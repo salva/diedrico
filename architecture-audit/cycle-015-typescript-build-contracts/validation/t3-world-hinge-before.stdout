@@ -1,0 +1,81 @@
+  // HingeLine Methods
+  // ========================================
+
+  /**
+   * Get a hinge line by ID
+   */
+  getHingeLineById(id: string): HingeLine | undefined {
+    return this.hingeLines.get(id);
+  }
+
+  /**
+   * Get all hinge lines
+   */
+  getAllHingeLines(): HingeLine[] {
+    return Array.from(this.hingeLines.values());
+  }
+
+  /**
+   * Get all HalfHingeLine2D for a specific projection plane
+   * Returns the 2D representations of hinge lines that belong to the specified plane.
+   * 
+   * @param planeId ID of the projection plane
+   * @returns Array of HalfHingeLine2D objects for that plane
+   */
+  getHalfHingeLines2D(planeId: string): HalfHingeLine2D[] {
+    // Search the specific plane for half hinge lines
+    const plane = this.projectionPlanes.get(planeId);
+    if (!plane) return [];
+    
+    const allLines = plane.getAllLines();
+    return allLines.filter((line): line is HalfHingeLine2D => 
+      line instanceof HalfHingeLine2D
+    );
+  }
+
+  /**
+   * Get parent HingeLine from a HalfHingeLine2D
+   * 
+   * @param halfHingeLineId ID of the HalfHingeLine2D
+   * @returns Parent HingeLine or undefined if the element is not a HalfHingeLine2D
+   * @throws Error if the ID is invalid (Phase 76: fail-fast for corrupted state)
+   */
+  getHingeLineFromHalfHingeLine(halfHingeLineId: string): HingeLine | undefined {
+    // Get the HalfHingeLine2D by searching all planes
+    // Phase 76: getLine2D throws for invalid IDs (fail-fast)
+    const halfHingeLine = this.getLine2D(halfHingeLineId);
+    if (!halfHingeLine || !(halfHingeLine instanceof HalfHingeLine2D)) {
+      return undefined;
+    }
+    
+    // Cast to HalfHingeLine2D to access hingeLineId
+    const halfHL = halfHingeLine as HalfHingeLine2D;
+    return this.getHingeLineById(halfHL.hingeLineId);
+  }
+
+  /**
+   * Get sibling projection plane for an intersection point
+   * 
+   * If the intersection involves a HalfHingeLine2D, returns the other plane
+   * connected by the parent HingeLine. Otherwise returns undefined.
+   * 
+   * Algorithm:
+   * 1. Check if intersection point involves a HalfHingeLine2D
+   * 2. If yes: HalfHingeLine2D → hingeLineId → HingeLine → getOtherPlane(currentPlaneId)
+   * 3. If no: return undefined (not a HHL intersection, no sibling)
+   * 
+   * @param intersectionPoint The intersection point to check
+   * @returns Sibling plane ID if HHL intersection, undefined otherwise
+   */
+  getSiblingPlaneForIntersection(intersectionPoint: Point2D): string | undefined {
+    // Determine element IDs based on intersection type using instanceof
+    let element1Id: string | undefined;
+    let element2Id: string | undefined;
+
+    if (intersectionPoint instanceof Point2DLineLineIntersection) {
+      element1Id = intersectionPoint.line1Id;
+      element2Id = intersectionPoint.line2Id;
+    } else if (intersectionPoint instanceof Point2DLineCircleIntersection) {
+      element1Id = intersectionPoint.lineId;
+      element2Id = intersectionPoint.circleId;
+    } else if (intersectionPoint instanceof Point2DCircleCircleIntersection) {

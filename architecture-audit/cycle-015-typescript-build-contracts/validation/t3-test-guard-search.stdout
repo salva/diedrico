@@ -1,0 +1,750 @@
+frontend/src/domain/world/Point.ts:18:import type { ProjectionElementRealizationContext } from './projectionPlane/ProjectionPlaneContext';
+frontend/src/domain/world/Point.ts:19:import { intersectLineLine, intersectLineCircle, intersectCircleCircle } from '@/domain/calculations/Intersections';
+frontend/src/domain/world/Point.ts:32:  SIBLING_INTERSECTION: 'sibling-intersection',
+frontend/src/domain/world/Point.ts:42: * All behavioral differences belong in domain classes (FreePoint2D, Point2DLineLineIntersection,
+frontend/src/domain/world/Point.ts:163: * - Point2DLineLineIntersection: intersection of two lines
+frontend/src/domain/world/Point.ts:164: * - Point2DLineCircleIntersection: intersection of a line and a circle
+frontend/src/domain/world/Point.ts:165: * - Point2DCircleCircleIntersection: intersection of two circles
+frontend/src/domain/world/Point.ts:167: * When intersecting with HalfHingeLine2D, a sibling point is automatically
+frontend/src/domain/world/Point.ts:171:  siblingPointId?: string;  // Optional: ID of sibling point on paired plane (populated when intersecting with HalfHingeLine2D)
+frontend/src/domain/world/Point.ts:197:export class Point2DLineLineIntersection extends IntersectionPoint2D {
+frontend/src/domain/world/Point.ts:213:  clone(): Point2DLineLineIntersection {
+frontend/src/domain/world/Point.ts:214:    const cloned = new Point2DLineLineIntersection(
+frontend/src/domain/world/Point.ts:221:    if (this.siblingPointId) {
+frontend/src/domain/world/Point.ts:222:      cloned.siblingPointId = this.siblingPointId;
+frontend/src/domain/world/Point.ts:238:    const plane = world.getProjectionPlaneById(this.planeId);
+frontend/src/domain/world/Point.ts:239:    assert(plane, `[Point2DLineLineIntersection] plane ${this.planeId} not found for point ${this.id}`);
+frontend/src/domain/world/Point.ts:243:    assert(l1, `[Point2DLineLineIntersection] line1 ${this.line1Id} not found on plane ${this.planeId} for point ${this.id}`);
+frontend/src/domain/world/Point.ts:244:    assert(l2, `[Point2DLineLineIntersection] line2 ${this.line2Id} not found on plane ${this.planeId} for point ${this.id}`);
+frontend/src/domain/world/Point.ts:249:    assert(line1, `[Point2DLineLineIntersection] line1.realize2D() returned null for ${this.line1Id}`);
+frontend/src/domain/world/Point.ts:250:    assert(line2, `[Point2DLineLineIntersection] line2.realize2D() returned null for ${this.line2Id}`);
+frontend/src/domain/world/Point.ts:254:      console.warn('[Point2DLineLineIntersection] Parent element is infeasible, marking this as infeasible');
+frontend/src/domain/world/Point.ts:258:    const intersectionPointReal = intersectLineLine(line1, line2);
+frontend/src/domain/world/Point.ts:261:      console.warn('[Point2DLineLineIntersection] Lines do not intersect (parallel or coincident)');
+frontend/src/domain/world/Point.ts:279:        console.warn('[Point2DLineLineIntersection] Intersection falls outside segment bounds (line1)');
+frontend/src/domain/world/Point.ts:288:        console.warn('[Point2DLineLineIntersection] Intersection falls outside segment bounds (line2)');
+frontend/src/domain/world/Point.ts:336:export class Point2DLineCircleIntersection extends IntersectionPoint2D {
+frontend/src/domain/world/Point.ts:355:  clone(): Point2DLineCircleIntersection {
+frontend/src/domain/world/Point.ts:356:    const cloned = new Point2DLineCircleIntersection(
+frontend/src/domain/world/Point.ts:364:    if (this.siblingPointId) {
+frontend/src/domain/world/Point.ts:365:      cloned.siblingPointId = this.siblingPointId;
+frontend/src/domain/world/Point.ts:381:    const plane = world.getProjectionPlaneById(this.planeId);
+frontend/src/domain/world/Point.ts:382:    assert(plane, `[Point2DLineCircleIntersection] plane ${this.planeId} not found for point ${this.id}`);
+frontend/src/domain/world/Point.ts:386:    assert(l, `[Point2DLineCircleIntersection] line ${this.lineId} not found on plane ${this.planeId} for point ${this.id}`);
+frontend/src/domain/world/Point.ts:387:    assert(c, `[Point2DLineCircleIntersection] circle ${this.circleId} not found on plane ${this.planeId} for point ${this.id}`);
+frontend/src/domain/world/Point.ts:392:    assert(line, `[Point2DLineCircleIntersection] line.realize2D() returned null for ${this.lineId}`);
+frontend/src/domain/world/Point.ts:393:    assert(circle, `[Point2DLineCircleIntersection] circle.realize2D() returned null for ${this.circleId}`);
+frontend/src/domain/world/Point.ts:397:      console.warn('[Point2DLineCircleIntersection] Parent element is infeasible, marking this as infeasible');
+frontend/src/domain/world/Point.ts:401:    const intersectionPoints = intersectLineCircle(line, circle);
+frontend/src/domain/world/Point.ts:404:      console.warn('[Point2DLineCircleIntersection] Line and circle do not intersect');
+frontend/src/domain/world/Point.ts:416:        console.warn('[Point2DLineCircleIntersection] Intersection falls outside segment bounds');
+frontend/src/domain/world/Point.ts:464:export class Point2DCircleCircleIntersection extends IntersectionPoint2D {
+frontend/src/domain/world/Point.ts:483:  clone(): Point2DCircleCircleIntersection {
+frontend/src/domain/world/Point.ts:484:    const cloned = new Point2DCircleCircleIntersection(
+frontend/src/domain/world/Point.ts:492:    if (this.siblingPointId) {
+frontend/src/domain/world/Point.ts:493:      cloned.siblingPointId = this.siblingPointId;
+frontend/src/domain/world/Point.ts:509:    const plane = world.getProjectionPlaneById(this.planeId);
+frontend/src/domain/world/Point.ts:510:    assert(plane, `[Point2DCircleCircleIntersection] plane ${this.planeId} not found for point ${this.id}`);
+frontend/src/domain/world/Point.ts:514:    assert(c1, `[Point2DCircleCircleIntersection] circle1 ${this.circle1Id} not found on plane ${this.planeId} for point ${this.id}`);
+frontend/src/domain/world/Point.ts:515:    assert(c2, `[Point2DCircleCircleIntersection] circle2 ${this.circle2Id} not found on plane ${this.planeId} for point ${this.id}`);
+frontend/src/domain/world/Point.ts:520:    assert(circle1, `[Point2DCircleCircleIntersection] circle1.realize2D() returned null for ${this.circle1Id}`);
+frontend/src/domain/world/Point.ts:521:    assert(circle2, `[Point2DCircleCircleIntersection] circle2.realize2D() returned null for ${this.circle2Id}`);
+frontend/src/domain/world/Point.ts:525:      console.warn('[Point2DCircleCircleIntersection] Parent element is infeasible, marking this as infeasible');
+frontend/src/domain/world/Point.ts:529:    const intersectionPoints = intersectCircleCircle(circle1, circle2);
+frontend/src/domain/world/Point.ts:532:      console.warn('[Point2DCircleCircleIntersection] Circles do not intersect');
+frontend/src/domain/world/Point.ts:543: * The rule is: "projection of primary intersection's 3D position onto sibling plane"
+frontend/src/domain/world/Point.ts:547: * automatically creates this sibling point on the other plane to show the complete
+frontend/src/domain/world/Point.ts:553: * 3. Project that 3D position onto this sibling's plane
+frontend/src/domain/world/Point.ts:557:  primaryIntersectionId: string;  // ID of the primary intersection point this sibling derives from
+frontend/src/domain/world/Point.ts:597:   * Breaking this constraint causes sibling points to compute incorrect positions silently.
+frontend/src/domain/world/Point.ts:620:      const intersection = primaryPointDomain as Point2DLineLineIntersection;
+frontend/src/domain/world/Point.ts:631:        // BHHL 3D round-trip: lift the primary position to 3D and project to sibling plane.
+frontend/src/domain/world/Point.ts:633:        // intersection point on T2 and the sibling intersection on T2' are the same 3D point.
+frontend/src/domain/world/Point.ts:635:        const primaryPlaneReal3D = world.getProjectionPlane3DRealization(primaryBHHL.planeId);
+frontend/src/domain/world/Point.ts:636:        const siblingPlaneReal3D = world.getProjectionPlane3DRealization(this.planeId);
+frontend/src/domain/world/Point.ts:638:        if (!primaryPlaneReal3D?.feasible || !siblingPlaneReal3D?.feasible) {
+frontend/src/domain/world/Point.ts:645:        // Project back to sibling plane 2D (Vector4 → Vector3 homogeneous)
+frontend/src/domain/world/Point.ts:646:        const R_prime = applyMatrix3x4(R_3D, siblingPlaneReal3D.threeDToPlane);
+frontend/src/domain/world/Point.ts:665:export function isLineLineIntersection(point: Point2D): point is Point2DLineLineIntersection {
+frontend/src/domain/world/Point.ts:666:  return point instanceof Point2DLineLineIntersection;
+frontend/src/domain/world/Point.ts:669:export function isLineCircleIntersection(point: Point2D): point is Point2DLineCircleIntersection {
+frontend/src/domain/world/Point.ts:670:  return point instanceof Point2DLineCircleIntersection;
+frontend/src/domain/world/Point.ts:673:export function isCircleCircleIntersection(point: Point2D): point is Point2DCircleCircleIntersection {
+frontend/src/domain/world/Point.ts:674:  return point instanceof Point2DCircleCircleIntersection;
+frontend/src/domain/world/projectionPlane/ProjectionPlaneElementStore.ts:4:import type { ProjectionPlaneDependencyRegistrar } from './ProjectionPlaneContext';
+frontend/src/domain/world/projectionPlane/ProjectionPlaneElementStore.ts:6:export interface ProjectionPlaneStoreMutationContext {
+frontend/src/domain/world/projectionPlane/ProjectionPlaneElementStore.ts:7:  getDependencyService(): ProjectionPlaneDependencyRegistrar;
+frontend/src/domain/world/projectionPlane/ProjectionPlaneElementStore.ts:11:export class ProjectionPlaneElementStore {
+frontend/src/domain/world/projectionPlane/ProjectionPlaneElementStore.ts:28:  addPoint(point: Point2D, context?: ProjectionPlaneStoreMutationContext): void {
+frontend/src/domain/world/projectionPlane/ProjectionPlaneElementStore.ts:37:  removePoint(id: string, context?: ProjectionPlaneStoreMutationContext): boolean {
+frontend/src/domain/world/projectionPlane/ProjectionPlaneElementStore.ts:50:  addLine(line: Line2D, context?: ProjectionPlaneStoreMutationContext): void {
+frontend/src/domain/world/projectionPlane/ProjectionPlaneElementStore.ts:58:  removeLine(id: string, context?: ProjectionPlaneStoreMutationContext): boolean {
+frontend/src/domain/world/projectionPlane/ProjectionPlaneElementStore.ts:71:  addCircle(circle: Circle2D, context?: ProjectionPlaneStoreMutationContext): void {
+frontend/src/domain/world/projectionPlane/ProjectionPlaneElementStore.ts:79:  removeCircle(id: string, context?: ProjectionPlaneStoreMutationContext): boolean {
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts:3:import { computeProjectionPlaneMatrices } from '@/utils/projectionPlaneUtils';
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts:4:import type { ProjectionPlaneRealizationContext } from './ProjectionPlaneContext';
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts:5:import { ProjectionPlane, type ProjectionPlaneType } from '@/domain/world/projectionPlane/ProjectionPlane';
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts:6:import { ProjectionPlaneRealization2D, ProjectionPlaneRealization3D } from './ProjectionPlaneRealization';
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts:8:export class AuxiliaryProjectionPlane extends ProjectionPlane {
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts:9:  readonly type: ProjectionPlaneType = 'auxiliary';
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts:33:  clone(): AuxiliaryProjectionPlane {
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts:34:    return new AuxiliaryProjectionPlane(
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts:57:   * Computes transformation matrices from trace dependencies using computeProjectionPlaneMatrices().
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts:60:   * @returns ProjectionPlaneRealization3D with computed transformation matrices
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts:62:  realize3D(context: ProjectionPlaneRealizationContext): ProjectionPlaneRealization3D {
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts:70:      const matrices = computeProjectionPlaneMatrices(
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts:79:        return new ProjectionPlaneRealization3D(
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts:88:      return new ProjectionPlaneRealization3D(
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts:96:      console.error('[AuxiliaryProjectionPlane] Failed to compute realization:', error);
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts:98:      return new ProjectionPlaneRealization3D(
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts:112:   * @returns ProjectionPlaneRealization2D with computed transformation matrices
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts:114:  realize2D(context: ProjectionPlaneRealizationContext): ProjectionPlaneRealization2D {
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts:121:      const matrices = computeProjectionPlaneMatrices(
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts:132:        return new ProjectionPlaneRealization2D(
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts:143:      return new ProjectionPlaneRealization2D(
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts:151:      console.error('[AuxiliaryProjectionPlane] Failed to compute 2D realization:', error);
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts:155:      return new ProjectionPlaneRealization2D(
+frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:6:import type { ProjectionPlane } from '@/domain/world/projectionPlane/ProjectionPlane';
+frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:7:import type { ProjectionPlaneRealization2D, ProjectionPlaneRealization3D } from './ProjectionPlaneRealization';
+frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:10:  getProjectionPlaneById(id: string): ProjectionPlane | undefined;
+frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:14:  getProjectionPlane2DRealization(id: string): ProjectionPlaneRealization2D | undefined;
+frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:15:  getProjectionPlane3DRealization(id: string): ProjectionPlaneRealization3D | undefined;
+frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:18:  getAllProjectionPlanes(): ProjectionPlane[];
+frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:22:export interface ProjectionPlaneRealizationContext extends ProjectionElementRealizationContext {}
+frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:25:  getPlaneForElement(id: string): ProjectionPlane | undefined;
+frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:28:export interface ProjectionPlaneDependencyRegistrar {
+frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:33:export interface ProjectionPlaneMutationContext extends ProjectionPlaneRealizationContext, ProjectionOwnerPlaneQuery {
+frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:36:  getDependencyService(): ProjectionPlaneDependencyRegistrar;
+frontend/src/domain/world/projectionPlane/FixedProjectionPlane.ts:3:import type { ProjectionPlaneRealizationContext } from './ProjectionPlaneContext';
+frontend/src/domain/world/projectionPlane/FixedProjectionPlane.ts:4:import { ProjectionPlane, type ProjectionPlaneType } from '@/domain/world/projectionPlane/ProjectionPlane';
+frontend/src/domain/world/projectionPlane/FixedProjectionPlane.ts:5:import { ProjectionPlaneRealization2D, ProjectionPlaneRealization3D } from './ProjectionPlaneRealization';
+frontend/src/domain/world/projectionPlane/FixedProjectionPlane.ts:7:export class FixedProjectionPlane extends ProjectionPlane {
+frontend/src/domain/world/projectionPlane/FixedProjectionPlane.ts:8:  readonly type: ProjectionPlaneType = 'base';
+frontend/src/domain/world/projectionPlane/FixedProjectionPlane.ts:29:  clone(): FixedProjectionPlane {
+frontend/src/domain/world/projectionPlane/FixedProjectionPlane.ts:30:    return new FixedProjectionPlane(
+frontend/src/domain/world/projectionPlane/FixedProjectionPlane.ts:52:  realize2D(_context?: ProjectionPlaneRealizationContext): ProjectionPlaneRealization2D {
+frontend/src/domain/world/projectionPlane/FixedProjectionPlane.ts:60:    return new ProjectionPlaneRealization2D(
+frontend/src/domain/world/projectionPlane/FixedProjectionPlane.ts:74:  realize3D(_context?: ProjectionPlaneRealizationContext): ProjectionPlaneRealization3D {
+frontend/src/domain/world/projectionPlane/FixedProjectionPlane.ts:82:    return new ProjectionPlaneRealization3D(
+frontend/src/domain/world/projectionPlane/ProjectionPlaneRealization.ts:5:export class ProjectionPlaneRealization2D extends Realization {
+frontend/src/domain/world/projectionPlane/ProjectionPlaneRealization.ts:33:  clone(): ProjectionPlaneRealization2D {
+frontend/src/domain/world/projectionPlane/ProjectionPlaneRealization.ts:34:    return new ProjectionPlaneRealization2D(
+frontend/src/domain/world/projectionPlane/ProjectionPlaneRealization.ts:44: * ProjectionPlaneRealization3D - Stores computed 3D transformation matrices for a ProjectionPlane
+frontend/src/domain/world/projectionPlane/ProjectionPlaneRealization.ts:49: * Computation happens in realize3D() methods of ProjectionPlane subclasses.
+frontend/src/domain/world/projectionPlane/ProjectionPlaneRealization.ts:51:export class ProjectionPlaneRealization3D extends Realization {
+frontend/src/domain/world/projectionPlane/ProjectionPlaneRealization.ts:79:  clone(): ProjectionPlaneRealization3D {
+frontend/src/domain/world/projectionPlane/ProjectionPlaneRealization.ts:80:    return new ProjectionPlaneRealization3D(
+frontend/tests/unit/coordinateTransform.spec.ts:9:import { FixedProjectionPlane } from '@/domain/world/projectionPlane/FixedProjectionPlane';
+frontend/tests/unit/coordinateTransform.spec.ts:20:      const planeH = world.getProjectionPlaneByLabel('P_H');
+frontend/tests/unit/coordinateTransform.spec.ts:55:      const planeH = world.getProjectionPlaneByLabel('P_H');
+frontend/tests/unit/coordinateTransform.spec.ts:90:      const planeV = world.getProjectionPlaneByLabel('P_V');
+frontend/tests/unit/coordinateTransform.spec.ts:118:      const planeV = world.getProjectionPlaneByLabel('P_V');
+frontend/tests/unit/coordinateTransform.spec.ts:149:      const planeH = world.getProjectionPlaneByLabel('P_H');
+frontend/tests/unit/coordinateTransform.spec.ts:178:      const planeH = world.getProjectionPlaneByLabel('P_H');
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:6:import { FreePoint2D, Point2DLineLineIntersection, Point2DLineCircleIntersection, Point2DCircleCircleIntersection, SiblingIntersectionPoint2D } from '../Point';
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:14:import { ProjectionPlaneElementStore } from './ProjectionPlaneElementStore';
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:15:import type { ProjectionPlaneMutationContext, ProjectionPlaneRealizationContext } from './ProjectionPlaneContext';
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:16:import { ProjectionPlaneRealization2D, ProjectionPlaneRealization3D } from './ProjectionPlaneRealization';
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:22:export type ProjectionPlaneType = typeof PROJECTION_PLANE_TYPE[keyof typeof PROJECTION_PLANE_TYPE];
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:24:export abstract class ProjectionPlane extends Element {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:25:  abstract readonly type: ProjectionPlaneType;
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:38:  private readonly elementStore: ProjectionPlaneElementStore;
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:54:    this.elementStore = new ProjectionPlaneElementStore();
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:70:  addPoint(point: Point2D, context?: ProjectionPlaneMutationContext): void {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:111:  removePoint(id: string, context?: ProjectionPlaneMutationContext): boolean {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:142:  addLine(line: Line2D, context?: ProjectionPlaneMutationContext): void {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:163:  removeLine(id: string, context?: ProjectionPlaneMutationContext): boolean {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:195:  addCircle(circle: Circle2D, context?: ProjectionPlaneMutationContext): void {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:216:  removeCircle(id: string, context?: ProjectionPlaneMutationContext): boolean {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:243:  // Phase 22.5: Realization computation moved from World to ProjectionPlane
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:252:  realizePoint2D(point: Point2D, world: ProjectionPlaneMutationContext): Point2DRealization2D | undefined {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:276:  realizeLine2D(line: Line2D, world: ProjectionPlaneMutationContext): Line2DRealization2D | undefined {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:300:  realizeCircle2D(circle: Circle2D, world: ProjectionPlaneMutationContext): Circle2DRealization2D | undefined {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:319:  // Phase 22.5: Factory methods moved from World to ProjectionPlane
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:325:  generatePoint2DId(world: ProjectionPlaneMutationContext): string {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:333:  generateLine2DId(world: ProjectionPlaneMutationContext): string {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:341:  generateSegment2DId(world: ProjectionPlaneMutationContext): string {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:349:  generateCircle2DId(world: ProjectionPlaneMutationContext): string {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:357:  generateGuide2DId(world: ProjectionPlaneMutationContext): string {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:381:    world: ProjectionPlaneMutationContext,
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:406:   * Factory method: Create and add a Point2DLineLineIntersection to this plane
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:413:   * @returns The created Point2DLineLineIntersection
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:415:  addLineLineIntersection(
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:418:    world: ProjectionPlaneMutationContext,
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:420:  ): Point2DLineLineIntersection {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:452:    const point = new Point2DLineLineIntersection(id, line1Id, line2Id, this.id, label);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:459:   * Factory method: Create and add a Point2DLineCircleIntersection to this plane
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:465:   * @returns The created Point2DLineCircleIntersection
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:467:  addLineCircleIntersection(
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:471:    world: ProjectionPlaneMutationContext,
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:473:  ): Point2DLineCircleIntersection {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:510:    const point = new Point2DLineCircleIntersection(id, lineId, circleId, index, this.id, label);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:517:   * Factory method: Create and add a Point2DCircleCircleIntersection to this plane
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:523:   * @returns The created Point2DCircleCircleIntersection
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:525:  addCircleCircleIntersection(
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:529:    world: ProjectionPlaneMutationContext,
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:531:  ): Point2DCircleCircleIntersection {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:568:    const point = new Point2DCircleCircleIntersection(id, circle1Id, circle2Id, index, this.id, label);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:587:    world: ProjectionPlaneMutationContext,
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:650:    world: ProjectionPlaneMutationContext,
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:700:    world: ProjectionPlaneMutationContext,
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:753:    world: ProjectionPlaneMutationContext,
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:814:    world: ProjectionPlaneMutationContext,
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:876:    world: ProjectionPlaneMutationContext,
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:926:    world: ProjectionPlaneMutationContext,
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:976:    world: ProjectionPlaneMutationContext,
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1015:   * Add a sibling guide to this plane
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1021:   * @param primaryGuideId ID of the primary guide that spawned this sibling
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1022:   * @param referenceLineId ID of the HalfHingeLine2D in this (sibling) plane
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1024:   * @param id Optional ID for the sibling guide (generated if not provided)
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1031:    world: ProjectionPlaneMutationContext,
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1035:      throw new Error('Cannot add sibling guide to plane without ID');
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1063:    const siblingGuide = new SiblingGuide2D(
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1071:    this.addLine(siblingGuide, world);  // Sibling guides are stored as lines
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1072:    return siblingGuide;
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1076:   * Factory method: Create and add a sibling intersection point to this plane
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1079:   * a 3D point that projects onto both planes. This method creates the sibling
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1083:   * The sibling point uses SiblingIntersectionPoint2D which realizes by cloning
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1094:    world: ProjectionPlaneMutationContext,
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1098:      throw new Error('Cannot add sibling intersection point to plane without ID');
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1113:    const isIntersection = primaryPoint instanceof Point2DLineLineIntersection ||
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1114:                           primaryPoint instanceof Point2DLineCircleIntersection ||
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1115:                           primaryPoint instanceof Point2DCircleCircleIntersection;
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1129:    const siblingPoint = new SiblingIntersectionPoint2D(
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1137:    primaryPoint.siblingPointId = siblingPoint.id;
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1139:    this.addPoint(siblingPoint, world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1140:    return siblingPoint;
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1157:    world: ProjectionPlaneMutationContext,
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1197:    world: ProjectionPlaneMutationContext,
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1233:  abstract clone(): ProjectionPlane;
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1242:  abstract realize2D(context: ProjectionPlaneRealizationContext): ProjectionPlaneRealization2D;
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1250:  abstract realize3D(context: ProjectionPlaneRealizationContext): ProjectionPlaneRealization3D;
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1254:   * Shared between FixedProjectionPlane and AuxiliaryProjectionPlane realize2D() methods.
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1286:   * Used by FixedProjectionPlane.realize3D().
+frontend/tests/unit/rendering/threeView/threeSceneAdapters.spec.ts:3:import { ProjectionPlaneSceneAdapter } from '@/rendering/threeView/ProjectionPlaneSceneAdapter';
+frontend/tests/unit/rendering/threeView/threeSceneAdapters.spec.ts:11:    const objects = new ProjectionPlaneSceneAdapter().createObjects([
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:106:describe('AppShellRuntime lifecycle ownership', () => {
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:248:      getProjectionPlaneById: vi.fn((id: string) => id === 'plane-a' ? planeA : planeB),
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:249:      getAllProjectionPlanes: vi.fn(() => [planeA, planeB]),
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:315:      { getProjectionPlaneById: vi.fn(() => activePlane) } as any,
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:356:    expect(deps.world.getAllProjectionPlanes().length).toBeGreaterThan(0);
+frontend/tests/unit/tools/toolValidation.spec.ts:79:    planeId = world.getProjectionPlaneByLabel('P_H').id!;
+frontend/tests/unit/tools/toolValidation.spec.ts:178:      const plane = world.getProjectionPlaneById(planeId);
+frontend/tests/unit/tools/toolValidation.spec.ts:200:      const plane = world.getProjectionPlaneById(planeId);
+frontend/tests/unit/components/propertiesDialog.spec.ts:28:    const planeH = world.getProjectionPlaneByLabel('P_H');
+frontend/tests/unit/components/propertiesDialog.spec.ts:108:      const planeH = world.getProjectionPlaneByLabel('P_H');
+frontend/tests/unit/components/propertiesDialog.spec.ts:125:      const planeH = world.getProjectionPlaneByLabel('P_H');
+frontend/tests/unit/components/propertiesDialog.spec.ts:189:      const planeH = world.getProjectionPlaneByLabel('P_H');
+frontend/tests/unit/components/propertiesDialog.spec.ts:220:      const planeH = world.getProjectionPlaneByLabel('P_H');
+frontend/tests/unit/components/propertiesDialog.spec.ts:275:      const planeH = world.getProjectionPlaneByLabel('P_H');
+frontend/tests/unit/components/propertiesDialog.spec.ts:310:      const planeH = world.getProjectionPlaneByLabel('P_H');
+frontend/tests/unit/tools/pointTool.spec.ts:66:    horizontalPlaneId = world.getProjectionPlaneByLabel('P_H').id!;
+frontend/tests/unit/tools/pointTool.spec.ts:67:    verticalPlaneId = world.getProjectionPlaneByLabel('P_V').id!;
+frontend/tests/unit/utils/projectionPlaneUtils.spec.ts:5: * - computeLineLineIntersection3D: 3D line intersection helper
+frontend/tests/unit/utils/projectionPlaneUtils.spec.ts:6: * - computeProjectionPlaneMatrices: Complete coordinate system computation
+frontend/tests/unit/utils/projectionPlaneUtils.spec.ts:11:import { computeLineLineIntersection3D } from '../../../src/utils/projectionPlaneUtils';
+frontend/tests/unit/utils/projectionPlaneUtils.spec.ts:13:describe('computeLineLineIntersection3D', () => {
+frontend/tests/unit/utils/projectionPlaneUtils.spec.ts:24:      const intersection = computeLineLineIntersection3D(line1Point, line1Dir, line2Point, line2Dir);
+frontend/tests/unit/utils/projectionPlaneUtils.spec.ts:42:      const intersection = computeLineLineIntersection3D(line1Point, line1Dir, line2Point, line2Dir);
+frontend/tests/unit/utils/projectionPlaneUtils.spec.ts:61:      const intersection = computeLineLineIntersection3D(line1Point, line1Dir, line2Point, line2Dir);
+frontend/tests/unit/utils/projectionPlaneUtils.spec.ts:84:      const result = computeLineLineIntersection3D(line1Point, line1Dir, line2Point, line2Dir);
+frontend/tests/unit/utils/projectionPlaneUtils.spec.ts:97:      const result = computeLineLineIntersection3D(line1Point, line1Dir, line2Point, line2Dir);
+frontend/tests/unit/utils/projectionPlaneUtils.spec.ts:113:      const result = computeLineLineIntersection3D(line1Point, line1Dir, line2Point, line2Dir);
+frontend/tests/unit/utils/projectionPlaneUtils.spec.ts:127:      const result = computeLineLineIntersection3D(line1Point, line1Dir, line2Point, line2Dir);
+frontend/tests/unit/utils/projectionPlaneUtils.spec.ts:140:      const intersection = computeLineLineIntersection3D(line1Point, line1Dir, line2Point, line2Dir);
+frontend/tests/unit/utils/projectionPlaneUtils.spec.ts:151:// TODO: Add comprehensive tests for computeProjectionPlaneMatrices once we have test fixtures
+frontend/tests/unit/utils/projectionPlaneUtils.spec.ts:153:// For now, testing the helper function computeLineLineIntersection3D provides good coverage
+frontend/tests/unit/utils/projectionPlaneUtils.spec.ts:156:describe('computeProjectionPlaneMatrices - TODO', () => {
+frontend/tests/unit/tools/GuideTool.test.ts:27:    it('should create sibling guide when reference is HalfHingeLine2D', async () => {
+frontend/tests/unit/tools/GuideTool.test.ts:32:      // Creating guide on a hinge line should create sibling on other plane
+frontend/tests/unit/tools/GuideTool.test.ts:40:    it('should create sibling guide when reference is BrokenHalfHingeLine2D', async () => {
+frontend/tests/unit/tools/GuideTool.test.ts:42:      // Creating guide on BHHL should create sibling guide
+frontend/tests/unit/tools/GuideTool.test.ts:54:      // assumed all guides have siblings and threw error when
+frontend/tests/unit/tools/GuideTool.test.ts:59:      // Previous behavior: Threw "Failed to get sibling info" error
+frontend/tests/unit/tools/GuideTool.test.ts:72:    it('should create single action for guide without sibling', () => {
+frontend/tests/unit/tools/GuideTool.test.ts:77:    it('should create two actions for guide with sibling', () => {
+frontend/tests/unit/tools/GuideTool.test.ts:78:      // Verify ProcessTree contains both primary and sibling actions
+frontend/tests/unit/utils/coordinateTransform.spec.ts:21:import { FixedProjectionPlane } from '@/domain/world/projectionPlane/FixedProjectionPlane';
+frontend/tests/unit/utils/coordinateTransform.spec.ts:139:      horizontalPlaneId = world.getProjectionPlaneByLabel('P_H').id!;
+frontend/tests/unit/utils/coordinateTransform.spec.ts:140:      verticalPlaneId = world.getProjectionPlaneByLabel('P_V').id!;
+frontend/tests/unit/utils/coordinateTransform.spec.ts:192:      horizontalPlaneId = world.getProjectionPlaneByLabel('P_H').id!;
+frontend/tests/unit/utils/coordinateTransform.spec.ts:193:      verticalPlaneId = world.getProjectionPlaneByLabel('P_V').id!;
+frontend/tests/unit/utils/coordinateTransform.spec.ts:246:      horizontalPlaneId = world.getProjectionPlaneByLabel('P_H').id!;
+frontend/tests/unit/utils/coordinateTransform.spec.ts:247:      verticalPlaneId = world.getProjectionPlaneByLabel('P_V').id!;
+frontend/tests/unit/tools/CircleTool.spec.ts:54:    horizontalPlaneId = world.getProjectionPlaneByLabel('P_H').id!;
+frontend/tests/unit/tools/CircleTool.spec.ts:113:      const plane = world.getProjectionPlaneById(horizontalPlaneId);
+frontend/tests/unit/tools/CircleTool.spec.ts:137:      const plane = world.getProjectionPlaneById(horizontalPlaneId);
+frontend/tests/unit/tools/CircleTool.spec.ts:230:      const plane = world.getProjectionPlaneById(horizontalPlaneId);
+frontend/tests/unit/tools/CircleTool.spec.ts:288:      const plane = world.getProjectionPlaneById(horizontalPlaneId);
+frontend/tests/unit/tools/CircleTool.spec.ts:438:      const plane = world.getProjectionPlaneById(horizontalPlaneId);
+frontend/tests/unit/tools/CircleTool.spec.ts:515:      const plane = world.getProjectionPlaneById(horizontalPlaneId);
+frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:5:import { ProjectionPlane3DSelector } from '@/application/threePresentation/ProjectionPlane3DSelector';
+frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:20:      getAllProjectionPlanes: () => [plane],
+frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:21:      getProjectionPlane3DRealization: () => feasiblePlaneRealization,
+frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:22:      getProjectionPlaneById: () => plane,
+frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:26:    const dtos = new ProjectionPlane3DSelector().select(world, true, true, true);
+frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:38:      getAllProjectionPlanes: () => [{ ...plane, getAllPoints: () => [point] }],
+frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:39:      getProjectionPlane3DRealization: () => feasiblePlaneRealization,
+frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:77:      getProjectionPlane3DRealization: () => feasiblePlaneRealization,
+frontend/tests/unit/application/panelToolbarIntentControllers.spec.ts:30:      'addProjectionPlaneSetup',
+frontend/tests/unit/application/canvasToolControllers.spec.ts:19:  return world.getProjectionPlaneById(planeId).getAllPoints().filter((point: any) => !point.locked);
+frontend/tests/unit/world/generateDefaultLabel.test.ts:136:    it('should share sequence between Plane3D and ProjectionPlane', () => {
+frontend/tests/unit/world/generateDefaultLabel.test.ts:138:      expect(world.generateDefaultLabel('projPlane1', 'ProjectionPlane')).toBe('π_2');
+frontend/tests/unit/application/canvasPresentation/canvasPresentationSelector.spec.ts:9:    const plane = world.getProjectionPlaneByLabel('P_H');
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:50:      const projPlanes = world.getAllProjectionPlanes();
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:54:      const horizontalPlane = world.getProjectionPlaneByLabel('P_H');
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:55:      const verticalPlane = world.getProjectionPlaneByLabel('P_V');
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:68:      const projPlaneH = world.getProjectionPlaneByLabel('P_H');
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:69:      const projPlaneV = world.getProjectionPlaneByLabel('P_V');
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:79:      const projPlaneH = world.getProjectionPlaneByLabel('P_H');
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:80:      const projPlaneV = world.getProjectionPlaneByLabel('P_V');
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:96:      const horizPlane = world.getProjectionPlaneByLabel('P_H');
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:97:      const vertPlane = world.getProjectionPlaneByLabel('P_V');
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:194:      expect(opTypes).toContain('AddProjectionPlaneFixed'); // Projection planes
+frontend/tests/unit/projectionPlaneMatrix.test.ts:11:describe('ProjectionPlane Matrix4x3 Transformations', () => {
+frontend/tests/unit/projectionPlane.spec.ts:2: * Tests for ProjectionPlane transformations and element storage
+frontend/tests/unit/projectionPlane.spec.ts:9:import { FixedProjectionPlane } from '@/domain/world/projectionPlane/FixedProjectionPlane';
+frontend/tests/unit/projectionPlane.spec.ts:16:describe('ProjectionPlane Transformations', () => {
+frontend/tests/unit/projectionPlane.spec.ts:21:      const planeH = world.getProjectionPlaneByLabel('P_H');
+frontend/tests/unit/projectionPlane.spec.ts:35:      const planeH = world.getProjectionPlaneByLabel('P_H');
+frontend/tests/unit/projectionPlane.spec.ts:49:      const planeH = world.getProjectionPlaneByLabel('P_H');
+frontend/tests/unit/projectionPlane.spec.ts:63:      const planeH = world.getProjectionPlaneByLabel('P_H');
+frontend/tests/unit/projectionPlane.spec.ts:79:      const planeV = world.getProjectionPlaneByLabel('P_V');
+frontend/tests/unit/projectionPlane.spec.ts:93:      const planeV = world.getProjectionPlaneByLabel('P_V');
+frontend/tests/unit/projectionPlane.spec.ts:107:      const planeV = world.getProjectionPlaneByLabel('P_V');
+frontend/tests/unit/projectionPlane.spec.ts:121:      const planeV = world.getProjectionPlaneByLabel('P_V');
+frontend/tests/unit/projectionPlane.spec.ts:137:      const planeH = world.getProjectionPlaneByLabel('P_H');
+frontend/tests/unit/projectionPlane.spec.ts:158:      const planeV = world.getProjectionPlaneByLabel('P_V');
+frontend/tests/unit/projectionPlane.spec.ts:180:describe('ProjectionPlane Element Storage (Phase 22.5.1)', () => {
+frontend/tests/unit/projectionPlane.spec.ts:182:  let planeH: FixedProjectionPlane;
+frontend/tests/unit/projectionPlane.spec.ts:183:  let planeV: FixedProjectionPlane;
+frontend/tests/unit/commands/initializationOps.spec.ts:6: * - AddProjectionPlaneFixedOp (formerly AddProjectionPlaneOp)
+frontend/tests/unit/commands/initializationOps.spec.ts:20:  AddProjectionPlaneFixedOp,
+frontend/tests/unit/commands/initializationOps.spec.ts:123:      // Phase 78: AddPlane3DFixedOp creates Plane3D, not ProjectionPlane
+frontend/tests/unit/commands/initializationOps.spec.ts:138:      // Phase 78: AddPlane3DFixedOp creates Plane3D, not ProjectionPlane
+frontend/tests/unit/commands/initializationOps.spec.ts:150:      // Phase 78: AddPlane3DFixedOp creates Plane3D, not ProjectionPlane
+frontend/tests/unit/commands/initializationOps.spec.ts:183:  describe('AddProjectionPlaneFixedOp', () => {
+frontend/tests/unit/commands/initializationOps.spec.ts:193:      const op = new AddProjectionPlaneFixedOp(
+frontend/tests/unit/commands/initializationOps.spec.ts:205:      const projPlane = world.getProjectionPlaneById('proj_plane_test');
+frontend/tests/unit/commands/initializationOps.spec.ts:212:      const op = new AddProjectionPlaneFixedOp(
+frontend/tests/unit/commands/initializationOps.spec.ts:220:      expect(world.getProjectionPlaneById('proj_undo')).toBeDefined();
+frontend/tests/unit/commands/initializationOps.spec.ts:224:      expect(world.getProjectionPlaneById('proj_undo')).toBeUndefined();
+frontend/tests/unit/commands/initializationOps.spec.ts:229:      const op = new AddProjectionPlaneFixedOp(
+frontend/tests/unit/commands/initializationOps.spec.ts:250:      new AddProjectionPlaneFixedOp('plane_3d', matrices.planeToPaper, matrices.planeTo3D, 'proj_plane').apply(world);  // Phase 94: threeDToPlane removed
+frontend/tests/unit/commands/initializationOps.spec.ts:262:      const projPlane = world.getProjectionPlaneById('proj_plane');
+frontend/tests/unit/commands/initializationOps.spec.ts:301:      new AddProjectionPlaneFixedOp('plane_H', matricesH.planeToPaper, matricesH.planeTo3D, 'proj_H').apply(world);  // Phase 94: threeDToPlane removed
+frontend/tests/unit/commands/initializationOps.spec.ts:302:      new AddProjectionPlaneFixedOp('plane_V', matricesV.planeToPaper, matricesV.planeTo3D, 'proj_V').apply(world);  // Phase 94: threeDToPlane removed
+frontend/tests/unit/commands/initializationOps.spec.ts:351:      new AddProjectionPlaneFixedOp('plane_3d_h', matricesH.planeToPaper, matricesH.planeTo3D, 'proj_plane_h').apply(world);  // Phase 94: threeDToPlane removed
+frontend/tests/unit/commands/initializationOps.spec.ts:355:      new AddProjectionPlaneFixedOp('plane_3d_v', matricesV.planeToPaper, matricesV.planeTo3D, 'proj_plane_v').apply(world);  // Phase 94: threeDToPlane removed
+frontend/tests/unit/commands/initializationOps.spec.ts:369:      const projPlane = world.getProjectionPlaneById('proj_plane_h');
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:12:import { FreePoint2D, Point2DLineLineIntersection } from '../../../src/domain/world/Point';
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:34:   * 6. Create line M between D and C' (C' is sibling of C)
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:41:    const planeH = world.getProjectionPlaneById('projPlane3'); // P_H
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:42:    const planeV = world.getProjectionPlaneById('projPlane4'); // P_V
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:81:    const pointC = new Point2DLineLineIntersection(
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:89:    // 5. Create sibling point C' on P_V (manual creation since we're in test)
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:92:    // Verify sibling relationship
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:93:    expect(pointC.siblingPointId).toBe(pointCPrime.id);
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:120:      pointC.siblingPointId!,
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:160:    const planeV = world.getProjectionPlaneById('projPlane4'); // P_V
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:161:    const planeH = world.getProjectionPlaneById('projPlane3'); // P_H
+frontend/tests/unit/calculations/intersections.spec.ts:20:  intersectLineLine, 
+frontend/tests/unit/calculations/intersections.spec.ts:22:  intersectLineCircle,
+frontend/tests/unit/calculations/intersections.spec.ts:23:  intersectCircleCircle
+frontend/tests/unit/calculations/intersections.spec.ts:29:  describe('intersectLineLine', () => {
+frontend/tests/unit/calculations/intersections.spec.ts:45:      const result = intersectLineLine(line1, line2);
+frontend/tests/unit/calculations/intersections.spec.ts:68:      const result = intersectLineLine(line1, line2);
+frontend/tests/unit/calculations/intersections.spec.ts:91:      const result = intersectLineLine(line1, line2);
+frontend/tests/unit/calculations/intersections.spec.ts:109:      const result = intersectLineLine(line1, line2);
+frontend/tests/unit/calculations/intersections.spec.ts:127:      const result = intersectLineLine(line1, line2);
+frontend/tests/unit/calculations/intersections.spec.ts:145:      const result = intersectLineLine(line1, line2);
+frontend/tests/unit/calculations/intersections.spec.ts:163:      const result = intersectLineLine(line1, line2);
+frontend/tests/unit/calculations/intersections.spec.ts:182:      const result = intersectLineLine(line1, line2);
+frontend/tests/unit/calculations/intersections.spec.ts:201:      const result = intersectLineLine(line1, line2);
+frontend/tests/unit/calculations/intersections.spec.ts:221:      const result = intersectLineLine(line1, line2);
+frontend/tests/unit/calculations/intersections.spec.ts:289:  describe('intersectLineCircle', () => {
+frontend/tests/unit/calculations/intersections.spec.ts:300:      const result = intersectLineCircle(line, circle);
+frontend/tests/unit/calculations/intersections.spec.ts:323:      const result = intersectLineCircle(line, circle);
+frontend/tests/unit/calculations/intersections.spec.ts:346:      const result = intersectLineCircle(line, circle);
+frontend/tests/unit/calculations/intersections.spec.ts:364:      const result = intersectLineCircle(line, circle);
+frontend/tests/unit/calculations/intersections.spec.ts:379:      const result = intersectLineCircle(line, circle);
+frontend/tests/unit/calculations/intersections.spec.ts:402:      const result = intersectLineCircle(line, circle);
+frontend/tests/unit/calculations/intersections.spec.ts:417:      const result = intersectLineCircle(line, circle);
+frontend/tests/unit/calculations/intersections.spec.ts:425:  describe('intersectCircleCircle', () => {
+frontend/tests/unit/calculations/intersections.spec.ts:433:      const result = intersectCircleCircle(circle1, circle2);
+frontend/tests/unit/calculations/intersections.spec.ts:460:      const result = intersectCircleCircle(circle1, circle2);
+frontend/tests/unit/calculations/intersections.spec.ts:474:      const result = intersectCircleCircle(circle1, circle2);
+frontend/tests/unit/calculations/intersections.spec.ts:488:      const result = intersectCircleCircle(circle1, circle2);
+frontend/tests/unit/calculations/intersections.spec.ts:500:      const result = intersectCircleCircle(circle1, circle2);
+frontend/tests/unit/calculations/intersections.spec.ts:510:      const result = intersectCircleCircle(circle1, circle2);
+frontend/tests/unit/calculations/intersections.spec.ts:522:      const result = intersectCircleCircle(circle1, circle2);
+frontend/tests/unit/calculations/intersections.spec.ts:542:      const result = intersectCircleCircle(circle1, circle2);
+frontend/tests/unit/calculations/intersections.spec.ts:554:      const result = intersectCircleCircle(circle1, circle2);
+frontend/tests/unit/calculations/intersections.spec.ts:568:      const result = intersectCircleCircle(circle1, circle2);
+frontend/tests/unit/calculations/intersections.spec.ts:624:        const result = intersectCircleCircle(circle1, circle2);
+frontend/tests/unit/calculations/intersections.spec.ts:655:        const result = intersectCircleCircle(circle1, circle2);
+frontend/tests/unit/calculations/intersections.spec.ts:679:        const result = intersectCircleCircle(circle1, circle2);
+frontend/tests/unit/calculations/intersections.spec.ts:712:        const result = intersectCircleCircle(circle1, circle2);
+frontend/tests/unit/calculations/intersections.spec.ts:737:        const result = intersectCircleCircle(circle1, circle2);
+frontend/tests/unit/calculations/intersections.spec.ts:762:        const result = intersectCircleCircle(circle1, circle2);
+frontend/tests/unit/calculations/intersections.spec.ts:786:        const result = intersectCircleCircle(circle1, circle2);
+frontend/tests/unit/calculations/intersections.spec.ts:849:        const result = intersectCircleCircle(circle1, circle2);
+frontend/tests/unit/calculations/intersections.spec.ts:872:        const result = intersectCircleCircle(circle1, circle2);
+frontend/tests/unit/calculations/intersections.spec.ts:894:        const result = intersectCircleCircle(circle1, circle2);
+frontend/tests/unit/calculations/intersections.spec.ts:917:        const result = intersectCircleCircle(circle1, circle2);
+frontend/tests/unit/calculations/intersections.spec.ts:946:        const result = intersectCircleCircle(circle1, circle2);
+frontend/tests/unit/calculations/intersections.spec.ts:1027:        const result = intersectCircleCircle(circleA, circleB);
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:113:    const P_H = world.getProjectionPlaneByLabel('P_H')!.id!;
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:114:    const P_V = world.getProjectionPlaneByLabel('P_V')!.id!;
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:143:    const P_H = world.getProjectionPlaneByLabel('P_H')!.id!;
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:144:    const P_V = world.getProjectionPlaneByLabel('P_V')!.id!;
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:172:    const P_H = world.getProjectionPlaneByLabel('P_H')!.id!;
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:173:    const P_V = world.getProjectionPlaneByLabel('P_V')!.id!;
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:201:    const P_H = world.getProjectionPlaneByLabel('P_H')!.id!;
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:202:    const P_V = world.getProjectionPlaneByLabel('P_V')!.id!;
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:228:    const P_H = world.getProjectionPlaneByLabel('P_H')!.id!;
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:229:    const P_V = world.getProjectionPlaneByLabel('P_V')!.id!;
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:255:    const P_H = world.getProjectionPlaneByLabel('P_H')!.id!;
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:256:    const P_V = world.getProjectionPlaneByLabel('P_V')!.id!;
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:279:    const P_H = world.getProjectionPlaneByLabel('P_H')!.id!;
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:280:    const P_V = world.getProjectionPlaneByLabel('P_V')!.id!;
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:312:    const P_H = world.getProjectionPlaneByLabel('P_H')!.id!;
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:313:    const P_V = world.getProjectionPlaneByLabel('P_V')!.id!;
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:339:    const P_H = world.getProjectionPlaneByLabel('P_H')!.id!;
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:340:    const P_V = world.getProjectionPlaneByLabel('P_V')!.id!;
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:380:    const P_H = world.getProjectionPlaneByLabel('P_H')!.id!;
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:381:    const P_V = world.getProjectionPlaneByLabel('P_V')!.id!;
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:38:    const planeH = world.getProjectionPlaneByLabel('P_H');
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:39:    const planeV = world.getProjectionPlaneByLabel('P_V');
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:97:    const planeH = world.getProjectionPlaneByLabel('P_H');
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:98:    const planeV = world.getProjectionPlaneByLabel('P_V');
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:145:    const planeH = world.getProjectionPlaneByLabel('P_H');
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:146:    const planeV = world.getProjectionPlaneByLabel('P_V');
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:178:    const planeH = world.getProjectionPlaneByLabel('P_H');
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:179:    const planeV = world.getProjectionPlaneByLabel('P_V');
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:212:    const planeH = world.getProjectionPlaneByLabel('P_H');
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:213:    const planeV = world.getProjectionPlaneByLabel('P_V');
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:244:    const planeH = world.getProjectionPlaneByLabel('P_H');
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:245:    const planeV = world.getProjectionPlaneByLabel('P_V');
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:30:import { AddLineLineIntersectionPoint2DOp } from '@/commands/operations/world/AddLineLineIntersectionPoint2DOp';
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:31:import { AddLineCircleIntersectionPoint2DOp } from '@/commands/operations/world/AddLineCircleIntersectionPoint2DOp';
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:32:import { AddCircleCircleIntersectionPoint2DOp } from '@/commands/operations/world/AddCircleCircleIntersectionPoint2DOp';
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:116:      siblingGuideId: undefined
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:120:  it('AddLineLineIntersectionPoint2D survives round-trip', () => {
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:121:    const op = new AddLineLineIntersectionPoint2DOp('projPlaneH', 'line1', 'line2');
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:125:    expect(result.type).toBe('AddLineLineIntersectionPoint2D');
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:131:  it('AddLineCircleIntersectionPoint2D survives round-trip', () => {
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:132:    const op = new AddLineCircleIntersectionPoint2DOp('projPlaneH', 'line', 'circle', 0);
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:136:    expect(result.type).toBe('AddLineCircleIntersectionPoint2D');
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:143:  it('AddCircleCircleIntersectionPoint2D survives round-trip', () => {
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:144:    const op = new AddCircleCircleIntersectionPoint2DOp('projPlaneH', 'circle1', 'circle2', 1);
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:148:    expect(result.type).toBe('AddCircleCircleIntersectionPoint2D');
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:4: * Focuses on testing the HalfHingeLine sibling intersection creation behavior.
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:36:    planeId = world.getProjectionPlaneByLabel('P_H')!.id;
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:39:  describe('HalfHingeLine sibling intersection creation (Phase 42)', () => {
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:40:    it('should create sibling intersection when line intersects HHL', () => {
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:45:      const horizontalPlane = world.getProjectionPlaneByLabel('P_H')!;
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:72:      const result = IntersectionSequenceFactory.createLineLineIntersection(
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:81:      expect(result.siblingPointId).toBeDefined();
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:82:      expect(typeof result.siblingPointId).toBe('string');
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:83:      expect(result.pointId).not.toBe(result.siblingPointId);
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:88:      const verticalPlane = world.getProjectionPlaneByLabel('P_V')!;
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:91:      const siblingPoint = verticalPlane.getPoint(result.siblingPointId!);
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:94:      expect(siblingPoint).toBeDefined();
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:95:      expect(siblingPoint).toBeInstanceOf(SiblingIntersectionPoint2D);
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:98:      expect((primaryPoint as any).siblingPointId).toBe(result.siblingPointId);
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:99:      expect((siblingPoint as any).primaryIntersectionId).toBe(result.pointId);
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:103:      const siblingRealization = verticalPlane.realizePoint2D(siblingPoint!, world);
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:106:      expect(siblingRealization).toBeDefined();
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:107:      expect(primaryRealization!.position.x).toBeCloseTo(siblingRealization!.position.x);
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:108:      expect(primaryRealization!.position.y).toBeCloseTo(siblingRealization!.position.y);
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:131:      const result = IntersectionSequenceFactory.createLineLineIntersection(
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:135:      // Verify: Only primary intersection created (no sibling)
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:137:      expect(result.siblingPointId).toBeUndefined();
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:140:    it('should create sibling for line-circle intersection with HHL', () => {
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:145:      const horizontalPlane = world.getProjectionPlaneByLabel('P_H')!;
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:171:      const result = IntersectionSequenceFactory.createLineCircleIntersection(
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:175:      // Verify: Both primary and sibling created
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:177:      expect(result.siblingPointId).toBeDefined();
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:182:      const verticalPlane = world.getProjectionPlaneByLabel('P_V')!;
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:185:      const siblingPoint = verticalPlane.getPoint(result.siblingPointId!);
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:188:      expect(siblingPoint).toBeDefined();
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:189:      expect(siblingPoint).toBeInstanceOf(SiblingIntersectionPoint2D);
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:4: * Covers cascade deletion behavior using Wave 005's explicit ownership model:
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:37:    planeId = world.getProjectionPlaneByLabel('P_H').id!;
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:91:      const plane = world.getProjectionPlaneById(planeId)!;
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:110:      const plane = world.getProjectionPlaneById(planeId)!;
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:134:      const plane = world.getProjectionPlaneById(planeId)!;
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:171:      const plane = world.getProjectionPlaneById(planeId)!;
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:200:      const plane = world.getProjectionPlaneById(planeId)!;
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:236:      const plane = world.getProjectionPlaneById(planeId)!;
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:274:      const plane = world.getProjectionPlaneById(planeId)!;
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:55:    const planeH = world.getProjectionPlaneByLabel('P_H');
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:84:    const plane = freshWorld.getProjectionPlaneById(planeId);
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:150:    const plane = freshWorld.getProjectionPlaneById(planeId);
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:223:    const plane = freshWorld.getProjectionPlaneById(planeId);
+frontend/tests/unit/domain/world.spec.ts:3: * Unit tests for ProjectionPlane Factory Methods
+frontend/tests/unit/domain/world.spec.ts:5: * Tests ProjectionPlane factory methods for creating geometric elements.
+frontend/tests/unit/domain/world.spec.ts:7: * Note: Factory methods have been moved from World to ProjectionPlane.
+frontend/tests/unit/domain/world.spec.ts:9: * @see frontend/src/domain/world/ProjectionPlane.ts
+frontend/tests/unit/domain/world.spec.ts:19:describe('ProjectionPlane Factory Methods', () => {
+frontend/tests/unit/domain/world.spec.ts:27:    planeH = world.getProjectionPlaneByLabel('P_H')!;
+frontend/tests/unit/domain/world.spec.ts:28:    planeV = world.getProjectionPlaneByLabel('P_V')!;
+frontend/tests/unit/domain/world.spec.ts:78:        const invalidPlane = world.getProjectionPlaneById('invalid_plane');
+frontend/tests/unit/domain/world.spec.ts:83:    describe('addLineLineIntersection', () => {
+frontend/tests/unit/domain/world.spec.ts:93:        const intersection = planeH.addLineLineIntersection(
+frontend/tests/unit/domain/world.spec.ts:114:        const intersection = planeH.addLineLineIntersection(
+frontend/tests/unit/domain/world.spec.ts:126:          planeH.addLineLineIntersection('invalid_line1', 'invalid_line2', world);
+frontend/tests/unit/domain/world.spec.ts:141:        const point = planeH.addLineLineIntersection(line1.id, line2.id, world);
+frontend/tests/unit/domain/world.spec.ts:148:    // T055m: Tests for sibling creation with HalfHingeLine2D
+frontend/tests/unit/domain/world.spec.ts:150:    // These tests are commented out until sibling functionality is re-implemented
+frontend/tests/unit/domain/world.spec.ts:171:        expect(result.sibling).toBeUndefined();
+frontend/tests/unit/domain/world.spec.ts:174:      it('should create sibling when element1 is HalfHingeLine2D', () => {
+frontend/tests/unit/domain/world.spec.ts:192:        expect(result.sibling).toBeDefined();
+frontend/tests/unit/domain/world.spec.ts:193:        expect(result.sibling).toBeInstanceOf(SiblingIntersectionPoint2D);
+frontend/tests/unit/domain/world.spec.ts:194:        expect(result.sibling!.planeId).toBe('projPlaneV');
+frontend/tests/unit/domain/world.spec.ts:195:        expect(result.sibling!.primaryIntersectionId).toBe(result.primary.id);
+frontend/tests/unit/domain/world.spec.ts:198:      it('should create sibling when element2 is HalfHingeLine2D', () => {
+frontend/tests/unit/domain/world.spec.ts:216:        expect(result.sibling).toBeDefined();
+frontend/tests/unit/domain/world.spec.ts:217:        expect(result.sibling!.planeId).toBe('projPlaneH');
+frontend/tests/unit/domain/world.spec.ts:218:        expect(result.sibling!.primaryIntersectionId).toBe(result.primary.id);
+frontend/tests/unit/domain/world.spec.ts:221:      it('should establish bidirectional link between primary and sibling', () => {
+frontend/tests/unit/domain/world.spec.ts:235:        // Primary → sibling link
+frontend/tests/unit/domain/world.spec.ts:236:        expect(result.primary.siblingPointId).toBe(result.sibling!.id);
+frontend/tests/unit/domain/world.spec.ts:239:        expect(result.sibling!.primaryIntersectionId).toBe(result.primary.id);
+frontend/tests/unit/domain/world.spec.ts:255:          'custom_sibling_id'
+frontend/tests/unit/domain/world.spec.ts:259:        expect(result.sibling!.id).toBe('custom_sibling_id');
+frontend/tests/unit/domain/world.spec.ts:262:      it('should copy label from primary to sibling', () => {
+frontend/tests/unit/domain/world.spec.ts:279:        expect(result.sibling!.label).toBeUndefined();
+frontend/tests/unit/domain/world.spec.ts:281:        // If we set label on primary after creation, sibling doesn't auto-update
+frontend/tests/unit/domain/world.spec.ts:285:        expect(result.sibling!.label).toBeUndefined(); // Sibling still has no label
+frontend/tests/unit/domain/world.spec.ts:288:      it('should determine correct sibling plane for proj_plane_H', () => {
+frontend/tests/unit/domain/world.spec.ts:302:        expect(result.sibling!.planeId).toBe('projPlaneV');
+frontend/tests/unit/domain/world.spec.ts:305:      it('should determine correct sibling plane for proj_plane_V', () => {
+frontend/tests/unit/domain/world.spec.ts:319:        expect(result.sibling!.planeId).toBe('projPlaneH');
+frontend/tests/unit/domain/world.spec.ts:322:      it('should add sibling to world storage', () => {
+frontend/tests/unit/domain/world.spec.ts:336:        const retrievedSibling = world.getPoint2DById(result.sibling!.id);
+frontend/tests/unit/domain/world.spec.ts:337:        expect(retrievedSibling).toBe(result.sibling);
+frontend/tests/unit/domain/world.spec.ts:618:      it('should return sibling plane for line-HHL intersection on P_H', () => {
+frontend/tests/unit/domain/world.spec.ts:630:        const intersection = planeH.addLineLineIntersection(hhlId, line.id, world);
+frontend/tests/unit/domain/world.spec.ts:632:        const siblingPlaneId = world.getSiblingPlaneForIntersection(intersection);
+frontend/tests/unit/domain/world.spec.ts:634:        expect(siblingPlaneId).toBe(planeV.id);
+frontend/tests/unit/domain/world.spec.ts:637:      it('should return sibling plane for line-HHL intersection on P_V', () => {
+frontend/tests/unit/domain/world.spec.ts:649:        const intersection = planeV.addLineLineIntersection(line.id, hhlId, world);
+frontend/tests/unit/domain/world.spec.ts:651:        const siblingPlaneId = world.getSiblingPlaneForIntersection(intersection);
+frontend/tests/unit/domain/world.spec.ts:653:        expect(siblingPlaneId).toBe(planeH.id);
+frontend/tests/unit/domain/world.spec.ts:667:        const intersection = planeH.addLineLineIntersection(line1.id, line2.id, world);
+frontend/tests/unit/domain/world.spec.ts:669:        const siblingPlaneId = world.getSiblingPlaneForIntersection(intersection);
+frontend/tests/unit/domain/world.spec.ts:671:        expect(siblingPlaneId).toBeUndefined();
+frontend/tests/unit/domain/world.spec.ts:674:      it('should return sibling plane for circle-HHL intersection', () => {
+frontend/tests/unit/domain/world.spec.ts:686:        const intersection = planeH.addLineCircleIntersection(hhlId, circle.id, 0, world);
+frontend/tests/unit/domain/world.spec.ts:688:        const siblingPlaneId = world.getSiblingPlaneForIntersection(intersection);
+frontend/tests/unit/domain/world.spec.ts:690:        expect(siblingPlaneId).toBe(planeV.id);
+frontend/tests/unit/domain/world.spec.ts:704:        const intersection = planeH.addCircleCircleIntersection(circle1.id, circle2.id, 0, world);
+frontend/tests/unit/domain/world.spec.ts:706:        const siblingPlaneId = world.getSiblingPlaneForIntersection(intersection);
+frontend/tests/unit/domain/world.spec.ts:708:        expect(siblingPlaneId).toBeUndefined();
+frontend/tests/unit/domain/world.spec.ts:715:        const siblingPlaneId = world.getSiblingPlaneForIntersection(point);
+frontend/tests/unit/domain/world.spec.ts:717:        expect(siblingPlaneId).toBeUndefined();
+frontend/tests/unit/domain/tangentLine.spec.ts:55:    const plane = world.getProjectionPlaneByLabel('P_H')!;
+frontend/tests/unit/domain/tangentLine.spec.ts:95:    const plane = world.getProjectionPlaneByLabel('P_H')!;
+frontend/tests/unit/domain/tangentLine.spec.ts:127:    const plane = world.getProjectionPlaneByLabel('P_H')!;
+frontend/tests/unit/domain/tangentLine.spec.ts:162:    const plane = world.getProjectionPlaneByLabel('P_H')!;
+frontend/tests/unit/domain/tangentLine.spec.ts:194:    const plane = world.getProjectionPlaneByLabel('P_H')!;
+frontend/tests/unit/domain/tangentLine.spec.ts:246:    const plane = world.getProjectionPlaneByLabel('P_H')!;
+frontend/tests/unit/domain/tangentLine.spec.ts:285:    const plane = world.getProjectionPlaneByLabel('P_H')!;
+frontend/tests/unit/domain/tangentLine.spec.ts:320:    const plane = world.getProjectionPlaneByLabel('P_H')!;
+frontend/tests/unit/domain/segmentIntersections.spec.ts:26:    const plane = world.getProjectionPlaneByLabel('P_H')!;
+frontend/tests/unit/domain/segmentIntersections.spec.ts:44:      const intersection = plane.addLineLineIntersection(line1.id, line2.id, world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:63:      const intersection = plane.addLineLineIntersection(line1.id, line2.id, world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:85:      const intersection = plane.addLineLineIntersection(line.id, segment.id, world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:107:      const intersection = plane.addLineLineIntersection(line.id, segment.id, world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:131:      const intersection = plane.addLineLineIntersection(seg1.id, seg2.id, world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:152:      const intersection = plane.addLineLineIntersection(seg1.id, seg2.id, world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:171:      const intersection = plane.addLineLineIntersection(seg1.id, seg2.id, world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:190:      const intersection = plane.addLineLineIntersection(seg1.id, seg2.id, world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:213:      const int0 = plane.addLineCircleIntersection(line.id, circle.id, 0, world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:214:      const int1 = plane.addLineCircleIntersection(line.id, circle.id, 1, world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:240:      const int0 = plane.addLineCircleIntersection(line.id, circle.id, 0, world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:259:      const int0 = plane.addLineCircleIntersection(tangent.id, circle.id, 0, world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:260:      const int1 = plane.addLineCircleIntersection(tangent.id, circle.id, 1, world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:287:      const int0 = plane.addLineCircleIntersection(segment.id, circle.id, 0, world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:306:      const int0 = plane.addLineCircleIntersection(segment.id, circle.id, 0, world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:325:      const int0 = plane.addLineCircleIntersection(segment.id, circle.id, 0, world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:326:      const int1 = plane.addLineCircleIntersection(segment.id, circle.id, 1, world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:352:      const int0 = plane.addCircleCircleIntersection(circle1.id, circle2.id, 0, world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:353:      const int1 = plane.addCircleCircleIntersection(circle1.id, circle2.id, 1, world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:382:      const int0 = plane.addCircleCircleIntersection(circle1.id, circle2.id, 0, world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:401:      const int0 = plane.addCircleCircleIntersection(circle1.id, circle2.id, 0, world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:402:      const int1 = plane.addCircleCircleIntersection(circle1.id, circle2.id, 1, world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:429:      const intersection = plane.addLineLineIntersection(degLine.id, normalLine.id, world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:448:      const int0 = plane.addLineCircleIntersection(line.id, circle.id, 0, world);
+frontend/tests/unit/domain/segment3DRealization.spec.ts:99:    const plane = world.getProjectionPlaneById(planeId);
+frontend/tests/unit/domain/segment3DRealization.spec.ts:107:    const planeH = world.getProjectionPlaneByLabel('P_H');
+frontend/tests/unit/domain/segment3DRealization.spec.ts:108:    const planeV = world.getProjectionPlaneByLabel('P_V');
+frontend/tests/unit/domain/segment3DRealization.spec.ts:143:    const planeH = world.getProjectionPlaneByLabel('P_H');
+frontend/tests/unit/domain/segment3DRealization.spec.ts:144:    const planeV = world.getProjectionPlaneByLabel('P_V');
+frontend/tests/unit/domain/segment3DRealization.spec.ts:177:    const planeH = world.getProjectionPlaneByLabel('P_H');
+frontend/tests/unit/domain/segment3DRealization.spec.ts:178:    const planeV = world.getProjectionPlaneByLabel('P_V');
+frontend/tests/unit/domain/segment3DRealization.spec.ts:198:    const planeH = world.getProjectionPlaneByLabel('P_H');
+frontend/tests/unit/domain/segment3DRealization.spec.ts:199:    const planeV = world.getProjectionPlaneByLabel('P_V');
+frontend/tests/unit/domain/segment3DRealization.spec.ts:246:    const planeH = world.getProjectionPlaneByLabel('P_H');
+frontend/tests/unit/domain/segment3DRealization.spec.ts:247:    const planeV = world.getProjectionPlaneByLabel('P_V');
+frontend/tests/unit/domain/segment3DRealization.spec.ts:261:    const planeH = world.getProjectionPlaneByLabel('P_H');
+frontend/tests/unit/domain/segment3DRealization.spec.ts:262:    const planeV = world.getProjectionPlaneByLabel('P_V');
+frontend/tests/unit/domain/segment3DRealization.spec.ts:276:    const planeH = world.getProjectionPlaneByLabel('P_H');
+frontend/tests/unit/domain/segment.spec.ts:28:    planeH = world.getProjectionPlaneByLabel('P_H')!;
+frontend/tests/unit/domain/realizationCache.spec.ts:5: * propagation, and full cache clear for ProjectionPlane realization caches.
+frontend/tests/unit/domain/realizationCache.spec.ts:11:import type { ProjectionPlane } from '@/domain/world/projectionPlane/ProjectionPlane';
+frontend/tests/unit/domain/realizationCache.spec.ts:16:  let planeH: ProjectionPlane;
+frontend/tests/unit/domain/realizationCache.spec.ts:17:  let planeV: ProjectionPlane;
+frontend/tests/unit/domain/realizationCache.spec.ts:22:    planeH = world.getProjectionPlaneByLabel('P_H')!;
+frontend/tests/unit/domain/realizationCache.spec.ts:23:    planeV = world.getProjectionPlaneByLabel('P_V')!;
+frontend/tests/unit/domain/realizationCache.spec.ts:164:      const intPt = planeH.addLineLineIntersection(line1.id, line2.id, world);
+frontend/tests/unit/domain/realizationCache.spec.ts:238:  // ── T1917: Full cache clear via ProjectionPlane.clear() ──
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:2: * Tests for ProjectionPlane Realization Computation (Phase 22.5)
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:4: * Verifies that realization computation has been moved from World to ProjectionPlane.
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:6: * - Realizations are computed by ProjectionPlane methods
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:8: * - World delegates to ProjectionPlane for computation
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:19:describe('ProjectionPlane Realization Computation (Phase 22.5)', () => {
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:28:    planeH = world.getProjectionPlaneByLabel('P_H')!;
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:39:    it('ProjectionPlane.realizePoint2D() should compute and cache point realization', () => {
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:45:      // Compute realization via ProjectionPlane
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:53:      // Verify cached in ProjectionPlane
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:89:    it('ProjectionPlane.realizeLine2D() should compute and cache line realization', () => {
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:95:      // Compute realization via ProjectionPlane
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:102:      // Verify cached in ProjectionPlane
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:110:      // to enforce ProjectionPlane ownership. Use plane.realizeLine2D() instead.
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:117:      // Compute via ProjectionPlane
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:133:    it('ProjectionPlane.realizeCircle2D() should compute and cache circle realization', () => {
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:141:      // Compute realization via ProjectionPlane
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:150:      // Verify cached in ProjectionPlane
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:158:      // to enforce ProjectionPlane ownership. Use plane.realizeCircle2D() instead.
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:164:      const planeV = world.getProjectionPlaneByLabel('P_V')!;
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:186:      // ProjectionPlane is now the sole owner of realization caching.
+frontend/tests/unit/domain/point.spec.ts:14:  Point2DLineLineIntersection,
+frontend/tests/unit/domain/point.spec.ts:15:  Point2DLineCircleIntersection,
+frontend/tests/unit/domain/point.spec.ts:16:  Point2DCircleCircleIntersection,
+frontend/tests/unit/domain/point.spec.ts:36:      const point = new Point2DLineLineIntersection('plane_H/test-point-2', 'plane_H/line_1', 'plane_H/line_2', "plane_H");
+frontend/tests/unit/domain/point.spec.ts:40:      expect(point instanceof Point2DLineLineIntersection).toBe(true);
+frontend/tests/unit/domain/point.spec.ts:192:      // a point with known coordinates that the sibling can reference)
+frontend/tests/unit/domain/point.spec.ts:198:      it('should create a sibling intersection point', () => {
+frontend/tests/unit/domain/point.spec.ts:199:        const sibling = new SiblingIntersectionPoint2D(
+frontend/tests/unit/domain/point.spec.ts:200:          planeVId + '/sibling-point',
+frontend/tests/unit/domain/point.spec.ts:206:        expect(sibling.id).toBe(planeVId + '/sibling-point');
+frontend/tests/unit/domain/point.spec.ts:207:        expect(sibling instanceof SiblingIntersectionPoint2D).toBe(true);
+frontend/tests/unit/domain/point.spec.ts:208:        expect(sibling.primaryIntersectionId).toBe(primaryPointId);
+frontend/tests/unit/domain/point.spec.ts:209:        expect(sibling.planeId).toBe(planeVId);
+frontend/tests/unit/domain/point.spec.ts:210:        expect(sibling.label).toBe('Sibling Point');
+frontend/tests/unit/domain/point.spec.ts:214:        const sibling = new SiblingIntersectionPoint2D(
+frontend/tests/unit/domain/point.spec.ts:215:          planeVId + '/sibling-point',
+frontend/tests/unit/domain/point.spec.ts:220:        expect(sibling.label).toBeUndefined();
+frontend/tests/unit/domain/point.spec.ts:225:      it('should create a deep copy of the sibling point', () => {
+frontend/tests/unit/domain/point.spec.ts:227:          planeVId + '/sibling-1',
+frontend/tests/unit/domain/point.spec.ts:236:        expect(clone.id).toBe(planeVId + '/sibling-1');
+frontend/tests/unit/domain/point.spec.ts:245:          planeVId + '/sibling-1',
+frontend/tests/unit/domain/point.spec.ts:260:        const sibling = new SiblingIntersectionPoint2D(
+frontend/tests/unit/domain/point.spec.ts:261:          planeVId + '/sibling-point',
+frontend/tests/unit/domain/point.spec.ts:266:        const realization = sibling.realize2D(world);
+frontend/tests/unit/domain/point.spec.ts:274:        const sibling = new SiblingIntersectionPoint2D(
+frontend/tests/unit/domain/point.spec.ts:275:          planeVId + '/sibling-point',
+frontend/tests/unit/domain/point.spec.ts:280:        const realization1 = sibling.realize2D(world);
+frontend/tests/unit/domain/point.spec.ts:281:        const realization2 = sibling.realize2D(world);
+frontend/tests/unit/domain/point.spec.ts:289:        const sibling = new SiblingIntersectionPoint2D(
+frontend/tests/unit/domain/point.spec.ts:290:          planeVId + '/sibling-point',
+frontend/tests/unit/domain/point.spec.ts:296:        const realization1 = sibling.realize2D(world);
+frontend/tests/unit/domain/point.spec.ts:308:        const realization2 = sibling.realize2D(world);
+frontend/tests/unit/domain/point.spec.ts:314:        const sibling = new SiblingIntersectionPoint2D(
+frontend/tests/unit/domain/point.spec.ts:315:          planeVId + '/sibling-point',
+frontend/tests/unit/domain/point.spec.ts:320:        const realization = sibling.realize2D(world);
+frontend/tests/unit/domain/point.spec.ts:334:        const planeH = world.getProjectionPlaneByLabel('P_H')!;
+frontend/tests/unit/domain/point.spec.ts:337:        const sibling = new SiblingIntersectionPoint2D(
+frontend/tests/unit/domain/point.spec.ts:338:          planeVId + '/sibling-point',
+frontend/tests/unit/domain/point.spec.ts:343:        const realizationSibling = sibling.realize2D(world);
+frontend/tests/unit/domain/element2d.spec.ts:263:      const planeV = world.getProjectionPlaneByLabel('P_V');
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:16:      const plane = world.getProjectionPlaneByLabel('P_H')!;
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:27:      const plane = world.getProjectionPlaneByLabel('P_H')!;
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:42:      const plane = world.getProjectionPlaneByLabel('P_H')!;
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:57:      const plane = world.getProjectionPlaneByLabel('P_H')!;
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:80:      const plane = world.getProjectionPlaneByLabel('P_H')!;
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:99:      const plane = world.getProjectionPlaneByLabel('P_H')!;
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:112:      const infeasiblePoint = plane.addLineLineIntersection(refLine.id, line2.id, world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:128:      const plane = world.getProjectionPlaneByLabel('P_H')!;
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:141:      const plane = world.getProjectionPlaneByLabel('P_H')!;
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:156:      const plane = world.getProjectionPlaneByLabel('P_H')!;
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:169:      const plane = world.getProjectionPlaneByLabel('P_H')!;
+frontend/tests/unit/domain/line.spec.ts:88:    const plane = world.getProjectionPlaneByLabel('P_H')!;
+frontend/tests/unit/domain/line.spec.ts:109:    const plane = world.getProjectionPlaneByLabel('P_H')!;
+frontend/tests/unit/domain/line.spec.ts:127:    const plane = world.getProjectionPlaneByLabel('P_H')!;
+frontend/tests/unit/domain/line.spec.ts:142:    const plane = world.getProjectionPlaneByLabel('P_V')!;
+frontend/tests/unit/domain/line.spec.ts:161:    const plane = world.getProjectionPlaneByLabel('P_H')!;
+frontend/tests/unit/domain/line.spec.ts:179:    const plane = world.getProjectionPlaneByLabel('P_V')!;
+frontend/tests/unit/domain/labelGenerator.spec.ts:103:      expect(gen.next('ProjectionPlane')).toBe('π_2');
+frontend/tests/unit/domain/plane.spec.ts:499:          getProjectionPlaneById: (id: string) => {
+frontend/tests/unit/domain/plane.spec.ts:505:          getProjectionPlane3DRealization: (id: string) => {
+frontend/tests/unit/domain/guide.spec.ts:206:    it('should create sibling guide with primary guide reference (no throughPointId)', () => {
+frontend/tests/unit/domain/guide.spec.ts:207:      // Create a sibling guide using coordinate correspondence pattern
+frontend/tests/unit/domain/guide.spec.ts:208:      const plane = world.getProjectionPlaneByLabel('P_V');
+frontend/tests/unit/domain/guide.spec.ts:212:      const siblingGuide = new SiblingGuide2D(
+frontend/tests/unit/domain/guide.spec.ts:220:      expect(siblingGuide.id).toBe(guideId);
+frontend/tests/unit/domain/guide.spec.ts:221:      expect(siblingGuide).toBeInstanceOf(SiblingGuide2D);
+frontend/tests/unit/domain/guide.spec.ts:222:      expect(siblingGuide.referenceLineId).toBe(referenceLineId);
+frontend/tests/unit/domain/guide.spec.ts:223:      expect(siblingGuide.planeId).toBe(planeId);
+frontend/tests/unit/domain/guide.spec.ts:224:      expect(siblingGuide.primaryGuideId).toBe(primaryGuideId);
+frontend/tests/unit/domain/guide.spec.ts:225:      expect(siblingGuide.label).toBe('Test Guide');
+frontend/tests/unit/domain/guide.spec.ts:227:      expect((siblingGuide as any).throughPointId).toBeUndefined();
+frontend/tests/unit/domain/guide.spec.ts:230:    it('should clone sibling guide correctly', () => {
+frontend/tests/unit/domain/guide.spec.ts:231:      const plane = world.getProjectionPlaneByLabel('P_V');
+frontend/tests/unit/domain/guide.spec.ts:247:    it('should realize sibling guide using coordinate correspondence with primary guide', () => {
+frontend/tests/unit/domain/guide.spec.ts:269:      // Create sibling guide in plane V
+frontend/tests/unit/domain/guide.spec.ts:275:      const siblingGuide = new SiblingGuide2D(planeV.generateLine2DId(world), halfHLV.id, planeVId, primaryGuide.id);
+frontend/tests/unit/domain/guide.spec.ts:276:      planeV.addLine(siblingGuide);
+frontend/tests/unit/domain/guide.spec.ts:278:      // Verify sibling guide realization
+frontend/tests/unit/domain/guide.spec.ts:279:      const siblingRealization = siblingGuide.realize2D(world);
+frontend/tests/unit/domain/guide.spec.ts:280:      expect(siblingRealization).toBeDefined();
+frontend/tests/unit/domain/guide.spec.ts:281:      expect(siblingRealization!.feasible).toBe(true);
+frontend/tests/unit/domain/guide.spec.ts:285:      expect(siblingRealization!.point1.x).toBeCloseTo(50, 5);
+frontend/tests/unit/domain/guide.spec.ts:286:      expect(siblingRealization!.point1.y).toBeCloseTo(0, 5);
+frontend/tests/unit/domain/guide.spec.ts:287:      expect(siblingRealization!.point1.z).toBeCloseTo(1, 5);
+frontend/tests/unit/domain/guide.spec.ts:291:      expect(siblingRealization!.point2.x).toBeCloseTo(0, 5);
+frontend/tests/unit/domain/guide.spec.ts:292:      expect(siblingRealization!.point2.y).toBeCloseTo(1, 5);
+frontend/tests/unit/domain/guide.spec.ts:293:      expect(siblingRealization!.point2.z).toBeCloseTo(0, 5);
+frontend/tests/unit/domain/guide.spec.ts:299:      const planeV = world.getProjectionPlaneByLabel('P_V');
+frontend/tests/unit/domain/guide.spec.ts:302:      const siblingId = planeV.generateLine2DId(world);
+frontend/tests/unit/domain/guide.spec.ts:304:      // Create primary guide with siblingGuideId
+frontend/tests/unit/domain/guide.spec.ts:305:      const primaryGuide = new Guide2D(guideId, referenceLineId, throughPointId, planeHId, 'Primary', siblingId);
+frontend/tests/unit/domain/guide.spec.ts:306:      expect(primaryGuide.siblingGuideId).toBe(siblingId);
+frontend/tests/unit/domain/guide.spec.ts:308:      // Create sibling guide with primaryGuideId (no throughPointId parameter)
+frontend/tests/unit/domain/guide.spec.ts:309:      const siblingGuide = new SiblingGuide2D(siblingId, referenceLineId, planeVId, guideId);
+frontend/tests/unit/domain/guide.spec.ts:310:      expect(siblingGuide.primaryGuideId).toBe(guideId);
+frontend/tests/unit/domain/guide.spec.ts:316:      const planeV = world.getProjectionPlaneByLabel('P_V');
+frontend/tests/unit/domain/guide.spec.ts:319:      const siblingId = planeV.generateLine2DId(world);
+frontend/tests/unit/domain/guide.spec.ts:322:      const siblingGuide = new SiblingGuide2D(siblingId, referenceLineId, planeVId, guideId);
+frontend/tests/unit/domain/guide.spec.ts:324:      expect(isSiblingGuide2D(siblingGuide)).toBe(true);
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:25:    horizontalPlaneId = world.getProjectionPlaneByLabel('P_H').id!;
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:26:    verticalPlaneId = world.getProjectionPlaneByLabel('P_V').id!;
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:57:      // Should add exactly 1 operation (no sibling for regular line)
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:61:      // Should return guideId but no siblingGuideId
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:64:      expect(result.siblingGuideId).toBeUndefined();
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:95:      // Should add 2 operations (primary + sibling)
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:100:      // Should return both guideId and siblingGuideId
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:102:      expect(result.siblingGuideId).toBeDefined();
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:104:      expect(result.siblingGuideId).toContain('/guide2d'); // Hierarchical ID format
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:105:      expect(result.guideId).not.toBe(result.siblingGuideId);
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:109:      const siblingGuide = world.getLine2D(result.siblingGuideId!);
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:112:      expect(siblingGuide).toBeDefined();
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:114:      expect(siblingGuide).toBeInstanceOf(SiblingGuide2D);
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:117:      expect((primaryGuide as any).siblingGuideId).toBe(result.siblingGuideId);
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:118:      expect((siblingGuide as any).primaryGuideId).toBe(result.guideId);
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:121:    it('should handle HHL with no sibling info available gracefully', () => {
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:137:      // Call factory - should succeed even if no sibling info
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:148:      expect(result.siblingGuideId).toBeUndefined();
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:197:      const cmd = new Command('Create guide with sibling', world);
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:221:      const siblingGuide = world.getLine2D(result.siblingGuideId!);
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:224:      expect(siblingGuide).toBeDefined();
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:226:      expect(siblingGuide!.planeId).toBe(verticalPlaneId);
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:255:      // Should have created 4 guides total (2 primaries + 2 siblings)
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:257:      expect(result1.siblingGuideId).not.toBe(result2.siblingGuideId);
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:261:      const sibling1 = world.getLine2D(result1.siblingGuideId!);
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:262:      const sibling2 = world.getLine2D(result2.siblingGuideId!);
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:266:      expect(sibling1).toBeDefined();
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:267:      expect(sibling2).toBeDefined();

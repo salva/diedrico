@@ -439,3 +439,21 @@ describe('ProjectionPlane Element Storage (Phase 22.5.1)', () => {
     });
   });
 });
+
+
+describe('ProjectionPlane owner-plane guard paths', () => {
+  let world: World;
+  let planeV: FixedProjectionPlane;
+
+  beforeEach(() => {
+    const { world: w } = createTestWorld();
+    world = w;
+    planeV = getVerticalPlane(world);
+  });
+
+  it('throws an explicit missing-owner error when adding a sibling intersection for an unknown primary point', () => {
+    expect(() => planeV.addSiblingIntersectionPoint('missing-primary-intersection', world)).toThrow(
+      'Primary intersection point not found: missing-primary-intersection'
+    );
+  });
+});

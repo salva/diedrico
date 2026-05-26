@@ -354,3 +354,56 @@ describe('Point2D', () => {
     // validateParametricConsistency() method was removed
   });
 });
+
+
+describe('projection/world strict guard paths', () => {
+  let world: World;
+  let planeId: string;
+
+  beforeEach(() => {
+    const { world: w } = createTestWorld();
+    world = w;
+    planeId = getHorizontalPlaneId(world);
+  });
+
+  it('throws an explicit invariant when a line-line intersection references a missing line', () => {
+    const point = new Point2DLineLineIntersection(
+      `${planeId}/point-missing-line-line`,
+      `${planeId}/missing-line-1`,
+      `${planeId}/missing-line-2`,
+      planeId
+    );
+
+    expect(() => point.realize2D(world)).toThrow(
+      `[Point2DLineLineIntersection] line1 ${planeId}/missing-line-1 not found on plane ${planeId}`
+    );
+  });
+
+  it('throws an explicit invariant when a line-circle intersection references a missing line', () => {
+    const point = new Point2DLineCircleIntersection(
+      `${planeId}/point-missing-line-circle`,
+      `${planeId}/missing-line`,
+      `${planeId}/missing-circle`,
+      0,
+      planeId
+    );
+
+    expect(() => point.realize2D(world)).toThrow(
+      `[Point2DLineCircleIntersection] line ${planeId}/missing-line not found on plane ${planeId}`
+    );
+  });
+
+  it('throws an explicit invariant when a circle-circle intersection references a missing circle', () => {
+    const point = new Point2DCircleCircleIntersection(
+      `${planeId}/point-missing-circle-circle`,
+      `${planeId}/missing-circle-1`,
+      `${planeId}/missing-circle-2`,
+      0,
+      planeId
+    );
+
+    expect(() => point.realize2D(world)).toThrow(
+      `[Point2DCircleCircleIntersection] circle1 ${planeId}/missing-circle-1 not found on plane ${planeId}`
+    );
+  });
+});

@@ -1,0 +1,4 @@
+frontend/src/domain/world/World.ts:911:  addHingeLineEntity(hingeLine: HingeLine): void {
+frontend/src/domain/world/World.ts:918:  removeHingeLine(id: string): void {
+frontend/src/commands/operations/world/AddBrokenHingeLineOp.ts:124:      world.addHingeLineEntity(brokenHingeLine);
+frontend/src/commands/operations/world/AddBrokenHingeLineOp.ts:171:      world.removeHingeLine(this.outputs.brokenHingeLineId);

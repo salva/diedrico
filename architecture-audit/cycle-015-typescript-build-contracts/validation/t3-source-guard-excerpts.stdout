@@ -1,0 +1,351 @@
+/**
+ * Point2D - Geometric point in 2D projection plane
+ * 
+ * Points are the fundamental building blocks of the dihedral system.
+ * This class represents the DEFINITION/RULE of a point, not its coordinates.
+ * Actual coordinates are stored in Point2DRealization2D objects.
+ * 
+ * Two types of 2D points:
+ * - Free points: defined by their position inside the projection plane
+ * - Intersection points: defined as intersection of two objects, with index for multiple intersections
+ * 
+ * Design principles:
+ * - Principle V: Coordinates computed and cached in realizations
+ * 
+ */
+
+import { Vector3, Vector4 } from 'three';
+import type { ProjectionElementRealizationContext } from './projectionPlane/ProjectionPlaneContext';
+import { intersectLineLine, intersectLineCircle, intersectCircleCircle } from '@/domain/calculations/Intersections';
+import { Element2DRealization2D } from './Element2DRealization2D';
+import { Element2D } from './Element2D';
+import { BrokenHalfHingeLine2D } from './elements/BrokenHalfHingeLine2D';
+import { applyMatrix4x3, applyMatrix3x4 } from '@/utils/threeUtils';
+import { assert } from '@/utils/assert';
+
+export const POINT_2D_TYPE = {
+  FREE: 'free',
+  INTERSECTION: 'intersection',  // Kept temporarily for backward compatibility
+  LINE_LINE_INTERSECTION: 'line-line-intersection',
+  LINE_CIRCLE_INTERSECTION: 'line-circle-intersection',
+  CIRCLE_CIRCLE_INTERSECTION: 'circle-circle-intersection',
+  SIBLING_INTERSECTION: 'sibling-intersection',
+} as const;
+export type Point2DType = typeof POINT_2D_TYPE[keyof typeof POINT_2D_TYPE];
+
+/**
+ * Point2DRealization2D - Stores computed 2D position for a Point2D
+ * 
+ * @sealed - This class must not be subclassed
+ * 
+ * Architectural principle: Realization classes contain ONLY geometric data.
+ * All behavioral differences belong in domain classes (FreePoint2D, Point2DLineLineIntersection,
+ * etc.), not in realization classes. Type distinction happens at domain level, not realization level.
+ * 
+ * Contains ONLY numeric data. Structural information (id, planeId) stays in domain objects.
+ */
+export class Point2DRealization2D extends Element2DRealization2D {
+  position: Vector3;  // Position in plane coordinates (u, v, 1) - ONLY NUMERIC DATA
+
+  constructor(position: Vector3, feasible: boolean = true) {
+    super(feasible);
+    this.position = position;
+  }
+
+  /**
+   * Get position as Vector3
+   */
+  getPosition(): Vector3 {
+    return this.position;
+  }
+}
+
+/**
+ * Point3DRealization3D - Stores computed 3D position for a point
+ * Reconstructed from 2D projections or defined directly in 3D space.
+ * Contains ONLY numeric data. Structural information (id) stays in domain objects.
+ */
+export class Point3DRealization3D {
+  position: Vector4;  // Position in 3D space (x, y, z, 1) - ONLY NUMERIC DATA
+  feasible: boolean;  // Whether the geometric computation succeeded
+
+  constructor(position: Vector4, feasible: boolean = true) {
+    this.position = position;
+    this.feasible = feasible;
+  }
+
+  /**
+   * Get position as Vector4
+   */
+  getPosition(): Vector4 {
+    return this.position;
+  }
+}
+
+/**
+ * Base Point2D class - represents the rule/definition of a point
+ * Extends Element2D to provide common properties and interface for all 2D elements
+ */
+export abstract class Point2D extends Element2D {
+  constructor(
+    id: string,
+    planeId: string,
+    label?: string
+  ) {
+    super(id, planeId, label);
+  }
+
+  /**
+   * Clone this point
+   */
+  abstract clone(): Point2D;
+
+  /**
+   * Calculate the 2D realization (position) for this point
+   * Returns position in the projection plane's intrinsic coordinates
+   * 
+   * @param world World instance to query parent realizations
+   */
+  abstract realize2D(world: ProjectionElementRealizationContext): Point2DRealization2D;
+}
+
+/**
+ * Free Point2D - defined by its position inside the projection plane
+ * The rule is: "user placed it at this position"
+ */
+export class FreePoint2D extends Point2D {
+  readonly position: Vector3;  // The defining position in plane coordinates (u, v, 1) - IMMUTABLE RULE
+  locked?: boolean;  // If true, point cannot be moved or deleted
+
+  constructor(
+    id: string,
+    position: Vector3,
+    planeId: string,
+    label?: string
+  ) {
+    super(id, planeId, label);
+    this.position = position;
+    this.locked = false;
+  }
+
+  clone(): FreePoint2D {
+    const cloned = new FreePoint2D(
+      this.id,
+      this.position.clone(),
+      this.planeId,
+      this.label
+    );
+    if (this.locked !== undefined) {
+      cloned.locked = this.locked;
+    }
+    return cloned;
+  }
+
+  /**
+   * Calculate 2D realization - for free points, just return the stored position
+   */
+  realize2D(_world: ProjectionElementRealizationContext): Point2DRealization2D {
+    return new Point2DRealization2D(this.position, true);
+  }
+
+  getDependencies(): string[] {
+    return [];
+  }
+}
+
+/**
+ * Intersection Point2D - Abstract base class for all intersection point types
+ * 
+ * The rule is: "intersection of two geometric elements"
+ * Coordinates are computed and cached in Point2DRealization2D.
+ * 
+ * Concrete subclasses:
+ * - Point2DLineLineIntersection: intersection of two lines
+ * - Point2DLineCircleIntersection: intersection of a line and a circle
+ * - Point2DCircleCircleIntersection: intersection of two circles
+ * 
+ * When intersecting with HalfHingeLine2D, a sibling point is automatically
+ * created on the paired plane to maintain geometric consistency.
+ */
+export abstract class IntersectionPoint2D extends Point2D {
+  siblingPointId?: string;  // Optional: ID of sibling point on paired plane (populated when intersecting with HalfHingeLine2D)
+
+  constructor(
+    id: string,
+    planeId: string,
+    label?: string
+  ) {
+    super(id, planeId, label);
+  }
+
+  /**
+   * Calculate 2D realization - compute intersection of two geometric objects
+   * Intersection is calculated in the plane's intrinsic coordinate system
+   * 
+   * @param world World instance to query parent realizations
+   * @returns Point2DRealization2D with intersection point, or infeasible if computation fails
+   */
+  abstract realize2D(world: ProjectionElementRealizationContext): Point2DRealization2D;
+}
+
+/**
+ * Line-Line Intersection Point2D - intersection of two lines
+ * 
+ * The rule is: "intersection of line1 and line2"
+ * Line-line intersection produces at most one point (or none if parallel/coincident).
+ */
+export class Point2DLineLineIntersection extends IntersectionPoint2D {
+  line1Id: string;  // ID of first line
+  line2Id: string;  // ID of second line
+
+  constructor(
+    id: string,
+    line1Id: string,
+    line2Id: string,
+    planeId: string,
+    label?: string
+  ) {
+    super(id, planeId, label);
+    this.line1Id = line1Id;
+    this.line2Id = line2Id;
+  }
+
+  clone(): Point2DLineLineIntersection {
+    const cloned = new Point2DLineLineIntersection(
+      this.id,
+      this.line1Id,
+      this.line2Id,
+      this.planeId,
+      this.label
+    );
+    if (this.siblingPointId) {
+      cloned.siblingPointId = this.siblingPointId;
+    }
+    return cloned;
+  }
+
+  getDependencies(): string[] {
+    return [this.line1Id, this.line2Id];
+  }
+
+  /**
+   * Calculate 2D realization - compute intersection of two lines
+   * 
+   * @param world World instance to query parent realizations
+   * @returns Point2DRealization2D with intersection point, or infeasible if lines are parallel/coincident or intersection falls outside segment bounds
+   */
+  realize2D(world: ProjectionElementRealizationContext): Point2DRealization2D {
+    const plane = world.getProjectionPlaneById(this.planeId);
+    assert(plane, `[Point2DLineLineIntersection] plane ${this.planeId} not found for point ${this.id}`);
+    const l1 = plane.getLine(this.line1Id);
+    const l2 = plane.getLine(this.line2Id);
+    
+    assert(l1, `[Point2DLineLineIntersection] line1 ${this.line1Id} not found on plane ${this.planeId} for point ${this.id}`);
+    assert(l2, `[Point2DLineLineIntersection] line2 ${this.line2Id} not found on plane ${this.planeId} for point ${this.id}`);
+    
+    const line1 = l1.realize2D(world);
+    const line2 = l2.realize2D(world);
+    
+    assert(line1, `[Point2DLineLineIntersection] line1.realize2D() returned null for ${this.line1Id}`);
+    assert(line2, `[Point2DLineLineIntersection] line2.realize2D() returned null for ${this.line2Id}`);
+    
+    // Check if parent elements are infeasible - propagate infeasibility
+    if (!line1.feasible || !line2.feasible) {
+      console.warn('[Point2DLineLineIntersection] Parent element is infeasible, marking this as infeasible');
+      return new Point2DRealization2D(new Vector3(0, 0, 1), false);
+    }
+    
+    const intersectionPointReal = intersectLineLine(line1, line2);
+    
+    if (!intersectionPointReal.feasible) {
+   * 
+   * @param primaryGuideId ID of the primary guide that spawned this sibling
+   * @param referenceLineId ID of the HalfHingeLine2D in this (sibling) plane
+   * @param world World instance for validation
+   * @param id Optional ID for the sibling guide (generated if not provided)
+   * @returns The created SiblingGuide2D
+   * @throws Error if validation fails
+   */
+  addSiblingGuide2D(
+    primaryGuideId: string,
+    referenceLineId: string,
+    world: ProjectionPlaneMutationContext,
+    id?: string
+  ): SiblingGuide2D {
+    if (!this.id) {
+      throw new Error('Cannot add sibling guide to plane without ID');
+    }
+
+    // Validate reference line exists in world
+    const refLineElement = world.getLine2D(referenceLineId);
+    if (!refLineElement) {
+      throw new Error(`Invalid referenceLineId: ${referenceLineId}. Line does not exist.`);
+    }
+    
+    const referenceLine = refLineElement.realize2D(world);
+    if (!referenceLine) {
+      throw new Error(`Invalid referenceLineId: ${referenceLineId}. Line cannot be realized.`);
+    }
+
+    // Validate primary guide exists
+    const primaryGuide = world.getLine2D(primaryGuideId);
+    if (!primaryGuide) {
+      throw new Error(`Invalid primaryGuideId: ${primaryGuideId}. Primary guide does not exist.`);
+    }
+
+    // Generate unique ID if not provided
+    if (!id) {
+      id = this.generateGuide2DId(world);
+    }
+
+    // Get label from primary guide
+    const label = primaryGuide.label;
+    
+    const siblingGuide = new SiblingGuide2D(
+      id,
+      referenceLineId,
+      this.id,
+      primaryGuideId,
+      label
+    );
+    
+    this.addLine(siblingGuide, world);  // Sibling guides are stored as lines
+    return siblingGuide;
+  }
+
+  /**
+   * Factory method: Create and add a sibling intersection point to this plane
+   * 
+   * When an element intersects with a HalfHingeLine2D, the intersection represents
+   * a 3D point that projects onto both planes. This method creates the sibling
+   * intersection point on the paired projection plane.
+   * 
+   * Architecture note: Follows the same pattern as addSiblingGuide2D (Phase 36).
+   * The sibling point uses SiblingIntersectionPoint2D which realizes by cloning
+   * the primary point's coordinates (valid when HHL parametric consistency holds).
+   * 
+   * @param primaryIntersectionId ID of the primary intersection point
+   * @param world World context for validation and ID generation
+   * @param id Optional ID for redo support
+   * @returns The created SiblingIntersectionPoint2D
+   * @throws Error if plane has no ID or primary intersection doesn't exist
+   */
+  addSiblingIntersectionPoint(
+    primaryIntersectionId: string,
+    world: ProjectionPlaneMutationContext,
+    id?: string
+  ): SiblingIntersectionPoint2D {
+    if (!this.id) {
+      throw new Error('Cannot add sibling intersection point to plane without ID');
+    }
+
+    // Validate primary intersection exists
+    const primaryPlane = world.getPlaneForElement(primaryIntersectionId);
+    if (!primaryPlane) {
+      throw new Error(`Primary intersection point not found: ${primaryIntersectionId}`);
+    }
+
+    const primaryPoint = primaryPlane.getPoint(primaryIntersectionId);
+    if (!primaryPoint) {
+      throw new Error(`Primary intersection point not found: ${primaryIntersectionId}`);
+    }

@@ -1,0 +1,357 @@
+    );
+    if (this.siblingPointId) {
+      cloned.siblingPointId = this.siblingPointId;
+    }
+    return cloned;
+  }
+
+  getDependencies(): string[] {
+    return [this.line1Id, this.line2Id];
+  }
+
+  /**
+   * Calculate 2D realization - compute intersection of two lines
+   * 
+   * @param world World instance to query parent realizations
+   * @returns Point2DRealization2D with intersection point, or infeasible if lines are parallel/coincident or intersection falls outside segment bounds
+   */
+  realize2D(world: ProjectionElementRealizationContext): Point2DRealization2D {
+    const plane = world.getProjectionPlaneById(this.planeId);
+    assert(plane, `[Point2DLineLineIntersection] plane ${this.planeId} not found for point ${this.id}`);
+    const l1 = plane.getLine(this.line1Id);
+    const l2 = plane.getLine(this.line2Id);
+    
+    assert(l1, `[Point2DLineLineIntersection] line1 ${this.line1Id} not found on plane ${this.planeId} for point ${this.id}`);
+    assert(l2, `[Point2DLineLineIntersection] line2 ${this.line2Id} not found on plane ${this.planeId} for point ${this.id}`);
+    
+    const line1 = l1.realize2D(world);
+    const line2 = l2.realize2D(world);
+    
+    assert(line1, `[Point2DLineLineIntersection] line1.realize2D() returned null for ${this.line1Id}`);
+    assert(line2, `[Point2DLineLineIntersection] line2.realize2D() returned null for ${this.line2Id}`);
+    
+    // Check if parent elements are infeasible - propagate infeasibility
+    if (!line1.feasible || !line2.feasible) {
+      console.warn('[Point2DLineLineIntersection] Parent element is infeasible, marking this as infeasible');
+      return new Point2DRealization2D(new Vector3(0, 0, 1), false);
+    }
+    
+    const intersectionPointReal = intersectLineLine(line1, line2);
+    
+    if (!intersectionPointReal.feasible) {
+      console.warn('[Point2DLineLineIntersection] Lines do not intersect (parallel or coincident)');
+      return new Point2DRealization2D(new Vector3(0, 0, 1), false);
+    }
+    
+    const intersectionPoint = intersectionPointReal.position;
+    
+    // Get the domain objects to check if they're segments
+    const line1Domain = world.getLine2D(this.line1Id);
+    const line2Domain = world.getLine2D(this.line2Id);
+    
+    // Check if intersection falls within segment bounds
+    // A segment has point1.z=1 and point2.z=1 (finite endpoints)
+    // An infinite line has point2.z=0 (direction vector)
+    
+    // Check line1 if it's a segment
+    if (line1Domain && line1Domain.isBounded() && line1.point2.z === 1) {
+      // Segment: check if intersection is between point1 and point2
+      if (!this.isPointOnSegment(intersectionPoint, line1)) {
+        console.warn('[Point2DLineLineIntersection] Intersection falls outside segment bounds (line1)');
+        return new Point2DRealization2D(intersectionPoint, false);
+      }
+    }
+    
+    // Check line2 if it's a segment
+    if (line2Domain && line2Domain.isBounded() && line2.point2.z === 1) {
+      // Segment: check if intersection is between point1 and point2
+      if (!this.isPointOnSegment(intersectionPoint, line2)) {
+        console.warn('[Point2DLineLineIntersection] Intersection falls outside segment bounds (line2)');
+        return new Point2DRealization2D(intersectionPoint, false);
+      }
+    }
+    
+    return new Point2DRealization2D(intersectionPoint, true);
+  }
+  
+  /**
+   * Check if a point lies on a segment (between its endpoints)
+   * 
+   * @param point The point to check
+   * @param segment The segment realization (with point1 and point2 as endpoints, z=1)
+   * @returns true if point is on segment, false otherwise
+   */
+  private isPointOnSegment(point: Vector3, segment: import('./Line').Line2DRealization2D): boolean {
+    // For a segment, point2.z should be 1 (not a direction vector)
+    if (segment.point2.z !== 1) {
+      return true; // Not a segment, it's an infinite line
+    }
+    
+    // Get the direction from point1 to point2
+    const segmentVector = segment.point2.clone().sub(segment.point1);
+    const pointVector = point.clone().sub(segment.point1);
+    
+    // Project pointVector onto segmentVector
+    const segmentLengthSq = segmentVector.lengthSq();
+    if (segmentLengthSq === 0) {
+      // Degenerate segment (point1 == point2)
+      return point.distanceTo(segment.point1) < 0.0001;
+    }
+    
+    const t = pointVector.dot(segmentVector) / segmentLengthSq;
+    
+    // t should be between 0 and 1 for the point to be on the segment
+    // Use small epsilon for numerical tolerance
+    const epsilon = 0.0001;
+    return t >= -epsilon && t <= 1 + epsilon;
+  }
+}
+
+/**
+ * Line-Circle Intersection Point2D - intersection of a line and a circle
+ * 
+ * The rule is: "intersection of line and circle at index"
+ * Line-circle intersection produces 0, 1 (tangent), or 2 points.
+ * Points are indexed by angle from the circle's radius vector.
+ */
+export class Point2DLineCircleIntersection extends IntersectionPoint2D {
+  lineId: string;    // ID of the line
+  circleId: string;  // ID of the circle
+  index: number;     // Index to identify which intersection (0 or 1)
+
+  constructor(
+    id: string,
+    lineId: string,
+    circleId: string,
+    index: number,
+    planeId: string,
+    label?: string
+  ) {
+    super(id, planeId, label);
+    this.lineId = lineId;
+    this.circleId = circleId;
+    this.index = index;
+  }
+
+  clone(): Point2DLineCircleIntersection {
+    const cloned = new Point2DLineCircleIntersection(
+      this.id,
+      this.lineId,
+      this.circleId,
+      this.index,
+      this.planeId,
+      this.label
+    );
+    if (this.siblingPointId) {
+      cloned.siblingPointId = this.siblingPointId;
+    }
+    return cloned;
+  }
+
+  getDependencies(): string[] {
+    return [this.lineId, this.circleId];
+  }
+
+  /**
+   * Calculate 2D realization - compute intersection of line and circle
+   * 
+   * @param world World instance to query parent realizations
+   * @returns Point2DRealization2D with intersection point at specified index, or infeasible if no intersection or intersection falls outside segment bounds
+   */
+  realize2D(world: ProjectionElementRealizationContext): Point2DRealization2D {
+    const plane = world.getProjectionPlaneById(this.planeId);
+    assert(plane, `[Point2DLineCircleIntersection] plane ${this.planeId} not found for point ${this.id}`);
+    const l = plane.getLine(this.lineId);
+    const c = plane.getCircle(this.circleId);
+    
+    assert(l, `[Point2DLineCircleIntersection] line ${this.lineId} not found on plane ${this.planeId} for point ${this.id}`);
+    assert(c, `[Point2DLineCircleIntersection] circle ${this.circleId} not found on plane ${this.planeId} for point ${this.id}`);
+    
+    const line = l.realize2D(world);
+    const circle = c.realize2D(world);
+    
+    assert(line, `[Point2DLineCircleIntersection] line.realize2D() returned null for ${this.lineId}`);
+    assert(circle, `[Point2DLineCircleIntersection] circle.realize2D() returned null for ${this.circleId}`);
+    
+    // Check if parent elements are infeasible - propagate infeasibility
+    if (!line.feasible || !circle.feasible) {
+      console.warn('[Point2DLineCircleIntersection] Parent element is infeasible, marking this as infeasible');
+      return new Point2DRealization2D(new Vector3(0, 0, 1), false);
+    }
+    
+    const intersectionPoints = intersectLineCircle(line, circle);
+    
+    if (intersectionPoints.length === 0) {
+      console.warn('[Point2DLineCircleIntersection] Line and circle do not intersect');
+      return new Point2DRealization2D(new Vector3(0, 0, 1), false);
+    }
+    
+    // Return the point at the specified index
+    const point = intersectionPoints[Math.min(this.index, intersectionPoints.length - 1)];
+    
+    // Check if the line is actually a segment and if intersection is within bounds
+    const lineDomain = world.getLine2D(this.lineId);
+    if (lineDomain && lineDomain.isBounded() && line.point2.z === 1) {
+      // Segment: check if intersection is between point1 and point2
+      if (!this.isPointOnSegment(point, line)) {
+        console.warn('[Point2DLineCircleIntersection] Intersection falls outside segment bounds');
+        return new Point2DRealization2D(point, false);
+      }
+    }
+    
+    return new Point2DRealization2D(point, true);
+  }
+  
+  /**
+   * Check if a point lies on a segment (between its endpoints)
+   * 
+   * @param point The point to check
+   * @param segment The segment realization (with point1 and point2 as endpoints, z=1)
+   * @returns true if point is on segment, false otherwise
+   */
+  private isPointOnSegment(point: Vector3, segment: import('./Line').Line2DRealization2D): boolean {
+    // For a segment, point2.z should be 1 (not a direction vector)
+    if (segment.point2.z !== 1) {
+      return true; // Not a segment, it's an infinite line
+    }
+    
+    // Get the direction from point1 to point2
+    const segmentVector = segment.point2.clone().sub(segment.point1);
+    const pointVector = point.clone().sub(segment.point1);
+    
+    // Project pointVector onto segmentVector
+    const segmentLengthSq = segmentVector.lengthSq();
+    if (segmentLengthSq === 0) {
+      // Degenerate segment (point1 == point2)
+      return point.distanceTo(segment.point1) < 0.0001;
+    }
+    
+    const t = pointVector.dot(segmentVector) / segmentLengthSq;
+    
+    // t should be between 0 and 1 for the point to be on the segment
+    // Use small epsilon for numerical tolerance
+    const epsilon = 0.0001;
+    return t >= -epsilon && t <= 1 + epsilon;
+  }
+}
+
+/**
+ * Circle-Circle Intersection Point2D - intersection of two circles
+ * 
+ * The rule is: "intersection of circle1 and circle2 at index"
+ * Circle-circle intersection produces 0, 1 (tangent), or 2 points.
+ * Points are indexed by angle from the first circle's radius vector.
+ */
+export class Point2DCircleCircleIntersection extends IntersectionPoint2D {
+  circle1Id: string;  // ID of first circle
+  circle2Id: string;  // ID of second circle
+  index: number;      // Index to identify which intersection (0 or 1)
+
+  constructor(
+    id: string,
+    circle1Id: string,
+    circle2Id: string,
+    index: number,
+    planeId: string,
+    label?: string
+  ) {
+    super(id, planeId, label);
+    this.circle1Id = circle1Id;
+    this.circle2Id = circle2Id;
+    this.index = index;
+  }
+
+  clone(): Point2DCircleCircleIntersection {
+    const cloned = new Point2DCircleCircleIntersection(
+      this.id,
+      this.circle1Id,
+      this.circle2Id,
+      this.index,
+      this.planeId,
+      this.label
+    );
+    if (this.siblingPointId) {
+      cloned.siblingPointId = this.siblingPointId;
+    }
+    return cloned;
+  }
+
+  getDependencies(): string[] {
+    return [this.circle1Id, this.circle2Id];
+  }
+
+  /**
+   * Calculate 2D realization - compute intersection of two circles
+   * 
+   * @param world World instance to query parent realizations
+   * @returns Point2DRealization2D with intersection point at specified index, or infeasible if no intersection
+   */
+  realize2D(world: ProjectionElementRealizationContext): Point2DRealization2D {
+    const plane = world.getProjectionPlaneById(this.planeId);
+    assert(plane, `[Point2DCircleCircleIntersection] plane ${this.planeId} not found for point ${this.id}`);
+    const c1 = plane.getCircle(this.circle1Id);
+    const c2 = plane.getCircle(this.circle2Id);
+    
+    assert(c1, `[Point2DCircleCircleIntersection] circle1 ${this.circle1Id} not found on plane ${this.planeId} for point ${this.id}`);
+    assert(c2, `[Point2DCircleCircleIntersection] circle2 ${this.circle2Id} not found on plane ${this.planeId} for point ${this.id}`);
+    
+    const circle1 = c1.realize2D(world);
+    const circle2 = c2.realize2D(world);
+    
+    assert(circle1, `[Point2DCircleCircleIntersection] circle1.realize2D() returned null for ${this.circle1Id}`);
+    }
+
+    // Validate primary is an intersection type using instanceof
+    const isIntersection = primaryPoint instanceof Point2DLineLineIntersection ||
+                           primaryPoint instanceof Point2DLineCircleIntersection ||
+                           primaryPoint instanceof Point2DCircleCircleIntersection;
+    
+    if (!isIntersection) {
+      throw new Error(`Primary point must be an intersection type, got: ${primaryPoint.constructor.name}`);
+    }
+
+    // Generate unique ID if not provided
+    if (!id) {
+      id = this.generatePoint2DId(world);
+    }
+
+    // Get label from primary point
+    const label = primaryPoint.label;
+    
+    const siblingPoint = new SiblingIntersectionPoint2D(
+      id,
+      primaryIntersectionId,
+      this.id,
+      label
+    );
+    
+    // Link bidirectionally
+    primaryPoint.siblingPointId = siblingPoint.id;
+    
+    this.addPoint(siblingPoint, world);
+    return siblingPoint;
+  }
+
+  /**
+   * Element factory: Add origin point to projection plane
+   * 
+   * Creates a locked origin point at the specified position.
+   * Origin points cannot be moved or deleted by user actions.
+   * 
+   * @param position Position in intrinsic plane coordinates (typically (0,0,1))
+   * @param world World instance for ID generation
+   * @param id Optional ID for redo support
+   * @param label Optional label for semantic access (e.g., 'O_H', 'O_V')
+   * @returns The created origin FreePoint2D (with locked=true)
+   */
+  addOriginPoint2D(
+    position: Vector3,
+    world: ProjectionPlaneMutationContext,
+    id?: string,
+    label?: string
+  ): FreePoint2D {
+    if (!this.id) {
+      throw new Error('Cannot add origin point to plane without ID');
+    }
+
+    // Generate unique ID if not provided
