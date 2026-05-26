@@ -83,3 +83,38 @@ All logs are under `architecture-audit/cycle-009-app-shell-services/validation/`
 
 - Replace remaining UI highlight no-op adapters with a rendering/highlight application boundary in a rendering-focused wave.
 - Clean up repository validation debt separately: install/configure lint tooling, replace Node 24-incompatible vue-tsc version or pin Node, and remove/repair obsolete broad Vitest specs.
+
+## Validation and preview refresh — cycle-009-validation-and-preview-refresh
+
+Validation rerun by `t1-validation-cadence-and-preview` on 2026-05-26. Full stdout/stderr is captured under `architecture-audit/cycle-009-app-shell-services/validation/`.
+
+| Check | Command | Logs | Result | Classification |
+| --- | --- | --- | --- | --- |
+| Root lint | `npm run lint` from repo root | `root-lint.stdout.log`, `root-lint.stderr.log` | FAIL | Pre-existing tooling debt: frontend lint delegates to `eslint`, but `eslint` is not installed (`sh: 1: eslint: not found`). No Wave 009 source error is reached. |
+| Frontend lint | `npm run lint` from `frontend/` | `frontend-lint.stdout.log`, `frontend-lint.stderr.log` | FAIL | Same pre-existing missing `eslint` binary. |
+| Focused Wave 009 Vitest | `npm run test -- tests/unit/application/appShell/KeyboardShortcutRouter.test.ts tests/unit/application/appShell/AppShellBoundary.test.ts tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts` from `frontend/` | `focused-app-shell-vitest.stdout.log`, `focused-app-shell-vitest.stderr.log` | PASS | 3 files / 16 tests passed, covering keyboard-router singleton/disposal, app-shell boundary, runtime lifecycle/use-case cleanup, project lifecycle, selection, autosave, active-plane, and startup-dialog state. |
+| Root full Vitest | `npm run test` from repo root | `root-vitest-full.stdout.log`, `root-vitest-full.stderr.log`, summary in `root-vitest-summary.stdout.log` | FAIL | Pre-existing/unrelated broad-suite debt. App-shell tests pass; failures are outside Wave 009 app-shell files, including `tests/unit/calculations/intersections.spec.ts`, `tests/integration/guide-creation.test.ts`, and `tests/unit/architecture/noCommandSubclasses.spec.ts` (`default.resolve is not a function`). |
+| Frontend full Vitest | `npm run test` from `frontend/` | `frontend-vitest-full.stdout.log`, `frontend-vitest-full.stderr.log` | FAIL | Same pre-existing/unrelated broad-suite failures as root full Vitest; focused Wave 009 tests pass. |
+| Backend Vitest | `npm run test` from `backend/` | `backend-vitest-full.stdout.log`, `backend-vitest-full.stderr.log` | PASS | Backend unchanged by Wave 009; 15 integration tests passed. |
+| Root build | `npm run build` from repo root | `root-build.stdout.log`, `root-build.stderr.log` | FAIL | Pre-existing environment/tooling incompatibility before app source compilation: `vue-tsc` crashes under Node v24.15.0 with `Search string not found: "/supportedTSExtensions = .*(?=;)/"`. |
+| Frontend build | `npm run build` from `frontend/` | `frontend-build.stdout.log`, `frontend-build.stderr.log` | FAIL | Same pre-existing `vue-tsc`/Node 24 failure. |
+| Backend build | `npm run build` from `backend/` | `backend-build.stdout.log`, `backend-build.stderr.log` | PASS | Backend TypeScript build passed. |
+| Frontend Vite build | `npx vite build` from `frontend/` | `frontend-vite-build.stdout.log`, `frontend-vite-build.stderr.log` | PASS | Vite transformed 303 modules and produced `dist/`; only the existing chunk-size warning was emitted. |
+| Frontend TypeScript no-emit | `npx tsc --noEmit` from `frontend/` | `frontend-tsc-noemit.stdout.log`, `frontend-tsc-noemit.stderr.log` | FAIL | Pre-existing/unrelated broad TypeScript debt across command/domain/icon/service modules (for example missing toolbar icon modules, world operation context type mismatches, stale viewState imports). No app-shell-specific error was reported in the logged output. |
+| Playwright/e2e suite | `npm run test:e2e` from `frontend/` | `frontend-e2e.stdout.log`, `frontend-e2e.stderr.log` | FAIL | Pre-existing corrupted e2e spec syntax blocks test collection before exercising Wave 009 behavior: `tests/e2e/keyboard-shortcuts.spec.ts: Unexpected token (267:10160)` and `tests/e2e/selection-mask.spec.ts: Unexpected token (188:2)`. |
+| Static architecture checks | shell grep assertions | `static-architecture-check.stdout.log`, `static-architecture-check.stderr.log` | PASS | Confirmed App.vue no longer contains legacy app-shell orchestration tokens and does contain runtime lifecycle calls; Toolbar lacks global shortcut handling; StartupDialog lacks window bridge/imperative exposure and uses typed props/events; runtime/use-case/router files expose cleanup/disposal. |
+| Live preview refresh/probe | `npm run dev -- --host 0.0.0.0`, then `curl -I http://127.0.0.1:5173/` and socket listing | `live-preview-refresh.stdout.log`, `live-preview-refresh.stderr.log`, `live-preview-probe.stdout.log`, `live-preview-probe.stderr.log`, `live-preview.pid` | PASS | Preview is bound on `0.0.0.0:5173` (socket listing shows `LISTEN ... 0.0.0.0:5173`) and returned `HTTP/1.1 200 OK`. |
+| Live app-shell smoke | temporary Playwright script against `http://127.0.0.1:5173/` | `live-app-shell-smoke.stdout.log`, `live-app-shell-smoke.stderr.log` | PASS | Loaded app container, toolbar, and SVG rendering; observed 26 toolbar buttons and 19 SVGs; exercised `p`, `l`, `Escape`, and `Tab` without fatal browser errors. Browser emitted only existing app debug logs and WebGL software/performance warnings. |
+
+### Validation classification
+
+No Wave-009-attributable validation failure remains. The Wave 009-focused unit tests, static boundary checks, Vite build, backend build/test, preview refresh/probe, and live app-shell smoke all pass. Mandatory repository-wide lint/build/full-test/e2e commands were attempted and logged; their failures are classified as pre-existing/unrelated because they occur in missing tooling, Node/vue-tsc compatibility, corrupted e2e specs, or broad domain/test debt outside the Wave 009 app-shell implementation while the focused Wave 009 coverage passes.
+
+### Preview refresh evidence
+
+The live preview was refreshed from `frontend/` with `npm run dev -- --host 0.0.0.0`. `live-preview-probe.stdout.log` records the process id file, `HTTP/1.1 200 OK` from `http://127.0.0.1:5173/`, and listening evidence for `0.0.0.0:5173`. `live-app-shell-smoke.stdout.log` records successful representative app-shell behavior after refresh.
+
+### Additional residual risks
+
+- Repository validation gates remain noisy and should be addressed by a future validation/tooling hardening wave: install/configure lint tooling, resolve Node 24 / `vue-tsc` incompatibility, repair corrupted e2e specs, and close broad TypeScript/test debt.
+- The live smoke validates representative app-shell loading, toolbar rendering, shortcut routing, and active-plane/tab handling, but the committed Playwright suite cannot currently collect due unrelated syntax corruption.
