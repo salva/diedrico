@@ -400,3 +400,27 @@ All command output was captured under `architecture-audit/cycle-015-typescript-b
 The assigned service/domain strictness build category is closed: frontend and root builds are green, and the current build no longer reports `CoordinateTransform.ts`, `GeometryService.ts`, `GoogleDriveService.ts`, or `ProjectService.ts` errors. The full frontend/root Vitest suites are also green after resolving the direct `ProjectService.roundTrip` style fixture drift and `viewStore` `showReferenceAxes` fixture drift.
 
 The only remaining validation residual observed in this lane is environment/tooling outside the source changes: Playwright Chromium is missing from the local browser cache, so e2e cannot launch browsers. This is suitable for the validation/preview environment follow-up and does not indicate a service/domain source regression.
+
+## t2 service/domain reviewer validation/preview scope disposition
+
+Task `t2-log-reviewer-validation-scope-disposition` addresses the reviewer validation/preview blockers as a documentation-only scope disposition. It does **not** perform source, package/tooling, browser-cache, or live-preview repair.
+
+### Reviewer blockers and disposition
+
+Reviewer `t9-review-stage` accepted the service/domain source fixes as build/test-correct but kept the stage at `needs_changes` for two stage-level validation obligations:
+
+1. **Playwright/e2e browser launch failure** — `service-domain-frontend-e2e.stdout` records that the Playwright web server started Vite at `http://localhost:5173/`, but Chromium could not launch because the executable is missing from `/home/salva/.cache/ms-playwright/chromium_headless_shell-1223/chrome-headless-shell-linux64/chrome-headless-shell`. This is a validation environment/browser-cache blocker, not a residual TypeScript, service/domain boundary, ProjectService, GeometryService, CoordinateTransform, or GoogleDriveService source failure.
+2. **Persistent live preview not refreshed/reachable on `0.0.0.0`** — the previous log correctly did not claim a successful persistent preview refresh. The only server observed during validation was Playwright's temporary localhost Vite server; no durable preview bound to `0.0.0.0` was started by the service/domain strictness lane.
+
+Disposition for this task: both blockers remain real blockers for a later validation/preview follow-up or validation-and-preview-refresh stage, but they are intentionally **out of scope** for this documentation-only task because the direct assignment forbids touching source, tooling, browser cache, or live-preview setup.
+
+### Acceptance-criteria mapping
+
+- Service/domain build acceptance remains satisfied by existing evidence: `service-domain-build-forbidden-final.stdout` shows `npm run build --workspace=frontend` passed, and `service-domain-root-build.stdout` shows root `npm run build` passed.
+- Focused and full Vitest acceptance remains satisfied by existing evidence: `service-domain-focused-tests-rerun.stdout`, `service-domain-frontend-full-vitest.stdout`, and `service-domain-root-full-vitest.stdout` passed after the ProjectService style-payload and viewStore fixture drift updates.
+- Forbidden-repair constraints remain preserved in this task: no `@ts-ignore`, `@ts-expect-error`, broad cast, compatibility shim, stale export restoration, package/tooling edit, browser-cache mutation, source edit, secret read/log, or live-preview process manipulation was introduced here.
+- The reviewer e2e and preview findings are **not waived** and this section does not claim Wave 015 validation complete. They are categorized as validation/preview infrastructure blockers that require an explicit follow-up allowed to provision Playwright browsers and refresh/probe the persistent preview.
+
+### Protected-surface check for this documentation-only task
+
+This task changed only this implementation log and its Saivage task report. It did not edit `frontend/` source, tests, package files, Playwright configuration, browser cache paths, live-preview scripts/processes, `.saivage/saivage.json`, auth/provider config, or env files. Completed projection/world, command/factory, process/view-state, UI/store/render DTO, and service/domain source lanes remain untouched by this disposition.
