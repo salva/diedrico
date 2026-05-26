@@ -16,6 +16,7 @@
  * 
  */
 
+import type { ProjectionElementRealizationContext } from './projectionPlane/ProjectionPlaneContext';
 import { Vector3 } from 'three';
 import { Line2DPerpendicularToLine, Line2DRealization2D, Line2D, Line2DType } from './Line';
 import { intersectLineLine } from '@/domain/calculations/Intersections';
@@ -96,7 +97,7 @@ export class Guide2D extends Line2DPerpendicularToLine {
    * they are simply lines. Type distinction happens at domain level (Guide2D), not
    * realization level. See data-model.md §Line2D Constructions.
    */
-  realize2D(world: import('./World').World): Line2DRealization2D {
+  realize2D(world: ProjectionElementRealizationContext): Line2DRealization2D {
     // Get reference line realization from world
     const plane = world.getProjectionPlaneById(this.planeId)!;
     const refLine = plane.getLine(this.referenceLineId);
@@ -226,7 +227,7 @@ export class SiblingGuide2D extends Line2D {
    * @param world World instance for plane and hinge line lookup
    * @returns Object containing the primary guide, primary HHL, and sibling's own HHL
    */
-  private getPrimaryGuideContext(world: import('./World').World): {
+  private getPrimaryGuideContext(world: ProjectionElementRealizationContext): {
     primaryGuide: Guide2D;
     primaryHHL: HalfHingeLine2D;
     myHHL: HalfHingeLine2D;
@@ -269,7 +270,7 @@ export class SiblingGuide2D extends Line2D {
    * @param world World instance to access primary guide and HalfHingeLine realizations
    * @returns Line2DRealization2D with perpendicular line to sibling HalfHingeLine
    */
-  realize2D(world: import('./World').World): Line2DRealization2D {
+  realize2D(world: ProjectionElementRealizationContext): Line2DRealization2D {
     // Get primary guide via: myHHL → HingeLine → otherPlane → primaryGuide
     const { primaryGuide, primaryHHL, myHHL } = this.getPrimaryGuideContext(world);
     

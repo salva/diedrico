@@ -13,8 +13,9 @@
  * 
  */
 
+import type { ProjectionElementRealizationContext } from './projectionPlane/ProjectionPlaneContext';
 import { Vector3 } from 'three';
-import { Line2D, Line2DRealization2D } from './Line';
+import { Line2D } from './Line';
 import { Line3D } from './Line3D';
 import { Line3DRealization3D } from './Element3DRealization3D';
 import { HalfHingeLineRealization2D } from './HalfHingeLineRealization2D';
@@ -97,7 +98,7 @@ export class HalfHingeLine2D extends Line2D {
    * @returns Object with siblingPlaneId and siblingHalfHingeLineId, or undefined if not a HHL
    */
   static getSiblingInfo(
-    world: import('./World').World,
+    world: ProjectionElementRealizationContext,
     halfHingeLineId: string,
     currentPlaneId: string
   ): { siblingPlaneId: string; siblingHalfHingeLineId: string } | undefined {
@@ -141,7 +142,7 @@ export class HalfHingeLine2D extends Line2D {
    * 
    * @param world World instance for accessing HingeLine and plane realizations
    */
-  realize2D(world: import('./World').World): HalfHingeLineRealization2D {
+  realize2D(world: ProjectionElementRealizationContext): HalfHingeLineRealization2D {
     const hingeLine = world.getHingeLineById(this.hingeLineId)!;
 
     // Plane1: Return canonical coordinates directly
@@ -235,7 +236,7 @@ export class HingeLine extends Line3D {
    * 
    * Returns Line3DRealization3D with point and direction in 3D domain coordinates (Vector4).
    */
-  realize3D(world: import('./World').World): Line3DRealization3D {
+  realize3D(world: ProjectionElementRealizationContext): Line3DRealization3D {
     const projPlane1 = world.getProjectionPlaneById(this.plane1Id);
     const projPlane2 = world.getProjectionPlaneById(this.plane2Id);
 

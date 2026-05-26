@@ -1,0 +1,6 @@
+frontend/src/domain/world/Element3DRealization3D.ts:205:export class Plane3DRealization3D extends Element3DRealization3D {
+frontend/src/domain/world/HingeLine.ts:153:        const plane3DReal = world.get3DPlaneRealization(projPlane1.plane3DId)!;
+frontend/src/domain/world/HingeLine.ts:268:      const plane3DReal = world.get3DPlaneRealization(projPlane1.plane3DId);
+frontend/src/domain/world/World.ts:1277:  get3DPlaneRealization(id: string): Plane3DRealization3D | undefined {
+frontend/src/domain/world/projectionPlane/ProjectionPlaneRealization.ts:5:export class ProjectionPlaneRealization2D extends Realization {
+frontend/src/domain/world/projectionPlane/ProjectionPlaneRealization.ts:51:export class ProjectionPlaneRealization3D extends Realization {

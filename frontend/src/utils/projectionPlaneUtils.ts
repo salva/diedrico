@@ -13,7 +13,7 @@
  */
 
 import { Matrix3, Vector3, Vector4 } from 'three';
-import type { World } from '@/domain/world/World';
+import type { ProjectionPlaneRealizationContext } from '@/domain/world/projectionPlane/ProjectionPlaneContext';
 import { Matrix4x3, Matrix3x4, applyMatrix4x3, applyMatrix3x4, crossVector3Homogeneous, dotVector3Homogeneous, dotVector2Homogeneous } from './threeUtils';
 import { Line2DRealization2D } from '@/domain/world/Line';
 import { Point3DRealization3D } from '@/domain/world/Element3DRealization3D';
@@ -181,7 +181,7 @@ export function computeProjectionPlaneMatrices(
   t1HingeTraceId: string,
   t2OtherTraceId: string,
   t2PrimeLineId: string,
-  world: World
+  world: ProjectionPlaneRealizationContext
 ): ProjectionPlaneMatrices | null {
   // Get lines and their containing planes
   const t1Line = world.getLine2D(t1HingeTraceId)!;
@@ -376,7 +376,7 @@ export function computeProjectionPlaneMatrices(
 export function computeExpectedT2Prime(
   t1HingeTraceId: string,
   t2OtherTraceId: string,
-  world: World
+  world: ProjectionPlaneRealizationContext
 ): Line2DRealization2D | null {
   // Algorithm:
   // 1. Get T1, T2 in 3D
@@ -556,7 +556,7 @@ export function computeExpectedT2Prime(
  * @param world - World instance to query existing planes
  * @returns Paper-space offset {x, y} for new auxiliary plane
  */
-export function computeAuxiliaryPlaneLayout(world: World): { x: number; y: number } {
+export function computeAuxiliaryPlaneLayout(world: ProjectionPlaneRealizationContext): { x: number; y: number } {
   // Count existing auxiliary planes (exclude P_H and P_V)
   const allPlanes = world.getAllProjectionPlanes();
   const auxiliaryPlanes = allPlanes.filter(plane => 

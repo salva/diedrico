@@ -15,7 +15,7 @@
  */
 
 import { Vector3, Vector4 } from 'three';
-import type { World } from './World';
+import type { ProjectionElementRealizationContext } from './projectionPlane/ProjectionPlaneContext';
 import { intersectLineLine, intersectLineCircle, intersectCircleCircle } from '@/domain/calculations/Intersections';
 import { Element2DRealization2D } from './Element2DRealization2D';
 import { Element2D } from './Element2D';
@@ -106,7 +106,7 @@ export abstract class Point2D extends Element2D {
    * 
    * @param world World instance to query parent realizations
    */
-  abstract realize2D(world: World): Point2DRealization2D;
+  abstract realize2D(world: ProjectionElementRealizationContext): Point2DRealization2D;
 }
 
 /**
@@ -144,7 +144,7 @@ export class FreePoint2D extends Point2D {
   /**
    * Calculate 2D realization - for free points, just return the stored position
    */
-  realize2D(_world: World): Point2DRealization2D {
+  realize2D(_world: ProjectionElementRealizationContext): Point2DRealization2D {
     return new Point2DRealization2D(this.position, true);
   }
 
@@ -185,7 +185,7 @@ export abstract class IntersectionPoint2D extends Point2D {
    * @param world World instance to query parent realizations
    * @returns Point2DRealization2D with intersection point, or infeasible if computation fails
    */
-  abstract realize2D(world: World): Point2DRealization2D;
+  abstract realize2D(world: ProjectionElementRealizationContext): Point2DRealization2D;
 }
 
 /**
@@ -234,7 +234,7 @@ export class Point2DLineLineIntersection extends IntersectionPoint2D {
    * @param world World instance to query parent realizations
    * @returns Point2DRealization2D with intersection point, or infeasible if lines are parallel/coincident or intersection falls outside segment bounds
    */
-  realize2D(world: World): Point2DRealization2D {
+  realize2D(world: ProjectionElementRealizationContext): Point2DRealization2D {
     const plane = world.getProjectionPlaneById(this.planeId);
     assert(plane, `[Point2DLineLineIntersection] plane ${this.planeId} not found for point ${this.id}`);
     const l1 = plane.getLine(this.line1Id);
@@ -377,7 +377,7 @@ export class Point2DLineCircleIntersection extends IntersectionPoint2D {
    * @param world World instance to query parent realizations
    * @returns Point2DRealization2D with intersection point at specified index, or infeasible if no intersection or intersection falls outside segment bounds
    */
-  realize2D(world: World): Point2DRealization2D {
+  realize2D(world: ProjectionElementRealizationContext): Point2DRealization2D {
     const plane = world.getProjectionPlaneById(this.planeId);
     assert(plane, `[Point2DLineCircleIntersection] plane ${this.planeId} not found for point ${this.id}`);
     const l = plane.getLine(this.lineId);
@@ -505,7 +505,7 @@ export class Point2DCircleCircleIntersection extends IntersectionPoint2D {
    * @param world World instance to query parent realizations
    * @returns Point2DRealization2D with intersection point at specified index, or infeasible if no intersection
    */
-  realize2D(world: World): Point2DRealization2D {
+  realize2D(world: ProjectionElementRealizationContext): Point2DRealization2D {
     const plane = world.getProjectionPlaneById(this.planeId);
     assert(plane, `[Point2DCircleCircleIntersection] plane ${this.planeId} not found for point ${this.id}`);
     const c1 = plane.getCircle(this.circle1Id);
@@ -600,7 +600,7 @@ export class SiblingIntersectionPoint2D extends Point2D {
    * @returns Point2DRealization2D with same coordinates as primary
    * @see HingeLine constructor must ensure parametric consistency for paired HalfHingeLine2D
    */
-  realize2D(world: World): Point2DRealization2D {
+  realize2D(world: ProjectionElementRealizationContext): Point2DRealization2D {
     // Get primary intersection point's 2D realization
     const primaryPoint = world.getPoint2D(this.primaryIntersectionId);
     assert(primaryPoint, `[SiblingIntersectionPoint2D] Primary point ${this.primaryIntersectionId} not found for point ${this.id}`);

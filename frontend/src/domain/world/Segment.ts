@@ -12,6 +12,7 @@
  * 
  */
 
+import type { ProjectionElementRealizationContext } from './projectionPlane/ProjectionPlaneContext';
 import { Vector3 } from 'three';
 import { Line2D, Line2DRealization2D } from './Line';
 
@@ -70,9 +71,12 @@ export class Segment2DByPoints extends Line2D {
    * 
    * Phase 76: Always returns realization (never null). Uses feasible flag for geometric failures.
    */
-  realize2D(world: import('./World').World): Line2DRealization2D {
+  realize2D(world: ProjectionElementRealizationContext): Line2DRealization2D {
     // Get both endpoint realizations from world
     const plane = world.getProjectionPlaneById(this.planeId);
+    if (!plane) {
+      throw new Error(`[Segment2DByPoints] Plane ${this.planeId} not found for segment ${this.id}`);
+    }
     const p1 = plane.getPoint(this.point1Id);
     const p2 = plane.getPoint(this.point2Id);
     

@@ -1,0 +1,63 @@
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:15:import type { ProjectionPlaneMutationContext, ProjectionPlaneRealizationContext } from './ProjectionPlaneContext';
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:70:  addPoint(point: Point2D, context?: ProjectionPlaneMutationContext): void {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:90:   * const originH = plane.getPoint2DByLabel('O_H');
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:92:  getPoint2DByLabel(label: string): Point2D {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:111:  removePoint(id: string, context?: ProjectionPlaneMutationContext): boolean {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:142:  addLine(line: Line2D, context?: ProjectionPlaneMutationContext): void {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:163:  removeLine(id: string, context?: ProjectionPlaneMutationContext): boolean {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:195:  addCircle(circle: Circle2D, context?: ProjectionPlaneMutationContext): void {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:216:  removeCircle(id: string, context?: ProjectionPlaneMutationContext): boolean {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:252:  realizePoint2D(point: Point2D, world: ProjectionPlaneMutationContext): Point2DRealization2D | undefined {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:276:  realizeLine2D(line: Line2D, world: ProjectionPlaneMutationContext): Line2DRealization2D | undefined {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:300:  realizeCircle2D(circle: Circle2D, world: ProjectionPlaneMutationContext): Circle2DRealization2D | undefined {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:325:  generatePoint2DId(world: ProjectionPlaneMutationContext): string {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:333:  generateLine2DId(world: ProjectionPlaneMutationContext): string {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:341:  generateSegment2DId(world: ProjectionPlaneMutationContext): string {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:349:  generateCircle2DId(world: ProjectionPlaneMutationContext): string {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:357:  generateGuide2DId(world: ProjectionPlaneMutationContext): string {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:381:    world: ProjectionPlaneMutationContext,
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:418:    world: ProjectionPlaneMutationContext,
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:426:    const l1 = this.getLine(line1Id) || world.getLine2D(line1Id);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:427:    const l2 = this.getLine(line2Id) || world.getLine2D(line2Id);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:465:    world: ProjectionPlaneMutationContext,
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:517:    world: ProjectionPlaneMutationContext,
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:569:    world: ProjectionPlaneMutationContext,
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:632:    world: ProjectionPlaneMutationContext,
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:646:    const refLineElement = world.getLine2D(referenceLineId);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:679:    world: ProjectionPlaneMutationContext,
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:693:    const refLineElement = world.getLine2D(referenceLineId);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:729:    world: ProjectionPlaneMutationContext,
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:790:    world: ProjectionPlaneMutationContext,
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:804:    const refLineElement = world.getLine2D(referenceLineId);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:849:    world: ProjectionPlaneMutationContext,
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:899:    world: ProjectionPlaneMutationContext,
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:949:    world: ProjectionPlaneMutationContext,
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:963:    const refLineElement = world.getLine2D(referenceLineId);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1004:    world: ProjectionPlaneMutationContext,
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1012:    const refLineElement = world.getLine2D(referenceLineId);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1023:    const primaryGuide = world.getLine2D(primaryGuideId);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1067:    world: ProjectionPlaneMutationContext,
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1075:    const primaryPlane = world.getPlaneForElement(primaryIntersectionId);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1130:    world: ProjectionPlaneMutationContext,
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1170:    world: ProjectionPlaneMutationContext,
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1215:  abstract realize2D(context: ProjectionPlaneRealizationContext): ProjectionPlaneRealization2D;
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1223:  abstract realize3D(context: ProjectionPlaneRealizationContext): ProjectionPlaneRealization3D;
+frontend/src/domain/world/World.ts:23: *    const point = world.getPoint2D(pointId);        // Returns Point2D | undefined
+frontend/src/domain/world/World.ts:24: *    const line = world.getLine2D(lineId);           // Returns Line2D | undefined
+frontend/src/domain/world/World.ts:25: *    const circle = world.getCircle2D(circleId);     // Returns Circle2D | undefined
+frontend/src/domain/world/World.ts:61: *    const originH = horizontalPlane.getPoint2DByLabel('O_H');  // Phase 53
+frontend/src/domain/world/World.ts:67: * Previous versions had convenience methods like `world.getPoint2DRealization(id)` that
+frontend/src/domain/world/World.ts:494:  getPlaneForElement(elementId: string): ProjectionPlane | undefined {
+frontend/src/domain/world/World.ts:508:  private getPoint2DFromPlanes(pointId: string): Point2D | undefined {
+frontend/src/domain/world/World.ts:528:    const point = this.getPoint2DFromPlanes(pointId);
+frontend/src/domain/world/World.ts:559:   * Consistent pattern with getPoint2DRealization()
+frontend/src/domain/world/World.ts:693:    const plane = this.getPlaneForElement(circleId);
+frontend/src/domain/world/World.ts:791:  getPoint2D(id: string): Point2D | undefined {
+frontend/src/domain/world/World.ts:808:  getLine2D(id: string): Line2D | undefined {
+frontend/src/domain/world/World.ts:825:  getCircle2D(id: string): Circle2D | undefined {
+frontend/src/domain/world/World.ts:946:    // Phase 76: getLine2D throws for invalid IDs (fail-fast)
+frontend/src/domain/world/World.ts:947:    const halfHingeLine = this.getLine2D(halfHingeLineId);
+frontend/src/domain/world/World.ts:971:  getSiblingPlaneForIntersection(intersectionPoint: Point2D): string | undefined {
+frontend/src/domain/world/World.ts:991:    const element1 = element1Id ? this.getLine2D(element1Id) : undefined;
+frontend/src/domain/world/World.ts:992:    const element2 = element2Id ? this.getLine2D(element2Id) : undefined;
+frontend/src/domain/world/World.ts:1010:      console.warn(`[World.getSiblingPlaneForIntersection] HingeLine ${halfHingeLine.hingeLineId} not found`);

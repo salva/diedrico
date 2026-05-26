@@ -1,0 +1,80 @@
+frontend/tests/integration/factories/AllFactories.spec.ts:6: * - DeletionSequenceFactory: Cascade deletion with dependencies
+frontend/tests/integration/factories/AllFactories.spec.ts:133:  describe.skip('DeletionSequenceFactory Integration - SKIPPED: Cascade deletion broken', () => {
+frontend/tests/integration/factories/AllFactories.spec.ts:134:    // NOTE: Cascade deletion not working - dependency service doesn't find dependents
+frontend/tests/integration/factories/AllFactories.spec.ts:222:    it('should handle multiple element deletion in one command', () => {
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:4: * These tests verify that deletion operations are correctly preserved 
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:10: * - Verify deletions are preserved
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:13: * Reference: Phase 40 T443 - Edge case testing for deletions
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:40:   * Test deletion is preserved through serialization
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:42:  it('should preserve deletion through serialization', () => {
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:59:    // Verify deletion
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:71:    // Verify deletion is preserved
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:83:   * Test multiple deletions in sequence
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:85:  it('should handle multiple deletions in sequence', () => {
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:121:    // Undo last deletion
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:125:    // Undo first deletion
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:131:   * Test undo/redo cycles with deletions
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:133:  it('should handle deletion through undo/redo cycles', () => {
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:154:    // Undo deletion
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:158:    // Redo deletion
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:4: * Covers cascade deletion behavior using Wave 005's explicit ownership model:
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:215:    it('should support undo and redo for dependency-driven cascade deletion', () => {
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:255:    it('should dispatch segment deletion to RemoveSegment2D without deleting defining points', () => {
+frontend/tests/unit/commands/removeElementOps.spec.ts:7: * - Integration with Command composition for cascade deletion
+frontend/tests/unit/commands/removeElementOps.spec.ts:15:import { RemoveActionFromProcessTreeOp } from '@/commands/operations/processTree/ProcessTreeOperations';
+frontend/tests/unit/commands/removeElementOps.spec.ts:133:  describe('Command composition for cascade deletion', () => {
+frontend/tests/unit/commands/removeElementOps.spec.ts:154:      deleteCmd.addAndExecute(new RemoveActionFromProcessTreeOp(actionNode3));
+frontend/tests/unit/commands/removeElementOps.spec.ts:158:      deleteCmd.addAndExecute(new RemoveActionFromProcessTreeOp(actionNode1));
+frontend/tests/unit/commands/removeElementOps.spec.ts:169:    it('should support undo for cascade deletion', () => {
+frontend/tests/unit/commands/removeElementOps.spec.ts:183:      deleteCmd.addAndExecute(new RemoveActionFromProcessTreeOp(actionNode3));
+frontend/tests/unit/commands/removeElementOps.spec.ts:185:      deleteCmd.addAndExecute(new RemoveActionFromProcessTreeOp(actionNode1));
+frontend/tests/unit/commands/removeElementOps.spec.ts:213:      deleteCmd.addAndExecute(new RemoveActionFromProcessTreeOp(actionNode3));
+frontend/tests/unit/commands/removeElementOps.spec.ts:215:      deleteCmd.addAndExecute(new RemoveActionFromProcessTreeOp(actionNode1));
+frontend/tests/unit/commands/removeElementOps.spec.ts:230:  describe('Multiple elements deletion', () => {
+frontend/tests/unit/commands/removeElementOps.spec.ts:243:      deleteCmd.addAndExecute(new RemoveActionFromProcessTreeOp(actionNode1));
+frontend/tests/unit/commands/removeElementOps.spec.ts:245:      deleteCmd.addAndExecute(new RemoveActionFromProcessTreeOp(actionNode2));
+frontend/tests/unit/components/panelToolbarBehavior.spec.ts:197:  it('preserves toolbar presentation behavior for tool selection, view toggles, and Alt+E deletion', async () => {
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:35:import { RemoveActionFromProcessTreeOp, RemoveActionGroupFromProcessTreeOp, RemoveSubprocessFromProcessTreeOp } from '@/commands/operations/processTree/ProcessTreeOperations';
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:217:    const op = new RemoveActionFromProcessTreeOp('action_123');
+frontend/tests/unit/dependencyGraph.spec.ts:26:    it('should add action nodes', () => {
+frontend/src/commands/factories/README.md:14:- `DeletionSequenceFactory` - Handles cascade deletion with topological sorting
+frontend/src/commands/factories/README.md:24:3. **Pattern is domain-specific** (guides, intersections, deletion, not generic "create element")
+frontend/src/commands/factories/README.md:200:**Purpose**: Handle cascade deletion with topological sorting
+frontend/src/commands/factories/README.md:203:1. Get deletion order (dependents first, roots last)
+frontend/src/commands/factories/DeletionSequenceFactory.ts:2: * DeletionSequenceFactory - Factory for cascade deletion sequences
+frontend/src/commands/factories/DeletionSequenceFactory.ts:4: * Encapsulates the complex cascade deletion logic:
+frontend/src/commands/factories/DeletionSequenceFactory.ts:6: * 2. Sort elements in proper deletion order (reverse topological)
+frontend/src/commands/factories/DeletionSequenceFactory.ts:30:import { RemoveActionFromProcessTreeOp } from '@/commands/operations/processTree/ProcessTreeOperations';
+frontend/src/commands/factories/DeletionSequenceFactory.ts:35: * DeletionSequenceFactory - Factory for cascade deletion sequences
+frontend/src/commands/factories/DeletionSequenceFactory.ts:37: * Encapsulates multi-element deletion logic extracted from App.vue lines 660-760.
+frontend/src/commands/factories/DeletionSequenceFactory.ts:42:   * Create cascade deletion sequence for selected elements
+frontend/src/commands/factories/DeletionSequenceFactory.ts:46:   * 2. Sort elements in deletion order (dependents first, roots last)
+frontend/src/commands/factories/DeletionSequenceFactory.ts:48:   * 4. Add RemoveActionFromProcessTreeOp for each producing action
+frontend/src/commands/factories/DeletionSequenceFactory.ts:59:    // Step 1: Compute cascade and get elements in proper deletion order
+frontend/src/commands/factories/DeletionSequenceFactory.ts:65:    console.log('[DeletionSequenceFactory] Cascade deletion:', {
+frontend/src/commands/factories/DeletionSequenceFactory.ts:69:      order: 'dependents-first (proper deletion order)'
+frontend/src/commands/factories/DeletionSequenceFactory.ts:137:      cmd.addAndExecute(new RemoveActionFromProcessTreeOp(actionId));
+frontend/src/commands/operations/processTree/ProcessTreeOperations.ts:16: * RemoveActionFromProcessTreeOp - Remove an action from the construction history
+frontend/src/commands/operations/processTree/ProcessTreeOperations.ts:23:export class RemoveActionFromProcessTreeOp implements IOperation {
+frontend/src/commands/operations/processTree/README.md:8:- `RemoveActionFromProcessTreeOp` - Remove action from history
+frontend/src/commands/operations/processTree/registerProcessTreeOperationDescriptors.ts:11:import { RemoveActionFromProcessTreeOp, RemoveActionGroupFromProcessTreeOp, RemoveSubprocessFromProcessTreeOp } from './ProcessTreeOperations';
+frontend/src/commands/operations/processTree/registerProcessTreeOperationDescriptors.ts:32:  registry.register('RemoveActionFromProcessTree', d => new RemoveActionFromProcessTreeOp(s(d, 'actionId')));
+frontend/src/commands/operations/world/RemoveElementOps.ts:363: * Handles sibling guide deletion cascade:
+frontend/src/commands/operations/world/RemoveElementOps.ts:367: * Architecture: Sibling objects must be deleted in pairs, with deletion always
+frontend/src/commands/operations/world/RemoveElementOps.ts:419:      // This is a primary Guide2D - proceed with deletion
+frontend/src/components/panels/ProcessTreeNode.vue:131:      class="action-node"
+frontend/src/components/panels/ProcessTreeNode.vue:278:// Description parts for action nodes
+frontend/src/components/panels/ProcessTreeNode.vue:367:  event.stopPropagation(); // Prevent action node selection
+frontend/src/components/panels/ProcessTreeNode.vue:539:/* Specific overrides for action node to ensure right alignment */
+frontend/src/components/panels/ProcessTreeNode.vue:540:.action-node .node-controls,
+frontend/src/components/panels/ProcessTreeNode.vue:690:.action-node {
+frontend/src/components/panels/ProcessTreeNode.vue:699:.action-node:hover {
+frontend/src/components/panels/ProcessTreeNode.vue:703:.action-node.node-selected {
+frontend/src/components/panels/ProcessTreeNode.vue:709:.action-node.action-infeasible {
+frontend/src/components/panels/ProcessTreeNode.vue:713:.action-node.action-related {
+frontend/src/components/panels/ProcessTreeNode.vue:719:.action-node.action-related:hover {
+frontend/src/components/toolbars/StatusBar.vue:21:      <!-- Cascade deletion preview -->
+frontend/src/domain/world/Guide.ts:170: * - Are deleted together (cascade deletion via dependency system)
+frontend/src/domain/world/DependencyService.ts:217:   * Get elements to delete in proper order for cascade deletion
+frontend/src/domain/world/DependencyService.ts:220:   * CRITICAL for cascade deletion: Elements MUST be deleted in this order to maintain
+frontend/src/domain/world/DependencyService.ts:221:   * referential integrity during the deletion process.

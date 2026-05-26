@@ -19,7 +19,8 @@
 import { HalfHingeLine2D } from '../HingeLine';
 import { BrokenHingeLine } from '../BrokenHingeLine';
 import { HalfHingeLineRealization2D } from '../HalfHingeLineRealization2D';
-import type { World } from '../World';
+import { AuxiliaryProjectionPlane } from '../projectionPlane/AuxiliaryProjectionPlane';
+import type { ProjectionElementRealizationContext } from '../projectionPlane/ProjectionPlaneContext';
 
 /**
  * BrokenHalfHingeLine2D - Broken hinge line projection on one plane
@@ -88,7 +89,7 @@ export class BrokenHalfHingeLine2D extends HalfHingeLine2D {
    *   T2/T2' local coords → paper coords (via source planeToPaper) → this plane local coords (via paperToPlane)
    * This avoids the 3D round-trip which incorrectly maps to the P_A1 origin.
    */
-  realize2D(world: World): HalfHingeLineRealization2D {
+  realize2D(world: ProjectionElementRealizationContext): HalfHingeLineRealization2D {
     // Get the BrokenHingeLine parent
     const bhl = world.getHingeLineById(this.hingeLineId);
     if (!(bhl instanceof BrokenHingeLine)) {
@@ -98,7 +99,7 @@ export class BrokenHalfHingeLine2D extends HalfHingeLine2D {
 
     // Get auxiliary plane to find the correct T2/T2' trace
     const auxPlane = world.getProjectionPlaneById(bhl.auxiliaryPlaneId);
-    if (!auxPlane || auxPlane.type !== 'auxiliary') {
+    if (!(auxPlane instanceof AuxiliaryProjectionPlane)) {
       console.error(`[BHHL ${this.label}] Auxiliary plane not found: ${bhl.auxiliaryPlaneId}`);
       return HalfHingeLineRealization2D.createInfeasible();
     }
@@ -108,8 +109,8 @@ export class BrokenHalfHingeLine2D extends HalfHingeLine2D {
     // - BHHL on plane2 (other plane): uses T2 from the other plane
     const isOnAuxiliaryPlane = this.planeId === bhl.plane1Id;
     const t2TraceId = isOnAuxiliaryPlane
-      ? (auxPlane as any).t2PrimeLineId   // T2' on hinge plane
-      : (auxPlane as any).t2OtherTraceId; // T2 on other plane
+      ? auxPlane.t2PrimeLineId   // T2' on hinge plane
+      : auxPlane.t2OtherTraceId; // T2 on other plane
     const traceName = isOnAuxiliaryPlane ? "T2'" : 'T2';
 
     if (!t2TraceId) {
@@ -242,7 +243,7 @@ export class BrokenHalfHingeLine2D extends HalfHingeLine2D {
    * @returns Sibling info or undefined if not a BHHL
    */
   static getSiblingInfo(
-    world: World,
+    world: ProjectionElementRealizationContext,
     bhhlId: string,
     currentPlaneId: string
   ): { siblingPlaneId: string; siblingHalfHingeLineId: string } | undefined {

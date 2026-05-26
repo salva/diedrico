@@ -3,7 +3,7 @@ import { Matrix4x3, Matrix3x4 } from '@/utils/threeUtils';
 import { buildElementId } from '../ElementId';
 import { Element } from '../Element';
 import type { Point2D, Point2DRealization2D } from '../Point';
-import { FreePoint2D, IntersectionPoint2D, Point2DLineLineIntersection, Point2DLineCircleIntersection, Point2DCircleCircleIntersection, SiblingIntersectionPoint2D } from '../Point';
+import { FreePoint2D, Point2DLineLineIntersection, Point2DLineCircleIntersection, Point2DCircleCircleIntersection, SiblingIntersectionPoint2D } from '../Point';
 import type { Line2D, Line2DRealization2D } from '../Line';
 import { Line2DByTwoPoints, Line2DParallel, Line2DPerpendicularToLine, Line2DTangentToCircleThroughPoint, Line2DTangentToCircleParallelToLine } from '../Line';
 import type { Circle2D, Circle2DRealization2D } from '../Circle';
@@ -425,6 +425,12 @@ export abstract class ProjectionPlane extends Element {
     // Validate lines exist
     const l1 = this.getLine(line1Id) || world.getLine2D(line1Id);
     const l2 = this.getLine(line2Id) || world.getLine2D(line2Id);
+    if (!l1) {
+      throw new Error(`Invalid line1Id: ${line1Id}. Line does not exist.`);
+    }
+    if (!l2) {
+      throw new Error(`Invalid line2Id: ${line2Id}. Line does not exist.`);
+    }
     const line1 = l1.realize2D(world);
     const line2 = l2.realize2D(world);
     
@@ -472,6 +478,12 @@ export abstract class ProjectionPlane extends Element {
     // Validate elements exist
     const lineElement = this.getLine(lineId);
     const circleElement = this.getCircle(circleId);
+    if (!lineElement) {
+      throw new Error(`Invalid lineId: ${lineId}. Line does not exist.`);
+    }
+    if (!circleElement) {
+      throw new Error(`Invalid circleId: ${circleId}. Circle does not exist.`);
+    }
     const line = lineElement.realize2D(world);
     const circle = circleElement.realize2D(world);
     
@@ -524,6 +536,12 @@ export abstract class ProjectionPlane extends Element {
     // Validate circles exist
     const circle1Element = this.getCircle(circle1Id);
     const circle2Element = this.getCircle(circle2Id);
+    if (!circle1Element) {
+      throw new Error(`Invalid circle1Id: ${circle1Id}. Circle does not exist.`);
+    }
+    if (!circle2Element) {
+      throw new Error(`Invalid circle2Id: ${circle2Id}. Circle does not exist.`);
+    }
     const circle1 = circle1Element.realize2D(world);
     const circle2 = circle2Element.realize2D(world);
     
@@ -644,6 +662,9 @@ export abstract class ProjectionPlane extends Element {
 
     // Validate reference line exists (could be on any plane)
     const refLineElement = world.getLine2D(referenceLineId);
+    if (!refLineElement) {
+      throw new Error(`Invalid referenceLineId: ${referenceLineId}. Line does not exist.`);
+    }
     const referenceLine = refLineElement.realize2D(world);
     if (!referenceLine) {
       throw new Error(`Invalid referenceLineId: ${referenceLineId}. Line does not exist.`);
@@ -691,6 +712,9 @@ export abstract class ProjectionPlane extends Element {
 
     // Validate reference line exists (could be on any plane)
     const refLineElement = world.getLine2D(referenceLineId);
+    if (!refLineElement) {
+      throw new Error(`Invalid referenceLineId: ${referenceLineId}. Line does not exist.`);
+    }
     const referenceLine = refLineElement.realize2D(world);
     if (!referenceLine) {
       throw new Error(`Invalid referenceLineId: ${referenceLineId}. Line does not exist.`);
@@ -802,6 +826,9 @@ export abstract class ProjectionPlane extends Element {
 
     // Validate reference line exists (could be on any plane)
     const refLineElement = world.getLine2D(referenceLineId);
+    if (!refLineElement) {
+      throw new Error(`Invalid referenceLineId: ${referenceLineId}. Line does not exist.`);
+    }
     const referenceLine = refLineElement.realize2D(world);
     if (!referenceLine) {
       throw new Error(`Invalid referenceLineId: ${referenceLineId}. Line does not exist.`);
@@ -1107,7 +1134,7 @@ export abstract class ProjectionPlane extends Element {
     );
     
     // Link bidirectionally
-    (primaryPoint as any).siblingPointId = siblingPoint.id;
+    primaryPoint.siblingPointId = siblingPoint.id;
     
     this.addPoint(siblingPoint, world);
     return siblingPoint;

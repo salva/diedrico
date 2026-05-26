@@ -1,4 +1,4 @@
-import { World } from './World';
+import type { ProjectionElementRealizationContext } from './projectionPlane/ProjectionPlaneContext';
 import { Point2DRealization2D } from './Point';
 import { Line2DRealization2D } from './Line';
 import { Circle2DRealization2D } from './Circle';
@@ -105,7 +105,7 @@ export abstract class Element2D extends Element {
    * @param world World instance to query parent element realizations
    * @returns Element realization or null if computation fails
    */
-  abstract realize2D(world: World): Element2DRealization | null;
+  abstract realize2D(context: ProjectionElementRealizationContext): Element2DRealization | null;
 }
 
 /**

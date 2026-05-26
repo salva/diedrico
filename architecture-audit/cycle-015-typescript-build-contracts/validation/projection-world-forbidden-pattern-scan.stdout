@@ -1,0 +1,17 @@
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:111:      ? (auxPlane as any).t2PrimeLineId   // T2' on hinge plane
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:112:      : (auxPlane as any).t2OtherTraceId; // T2 on other plane
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:249:   * @param world World context for querying dependencies
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:273:   * @param world World context for querying dependencies
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:297:   * @param world World context for querying dependencies
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:410:   * @param world World context for validation and ID generation
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:463:   * @param world World context for validation and ID generation
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:521:   * @param world World context for validation and ID generation
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:579:   * @param world World context for validation and ID generation
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:642:   * @param world World context for validation and ID generation
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:745:   * @param world World context for validation and ID generation
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:806:   * @param world World context for validation and ID generation
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:868:   * @param world World context for validation and ID generation
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:918:   * @param world World context for validation and ID generation
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:968:   * @param world World context for validation and ID generation
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1087:   * @param world World context for validation and ID generation
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts:109:   * Unlike base planes, this requires World context to resolve trace dependencies.

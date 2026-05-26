@@ -12,6 +12,7 @@
  * 
  */
 
+import type { ProjectionElementRealizationContext } from './projectionPlane/ProjectionPlaneContext';
 import { Vector3 } from 'three';
 import { Element2DRealization2D } from './Element2DRealization2D';
 import { Element2D } from './Element2D';
@@ -85,7 +86,7 @@ export abstract class Circle2D extends Element2D {
    * Calculate 2D realization - compute center and radius
    * @param world World instance to access element realizations
    */
-  abstract realize2D(world: import('./World').World): Circle2DRealization2D | null;
+  abstract realize2D(world: ProjectionElementRealizationContext): Circle2DRealization2D | null;
 }
 
 /**
@@ -132,9 +133,12 @@ export class Circle2DByCenterAndPoint extends Circle2D {
    * 
    * Phase 76: Always returns realization (never null). Uses feasible flag for geometric failures.
    */
-  realize2D(world: import('./World').World): Circle2DRealization2D {
+  realize2D(world: ProjectionElementRealizationContext): Circle2DRealization2D {
     // Get both point realizations from world
     const plane = world.getProjectionPlaneById(this.planeId);
+    if (!plane) {
+      throw new Error(`[Circle2DByCenterAndPoint] Plane ${this.planeId} not found for circle ${this.id}`);
+    }
     const centerPoint = plane.getPoint(this.centerPointId);
     const circumferencePoint = plane.getPoint(this.circumferencePointId);
     
@@ -228,9 +232,12 @@ export class Circle2DByThreePoints extends Circle2D {
    * 
    * Phase 76: Always returns realization (never null). Uses feasible flag for geometric failures.
    */
-  realize2D(world: import('./World').World): Circle2DRealization2D {
+  realize2D(world: ProjectionElementRealizationContext): Circle2DRealization2D {
     // Get all three point realizations from world
     const plane = world.getProjectionPlaneById(this.planeId);
+    if (!plane) {
+      throw new Error(`[Circle2DByThreePoints] Plane ${this.planeId} not found for circle ${this.id}`);
+    }
     const point1 = plane.getPoint(this.point1Id);
     const point2 = plane.getPoint(this.point2Id);
     const point3 = plane.getPoint(this.point3Id);

@@ -1,0 +1,62 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run --run tests/unit/domain/guide.spec.ts tests/unit/commands/factories/GuideSequenceFactory.spec.ts tests/unit/utils/projectionPlaneUtils.spec.ts tests/unit/projectionPlaneMatrix.test.ts tests/unit/utils/guidePerpendicularPlane.spec.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/utils/guidePerpendicularPlane.spec.ts  (20 tests) 8ms
+ ✓ tests/unit/projectionPlaneMatrix.test.ts  (5 tests) 5ms
+ ✓ tests/unit/utils/projectionPlaneUtils.spec.ts  (19 tests | 11 skipped) 7ms
+ ✓ tests/unit/commands/factories/GuideSequenceFactory.spec.ts  (7 tests) 17ms
+stdout | tests/unit/commands/factories/GuideSequenceFactory.spec.ts > GuideSequenceFactory > createGuideWithSibling > should create single operation for non-HHL reference line
+[GuideSequenceFactory] createGuideWithSibling called: plane=projPlane3, refLine=projPlane3/line2d12, point=projPlane3/point2d13
+[GuideSequenceFactory] Primary guide created: projPlane3/guide2d14
+[GuideSequenceFactory] Getting sibling plane info...
+[GuideSequenceFactory] No sibling info - reference line is not a HalfHingeLine or BrokenHalfHingeLine2D
+
+stdout | tests/unit/commands/factories/GuideSequenceFactory.spec.ts > GuideSequenceFactory > createGuideWithSibling > should create two operations for HHL reference line
+[GuideSequenceFactory] createGuideWithSibling called: plane=projPlane3, refLine=projPlane3/line2d8, point=projPlane3/point2d10
+[GuideSequenceFactory] Primary guide created: projPlane3/guide2d11
+[GuideSequenceFactory] Getting sibling plane info...
+[GuideSequenceFactory] Sibling plane: projPlane4, HHL: projPlane4/line2d9
+[GuideSequenceFactory] Created sibling guide projPlane4/guide2d12 in plane projPlane4
+
+stdout | tests/unit/commands/factories/GuideSequenceFactory.spec.ts > GuideSequenceFactory > createGuideWithSibling > should handle HHL with no sibling info available gracefully
+[GuideSequenceFactory] createGuideWithSibling called: plane=projPlane3, refLine=projPlane3/line2d12, point=projPlane3/point2d13
+[GuideSequenceFactory] Primary guide created: projPlane3/guide2d14
+[GuideSequenceFactory] Getting sibling plane info...
+[GuideSequenceFactory] No sibling info - reference line is not a HalfHingeLine or BrokenHalfHingeLine2D
+
+stdout | tests/unit/commands/factories/GuideSequenceFactory.spec.ts > GuideSequenceFactory > createGuideWithSibling > should handle invalid reference line ID gracefully
+[GuideSequenceFactory] createGuideWithSibling called: plane=projPlane3, refLine=invalid_line_id, point=projPlane3/point2d10
+
+stdout | tests/unit/commands/factories/GuideSequenceFactory.spec.ts > GuideSequenceFactory > createGuideWithSibling > should handle invalid through point ID gracefully
+[GuideSequenceFactory] createGuideWithSibling called: plane=projPlane3, refLine=projPlane3/line2d12, point=invalid_point_id
+
+stdout | tests/unit/commands/factories/GuideSequenceFactory.spec.ts > GuideSequenceFactory > createGuideWithSibling > should work with command commit and verify state
+[GuideSequenceFactory] createGuideWithSibling called: plane=projPlane3, refLine=projPlane3/line2d8, point=projPlane3/point2d10
+[GuideSequenceFactory] Primary guide created: projPlane3/guide2d11
+[GuideSequenceFactory] Getting sibling plane info...
+[GuideSequenceFactory] Sibling plane: projPlane4, HHL: projPlane4/line2d9
+[GuideSequenceFactory] Created sibling guide projPlane4/guide2d12 in plane projPlane4
+
+stdout | tests/unit/commands/factories/GuideSequenceFactory.spec.ts > GuideSequenceFactory > createGuideWithSibling > should handle multiple sequential guide creations
+[GuideSequenceFactory] createGuideWithSibling called: plane=projPlane3, refLine=projPlane3/line2d8, point=projPlane3/point2d10
+[GuideSequenceFactory] Primary guide created: projPlane3/guide2d11
+[GuideSequenceFactory] Getting sibling plane info...
+[GuideSequenceFactory] Sibling plane: projPlane4, HHL: projPlane4/line2d9
+[GuideSequenceFactory] Created sibling guide projPlane4/guide2d12 in plane projPlane4
+[GuideSequenceFactory] createGuideWithSibling called: plane=projPlane3, refLine=projPlane3/line2d8, point=projPlane3/point2d13
+[GuideSequenceFactory] Primary guide created: projPlane3/guide2d14
+[GuideSequenceFactory] Getting sibling plane info...
+[GuideSequenceFactory] Sibling plane: projPlane4, HHL: projPlane4/line2d9
+[GuideSequenceFactory] Created sibling guide projPlane4/guide2d15 in plane projPlane4
+
+ ✓ tests/unit/domain/guide.spec.ts  (13 tests) 17ms
+
+ Test Files  5 passed (5)
+      Tests  53 passed | 11 todo (64)
+   Start at  17:14:56
+   Duration  1.60s (transform 893ms, setup 0ms, collect 1.70s, tests 54ms, environment 3.17s, prepare 604ms)
+

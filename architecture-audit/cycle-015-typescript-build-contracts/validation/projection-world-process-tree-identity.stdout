@@ -1,0 +1,7 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run --run tests/unit/commands/deletion-sequence-regression.spec.ts tests/unit/domain/processTree.spec.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
