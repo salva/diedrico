@@ -1,0 +1,2 @@
+started preview pid=485458 command=npm run dev --workspace=frontend -- --host 0.0.0.0
+probe attempt=2 status=200 body_prefix='<!doctype html>\n<html lang="en">\n  <head>\n    <script type="module" src="/@vite/'

@@ -1,0 +1,32 @@
+
+> diedrico@0.1.0 test:e2e
+> npm run test:e2e --workspace=frontend
+
+
+> diedrico-frontend@0.1.0 test:e2e
+> playwright test
+
+[1A[2K[WebServer] 
+[WebServer] > diedrico-frontend@0.1.0 dev
+[WebServer] > vite
+[WebServer] 
+
+[1A[2K[WebServer] 
+[WebServer]   [32m[1mVITE[22m v5.4.21[39m  [2mready in [0m[1m387[22m[2m[0m ms[22m
+[WebServer] 
+
+[1A[2K[WebServer]   [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5173[22m/[39m
+
+[1A[2K[WebServer] [2m  [32m➜[39m  [1mNetwork[22m[2m: use [22m[1m--host[22m[2m to expose[22m
+
+
+Running 7 tests using 4 workers
+
+[1A[2K[1/7] [chromium] › tests/e2e/current-ui-contract.spec.ts:40:3 › Current Diedrico UI contract › plane selector exposes current projection planes and switches active plane
+[1A[2K[2/7] [chromium] › tests/e2e/current-ui-contract.spec.ts:57:3 › Current Diedrico UI contract › updates 3D coordinate status through the current canvas mouse contract
+[1A[2K[3/7] [chromium] › tests/e2e/current-ui-contract.spec.ts:12:3 › Current Diedrico UI contract › renders the current app shell, canvas, toolbar, status bar, and plane selector
+[1A[2K[4/7] [chromium] › tests/e2e/current-ui-contract.spec.ts:26:3 › Current Diedrico UI contract › creates a free point through stable tool and canvas test IDs
+[1A[2K[5/7] [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:9:3 › Keyboard shortcuts › tool shortcut keys activate current tool buttons
+[1A[2K[6/7] [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:24:3 › Keyboard shortcuts › Escape returns to select tool after starting a point workflow
+[1A[2K[7/7] [chromium] › tests/e2e/wave010-app-shell-project-flow.spec.ts:4:3 › Wave 010 app-shell project boundary › starts without Google credentials and opens the app-shell project chooser without backend project API calls
+[1A[2K  7 passed (11.4s)

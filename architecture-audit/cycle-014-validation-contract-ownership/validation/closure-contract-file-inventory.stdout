@@ -1,0 +1,3 @@
+frontend/tests/e2e/keyboard-shortcuts.spec.ts: test declarations=2
+frontend/tests/e2e/current-ui-contract.spec.ts: test declarations=4
+frontend/tests/integration/guide-creation.test.ts: test declarations=6

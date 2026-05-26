@@ -1,0 +1,28 @@
+preview processes with 0.0.0.0 host:
+pid=485469 cmd=sh -c vite --host 0.0.0.0
+pid=485470 cmd=node /work/diedrico/frontend/node_modules/.bin/vite --host 0.0.0.0
+pid=485901 cmd=/bin/sh -c python3 - <<'PY'
+from pathlib import Path
+import urllib.request
+matches=[]
+for pid in Path('/proc').iterdir():
+    if not pid.name.isdigit():
+        continue
+    try:
+        cmd=(pid/'cmdline').read_bytes().decode('utf-8','ignore').replace('\x00',' ').strip()
+    except Exception:
+        continue
+    if 'vite' in cmd and ('--host 0.0.0.0' in cmd or '0.0.0.0' in cmd):
+        matches.append((pid.name, cmd))
+print('preview processes with 0.0.0.0 host:')
+for pid, cmd in matches:
+    print(f'pid={pid} cmd={cmd}')
+if not matches:
+    raise SystemExit('no vite --host 0.0.0.0 process found')
+with urllib.request.urlopen('http://127.0.0.1:5173/', timeout=5) as r:
+    body=r.read(160).decode('utf-8','ignore')
+    print(f'probe status={r.status}')
+    print(f'body_prefix={body!r}')
+PY
+probe status=200
+body_prefix='<!doctype html>\n<html lang="en">\n  <head>\n    <script type="module" src="/@vite/client"></script>\n\n    <meta charset="UTF-8" />\n    <link rel="icon" type="image'
