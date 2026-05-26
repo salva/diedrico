@@ -125,6 +125,19 @@ Delete or mark obsolete only references that describe backend project API/file s
 - `npm run test:e2e` from `frontend/`, because project open/save UX is touched by deletion of obsolete project surfaces.
 - Live preview refresh on `0.0.0.0`, reachability probe, and live smoke for app load plus project/startup dialog affordance. If no Google credentials are configured, smoke should verify no-credentials local startup and absence of backend fetch errors.
 
+### Required validation for the shared typed backend-contract alternative
+
+If review selects the alternative that retains backend project capability through a shared typed contract, implementation must add and pass explicit focused backend contract/API validation. This is part of Wave 010, not deferrable to Wave 011:
+
+- Shared contract tests proving the single exported `ProjectData`/metadata/serialized-command schema and runtime validators are consumed by both frontend and backend, with no duplicate backend `ProjectDTO` schema or frontend-only contract copy.
+- Backend request/response validation tests covering valid command-stream project payloads and invalid payloads: unsupported `schemaVersion`, missing `nextElementId`, malformed command descriptors, invalid metadata, unknown stale DTO fields, and corrupt stored JSON.
+- Backend API integration tests for every retained project endpoint (`POST`, `GET`, update, list, delete) using the shared contract; each test must assert the HTTP response body is the shared contract/metadata shape and not the deleted `elements2D`/`elements3D`/`dependencyGraph`/`planes`/`hingeLines`/`view2D`/`processTree` DTO shape.
+- Backend storage adapter tests proving persisted JSON round-trips through the shared validator on both read and write, rejects/quarantines obsolete files, and never casts arbitrary JSON to TypeScript interfaces.
+- Frontend app-shell adapter tests, if backend storage becomes user-facing, proving project create/open/save/autosave are routed through `ProjectPersistencePort`/an explicit backend adapter and that Vue components do not import backend implementation files.
+- Required commands for this retained-backend path: focused backend Vitest for contract/API/storage, backend full `npm run test`, backend `npm run build`, shared-package type/build tests if a package is introduced, root `npm run test`/`npm run build` including the chosen workspace set, and the frontend focused ProjectService/app-shell tests listed above.
+
+A shared-contract/backend-retained implementation is incomplete unless these backend API and storage validation checks exist and pass, even if the import leak is removed.
+
 ### Known pre-existing validation debt
 
 Use Wave 009 classifications for failures unrelated to Wave 010: missing `eslint`, Node 24/`vue-tsc` incompatibility, broad frontend/root Vitest debt, TypeScript no-emit debt, and corrupted e2e specs. Focused import-boundary/project-contract tests must pass; failures there are Wave 010-attributable.

@@ -101,9 +101,22 @@ Do not broaden into Wave 013 docs reconciliation beyond these direct stale backe
 - Frontend `npm run test:e2e`, because persistence/open-project behavior is user-facing.
 - Live preview refresh: `npm run dev -- --host 0.0.0.0` from `frontend/`, reachability probe, and a live smoke covering app load plus startup/open-project affordance. If Google credentials are absent, smoke should verify local/no-credentials startup remains usable and no backend fetch errors are emitted.
 
+### Required validation if implementation retains backend or creates a shared contract
+
+The preferred direct stance is deletion. If implementation instead keeps any backend project capability, or introduces a shared `ProjectData` contract package, the following focused backend contract/API validation is required and must pass; it is not optional Wave 011 hardening:
+
+- Backend model/contract tests proving the backend accepts, persists, returns, and rejects the exact shared command-stream `ProjectData` schema, including `schemaVersion`, `nextElementId`, serialized command descriptors, metadata timestamps, and malformed/unsupported-schema rejection cases.
+- Backend API integration tests for `POST`, `GET`, `PUT/PATCH`, list, and delete project endpoints using the shared contract only; tests must prove no stale `ProjectDTO` fields such as `elements2D`, `elements3D`, `dependencyGraph`, `planes`, `hingeLines`, `view2D`, `processTree`, or `commandHistory` survive as accepted backend contract fields.
+- Backend storage round-trip tests proving stored JSON is runtime-validated on read and write before it is exposed through the API, with corrupt or obsolete files rejected/quarantined rather than cast to TypeScript types.
+- Frontend adapter tests, if a backend adapter is exposed to the app shell, proving create/open/save/autosave go through an app-shell port adapter and never through Vue component imports or direct backend-source type imports.
+- Shared-package build/type tests, if a shared package is added, proving both frontend and backend import the same contract and validators from that package with no duplicate project schema definitions.
+- Mandatory commands for the retained-backend path: backend focused Vitest for contract/API/storage, backend full `npm run test`, backend `npm run build`, root test/build commands that include the shared package/backend path as required by the chosen workspace stance, plus the frontend focused persistence/app-shell tests listed above.
+
+A retained-backend/shared-contract implementation that lacks these focused backend API and storage validation checks fails Wave 010 even if frontend deletion/import-boundary checks pass.
+
 ### Known pre-existing failures to classify separately
 
-From Wave 009 validation: missing `eslint`, Node 24/`vue-tsc` incompatibility, unrelated broad frontend Vitest failures, broad TypeScript no-emit debt, and corrupted e2e specs. These must be attempted and logged; a focused Wave 010 failure in import boundaries, app-shell project routing, or ProjectService contract is attributable and blocks completion.
+From Wave 009 validation: missing `eslint`, Node 24/`vue-tsc` incompatibility, unrelated broad frontend Vitest failures, broad TypeScript no-emit debt, and corrupted e2e specs. These must be attempted and logged; a focused Wave 010 failure in import boundaries, app-shell project routing, ProjectService contract, retained-backend API contract, backend storage validation, or shared-contract type/runtime validation is attributable and blocks completion.
 
 ## Risks
 
