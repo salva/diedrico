@@ -85,6 +85,7 @@ onUnmounted(() => {
 }
 
 .three-controls {
+  pointer-events: auto;
   position: absolute;
   top: 10px;
   right: 10px;

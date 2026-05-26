@@ -1,0 +1,33 @@
+
+> diedrico-frontend@0.1.0 build
+> vue-tsc && vite build
+
+src/application/canvasPresentation/CanvasPresentationSelector.ts(37,44): error TS2345: Argument of type 'CanvasWorldReadPort' is not assignable to parameter of type 'CanvasVisibilityWorld'.
+  Property 'getProcessTree' is missing in type 'CanvasWorldReadPort' but required in type 'CanvasVisibilityWorld'.
+src/application/canvasPresentation/CanvasPresentationSelector.ts(38,57): error TS2345: Argument of type 'CanvasWorldReadPort' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  The types returned by 'getAllProjectionPlanes()' are incompatible between these types.
+    Type 'CanvasProjectionPlaneReadPort[]' is not assignable to type 'ProjectionPlane[]'.
+      Type 'CanvasProjectionPlaneReadPort' is missing the following properties from type 'ProjectionPlane': type, name, isActive, isVisible, and 49 more.
+src/application/canvasPresentation/CanvasPresentationSelector.ts(48,43): error TS2345: Argument of type 'CanvasWorldReadPort' is not assignable to parameter of type 'CanvasVisibilityWorld'.
+  Property 'getProcessTree' is missing in type 'CanvasWorldReadPort' but required in type 'CanvasVisibilityWorld'.
+src/application/canvasPresentation/CanvasPresentationSelector.ts(49,55): error TS2345: Argument of type 'CanvasWorldReadPort' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  The types returned by 'getAllProjectionPlanes()' are incompatible between these types.
+    Type 'CanvasProjectionPlaneReadPort[]' is not assignable to type 'ProjectionPlane[]'.
+      Type 'CanvasProjectionPlaneReadPort' is missing the following properties from type 'ProjectionPlane': type, name, isActive, isVisible, and 49 more.
+src/application/canvasPresentation/CanvasPresentationSelector.ts(75,45): error TS2345: Argument of type 'CanvasWorldReadPort' is not assignable to parameter of type 'CanvasVisibilityWorld'.
+  Property 'getProcessTree' is missing in type 'CanvasWorldReadPort' but required in type 'CanvasVisibilityWorld'.
+src/application/canvasPresentation/CanvasPresentationSelector.ts(76,59): error TS2345: Argument of type 'CanvasWorldReadPort' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  The types returned by 'getAllProjectionPlanes()' are incompatible between these types.
+    Type 'CanvasProjectionPlaneReadPort[]' is not assignable to type 'ProjectionPlane[]'.
+      Type 'CanvasProjectionPlaneReadPort' is missing the following properties from type 'ProjectionPlane': type, name, isActive, isVisible, and 49 more.
+src/application/canvasPresentation/CanvasWorldReadPort.ts(24,18): error TS2430: Interface 'CanvasWorldReadPort' incorrectly extends interface 'ProjectionPlaneMutationContext'.
+  The types returned by 'getAllProjectionPlanes()' are incompatible between these types.
+    Type 'CanvasProjectionPlaneReadPort[]' is not assignable to type 'ProjectionPlane[]'.
+      Type 'CanvasProjectionPlaneReadPort' is missing the following properties from type 'ProjectionPlane': type, name, isActive, isVisible, and 49 more.
+src/application/canvasPresentation/CanvasWorldReadPort.ts(34,3): error TS2741: Property 'getHingeLineById' is missing in type '{ getAllProjectionPlanes: () => ProjectionPlane[]; getProjectionPlane2DTransform: (planeId: string) => { planeId: string; planeToPaper: Matrix3; paperToPlane: Matrix3; } | undefined; ... 16 more ...; getSiblingPlaneForIntersection: (point: Point2D) => string | undefined; }' but required in type 'CanvasWorldReadPort'.
+src/application/canvasPresentation/Projected3DCanvasSelector.ts(20,47): error TS2345: Argument of type 'CanvasWorldReadPort' is not assignable to parameter of type 'World'.
+  Type 'CanvasWorldReadPort' is missing the following properties from type 'World': hingeLines, planes3D, projectionPlanes, points3D, and 70 more.
+src/application/canvasPresentation/Projected3DCanvasSelector.ts(37,46): error TS2345: Argument of type 'CanvasWorldReadPort' is not assignable to parameter of type 'World'.
+  Type 'CanvasWorldReadPort' is missing the following properties from type 'World': hingeLines, planes3D, projectionPlanes, points3D, and 70 more.
+src/application/canvasPresentation/Projected3DCanvasSelector.ts(56,49): error TS2345: Argument of type 'CanvasWorldReadPort' is not assignable to parameter of type 'World'.
+  Type 'CanvasWorldReadPort' is missing the following properties from type 'World': hingeLines, planes3D, projectionPlanes, points3D, and 70 more.

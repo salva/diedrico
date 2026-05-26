@@ -1,0 +1,22 @@
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/application/canvasPresentation/canvasPresentationSelector.spec.ts > CanvasPresentationSelector > builds render/query DTOs and grid labels from one world/view snapshot
+TypeError: readPort.getProjectionPlane2DTransform is not a function
+ ❯ CanvasPresentationSelector.select src/application/canvasPresentation/CanvasPresentationSelector.ts:28:34
+     26| 
+     27|     for (const plane of readPort.getAllProjectionPlanes()) {
+     28|       const transform = readPort.getProjectionPlane2DTransform(plane.i…
+       |                                  ^
+     29|       if (transform) planeTransforms.set(plane.id, transform);
+     30|     }
+ ❯ tests/unit/application/canvasPresentation/canvasPresentationSelector.spec.ts:15:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c vitest run tests/unit/application/canvasPresentation/canvasPresentationSelector.spec.ts tests/unit/application/canvasPresentation/canvasWorldReadPort.spec.ts tests/unit/application/canvasPresentation/projected3DCanvasSelector.spec.ts tests/unit/application/canvasPresentation/canvasInteractionQuery.spec.ts

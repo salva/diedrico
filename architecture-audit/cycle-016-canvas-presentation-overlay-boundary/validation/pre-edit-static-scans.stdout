@@ -1,0 +1,371 @@
+## full World canvas APIs
+frontend/src/components/workspace/SvgCanvas.vue:167: * 1. World (domain objects + realizations) 
+frontend/src/components/workspace/SvgCanvas.vue:182:import { World } from '@/domain/world/World';
+frontend/src/components/workspace/SvgCanvas.vue:222:// Track World version changes (World is not reactive by itself)
+frontend/src/components/workspace/SvgCanvas.vue:225:let lastWorldVersion = 0;
+frontend/src/components/workspace/SvgCanvas.vue:227:// Active plane - derived from World (managed by App.vue)
+frontend/src/components/workspace/SvgCanvas.vue:410:// World instance - injected from App.vue
+frontend/src/components/workspace/SvgCanvas.vue:411:const world = inject<World>('world')!;
+frontend/src/components/workspace/SvgCanvas.vue:413:  throw new Error('World not provided');
+frontend/src/components/workspace/SvgCanvas.vue:468:  // World is already initialized by initialization factory in constructor
+frontend/src/components/workspace/SvgCanvas.vue:478:  // Poll World version so UI reacts to domain changes (e.g. active plane switching)
+frontend/src/components/workspace/SvgCanvas.vue:479:  lastWorldVersion = world.getVersion();
+frontend/src/components/workspace/SvgCanvas.vue:480:  worldVersion.value = lastWorldVersion;
+frontend/src/components/workspace/SvgCanvas.vue:483:    if (current !== lastWorldVersion) {
+frontend/src/components/workspace/SvgCanvas.vue:484:      lastWorldVersion = current;
+frontend/src/components/workspace/SvgCanvas.vue:490:  console.log('World initialized');
+frontend/src/components/workspace/SvgCanvas.vue:550:  return canvasPresentationController.buildModel(
+frontend/src/components/workspace/SvgCanvas.vue:732:  // Phase 6.5: Delegate to active tool instead of direct World mutation
+frontend/src/application/canvasPresentation/CanvasPresentationController.ts:1:import type { World } from '@/domain/world/World';
+frontend/src/application/canvasPresentation/CanvasPresentationController.ts:7:  buildModel(world: World, viewport: CanvasViewportModel, state: CanvasPresentationState): CanvasPresentationModel {
+frontend/src/application/canvasPresentation/CanvasPresentationController.ts:8:    return this.selector.select(world, viewport, state);
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:2:import type { World } from '@/domain/world/World';
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:14:  select(world: World, viewport: CanvasViewportModel, state: CanvasPresentationState): CanvasPresentationModel {
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:77:function projected3D(world: World, planeTransforms: Map<string, any>): CanvasRenderItem[] {
+frontend/src/application/canvasPresentation/CanvasVisibilityPolicy.ts:1:import type { World } from '@/domain/world/World';
+frontend/src/application/canvasPresentation/CanvasVisibilityPolicy.ts:4:export function isCanvasElementVisible(element: object, world: World): boolean {
+## any seams
+frontend/src/domain/presentation/Paper.ts:379:   * Check if paper has any dirty primitives
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:27:        const realization = plane.realizePoint2D(point, world as any); if (!realization) continue;
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:36:        const realization = plane.realizeLine2D(line, world as any); if (!realization) continue;
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:49:          const arcGeometry = (line as any).arcGeometry;
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:59:        const realization = plane.realizeCircle2D(circle, world as any); if (!realization) continue;
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:76:function item(primitive: any, kind: any): CanvasRenderItem { return { id: primitive.id, kind, sourceEntityId: primitive.sourceEntityId, planeId: primitive.planeId, primitive, visible: primitive.visible, style: primitive.style }; }
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:77:function projected3D(world: World, planeTransforms: Map<string, any>): CanvasRenderItem[] {
+## projected 3d selector loops
+frontend/src/components/workspace/SvgCanvas.vue:558:      showProjectedElements: viewStore.showProjectedElements.value,
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:67:    if (state.showProjectedElements) renderItems.push(...projected3D(world, planeTransforms));
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:77:function projected3D(world: World, planeTransforms: Map<string, any>): CanvasRenderItem[] {
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:82:    for (const point3D of world.getAll3DPoints()) { const r = point3D.realize3D(world); if (!r?.isFeasible()) continue; const position = applyMatrix3x4(r.position, planeRealization.threeDToPlane).applyMatrix3(planeToPaper); items.push(item({ type: 'point', id: `proj3d-point-${point3D.id}-on-${plane.id}`, sourceEntityId: point3D.id, planeId: plane.id, layer: RenderLayer.Guides + 3, visible: true, style: PROJECTED_POINT_STYLE, position, radius: 6 }, 'projected-3d-point')); }
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:83:    for (const line3D of world.getAll3DLines()) { const r = line3D.realize3D(world); if (!r?.isFeasible()) continue; const dir = applyMatrix3x4(r.direction, planeRealization.threeDToPlane); if (dir.length() < EPSILON) continue; items.push(item({ type: 'line', id: `proj3d-line-${line3D.id}-on-${plane.id}`, sourceEntityId: line3D.id, planeId: plane.id, layer: RenderLayer.Guides + 3, visible: true, style: PROJECTED_LINE_STYLE, point: applyMatrix3x4(r.point, planeRealization.threeDToPlane).applyMatrix3(planeToPaper), direction: dir.applyMatrix3(planeToPaper) }, 'projected-3d-line')); }
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:84:    for (const segment3D of world.getAll3DSegments()) { const r = segment3D.realize3D(world); if (!r?.isFeasible()) continue; items.push(item({ type: 'segment', id: `proj3d-segment-${segment3D.id}-on-${plane.id}`, sourceEntityId: segment3D.id, planeId: plane.id, layer: RenderLayer.Guides + 3, visible: true, style: PROJECTED_SEGMENT_STYLE, point1: applyMatrix3x4(r.startPoint, planeRealization.threeDToPlane).applyMatrix3(planeToPaper), point2: applyMatrix3x4(r.endPoint, planeRealization.threeDToPlane).applyMatrix3(planeToPaper) }, 'projected-3d-segment')); }
+frontend/src/application/canvasPresentation/CanvasPresentationModel.ts:104:  showProjectedElements?: boolean;
+## Paper query/mutable usage
+frontend/src/main.ts:9: * Per Constitution Principle I, the application follows a layered architecture:
+frontend/src/App.vue:271:  background: white;
+frontend/tests/unit/tools/toolValidation.spec.ts:35:    hitTest(canvasPos: any, snapRadiusPixels: number, context: any, selectionMask?: any) {
+frontend/tests/unit/tools/toolValidation.spec.ts:39:      return new CanvasInteractionQuery(model.queryItems).hitTest(canvasPos, snapRadiusPixels, context, selectionMask);
+frontend/src/services/SVGRenderer.ts:2: * SVGRenderer - Converts Paper primitives to SVG elements
+frontend/src/services/SVGRenderer.ts:8: * Paper primitives (paper coords) → Viewport transform → Canvas coords → SVG
+frontend/src/services/SVGRenderer.ts:32:} from '../domain/presentation/Paper';
+frontend/src/services/SVGRenderer.ts:51: * Renderer for converting Paper primitives to SVG
+frontend/src/services/SVGRenderer.ts:455:   * Render all primitives from a Paper to SVG attributes
+frontend/src/services/SVGRenderer.ts:457:  renderPaper(
+frontend/tests/unit/tools/pointTool.spec.ts:24:    hitTest(canvasPos: any, snapRadiusPixels: number, context: any, selectionMask?: any) {
+frontend/tests/unit/tools/pointTool.spec.ts:28:      return new CanvasInteractionQuery(model.queryItems).hitTest(canvasPos, snapRadiusPixels, context, selectionMask);
+frontend/tests/unit/tools/CircleTool.spec.ts:29:    hitTest(canvasPos: any, snapRadiusPixels: number, context: any, selectionMask?: any) {
+frontend/tests/unit/tools/CircleTool.spec.ts:33:      return new CanvasInteractionQuery(model.queryItems).hitTest(canvasPos, snapRadiusPixels, context, selectionMask);
+frontend/tests/unit/projectionPlane.spec.ts:136:    it('P_H: paperToPlane should be inverse of planeToPaper', () => {
+frontend/tests/unit/projectionPlane.spec.ts:141:      // Multiply planeToPaper * paperToPlane should give identity
+frontend/tests/unit/projectionPlane.spec.ts:157:    it('P_V: paperToPlane should be inverse of planeToPaper', () => {
+frontend/tests/unit/projectionPlane.spec.ts:162:      // Multiply planeToPaper * paperToPlane should give identity
+frontend/tests/unit/services/svgCanvasRenderer.spec.ts:4:import { RenderLayer, type LinePrimitive } from '@/domain/presentation/Paper';
+frontend/tests/unit/components/SvgCanvas.gridLabels.spec.ts:58:      // Paper coordinates visible: [50, 850]
+frontend/tests/unit/components/SvgCanvas.gridLabels.spec.ts:84:      // Paper coordinates visible: [0, 400]
+frontend/tests/unit/components/SvgCanvas.gridLabels.spec.ts:108:      // Paper coordinates visible: [-400, 400]
+frontend/tests/unit/components/SvgCanvas.gridLabels.spec.ts:132:      // Paper coordinates visible: [-200, 600]
+frontend/tests/unit/coordinateTransform.spec.ts:4: * Screen → Canvas → Paper → Plane → Paper → Canvas → Screen
+frontend/tests/unit/coordinateTransform.spec.ts:29:      // Forward: Screen → Canvas → Paper → Plane
+frontend/tests/unit/coordinateTransform.spec.ts:42:      // Reverse: Plane → Paper → Canvas → Screen
+frontend/tests/unit/application/canvasToolControllers.spec.ts:203:    vi.spyOn(interactionQuery, 'hitTest')
+frontend/tests/unit/application/canvasPresentation/canvasInteractionQuery.spec.ts:13:    expect(query.hitTest(new Vector3(5, 1, 1), 5, ctx)?.elementId).toBe('s1');
+frontend/tests/unit/application/canvasPresentation/canvasInteractionQuery.spec.ts:14:    expect(query.hitTest(new Vector3(50, 1, 1), 5, ctx)).toBeNull();
+frontend/tests/unit/application/canvasPresentation/canvasInteractionQuery.spec.ts:23:    expect(query.hitTest(new Vector3(0, 0, 1), 10, ctx, SelectionMask.point())).toBeNull();
+frontend/tests/unit/application/canvasPresentation/canvasInteractionQuery.spec.ts:24:    expect(query.hitTest(new Vector3(0, 0, 1), 10, ctx, SelectionMask.line())?.elementId).toBe('l1');
+frontend/tests/unit/application/canvasPresentation/canvasInteractionQuery.spec.ts:34:    expect(query.hitTest(new Vector3(1, 4, 1), 5, ctx)?.elementId).toBe('g1');
+frontend/tests/unit/application/canvasPresentation/canvasInteractionQuery.spec.ts:35:    expect(query.hitTest(new Vector3(11, 4, 1), 5, ctx)?.elementId).toBe('h1');
+frontend/tests/unit/application/canvasPresentation/canvasInteractionQuery.spec.ts:36:    const circleHit = query.hitTest(new Vector3(25, 1, 1), 5, ctx);
+frontend/src/application/threePresentation/Guide3DSelector.ts:56:    const hit = intersectLinePlane3D(real.point, real.getDirection(), planePoint, normal);
+frontend/src/application/threePresentation/Guide3DSelector.ts:57:    if (hit) items.push(marker(`${guideId}-line-${line.id}`, line.id!, hit));
+frontend/src/application/threePresentation/Guide3DSelector.ts:63:    const hit = intersectSegmentPlane3D(real.startPoint, real.endPoint, planePoint, normal);
+frontend/src/application/threePresentation/Guide3DSelector.ts:64:    if (hit) items.push(marker(`${guideId}-segment-${segment.id}`, segment.id!, hit));
+frontend/tests/unit/utils/coordinateTransform.spec.ts:5: * Screen → SVG → Paper → Plane (u,v) → 3D (x,y,z)
+frontend/tests/unit/utils/coordinateTransform.spec.ts:7: * These transformations demonstrate the layered coordinate system architecture
+frontend/tests/unit/utils/coordinateTransform.spec.ts:15:  svgToPaper,
+frontend/tests/unit/utils/coordinateTransform.spec.ts:80:  describe('svgToPaper', () => {
+frontend/tests/unit/utils/coordinateTransform.spec.ts:85:      const result = svgToPaper(svgPoint, identityTransform);
+frontend/tests/unit/utils/coordinateTransform.spec.ts:95:      // svgToPaper expects the INVERSE transform (canvas→paper)
+frontend/tests/unit/utils/coordinateTransform.spec.ts:104:      const result = svgToPaper(svgPoint, inverseViewportTransform);
+frontend/tests/unit/utils/coordinateTransform.spec.ts:114:      // svgToPaper expects the INVERSE transform (canvas→paper)
+frontend/tests/unit/utils/coordinateTransform.spec.ts:123:      const result = svgToPaper(svgPoint, inverseViewportTransform);
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:137:      // Current architecture: All initialization actions in ONE group
+frontend/tests/unit/types/SelectionMask.spec.ts:4: * Tests the class-based selection mask architecture that replaces
+frontend/tests/unit/types/SelectionMask.spec.ts:24:describe('SelectionMask - Phase 63 Class-Based Architecture', () => {
+frontend/src/commands/Command.ts:34: * 4. **Architectural Consistency**: Having Command subclasses encourages violating
+frontend/src/commands/Command.ts:35: *    the Operation pattern and leads to inconsistent architecture.
+frontend/src/commands/Command.ts:53: * This architectural rule is enforced by:
+frontend/src/commands/Command.ts:56: * - Automated test in tests/unit/architecture/noCommandSubclasses.spec.ts
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:6:import { RenderLayer, type LinePrimitive, type PointPrimitive, type SegmentPrimitive, type CirclePrimitive, type PathPrimitive } from '@/domain/presentation/Paper';
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:20:      if (realization) planeTransforms.set(plane.id, { planeId: plane.id, planeToPaper: realization.planeToPaper2D, paperToPlane: realization.paperToPlane2D });
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:23:      const transform = planeTransforms.get(plane.id)?.planeToPaper as Matrix3 | undefined;
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:69:    const activeTransform = state.activePlaneId ? planeTransforms.get(state.activePlaneId)?.planeToPaper : undefined;
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:80:    const planeRealization = world.getProjectionPlane3DRealization(plane.id); const planeToPaper = planeTransforms.get(plane.id)?.planeToPaper;
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:81:    if (!planeRealization || !planeToPaper) continue;
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:82:    for (const point3D of world.getAll3DPoints()) { const r = point3D.realize3D(world); if (!r?.isFeasible()) continue; const position = applyMatrix3x4(r.position, planeRealization.threeDToPlane).applyMatrix3(planeToPaper); items.push(item({ type: 'point', id: `proj3d-point-${point3D.id}-on-${plane.id}`, sourceEntityId: point3D.id, planeId: plane.id, layer: RenderLayer.Guides + 3, visible: true, style: PROJECTED_POINT_STYLE, position, radius: 6 }, 'projected-3d-point')); }
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:83:    for (const line3D of world.getAll3DLines()) { const r = line3D.realize3D(world); if (!r?.isFeasible()) continue; const dir = applyMatrix3x4(r.direction, planeRealization.threeDToPlane); if (dir.length() < EPSILON) continue; items.push(item({ type: 'line', id: `proj3d-line-${line3D.id}-on-${plane.id}`, sourceEntityId: line3D.id, planeId: plane.id, layer: RenderLayer.Guides + 3, visible: true, style: PROJECTED_LINE_STYLE, point: applyMatrix3x4(r.point, planeRealization.threeDToPlane).applyMatrix3(planeToPaper), direction: dir.applyMatrix3(planeToPaper) }, 'projected-3d-line')); }
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:84:    for (const segment3D of world.getAll3DSegments()) { const r = segment3D.realize3D(world); if (!r?.isFeasible()) continue; items.push(item({ type: 'segment', id: `proj3d-segment-${segment3D.id}-on-${plane.id}`, sourceEntityId: segment3D.id, planeId: plane.id, layer: RenderLayer.Guides + 3, visible: true, style: PROJECTED_SEGMENT_STYLE, point1: applyMatrix3x4(r.startPoint, planeRealization.threeDToPlane).applyMatrix3(planeToPaper), point2: applyMatrix3x4(r.endPoint, planeRealization.threeDToPlane).applyMatrix3(planeToPaper) }, 'projected-3d-segment')); }
+frontend/tests/unit/commands/initializationOps.spec.ts:32:    const planeToPaper = new Matrix3().set(
+frontend/tests/unit/commands/initializationOps.spec.ts:48:    return { planeToPaper, planeTo3D, threeDToPlane };
+frontend/tests/unit/commands/initializationOps.spec.ts:52:    const planeToPaper = new Matrix3().set(
+frontend/tests/unit/commands/initializationOps.spec.ts:68:    return { planeToPaper, planeTo3D, threeDToPlane };
+frontend/tests/unit/commands/initializationOps.spec.ts:195:        matrices.planeToPaper,
+frontend/tests/unit/commands/initializationOps.spec.ts:214:        matrices.planeToPaper,
+frontend/tests/unit/commands/initializationOps.spec.ts:231:        matrices.planeToPaper,
+frontend/tests/unit/commands/initializationOps.spec.ts:250:      new AddProjectionPlaneFixedOp('plane_3d', matrices.planeToPaper, matrices.planeTo3D, 'proj_plane').apply(world);  // Phase 94: threeDToPlane removed
+frontend/tests/unit/commands/initializationOps.spec.ts:301:      new AddProjectionPlaneFixedOp('plane_H', matricesH.planeToPaper, matricesH.planeTo3D, 'proj_H').apply(world);  // Phase 94: threeDToPlane removed
+frontend/tests/unit/commands/initializationOps.spec.ts:302:      new AddProjectionPlaneFixedOp('plane_V', matricesV.planeToPaper, matricesV.planeTo3D, 'proj_V').apply(world);  // Phase 94: threeDToPlane removed
+frontend/tests/unit/commands/initializationOps.spec.ts:351:      new AddProjectionPlaneFixedOp('plane_3d_h', matricesH.planeToPaper, matricesH.planeTo3D, 'proj_plane_h').apply(world);  // Phase 94: threeDToPlane removed
+frontend/tests/unit/commands/initializationOps.spec.ts:355:      new AddProjectionPlaneFixedOp('plane_3d_v', matricesV.planeToPaper, matricesV.planeTo3D, 'proj_plane_v').apply(world);  // Phase 94: threeDToPlane removed
+frontend/src/application/canvasPresentation/CanvasInteractionQuery.ts:11:  hitTest(canvasPos: Vector3, snapRadiusPixels: number, context: CanvasInteractionQueryContext, selectionMask?: SelectionMask): CanvasSnapPoint | null {
+frontend/src/application/canvasPresentation/CanvasInteractionQuery.ts:13:    const canvasToPaper = new Matrix3().set(1 / context.viewport.zoom, 0, -context.viewport.panX, 0, 1 / context.viewport.zoom, -context.viewport.panY, 0, 0, 1);
+frontend/src/application/canvasPresentation/CanvasInteractionQuery.ts:14:    const paperPos = canvasPos.clone().applyMatrix3(canvasToPaper);
+frontend/src/application/canvasPresentation/CanvasInteractionQuery.ts:16:    const radiusVector = new Vector3(snapRadiusPixels, 0, 0).applyMatrix3(canvasToPaper).applyMatrix3(context.paperToPlaneTransform);
+frontend/src/components/LoginStatusWidget.vue:146:  background: white;
+frontend/src/components/LoginStatusWidget.vue:196:  color: white;
+frontend/src/components/LoginStatusWidget.vue:206:  color: white;
+frontend/src/components/LoginStatusWidget.vue:212:  white-space: nowrap;
+frontend/src/components/LoginStatusWidget.vue:241:  color: white;
+frontend/src/components/LoginStatusWidget.vue:256:  background: white;
+frontend/src/components/LoginStatusWidget.vue:293:  background: white;
+frontend/src/assets/styles/main.css:119:  white-space: nowrap;
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:7:import { RenderLayer, type ResolvedStyle } from '@/domain/presentation/Paper';
+frontend/src/services/InputService.ts:7: * - Paper coordinates (after viewport transform)
+frontend/src/services/InputService.ts:27:   * Pipeline: Canvas → Paper (inverse viewport) → Plane (paper-to-plane transform)
+frontend/src/services/InputService.ts:31:   * @param paperToPlaneTransform Paper-to-plane transformation matrix (already inverted)
+frontend/src/services/InputService.ts:41:    // Step 1: Canvas → Paper (inverse viewport transform)
+frontend/src/services/InputService.ts:47:    // Step 2: Paper → Plane (use pre-computed paper-to-plane transform)
+frontend/tests/unit/domain/realizationCache.spec.ts:4: * Verifies cache hit, invalidation, dependency cascade, cross-plane
+frontend/tests/unit/domain/realizationCache.spec.ts:26:  // ── T1913: Cache hit — same object reference on repeated calls ──
+frontend/tests/unit/domain/realizationCache.spec.ts:28:  describe('Cache hit (T1913)', () => {
+frontend/src/application/canvasPresentation/CanvasGridSelector.ts:19:export function selectCanvasGrid(planeToPaper: Matrix3 | undefined, viewport: CanvasViewportModel): { lines: CanvasGridLine[]; labels: CanvasGridLabels } {
+frontend/src/application/canvasPresentation/CanvasGridSelector.ts:21:  if (!planeToPaper) return empty;
+frontend/src/application/canvasPresentation/CanvasGridSelector.ts:25:  const originPaper = new Vector3(0, 0, 1).applyMatrix3(planeToPaper);
+frontend/src/application/canvasPresentation/CanvasGridSelector.ts:26:  const uPaper = new Vector3(1, 0, 0).applyMatrix3(planeToPaper);
+frontend/src/application/canvasPresentation/CanvasGridSelector.ts:27:  const vPaper = new Vector3(0, 1, 0).applyMatrix3(planeToPaper);
+frontend/src/application/canvasPresentation/CanvasGridSelector.ts:32:  const viewportCornersPaper = [
+frontend/src/application/canvasPresentation/CanvasGridSelector.ts:39:    const offset = new Vector3().subVectors(p, originPaper);
+frontend/src/application/canvasPresentation/CanvasGridSelector.ts:40:    return { u: offset.dot(uPaper) / uPaper.lengthSq(), v: offset.dot(vPaper) / vPaper.lengthSq() };
+frontend/src/application/canvasPresentation/CanvasGridSelector.ts:42:  const uvCorners = viewportCornersPaper.map(paperToUV);
+frontend/src/application/canvasPresentation/CanvasGridSelector.ts:52:    const p1 = originPaper.clone().addScaledVector(uPaper, u).addScaledVector(vPaper, vMin);
+frontend/src/application/canvasPresentation/CanvasGridSelector.ts:53:    const p2 = originPaper.clone().addScaledVector(uPaper, u).addScaledVector(vPaper, vMax);
+frontend/src/application/canvasPresentation/CanvasGridSelector.ts:60:    const p1 = originPaper.clone().addScaledVector(uPaper, uMin).addScaledVector(vPaper, v);
+frontend/src/application/canvasPresentation/CanvasGridSelector.ts:61:    const p2 = originPaper.clone().addScaledVector(uPaper, uMax).addScaledVector(vPaper, v);
+frontend/src/application/canvasPresentation/CanvasGridSelector.ts:69:  const uHorizontal = Math.abs(uPaper.x) / (Math.abs(uPaper.y) + 1e-10) > 1;
+frontend/src/application/canvasPresentation/CanvasGridSelector.ts:70:  const screenToPaper = (x: number, y: number) => new Vector3(x / zoom - viewport.panX, y / zoom - viewport.panY, 1);
+frontend/src/application/canvasPresentation/CanvasGridSelector.ts:71:  const findULineY = (u: number, xPaper: number) => {
+frontend/src/application/canvasPresentation/CanvasGridSelector.ts:72:    if (Math.abs(vPaper.x) < 1e-10) return null;
+frontend/src/application/canvasPresentation/CanvasGridSelector.ts:73:    const t = (xPaper - originPaper.x - u * uPaper.x) / vPaper.x;
+frontend/src/application/canvasPresentation/CanvasGridSelector.ts:74:    return (originPaper.y + u * uPaper.y + t * vPaper.y + viewport.panY) * zoom;
+frontend/src/application/canvasPresentation/CanvasGridSelector.ts:76:  const findVLineX = (v: number, yPaper: number) => {
+frontend/src/application/canvasPresentation/CanvasGridSelector.ts:77:    if (Math.abs(uPaper.y) < 1e-10) return null;
+frontend/src/application/canvasPresentation/CanvasGridSelector.ts:78:    const t = (yPaper - originPaper.y - v * vPaper.y) / uPaper.y;
+frontend/src/application/canvasPresentation/CanvasGridSelector.ts:79:    return (originPaper.x + t * uPaper.x + v * vPaper.x + viewport.panX) * zoom;
+frontend/src/application/canvasPresentation/CanvasGridSelector.ts:92:  void subdivision; void screenToPaper;
+frontend/src/components/workspace/SvgCanvas.vue:711:    const hit = interactionQuery.value.hitTest(canvasPos, 20, { viewport: viewport.value, activePlaneId, paperToPlaneTransform: paperToPlane });
+frontend/src/components/workspace/SvgCanvas.vue:713:    if (hit) {
+frontend/src/components/workspace/SvgCanvas.vue:717:        selectionStore.addToSelection(hit.elementId);
+frontend/src/components/workspace/SvgCanvas.vue:718:        // console.log('[SvgCanvas] Added to selection:', hit.elementId);
+frontend/src/components/workspace/SvgCanvas.vue:721:        selectionStore.selectSingle(hit.elementId);
+frontend/src/components/workspace/SvgCanvas.vue:722:        // console.log('[SvgCanvas] Selected:', hit.elementId);
+frontend/src/components/workspace/SvgCanvas.vue:844:  const hit = interactionQuery.value.hitTest(canvasPos, 20, { viewport: viewport.value, activePlaneId, paperToPlaneTransform: paperToPlane });
+frontend/src/components/workspace/SvgCanvas.vue:846:  // Check if we hit a movable point
+frontend/src/components/workspace/SvgCanvas.vue:847:  if (hit && hit.elementType === 'point') {
+frontend/src/components/workspace/SvgCanvas.vue:850:    const point = plane.getPoint(hit.elementId);
+frontend/src/components/workspace/SvgCanvas.vue:854:      selectionStore.selectSingle(hit.elementId);
+frontend/src/components/workspace/SvgCanvas.vue:859:        pointId: hit.elementId,
+frontend/src/components/workspace/SvgCanvas.vue:860:        moveSession: canvasToolController.startFreePointMove({ planeId: activePlaneId, pointId: hit.elementId, label: point.label ?? hit.elementId }),
+frontend/src/components/workspace/SvgCanvas.vue:869:  // No movable point hit - start viewport pan (T965: Drag empty space pans)
+frontend/src/components/workspace/SvgCanvas.vue:899:  // Get plane transform for hit testing
+frontend/src/components/workspace/SvgCanvas.vue:906:  const hit = interactionQuery.value.hitTest(canvasPos, 20, { viewport: viewport.value, activePlaneId, paperToPlaneTransform: paperToPlane });
+frontend/src/components/workspace/SvgCanvas.vue:908:  if (hit) {
+frontend/src/components/workspace/SvgCanvas.vue:910:    propertiesElementId.value = hit.elementId;
+frontend/src/components/workspace/SvgCanvas.vue:912:    console.log('[SvgCanvas] Opening properties dialog for:', hit.elementId);
+frontend/src/components/workspace/SvgCanvas.vue:1042:  const hit = interactionQuery.value.hitTest(canvasPos, 20, { viewport: viewport.value, activePlaneId, paperToPlaneTransform: paperToPlane }, selectionMask);
+frontend/src/components/workspace/SvgCanvas.vue:1046:  if (hit && hit.elementType === 'point') {
+frontend/src/components/workspace/SvgCanvas.vue:1049:      pointId: hit.elementId,
+frontend/src/components/workspace/SvgCanvas.vue:1061:  const newHovered = hit ? hit.elementId : undefined;
+frontend/src/components/workspace/SvgCanvas.vue:1067:    if (newHovered && hit) {
+frontend/src/components/workspace/SvgCanvas.vue:1068:      const label = getElementLabel(newHovered, hit.elementType, activePlaneId);
+frontend/src/components/workspace/SvgCanvas.vue:1071:        hit.elementType,
+frontend/src/components/workspace/SvgCanvas.vue:1314:  color: white;
+frontend/src/components/workspace/SvgCanvas.vue:1320:  white-space: nowrap;
+frontend/src/application/canvasPresentation/CanvasPresentationModel.ts:2:import type { Primitive, ResolvedStyle } from '@/domain/presentation/Paper';
+frontend/src/application/canvasPresentation/CanvasPresentationModel.ts:54:  planeToPaper: Matrix3;
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:21: * - Callers use instanceof directly, matching Phase 73 architectural principle
+frontend/src/commands/factories/InitializationSequenceFactory.ts:30: * It does NOT create a Command subclass, maintaining architecture compliance.
+frontend/src/components/toolbars/ToolFamilyButton.vue:137:  background: white;
+frontend/src/components/toolbars/ToolFamilyButton.vue:198:  background: white;
+frontend/src/components/toolbars/ToolFamilyButton.vue:215:  white-space: nowrap;
+frontend/tests/unit/domain/guide.spec.ts:7: *   NOTE: Guides use Line2DRealization2D directly per Phase 34 architectural principle
+frontend/tests/unit/domain/guide.spec.ts:202:  // Guides now use Line2DRealization2D directly per architectural principle
+frontend/src/services/GoogleDriveService.ts:7: * Architecture:
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts:141:      const { paperToPlane, feasible } = this.computeBackward2DMatrix(matrices.planeToPaper);
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts:145:        matrices.planeToPaper,
+frontend/src/commands/factories/README.md:110:## Architecture
+frontend/tests/unit/architecture/importBoundaries.spec.ts:14:function isArchitectureSpec(file: ScannedFile): boolean {
+frontend/tests/unit/architecture/importBoundaries.spec.ts:15:  return file.projectPath.startsWith('tests/unit/architecture/');
+frontend/tests/unit/architecture/importBoundaries.spec.ts:39:describe('Architecture: import boundaries', () => {
+frontend/tests/unit/architecture/importBoundaries.spec.ts:67:    expect(findContentMatches(files, /backend\/src\//g, { exclude: isArchitectureSpec })).toEqual([]);
+frontend/tests/unit/architecture/importBoundaries.spec.ts:74:      exclude: file => isArchitectureSpec(file) || isWave010NegativeE2EGuard(file),
+frontend/tests/unit/architecture/importBoundaries.spec.ts:82:      exclude: isArchitectureSpec,
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1082:   * Architecture note: Follows the same pattern as addSiblingGuide2D (Phase 36).
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1253:   * Protected helper: Compute backward 2D matrix (paperToPlane) from forward matrix (planeToPaper)
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1257:   * @param planeToPaper - Forward transformation matrix
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1260:  protected computeBackward2DMatrix(planeToPaper: Matrix3): { paperToPlane: Matrix3; feasible: boolean } {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1265:      const det = planeToPaper.determinant();
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1272:        paperToPlane = planeToPaper.clone().invert();
+frontend/src/commands/operations/processTree/PushSubprocessOp.ts:7: * Phase 85: ProcessTree Subprocess Stack Architecture
+frontend/tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts:15:const self = 'tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts';
+frontend/tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts:17:function isThisArchitectureSpec(file: ScannedFile): boolean {
+frontend/tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts:21:describe('Architecture: deleted legacy world-state paths', () => {
+frontend/tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts:26:    expect(findContentMatches(files, pattern, { exclude: isThisArchitectureSpec })).toEqual([]);
+frontend/src/utils/projectionPlaneUtils.ts:9: * - computeProjectionPlaneMatrices: Compute planeToPaper, planeTo3D, threeDToPlane from T1, T2, T2'
+frontend/src/utils/projectionPlaneUtils.ts:144:  planeToPaper: Matrix3;
+frontend/src/utils/projectionPlaneUtils.ts:158: * **Part 1: planeToPaper (Paper Layout)**
+frontend/src/utils/projectionPlaneUtils.ts:210:  // ===== PART 1: planeToPaper (Paper Layout) =====
+frontend/src/utils/projectionPlaneUtils.ts:245:  const auxOriginInPaper = auxOriginInP1.clone().applyMatrix3(planeP1Realization2D.planeToPaper2D);
+frontend/src/utils/projectionPlaneUtils.ts:248:  const auxUDirInPaper = t1DirInP1.clone().applyMatrix3(planeP1Realization2D.planeToPaper2D);
+frontend/src/utils/projectionPlaneUtils.ts:252:  // 1.5: Build planeToPaper matrix (homogeneous 2D transform)
+frontend/src/utils/projectionPlaneUtils.ts:255:  // Note: planeToPaper matrix will be constructed in Part 2 after v_paper is computed
+frontend/src/utils/projectionPlaneUtils.ts:269:  // 2.2: Compute auxVDirInPaper with corrected T2' direction
+frontend/src/utils/projectionPlaneUtils.ts:288:  const auxVDirInPaper = auxVDirInP1.clone().applyMatrix3(planeP1Realization2D.planeToPaper2D);
+frontend/src/utils/projectionPlaneUtils.ts:290:  // 1.5: Build planeToPaper matrix (homogeneous 2D transform)
+frontend/src/utils/projectionPlaneUtils.ts:291:  // Now that we have auxUDirInPaper and auxVDirInPaper, we can construct the matrix
+frontend/src/utils/projectionPlaneUtils.ts:292:  const planeToPaper = new Matrix3();
+frontend/src/utils/projectionPlaneUtils.ts:293:  planeToPaper.set(
+frontend/src/utils/projectionPlaneUtils.ts:294:    auxUDirInPaper.x, auxVDirInPaper.x, auxOriginInPaper.x,  // Column 0, 1, 2 (row 0)
+frontend/src/utils/projectionPlaneUtils.ts:295:    auxUDirInPaper.y, auxVDirInPaper.y, auxOriginInPaper.y,  // Row 1
+frontend/src/utils/projectionPlaneUtils.ts:354:    planeToPaper,
+frontend/src/utils/projectionPlaneUtils.ts:557: * @returns Paper-space offset {x, y} for new auxiliary plane
+frontend/src/commands/operations/processTree/PopSubprocessOp.ts:7: * Phase 85: ProcessTree Subprocess Stack Architecture
+frontend/tests/unit/architecture/worldBoundary.spec.ts:19:describe('Architecture: domain world boundary', () => {
+frontend/src/commands/operations/world/AddGuideOp.ts:82: * Architecture note: Sibling creation must be done at command level using specific ops,
+frontend/src/commands/operations/world/AddGuideOp.ts:83: * not embedded in the world layer (as per architecture requirements).
+frontend/src/utils/coordinateTransform.ts:5: * Screen → SVG → Paper → Plane (u,v) → 3D (x,y,z)
+frontend/src/utils/coordinateTransform.ts:7: * This demonstrates the layered coordinate system architecture:
+frontend/src/utils/coordinateTransform.ts:10: * 3. Paper: Viewport-transformed canvas space
+frontend/src/utils/coordinateTransform.ts:63: * Convert SVG coordinates to Paper coordinates
+frontend/src/utils/coordinateTransform.ts:65: * Paper coordinates are the viewport-transformed canvas space.
+frontend/src/utils/coordinateTransform.ts:70: * @returns Paper coordinates as Vector3 (x, y, 1) in homogeneous coords
+frontend/src/utils/coordinateTransform.ts:72:export function svgToPaper(
+frontend/src/utils/coordinateTransform.ts:82: * Convert Paper coordinates to Plane intrinsic (u,v) coordinates
+frontend/src/utils/coordinateTransform.ts:145: * Complete transformation pipeline: Screen → SVG → Paper → Plane → 3D
+frontend/src/utils/coordinateTransform.ts:169:    // Step 2: SVG → Paper
+frontend/src/utils/coordinateTransform.ts:170:    const paperCoords = svgToPaper(svgCoords, viewportTransform);
+frontend/src/utils/coordinateTransform.ts:172:    // Step 3: Paper → Plane
+frontend/src/domain/world/projectionPlane/ProjectionPlaneRealization.ts:13:  // Paper-to-plane: Inverse of planeToPaper2D
+frontend/tests/unit/architecture/noCommandSubclasses.spec.ts:13:describe('Architecture: Command Pattern', () => {
+frontend/src/commands/operations/world/RemoveElementOps.ts:367: * Architecture: Sibling objects must be deleted in pairs, with deletion always
+frontend/src/commands/operations/world/RemoveElementOps.ts:368: * redirected to the primary object (as per architecture requirements).
+frontend/src/domain/world/World.ts:12: * ## Architecture: Element Access Patterns (Phase 48)
+frontend/src/domain/world/World.ts:74: * The current architecture enforces proper ownership: ProjectionPlane owns its elements,
+frontend/src/commands/operations/world/AddSiblingIntersectionPoint2DOp.ts:11: * Architecture note: Sibling creation must be done at command level using specific ops,
+frontend/src/commands/operations/world/AddSiblingIntersectionPoint2DOp.ts:12: * not embedded in the world layer (as per architecture requirements).
+frontend/src/commands/operations/world/AddSiblingIntersectionPoint2DOp.ts:14: * Pattern: Follows the same architecture as AddSiblingGuide2DOp (Phase 36)
+frontend/src/commands/operations/world/AddSiblingIntersectionPoint2DOp.ts:18: * @see data-model.md §HalfHingeLine2D Intersection Sibling Behavior for architecture details
+frontend/tests/integration/semanticReferences.spec.ts:144:      // This test verifies the architecture supports multiple plane pairs
+frontend/src/domain/world/Element3DRealization3D.ts:4: * Mirrors Element2DRealization2D architecture:
+frontend/src/domain/world/Element3DRealization3D.ts:9: * Architectural symmetry:
+frontend/src/domain/world/Element3DRealization3D.ts:24: * Architectural principle: Realization classes contain ONLY geometric data.
+frontend/src/components/panels/ProcessTreeNode.vue:491:  white-space: nowrap;
+frontend/src/components/panels/ProcessTreeNode.vue:499:  white-space: normal;
+frontend/src/components/panels/ProcessTreeNode.vue:707:  white-space: nowrap;
+frontend/src/types/SelectionMask.ts:2: * SelectionMask.ts - Class-based selection filtering architecture (Phase 63)
+frontend/src/types/SelectionMask.ts:66: * Selection masks determine which element types can be selected/hit-tested by tools.
+frontend/src/types/SelectionMask.ts:344: * Included for architectural completeness and symmetry with UnionMask.
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:86:   *   T2/T2' local coords → paper coords (via source planeToPaper) → this plane local coords (via paperToPlane)
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:140:    const pointInPaper = t2Real2D.point1.clone().applyMatrix3(sourcePlaneReal2D.planeToPaper2D);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:141:    // Step 2: Paper coords → this plane's local coords
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:142:    const origin2D = pointInPaper.applyMatrix3(targetPlaneReal2D.paperToPlane2D);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:145:    const dirInPaper = t2Real2D.getDirection().clone().applyMatrix3(sourcePlaneReal2D.planeToPaper2D);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:146:    const direction2D = dirInPaper.applyMatrix3(targetPlaneReal2D.paperToPlane2D);
+frontend/src/domain/world/Element2D.ts:21: * **Architectural Principle: DRY and Uniform Interface**
+frontend/src/components/panels/ElementsPanel.vue:343:  // Architecture: Get element polymorphically and check type with instanceof
+frontend/tests/integration/pointCreation.spec.ts:75:    it('should flow through all architectural layers', () => {
+frontend/tests/integration/pointCreation.spec.ts:351:  describe('Architecture Compliance', () => {
+frontend/src/components/panels/ActionsPanel.vue:353:  color: white;
+frontend/src/domain/world/Circle.ts:31: * Architectural principle: Realization classes contain ONLY geometric data.
+frontend/src/domain/world/Realization.ts:18: * **Design Principle: DRY + Architectural Symmetry**
+frontend/src/domain/world/Realization.ts:27: * - **Architectural Symmetry**: Realization hierarchy mirrors Element hierarchy
+frontend/src/domain/world/Element2DRealization2D.ts:12: * Architectural principle: All 2D element realizations share a common feasibility property.
+frontend/src/domain/world/Element2DRealization2D.ts:19: * - Architectural symmetry: Mirrors Element → Element2D pattern in the realization layer
+frontend/src/domain/world/Line3D.ts:11: * Architecture:
+frontend/src/domain/world/Segment3D.ts:10: * Architecture:
+frontend/src/domain/world/Line.ts:43: * Architectural principle: Realization classes contain ONLY geometric data.
+frontend/src/domain/world/Point3D.ts:11: * Architecture:
+frontend/src/domain/world/HalfHingeLineRealization2D.ts:5: * guides perpendicular/parallel to this hinge line. This architectural decision keeps
+frontend/src/domain/world/Point.ts:41: * Architectural principle: Realization classes contain ONLY geometric data.
+frontend/src/components/header/ProjectNameDisplay.vue:203:  background-color: white;
+frontend/src/components/header/ProjectNameDisplay.vue:228:  color: white;
+frontend/src/components/header/ProjectNameDisplay.vue:243:  color: white;
+frontend/src/domain/world/HingeLine.ts:133:   * **Phase 84 Architecture**:
+frontend/src/domain/world/Guide.ts:95:   * NOTE: Guides use Line2DRealization2D directly per architectural principle.
+frontend/src/domain/world/Guide.ts:176: * Architecture:
+frontend/src/components/toolbars/PlaneSelector.vue:263:  white-space: nowrap;
+frontend/src/stores/viewStore.ts:10: * 2. Paper coordinates (x,y) (after plane-to-paper transform)
+frontend/src/components/dialogs/StartupDialog.vue:158:  background: white;
+frontend/src/components/dialogs/StartupDialog.vue:191:  color: white;
+frontend/src/components/dialogs/StartupDialog.vue:279:  color: white;
+frontend/src/components/dialogs/StartupDialog.vue:285:  white-space: nowrap;
+frontend/src/components/dialogs/NewProjectDialog.vue:107:  background: white;
+frontend/src/components/dialogs/NewProjectDialog.vue:175:  color: white;
+frontend/src/components/dialogs/PropertiesDialog.vue:485:  background: white;
+frontend/src/components/dialogs/PropertiesDialog.vue:683:  color: white;
+frontend/src/tools/ArgumentCollectorTool.ts:176:    const hit = interactionQuery.hitTest(canvasPos, 50, { viewport, activePlaneId: planeId, paperToPlaneTransform }, selectionMask);
+frontend/src/tools/ArgumentCollectorTool.ts:184:    if (!hit) {
+frontend/src/tools/ArgumentCollectorTool.ts:185:      // No element hit - check if any viable next argument accepts SelectionMask.none()
+frontend/src/tools/ArgumentCollectorTool.ts:199:      // Element hit - get element and create ArgumentValue
+frontend/src/tools/ArgumentCollectorTool.ts:200:      const element = world.getElement2D(hit.elementId);
+frontend/src/tools/ArgumentCollectorTool.ts:202:        return { success: false, message: `Element not found: ${hit.elementId}` };
+frontend/src/domain/presentation/Paper.ts:2: * Paper - pure intermediate drawing primitive collection.
+frontend/src/domain/presentation/Paper.ts:4: * Paper stores primitives in paper coordinates and exposes collection helpers.
+frontend/src/domain/presentation/Paper.ts:5: * Raw domain traversal and spatial hit/query behavior live in the canvas-presentation
+frontend/src/domain/presentation/Paper.ts:42:  planeId?: string;                 // Plane this element belongs to (for hit testing filter)
+frontend/src/domain/presentation/Paper.ts:151: * Result of a hit test query
+frontend/src/domain/presentation/Paper.ts:154:export interface HitResult {
+frontend/src/domain/presentation/Paper.ts:163: * Paper - Collection of drawing primitives in unified paper coordinate system
+frontend/src/domain/presentation/Paper.ts:165: * Paper contains primitives from all projection planes in a shared coordinate system.
+frontend/src/domain/presentation/Paper.ts:169: * Paper also serves as the spatial query engine for hit testing and hover detection,
+frontend/src/domain/presentation/Paper.ts:172:export class Paper {
+frontend/src/domain/presentation/Paper.ts:174:  private dirtyPrimitiveIds: Set<string>;
+frontend/src/domain/presentation/Paper.ts:177:  private canvasToPaperMatrix: Matrix3;  // Cached inverse viewport transform matrix
+frontend/src/domain/presentation/Paper.ts:181:    this.dirtyPrimitiveIds = new Set();
+frontend/src/domain/presentation/Paper.ts:183:    this.canvasToPaperMatrix = new Matrix3(); // Identity
+frontend/src/domain/presentation/Paper.ts:191:  setViewportTransform(viewport: ViewportTransform): void {
+frontend/src/domain/presentation/Paper.ts:234:    this.canvasToPaperMatrix.set(
+frontend/src/domain/presentation/Paper.ts:269:  setPrimitive(primitive: Primitive): void {
+frontend/src/domain/presentation/Paper.ts:271:    this.dirtyPrimitiveIds.add(primitive.id);
+frontend/src/domain/presentation/Paper.ts:277:  setPrimitives(primitives: Primitive[]): void {
+frontend/src/domain/presentation/Paper.ts:279:      this.setPrimitive(primitive);
+frontend/src/domain/presentation/Paper.ts:288:    this.dirtyPrimitiveIds.delete(id);
+frontend/src/domain/presentation/Paper.ts:294:  removePrimitivesByEntity(entityId: string): void {
+frontend/src/domain/presentation/Paper.ts:316:  getPrimitives(options?: {
+frontend/src/domain/presentation/Paper.ts:347:    for (const id of this.dirtyPrimitiveIds) {
+frontend/src/domain/presentation/Paper.ts:360:    this.dirtyPrimitiveIds.clear();
+frontend/src/domain/presentation/Paper.ts:368:    this.dirtyPrimitiveIds.clear();
+frontend/src/domain/presentation/Paper.ts:382:    return this.dirtyPrimitiveIds.size > 0;
+## overlay pointer handlers/css
+frontend/src/components/panels/ThreeView.vue:2:  <div class="three-view-panel" ref="containerRef">
+frontend/src/components/panels/ThreeView.vue:3:    <canvas ref="canvasRef" class="three-canvas"></canvas>
+frontend/src/components/panels/ThreeView.vue:54:  window.addEventListener('resize', handleResize);
+frontend/src/components/panels/ThreeView.vue:73:.three-view-panel {
+frontend/src/components/panels/ThreeView.vue:81:.three-canvas {
+frontend/src/components/panels/ThreeView.vue:108:  cursor: pointer;
+frontend/src/components/panels/ThreeView.vue:112:.control-label input[type="checkbox"] { cursor: pointer; }
+frontend/tests/e2e/current-ui-contract.spec.ts:32:    await page.getByTestId('tool-point').click();
+frontend/tests/e2e/current-ui-contract.spec.ts:35:    await svg.click({ position: { x: 80, y: 80 } });
+frontend/tests/e2e/current-ui-contract.spec.ts:43:    await page.getByTestId('plane-selector-button').click();
+frontend/tests/e2e/current-ui-contract.spec.ts:49:      await pvOption.click();
+frontend/tests/e2e/current-ui-contract.spec.ts:52:      await page.locator('[data-testid^="plane-selector-"]').first().click();
+frontend/tests/e2e/current-ui-contract.spec.ts:65:    await page.getByTestId('tool-point').click();
+frontend/tests/e2e/current-ui-contract.spec.ts:67:    await svg.click({ position: { x: 40, y: 60 } });
+frontend/tests/e2e/current-ui-contract.spec.ts:68:    await svg.click({ position: { x: 80, y: 90 } });
+frontend/tests/e2e/current-ui-contract.spec.ts:71:    await page.getByTestId('tool-line').click();
+frontend/tests/e2e/current-ui-contract.spec.ts:73:    await svg.click({ position: { x: 40, y: 60 } });
+frontend/tests/e2e/current-ui-contract.spec.ts:74:    await svg.click({ position: { x: 80, y: 90 } });
+frontend/tests/e2e/wave010-app-shell-project-flow.spec.ts:29:    await page.getByRole('button', { name: 'Open Project' }).click();
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:27:    await canvas.click({ position: { x: 100, y: 100 } });
+frontend/src/rendering/threeView/ThreeSceneHost.ts:2:import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+frontend/src/rendering/threeView/ThreeSceneHost.ts:15:  private controls?: OrbitControls;
+frontend/src/rendering/threeView/ThreeSceneHost.ts:35:    this.labelRenderer.domElement.style.pointerEvents = 'none';
+frontend/src/rendering/threeView/ThreeSceneHost.ts:37:    this.controls = new OrbitControls(this.camera, this.renderer.domElement);

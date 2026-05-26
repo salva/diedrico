@@ -1,0 +1,586 @@
+diff --git a/frontend/src/App.vue b/frontend/src/App.vue
+index be842aa..b752899 100644
+--- a/frontend/src/App.vue
++++ b/frontend/src/App.vue
+@@ -67,7 +67,7 @@
+         />
+         
+         <!-- 3D View Overlay (Phase 25) -->
+-        <div class="three-view-overlay" v-if="show3DView">
++        <div class="three-view-overlay" data-testid="three-view-overlay" v-if="show3DView">
+           <ThreeView />
+         </div>
+       </div>
+@@ -82,7 +82,7 @@
+         :coordinates3-d="coordinates3D"
+         :save-status="saveStatus"
+         :cascade-count="selectionStore.cascadeHighlightIdsArray.length"
+-        :tool-step-message="toolStore.currentToolStepMessage"
++        :tool-step-message="toolStore.currentToolStepMessage.value"
+       />
+     </footer>
+   </div>
+@@ -259,6 +259,7 @@ onUnmounted(() => runtime.actions.dispose());
+ }
+ 
+ .three-view-overlay {
++  pointer-events: none;
+   position: absolute;
+   bottom: 20px;
+   right: 20px;
+diff --git a/frontend/src/application/canvasPresentation/CanvasPresentationController.ts b/frontend/src/application/canvasPresentation/CanvasPresentationController.ts
+index 7d92cc3..4387886 100644
+--- a/frontend/src/application/canvasPresentation/CanvasPresentationController.ts
++++ b/frontend/src/application/canvasPresentation/CanvasPresentationController.ts
+@@ -1,10 +1,10 @@
+-import type { World } from '@/domain/world/World';
+ import type { CanvasPresentationModel, CanvasPresentationState, CanvasViewportModel } from './CanvasPresentationModel';
+ import { CanvasPresentationSelector } from './CanvasPresentationSelector';
++import type { CanvasWorldReadPort } from './CanvasWorldReadPort';
+ 
+ export class CanvasPresentationController {
+   constructor(private readonly selector = new CanvasPresentationSelector()) {}
+-  buildModel(world: World, viewport: CanvasViewportModel, state: CanvasPresentationState): CanvasPresentationModel {
+-    return this.selector.select(world, viewport, state);
++  buildModel(readPort: CanvasWorldReadPort, viewport: CanvasViewportModel, state: CanvasPresentationState): CanvasPresentationModel {
++    return this.selector.select(readPort, viewport, state);
+   }
+ }
+diff --git a/frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts b/frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts
+index e0c0a8e..ce5fe1f 100644
+--- a/frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts
++++ b/frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts
+@@ -1,70 +1,89 @@
+-import { Matrix3 } from 'three';
+-import type { World } from '@/domain/world/World';
+ import { Segment2DByPoints } from '@/domain/world/Segment';
+ import { Guide2D, SiblingGuide2D } from '@/domain/world/Guide';
+ import { HalfHingeLine2D } from '@/domain/world/HingeLine';
+-import { RenderLayer, type LinePrimitive, type PointPrimitive, type SegmentPrimitive, type CirclePrimitive, type PathPrimitive } from '@/domain/presentation/Paper';
+-import { applyMatrix3x4 } from '@/utils/threeUtils';
+-import type { CanvasPresentationModel, CanvasPresentationState, CanvasQueryItem, CanvasRenderItem, CanvasViewportModel } from './CanvasPresentationModel';
++import { RenderLayer, type LinePrimitive, type PointPrimitive, type SegmentPrimitive, type CirclePrimitive, type PathPrimitive, type Primitive } from '@/domain/presentation/Paper';
++import type { CanvasElementKind, CanvasPresentationModel, CanvasPresentationState, CanvasQueryItem, CanvasRenderItem, CanvasViewportModel } from './CanvasPresentationModel';
+ import { selectCanvasGrid } from './CanvasGridSelector';
+-import { circleStyle, guideStyle, hingeStyle, lineStyle, pointStyle, PROJECTED_LINE_STYLE, PROJECTED_POINT_STYLE, PROJECTED_SEGMENT_STYLE, segmentStyle } from './CanvasStylePolicy';
++import { circleStyle, guideStyle, hingeStyle, lineStyle, pointStyle, segmentStyle } from './CanvasStylePolicy';
+ import { isCanvasElementVisible } from './CanvasVisibilityPolicy';
++import { Projected3DCanvasSelector } from './Projected3DCanvasSelector';
++import type { CanvasPlaneTransformMap, CanvasWorldReadPort } from './CanvasWorldReadPort';
++
++interface ArcGeometryLike {
++  startPoint?: { x: number; y: number };
++  endPoint?: { x: number; y: number };
++  controlPoints?: Array<{ x: number; y: number }>;
++  style?: { color: string; width: number; dashArray?: readonly number[]; opacity: number };
++}
+ 
+ export class CanvasPresentationSelector {
+-  select(world: World, viewport: CanvasViewportModel, state: CanvasPresentationState): CanvasPresentationModel {
++  constructor(private readonly projected3DSelector = new Projected3DCanvasSelector()) {}
++
++  select(readPort: CanvasWorldReadPort, viewport: CanvasViewportModel, state: CanvasPresentationState): CanvasPresentationModel {
+     const renderItems: CanvasRenderItem[] = [];
+     const queryItems: CanvasQueryItem[] = [];
+-    const planeTransforms = new Map();
+-    for (const plane of world.getAllProjectionPlanes()) {
+-      const realization = world.getProjectionPlane2DRealization(plane.id);
+-      if (realization) planeTransforms.set(plane.id, { planeId: plane.id, planeToPaper: realization.planeToPaper2D, paperToPlane: realization.paperToPlane2D });
++    const planeTransforms: CanvasPlaneTransformMap = new Map();
++
++    for (const plane of readPort.getAllProjectionPlanes()) {
++      const transform = readPort.getProjectionPlane2DTransform(plane.id);
++      if (transform) planeTransforms.set(plane.id, transform);
+     }
+-    for (const plane of world.getAllProjectionPlanes()) {
+-      const transform = planeTransforms.get(plane.id)?.planeToPaper as Matrix3 | undefined;
++
++    for (const plane of readPort.getAllProjectionPlanes()) {
++      const transform = planeTransforms.get(plane.id)?.planeToPaper;
+       if (!transform) continue;
++
+       for (const point of plane.getAllPoints()) {
+-        if (!isCanvasElementVisible(point, world)) continue;
+-        const realization = plane.realizePoint2D(point, world as any); if (!realization) continue;
+-        const s = pointStyle(point, stateFor(point.id!, state));
++        if (!isCanvasElementVisible(point, readPort)) continue;
++        const realization = readPort.realizePoint2D(plane, point);
++        if (!realization) continue;
++        const style = pointStyle(point, stateFor(point.id, state));
+         const position = realization.position.clone().applyMatrix3(transform);
+-        const primitive: PointPrimitive = { type: 'point', id: `point-${point.id}`, sourceEntityId: point.id, planeId: point.planeId, layer: s.layer, visible: true, style: s.style, position, radius: s.radius };
+-        renderItems.push(item(primitive, 'point'));
+-        queryItems.push({ id: primitive.id, kind: 'point', elementId: point.id!, elementType: 'point', planeId: point.planeId, selectable: true, planeGeometry: { type: 'point', position: realization.position.clone(), visualRadiusPixels: s.radius } });
++        const primitive: PointPrimitive = { type: 'point', id: `point-${point.id}`, sourceEntityId: point.id, planeId: point.planeId, layer: style.layer, visible: true, style: style.style, position, radius: style.radius };
++        renderItems.push(canvasRenderItem(primitive, 'point'));
++        queryItems.push({ id: primitive.id, kind: 'point', elementId: point.id, elementType: 'point', planeId: point.planeId, selectable: true, planeGeometry: { type: 'point', position: realization.position.clone(), visualRadiusPixels: style.radius } });
+       }
++
+       for (const line of plane.getAllLines()) {
+-        if (!isCanvasElementVisible(line, world)) continue;
+-        const realization = plane.realizeLine2D(line, world as any); if (!realization) continue;
++        if (!isCanvasElementVisible(line, readPort)) continue;
++        const realization = readPort.realizeLine2D(plane, line);
++        if (!realization) continue;
+         const kind = line instanceof HalfHingeLine2D ? 'half-hinge-line' : line instanceof Segment2DByPoints ? 'finite-segment' : line instanceof SiblingGuide2D ? 'sibling-guide' : line instanceof Guide2D ? 'guide' : 'infinite-line';
++
+         if (kind === 'finite-segment') {
+-          const style = segmentStyle(line, stateFor(line.id!, state));
++          const style = segmentStyle(line, stateFor(line.id, state));
+           const primitive: SegmentPrimitive = { type: 'segment', id: `segment-${line.id}`, sourceEntityId: line.id, planeId: line.planeId, layer: RenderLayer.Elements, visible: true, style, point1: realization.point1.clone().applyMatrix3(transform), point2: realization.point2.clone().applyMatrix3(transform) };
+-          renderItems.push(item(primitive, kind));
+-          queryItems.push({ id: primitive.id, kind, elementId: line.id!, elementType: 'segment', planeId: line.planeId, selectable: true, planeGeometry: { type: 'segment', point1: realization.point1.clone(), point2: realization.point2.clone() } });
++          renderItems.push(canvasRenderItem(primitive, kind));
++          queryItems.push({ id: primitive.id, kind, elementId: line.id, elementType: 'segment', planeId: line.planeId, selectable: true, planeGeometry: { type: 'segment', point1: realization.point1.clone(), point2: realization.point2.clone() } });
+         } else {
+-          const style = kind === 'guide' || kind === 'sibling-guide' ? guideStyle(line as Guide2D | SiblingGuide2D, stateFor(line.id!, state)) : kind === 'half-hinge-line' ? hingeStyle(line as HalfHingeLine2D, stateFor(line.id!, state)) : lineStyle(line, stateFor(line.id!, state));
++          const style = kind === 'guide' || kind === 'sibling-guide' ? guideStyle(line as Guide2D | SiblingGuide2D, stateFor(line.id, state)) : kind === 'half-hinge-line' ? hingeStyle(line as HalfHingeLine2D, stateFor(line.id, state)) : lineStyle(line, stateFor(line.id, state));
+           const prefix = kind === 'guide' || kind === 'sibling-guide' ? 'guide' : kind === 'half-hinge-line' ? 'halfhingeline' : 'line';
+           const primitive: LinePrimitive = { type: 'line', id: `${prefix}-${line.id}`, sourceEntityId: line.id, planeId: kind === 'guide' || kind === 'sibling-guide' ? undefined : line.planeId, layer: kind === 'guide' || kind === 'sibling-guide' ? RenderLayer.Guides : kind === 'half-hinge-line' ? RenderLayer.HingeLines : RenderLayer.Elements, visible: true, style, point: realization.point1.clone().applyMatrix3(transform), direction: realization.getDirection().applyMatrix3(transform) };
+-          renderItems.push(item(primitive, kind));
+-          queryItems.push({ id: primitive.id, kind, elementId: line.id!, elementType: kind === 'half-hinge-line' ? 'half-hinge-line' : kind === 'guide' || kind === 'sibling-guide' ? 'guide' : 'line', planeId: line.planeId, selectable: true, planeGeometry: { type: 'line', point: realization.point1.clone(), direction: realization.getDirection() } });
+-          const arcGeometry = (line as any).arcGeometry;
+-          if (arcGeometry?.startPoint && arcGeometry?.endPoint && arcGeometry?.controlPoints?.length) {
+-            const style = { stroke: arcGeometry.style.color, strokeWidth: arcGeometry.style.width, strokeStyle: arcGeometry.style.dashArray ? 'dashed' as const : 'solid' as const, fill: 'none', opacity: arcGeometry.style.opacity, zIndex: 2 };
+-            const path: PathPrimitive = { type: 'path', id: `arc-${line.id}`, sourceEntityId: line.id, planeId: undefined, layer: RenderLayer.Guides, visible: true, style, points: [[arcGeometry.startPoint.x, arcGeometry.startPoint.y], [arcGeometry.controlPoints[0].x, arcGeometry.controlPoints[0].y], [arcGeometry.endPoint.x, arcGeometry.endPoint.y]], closed: false };
+-            renderItems.push(item(path, 'arc'));
++          renderItems.push(canvasRenderItem(primitive, kind));
++          queryItems.push({ id: primitive.id, kind, elementId: line.id, elementType: kind === 'half-hinge-line' ? 'half-hinge-line' : kind === 'guide' || kind === 'sibling-guide' ? 'guide' : 'line', planeId: line.planeId, selectable: true, planeGeometry: { type: 'line', point: realization.point1.clone(), direction: realization.getDirection() } });
++
++          const arcGeometry = optionalArcGeometry(line);
++          if (arcGeometry?.startPoint && arcGeometry?.endPoint && arcGeometry.controlPoints?.length && arcGeometry.style) {
++            const pathStyle = { stroke: arcGeometry.style.color, strokeWidth: arcGeometry.style.width, strokeStyle: arcGeometry.style.dashArray ? 'dashed' as const : 'solid' as const, fill: 'none', opacity: arcGeometry.style.opacity, zIndex: 2 };
++            const path: PathPrimitive = { type: 'path', id: `arc-${line.id}`, sourceEntityId: line.id, planeId: undefined, layer: RenderLayer.Guides, visible: true, style: pathStyle, points: [[arcGeometry.startPoint.x, arcGeometry.startPoint.y], [arcGeometry.controlPoints[0].x, arcGeometry.controlPoints[0].y], [arcGeometry.endPoint.x, arcGeometry.endPoint.y]], closed: false };
++            renderItems.push(canvasRenderItem(path, 'arc'));
+           }
+         }
+       }
++
+       for (const circle of plane.getAllCircles()) {
+-        if (!isCanvasElementVisible(circle, world)) continue;
+-        const realization = plane.realizeCircle2D(circle, world as any); if (!realization) continue;
++        if (!isCanvasElementVisible(circle, readPort)) continue;
++        const realization = readPort.realizeCircle2D(plane, circle);
++        if (!realization) continue;
+         const center = realization.center.clone().applyMatrix3(transform);
+         const radius = realization.radiusVector.clone().applyMatrix3(transform).length();
+-        const primitive: CirclePrimitive = { type: 'circle', id: `circle-${circle.id}`, sourceEntityId: circle.id!, planeId: circle.planeId, layer: RenderLayer.Elements, visible: true, style: circleStyle(circle, stateFor(circle.id!, state)), cx: center.x, cy: center.y, radius };
+-        renderItems.push(item(primitive, 'circle'));
+-        queryItems.push({ id: primitive.id, kind: 'circle', elementId: circle.id!, elementType: 'circle', planeId: circle.planeId, selectable: true, planeGeometry: { type: 'circle', center: realization.center.clone(), radius: realization.getRadius() } });
++        const primitive: CirclePrimitive = { type: 'circle', id: `circle-${circle.id}`, sourceEntityId: circle.id, planeId: circle.planeId, layer: RenderLayer.Elements, visible: true, style: circleStyle(circle, stateFor(circle.id, state)), cx: center.x, cy: center.y, radius };
++        renderItems.push(canvasRenderItem(primitive, 'circle'));
++        queryItems.push({ id: primitive.id, kind: 'circle', elementId: circle.id, elementType: 'circle', planeId: circle.planeId, selectable: true, planeGeometry: { type: 'circle', center: realization.center.clone(), radius: realization.getRadius() } });
+       }
+     }
+-    if (state.showProjectedElements) renderItems.push(...projected3D(world, planeTransforms));
++
++    if (state.showProjectedElements) renderItems.push(...this.projected3DSelector.select(readPort, planeTransforms));
+     renderItems.sort((a, b) => a.primitive.layer === b.primitive.layer ? a.style.zIndex - b.style.zIndex : a.primitive.layer - b.primitive.layer);
+     const activeTransform = state.activePlaneId ? planeTransforms.get(state.activePlaneId)?.planeToPaper : undefined;
+     const grid = state.gridVisible === false ? { lines: [], labels: { top: [], bottom: [], left: [], right: [] } } : selectCanvasGrid(activeTransform, viewport);
+@@ -73,15 +92,11 @@ export class CanvasPresentationSelector {
+ }
+ 
+ function stateFor(id: string, state: CanvasPresentationState) { return { selected: state.selectedIds?.has(id), hovered: state.hoveredIds?.has(id), snapTarget: state.activeSnapTargetId === id, cascade: state.cascadeHighlightIds?.has(id), activePlaneId: state.activePlaneId }; }
+-function item(primitive: any, kind: any): CanvasRenderItem { return { id: primitive.id, kind, sourceEntityId: primitive.sourceEntityId, planeId: primitive.planeId, primitive, visible: primitive.visible, style: primitive.style }; }
+-function projected3D(world: World, planeTransforms: Map<string, any>): CanvasRenderItem[] {
+-  const items: CanvasRenderItem[] = []; const EPSILON = 1e-10;
+-  for (const plane of world.getAllProjectionPlanes()) {
+-    const planeRealization = world.getProjectionPlane3DRealization(plane.id); const planeToPaper = planeTransforms.get(plane.id)?.planeToPaper;
+-    if (!planeRealization || !planeToPaper) continue;
+-    for (const point3D of world.getAll3DPoints()) { const r = point3D.realize3D(world); if (!r?.isFeasible()) continue; const position = applyMatrix3x4(r.position, planeRealization.threeDToPlane).applyMatrix3(planeToPaper); items.push(item({ type: 'point', id: `proj3d-point-${point3D.id}-on-${plane.id}`, sourceEntityId: point3D.id, planeId: plane.id, layer: RenderLayer.Guides + 3, visible: true, style: PROJECTED_POINT_STYLE, position, radius: 6 }, 'projected-3d-point')); }
+-    for (const line3D of world.getAll3DLines()) { const r = line3D.realize3D(world); if (!r?.isFeasible()) continue; const dir = applyMatrix3x4(r.direction, planeRealization.threeDToPlane); if (dir.length() < EPSILON) continue; items.push(item({ type: 'line', id: `proj3d-line-${line3D.id}-on-${plane.id}`, sourceEntityId: line3D.id, planeId: plane.id, layer: RenderLayer.Guides + 3, visible: true, style: PROJECTED_LINE_STYLE, point: applyMatrix3x4(r.point, planeRealization.threeDToPlane).applyMatrix3(planeToPaper), direction: dir.applyMatrix3(planeToPaper) }, 'projected-3d-line')); }
+-    for (const segment3D of world.getAll3DSegments()) { const r = segment3D.realize3D(world); if (!r?.isFeasible()) continue; items.push(item({ type: 'segment', id: `proj3d-segment-${segment3D.id}-on-${plane.id}`, sourceEntityId: segment3D.id, planeId: plane.id, layer: RenderLayer.Guides + 3, visible: true, style: PROJECTED_SEGMENT_STYLE, point1: applyMatrix3x4(r.startPoint, planeRealization.threeDToPlane).applyMatrix3(planeToPaper), point2: applyMatrix3x4(r.endPoint, planeRealization.threeDToPlane).applyMatrix3(planeToPaper) }, 'projected-3d-segment')); }
+-  }
+-  return items;
++
++export function canvasRenderItem<TPrimitive extends Primitive>(primitive: TPrimitive, kind: CanvasElementKind): CanvasRenderItem {
++  return { id: primitive.id, kind, sourceEntityId: primitive.sourceEntityId, planeId: primitive.planeId, primitive, visible: primitive.visible, style: primitive.style };
++}
++
++function optionalArcGeometry(line: object): ArcGeometryLike | undefined {
++  return 'arcGeometry' in line ? line.arcGeometry as ArcGeometryLike | undefined : undefined;
+ }
+diff --git a/frontend/src/application/canvasPresentation/CanvasVisibilityPolicy.ts b/frontend/src/application/canvasPresentation/CanvasVisibilityPolicy.ts
+index 2b54b68..61a7600 100644
+--- a/frontend/src/application/canvasPresentation/CanvasVisibilityPolicy.ts
++++ b/frontend/src/application/canvasPresentation/CanvasVisibilityPolicy.ts
+@@ -1,6 +1,9 @@
++import type { Element } from '@/domain/world/Element';
+ import type { World } from '@/domain/world/World';
+ import { resolveVisibility } from '@/domain/world/styleService';
+ 
+-export function isCanvasElementVisible(element: object, world: World): boolean {
+-  return resolveVisibility(element as never, world);
++type CanvasVisibilityWorld = Pick<World, 'getProcessTree'>;
++
++export function isCanvasElementVisible(element: Element, world: CanvasVisibilityWorld): boolean {
++  return resolveVisibility(element, world as World);
+ }
+diff --git a/frontend/src/components/panels/ThreeView.vue b/frontend/src/components/panels/ThreeView.vue
+index 02a3951..e11cd1a 100644
+--- a/frontend/src/components/panels/ThreeView.vue
++++ b/frontend/src/components/panels/ThreeView.vue
+@@ -85,6 +85,7 @@ onUnmounted(() => {
+ }
+ 
+ .three-controls {
++  pointer-events: auto;
+   position: absolute;
+   top: 10px;
+   right: 10px;
+diff --git a/frontend/src/components/workspace/SvgCanvas.vue b/frontend/src/components/workspace/SvgCanvas.vue
+index 27c308c..ecfc958 100644
+--- a/frontend/src/components/workspace/SvgCanvas.vue
++++ b/frontend/src/components/workspace/SvgCanvas.vue
+@@ -210,6 +210,7 @@ import { createCanvasToolController } from '@/application/tools/CanvasToolContro
+ import type { FreePointMoveSession } from '@/application/tools/ToolCommandIntents';
+ import { CanvasPresentationController } from '@/application/canvasPresentation/CanvasPresentationController';
+ import { CanvasInteractionQuery } from '@/application/canvasPresentation/CanvasInteractionQuery';
++import { createCanvasWorldReadPort } from '@/application/canvasPresentation/CanvasWorldReadPort';
+ 
+ // Define emits
+ const emit = defineEmits<{
+@@ -548,7 +549,7 @@ const canvasPresentation = computed(() => {
+   const selectedIds = selectionStore.selectedIdsArray;
+   const cascadeHighlightIds = selectionStore.cascadeHighlightIdsArray;
+   return canvasPresentationController.buildModel(
+-    world,
++    createCanvasWorldReadPort(world),
+     { ...viewport.value, width: canvasWidth.value, height: canvasHeight.value },
+     {
+       hoveredIds: hoveredId ? new Set([hoveredId]) : undefined,
+diff --git a/frontend/src/domain/presentation/Paper.ts b/frontend/src/domain/presentation/Paper.ts
+index bbb0860..0ac825c 100644
+--- a/frontend/src/domain/presentation/Paper.ts
++++ b/frontend/src/domain/presentation/Paper.ts
+@@ -6,7 +6,7 @@
+  * selector/query layer; this module intentionally has no World dependency.
+  */
+ 
+-import { Vector3, Matrix3 } from 'three';
++import { Vector3 } from 'three';
+ 
+ /**
+  * Visual style attributes resolved and ready for rendering
+@@ -147,239 +147,3 @@ export interface ViewportTransform {
+   panY: number;                     // Pan offset Y in paper space
+ }
+ 
+-/**
+- * Result of a hit test query
+- * Contains element identification and distance information
+- */
+-export interface HitResult {
+-  elementId: string;                // Source domain element ID ("point_1", "line_2")
+-  elementType: string;              // "point" | "line" | "circle" | "segment"
+-  primitiveId: string;              // Primitive ID ("point-point_1")
+-  distance: number;                 // Distance in canvas pixels (for UI feedback)
+-  snapPoint: Vector3;               // Exact snap position (paper coordinates, homogeneous)
+-}
+-
+-/**
+- * Paper - Collection of drawing primitives in unified paper coordinate system
+- * 
+- * Paper contains primitives from all projection planes in a shared coordinate system.
+- * Each plane has a transformation matrix (stored elsewhere) that converts from
+- * its intrinsic <u,v> coordinates to paper coordinates when generating primitives.
+- * 
+- * Paper also serves as the spatial query engine for hit testing and hover detection,
+- * applying correct coordinate transforms to handle snap radius and element proximity.
+- */
+-export class Paper {
+-  private primitives: Map<string, Primitive>;
+-  private dirtyPrimitiveIds: Set<string>;
+-  private hoveredElementId?: string;
+-  private viewportTransform: ViewportTransform;
+-  private canvasToPaperMatrix: Matrix3;  // Cached inverse viewport transform matrix
+-
+-  constructor() {
+-    this.primitives = new Map();
+-    this.dirtyPrimitiveIds = new Set();
+-    this.viewportTransform = { zoom: 1.0, panX: 0, panY: 0 };
+-    this.canvasToPaperMatrix = new Matrix3(); // Identity
+-    this.updateTransformMatrix();
+-  }
+-
+-  /**
+-   * Update viewport transform for coordinate conversions
+-   * Must be called when viewport changes (pan/zoom)
+-   */
+-  setViewportTransform(viewport: ViewportTransform): void {
+-    this.viewportTransform = viewport;
+-    this.updateTransformMatrix();
+-  }
+-
+-  /**
+-   * Build the inverse viewport transformation matrix
+-   * 
+-   * Forward transform (paper → canvas):
+-   *   canvas = zoom * (paper + pan)
+-   *   Matrices: S(zoom) * T(pan) where T applies first
+-   * 
+-   * Inverse transform (canvas → paper):
+-   *   paper = (canvas / zoom) - pan
+-   *   Matrices: T(-pan) * S(1/zoom) = (S * T)^-1
+-   * 
+-   * Result in homogeneous 2D:
+-   * | 1/zoom    0      -panX |
+-   * |   0     1/zoom  -panY |
+-   * |   0       0        1   |
+-   * 
+-   * CRITICAL: Three.js Matrix3.set() argument order
+-   * ================================================
+-   * Three.js stores matrices in COLUMN-MAJOR order internally (OpenGL style),
+-   * but set() takes arguments in ROW-MAJOR order for convenience:
+-   * 
+-   *   set(n11, n12, n13,   ← row 1
+-   *       n21, n22, n23,   ← row 2  
+-   *       n31, n32, n33)   ← row 3
+-   * 
+-   * When applyMatrix3() is called, it computes: result = M × v (column vector)
+-   * 
+-   * Verification with our matrix:
+-   *   | 1/z   0   -pX |   | cx |   | cx/z - pX |
+-   *   |  0   1/z  -pY | × | cy | = | cy/z - pY | ✓
+-   *   |  0    0    1  |   | 1  |   |     1     |
+-   */
+-  private updateTransformMatrix(): void {
+-    const s = 1 / this.viewportTransform.zoom;
+-    const tx = -this.viewportTransform.panX;
+-    const ty = -this.viewportTransform.panY;
+-    
+-    // Arguments to set() are in ROW-MAJOR order: (r1c1, r1c2, r1c3, r2c1, r2c2, r2c3, r3c1, r3c2, r3c3)
+-    this.canvasToPaperMatrix.set(
+-      s,  0,  tx,   // Row 1: [1/zoom,    0,    -panX]
+-      0,  s,  ty,   // Row 2: [  0,    1/zoom, -panY]
+-      0,  0,  1     // Row 3: [  0,      0,      1  ]
+-    );
+-  }
+-
+-  /**
+-   * Get current viewport transform
+-   */
+-  getViewportTransform(): ViewportTransform {
+-    return this.viewportTransform;
+-  }
+-
+-  /**
+-   * Set which element should be visually highlighted (hover feedback)
+-   * This triggers re-generation of primitives with hover styling
+-   */
+-  setHoveredElement(elementId: string | undefined): void {
+-    if (this.hoveredElementId !== elementId) {
+-      this.hoveredElementId = elementId;
+-      // Note: Caller should trigger re-render after setting hover state
+-    }
+-  }
+-
+-  /**
+-   * Get currently hovered element ID
+-   */
+-  getHoveredElement(): string | undefined {
+-    return this.hoveredElementId;
+-  }
+-
+-  /**
+-   * Add or update a primitive
+-   */
+-  setPrimitive(primitive: Primitive): void {
+-    this.primitives.set(primitive.id, primitive);
+-    this.dirtyPrimitiveIds.add(primitive.id);
+-  }
+-
+-  /**
+-   * Add or update multiple primitives
+-   */
+-  setPrimitives(primitives: Primitive[]): void {
+-    for (const primitive of primitives) {
+-      this.setPrimitive(primitive);
+-    }
+-  }
+-
+-  /**
+-   * Remove a primitive by ID
+-   */
+-  removePrimitive(id: string): void {
+-    this.primitives.delete(id);
+-    this.dirtyPrimitiveIds.delete(id);
+-  }
+-
+-  /**
+-   * Remove all primitives generated by a specific entity
+-   */
+-  removePrimitivesByEntity(entityId: string): void {
+-    const toRemove: string[] = [];
+-    for (const [id, primitive] of this.primitives) {
+-      if (primitive.sourceEntityId === entityId) {
+-        toRemove.push(id);
+-      }
+-    }
+-    for (const id of toRemove) {
+-      this.removePrimitive(id);
+-    }
+-  }
+-
+-  /**
+-   * Get a primitive by ID
+-   */
+-  getPrimitive(id: string): Primitive | undefined {
+-    return this.primitives.get(id);
+-  }
+-
+-  /**
+-   * Get all primitives, optionally filtered by visibility and layer
+-   */
+-  getPrimitives(options?: {
+-    visibleOnly?: boolean;
+-    layers?: RenderLayer[];
+-  }): Primitive[] {
+-    let result = Array.from(this.primitives.values());
+-
+-    if (options?.visibleOnly) {
+-      result = result.filter(p => p.visible);
+-    }
+-
+-    if (options?.layers && options.layers.length > 0) {
+-      const layerSet = new Set(options.layers);
+-      result = result.filter(p => layerSet.has(p.layer));
+-    }
+-
+-    // Sort by layer, then z-index
+-    result.sort((a, b) => {
+-      if (a.layer !== b.layer) {
+-        return a.layer - b.layer;
+-      }
+-      return a.style.zIndex - b.style.zIndex;
+-    });
+-
+-    return result;
+-  }
+-
+-  /**
+-   * Get primitives that need re-rendering
+-   */
+-  getDirtyPrimitives(): Primitive[] {
+-    const result: Primitive[] = [];
+-    for (const id of this.dirtyPrimitiveIds) {
+-      const primitive = this.primitives.get(id);
+-      if (primitive) {
+-        result.push(primitive);
+-      }
+-    }
+-    return result;
+-  }
+-
+-  /**
+-   * Clear dirty flags
+-   */
+-  clearDirtyFlags(): void {
+-    this.dirtyPrimitiveIds.clear();
+-  }
+-
+-  /**
+-   * Clear all primitives
+-   */
+-  clear(): void {
+-    this.primitives.clear();
+-    this.dirtyPrimitiveIds.clear();
+-  }
+-
+-  /**
+-   * Get count of primitives
+-   */
+-  get size(): number {
+-    return this.primitives.size;
+-  }
+-
+-  /**
+-   * Check if paper has any dirty primitives
+-   */
+-  get isDirty(): boolean {
+-    return this.dirtyPrimitiveIds.size > 0;
+-  }
+-
+-}
+diff --git a/frontend/tests/unit/application/canvasPresentation/canvasPresentationSelector.spec.ts b/frontend/tests/unit/application/canvasPresentation/canvasPresentationSelector.spec.ts
+index 1467203..bffdd46 100644
+--- a/frontend/tests/unit/application/canvasPresentation/canvasPresentationSelector.spec.ts
++++ b/frontend/tests/unit/application/canvasPresentation/canvasPresentationSelector.spec.ts
+@@ -1,6 +1,7 @@
+ import { describe, expect, it } from 'vitest';
+ import { Vector3 } from 'three';
+ import { CanvasPresentationSelector } from '@/application/canvasPresentation/CanvasPresentationSelector';
++import { createCanvasWorldReadPort } from '@/application/canvasPresentation/CanvasWorldReadPort';
+ import { createTestWorld } from '../../../helpers/worldHelpers';
+ 
+ describe('CanvasPresentationSelector', () => {
+@@ -12,7 +13,7 @@ describe('CanvasPresentationSelector', () => {
+     const segment = plane.addSegment2DBetweenPoints(a.id!, b.id!, world as any);
+     const circle = plane.addCircle2DByCenterAndPoint(a.id!, b.id!, world as any);
+     const selector = new CanvasPresentationSelector();
+-    const model = selector.select(world, { zoom: 1, panX: 0, panY: 0, width: 400, height: 300 }, { activePlaneId: plane.id, selectedIds: new Set([segment.id!]), hoveredIds: new Set([circle.id!]), gridVisible: true });
++    const model = selector.select(createCanvasWorldReadPort(world), { zoom: 1, panX: 0, panY: 0, width: 400, height: 300 }, { activePlaneId: plane.id, selectedIds: new Set([segment.id!]), hoveredIds: new Set([circle.id!]), gridVisible: true });
+     expect(model.renderItems.some(item => item.kind === 'point')).toBe(true);
+     expect(model.renderItems.some(item => item.kind === 'finite-segment')).toBe(true);
+     expect(model.renderItems.some(item => item.kind === 'circle')).toBe(true);
+diff --git a/frontend/tests/unit/tools/CircleTool.spec.ts b/frontend/tests/unit/tools/CircleTool.spec.ts
+index 4f57829..b1cd820 100644
+--- a/frontend/tests/unit/tools/CircleTool.spec.ts
++++ b/frontend/tests/unit/tools/CircleTool.spec.ts
+@@ -23,13 +23,14 @@ import type { ToolContext } from '@/tools/ITool';
+ import { CanvasToolController } from '@/application/tools/CanvasToolController';
+ import { Vector3, Matrix3 } from 'three';
+ import { CanvasPresentationSelector } from '@/application/canvasPresentation/CanvasPresentationSelector';
++import { createCanvasWorldReadPort } from '@/application/canvasPresentation/CanvasWorldReadPort';
+ 
+ function liveInteractionQuery(worldRef: () => any, planeIdRef: () => string): CanvasInteractionQuery {
+   return {
+     hitTest(canvasPos: any, snapRadiusPixels: number, context: any, selectionMask?: any) {
+       const world = worldRef();
+       const activePlaneId = context.activePlaneId ?? planeIdRef();
+-      const model = new CanvasPresentationSelector().select(world, { zoom: 1, panX: 0, panY: 0, width: 800, height: 600 }, { activePlaneId });
++      const model = new CanvasPresentationSelector().select(createCanvasWorldReadPort(world), { zoom: 1, panX: 0, panY: 0, width: 800, height: 600 }, { activePlaneId });
+       return new CanvasInteractionQuery(model.queryItems).hitTest(canvasPos, snapRadiusPixels, context, selectionMask);
+     }
+   } as CanvasInteractionQuery;
+diff --git a/frontend/tests/unit/tools/pointTool.spec.ts b/frontend/tests/unit/tools/pointTool.spec.ts
+index 929302a..26bf4d5 100644
+--- a/frontend/tests/unit/tools/pointTool.spec.ts
++++ b/frontend/tests/unit/tools/pointTool.spec.ts
+@@ -18,13 +18,14 @@ import type { ToolContext } from '@/tools/ITool';
+ import { CanvasToolController } from '@/application/tools/CanvasToolController';
+ import { Vector3 } from 'three';
+ import { CanvasPresentationSelector } from '@/application/canvasPresentation/CanvasPresentationSelector';
++import { createCanvasWorldReadPort } from '@/application/canvasPresentation/CanvasWorldReadPort';
+ 
+ function liveInteractionQuery(worldRef: () => any, planeIdRef: () => string): CanvasInteractionQuery {
+   return {
+     hitTest(canvasPos: any, snapRadiusPixels: number, context: any, selectionMask?: any) {
+       const world = worldRef();
+       const activePlaneId = context.activePlaneId ?? planeIdRef();
+-      const model = new CanvasPresentationSelector().select(world, { zoom: 1, panX: 0, panY: 0, width: 800, height: 600 }, { activePlaneId });
++      const model = new CanvasPresentationSelector().select(createCanvasWorldReadPort(world), { zoom: 1, panX: 0, panY: 0, width: 800, height: 600 }, { activePlaneId });
+       return new CanvasInteractionQuery(model.queryItems).hitTest(canvasPos, snapRadiusPixels, context, selectionMask);
+     }
+   } as CanvasInteractionQuery;
+diff --git a/frontend/tests/unit/tools/toolValidation.spec.ts b/frontend/tests/unit/tools/toolValidation.spec.ts
+index b0f6ba7..0637784 100644
+--- a/frontend/tests/unit/tools/toolValidation.spec.ts
++++ b/frontend/tests/unit/tools/toolValidation.spec.ts
+@@ -29,13 +29,14 @@ import type { ToolContext } from '@/tools/ITool';
+ import { CanvasToolController } from '@/application/tools/CanvasToolController';
+ import { Vector3, Matrix3 } from 'three';
+ import { CanvasPresentationSelector } from '@/application/canvasPresentation/CanvasPresentationSelector';
++import { createCanvasWorldReadPort } from '@/application/canvasPresentation/CanvasWorldReadPort';
+ 
+ function liveInteractionQuery(worldRef: () => any, planeIdRef: () => string): CanvasInteractionQuery {
+   return {
+     hitTest(canvasPos: any, snapRadiusPixels: number, context: any, selectionMask?: any) {
+       const world = worldRef();
+       const activePlaneId = context.activePlaneId ?? planeIdRef();
+-      const model = new CanvasPresentationSelector().select(world, { zoom: 1, panX: 0, panY: 0, width: 800, height: 600 }, { activePlaneId });
++      const model = new CanvasPresentationSelector().select(createCanvasWorldReadPort(world), { zoom: 1, panX: 0, panY: 0, width: 800, height: 600 }, { activePlaneId });
+       return new CanvasInteractionQuery(model.queryItems).hitTest(canvasPos, snapRadiusPixels, context, selectionMask);
+     }
+   } as CanvasInteractionQuery;

@@ -1,0 +1,948 @@
+frontend/src/application/threePresentation/ThreePresentationSelector.ts:20:      projectionPlanes: this.projectionPlanes.select(world, displayOptions.showPlanes, displayOptions.showGrid, displayOptions.showReferenceAxes),
+frontend/src/application/threePresentation/ThreePresentationSelector.ts:21:      planarElements: this.planarElements.select(world, displayOptions.show2DElementsOnPlanes),
+frontend/src/application/threePresentation/ThreePresentationSelector.ts:22:      reconstructedElements: this.reconstructedElements.select(world, displayOptions.showPlanes),
+frontend/src/application/threePresentation/ThreePresentationSelector.ts:23:      guides: this.guides.select(world, selectedIds),
+frontend/src/application/threePresentation/ThreePresentationSelector.ts:24:      hinges: this.hinges.select(world, displayOptions.showPlanes),
+frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:26:    const dtos = new ProjectionPlane3DSelector().select(world, true, true, true);
+frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:42:    expect(new PlanarElement3DSelector().select(world, false)).toEqual([]);
+frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:43:    const dtos = new PlanarElement3DSelector().select(world, true);
+frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:65:    const kinds = new ReconstructedElement3DSelector().select(world, true).map(dto => dto.kind);
+frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:68:    expect(new ReconstructedElement3DSelector().select(world, false)).toEqual([]);
+frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:84:    const selected = new Guide3DSelector().select(world, ['PH/guide-1']);
+frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:85:    const unselected = new Guide3DSelector().select(world, ['unrelated']);
+frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:96:    const dtos = new Hinge3DSelector().select(world, true);
+frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:100:    expect(new Hinge3DSelector().select(world, false)).toEqual([]);
+
+> diedrico-frontend@0.1.0 test
+> vitest run
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/services/googleDriveService.spec.ts  (33 tests | 2 skipped) 39ms
+stdout | tests/unit/domain/plane.spec.ts > Plane3DFixed > realize3D > Plane3DFromTraces > should compute plane from two trace lines
+[Plane3DFromTraces] getPlaneEquation called for plane: plane_from_traces trace1: trace1_id trace2: trace2_id
+[Plane3DFromTraces] All realizations feasible - computing plane
+[Plane3DFromTraces] t1 in 3D: t1PointIn3D: Vector4 { x: 0, y: 0, z: 0, w: 1 } t1DirIn3D: Vector4 { x: 1, y: 0, z: 0, w: 1 }
+[Plane3DFromTraces] t2 in 3D: t2PointIn3D: Vector4 { x: 0, y: 0, z: 0, w: 1 } t2DirIn3D: Vector4 { x: 0, y: 0, z: 1, w: 1 }
+[Plane3DFromTraces] Traces intersect at: Vector4 { x: 0, y: 0, z: 0, w: 1 }
+[Plane3DFromTraces] Normalized normal: [ 0, -1, 0 ]
+[Plane3DFromTraces] Plane equation: a= 0 b= -1 c= 0 d= -0
+
+ ✓ tests/unit/domain/plane.spec.ts  (39 tests | 6 skipped) 27ms
+ ✓ tests/unit/calculations/intersections.spec.ts  (44 tests) 25ms
+ ✓ tests/unit/domain/segmentIntersections.spec.ts  (19 tests) 79ms
+ ✓ tests/unit/projectionPlane.spec.ts  (28 tests) 70ms
+ ✓ tests/unit/domain/world.spec.ts  (49 tests | 9 skipped) 94ms
+ ✓ tests/unit/tools/CircleTool.spec.ts  (10 tests) 111ms
+stdout | tests/unit/tools/CircleTool.spec.ts > CircleTool > T989: Parametric Updates - Circumference Point Movement > should update circle when circumference point moves
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d11
+  projPlane3/point2d11 → invalidates 1 descendant(s):
+    • projPlane3/circle2d12
+=== CASCADE COMPLETE (2 elements invalidated) ===
+
+
+stdout | tests/unit/tools/CircleTool.spec.ts > CircleTool > T992: Regression - Center Point Movement > should still update circle when center point moves
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+  projPlane3/point2d10 → invalidates 1 descendant(s):
+    • projPlane3/circle2d12
+=== CASCADE COMPLETE (2 elements invalidated) ===
+
+
+ ✓ tests/unit/commands/command.spec.ts  (35 tests) 87ms
+ ✓ tests/unit/stores/selectionStore.spec.ts  (42 tests) 197ms
+ ✓ tests/unit/domain/Line3DReconstruction.test.ts  (10 tests) 109ms
+stdout | tests/unit/domain/Line3DReconstruction.test.ts > Line3D Reconstruction from Projections > should reconstruct a line along the x-axis
+[Line3DFromProjections] Reconstructing 3D line from projections: {
+  line1Id: 'projPlane3/line2d12',
+  line2Id: 'projPlane4/line2d15',
+  plane1Id: 'projPlane3',
+  plane2Id: 'projPlane4'
+}
+[Line3DFromProjections] 2D line data: {
+  line1: { point: [ 0, 0 ], direction: [ 10, 0 ] },
+  line2: { point: [ 0, 0 ], direction: [ 10, 0 ] }
+}
+[Line3DFromProjections] Plane 1 (3D): {
+  point1: [ 0, 0, 0 ],
+  point2: [ 10, 0, 0 ],
+  lineDir: [ 10, 0, 0 ],
+  uDir: [ 1, 0, 0 ],
+  vDir: [ 0, 1, 0 ],
+  projPlanePerp: [ 0, 0, 1 ],
+  normal: [ 0, -10, 0 ]
+}
+[Line3DFromProjections] Plane 2 (3D): {
+  point1: [ 0, 0, 0 ],
+  point2: [ 10, 0, 0 ],
+  lineDir: [ 10, 0, 0 ],
+  uDir: [ 1, 0, 0 ],
+  vDir: [ 0, 0, 1 ],
+  projPlanePerp: [ 0, -1, 0 ],
+  normal: [ 0, 0, -10 ]
+}
+[Line3DFromProjections] 3D line direction: [ 1, 0, 0 ]
+[Line3DFromProjections] Plane equations: { plane1: '0*x + -10*y + 0*z = 0', plane2: '0*x + 0*y + -10*z = 0' }
+[Line3DFromProjections] Fixed x=0, solved for y,z
+[Line3DFromProjections] 3D line point: [ 0, -0, -0 ]
+[Line3DFromProjections] ✓ Success! 3D line reconstructed
+
+stdout | tests/unit/domain/Line3DReconstruction.test.ts > Line3D Reconstruction from Projections > should reconstruct a line parallel to y-axis
+[Line3DFromProjections] Reconstructing 3D line from projections: {
+  line1Id: 'projPlane3/line2d12',
+  line2Id: 'projPlane4/line2d15',
+  plane1Id: 'projPlane3',
+  plane2Id: 'projPlane4'
+}
+[Line3DFromProjections] 2D line data: {
+  line1: { point: [ 5, 0 ], direction: [ 0, 10 ] },
+  line2: {
+    point: [ 5, 3 ],
+    direction: [ 0.00009999999999976694, 0.00010000000000021103 ]
+  }
+}
+[Line3DFromProjections] Plane 1 (3D): {
+  point1: [ 5, 0, 0 ],
+  point2: [ 5, 10, 0 ],
+  lineDir: [ 0, 10, 0 ],
+  uDir: [ 1, 0, 0 ],
+  vDir: [ 0, 1, 0 ],
+  projPlanePerp: [ 0, 0, 1 ],
+  normal: [ 10, 0, 0 ]
+}
+[Line3DFromProjections] Plane 2 (3D): {
+  point1: [ 5, 0, 3 ],
+  point2: [ 5.0001, 0, 3.0001 ],
+  lineDir: [ 0.00009999999999976694, 0, 0.00010000000000021103 ],
+  uDir: [ 1, 0, 0 ],
+  vDir: [ 0, 0, 1 ],
+  projPlanePerp: [ 0, -1, 0 ],
+  normal: [ 0.00010000000000021103, 0, -0.00009999999999976694 ]
+}
+[Line3DFromProjections] 3D line direction: [ -0, 1, 0 ]
+[Line3DFromProjections] Plane equations: {
+  plane1: '10*x + 0*y + 0*z = 50',
+  plane2: '0.00010000000000021103*x + 0*y + -0.00009999999999976694*z = 0.00020000000000175433'
+}
+[Line3DFromProjections] Fixed y=0, solved for x,z
+[Line3DFromProjections] 3D line point: [ 5, 0, 3 ]
+[Line3DFromProjections] ✓ Success! 3D line reconstructed
+
+stdout | tests/unit/domain/Line3DReconstruction.test.ts > Line3D Reconstruction from Projections > should reconstruct a line parallel to z-axis
+[Line3DFromProjections] Reconstructing 3D line from projections: {
+  line1Id: 'projPlane3/line2d12',
+  line2Id: 'projPlane4/line2d15',
+  plane1Id: 'projPlane3',
+  plane2Id: 'projPlane4'
+}
+[Line3DFromProjections] 2D line data: {
+  line1: {
+    point: [ 5, 3 ],
+    direction: [ 0.00009999999999976694, 0.00010000000000021103 ]
+  },
+  line2: { point: [ 5, 0 ], direction: [ 0, 10 ] }
+}
+[Line3DFromProjections] Plane 1 (3D): {
+  point1: [ 5, 3, 0 ],
+  point2: [ 5.0001, 3.0001, 0 ],
+  lineDir: [ 0.00009999999999976694, 0.00010000000000021103, 0 ],
+  uDir: [ 1, 0, 0 ],
+  vDir: [ 0, 1, 0 ],
+  projPlanePerp: [ 0, 0, 1 ],
+  normal: [ 0.00010000000000021103, -0.00009999999999976694, 0 ]
+}
+[Line3DFromProjections] Plane 2 (3D): {
+  point1: [ 5, 0, 0 ],
+  point2: [ 5, 0, 10 ],
+  lineDir: [ 0, 0, 10 ],
+  uDir: [ 1, 0, 0 ],
+  vDir: [ 0, 0, 1 ],
+  projPlanePerp: [ 0, -1, 0 ],
+  normal: [ 10, 0, -0 ]
+}
+[Line3DFromProjections] 3D line direction: [ 0, 0, 1 ]
+[Line3DFromProjections] Plane equations: {
+  plane1: '0.00010000000000021103*x + -0.00009999999999976694*y + 0*z = 0.00020000000000175433',
+  plane2: '10*x + 0*y + 0*z = 50'
+}
+[Line3DFromProjections] Fixed z=0, solved for x,y
+[Line3DFromProjections] 3D line point: [ 5, 3, 0 ]
+[Line3DFromProjections] ✓ Success! 3D line reconstructed
+
+stdout | tests/unit/domain/Line3DReconstruction.test.ts > Line3D Reconstruction from Projections > should reconstruct a diagonal line in XY plane (z=0)
+[Line3DFromProjections] Reconstructing 3D line from projections: {
+  line1Id: 'projPlane3/line2d12',
+  line2Id: 'projPlane4/line2d15',
+  plane1Id: 'projPlane3',
+  plane2Id: 'projPlane4'
+}
+[Line3DFromProjections] 2D line data: {
+  line1: { point: [ 0, 0 ], direction: [ 10, 10 ] },
+  line2: { point: [ 0, 0 ], direction: [ 10, 0 ] }
+}
+[Line3DFromProjections] Plane 1 (3D): {
+  point1: [ 0, 0, 0 ],
+  point2: [ 10, 10, 0 ],
+  lineDir: [ 10, 10, 0 ],
+  uDir: [ 1, 0, 0 ],
+  vDir: [ 0, 1, 0 ],
+  projPlanePerp: [ 0, 0, 1 ],
+  normal: [ 10, -10, 0 ]
+}
+[Line3DFromProjections] Plane 2 (3D): {
+  point1: [ 0, 0, 0 ],
+  point2: [ 10, 0, 0 ],
+  lineDir: [ 10, 0, 0 ],
+  uDir: [ 1, 0, 0 ],
+  vDir: [ 0, 0, 1 ],
+  projPlanePerp: [ 0, -1, 0 ],
+  normal: [ 0, 0, -10 ]
+}
+[Line3DFromProjections] 3D line direction: [ 0.7071067811865475, 0.7071067811865475, 0 ]
+[Line3DFromProjections] Plane equations: { plane1: '10*x + -10*y + 0*z = 0', plane2: '0*x + 0*y + -10*z = 0' }
+[Line3DFromProjections] Fixed y=0, solved for x,z
+[Line3DFromProjections] 3D line point: [ 0, 0, -0 ]
+[Line3DFromProjections] ✓ Success! 3D line reconstructed
+
+stdout | tests/unit/domain/Line3DReconstruction.test.ts > Line3D Reconstruction from Projections > should reconstruct a diagonal line in XZ plane (y=0)
+[Line3DFromProjections] Reconstructing 3D line from projections: {
+  line1Id: 'projPlane3/line2d12',
+  line2Id: 'projPlane4/line2d15',
+  plane1Id: 'projPlane3',
+  plane2Id: 'projPlane4'
+}
+[Line3DFromProjections] 2D line data: {
+  line1: { point: [ 0, 0 ], direction: [ 10, 0 ] },
+  line2: { point: [ 0, 0 ], direction: [ 10, 10 ] }
+}
+[Line3DFromProjections] Plane 1 (3D): {
+  point1: [ 0, 0, 0 ],
+  point2: [ 10, 0, 0 ],
+  lineDir: [ 10, 0, 0 ],
+  uDir: [ 1, 0, 0 ],
+  vDir: [ 0, 1, 0 ],
+  projPlanePerp: [ 0, 0, 1 ],
+  normal: [ 0, -10, 0 ]
+}
+[Line3DFromProjections] Plane 2 (3D): {
+  point1: [ 0, 0, 0 ],
+  point2: [ 10, 0, 10 ],
+  lineDir: [ 10, 0, 10 ],
+  uDir: [ 1, 0, 0 ],
+  vDir: [ 0, 0, 1 ],
+  projPlanePerp: [ 0, -1, 0 ],
+  normal: [ 10, 0, -10 ]
+}
+[Line3DFromProjections] 3D line direction: [ 0.7071067811865475, 0, 0.7071067811865475 ]
+[Line3DFromProjections] Plane equations: { plane1: '0*x + -10*y + 0*z = 0', plane2: '10*x + 0*y + -10*z = 0' }
+[Line3DFromProjections] Fixed z=0, solved for x,y
+[Line3DFromProjections] 3D line point: [ 0, 0, 0 ]
+[Line3DFromProjections] ✓ Success! 3D line reconstructed
+
+stdout | tests/unit/domain/Line3DReconstruction.test.ts > Line3D Reconstruction from Projections > should reconstruct a fully 3D diagonal line
+[Line3DFromProjections] Reconstructing 3D line from projections: {
+  line1Id: 'projPlane3/line2d12',
+  line2Id: 'projPlane4/line2d15',
+  plane1Id: 'projPlane3',
+  plane2Id: 'projPlane4'
+}
+[Line3DFromProjections] 2D line data: {
+  line1: { point: [ 0, 0 ], direction: [ 10, 10 ] },
+  line2: { point: [ 0, 0 ], direction: [ 10, 5 ] }
+}
+[Line3DFromProjections] Plane 1 (3D): {
+  point1: [ 0, 0, 0 ],
+  point2: [ 10, 10, 0 ],
+  lineDir: [ 10, 10, 0 ],
+  uDir: [ 1, 0, 0 ],
+  vDir: [ 0, 1, 0 ],
+  projPlanePerp: [ 0, 0, 1 ],
+  normal: [ 10, -10, 0 ]
+}
+[Line3DFromProjections] Plane 2 (3D): {
+  point1: [ 0, 0, 0 ],
+  point2: [ 10, 0, 5 ],
+  lineDir: [ 10, 0, 5 ],
+  uDir: [ 1, 0, 0 ],
+  vDir: [ 0, 0, 1 ],
+  projPlanePerp: [ 0, -1, 0 ],
+  normal: [ 5, 0, -10 ]
+}
+[Line3DFromProjections] 3D line direction: [ 0.6666666666666666, 0.6666666666666666, 0.3333333333333333 ]
+[Line3DFromProjections] Plane equations: { plane1: '10*x + -10*y + 0*z = 0', plane2: '5*x + 0*y + -10*z = 0' }
+[Line3DFromProjections] Fixed y=0, solved for x,z
+[Line3DFromProjections] 3D line point: [ 0, 0, -0 ]
+[Line3DFromProjections] ✓ Success! 3D line reconstructed
+
+stdout | tests/unit/domain/Line3DReconstruction.test.ts > Line3D Reconstruction from Projections > should handle order independence - H then V vs V then H
+[Line3DFromProjections] Reconstructing 3D line from projections: {
+  line1Id: 'projPlane3/line2d12',
+  line2Id: 'projPlane4/line2d15',
+  plane1Id: 'projPlane3',
+  plane2Id: 'projPlane4'
+}
+[Line3DFromProjections] 2D line data: {
+  line1: { point: [ 0, 0 ], direction: [ 10, 5 ] },
+  line2: { point: [ 0, 0 ], direction: [ 10, 3 ] }
+}
+[Line3DFromProjections] Plane 1 (3D): {
+  point1: [ 0, 0, 0 ],
+  point2: [ 10, 5, 0 ],
+  lineDir: [ 10, 5, 0 ],
+  uDir: [ 1, 0, 0 ],
+  vDir: [ 0, 1, 0 ],
+  projPlanePerp: [ 0, 0, 1 ],
+  normal: [ 5, -10, 0 ]
+}
+[Line3DFromProjections] Plane 2 (3D): {
+  point1: [ 0, 0, 0 ],
+  point2: [ 10, 0, 3 ],
+  lineDir: [ 10, 0, 3 ],
+  uDir: [ 1, 0, 0 ],
+  vDir: [ 0, 0, 1 ],
+  projPlanePerp: [ 0, -1, 0 ],
+  normal: [ 3, 0, -10 ]
+}
+[Line3DFromProjections] 3D line direction: [ 0.8638684255813601, 0.43193421279068006, 0.25916052767440806 ]
+[Line3DFromProjections] Plane equations: { plane1: '5*x + -10*y + 0*z = 0', plane2: '3*x + 0*y + -10*z = 0' }
+[Line3DFromProjections] Fixed x=0, solved for y,z
+[Line3DFromProjections] 3D line point: [ 0, -0, -0 ]
+[Line3DFromProjections] ✓ Success! 3D line reconstructed
+[Line3DFromProjections] Reconstructing 3D line from projections: {
+  line1Id: 'projPlane4/line2d15',
+  line2Id: 'projPlane3/line2d12',
+  plane1Id: 'projPlane4',
+  plane2Id: 'projPlane3'
+}
+[Line3DFromProjections] 2D line data: {
+  line1: { point: [ 0, 0 ], direction: [ 10, 3 ] },
+  line2: { point: [ 0, 0 ], direction: [ 10, 5 ] }
+}
+[Line3DFromProjections] Plane 1 (3D): {
+  point1: [ 0, 0, 0 ],
+  point2: [ 10, 0, 3 ],
+  lineDir: [ 10, 0, 3 ],
+  uDir: [ 1, 0, 0 ],
+  vDir: [ 0, 0, 1 ],
+  projPlanePerp: [ 0, -1, 0 ],
+  normal: [ 3, 0, -10 ]
+}
+[Line3DFromProjections] Plane 2 (3D): {
+  point1: [ 0, 0, 0 ],
+  point2: [ 10, 5, 0 ],
+  lineDir: [ 10, 5, 0 ],
+  uDir: [ 1, 0, 0 ],
+  vDir: [ 0, 1, 0 ],
+  projPlanePerp: [ 0, 0, 1 ],
+  normal: [ 5, -10, 0 ]
+}
+[Line3DFromProjections] 3D line direction: [ -0.8638684255813601, -0.43193421279068006, -0.25916052767440806 ]
+[Line3DFromProjections] Plane equations: { plane1: '3*x + 0*y + -10*z = 0', plane2: '5*x + -10*y + 0*z = 0' }
+[Line3DFromProjections] Fixed x=0, solved for y,z
+[Line3DFromProjections] 3D line point: [ 0, -0, -0 ]
+[Line3DFromProjections] ✓ Success! 3D line reconstructed
+
+stdout | tests/unit/domain/Line3DReconstruction.test.ts > Line3D Reconstruction from Projections > should reconstruct line from actual browser case
+[Line3DFromProjections] Reconstructing 3D line from projections: {
+  line1Id: 'projPlane3/line2d12',
+  line2Id: 'projPlane4/line2d15',
+  plane1Id: 'projPlane3',
+  plane2Id: 'projPlane4'
+}
+[Line3DFromProjections] 2D line data: {
+  line1: { point: [ 0.5, 0.5 ], direction: [ 2, 1 ] },
+  line2: { point: [ 0.5, 0.3 ], direction: [ 2, 0.5 ] }
+}
+[Line3DFromProjections] Plane 1 (3D): {
+  point1: [ 0.5, 0.5, 0 ],
+  point2: [ 2.5, 1.5, 0 ],
+  lineDir: [ 2, 1, 0 ],
+  uDir: [ 1, 0, 0 ],
+  vDir: [ 0, 1, 0 ],
+  projPlanePerp: [ 0, 0, 1 ],
+  normal: [ 1, -2, 0 ]
+}
+[Line3DFromProjections] Plane 2 (3D): {
+  point1: [ 0.5, 0, 0.3 ],
+  point2: [ 2.5, 0, 0.8 ],
+  lineDir: [ 2, 0, 0.5 ],
+  uDir: [ 1, 0, 0 ],
+  vDir: [ 0, 0, 1 ],
+  projPlanePerp: [ 0, -1, 0 ],
+  normal: [ 0.5, 0, -2 ]
+}
+[Line3DFromProjections] 3D line direction: [ 0.8728715609439696, 0.4364357804719848, 0.2182178902359924 ]
+[Line3DFromProjections] Plane equations: {
+  plane1: '1*x + -2*y + 0*z = -0.5',
+  plane2: '0.5*x + 0*y + -2*z = -0.35'
+}
+[Line3DFromProjections] Fixed x=0, solved for y,z
+[Line3DFromProjections] 3D line point: [ 0, 0.25, 0.175 ]
+[Line3DFromProjections] ✓ Success! 3D line reconstructed
+
+stdout | tests/unit/domain/Line3DReconstruction.test.ts > Line3D Reconstruction from Projections > should handle original Quick3DLineTool geometry (horizontal + vertical)
+[Line3DFromProjections] Reconstructing 3D line from projections: {
+  line1Id: 'projPlane3/line2d12',
+  line2Id: 'projPlane4/line2d15',
+  plane1Id: 'projPlane3',
+  plane2Id: 'projPlane4'
+}
+[Line3DFromProjections] 2D line data: {
+  line1: { point: [ -40, 15 ], direction: [ 80, 0 ] },
+  line2: { point: [ 0, -20 ], direction: [ 0, 60 ] }
+}
+[Line3DFromProjections] Plane 1 (3D): {
+  point1: [ -40, 15, 0 ],
+  point2: [ 40, 15, 0 ],
+  lineDir: [ 80, 0, 0 ],
+  uDir: [ 1, 0, 0 ],
+  vDir: [ 0, 1, 0 ],
+  projPlanePerp: [ 0, 0, 1 ],
+  normal: [ 0, -80, 0 ]
+}
+[Line3DFromProjections] Plane 2 (3D): {
+  point1: [ 0, 0, -20 ],
+  point2: [ 0, 0, 40 ],
+  lineDir: [ 0, 0, 60 ],
+  uDir: [ 1, 0, 0 ],
+  vDir: [ 0, 0, 1 ],
+  projPlanePerp: [ 0, -1, 0 ],
+  normal: [ 60, 0, -0 ]
+}
+[Line3DFromProjections] 3D line direction: [ 0, 0, 1 ]
+[Line3DFromProjections] Plane equations: { plane1: '0*x + -80*y + 0*z = -1200', plane2: '60*x + 0*y + 0*z = 0' }
+[Line3DFromProjections] Fixed z=0, solved for x,y
+[Line3DFromProjections] 3D line point: [ 0, 15, 0 ]
+[Line3DFromProjections] ✓ Success! 3D line reconstructed
+
+stdout | tests/unit/domain/Line3DReconstruction.test.ts > Line3D Reconstruction from Projections > should detect infeasible 3D line when lifted planes are parallel
+[Line3DFromProjections] Reconstructing 3D line from projections: {
+  line1Id: 'projPlane3/line2d12',
+  line2Id: 'projPlane4/line2d15',
+  plane1Id: 'projPlane3',
+  plane2Id: 'projPlane4'
+}
+[Line3DFromProjections] 2D line data: {
+  line1: { point: [ 5, 0 ], direction: [ 0, 10 ] },
+  line2: { point: [ 0, 0 ], direction: [ 0, 10 ] }
+}
+[Line3DFromProjections] Plane 1 (3D): {
+  point1: [ 5, 0, 0 ],
+  point2: [ 5, 10, 0 ],
+  lineDir: [ 0, 10, 0 ],
+  uDir: [ 1, 0, 0 ],
+  vDir: [ 0, 1, 0 ],
+  projPlanePerp: [ 0, 0, 1 ],
+  normal: [ 10, 0, 0 ]
+}
+[Line3DFromProjections] Plane 2 (3D): {
+  point1: [ 0, 0, 0 ],
+  point2: [ 0, 0, 10 ],
+  lineDir: [ 0, 0, 10 ],
+  uDir: [ 1, 0, 0 ],
+  vDir: [ 0, 0, 1 ],
+  projPlanePerp: [ 0, -1, 0 ],
+  normal: [ 10, 0, -0 ]
+}
+
+ ✓ tests/unit/commands/commandStack.spec.ts  (28 tests) 36ms
+ ↓ tests/integration/pointCreation.spec.ts  (14 tests | 14 skipped)
+ ✓ tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts  (10 tests) 47ms
+ ✓ tests/unit/domain/guide.spec.ts  (13 tests) 46ms
+ ✓ tests/unit/domain/lineHierarchy.spec.ts  (26 tests) 50ms
+ ✓ tests/unit/tools/pointTool.spec.ts  (22 tests) 114ms
+ ✓ tests/unit/domain/point.spec.ts  (28 tests) 43ms
+ ✓ tests/unit/commands/initializationOps.spec.ts  (20 tests) 54ms
+ ✓ tests/unit/domain/element2d.spec.ts  (19 tests) 54ms
+ ✓ tests/unit/dependencyGraph.spec.ts  (34 tests) 41ms
+stdout | tests/unit/commands/factories/DeletionSequenceFactory.spec.ts > DeletionSequenceFactory > createCascadeDeletion > should handle empty selection gracefully
+[DeletionSequenceFactory] Cascade deletion: {
+  direct: [],
+  cascaded: [],
+  total: [],
+  order: 'dependents-first (proper deletion order)'
+}
+
+stdout | tests/unit/commands/factories/DeletionSequenceFactory.spec.ts > DeletionSequenceFactory > createCascadeDeletion > should delete a single point and tombstone its explicit process-tree action
+[DeletionSequenceFactory] Cascade deletion: {
+  direct: [ 'projPlane3/point2d10' ],
+  cascaded: [],
+  total: [ 'projPlane3/point2d10' ],
+  order: 'dependents-first (proper deletion order)'
+}
+
+stdout | tests/unit/commands/factories/DeletionSequenceFactory.spec.ts > DeletionSequenceFactory > createCascadeDeletion > should handle element without process tree action
+[DeletionSequenceFactory] Cascade deletion: {
+  direct: [ 'projPlane3/point2d10' ],
+  cascaded: [],
+  total: [ 'projPlane3/point2d10' ],
+  order: 'dependents-first (proper deletion order)'
+}
+
+stdout | tests/unit/commands/factories/DeletionSequenceFactory.spec.ts > DeletionSequenceFactory > createCascadeDeletion > should cascade delete a dependent line before deleting its defining point
+[DeletionSequenceFactory] Cascade deletion: {
+  direct: [ 'projPlane3/point2d10' ],
+  cascaded: [ 'projPlane3/line2d12' ],
+  total: [ 'projPlane3/line2d12', 'projPlane3/point2d10' ],
+  order: 'dependents-first (proper deletion order)'
+}
+
+stdout | tests/unit/commands/factories/DeletionSequenceFactory.spec.ts > DeletionSequenceFactory > createCascadeDeletion > should cascade delete a dependent circle through real dependency registration
+[DeletionSequenceFactory] Cascade deletion: {
+  direct: [ 'projPlane3/point2d10' ],
+  cascaded: [ 'projPlane3/circle2d12' ],
+  total: [ 'projPlane3/circle2d12', 'projPlane3/point2d10' ],
+  order: 'dependents-first (proper deletion order)'
+}
+
+stdout | tests/unit/commands/factories/DeletionSequenceFactory.spec.ts > DeletionSequenceFactory > createCascadeDeletion > should delete multiple independent points and their explicit process-tree actions
+[DeletionSequenceFactory] Cascade deletion: {
+  direct: [
+    'projPlane3/point2d10',
+    'projPlane3/point2d11',
+    'projPlane3/point2d12'
+  ],
+  cascaded: [],
+  total: [
+    'projPlane3/point2d10',
+    'projPlane3/point2d11',
+    'projPlane3/point2d12'
+  ],
+  order: 'dependents-first (proper deletion order)'
+}
+
+stdout | tests/unit/commands/factories/DeletionSequenceFactory.spec.ts > DeletionSequenceFactory > createCascadeDeletion > should support undo and redo for dependency-driven cascade deletion
+[DeletionSequenceFactory] Cascade deletion: {
+  direct: [ 'projPlane3/point2d10' ],
+  cascaded: [ 'projPlane3/line2d12' ],
+  total: [ 'projPlane3/line2d12', 'projPlane3/point2d10' ],
+  order: 'dependents-first (proper deletion order)'
+}
+
+stdout | tests/unit/commands/factories/DeletionSequenceFactory.spec.ts > DeletionSequenceFactory > createCascadeDeletion > should dispatch segment deletion to RemoveSegment2D without deleting defining points
+[DeletionSequenceFactory] Cascade deletion: {
+  direct: [ 'projPlane3/segment2d12' ],
+  cascaded: [],
+  total: [ 'projPlane3/segment2d12' ],
+  order: 'dependents-first (proper deletion order)'
+}
+
+ ✓ tests/unit/commands/factories/DeletionSequenceFactory.spec.ts  (8 tests) 42ms
+stdout | tests/unit/domain/realizationCache.spec.ts > Per-Plane Realization Cache (Phase 119) > Cache invalidation (T1914) > invalidateRealization clears point cache; next call returns fresh object
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+
+stdout | tests/unit/domain/realizationCache.spec.ts > Per-Plane Realization Cache (Phase 119) > Cache invalidation (T1914) > invalidateRealization clears line cache for the same element
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+  projPlane3/point2d10 → invalidates 1 descendant(s):
+    • projPlane3/line2d12
+=== CASCADE COMPLETE (2 elements invalidated) ===
+
+
+stdout | tests/unit/domain/realizationCache.spec.ts > Per-Plane Realization Cache (Phase 119) > Cache invalidation (T1914) > invalidateRealization clears circle cache when center point invalidated
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+  projPlane3/point2d10 → invalidates 1 descendant(s):
+    • projPlane3/circle2d12
+=== CASCADE COMPLETE (2 elements invalidated) ===
+
+
+stdout | tests/unit/domain/realizationCache.spec.ts > Per-Plane Realization Cache (Phase 119) > Dependency propagation (T1915) > invalidating a point clears dependent line on same plane
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+  projPlane3/point2d10 → invalidates 1 descendant(s):
+    • projPlane3/line2d12
+=== CASCADE COMPLETE (2 elements invalidated) ===
+
+
+stdout | tests/unit/domain/realizationCache.spec.ts > Per-Plane Realization Cache (Phase 119) > Dependency propagation (T1915) > invalidating a point clears dependent circle on same plane
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+  projPlane3/point2d10 → invalidates 1 descendant(s):
+    • projPlane3/circle2d12
+=== CASCADE COMPLETE (2 elements invalidated) ===
+
+
+stdout | tests/unit/domain/realizationCache.spec.ts > Per-Plane Realization Cache (Phase 119) > Dependency propagation (T1915) > two-level cascade: point → line → intersection point
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+  projPlane3/point2d10 → invalidates 1 descendant(s):
+    • projPlane3/line2d14
+    projPlane3/line2d14 → invalidates 1 descendant(s):
+      • projPlane3/point2d16
+=== CASCADE COMPLETE (3 elements invalidated) ===
+
+
+stdout | tests/unit/domain/realizationCache.spec.ts > Per-Plane Realization Cache (Phase 119) > Cross-plane propagation (T1916) > invalidateRealization clears caches across ALL planes
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+
+stdout | tests/unit/domain/realizationCache.spec.ts > Per-Plane Realization Cache (Phase 119) > Cross-plane propagation (T1916) > invalidation on one plane does not clear unrelated caches on other plane
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+  projPlane3/point2d10 → invalidates 1 descendant(s):
+    • projPlane3/line2d14
+=== CASCADE COMPLETE (2 elements invalidated) ===
+
+
+ ✓ tests/unit/domain/realizationCache.spec.ts  (14 tests) 37ms
+ ✓ tests/integration/factories/AllFactories.spec.ts  (5 tests | 4 skipped) 43ms
+stdout | tests/integration/factories/AllFactories.spec.ts > Factory Integration Tests > GuideSequenceFactory Integration > should create guide with sibling on HHL and support undo/redo
+[GuideSequenceFactory] createGuideWithSibling called: plane=projPlane3, refLine=projPlane3/line2d8, point=projPlane3/point2d5
+[GuideSequenceFactory] Primary guide created: projPlane3/guide2d11
+[GuideSequenceFactory] Getting sibling plane info...
+[GuideSequenceFactory] Sibling plane: projPlane4, HHL: projPlane4/line2d9
+[GuideSequenceFactory] Created sibling guide projPlane4/guide2d12 in plane projPlane4
+
+ ✓ tests/unit/application/canvasToolControllers.spec.ts  (8 tests) 74ms
+stdout | tests/unit/application/canvasToolControllers.spec.ts > Wave 006a canvas/tool command controllers > uses typed tangent metadata instead of defaulting tangent choices to index zero
+[TangentLine] Through Point: {
+  center: { x: 0, y: 0 },
+  radius: 5,
+  externalPoint: { x: 10, y: 0 },
+  distance: 10,
+  angleCP: 0,
+  angleBeta: 60.00000000000001,
+  tangentAngle: -60.00000000000001,
+  tangentPoint: { x: 2.4999999999999996, y: -4.330127018922194 },
+  direction: { x: -7.5, y: -4.330127018922194 },
+  index: 1
+}
+[TangentLine] Through Point: {
+  center: { x: 0, y: 0 },
+  radius: 5,
+  externalPoint: { x: 10, y: 0 },
+  distance: 10,
+  angleCP: 0,
+  angleBeta: 60.00000000000001,
+  tangentAngle: -60.00000000000001,
+  tangentPoint: { x: 2.4999999999999996, y: -4.330127018922194 },
+  direction: { x: -7.5, y: -4.330127018922194 },
+  index: 1
+}
+
+stdout | tests/unit/application/canvasToolControllers.spec.ts > Wave 006a canvas/tool command controllers > previews, cancels, commits, and undoes free-point moves through the movement use case
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+
+stdout | tests/unit/domain/tangentLine.spec.ts > Line2DTangentToCircleThroughPoint - Geometric Correctness > should create tangent line that touches circle (index 0)
+[TangentLine] Through Point: {
+  center: { x: 0, y: 0 },
+  radius: 5,
+  externalPoint: { x: 10, y: 0 },
+  distance: 10,
+  angleCP: 0,
+  angleBeta: 60.00000000000001,
+  tangentAngle: 60.00000000000001,
+  tangentPoint: { x: 2.4999999999999996, y: 4.330127018922194 },
+  direction: { x: -7.5, y: 4.330127018922194 },
+  index: 0
+}
+
+stdout | tests/unit/domain/tangentLine.spec.ts > Line2DTangentToCircleThroughPoint - Geometric Correctness > should create tangent line that touches circle (index 1)
+[TangentLine] Through Point: {
+  center: { x: 0, y: 0 },
+  radius: 5,
+  externalPoint: { x: 10, y: 0 },
+  distance: 10,
+  angleCP: 0,
+  angleBeta: 60.00000000000001,
+  tangentAngle: -60.00000000000001,
+  tangentPoint: { x: 2.4999999999999996, y: -4.330127018922194 },
+  direction: { x: -7.5, y: -4.330127018922194 },
+  index: 1
+}
+
+stdout | tests/unit/domain/tangentLine.spec.ts > Line2DTangentToCircleThroughPoint - Geometric Correctness > should work with external point at an angle
+[TangentLine] Through Point: {
+  center: { x: 0, y: 0 },
+  radius: 5,
+  externalPoint: { x: 10, y: 5 },
+  distance: 11.180339887498949,
+  angleCP: 26.56505117707799,
+  angleBeta: 63.43494882292201,
+  tangentAngle: 90,
+  tangentPoint: { x: 3.061616997868383e-16, y: 5 },
+  direction: { x: -10, y: 0 },
+  index: 0
+}
+[TangentLine] Through Point: {
+  center: { x: 0, y: 0 },
+  radius: 5,
+  externalPoint: { x: 10, y: 5 },
+  distance: 11.180339887498949,
+  angleCP: 26.56505117707799,
+  angleBeta: 63.43494882292201,
+  tangentAngle: -36.86989764584401,
+  tangentPoint: { x: 4, y: -2.999999999999999 },
+  direction: { x: -6, y: -7.999999999999999 },
+  index: 1
+}
+
+stdout | tests/unit/domain/tangentLine.spec.ts > Line2DTangentToCircleThroughPoint - Geometric Correctness > should work with different circle positions
+[TangentLine] Through Point: {
+  center: { x: 100, y: 200 },
+  radius: 30,
+  externalPoint: { x: 150, y: 200 },
+  distance: 50,
+  angleCP: 0,
+  angleBeta: 53.13010235415598,
+  tangentAngle: 53.13010235415598,
+  tangentPoint: { x: 118, y: 224 },
+  direction: { x: -32, y: 24 },
+  index: 0
+}
+[TangentLine] Through Point: {
+  center: { x: 100, y: 200 },
+  radius: 30,
+  externalPoint: { x: 150, y: 200 },
+  distance: 50,
+  angleCP: 0,
+  angleBeta: 53.13010235415598,
+  tangentAngle: -53.13010235415598,
+  tangentPoint: { x: 118, y: 176 },
+  direction: { x: -32, y: -24 },
+  index: 1
+}
+
+stdout | tests/unit/domain/tangentLine.spec.ts > Line2DTangentToCircleParallelToLine - Geometric Correctness > should create tangent line parallel to reference that touches circle
+[TangentLine] Parallel to Line: {
+  center: { x: 0, y: 0 },
+  radius: 5,
+  refDirection: { x: 1, y: 0 },
+  perpDirection: { x: -0, y: 1 },
+  tangentPoint: { x: 0, y: 5 },
+  index: 0
+}
+
+stdout | tests/unit/domain/tangentLine.spec.ts > Line2DTangentToCircleParallelToLine - Geometric Correctness > should create parallel tangents on both sides of circle
+[TangentLine] Parallel to Line: {
+  center: { x: 0, y: 0 },
+  radius: 5,
+  refDirection: { x: 1, y: 0 },
+  perpDirection: { x: -0, y: 1 },
+  tangentPoint: { x: 0, y: 5 },
+  index: 0
+}
+[TangentLine] Parallel to Line: {
+  center: { x: 0, y: 0 },
+  radius: 5,
+  refDirection: { x: 1, y: 0 },
+  perpDirection: { x: -0, y: 1 },
+  tangentPoint: { x: 0, y: -5 },
+  index: 1
+}
+
+ ✓ tests/unit/domain/tangentLine.spec.ts  (8 tests) 60ms
+ ✓ tests/unit/components/propertiesDialog.spec.ts  (18 tests) 399ms
+ ✓ tests/unit/utils/guidePerpendicularPlane.spec.ts  (20 tests) 17ms
+ ✓ tests/unit/services/ProjectService.roundTrip.spec.ts  (18 tests) 51ms
+stdout | tests/unit/commands/factories/GuideSequenceFactory.spec.ts > GuideSequenceFactory > createGuideWithSibling > should create single operation for non-HHL reference line
+[GuideSequenceFactory] createGuideWithSibling called: plane=projPlane3, refLine=projPlane3/line2d12, point=projPlane3/point2d13
+[GuideSequenceFactory] Primary guide created: projPlane3/guide2d14
+[GuideSequenceFactory] Getting sibling plane info...
+[GuideSequenceFactory] No sibling info - reference line is not a HalfHingeLine or BrokenHalfHingeLine2D
+
+stdout | tests/unit/commands/factories/GuideSequenceFactory.spec.ts > GuideSequenceFactory > createGuideWithSibling > should create two operations for HHL reference line
+[GuideSequenceFactory] createGuideWithSibling called: plane=projPlane3, refLine=projPlane3/line2d8, point=projPlane3/point2d10
+[GuideSequenceFactory] Primary guide created: projPlane3/guide2d11
+[GuideSequenceFactory] Getting sibling plane info...
+[GuideSequenceFactory] Sibling plane: projPlane4, HHL: projPlane4/line2d9
+[GuideSequenceFactory] Created sibling guide projPlane4/guide2d12 in plane projPlane4
+
+stdout | tests/unit/commands/factories/GuideSequenceFactory.spec.ts > GuideSequenceFactory > createGuideWithSibling > should handle HHL with no sibling info available gracefully
+[GuideSequenceFactory] createGuideWithSibling called: plane=projPlane3, refLine=projPlane3/line2d12, point=projPlane3/point2d13
+[GuideSequenceFactory] Primary guide created: projPlane3/guide2d14
+[GuideSequenceFactory] Getting sibling plane info...
+[GuideSequenceFactory] No sibling info - reference line is not a HalfHingeLine or BrokenHalfHingeLine2D
+
+stdout | tests/unit/commands/factories/GuideSequenceFactory.spec.ts > GuideSequenceFactory > createGuideWithSibling > should handle invalid reference line ID gracefully
+[GuideSequenceFactory] createGuideWithSibling called: plane=projPlane3, refLine=invalid_line_id, point=projPlane3/point2d10
+
+stdout | tests/unit/commands/factories/GuideSequenceFactory.spec.ts > GuideSequenceFactory > createGuideWithSibling > should handle invalid through point ID gracefully
+[GuideSequenceFactory] createGuideWithSibling called: plane=projPlane3, refLine=projPlane3/line2d12, point=invalid_point_id
+
+stdout | tests/unit/commands/factories/GuideSequenceFactory.spec.ts > GuideSequenceFactory > createGuideWithSibling > should work with command commit and verify state
+[GuideSequenceFactory] createGuideWithSibling called: plane=projPlane3, refLine=projPlane3/line2d8, point=projPlane3/point2d10
+[GuideSequenceFactory] Primary guide created: projPlane3/guide2d11
+[GuideSequenceFactory] Getting sibling plane info...
+[GuideSequenceFactory] Sibling plane: projPlane4, HHL: projPlane4/line2d9
+[GuideSequenceFactory] Created sibling guide projPlane4/guide2d12 in plane projPlane4
+
+stdout | tests/unit/commands/factories/GuideSequenceFactory.spec.ts > GuideSequenceFactory > createGuideWithSibling > should handle multiple sequential guide creations
+[GuideSequenceFactory] createGuideWithSibling called: plane=projPlane3, refLine=projPlane3/line2d8, point=projPlane3/point2d10
+[GuideSequenceFactory] Primary guide created: projPlane3/guide2d11
+[GuideSequenceFactory] Getting sibling plane info...
+[GuideSequenceFactory] Sibling plane: projPlane4, HHL: projPlane4/line2d9
+[GuideSequenceFactory] Created sibling guide projPlane4/guide2d12 in plane projPlane4
+[GuideSequenceFactory] createGuideWithSibling called: plane=projPlane3, refLine=projPlane3/line2d8, point=projPlane3/point2d13
+[GuideSequenceFactory] Primary guide created: projPlane3/guide2d14
+[GuideSequenceFactory] Getting sibling plane info...
+[GuideSequenceFactory] Sibling plane: projPlane4, HHL: projPlane4/line2d9
+[GuideSequenceFactory] Created sibling guide projPlane4/guide2d15 in plane projPlane4
+
+ ✓ tests/unit/commands/factories/GuideSequenceFactory.spec.ts  (7 tests) 34ms
+ ✓ tests/unit/services/ProjectService.selfContainment.spec.ts  (8 tests) 43ms
+ ✓ tests/unit/domain/segment3DRealization.spec.ts  (11 tests) 53ms
+ ✓ tests/unit/utils/coordinateTransform.spec.ts  (14 tests) 40ms
+ ✓ tests/unit/components/panelToolbarBehavior.spec.ts  (4 tests) 219ms
+stdout | tests/unit/components/panelToolbarBehavior.spec.ts > Wave 006b ActionsPanel component behavior > delegates process-tree child toggle and rename events without direct command assembly in the component
+[ProcessTree.toggleSubprocessEncapsulation] subprocessId: node177983260785248sknlkv2, true → false
+[ProcessTree.toggleOutput] subprocess node177983260785248sknlkv2, true → false
+
+ ✓ tests/unit/commands/removeElementOps.spec.ts  (9 tests) 46ms
+ ✓ tests/unit/calculations/transform.spec.ts  (25 tests) 13ms
+ ✓ tests/unit/types/SelectionMask.spec.ts  (21 tests) 24ms
+ ✓ tests/integration/worldInitialization.spec.ts  (13 tests | 1 skipped) 37ms
+ ✓ tests/unit/domain/Point3DReconstruction.test.ts  (6 tests) 28ms
+stdout | tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts > IntersectionSequenceFactory > HalfHingeLine sibling intersection creation (Phase 42) > should create sibling intersection when line intersects HHL
+[IntersectionSequenceFactory] Created sibling intersection projPlane4/point2d14 in plane projPlane4 for primary projPlane3/point2d13
+
+stdout | tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts > IntersectionSequenceFactory > HalfHingeLine sibling intersection creation (Phase 42) > should create sibling for line-circle intersection with HHL
+[IntersectionSequenceFactory] Created sibling intersection projPlane4/point2d14 in plane projPlane4 for primary projPlane3/point2d13
+
+ ✓ tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts  (3 tests) 23ms
+ ✓ tests/unit/stores/authStore.spec.ts  (18 tests) 59ms
+ ✓ tests/integration/projectService.determinism.spec.ts  (2 tests) 40ms
+ ✓ tests/unit/domain/degenerateRealize2D.spec.ts  (10 tests) 35ms
+stdout | tests/unit/domain/Plane3DFromTraces.test.ts > Plane3DFromTraces - Intersecting via Hinge Line > should create feasible 3D plane from user scenario
+[TEST] Point C coords on P_H: Vector3 { x: 15, y: 0, z: 1 }
+[TEST] Point C' coords on P_V: Vector3 { x: 15, y: 0, z: 1 }
+[Plane3DFromTraces] getPlaneEquation called for plane: planeP trace1: projPlane3/line_L trace2: projPlane4/line_M
+[Plane3DFromTraces] All realizations feasible - computing plane
+[Plane3DFromTraces] t1 in 3D: t1PointIn3D: Vector4 { x: 10, y: 5, z: 0, w: 1 } t1DirIn3D: Vector4 { x: 10, y: -10, z: 0, w: 0 }
+[Plane3DFromTraces] t2 in 3D: t2PointIn3D: Vector4 { x: 15, y: 0, z: 10, w: 1 } t2DirIn3D: Vector4 { x: 0, y: 0, z: -10, w: 0 }
+[Plane3DFromTraces] Traces intersect at: Vector4 { x: 15, y: 0, z: 0, w: 1 }
+[Plane3DFromTraces] Normalized normal: [ 0.7071067811865476, 0.7071067811865476, 0 ]
+[Plane3DFromTraces] Plane equation: a= 0.7071067811865476 b= 0.7071067811865476 c= 0 d= -10.606601717798213
+[Test] Point C coords: Vector3 { x: 15, y: 0, z: 1 }
+[Test] Point C' coords: Vector3 { x: 15, y: 0, z: 1 }
+
+stdout | tests/unit/domain/Plane3DFromTraces.test.ts > Plane3DFromTraces - Intersecting via Hinge Line > should handle points with identical 2D coordinates
+[Plane3DFromTraces] getPlaneEquation called for plane: plane3d_simple trace1: projPlane4/line trace2: projPlane3/line
+[Plane3DFromTraces] All realizations feasible - computing plane
+[Plane3DFromTraces] t1 in 3D: t1PointIn3D: Vector4 { x: 5, y: 0, z: 0, w: 1 } t1DirIn3D: Vector4 { x: 10, y: 0, z: 20, w: 0 }
+[Plane3DFromTraces] t2 in 3D: t2PointIn3D: Vector4 { x: 5, y: 0, z: 0, w: 1 } t2DirIn3D: Vector4 { x: 10, y: -5, z: 0, w: 0 }
+[Plane3DFromTraces] Traces intersect at: Vector4 { x: 5, y: 0, z: 0, w: 1 }
+[Plane3DFromTraces] Normalized normal: [ 0.4364357804719847, 0.8728715609439694, -0.21821789023599236 ]
+[Plane3DFromTraces] Plane equation: a= 0.4364357804719847 b= 0.8728715609439694 c= -0.21821789023599236 d= -2.1821789023599236
+
+ ✓ tests/unit/domain/Plane3DFromTraces.test.ts  (2 tests) 29ms
+ ✓ tests/unit/tools/toolValidation.spec.ts  (8 tests) 93ms
+ ✓ tests/unit/commands/initializeWorldCommand.spec.ts  (11 tests) 43ms
+ ✓ tests/integration/processTree-stack.test.ts  (16 tests) 42ms
+ ✓ tests/unit/processTree.spec.ts  (15 tests) 27ms
+ ✓ tests/integration/projectService.cascadeDeletion.spec.ts  (4 tests) 31ms
+ ✓ tests/unit/projectionPlaneMatrix.test.ts  (5 tests) 7ms
+ ✓ tests/unit/utils/projectionPlaneUtils.spec.ts  (19 tests | 11 skipped) 8ms
+ ✓ tests/unit/world/generateDefaultLabel.test.ts  (24 tests) 28ms
+ ✓ tests/unit/commandStack.spec.ts  (15 tests) 23ms
+ ✓ tests/unit/domain/projectionPlaneRealization.spec.ts  (10 tests | 3 skipped) 23ms
+ ✓ tests/integration/semanticReferences.spec.ts  (11 tests | 4 skipped) 51ms
+ ✓ tests/unit/components/SvgCanvas.gridLabels.spec.ts  (10 tests) 14ms
+ ✓ tests/unit/domain/elementId.spec.ts  (21 tests) 26ms
+ ✓ tests/unit/domain/circle.spec.ts  (8 tests) 18ms
+ ✓ tests/unit/domain/line.spec.ts  (10 tests) 26ms
+ ✓ tests/integration/world/defaultLabels.integration.test.ts  (9 tests) 40ms
+ ✓ tests/unit/commands/createIntersectionPoint.spec.ts  (4 tests) 37ms
+ ✓ tests/unit/coordinateTransform.spec.ts  (6 tests) 25ms
+ ✓ tests/unit/calculations/distances.spec.ts  (18 tests) 14ms
+ ✓ tests/unit/stores/viewStore.spec.ts  (23 tests) 23ms
+ ✓ tests/unit/domain/element2dRealization.spec.ts  (14 tests) 26ms
+ ✓ tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts  (5 tests) 35ms
+stdout | tests/unit/application/panelToolbarIntentControllers.spec.ts > Wave 006b panel/toolbar intent controllers > executes process-history mutations through use cases with undo/redo stack effects
+[ProcessTree.toggleSubprocessEncapsulation] subprocessId: node1779832616351ldh0nrh9r, true → false
+[ProcessTree.toggleOutput] subprocess node1779832616351ldh0nrh9r, true → false
+
+ ✓ tests/unit/application/panelToolbarIntentControllers.spec.ts  (5 tests) 28ms
+ ✓ tests/unit/commands.spec.ts  (12 tests) 21ms
+ ✓ tests/unit/commands/createGuide.spec.ts  (4 tests) 20ms
+ ✓ tests/unit/utils/threeUtils.spec.ts  (13 tests) 28ms
+ ✓ tests/unit/domain/labelGenerator.spec.ts  (20 tests) 22ms
+ ✓ tests/unit/domain/segment.spec.ts  (10 tests) 31ms
+ ✓ tests/unit/composables/hoverHighlight.spec.ts  (11 tests) 17ms
+ ✓ tests/unit/calculations/perpendiculars.spec.ts  (12 tests) 13ms
+ ✓ tests/unit/stores/toolStore.spec.ts  (15 tests) 15ms
+ ✓ tests/unit/commands/createCircle.spec.ts  (4 tests) 32ms
+ ✓ tests/unit/commands/createFreePoint.spec.ts  (8 tests | 2 skipped) 49ms
+ ✓ tests/unit/utils/formatUtils.spec.ts  (21 tests) 71ms
+ ✓ tests/unit/commands/createLine.spec.ts  (4 tests) 20ms
+ ✓ tests/unit/rectangleGrid.test.ts  (6 tests) 22ms
+ ✓ tests/unit/commands/createSegment.spec.ts  (4 tests) 25ms
+stdout | tests/integration/guide-creation.test.ts > Guide Creation - Integration Tests > Regular Line Reference > should create guide on regular line without sibling
+[GuideSequenceFactory] createGuideWithSibling called: plane=projPlane3, refLine=projPlane3/line2d12, point=projPlane3/point2d13
+[GuideSequenceFactory] Primary guide created: projPlane3/guide2d14
+[GuideSequenceFactory] Getting sibling plane info...
+[GuideSequenceFactory] No sibling info - reference line is not a HalfHingeLine or BrokenHalfHingeLine2D
+
+stdout | tests/integration/guide-creation.test.ts > Guide Creation - Integration Tests > Error Prevention > should not throw when creating guide on non-hinge line
+[GuideSequenceFactory] createGuideWithSibling called: plane=projPlane3, refLine=projPlane3/line2d12, point=projPlane3/point2d13
+[GuideSequenceFactory] Primary guide created: projPlane3/guide2d14
+[GuideSequenceFactory] Getting sibling plane info...
+[GuideSequenceFactory] No sibling info - reference line is not a HalfHingeLine or BrokenHalfHingeLine2D
+
+ ✓ tests/integration/guide-creation.test.ts  (2 tests) 76ms
+ ✓ tests/unit/services/ProjectService.subprocess.spec.ts  (5 tests) 81ms
+ ✓ tests/unit/commands/operations/operationRegistry.spec.ts  (7 tests) 16ms
+ ✓ tests/unit/stores/processTreeStore.spec.ts  (13 tests) 21ms
+ ✓ tests/unit/commands/viewStateOperations.spec.ts  (4 tests) 18ms
+ ✓ tests/integration/phase76-fail-fast.spec.ts  (10 tests) 42ms
+ ✓ tests/unit/autosave.spec.ts  (3 tests) 10ms
+ ✓ tests/unit/commands/commandStackObserver.spec.ts  (5 tests) 45ms
+ ✓ tests/unit/tools/GuideTool.test.ts  (8 tests) 49ms
+ ✓ tests/unit/application/canvasPresentation/canvasInteractionQuery.spec.ts  (3 tests) 10ms
+ ✓ tests/unit/application/appShell/KeyboardShortcutRouter.test.ts  (3 tests) 13ms
+ ✓ tests/unit/application/canvasPresentation/canvasWorldReadPort.spec.ts  (2 tests) 20ms
+ ✓ tests/unit/application/threePresentation/threePresentationSelector.spec.ts  (1 test) 11ms
+ ✓ tests/unit/application/canvasPresentation/projected3DCanvasSelector.spec.ts  (1 test) 10ms
+ ✓ tests/unit/rendering/threeView/threeSceneAdapters.spec.ts  (2 tests) 123ms
+ ✓ tests/unit/application/appShell/AppShellBoundary.test.ts  (3 tests) 5ms
+ ✓ tests/unit/rendering/threeView/threeObjectRegistry.spec.ts  (2 tests) 26ms
+ ✓ tests/unit/application/canvasPresentation/canvasPresentationSelector.spec.ts  (1 test) 17ms
+ ✓ tests/unit/commands/updateFreePoint2DPositionOp.spec.ts  (2 tests) 16ms
+stdout | tests/unit/commands/updateFreePoint2DPositionOp.spec.ts > UpdateFreePoint2DPositionOp > updates a free point position and supports undo
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+
+ ✓ tests/unit/components/panels/threeViewShellBoundary.spec.ts  (1 test) 8ms
+ ✓ tests/unit/architecture/noCommandSubclasses.spec.ts  (2 tests) 44ms
+ ✓ tests/unit/architecture/worldBoundary.spec.ts  (2 tests) 56ms
+ ✓ tests/unit/architecture/importBoundaries.spec.ts  (6 tests) 129ms
+ ✓ tests/unit/application/canvasPresentation/canvasGridSelector.spec.ts  (2 tests) 11ms
+ ✓ tests/unit/services/GeometryService.spec.ts  (2 tests) 4ms
+ ✓ tests/unit/services/svgCanvasRenderer.spec.ts  (1 test) 5ms
+ ✓ tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts  (1 test) 20ms
+ ✓ tests/unit/smoke.spec.ts  (2 tests) 5ms
+
+ Test Files  107 passed | 1 skipped (108)
+      Tests  1230 passed | 45 skipped | 11 todo (1286)
+   Start at  21:56:36
+   Duration  32.39s (transform 10.84s, setup 32ms, collect 44.34s, tests 4.73s, environment 110.81s, prepare 22.04s)
+

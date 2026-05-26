@@ -210,6 +210,7 @@ import { createCanvasToolController } from '@/application/tools/CanvasToolContro
 import type { FreePointMoveSession } from '@/application/tools/ToolCommandIntents';
 import { CanvasPresentationController } from '@/application/canvasPresentation/CanvasPresentationController';
 import { CanvasInteractionQuery } from '@/application/canvasPresentation/CanvasInteractionQuery';
+import { createCanvasWorldReadPort } from '@/application/canvasPresentation/CanvasWorldReadPort';
 
 // Define emits
 const emit = defineEmits<{
@@ -548,7 +549,7 @@ const canvasPresentation = computed(() => {
   const selectedIds = selectionStore.selectedIdsArray;
   const cascadeHighlightIds = selectionStore.cascadeHighlightIdsArray;
   return canvasPresentationController.buildModel(
-    world,
+    createCanvasWorldReadPort(world),
     { ...viewport.value, width: canvasWidth.value, height: canvasHeight.value },
     {
       hoveredIds: hoveredId ? new Set([hoveredId]) : undefined,

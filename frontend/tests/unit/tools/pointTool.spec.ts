@@ -18,13 +18,14 @@ import type { ToolContext } from '@/tools/ITool';
 import { CanvasToolController } from '@/application/tools/CanvasToolController';
 import { Vector3 } from 'three';
 import { CanvasPresentationSelector } from '@/application/canvasPresentation/CanvasPresentationSelector';
+import { createCanvasWorldReadPort } from '@/application/canvasPresentation/CanvasWorldReadPort';
 
 function liveInteractionQuery(worldRef: () => any, planeIdRef: () => string): CanvasInteractionQuery {
   return {
     hitTest(canvasPos: any, snapRadiusPixels: number, context: any, selectionMask?: any) {
       const world = worldRef();
       const activePlaneId = context.activePlaneId ?? planeIdRef();
-      const model = new CanvasPresentationSelector().select(world, { zoom: 1, panX: 0, panY: 0, width: 800, height: 600 }, { activePlaneId });
+      const model = new CanvasPresentationSelector().select(createCanvasWorldReadPort(world), { zoom: 1, panX: 0, panY: 0, width: 800, height: 600 }, { activePlaneId });
       return new CanvasInteractionQuery(model.queryItems).hitTest(canvasPos, snapRadiusPixels, context, selectionMask);
     }
   } as CanvasInteractionQuery;

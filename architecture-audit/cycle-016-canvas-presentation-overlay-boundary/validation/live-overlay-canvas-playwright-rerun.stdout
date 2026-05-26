@@ -1,0 +1,21 @@
+{
+  "overlayPresent": true,
+  "canvasPresent": true,
+  "overlayPointerEvents": "none",
+  "controlsPointerEvents": "auto",
+  "canvasBox": {
+    "x": 300,
+    "y": 91,
+    "width": 980,
+    "height": 612.5
+  },
+  "overlayBox": {
+    "x": 460,
+    "y": 252,
+    "width": 800,
+    "height": 600
+  },
+  "elementAtOverlayCenterTag": "line",
+  "elementAtOverlayCenterTestId": null,
+  "elementAtOverlayCenterClass": null
+}

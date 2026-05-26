@@ -67,7 +67,7 @@
         />
         
         <!-- 3D View Overlay (Phase 25) -->
-        <div class="three-view-overlay" v-if="show3DView">
+        <div class="three-view-overlay" data-testid="three-view-overlay" v-if="show3DView">
           <ThreeView />
         </div>
       </div>
@@ -82,7 +82,7 @@
         :coordinates3-d="coordinates3D"
         :save-status="saveStatus"
         :cascade-count="selectionStore.cascadeHighlightIdsArray.length"
-        :tool-step-message="toolStore.currentToolStepMessage"
+        :tool-step-message="toolStore.currentToolStepMessage.value"
       />
     </footer>
   </div>
@@ -259,6 +259,7 @@ onUnmounted(() => runtime.actions.dispose());
 }
 
 .three-view-overlay {
+  pointer-events: none;
   position: absolute;
   bottom: 20px;
   right: 20px;
