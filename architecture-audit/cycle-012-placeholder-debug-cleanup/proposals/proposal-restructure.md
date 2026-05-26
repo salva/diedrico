@@ -15,7 +15,7 @@ This proposal deliberately rejects a general logging service/diagnostics abstrac
 
 Wave 012 evidence shows two different smells sharing the same root: active source still contains artifacts that communicate nonexistent architecture.
 
-1. **Vacant operation families:** `paper/` and `toolbar/` under `frontend/src/commands/operations/` are README-only future-operation directories (`frontend/src/commands/operations/paper/README.md:1-10`, `frontend/src/commands/operations/toolbar/README.md:1-10`). They imply command-operation families that do not exist in the runtime registry. `OperationRegistry.ts` registers only world and process-tree operation descriptors (`frontend/src/commands/operations/OperationRegistry.ts:54-63`, `:78-79`).
+1. **Vacant operation families:** among the five README-bearing operation directories, only `paper/` and `toolbar/` under `frontend/src/commands/operations/` are README-only future-operation directories (`frontend/src/commands/operations/paper/README.md:1-10`, `frontend/src/commands/operations/toolbar/README.md:1-10`). They imply command-operation families that do not exist in the runtime registry. By contrast, `processTree/` and `world/` contain active registered operations and READMEs (`frontend/src/commands/operations/processTree/README.md:1-12`, `frontend/src/commands/operations/world/README.md:1-12`), while `viewState/` contains source files beside its README but is not currently registered by `OperationRegistry.ts` (`frontend/src/commands/operations/viewState/README.md:1-10`; `frontend/src/commands/operations/OperationRegistry.ts:54-63`, `:78-79`).
 2. **Normal-flow debug logging:** Drive, geometry, domain-realization, and command-operation code logs implementation details during expected execution (`frontend/src/services/GoogleDriveService.ts:82-86`, `:475-483`, `:556-592`; `frontend/src/utils/rectangleGrid.ts:94`, `:142-186`, `:211-223`; `frontend/src/utils/projectionPlaneUtils.ts:282-284`, `:341-351`; `frontend/src/domain/world/HingeLine.ts:111`, `:120`, `:131`, `:140`; `frontend/src/domain/world/Guide.ts:276`, `:282`, `:335`; `frontend/src/commands/operations/processTree/ToggleOutputOp.ts:20`, `:35`; `frontend/src/commands/operations/processTree/ToggleEncapsulationOp.ts:20`, `:35`).
 
 The higher-level architectural issue is not missing logging infrastructure; it is that source hygiene is not encoded as an executable boundary. Wave 011 created architecture/static gates, including deleted example/debug surface checks (`frontend/tests/unit/architecture/importBoundaries.spec.ts:61-67`). Wave 012 can consume that mechanism and extend it narrowly.
@@ -34,7 +34,7 @@ Therefore this proposal does **not** add a logger service, diagnostics port, env
 
 After implementation:
 
-- No README-only operation subdirectories remain under `frontend/src/commands/operations/`.
+- No README-only placeholder operation subdirectories remain under `frontend/src/commands/operations/`, while README-bearing active/non-placeholder families (`processTree/`, `world/`, and `viewState/`) remain intact.
 - No active source/tests reference deleted debug/example/placeholder operation surfaces.
 - No `console.log`, `console.debug`, or `console.info` remains in `frontend/src/**` unless explicitly justified as non-routine in the implementation log and guarded by a precise static-test exception.
 - Genuine error/catch-path `console.error`/`console.warn` usage remains available where it reports failures rather than normal progress.
@@ -61,7 +61,7 @@ After implementation:
 
 Modify or add architecture tests under `frontend/tests/unit/architecture/`, preferably using the shared scanner introduced by Wave 011 in `frontend/tests/unit/architecture/helpers/sourceScanner.ts`:
 
-- Add a placeholder-operation hygiene assertion that active source/test files do not contain `operations/paper`, `operations/toolbar`, or `operations/debug`, and that the README-only directories do not exist. If direct filesystem checks are awkward in Vite raw-glob tests, assert on source/test references in Vitest and cover directory absence with validation shell scans.
+- Add a placeholder-operation hygiene assertion that active source/test files do not contain deleted/placeholder-only `operations/paper`, `operations/toolbar`, or `operations/debug`, and that the README-only placeholder directories do not exist. The assertion must not forbid or delete README-bearing active/non-placeholder families: `processTree/`, `world/`, and `viewState/`. If direct filesystem checks are awkward in Vite raw-glob tests, assert on source/test references in Vitest and cover directory absence/preserved README files with validation shell scans.
 - Add a console-noise assertion over `frontend/src/**` that fails on `console.log`, `console.debug`, or `console.info` unless the selected implementation records a narrow, named exception. Avoid allowing `console.warn`/`console.error` in this guard; those require separate semantic review and should not be bundled with normal-flow debug cleanup.
 - Keep the existing Wave 011 deleted examples/debug assertions for `ExamplesMenu`, `AddExampleSetupOp`, `projection-plane-setup`, and `basic-3d-point-setup` (`frontend/tests/unit/architecture/importBoundaries.spec.ts:61-67`). Extend rather than weaken them.
 
@@ -108,6 +108,9 @@ All stdout/stderr logs should be saved under `architecture-audit/cycle-012-place
 
 - `test ! -d frontend/src/commands/operations/paper`
 - `test ! -d frontend/src/commands/operations/toolbar`
+- `test -f frontend/src/commands/operations/processTree/README.md`
+- `test -f frontend/src/commands/operations/world/README.md`
+- `test -f frontend/src/commands/operations/viewState/README.md`
 - Search active `frontend/src` and `frontend/tests` for:
   - `operations/paper`
   - `operations/toolbar`

@@ -27,7 +27,17 @@ Wave 011 created executable architecture/static gates and removed the old debug 
 - The worktree already contains many unrelated tracked/untracked Saivage/audit changes. This scope check must not revert them; implementation should inspect its own diff and stage only Wave 012 files.
 - Application source (`frontend/`, `backend/`, `specs/`, `docs/`) was inspected only; no application source was modified by this scout.
 
-## Placeholder operation directories
+## README-bearing operation directories
+
+The current operation tree has five README-bearing subdirectories. Wave 012 should delete only the vacant README-only placeholders and must preserve README files that sit beside active operation implementations unless a later Wave 013 docs/spec reconciliation edits their prose.
+
+| Directory | README classification | Evidence | Wave 012 action |
+| --- | --- | --- | --- |
+| `frontend/src/commands/operations/paper/` | README-only vacant placeholder | The directory contains only `README.md`; the README lists future-only `InvalidateCacheOp`, `SetVisibilityOp`, and `UpdateHighlightOp` (`frontend/src/commands/operations/paper/README.md:1-10`). | Delete README and empty directory. |
+| `frontend/src/commands/operations/toolbar/` | README-only vacant placeholder | The directory contains only `README.md`; the README lists future-only `SetActiveToolOp`, `SetToolFeedbackOp`, and `SetToolOptionsOp` (`frontend/src/commands/operations/toolbar/README.md:1-10`). | Delete README and empty directory. |
+| `frontend/src/commands/operations/processTree/` | README-bearing active operation family | The directory contains implementation files such as `AddProcessTreeActionOp.ts`, `ProcessTreeOperations.ts`, `ToggleOutputOp.ts`, `ToggleEncapsulationOp.ts`, and descriptor registration; its README describes existing process-tree operations (`frontend/src/commands/operations/processTree/README.md:1-12`). | Preserve directory and README; only remove routine debug logs from active operation files if selected for implementation. |
+| `frontend/src/commands/operations/world/` | README-bearing active operation family | The directory contains many active world operation implementations and descriptor registration; its README documents existing geometric-domain operations such as `AddFreePoint2DOp`, `AddLine2DOp`, `RemovePoint2DOp`, and `UpdateElementStyleOp` (`frontend/src/commands/operations/world/README.md:1-12`). | Preserve directory and README; only remove routine debug logs from active operation files if selected for implementation. |
+| `frontend/src/commands/operations/viewState/` | README-bearing partially implemented/non-registered operation family, not README-only | The directory contains `ViewStateOperations.ts` and `index.ts` beside the README; the README cites `SetActivePlaneOp` as an example (`frontend/src/commands/operations/viewState/README.md:1-10`). The operation registry does not currently register view-state descriptors (`frontend/src/commands/operations/OperationRegistry.ts:54-63`, `frontend/src/commands/operations/OperationRegistry.ts:78-79`). | Do not delete as a README-only placeholder in Wave 012; treat registration/contract questions as out of scope unless a reviewed delta expands the wave. |
 
 ### `paper/` is still README-only
 
@@ -119,7 +129,8 @@ Many old “Phase N” and `@see specs/001-dihedral-learning-mvp/...` comments r
 The implementation proposal should plan the mandatory cadence and classify known pre-existing failures explicitly:
 
 1. **Static/focused deletion scans**
-   - Scan that no README-only operation directories remain: `test ! -d frontend/src/commands/operations/paper && test ! -d frontend/src/commands/operations/toolbar`.
+   - Scan that no README-only operation placeholder directories remain: `test ! -d frontend/src/commands/operations/paper && test ! -d frontend/src/commands/operations/toolbar`.
+   - Verify README-bearing active/non-placeholder operation families remain present: `test -f frontend/src/commands/operations/processTree/README.md && test -f frontend/src/commands/operations/world/README.md && test -f frontend/src/commands/operations/viewState/README.md`. This prevents an over-broad cleanup from deleting every README-bearing operation directory.
    - Scan that no active source/tests reference `operations/paper`, `operations/toolbar`, `operations/debug`, `ExamplesMenu`, `AddExampleSetupOp`, `projection-plane-setup`, or `basic-3d-point-setup`, excluding architecture artifact prose.
    - Scan active `frontend/src` for routine `console.log` / `console.debug` / `console.info` after agreed deletions. If any remain, proposals should require a justification per line.
 2. **Architecture/static gates**
@@ -147,4 +158,4 @@ Candidate future issues from Wave 011 validation debt (Node 24 / `vue-tsc`, full
 
 ## Conclusion
 
-Proceed to proposals. The direct proposal can safely center on deleting `frontend/src/commands/operations/paper/` and `frontend/src/commands/operations/toolbar/`, removing routine debug logs from Drive/geometry/domain/operation paths, and adding/using static scans to prevent recurrence. The restructure proposal should evaluate whether a tiny diagnostics boundary or architecture gate is warranted, but should avoid overbuilding logging infrastructure for debug noise that can simply be deleted.
+Proceed to proposals. The direct proposal can safely center on deleting only the README-only `frontend/src/commands/operations/paper/` and `frontend/src/commands/operations/toolbar/` placeholders, preserving the README-bearing active/non-placeholder `processTree/`, `world/`, and `viewState/` directories, removing routine debug logs from Drive/geometry/domain/operation paths, and adding/using static scans to prevent recurrence. The restructure proposal should evaluate whether a tiny diagnostics boundary or architecture gate is warranted, but should avoid overbuilding logging infrastructure for debug noise that can simply be deleted.

@@ -13,11 +13,13 @@ This is intentionally a source-tree hygiene wave: it makes the active architectu
 
 ## Current evidence
 
-### Placeholder operation families
+### README-bearing operation families
 
-- `frontend/src/commands/operations/paper/README.md` is a README-only placeholder for future `InvalidateCacheOp`, `SetVisibilityOp`, and `UpdateHighlightOp` operations (`frontend/src/commands/operations/paper/README.md:1-10`).
-- `frontend/src/commands/operations/toolbar/README.md` is a README-only placeholder for future `SetActiveToolOp`, `SetToolFeedbackOp`, and `SetToolOptionsOp` operations (`frontend/src/commands/operations/toolbar/README.md:1-10`).
-- `frontend/src/commands/operations/OperationRegistry.ts` registers only world and process-tree descriptors, so the README-only directories are not part of deserialization/runtime registration (`frontend/src/commands/operations/OperationRegistry.ts:54-63`, `frontend/src/commands/operations/OperationRegistry.ts:78-79`).
+- `frontend/src/commands/operations/paper/README.md` is a README-only placeholder for future `InvalidateCacheOp`, `SetVisibilityOp`, and `UpdateHighlightOp` operations (`frontend/src/commands/operations/paper/README.md:1-10`). Delete it.
+- `frontend/src/commands/operations/toolbar/README.md` is a README-only placeholder for future `SetActiveToolOp`, `SetToolFeedbackOp`, and `SetToolOptionsOp` operations (`frontend/src/commands/operations/toolbar/README.md:1-10`). Delete it.
+- `frontend/src/commands/operations/processTree/README.md` is README-bearing but not placeholder-only: active implementation and descriptor files sit beside it, and the README describes current process-tree operations (`frontend/src/commands/operations/processTree/README.md:1-12`). Preserve it.
+- `frontend/src/commands/operations/world/README.md` is README-bearing but not placeholder-only: active implementation and descriptor files sit beside it, and the README describes current geometric-domain operations (`frontend/src/commands/operations/world/README.md:1-12`). Preserve it.
+- `frontend/src/commands/operations/viewState/README.md` is README-bearing and not README-only because `ViewStateOperations.ts` and `index.ts` are present; however, `OperationRegistry.ts` registers only world and process-tree descriptors (`frontend/src/commands/operations/OperationRegistry.ts:54-63`, `frontend/src/commands/operations/OperationRegistry.ts:78-79`). Preserve it in Wave 012 and leave any view-state operation contract/registration cleanup to a reviewed later wave or delta.
 - `frontend/src/commands/operations/debug/` is already gone after Wave 011, and `frontend/tests/unit/architecture/importBoundaries.spec.ts:61-67` prevents active references to the removed example/debug setup names.
 
 ### Routine logging to delete
@@ -71,7 +73,8 @@ This is intentionally a source-tree hygiene wave: it makes the active architectu
 
 If implementation confirms the scanner can express this deterministically without brittle false positives, extend the Wave 011 architecture/static gate in `frontend/tests/unit/architecture/importBoundaries.spec.ts` or a new focused architecture spec to assert:
 
-- no active source/tests reference `operations/paper`, `operations/toolbar`, `operations/debug`, `ExamplesMenu`, `AddExampleSetupOp`, `projection-plane-setup`, or `basic-3d-point-setup`, except in architecture gate assertion text itself; and
+- no active source/tests reference deleted/placeholder-only surfaces `operations/paper`, `operations/toolbar`, `operations/debug`, `ExamplesMenu`, `AddExampleSetupOp`, `projection-plane-setup`, or `basic-3d-point-setup`, except in architecture gate assertion text itself;
+- `frontend/src/commands/operations/processTree/README.md`, `frontend/src/commands/operations/world/README.md`, and `frontend/src/commands/operations/viewState/README.md` still exist, so the guard cannot be misread as deleting every README-bearing operation directory; and
 - no `console.log`, `console.debug`, or `console.info` remains in `frontend/src/**` normal source unless an allowlisted line is justified in the implementation log.
 
 If this becomes over-broad because current source contains justified non-routine logging outside the Wave 012 touched set, do not add a broad allowlist framework. Instead, record the exact residual logging and keep this wave to deletion plus shell/static scans in validation.
@@ -106,9 +109,13 @@ All logs must be captured under `architecture-audit/cycle-012-placeholder-debug-
 
 ### Focused static/deletion checks
 
-- Verify placeholders are deleted:
+- Verify README-only placeholders are deleted:
   - `test ! -d frontend/src/commands/operations/paper`
   - `test ! -d frontend/src/commands/operations/toolbar`
+- Verify README-bearing active/non-placeholder operation families were not deleted by an over-broad cleanup:
+  - `test -f frontend/src/commands/operations/processTree/README.md`
+  - `test -f frontend/src/commands/operations/world/README.md`
+  - `test -f frontend/src/commands/operations/viewState/README.md`
 - Search active source/tests for forbidden deleted surfaces, excluding `architecture-audit/` prose:
   - `operations/paper`
   - `operations/toolbar`
