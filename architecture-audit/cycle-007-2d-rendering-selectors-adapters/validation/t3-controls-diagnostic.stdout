@@ -1,0 +1,312 @@
+[
+  {
+    "i": 0,
+    "tag": "BUTTON",
+    "type": null,
+    "text": "",
+    "title": "New Project (Ctrl+N)",
+    "aria": "New Project",
+    "cls": "file-button"
+  },
+  {
+    "i": 1,
+    "tag": "BUTTON",
+    "type": null,
+    "text": "",
+    "title": "Open Project (Ctrl+O)",
+    "aria": "Open Project",
+    "cls": "file-button"
+  },
+  {
+    "i": 2,
+    "tag": "BUTTON",
+    "type": null,
+    "text": "",
+    "title": "Undo (Ctrl+Z)",
+    "aria": "Undo",
+    "cls": "history-button"
+  },
+  {
+    "i": 3,
+    "tag": "BUTTON",
+    "type": null,
+    "text": "",
+    "title": "Redo (Ctrl+Y)",
+    "aria": "Redo",
+    "cls": "history-button"
+  },
+  {
+    "i": 4,
+    "tag": "BUTTON",
+    "type": null,
+    "text": "",
+    "title": "Active Plane",
+    "aria": null,
+    "cls": "plane-select-button"
+  },
+  {
+    "i": 5,
+    "tag": "BUTTON",
+    "type": null,
+    "text": "",
+    "title": "Toggle Grid (G)",
+    "aria": "Toggle Grid",
+    "cls": "nav-button active"
+  },
+  {
+    "i": 6,
+    "tag": "BUTTON",
+    "type": null,
+    "text": "",
+    "title": "Toggle 3D Projections (D)",
+    "aria": "Toggle 3D Projections",
+    "cls": "nav-button"
+  },
+  {
+    "i": 7,
+    "tag": "BUTTON",
+    "type": null,
+    "text": "",
+    "title": "Fit to View (Ctrl+0)",
+    "aria": "Fit to View",
+    "cls": "nav-button"
+  },
+  {
+    "i": 8,
+    "tag": "BUTTON",
+    "type": null,
+    "text": "",
+    "title": "Selection Tool - Pick, move, and edit objects (Esc)",
+    "aria": "Selection Tool",
+    "cls": "tool-button active"
+  },
+  {
+    "i": 9,
+    "tag": "BUTTON",
+    "type": null,
+    "text": "",
+    "title": "Create free point - Click to place point (P)",
+    "aria": "Free Point",
+    "cls": "tool-button-main"
+  },
+  {
+    "i": 10,
+    "tag": "BUTTON",
+    "type": null,
+    "text": "▼",
+    "title": "Show all Point tools",
+    "aria": "Show all Point tools",
+    "cls": "tool-button-dropdown"
+  },
+  {
+    "i": 11,
+    "tag": "BUTTON",
+    "type": null,
+    "text": "",
+    "title": "Create line through two points (L)",
+    "aria": "Line Through Points",
+    "cls": "tool-button-main"
+  },
+  {
+    "i": 12,
+    "tag": "BUTTON",
+    "type": null,
+    "text": "▼",
+    "title": "Show all Line tools",
+    "aria": "Show all Line tools",
+    "cls": "tool-button-dropdown"
+  },
+  {
+    "i": 13,
+    "tag": "BUTTON",
+    "type": null,
+    "text": "",
+    "title": "Create segment between two points (S)",
+    "aria": "Segment",
+    "cls": "tool-button-main"
+  },
+  {
+    "i": 14,
+    "tag": "BUTTON",
+    "type": null,
+    "text": "▼",
+    "title": "Show all Segment tools",
+    "aria": "Show all Segment tools",
+    "cls": "tool-button-dropdown"
+  },
+  {
+    "i": 15,
+    "tag": "BUTTON",
+    "type": null,
+    "text": "",
+    "title": "Create circle - Pick center then circumference point (C)",
+    "aria": "Circle",
+    "cls": "tool-button-main"
+  },
+  {
+    "i": 16,
+    "tag": "BUTTON",
+    "type": null,
+    "text": "▼",
+    "title": "Show all Circle tools",
+    "aria": "Show all Circle tools",
+    "cls": "tool-button-dropdown"
+  },
+  {
+    "i": 17,
+    "tag": "BUTTON",
+    "type": null,
+    "text": "",
+    "title": "Create guide perpendicular to hinge line (G)",
+    "aria": "Guide",
+    "cls": "tool-button-main"
+  },
+  {
+    "i": 18,
+    "tag": "BUTTON",
+    "type": null,
+    "text": "▼",
+    "title": "Show all Guide tools",
+    "aria": "Show all Guide tools",
+    "cls": "tool-button-dropdown"
+  },
+  {
+    "i": 19,
+    "tag": "BUTTON",
+    "type": null,
+    "text": "",
+    "title": "Transport distance or point (T) - Not yet implemented",
+    "aria": "Transport",
+    "cls": "tool-button-main"
+  },
+  {
+    "i": 20,
+    "tag": "BUTTON",
+    "type": null,
+    "text": "▼",
+    "title": "Show all Transport tools",
+    "aria": "Show all Transport tools",
+    "cls": "tool-button-dropdown"
+  },
+  {
+    "i": 21,
+    "tag": "BUTTON",
+    "type": null,
+    "text": "",
+    "title": "Create 3D point from two 2D projections on different planes",
+    "aria": "3D Point",
+    "cls": "tool-button-main"
+  },
+  {
+    "i": 22,
+    "tag": "BUTTON",
+    "type": null,
+    "text": "▼",
+    "title": "Show all 3D Elements tools",
+    "aria": "Show all 3D Elements tools",
+    "cls": "tool-button-dropdown"
+  },
+  {
+    "i": 23,
+    "tag": "BUTTON",
+    "type": null,
+    "text": "",
+    "title": "Creates traces T1, T2, T2' for auxiliary projection plane testing",
+    "aria": "Folding Plane Setup",
+    "cls": "tool-button-main"
+  },
+  {
+    "i": 24,
+    "tag": "BUTTON",
+    "type": null,
+    "text": "▼",
+    "title": "Show all Examples tools",
+    "aria": "Show all Examples tools",
+    "cls": "tool-button-dropdown"
+  },
+  {
+    "i": 25,
+    "tag": "BUTTON",
+    "type": null,
+    "text": "Sign in",
+    "title": "Sign in with Google",
+    "aria": null,
+    "cls": "sign-in-button"
+  },
+  {
+    "i": 26,
+    "tag": "BUTTON",
+    "type": null,
+    "text": "<",
+    "title": "Cannot close root",
+    "aria": "Pop subprocess from stack",
+    "cls": "stack-btn stack-pop-btn"
+  },
+  {
+    "i": 27,
+    "tag": "BUTTON",
+    "type": null,
+    "text": ">",
+    "title": "Create and enter new subprocess (Ctrl+Shift+])",
+    "aria": "Push subprocess to stack",
+    "cls": "stack-btn stack-push-btn"
+  },
+  {
+    "i": 28,
+    "tag": "BUTTON",
+    "type": null,
+    "text": "▼",
+    "title": "Show Intermediates",
+    "aria": null,
+    "cls": "icon-btn internal-btn active"
+  },
+  {
+    "i": 29,
+    "tag": "BUTTON",
+    "type": null,
+    "text": "▲",
+    "title": "Mark as Output",
+    "aria": null,
+    "cls": "icon-btn output-btn active"
+  },
+  {
+    "i": 30,
+    "tag": "INPUT",
+    "type": "checkbox",
+    "text": "",
+    "title": null,
+    "aria": null,
+    "cls": null,
+    "checked": true
+  },
+  {
+    "i": 31,
+    "tag": "INPUT",
+    "type": "checkbox",
+    "text": "",
+    "title": null,
+    "aria": null,
+    "cls": null,
+    "checked": false
+  },
+  {
+    "i": 32,
+    "tag": "INPUT",
+    "type": "checkbox",
+    "text": "",
+    "title": null,
+    "aria": null,
+    "cls": null,
+    "checked": true
+  },
+  {
+    "i": 33,
+    "tag": "INPUT",
+    "type": "checkbox",
+    "text": "",
+    "title": null,
+    "aria": null,
+    "cls": null,
+    "checked": false
+  }
+]

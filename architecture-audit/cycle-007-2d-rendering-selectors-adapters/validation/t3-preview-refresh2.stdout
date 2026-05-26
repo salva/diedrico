@@ -1,0 +1,10 @@
+Stopping preview/dev processes: 351636
+351648
+351649
+351660
+351661
+351672
+351673
+ 351773  351767 npm run dev --host 0.0.0.0
+ 351785  351773 sh -c vite --host 0.0.0.0
+ 351786  351785 node /work/diedrico/node_modules/.bin/vite --host 0.0.0.0

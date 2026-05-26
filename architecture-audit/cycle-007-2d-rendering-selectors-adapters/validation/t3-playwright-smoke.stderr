@@ -1,0 +1,22 @@
+node:internal/modules/cjs/loader:1479
+  throw err;
+  ^
+
+Error: Cannot find module '@playwright/test'
+Require stack:
+- /tmp/diedrico-wave007-smoke.cjs
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1476:15)
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1049:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1073:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1094:12)
+    at Module._load (node:internal/modules/cjs/loader:1262:25)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.require (node:internal/modules/cjs/loader:1576:12)
+    at require (node:internal/modules/helpers:153:16)
+    at Object.<anonymous> (/tmp/diedrico-wave007-smoke.cjs:1:22)
+    at Module._compile (node:internal/modules/cjs/loader:1830:14) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [ '/tmp/diedrico-wave007-smoke.cjs' ]
+}
+
+Node.js v24.15.0

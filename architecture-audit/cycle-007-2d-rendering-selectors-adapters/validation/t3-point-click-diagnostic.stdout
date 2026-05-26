@@ -1,0 +1,76 @@
+{
+  "snapshot": {
+    "bodyText": "Untitled Project\n▼\n▼\n▼\n▼\n▼\n▼\n▼\n▼\nSign in\nElements\n▼\n2D Elements\n\nNo elements yet. Use the tools to create points, lines, and other geometric objects.\n\n▼\n3D Elements\n\nNo 3D elements yet. Use the 3D tools to create points, lines, and other objects from projections.\n\nNo elements yet. Start creating geometry!\n\nConstruction History\n<\n>\n▼\nRoot Process\n●\n▼\n▲\n➤\nShow Planes\nShow 2D Elements on Planes\nShow Grid\nShow Reference Axes\nPlane:\nTool:\nPoint\nPick\n3D:\n---",
+    "svgOuterStart": "<svg data-v-8488fee1=\"\" class=\"svg-canvas\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 980 612.5\" preserveAspectRatio=\"xMidYMid meet\"><g data-v-8488fee1=\"\" class=\"background-grid\"></g><!----><g data-v-8488fee1=\"\" class=\"grid-labels\"></g></svg>",
+    "counts": {
+      "gridGroups": 1,
+      "gridLines": 0,
+      "gridLabelGroups": 1,
+      "gridLabels": 0,
+      "circles": 0,
+      "lines": 0,
+      "paths": 0
+    },
+    "controls": [
+      {
+        "aria": "Toggle Grid",
+        "title": "Toggle Grid (G)",
+        "className": "nav-button active",
+        "text": ""
+      },
+      {
+        "aria": "Selection Tool",
+        "title": "Selection Tool - Pick, move, and edit objects (Esc)",
+        "className": "tool-button",
+        "text": ""
+      },
+      {
+        "aria": "Free Point",
+        "title": "Create free point - Click to place point (P)",
+        "className": "tool-button-main active",
+        "text": ""
+      },
+      {
+        "aria": "Show all Point tools",
+        "title": "Show all Point tools",
+        "className": "tool-button-dropdown active",
+        "text": "▼"
+      },
+      {
+        "aria": null,
+        "title": "Show Intermediates",
+        "className": "icon-btn internal-btn active",
+        "text": "▼"
+      },
+      {
+        "aria": null,
+        "title": "Mark as Output",
+        "className": "icon-btn output-btn active",
+        "text": "▲"
+      }
+    ]
+  },
+  "consoleMessages": [
+    "debug: [vite] connecting...",
+    "debug: [vite] connected.",
+    "log: [DEBUG] Environment variables: {clientId: NOT SET, hasApiKey: false, hasAppId: false, allEnvVars: Object}",
+    "log: [DEBUG] hasGoogleCredentials: ",
+    "log: [ElementsPanel] Computing projection planes list, version: 0 forceUpdate: 0",
+    "log: [ElementsPanel] Computing 3D elements",
+    "log: [ElementsPanel] 3D elements: {points: 0, lines: 0, segments: 0, planes: 0}",
+    "log: [ElementsPanel] Mounted, initial World version: 0",
+    "log: World initialized",
+    "log: Points in world: 0",
+    "log: [ThreeView.renderHingeLines] Called",
+    "log: [ThreeView.renderHingeLines] Found 0 hinge lines: []",
+    "warning: Google Drive credentials not configured. Running in local-only mode.",
+    "info: To enable Google Drive integration, create a .env file with VITE_GOOGLE_CLIENT_ID, VITE_GOOGLE_API_KEY, and VITE_GOOGLE_APP_ID",
+    "warning: [GroupMarkerNotSet(crbug.com/242999)!:A09018008C3E0000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content.",
+    "warning: [.WebGL-0x152c0014d400]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "warning: [.WebGL-0x152c0014d400]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "warning: [.WebGL-0x152c0014d400]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "warning: [.WebGL-0x152c0014d400]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)",
+    "log: [SvgCanvas] Created new tool instance: point"
+  ],
+  "pageErrors": []
+}

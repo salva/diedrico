@@ -1,0 +1,7 @@
+ 351636       1 npm run dev --host 0.0.0.0
+ 351648  351636 sh -c npm run dev:frontend --host 0.0.0.0
+ 351649  351648 npm run dev:frontend 0.0.0.0
+ 351660  351649 sh -c npm run dev --workspace=frontend 0.0.0.0
+ 351661  351660 npm run dev 0.0.0.0
+ 351672  351661 sh -c vite 0.0.0.0
+ 351673  351672 node /work/diedrico/node_modules/.bin/vite 0.0.0.0

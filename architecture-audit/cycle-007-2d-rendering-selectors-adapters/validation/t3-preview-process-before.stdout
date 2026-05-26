@@ -1,0 +1,4 @@
+ 346108       1 npm run dev --host 0.0.0.0
+ 346120  346108 sh -c vite --host 0.0.0.0
+ 346121  346120 node /work/diedrico/node_modules/.bin/vite --host 0.0.0.0
+ 346129  346121 /work/diedrico/node_modules/vite/node_modules/@esbuild/linux-x64/bin/esbuild --service=0.21.5 --ping

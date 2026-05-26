@@ -113,3 +113,30 @@ Additional evidence captured for this handoff/reporting task:
 - Git status scoped to Wave 007 source paths showed no uncommitted frontend source/test changes after the prior implementation commit; this continuation task only added verification/reporting artifacts.
 
 Residual validation blockers remain as classified above: missing `eslint`, `vue-tsc` failing under the current Node/toolchain, existing root Vitest failures, and malformed e2e specs. No new Wave 007-attributable focused test failure was found during t1b verification.
+
+
+## t3 live preview smoke correction
+
+Addressed the reviewer live-preview smoke blocker with a fresh preview refresh, HTTP reachability probe, and browser smoke/diagnostic runs. No application source was changed by this correction task.
+
+Preview refresh/probe evidence:
+
+- Initial refresh wrapper attempt failed because `/bin/sh` did not support `set -o pipefail`; logs: `validation/t3-preview-refresh.stdout`, `validation/t3-preview-refresh.stderr`.
+- First root-level restart attempt mis-forwarded `--host` through npm, leaving Vite localhost-only as `vite 0.0.0.0`; logs: `validation/t3-live-preview.stdout`, `validation/t3-live-preview.stderr`, `validation/t3-preview-process-after-failed-probe.stdout`, `validation/t3-preview-http-probe.stdout`, `validation/t3-preview-http-probe.stderr`.
+- Corrected refresh used `npm run dev --workspace=frontend -- --host 0.0.0.0`, replacing the stale process and starting Vite as `node /work/diedrico/node_modules/.bin/vite --host 0.0.0.0`; logs: `validation/t3-preview-refresh2.stdout`, `validation/t3-preview-refresh2.stderr`, `validation/t3-live-preview-refresh2.stdout`, `validation/t3-live-preview-refresh2.stderr`, `validation/t3-live-preview-refresh2.pid`.
+- HTTP probe succeeded on the refreshed preview: `curl http://127.0.0.1:5173/` returned HTTP 200 and the Diedrico index HTML; logs: `validation/t3-preview-http-probe2.stdout`, `validation/t3-preview-http-probe2.stderr`.
+
+Browser smoke evidence:
+
+- A Playwright diagnostic run loaded `http://127.0.0.1:5173/`, mounted `svg.svg-canvas` at approximately `980x613`, mounted the Wave 007 presentation groups `g.background-grid` and `g.grid-labels`, and reported no page errors; logs: `validation/t3-playwright-diagnostic.stdout`, `validation/t3-playwright-diagnostic.stderr`.
+- The same diagnostic captured that the default empty project state has `0` grid line DTOs, `0` grid label DTOs, and `0` rendered SVG geometry even though the `Toggle Grid` control is active. This is not an environment blocker: the app served and mounted the canvas, but the default world/active-plane state did not produce visible grid/read-model entries in this browser smoke.
+- A controls diagnostic verified accessible toolbar controls including `Free Point`, `Selection Tool`, and `Toggle Grid`; logs: `validation/t3-controls-diagnostic.stdout`, `validation/t3-controls-diagnostic.stderr`.
+- A user-interaction diagnostic clicked `Free Point` and the center of the SVG canvas. The UI switched to `Tool: Point / Pick` and logged `[SvgCanvas] Created new tool instance: point`, but no SVG circle was rendered and no page error was emitted; logs: `validation/t3-point-click-diagnostic.stdout`, `validation/t3-point-click-diagnostic.stderr`.
+- Strict smoke scripts that required visible grid lines or rendered point creation failed with stable evidence, respectively: `validation/t3-playwright-smoke2.stdout`/`.stderr` and `validation/t3-playwright-smoke-final.stdout`/`.stderr`.
+- The first log-update helper attempted `python` and failed because only `python3` is present; logs: `validation/t3-update-implementation-log.stdout`, `validation/t3-update-implementation-log.stderr`.
+
+Classification:
+
+- Live preview refresh and reachability are complete: the refreshed Vite process is bound on `0.0.0.0` and the app answers HTTP 200.
+- Browser smoke is partially successful: the application loads, the 2D SVG canvas mounts, Wave 007 grid/read-model groups exist in the DOM, controls are accessible, and no browser/page errors occur.
+- User-visible 2D geometry smoke remains inconclusive/blocked by default-state behavior: the empty initial project exposes no visible grid labels/lines and a Free Point click did not render a point. The stable logs above classify the observed behavior precisely for the validation stage/reviewer rather than hiding it as a generic Playwright failure.
