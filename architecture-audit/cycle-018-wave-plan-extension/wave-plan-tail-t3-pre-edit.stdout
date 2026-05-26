@@ -1,0 +1,220 @@
+Do not reopen broad rendering, 3D scene, app-shell, command, persistence, backend, package/tooling, docs/spec, or validation-platform redesigns inside this wave. If implementation discovers those areas are required, stop and run a reviewed plan-edit mini-cycle before broadening scope.
+
+**Target outcome**
+
+The 2D canvas presentation path consumes explicit narrow read ports/DTOs instead of a full mutable `World`; 2D primitive selection, projected-3D-on-2D projection, hit/query input, style policy, visibility policy, and overlay event ownership have named modules with one responsibility each. Broad `any` helper seams in active presentation code are deleted rather than cast over. The 3D overlay either deliberately owns pointer interaction in its region or deliberately allows underlying canvas interaction; that contract is encoded in source and tests instead of hidden in e2e click-coordinate workarounds.
+
+**Explicit DELETE list**
+
+- Delete `CanvasPresentationController.buildModel(world: World, ...)` or any equivalent full-`World` selector API once the reviewed read port is introduced.
+- Delete `CanvasPresentationSelector` helper signatures that use `any`, including untyped primitive/kind and plane-transform helper seams.
+- Delete direct projected-3D rendering loops from `CanvasPresentationSelector` when moved to a named projected-3D canvas selector/adapter.
+- Delete obsolete selector tests that instantiate concrete `World` only to inspect traversal internals; replace them with read-port/DTO tests.
+- Delete mutable/spatial-query responsibilities from `frontend/src/domain/presentation/Paper.ts` only if static usage and focused tests prove `CanvasInteractionQuery` is the active query owner.
+- Delete e2e workarounds that avoid overlay interception if the implementation changes overlay input ownership; replace them with current behavior contracts.
+- Delete any compatibility wrapper, dual full-`World`/read-port path, broad presentation facade, or dead export created during the transition.
+
+**Success criteria**
+
+- Canvas presentation selectors/controllers no longer depend on a full mutable `World` where a narrow read port/DTO is sufficient.
+- Active `CanvasPresentationSelector` helper seams no longer use `any` for primitive/kind or plane-transform data.
+- Projected-3D-on-2D rendering has an explicit owner outside the general 2D selector loop, or the implementation log explains with reviewed evidence why the owner remains there.
+- Overlay pointer ownership is inventoried against current `ThreeView`/three-rendering handlers before any behavior change, then covered by focused e2e/live evidence if user-observable behavior changes.
+- No broad rendering platform, shared god snapshot factory, app-shell redesign, command/persistence/backend change, package/tooling change, or stale audit-history dependency is introduced.
+- Mandatory validation cadence passes with stable logs: root/frontend lint where defined, focused Vitest for touched presentation/query modules, full root/frontend Vitest, root/frontend build, root/frontend e2e when user-facing overlay/canvas behavior changes, live preview refresh on `0.0.0.0:5173`, HTTP reachability probe, and Playwright/live browser evidence for the affected canvas/overlay region when applicable.
+
+**Dependencies**
+
+Depends on Wave 015 and the subsequent Wave 014 validation closure, because this wave relies on the now-green TypeScript/build/test/e2e gates and on the extracted command/use-case, rendering, and validation contracts produced by earlier cycles. It is ordered before any remaining peripheral docs/debug cleanup because it is the most central current user-input/rendering boundary left after Wave 015.
+
+**Validation requirements**
+
+1. Capture static scans for full-`World` canvas presentation APIs, `CanvasPresentationSelector` `any` seams, projected-3D loops, `Paper` query usage, and current 3D overlay pointer handlers before edits.
+2. Run focused Vitest for changed canvas presentation selector/controller/read-port/query modules and any three-presentation shared DTO/overlay boundary.
+3. Run root and frontend lint where scripts exist.
+4. Run full root and frontend Vitest.
+5. Run root and frontend build.
+6. Run root/frontend Playwright e2e if overlay/canvas interaction or other user-facing behavior changes; otherwise record exact justification in the implementation log.
+7. Refresh the live preview on `0.0.0.0:5173`, capture an HTTP 200 reachability probe, and run a Playwright/live browser check for the current canvas area affected by the 3D overlay.
+
+**Risks**
+
+- A shared snapshot or read-model adapter can become a new god-module if it absorbs style, visibility, projection, interaction, and traversal policy. Keep adapters small and delegate those responsibilities to focused modules.
+- Overlay pointer changes can break legitimate 3D interactivity. Inventory current handlers before changing CSS/event behavior.
+- `Paper.ts` query deletion can remove still-used behavior if based on assumption rather than static usage plus tests.
+- The scope is near rendering and interaction, so broad visual redesign is tempting; reject changes not required by the read-port/projected-3D/overlay ownership boundary.
+
+
+---
+
+## Wave 017 — Three presentation read ports and realization boundary
+
+**Status**
+
+Proposed by `cycle-017-fresh-scout-proposals`; requires canonical review in `cycle-017-review-round-01` before implementation.
+
+**Scope**
+
+- `frontend/src/application/threePresentation/ThreePresentationModel.ts`
+- `frontend/src/application/threePresentation/ThreePresentationController.ts`
+- `frontend/src/application/threePresentation/ThreePresentationSelector.ts`
+- `frontend/src/application/threePresentation/ProjectionPlane3DSelector.ts`
+- `frontend/src/application/threePresentation/PlanarElement3DSelector.ts`
+- `frontend/src/application/threePresentation/ReconstructedElement3DSelector.ts`
+- `frontend/src/application/threePresentation/Guide3DSelector.ts`
+- `frontend/src/application/threePresentation/Hinge3DSelector.ts`
+- a new narrow 3D presentation read-port module, or a reviewed shared presentation read-context module if the restructure proposal wins
+- `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts` only where needed to align realization/read-context ownership and avoid duplicate presentation adapters
+- `frontend/src/application/canvasPresentation/CanvasVisibilityPolicy.ts` only if the reviewed implementation can delete its `world as World` cast through a narrow visibility/process-tree capability without broad style/process redesign
+- `frontend/src/rendering/threeView/ThreeViewRuntime.ts`
+- `frontend/src/components/panels/ThreeView.vue`
+- focused three-presentation/canvas-read-port/component-shell tests
+
+**Scope guard**
+
+This wave continues Wave 016's active presentation-boundary cleanup. It must not reopen broad rendering, scene-host/OrbitControls, app-shell, command/undo, persistence, backend, docs/spec, package/tooling, validation-platform, or Drive/local project architecture. It may touch canvas presentation only to share or align the read-port/realization context; it must not rewrite the Wave 016 selector model or introduce a global presentation snapshot god-module. If implementation proves that domain realization itself needs a larger redesign, stop for a reviewed plan-edit mini-cycle rather than hiding it in this wave.
+
+**Baseline/current grounding**
+
+Wave 016 completed the 2D canvas presentation read-port/overlay boundary and recorded a residual risk that `CanvasWorldReadPort` still delegates realization calls through concrete runtime `World` (`architecture-audit/cycle-016-canvas-presentation-overlay-boundary/implementation-log.md`, “Residual risks / future candidates”). Current source shows `CanvasWorldReadPort` exposes 2D/3D realization capabilities and the adapter calls entity realization with `world` (`frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:14`, `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:21`, `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:24`, `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:46`, `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:49`, `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:50`, `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:51`).
+
+The active 3D presentation path still accepts full mutable `World`: `ThreePresentationInput` embeds `world: World` (`frontend/src/application/threePresentation/ThreePresentationModel.ts:1`, `frontend/src/application/threePresentation/ThreePresentationModel.ts:10`), `ThreePresentationSelector` passes it to every concern selector (`frontend/src/application/threePresentation/ThreePresentationSelector.ts:17`, `frontend/src/application/threePresentation/ThreePresentationSelector.ts:20`, `frontend/src/application/threePresentation/ThreePresentationSelector.ts:21`, `frontend/src/application/threePresentation/ThreePresentationSelector.ts:22`, `frontend/src/application/threePresentation/ThreePresentationSelector.ts:23`, `frontend/src/application/threePresentation/ThreePresentationSelector.ts:24`), and `ThreeView.vue` still injects `World` and passes it into the runtime refresh input (`frontend/src/components/panels/ThreeView.vue:29`, `frontend/src/components/panels/ThreeView.vue:41`, `frontend/src/components/panels/ThreeView.vue:46`). Existing domain projection realization context interfaces provide a possible lower-level read-capability vocabulary (`frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:9`, `frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:20`).
+
+**Target outcome**
+
+3D presentation selectors/controllers consume explicit read ports or read-context slices instead of full mutable `World`. Canvas and 3D presentation do not maintain contradictory realization/read adapter models: either a small 3D read port mirrors the successful Wave 016 boundary without duplicating broad world access, or a reviewed shared presentation read-context replaces duplicate adapters. Internal full-`World` selector APIs and touched test `any` workarounds are deleted, not wrapped. User-visible 2D and 3D rendering remains equivalent.
+
+**Explicit DELETE list**
+
+- Delete `ThreePresentationInput.world: World` as the active 3D presentation input contract.
+- Delete full-`World` selector signatures in active three-presentation selectors where a read port/context slice is sufficient.
+- Delete touched three-presentation unit-test `as any` workarounds that only exist to bypass broad concrete selector dependencies.
+- Delete duplicate read-port/realization helper code if the reviewed implementation introduces a shared presentation context.
+- Delete the `CanvasVisibilityPolicy` `world as World` cast only if replaced by a narrow typed visibility/process-tree capability inside the reviewed scope.
+- Delete transitional overloads, compatibility wrappers, and dead exports created while moving from full `World` to read ports.
+
+**Success criteria**
+
+- `frontend/src/application/threePresentation/*` no longer exposes a public application-presentation input or selector API requiring full mutable `World` where a read port/context slice is sufficient.
+- `ThreeView.vue` remains a composition shell and wraps the injected runtime `World` only at the boundary needed to create the selected read port/context.
+- Canvas and 3D presentation realization/read access are aligned by a documented boundary; no parallel full-World and read-port paths remain for the same selector responsibility.
+- Focused tests cover the new read-port/context contract and update three-presentation selector tests without broad `as any` spy seams for touched constructors/input shapes.
+- No scene-host/OrbitControls redesign, app-shell redesign, command/persistence/backend change, package/tooling change, or docs/spec rewrite is introduced.
+- Mandatory validation cadence passes with stable logs: root/frontend lint where defined, focused Vitest for touched presentation/read-port modules, full root/frontend Vitest, root/frontend build, root/frontend e2e, live preview refresh on `0.0.0.0:5173`, HTTP reachability probe, and Playwright/live browser evidence for 3D view plus representative 2D canvas rendering.
+
+**Dependencies**
+
+Depends on Wave 016 because it builds on the completed canvas presentation read-port and overlay boundary. It is ordered before scene-host interaction or peripheral cleanup because it is the most central remaining active rendering/read-model boundary.
+
+**Validation requirements**
+
+1. Capture pre-edit static scans for full-`World` APIs/imports in three presentation, `CanvasWorldReadPort` realization delegation, `CanvasVisibilityPolicy` casts, and touched-test `as any` seams.
+2. Run focused three-presentation and canvas-read-port Vitest for every behavior-bearing change.
+3. Run root/frontend lint where scripts exist.
+4. Run full root/frontend Vitest.
+5. Run root/frontend build.
+6. Run root/frontend Playwright e2e because 3D/canvas rendering is user-observable.
+7. Refresh live preview on `0.0.0.0:5173`, capture HTTP 200, and run focused live browser evidence for 3D view rendering plus representative 2D canvas rendering.
+
+**Risks**
+
+- A read port can become a renamed `World` facade if it mirrors too many methods. Keep capabilities tied to selector responsibilities.
+- A shared presentation context can become a god snapshot if it owns traversal, style, visibility, geometry conversion, and scene concerns. Prefer slices/composition over a large behavior class.
+- Over-eager canvas changes can destabilize the just-completed Wave 016 boundary. Touch canvas only for read-context alignment.
+- Scene-host interaction debt remains real but should not distract from the higher-level presentation data boundary in this wave.
+
+---
+
+## Wave 018 — Domain realization context boundary
+
+**Status**
+
+Added by `cycle-018-wave-plan-extension` as the recommended next wave after Wave 017. Requires `cycle-018-wave-plan-extension-review` sign-off before the canonical `cycle-018-fresh-scout-proposals` stage and before any implementation.
+
+**Scope**
+
+- `frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts`
+- `frontend/src/domain/world/Element2D.ts`
+- `frontend/src/domain/world/Element3D.ts`
+- 3D realization classes that still type realization against concrete `World` or `any`:
+  - `frontend/src/domain/world/Point3D.ts`
+  - `frontend/src/domain/world/Line3D.ts`
+  - `frontend/src/domain/world/Segment3D.ts`
+  - `frontend/src/domain/world/Plane.ts`
+  - `frontend/src/domain/world/HingeLine.ts`
+  - `frontend/src/domain/world/BrokenHingeLine.ts`
+- 2D realization classes only where needed to align naming/types with the existing projection-element context:
+  - `frontend/src/domain/world/Point.ts`
+  - `frontend/src/domain/world/Line.ts`
+  - `frontend/src/domain/world/Segment.ts`
+  - `frontend/src/domain/world/Circle.ts`
+  - `frontend/src/domain/world/Guide.ts`
+  - `frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts`
+- Presentation read-port adapters that currently pass concrete `World` into domain realization:
+  - `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts`
+  - `frontend/src/application/threePresentation/ThreeWorldReadPort.ts`
+- focused realization-context, canvas-read-port, three-read-port, and representative rendering tests
+
+**Scope guard**
+
+This wave owns the domain realization context contract, not a broad rendering, scene-host, command, persistence, app-shell, backend, validation-platform, docs/spec, or package/tooling redesign. It must begin with a current caller inventory for `realize2D(...)`, `realize3D(...)`, `getPlaneEquation(...)`, and projection-plane realization helper APIs, then choose the smallest typed context boundary that removes concrete `World`/`any` from active realization contracts without introducing a new god context.
+
+Do not reopen the Wave 016/017 presentation selector read-port architecture except to update adapters to the new realization context. Do not move ownership of style, visibility, process-tree rendering, command execution, or persistence into the realization context. If the caller inventory proves that projection-plane mutation APIs or dependency registration must be redesigned first, stop and run a reviewed plan-edit mini-cycle rather than hiding that redesign in this wave.
+
+**Baseline/current grounding**
+
+The baseline already identified domain-internal realization coupling as a residual central risk: `Element2D` required realization through a whole `World`, `styleService` walked `World`/`ProcessTree`, and weak realization contexts used `any` (`architecture-audit/baseline/risk-register.md`, R6 and R11; `architecture-audit/baseline/architecture-map.md`, “Additional service/domain coupling paths”). Waves 016 and 017 deliberately narrowed canvas and 3D presentation selectors to read ports, but both closure logs record the same residual: presentation read-port adapters still call domain realization APIs with concrete runtime `World` (`architecture-audit/cycle-016-canvas-presentation-overlay-boundary/implementation-log.md`, “Residual risks / future candidates”; `architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/implementation-log.md`, “Residual risks after closure”).
+
+Current source evidence confirms that the residual is now a domain-realization boundary, not a selector-boundary problem. `CanvasWorldReadPort` exposes realization methods and its adapter calls `plane.realizePoint2D(point, world)`, `plane.realizeLine2D(line, world)`, `plane.realizeCircle2D(circle, world)`, `point.realize3D(world)`, `line.realize3D(world)`, and `segment.realize3D(world)` (`frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:14`, `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:21`, `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:30`, `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:46`, `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:51`). `ThreeWorldReadPort` similarly wraps `World` and builds read models by calling `point.realize2D(world)`, `line.realize2D(world)`, `circle.realize2D(world)`, selected-guide `line.realize2D(world)`, and hinge `realize3D(world)` inside the adapter (`frontend/src/application/threePresentation/ThreeWorldReadPort.ts:55`, `frontend/src/application/threePresentation/ThreeWorldReadPort.ts:65`, `frontend/src/application/threePresentation/ThreeWorldReadPort.ts:84`, `frontend/src/application/threePresentation/ThreeWorldReadPort.ts:98`, `frontend/src/application/threePresentation/ThreeWorldReadPort.ts:117`).
+
+The domain has already started the right vocabulary for 2D realization with `ProjectionElementRealizationContext` (`frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:9`, `frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:20`), and `Element2D.realize2D(context: ProjectionElementRealizationContext)` now uses that type (`frontend/src/domain/world/Element2D.ts:1`, `frontend/src/domain/world/Element2D.ts:108`). The remaining central weakness is that 3D realization and plane-equation contracts still use concrete `World` or `any`: `Element3D.realize3D(world: any): any` (`frontend/src/domain/world/Element3D.ts:40`), `Point3D`/`Line3D`/`Segment3D` import `World` for realization (`frontend/src/domain/world/Point3D.ts`, `frontend/src/domain/world/Line3D.ts`, `frontend/src/domain/world/Segment3D.ts`), and `Plane` uses `any` in plane-equation/realization APIs (`frontend/src/domain/world/Plane.ts`). Static scans in `architecture-audit/cycle-018-wave-plan-extension/static-realization-world-scan.stdout` and `static-any-scan.stdout` capture the current residual seams.
+
+**Target outcome**
+
+Domain realization APIs consume explicit typed realization/read contexts rather than full mutable `World` or broad `any`. 2D and 3D realization share a coherent context vocabulary where their lookup needs overlap, with separate narrow capabilities where they do not. Canvas and three presentation read-port adapters may still be the runtime boundary that wraps a concrete `World`, but they pass only the selected realization context into domain realization APIs. The active source no longer has a parallel situation where selectors use read ports while domain realization contracts force adapters back to full `World`/`any`.
+
+**Explicit DELETE list**
+
+- Delete `Element3D.realize3D(world: any): any` and replace it with a typed 3D realization context/result contract.
+- Delete `Plane.getPlaneEquation(world: any)` / `Plane.realize3D(world: any)` broad `any` contracts in touched plane classes.
+- Delete concrete `World` realization signatures from active 3D domain elements where a typed context is sufficient, including point/line/segment/plane/hinge realization paths covered by the caller inventory.
+- Delete presentation adapter calls that pass full `World` directly to `realize2D(...)`, `realize3D(...)`, or plane-equation APIs when the new context is available.
+- Delete redundant realization-context names or shims if implementation discovers the existing `ProjectionElementRealizationContext` can be evolved cleanly instead of duplicated.
+- Delete touched unit-test helper `as any`/broad mock contexts that only exist because realization contracts are weak; replace with typed test context builders.
+- Delete transitional overloads, compatibility wrappers, dead exports, and type aliases that preserve both old full-`World` and new context APIs.
+
+**Success criteria**
+
+- A caller inventory in `implementation-log.md` lists active `realize2D`, `realize3D`, `getPlaneEquation`, projection-plane realization helper, and presentation-read-port adapter call sites before edits and states which are changed, deferred, or explicitly out of scope.
+- Active 3D realization base contracts no longer use `any` or concrete `World` where a typed realization context is sufficient.
+- Existing 2D `ProjectionElementRealizationContext` usage is preserved or evolved into a clearly named realization context family; no second duplicate context is introduced for the same lookup responsibility.
+- `CanvasWorldReadPort` and `ThreeWorldReadPort` pass typed realization contexts into domain realization calls rather than exposing selector-side read ports that internally depend on full-`World` realization signatures.
+- Focused tests cover the selected realization context using typed test fixtures for representative 2D point/line/circle/guide, 3D point/line/segment/plane/hinge, and canvas/three read-port adapter paths changed by the wave.
+- No source change is made to command/undo, persistence/project schema, app-shell orchestration, backend contracts, package/tooling, docs/specs, Drive/local services, or broad rendering/scene-host modules except if a reviewed mini-cycle explicitly broadens scope.
+- Mandatory validation cadence passes with stable logs: root/frontend lint where defined, focused Vitest for realization/read-port tests, full root/frontend Vitest, root/frontend build, root/frontend e2e because canvas/3D rendering is user-observable, live preview refresh on `0.0.0.0:5173`, HTTP reachability probe, and Playwright/live smoke for representative 2D canvas plus 3D view rendering.
+
+**Dependencies**
+
+Depends on Waves 016 and 017 because those waves moved presentation selectors behind canvas/three read ports and exposed the remaining full-`World` seam as a domain realization issue. It is ordered before broader 3D scene-host lifecycle, app-shell service concentration, backend/frontend contract stance, validation-gate hardening beyond existing gates, placeholder/debug cleanup, and docs/spec drift because those later topics should consume a stable domain realization/read-context contract rather than preserve the current full-`World` realization API.
+
+**Validation requirements**
+
+1. Capture pre-edit static scans for `realize2D`, `realize3D`, `getPlaneEquation`, `World` imports in realization classes, `any` realization contracts, and read-port adapter calls that pass full `World` into realization.
+2. Run focused Vitest for changed realization context/domain element/read-port adapter modules.
+3. Run root and frontend lint where scripts exist.
+4. Run full root and frontend Vitest.
+5. Run root and frontend build.
+6. Run root and frontend Playwright e2e because realization affects user-visible 2D/3D rendering, construction, intersections, guides, and projection-plane behavior.
+7. Refresh the live preview on `0.0.0.0:5173`, capture HTTP 200, and run focused Playwright/live browser smoke that confirms representative 2D canvas primitives and the 3D view still render.
+
+**Risks**
+
+- A single “realization context” can become a renamed `World` facade if it exposes every lookup/mutation method. Keep capabilities read-only and scoped to actual realization caller needs from the inventory.
+- Changing realization signatures can ripple widely through geometry construction and rendering. Use typed context builders and focused tests before full validation.
+- Projection-plane mutation methods use realization while also registering dependencies and marking dirty; do not mix mutation/dependency ownership into this realization-context wave unless a reviewed plan edit broadens scope.
+- Some domain comments still reference old phase-era `World` examples. Do not convert this into a docs/comment cleanup wave; update only comments adjacent to changed contracts if needed for correctness.
+- If the source tree has unrelated dirty build-contract work in progress, implementation must inspect path-focused diffs first and avoid reverting or masking those changes.
+
+**No-backcompat rationale**
+
+The old full-`World`/`any` realization signatures are architectural debt, not a compatibility surface worth preserving. Keeping overloads or aliases would leave the core domain contract ambiguous and would let future presentation adapters continue bypassing narrow read contexts. Under the project priorities, delete the old signatures and update active callers/tests directly once the reviewed proposal chooses the exact context shape.

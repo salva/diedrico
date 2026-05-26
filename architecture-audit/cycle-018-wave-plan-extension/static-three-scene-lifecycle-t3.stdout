@@ -1,0 +1,68 @@
+frontend/src/components/panels/ThreeView.vue:4:    <div class="three-controls">
+frontend/src/components/panels/ThreeView.vue:56:  window.addEventListener('resize', handleResize);
+frontend/src/components/panels/ThreeView.vue:69:  window.removeEventListener('resize', handleResize);
+frontend/src/components/panels/ThreeView.vue:70:  runtime.dispose();
+frontend/src/components/panels/ThreeView.vue:89:.three-controls {
+frontend/src/rendering/threeView/ThreeViewRuntime.ts:31:  dispose(): void { this.host.dispose(); }
+frontend/src/rendering/threeView/ProjectionPlaneSceneAdapter.ts:11:          const geometry = new THREE.BufferGeometry();
+frontend/src/rendering/threeView/ProjectionPlaneSceneAdapter.ts:13:          geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+frontend/src/rendering/threeView/ProjectionPlaneSceneAdapter.ts:14:          const object = new THREE.LineSegments(geometry, new THREE.LineBasicMaterial({ color: dto.style.color as number, opacity: dto.style.opacity, transparent: dto.style.transparent }));
+frontend/src/rendering/threeView/ProjectionPlaneSceneAdapter.ts:19:          const mesh = new THREE.Mesh(new THREE.PlaneGeometry(dto.geometry.size, dto.geometry.size), new THREE.MeshBasicMaterial({ color: dto.style.color as number, side: THREE.DoubleSide, transparent: true, opacity: dto.style.opacity }));
+frontend/src/rendering/threeView/ProjectionPlaneSceneAdapter.ts:21:          mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), vec(dto.geometry.normal).normalize());
+frontend/src/rendering/threeView/ProjectionPlaneSceneAdapter.ts:35:function vec(v: Vec3): THREE.Vector3 { return new THREE.Vector3(v.x, v.y, v.z); }
+frontend/src/rendering/threeView/GuideSceneAdapter.ts:8:        const mesh = new THREE.Mesh(new THREE.PlaneGeometry(dto.geometry.size, dto.geometry.size), new THREE.MeshBasicMaterial({ color: dto.style.color as number, side: THREE.DoubleSide, transparent: true, opacity: dto.style.opacity }));
+frontend/src/rendering/threeView/GuideSceneAdapter.ts:14:      const marker = new THREE.Mesh(new THREE.SphereGeometry(dto.style.radius ?? 0.25, 16, 16), new THREE.MeshStandardMaterial({ color: dto.style.color as number, emissive: 0x886600, metalness: 0.4, roughness: 0.3 }));
+frontend/src/rendering/threeView/GuideSceneAdapter.ts:21:function vec(v: Vec3): THREE.Vector3 { return new THREE.Vector3(v.x, v.y, v.z); }
+frontend/src/rendering/threeView/AxisLabelSceneAdapter.ts:7:    const axis = new THREE.ArrowHelper(vec(dto.direction).normalize(), vec(dto.origin), dto.length, dto.style.color as number, 1, 0.5);
+frontend/src/rendering/threeView/AxisLabelSceneAdapter.ts:31:function vec(v: Vec3): THREE.Vector3 { return new THREE.Vector3(v.x, v.y, v.z); }
+frontend/src/rendering/threeView/HingeSceneAdapter.ts:7:      const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([vec(dto.start), vec(dto.end)]), new THREE.LineDashedMaterial({ color: dto.style.color as number, dashSize: dto.style.dashSize ?? 0.5, gapSize: dto.style.gapSize ?? 0.3, linewidth: dto.style.lineWidth ?? 2 }));
+frontend/src/rendering/threeView/HingeSceneAdapter.ts:14:function vec(v: Vec3): THREE.Vector3 { return new THREE.Vector3(v.x, v.y, v.z); }
+frontend/src/rendering/threeView/ReconstructedElementSceneAdapter.ts:9:        const mesh = new THREE.Mesh(new THREE.SphereGeometry(dto.style.radius ?? 0.15, 16, 16), standard(dto.style.color as number));
+frontend/src/rendering/threeView/ReconstructedElementSceneAdapter.ts:14:        const mesh = new THREE.Mesh(new THREE.PlaneGeometry(dto.geometry.size, dto.geometry.size), new THREE.MeshBasicMaterial({ color: dto.style.color as number, side: THREE.DoubleSide, transparent: true, opacity: dto.style.opacity }));
+frontend/src/rendering/threeView/ReconstructedElementSceneAdapter.ts:20:        const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([vec(dto.start), vec(dto.end)]), new THREE.LineBasicMaterial({ color: dto.style.color as number, linewidth: dto.style.lineWidth ?? 3 }));
+frontend/src/rendering/threeView/ReconstructedElementSceneAdapter.ts:25:            const sphere = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 12), standard(dto.style.color as number));
+frontend/src/rendering/threeView/ReconstructedElementSceneAdapter.ts:36:function standard(color: number) { return new THREE.MeshStandardMaterial({ color, emissive: 0x000000, metalness: 0.3, roughness: 0.7 }); }
+frontend/src/rendering/threeView/ReconstructedElementSceneAdapter.ts:37:function vec(v: Vec3): THREE.Vector3 { return new THREE.Vector3(v.x, v.y, v.z); }
+frontend/src/rendering/threeView/ThreeSceneHost.ts:2:import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+frontend/src/rendering/threeView/ThreeSceneHost.ts:10:  readonly scene = new THREE.Scene();
+frontend/src/rendering/threeView/ThreeSceneHost.ts:15:  private controls?: OrbitControls;
+frontend/src/rendering/threeView/ThreeSceneHost.ts:21:    this.scene.background = new THREE.Color(0xf5f5f5);
+frontend/src/rendering/threeView/ThreeSceneHost.ts:23:    this.camera = new THREE.PerspectiveCamera(60, aspect, 0.1, 10000);
+frontend/src/rendering/threeView/ThreeSceneHost.ts:24:    const cameraPos = domainDirectionToThreeJS(new THREE.Vector3(1, 1, 1).normalize());
+frontend/src/rendering/threeView/ThreeSceneHost.ts:25:    this.camera.position.set(cameraPos.x * 30, cameraPos.y * 30, cameraPos.z * 30);
+frontend/src/rendering/threeView/ThreeSceneHost.ts:26:    const up = domainDirectionToThreeJS(new THREE.Vector3(0, 0, 1));
+frontend/src/rendering/threeView/ThreeSceneHost.ts:27:    this.camera.up.set(up.x, up.y, up.z);
+frontend/src/rendering/threeView/ThreeSceneHost.ts:28:    this.camera.lookAt(0, 0, 0);
+frontend/src/rendering/threeView/ThreeSceneHost.ts:30:    this.renderer = new THREE.WebGLRenderer({ canvas: mount.canvas, antialias: true, alpha: false });
+frontend/src/rendering/threeView/ThreeSceneHost.ts:31:    this.renderer.setPixelRatio(window.devicePixelRatio);
+frontend/src/rendering/threeView/ThreeSceneHost.ts:37:    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+frontend/src/rendering/threeView/ThreeSceneHost.ts:38:    this.controls.enableDamping = true;
+frontend/src/rendering/threeView/ThreeSceneHost.ts:39:    this.controls.dampingFactor = 0.05;
+frontend/src/rendering/threeView/ThreeSceneHost.ts:40:    this.controls.screenSpacePanning = false;
+frontend/src/rendering/threeView/ThreeSceneHost.ts:41:    this.controls.minDistance = 2;
+frontend/src/rendering/threeView/ThreeSceneHost.ts:42:    this.controls.maxDistance = 500;
+frontend/src/rendering/threeView/ThreeSceneHost.ts:43:    this.controls.maxPolarAngle = Math.PI;
+frontend/src/rendering/threeView/ThreeSceneHost.ts:44:    this.scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+frontend/src/rendering/threeView/ThreeSceneHost.ts:45:    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.4);
+frontend/src/rendering/threeView/ThreeSceneHost.ts:47:    this.scene.add(directionalLight);
+frontend/src/rendering/threeView/ThreeSceneHost.ts:56:    this.camera.aspect = width / Math.max(1, height);
+frontend/src/rendering/threeView/ThreeSceneHost.ts:57:    this.camera.updateProjectionMatrix();
+frontend/src/rendering/threeView/ThreeSceneHost.ts:58:    this.renderer.setSize(width, height);
+frontend/src/rendering/threeView/ThreeSceneHost.ts:62:  dispose(): void {
+frontend/src/rendering/threeView/ThreeSceneHost.ts:64:    this.registry.dispose();
+frontend/src/rendering/threeView/ThreeSceneHost.ts:65:    this.controls?.dispose();
+frontend/src/rendering/threeView/ThreeSceneHost.ts:66:    this.renderer?.dispose();
+frontend/src/rendering/threeView/ThreeSceneHost.ts:71:    this.animationFrameId = requestAnimationFrame(this.animate);
+frontend/src/rendering/threeView/ThreeSceneHost.ts:73:    this.controls?.update();
+frontend/src/rendering/threeView/ThreeSceneHost.ts:74:    this.renderer.render(this.scene, this.camera);
+frontend/src/rendering/threeView/PlanarElementSceneAdapter.ts:8:        const mesh = new THREE.Mesh(new THREE.SphereGeometry(dto.style.radius ?? 0.3, 16, 16), material(dto.style.color as number, dto.style.opacity));
+frontend/src/rendering/threeView/PlanarElementSceneAdapter.ts:14:        const curve = new THREE.CatmullRomCurve3(dto.points.map(vec), true);
+frontend/src/rendering/threeView/PlanarElementSceneAdapter.ts:15:        const mesh = new THREE.Mesh(new THREE.TubeGeometry(curve, dto.points.length, dto.style.radius ?? 0.15, 8, true), material(dto.style.color as number, (dto.style.opacity ?? 1) * 0.7));
+frontend/src/rendering/threeView/PlanarElementSceneAdapter.ts:19:      const curve = new THREE.LineCurve3(vec(dto.start), vec(dto.end));
+frontend/src/rendering/threeView/PlanarElementSceneAdapter.ts:20:      const mesh = new THREE.Mesh(new THREE.TubeGeometry(curve, 1, dto.style.radius ?? 0.15, 8, false), material(dto.style.color as number, (dto.style.opacity ?? 1) * 0.7));
+frontend/src/rendering/threeView/PlanarElementSceneAdapter.ts:26:function material(color: number, opacity = 1) { return new THREE.MeshBasicMaterial({ color, opacity, transparent: opacity < 1, depthTest: true, depthWrite: true }); }
+frontend/src/rendering/threeView/PlanarElementSceneAdapter.ts:27:function vec(v: Vec3): THREE.Vector3 { return new THREE.Vector3(v.x, v.y, v.z); }
+frontend/src/rendering/threeView/ThreeObjectRegistry.ts:9:    for (const object of objects) this.scene.add(object);
+frontend/src/rendering/threeView/ThreeObjectRegistry.ts:13:  dispose(): void {
+frontend/src/rendering/threeView/ThreeObjectRegistry.ts:21:      this.scene.remove(object);
+frontend/src/rendering/threeView/ThreeObjectRegistry.ts:33:    if (Array.isArray(material)) material.forEach(m => m.dispose());

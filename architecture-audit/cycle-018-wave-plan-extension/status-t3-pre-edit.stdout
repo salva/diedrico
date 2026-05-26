@@ -1,0 +1,200 @@
+ D .github/agents/speckit.analyze.agent.md
+ D .github/agents/speckit.checklist.agent.md
+ D .github/agents/speckit.clarify.agent.md
+ D .github/agents/speckit.constitution.agent.md
+ D .github/agents/speckit.implement.agent.md
+ D .github/agents/speckit.plan.agent.md
+ D .github/agents/speckit.specify.agent.md
+ D .github/agents/speckit.tasks.agent.md
+ D .github/agents/speckit.taskstoissues.agent.md
+ D .github/prompts/speckit.analyze.prompt.md
+ D .github/prompts/speckit.checklist.prompt.md
+ D .github/prompts/speckit.clarify.prompt.md
+ D .github/prompts/speckit.constitution.prompt.md
+ D .github/prompts/speckit.implement.prompt.md
+ D .github/prompts/speckit.plan.prompt.md
+ D .github/prompts/speckit.specify.prompt.md
+ D .github/prompts/speckit.tasks.prompt.md
+ D .github/prompts/speckit.taskstoissues.prompt.md
+ M .saivage/plan.json
+ M .saivage/stages/baseline-fresh-analysis/reports/t1-inventory-and-domain.json
+ M .saivage/stages/baseline-fresh-analysis/reports/t2-architecture-quality-risk.json
+ M .saivage/stages/cycle-001-decision/reports/t1-write-wave-001-decision.json
+ M .saivage/stages/cycle-002-fresh-scout-proposals/reports/t2-review-stage-artifacts-retry-01.json
+ M .saivage/stages/cycle-003-review-round-01/reports/t1-review-wave-003-proposals.json
+ M .saivage/stages/cycle-003-review-round-01/reports/t2-correct-dynamic-planes-proposal-language.json
+ M .saivage/stages/cycle-003-review-round-01/reports/t3-review-b1-correction.json
+ M .saivage/stages/cycle-004-fresh-scout-proposals/tasks.json
+ M .saivage/stages/cycle-005-decision/reports/t1-write-wave-005-decision.json
+ M .saivage/stages/cycle-005-implement-process-tree-dependency-ownership/reports/t3-correct-deletion-sequence-coverage.json
+ M .saivage/stages/cycle-008-corrections-round-01/reports/t1-correct-wave-008-proposals-retry-01.json
+ M .saivage/stages/cycle-008-decision/reports/t1-write-wave-008-decision.json
+ M .saivage/stages/cycle-011-implement-architecture-tests-validation-gates/reports/t1-implement-wave-011-restructure.json
+ M .saivage/stages/wave-plan-draft/reports/t1-draft-wave-plan.json
+ D .specify/memory/constitution.md
+ D .specify/scripts/bash/check-prerequisites.sh
+ D .specify/scripts/bash/common.sh
+ D .specify/scripts/bash/create-new-feature.sh
+ D .specify/scripts/bash/setup-plan.sh
+ D .specify/scripts/bash/update-agent-context.sh
+ D .specify/templates/agent-file-template.md
+ D .specify/templates/checklist-template.md
+ D .specify/templates/plan-template.md
+ D .specify/templates/spec-template.md
+ D .specify/templates/tasks-template.md
+ M architecture-audit/cycle-001-invert-world-application-boundary/proposals/proposal-direct.md
+ M architecture-audit/cycle-001-invert-world-application-boundary/proposals/proposal-restructure.md
+ M architecture-audit/cycle-001-invert-world-application-boundary/reviews/corrections-round-01-note.md
+ M architecture-audit/cycle-003-authoritative-world-state-delete-dead-store-workspace/proposals/proposal-direct.md
+ M architecture-audit/cycle-003-authoritative-world-state-delete-dead-store-workspace/proposals/proposal-restructure.md
+ M architecture-audit/cycle-005-process-tree-dependency-ownership/validation/live-preview.stderr
+ M architecture-audit/cycle-005-process-tree-dependency-ownership/validation/live-preview.stdout
+ M architecture-audit/cycle-006a-canvas-tool-command-controllers/decision.md
+ M architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/t1-live-preview.stdout
+ M architecture-audit/cycle-007-2d-rendering-selectors-adapters/validation/t1-stage-live-preview-detached.stdout
+ M architecture-audit/cycle-007-2d-rendering-selectors-adapters/validation/t3-live-preview-refresh2.stdout
+ M architecture-audit/cycle-008-3d-rendering-scene-adapters/corrections-round-01-note.md
+ M architecture-audit/cycle-008-3d-rendering-scene-adapters/proposals/proposal-direct.md
+ M architecture-audit/cycle-008-3d-rendering-scene-adapters/proposals/proposal-restructure.md
+ M architecture-audit/cycle-010-backend-frontend-project-contract/validation/live-preview-refresh.stdout
+ M architecture-audit/cycle-010-backend-frontend-project-contract/validation/pre-implementation-reference-scan.stdout
+ M architecture-audit/cycle-011-architecture-tests-validation-gates/validation/live-preview-refresh.stderr
+ M architecture-audit/cycle-011-architecture-tests-validation-gates/validation/live-preview-refresh.stdout
+ M architecture-audit/cycle-012-placeholder-debug-cleanup/validation/live-preview-refresh.stdout
+ M architecture-audit/cycle-013-docs-specs-reconciliation/line-evidence.stdout
+ M architecture-audit/cycle-013-docs-specs-reconciliation/scout-rg.stdout
+ M architecture-audit/cycle-013-docs-specs-reconciliation/validation/final-live-preview-refresh-02.stdout
+ M architecture-audit/cycle-015-typescript-build-contracts/projection-world-split/proposals/proposal-direct.md
+ M architecture-audit/cycle-015-typescript-build-contracts/projection-world-split/proposals/proposal-restructure.md
+ M architecture-audit/cycle-015-typescript-build-contracts/proposals/proposal-direct.md
+ M architecture-audit/cycle-015-typescript-build-contracts/proposals/proposal-restructure.md
+ M architecture-audit/cycle-015-typescript-build-contracts/scope-check.md
+ M architecture-audit/cycle-015-typescript-build-contracts/validation/final-closure-live-preview.stdout
+ M architecture-audit/cycle-016-canvas-presentation-overlay-boundary/validation/closure-verify-preview-server.stdout
+ M architecture-audit/cycle-016-canvas-presentation-overlay-boundary/validation/preview-server-frontend.stdout
+ M architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/scope-check.md
+ M architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/preview-refresh-final.stdout
+ M architecture-audit/post-phase-3-next-wave-scout/line-evidence.stdout
+ M frontend/src/application/appShell/AppShellPorts.ts
+ M frontend/src/commands/Command.ts
+ M frontend/src/commands/factories/DeletionSequenceFactory.ts
+ M frontend/src/commands/factories/PointSequenceFactory.ts
+ M frontend/src/commands/operations/IOperation.ts
+ M frontend/src/commands/operations/world/AddCircleCircleIntersectionPoint2DOp.ts
+ M frontend/src/commands/operations/world/AddFreePointOp.ts
+ M frontend/src/commands/operations/world/AddLineCircleIntersectionPoint2DOp.ts
+ M frontend/src/commands/operations/world/AddLineLineIntersectionPoint2DOp.ts
+ M frontend/src/commands/operations/world/AddSiblingIntersectionPoint2DOp.ts
+ M frontend/src/components/panels/ActionGroupItem.vue
+ M frontend/src/components/panels/ActionItem.vue
+ M frontend/src/components/toolbars/MainToolbar.vue
+ M frontend/src/composables/useHoverHighlight.ts
+ M frontend/src/domain/calculations/Intersections.ts
+ M frontend/src/domain/processTree/ActionGroup.ts
+ M frontend/src/stores/processStore.ts
+ M frontend/src/stores/viewStore.ts
+ D frontend/tests/e2e/active-plane-shortcuts.spec.ts
+ D frontend/tests/e2e/selection-mask.spec.ts
+ D pre-plan.md
+?? .saivage/auth-profiles.json
+?? .saivage/config.json
+?? .saivage/plan-history.json
+?? .saivage/plan.json.bak-1779690856
+?? .saivage/saivage.json
+?? .saivage/saivage.json.bak-creditswap-1779744289
+?? .saivage/skills/project/audit.jsonl
+?? .saivage/skills/project/index.json
+?? .saivage/skills/project/records/01e65173-942b-4749-ab40-d6c69cb16da7.json
+?? .saivage/skills/project/records/01e65173-942b-4749-ab40-d6c69cb16da7.md
+?? .saivage/skills/project/records/0d378d7b-eacc-459c-a54c-1d6817c23772.json
+?? .saivage/skills/project/records/0d378d7b-eacc-459c-a54c-1d6817c23772.md
+?? .saivage/skills/project/records/2166f225-d631-46d8-853a-c0d65e1f7aed.json
+?? .saivage/skills/project/records/2166f225-d631-46d8-853a-c0d65e1f7aed.md
+?? .saivage/skills/project/records/4b836255-7ed0-48d2-8ffe-4b805ff097e9.json
+?? .saivage/skills/project/records/4b836255-7ed0-48d2-8ffe-4b805ff097e9.md
+?? .saivage/skills/project/records/71daf878-c9aa-47f2-8e33-8d7e0e1a0916.json
+?? .saivage/skills/project/records/71daf878-c9aa-47f2-8e33-8d7e0e1a0916.md
+?? .saivage/skills/project/records/8cb297ec-573a-4178-8fe2-fbb25699c6a1.json
+?? .saivage/skills/project/records/8cb297ec-573a-4178-8fe2-fbb25699c6a1.md
+?? .saivage/skills/project/records/8f169cab-256f-4105-a428-9faa6d8d93e2.json
+?? .saivage/skills/project/records/8f169cab-256f-4105-a428-9faa6d8d93e2.md
+?? .saivage/skills/project/records/9048306d-2ab7-47ac-b07e-d4d9b3d0dd2d.json
+?? .saivage/skills/project/records/9048306d-2ab7-47ac-b07e-d4d9b3d0dd2d.md
+?? .saivage/skills/project/records/b903d0a8-ab32-42e3-b955-d731fbf088a3.json
+?? .saivage/skills/project/records/b903d0a8-ab32-42e3-b955-d731fbf088a3.md
+?? .saivage/skills/project/records/c6a7a6c7-d924-41ba-be4d-3766b3c90896.json
+?? .saivage/skills/project/records/c6a7a6c7-d924-41ba-be4d-3766b3c90896.md
+?? .saivage/skills/project/records/f13227cd-646d-4837-a0e7-5c4cc08543a4.json
+?? .saivage/skills/project/records/f13227cd-646d-4837-a0e7-5c4cc08543a4.md
+?? .saivage/skills/project/records/f14e688a-f9c5-42dc-8369-f94e5203bcf1.json
+?? .saivage/skills/project/records/f14e688a-f9c5-42dc-8369-f94e5203bcf1.md
+?? .saivage/skills/project/records/fddb654d-c1ac-43de-90b8-a9443e2a7d98.json
+?? .saivage/skills/project/records/fddb654d-c1ac-43de-90b8-a9443e2a7d98.md
+?? .saivage/stages/baseline-corrections-round-01/reports/t2-stage-review-retry-01.json
+?? .saivage/stages/baseline-corrections-round-01/reports/t2-stage-review.json
+?? .saivage/stages/baseline-corrections-round-01/summary.json
+?? .saivage/stages/baseline-corrections-round-01/tasks.json
+?? .saivage/stages/baseline-decision/summary.json
+?? .saivage/stages/baseline-decision/tasks.json
+?? .saivage/stages/baseline-fresh-analysis/reports/t3-review-baseline-artifacts.json
+?? .saivage/stages/baseline-fresh-analysis/reviews/round-01-reviewer-b.md
+?? .saivage/stages/baseline-fresh-analysis/summary.json
+?? .saivage/stages/baseline-fresh-analysis/tasks.json
+?? .saivage/stages/baseline-reviewer-a-round-01/summary.json
+?? .saivage/stages/baseline-reviewer-a-round-01/tasks.json
+?? .saivage/stages/baseline-reviewer-a-round-02/summary.json
+?? .saivage/stages/baseline-reviewer-a-round-02/tasks.json
+?? .saivage/stages/baseline-reviewer-b-round-01/summary.json
+?? .saivage/stages/baseline-reviewer-b-round-01/tasks.json
+?? .saivage/stages/baseline-reviewer-b-round-02/summary.json
+?? .saivage/stages/baseline-reviewer-b-round-02/tasks.json
+?? .saivage/stages/cycle-001-corrections-round-01/reports/t2-review-corrections.json
+?? .saivage/stages/cycle-001-corrections-round-01/reports/t3-review-corrections-follow-up-retry.json
+?? .saivage/stages/cycle-001-corrections-round-01/reports/t3-review-corrections-follow-up-synthesized.md
+?? .saivage/stages/cycle-001-corrections-round-01/reports/t3-review-corrections-follow-up.json
+?? .saivage/stages/cycle-001-corrections-round-01/summary.json
+?? .saivage/stages/cycle-001-corrections-round-01/tasks.json
+?? .saivage/stages/cycle-001-decision/reports/t2-review-decision-stage-retry.json
+?? .saivage/stages/cycle-001-decision/reports/t2-review-decision-stage.json
+?? .saivage/stages/cycle-001-decision/summary.json
+?? .saivage/stages/cycle-001-decision/tasks.json
+?? .saivage/stages/cycle-001-fresh-scout-proposals/reports/t2-stage-review.json
+?? .saivage/stages/cycle-001-fresh-scout-proposals/reports/t4-follow-up-review.json
+?? .saivage/stages/cycle-001-fresh-scout-proposals/reviews/round-01-review.md
+?? .saivage/stages/cycle-001-fresh-scout-proposals/reviews/round-02-follow-up-review.md
+?? .saivage/stages/cycle-001-fresh-scout-proposals/summary.json
+?? .saivage/stages/cycle-001-fresh-scout-proposals/tasks.json
+?? .saivage/stages/cycle-001-implement-invert-world-application-boundary/reports/t1-implement-wave-001-direct.json
+?? .saivage/stages/cycle-001-implement-invert-world-application-boundary/summary.json
+?? .saivage/stages/cycle-001-implement-invert-world-application-boundary/tasks.json
+?? .saivage/stages/cycle-001-review-round-01/reports/t1-review-wave-001-proposals.json
+?? .saivage/stages/cycle-001-review-round-01/summary.json
+?? .saivage/stages/cycle-001-review-round-01/tasks.json
+?? .saivage/stages/cycle-001-review-round-02/reports/t1-review-corrected-wave-001-proposals.json
+?? .saivage/stages/cycle-001-review-round-02/summary.json
+?? .saivage/stages/cycle-001-review-round-02/tasks.json
+?? .saivage/stages/cycle-002-decision/summary.json
+?? .saivage/stages/cycle-002-decision/tasks.json
+?? .saivage/stages/cycle-002-fresh-scout-proposals/summary.json
+?? .saivage/stages/cycle-002-fresh-scout-proposals/tasks.json
+?? .saivage/stages/cycle-002-implement-split-projection-plane-domain-god-module/reports/t1-implement-wave-002-direct.json
+?? .saivage/stages/cycle-002-implement-split-projection-plane-domain-god-module/reports/t2-review-stage-retry-01.json
+?? .saivage/stages/cycle-002-implement-split-projection-plane-domain-god-module/reports/t2-review-stage-synthesized.md
+?? .saivage/stages/cycle-002-implement-split-projection-plane-domain-god-module/reports/t2-review-stage.json
+?? .saivage/stages/cycle-002-implement-split-projection-plane-domain-god-module/summary.json
+?? .saivage/stages/cycle-002-implement-split-projection-plane-domain-god-module/tasks.json
+?? .saivage/stages/cycle-002-review-round-01/reports/t2-correct-wave-002-proposals-for-review-b1.json
+?? .saivage/stages/cycle-002-review-round-01/summary.json
+?? .saivage/stages/cycle-002-review-round-01/tasks.json
+?? .saivage/stages/cycle-003-decision/reports/t2-review-decision-stage-retry-01.json
+?? .saivage/stages/cycle-003-decision/reports/t2-review-decision-stage.json
+?? .saivage/stages/cycle-003-decision/summary.json
+?? .saivage/stages/cycle-003-decision/tasks.json
+?? .saivage/stages/cycle-003-fresh-scout-proposals/reports/t4-correct-proposal-delete-lists.json
+?? .saivage/stages/cycle-003-fresh-scout-proposals/summary.json
+?? .saivage/stages/cycle-003-fresh-scout-proposals/tasks.json
+?? .saivage/stages/cycle-003-implement-authoritative-world-state-delete-dead-store-workspace/reports/t1-implement-proposal-direct.json
+?? .saivage/stages/cycle-003-implement-authoritative-world-state-delete-dead-store-workspace/summary.json
+?? .saivage/stages/cycle-003-implement-authoritative-world-state-delete-dead-store-workspace/tasks.json
+?? .saivage/stages/cycle-003-review-round-01/summary.json
+?? .saivage/stages/cycle-003-review-round-01/tasks.json
