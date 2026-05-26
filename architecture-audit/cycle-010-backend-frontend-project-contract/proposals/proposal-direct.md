@@ -12,6 +12,7 @@ This proposal is “direct” because it implements the Wave 010 target with the
 - The stale backend project CRUD/file-storage route is gone from active source and tests.
 - Root workspace/scripts no longer claim an active backend project API unless other backend surfaces remain explicitly active.
 - Frontend project persistence remains the Wave 004 command-stream contract via `ProjectService` and the Wave 009 app-shell runtime/Drive ports.
+- Obsolete e2e coverage for the removed backend `/api/projects` contract is deleted or replaced with active app-shell/startup/open-project/project-persistence coverage.
 
 ## Current evidence
 
@@ -32,9 +33,11 @@ This proposal is “direct” because it implements the Wave 010 target with the
 - Delete `backend/tests/integration/projects.spec.ts`.
 - Update `backend/src/server.ts` to remove the `projectsRouter` import and `/api/projects` mount. If the backend only has health after this deletion and is not used by any runtime, consider deleting the entire backend workspace in this same implementation rather than preserving a server shell.
 
-### Delete frontend import leak/dead dialog
+### Delete frontend import leak/dead dialog and obsolete e2e backend-path coverage
 
 - Delete `frontend/src/components/dialogs/OpenProjectDialog.vue`.
+- Delete or replace `frontend/tests/e2e/persistence.spec.ts`; it targets `localhost:3000/api/projects` and stale backend DTO behavior, so it must not remain as current validation after the backend project API is deleted.
+- Replacement e2e coverage, if added in this wave, must exercise the active Wave 009 app-shell/startup/open-project/project-persistence behavior: app load, startup/open-project affordance, Drive/no-credentials handling as available, and absence of stale backend fetch expectations.
 - Confirm no active source/test imports `OpenProjectDialog.vue`; if any emerge, replace with the Wave 009 `StartupDialog`/runtime flow or delete obsolete tests.
 
 ### Package/workspace stance
@@ -52,12 +55,14 @@ Delete only backend project API references that would otherwise describe removed
 - `specs/001-dihedral-learning-mvp/quickstart.md` references to `backend/data/projects`.
 - `specs/001-dihedral-learning-mvp/research.md` references to `/api/projects` and backend file storage.
 - `specs/001-dihedral-learning-mvp/plan.md` references to `backend/src/api/projects.ts` output.
+- Any retained test fixture or current-guidance doc that names `localhost:3000/api/projects`, `/api/projects`, backend `ProjectDTO`, backend file storage, or the old backend metadata/list/load project flow as active behavior.
 
 Do not broaden into Wave 013 docs reconciliation beyond these direct stale backend-project references.
 
 ## Explicit DELETE list
 
 - `frontend/src/components/dialogs/OpenProjectDialog.vue`.
+- `frontend/tests/e2e/persistence.spec.ts` as written; delete it or replace it with active app-shell/startup/open-project/project-persistence e2e coverage that does not call `localhost:3000/api/projects`.
 - `backend/src/api/projects.ts`.
 - `backend/src/models/Project.ts`.
 - `backend/src/storage/FileStorage.ts`.
@@ -65,7 +70,7 @@ Do not broaden into Wave 013 docs reconciliation beyond these direct stale backe
 - `backend/tests/integration/projects.spec.ts`.
 - `/api/projects` import/mount from `backend/src/server.ts`.
 - Backend workspace/package files if no active non-project backend remains.
-- Obsolete docs/spec references that describe backend project CRUD/file storage after deletion.
+- Obsolete docs/spec/test fixture references that describe backend project CRUD/file storage after deletion, including current-guidance references to `/api/projects` and backend `ProjectDTO` behavior.
 
 ## Expected behavior change
 
@@ -80,6 +85,7 @@ Do not broaden into Wave 013 docs reconciliation beyond these direct stale backe
 - Static scan: no `frontend/` import references to `backend/src`.
 - Static scan: no `/api/projects` route references remain in active source, tests, docs retained as current guidance.
 - Static scan: no `OpenProjectDialog` references remain.
+- Static scan: no `localhost:3000/api/projects` or stale backend-project e2e paths remain in active tests; `frontend/tests/e2e/persistence.spec.ts` is absent or rewritten around active app-shell/startup/open-project behavior.
 - Focused frontend ProjectService tests:
   - `npm run test -- tests/unit/services/ProjectService.roundTrip.spec.ts tests/unit/services/ProjectService.selfContainment.spec.ts tests/unit/services/ProjectService.subprocess.spec.ts` from `frontend/`.
   - Include integration persistence specs if they remain passing/focused enough: `tests/integration/projectService.determinism.spec.ts`, `tests/integration/projectService.cascadeDeletion.spec.ts`.
@@ -98,7 +104,8 @@ Do not broaden into Wave 013 docs reconciliation beyond these direct stale backe
 - Root `npm run build`.
 - Frontend `npm run build`.
 - Backend `npm run build` only if backend remains; if backend is deleted, not applicable.
-- Frontend `npm run test:e2e`, because persistence/open-project behavior is user-facing.
+- Frontend `npm run test:e2e`, because persistence/open-project behavior is user-facing. This e2e run must use the active app-shell/startup/open-project/project-persistence path and must not rely on the deleted backend `/api/projects` spec.
+- Playwright/live smoke must cover app load plus startup/open-project affordance through the current app shell. If Google credentials are absent, smoke should verify local/no-credentials startup remains usable, no stale backend fetch errors are emitted, and no test expects `localhost:3000/api/projects`.
 - Live preview refresh: `npm run dev -- --host 0.0.0.0` from `frontend/`, reachability probe, and a live smoke covering app load plus startup/open-project affordance. If Google credentials are absent, smoke should verify local/no-credentials startup remains usable and no backend fetch errors are emitted.
 
 ### Required validation if implementation retains backend or creates a shared contract
@@ -116,7 +123,7 @@ A retained-backend/shared-contract implementation that lacks these focused backe
 
 ### Known pre-existing failures to classify separately
 
-From Wave 009 validation: missing `eslint`, Node 24/`vue-tsc` incompatibility, unrelated broad frontend Vitest failures, broad TypeScript no-emit debt, and corrupted e2e specs. These must be attempted and logged; a focused Wave 010 failure in import boundaries, app-shell project routing, ProjectService contract, retained-backend API contract, backend storage validation, or shared-contract type/runtime validation is attributable and blocks completion.
+From Wave 009 validation: missing `eslint`, Node 24/`vue-tsc` incompatibility, unrelated broad frontend Vitest failures, broad TypeScript no-emit debt, and corrupted e2e specs. The stale `frontend/tests/e2e/persistence.spec.ts` backend-route contract is not acceptable to carry forward as pre-existing debt; Wave 010 must delete or replace it because it directly contradicts the chosen backend stance. These must be attempted and logged; a focused Wave 010 failure in import boundaries, app-shell project routing, ProjectService contract, retained-backend API contract, backend storage validation, or shared-contract type/runtime validation is attributable and blocks completion.
 
 ## Risks
 

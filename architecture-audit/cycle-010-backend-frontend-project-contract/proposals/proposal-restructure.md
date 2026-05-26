@@ -28,6 +28,7 @@ Wave 010 asks whether to delete unused backend/project API, establish a shared t
 - Backend project DTO/API/storage/tests are deleted as a non-adapter competing model.
 - A focused architecture test forbids frontend imports from `backend/src/**`.
 - If a backend is needed in a future product wave, it must be introduced as a true adapter for the existing project contract, not revived from stale DTOs.
+- Obsolete e2e coverage for `localhost:3000/api/projects` is deleted or replaced with coverage of active app-shell/startup/open-project/project-persistence behavior.
 
 ## Alternative considered: shared typed backend contract
 
@@ -59,9 +60,11 @@ This would satisfy Wave 010 only if the backend becomes a real active boundary. 
 - Delete `backend/tests/integration/projects.spec.ts`.
 - Remove `/api/projects` from `backend/src/server.ts`, or delete the backend workspace if no active backend capability remains.
 
-### Delete stale frontend surface
+### Delete stale frontend surface and obsolete backend-path e2e coverage
 
 - Delete `frontend/src/components/dialogs/OpenProjectDialog.vue`.
+- Delete or replace `frontend/tests/e2e/persistence.spec.ts`; as written it validates the stale `localhost:3000/api/projects` backend DTO path, not the active `ProjectPersistencePort`/Drive/app-shell project flow.
+- Any replacement e2e coverage must exercise the current app shell: app startup, startup/open-project affordance, project persistence/open behavior through the runtime ports, no-credentials handling where relevant, and absence of stale backend HTTP assumptions.
 
 ### Package/root stance
 
@@ -76,14 +79,16 @@ Delete or mark obsolete only references that describe backend project API/file s
 - `specs/001-dihedral-learning-mvp/quickstart.md` backend data/project references.
 - `specs/001-dihedral-learning-mvp/research.md` `/api/projects` backend storage snippets.
 - `specs/001-dihedral-learning-mvp/plan.md` output references to `backend/src/api/projects.ts`.
+- Any retained test fixture or current-guidance doc that presents `localhost:3000/api/projects`, `/api/projects`, backend `ProjectDTO`, or backend file storage as the active project persistence route.
 
 ## Explicit DELETE list
 
 - Direct frontend import from `backend/src/models/Project` by deleting `frontend/src/components/dialogs/OpenProjectDialog.vue`.
+- `frontend/tests/e2e/persistence.spec.ts` as written; delete it or replace it with app-shell/startup/open-project/project-persistence e2e coverage that does not call `localhost:3000/api/projects`.
 - Backend project DTO fields and `any` contracts by deleting `backend/src/models/Project.ts` instead of migrating them.
 - Backend project CRUD routes/storage/repository/tests listed above.
 - Root workspace/backend package references if backend has no active non-project responsibility.
-- Stale backend-project docs/spec references made false by the deletion.
+- Stale backend-project docs/spec/test fixture references made false by the deletion, including current-guidance references to `/api/projects` and backend DTO behavior.
 
 ## Expected behavior change
 
@@ -100,6 +105,7 @@ Delete or mark obsolete only references that describe backend project API/file s
   - `grep -R "backend/src" frontend/src frontend/tests` should produce no active references.
 - Static scan for stale backend route references:
   - no `/api/projects` in retained source/tests/current docs except historical notes intentionally deleted or marked obsolete.
+  - no `localhost:3000/api/projects` in retained e2e tests; `frontend/tests/e2e/persistence.spec.ts` is absent or rewritten around active app-shell/startup/open-project behavior.
 - Focused project persistence tests:
   - `frontend/tests/unit/services/ProjectService.roundTrip.spec.ts`
   - `frontend/tests/unit/services/ProjectService.selfContainment.spec.ts`
@@ -122,7 +128,8 @@ Delete or mark obsolete only references that describe backend project API/file s
 - `npm run build` at root.
 - `npm run build` from `frontend/`.
 - Backend `npm run build` only if backend remains; not applicable if deleted.
-- `npm run test:e2e` from `frontend/`, because project open/save UX is touched by deletion of obsolete project surfaces.
+- `npm run test:e2e` from `frontend/`, because project open/save UX is touched by deletion of obsolete project surfaces. This run must use active app-shell/startup/open-project/project-persistence behavior and must not depend on the deleted backend `/api/projects` test path.
+- Playwright/live smoke for app load plus project/startup dialog affordance through the current app shell. If no Google credentials are configured, smoke should verify no-credentials local startup, absence of backend fetch errors, and no expectation that `localhost:3000/api/projects` exists.
 - Live preview refresh on `0.0.0.0`, reachability probe, and live smoke for app load plus project/startup dialog affordance. If no Google credentials are configured, smoke should verify no-credentials local startup and absence of backend fetch errors.
 
 ### Required validation for the shared typed backend-contract alternative
@@ -140,7 +147,7 @@ A shared-contract/backend-retained implementation is incomplete unless these bac
 
 ### Known pre-existing validation debt
 
-Use Wave 009 classifications for failures unrelated to Wave 010: missing `eslint`, Node 24/`vue-tsc` incompatibility, broad frontend/root Vitest debt, TypeScript no-emit debt, and corrupted e2e specs. Focused import-boundary/project-contract tests must pass; failures there are Wave 010-attributable.
+Use Wave 009 classifications for failures unrelated to Wave 010: missing `eslint`, Node 24/`vue-tsc` incompatibility, broad frontend/root Vitest debt, TypeScript no-emit debt, and corrupted e2e specs. Do not classify the stale `frontend/tests/e2e/persistence.spec.ts` backend-route contract as acceptable unrelated debt; Wave 010 must delete or replace it because it is directly tied to the backend stance. Focused import-boundary/project-contract tests must pass; failures there are Wave 010-attributable.
 
 ## Risks
 
