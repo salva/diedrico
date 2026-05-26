@@ -69,15 +69,24 @@ This is intentionally a source-tree hygiene wave: it makes the active architectu
 - `frontend/src/commands/operations/processTree/ToggleEncapsulationOp.ts`
   - Delete apply/redo subprocess-ID debug logs.
 
-### Optional focused static gate update
+### Focused static gate update
 
-If implementation confirms the scanner can express this deterministically without brittle false positives, extend the Wave 011 architecture/static gate in `frontend/tests/unit/architecture/importBoundaries.spec.ts` or a new focused architecture spec to assert:
+Extend the Wave 011 architecture/static gate in `frontend/tests/unit/architecture/importBoundaries.spec.ts` or a new focused architecture spec only within the following bounded scope:
 
-- no active source/tests reference deleted/placeholder-only surfaces `operations/paper`, `operations/toolbar`, `operations/debug`, `ExamplesMenu`, `AddExampleSetupOp`, `projection-plane-setup`, or `basic-3d-point-setup`, except in architecture gate assertion text itself;
-- `frontend/src/commands/operations/processTree/README.md`, `frontend/src/commands/operations/world/README.md`, and `frontend/src/commands/operations/viewState/README.md` still exist, so the guard cannot be misread as deleting every README-bearing operation directory; and
-- no `console.log`, `console.debug`, or `console.info` remains in `frontend/src/**` normal source unless an allowlisted line is justified in the implementation log.
+- Active `frontend/src/**` and `frontend/tests/**` references must not contain deleted/placeholder-only surfaces `operations/paper`, `operations/toolbar`, `operations/debug`, `ExamplesMenu`, `AddExampleSetupOp`, `projection-plane-setup`, or `basic-3d-point-setup`, except in architecture gate assertion text itself.
+- Directory-presence/absence checks for operation-family READMEs are enforced by validation shell commands, not by an implicit broad source scanner: `paper/` and `toolbar/` must be absent, while `processTree/README.md`, `world/README.md`, and `viewState/README.md` must remain.
+- Console/source-hygiene enforcement is restricted to the Wave 012 evidenced touched source files listed below, and the implementation must delete all `console.log`, `console.debug`, and `console.info` in those files rather than introduce an allowlist:
+  - `frontend/src/services/GoogleDriveService.ts`
+  - `frontend/src/utils/rectangleGrid.ts`
+  - `frontend/src/utils/projectionPlaneUtils.ts`
+  - `frontend/src/domain/world/HingeLine.ts`
+  - `frontend/src/domain/world/Guide.ts`
+  - `frontend/src/commands/operations/world/UpdateElementStyleOp.ts`
+  - `frontend/src/commands/operations/world/RemoveElementOps.ts`
+  - `frontend/src/commands/operations/processTree/ToggleOutputOp.ts`
+  - `frontend/src/commands/operations/processTree/ToggleEncapsulationOp.ts`
 
-If this becomes over-broad because current source contains justified non-routine logging outside the Wave 012 touched set, do not add a broad allowlist framework. Instead, record the exact residual logging and keep this wave to deletion plus shell/static scans in validation.
+Do not add a full-`frontend/src/**` console policy in Wave 012. If implementation discovers routine `console.log`/`debug`/`info` outside the files above, record it as future cleanup or stop for a reviewed delta; do not expand this wave into broad repository cleanup or an allowlist framework.
 
 ## Files/tests/docs/fixtures to DELETE
 
@@ -124,7 +133,7 @@ All logs must be captured under `architecture-audit/cycle-012-placeholder-debug-
   - `AddExampleSetupOp`
   - `projection-plane-setup`
   - `basic-3d-point-setup`
-- Search `frontend/src` for remaining `console.log`, `console.debug`, and `console.info`; either the scan is empty or the implementation log justifies every residual line.
+- Search only the Wave 012 evidenced touched files enumerated in the focused static gate section for remaining `console.log`, `console.debug`, and `console.info`; the scan must be empty for those files. Do not require broad docs/spec cleanup or unrelated `frontend/src/**` rewrites.
 
 ### Architecture/static gates
 
@@ -133,7 +142,7 @@ All logs must be captured under `architecture-audit/cycle-012-placeholder-debug-
 - `npm run test:architecture` from the repo root.
 - `npm run test:architecture --workspace=frontend` from the repo root.
 
-These currently execute Wave 011 architecture/static gates and are expected to pass.
+These currently execute Wave 011 architecture/static gates and are expected to pass. Any Wave 012 console/source-hygiene gate must prove its scope is limited to the enumerated touched files above and must not fail because of unrelated docs/spec prose or unrelated source files.
 
 ### Focused Vitest
 
@@ -174,7 +183,7 @@ Because this wave touches frontend runtime source but should not change user beh
 | Risk | Impact | Mitigation |
 | --- | --- | --- |
 | A test or user flow implicitly depends on console output. | Low; console output should not be a runtime contract. | Run focused behavior tests and Playwright smoke; do not delete error/warn paths used for real failures. |
-| Broad console scan finds unrelated logging outside the scope evidence. | Medium; over-broad cleanup could become unreviewed scope creep. | Delete only Wave 012 evidenced routine logs; justify or defer unrelated lines. |
+| Broad console scan finds unrelated logging outside the scope evidence. | Medium; over-broad cleanup could become unreviewed scope creep. | Do not run or encode a broad console gate; scan only the enumerated Wave 012 touched files and defer unrelated lines to a future reviewed wave/delta. |
 | Removing placeholder directories breaks import/glob assumptions. | Low; registry imports only world/process-tree descriptors. | Run static scans plus operation registry/serialization focused tests. |
 | Drive logs include partially redacted config metadata. | Medium privacy/noise concern if retained. | Delete routine success/metadata logs while preserving catch-path errors/warnings. |
 | Known validation debt obscures Wave 012 regressions. | Medium. | Capture focused passing checks, compare mandatory failures to Wave 011 classifications, and label only unchanged debt as pre-existing. |

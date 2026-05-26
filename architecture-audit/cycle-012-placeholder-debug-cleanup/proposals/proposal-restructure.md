@@ -36,7 +36,7 @@ After implementation:
 
 - No README-only placeholder operation subdirectories remain under `frontend/src/commands/operations/`, while README-bearing active/non-placeholder families (`processTree/`, `world/`, and `viewState/`) remain intact.
 - No active source/tests reference deleted debug/example/placeholder operation surfaces.
-- No `console.log`, `console.debug`, or `console.info` remains in `frontend/src/**` unless explicitly justified as non-routine in the implementation log and guarded by a precise static-test exception.
+- No `console.log`, `console.debug`, or `console.info` remains in the Wave 012 evidenced touched files enumerated below; Wave 012 does not establish a full-`frontend/src/**` console policy or an allowlist framework.
 - Genuine error/catch-path `console.error`/`console.warn` usage remains available where it reports failures rather than normal progress.
 - Wave 013 remains responsible for broad docs/spec/comment reconciliation; Wave 012 only deletes comments directly adjacent to removed placeholder/debug code.
 
@@ -59,13 +59,23 @@ After implementation:
 
 ### Static hygiene boundary
 
-Modify or add architecture tests under `frontend/tests/unit/architecture/`, preferably using the shared scanner introduced by Wave 011 in `frontend/tests/unit/architecture/helpers/sourceScanner.ts`:
+Modify or add architecture tests under `frontend/tests/unit/architecture/`, preferably using the shared scanner introduced by Wave 011 in `frontend/tests/unit/architecture/helpers/sourceScanner.ts`, with this exact bounded enforcement scope:
 
-- Add a placeholder-operation hygiene assertion that active source/test files do not contain deleted/placeholder-only `operations/paper`, `operations/toolbar`, or `operations/debug`, and that the README-only placeholder directories do not exist. The assertion must not forbid or delete README-bearing active/non-placeholder families: `processTree/`, `world/`, and `viewState/`. If direct filesystem checks are awkward in Vite raw-glob tests, assert on source/test references in Vitest and cover directory absence/preserved README files with validation shell scans.
-- Add a console-noise assertion over `frontend/src/**` that fails on `console.log`, `console.debug`, or `console.info` unless the selected implementation records a narrow, named exception. Avoid allowing `console.warn`/`console.error` in this guard; those require separate semantic review and should not be bundled with normal-flow debug cleanup.
-- Keep the existing Wave 011 deleted examples/debug assertions for `ExamplesMenu`, `AddExampleSetupOp`, `projection-plane-setup`, and `basic-3d-point-setup` (`frontend/tests/unit/architecture/importBoundaries.spec.ts:61-67`). Extend rather than weaken them.
+- Add a placeholder-operation hygiene assertion that active `frontend/src/**` and `frontend/tests/**` files do not contain deleted/placeholder-only `operations/paper`, `operations/toolbar`, or `operations/debug` references. Keep the existing Wave 011 deleted examples/debug assertions for `ExamplesMenu`, `AddExampleSetupOp`, `projection-plane-setup`, and `basic-3d-point-setup` (`frontend/tests/unit/architecture/importBoundaries.spec.ts:61-67`) and extend rather than weaken them.
+- Do not encode README-family deletion as a broad “no operation READMEs” rule. Directory absence/preservation is deterministic shell validation: `paper/` and `toolbar/` must be absent, while `processTree/README.md`, `world/README.md`, and `viewState/README.md` must remain.
+- Add a console-noise assertion only for these Wave 012 evidenced touched source files, requiring zero `console.log`, `console.debug`, or `console.info` hits in them:
+  - `frontend/src/services/GoogleDriveService.ts`
+  - `frontend/src/utils/rectangleGrid.ts`
+  - `frontend/src/utils/projectionPlaneUtils.ts`
+  - `frontend/src/domain/world/HingeLine.ts`
+  - `frontend/src/domain/world/Guide.ts`
+  - `frontend/src/commands/operations/world/UpdateElementStyleOp.ts`
+  - `frontend/src/commands/operations/world/RemoveElementOps.ts`
+  - `frontend/src/commands/operations/processTree/ToggleOutputOp.ts`
+  - `frontend/src/commands/operations/processTree/ToggleEncapsulationOp.ts`
+- Exclude `console.warn` and `console.error` from this guard; those require separate semantic review and should not be bundled with normal-flow debug cleanup.
 
-If implementation discovers many legitimate `console.info`/`console.log` uses not identified in the scope check, stop and create a delta proposal. Do not introduce a broad allowlist that normalizes console noise.
+Wave 012 must not add a full-`frontend/src/**` console ban, a broad allowlist, or a “scan everything and justify later” policy. If implementation discovers additional routine console noise outside the enumerated files, record it as future work or stop for a reviewed delta instead of widening this wave.
 
 ## Files/tests/docs/fixtures to DELETE
 
@@ -102,6 +112,7 @@ All stdout/stderr logs should be saved under `architecture-audit/cycle-012-place
 
 - Run `npm run test:architecture --workspace=frontend` and `npm run test:architecture`.
 - The architecture suite should pass with the new source-hygiene assertions.
+- Confirm the console/source-hygiene assertion's fixture list or scanner roots are exactly the enumerated touched files, not all of `frontend/src/**`.
 - Confirm the assertions fail locally before the deletion when practical, or document why failure demonstration was not run to avoid source churn.
 
 ### Static deletion scans
@@ -119,7 +130,7 @@ All stdout/stderr logs should be saved under `architecture-audit/cycle-012-place
   - `AddExampleSetupOp`
   - `projection-plane-setup`
   - `basic-3d-point-setup`
-- Search `frontend/src` for `console.log`, `console.debug`, and `console.info`; require zero hits or a documented narrow exception matching the architecture test.
+- Search only the Wave 012 evidenced touched files named in the Static hygiene boundary section for `console.log`, `console.debug`, and `console.info`; require zero hits in those files. This validation must not require broad docs/spec cleanup or unrelated `frontend/src/**` rewrites.
 
 ### Focused behavior tests
 
@@ -159,8 +170,8 @@ Classify unchanged known failures from Wave 011 as pre-existing/unrelated:
 
 | Risk | Impact | Mitigation |
 | --- | --- | --- |
-| The console hygiene test becomes brittle by matching comments, tests, or intentional error logging. | Medium. | Scope it to `frontend/src/**`, only `console.log/debug/info`, and keep `warn/error` out of this wave. |
-| A static allowlist grows into a parallel policy layer. | Medium. | Permit only documented narrow exceptions; otherwise stop for a delta proposal rather than broad allowlisting. |
+| The console hygiene test becomes brittle by matching comments, tests, or intentional error logging. | Medium. | Scope it to the enumerated Wave 012 touched files only, match only `console.log/debug/info`, and keep `warn/error` out of this wave. |
+| A static allowlist grows into a parallel policy layer. | Medium. | Do not introduce an allowlist in Wave 012; require zero hits in the enumerated touched files and stop for a delta proposal if broader policy is needed. |
 | Deleting logs from numeric geometry utilities accidentally edits calculations. | Medium. | Keep diffs limited to logging/debug flag removal; run focused geometry/rendering tests. |
 | Placeholder directory absence is hard to enforce from Vitest raw globs. | Low. | Enforce references in architecture tests and directory absence with stable validation shell scans. |
 | Mandatory full validation still fails from known debt. | Medium. | Capture focused passing gates and compare failure signatures to Wave 011 implementation-log classifications. |
