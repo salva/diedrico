@@ -1,0 +1,200 @@
+frontend/src/components/workspace/SvgCanvas.vue:2:  <div class="svg-canvas-container">
+frontend/src/components/workspace/SvgCanvas.vue:5:      class="svg-canvas diedrico-canvas"
+frontend/src/components/workspace/SvgCanvas.vue:6:      data-testid="svg-canvas"
+frontend/src/components/workspace/SvgCanvas.vue:17:      <g v-if="viewStore.gridVisible.value" class="background-grid">
+frontend/src/components/workspace/SvgCanvas.vue:18:        <line
+frontend/src/components/workspace/SvgCanvas.vue:31:      <line
+frontend/src/components/workspace/SvgCanvas.vue:38:      <line
+frontend/src/components/workspace/SvgCanvas.vue:45:      <line
+frontend/src/components/workspace/SvgCanvas.vue:52:      <circle
+frontend/src/components/workspace/SvgCanvas.vue:66:      <circle
+frontend/src/components/workspace/SvgCanvas.vue:73:      <circle
+frontend/src/components/workspace/SvgCanvas.vue:82:        class="snap-indicator"
+frontend/src/components/workspace/SvgCanvas.vue:86:      <g v-if="viewStore.gridVisible.value" class="grid-labels">
+frontend/src/components/workspace/SvgCanvas.vue:93:          class="grid-label"
+frontend/src/components/workspace/SvgCanvas.vue:105:          class="grid-label"
+frontend/src/components/workspace/SvgCanvas.vue:117:          class="grid-label"
+frontend/src/components/workspace/SvgCanvas.vue:130:          class="grid-label"
+frontend/src/components/workspace/SvgCanvas.vue:142:      class="hover-tooltip"
+frontend/src/components/dialogs/NewProjectDialog.vue:2:  <div v-if="isOpen" class="dialog-overlay" @click="handleOverlayClick">
+frontend/src/components/dialogs/NewProjectDialog.vue:3:    <div class="dialog-content" @click.stop>
+frontend/src/components/dialogs/NewProjectDialog.vue:4:      <h2 class="dialog-title">New Project</h2>
+frontend/src/components/dialogs/NewProjectDialog.vue:7:        <div class="form-group">
+frontend/src/components/dialogs/NewProjectDialog.vue:14:            class="form-input"
+frontend/src/components/dialogs/NewProjectDialog.vue:20:        <div class="dialog-actions">
+frontend/src/components/dialogs/NewProjectDialog.vue:21:          <button type="button" class="btn btn-secondary" @click="handleCancel">
+frontend/src/components/dialogs/NewProjectDialog.vue:26:            class="btn btn-primary"
+frontend/src/components/dialogs/NewProjectDialog.vue:34:      <div v-if="error" class="error-message">
+frontend/src/components/dialogs/PropertiesDialog.vue:2:  <div v-if="isOpen" class="dialog-overlay" @click.self="handleCancel">
+frontend/src/components/dialogs/PropertiesDialog.vue:3:    <div class="properties-dialog" role="dialog" aria-labelledby="dialog-title">
+frontend/src/components/dialogs/PropertiesDialog.vue:5:      <div class="dialog-header">
+frontend/src/components/dialogs/PropertiesDialog.vue:7:        <button class="close-button" @click="handleCancel" aria-label="Close dialog">
+frontend/src/components/dialogs/PropertiesDialog.vue:13:      <div class="dialog-content">
+frontend/src/components/dialogs/PropertiesDialog.vue:15:        <section class="geometry-section">
+frontend/src/components/dialogs/PropertiesDialog.vue:17:          <div class="info-grid">
+frontend/src/components/dialogs/PropertiesDialog.vue:18:            <div class="info-row">
+frontend/src/components/dialogs/PropertiesDialog.vue:19:              <span class="info-label">Type:</span>
+frontend/src/components/dialogs/PropertiesDialog.vue:20:              <span class="info-value">{{ elementType }}</span>
+frontend/src/components/dialogs/PropertiesDialog.vue:22:            <div class="info-row" v-if="planeId">
+frontend/src/components/dialogs/PropertiesDialog.vue:23:              <span class="info-label">Plane:</span>
+frontend/src/components/dialogs/PropertiesDialog.vue:24:              <span class="info-value">{{ planeId }}</span>
+frontend/src/components/dialogs/PropertiesDialog.vue:26:            <div class="info-row" v-if="coordinates">
+frontend/src/components/dialogs/PropertiesDialog.vue:27:              <span class="info-label">Coordinates:</span>
+frontend/src/components/dialogs/PropertiesDialog.vue:28:              <span class="info-value">{{ coordinates }}</span>
+frontend/src/components/dialogs/PropertiesDialog.vue:30:            <div class="info-row" v-if="dependencies && dependencies.length > 0">
+frontend/src/components/dialogs/PropertiesDialog.vue:31:              <span class="info-label">Dependencies:</span>
+frontend/src/components/dialogs/PropertiesDialog.vue:32:              <span class="info-value">{{ dependencies.join(', ') }}</span>
+frontend/src/components/dialogs/PropertiesDialog.vue:34:            <div class="info-row" v-if="createdBy">
+frontend/src/components/dialogs/PropertiesDialog.vue:35:              <span class="info-label">Created by:</span>
+frontend/src/components/dialogs/PropertiesDialog.vue:36:              <span class="info-value">{{ createdBy }}</span>
+frontend/src/components/dialogs/PropertiesDialog.vue:42:        <section class="visual-style-section">
+frontend/src/components/dialogs/PropertiesDialog.vue:44:          <div class="style-controls">
+frontend/src/components/dialogs/PropertiesDialog.vue:46:            <div class="control-row">
+frontend/src/components/dialogs/PropertiesDialog.vue:59:                class="hex-input"
+frontend/src/components/dialogs/PropertiesDialog.vue:60:                :class="{ 'input-error': colorError }"
+frontend/src/components/dialogs/PropertiesDialog.vue:65:              <label class="override-checkbox">
+frontend/src/components/dialogs/PropertiesDialog.vue:70:            <div v-if="colorError" class="error-message">{{ colorError }}</div>
+frontend/src/components/dialogs/PropertiesDialog.vue:73:            <div class="control-row" v-if="elementType !== '2D Point'">
+frontend/src/components/dialogs/PropertiesDialog.vue:91:                class="number-input"
+frontend/src/components/dialogs/PropertiesDialog.vue:92:                :class="{ 'input-error': lineWidthError }"
+frontend/src/components/dialogs/PropertiesDialog.vue:96:              <label class="override-checkbox">
+frontend/src/components/dialogs/PropertiesDialog.vue:101:            <div v-if="lineWidthError" class="error-message">{{ lineWidthError }}</div>
+frontend/src/components/dialogs/PropertiesDialog.vue:104:            <div class="control-row" v-if="hasLineStyle">
+frontend/src/components/dialogs/PropertiesDialog.vue:109:                :class="{ 'input-error': lineStyleError }"
+frontend/src/components/dialogs/PropertiesDialog.vue:117:              <label class="override-checkbox">
+frontend/src/components/dialogs/PropertiesDialog.vue:122:            <div v-if="lineStyleError" class="error-message">{{ lineStyleError }}</div>
+frontend/src/components/dialogs/PropertiesDialog.vue:125:            <div class="control-row">
+frontend/src/components/dialogs/PropertiesDialog.vue:133:              <label class="override-checkbox">
+frontend/src/components/dialogs/PropertiesDialog.vue:141:          <button class="reset-button" @click="handleResetToDefault">
+frontend/src/components/dialogs/PropertiesDialog.vue:148:      <div class="dialog-footer">
+frontend/src/components/dialogs/PropertiesDialog.vue:149:        <button class="button button-secondary" @click="handleCancel">
+frontend/src/components/dialogs/PropertiesDialog.vue:152:        <button class="button button-primary" @click="handleSave">
+frontend/src/components/dialogs/StartupDialog.vue:2:  <div v-if="show" class="dialog-overlay" @click="handleOverlayClick">
+frontend/src/components/dialogs/StartupDialog.vue:3:    <div class="dialog-content startup-dialog" @click.stop>
+frontend/src/components/dialogs/StartupDialog.vue:4:      <h1 class="dialog-title">Diedrico - Project Selection</h1>
+frontend/src/components/dialogs/StartupDialog.vue:7:      <div v-if="!isSignedIn" class="sign-in-section">
+frontend/src/components/dialogs/StartupDialog.vue:8:        <p class="info-text">Sign in with your Google account to access your projects</p>
+frontend/src/components/dialogs/StartupDialog.vue:9:        <button class="sign-in-button" @click="handleSignIn" :disabled="props.loading">
+frontend/src/components/dialogs/StartupDialog.vue:13:        <p v-if="props.error" class="error-text">{{ props.error }}</p>
+frontend/src/components/dialogs/StartupDialog.vue:17:      <div v-else class="project-selection">
+frontend/src/components/dialogs/StartupDialog.vue:19:          <button class="create-button" style="width: 100%" @click="handleCreateNewProject">
+frontend/src/components/dialogs/StartupDialog.vue:25:        <section class="project-section">
+frontend/src/components/dialogs/StartupDialog.vue:28:          <div v-if="props.loadingFiles" class="loading-files">
+frontend/src/components/dialogs/StartupDialog.vue:32:          <div v-else-if="props.files.length === 0" class="no-files">
+frontend/src/components/dialogs/StartupDialog.vue:34:            <button class="create-button" @click="handleCreateNewProject">Create First Project</button>
+frontend/src/components/dialogs/StartupDialog.vue:37:          <div v-else class="file-list">
+frontend/src/components/dialogs/StartupDialog.vue:41:              class="file-item"
+frontend/src/components/dialogs/StartupDialog.vue:42:              :class="{ selected: selectedFileId === file.id }"
+frontend/src/components/dialogs/StartupDialog.vue:46:              <div class="file-name">{{ getDisplayName(file.name) }}</div>
+frontend/src/components/dialogs/StartupDialog.vue:47:              <div class="file-modified">{{ formatDate(file.modifiedTime) }}</div>
+frontend/src/components/dialogs/StartupDialog.vue:55:            class="open-button"
+frontend/src/components/dialogs/StartupDialog.vue:61:        <p v-if="props.error" class="error-text">{{ props.error }}</p>
+frontend/src/components/header/ProjectNameDisplay.vue:2:  <div class="project-name-display">
+frontend/src/components/header/ProjectNameDisplay.vue:5:      class="project-name"
+frontend/src/components/header/ProjectNameDisplay.vue:6:      :class="{ 'editable': !isRenaming }"
+frontend/src/components/header/ProjectNameDisplay.vue:11:      <span v-if="isRenaming" class="save-indicator">💾</span>
+frontend/src/components/header/ProjectNameDisplay.vue:14:    <div v-else class="edit-mode">
+frontend/src/components/header/ProjectNameDisplay.vue:19:        class="name-input"
+frontend/src/components/header/ProjectNameDisplay.vue:25:        class="save-button"
+frontend/src/components/header/ProjectNameDisplay.vue:33:        class="cancel-button"
+frontend/src/components/icons/toolbar/FreePointIcon.vue:4:    <circle
+frontend/src/components/icons/toolbar/LineByTwoPointsIcon.vue:4:    <line
+frontend/src/components/icons/toolbar/LineByTwoPointsIcon.vue:12:    <circle
+frontend/src/components/icons/toolbar/LineByTwoPointsIcon.vue:18:    <circle
+frontend/src/components/icons/toolbar/CircleIcon.vue:4:    <circle
+frontend/src/components/icons/toolbar/CircleIcon.vue:12:    <circle
+frontend/src/components/icons/toolbar/CircleIcon.vue:18:    <circle
+frontend/src/components/icons/toolbar/Create3DLineIcon.vue:4:    <line
+frontend/src/components/icons/toolbar/Create3DLineIcon.vue:13:    <line
+frontend/src/components/icons/toolbar/Create3DLineIcon.vue:23:    <line
+frontend/src/components/icons/toolbar/Create3DLineIcon.vue:32:    <line
+frontend/src/components/icons/toolbar/Create3DPlaneIcon.vue:17:    <line
+frontend/src/components/icons/toolbar/Create3DPlaneIcon.vue:26:    <line
+frontend/src/components/icons/toolbar/Create3DPointIcon.vue:4:    <circle
+frontend/src/components/icons/toolbar/Create3DPointIcon.vue:11:    <circle
+frontend/src/components/icons/toolbar/Create3DSegmentIcon.vue:4:    <line
+frontend/src/components/icons/toolbar/Create3DSegmentIcon.vue:12:    <circle
+frontend/src/components/icons/toolbar/Create3DSegmentIcon.vue:18:    <circle
+frontend/src/components/icons/toolbar/Create3DSegmentIcon.vue:25:    <line
+frontend/src/components/icons/toolbar/Create3DSegmentIcon.vue:34:    <circle
+frontend/src/components/icons/toolbar/Create3DSegmentIcon.vue:41:    <circle
+frontend/src/components/icons/toolbar/GridIcon.vue:4:    <line x1="6" y1="3" x2="6" y2="21" :stroke="ICON_COLORS.neutral" stroke-width="1" opacity="0.6" />
+frontend/src/components/icons/toolbar/GridIcon.vue:5:    <line x1="12" y1="3" x2="12" y2="21" :stroke="ICON_COLORS.neutral" stroke-width="1" opacity="0.6" />
+frontend/src/components/icons/toolbar/GridIcon.vue:6:    <line x1="18" y1="3" x2="18" y2="21" :stroke="ICON_COLORS.neutral" stroke-width="1" opacity="0.6" />
+frontend/src/components/icons/toolbar/GridIcon.vue:7:    <line x1="3" y1="6" x2="21" y2="6" :stroke="ICON_COLORS.neutral" stroke-width="1" opacity="0.6" />
+frontend/src/components/icons/toolbar/GridIcon.vue:8:    <line x1="3" y1="12" x2="21" y2="12" :stroke="ICON_COLORS.neutral" stroke-width="1" opacity="0.6" />
+frontend/src/components/icons/toolbar/GridIcon.vue:9:    <line x1="3" y1="18" x2="21" y2="18" :stroke="ICON_COLORS.neutral" stroke-width="1" opacity="0.6" />
+frontend/src/components/icons/toolbar/GuideLineIcon.vue:4:    <line
+frontend/src/components/icons/toolbar/GuideLineIcon.vue:12:    <line
+frontend/src/components/icons/toolbar/GuideLineIcon.vue:28:    <circle
+frontend/src/components/icons/toolbar/IntersectionPointIcon.vue:4:    <line
+frontend/src/components/icons/toolbar/IntersectionPointIcon.vue:12:    <line
+frontend/src/components/icons/toolbar/IntersectionPointIcon.vue:20:    <circle
+frontend/src/components/icons/toolbar/NewFileIcon.vue:16:    <line
+frontend/src/components/icons/toolbar/NewFileIcon.vue:24:    <line
+frontend/src/components/icons/toolbar/ParallelLineIcon.vue:4:    <line
+frontend/src/components/icons/toolbar/ParallelLineIcon.vue:12:    <line
+frontend/src/components/icons/toolbar/ParallelLineIcon.vue:20:    <circle
+frontend/src/components/icons/toolbar/PerpendicularLineIcon.vue:4:    <line
+frontend/src/components/icons/toolbar/PerpendicularLineIcon.vue:12:    <line
+frontend/src/components/icons/toolbar/PerpendicularLineIcon.vue:27:    <circle
+frontend/src/components/icons/toolbar/ProjectionIcon.vue:4:    <circle cx="12" cy="6" r="2.5" :fill="ICON_COLORS.neutral" opacity="0.9" />
+frontend/src/components/icons/toolbar/ProjectionIcon.vue:6:    <line x1="12" y1="8.5" x2="6" y2="17" :stroke="ICON_COLORS.neutral" stroke-width="1" stroke-dasharray="2,2" opacity="0.5" />
+frontend/src/components/icons/toolbar/ProjectionIcon.vue:7:    <line x1="12" y1="8.5" x2="18" y2="17" :stroke="ICON_COLORS.neutral" stroke-width="1" stroke-dasharray="2,2" opacity="0.5" />
+frontend/src/components/icons/toolbar/ProjectionIcon.vue:9:    <line x1="3" y1="17" x2="21" y2="17" :stroke="ICON_COLORS.neutral" stroke-width="1.5" opacity="0.7" />
+frontend/src/components/icons/toolbar/ProjectionIcon.vue:11:    <circle cx="6" cy="17" r="2" :fill="ICON_COLORS.neutral" opacity="0.4" />
+frontend/src/components/icons/toolbar/ProjectionIcon.vue:12:    <circle cx="18" cy="17" r="2" :fill="ICON_COLORS.neutral" opacity="0.4" />
+frontend/src/components/icons/toolbar/SegmentIcon.vue:4:    <line
+frontend/src/components/icons/toolbar/SegmentIcon.vue:12:    <circle
+frontend/src/components/icons/toolbar/SegmentIcon.vue:18:    <circle
+frontend/src/components/icons/toolbar/TangentParallelIcon.vue:4:    <circle
+frontend/src/components/icons/toolbar/TangentParallelIcon.vue:12:    <line
+frontend/src/components/icons/toolbar/TangentParallelIcon.vue:20:    <line
+frontend/src/components/icons/toolbar/TangentThroughPointIcon.vue:4:    <circle
+frontend/src/components/icons/toolbar/TangentThroughPointIcon.vue:12:    <line
+frontend/src/components/icons/toolbar/TangentThroughPointIcon.vue:20:    <circle
+frontend/src/components/icons/toolbar/TransportPointIcon.vue:4:    <line
+frontend/src/components/icons/toolbar/TransportPointIcon.vue:13:    <circle
+frontend/src/components/icons/toolbar/TransportPointIcon.vue:19:    <circle
+frontend/src/components/icons/toolbar/ZoomInIcon.vue:4:    <circle
+frontend/src/components/icons/toolbar/ZoomInIcon.vue:12:    <line
+frontend/src/components/icons/toolbar/ZoomInIcon.vue:21:    <line
+frontend/src/components/icons/toolbar/ZoomInIcon.vue:29:    <line
+frontend/src/components/icons/toolbar/ZoomOutIcon.vue:4:    <circle
+frontend/src/components/icons/toolbar/ZoomOutIcon.vue:12:    <line
+frontend/src/components/icons/toolbar/ZoomOutIcon.vue:21:    <line
+frontend/src/components/panels/ActionGroupItem.vue:2:  <div class="action-group-item">
+frontend/src/components/panels/ActionGroupItem.vue:4:    <div v-if="node.type === 'subprocess'" class="subprocess-item">
+frontend/src/components/panels/ActionGroupItem.vue:5:      <div class="subprocess-header" @click="toggleExpanded">
+frontend/src/components/panels/ActionGroupItem.vue:6:        <span class="expand-icon" :class="{ expanded: isExpanded }">▶</span>
+frontend/src/components/panels/ActionGroupItem.vue:7:        <span class="subprocess-name">{{ node.name }}</span>
+frontend/src/components/panels/ActionGroupItem.vue:8:        <span class="subprocess-count">({{ childCount }})</span>
+frontend/src/components/panels/ActionGroupItem.vue:10:      <div v-if="isExpanded" class="subprocess-children">
+frontend/src/components/panels/ActionGroupItem.vue:20:    <div v-else-if="node.type === 'actionGroup'" class="action-group">
+frontend/src/components/panels/ActionGroupItem.vue:21:      <div class="action-group-header" @click="toggleExpanded">
+frontend/src/components/panels/ActionGroupItem.vue:22:        <span class="expand-icon" :class="{ expanded: isExpanded }">▶</span>
+frontend/src/components/panels/ActionGroupItem.vue:23:        <span class="action-group-label">Group</span>
+frontend/src/components/panels/ActionGroupItem.vue:24:        <span class="action-count">({{ node.children.length }} actions)</span>
+frontend/src/components/panels/ActionGroupItem.vue:25:        <span class="timestamp">{{ formatTime(node.created) }}</span>
+frontend/src/components/panels/ActionGroupItem.vue:27:      <div v-if="isExpanded" class="action-group-children">
+frontend/src/components/panels/ActionItem.vue:3:    class="action-item"
+frontend/src/components/panels/ActionItem.vue:7:    <div v-if="action.elementId" class="action-outputs">
+frontend/src/components/panels/ActionItem.vue:8:      <span class="label">Element:</span>
+frontend/src/components/panels/ActionItem.vue:9:      <span class="outputs">{{ action.elementId }}</span>
+frontend/src/components/panels/ActionItem.vue:11:    <div class="action-description">
+frontend/src/components/panels/ActionItem.vue:12:      <span class="description">{{ action.description }}</span>
+frontend/src/components/panels/ActionsPanel.vue:2:  <aside class="actions-panel">
+frontend/src/components/panels/ActionsPanel.vue:3:    <header class="panel-header">
+frontend/src/components/panels/ActionsPanel.vue:4:      <h2 class="panel-title">Construction History</h2>
+frontend/src/components/panels/ActionsPanel.vue:5:      <div class="header-controls">
+frontend/src/components/panels/ActionsPanel.vue:7:        <div class="stack-controls">
+frontend/src/components/panels/ActionsPanel.vue:9:            class="stack-btn stack-pop-btn"
+frontend/src/components/panels/ActionsPanel.vue:18:            class="stack-btn stack-push-btn"
+frontend/src/components/panels/ActionsPanel.vue:30:    <div class="process-tree" ref="treeContainer">
+frontend/src/components/panels/ElementTypeGroup.vue:2:  <div class="element-type-group">
+frontend/src/components/panels/ElementTypeGroup.vue:3:    <div class="group-header" @click="toggleCollapse">
+frontend/src/components/panels/ElementTypeGroup.vue:4:      <span class="collapse-icon">{{ isCollapsed ? '▶' : '▼' }}</span>
+frontend/src/components/panels/ElementTypeGroup.vue:5:      <span class="group-title">{{ title }} ({{ elements.length }})</span>
+frontend/src/components/panels/ElementTypeGroup.vue:8:    <div v-if="!isCollapsed" class="group-content">
+frontend/src/components/panels/ElementTypeGroup.vue:12:        class="element-item"
+frontend/src/components/panels/ElementTypeGroup.vue:13:        :class="{ 'element-selected': selectionStore.isSelected(element.id), 'element-hidden': !element.visible }"

@@ -1,0 +1,50 @@
+
+Running 1 test using 1 worker
+
+[1A[2K[1/1] [chromium] › tests/e2e/current-ui-contract.spec.ts:57:3 › Current Diedrico UI contract › selection masks allow free-point creation and point-only line argument collection
+[1A[2K  1) [chromium] › tests/e2e/current-ui-contract.spec.ts:57:3 › Current Diedrico UI contract › selection masks allow free-point creation and point-only line argument collection 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByTestId('svg-canvas')[22m
+    [2m    - locator resolved to <svg data-v-35319051="" viewBox="0 0 980 612.5" data-testid="svg-canvas" class="svg-canvas diedrico-canvas" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">…</svg>[22m
+    [2m  - attempting click action[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is visible, enabled and stable[22m
+    [2m      - scrolling into view if needed[22m
+    [2m      - done scrolling[22m
+    [2m      - <canvas width="800" height="600" data-v-be45d60d="" class="three-canvas" data-engine="three.js r160"></canvas> from <div data-v-d2cd657d="" class="three-view-overlay">…</div> subtree intercepts pointer events[22m
+    [2m    - retrying click action[22m
+    [2m    - waiting 20ms[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is visible, enabled and stable[22m
+    [2m      - scrolling into view if needed[22m
+    [2m      - done scrolling[22m
+    [2m      - <canvas width="800" height="600" data-v-be45d60d="" class="three-canvas" data-engine="three.js r160"></canvas> from <div data-v-d2cd657d="" class="three-view-overlay">…</div> subtree intercepts pointer events[22m
+    [2m    - retrying click action[22m
+    [2m      - waiting 100ms[22m
+    [2m    37 × waiting for element to be visible, enabled and stable[22m
+    [2m       - element is visible, enabled and stable[22m
+    [2m       - scrolling into view if needed[22m
+    [2m       - done scrolling[22m
+    [2m       - <canvas width="800" height="600" data-v-be45d60d="" class="three-canvas" data-engine="three.js r160"></canvas> from <div data-v-d2cd657d="" class="three-view-overlay">…</div> subtree intercepts pointer events[22m
+    [2m     - retrying click action[22m
+    [2m       - waiting 500ms[22m
+
+
+      66 |     await expect(page.getByTestId('active-tool-status')).toContainText('Point');
+      67 |     await svg.click({ position: { x: 90, y: 90 } });
+    > 68 |     await svg.click({ position: { x: 180, y: 120 } });
+         |               ^
+      69 |     await expect.poll(async () => constructionPoints.count()).toBeGreaterThanOrEqual(initialPointCount + 2);
+      70 |
+      71 |     await page.getByTestId('tool-line').click();
+        at /work/diedrico/frontend/tests/e2e/current-ui-contract.spec.ts:68:15
+
+    Error Context: test-results/current-ui-contract-Curren-b6f23-ly-line-argument-collection-chromium/error-context.md
+
+
+[1A[2K  1 failed
+    [chromium] › tests/e2e/current-ui-contract.spec.ts:57:3 › Current Diedrico UI contract › selection masks allow free-point creation and point-only line argument collection 

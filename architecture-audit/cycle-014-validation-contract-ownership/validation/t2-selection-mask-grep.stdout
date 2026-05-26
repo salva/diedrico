@@ -1,0 +1,166 @@
+frontend/src/components/workspace/SvgCanvas.vue:1038:  const selectionMask = activeTool?.getSelectionMask?.();
+frontend/src/components/workspace/SvgCanvas.vue:1042:  const hit = interactionQuery.value.hitTest(canvasPos, 20, { viewport: viewport.value, activePlaneId, paperToPlaneTransform: paperToPlane }, selectionMask);
+frontend/src/tools/ArgumentCollectorTool.ts:12: * - Three-layer validation: Type (SelectionMask), argument-level (validator), set-level (setValidator)
+frontend/src/tools/ArgumentCollectorTool.ts:23: *         { name: 'center', mask: SelectionMask.point() },
+frontend/src/tools/ArgumentCollectorTool.ts:24: *         { name: 'circumferencePoint', mask: SelectionMask.point() }
+frontend/src/tools/ArgumentCollectorTool.ts:43:import { SelectionMask, NoneMask } from '@/types/SelectionMask';
+frontend/src/tools/ArgumentCollectorTool.ts:61: * - getSelectionMask(): Dynamic mask based on viable next arguments
+frontend/src/tools/ArgumentCollectorTool.ts:83:   * - Different argument types (via SelectionMask) are automatically exclusive
+frontend/src/tools/ArgumentCollectorTool.ts:175:    const selectionMask = this.getSelectionMask();
+frontend/src/tools/ArgumentCollectorTool.ts:176:    const hit = interactionQuery.hitTest(canvasPos, 50, { viewport, activePlaneId: planeId, paperToPlaneTransform }, selectionMask);
+frontend/src/tools/ArgumentCollectorTool.ts:181:    // Create ArgumentValue - either with selected element or null (for SelectionMask.none())
+frontend/src/tools/ArgumentCollectorTool.ts:185:      // No element hit - check if any viable next argument accepts SelectionMask.none()
+frontend/src/tools/ArgumentCollectorTool.ts:193:      // SelectionMask.none() - use null element with mouse position
+frontend/src/tools/ArgumentCollectorTool.ts:262:   * Computes union of SelectionMasks from all viable next argument specs.
+frontend/src/tools/ArgumentCollectorTool.ts:267:  getSelectionMask(): SelectionMask {
+frontend/src/tools/ArgumentCollectorTool.ts:281:      return SelectionMask.none();
+frontend/src/tools/ArgumentCollectorTool.ts:288:    const mask = SelectionMask.union(...masks);
+frontend/src/tools/ArgumentCollectorTool.ts:395:          // Element provided - check if it matches SelectionMask using instanceof
+frontend/src/tools/ArgumentCollectorTool.ts:398:          // No element (null) - check if spec accepts SelectionMask.none()
+frontend/src/tools/ArgumentCollectorTool.ts:456:          // Element provided - check if it matches SelectionMask using instanceof
+frontend/src/tools/ArgumentCollectorTool.ts:459:          // No element (null) - check if spec accepts SelectionMask.none()
+frontend/src/tools/CircleTool.ts:18:import { SelectionMask } from '@/types/SelectionMask';
+frontend/src/tools/CircleTool.ts:43:            mask: SelectionMask.point() 
+frontend/src/tools/CircleTool.ts:47:            mask: SelectionMask.point() 
+frontend/src/tools/Create3DLineTool.ts:17:import { SelectionMask } from '@/types/SelectionMask';
+frontend/src/tools/Create3DLineTool.ts:32:            mask: SelectionMask.line()
+frontend/src/tools/Create3DLineTool.ts:36:            mask: SelectionMask.line()
+frontend/src/tools/Create3DPlaneTool.ts:17:import { SelectionMask } from '@/types/SelectionMask';
+frontend/src/tools/Create3DPlaneTool.ts:32:            mask: SelectionMask.line()
+frontend/src/tools/Create3DPlaneTool.ts:36:            mask: SelectionMask.line()
+frontend/src/tools/Create3DPointTool.ts:17:import { SelectionMask } from '@/types/SelectionMask';
+frontend/src/tools/Create3DPointTool.ts:45:            mask: SelectionMask.point()
+frontend/src/tools/Create3DPointTool.ts:49:            mask: SelectionMask.point()
+frontend/src/tools/Create3DSegmentTool.ts:17:import { SelectionMask } from '@/types/SelectionMask';
+frontend/src/tools/Create3DSegmentTool.ts:32:            mask: SelectionMask.segment()
+frontend/src/tools/Create3DSegmentTool.ts:36:            mask: SelectionMask.segment()
+frontend/src/tools/CreateProjectionPlaneTool.ts:24:import { SelectionMask } from '@/types/SelectionMask';
+frontend/src/tools/CreateProjectionPlaneTool.ts:51:            mask: SelectionMask.line()
+frontend/src/tools/CreateProjectionPlaneTool.ts:55:            mask: SelectionMask.line(),
+frontend/src/tools/CreateProjectionPlaneTool.ts:76:            mask: SelectionMask.line(),
+frontend/src/tools/GuideTool.ts:26:import { SelectionMask } from '@/types/SelectionMask';
+frontend/src/tools/GuideTool.ts:58:            mask: SelectionMask.halfHingeLine()
+frontend/src/tools/GuideTool.ts:62:            mask: SelectionMask.point()
+frontend/src/tools/ITool.ts:12:import type { SelectionMask } from '@/types/SelectionMask';
+frontend/src/tools/ITool.ts:49:  getSelectionMask?(): SelectionMask | undefined;
+frontend/src/tools/IntersectionTool.ts:24:import { SelectionMask } from '@/types/SelectionMask';
+frontend/src/tools/IntersectionTool.ts:49:            mask: SelectionMask.union(SelectionMask.anyLine(), SelectionMask.circle())
+frontend/src/tools/IntersectionTool.ts:53:            mask: SelectionMask.union(SelectionMask.anyLine(), SelectionMask.circle()),
+frontend/src/tools/LineTool.ts:18:import { SelectionMask } from '@/types/SelectionMask';
+frontend/src/tools/LineTool.ts:43:            mask: SelectionMask.point() 
+frontend/src/tools/LineTool.ts:47:            mask: SelectionMask.point(),
+frontend/src/tools/ParallelLineTool.ts:17:import { SelectionMask } from '@/types/SelectionMask';
+frontend/src/tools/ParallelLineTool.ts:43:            mask: SelectionMask.anyLine() // Accepts lines, segments, guides, half-hinge-lines
+frontend/src/tools/ParallelLineTool.ts:47:            mask: SelectionMask.point() 
+frontend/src/tools/PerpendicularLineTool.ts:17:import { SelectionMask } from '@/types/SelectionMask';
+frontend/src/tools/PerpendicularLineTool.ts:43:            mask: SelectionMask.anyLine() // Accepts lines, segments, guides, half-hinge-lines
+frontend/src/tools/PerpendicularLineTool.ts:47:            mask: SelectionMask.point() 
+frontend/src/tools/PointTool.ts:6: * Uses SelectionMask.none() to capture just the mouse position without selecting
+frontend/src/tools/PointTool.ts:15:import { SelectionMask } from '@/types/SelectionMask';
+frontend/src/tools/PointTool.ts:21: * - Click capture with SelectionMask.none()
+frontend/src/tools/PointTool.ts:34:   * Single argument with SelectionMask.none() - just captures position
+frontend/src/tools/PointTool.ts:42:            mask: SelectionMask.none()  // No element selection - just mouse position
+frontend/src/tools/SegmentTool.ts:21:import { SelectionMask } from '@/types/SelectionMask';
+frontend/src/tools/SegmentTool.ts:46:            mask: SelectionMask.point() 
+frontend/src/tools/SegmentTool.ts:50:            mask: SelectionMask.point(),
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts:19:import { SelectionMask } from '@/types/SelectionMask';
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts:50:            mask: SelectionMask.circle()
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts:54:            mask: SelectionMask.anyLine()  // Accepts all Line2D subtypes
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts:19:import { SelectionMask } from '@/types/SelectionMask';
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts:48:            mask: SelectionMask.circle()
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts:52:            mask: SelectionMask.point()
+frontend/src/types/SelectionMask.ts:2: * SelectionMask.ts - Class-based selection filtering architecture (Phase 63)
+frontend/src/types/SelectionMask.ts:71: * const mask = SelectionMask.union(
+frontend/src/types/SelectionMask.ts:72: *   SelectionMask.point(),
+frontend/src/types/SelectionMask.ts:73: *   SelectionMask.line()
+frontend/src/types/SelectionMask.ts:81:export abstract class SelectionMask {
+frontend/src/types/SelectionMask.ts:122:   * @deprecated Use SelectionMask.line() instead
+frontend/src/types/SelectionMask.ts:164:   * @throws Error if no masks provided (ambiguous: use SelectionMask.none() explicitly for "match nothing")
+frontend/src/types/SelectionMask.ts:166:  static union(...masks: SelectionMask[]): SelectionMask {
+frontend/src/types/SelectionMask.ts:181:  static intersection(...masks: SelectionMask[]): SelectionMask {
+frontend/src/types/SelectionMask.ts:206:export class NoneMask extends SelectionMask {
+frontend/src/types/SelectionMask.ts:221:export class TypeMask extends SelectionMask {
+frontend/src/types/SelectionMask.ts:265:export class HierarchyMask extends SelectionMask {
+frontend/src/types/SelectionMask.ts:310:export class UnionMask extends SelectionMask {
+frontend/src/types/SelectionMask.ts:311:  constructor(private readonly masks: SelectionMask[]) {
+frontend/src/types/SelectionMask.ts:330:  getMasks(): readonly SelectionMask[] {
+frontend/src/types/SelectionMask.ts:346:export class IntersectionMask extends SelectionMask {
+frontend/src/types/SelectionMask.ts:347:  constructor(private readonly masks: SelectionMask[]) {
+frontend/src/types/SelectionMask.ts:366:  getMasks(): readonly SelectionMask[] {
+frontend/src/types/SelectionMask.ts:376:export function isTypeMask(mask: SelectionMask): mask is TypeMask {
+frontend/src/types/SelectionMask.ts:383:export function isHierarchyMask(mask: SelectionMask): mask is HierarchyMask {
+frontend/src/types/SelectionMask.ts:390:export function isUnionMask(mask: SelectionMask): mask is UnionMask {
+frontend/src/types/SelectionMask.ts:397:export function isIntersectionMask(mask: SelectionMask): mask is IntersectionMask {
+frontend/src/types/ToolArgumentCollector.ts:12: * - Three-layer validation: Type (via SelectionMask), argument-level (per spec), set-level (cross-argument)
+frontend/src/types/ToolArgumentCollector.ts:16:import type { SelectionMask } from './SelectionMask';
+frontend/src/types/ToolArgumentCollector.ts:25: * For tools with SelectionMask.none():
+frontend/src/types/ToolArgumentCollector.ts:36:  /** Selected element (null if SelectionMask.none() used) */
+frontend/src/types/ToolArgumentCollector.ts:50: *   mask: SelectionMask.point(),
+frontend/src/types/ToolArgumentCollector.ts:69:  mask: SelectionMask;
+frontend/src/types/ToolArgumentCollector.ts:73:   * Called after type checking (SelectionMask) but before set-level validation
+frontend/src/application/canvasPresentation/CanvasInteractionQuery.ts:3:import type { SelectionMask, SelectableElementType } from '@/types/SelectionMask';
+frontend/src/application/canvasPresentation/CanvasInteractionQuery.ts:4:import { isHierarchyMask, isIntersectionMask, isTypeMask, isUnionMask, NoneMask } from '@/types/SelectionMask';
+frontend/src/application/canvasPresentation/CanvasInteractionQuery.ts:11:  hitTest(canvasPos: Vector3, snapRadiusPixels: number, context: CanvasInteractionQueryContext, selectionMask?: SelectionMask): CanvasSnapPoint | null {
+frontend/src/application/canvasPresentation/CanvasInteractionQuery.ts:22:      if (selectionMask && !itemMatchesMask(item, selectionMask)) continue;
+frontend/src/application/canvasPresentation/CanvasInteractionQuery.ts:34:function itemMatchesMask(item: CanvasQueryItem, mask: SelectionMask): boolean {
+frontend/tests/unit/tools/CircleTool.spec.ts:29:    hitTest(canvasPos: any, snapRadiusPixels: number, context: any, selectionMask?: any) {
+frontend/tests/unit/tools/CircleTool.spec.ts:33:      return new CanvasInteractionQuery(model.queryItems).hitTest(canvasPos, snapRadiusPixels, context, selectionMask);
+frontend/tests/unit/tools/GuideTool.test.ts:23:      expect(tool.getSelectionMask()).toBeDefined();
+frontend/tests/unit/tools/pointTool.spec.ts:24:    hitTest(canvasPos: any, snapRadiusPixels: number, context: any, selectionMask?: any) {
+frontend/tests/unit/tools/pointTool.spec.ts:28:      return new CanvasInteractionQuery(model.queryItems).hitTest(canvasPos, snapRadiusPixels, context, selectionMask);
+frontend/tests/unit/tools/toolValidation.spec.ts:35:    hitTest(canvasPos: any, snapRadiusPixels: number, context: any, selectionMask?: any) {
+frontend/tests/unit/tools/toolValidation.spec.ts:39:      return new CanvasInteractionQuery(model.queryItems).hitTest(canvasPos, snapRadiusPixels, context, selectionMask);
+frontend/tests/unit/types/SelectionMask.spec.ts:2: * Unit tests for SelectionMask class hierarchy (Phase 63)
+frontend/tests/unit/types/SelectionMask.spec.ts:9:import { SelectionMask } from '@/types/SelectionMask';
+frontend/tests/unit/types/SelectionMask.spec.ts:15:} from '@/types/SelectionMask';
+frontend/tests/unit/types/SelectionMask.spec.ts:24:describe('SelectionMask - Phase 63 Class-Based Architecture', () => {
+frontend/tests/unit/types/SelectionMask.spec.ts:37:      const mask = SelectionMask.point();
+frontend/tests/unit/types/SelectionMask.spec.ts:48:      const mask = SelectionMask.line();
+frontend/tests/unit/types/SelectionMask.spec.ts:57:      const mask = SelectionMask.circle();
+frontend/tests/unit/types/SelectionMask.spec.ts:65:      const mask = SelectionMask.point();
+frontend/tests/unit/types/SelectionMask.spec.ts:74:      expect(SelectionMask.point().toString()).toContain('point');
+frontend/tests/unit/types/SelectionMask.spec.ts:75:      expect(SelectionMask.line().toString()).toContain('line');
+frontend/tests/unit/types/SelectionMask.spec.ts:76:      expect(SelectionMask.circle().toString()).toContain('circle');
+frontend/tests/unit/types/SelectionMask.spec.ts:82:      const mask = SelectionMask.anyLine();
+frontend/tests/unit/types/SelectionMask.spec.ts:96:      const mask = SelectionMask.anyLine();
+frontend/tests/unit/types/SelectionMask.spec.ts:104:      const str = SelectionMask.anyLine().toString();
+frontend/tests/unit/types/SelectionMask.spec.ts:114:      const mask = SelectionMask.union(
+frontend/tests/unit/types/SelectionMask.spec.ts:115:        SelectionMask.point(),
+frontend/tests/unit/types/SelectionMask.spec.ts:116:        SelectionMask.circle()
+frontend/tests/unit/types/SelectionMask.spec.ts:126:      const mask = SelectionMask.union(
+frontend/tests/unit/types/SelectionMask.spec.ts:127:        SelectionMask.point(),
+frontend/tests/unit/types/SelectionMask.spec.ts:128:        SelectionMask.anyLine()
+frontend/tests/unit/types/SelectionMask.spec.ts:145:      expect(() => SelectionMask.union()).toThrow('union() requires at least one mask');
+frontend/tests/unit/types/SelectionMask.spec.ts:149:      const mask = SelectionMask.union(SelectionMask.point());
+frontend/tests/unit/types/SelectionMask.spec.ts:157:      const mask = SelectionMask.union(
+frontend/tests/unit/types/SelectionMask.spec.ts:158:        SelectionMask.point(),
+frontend/tests/unit/types/SelectionMask.spec.ts:159:        SelectionMask.line()
+frontend/tests/unit/types/SelectionMask.spec.ts:167:      const mask = SelectionMask.union(
+frontend/tests/unit/types/SelectionMask.spec.ts:168:        SelectionMask.point(),
+frontend/tests/unit/types/SelectionMask.spec.ts:169:        SelectionMask.circle()
+frontend/tests/unit/types/SelectionMask.spec.ts:183:      const mask = SelectionMask.intersection(
+frontend/tests/unit/types/SelectionMask.spec.ts:184:        SelectionMask.anyLine(),
+frontend/tests/unit/types/SelectionMask.spec.ts:185:        SelectionMask.segment()
+frontend/tests/unit/types/SelectionMask.spec.ts:199:      expect(() => SelectionMask.intersection()).toThrow('intersection() requires at least one mask');
+frontend/tests/unit/types/SelectionMask.spec.ts:203:      const mask = SelectionMask.intersection(SelectionMask.point());
+frontend/tests/unit/types/SelectionMask.spec.ts:211:      const mask = SelectionMask.intersection(
+frontend/tests/unit/types/SelectionMask.spec.ts:212:        SelectionMask.anyLine(),
+frontend/tests/unit/types/SelectionMask.spec.ts:213:        SelectionMask.segment()
+frontend/tests/unit/types/SelectionMask.spec.ts:223:      // Phase 62: selectionMask = ['point', 'any-line']
+frontend/tests/unit/types/SelectionMask.spec.ts:224:      // Phase 63: SelectionMask.union(SelectionMask.point(), SelectionMask.anyLine())
+frontend/tests/unit/types/SelectionMask.spec.ts:226:      const mask = SelectionMask.union(
+frontend/tests/unit/types/SelectionMask.spec.ts:227:        SelectionMask.point(),
+frontend/tests/unit/types/SelectionMask.spec.ts:228:        SelectionMask.anyLine()
+frontend/tests/unit/types/SelectionMask.spec.ts:243:      expect(SelectionMask.point()).toBeDefined();
+frontend/tests/unit/types/SelectionMask.spec.ts:244:      expect(SelectionMask.line()).toBeDefined();
+frontend/tests/unit/types/SelectionMask.spec.ts:245:      expect(SelectionMask.segment()).toBeDefined();
+frontend/tests/unit/types/SelectionMask.spec.ts:246:      expect(SelectionMask.guide()).toBeDefined();
+frontend/tests/unit/types/SelectionMask.spec.ts:247:      expect(SelectionMask.circle()).toBeDefined();
+frontend/tests/unit/types/SelectionMask.spec.ts:248:      expect(SelectionMask.halfHingeLine()).toBeDefined();
+frontend/tests/unit/types/SelectionMask.spec.ts:249:      expect(SelectionMask.anyLine()).toBeDefined();
+frontend/tests/unit/types/SelectionMask.spec.ts:253:      expect(isTypeMask(SelectionMask.point())).toBe(true);
+frontend/tests/unit/types/SelectionMask.spec.ts:254:      expect(isTypeMask(SelectionMask.line())).toBe(true);
+frontend/tests/unit/types/SelectionMask.spec.ts:255:      expect(isHierarchyMask(SelectionMask.anyLine())).toBe(true);
+frontend/tests/unit/application/canvasPresentation/canvasInteractionQuery.spec.ts:5:import { SelectionMask } from '@/types/SelectionMask';
+frontend/tests/unit/application/canvasPresentation/canvasInteractionQuery.spec.ts:23:    expect(query.hitTest(new Vector3(0, 0, 1), 10, ctx, SelectionMask.point())).toBeNull();
+frontend/tests/unit/application/canvasPresentation/canvasInteractionQuery.spec.ts:24:    expect(query.hitTest(new Vector3(0, 0, 1), 10, ctx, SelectionMask.line())?.elementId).toBe('l1');

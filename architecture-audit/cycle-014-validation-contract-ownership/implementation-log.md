@@ -115,3 +115,32 @@ No corrupted Playwright parse artifacts, unsupported build-tool/runtime blockers
 ### Next recommended ordered wave
 
 After rereading `architecture-audit/wave-plan.md` and accounting for Wave 014 closure plus Wave 015 build-contract completion, the next ordered action is to return to the normal wave loop by scouting the next unexecuted central wave in plan order. The recommended canonical next stage is `cycle-016-fresh-scout-proposals`, with scope selected by re-ranking the remaining post-Wave-015 architectural risks before implementation. Do not implement the next wave in this validation/preview closure stage.
+
+## Reviewer-blocker correction: explicit selection-mask Playwright evidence
+
+A reviewer blocker noted that the previous closure evidence grouped selection-mask behavior under the generic `current-ui-contract` Playwright slice without an explicitly named focused browser assertion. This correction adds and reruns explicit selection-mask evidence without changing production source.
+
+### Selection-mask contract evidence added
+
+- `frontend/tests/e2e/current-ui-contract.spec.ts` now includes `selection masks allow free-point creation and point-only line argument collection`.
+- The browser test exercises the current user-visible selection-mask path end-to-end:
+  - activates the Point tool and verifies two free-point creation clicks succeed through `SelectionMask.none()`/position capture rather than element selection;
+  - activates the Line tool and verifies the same created points can be consumed through the point-only line argument selection mask;
+  - asserts both rendered point count and rendered line count increase through stable toolbar/canvas contracts.
+- This supplements, rather than replaces, the existing type-level owners in `frontend/tests/unit/types/SelectionMask.spec.ts` and `frontend/tests/unit/application/canvasPresentation/canvasInteractionQuery.spec.ts`.
+
+### Fresh correction validation logs
+
+All logs are under `architecture-audit/cycle-014-validation-contract-ownership/validation/`.
+
+| Gate | Command | Result | Logs |
+| --- | --- | --- | --- |
+| Selection-mask source inventory | `grep -R "SelectionMask\|selectionMask\|getSelectionMask" -n frontend/src frontend/tests | head -200` | PASS — confirms active tool/query selection-mask call sites and tests | `t2-selection-mask-grep.stdout`, `t2-selection-mask-grep.stderr` |
+| Explicit focused Playwright selection-mask test | `npx playwright test tests/e2e/current-ui-contract.spec.ts --grep "selection masks"` from `frontend/` | PASS — 1/1 after correcting the click coordinates to the unobstructed 2D canvas area | `t2-focused-playwright-selection-mask-rerun2.stdout`, `t2-focused-playwright-selection-mask-rerun2.stderr` |
+| Focused keyboard/current-UI Playwright slice | `npx playwright test tests/e2e/keyboard-shortcuts.spec.ts tests/e2e/current-ui-contract.spec.ts` from `frontend/` | PASS — 7/7 including the explicit selection-mask browser test | `t2-focused-playwright-keyboard-current-ui-selection-mask.stdout`, `t2-focused-playwright-keyboard-current-ui-selection-mask.stderr` |
+| Focused selection-mask Vitest owners | `npm run test --workspace=frontend -- tests/unit/types/SelectionMask.spec.ts tests/unit/application/canvasPresentation/canvasInteractionQuery.spec.ts` | PASS — 2 files / 24 tests | `t2-focused-vitest-selection-mask.stdout`, `t2-focused-vitest-selection-mask.stderr` |
+| Live preview reachability | `curl -I --max-time 10 http://127.0.0.1:5173/` | PASS — HTTP 200 from the running preview | `t2-live-preview-reachability.stdout`, `t2-live-preview-reachability.stderr` |
+
+### Correction notes
+
+The first attempt at the new focused Playwright check failed because a click coordinate landed under the 3D overlay canvas, which intercepted pointer events; this was a test-coordinate issue, not a selection-mask/source failure. The passing rerun uses coordinates in the unobstructed 2D canvas region. Wave 014 remains **COMPLETE** with explicit focused Playwright selection-mask evidence now present in current logs.

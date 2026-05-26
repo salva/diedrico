@@ -1,0 +1,15 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run tests/unit/types/SelectionMask.spec.ts tests/unit/application/canvasPresentation/canvasInteractionQuery.spec.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/application/canvasPresentation/canvasInteractionQuery.spec.ts  (3 tests) 4ms
+ ✓ tests/unit/types/SelectionMask.spec.ts  (21 tests) 8ms
+
+ Test Files  2 passed (2)
+      Tests  24 passed (24)
+   Start at  20:49:05
+   Duration  1.30s (transform 307ms, setup 0ms, collect 613ms, tests 12ms, environment 1.03s, prepare 233ms)
+

@@ -54,6 +54,27 @@ test.describe('Current Diedrico UI contract', () => {
     }
   });
 
+  test('selection masks allow free-point creation and point-only line argument collection', async ({ page }) => {
+    await openApp(page);
+
+    const svg = canvas(page);
+    const constructionPoints = svg.locator('circle').filter({ hasNot: svg.locator('.snap-indicator') });
+    const initialPointCount = await constructionPoints.count();
+    const initialLineCount = await svg.locator('line').count();
+
+    await page.getByTestId('tool-point').click();
+    await expect(page.getByTestId('active-tool-status')).toContainText('Point');
+    await svg.click({ position: { x: 40, y: 60 } });
+    await svg.click({ position: { x: 80, y: 90 } });
+    await expect.poll(async () => constructionPoints.count()).toBeGreaterThanOrEqual(initialPointCount + 2);
+
+    await page.getByTestId('tool-line').click();
+    await expect(page.getByTestId('active-tool-status')).toContainText('Line');
+    await svg.click({ position: { x: 40, y: 60 } });
+    await svg.click({ position: { x: 80, y: 90 } });
+    await expect.poll(async () => svg.locator('line').count()).toBeGreaterThan(initialLineCount);
+  });
+
   test('updates 3D coordinate status through the current canvas mouse contract', async ({ page }) => {
     await openApp(page);
 
