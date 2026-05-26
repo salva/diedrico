@@ -1,0 +1,33 @@
+architecture-audit/post-phase-3-next-wave-scout/line-evidence.stdout:59:    58	  return new Vector3(a, b, c);
+architecture-audit/post-phase-3-next-wave-scout/line-evidence.stdout:81:    80	export function intersectLineLine(
+architecture-audit/post-phase-3-next-wave-scout/line-evidence.stdout:1045:===== frontend/tests/integration/guide-creation.test.ts =====
+architecture-audit/post-phase-3-next-wave-scout/line-evidence.stdout:1220:===== frontend/tests/e2e/keyboard-shortcuts.spec.ts =====
+architecture-audit/post-phase-3-next-wave-scout/line-evidence.stdout:1481:===== frontend/tests/e2e/selection-mask.spec.ts =====
+architecture-audit/post-phase-3-next-wave-scout/line-evidence.stdout:1749:     8	    "build": "vue-tsc && vite build",
+architecture-audit/post-phase-3-next-wave-scout/line-evidence.stdout:1755:    14	    "test:e2e": "playwright test",
+architecture-audit/post-phase-3-next-wave-scout/line-evidence.stdout:1756:    15	    "test:e2e:headed": "playwright test --headed",
+architecture-audit/post-phase-3-next-wave-scout/line-evidence.stdout:1797:    13	    "build": "npm run build --workspace=frontend",
+architecture-audit/post-phase-3-next-wave-scout/line-evidence.stdout:1802:    18	    "docs:build": "vitepress build docs",
+architecture-audit/post-phase-3-next-wave-scout/line-evidence.stdout:1805:    21	    "test:e2e": "npm run test:e2e --workspace=frontend"
+architecture-audit/post-phase-3-next-wave-scout/line-evidence.stdout:1829:    13	      cmd.addAndExecute(new UpdateElementStyleOp(request.elementId, request.planeId, request.style) as any);
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/final-validation-summary.stdout:22: ❯ tests/integration/guide-creation.test.ts  (0 test)
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/final-validation-summary.stdout:43: ❯ tests/integration/guide-creation.test.ts  (0 test)
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/final-validation-summary.stdout:46:--- final-npm-run-build.stderr key lines ---
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/final-validation-summary.stdout:48:Search string not found: "/supportedTSExtensions = .*(?=;)/"
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/final-validation-summary.stdout:50:npm error Lifecycle script `build` failed with error:
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/final-validation-summary.stdout:51:npm error command sh -c vue-tsc && vite build
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/final-validation-summary.stdout:52:--- final-npm-run-build-workspace-frontend.stderr key lines ---
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/final-validation-summary.stdout:54:Search string not found: "/supportedTSExtensions = .*(?=;)/"
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/final-validation-summary.stdout:56:npm error Lifecycle script `build` failed with error:
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/final-validation-summary.stdout:57:npm error command sh -c vue-tsc && vite build
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/final-validation-summary.stdout:59:SyntaxError: /work/diedrico/frontend/tests/e2e/keyboard-shortcuts.spec.ts: Unexpected token (267:10160)
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/final-validation-summary.stdout:60:   at keyboard-shortcuts.spec.ts:267
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/final-validation-summary.stdout:61:SyntaxError: /work/diedrico/frontend/tests/e2e/selection-mask.spec.ts: Unexpected token (188:2)
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/final-validation-summary.stdout:62:   at selection-mask.spec.ts:188
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/final-validation-summary.stdout:64:SyntaxError: /work/diedrico/frontend/tests/e2e/keyboard-shortcuts.spec.ts: Unexpected token (267:10160)
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/final-validation-summary.stdout:65:   at keyboard-shortcuts.spec.ts:267
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/final-validation-summary.stdout:66:SyntaxError: /work/diedrico/frontend/tests/e2e/selection-mask.spec.ts: Unexpected token (188:2)
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/final-validation-summary.stdout:67:   at selection-mask.spec.ts:188
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/final-validation-summary.stdout:157:frontend/src/application/canvas/CanvasStyleUseCase.ts:13:      cmd.addAndExecute(new UpdateElementStyleOp(request.elementId, request.planeId, request.style) as any);
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/final-validation-summary.stdout:182:=== rerun npm-run-docs-build ===
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/final-validation-summary.stdout:183:Command: npm run docs:build

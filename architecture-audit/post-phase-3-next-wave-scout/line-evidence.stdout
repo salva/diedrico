@@ -1,0 +1,2099 @@
+===== frontend/src/domain/calculations/Intersections.ts =====
+     1	/**
+     2	 * Intersections - Geometric intersection calculations using homogeneous coordinates
+     3	 * 
+     4	 * This module provides functions for calculating intersections between geometric
+     5	 * primitives using homogeneous coordinate representation.
+     6	 * 
+     7	 * All calculations follow constitution.md Principle V:
+     8	 * - Use homogeneous coordinates throughout
+     9	 * - Convert parametric forms to implicit forms when needed
+    10	 * - Use cross products for line-line intersections
+    11	 * - Handle edge cases (parallel, coincident) explicitly
+    12	 * 
+    13	 * Line representation:
+    14	 * - Parametric form: P(t) = point + t * direction (storage format)
+    15	 * - Implicit form: ax + by + c = 0 (computation format for intersections)
+    16	 * 
+    17	 * Reference:
+    18	 * - .specify/memory/constitution.md#v-homogeneous-coordinate-system
+    19	 */
+    20	
+    21	import { Vector3 } from 'three';
+    22	import type { Line2DRealization2D } from '../world/Line';
+    23	import type { Circle2DRealization2D } from '../world/Circle';
+    24	import { Point2DRealization2D } from '../world/Point';
+    25	
+    26	/**
+    27	 * Convert line from parametric form to implicit form using homogeneous coordinates
+    28	 * 
+    29	 * Parametric form: P(t) = P0 + t * d where P0 = (x0, y0, 1), d = (dx, dy, 0)
+    30	 * Implicit form: ax + by + c = 0
+    31	 * 
+    32	 * The implicit form can be derived from the parametric form:
+    33	 * - A line passing through P0 = (x0, y0) with direction d = (dx, dy)
+    34	 * - The perpendicular direction to d is (-dy, dx)
+    35	 * - Points on the line satisfy: (P - P0) · perpendicular = 0
+    36	 * - This gives: -dy(x - x0) + dx(y - y0) = 0
+    37	 * - Expanding: -dy*x + dx*y + (dy*x0 - dx*y0) = 0
+    38	 * - So: a = -dy, b = dx, c = dy*x0 - dx*y0
+    39	 * 
+    40	 * @param line Line in parametric form
+    41	 * @returns Line in implicit form [a, b, c] where ax + by + c = 0
+    42	 */
+    43	function lineToImplicitForm(line: Line2DRealization2D): Vector3 {
+    44	  const point = line.point1;
+    45	  const direction = line.getDirection();
+    46	  const x0 = point.x;
+    47	  const y0 = point.y;
+    48	  const dx = direction.x;
+    49	  const dy = direction.y;
+    50	  
+    51	  // Implicit form: a*x + b*y + c = 0
+    52	  // a = -dy, b = dx, c = dy*x0 - dx*y0
+    53	  const a = -dy;
+    54	  const b = dx;
+    55	  const c = dy * x0 - dx * y0;
+    56	  
+    57	  // Return as Vector3 for convenience (not really a point, just 3 numbers)
+    58	  return new Vector3(a, b, c);
+    59	}
+    60	
+    61	/**
+    62	 * Calculate intersection point of two lines using homogeneous coordinates
+    63	 * 
+    64	 * Algorithm (from projective geometry):
+    65	 * 1. Convert lines from parametric to implicit form
+    66	 * 2. Represent lines as homogeneous vectors L1 = [a1, b1, c1], L2 = [a2, b2, c2]
+    67	 * 3. Intersection point is given by cross product: P = L1 × L2
+    68	 * 4. Result is in homogeneous coordinates [x, y, w]
+    69	 * 5. If w ≈ 0, lines are parallel (point at infinity)
+    70	 * 6. Otherwise, convert to Cartesian: (x/w, y/w, 1)
+    71	 * 
+    72	 * Edge cases:
+    73	 * - Parallel lines: Cross product yields [0, 0, 0] or [*, *, 0] (w = 0)
+    74	 * - Coincident lines: Same as parallel (treated as no intersection)
+    75	 * 
+    76	 * @param line1 First line in parametric form
+    77	 * @param line2 Second line in parametric form
+    78	 * @returns Point2DRealization2D with feasible=false if parallel/coincident, feasible=true otherwise
+    79	 */
+    80	export function intersectLineLine(
+    81	  line1: Line2DRealization2D,
+    82	  line2: Line2DRealization2D
+    83	): Point2DRealization2D {
+    84	  // Convert to implicit form
+    85	  const L1 = lineToImplicitForm(line1);
+    86	  const L2 = lineToImplicitForm(line2);
+    87	  
+    88	  // Cross product in homogeneous coordinates
+    89	  // L1 × L2 gives the intersection point in homogeneous form
+    90	  // 
+    91	  // Given L1 = (a1, b1, c1) and L2 = (a2, b2, c2):
+    92	  // L1 × L2 = | i    j    k  |
+    93	  //           | a1   b1   c1 |
+    94	  //           | a2   b2   c2 |
+    95	  //
+    96	  // = i(b1*c2 - c1*b2) - j(a1*c2 - c1*a2) + k(a1*b2 - b1*a2)
+    97	  // = (b1*c2 - c1*b2, c1*a2 - a1*c2, a1*b2 - b1*a2)
+    98	  //
+    99	  // This represents the point [x, y, w] in homogeneous coordinates
+   100	  // where x/w and y/w are the Cartesian coordinates (if w ≠ 0)
+   101	  
+   102	  const a1 = L1.x, b1 = L1.y, c1 = L1.z;
+   103	  const a2 = L2.x, b2 = L2.y, c2 = L2.z;
+   104	  
+   105	  // Cross product components
+   106	  const px = b1 * c2 - c1 * b2;  // x-component (homogeneous)
+   107	  const py = c1 * a2 - a1 * c2;  // y-component (homogeneous)
+   108	  const w = a1 * b2 - b1 * a2;   // w-component (homogeneous scale)
+   109	  
+   110	  // Check for parallel lines (w ≈ 0)
+   111	  const epsilon = 1e-10;
+   112	  if (Math.abs(w) < epsilon) {
+   113	    // Lines are parallel or coincident - return infeasible realization
+   114	    return new Point2DRealization2D(new Vector3(0, 0, 1), false);
+   115	  }
+   116	  
+   117	  // Convert from homogeneous to Cartesian coordinates
+   118	  // Divide by w to get actual (x, y) coordinates
+   119	  const x = px / w;
+   120	  const y = py / w;
+   121	  
+   122	  // Return as point realization in homogeneous form (x, y, 1)
+   123	  return new Point2DRealization2D(new Vector3(x, y, 1), true);
+   124	}
+   125	
+   126	/**
+   127	 * Check if two lines are parallel (without computing intersection)
+   128	 * 
+   129	 * Two lines are parallel if their directions are parallel (or anti-parallel).
+   130	 * In 2D, this means the cross product of direction vectors is zero.
+   131	 * 
+   132	 * @param line1 First line
+   133	 * @param line2 Second line
+   134	 * @returns True if lines are parallel
+   135	 */
+   136	export function areLinesParallel(
+   137	  line1: Line2DRealization2D,
+   138	  line2: Line2DRealization2D
+   139	): boolean {
+   140	  const d1 = line1.getDirection();
+   141	  const d2 = line2.getDirection();
+   142	  
+   143	  // Cross product in 2D: d1.x * d2.y - d1.y * d2.x
+   144	  // If zero, directions are parallel
+   145	  const cross = d1.x * d2.y - d1.y * d2.x;
+   146	  
+   147	  return Math.abs(cross) < 1e-10;
+   148	}
+   149	
+   150	/**
+   151	 * Sort intersection points by projection onto a direction vector.
+   152	 * Index 0 = larger projection (more positive), Index 1 = smaller projection (more negative)
+   153	 * 
+   154	 * This generic function handles both line-circle and circle-circle intersection ordering:
+   155	 * - Line-circle: direction = line direction, reference = point on line
+   156	 * - Circle-circle: direction = perpendicular to center-line, reference = first circle center
+   157	 * 
+   158	 * @param points Array of intersection points (typically 2)
+   159	 * @param direction Direction vector to project onto (defines "left" vs "right")
+   160	 * @param referencePoint Reference point for computing relative positions
+   161	 * @returns Sorted array with index 0 = larger (more positive) projection
+   162	 */
+   163	function sortIntersectionsByProjection(
+   164	  points: Vector3[],
+   165	  direction: { x: number; y: number },
+   166	  referencePoint: Vector3
+   167	): Vector3[] {
+   168	  if (points.length < 2) return points;
+   169	  
+   170	  // Project each point onto direction vector (from reference point)
+   171	  const projectionsAndPoints = points.map(point => {
+   172	    const dx = point.x - referencePoint.x;
+   173	    const dy = point.y - referencePoint.y;
+   174	    const projection = dx * direction.x + dy * direction.y;
+   175	    return { projection, point };
+   176	  });
+   177	  
+   178	  // Sort by projection descending (larger/more positive first = index 0)
+   179	  projectionsAndPoints.sort((a, b) => b.projection - a.projection);
+   180	  
+   181	  return projectionsAndPoints.map(item => item.point);
+   182	}
+   183	
+   184	/**
+   185	 * Calculate intersection points of a line and a circle using homogeneous coordinates
+   186	 * 
+   187	 * Algorithm:
+   188	 * 1. Line in parametric form: P(t) = P0 + t*d where P0 is point, d is direction
+   189	 * 2. Circle: (x - cx)² + (y - cy)² = r²
+   190	 * 3. Substitute line equation into circle equation
+   191	 * 4. Results in quadratic: at² + bt + c = 0
+   192	 * 5. Solve quadratic to find t values
+   193	 * 6. Substitute t back into line equation to get intersection points
+   194	 * 
+   195	 * Edge cases:
+   196	 * - No intersection: discriminant < 0 (returns empty array)
+   197	 * - Tangent: discriminant = 0 (returns array with 1 point)
+   198	 * - Secant: discriminant > 0 (returns array with 2 points, sorted by projection on line direction)
+   199	 * 
+   200	 * @param line Line in parametric form
+   201	 * @param circle Circle with center and radius
+   202	 * @returns Array of intersection points (0, 1, or 2 points)
+   203	 */
+   204	export function intersectLineCircle(
+   205	  line: Line2DRealization2D,
+   206	  circle: Circle2DRealization2D
+   207	): Vector3[] {
+   208	  const P0 = line.point1;
+   209	  const d = line.getDirection();
+   210	  const C = circle.center;
+   211	  const r = circle.getRadius();
+   212	  
+   213	  // Line: P(t) = P0 + t*d = (P0.x + t*d.x, P0.y + t*d.y)
+   214	  // Circle: (x - C.x)² + (y - C.y)² = r²
+   215	  //
+   216	  // Substitute line into circle:
+   217	  // (P0.x + t*d.x - C.x)² + (P0.y + t*d.y - C.y)² = r²
+   218	  //
+   219	  // Let dx = P0.x - C.x, dy = P0.y - C.y
+   220	  // (dx + t*d.x)² + (dy + t*d.y)² = r²
+   221	  //
+   222	  // Expand:
+   223	  // dx² + 2*dx*t*d.x + t²*d.x² + dy² + 2*dy*t*d.y + t²*d.y² = r²
+   224	  //
+   225	  // Group by powers of t:
+   226	  // (d.x² + d.y²)*t² + 2*(dx*d.x + dy*d.y)*t + (dx² + dy² - r²) = 0
+   227	  //
+   228	  // This is quadratic: a*t² + b*t + c = 0
+   229	  
+   230	  const dx = P0.x - C.x;
+   231	  const dy = P0.y - C.y;
+   232	  
+   233	  const a = d.x * d.x + d.y * d.y;  // Should be 1 if direction is normalized
+   234	  const b = 2 * (dx * d.x + dy * d.y);
+   235	  const c = dx * dx + dy * dy - r * r;
+   236	  
+   237	  // Calculate discriminant
+   238	  const discriminant = b * b - 4 * a * c;
+   239	  const epsilon = 1e-10;
+   240	  
+   241	  if (discriminant < -epsilon) {
+   242	    // No intersection
+   243	    return [];
+   244	  } else if (Math.abs(discriminant) < epsilon) {
+   245	    // Tangent - one intersection point
+   246	    const t = -b / (2 * a);
+   247	    const x = P0.x + t * d.x;
+   248	    const y = P0.y + t * d.y;
+   249	    
+   250	    return [new Vector3(x, y, 1)];
+   251	  } else {
+   252	    // Secant - two intersection points
+   253	    const sqrtDisc = Math.sqrt(discriminant);
+   254	    const t1 = (-b - sqrtDisc) / (2 * a);
+   255	    const t2 = (-b + sqrtDisc) / (2 * a);
+   256	    
+   257	    const x1 = P0.x + t1 * d.x;
+   258	    const y1 = P0.y + t1 * d.y;
+   259	    const x2 = P0.x + t2 * d.x;
+   260	    const y2 = P0.y + t2 * d.y;
+===== frontend/tests/unit/calculations/intersections.spec.ts =====
+     1	/**
+     2	 * Unit tests for Intersections module
+     3	 * 
+     4	 * Tests geometric intersection calculations using homogeneous coordinates.
+     5	 * Validates:
+     6	 * - Line-line intersections (cross product algorithm)
+     7	 * - Line-circle intersections (quadratic formula)
+     8	 * - Circle-circle intersections (geometric formula)
+     9	 * 
+    10	 * Test coverage:
+    11	 * - Standard intersections (perpendicular, diagonal, tangent, secant)
+    12	 * - Edge cases (parallel, coincident, no intersection, multiple solutions)
+    13	 * - Homogeneous coordinate correctness
+    14	 * - Numerical stability
+    15	 */
+    16	
+    17	import { describe, it, expect } from 'vitest';
+    18	import { Vector3 } from 'three';
+    19	import { 
+    20	  intersectLineLine, 
+    21	  areLinesParallel,
+    22	  intersectLineCircle,
+    23	  intersectCircleCircle
+    24	} from '../../../src/domain/calculations/Intersections';
+    25	import { Line2DRealization2D } from '../../../src/domain/world/Line';
+    26	import { Circle2DRealization2D } from '../../../src/domain/world/Circle';
+    27	
+    28	describe('Intersections', () => {
+    29	  describe('intersectLineLine', () => {
+    30	    it('should find intersection of perpendicular lines', () => {
+    31	      // Horizontal line through (0, 2): y = 2
+    32	      // Parametric: P(t) = (0, 2, 1) + t*(1, 0, 0)
+    33	      const line1 = new Line2DRealization2D(
+    34	        new Vector3(0, 2, 1),  // point
+    35	        new Vector3(1, 0, 0)   // direction (horizontal)
+    36	      );
+    37	      
+    38	      // Vertical line through (3, 0): x = 3
+    39	      // Parametric: P(t) = (3, 0, 1) + t*(0, 1, 0)
+    40	      const line2 = new Line2DRealization2D(
+    41	        new Vector3(3, 0, 1),  // point
+    42	        new Vector3(0, 1, 0)   // direction (vertical)
+    43	      );
+    44	      
+    45	      const result = intersectLineLine(line1, line2);
+    46	      
+    47	      expect(result).not.toBeNull();
+    48	      expect(result!.x).toBeCloseTo(3, 6);
+    49	      expect(result!.y).toBeCloseTo(2, 6);
+    50	      expect(result!.z).toBe(1); // homogeneous coordinate
+    51	    });
+    52	    
+    53	    it('should find intersection of diagonal lines', () => {
+    54	      // Line 1: passing through (0, 0) with direction (1, 1)
+    55	      // Equation: y = x
+    56	      const line1 = new Line2DRealization2D(
+    57	        new Vector3(0, 0, 1),
+    58	        new Vector3(1, 1, 0).normalize()
+    59	      );
+    60	      
+    61	      // Line 2: passing through (0, 4) with direction (1, -1)
+    62	      // Equation: y = -x + 4
+    63	      const line2 = new Line2DRealization2D(
+    64	        new Vector3(0, 4, 1),
+    65	        new Vector3(1, -1, 0).normalize()
+    66	      );
+    67	      
+    68	      const result = intersectLineLine(line1, line2);
+    69	      
+    70	      // Intersection: y = x and y = -x + 4
+    71	      // x = -x + 4 => 2x = 4 => x = 2, y = 2
+    72	      expect(result).not.toBeNull();
+    73	      expect(result!.x).toBeCloseTo(2, 6);
+    74	      expect(result!.y).toBeCloseTo(2, 6);
+    75	      expect(result!.z).toBe(1);
+    76	    });
+    77	    
+    78	    it('should detect parallel horizontal lines', () => {
+    79	      // Line 1: y = 2
+    80	      const line1 = new Line2DRealization2D(
+    81	        new Vector3(0, 2, 1),
+    82	        new Vector3(1, 0, 0)
+    83	      );
+    84	      
+    85	      // Line 2: y = 5 (parallel to line1)
+    86	      const line2 = new Line2DRealization2D(
+    87	        new Vector3(0, 5, 1),
+    88	        new Vector3(1, 0, 0)
+    89	      );
+    90	      
+    91	      const result = intersectLineLine(line1, line2);
+    92	      
+    93	      expect(result).toBeNull();
+    94	    });
+    95	    
+    96	    it('should detect parallel vertical lines', () => {
+    97	      // Line 1: x = 3
+    98	      const line1 = new Line2DRealization2D(
+    99	        new Vector3(3, 0, 1),
+   100	        new Vector3(0, 1, 0)
+   101	      );
+   102	      
+   103	      // Line 2: x = -2 (parallel to line1)
+   104	      const line2 = new Line2DRealization2D(
+   105	        new Vector3(-2, 0, 1),
+   106	        new Vector3(0, 1, 0)
+   107	      );
+   108	      
+   109	      const result = intersectLineLine(line1, line2);
+   110	      
+   111	      expect(result).toBeNull();
+   112	    });
+   113	    
+   114	    it('should detect parallel diagonal lines', () => {
+   115	      // Line 1: y = x
+   116	      const line1 = new Line2DRealization2D(
+   117	        new Vector3(0, 0, 1),
+   118	        new Vector3(1, 1, 0).normalize()
+   119	      );
+   120	      
+   121	      // Line 2: y = x + 3 (parallel to line1)
+   122	      const line2 = new Line2DRealization2D(
+   123	        new Vector3(0, 3, 1),
+   124	        new Vector3(1, 1, 0).normalize()
+   125	      );
+   126	      
+   127	      const result = intersectLineLine(line1, line2);
+   128	      
+   129	      expect(result).toBeNull();
+   130	    });
+   131	    
+   132	    it('should detect coincident lines', () => {
+   133	      // Line 1: y = 2x through (0, 0)
+   134	      const line1 = new Line2DRealization2D(
+   135	        new Vector3(0, 0, 1),
+   136	        new Vector3(1, 2, 0).normalize()
+   137	      );
+   138	      
+   139	      // Line 2: Same line through different point (1, 2)
+   140	      const line2 = new Line2DRealization2D(
+   141	        new Vector3(1, 2, 1),
+   142	        new Vector3(1, 2, 0).normalize()
+   143	      );
+   144	      
+   145	      const result = intersectLineLine(line1, line2);
+   146	      
+   147	      expect(result).toBeNull();
+   148	    });
+   149	    
+   150	    it('should handle lines with non-unit direction vectors', () => {
+   151	      // Line 1 with direction (2, 0) instead of normalized (1, 0)
+   152	      const line1 = new Line2DRealization2D(
+   153	        new Vector3(0, 1, 1),
+   154	        new Vector3(2, 0, 0)  // Not normalized
+   155	      );
+   156	      
+   157	      // Line 2 with direction (0, 3) instead of normalized (0, 1)
+   158	      const line2 = new Line2DRealization2D(
+   159	        new Vector3(4, 0, 1),
+   160	        new Vector3(0, 3, 0)  // Not normalized
+   161	      );
+   162	      
+   163	      const result = intersectLineLine(line1, line2);
+   164	      
+   165	      // Should still find correct intersection at (4, 1)
+   166	      expect(result).not.toBeNull();
+   167	      expect(result!.x).toBeCloseTo(4, 6);
+   168	      expect(result!.y).toBeCloseTo(1, 6);
+   169	    });
+   170	    
+   171	    it('should produce homogeneous points with z=1', () => {
+   172	      const line1 = new Line2DRealization2D(
+   173	        new Vector3(0, 0, 1),
+   174	        new Vector3(1, 0, 0)
+   175	      );
+   176	      
+   177	      const line2 = new Line2DRealization2D(
+   178	        new Vector3(5, 5, 1),
+   179	        new Vector3(0, 1, 0)
+   180	      );
+   181	      
+   182	      const result = intersectLineLine(line1, line2);
+   183	      
+   184	      expect(result).not.toBeNull();
+   185	      expect(result!.z).toBe(1); // Homogeneous coordinate
+   186	    });
+   187	    
+   188	    it('should handle intersection at origin', () => {
+   189	      // Line 1: y = x through origin
+   190	      const line1 = new Line2DRealization2D(
+   191	        new Vector3(0, 0, 1),
+   192	        new Vector3(1, 1, 0).normalize()
+   193	      );
+   194	      
+   195	      // Line 2: y = -x through origin
+   196	      const line2 = new Line2DRealization2D(
+   197	        new Vector3(0, 0, 1),
+   198	        new Vector3(1, -1, 0).normalize()
+   199	      );
+   200	      
+   201	      const result = intersectLineLine(line1, line2);
+   202	      
+   203	      expect(result).not.toBeNull();
+   204	      expect(result!.x).toBeCloseTo(0, 6);
+   205	      expect(result!.y).toBeCloseTo(0, 6);
+   206	    });
+   207	    
+   208	    it('should handle intersection with negative coordinates', () => {
+   209	      // Line 1: horizontal through y = -3
+   210	      const line1 = new Line2DRealization2D(
+   211	        new Vector3(0, -3, 1),
+   212	        new Vector3(1, 0, 0)
+   213	      );
+   214	      
+   215	      // Line 2: vertical through x = -5
+   216	      const line2 = new Line2DRealization2D(
+   217	        new Vector3(-5, 0, 1),
+   218	        new Vector3(0, 1, 0)
+   219	      );
+   220	      
+   221	      const result = intersectLineLine(line1, line2);
+   222	      
+   223	      expect(result).not.toBeNull();
+   224	      expect(result!.x).toBeCloseTo(-5, 6);
+   225	      expect(result!.y).toBeCloseTo(-3, 6);
+   226	    });
+   227	  });
+   228	  
+   229	  describe('areLinesParallel', () => {
+   230	    it('should detect parallel horizontal lines', () => {
+   231	      const line1 = new Line2DRealization2D(
+   232	        new Vector3(0, 1, 1),
+   233	        new Vector3(1, 0, 0)
+   234	      );
+   235	      
+   236	      const line2 = new Line2DRealization2D(
+   237	        new Vector3(0, 5, 1),
+   238	        new Vector3(1, 0, 0)
+   239	      );
+   240	      
+   241	      expect(areLinesParallel(line1, line2)).toBe(true);
+   242	    });
+   243	    
+   244	    it('should detect parallel vertical lines', () => {
+   245	      const line1 = new Line2DRealization2D(
+   246	        new Vector3(2, 0, 1),
+   247	        new Vector3(0, 1, 0)
+   248	      );
+   249	      
+   250	      const line2 = new Line2DRealization2D(
+   251	        new Vector3(-3, 0, 1),
+   252	        new Vector3(0, 1, 0)
+   253	      );
+   254	      
+   255	      expect(areLinesParallel(line1, line2)).toBe(true);
+   256	    });
+   257	    
+   258	    it('should detect non-parallel lines', () => {
+   259	      const line1 = new Line2DRealization2D(
+   260	        new Vector3(0, 0, 1),
+===== frontend/src/components/dialogs/PropertiesDialog.vue =====
+     1	<template>
+     2	  <div v-if="isOpen" class="dialog-overlay" @click.self="handleCancel">
+     3	    <div class="properties-dialog" role="dialog" aria-labelledby="dialog-title">
+     4	      <!-- Header -->
+     5	      <div class="dialog-header">
+     6	        <h2 id="dialog-title">Properties: {{ elementLabel }}</h2>
+     7	        <button class="close-button" @click="handleCancel" aria-label="Close dialog">
+     8	          ×
+     9	        </button>
+    10	      </div>
+    11	
+    12	      <!-- Content -->
+    13	      <div class="dialog-content">
+    14	        <!-- Geometry Info Section (Read-only) -->
+    15	        <section class="geometry-section">
+    16	          <h3>Geometry Info</h3>
+    17	          <div class="info-grid">
+    18	            <div class="info-row">
+    19	              <span class="info-label">Type:</span>
+    20	              <span class="info-value">{{ elementType }}</span>
+    21	            </div>
+    22	            <div class="info-row" v-if="planeId">
+    23	              <span class="info-label">Plane:</span>
+    24	              <span class="info-value">{{ planeId }}</span>
+    25	            </div>
+    26	            <div class="info-row" v-if="coordinates">
+    27	              <span class="info-label">Coordinates:</span>
+    28	              <span class="info-value">{{ coordinates }}</span>
+    29	            </div>
+    30	            <div class="info-row" v-if="dependencies && dependencies.length > 0">
+    31	              <span class="info-label">Dependencies:</span>
+    32	              <span class="info-value">{{ dependencies.join(', ') }}</span>
+    33	            </div>
+    34	            <div class="info-row" v-if="createdBy">
+    35	              <span class="info-label">Created by:</span>
+    36	              <span class="info-value">{{ createdBy }}</span>
+    37	            </div>
+    38	          </div>
+    39	        </section>
+    40	
+    41	        <!-- Visual Style Section (Editable) -->
+    42	        <section class="visual-style-section">
+    43	          <h3>Visual Style</h3>
+    44	          <div class="style-controls">
+    45	            <!-- Color -->
+    46	            <div class="control-row">
+    47	              <label for="color-input">Color:</label>
+    48	              <input
+    49	                id="color-input"
+    50	                type="color"
+    51	                v-model="editableColor"
+    52	                :disabled="!colorOverride"
+    53	                @blur="colorOverride && validateColor(editableColor)"
+    54	              />
+    55	              <input
+    56	                type="text"
+    57	                v-model="editableColor"
+    58	                pattern="^#[0-9A-Fa-f]{6}$"
+    59	                class="hex-input"
+    60	                :class="{ 'input-error': colorError }"
+    61	                :disabled="!colorOverride"
+    62	                placeholder="#000000"
+    63	                @blur="colorOverride && validateColor(editableColor)"
+    64	              />
+    65	              <label class="override-checkbox">
+    66	                <input type="checkbox" v-model="colorOverride" />
+    67	                Override
+    68	              </label>
+    69	            </div>
+    70	            <div v-if="colorError" class="error-message">{{ colorError }}</div>
+    71	
+    72	            <!-- Line Width (for non-point elements) -->
+    73	            <div class="control-row" v-if="elementType !== '2D Point'">
+    74	              <label for="width-input">Line Width:</label>
+    75	              <input
+    76	                id="width-input"
+    77	                type="range"
+    78	                min="0.5"
+    79	                max="5.0"
+    80	                step="0.1"
+    81	                v-model.number="editableLineWidth"
+    82	                :disabled="!lineWidthOverride"
+    83	                @change="lineWidthOverride && validateLineWidth(editableLineWidth)"
+    84	              />
+    85	              <input
+    86	                type="number"
+    87	                v-model.number="editableLineWidth"
+    88	                min="0.5"
+    89	                max="5.0"
+    90	                step="0.1"
+    91	                class="number-input"
+    92	                :class="{ 'input-error': lineWidthError }"
+    93	                :disabled="!lineWidthOverride"
+    94	                @blur="lineWidthOverride && validateLineWidth(editableLineWidth)"
+    95	              />
+    96	              <label class="override-checkbox">
+    97	                <input type="checkbox" v-model="lineWidthOverride" />
+    98	                Override
+    99	              </label>
+   100	            </div>
+   101	            <div v-if="lineWidthError" class="error-message">{{ lineWidthError }}</div>
+   102	
+   103	            <!-- Line Style (for line/segment/guide elements) -->
+   104	            <div class="control-row" v-if="hasLineStyle">
+   105	              <label for="style-input">Line Style:</label>
+   106	              <select
+   107	                id="style-input"
+   108	                v-model="editableLineStyle"
+   109	                :class="{ 'input-error': lineStyleError }"
+   110	                :disabled="!lineStyleOverride"
+   111	                @change="lineStyleOverride && validateLineStyle(editableLineStyle)"
+   112	              >
+   113	                <option value="solid">Solid</option>
+   114	                <option value="dashed">Dashed</option>
+   115	                <option value="dotted">Dotted</option>
+   116	              </select>
+   117	              <label class="override-checkbox">
+   118	                <input type="checkbox" v-model="lineStyleOverride" />
+   119	                Override
+   120	              </label>
+   121	            </div>
+   122	            <div v-if="lineStyleError" class="error-message">{{ lineStyleError }}</div>
+   123	
+   124	            <!-- Visibility -->
+   125	            <div class="control-row">
+   126	              <label for="visibility-input">Visibility:</label>
+   127	              <input
+   128	                id="visibility-input"
+   129	                type="checkbox"
+   130	                v-model="editableVisible"
+   131	                :disabled="!visibilityOverride"
+   132	              />
+   133	              <label class="override-checkbox">
+   134	                <input type="checkbox" v-model="visibilityOverride" />
+   135	                Override
+   136	              </label>
+   137	            </div>
+   138	          </div>
+   139	
+   140	          <!-- Reset Button -->
+   141	          <button class="reset-button" @click="handleResetToDefault">
+   142	            Reset to Default
+   143	          </button>
+   144	        </section>
+   145	      </div>
+   146	
+   147	      <!-- Footer Actions -->
+   148	      <div class="dialog-footer">
+   149	        <button class="button button-secondary" @click="handleCancel">
+   150	          Cancel
+   151	        </button>
+   152	        <button class="button button-primary" @click="handleSave">
+   153	          Save
+   154	        </button>
+   155	      </div>
+   156	    </div>
+   157	  </div>
+   158	</template>
+   159	
+   160	<script setup lang="ts">
+   161	import { ref, computed, watch } from 'vue';
+   162	import type { World } from '@/domain/world/World';
+   163	
+   164	interface Props {
+   165	  isOpen: boolean;
+   166	  elementId: string | null;
+   167	  world: World | null;
+   168	}
+   169	
+   170	interface Emits {
+   171	  (e: 'close'): void;
+   172	  (e: 'save', changes: StyleChanges): void;
+   173	}
+   174	
+   175	interface StyleChanges {
+   176	  elementId: string;
+   177	  color?: string;
+   178	  lineWidth?: number;
+   179	  lineStyle?: string;
+   180	  visible?: boolean;
+   181	}
+   182	
+   183	const props = defineProps<Props>();
+   184	const emit = defineEmits<Emits>();
+   185	
+   186	// Editable state
+   187	const editableColor = ref<string>('#000000');
+   188	const editableLineWidth = ref<number>(1.0);
+   189	const editableLineStyle = ref<string>('solid');
+   190	const editableVisible = ref<boolean>(true);
+   191	
+   192	// Override flags
+   193	const colorOverride = ref<boolean>(false);
+   194	const lineWidthOverride = ref<boolean>(false);
+   195	const lineStyleOverride = ref<boolean>(false);
+   196	const visibilityOverride = ref<boolean>(false);
+   197	
+   198	// Validation state
+   199	const colorError = ref<string>('');
+   200	const lineWidthError = ref<string>('');
+   201	const lineStyleError = ref<string>('');
+   202	
+   203	// Computed properties for display
+   204	const elementLabel = computed(() => {
+   205	  if (!props.elementId || !props.world) return 'Unknown';
+   206	  
+   207	  // Get element label/ID
+   208	  return props.elementId;
+   209	});
+   210	
+   211	const elementType = computed(() => {
+   212	  if (!props.elementId || !props.world) return 'Unknown';
+   213	  
+   214	  // Determine element type by checking which collection contains it
+   215	  const point = props.world.getPoint2D(props.elementId);
+   216	  if (point) return '2D Point';
+   217	  
+   218	  const line = props.world.getLine2D(props.elementId);
+   219	  if (line) return '2D Line';
+   220	  
+   221	  const segment = props.world.getSegment2D(props.elementId);
+   222	  if (segment) return '2D Segment';
+   223	  
+   224	  const circle = props.world.getCircle2D(props.elementId);
+   225	  if (circle) return '2D Circle';
+   226	  
+   227	  const guide = props.world.getGuide2D(props.elementId);
+   228	  if (guide) return '2D Guide';
+   229	  
+   230	  return 'Unknown';
+   231	});
+   232	
+   233	const planeId = computed(() => {
+   234	  if (!props.elementId || !props.world) return null;
+   235	  
+   236	  // Get plane ID from element
+   237	  const point = props.world.getPoint2D(props.elementId);
+   238	  if (point) return point.planeId;
+   239	  
+   240	  const line = props.world.getLine2D(props.elementId);
+   241	  if (line) return line.planeId;
+   242	  
+   243	  const segment = props.world.getSegment2D(props.elementId);
+   244	  if (segment) return segment.planeId;
+   245	  
+   246	  const circle = props.world.getCircle2D(props.elementId);
+   247	  if (circle) return circle.planeId;
+   248	  
+   249	  const guide = props.world.getGuide2D(props.elementId);
+   250	  if (guide) return guide.planeId;
+   251	  
+   252	  return null;
+   253	});
+   254	
+   255	const coordinates = computed(() => {
+   256	  if (!props.elementId || !props.world) return null;
+   257	  
+   258	  // Get coordinates from realization
+   259	  const point = props.world.getPoint2D(props.elementId);
+   260	  if (point) {
+===== frontend/tests/unit/components/propertiesDialog.spec.ts =====
+     1	/**
+     2	 * Unit tests for PropertiesDialog component
+     3	 * 
+     4	 * Tests dialog functionality including:
+     5	 * - Dialog open/close behavior
+     6	 * - Property display per element type
+     7	 * - Style input validation
+     8	 * - Save/cancel operations
+     9	 * - Override checkbox behavior
+    10	 */
+    11	
+    12	import { describe, it, expect, beforeEach, vi } from 'vitest';
+    13	import { mount } from '@vue/test-utils';
+    14	import PropertiesDialog from '@/components/dialogs/PropertiesDialog.vue';
+    15	import type { World } from '@/domain/world/World';
+    16	import { Vector3 } from 'three';
+    17	import { createTestWorld } from '../../helpers/worldHelpers';
+    18	
+    19	describe('PropertiesDialog', () => {
+    20	  let world: World;
+    21	  let testPointId: string; // Helper for tests that need a valid element ID
+    22	  
+    23	  beforeEach(() => {
+    24	    const { world: w } = createTestWorld();
+    25	    world = w;
+    26	    
+    27	    // Create a test point for tests that need a valid element ID
+    28	    const planeH = world.getProjectionPlaneByLabel('P_H');
+    29	    const point = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+    30	    testPointId = point.id;
+    31	  });
+    32	
+    33	  describe('Dialog visibility', () => {
+    34	    it('should not render when isOpen is false', () => {
+    35	      const wrapper = mount(PropertiesDialog, {
+    36	        props: {
+    37	          isOpen: false,
+    38	          elementId: null,
+    39	          world: null
+    40	        }
+    41	      });
+    42	      
+    43	      expect(wrapper.find('.dialog-overlay').exists()).toBe(false);
+    44	    });
+    45	
+    46	    it('should render when isOpen is true', () => {
+    47	      const wrapper = mount(PropertiesDialog, {
+    48	        props: {
+    49	          isOpen: true,
+    50	          elementId: testPointId,
+    51	          world
+    52	        }
+    53	      });
+    54	      
+    55	      expect(wrapper.find('.dialog-overlay').exists()).toBe(true);
+    56	      expect(wrapper.find('.properties-dialog').exists()).toBe(true);
+    57	    });
+    58	
+    59	    it('should emit close event when close button clicked', async () => {
+    60	      const wrapper = mount(PropertiesDialog, {
+    61	        props: {
+    62	          isOpen: true,
+    63	          elementId: testPointId,
+    64	          world
+    65	        }
+    66	      });
+    67	      
+    68	      await wrapper.find('.close-button').trigger('click');
+    69	      expect(wrapper.emitted('close')).toBeTruthy();
+    70	    });
+    71	
+    72	    it('should emit close event when overlay clicked', async () => {
+    73	      const wrapper = mount(PropertiesDialog, {
+    74	        props: {
+    75	          isOpen: true,
+    76	          elementId: testPointId,
+    77	          world
+    78	        }
+    79	      });
+    80	      
+    81	      await wrapper.find('.dialog-overlay').trigger('click');
+    82	      expect(wrapper.emitted('close')).toBeTruthy();
+    83	    });
+    84	
+    85	    it('should emit close event when cancel button clicked', async () => {
+    86	      const wrapper = mount(PropertiesDialog, {
+    87	        props: {
+    88	          isOpen: true,
+    89	          elementId: testPointId,
+    90	          world
+    91	        }
+    92	      });
+    93	      
+    94	      await wrapper.find('.button-secondary').trigger('click');
+    95	      expect(wrapper.emitted('close')).toBeTruthy();
+    96	    });
+    97	  });
+    98	
+    99	  describe('Element type detection', () => {
+   100	    it('should display "2D Point" for point elements', () => {
+   101	      // Add a point to world
+   102	      const planeH = world.getProjectionPlaneByLabel('P_H');
+   103	      const position = new Vector3(0, 0, 1);
+   104	      const point = planeH.addFreePoint2D(position, world);
+   105	      const pointId = point.id;
+   106	      
+   107	      const wrapper = mount(PropertiesDialog, {
+   108	        props: {
+   109	          isOpen: true,
+   110	          elementId: pointId,
+   111	          world
+   112	        }
+   113	      });
+   114	      
+   115	      expect(wrapper.text()).toContain('2D Point');
+   116	    });
+   117	
+   118	    it('should display plane ID for 2D elements', () => {
+   119	      const planeH = world.getProjectionPlaneByLabel('P_H');
+   120	      const position = new Vector3(0, 0, 1);
+   121	      const point = planeH.addFreePoint2D(position, world);
+   122	      const pointId = point.id;
+   123	      
+   124	      const wrapper = mount(PropertiesDialog, {
+   125	        props: {
+   126	          isOpen: true,
+   127	          elementId: pointId,
+   128	          world
+   129	        }
+   130	      });
+   131	      
+   132	      expect(wrapper.text()).toContain(planeH.id);
+   133	    });
+   134	  });
+   135	
+   136	  describe('Style input validation', () => {
+   137	    it('should validate hex color format', async () => {
+   138	      const wrapper = mount(PropertiesDialog, {
+   139	        props: {
+   140	          isOpen: true,
+   141	          elementId: testPointId,
+   142	          world
+   143	        }
+   144	      });
+   145	      
+   146	      // Enable color override
+   147	      const colorOverride = wrapper.find('input[type="checkbox"]');
+   148	      await colorOverride.setValue(true);
+   149	      
+   150	      // Set invalid color
+   151	      const hexInput = wrapper.find('.hex-input');
+   152	      await hexInput.setValue('invalid');
+   153	      await hexInput.trigger('blur');
+   154	      
+   155	      // Check for error message
+   156	      expect(wrapper.text()).toContain('Invalid hex color format');
+   157	    });
+   158	
+   159	    it('should accept valid hex colors', async () => {
+   160	      const wrapper = mount(PropertiesDialog, {
+   161	        props: {
+   162	          isOpen: true,
+   163	          elementId: testPointId,
+   164	          world
+   165	        }
+   166	      });
+   167	      
+   168	      // Enable color override
+   169	      const overrideCheckboxes = wrapper.findAll('input[type="checkbox"]');
+   170	      await overrideCheckboxes[0].setValue(true);
+   171	      
+   172	      // Set valid color
+   173	      const hexInput = wrapper.find('.hex-input');
+   174	      await hexInput.setValue('#FF5733');
+   175	      await hexInput.trigger('blur');
+   176	      
+   177	      // Should not show error
+   178	      expect(wrapper.text()).not.toContain('Invalid hex color format');
+   179	    });
+   180	
+   181	    it('should validate line width range', async () => {
+   182	      // Add a line element
+   183	      const planeH = world.getProjectionPlaneByLabel('P_H');
+   184	      const pos1 = new Vector3(0, 0, 1);
+   185	      const pos2 = new Vector3(10, 10, 1);
+   186	      const point1 = planeH.addFreePoint2D(pos1, world);
+   187	      const point2 = planeH.addFreePoint2D(pos2, world);
+   188	      const line = planeH.addLine2DBetweenTwoPoints(point1.id, point2.id, world);
+   189	      const lineId = line.id;
+   190	      
+   191	      const wrapper = mount(PropertiesDialog, {
+   192	        props: {
+   193	          isOpen: true,
+   194	          elementId: lineId,
+   195	          world
+   196	        }
+   197	      });
+   198	      
+   199	      // Find and enable line width override (second checkbox after color)
+   200	      const overrideCheckboxes = wrapper.findAll('input[type="checkbox"]');
+   201	      const lineWidthOverride = overrideCheckboxes[1]; // Second checkbox
+   202	      await lineWidthOverride.setValue(true);
+   203	      
+   204	      // Set invalid width (too large)
+   205	      const numberInput = wrapper.find('.number-input');
+   206	      await numberInput.setValue(10);
+   207	      await numberInput.trigger('blur');
+   208	      
+   209	      // Check for error message
+   210	      expect(wrapper.text()).toContain('Line width must be between 0.5 and 5.0');
+   211	    });
+   212	
+   213	    it('should validate line style options', async () => {
+   214	      const planeH = world.getProjectionPlaneByLabel('P_H');
+   215	      const pos1 = new Vector3(0, 0, 1);
+   216	      const pos2 = new Vector3(10, 10, 1);
+   217	      const point1 = planeH.addFreePoint2D(pos1, world);
+   218	      const point2 = planeH.addFreePoint2D(pos2, world);
+   219	      const line = planeH.addLine2DBetweenTwoPoints(point1.id, point2.id, world);
+   220	      const lineId = line.id;
+   221	      
+   222	      const wrapper = mount(PropertiesDialog, {
+   223	        props: {
+   224	          isOpen: true,
+   225	          elementId: lineId,
+   226	          world
+   227	        }
+   228	      });
+   229	      
+   230	      // Line style selector should have valid options
+   231	      const styleSelect = wrapper.find('#style-input');
+   232	      expect(styleSelect.exists()).toBe(true);
+   233	      
+   234	      const options = styleSelect.findAll('option');
+   235	      expect(options).toHaveLength(3);
+   236	      expect(options[0].text()).toBe('Solid');
+   237	      expect(options[1].text()).toBe('Dashed');
+   238	      expect(options[2].text()).toBe('Dotted');
+   239	    });
+   240	  });
+   241	
+   242	  describe('Save behavior', () => {
+   243	    it('should not save with validation errors', async () => {
+   244	      const wrapper = mount(PropertiesDialog, {
+   245	        props: {
+   246	          isOpen: true,
+   247	          elementId: testPointId,
+   248	          world
+   249	        }
+   250	      });
+   251	      
+   252	      // Enable color override
+   253	      const overrideCheckboxes = wrapper.findAll('input[type="checkbox"]');
+   254	      await overrideCheckboxes[0].setValue(true);
+   255	      
+   256	      // Set invalid color
+   257	      const hexInput = wrapper.find('.hex-input');
+   258	      await hexInput.setValue('invalid');
+   259	      
+   260	      // Try to save
+===== frontend/tests/integration/guide-creation.test.ts =====
+     1	import { describe, it, expect, beforeEach } from 'vitest';
+     2	import type { World } from '../../src/domain/world/World';
+     3	import type { CommandStack } from '../../src/commands/CommandStack';
+     4	import { Command } from '../../src/commands/Command';
+     5	import { AddFreePoint2DOp } from '../../src/commands/operations/AddFreePoint2DOp';
+     6	import { AddLine2DOp } from '../../src/commands/operations/AddLine2DOp';
+     7	import { GuideSequenceFactory } from '../../src/commands/factories/GuideSequenceFactory';
+     8	import { setupBasicWorld } from '../helpers/worldHelpers';
+     9	
+    10	describe('Guide Creation - Integration Tests', () => {
+    11	  let world: World;
+    12	  let commandStack: CommandStack;
+    13	
+    14	  beforeEach(() => {
+    15	    const setup = setupBasicWorld();
+    16	    world = setup.world;
+    17	    commandStack = setup.commandStack;
+    18	  });
+    19	
+    20	  describe('Regular Line Reference', () => {
+    21	    it('should create guide on regular line without sibling', () => {
+    22	      const { projPlaneH } = setupBasicWorld();
+    23	      const planeId = projPlaneH;
+    24	
+    25	      // Create two points and a line between them
+    26	      const cmd = new Command('Setup test geometry', world);
+    27	      
+    28	      const point1Result = cmd.addAndExecute(
+    29	        new AddFreePoint2DOp(planeId, [100, 100, 1])
+    30	      );
+    31	      const point1Id = point1Result.outputs.pointId;
+    32	
+    33	      const point2Result = cmd.addAndExecute(
+    34	        new AddFreePoint2DOp(planeId, [200, 100, 1])
+    35	      );
+    36	      const point2Id = point2Result.outputs.pointId;
+    37	
+    38	      const lineResult = cmd.addAndExecute(
+    39	        new AddLine2DOp(planeId, point1Id, point2Id)
+    40	      );
+    41	      const lineId = lineResult.outputs.lineId;
+    42	
+    43	      // Create point for guide to pass through
+    44	      const throughPointResult = cmd.addAndExecute(
+    45	        new AddFreePoint2DOp(planeId, [150, 150, 1])
+    46	      );
+    47	      const throughPointId = throughPointResult.outputs.pointId;
+    48	
+    49	      cmd.commit();
+    50	      commandStack.push(cmd);
+    51	
+    52	      // Create guide using regular line as reference
+    53	      const guideCmd = new Command('Create guide on regular line', world);
+    54	      const result = GuideSequenceFactory.createGuideWithSibling(
+    55	        guideCmd,
+    56	        planeId,
+    57	        lineId,
+    58	        throughPointId,
+    59	        world
+    60	      );
+    61	
+    62	      guideCmd.commit();
+    63	      commandStack.push(guideCmd);
+    64	
+    65	      // Verify results
+    66	      expect(result.guideId).toBeDefined();
+    67	      expect(result.siblingGuideId).toBeUndefined(); // No sibling for regular line
+    68	
+    69	      // Verify guide exists in world
+    70	      const plane = world.getProjectionPlane(planeId);
+    71	      const guide = plane.getElement(result.guideId);
+    72	      expect(guide).toBeDefined();
+    73	      expect(guide?.elementType).toBe('Guide2D');
+    74	    });
+    75	  });
+    76	
+    77	  describe('HalfHingeLine2D Reference', () => {
+    78	    it('should create sibling guide when reference is hinge line', () => {
+    79	      // After basic world setup, there should be hinge lines
+    80	      const { projPlaneH, projPlaneV } = setupBasicWorld();
+    81	      
+    82	      // Get the hinge line on plane H
+    83	      const planeH = world.getProjectionPlane(projPlaneH);
+    84	      const hingeLines = Array.from(planeH.lines.values()).filter(
+    85	        line => line.elementType === 'HalfHingeLine2D'
+    86	      );
+    87	      
+    88	      expect(hingeLines.length).toBeGreaterThan(0);
+    89	      const hingeLineId = hingeLines[0]!.id;
+    90	
+    91	      // Create point for guide to pass through
+    92	      const cmd = new Command('Create test point', world);
+    93	      const pointResult = cmd.addAndExecute(
+    94	        new AddFreePoint2DOp(projPlaneH, [100, 100, 1])
+    95	      );
+    96	      const throughPointId = pointResult.outputs.pointId;
+    97	      cmd.commit();
+    98	      commandStack.push(cmd);
+    99	
+   100	      // Create guide using hinge line as reference
+   101	      const guideCmd = new Command('Create guide on hinge line', world);
+   102	      const result = GuideSequenceFactory.createGuideWithSibling(
+   103	        guideCmd,
+   104	        projPlaneH,
+   105	        hingeLineId,
+   106	        throughPointId,
+   107	        world
+   108	      );
+   109	
+   110	      guideCmd.commit();
+   111	      commandStack.push(guideCmd);
+   112	
+   113	      // Verify results
+   114	      expect(result.guideId).toBeDefined();
+   115	      expect(result.siblingGuideId).toBeDefined(); // Should have sibling
+   116	
+   117	      // Verify both guides exist
+   118	      const planeHGuide = planeH.getElement(result.guideId);
+   119	      expect(planeHGuide).toBeDefined();
+   120	
+   121	      const planeV = world.getProjectionPlane(projPlaneV);
+   122	      const planeVGuide = planeV.getElement(result.siblingGuideId!);
+   123	      expect(planeVGuide).toBeDefined();
+   124	    });
+   125	  });
+   126	
+   127	  describe('BrokenHalfHingeLine2D Reference', () => {
+   128	    it('should create sibling guide when reference is broken hinge line', () => {
+   129	      // This test would require setting up an auxiliary plane with BHHL
+   130	      // For now, we document the expected behavior:
+   131	      
+   132	      // Given: Auxiliary plane with BrokenHalfHingeLine2D
+   133	      // When: Create guide using BHHL as reference
+   134	      // Then: 
+   135	      //   - Primary guide created on auxiliary plane
+   136	      //   - Sibling guide created on base plane
+   137	      //   - Both guides parallel to main hinge T1
+   138	      //   - No error thrown
+   139	      
+   140	      // This is the scenario that was failing before the fix
+   141	    });
+   142	  });
+   143	
+   144	  describe('Error Prevention', () => {
+   145	    it('should not throw when creating guide on non-hinge line', () => {
+   146	      // Regression test for: "Failed to get sibling info for half-hinge-line"
+   147	      // This error occurred when GuideTool assumed all guides had siblings
+   148	      
+   149	      const { projPlaneH } = setupBasicWorld();
+   150	      
+   151	      // Create regular line (not hinge)
+   152	      const cmd = new Command('Setup', world);
+   153	      const p1 = cmd.addAndExecute(new AddFreePoint2DOp(projPlaneH, [0, 0, 1]));
+   154	      const p2 = cmd.addAndExecute(new AddFreePoint2DOp(projPlaneH, [100, 0, 1]));
+   155	      const line = cmd.addAndExecute(new AddLine2DOp(projPlaneH, p1.outputs.pointId, p2.outputs.pointId));
+   156	      const throughPoint = cmd.addAndExecute(new AddFreePoint2DOp(projPlaneH, [50, 50, 1]));
+   157	      cmd.commit();
+   158	      commandStack.push(cmd);
+   159	
+   160	      // This should NOT throw
+   161	      expect(() => {
+   162	        const guideCmd = new Command('Create guide', world);
+   163	        GuideSequenceFactory.createGuideWithSibling(
+   164	          guideCmd,
+   165	          projPlaneH,
+   166	          line.outputs.lineId,
+   167	          throughPoint.outputs.pointId,
+   168	          world
+   169	        );
+   170	        guideCmd.commit();
+   171	      }).not.toThrow();
+   172	    });
+   173	  });
+   174	});
+===== frontend/tests/e2e/keyboard-shortcuts.spec.ts =====
+     1	/**
+     2	 * E2E Test: Keyboard Shortcuts
+     3	
+     4	
+     5	
+     6	
+     7	
+     8	
+     9	
+    10	
+    11	
+    12	
+    13	
+    14	
+    15	
+    16	
+    17	
+    18	
+    19	
+    20	
+    21	
+    22	
+    23	
+    24	
+    25	
+    26	
+    27	
+    28	
+    29	
+    30	
+    31	
+    32	
+    33	
+    34	
+    35	
+    36	
+    37	
+    38	
+    39	
+    40	
+    41	
+    42	
+    43	
+    44	
+    45	
+    46	
+    47	
+    48	
+    49	
+    50	
+    51	
+    52	
+    53	
+    54	
+    55	
+    56	
+    57	
+    58	
+    59	
+    60	
+    61	
+    62	
+    63	
+    64	
+    65	
+    66	
+    67	
+    68	
+    69	
+    70	
+    71	
+    72	
+    73	
+    74	
+    75	
+    76	
+    77	
+    78	
+    79	
+    80	
+    81	
+    82	
+    83	
+    84	
+    85	
+    86	
+    87	
+    88	
+    89	
+    90	
+    91	
+    92	
+    93	
+    94	
+    95	
+    96	
+    97	
+    98	
+    99	
+   100	
+   101	
+   102	
+   103	
+   104	
+   105	
+   106	
+   107	
+   108	
+   109	
+   110	
+   111	
+   112	
+   113	
+   114	
+   115	
+   116	
+   117	
+   118	
+   119	
+   120	
+   121	
+   122	
+   123	
+   124	
+   125	
+   126	
+   127	
+   128	
+   129	
+   130	
+   131	
+   132	
+   133	
+   134	
+   135	
+   136	
+   137	
+   138	
+   139	
+   140	
+   141	
+   142	
+   143	
+   144	
+   145	
+   146	
+   147	
+   148	
+   149	
+   150	
+   151	
+   152	
+   153	
+   154	
+   155	
+   156	
+   157	
+   158	
+   159	
+   160	
+   161	
+   162	
+   163	
+   164	
+   165	
+   166	
+   167	
+   168	
+   169	
+   170	
+   171	
+   172	
+   173	
+   174	
+   175	
+   176	
+   177	
+   178	
+   179	
+   180	
+   181	
+   182	
+   183	
+   184	
+   185	
+   186	
+   187	
+   188	
+   189	
+   190	
+   191	
+   192	
+   193	
+   194	
+   195	
+   196	
+   197	
+   198	
+   199	
+   200	
+   201	
+   202	
+   203	
+   204	
+   205	
+   206	
+   207	
+   208	
+   209	
+   210	
+   211	
+   212	
+   213	
+   214	
+   215	
+   216	
+   217	
+   218	
+   219	
+   220	
+   221	
+   222	
+   223	
+   224	
+   225	
+   226	
+   227	
+   228	
+   229	
+   230	
+   231	
+   232	
+   233	
+   234	
+   235	
+   236	
+   237	
+   238	
+   239	
+   240	
+   241	
+   242	
+   243	
+   244	
+   245	
+   246	
+   247	
+   248	
+   249	
+   250	
+   251	
+   252	
+   253	
+   254	
+   255	
+   256	
+   257	
+   258	
+   259	
+   260	
+===== frontend/tests/e2e/selection-mask.spec.ts =====
+     1	/**
+     2	 * E2E tests for Selection Mask System
+     3	 * 
+     4	 * Tests user-facing behavior:
+     5	 * - Only valid elements highlight on hover based on active tool
+     6	 * - Invalid elements do not highlight
+     7	 * - Dynamic masks change as tool progresses through steps
+     8	 * 
+     9	 * Reference: specs/001-dihedral-learning-mvp/data-model.md §Selection Mask System
+    10	 */
+    11	
+    12	import { test, expect } from '@playwright/test';
+    13	
+    14	test.describe('Selection Mask System E2E', () => {
+    15	  test.beforeEach(async ({ page }) => {
+    16	    await page.goto('/');
+    17	    // Wait for application to load
+    18	    await page.waitForSelector('[data-testid="svg-canvas"]', { timeout: 5000 });
+    19	  });
+    20	
+    21	  test('PointTool: no elements highlight (empty mask)', async ({ page }) => {
+    22	    // Select Point tool
+    23	    await page.click('[data-testid="tool-point"]');
+    24	
+    25	    // Create a point first
+    26	    await page.click('[data-testid="svg-canvas"]', { position: { x: 100, y: 100 } });
+    27	
+    28	    // Move mouse over the created point
+    29	    await page.mouse.move(100, 100);
+    30	    await page.waitForTimeout(200); // Wait for hover state
+    31	
+    32	    // Check that point does NOT have hover class (PointTool has empty mask)
+    33	    const pointElement = page.locator('[data-element-type="point"]').first();
+    34	    const hasHoverClass = await pointElement.evaluate(el => 
+    35	      el.classList.contains('hover') || el.classList.contains('hovered')
+    36	    );
+    37	    
+    38	    expect(hasHoverClass).toBe(false);
+    39	  });
+    40	
+    41	  test('LineTool: only points highlight', async ({ page }) => {
+    42	    // Create initial setup: two points and a line
+    43	    await page.click('[data-testid="tool-point"]');
+    44	    await page.click('[data-testid="svg-canvas"]', { position: { x: 100, y: 100 } });
+    45	    await page.click('[data-testid="svg-canvas"]', { position: { x: 200, y: 100 } });
+    46	    
+    47	    await page.click('[data-testid="tool-line"]');
+    48	    await page.click('[data-testid="svg-canvas"]', { position: { x: 100, y: 100 } });
+    49	    await page.click('[data-testid="svg-canvas"]', { position: { x: 200, y: 100 } });
+    50	
+    51	    // Now test: LineTool should only highlight points, not lines
+    52	    await page.click('[data-testid="tool-line"]'); // Activate line tool
+    53	
+    54	    // Hover over point - should highlight
+    55	    await page.mouse.move(100, 100);
+    56	    await page.waitForTimeout(200);
+    57	    
+    58	    let pointElement = page.locator('[data-element-type="point"]').first();
+    59	    let hasHover = await pointElement.evaluate(el => 
+    60	      el.classList.contains('hover') || el.classList.contains('hovered')
+    61	    );
+    62	    expect(hasHover).toBe(true);
+    63	
+    64	    // Hover over line - should NOT highlight
+    65	    await page.mouse.move(150, 100); // On the line
+    66	    await page.waitForTimeout(200);
+    67	    
+    68	    const lineElement = page.locator('[data-element-type="line"]').first();
+    69	    const lineHasHover = await lineElement.evaluate(el => 
+    70	      el.classList.contains('hover') || el.classList.contains('hovered')
+    71	    );
+    72	    expect(lineHasHover).toBe(false);
+    73	  });
+    74	
+    75	  test('GuideTool: dynamic mask changes after first selection', async ({ page }) => {
+    76	    // Setup: Create points for hinge line
+    77	    await page.click('[data-testid="tool-point"]');
+    78	    await page.click('[data-testid="svg-canvas"]', { position: { x: 100, y: 300 } }); // Hinge point 1
+    79	    await page.click('[data-testid="svg-canvas"]', { position: { x: 400, y: 300 } }); // Hinge point 2
+    80	    await page.click('[data-testid="svg-canvas"]', { position: { x: 200, y: 100 } }); // Regular point
+    81	
+    82	    // Activate guide tool
+    83	    await page.click('[data-testid="tool-guide"]');
+    84	
+    85	    // Initial state: both lines and points should be highlightable
+    86	    // Hover over hinge line (HalfHingeLine2D)
+    87	    await page.mouse.move(250, 300);
+    88	    await page.waitForTimeout(200);
+    89	    
+    90	    const hhlElement = page.locator('[data-element-type="half-hinge-line"]').first();
+    91	    const hhlHasHover = await hhlElement.evaluate(el => 
+    92	      el.classList.contains('hover') || el.classList.contains('hovered')
+    93	    );
+    94	    expect(hhlHasHover).toBe(true);
+    95	
+    96	    // Click to select the hinge line
+    97	    await page.click('[data-testid="svg-canvas"]', { position: { x: 250, y: 300 } });
+    98	
+    99	    // After selecting line: only points should highlight
+   100	    // Hover over point - should highlight
+   101	    await page.mouse.move(200, 100);
+   102	    await page.waitForTimeout(200);
+   103	    
+   104	    const pointElement = page.locator('[data-element-type="point"]').first();
+   105	    const pointHasHover = await pointElement.evaluate(el => 
+   106	      el.classList.contains('hover') || el.classList.contains('hovered')
+   107	    );
+   108	    expect(pointHasHover).toBe(true);
+   109	
+   110	    // Hover back over hinge line - should NOT highlight anymore
+   111	    await page.mouse.move(250, 300);
+   112	    await page.waitForTimeout(200);
+   113	    
+   114	    const hhlHasHoverAfter = await hhlElement.evaluate(el => 
+   115	      el.classList.contains('hover') || el.classList.contains('hovered')
+   116	    );
+   117	    expect(hhlHasHoverAfter).toBe(false);
+   118	  });
+   119	
+   120	  test('IntersectionTool: only lines highlight', async ({ page }) => {
+   121	    // Create setup: points and lines
+   122	    await page.click('[data-testid="tool-point"]');
+   123	    await page.click('[data-testid="svg-canvas"]', { position: { x: 100, y: 100 } });
+   124	    await page.click('[data-testid="svg-canvas"]', { position: { x: 200, y: 200 } });
+   125	    await page.click('[data-testid="svg-canvas"]', { position: { x: 100, y: 200 } });
+   126	    await page.click('[data-testid="svg-canvas"]', { position: { x: 200, y: 100 } });
+   127	
+   128	    // Create two lines
+   129	    await page.click('[data-testid="tool-line"]');
+   130	    await page.click('[data-testid="svg-canvas"]', { position: { x: 100, y: 100 } });
+   131	    await page.click('[data-testid="svg-canvas"]', { position: { x: 200, y: 200 } });
+   132	    await page.click('[data-testid="svg-canvas"]', { position: { x: 100, y: 200 } });
+   133	    await page.click('[data-testid="svg-canvas"]', { position: { x: 200, y: 100 } });
+   134	
+   135	    // Activate intersection tool
+   136	    await page.click('[data-testid="tool-intersection"]');
+   137	
+   138	    // Hover over line - should highlight
+   139	    await page.mouse.move(150, 150);
+   140	    await page.waitForTimeout(200);
+   141	    
+   142	    const lineElement = page.locator('[data-element-type="line"]').first();
+   143	    const lineHasHover = await lineElement.evaluate(el => 
+   144	      el.classList.contains('hover') || el.classList.contains('hovered')
+   145	    );
+   146	    expect(lineHasHover).toBe(true);
+   147	
+   148	    // Hover over point - should NOT highlight
+   149	    await page.mouse.move(100, 100);
+   150	    await page.waitForTimeout(200);
+   151	    
+   152	    const pointElement = page.locator('[data-element-type="point"]').first();
+   153	    const pointHasHover = await pointElement.evaluate(el => 
+   154	      el.classList.contains('hover') || el.classList.contains('hovered')
+   155	    );
+   156	    expect(pointHasHover).toBe(false);
+   157	  });
+   158	});
+   159	    
+   160	    const pointElement = page.locator('[data-element-type="point"]').first();
+   161	    const pointHasHover = await pointElement.evaluate(el => 
+   162	      el.classList.contains('hover') || el.classList.contains('hovered')
+   163	    );
+   164	    expect(pointHasHover).toBe(true);
+   165	
+   166	    // Click to select source point
+   167	    await page.click('[data-testid="svg-canvas"]', { position: { x: 100, y: 100 } });
+   168	
+   169	    // After selecting point: only guides should highlight
+   170	    // Hover over guide - should highlight
+   171	    await page.mouse.move(200, 150); // Near guide line
+   172	    await page.waitForTimeout(200);
+   173	    
+   174	    const guideElement = page.locator('[data-element-type="guide"]').first();
+   175	    const guideHasHover = await guideElement.evaluate(el => 
+   176	      el.classList.contains('hover') || el.classList.contains('hovered')
+   177	    );
+   178	    expect(guideHasHover).toBe(true);
+   179	
+   180	    // Hover over point - should NOT highlight anymore
+   181	    await page.mouse.move(100, 100);
+   182	    await page.waitForTimeout(200);
+   183	    
+   184	    const pointHasHoverAfter = await pointElement.evaluate(el => 
+   185	      el.classList.contains('hover') || el.classList.contains('hovered')
+   186	    );
+   187	    expect(pointHasHoverAfter).toBe(false);
+   188	  });
+   189	
+   190	  test('SegmentTool: only points highlight', async ({ page }) => {
+   191	    // Create points
+   192	    await page.click('[data-testid="tool-point"]');
+   193	    await page.click('[data-testid="svg-canvas"]', { position: { x: 100, y: 100 } });
+   194	    await page.click('[data-testid="svg-canvas"]', { position: { x: 200, y: 100 } });
+   195	
+   196	    // Create line between them
+   197	    await page.click('[data-testid="tool-line"]');
+   198	    await page.click('[data-testid="svg-canvas"]', { position: { x: 100, y: 100 } });
+   199	    await page.click('[data-testid="svg-canvas"]', { position: { x: 200, y: 100 } });
+   200	
+   201	    // Activate segment tool
+   202	    await page.click('[data-testid="tool-segment"]');
+   203	
+   204	    // Hover over point - should highlight
+   205	    await page.mouse.move(100, 100);
+   206	    await page.waitForTimeout(200);
+   207	    
+   208	    const pointElement = page.locator('[data-element-type="point"]').first();
+   209	    const pointHasHover = await pointElement.evaluate(el => 
+   210	      el.classList.contains('hover') || el.classList.contains('hovered')
+   211	    );
+   212	    expect(pointHasHover).toBe(true);
+   213	
+   214	    // Hover over line - should NOT highlight
+   215	    await page.mouse.move(150, 100);
+   216	    await page.waitForTimeout(200);
+   217	    
+   218	    const lineElement = page.locator('[data-element-type="line"]').first();
+   219	    const lineHasHover = await lineElement.evaluate(el => 
+   220	      el.classList.contains('hover') || el.classList.contains('hovered')
+   221	    );
+   222	    expect(lineHasHover).toBe(false);
+   223	  });
+   224	
+   225	  test('CircleTool: only points highlight', async ({ page }) => {
+   226	    // Create points
+   227	    await page.click('[data-testid="tool-point"]');
+   228	    await page.click('[data-testid="svg-canvas"]', { position: { x: 100, y: 100 } });
+   229	    await page.click('[data-testid="svg-canvas"]', { position: { x: 200, y: 100 } });
+   230	
+   231	    // Create circle
+   232	    await page.click('[data-testid="tool-circle"]');
+   233	    await page.click('[data-testid="svg-canvas"]', { position: { x: 100, y: 100 } }); // Center
+   234	    await page.click('[data-testid="svg-canvas"]', { position: { x: 200, y: 100 } }); // Radius point
+   235	
+   236	    // Activate circle tool again
+   237	    await page.click('[data-testid="tool-circle"]');
+   238	
+   239	    // Hover over point - should highlight
+   240	    await page.mouse.move(100, 100);
+   241	    await page.waitForTimeout(200);
+   242	    
+   243	    const pointElement = page.locator('[data-element-type="point"]').first();
+   244	    const pointHasHover = await pointElement.evaluate(el => 
+   245	      el.classList.contains('hover') || el.classList.contains('hovered')
+   246	    );
+   247	    expect(pointHasHover).toBe(true);
+   248	
+   249	    // Hover over circle - should NOT highlight
+   250	    await page.mouse.move(150, 100);
+   251	    await page.waitForTimeout(200);
+   252	    
+   253	    const circleElement = page.locator('[data-element-type="circle"]').first();
+   254	    const circleHasHover = await circleElement.evaluate(el => 
+   255	      el.classList.contains('hover') || el.classList.contains('hovered')
+   256	    );
+   257	    expect(circleHasHover).toBe(false);
+   258	  });
+   259	});
+===== frontend/package.json =====
+     1	{
+     2	  "name": "diedrico-frontend",
+     3	  "version": "0.1.0",
+     4	  "type": "module",
+     5	  "license": "GPL-3.0-or-later",
+     6	  "scripts": {
+     7	    "dev": "vite",
+     8	    "build": "vue-tsc && vite build",
+     9	    "preview": "vite preview",
+    10	    "test": "vitest run",
+    11	    "test:watch": "vitest",
+    12	    "test:ui": "vitest --ui",
+    13	    "test:architecture": "vitest run tests/unit/architecture",
+    14	    "test:e2e": "playwright test",
+    15	    "test:e2e:headed": "playwright test --headed",
+    16	    "lint": "npm run test:architecture"
+    17	  },
+    18	  "dependencies": {
+    19	    "@types/katex": "^0.16.8",
+    20	    "d3": "^7.8.5",
+    21	    "katex": "^0.16.28",
+    22	    "pinia": "^2.1.7",
+    23	    "three": "^0.160.0",
+    24	    "vue": "^3.4.0"
+    25	  },
+    26	  "devDependencies": {
+    27	    "@playwright/test": "^1.40.0",
+    28	    "@types/d3": "^7.4.3",
+    29	    "@types/gapi": "^0.0.47",
+    30	    "@types/gapi.client.drive-v3": "^0.0.5",
+    31	    "@types/three": "^0.160.0",
+    32	    "@vitejs/plugin-vue": "^5.0.0",
+    33	    "@vitest/ui": "^1.0.0",
+    34	    "@vue/test-utils": "^2.4.6",
+    35	    "@vue/tsconfig": "^0.5.0",
+    36	    "jsdom": "^27.3.0",
+    37	    "typescript": "^5.3.0",
+    38	    "vite": "^5.0.0",
+    39	    "vitest": "^1.0.0",
+    40	    "vue-tsc": "^1.8.0"
+    41	  }
+    42	}
+===== package.json =====
+     1	{
+     2	  "name": "diedrico",
+     3	  "version": "0.1.0",
+     4	  "description": "Educational web application for teaching dihedral/orthographic projection",
+     5	  "private": true,
+     6	  "license": "GPL-3.0-or-later",
+     7	  "workspaces": [
+     8	    "frontend"
+     9	  ],
+    10	  "scripts": {
+    11	    "dev": "npm run dev:frontend",
+    12	    "dev:frontend": "npm run dev --workspace=frontend",
+    13	    "build": "npm run build --workspace=frontend",
+    14	    "test": "npm run test --workspace=frontend",
+    15	    "test:frontend": "npm run test --workspace=frontend",
+    16	    "lint": "npm run lint --workspace=frontend",
+    17	    "docs:dev": "vitepress dev docs",
+    18	    "docs:build": "vitepress build docs",
+    19	    "docs:preview": "vitepress preview docs",
+    20	    "test:architecture": "npm run test:architecture --workspace=frontend",
+    21	    "test:e2e": "npm run test:e2e --workspace=frontend"
+    22	  },
+    23	  "devDependencies": {
+    24	    "concurrently": "^8.2.2",
+    25	    "vitepress": "^1.6.4"
+    26	  },
+    27	  "engines": {
+    28	    "node": ">=18.0.0",
+    29	    "npm": ">=9.0.0"
+    30	  }
+    31	}
+===== frontend/src/application/canvas/CanvasStyleUseCase.ts =====
+     1	import { Command } from '@/commands/Command';
+     2	import type { CommandStack } from '@/commands/CommandStack';
+     3	import type { World } from '@/domain/world/World';
+     4	import { UpdateElementStyleOp } from '@/commands/operations/world/UpdateElementStyleOp';
+     5	import type { StyleUpdateRequest, ToolCommandResult } from '@/application/tools/ToolCommandIntents';
+     6	
+     7	export class CanvasStyleUseCase {
+     8	  constructor(private readonly world: World, private readonly commandStack: CommandStack) {}
+     9	
+    10	  update(request: StyleUpdateRequest): ToolCommandResult {
+    11	    const cmd = new Command(`Update style: ${request.elementId}`, this.world);
+    12	    try {
+    13	      cmd.addAndExecute(new UpdateElementStyleOp(request.elementId, request.planeId, request.style) as any);
+    14	      cmd.commit();
+    15	      this.commandStack.push(cmd);
+    16	      return { success: true };
+    17	    } catch (error) {
+    18	      cmd.rollback();
+    19	      return { success: false, message: error instanceof Error ? error.message : String(error) };
+    20	    }
+    21	  }
+    22	}
+===== frontend/src/components/dialogs/PropertiesDialog.vue =====
+     1	<template>
+     2	  <div v-if="isOpen" class="dialog-overlay" @click.self="handleCancel">
+     3	    <div class="properties-dialog" role="dialog" aria-labelledby="dialog-title">
+     4	      <!-- Header -->
+     5	      <div class="dialog-header">
+     6	        <h2 id="dialog-title">Properties: {{ elementLabel }}</h2>
+     7	        <button class="close-button" @click="handleCancel" aria-label="Close dialog">
+     8	          ×
+     9	        </button>
+    10	      </div>
+    11	
+    12	      <!-- Content -->
+    13	      <div class="dialog-content">
+    14	        <!-- Geometry Info Section (Read-only) -->
+    15	        <section class="geometry-section">
+    16	          <h3>Geometry Info</h3>
+    17	          <div class="info-grid">
+    18	            <div class="info-row">
+    19	              <span class="info-label">Type:</span>
+    20	              <span class="info-value">{{ elementType }}</span>
+    21	            </div>
+    22	            <div class="info-row" v-if="planeId">
+    23	              <span class="info-label">Plane:</span>
+    24	              <span class="info-value">{{ planeId }}</span>
+    25	            </div>
+    26	            <div class="info-row" v-if="coordinates">
+    27	              <span class="info-label">Coordinates:</span>
+    28	              <span class="info-value">{{ coordinates }}</span>
+    29	            </div>
+    30	            <div class="info-row" v-if="dependencies && dependencies.length > 0">
+    31	              <span class="info-label">Dependencies:</span>
+    32	              <span class="info-value">{{ dependencies.join(', ') }}</span>
+    33	            </div>
+    34	            <div class="info-row" v-if="createdBy">
+    35	              <span class="info-label">Created by:</span>
+    36	              <span class="info-value">{{ createdBy }}</span>
+    37	            </div>
+    38	          </div>
+    39	        </section>
+    40	
+    41	        <!-- Visual Style Section (Editable) -->
+    42	        <section class="visual-style-section">
+    43	          <h3>Visual Style</h3>
+    44	          <div class="style-controls">
+    45	            <!-- Color -->
+    46	            <div class="control-row">
+    47	              <label for="color-input">Color:</label>
+    48	              <input
+    49	                id="color-input"
+    50	                type="color"
+    51	                v-model="editableColor"
+    52	                :disabled="!colorOverride"
+    53	                @blur="colorOverride && validateColor(editableColor)"
+    54	              />
+    55	              <input
+    56	                type="text"
+    57	                v-model="editableColor"
+    58	                pattern="^#[0-9A-Fa-f]{6}$"
+    59	                class="hex-input"
+    60	                :class="{ 'input-error': colorError }"
+    61	                :disabled="!colorOverride"
+    62	                placeholder="#000000"
+    63	                @blur="colorOverride && validateColor(editableColor)"
+    64	              />
+    65	              <label class="override-checkbox">
+    66	                <input type="checkbox" v-model="colorOverride" />
+    67	                Override
+    68	              </label>
+    69	            </div>
+    70	            <div v-if="colorError" class="error-message">{{ colorError }}</div>
+    71	
+    72	            <!-- Line Width (for non-point elements) -->
+    73	            <div class="control-row" v-if="elementType !== '2D Point'">
+    74	              <label for="width-input">Line Width:</label>
+    75	              <input
+    76	                id="width-input"
+    77	                type="range"
+    78	                min="0.5"
+    79	                max="5.0"
+    80	                step="0.1"
+    81	                v-model.number="editableLineWidth"
+    82	                :disabled="!lineWidthOverride"
+    83	                @change="lineWidthOverride && validateLineWidth(editableLineWidth)"
+    84	              />
+    85	              <input
+    86	                type="number"
+    87	                v-model.number="editableLineWidth"
+    88	                min="0.5"
+    89	                max="5.0"
+    90	                step="0.1"
+    91	                class="number-input"
+    92	                :class="{ 'input-error': lineWidthError }"
+    93	                :disabled="!lineWidthOverride"
+    94	                @blur="lineWidthOverride && validateLineWidth(editableLineWidth)"
+    95	              />
+    96	              <label class="override-checkbox">
+    97	                <input type="checkbox" v-model="lineWidthOverride" />
+    98	                Override
+    99	              </label>
+   100	            </div>
+   101	            <div v-if="lineWidthError" class="error-message">{{ lineWidthError }}</div>
+   102	
+   103	            <!-- Line Style (for line/segment/guide elements) -->
+   104	            <div class="control-row" v-if="hasLineStyle">
+   105	              <label for="style-input">Line Style:</label>
+   106	              <select
+   107	                id="style-input"
+   108	                v-model="editableLineStyle"
+   109	                :class="{ 'input-error': lineStyleError }"
+   110	                :disabled="!lineStyleOverride"
+   111	                @change="lineStyleOverride && validateLineStyle(editableLineStyle)"
+   112	              >
+   113	                <option value="solid">Solid</option>
+   114	                <option value="dashed">Dashed</option>
+   115	                <option value="dotted">Dotted</option>
+   116	              </select>
+   117	              <label class="override-checkbox">
+   118	                <input type="checkbox" v-model="lineStyleOverride" />
+   119	                Override
+   120	              </label>
+   121	            </div>
+   122	            <div v-if="lineStyleError" class="error-message">{{ lineStyleError }}</div>
+   123	
+   124	            <!-- Visibility -->
+   125	            <div class="control-row">
+   126	              <label for="visibility-input">Visibility:</label>
+   127	              <input
+   128	                id="visibility-input"
+   129	                type="checkbox"
+   130	                v-model="editableVisible"
+   131	                :disabled="!visibilityOverride"
+   132	              />
+   133	              <label class="override-checkbox">
+   134	                <input type="checkbox" v-model="visibilityOverride" />
+   135	                Override
+   136	              </label>
+   137	            </div>
+   138	          </div>
+   139	
+   140	          <!-- Reset Button -->
+   141	          <button class="reset-button" @click="handleResetToDefault">
+   142	            Reset to Default
+   143	          </button>
+   144	        </section>
+   145	      </div>
+   146	
+   147	      <!-- Footer Actions -->
+   148	      <div class="dialog-footer">
+   149	        <button class="button button-secondary" @click="handleCancel">
+   150	          Cancel
+   151	        </button>
+   152	        <button class="button button-primary" @click="handleSave">
+   153	          Save
+   154	        </button>
+   155	      </div>
+   156	    </div>
+   157	  </div>
+   158	</template>
+   159	
+   160	<script setup lang="ts">
+   161	import { ref, computed, watch } from 'vue';
+   162	import type { World } from '@/domain/world/World';
+   163	
+   164	interface Props {
+   165	  isOpen: boolean;
+   166	  elementId: string | null;
+   167	  world: World | null;
+   168	}
+   169	
+   170	interface Emits {
+   171	  (e: 'close'): void;
+   172	  (e: 'save', changes: StyleChanges): void;
+   173	}
+   174	
+   175	interface StyleChanges {
+   176	  elementId: string;
+   177	  color?: string;
+   178	  lineWidth?: number;
+   179	  lineStyle?: string;
+   180	  visible?: boolean;
+   181	}
+   182	
+   183	const props = defineProps<Props>();
+   184	const emit = defineEmits<Emits>();
+   185	
+   186	// Editable state
+   187	const editableColor = ref<string>('#000000');
+   188	const editableLineWidth = ref<number>(1.0);
+   189	const editableLineStyle = ref<string>('solid');
+   190	const editableVisible = ref<boolean>(true);
+   191	
+   192	// Override flags
+   193	const colorOverride = ref<boolean>(false);
+   194	const lineWidthOverride = ref<boolean>(false);
+   195	const lineStyleOverride = ref<boolean>(false);
+   196	const visibilityOverride = ref<boolean>(false);
+   197	
+   198	// Validation state
+   199	const colorError = ref<string>('');
+   200	const lineWidthError = ref<string>('');
+   201	const lineStyleError = ref<string>('');
+   202	
+   203	// Computed properties for display
+   204	const elementLabel = computed(() => {
+   205	  if (!props.elementId || !props.world) return 'Unknown';
+   206	  
+   207	  // Get element label/ID
+   208	  return props.elementId;
+   209	});
+   210	
+   211	const elementType = computed(() => {
+   212	  if (!props.elementId || !props.world) return 'Unknown';
+   213	  
+   214	  // Determine element type by checking which collection contains it
+   215	  const point = props.world.getPoint2D(props.elementId);
+   216	  if (point) return '2D Point';
+   217	  
+   218	  const line = props.world.getLine2D(props.elementId);
+   219	  if (line) return '2D Line';
+   220	  
+   221	  const segment = props.world.getSegment2D(props.elementId);
+   222	  if (segment) return '2D Segment';
+   223	  
+   224	  const circle = props.world.getCircle2D(props.elementId);
+   225	  if (circle) return '2D Circle';
+   226	  
+   227	  const guide = props.world.getGuide2D(props.elementId);
+   228	  if (guide) return '2D Guide';
+   229	  
+   230	  return 'Unknown';
+   231	});
+   232	
+   233	const planeId = computed(() => {
+   234	  if (!props.elementId || !props.world) return null;
+   235	  
+   236	  // Get plane ID from element
+   237	  const point = props.world.getPoint2D(props.elementId);
+   238	  if (point) return point.planeId;
+   239	  
+   240	  const line = props.world.getLine2D(props.elementId);
+   241	  if (line) return line.planeId;
+   242	  
+   243	  const segment = props.world.getSegment2D(props.elementId);
+   244	  if (segment) return segment.planeId;
+   245	  
+   246	  const circle = props.world.getCircle2D(props.elementId);
+   247	  if (circle) return circle.planeId;
+   248	  
+   249	  const guide = props.world.getGuide2D(props.elementId);
+   250	  if (guide) return guide.planeId;
+   251	  
+   252	  return null;
+   253	});
+   254	
+   255	const coordinates = computed(() => {
+   256	  if (!props.elementId || !props.world) return null;
+   257	  
+   258	  // Get coordinates from realization
+   259	  const point = props.world.getPoint2D(props.elementId);
+   260	  if (point) {

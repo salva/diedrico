@@ -1,0 +1,560 @@
+## any_casts
+frontend/src/application/appShell/AutoSaveUseCases.ts:61:} catch (error: any) {
+frontend/src/application/appShell/AutoSaveUseCases.ts:92:private async handleSaveError(error: any): Promise<void> {
+frontend/src/application/canvas/CanvasStyleUseCase.ts:13:cmd.addAndExecute(new UpdateElementStyleOp(request.elementId, request.planeId, request.style) as any);
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:27:const realization = plane.realizePoint2D(point, world as any); if (!realization) continue;
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:36:const realization = plane.realizeLine2D(line, world as any); if (!realization) continue;
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:49:const arcGeometry = (line as any).arcGeometry;
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:59:const realization = plane.realizeCircle2D(circle, world as any); if (!realization) continue;
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:76:function item(primitive: any, kind: any): CanvasRenderItem { return { id: primitive.id, kind, sourceEntityId: primitive.sourceEntityId, planeId: primitive.planeId, primitive, visible: primitive.visible, style: primitive.
+frontend/src/application/construction/ConstructionUseCases.ts:162:throw new Error(`Unsupported construction intent: ${(intent as any).type}`);
+frontend/src/application/construction/ConstructionUseCases.ts:219:function validateCoordinates(coords: any): void {
+frontend/src/application/threePresentation/PlanarElement3DSelector.ts:57:function lift(point2D: Vector3, matrix: any): Vector3 {
+frontend/src/application/threePresentation/ProjectionPlane3DSelector.ts:59:function to3DSegment(segment: Segment2D, matrix: any): SegmentGeometryDto {
+frontend/src/commands/factories/GuideSequenceFactory.ts:98:(primaryGuide as any).siblingGuideId = siblingGuideId;
+frontend/src/commands/factories/ProjectionSetupFactory.ts:62:line => line instanceof HalfHingeLine2D && (line as any).hingeLineId === hingeLineId
+frontend/src/commands/factories/ProjectionSetupFactory.ts:63:) as any;
+frontend/src/commands/factories/ProjectionSetupFactory.ts:107:line => line instanceof HalfHingeLine2D && (line as any).hingeLineId === hingeLineId
+frontend/src/commands/factories/ProjectionSetupFactory.ts:108:) as any;
+frontend/src/commands/operations/processTree/AddProcessTreeActionGroupOp.ts:14:parameters: Record<string, any>;
+frontend/src/commands/operations/processTree/AddProcessTreeActionGroupOp.ts:15:outputs: Record<string, any> = {};
+frontend/src/commands/operations/processTree/AddProcessTreeActionOp.ts:16:parameters: Record<string, any>;
+frontend/src/commands/operations/processTree/AddProcessTreeActionOp.ts:17:outputs: Record<string, any> = {};
+frontend/src/commands/operations/processTree/PopSubprocessOp.ts:15:parameters: Record<string, any> = {};
+frontend/src/commands/operations/processTree/PopSubprocessOp.ts:16:outputs: Record<string, any> = {};
+frontend/src/commands/operations/processTree/ProcessTreeOperations.ts:25:readonly parameters: Record<string, any>;
+frontend/src/commands/operations/processTree/ProcessTreeOperations.ts:26:outputs: Record<string, any> = {};
+frontend/src/commands/operations/processTree/ProcessTreeOperations.ts:101:readonly parameters: Record<string, any>;
+frontend/src/commands/operations/processTree/ProcessTreeOperations.ts:102:outputs: Record<string, any> = {};
+frontend/src/commands/operations/processTree/ProcessTreeOperations.ts:141:readonly parameters: Record<string, any>;
+frontend/src/commands/operations/processTree/ProcessTreeOperations.ts:142:outputs: Record<string, any> = {};
+frontend/src/commands/operations/processTree/PushSubprocessOp.ts:15:parameters: Record<string, any>;
+frontend/src/commands/operations/processTree/PushSubprocessOp.ts:16:outputs: Record<string, any> = {};
+frontend/src/commands/operations/processTree/RenameSubprocessOp.ts:10:parameters: Record<string, any>;
+frontend/src/commands/operations/processTree/RenameSubprocessOp.ts:11:outputs: Record<string, any> = {};
+frontend/src/commands/operations/processTree/ToggleEncapsulationOp.ts:10:parameters: Record<string, any>;
+frontend/src/commands/operations/processTree/ToggleEncapsulationOp.ts:11:outputs: Record<string, any> = {};
+frontend/src/commands/operations/processTree/ToggleEncapsulationOp.ts:22:} catch (e: any) {
+frontend/src/commands/operations/processTree/ToggleOutputOp.ts:10:parameters: Record<string, any>;
+frontend/src/commands/operations/processTree/ToggleOutputOp.ts:11:outputs: Record<string, any> = {};
+frontend/src/commands/operations/processTree/ToggleOutputOp.ts:22:} catch (e: any) {
+frontend/src/commands/operations/viewState/ViewStateOperations.ts:19:private viewStore: any;
+frontend/src/commands/operations/viewState/ViewStateOperations.ts:25:viewStore: any
+frontend/src/commands/operations/viewState/ViewStateOperations.ts:66:beforeState: Record<string, any>;
+frontend/src/commands/operations/viewState/ViewStateOperations.ts:67:afterState: Record<string, any>;
+frontend/src/commands/operations/viewState/ViewStateOperations.ts:70:private viewStore: any;
+frontend/src/commands/operations/viewState/ViewStateOperations.ts:75:beforeState: Record<string, any>,
+frontend/src/commands/operations/viewState/ViewStateOperations.ts:76:afterState: Record<string, any>,
+frontend/src/commands/operations/viewState/ViewStateOperations.ts:77:viewStore: any
+frontend/src/commands/operations/viewState/ViewStateOperations.ts:122:private viewStore: any;
+frontend/src/commands/operations/viewState/ViewStateOperations.ts:129:viewStore: any
+frontend/src/commands/operations/world/Add3DLineOp.ts:24:readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/Add3DLineOp.ts:25:outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/Add3DLineOp.ts:33:private visualStyle?: any          // Optional visual style
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:27:readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:28:outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/Add3DPointOp.ts:30:readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/Add3DPointOp.ts:31:outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/Add3DPointOp.ts:39:private visualStyle?: any          // Optional visual style
+frontend/src/commands/operations/world/Add3DSegmentOp.ts:25:readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/Add3DSegmentOp.ts:26:outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/Add3DSegmentOp.ts:34:private visualStyle?: any          // Optional visual style
+frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts:27:readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts:28:outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/AddBrokenHingeLineOp.ts:28:readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/AddBrokenHingeLineOp.ts:29:outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/AddBrokenHingeLineOp.ts:125:(world as any).hingeLines.set(bhlId, brokenHingeLine);
+frontend/src/commands/operations/world/AddBrokenHingeLineOp.ts:172:(world as any).hingeLines.delete(this.outputs.brokenHingeLineId);
+frontend/src/commands/operations/world/AddCircleCircleIntersectionPoint2DOp.ts:15:readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/AddCircleCircleIntersectionPoint2DOp.ts:16:outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/AddCircleOp.ts:13:readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/AddCircleOp.ts:14:outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/AddFreePointOp.ts:13:readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/AddFreePointOp.ts:14:outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/AddIntersectionPointOp.ts:15:readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/AddIntersectionPointOp.ts:16:outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/AddLineCircleIntersectionPoint2DOp.ts:15:readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/AddLineCircleIntersectionPoint2DOp.ts:16:outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/AddLineLineIntersectionPoint2DOp.ts:15:readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/AddLineLineIntersectionPoint2DOp.ts:16:outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/AddLineOp.ts:12:readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/AddLineOp.ts:13:outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/AddLineOp.ts:78:readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/AddLineOp.ts:79:outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/AddLineOp.ts:145:readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/AddLineOp.ts:146:outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/AddLineOp.ts:212:readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/AddLineOp.ts:213:outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/AddLineOp.ts:281:readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/AddLineOp.ts:282:outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/AddSegmentOp.ts:12:readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/AddSegmentOp.ts:13:outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/AddSiblingIntersectionPoint2DOp.ts:22:readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/AddSiblingIntersectionPoint2DOp.ts:23:outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/AddSiblingIntersectionPoint2DOp.ts:70:(primaryPoint as any).siblingPointId = undefined;
+frontend/src/commands/operations/world/InitializationOps.ts:33:readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/InitializationOps.ts:34:outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/InitializationOps.ts:81:(world as any).planes3D.delete(this.outputs.planeId);
+frontend/src/commands/operations/world/InitializationOps.ts:105:readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/InitializationOps.ts:106:outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/InitializationOps.ts:157:(world as any).projectionPlanes.delete(this.outputs.projPlaneId);
+frontend/src/commands/operations/world/InitializationOps.ts:184:readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/InitializationOps.ts:185:outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/InitializationOps.ts:274:readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/InitializationOps.ts:275:outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/InitializationOps.ts:314:(world as any).hingeLines.delete(this.outputs.hingeLineId);
+frontend/src/commands/operations/world/InitializationOps.ts:315:(world as any).mainHingeLineId = undefined;
+frontend/src/commands/operations/world/InitializationOps.ts:337:readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/InitializationOps.ts:338:outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/InitializationOps.ts:419:readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/InitializationOps.ts:420:outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/RemoveElementOps.ts:25:readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/RemoveElementOps.ts:26:outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/RemoveElementOps.ts:112:readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/RemoveElementOps.ts:113:outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/RemoveElementOps.ts:196:readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/RemoveElementOps.ts:197:outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/RemoveElementOps.ts:281:readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/RemoveElementOps.ts:282:outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/RemoveElementOps.ts:372:readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/RemoveElementOps.ts:373:outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/RemoveElementOps.ts:423:if ('siblingGuideId' in this.removedGuide && (this.removedGuide as any).siblingGuideId) {
+frontend/src/commands/operations/world/RemoveElementOps.ts:424:const siblingGuideId = (this.removedGuide as any).siblingGuideId;
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:35:readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:36:outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/UpdateFreePoint2DPositionOp.ts:22:readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/UpdateFreePoint2DPositionOp.ts:23:outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/UpdateFreePoint2DPositionOp.ts:34:const pos = this.newPosition as any;
+frontend/src/commands/operations/world/UpdateFreePoint2DPositionOp.ts:64:this.previousPosition = toVector3((freePoint as any).position);
+frontend/src/components/dialogs/NewProjectDialog.vue:77:} catch (err: any) {
+frontend/src/components/dialogs/PropertiesDialog.vue:291:const intersectionPoint = point as any; // Type assertion for intersection-specific properties
+frontend/src/components/dialogs/PropertiesDialog.vue:298:const lineByPoints = line as any;
+frontend/src/components/dialogs/PropertiesDialog.vue:306:const segmentByPoints = segment as any;
+frontend/src/components/dialogs/PropertiesDialog.vue:314:const circleByCenterRadius = circle as any;
+frontend/src/components/dialogs/PropertiesDialog.vue:322:const guidePerp = guide as any;
+frontend/src/components/panels/ElementsPanel.vue:278:function formatElement(element: any): any {
+frontend/src/components/panels/ElementsPanel.vue:302:function formatLabel(element: any): string {
+frontend/src/components/panels/ElementsPanel.vue:309:function getElementProperties(element: any): string {
+frontend/src/components/panels/ProcessTreeNode.vue:441:function formatParameterValue(value: any): string {
+frontend/src/components/toolbars/ToolFamilyButton.vue:31::class="{ active: toolStore.isToolActive(tool.id as any) }"
+frontend/src/components/toolbars/ToolFamilyButton.vue:37:<span v-if="toolStore.isToolActive(tool.id as any)" class="checkmark">✓</span>
+frontend/src/components/toolbars/ToolFamilyButton.vue:61:return props.family.tools.some(tool => toolStore.isToolActive(tool.id as any));
+frontend/src/components/toolbars/ToolFamilyButton.vue:66:const activeTool = props.family.tools.find(tool => toolStore.isToolActive(tool.id as any));
+frontend/src/components/workspace/SvgCanvas.vue:301:function isMovableFreePoint(point: any): point is FreePoint2D {
+frontend/src/components/workspace/SvgCanvas.vue:360:let element: any;
+frontend/src/components/workspace/SvgCanvas.vue:519:const msg = (currentToolInstance.value as any).getStatusMessage();
+frontend/src/components/workspace/SvgCanvas.vue:928:function handleSaveProperties(changes: any) {
+frontend/src/composables/useToolFeedback.ts:39:const setPreview = (elements: any[]) => {
+frontend/src/domain/calculations/CoordinateTransform.ts:152:const getCoord = (v: any, axis: 'x' | 'y' | 'z'): number => {
+frontend/src/domain/world/BrokenHingeLine.ts:82:? (auxPlane as any).t2PrimeLineId   // T2' on hinge plane (e.g., projPlane3)
+frontend/src/domain/world/BrokenHingeLine.ts:83:: (auxPlane as any).t2OtherTraceId; // T2 on other plane (e.g., projPlane4)
+frontend/src/domain/world/Element.ts:76:export function isElement(obj: any): obj is Element {
+frontend/src/domain/world/Element2D.ts:44:* function isElement2D(obj: any): obj is Element2D {
+frontend/src/domain/world/Element2D.ts:117:export function isElement2D(obj: any): obj is Element2D {
+frontend/src/domain/world/Element3D.ts:40:abstract realize3D(world: any): any;  // Using any to avoid circular dependencies
+frontend/src/domain/world/Element3D.ts:67:export function isElement3D(obj: any): obj is Element3D {
+frontend/src/domain/world/Plane.ts:30:abstract getPlaneEquation(world: any): Vector4 | null;
+frontend/src/domain/world/Plane.ts:36:realize3D(world: any): Plane3DRealization3D {
+frontend/src/domain/world/Plane.ts:159:getPlaneEquation(_world: any): Vector4 {
+frontend/src/domain/world/Plane.ts:269:getPlaneEquation(world: any): Vector4 | null {
+frontend/src/domain/world/descriptors/DescriptorRegistry.ts:34:elementClass: new (...args: any[]) => T,
+frontend/src/domain/world/descriptors/Element3DDescriptors.ts:155:(hhl as any).hingeLineId === hl.id && hhl.id === element.t1HingeTraceId
+
+## console
+frontend/src/commands/factories/DeletionSequenceFactory.ts:65:console.log('[DeletionSequenceFactory] Cascade deletion:', {
+frontend/src/commands/factories/GuideSequenceFactory.ts:58:console.log(`[GuideSequenceFactory] createGuideWithSibling called: plane=${planeId}, refLine=${referenceLineId}, point=${throughPointId}`);
+frontend/src/commands/factories/GuideSequenceFactory.ts:66:console.log(`[GuideSequenceFactory] Primary guide created: ${guideId}`);
+frontend/src/commands/factories/GuideSequenceFactory.ts:68:console.log(`[GuideSequenceFactory] Getting sibling plane info...`);
+frontend/src/commands/factories/GuideSequenceFactory.ts:80:console.log(`[GuideSequenceFactory] No sibling info - reference line is not a HalfHingeLine or BrokenHalfHingeLine2D`);
+frontend/src/commands/factories/GuideSequenceFactory.ts:84:console.log(`[GuideSequenceFactory] Sibling plane: ${siblingInfo.siblingPlaneId}, HHL: ${siblingInfo.siblingHalfHingeLineId}`);
+frontend/src/commands/factories/GuideSequenceFactory.ts:100:console.log(
+frontend/src/commands/factories/GuideSequenceFactory.ts:108:console.log(`[GuideSequenceFactory] Reference is BrokenHalfHingeLine2D - computing arc geometry`);
+frontend/src/commands/factories/GuideSequenceFactory.ts:121:console.log(`[GuideSequenceFactory] Arc geometry computed and stored`);
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:238:console.log(
+frontend/src/components/panels/ElementsPanel.vue:166:console.log('[ElementsPanel] Mounted, initial World version:', world.getVersion());
+frontend/src/components/panels/ElementsPanel.vue:170:// console.log('[ElementsPanel] Initial points:', totalPoints);
+frontend/src/components/panels/ElementsPanel.vue:171:// console.log('[ElementsPanel] Initial lines:', totalLines);
+frontend/src/components/panels/ElementsPanel.vue:176:console.log('[ElementsPanel] World version changed:', lastVersion, '→', currentVersion);
+frontend/src/components/panels/ElementsPanel.vue:195:console.log('[ElementsPanel] Computing projection planes list, version:', version, 'forceUpdate:', update);
+frontend/src/components/panels/ElementsPanel.vue:248:console.log('[ElementsPanel] Computing 3D elements');
+frontend/src/components/panels/ElementsPanel.vue:256:console.log('[ElementsPanel] 3D elements:', {
+frontend/src/components/toolbars/ToolFamilyButton.vue:96:console.log('[ToolFamilyButton] Dropdown opened for family:', props.family.id);
+frontend/src/components/toolbars/ToolFamilyButton.vue:97:console.log('[ToolFamilyButton] Tools in family:', props.family.tools);
+frontend/src/components/toolbars/ToolFamilyButton.vue:102:console.log('[ToolFamilyButton] Selecting tool:', toolId);
+frontend/src/components/workspace/SvgCanvas.vue:491:console.log('World initialized');
+frontend/src/components/workspace/SvgCanvas.vue:494:console.log('Points in world:', totalPoints);
+frontend/src/components/workspace/SvgCanvas.vue:516:console.log(`[SvgCanvas] Created new tool instance: ${newTool}`);
+frontend/src/components/workspace/SvgCanvas.vue:591:// console.log('Rendering point primitive:', p, '→ SVG attrs:', result.attributes);
+frontend/src/components/workspace/SvgCanvas.vue:615:// console.log('Rendering segment primitive:', p, '→ SVG attrs:', result.attributes);
+frontend/src/components/workspace/SvgCanvas.vue:628:// console.log('Rendering circle primitive:', p, '→ SVG attrs:', result.attributes);
+frontend/src/components/workspace/SvgCanvas.vue:686:// console.log('[SvgCanvas] Click at canvas coords:', { x: canvasPoint.x, y: canvasPoint.y });
+frontend/src/components/workspace/SvgCanvas.vue:710:// console.log('[SvgCanvas] Plane coords (u,v,w):', planePos);
+frontend/src/components/workspace/SvgCanvas.vue:731:// console.log('[SvgCanvas] Added to selection:', hit.elementId);
+frontend/src/components/workspace/SvgCanvas.vue:735:// console.log('[SvgCanvas] Selected:', hit.elementId);
+frontend/src/components/workspace/SvgCanvas.vue:740:// console.log('[SvgCanvas] Cleared selection');
+frontend/src/components/workspace/SvgCanvas.vue:770:// console.log('[SvgCanvas] Reactivity triggered, renderTick:', renderTick.value);
+frontend/src/components/workspace/SvgCanvas.vue:773:console.log('[SvgCanvas] Tool operation succeeded:', result.message);
+frontend/src/components/workspace/SvgCanvas.vue:802:console.log('[Zoom] BEFORE:', {
+frontend/src/components/workspace/SvgCanvas.vue:818:console.log('[Zoom] AFTER:', {
+frontend/src/components/workspace/SvgCanvas.vue:920:console.log('[SvgCanvas] Opening properties dialog for:', hit.elementId);
+frontend/src/components/workspace/SvgCanvas.vue:929:console.log('[SvgCanvas] Saving property changes:', changes);
+frontend/src/components/workspace/SvgCanvas.vue:944:console.log('[SvgCanvas] Style updated and command added to stack');
+frontend/src/components/workspace/SvgCanvas.vue:1166:console.log('[SvgCanvas] fitToView called');
+frontend/src/components/workspace/SvgCanvas.vue:1173:console.log('[SvgCanvas] No elements to fit, resetting to default view');
+frontend/src/components/workspace/SvgCanvas.vue:1215:console.log('[SvgCanvas] No valid bounds found, resetting to default view');
+frontend/src/components/workspace/SvgCanvas.vue:1239:console.log('[SvgCanvas] Fit to view:', {
+frontend/src/domain/processTree/ProcessTree.ts:238:console.log(`[ProcessTree.toggleSubprocessEncapsulation] subprocessId: ${subprocessId}, ${oldValue} → ${subprocess.showIntermediates}`);
+frontend/src/domain/processTree/ProcessTree.ts:255:console.log(`[ProcessTree.toggleOutput] subprocess ${nodeId}, ${oldValue} → ${subprocess.isOutput}`);
+frontend/src/domain/processTree/ProcessTree.ts:272:console.log(`[ProcessTree.toggleOutput] actionGroup ${nodeId}, ${oldValue} → ${group.isOutput}`);
+frontend/src/domain/processTree/ProcessTree.ts:278:console.log(`[ProcessTree.toggleOutput] action ${nodeId}, ${oldValue} → ${action.isOutput}`);
+frontend/src/domain/world/BrokenHingeLine.ts:117:console.log(`[BHL ${this.label}] ${traceName} on ${t2Line.planeId}: (${t2Real2D.point1.x.toFixed(2)}, ${t2Real2D.point1.y.toFixed(2)})`);
+frontend/src/domain/world/BrokenHingeLine.ts:118:console.log(`[BHL ${this.label}] 3D point: (${point3D.x.toFixed(2)}, ${point3D.y.toFixed(2)}, ${point3D.z.toFixed(2)}, ${point3D.w.toFixed(2)})`);
+frontend/src/domain/world/DependencyService.ts:310:console.log('=== CASCADE INVALIDATION START ===');
+frontend/src/domain/world/DependencyService.ts:311:console.log(`Root element: ${elementId}`);
+frontend/src/domain/world/DependencyService.ts:326:console.log(`${indent}${id} → invalidates ${directDependents.length} descendant(s):`);
+frontend/src/domain/world/DependencyService.ts:328:console.log(`${indent}  • ${depId}`);
+frontend/src/domain/world/DependencyService.ts:341:console.log(`=== CASCADE COMPLETE (${visited.size} elements invalidated) ===\n`);
+frontend/src/domain/world/DependencyService.ts:352:console.log('=== INVALIDATION PROPAGATION TRACE ===');
+frontend/src/domain/world/DependencyService.ts:353:console.log(`Starting from: ${elementId}`);
+frontend/src/domain/world/DependencyService.ts:354:console.log('');
+frontend/src/domain/world/DependencyService.ts:369:console.log(`${indent}[Depth ${depth}] ${id}`);
+frontend/src/domain/world/DependencyService.ts:371:console.log(`${indent}  → Invalidates ${dependents.length} dependent(s):`);
+frontend/src/domain/world/DependencyService.ts:373:console.log(`${indent}    • ${depId}`);
+frontend/src/domain/world/DependencyService.ts:376:console.log(`${indent}  → (leaf element - no dependents)`);
+frontend/src/domain/world/DependencyService.ts:389:console.log('');
+frontend/src/domain/world/DependencyService.ts:390:console.log(`Total elements invalidated: ${trace.length}`);
+frontend/src/domain/world/DependencyService.ts:391:console.log('=== END INVALIDATION TRACE ===');
+frontend/src/domain/world/DependencyService.ts:403:console.log('=== DEPENDENCY GRAPH ===');
+frontend/src/domain/world/DependencyService.ts:404:console.log(`Total elements tracked: ${this.dependenciesMap.size}`);
+frontend/src/domain/world/DependencyService.ts:405:console.log('');
+frontend/src/domain/world/DependencyService.ts:421:console.log(`Element: ${elementId}`);
+frontend/src/domain/world/DependencyService.ts:423:console.log(`  Depends on (${dependencies.length}):`);
+frontend/src/domain/world/DependencyService.ts:424:dependencies.forEach(dep => console.log(`    <- ${dep}`));
+frontend/src/domain/world/DependencyService.ts:426:console.log(`  Depends on: (none - base element)`);
+frontend/src/domain/world/DependencyService.ts:430:console.log(`  Depended on by (${dependents.length}):`);
+frontend/src/domain/world/DependencyService.ts:431:dependents.forEach(dep => console.log(`    -> ${dep}`));
+frontend/src/domain/world/DependencyService.ts:433:console.log(`  Depended on by: (none - leaf element)`);
+frontend/src/domain/world/DependencyService.ts:435:console.log('');
+frontend/src/domain/world/DependencyService.ts:438:console.log('=== END DEPENDENCY GRAPH ===');
+frontend/src/domain/world/Line.ts:632:console.log('[TangentLine] Through Point:', {
+frontend/src/domain/world/Line.ts:827:console.log('[TangentLine] Parallel to Line:', {
+frontend/src/domain/world/Line3D.ts:114:console.log('[Line3DFromProjections] Reconstructing 3D line from projections:', {
+frontend/src/domain/world/Line3D.ts:141:console.log('[Line3DFromProjections] 2D line data:', {
+frontend/src/domain/world/Line3D.ts:207:console.log('[Line3DFromProjections] Plane 1 (3D):', {
+frontend/src/domain/world/Line3D.ts:258:console.log('[Line3DFromProjections] Plane 2 (3D):', {
+frontend/src/domain/world/Line3D.ts:296:console.log('[Line3DFromProjections] 3D line direction:', [direction3D.x, direction3D.y, direction3D.z]);
+frontend/src/domain/world/Line3D.ts:308:console.log('[Line3DFromProjections] Plane equations:', {
+frontend/src/domain/world/Line3D.ts:336:console.log('[Line3DFromProjections] Fixed z=0, solved for x,y');
+frontend/src/domain/world/Line3D.ts:353:console.log('[Line3DFromProjections] Fixed y=0, solved for x,z');
+frontend/src/domain/world/Line3D.ts:370:console.log('[Line3DFromProjections] Fixed x=0, solved for y,z');
+frontend/src/domain/world/Line3D.ts:373:console.log('[Line3DFromProjections] 3D line point:', [point3D.x, point3D.y, point3D.z]);
+frontend/src/domain/world/Line3D.ts:374:console.log('[Line3DFromProjections] ✓ Success! 3D line reconstructed');
+frontend/src/domain/world/Plane.ts:272:console.log('[Plane3DFromTraces] getPlaneEquation called for plane:', this.id, 'trace1:', this.trace1, 'trace2:', this.trace2);
+frontend/src/domain/world/Plane.ts:302:console.log('[Plane3DFromTraces] All realizations feasible - computing plane');
+frontend/src/domain/world/Plane.ts:308:console.log('[Plane3DFromTraces] t1 in 3D: t1PointIn3D:', t1PointIn3D, 't1DirIn3D:', t1DirIn3D);
+frontend/src/domain/world/Plane.ts:314:console.log('[Plane3DFromTraces] t2 in 3D: t2PointIn3D:', t2PointIn3D, 't2DirIn3D:', t2DirIn3D);
+frontend/src/domain/world/Plane.ts:329:console.log('[Plane3DFromTraces] Traces intersect at:', intersection.position);
+frontend/src/domain/world/Plane.ts:337:console.log('[Plane3DFromTraces] Normalized normal:', [a, b, c]);
+frontend/src/domain/world/Plane.ts:342:console.log('[Plane3DFromTraces] Plane equation: a=', a, 'b=', b, 'c=', c, 'd=', d);
+frontend/src/domain/world/Point.ts:648:console.log(`[SiblingIntersectionPoint2D] BHHL 3D round-trip: R=(${R.x.toFixed(2)},${R.y.toFixed(2)}) → 3D=(${R_3D.x.toFixed(2)},${R_3D.y.toFixed(2)},${R_3D.z.toFixed(2)}) → R'=(${R_prime.x.toFixed(2)},${R_prime.y.toFixe
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:150:console.log(`[BHHL ${this.label}] ${traceName} (${t2TraceId}) on ${t2Line.planeId}: point=(${t2Real2D.point1.x.toFixed(2)}, ${t2Real2D.point1.y.toFixed(2)})`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:151:console.log(`[BHHL ${this.label}] origin2D: (${origin2D.x.toFixed(2)}, ${origin2D.y.toFixed(2)}, z=${origin2D.z.toFixed(2)}) on plane ${this.planeId}`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:168:console.log(`[BHHL ${this.label}] Looking for T1 hinge between ${this.planeId} and ${mainHinge.plane1Id}`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:170:console.log(`[BHHL ${this.label}] Available hinge lines:`, allHingeLines.map(hl => `${hl.id}(${hl.plane1Id}-${hl.plane2Id})`));
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:182:console.log(`[BHHL ${this.label}] Found T1 hinge: ${t1HingeLine.id}`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:186:console.log(`[BHHL ${this.label}] Lines on plane ${this.planeId}:`, allLinesOnPlane.map(l => `${l.id}(${l.constructor.name})`));
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:199:console.log(`[BHHL ${this.label}] Found T1 trace: ${t1HalfHinge.id} (${t1HalfHinge.label})`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:207:console.log(`[BHHL ${this.label}] T1 realization feasible`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:212:console.log(`[BHHL ${this.label}] Guide vector parallel to T1: (${guideVector.x.toFixed(2)}, ${guideVector.y.toFixed(2)})`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:213:console.log(`[BHHL ${this.label}] ✅ REALIZATION COMPLETE - returning feasible result`);
+frontend/src/services/factories/PlaneSequenceFactory.ts:132:console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] About to add ProcessTree action for projPlane:', projPlaneId, 'groupId:', groupId);
+frontend/src/services/factories/PlaneSequenceFactory.ts:134:console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] ProcessTree action added for projPlane');
+frontend/src/services/factories/PlaneSequenceFactory.ts:144:console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] About to add ProcessTree action for hingeLine:', hingeLineId);
+frontend/src/services/factories/PlaneSequenceFactory.ts:149:console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] ProcessTree action added for hingeLine');
+frontend/src/services/factories/PlaneSequenceFactory.ts:154:console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] About to add ProcessTree action for HHL #1:', hhl1Op.outputs.lineId, 'groupId:', groupId);
+frontend/src/services/factories/PlaneSequenceFactory.ts:159:console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] ProcessTree action added for HHL #1');
+frontend/src/services/factories/PlaneSequenceFactory.ts:163:console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] About to add ProcessTree action for HHL #2:', hhl2Op.outputs.lineId, 'groupId:', groupId);
+frontend/src/services/factories/PlaneSequenceFactory.ts:168:console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] ProcessTree action added for HHL #2');
+frontend/src/services/factories/PlaneSequenceFactory.ts:230:console.log('[PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane] About to add ProcessTree action for BrokenHingeLine:', brokenHingeLineId, 'groupId:', groupId);
+frontend/src/services/factories/PlaneSequenceFactory.ts:235:console.log('[PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane] ProcessTree action added for BrokenHingeLine');
+frontend/src/services/factories/PlaneSequenceFactory.ts:237:console.log('[PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane] About to add ProcessTree action for BHHL #1:', bhhl1Id, 'groupId:', groupId);
+frontend/src/services/factories/PlaneSequenceFactory.ts:242:console.log('[PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane] ProcessTree action added for BHHL #1');
+frontend/src/services/factories/PlaneSequenceFactory.ts:243:console.log('[PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane] ProcessTree action added for BHHL #1');
+frontend/src/services/factories/PlaneSequenceFactory.ts:245:console.log('[PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane] About to add ProcessTree action for BHHL #2:', bhhl2Id, 'groupId:', groupId);
+frontend/src/services/factories/PlaneSequenceFactory.ts:250:console.log('[PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane] ProcessTree action added for BHHL #2');
+frontend/src/stores/settingsStore.ts:125:console.log('[SettingsStore] Settings saved to localStorage');
+frontend/src/stores/settingsStore.ts:218:console.log('[SettingsStore] Settings reset to defaults');
+frontend/src/stores/settingsStore.ts:226:console.log(`[SettingsStore] ${category} settings reset to defaults`);
+frontend/tests/e2e/debug.spec.ts:4:page.on('console', msg => console.log('BROWSER LOG:', msg.text()));
+frontend/tests/e2e/debug.spec.ts:5:page.on('requestfailed', request => console.log(`REQUEST FAILED: ${request.url()} - ${request.failure()?.errorText}`));
+frontend/tests/e2e/debug.spec.ts:7:if (response.status() === 404) console.log(`RESPONSE 404: ${response.url()}`);
+frontend/tests/e2e/debug.spec.ts:9:page.on('pageerror', exception => console.log(`In-page error: "${exception}"`));
+frontend/tests/e2e/debug.spec.ts:15:console.log('SVG count:', count);
+frontend/tests/e2e/debug.spec.ts:17:console.log('SVG visible:', visible);
+frontend/tests/e2e/debug.spec.ts:19:console.log('SVG class:', classes);
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:99:console.log('[TEST] Point C coords on P_H:', cRealization.position);
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:100:console.log('[TEST] Point C\' coords on P_V:', cPrimeRealization.position);
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:142:console.log('[Test] Point C coords:', coordsC.position);
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:143:console.log('[Test] Point C\' coords:', coordsCPrime.position);
+
+## todo
+frontend/src/commands/operations/processTree/ProcessTreeOperations.ts:104:// TODO: Implement when needed
+frontend/src/commands/operations/processTree/ProcessTreeOperations.ts:144:// TODO: Implement when needed
+frontend/src/components/dialogs/PropertiesDialog.vue:333:// TODO: Get creation action from ProcessTree
+frontend/src/components/dialogs/PropertiesDialog.vue:357:// TODO: Load current element properties from world
+frontend/src/components/panels/ElementTypeGroup.vue:64:// TODO: Emit highlight event
+frontend/src/components/panels/ElementTypeGroup.vue:68:// TODO: Clear highlight
+frontend/src/config/toolFamilies.ts:27:import ExampleIcon from '@/components/icons/toolbar/FreePointIcon.vue';  // TODO: Create dedicated icon for examples
+frontend/src/config/toolFamilies.ts:212:icon: Create3DPlaneIcon,  // TODO: Create dedicated icon for auxiliary projection planes
+frontend/src/domain/world/Line.ts:270:* TODO: Implement in later phase when parallel line tool is added
+frontend/src/domain/world/Line.ts:356:* TODO: Implement in later phase when perpendicular line tool is added
+frontend/src/domain/world/Point3D.ts:185:* TODO: Implement proper validation in GeometryValidator
+frontend/tests/e2e/basic-construction.spec.ts:24:// TODO: Implement project initialization
+frontend/tests/e2e/basic-construction.spec.ts:28:// TODO: Replace placeholder with UI-driven point-tool coverage when the current SvgCanvas workflow has stable test IDs:
+frontend/tests/e2e/basic-construction.spec.ts:53:// TODO: Replace placeholder with UI-driven segment-tool coverage when the current SvgCanvas workflow has stable test IDs:
+frontend/tests/e2e/basic-construction.spec.ts:79:// TODO: Replace placeholder with UI-driven panel/tool coverage when the current app shell exposes stable test IDs:
+frontend/tests/e2e/basic-construction.spec.ts:104:// TODO: Once panels are integrated:
+frontend/tests/e2e/create-point.spec.ts:137:// TODO: Add assertions for hover feedback (cursor change, preview indicator, etc.)
+frontend/tests/e2e/dependencies.spec.ts:40:// TODO: Move one of the base points and verify intersection point updates
+frontend/tests/e2e/dependencies.spec.ts:68:// TODO: Move the center point and verify circle moves with it
+frontend/tests/e2e/dependencies.spec.ts:92:// TODO: Move one of the points and verify line rotates/moves
+frontend/tests/e2e/dependencies.spec.ts:134:// TODO: Move point1 and verify that line1, intersection, and circle all update
+frontend/tests/e2e/dependencies.spec.ts:168:// TODO: Move the shared center point and verify all three circles move together
+frontend/tests/e2e/dependencies.spec.ts:195:// TODO: Hover over line action and verify it highlights dependent points
+frontend/tests/e2e/dependencies.spec.ts:256:// TODO: Programmatically move a point and verify that:
+frontend/tests/e2e/distance-transport.spec.ts:26:// TODO: Implement project initialization
+frontend/tests/e2e/distance-transport.spec.ts:30:// TODO: Replace placeholder with UI-driven distance-transport coverage when the current SvgCanvas workflow exposes stable test IDs:
+frontend/tests/e2e/distance-transport.spec.ts:69:// TODO: Once rendering is complete:
+frontend/tests/e2e/distance-transport.spec.ts:94:// TODO: Once coordinate system and measurements are integrated:
+frontend/tests/e2e/distance-transport.spec.ts:112:// TODO: Once parametric update is implemented:
+frontend/tests/e2e/distance-transport.spec.ts:135:// TODO: Once Actions panel is complete:
+frontend/tests/e2e/infeasibility.spec.ts:21:// TODO: Initialize project
+frontend/tests/e2e/infeasibility.spec.ts:25:// TODO: Once infeasibility constraints are implemented:
+frontend/tests/e2e/infeasibility.spec.ts:57:// TODO: Once dependency propagation is integrated:
+frontend/tests/e2e/infeasibility.spec.ts:88:// TODO: Once action infeasibility tracking is implemented:
+frontend/tests/e2e/infeasibility.spec.ts:109:// TODO: Once infeasibility clearing is integrated:
+frontend/tests/e2e/infeasibility.spec.ts:133:// TODO: Test isolation of infeasibility
+frontend/tests/e2e/infeasibility.spec.ts:163:// TODO: Performance test for infeasibility during dragging
+frontend/tests/e2e/navigation.spec.ts:21:// TODO: Initialize project with some elements for reference
+frontend/tests/e2e/navigation.spec.ts:25:// TODO: Once navigation and tools are integrated:
+frontend/tests/e2e/navigation.spec.ts:52:// TODO: Once zoom and tools are integrated:
+frontend/tests/e2e/navigation.spec.ts:79:// TODO: Test viewport persistence:
+frontend/tests/e2e/navigation.spec.ts:101:// TODO: Once keyboard shortcuts are implemented:
+frontend/tests/e2e/navigation.spec.ts:129:// TODO: Once mouse navigation is implemented:
+frontend/tests/e2e/navigation.spec.ts:156:// TODO: Performance test for navigation with many elements
+frontend/tests/e2e/navigation.spec.ts:189:// TODO: Test that tool preview (e.g., line preview) persists during pan/zoom
+frontend/tests/e2e/navigation.spec.ts:220:// TODO: Once touch support is implemented:
+frontend/tests/e2e/parametric-update.spec.ts:21:// TODO: Initialize project
+frontend/tests/e2e/parametric-update.spec.ts:25:// TODO: Once drag-and-drop and MoveFreePointCommand are integrated:
+frontend/tests/e2e/parametric-update.spec.ts:54:// TODO: Once complex dependencies are integrated:
+frontend/tests/e2e/parametric-update.spec.ts:85:// TODO: This should be prevented by the dependency graph validation
+frontend/tests/e2e/parametric-update.spec.ts:106:// TODO: Performance test for selective recomputation
+frontend/tests/e2e/parametric-update.spec.ts:129:// TODO: Performance test for smooth dragging
+frontend/tests/e2e/point-transport.spec.ts:31:// TODO: Implement full E2E test once HL visualization is available
+frontend/tests/e2e/point-transport.spec.ts:44:// TODO: Test error handling:
+frontend/tests/e2e/point-transport.spec.ts:56:// TODO: Test undo functionality:
+frontend/tests/unit/commands/createFreePoint.spec.ts:121:// TODO Phase 83: Re-enable when visualStyle is fully implemented
+frontend/tests/unit/utils/projectionPlaneUtils.spec.ts:151:// TODO: Add comprehensive tests for computeProjectionPlaneMatrices once we have test fixtures
+frontend/tests/unit/utils/projectionPlaneUtils.spec.ts:156:describe('computeProjectionPlaneMatrices - TODO', () => {
+
+## direct_ops_ui
+frontend/src/application/appShell/AppShellRuntime.ts:23:const commandStack = new CommandStack();
+frontend/src/application/appShell/SelectionUseCases.ts:36:const deleteCommand = new Command('Delete elements', this.world);
+frontend/src/application/appShell/SelectionUseCases.ts:39:this.commandStack.push(deleteCommand);
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:5:import { UpdateFreePoint2DPositionOp } from '@/commands/operations/world/UpdateFreePoint2DPositionOp';
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:12:const cmd = new Command(`Move point ${request.label ?? request.pointId}`, this.world);
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:33:this.commandStack.push(cmd);
+frontend/src/application/canvas/CanvasStyleUseCase.ts:4:import { UpdateElementStyleOp } from '@/commands/operations/world/UpdateElementStyleOp';
+frontend/src/application/canvas/CanvasStyleUseCase.ts:11:const cmd = new Command(`Update style: ${request.elementId}`, this.world);
+frontend/src/application/canvas/CanvasStyleUseCase.ts:15:this.commandStack.push(cmd);
+frontend/src/application/construction/ConstructionUseCases.ts:14:import { AddSegment2DByPointsOp } from '@/commands/operations/world/AddSegmentOp';
+frontend/src/application/construction/ConstructionUseCases.ts:15:import { Add3DPointOp } from '@/commands/operations/world/Add3DPointOp';
+frontend/src/application/construction/ConstructionUseCases.ts:16:import { Add3DLineOp } from '@/commands/operations/world/Add3DLineOp';
+frontend/src/application/construction/ConstructionUseCases.ts:17:import { Add3DSegmentOp } from '@/commands/operations/world/Add3DSegmentOp';
+frontend/src/application/construction/ConstructionUseCases.ts:18:import { AddLine2DTangentToCircleThroughPointOp, AddLine2DTangentToCircleParallelToLineOp } from '@/commands/operations/world/AddLineOp';
+frontend/src/application/construction/ConstructionUseCases.ts:20:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/application/construction/ConstructionUseCases.ts:21:import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+frontend/src/application/construction/ConstructionUseCases.ts:36:const cmd = new Command(intent.description, world);
+frontend/src/application/construction/ConstructionUseCases.ts:44:commandStack.push(cmd);
+frontend/src/application/processHistory/ProcessHistoryUseCases.ts:3:import { PopSubprocessOp } from '@/commands/operations/processTree/PopSubprocessOp';
+frontend/src/application/processHistory/ProcessHistoryUseCases.ts:4:import { PushSubprocessOp } from '@/commands/operations/processTree/PushSubprocessOp';
+frontend/src/application/processHistory/ProcessHistoryUseCases.ts:5:import { RenameSubprocessOp } from '@/commands/operations/processTree/RenameSubprocessOp';
+frontend/src/application/processHistory/ProcessHistoryUseCases.ts:6:import { ToggleEncapsulationOp } from '@/commands/operations/processTree/ToggleEncapsulationOp';
+frontend/src/application/processHistory/ProcessHistoryUseCases.ts:7:import { ToggleOutputOp } from '@/commands/operations/processTree/ToggleOutputOp';
+frontend/src/application/processHistory/ProcessHistoryUseCases.ts:8:import type { IOperation } from '@/commands/operations/IOperation';
+frontend/src/application/processHistory/ProcessHistoryUseCases.ts:73:const command = new Command(description, this.world);
+frontend/src/application/processHistory/ProcessHistoryUseCases.ts:78:this.commandStack.push(command);
+frontend/src/application/world/initializeWorld.ts:4:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/application/world/initializeWorld.ts:5:import { PopSubprocessOp, PushSubprocessOp } from '@/commands/operations/processTree';
+frontend/src/application/world/initializeWorld.ts:22:const initCmd = new Command('Initialize World', world);
+frontend/src/application/world/initializeWorld.ts:34:commandStack.push(initCmd);
+frontend/src/commands/Command.ts:27:*    const cmd = new Command("Create segment", world);
+frontend/src/commands/Command.ts:121:const command = new Command(input.description, world);
+frontend/src/commands/factories/DeletionSequenceFactory.ts:29:} from '@/commands/operations/world/RemoveElementOps';
+frontend/src/commands/factories/DeletionSequenceFactory.ts:30:import { RemoveActionFromProcessTreeOp } from '@/commands/operations/processTree/ProcessTreeOperations';
+frontend/src/commands/factories/GuideSequenceFactory.ts:38:* const cmd = new Command('Create guide', world);
+frontend/src/commands/factories/GuideSequenceFactory.ts:48:* commandStack.push(cmd);
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:27:* const cmd = new Command('Create intersection', world);
+frontend/src/commands/factories/LineSequenceFactory.ts:21:* const cmd = new Command('Create construction', world);
+frontend/src/commands/factories/PointSequenceFactory.ts:17:import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
+frontend/src/commands/factories/PointSequenceFactory.ts:18:import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+frontend/src/services/ProjectService.ts:8:import type { OperationDescriptor } from '@/commands/operations/IOperation';
+frontend/src/services/ProjectService.ts:9:import { deserializeOperation } from '@/commands/operations/OperationRegistry';
+frontend/src/services/factories/PlaneSequenceFactory.ts:19:import { Add3DPlaneOp } from '@/commands/operations/world/Add3DPlaneOp';
+frontend/src/services/factories/PlaneSequenceFactory.ts:20:import { AddAuxiliaryProjectionPlaneOp } from '@/commands/operations/world/AddAuxiliaryProjectionPlaneOp';
+frontend/src/services/factories/PlaneSequenceFactory.ts:21:import { AddHingeLineOp, AddHalfHingeLine2DOp } from '@/commands/operations/world/InitializationOps';
+frontend/src/services/factories/PlaneSequenceFactory.ts:22:import { AddBrokenHingeLineOp } from '@/commands/operations/world/AddBrokenHingeLineOp';
+frontend/src/services/factories/PlaneSequenceFactory.ts:23:import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+frontend/src/services/factories/PlaneSequenceFactory.ts:24:import { UpdateElementStyleOp } from '@/commands/operations/world/UpdateElementStyleOp';
+frontend/src/stores/processStore.ts:17:commandHistory: new CommandStack()
+frontend/tests/e2e/command-chaining.spec.ts:38:* const command = new Command();
+frontend/tests/e2e/command-chaining.spec.ts:67:* commandStack.push(command);
+frontend/tests/helpers/worldHelpers.ts:44:const commandStack = new CommandStack();
+frontend/tests/integration/factories/AllFactories.spec.ts:20:import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
+frontend/tests/integration/factories/AllFactories.spec.ts:22:import { AddLine2DByTwoPointsOp } from '@/commands/operations/world/AddLineOp';
+frontend/tests/integration/factories/AllFactories.spec.ts:23:import { AddCircle2DByCenterAndPointOp } from '@/commands/operations/world/AddCircleOp';
+frontend/tests/integration/factories/AllFactories.spec.ts:42:const setupCmd = new Command('Setup', world);
+frontend/tests/integration/factories/AllFactories.spec.ts:53:commandStack.push(setupCmd);
+frontend/tests/integration/factories/AllFactories.spec.ts:60:const guideCmd = new Command('Create guide', world);
+frontend/tests/integration/factories/AllFactories.spec.ts:66:commandStack.push(guideCmd);
+frontend/tests/integration/factories/AllFactories.spec.ts:99:const setupCmd = new Command('Setup line', world);
+frontend/tests/integration/factories/AllFactories.spec.ts:114:commandStack.push(setupCmd);
+frontend/tests/integration/factories/AllFactories.spec.ts:117:const guideCmd = new Command('Create guide', world);
+frontend/tests/integration/factories/AllFactories.spec.ts:123:commandStack.push(guideCmd);
+frontend/tests/integration/factories/AllFactories.spec.ts:138:const setupCmd = new Command('Setup', world);
+frontend/tests/integration/factories/AllFactories.spec.ts:150:commandStack.push(setupCmd);
+frontend/tests/integration/factories/AllFactories.spec.ts:158:const deleteCmd = new Command('Delete with cascade', world);
+frontend/tests/integration/factories/AllFactories.spec.ts:162:commandStack.push(deleteCmd);
+frontend/tests/integration/factories/AllFactories.spec.ts:188:const setupCmd = new Command('Setup', world);
+frontend/tests/integration/factories/AllFactories.spec.ts:200:commandStack.push(setupCmd);
+frontend/tests/integration/factories/AllFactories.spec.ts:208:const deleteCmd = new Command('Delete with cascade', world);
+frontend/tests/integration/factories/AllFactories.spec.ts:212:commandStack.push(deleteCmd);
+frontend/tests/integration/factories/AllFactories.spec.ts:224:const setupCmd = new Command('Setup', world);
+frontend/tests/integration/factories/AllFactories.spec.ts:236:commandStack.push(setupCmd);
+frontend/tests/integration/factories/AllFactories.spec.ts:243:const deleteCmd = new Command('Delete multiple', world);
+frontend/tests/integration/factories/AllFactories.spec.ts:247:commandStack.push(deleteCmd);
+frontend/tests/integration/guide-creation.test.ts:5:import { AddFreePoint2DOp } from '../../src/commands/operations/AddFreePoint2DOp';
+frontend/tests/integration/guide-creation.test.ts:6:import { AddLine2DOp } from '../../src/commands/operations/AddLine2DOp';
+frontend/tests/integration/guide-creation.test.ts:26:const cmd = new Command('Setup test geometry', world);
+frontend/tests/integration/guide-creation.test.ts:50:commandStack.push(cmd);
+frontend/tests/integration/guide-creation.test.ts:53:const guideCmd = new Command('Create guide on regular line', world);
+frontend/tests/integration/guide-creation.test.ts:63:commandStack.push(guideCmd);
+frontend/tests/integration/guide-creation.test.ts:92:const cmd = new Command('Create test point', world);
+frontend/tests/integration/guide-creation.test.ts:98:commandStack.push(cmd);
+frontend/tests/integration/guide-creation.test.ts:101:const guideCmd = new Command('Create guide on hinge line', world);
+frontend/tests/integration/guide-creation.test.ts:111:commandStack.push(guideCmd);
+frontend/tests/integration/guide-creation.test.ts:152:const cmd = new Command('Setup', world);
+frontend/tests/integration/guide-creation.test.ts:158:commandStack.push(cmd);
+frontend/tests/integration/guide-creation.test.ts:162:const guideCmd = new Command('Create guide', world);
+frontend/tests/integration/processTree-stack.test.ts:6:import { PushSubprocessOp } from '../../src/commands/operations/processTree/PushSubprocessOp';
+frontend/tests/integration/processTree-stack.test.ts:7:import { PopSubprocessOp } from '../../src/commands/operations/processTree/PopSubprocessOp';
+frontend/tests/integration/processTree-stack.test.ts:23:const cmd = new Command('Push subprocess', world);
+frontend/tests/integration/processTree-stack.test.ts:26:commandStack.push(cmd);
+frontend/tests/integration/processTree-stack.test.ts:30:const cmd = new Command('Pop subprocess', world);
+frontend/tests/integration/processTree-stack.test.ts:33:commandStack.push(cmd);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:23:import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:24:import { RemovePoint2DOp } from '@/commands/operations/world/RemoveElementOps';
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:44:const createCmd = new Command('Create points', world);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:48:commandStack.push(createCmd);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:54:const deleteCmd = new Command('Delete point', world);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:57:commandStack.push(deleteCmd);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:87:const createCmd = new Command('Create points', world);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:92:commandStack.push(createCmd);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:99:const delete1Cmd = new Command('Delete p1', world);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:102:commandStack.push(delete1Cmd);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:105:const delete3Cmd = new Command('Delete p3', world);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:108:commandStack.push(delete3Cmd);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:135:const createCmd = new Command('Create', world);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:138:commandStack.push(createCmd);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:142:const deleteCmd = new Command('Delete', world);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:145:commandStack.push(deleteCmd);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:174:const create1Cmd = new Command('Create 1', world);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:177:commandStack.push(create1Cmd);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:181:const deleteCmd = new Command('Delete', world);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:184:commandStack.push(deleteCmd);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:187:const create2Cmd = new Command('Create 2', world);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:190:commandStack.push(create2Cmd);
+frontend/tests/integration/projectService.determinism.spec.ts:23:import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
+frontend/tests/integration/projectService.determinism.spec.ts:24:import { AddLine2DByTwoPointsOp } from '@/commands/operations/world/AddLineOp';
+frontend/tests/integration/projectService.determinism.spec.ts:25:import { AddCircle2DByCenterAndPointOp } from '@/commands/operations/world/AddCircleOp';
+frontend/tests/integration/projectService.determinism.spec.ts:26:import { AddGuide2DPerpendicularToLineOp } from '@/commands/operations/world/AddGuideOp';
+frontend/tests/integration/projectService.determinism.spec.ts:27:import { AddLineLineIntersectionPoint2DOp } from '@/commands/operations/world/AddLineLineIntersectionPoint2DOp';
+frontend/tests/integration/projectService.determinism.spec.ts:28:import { RemovePoint2DOp } from '@/commands/operations/world/RemoveElementOps';
+frontend/tests/integration/projectService.determinism.spec.ts:40:const cmd1 = new Command('Create points', world);
+frontend/tests/integration/projectService.determinism.spec.ts:50:commandStack.push(cmd1);
+frontend/tests/integration/projectService.determinism.spec.ts:53:const cmd2 = new Command('Create lines', world);
+frontend/tests/integration/projectService.determinism.spec.ts:60:commandStack.push(cmd2);
+frontend/tests/integration/projectService.determinism.spec.ts:63:const cmd3 = new Command('Create intersection', world);
+frontend/tests/integration/projectService.determinism.spec.ts:67:commandStack.push(cmd3);
+frontend/tests/integration/projectService.determinism.spec.ts:70:const cmd4 = new Command('Create circle', world);
+frontend/tests/integration/projectService.determinism.spec.ts:73:commandStack.push(cmd4);
+frontend/tests/integration/projectService.determinism.spec.ts:78:const cmd5 = new Command('Create guide', world);
+frontend/tests/integration/projectService.determinism.spec.ts:81:commandStack.push(cmd5);
+frontend/tests/integration/projectService.determinism.spec.ts:85:const cmd6 = new Command('Delete point', world);
+frontend/tests/integration/projectService.determinism.spec.ts:88:commandStack.push(cmd6);
+frontend/tests/integration/projectService.determinism.spec.ts:141:const cmd = new Command('Create elements', world);
+frontend/tests/integration/projectService.determinism.spec.ts:146:commandStack.push(cmd);
+frontend/tests/integration/worldInitialization.spec.ts:21:const commandStack = new CommandStack();
+frontend/tests/integration/worldInitialization.spec.ts:50:const commandStack = new CommandStack();
+frontend/tests/integration/worldInitialization.spec.ts:67:const commandStack = new CommandStack();
+frontend/tests/integration/worldInitialization.spec.ts:82:const commandStack = new CommandStack();
+frontend/tests/integration/worldInitialization.spec.ts:114:const commandStack = new CommandStack();
+frontend/tests/integration/worldInitialization.spec.ts:149:const commandStack = new CommandStack();
+frontend/tests/integration/worldInitialization.spec.ts:169:const commandStack = new CommandStack();
+frontend/tests/integration/worldInitialization.spec.ts:184:const commandStack = new CommandStack();
+frontend/tests/integration/worldInitialization.spec.ts:198:const commandStack = new CommandStack();
+frontend/tests/integration/worldInitialization.spec.ts:221:const commandStack = new CommandStack();
+frontend/tests/integration/worldInitialization.spec.ts:247:const commandStack = new CommandStack();
+frontend/tests/integration/worldInitialization.spec.ts:260:const commandStack = new CommandStack();
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:330:const commandStack = new CommandStack();
+frontend/tests/unit/application/canvasToolControllers.spec.ts:250:expect(source).not.toContain('new Command(');
+frontend/tests/unit/application/panelToolbarIntentControllers.spec.ts:6:import { PushSubprocessOp } from '@/commands/operations/processTree/PushSubprocessOp';
+frontend/tests/unit/application/panelToolbarIntentControllers.spec.ts:15:"from '@/commands/operations/",
+frontend/tests/unit/application/panelToolbarIntentControllers.spec.ts:16:'new Command(',
+frontend/tests/unit/application/panelToolbarIntentControllers.spec.ts:18:'commandStack.push(cmd)',
+frontend/tests/unit/application/panelToolbarIntentControllers.spec.ts:24:"from '@/commands/operations/",
+frontend/tests/unit/application/panelToolbarIntentControllers.spec.ts:26:'new Command(',
+frontend/tests/unit/application/panelToolbarIntentControllers.spec.ts:116:const commandStack = new CommandStack();
+frontend/tests/unit/application/panelToolbarIntentControllers.spec.ts:117:const command = new Command('partial process-history command', world);
+frontend/tests/unit/architecture/importBoundaries.spec.ts:25:'src/commands/operations/world/UpdateElementStyleOp.ts',
+frontend/tests/unit/architecture/importBoundaries.spec.ts:26:'src/commands/operations/world/RemoveElementOps.ts',
+
+## test_skips_todos
+frontend/tests/e2e/active-plane-emphasis.spec.ts:99:test.skip();
+frontend/tests/e2e/active-plane-emphasis.spec.ts:142:test.skip();
+frontend/tests/e2e/navigation.spec.ts:223:test.skip();
+frontend/tests/e2e/selection.spec.ts:173:test.skip('should sync selection between canvas and ElementsPanel (canvas -> panel)', async ({ page }) => {
+frontend/tests/e2e/selection.spec.ts:189:test.skip('should sync selection between ElementsPanel and canvas (panel -> canvas)', async ({ page }) => {
+frontend/tests/e2e/selection.spec.ts:206:test.skip('should maintain multi-select when switching between canvas and panel', async ({ page }) => {
+frontend/tests/e2e/selection.spec.ts:258:test.skip('should select different element types (point, line, segment)', async ({ page }) => {
+frontend/tests/e2e/selection.spec.ts:334:test.skip('should persist selection across plane switches', async ({ page }) => {
+frontend/tests/integration/factories/AllFactories.spec.ts:97:it.skip('should create guide on regular line without sibling', () => {
+frontend/tests/integration/factories/AllFactories.spec.ts:133:describe.skip('DeletionSequenceFactory Integration - SKIPPED: Cascade deletion broken', () => {
+frontend/tests/integration/pointCreation.spec.ts:29:describe.skip('Integration: Point Creation Full Stack', () => {
+frontend/tests/integration/semanticReferences.spec.ts:45:it.skip('should provide access to horizontal origin point - SKIPPED: origin tracking not fully implemented', () => {
+frontend/tests/integration/semanticReferences.spec.ts:57:it.skip('should provide access to vertical origin point - SKIPPED: origin tracking not fully implemented', () => {
+frontend/tests/integration/semanticReferences.spec.ts:86:it.skip('should use hierarchical origin IDs, not hardcoded ones - SKIPPED: origin tracking not fully implemented', () => {
+frontend/tests/integration/semanticReferences.spec.ts:126:it.skip('should use plane ID as container in origin point IDs - SKIPPED: origin tracking not fully implemented', () => {
+frontend/tests/integration/worldInitialization.spec.ts:100:it.skip('should set origin point in 3D space', () => {
+frontend/tests/unit/commands/createFreePoint.spec.ts:31:it.skip('coordinate validation happens elsewhere', () => {
+frontend/tests/unit/commands/createFreePoint.spec.ts:120:it.skip('should create point with visual properties', () => {
+frontend/tests/unit/domain/plane.spec.ts:80:describe.skip('createPH', () => {
+frontend/tests/unit/domain/plane.spec.ts:109:describe.skip('createPV', () => {
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:108:it.skip('World.getLine2DRealization() - REMOVED IN PHASE 48', () => {
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:156:it.skip('World.getCircle2DRealization() - REMOVED IN PHASE 48', () => {
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:183:describe.skip('Dual storage during migration - OBSOLETE AFTER PHASE 48', () => {
+frontend/tests/unit/domain/world.spec.ts:151:describe.skip('addIntersectionPoint2DWithSibling', () => {
+frontend/tests/unit/services/googleDriveService.spec.ts:281:it.skip('should handle authentication expired error', async () => {
+frontend/tests/unit/services/googleDriveService.spec.ts:339:it.skip('should add .diedrico extension if missing', async () => {
+frontend/tests/unit/utils/projectionPlaneUtils.spec.ts:157:it.todo('should satisfy paper layout constraints: v=0 coincides with T1');
+frontend/tests/unit/utils/projectionPlaneUtils.spec.ts:158:it.todo('should satisfy paper layout constraints: origin at T1-T2\' intersection');
+frontend/tests/unit/utils/projectionPlaneUtils.spec.ts:159:it.todo('should satisfy paper layout constraints: V perpendicular to U');
+frontend/tests/unit/utils/projectionPlaneUtils.spec.ts:160:it.todo('should satisfy paper layout constraints: V orientation via T2 side test');
+frontend/tests/unit/utils/projectionPlaneUtils.spec.ts:162:it.todo('should satisfy 3D constraints: U perpendicular to V');
+frontend/tests/unit/utils/projectionPlaneUtils.spec.ts:163:it.todo('should satisfy 3D constraints: U and V normalized');
+frontend/tests/unit/utils/projectionPlaneUtils.spec.ts:164:it.todo('should satisfy 3D constraints: U and V lie in plane Q');
+frontend/tests/unit/utils/projectionPlaneUtils.spec.ts:165:it.todo('should satisfy 3D constraints: origin on T1');
+frontend/tests/unit/utils/projectionPlaneUtils.spec.ts:166:it.todo('should satisfy 3D constraints: origin on T2');
+frontend/tests/unit/utils/projectionPlaneUtils.spec.ts:168:it.todo('should produce invertible matrices (round-trip preserves points)');
+frontend/tests/unit/utils/projectionPlaneUtils.spec.ts:169:it.todo('should maintain consistency between paper and 3D coordinate systems');
+

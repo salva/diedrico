@@ -1,0 +1,41 @@
+   110	  // Check for parallel lines (w ≈ 0)
+   111	  const epsilon = 1e-10;
+   112	  if (Math.abs(w) < epsilon) {
+   113	    // Lines are parallel or coincident - return infeasible realization
+   114	    return new Point2DRealization2D(new Vector3(0, 0, 1), false);
+   115	  }
+   116	  
+   117	  // Convert from homogeneous to Cartesian coordinates
+   118	  // Divide by w to get actual (x, y) coordinates
+   119	  const x = px / w;
+   120	  const y = py / w;
+   121	  
+   122	  // Return as point realization in homogeneous form (x, y, 1)
+   123	  return new Point2DRealization2D(new Vector3(x, y, 1), true);
+   124	}
+   125	
+   126	/**
+   127	 * Check if two lines are parallel (without computing intersection)
+   128	 * 
+   129	 * Two lines are parallel if their directions are parallel (or anti-parallel).
+   130	 * In 2D, this means the cross product of direction vectors is zero.
+   131	 * 
+   132	 * @param line1 First line
+   133	 * @param line2 Second line
+   134	 * @returns True if lines are parallel
+   135	 */
+   136	export function areLinesParallel(
+   137	  line1: Line2DRealization2D,
+   138	  line2: Line2DRealization2D
+   139	): boolean {
+   140	  const d1 = line1.getDirection();
+   141	  const d2 = line2.getDirection();
+   142	  
+   143	  // Cross product in 2D: d1.x * d2.y - d1.y * d2.x
+   144	  // If zero, directions are parallel
+   145	  const cross = d1.x * d2.y - d1.y * d2.x;
+   146	  
+   147	  return Math.abs(cross) < 1e-10;
+   148	}
+   149	
+   150	/**
