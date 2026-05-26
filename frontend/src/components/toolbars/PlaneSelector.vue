@@ -50,10 +50,11 @@ import { computed, inject, onMounted, onUnmounted, ref } from 'vue';
 import type { World } from '@/domain/world/World';
 import { formatElementLabel } from '@/utils/formatUtils';
 
-const world = inject<World>('world');
-if (!world) {
+const injectedWorld = inject<World>('world');
+if (!injectedWorld) {
   throw new Error('[PlaneSelector] World not provided');
 }
+const world: World = injectedWorld;
 
 const forceUpdate = ref(0);
 const isOpen = ref(false);
@@ -88,7 +89,7 @@ onUnmounted(() => {
 type PlaneOption = { id: string; label: string };
 
 const planes = computed<PlaneOption[]>(() => {
-  const _ = forceUpdate.value;
+  forceUpdate.value;
 
   return world
     .getAllProjectionPlanes()
@@ -97,12 +98,12 @@ const planes = computed<PlaneOption[]>(() => {
 });
 
 const activePlaneId = computed(() => {
-  const _ = forceUpdate.value;
+  forceUpdate.value;
   return world.getActivePlaneId();
 });
 
 const activePlaneLabel = computed(() => {
-  const _ = forceUpdate.value;
+  forceUpdate.value;
   const planeId = world.getActivePlaneId();
   const plane = planes.value.find(p => p.id === planeId);
   return plane?.label || planeId;
@@ -166,7 +167,10 @@ function handleKeyDown(event: KeyboardEvent) {
     case ' ':
       event.preventDefault();
       if (focusedIndex.value >= 0 && focusedIndex.value < planes.value.length) {
-        selectPlane(planes.value[focusedIndex.value].id);
+        const focusedPlane = planes.value[focusedIndex.value];
+        if (focusedPlane) {
+          selectPlane(focusedPlane.id);
+        }
       }
       break;
     case 'Home':

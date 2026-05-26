@@ -307,8 +307,8 @@ export class ProcessTree {
   /**
    * Get all actions in execution order (depth-first traversal)
    */
-  getAllActions(): Action[] {
-    const actions: Action[] = [];
+  getAllActions(): ActionNode[] {
+    const actions: ActionNode[] = [];
     this.traverseActions(this.root, (action) => {
       actions.push(action);
     });
@@ -332,7 +332,7 @@ export class ProcessTree {
    * Depth-first traversal of actions
    * Automatically skips null tombstones (deleted actions)
    */
-  private traverseActions(node: ProcessNode, callback: (action: Action) => void): void {
+  private traverseActions(node: ProcessNode, callback: (action: ActionNode) => void): void {
     if (node.type === 'action') {
       callback(node);
     } else if (node.type === 'actionGroup') {
@@ -349,8 +349,8 @@ export class ProcessTree {
   /**
    * Find action by ID
    */
-  findAction(actionId: string): Action | undefined {
-    let found: Action | undefined;
+  findAction(actionId: string): ActionNode | undefined {
+    let found: ActionNode | undefined;
     this.traverseActions(this.root, (action) => {
       if (action.id === actionId) {
         found = action;
@@ -363,8 +363,8 @@ export class ProcessTree {
    * Get actions that produce a specific element (by elementId)
    * Phase 92: Use action.elementId instead of action.outputs
    */
-  getActionsProducingElement(elementId: string): Action[] {
-    const actions: Action[] = [];
+  getActionsProducingElement(elementId: string): ActionNode[] {
+    const actions: ActionNode[] = [];
     this.traverseActions(this.root, (action) => {
       if (action.elementId === elementId) {
         actions.push(action);

@@ -40,7 +40,6 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import { projectService } from '../../services/ProjectService';
 
 const props = defineProps<{
   isOpen: boolean;
@@ -48,7 +47,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   close: [];
-  created: [projectId: string];
+  created: [projectName: string];
 }>();
 
 const projectName = ref('');
@@ -71,11 +70,10 @@ async function handleSubmit() {
   error.value = '';
 
   try {
-    const project = await projectService.createProject(projectName.value.trim());
-    emit('created', project.id);
+    emit('created', projectName.value.trim());
     emit('close');
-  } catch (err: any) {
-    error.value = err.message || 'Failed to create project';
+  } catch (err: unknown) {
+    error.value = err instanceof Error ? err.message : 'Failed to create project';
     isCreating.value = false;
   }
 }

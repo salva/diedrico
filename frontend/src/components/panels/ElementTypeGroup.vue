@@ -30,7 +30,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 import { useSelectionStore } from '@/stores/selectionStore';
 import { formatElementLabel } from '@/utils/formatUtils';
 
@@ -42,7 +42,7 @@ interface Element {
   properties?: string;
 }
 
-const props = defineProps<{
+defineProps<{
   title: string;
   elements: Element[];
   selectedId?: string | null; // Deprecated: use selectionStore instead
@@ -60,7 +60,7 @@ function toggleCollapse() {
   isCollapsed.value = !isCollapsed.value;
 }
 
-function handleMouseEnter(elementId: string) {
+function handleMouseEnter(_elementId: string) {
   // TODO: Emit highlight event
 }
 

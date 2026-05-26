@@ -176,15 +176,6 @@
         </div>
       </div>
 
-      <!-- Action Details (when selected) -->
-      <div v-if="isSelected" class="action-details">
-        <div v-if="node.inputs && node.inputs.length > 0" class="action-io">
-          <strong>In:</strong> {{ node.inputs.join(', ') }}
-        </div>
-        <div v-if="node.outputs && node.outputs.length > 0" class="action-io">
-          <strong>Out:</strong> {{ node.outputs.join(', ') }}
-        </div>
-      </div>
     </div>
   </div>
 </template>
@@ -411,7 +402,7 @@ async function startEditing() {
 }
 
 function submitName() {
-  if (!isEditing.value) return;
+  if (!isEditing.value || props.node.type !== 'subprocess') return;
   
   const trimmedName = editName.value.trim();
   if (trimmedName && trimmedName !== props.node.name) {
@@ -423,32 +414,7 @@ function submitName() {
 
 function cancelEditing() {
   isEditing.value = false;
-  editName.value = props.node.name;
-}
-
-function formatActionType(type: string): string {
-  return type
-    .replace(/([A-Z])/g, ' $1')
-    .trim()
-    .replace(/^Create /, '');
-}
-
-function formatTime(timestamp: number | Date): string {
-  const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-}
-
-function formatParameterValue(value: any): string {
-  if (typeof value === 'number') {
-    return value.toFixed(2);
-  }
-  if (typeof value === 'object' && value !== null) {
-    if ('x' in value && 'y' in value) {
-      return `(${value.x.toFixed(2)}, ${value.y.toFixed(2)})`;
-    }
-    return JSON.stringify(value);
-  }
-  return String(value);
+  editName.value = props.node.type === 'subprocess' ? props.node.name : '';
 }
 </script>
 

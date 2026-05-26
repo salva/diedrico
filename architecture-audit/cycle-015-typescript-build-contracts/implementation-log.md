@@ -240,3 +240,45 @@ All command output was captured under `architecture-audit/cycle-015-typescript-b
 ### Residual categorization and stage status
 
 The process/view-state operation lane now has direct passing tests for the rewritten view-state apply/undo contracts plus the earlier passing process-tree/remove-element identity coverage. Full Wave 015 completion is still not claimed because the frontend build remains red on residual categories outside this task scope, including `NewProjectDialog.vue`, `PropertiesDialog.vue`, `ActionsPanel.vue`, `ElementTypeGroup.vue`, `ElementsPanel.vue`, `ProcessTreeNode.vue`, `PlaneSelector.vue`, `SvgCanvas.vue`, `CoordinateTransform.ts`, `GeometryService.ts`, `GoogleDriveService.ts`, and `ProjectService.ts`.
+
+## t1 UI/store/render DTO lane — closure attempt
+
+Task `t1-close-ui-store-render-dto-errors` closed the residual UI/store/render DTO TypeScript build category assigned after the process/view-state lane.
+
+### UI/store/render ownership map and source changes
+
+- `frontend/src/components/dialogs/NewProjectDialog.vue`: deleted the stale direct `projectService` singleton import. The dialog now remains a UI event source and emits the requested project name for the app-shell/session owner to handle; it no longer reaches into the persistence service boundary.
+- `frontend/src/components/dialogs/PropertiesDialog.vue`: replaced stale `Point2D.type` / broad dependency casts with current domain-class narrowing for intersection points, line-by-two-points, segments, center/point and three-point circles, and guides. Wave 014 close/save emit behavior was not changed.
+- `frontend/src/components/panels/ActionsPanel.vue` and `frontend/src/domain/processTree/ProcessTree.ts`: aligned construction-history selection highlighting with the current `ActionNode` view. `ProcessTree.getAllActions()` now advertises the node ids it already returns at runtime, and `ActionsPanel` uses `World.getDependencyService()` instead of violating the private `dependencyService` field.
+- `frontend/src/components/panels/ElementTypeGroup.vue` and `frontend/src/components/panels/ElementsPanel.vue`: deleted unused stale props/import/count locals and the wrong `Element2D` import from `Element.ts`; element grouping continues to use current plane/domain collections.
+- `frontend/src/components/panels/ProcessTreeNode.vue`: deleted obsolete action `inputs`/`outputs` details and unused formatting helpers; subprocess rename paths are now guarded by the `subprocess` discriminator before reading `name`.
+- `frontend/src/components/toolbars/PlaneSelector.vue`: removed unused reactive placeholders, made the injected world non-optional after the fail-fast guard, and guarded focused-plane keyboard selection.
+- `frontend/src/components/workspace/SvgCanvas.vue`: aligned hover tooltip reads to `hoverState.value.temporary`, deleted stale `ProjectionPlane.getArc()` and unused render-transform helper reads, added active-plane guards before passing ids to hit-testing/tool/style paths, replaced primitive `.geometry` reads with current `Primitive` DTO fields, and replaced the inherited tool-status broad cast with a local structural type guard.
+
+No Google Drive, CoordinateTransform, GeometryService, ProjectService strictness, package/tooling, projection/world, command/factory, or process/view-state operation repairs were made beyond the direct process-tree `ActionNode` return-type owner dependency required by `ActionsPanel`.
+
+### Validation evidence
+
+All command output was captured under `architecture-audit/cycle-015-typescript-build-contracts/validation/`:
+
+- `ui-store-render-primitive-grep.stdout` / `.stderr`: located the authoritative primitive DTO definitions in `frontend/src/domain/presentation/Paper.ts` before fixing `SvgCanvas.fitToView()`.
+- `ui-store-render-projectservice-grep.stdout` / `.stderr`: confirmed `NewProjectDialog.vue` was the stale direct `projectService.createProject()` UI consumer.
+- `ui-store-render-source-patch.stdout` / `.stderr`, `ui-store-render-svgcanvas-patch.stdout` / `.stderr`, `ui-store-render-residual-patch.stdout` / `.stderr`, and `ui-store-render-cast-removal-patch.stdout` / `.stderr`: patch scripts used for the scoped UI/store/render changes.
+- `ui-store-render-build-postpatch.stdout` / `.stderr`: first postpatch build removed most cited UI errors and exposed remaining local residuals in `ActionsPanel.vue`, `ProcessTreeNode.vue`, `PlaneSelector.vue`, and `SvgCanvas.vue`; those were fixed immediately.
+- `ui-store-render-build-final.stdout` / `.stderr`: `npm run build --workspace=frontend` remained red only on out-of-scope service/domain categories after the cited UI/store/render errors were gone.
+- `ui-store-render-focused-tests.stdout` / `.stderr`: initial focused run passed `processTree.spec.ts` and `viewStateOperations.spec.ts` but failed two pre-existing `viewStore.spec.ts` expectations because test fixtures still omit current `threeViewOptions.showReferenceAxes`.
+- `ui-store-render-focused-tests-rerun.stdout` / `.stderr`: reran focused in-scope process-tree/view-state coverage without the known stale viewStore fixture; passed 2 files / 19 tests.
+- `ui-store-render-forbidden-scan.stdout` / `.stderr`: found inherited broad casts in touched dialog/canvas files; those were removed.
+- `ui-store-render-forbidden-scan-final.stdout` / `.stderr`: scoped scan over touched UI/process files found no `@ts-ignore`, `@ts-expect-error`, `as any`, `as unknown as`, private `dependencyService` reads, `getArc`, stale primitive `.geometry`, or stale `hoverHighlight.temporary` reads.
+- `ui-store-render-build-after-cast-removal.stdout` / `.stderr`: final `npm run build --workspace=frontend` remained red only on `CoordinateTransform.ts`, `GeometryService.ts`, `GoogleDriveService.ts`, and `ProjectService.ts`; no errors from `NewProjectDialog.vue`, `PropertiesDialog.vue`, `ActionsPanel.vue`, `ElementTypeGroup.vue`, `ElementsPanel.vue`, `ProcessTreeNode.vue`, `PlaneSelector.vue`, `SvgCanvas.vue`, `useHoverHighlight.ts`, `processStore.ts`, or `viewStore.ts` remained.
+
+### Residual categorization and protected-surface checks
+
+The UI/store/render DTO lane is closed in the current build output. Full Wave 015 completion is still not claimed because frontend build remains red on out-of-scope non-UI service/domain strictness categories:
+
+- `frontend/src/domain/calculations/CoordinateTransform.ts`: stale `Plane3DCoordinateSystem` import.
+- `frontend/src/services/GeometryService.ts`: stale `lineLineIntersection` import and `Ok<unknown>` result typing.
+- `frontend/src/services/GoogleDriveService.ts`: nullable string strictness in two request paths.
+- `frontend/src/services/ProjectService.ts`: `record.nextElementId` possibly undefined after validation narrowing.
+
+The known stale `frontend/tests/unit/stores/viewStore.spec.ts` expectations around `threeViewOptions.showReferenceAxes` remain outside this lane and were already observed in the prior process/view-state stage. Completed projection/world, command/factory, and process/view-state lanes were preserved; no deleted legacy source module, package file, tooling file, fixture, or broad renderer extraction was introduced.

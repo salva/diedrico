@@ -1,0 +1,5 @@
+frontend/src/components/dialogs/PropertiesDialog.vue:299:    const lineByPoints = line as any;
+frontend/src/components/dialogs/PropertiesDialog.vue:307:    const segmentByPoints = segment as any;
+frontend/src/components/dialogs/PropertiesDialog.vue:315:    const circleByCenterRadius = circle as any;
+frontend/src/components/dialogs/PropertiesDialog.vue:323:    const guidePerp = guide as any;
+frontend/src/components/workspace/SvgCanvas.vue:513:      const msg = (currentToolInstance.value as any).getStatusMessage();

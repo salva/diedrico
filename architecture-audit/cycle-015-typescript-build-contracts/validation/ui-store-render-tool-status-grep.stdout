@@ -1,0 +1,3 @@
+frontend/src/tools/ArgumentCollectorTool.ts:62: * - getStatusMessage(): Automatic UI feedback
+frontend/src/tools/ArgumentCollectorTool.ts:256:    return { success: true, message: this.getStatusMessage() };
+frontend/src/tools/ArgumentCollectorTool.ts:301:  getStatusMessage(): string {

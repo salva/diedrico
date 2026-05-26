@@ -134,7 +134,6 @@ import { Segment2DByPoints } from '@/domain/world/Segment';
 import { Circle2D } from '@/domain/world/Circle';
 import { Guide2D } from '@/domain/world/Guide';
 import { HalfHingeLine2D } from '@/domain/world/HingeLine';
-import { Element2D } from '@/domain/world/Element';
 import { formatElementLabel } from '@/utils/formatUtils';
 
 // Emits
@@ -164,12 +163,6 @@ let lastVersion = world.getVersion();
 
 onMounted(() => {
   console.log('[ElementsPanel] Mounted, initial World version:', world.getVersion());
-  const allPlanes = world.getAllProjectionPlanes();
-  const totalPoints = allPlanes.reduce((sum, plane) => sum + plane.getAllPoints().length, 0);
-  const totalLines = allPlanes.reduce((sum, plane) => sum + plane.getAllLines().length, 0);
-  // console.log('[ElementsPanel] Initial points:', totalPoints);
-  // console.log('[ElementsPanel] Initial lines:', totalLines);
-  
   intervalId = window.setInterval(() => {
     const currentVersion = world.getVersion();
     if (currentVersion !== lastVersion) {

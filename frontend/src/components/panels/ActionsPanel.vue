@@ -50,7 +50,7 @@
 <script setup lang="ts">
 import { ref, computed, inject, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import type { World } from '@/domain/world/World';
-import type { ProcessTreeNode as ProcessTreeNodeType } from '@/domain/processTree/ProcessTreeNode';
+import type { ProcessNode as ProcessTreeNodeType } from '@/domain/processTree/ProcessTree';
 import { createProcessHistoryController } from '@/application/processHistory/ProcessHistoryController';
 import ProcessTreeNode from './ProcessTreeNode.vue';
 import { useSelectionStore } from '@/stores/selectionStore';
@@ -215,9 +215,10 @@ function findRelatedActions(selectedIds: string[]): void {
 
     // Check if action depends on any selected element
     // Dependencies are now in DependencyService, accessible via element
-    const dependsOnSelected = world && world.dependencyService
-      ? world.dependencyService.getDependencies(action.elementId).some(depId => selectedIdSet.has(depId))
-      : false;
+    const dependsOnSelected = world
+      .getDependencyService()
+      .getDependencies(action.elementId)
+      .some(depId => selectedIdSet.has(depId));
 
     if (producesSelected || dependsOnSelected) {
       related.add(action.id);
@@ -232,11 +233,13 @@ function findRelatedActions(selectedIds: string[]): void {
  */
 function countNodes(node: ProcessTreeNodeType): number {
   let count = 1;
-  if (node.children) {
-    for (const child of node.children) {
-      if (child) {
-        count += countNodes(child);
-      }
+  if (node.type === 'action') {
+    return count;
+  }
+
+  for (const child of node.children) {
+    if (child) {
+      count += countNodes(child);
     }
   }
   return count;

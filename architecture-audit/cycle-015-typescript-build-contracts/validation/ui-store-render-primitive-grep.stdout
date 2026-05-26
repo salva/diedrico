@@ -1,0 +1,13 @@
+frontend/src/commands/operations/IOperation.ts:11:export type JsonPrimitive = string | number | boolean | null;
+frontend/src/commands/operations/IOperation.ts:12:export type JsonValue = JsonPrimitive | JsonValue[] | JsonObject;
+frontend/src/domain/presentation/Paper.ts:39:export interface DrawingPrimitive {
+frontend/src/domain/presentation/Paper.ts:52:export interface PointPrimitive extends DrawingPrimitive {
+frontend/src/domain/presentation/Paper.ts:62:export interface PathPrimitive extends DrawingPrimitive {
+frontend/src/domain/presentation/Paper.ts:73:export interface LinePrimitive extends DrawingPrimitive {
+frontend/src/domain/presentation/Paper.ts:84:export interface SegmentPrimitive extends DrawingPrimitive {
+frontend/src/domain/presentation/Paper.ts:94:export interface CirclePrimitive extends DrawingPrimitive {
+frontend/src/domain/presentation/Paper.ts:105:export interface ArcPrimitive extends DrawingPrimitive {
+frontend/src/domain/presentation/Paper.ts:120:export interface TextPrimitive extends DrawingPrimitive {
+frontend/src/domain/presentation/Paper.ts:132:export type Primitive = 
+frontend/src/application/canvasPresentation/CanvasPresentationModel.ts:2:import type { Primitive, ResolvedStyle } from '@/domain/presentation/Paper';
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:6:import { RenderLayer, type LinePrimitive, type PointPrimitive, type SegmentPrimitive, type CirclePrimitive, type PathPrimitive } from '@/domain/presentation/Paper';

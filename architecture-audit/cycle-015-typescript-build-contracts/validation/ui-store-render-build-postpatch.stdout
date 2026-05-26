@@ -1,0 +1,25 @@
+
+> diedrico-frontend@0.1.0 build
+> vue-tsc && vite build
+
+src/components/panels/ActionsPanel.vue(236,12): error TS2339: Property 'children' does not exist on type 'ProcessNode'.
+  Property 'children' does not exist on type 'ActionNode'.
+src/components/panels/ActionsPanel.vue(237,30): error TS2339: Property 'children' does not exist on type 'ProcessNode'.
+  Property 'children' does not exist on type 'ActionNode'.
+src/components/panels/ProcessTreeNode.vue(408,49): error TS2339: Property 'name' does not exist on type 'ProcessNode'.
+  Property 'name' does not exist on type 'ActionGroup'.
+src/components/toolbars/PlaneSelector.vue(139,3): error TS18048: 'world' is possibly 'undefined'.
+src/components/workspace/SvgCanvas.vue(896,44): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/components/workspace/SvgCanvas.vue(899,89): error TS2552: Cannot find name 'activePlaneId'. Did you mean 'activePlane'?
+src/components/workspace/SvgCanvas.vue(917,14): error TS2552: Cannot find name 'activePlaneId'. Did you mean 'activePlane'?
+src/domain/calculations/CoordinateTransform.ts(18,15): error TS2305: Module '"../world/Plane"' has no exported member 'Plane3DCoordinateSystem'.
+src/services/GeometryService.ts(4,3): error TS2305: Module '"../domain/calculations/Intersections"' has no exported member 'lineLineIntersection'.
+src/services/GeometryService.ts(34,9): error TS2322: Type 'Ok<unknown>' is not assignable to type 'Result<{ x: number; y: number; } | null, string>'.
+  Type 'Ok<unknown>' is not assignable to type 'Ok<{ x: number; y: number; } | null>'.
+    Type 'unknown' is not assignable to type '{ x: number; y: number; } | null'.
+src/services/GoogleDriveService.ts(154,34): error TS2322: Type 'string | null' is not assignable to type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/services/GoogleDriveService.ts(190,34): error TS2322: Type 'string | null' is not assignable to type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/services/ProjectService.ts(93,52): error TS18048: 'record.nextElementId' is possibly 'undefined'.

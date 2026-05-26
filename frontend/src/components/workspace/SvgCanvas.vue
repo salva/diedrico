@@ -137,7 +137,7 @@
     
     <!-- Hover tooltip -->
     <div 
-      v-if="hoverHighlight.isHovering.value && hoverHighlight.hoveredElementLabel.value && hoverHighlight.temporary && !hoverHighlight.temporary.value"
+      v-if="hoverHighlight.isHovering.value && hoverHighlight.hoveredElementLabel.value && !hoverHighlight.hoverState.value.temporary"
       class="hover-tooltip"
       :style="{ left: tooltipPosition.x + 'px', top: tooltipPosition.y + 'px' }"
     >
@@ -176,7 +176,7 @@
  * - Element drawing policy comes from presentation selectors and SVGRenderer
  */
 
-import { ref, computed, watch, onMounted, onUnmounted, inject, provide } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted, inject } from 'vue';
 import { Matrix3, Vector3 } from 'three';
 import { World } from '@/domain/world/World';
 import { SVGRenderer, type ViewportTransform } from '@/services/SVGRenderer';
@@ -226,7 +226,7 @@ let lastWorldVersion = 0;
 // Active plane - derived from World (managed by App.vue)
 const activePlane = computed(() => {
   // Depend on worldVersion so plane switching triggers recomputation
-  const _ = worldVersion.value;
+  worldVersion.value;
   return world.getActivePlaneId();
 });
 
@@ -298,8 +298,12 @@ const viewportPan = ref<{
 
 let ignoreNextClick = false;
 
-function isMovableFreePoint(point: any): point is FreePoint2D {
+function isMovableFreePoint(point: unknown): point is FreePoint2D {
   return point instanceof FreePoint2D && !point.locked;
+}
+
+function hasStatusMessage(tool: ITool): tool is ITool & { getStatusMessage: () => string } {
+  return 'getStatusMessage' in tool && typeof tool.getStatusMessage === 'function';
 }
 
 function endPointDrag(commit: boolean): void {
@@ -376,9 +380,6 @@ function getElementLabel(elementId: string, elementType: string, planeId?: strin
         case 'circle':
           element = plane.getCircle(elementId);
           break;
-        case 'arc':
-          element = plane.getArc(elementId);
-          break;
       }
     }
   } else {
@@ -396,9 +397,6 @@ function getElementLabel(elementId: string, elementType: string, planeId?: strin
           break;
         case 'circle':
           element = plane.getCircle(elementId);
-          break;
-        case 'arc':
-          element = plane.getArc(elementId);
           break;
       }
       if (element) break; // Found it
@@ -515,8 +513,8 @@ watch(() => toolStore.currentTool.value, (newTool) => {
     currentToolInstance.value = factory();
     console.log(`[SvgCanvas] Created new tool instance: ${newTool}`);
     // Show initial tool feedback (e.g. "Creating line: pick point1, point2")
-    if (currentToolInstance.value && 'getStatusMessage' in currentToolInstance.value) {
-      const msg = (currentToolInstance.value as any).getStatusMessage();
+    if (currentToolInstance.value && hasStatusMessage(currentToolInstance.value)) {
+      const msg = currentToolInstance.value.getStatusMessage();
       if (msg) toolStore.setToolStepMessage(msg);
     }
   } else {
@@ -536,21 +534,6 @@ function getPlaneTransformsForInput(): Map<string, Matrix3> {
     const realization = world.getProjectionPlane2DRealization(plane.id);
     if (realization) {
       transforms.set(plane.id, realization.paperToPlane2D);
-    }
-  }
-  
-  return transforms;
-}
-
-// Get plane transforms for RENDERING (plane coordinates → paper coordinates)
-function getPlaneTransformsForRendering(): Map<string, Matrix3> {
-  const transforms = new Map<string, Matrix3>();
-  
-  // Get all projection planes dynamically
-  for (const plane of world.getAllProjectionPlanes()) {
-    const realization = world.getProjectionPlane2DRealization(plane.id);
-    if (realization) {
-      transforms.set(plane.id, realization.planeToPaper2D);
     }
   }
   
@@ -687,6 +670,10 @@ function handleCanvasClick(event: MouseEvent) {
   
   // Step 2-3: Canvas → read model → Plane using InputService
   const activePlaneId = activePlane.value;
+  if (!activePlaneId) {
+    console.error('[SvgCanvas] No active plane for canvas click');
+    return;
+  }
   const planeTransforms = getPlaneTransformsForInput();
   const planeTransform = planeTransforms.get(activePlaneId);
   
@@ -709,9 +696,8 @@ function handleCanvasClick(event: MouseEvent) {
   
   // console.log('[SvgCanvas] Plane coords (u,v,w):', planePos);
   
-    const canvasPos = new Vector3(canvasPoint.x, canvasPoint.y, 1);
-  const paperToPlane = planeTransforms.get(activePlane.value);
-  const hit = interactionQuery.value.hitTest(canvasPos, 20, { viewport: viewport.value, activePlaneId: activePlane.value, paperToPlaneTransform: paperToPlane });
+  const canvasPos = new Vector3(canvasPoint.x, canvasPoint.y, 1);
+  const paperToPlane = planeTransforms.get(activePlaneId);
   
   // Phase 20: Handle selection mode when 'select' tool is active
   const activeToolName = toolStore.currentTool.value;
@@ -721,7 +707,7 @@ function handleCanvasClick(event: MouseEvent) {
     // Click element: Select (Shift+click: add to selection)
     // Click empty: Deselect all
     
-    const hit = interactionQuery.value.hitTest(canvasPos, 20, { viewport: viewport.value, activePlaneId: activePlane.value, paperToPlaneTransform: paperToPlane });
+    const hit = interactionQuery.value.hitTest(canvasPos, 20, { viewport: viewport.value, activePlaneId, paperToPlaneTransform: paperToPlane });
     
     if (hit) {
       // Element clicked - handle selection
@@ -847,16 +833,19 @@ function handleMouseDown(event: MouseEvent) {
   const canvasPoint = pt.matrixTransform(ctm.inverse());
 
   const planeTransforms = getPlaneTransformsForInput();
-  const paperToPlane = planeTransforms.get(activePlane.value);
+  const activePlaneId = activePlane.value;
+  if (!activePlaneId) return;
+
+  const paperToPlane = planeTransforms.get(activePlaneId);
   if (!paperToPlane) return;
 
   const canvasPos = new Vector3(canvasPoint.x, canvasPoint.y, 1);
-  const hit = interactionQuery.value.hitTest(canvasPos, 20, { viewport: viewport.value, activePlaneId: activePlane.value, paperToPlaneTransform: paperToPlane });
+  const hit = interactionQuery.value.hitTest(canvasPos, 20, { viewport: viewport.value, activePlaneId, paperToPlaneTransform: paperToPlane });
   
   // Check if we hit a movable point
   if (hit && hit.elementType === 'point') {
-    const plane = world.getProjectionPlaneById(activePlane.value);
-    if (!plane) throw new Error(`Active plane not found: ${activePlane.value}`);
+    const plane = world.getProjectionPlaneById(activePlaneId);
+    if (!plane) throw new Error(`Active plane not found: ${activePlaneId}`);
     const point = plane.getPoint(hit.elementId);
     
     if (point && isMovableFreePoint(point)) {
@@ -865,9 +854,9 @@ function handleMouseDown(event: MouseEvent) {
 
       pointDrag.value = {
         active: true,
-        planeId: activePlane.value,
+        planeId: activePlaneId,
         pointId: hit.elementId,
-        moveSession: canvasToolController.startFreePointMove({ planeId: activePlane.value, pointId: hit.elementId, label: point.label ?? hit.elementId }),
+        moveSession: canvasToolController.startFreePointMove({ planeId: activePlaneId, pointId: hit.elementId, label: point.label ?? hit.elementId }),
         startClientX: event.clientX,
         startClientY: event.clientY,
         moved: false
@@ -907,11 +896,13 @@ function handleDoubleClick(event: MouseEvent) {
   const canvasPos = new Vector3(canvasPoint.x, canvasPoint.y, 1);
   
   // Get plane transform for hit testing
+  const activePlaneId = activePlane.value;
+  if (!activePlaneId) return;
   const planeTransforms = getPlaneTransformsForInput();
-  const paperToPlane = planeTransforms.get(activePlane.value);
+  const paperToPlane = planeTransforms.get(activePlaneId);
   
   // Hit test to find element under cursor
-  const hit = interactionQuery.value.hitTest(canvasPos, 20, { viewport: viewport.value, activePlaneId: activePlane.value, paperToPlaneTransform: paperToPlane });
+  const hit = interactionQuery.value.hitTest(canvasPos, 20, { viewport: viewport.value, activePlaneId, paperToPlaneTransform: paperToPlane });
   
   if (hit) {
     // Element found - show properties dialog
@@ -926,10 +917,16 @@ function handleDoubleClick(event: MouseEvent) {
  * T193: Apply property changes and record as command
  */
 function handleSaveProperties(changes: any) {
+  const activePlaneId = activePlane.value;
+  if (!activePlaneId) {
+    console.error('[SvgCanvas] Cannot save properties without active plane');
+    return;
+  }
+
   console.log('[SvgCanvas] Saving property changes:', changes);
   const result = canvasToolController.updateElementStyle({
     elementId: changes.elementId,
-    planeId: activePlane.value,
+    planeId: activePlaneId,
     style: {
       color: changes.color,
       lineWidth: changes.lineWidth,
@@ -1030,17 +1027,18 @@ function handleMouseMove(event: MouseEvent) {
   
   // Get paperToPlane transform for active plane
   const planeTransformsInput = getPlaneTransformsForInput();
-  const paperToPlane = planeTransformsInput.get(activePlane.value);
+  const activePlaneId = activePlane.value;
+  if (!activePlaneId) return;
+  const paperToPlane = planeTransformsInput.get(activePlaneId);
   
   // Get active tool's selection mask
-  const activeToolName = toolStore.currentTool.value;
   const activeTool = currentToolInstance.value;
   // 'select' is a special mode (not a tool), allow hover on all elements
-  const selectionMask = activeTool ? activeTool.getSelectionMask() : undefined;
+  const selectionMask = activeTool?.getSelectionMask?.();
   
   // Use CanvasInteractionQuery to find element near cursor (filtered by selection mask)
   const canvasPos = new Vector3(canvasPoint.x, canvasPoint.y, 1);
-  const hit = interactionQuery.value.hitTest(canvasPos, 20, { viewport: viewport.value, activePlaneId: activePlane.value, paperToPlaneTransform: paperToPlane }, selectionMask);
+  const hit = interactionQuery.value.hitTest(canvasPos, 20, { viewport: viewport.value, activePlaneId, paperToPlaneTransform: paperToPlane }, selectionMask);
   
   // Update snap target if hovering over a point within snap radius
   // Point snap preview when the cursor is within snap radius of an existing point.
@@ -1066,7 +1064,7 @@ function handleMouseMove(event: MouseEvent) {
     
     // Update global hover state for UI feedback
     if (newHovered && hit) {
-      const label = getElementLabel(newHovered, hit.elementType, activePlane.value);
+      const label = getElementLabel(newHovered, hit.elementType, activePlaneId);
       hoverHighlight.setHoveredElement(
         newHovered,
         hit.elementType,
@@ -1107,7 +1105,7 @@ function handleMouseMove(event: MouseEvent) {
     event.clientY,
     svg,
     viewportMatrix,
-    activePlane.value,
+    activePlaneId,
     world
   );
   
@@ -1183,31 +1181,23 @@ function fitToView() {
   let maxY = -Infinity;
   
   for (const prim of allPrimitives) {
-    // Skip primitives with undefined geometry
-    if (!prim.geometry) {
-      continue;
-    }
-    
     if (prim.type === 'point') {
-      const p = prim.geometry as { x: number; y: number };
-      minX = Math.min(minX, p.x);
-      minY = Math.min(minY, p.y);
-      maxX = Math.max(maxX, p.x);
-      maxY = Math.max(maxY, p.y);
-    } else if (prim.type === 'line' || prim.type === 'segment') {
-      const line = prim.geometry as { p1: { x: number; y: number }; p2: { x: number; y: number } };
-      minX = Math.min(minX, line.p1.x, line.p2.x);
-      minY = Math.min(minY, line.p1.y, line.p2.y);
-      maxX = Math.max(maxX, line.p1.x, line.p2.x);
-      maxY = Math.max(maxY, line.p1.y, line.p2.y);
-    } else if (prim.type === 'circle') {
-      const circle = prim.geometry as { center: { x: number; y: number }; radius: number };
-      minX = Math.min(minX, circle.center.x - circle.radius);
-      minY = Math.min(minY, circle.center.y - circle.radius);
-      maxX = Math.max(maxX, circle.center.x + circle.radius);
-      maxY = Math.max(maxY, circle.center.y + circle.radius);
+      minX = Math.min(minX, prim.position.x);
+      minY = Math.min(minY, prim.position.y);
+      maxX = Math.max(maxX, prim.position.x);
+      maxY = Math.max(maxY, prim.position.y);
+    } else if (prim.type === 'segment') {
+      minX = Math.min(minX, prim.point1.x, prim.point2.x);
+      minY = Math.min(minY, prim.point1.y, prim.point2.y);
+      maxX = Math.max(maxX, prim.point1.x, prim.point2.x);
+      maxY = Math.max(maxY, prim.point1.y, prim.point2.y);
+    } else if (prim.type === 'circle' || prim.type === 'arc') {
+      minX = Math.min(minX, prim.cx - prim.radius);
+      minY = Math.min(minY, prim.cy - prim.radius);
+      maxX = Math.max(maxX, prim.cx + prim.radius);
+      maxY = Math.max(maxY, prim.cy + prim.radius);
     }
-    // Note: Guides extend to infinity, so we skip them in bounding box calculation
+    // Infinite lines, guides, paths, and text do not contribute stable element bounds.
   }
   
   // Check if we found any valid bounds

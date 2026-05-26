@@ -1,0 +1,105 @@
+   220	      .getDependencies(action.elementId)
+   221	      .some(depId => selectedIdSet.has(depId));
+   222	
+   223	    if (producesSelected || dependsOnSelected) {
+   224	      related.add(action.id);
+   225	    }
+   226	  }
+   227	
+   228	  relatedActionIds.value = related;
+   229	}
+   230	
+   231	/**
+   232	 * Recursively count total nodes in the tree
+   233	 */
+   234	function countNodes(node: ProcessTreeNodeType): number {
+   235	  let count = 1;
+   236	  if (node.children) {
+   237	    for (const child of node.children) {
+   238	      if (child) {
+   239	        count += countNodes(child);
+   240	      }
+   241	    }
+   242	  }
+   243	  return count;
+   244	}
+   245	
+   398	  editName.value = props.node.name;
+   399	  isEditing.value = true;
+   400	  await nextTick();
+   401	  nameInput.value?.focus();
+   402	}
+   403	
+   404	function submitName() {
+   405	  if (!isEditing.value) return;
+   406	  
+   407	  const trimmedName = editName.value.trim();
+   408	  if (trimmedName && trimmedName !== props.node.name) {
+   409	    emit('renameNode', props.node.id, trimmedName);
+   410	  }
+   411	  
+   412	  isEditing.value = false;
+   413	}
+   414	
+   130	  }
+   131	}
+   132	
+   133	function closeDropdown() {
+   134	  isOpen.value = false;
+   135	  focusedIndex.value = -1;
+   136	}
+   137	
+   138	function selectPlane(planeId: string) {
+   139	  world.setActivePlaneId(planeId);
+   140	  closeDropdown();
+   141	}
+   142	
+   143	function handleClickOutside(event: MouseEvent) {
+   144	  if (dropdownRef.value && !dropdownRef.value.contains(event.target as Node)) {
+   145	    closeDropdown();
+   880	  if (!svgElement.value) return;
+   881	  
+   882	  // Transform screen coordinates to SVG coordinates
+   883	  const svg = svgElement.value;
+   884	  const pt = svg.createSVGPoint();
+   885	  pt.x = event.clientX;
+   886	  pt.y = event.clientY;
+   887	  
+   888	  const ctm = svg.getScreenCTM();
+   889	  if (!ctm) return;
+   890	  
+   891	  const canvasPoint = pt.matrixTransform(ctm.inverse());
+   892	  const canvasPos = new Vector3(canvasPoint.x, canvasPoint.y, 1);
+   893	  
+   894	  // Get plane transform for hit testing
+   895	  const planeTransforms = getPlaneTransformsForInput();
+   896	  const paperToPlane = planeTransforms.get(activePlane.value);
+   897	  
+   898	  // Hit test to find element under cursor
+   899	  const hit = interactionQuery.value.hitTest(canvasPos, 20, { viewport: viewport.value, activePlaneId, paperToPlaneTransform: paperToPlane });
+   900	  
+   901	  if (hit) {
+   902	    // Element found - show properties dialog
+   903	    propertiesElementId.value = hit.elementId;
+   904	    showPropertiesDialog.value = true;
+   905	    console.log('[SvgCanvas] Opening properties dialog for:', hit.elementId);
+   906	  }
+   907	}
+   908	
+   909	/**
+   910	 * Handle property changes from the properties dialog
+   911	 * T193: Apply property changes and record as command
+   912	 */
+   913	function handleSaveProperties(changes: any) {
+   914	  console.log('[SvgCanvas] Saving property changes:', changes);
+   915	  const result = canvasToolController.updateElementStyle({
+   916	    elementId: changes.elementId,
+   917	    planeId: activePlaneId,
+   918	    style: {
+   919	      color: changes.color,
+   920	      lineWidth: changes.lineWidth,
+   921	      lineStyle: changes.lineStyle,
+   922	      opacity: changes.opacity,
+   923	      visible: changes.visible
+   924	    }
+   925	  });

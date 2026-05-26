@@ -160,6 +160,11 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import type { World } from '@/domain/world/World';
+import { Point2DLineLineIntersection, Point2DLineCircleIntersection, Point2DCircleCircleIntersection } from '@/domain/world/Point';
+import { Line2DByTwoPoints } from '@/domain/world/Line';
+import { Segment2DByPoints } from '@/domain/world/Segment';
+import { Circle2DByCenterAndPoint, Circle2DByThreePoints } from '@/domain/world/Circle';
+import { Guide2D } from '@/domain/world/Guide';
 
 interface Props {
   isOpen: boolean;
@@ -283,44 +288,37 @@ const dependencies = computed(() => {
   
   // Get dependencies from element
   const point = props.world.getPoint2D(props.elementId);
-  if (point) {
-    // Check if it's an intersection point
-    if (point.type === 'intersection') {
-      const intersectionPoint = point as any; // Type assertion for intersection-specific properties
-      return [intersectionPoint.element1Id, intersectionPoint.element2Id].filter(Boolean);
-    }
+  if (point instanceof Point2DLineLineIntersection) {
+    return [point.line1Id, point.line2Id].filter(Boolean);
+  }
+  if (point instanceof Point2DLineCircleIntersection) {
+    return [point.lineId, point.circleId].filter(Boolean);
+  }
+  if (point instanceof Point2DCircleCircleIntersection) {
+    return [point.circle1Id, point.circle2Id].filter(Boolean);
   }
   
   const line = props.world.getLine2D(props.elementId);
-  if (line) {
-    const lineByPoints = line as any;
-    if (lineByPoints.point1Id && lineByPoints.point2Id) {
-      return [lineByPoints.point1Id, lineByPoints.point2Id];
-    }
+  if (line instanceof Line2DByTwoPoints) {
+    return [line.point1Id, line.point2Id];
   }
   
   const segment = props.world.getSegment2D(props.elementId);
-  if (segment) {
-    const segmentByPoints = segment as any;
-    if (segmentByPoints.point1Id && segmentByPoints.point2Id) {
-      return [segmentByPoints.point1Id, segmentByPoints.point2Id];
-    }
+  if (segment instanceof Segment2DByPoints) {
+    return [segment.point1Id, segment.point2Id];
   }
   
   const circle = props.world.getCircle2D(props.elementId);
-  if (circle) {
-    const circleByCenterRadius = circle as any;
-    if (circleByCenterRadius.centerId) {
-      return [circleByCenterRadius.centerId];
-    }
+  if (circle instanceof Circle2DByCenterAndPoint) {
+    return [circle.centerPointId, circle.circumferencePointId];
+  }
+  if (circle instanceof Circle2DByThreePoints) {
+    return [circle.point1Id, circle.point2Id, circle.point3Id];
   }
   
   const guide = props.world.getGuide2D(props.elementId);
-  if (guide) {
-    const guidePerp = guide as any;
-    if (guidePerp.lineId) {
-      return [guidePerp.lineId];
-    }
+  if (guide instanceof Guide2D) {
+    return [guide.referenceLineId, guide.throughPointId];
   }
   
   return [];
