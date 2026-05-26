@@ -1,0 +1,3774 @@
+
+> diedrico@0.1.0 test:e2e
+> npm run test:e2e --workspace=frontend
+
+
+> diedrico-frontend@0.1.0 test:e2e
+> playwright test
+
+[1A[2K[WebServer] 
+[WebServer] > diedrico-frontend@0.1.0 dev
+[WebServer] > vite
+[WebServer] 
+
+[1A[2K[WebServer] 
+[WebServer]   [32m[1mVITE[22m v5.4.21[39m  [2mready in [0m[1m374[22m[2m[0m ms[22m
+[WebServer] 
+
+[1A[2K[WebServer]   [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5173[22m/[39m
+
+[1A[2K[WebServer] [2m  [32m➜[39m  [1mNetwork[22m[2m: use [22m[1m--host[22m[2m to expose[22m
+
+
+Running 188 tests using 4 workers
+
+[1A[2K[1/188] [chromium] › tests/e2e/active-plane-emphasis.spec.ts:18:3 › Active Plane Visual Emphasis › should display active plane elements with full opacity
+[1A[2K[2/188] [chromium] › tests/e2e/active-plane-emphasis.spec.ts:94:3 › Active Plane Visual Emphasis › should maintain full opacity for guides regardless of active plane
+[1A[2K[3/188] [chromium] › tests/e2e/active-plane-emphasis.spec.ts:137:3 › Active Plane Visual Emphasis › should maintain full opacity for hinge lines regardless of active plane
+[1A[2K[4/188] [chromium] › tests/e2e/active-plane-emphasis.spec.ts:50:3 › Active Plane Visual Emphasis › should reduce opacity of inactive plane elements when switching planes
+[1A[2K[5/188] [chromium] › tests/e2e/active-plane-emphasis.spec.ts:167:3 › Active Plane Visual Emphasis › should apply smooth opacity transitions when switching planes
+[1A[2K[6/188] [chromium] › tests/e2e/active-plane-emphasis.spec.ts:207:3 › Active Plane Visual Emphasis › should not allow clicking elements on inactive plane
+[1A[2K  1) [chromium] › tests/e2e/active-plane-emphasis.spec.ts:18:3 › Active Plane Visual Emphasis › should display active plane elements with full opacity 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="tool-point"]')[22m
+
+
+      18 |   test('should display active plane elements with full opacity', async ({ page }) => {
+      19 |     // Select Point tool
+    > 20 |     await page.click('[data-testid="tool-point"]');
+         |                ^
+      21 |
+      22 |     // Create a point on P_H (active by default)
+      23 |     const svg = page.locator('svg');
+        at /work/diedrico/frontend/tests/e2e/active-plane-emphasis.spec.ts:20:16
+
+    Error Context: test-results/active-plane-emphasis-Acti-31635--elements-with-full-opacity-chromium/error-context.md
+
+
+[1A[2K  2) [chromium] › tests/e2e/active-plane-emphasis.spec.ts:50:3 › Active Plane Visual Emphasis › should reduce opacity of inactive plane elements when switching planes 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="tool-point"]')[22m
+
+
+      50 |   test('should reduce opacity of inactive plane elements when switching planes', async ({ page }) => {
+      51 |     // Select Point tool
+    > 52 |     await page.click('[data-testid="tool-point"]');
+         |                ^
+      53 |
+      54 |     // Create a point on P_H (active by default)
+      55 |     const svg = page.locator('svg');
+        at /work/diedrico/frontend/tests/e2e/active-plane-emphasis.spec.ts:52:16
+
+    Error Context: test-results/active-plane-emphasis-Acti-16d6e-ments-when-switching-planes-chromium/error-context.md
+
+
+[1A[2K[7/188] [chromium] › tests/e2e/basic-construction.spec.ts:27:3 › Basic Construction Workflow › should create points and display them in Elements panel
+[1A[2K[8/188] [chromium] › tests/e2e/active-plane-shortcuts.spec.ts:9:3 › Active Plane Shortcuts (Phase 89) › should cycle active plane with Tab and Shift+Tab
+[1A[2K  3) [chromium] › tests/e2e/active-plane-emphasis.spec.ts:167:3 › Active Plane Visual Emphasis › should apply smooth opacity transitions when switching planes 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="tool-point"]')[22m
+
+
+      167 |   test('should apply smooth opacity transitions when switching planes', async ({ page }) => {
+      168 |     // Select Point tool
+    > 169 |     await page.click('[data-testid="tool-point"]');
+          |                ^
+      170 |
+      171 |     // Create points on both planes
+      172 |     const svg = page.locator('svg');
+        at /work/diedrico/frontend/tests/e2e/active-plane-emphasis.spec.ts:169:16
+
+    Error Context: test-results/active-plane-emphasis-Acti-9d572-tions-when-switching-planes-chromium/error-context.md
+
+
+[1A[2K  4) [chromium] › tests/e2e/active-plane-emphasis.spec.ts:207:3 › Active Plane Visual Emphasis › should not allow clicking elements on inactive plane 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="tool-line"]')[22m
+
+
+      207 |   test('should not allow clicking elements on inactive plane', async ({ page }) => {
+      208 |     // Select Line tool
+    > 209 |     await page.click('[data-testid="tool-line"]');
+          |                ^
+      210 |
+      211 |     const svg = page.locator('svg');
+      212 |     const box = await svg.boundingBox();
+        at /work/diedrico/frontend/tests/e2e/active-plane-emphasis.spec.ts:209:16
+
+    Error Context: test-results/active-plane-emphasis-Acti-f89a1--elements-on-inactive-plane-chromium/error-context.md
+
+
+[1A[2K[9/188] [chromium] › tests/e2e/basic-construction.spec.ts:52:3 › Basic Construction Workflow › should create segment from two points
+[1A[2K[10/188] [chromium] › tests/e2e/basic-construction.spec.ts:78:3 › Basic Construction Workflow › should display actions in Actions panel
+[1A[2K[11/188] [chromium] › tests/e2e/basic-construction.spec.ts:103:3 › Basic Construction Workflow › should show correct action timestamps and outputs
+[1A[2K[12/188] [chromium] › tests/e2e/circle-tool-snapping.spec.ts:64:3 › Circle Tool: Circumference Point Snapping › T986: Center snaps, circumference creates new point
+[1A[2K[13/188] [chromium] › tests/e2e/circle-tool-snapping.spec.ts:25:3 › Circle Tool: Circumference Point Snapping › T986: Both clicks snap to existing points - no duplicates created
+[1A[2K[14/188] [chromium] › tests/e2e/circle-tool-snapping.spec.ts:97:3 › Circle Tool: Circumference Point Snapping › T986: Visual snap feedback on hover (both clicks)
+[1A[2K  5) [chromium] › tests/e2e/active-plane-shortcuts.spec.ts:9:3 › Active Plane Shortcuts (Phase 89) › should cycle active plane with Tab and Shift+Tab 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      2 |
+      3 | test.describe('Active Plane Shortcuts (Phase 89)', () => {
+    > 4 |   test.beforeEach(async ({ page }) => {
+        |        ^
+      5 |     await page.goto('/');
+      6 |     await page.waitForSelector('svg.diedrico-canvas');
+      7 |   });
+        at /work/diedrico/frontend/tests/e2e/active-plane-shortcuts.spec.ts:4:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg.diedrico-canvas') to be visible[22m
+
+
+      4 |   test.beforeEach(async ({ page }) => {
+      5 |     await page.goto('/');
+    > 6 |     await page.waitForSelector('svg.diedrico-canvas');
+        |                ^
+      7 |   });
+      8 |
+      9 |   test('should cycle active plane with Tab and Shift+Tab', async ({ page }) => {
+        at /work/diedrico/frontend/tests/e2e/active-plane-shortcuts.spec.ts:6:16
+
+    Error Context: test-results/active-plane-shortcuts-Act-d4df7-lane-with-Tab-and-Shift-Tab-chromium/error-context.md
+
+
+[1A[2K[15/188] [chromium] › tests/e2e/circle-tool-snapping.spec.ts:134:3 › Circle Tool: Circumference Point Snapping › T986: Multiple circles with snapping - point count remains stable
+[1A[2K  6) [chromium] › tests/e2e/circle-tool-snapping.spec.ts:64:3 › Circle Tool: Circumference Point Snapping › T986: Center snaps, circumference creates new point 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      17 |
+      18 | test.describe('Circle Tool: Circumference Point Snapping', () => {
+    > 19 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      20 |     await page.goto('/');
+      21 |     // Wait for app to load
+      22 |     await page.waitForSelector('svg.diedrico-canvas');
+        at /work/diedrico/frontend/tests/e2e/circle-tool-snapping.spec.ts:19:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg.diedrico-canvas') to be visible[22m
+
+
+      20 |     await page.goto('/');
+      21 |     // Wait for app to load
+    > 22 |     await page.waitForSelector('svg.diedrico-canvas');
+         |                ^
+      23 |   });
+      24 |
+      25 |   test('T986: Both clicks snap to existing points - no duplicates created', async ({ page }) => {
+        at /work/diedrico/frontend/tests/e2e/circle-tool-snapping.spec.ts:22:16
+
+    Error Context: test-results/circle-tool-snapping-Circl-182ce-umference-creates-new-point-chromium/error-context.md
+
+
+[1A[2K  7) [chromium] › tests/e2e/circle-tool-snapping.spec.ts:25:3 › Circle Tool: Circumference Point Snapping › T986: Both clicks snap to existing points - no duplicates created 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      17 |
+      18 | test.describe('Circle Tool: Circumference Point Snapping', () => {
+    > 19 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      20 |     await page.goto('/');
+      21 |     // Wait for app to load
+      22 |     await page.waitForSelector('svg.diedrico-canvas');
+        at /work/diedrico/frontend/tests/e2e/circle-tool-snapping.spec.ts:19:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg.diedrico-canvas') to be visible[22m
+
+
+      20 |     await page.goto('/');
+      21 |     // Wait for app to load
+    > 22 |     await page.waitForSelector('svg.diedrico-canvas');
+         |                ^
+      23 |   });
+      24 |
+      25 |   test('T986: Both clicks snap to existing points - no duplicates created', async ({ page }) => {
+        at /work/diedrico/frontend/tests/e2e/circle-tool-snapping.spec.ts:22:16
+
+    Error Context: test-results/circle-tool-snapping-Circl-2879b-nts---no-duplicates-created-chromium/error-context.md
+
+
+[1A[2K  8) [chromium] › tests/e2e/circle-tool-snapping.spec.ts:97:3 › Circle Tool: Circumference Point Snapping › T986: Visual snap feedback on hover (both clicks) 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      17 |
+      18 | test.describe('Circle Tool: Circumference Point Snapping', () => {
+    > 19 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      20 |     await page.goto('/');
+      21 |     // Wait for app to load
+      22 |     await page.waitForSelector('svg.diedrico-canvas');
+        at /work/diedrico/frontend/tests/e2e/circle-tool-snapping.spec.ts:19:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg.diedrico-canvas') to be visible[22m
+
+
+      20 |     await page.goto('/');
+      21 |     // Wait for app to load
+    > 22 |     await page.waitForSelector('svg.diedrico-canvas');
+         |                ^
+      23 |   });
+      24 |
+      25 |   test('T986: Both clicks snap to existing points - no duplicates created', async ({ page }) => {
+        at /work/diedrico/frontend/tests/e2e/circle-tool-snapping.spec.ts:22:16
+
+    Error Context: test-results/circle-tool-snapping-Circl-5484c-dback-on-hover-both-clicks--chromium/error-context.md
+
+
+[1A[2K[16/188] [chromium] › tests/e2e/circle-tool-snapping.spec.ts:191:3 › Circle Tool: Circumference Point Snapping › T986: Snap radius consistency with other tools
+[1A[2K[17/188] [chromium] › tests/e2e/circle-tool-snapping.spec.ts:169:3 › Circle Tool: Circumference Point Snapping › T986: Minimum radius validation prevents tiny circles
+[1A[2K[18/188] [chromium] › tests/e2e/circle-tool-snapping.spec.ts:219:3 › Circle Tool: Circumference Point Snapping › T986: Cancel circle creation with Escape key
+[1A[2K  9) [chromium] › tests/e2e/circle-tool-snapping.spec.ts:134:3 › Circle Tool: Circumference Point Snapping › T986: Multiple circles with snapping - point count remains stable 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      17 |
+      18 | test.describe('Circle Tool: Circumference Point Snapping', () => {
+    > 19 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      20 |     await page.goto('/');
+      21 |     // Wait for app to load
+      22 |     await page.waitForSelector('svg.diedrico-canvas');
+        at /work/diedrico/frontend/tests/e2e/circle-tool-snapping.spec.ts:19:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg.diedrico-canvas') to be visible[22m
+
+
+      20 |     await page.goto('/');
+      21 |     // Wait for app to load
+    > 22 |     await page.waitForSelector('svg.diedrico-canvas');
+         |                ^
+      23 |   });
+      24 |
+      25 |   test('T986: Both clicks snap to existing points - no duplicates created', async ({ page }) => {
+        at /work/diedrico/frontend/tests/e2e/circle-tool-snapping.spec.ts:22:16
+
+    Error Context: test-results/circle-tool-snapping-Circl-d8fe1--point-count-remains-stable-chromium/error-context.md
+
+
+[1A[2K[19/188] [chromium] › tests/e2e/circle-tool-snapping.spec.ts:249:3 › Circle Tool: Circumference Point Snapping › T986: Consistent snapping across plane switches
+[1A[2K  10) [chromium] › tests/e2e/circle-tool-snapping.spec.ts:191:3 › Circle Tool: Circumference Point Snapping › T986: Snap radius consistency with other tools 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      17 |
+      18 | test.describe('Circle Tool: Circumference Point Snapping', () => {
+    > 19 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      20 |     await page.goto('/');
+      21 |     // Wait for app to load
+      22 |     await page.waitForSelector('svg.diedrico-canvas');
+        at /work/diedrico/frontend/tests/e2e/circle-tool-snapping.spec.ts:19:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg.diedrico-canvas') to be visible[22m
+
+
+      20 |     await page.goto('/');
+      21 |     // Wait for app to load
+    > 22 |     await page.waitForSelector('svg.diedrico-canvas');
+         |                ^
+      23 |   });
+      24 |
+      25 |   test('T986: Both clicks snap to existing points - no duplicates created', async ({ page }) => {
+        at /work/diedrico/frontend/tests/e2e/circle-tool-snapping.spec.ts:22:16
+
+    Error Context: test-results/circle-tool-snapping-Circl-092b9-onsistency-with-other-tools-chromium/error-context.md
+
+
+[1A[2K  11) [chromium] › tests/e2e/circle-tool-snapping.spec.ts:169:3 › Circle Tool: Circumference Point Snapping › T986: Minimum radius validation prevents tiny circles 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      17 |
+      18 | test.describe('Circle Tool: Circumference Point Snapping', () => {
+    > 19 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      20 |     await page.goto('/');
+      21 |     // Wait for app to load
+      22 |     await page.waitForSelector('svg.diedrico-canvas');
+        at /work/diedrico/frontend/tests/e2e/circle-tool-snapping.spec.ts:19:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg.diedrico-canvas') to be visible[22m
+
+
+      20 |     await page.goto('/');
+      21 |     // Wait for app to load
+    > 22 |     await page.waitForSelector('svg.diedrico-canvas');
+         |                ^
+      23 |   });
+      24 |
+      25 |   test('T986: Both clicks snap to existing points - no duplicates created', async ({ page }) => {
+        at /work/diedrico/frontend/tests/e2e/circle-tool-snapping.spec.ts:22:16
+
+    Error Context: test-results/circle-tool-snapping-Circl-89a16-ation-prevents-tiny-circles-chromium/error-context.md
+
+
+[1A[2K  12) [chromium] › tests/e2e/circle-tool-snapping.spec.ts:219:3 › Circle Tool: Circumference Point Snapping › T986: Cancel circle creation with Escape key 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      17 |
+      18 | test.describe('Circle Tool: Circumference Point Snapping', () => {
+    > 19 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      20 |     await page.goto('/');
+      21 |     // Wait for app to load
+      22 |     await page.waitForSelector('svg.diedrico-canvas');
+        at /work/diedrico/frontend/tests/e2e/circle-tool-snapping.spec.ts:19:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg.diedrico-canvas') to be visible[22m
+
+
+      20 |     await page.goto('/');
+      21 |     // Wait for app to load
+    > 22 |     await page.waitForSelector('svg.diedrico-canvas');
+         |                ^
+      23 |   });
+      24 |
+      25 |   test('T986: Both clicks snap to existing points - no duplicates created', async ({ page }) => {
+        at /work/diedrico/frontend/tests/e2e/circle-tool-snapping.spec.ts:22:16
+
+    Error Context: test-results/circle-tool-snapping-Circl-9d8b3-le-creation-with-Escape-key-chromium/error-context.md
+
+
+[1A[2K[20/188] [chromium] › tests/e2e/coordinate-display.spec.ts:28:3 › 3D Coordinate Display › displays coordinates when cursor is over P_H
+[1A[2K[21/188] [chromium] › tests/e2e/command-chaining.spec.ts:115:3 › Operation Chaining Documentation › should exist as documentation for operation chaining pattern
+[1A[2K[22/188] [chromium] › tests/e2e/coordinate-display.spec.ts:76:3 › 3D Coordinate Display › updates coordinates smoothly as cursor moves
+[1A[2K[23/188] [chromium] › tests/e2e/coordinate-display.spec.ts:57:3 › 3D Coordinate Display › displays "---" when cursor is outside active plane
+[1A[2K  13) [chromium] › tests/e2e/coordinate-display.spec.ts:28:3 › 3D Coordinate Display › displays coordinates when cursor is over P_H 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mnot[2m.[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: not [32m"---"[39m
+
+      49 |     
+      50 |     const coordText = await coordDisplay.textContent();
+    > 51 |     expect(coordText).not.toBe('---');
+         |                           ^
+      52 |     
+      53 |     // Should be in format "(x.xx, y.yy, z.zz)"
+      54 |     expect(coordText).toMatch(/\(-?\d+\.\d{2}, -?\d+\.\d{2}, -?\d+\.\d{2}\)/);
+        at /work/diedrico/frontend/tests/e2e/coordinate-display.spec.ts:51:27
+
+    Error Context: test-results/coordinate-display-3D-Coor-534b0-tes-when-cursor-is-over-P-H-chromium/error-context.md
+
+
+[1A[2K[24/188] [chromium] › tests/e2e/coordinate-display.spec.ts:119:3 › 3D Coordinate Display › shows active tool name in status bar
+[1A[2K  14) [chromium] › tests/e2e/coordinate-display.spec.ts:76:3 › 3D Coordinate Display › updates coordinates smoothly as cursor moves 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mnot[2m.[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: not [32m"---"[39m
+
+      86 |     
+      87 |     const coord1 = await coordDisplay.textContent();
+    > 88 |     expect(coord1).not.toBe('---');
+         |                        ^
+      89 |     
+      90 |     // Move to second position
+      91 |     await page.mouse.move(canvasBox.x + 900, canvasBox.y + 600);
+        at /work/diedrico/frontend/tests/e2e/coordinate-display.spec.ts:88:24
+
+    Error Context: test-results/coordinate-display-3D-Coor-01365-es-smoothly-as-cursor-moves-chromium/error-context.md
+
+
+[1A[2K[25/188] [chromium] › tests/e2e/coordinate-display.spec.ts:105:3 › 3D Coordinate Display › shows active plane name in status bar
+[1A[2K[26/188] [chromium] › tests/e2e/coordinate-display.spec.ts:133:3 › 3D Coordinate Display › coordinates update when switching planes
+[1A[2K[27/188] [chromium] › tests/e2e/coordinate-display.spec.ts:158:3 › 3D Coordinate Display › coordinate precision is 2 decimal places
+[1A[2K[28/188] [chromium] › tests/e2e/coordinate-display.spec.ts:187:3 › 3D Coordinate Display › debouncing prevents rapid coordinate flickering
+[1A[2K[29/188] [chromium] › tests/e2e/coordinate-display.spec.ts:218:3 › 3D Coordinate Display › P_H origin shows approximately (0, 0, 0)
+[1A[2K  15) [chromium] › tests/e2e/coordinate-display.spec.ts:133:3 › 3D Coordinate Display › coordinates update when switching planes 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoMatch[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected pattern: [32m/\(-?\d+\.\d{2}, -?\d+\.\d{2}, -?\d+\.\d{2}\)/[39m
+    Received string:  [31m"---"[39m
+
+      153 |     
+      154 |     // Verify coordinate format
+    > 155 |     expect(coord1).toMatch(/\(-?\d+\.\d{2}, -?\d+\.\d{2}, -?\d+\.\d{2}\)/);
+          |                    ^
+      156 |   });
+      157 |
+      158 |   test('coordinate precision is 2 decimal places', async ({ page }) => {
+        at /work/diedrico/frontend/tests/e2e/coordinate-display.spec.ts:155:20
+
+    Error Context: test-results/coordinate-display-3D-Coor-b109b-pdate-when-switching-planes-chromium/error-context.md
+
+
+[1A[2K[30/188] [chromium] › tests/e2e/create-circle.spec.ts:22:3 › Circle Creation › should create circle with center and radius
+[1A[2K[31/188] [chromium] › tests/e2e/create-circle.spec.ts:50:3 › Circle Creation › should undo circle creation
+[1A[2K[32/188] [chromium] › tests/e2e/create-circle.spec.ts:72:3 › Circle Creation › should redo circle creation
+[1A[2K  16) [chromium] › tests/e2e/circle-tool-snapping.spec.ts:249:3 › Circle Tool: Circumference Point Snapping › T986: Consistent snapping across plane switches 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      17 |
+      18 | test.describe('Circle Tool: Circumference Point Snapping', () => {
+    > 19 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      20 |     await page.goto('/');
+      21 |     // Wait for app to load
+      22 |     await page.waitForSelector('svg.diedrico-canvas');
+        at /work/diedrico/frontend/tests/e2e/circle-tool-snapping.spec.ts:19:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg.diedrico-canvas') to be visible[22m
+
+
+      20 |     await page.goto('/');
+      21 |     // Wait for app to load
+    > 22 |     await page.waitForSelector('svg.diedrico-canvas');
+         |                ^
+      23 |   });
+      24 |
+      25 |   test('T986: Both clicks snap to existing points - no duplicates created', async ({ page }) => {
+        at /work/diedrico/frontend/tests/e2e/circle-tool-snapping.spec.ts:22:16
+
+    Error Context: test-results/circle-tool-snapping-Circl-7c20a-pping-across-plane-switches-chromium/error-context.md
+
+
+[1A[2K[33/188] [chromium] › tests/e2e/create-circle.spec.ts:96:3 › Circle Creation › should use keyboard shortcut for undo
+[1A[2K  17) [chromium] › tests/e2e/create-circle.spec.ts:22:3 › Circle Creation › should create circle with center and radius 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Point")')[22m
+
+
+      22 |   test('should create circle with center and radius', async ({ page }) => {
+      23 |     // 1. Create center point
+    > 24 |     await page.click('button:has-text("Point")');
+         |                ^
+      25 |     await page.click('.svg-canvas', { position: { x: 300, y: 300 } });
+      26 |     
+      27 |     // Verify point created
+        at /work/diedrico/frontend/tests/e2e/create-circle.spec.ts:24:16
+
+    Error Context: test-results/create-circle-Circle-Creat-46351-rcle-with-center-and-radius-chromium/error-context.md
+
+
+[1A[2K  18) [chromium] › tests/e2e/create-circle.spec.ts:50:3 › Circle Creation › should undo circle creation 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Point")')[22m
+
+
+      50 |   test('should undo circle creation', async ({ page }) => {
+      51 |     // Create point
+    > 52 |     await page.click('button:has-text("Point")');
+         |                ^
+      53 |     await page.click('.svg-canvas', { position: { x: 300, y: 300 } });
+      54 |     
+      55 |     // Create circle
+        at /work/diedrico/frontend/tests/e2e/create-circle.spec.ts:52:16
+
+    Error Context: test-results/create-circle-Circle-Creation-should-undo-circle-creation-chromium/error-context.md
+
+
+[1A[2K  19) [chromium] › tests/e2e/create-circle.spec.ts:72:3 › Circle Creation › should redo circle creation 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Point")')[22m
+
+
+      72 |   test('should redo circle creation', async ({ page }) => {
+      73 |     // Create point and circle
+    > 74 |     await page.click('button:has-text("Point")');
+         |                ^
+      75 |     await page.click('.svg-canvas', { position: { x: 300, y: 300 } });
+      76 |     
+      77 |     await page.click('button:has-text("Circle")');
+        at /work/diedrico/frontend/tests/e2e/create-circle.spec.ts:74:16
+
+    Error Context: test-results/create-circle-Circle-Creation-should-redo-circle-creation-chromium/error-context.md
+
+
+[1A[2K[34/188] [chromium] › tests/e2e/create-circle.spec.ts:113:3 › Circle Creation › should create multiple circles
+[1A[2K[35/188] [chromium] › tests/e2e/create-circle.spec.ts:144:3 › Circle Creation › should create circles on different planes
+[1A[2K[36/188] [chromium] › tests/e2e/create-circle.spec.ts:171:3 › Circle Creation › should reject circle with zero radius
+[1A[2K  20) [chromium] › tests/e2e/create-circle.spec.ts:96:3 › Circle Creation › should use keyboard shortcut for undo 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Point")')[22m
+
+
+       96 |   test('should use keyboard shortcut for undo', async ({ page }) => {
+       97 |     // Create point and circle
+    >  98 |     await page.click('button:has-text("Point")');
+          |                ^
+       99 |     await page.click('.svg-canvas', { position: { x: 300, y: 300 } });
+      100 |     
+      101 |     await page.click('button:has-text("Circle")');
+        at /work/diedrico/frontend/tests/e2e/create-circle.spec.ts:98:16
+
+    Error Context: test-results/create-circle-Circle-Creat-f425a--keyboard-shortcut-for-undo-chromium/error-context.md
+
+
+[1A[2K[37/188] [chromium] › tests/e2e/create-circle.spec.ts:186:3 › Circle Creation › should create circles with different radii
+[1A[2K  21) [chromium] › tests/e2e/create-circle.spec.ts:113:3 › Circle Creation › should create multiple circles 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Point")')[22m
+
+
+      113 |   test('should create multiple circles', async ({ page }) => {
+      114 |     // Create three points
+    > 115 |     await page.click('button:has-text("Point")');
+          |                ^
+      116 |     await page.click('.svg-canvas', { position: { x: 200, y: 200 } });
+      117 |     
+      118 |     await page.click('button:has-text("Point")');
+        at /work/diedrico/frontend/tests/e2e/create-circle.spec.ts:115:16
+
+    Error Context: test-results/create-circle-Circle-Creation-should-create-multiple-circles-chromium/error-context.md
+
+
+[1A[2K  22) [chromium] › tests/e2e/create-circle.spec.ts:144:3 › Circle Creation › should create circles on different planes 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Point")')[22m
+
+
+      144 |   test('should create circles on different planes', async ({ page }) => {
+      145 |     // Create point on horizontal plane
+    > 146 |     await page.click('button:has-text("Point")');
+          |                ^
+      147 |     await page.click('.svg-canvas', { position: { x: 300, y: 200 } });
+      148 |     
+      149 |     // Create circle on horizontal plane
+        at /work/diedrico/frontend/tests/e2e/create-circle.spec.ts:146:16
+
+    Error Context: test-results/create-circle-Circle-Creat-e74db-circles-on-different-planes-chromium/error-context.md
+
+
+[1A[2K  23) [chromium] › tests/e2e/create-circle.spec.ts:171:3 › Circle Creation › should reject circle with zero radius 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Point")')[22m
+
+
+      171 |   test('should reject circle with zero radius', async ({ page }) => {
+      172 |     // Create point
+    > 173 |     await page.click('button:has-text("Point")');
+          |                ^
+      174 |     await page.click('.svg-canvas', { position: { x: 300, y: 300 } });
+      175 |     
+      176 |     // Try to create circle by clicking center twice (zero radius)
+        at /work/diedrico/frontend/tests/e2e/create-circle.spec.ts:173:16
+
+    Error Context: test-results/create-circle-Circle-Creat-444d3-ect-circle-with-zero-radius-chromium/error-context.md
+
+
+[1A[2K[38/188] [chromium] › tests/e2e/create-circle.spec.ts:219:3 › Circle Creation › should display circle with distinct visual style
+[1A[2K[39/188] [chromium] › tests/e2e/create-circle.spec.ts:239:3 › Circle Creation › should require center point to exist
+[1A[2K[40/188] [chromium] › tests/e2e/create-point.spec.ts:22:3 › Point Creation › should create point when Point tool is active and canvas is clicked
+[1A[2K  24) [chromium] › tests/e2e/create-circle.spec.ts:186:3 › Circle Creation › should create circles with different radii 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Point")')[22m
+
+
+      186 |   test('should create circles with different radii', async ({ page }) => {
+      187 |     // Create center point
+    > 188 |     await page.click('button:has-text("Point")');
+          |                ^
+      189 |     await page.click('.svg-canvas', { position: { x: 300, y: 300 } });
+      190 |     
+      191 |     // Create small circle (radius ~25 pixels)
+        at /work/diedrico/frontend/tests/e2e/create-circle.spec.ts:188:16
+
+    Error Context: test-results/create-circle-Circle-Creat-7d63f-ircles-with-different-radii-chromium/error-context.md
+
+
+[1A[2K  25) [chromium] › tests/e2e/create-point.spec.ts:22:3 › Point Creation › should create point when Point tool is active and canvas is clicked 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5175/
+    Call log:
+    [2m  - navigating to "http://localhost:5175/", waiting until "load"[22m
+
+
+      15 | test.describe('Point Creation', () => {
+      16 |   test.beforeEach(async ({ page }) => {
+    > 17 |     await page.goto('http://localhost:5175');
+         |                ^
+      18 |     // Wait for app to load
+      19 |     await page.waitForSelector('.svg-canvas');
+      20 |   });
+        at /work/diedrico/frontend/tests/e2e/create-point.spec.ts:17:16
+
+    Error Context: test-results/create-point-Point-Creatio-094db-ctive-and-canvas-is-clicked-chromium/error-context.md
+
+
+[1A[2K[41/188] [chromium] › tests/e2e/create-point.spec.ts:47:3 › Point Creation › should create multiple points with repeated clicks
+[1A[2K[42/188] [chromium] › tests/e2e/create-point.spec.ts:63:3 › Point Creation › should create points on horizontal plane (P_H)
+[1A[2K  26) [chromium] › tests/e2e/create-point.spec.ts:47:3 › Point Creation › should create multiple points with repeated clicks 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5175/
+    Call log:
+    [2m  - navigating to "http://localhost:5175/", waiting until "load"[22m
+
+
+      15 | test.describe('Point Creation', () => {
+      16 |   test.beforeEach(async ({ page }) => {
+    > 17 |     await page.goto('http://localhost:5175');
+         |                ^
+      18 |     // Wait for app to load
+      19 |     await page.waitForSelector('.svg-canvas');
+      20 |   });
+        at /work/diedrico/frontend/tests/e2e/create-point.spec.ts:17:16
+
+    Error Context: test-results/create-point-Point-Creatio-3c98d-points-with-repeated-clicks-chromium/error-context.md
+
+
+[1A[2K  27) [chromium] › tests/e2e/create-point.spec.ts:63:3 › Point Creation › should create points on horizontal plane (P_H) 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5175/
+    Call log:
+    [2m  - navigating to "http://localhost:5175/", waiting until "load"[22m
+
+
+      15 | test.describe('Point Creation', () => {
+      16 |   test.beforeEach(async ({ page }) => {
+    > 17 |     await page.goto('http://localhost:5175');
+         |                ^
+      18 |     // Wait for app to load
+      19 |     await page.waitForSelector('.svg-canvas');
+      20 |   });
+        at /work/diedrico/frontend/tests/e2e/create-point.spec.ts:17:16
+
+    Error Context: test-results/create-point-Point-Creatio-a84a0-ts-on-horizontal-plane-P-H--chromium/error-context.md
+
+
+[1A[2K[43/188] [chromium] › tests/e2e/create-point.spec.ts:79:3 › Point Creation › should create points on vertical plane (P_V)
+[1A[2K[44/188] [chromium] › tests/e2e/create-point.spec.ts:95:3 › Point Creation › should not create points when Point tool is not active
+[1A[2K  28) [chromium] › tests/e2e/create-point.spec.ts:79:3 › Point Creation › should create points on vertical plane (P_V) 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5175/
+    Call log:
+    [2m  - navigating to "http://localhost:5175/", waiting until "load"[22m
+
+
+      15 | test.describe('Point Creation', () => {
+      16 |   test.beforeEach(async ({ page }) => {
+    > 17 |     await page.goto('http://localhost:5175');
+         |                ^
+      18 |     // Wait for app to load
+      19 |     await page.waitForSelector('.svg-canvas');
+      20 |   });
+        at /work/diedrico/frontend/tests/e2e/create-point.spec.ts:17:16
+
+    Error Context: test-results/create-point-Point-Creatio-9378c-ints-on-vertical-plane-P-V--chromium/error-context.md
+
+
+[1A[2K  29) [chromium] › tests/e2e/create-point.spec.ts:95:3 › Point Creation › should not create points when Point tool is not active 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5175/
+    Call log:
+    [2m  - navigating to "http://localhost:5175/", waiting until "load"[22m
+
+
+      15 | test.describe('Point Creation', () => {
+      16 |   test.beforeEach(async ({ page }) => {
+    > 17 |     await page.goto('http://localhost:5175');
+         |                ^
+      18 |     // Wait for app to load
+      19 |     await page.waitForSelector('.svg-canvas');
+      20 |   });
+        at /work/diedrico/frontend/tests/e2e/create-point.spec.ts:17:16
+
+    Error Context: test-results/create-point-Point-Creatio-af4a9-en-Point-tool-is-not-active-chromium/error-context.md
+
+
+[1A[2K[45/188] [chromium] › tests/e2e/create-point.spec.ts:114:3 › Point Creation › should deactivate tool when Select tool is clicked
+[1A[2K[46/188] [chromium] › tests/e2e/create-point.spec.ts:128:3 › Point Creation › should show visual feedback when hovering over canvas with Point tool active
+[1A[2K  30) [chromium] › tests/e2e/create-point.spec.ts:114:3 › Point Creation › should deactivate tool when Select tool is clicked 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5175/
+    Call log:
+    [2m  - navigating to "http://localhost:5175/", waiting until "load"[22m
+
+
+      15 | test.describe('Point Creation', () => {
+      16 |   test.beforeEach(async ({ page }) => {
+    > 17 |     await page.goto('http://localhost:5175');
+         |                ^
+      18 |     // Wait for app to load
+      19 |     await page.waitForSelector('.svg-canvas');
+      20 |   });
+        at /work/diedrico/frontend/tests/e2e/create-point.spec.ts:17:16
+
+    Error Context: test-results/create-point-Point-Creatio-0fe4f-when-Select-tool-is-clicked-chromium/error-context.md
+
+
+[1A[2K  31) [chromium] › tests/e2e/create-point.spec.ts:128:3 › Point Creation › should show visual feedback when hovering over canvas with Point tool active 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5175/
+    Call log:
+    [2m  - navigating to "http://localhost:5175/", waiting until "load"[22m
+
+
+      15 | test.describe('Point Creation', () => {
+      16 |   test.beforeEach(async ({ page }) => {
+    > 17 |     await page.goto('http://localhost:5175');
+         |                ^
+      18 |     // Wait for app to load
+      19 |     await page.waitForSelector('.svg-canvas');
+      20 |   });
+        at /work/diedrico/frontend/tests/e2e/create-point.spec.ts:17:16
+
+    Error Context: test-results/create-point-Point-Creatio-7b10d-nvas-with-Point-tool-active-chromium/error-context.md
+
+
+[1A[2K[47/188] [chromium] › tests/e2e/create-segment.spec.ts:22:3 › Segment Creation › should create segment between two points
+[1A[2K[48/188] [chromium] › tests/e2e/create-segment.spec.ts:66:3 › Segment Creation › should undo segment creation
+[1A[2K  32) [chromium] › tests/e2e/create-circle.spec.ts:219:3 › Circle Creation › should display circle with distinct visual style 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Point")')[22m
+
+
+      219 |   test('should display circle with distinct visual style', async ({ page }) => {
+      220 |     // Create point and circle
+    > 221 |     await page.click('button:has-text("Point")');
+          |                ^
+      222 |     await page.click('.svg-canvas', { position: { x: 300, y: 300 } });
+      223 |     
+      224 |     await page.click('button:has-text("Circle")');
+        at /work/diedrico/frontend/tests/e2e/create-circle.spec.ts:221:16
+
+    Error Context: test-results/create-circle-Circle-Creat-2b454--with-distinct-visual-style-chromium/error-context.md
+
+
+[1A[2K  33) [chromium] › tests/e2e/create-circle.spec.ts:239:3 › Circle Creation › should require center point to exist 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Circle")')[22m
+
+
+      239 |   test('should require center point to exist', async ({ page }) => {
+      240 |     // Try to create circle without creating center point first
+    > 241 |     await page.click('button:has-text("Circle")');
+          |                ^
+      242 |     await page.click('.svg-canvas', { position: { x: 300, y: 300 } });
+      243 |     
+      244 |     // Should fail - no error, just no action since no point to snap to
+        at /work/diedrico/frontend/tests/e2e/create-circle.spec.ts:241:16
+
+    Error Context: test-results/create-circle-Circle-Creat-463c7-quire-center-point-to-exist-chromium/error-context.md
+
+
+[1A[2K[49/188] [chromium] › tests/e2e/create-segment.spec.ts:91:3 › Segment Creation › should redo segment creation
+[1A[2K[50/188] [chromium] › tests/e2e/create-segment.spec.ts:119:3 › Segment Creation › should use keyboard shortcut for undo
+[1A[2K  34) [chromium] › tests/e2e/create-segment.spec.ts:22:3 › Segment Creation › should create segment between two points 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Point")')[22m
+
+
+      22 |   test('should create segment between two points', async ({ page }) => {
+      23 |     // 1. Create first point
+    > 24 |     await page.click('button:has-text("Point")');
+         |                ^
+      25 |     await page.click('.svg-canvas', { position: { x: 200, y: 200 } });
+      26 |     
+      27 |     // Verify point created
+        at /work/diedrico/frontend/tests/e2e/create-segment.spec.ts:24:16
+
+    Error Context: test-results/create-segment-Segment-Cre-c2d80--segment-between-two-points-chromium/error-context.md
+
+
+[1A[2K  35) [chromium] › tests/e2e/create-segment.spec.ts:66:3 › Segment Creation › should undo segment creation 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Point")')[22m
+
+
+      66 |   test('should undo segment creation', async ({ page }) => {
+      67 |     // Create two points
+    > 68 |     await page.click('button:has-text("Point")');
+         |                ^
+      69 |     await page.click('.svg-canvas', { position: { x: 200, y: 200 } });
+      70 |     
+      71 |     await page.click('button:has-text("Point")');
+        at /work/diedrico/frontend/tests/e2e/create-segment.spec.ts:68:16
+
+    Error Context: test-results/create-segment-Segment-Creation-should-undo-segment-creation-chromium/error-context.md
+
+
+[1A[2K[51/188] [chromium] › tests/e2e/create-segment.spec.ts:139:3 › Segment Creation › should create multiple segments
+[1A[2K[52/188] [chromium] › tests/e2e/create-segment.spec.ts:170:3 › Segment Creation › should create segments on different planes
+[1A[2K  36) [chromium] › tests/e2e/create-segment.spec.ts:91:3 › Segment Creation › should redo segment creation 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Point")')[22m
+
+
+      91 |   test('should redo segment creation', async ({ page }) => {
+      92 |     // Create two points
+    > 93 |     await page.click('button:has-text("Point")');
+         |                ^
+      94 |     await page.click('.svg-canvas', { position: { x: 200, y: 200 } });
+      95 |     
+      96 |     await page.click('button:has-text("Point")');
+        at /work/diedrico/frontend/tests/e2e/create-segment.spec.ts:93:16
+
+    Error Context: test-results/create-segment-Segment-Creation-should-redo-segment-creation-chromium/error-context.md
+
+
+[1A[2K  37) [chromium] › tests/e2e/create-segment.spec.ts:119:3 › Segment Creation › should use keyboard shortcut for undo 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Point")')[22m
+
+
+      119 |   test('should use keyboard shortcut for undo', async ({ page }) => {
+      120 |     // Create two points and segment
+    > 121 |     await page.click('button:has-text("Point")');
+          |                ^
+      122 |     await page.click('.svg-canvas', { position: { x: 200, y: 200 } });
+      123 |     
+      124 |     await page.click('button:has-text("Point")');
+        at /work/diedrico/frontend/tests/e2e/create-segment.spec.ts:121:16
+
+    Error Context: test-results/create-segment-Segment-Cre-e7e0a--keyboard-shortcut-for-undo-chromium/error-context.md
+
+
+[1A[2K[53/188] [chromium] › tests/e2e/create-segment.spec.ts:203:3 › Segment Creation › should reject segment with same point twice
+[1A[2K[54/188] [chromium] › tests/e2e/create-segment.spec.ts:218:3 › Segment Creation › should display segment with distinct visual style
+[1A[2K  38) [chromium] › tests/e2e/create-segment.spec.ts:139:3 › Segment Creation › should create multiple segments 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Point")')[22m
+
+
+      139 |   test('should create multiple segments', async ({ page }) => {
+      140 |     // Create three points
+    > 141 |     await page.click('button:has-text("Point")');
+          |                ^
+      142 |     await page.click('.svg-canvas', { position: { x: 200, y: 200 } });
+      143 |     
+      144 |     await page.click('button:has-text("Point")');
+        at /work/diedrico/frontend/tests/e2e/create-segment.spec.ts:141:16
+
+    Error Context: test-results/create-segment-Segment-Cre-3e8af-ld-create-multiple-segments-chromium/error-context.md
+
+
+[1A[2K  39) [chromium] › tests/e2e/create-segment.spec.ts:170:3 › Segment Creation › should create segments on different planes 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Point")')[22m
+
+
+      170 |   test('should create segments on different planes', async ({ page }) => {
+      171 |     // Create two points on horizontal plane
+    > 172 |     await page.click('button:has-text("Point")');
+          |                ^
+      173 |     await page.click('.svg-canvas', { position: { x: 200, y: 200 } });
+      174 |     
+      175 |     await page.click('button:has-text("Point")');
+        at /work/diedrico/frontend/tests/e2e/create-segment.spec.ts:172:16
+
+    Error Context: test-results/create-segment-Segment-Cre-c06d5-egments-on-different-planes-chromium/error-context.md
+
+
+[1A[2K[55/188] [chromium] › tests/e2e/debug.spec.ts:3:1 › debug console
+[1A[2K[chromium] › tests/e2e/debug.spec.ts:3:1 › debug console
+REQUEST FAILED: http://localhost:5180/ - net::ERR_CONNECTION_REFUSED
+
+[1A[2K[56/188] [chromium] › tests/e2e/dependencies.spec.ts:15:3 › Dependency Tracking › intersection point updates when base line moves
+[1A[2K  40) [chromium] › tests/e2e/debug.spec.ts:3:1 › debug console ─────────────────────────────────────
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Call log:
+    [2m  - navigating to "http://localhost:5180/", waiting until "load"[22m
+
+
+       9 |   page.on('pageerror', exception => console.log(`In-page error: "${exception}"`));
+      10 |   
+    > 11 |   await page.goto('http://localhost:5180');
+         |              ^
+      12 |   
+      13 |   // Check if svg exists
+      14 |   const count = await page.locator('svg').count();
+        at /work/diedrico/frontend/tests/e2e/debug.spec.ts:11:14
+
+    Error Context: test-results/debug-debug-console-chromium/error-context.md
+
+
+[1A[2K[57/188] [chromium] › tests/e2e/dependencies.spec.ts:49:3 › Dependency Tracking › circle updates when center point moves
+[1A[2K  41) [chromium] › tests/e2e/create-segment.spec.ts:203:3 › Segment Creation › should reject segment with same point twice 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Point")')[22m
+
+
+      203 |   test('should reject segment with same point twice', async ({ page }) => {
+      204 |     // Create one point
+    > 205 |     await page.click('button:has-text("Point")');
+          |                ^
+      206 |     await page.click('.svg-canvas', { position: { x: 200, y: 200 } });
+      207 |     
+      208 |     // Try to create segment by clicking same point twice
+        at /work/diedrico/frontend/tests/e2e/create-segment.spec.ts:205:16
+
+    Error Context: test-results/create-segment-Segment-Cre-4e460-gment-with-same-point-twice-chromium/error-context.md
+
+
+[1A[2K  42) [chromium] › tests/e2e/create-segment.spec.ts:218:3 › Segment Creation › should display segment with distinct visual style 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Point")')[22m
+
+
+      218 |   test('should display segment with distinct visual style', async ({ page }) => {
+      219 |     // Create two points
+    > 220 |     await page.click('button:has-text("Point")');
+          |                ^
+      221 |     await page.click('.svg-canvas', { position: { x: 200, y: 200 } });
+      222 |     
+      223 |     await page.click('button:has-text("Point")');
+        at /work/diedrico/frontend/tests/e2e/create-segment.spec.ts:220:16
+
+    Error Context: test-results/create-segment-Segment-Cre-5ec5a--with-distinct-visual-style-chromium/error-context.md
+
+
+[1A[2K[58/188] [chromium] › tests/e2e/dependencies.spec.ts:72:3 › Dependency Tracking › line updates when defining points move
+[1A[2K[59/188] [chromium] › tests/e2e/dependencies.spec.ts:96:3 › Dependency Tracking › dependency chain updates transitively
+[1A[2K  43) [chromium] › tests/e2e/dependencies.spec.ts:15:3 › Dependency Tracking › intersection point updates when base line moves 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="plane-selector-P_H"]')[22m
+
+
+      17 |
+      18 |     // Switch to P_H plane
+    > 19 |     await page.click('[data-testid="plane-selector-P_H"]');
+         |                ^
+      20 |
+      21 |     // Create first line by clicking two points
+      22 |     await page.click('[data-testid="tool-line"]');
+        at /work/diedrico/frontend/tests/e2e/dependencies.spec.ts:19:16
+
+    Error Context: test-results/dependencies-Dependency-Tr-23007-pdates-when-base-line-moves-chromium/error-context.md
+
+
+[1A[2K  44) [chromium] › tests/e2e/dependencies.spec.ts:49:3 › Dependency Tracking › circle updates when center point moves 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="plane-selector-P_H"]')[22m
+
+
+      51 |
+      52 |     // Switch to P_H plane
+    > 53 |     await page.click('[data-testid="plane-selector-P_H"]');
+         |                ^
+      54 |
+      55 |     // Create center point
+      56 |     await page.click('[data-testid="tool-point"]');
+        at /work/diedrico/frontend/tests/e2e/dependencies.spec.ts:53:16
+
+    Error Context: test-results/dependencies-Dependency-Tr-040e4-tes-when-center-point-moves-chromium/error-context.md
+
+
+[1A[2K[60/188] [chromium] › tests/e2e/dependencies.spec.ts:138:3 › Dependency Tracking › multiple dependents update when base element changes
+[1A[2K[61/188] [chromium] › tests/e2e/dependencies.spec.ts:172:3 › Dependency Tracking › dependency tracking shows in process tree
+[1A[2K  45) [chromium] › tests/e2e/dependencies.spec.ts:72:3 › Dependency Tracking › line updates when defining points move 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="plane-selector-P_H"]')[22m
+
+
+      74 |
+      75 |     // Switch to P_H plane
+    > 76 |     await page.click('[data-testid="plane-selector-P_H"]');
+         |                ^
+      77 |
+      78 |     // Create two points
+      79 |     await page.click('[data-testid="tool-point"]');
+        at /work/diedrico/frontend/tests/e2e/dependencies.spec.ts:76:16
+
+    Error Context: test-results/dependencies-Dependency-Tr-4cd69-s-when-defining-points-move-chromium/error-context.md
+
+
+[1A[2K  46) [chromium] › tests/e2e/dependencies.spec.ts:96:3 › Dependency Tracking › dependency chain updates transitively 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="plane-selector-P_H"]')[22m
+
+
+       98 |
+       99 |     // Switch to P_H plane
+    > 100 |     await page.click('[data-testid="plane-selector-P_H"]');
+          |                ^
+      101 |
+      102 |     // Create base points
+      103 |     await page.click('[data-testid="tool-point"]');
+        at /work/diedrico/frontend/tests/e2e/dependencies.spec.ts:100:16
+
+    Error Context: test-results/dependencies-Dependency-Tr-5a8bd--chain-updates-transitively-chromium/error-context.md
+
+
+[1A[2K[62/188] [chromium] › tests/e2e/dependencies.spec.ts:199:3 › Dependency Tracking › circular dependency prevention
+[1A[2K[63/188] [chromium] › tests/e2e/dependencies.spec.ts:233:3 › Parametric Updates (Integration) › realization cache invalidation cascades to dependents
+[1A[2K  47) [chromium] › tests/e2e/dependencies.spec.ts:138:3 › Dependency Tracking › multiple dependents update when base element changes 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="plane-selector-P_H"]')[22m
+
+
+      140 |
+      141 |     // Switch to P_H plane
+    > 142 |     await page.click('[data-testid="plane-selector-P_H"]');
+          |                ^
+      143 |
+      144 |     // Create center point
+      145 |     await page.click('[data-testid="tool-point"]');
+        at /work/diedrico/frontend/tests/e2e/dependencies.spec.ts:142:16
+
+    Error Context: test-results/dependencies-Dependency-Tr-41863-e-when-base-element-changes-chromium/error-context.md
+
+
+[1A[2K  48) [chromium] › tests/e2e/dependencies.spec.ts:172:3 › Dependency Tracking › dependency tracking shows in process tree 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="plane-selector-P_H"]')[22m
+
+
+      174 |
+      175 |     // Switch to P_H plane
+    > 176 |     await page.click('[data-testid="plane-selector-P_H"]');
+          |                ^
+      177 |
+      178 |     // Create construction with dependencies
+      179 |     await page.click('[data-testid="tool-point"]');
+        at /work/diedrico/frontend/tests/e2e/dependencies.spec.ts:176:16
+
+    Error Context: test-results/dependencies-Dependency-Tr-5e43e-cking-shows-in-process-tree-chromium/error-context.md
+
+
+[1A[2K[64/188] [chromium] › tests/e2e/distance-adjusted-hit-testing.spec.ts:22:3 › Distance-Adjusted Hit-Testing › T978: Point highlighted over line when overlapping
+[1A[2K[65/188] [chromium] › tests/e2e/distance-adjusted-hit-testing.spec.ts:53:3 › Distance-Adjusted Hit-Testing › T978: Point selected over line on click
+[1A[2K  49) [chromium] › tests/e2e/dependencies.spec.ts:199:3 › Dependency Tracking › circular dependency prevention 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="plane-selector-P_H"]')[22m
+
+
+      205 |
+      206 |     // Switch to P_H plane
+    > 207 |     await page.click('[data-testid="plane-selector-P_H"]');
+          |                ^
+      208 |
+      209 |     // Create a simple construction
+      210 |     await page.click('[data-testid="tool-point"]');
+        at /work/diedrico/frontend/tests/e2e/dependencies.spec.ts:207:16
+
+    Error Context: test-results/dependencies-Dependency-Tr-b7991-cular-dependency-prevention-chromium/error-context.md
+
+
+[1A[2K  50) [chromium] › tests/e2e/dependencies.spec.ts:233:3 › Parametric Updates (Integration) › realization cache invalidation cascades to dependents 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="plane-selector-P_H"]')[22m
+
+
+      239 |
+      240 |     // Switch to P_H plane
+    > 241 |     await page.click('[data-testid="plane-selector-P_H"]');
+          |                ^
+      242 |
+      243 |     // Create a construction chain
+      244 |     await page.click('[data-testid="tool-point"]');
+        at /work/diedrico/frontend/tests/e2e/dependencies.spec.ts:241:16
+
+    Error Context: test-results/dependencies-Parametric-Up-f6353-tion-cascades-to-dependents-chromium/error-context.md
+
+
+[1A[2K[66/188] [chromium] › tests/e2e/distance-adjusted-hit-testing.spec.ts:84:3 › Distance-Adjusted Hit-Testing › T979: Construction workflow with point on line
+[1A[2K[67/188] [chromium] › tests/e2e/distance-adjusted-hit-testing.spec.ts:131:3 › Distance-Adjusted Hit-Testing › T979: Tool input respects distance adjustment
+[1A[2K  51) [chromium] › tests/e2e/distance-adjusted-hit-testing.spec.ts:22:3 › Distance-Adjusted Hit-Testing › T978: Point highlighted over line when overlapping 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      14 |
+      15 | test.describe('Distance-Adjusted Hit-Testing', () => {
+    > 16 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      17 |     await page.goto('/');
+      18 |     // Wait for app to load
+      19 |     await page.waitForSelector('svg.diedrico-canvas');
+        at /work/diedrico/frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:16:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg.diedrico-canvas') to be visible[22m
+
+
+      17 |     await page.goto('/');
+      18 |     // Wait for app to load
+    > 19 |     await page.waitForSelector('svg.diedrico-canvas');
+         |                ^
+      20 |   });
+      21 |
+      22 |   test('T978: Point highlighted over line when overlapping', async ({ page }) => {
+        at /work/diedrico/frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:19:16
+
+    Error Context: test-results/distance-adjusted-hit-test-c7e1f--over-line-when-overlapping-chromium/error-context.md
+
+
+[1A[2K  52) [chromium] › tests/e2e/distance-adjusted-hit-testing.spec.ts:53:3 › Distance-Adjusted Hit-Testing › T978: Point selected over line on click 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      14 |
+      15 | test.describe('Distance-Adjusted Hit-Testing', () => {
+    > 16 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      17 |     await page.goto('/');
+      18 |     // Wait for app to load
+      19 |     await page.waitForSelector('svg.diedrico-canvas');
+        at /work/diedrico/frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:16:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg.diedrico-canvas') to be visible[22m
+
+
+      17 |     await page.goto('/');
+      18 |     // Wait for app to load
+    > 19 |     await page.waitForSelector('svg.diedrico-canvas');
+         |                ^
+      20 |   });
+      21 |
+      22 |   test('T978: Point highlighted over line when overlapping', async ({ page }) => {
+        at /work/diedrico/frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:19:16
+
+    Error Context: test-results/distance-adjusted-hit-test-3fa36-selected-over-line-on-click-chromium/error-context.md
+
+
+[1A[2K[68/188] [chromium] › tests/e2e/distance-adjusted-hit-testing.spec.ts:166:3 › Distance-Adjusted Hit-Testing › Line wins when significantly closer than point
+[1A[2K[69/188] [chromium] › tests/e2e/distance-adjusted-hit-testing.spec.ts:201:3 › Distance-Adjusted Hit-Testing › Distance adjustment works with hover highlighting
+[1A[2K  53) [chromium] › tests/e2e/distance-adjusted-hit-testing.spec.ts:84:3 › Distance-Adjusted Hit-Testing › T979: Construction workflow with point on line 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      14 |
+      15 | test.describe('Distance-Adjusted Hit-Testing', () => {
+    > 16 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      17 |     await page.goto('/');
+      18 |     // Wait for app to load
+      19 |     await page.waitForSelector('svg.diedrico-canvas');
+        at /work/diedrico/frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:16:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg.diedrico-canvas') to be visible[22m
+
+
+      17 |     await page.goto('/');
+      18 |     // Wait for app to load
+    > 19 |     await page.waitForSelector('svg.diedrico-canvas');
+         |                ^
+      20 |   });
+      21 |
+      22 |   test('T978: Point highlighted over line when overlapping', async ({ page }) => {
+        at /work/diedrico/frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:19:16
+
+    Error Context: test-results/distance-adjusted-hit-test-25313-workflow-with-point-on-line-chromium/error-context.md
+
+
+[1A[2K  54) [chromium] › tests/e2e/distance-adjusted-hit-testing.spec.ts:131:3 › Distance-Adjusted Hit-Testing › T979: Tool input respects distance adjustment 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      14 |
+      15 | test.describe('Distance-Adjusted Hit-Testing', () => {
+    > 16 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      17 |     await page.goto('/');
+      18 |     // Wait for app to load
+      19 |     await page.waitForSelector('svg.diedrico-canvas');
+        at /work/diedrico/frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:16:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg.diedrico-canvas') to be visible[22m
+
+
+      17 |     await page.goto('/');
+      18 |     // Wait for app to load
+    > 19 |     await page.waitForSelector('svg.diedrico-canvas');
+         |                ^
+      20 |   });
+      21 |
+      22 |   test('T978: Point highlighted over line when overlapping', async ({ page }) => {
+        at /work/diedrico/frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:19:16
+
+    Error Context: test-results/distance-adjusted-hit-test-348e3-espects-distance-adjustment-chromium/error-context.md
+
+
+[1A[2K[70/188] [chromium] › tests/e2e/distance-transport.spec.ts:29:3 › Distance Transport Workflow › should transport segment from P_H to P_V
+[1A[2K[71/188] [chromium] › tests/e2e/distance-transport.spec.ts:68:3 › Distance Transport Workflow › should render transported elements with derived style
+[1A[2K[72/188] [chromium] › tests/e2e/distance-transport.spec.ts:93:3 › Distance Transport Workflow › should preserve segment length during transport
+[1A[2K[73/188] [chromium] › tests/e2e/distance-transport.spec.ts:111:3 › Distance Transport Workflow › should update transported segment when source moves
+[1A[2K[74/188] [chromium] › tests/e2e/distance-transport.spec.ts:134:3 › Distance Transport Workflow › should create action in Actions panel
+[1A[2K[75/188] [chromium] › tests/e2e/guide-creation.spec.ts:22:3 › Guide Creation › should create guide perpendicular to line through point
+[1A[2K[76/188] [chromium] › tests/e2e/guide-creation.spec.ts:58:3 › Guide Creation › should render guide with dashed stroke style
+[1A[2K  55) [chromium] › tests/e2e/distance-adjusted-hit-testing.spec.ts:166:3 › Distance-Adjusted Hit-Testing › Line wins when significantly closer than point 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      14 |
+      15 | test.describe('Distance-Adjusted Hit-Testing', () => {
+    > 16 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      17 |     await page.goto('/');
+      18 |     // Wait for app to load
+      19 |     await page.waitForSelector('svg.diedrico-canvas');
+        at /work/diedrico/frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:16:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg.diedrico-canvas') to be visible[22m
+
+
+      17 |     await page.goto('/');
+      18 |     // Wait for app to load
+    > 19 |     await page.waitForSelector('svg.diedrico-canvas');
+         |                ^
+      20 |   });
+      21 |
+      22 |   test('T978: Point highlighted over line when overlapping', async ({ page }) => {
+        at /work/diedrico/frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:19:16
+
+    Error Context: test-results/distance-adjusted-hit-test-bf5c4-ificantly-closer-than-point-chromium/error-context.md
+
+
+[1A[2K  56) [chromium] › tests/e2e/distance-adjusted-hit-testing.spec.ts:201:3 › Distance-Adjusted Hit-Testing › Distance adjustment works with hover highlighting 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      14 |
+      15 | test.describe('Distance-Adjusted Hit-Testing', () => {
+    > 16 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      17 |     await page.goto('/');
+      18 |     // Wait for app to load
+      19 |     await page.waitForSelector('svg.diedrico-canvas');
+        at /work/diedrico/frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:16:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg.diedrico-canvas') to be visible[22m
+
+
+      17 |     await page.goto('/');
+      18 |     // Wait for app to load
+    > 19 |     await page.waitForSelector('svg.diedrico-canvas');
+         |                ^
+      20 |   });
+      21 |
+      22 |   test('T978: Point highlighted over line when overlapping', async ({ page }) => {
+        at /work/diedrico/frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:19:16
+
+    Error Context: test-results/distance-adjusted-hit-test-b210b-rks-with-hover-highlighting-chromium/error-context.md
+
+
+[1A[2K[77/188] [chromium] › tests/e2e/guide-creation.spec.ts:94:3 › Guide Creation › should undo guide creation
+[1A[2K[78/188] [chromium] › tests/e2e/guide-creation.spec.ts:129:3 › Guide Creation › should redo guide creation
+[1A[2K  57) [chromium] › tests/e2e/guide-creation.spec.ts:22:3 › Guide Creation › should create guide perpendicular to line through point 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Point")')[22m
+
+
+      22 |   test('should create guide perpendicular to line through point', async ({ page }) => {
+      23 |     // 1. Create two points for reference line
+    > 24 |     await page.click('button:has-text("Point")');
+         |                ^
+      25 |     await page.click('.svg-canvas', { position: { x: 200, y: 300 } });
+      26 |     
+      27 |     await page.click('button:has-text("Point")');
+        at /work/diedrico/frontend/tests/e2e/guide-creation.spec.ts:24:16
+
+    Error Context: test-results/guide-creation-Guide-Creat-393b3-cular-to-line-through-point-chromium/error-context.md
+
+
+[1A[2K  58) [chromium] › tests/e2e/guide-creation.spec.ts:58:3 › Guide Creation › should render guide with dashed stroke style 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Point")')[22m
+
+
+      58 |   test('should render guide with dashed stroke style', async ({ page }) => {
+      59 |     // Setup: Create reference line and through-point
+    > 60 |     await page.click('button:has-text("Point")');
+         |                ^
+      61 |     await page.click('.svg-canvas', { position: { x: 200, y: 300 } });
+      62 |     
+      63 |     await page.click('button:has-text("Point")');
+        at /work/diedrico/frontend/tests/e2e/guide-creation.spec.ts:60:16
+
+    Error Context: test-results/guide-creation-Guide-Creat-fdd99-de-with-dashed-stroke-style-chromium/error-context.md
+
+
+[1A[2K[79/188] [chromium] › tests/e2e/guide-creation.spec.ts:166:3 › Guide Creation › should use keyboard shortcut for undo
+[1A[2K[80/188] [chromium] › tests/e2e/guide-creation.spec.ts:195:3 › Guide Creation › should create multiple guides on same reference line
+[1A[2K  59) [chromium] › tests/e2e/guide-creation.spec.ts:94:3 › Guide Creation › should undo guide creation 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Point")')[22m
+
+
+      94 |   test('should undo guide creation', async ({ page }) => {
+      95 |     // Create reference line
+    > 96 |     await page.click('button:has-text("Point")');
+         |                ^
+      97 |     await page.click('.svg-canvas', { position: { x: 200, y: 300 } });
+      98 |     
+      99 |     await page.click('button:has-text("Point")');
+        at /work/diedrico/frontend/tests/e2e/guide-creation.spec.ts:96:16
+
+    Error Context: test-results/guide-creation-Guide-Creation-should-undo-guide-creation-chromium/error-context.md
+
+
+[1A[2K  60) [chromium] › tests/e2e/guide-creation.spec.ts:129:3 › Guide Creation › should redo guide creation 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Point")')[22m
+
+
+      129 |   test('should redo guide creation', async ({ page }) => {
+      130 |     // Create reference line and through-point
+    > 131 |     await page.click('button:has-text("Point")');
+          |                ^
+      132 |     await page.click('.svg-canvas', { position: { x: 200, y: 300 } });
+      133 |     
+      134 |     await page.click('button:has-text("Point")');
+        at /work/diedrico/frontend/tests/e2e/guide-creation.spec.ts:131:16
+
+    Error Context: test-results/guide-creation-Guide-Creation-should-redo-guide-creation-chromium/error-context.md
+
+
+[1A[2K[81/188] [chromium] › tests/e2e/guide-creation.spec.ts:239:3 › Guide Creation › should create guide perpendicular to vertical line
+[1A[2K[82/188] [chromium] › tests/e2e/guide-creation.spec.ts:265:3 › Guide Creation › should require reference line before through-point
+[1A[2K  61) [chromium] › tests/e2e/guide-creation.spec.ts:166:3 › Guide Creation › should use keyboard shortcut for undo 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Point")')[22m
+
+
+      166 |   test('should use keyboard shortcut for undo', async ({ page }) => {
+      167 |     // Create reference line and guide
+    > 168 |     await page.click('button:has-text("Point")');
+          |                ^
+      169 |     await page.click('.svg-canvas', { position: { x: 200, y: 300 } });
+      170 |     
+      171 |     await page.click('button:has-text("Point")');
+        at /work/diedrico/frontend/tests/e2e/guide-creation.spec.ts:168:16
+
+    Error Context: test-results/guide-creation-Guide-Creat-05c32--keyboard-shortcut-for-undo-chromium/error-context.md
+
+
+[1A[2K  62) [chromium] › tests/e2e/guide-creation.spec.ts:195:3 › Guide Creation › should create multiple guides on same reference line 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Point")')[22m
+
+
+      195 |   test('should create multiple guides on same reference line', async ({ page }) => {
+      196 |     // Create reference line (horizontal)
+    > 197 |     await page.click('button:has-text("Point")');
+          |                ^
+      198 |     await page.click('.svg-canvas', { position: { x: 200, y: 300 } });
+      199 |     
+      200 |     await page.click('button:has-text("Point")');
+        at /work/diedrico/frontend/tests/e2e/guide-creation.spec.ts:197:16
+
+    Error Context: test-results/guide-creation-Guide-Creat-64aa8-ides-on-same-reference-line-chromium/error-context.md
+
+
+[1A[2K[83/188] [chromium] › tests/e2e/hhl-intersection.spec.ts:21:3 › HalfHingeLine2D Intersection - Sibling Points › should create sibling point when intersecting with hinge line
+[1A[2K[84/188] [chromium] › tests/e2e/hhl-intersection.spec.ts:62:3 › HalfHingeLine2D Intersection - Sibling Points › should delete both sibling points when deleting primary
+[1A[2K  63) [chromium] › tests/e2e/guide-creation.spec.ts:239:3 › Guide Creation › should create guide perpendicular to vertical line 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Point")')[22m
+
+
+      239 |   test('should create guide perpendicular to vertical line', async ({ page }) => {
+      240 |     // Create vertical reference line
+    > 241 |     await page.click('button:has-text("Point")');
+          |                ^
+      242 |     await page.click('.svg-canvas', { position: { x: 300, y: 200 } });
+      243 |     
+      244 |     await page.click('button:has-text("Point")');
+        at /work/diedrico/frontend/tests/e2e/guide-creation.spec.ts:241:16
+
+    Error Context: test-results/guide-creation-Guide-Creat-5fe7a-pendicular-to-vertical-line-chromium/error-context.md
+
+
+[1A[2K  64) [chromium] › tests/e2e/guide-creation.spec.ts:265:3 › Guide Creation › should require reference line before through-point 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Point")')[22m
+
+
+      265 |   test('should require reference line before through-point', async ({ page }) => {
+      266 |     // Try to create guide without reference line
+    > 267 |     await page.click('button:has-text("Point")');
+          |                ^
+      268 |     await page.click('.svg-canvas', { position: { x: 300, y: 300 } });
+      269 |     
+      270 |     await page.click('button:has-text("Guide")');
+        at /work/diedrico/frontend/tests/e2e/guide-creation.spec.ts:267:16
+
+    Error Context: test-results/guide-creation-Guide-Creat-747f2-e-line-before-through-point-chromium/error-context.md
+
+
+[1A[2K[85/188] [chromium] › tests/e2e/hhl-intersection.spec.ts:101:3 › HalfHingeLine2D Intersection - Sibling Points › should undo intersection creation with both siblings
+[1A[2K[86/188] [chromium] › tests/e2e/hhl-intersection.spec.ts:133:3 › HalfHingeLine2D Intersection - Sibling Points › should create sibling on correct plane (H ↔ V mapping)
+[1A[2K  65) [chromium] › tests/e2e/hhl-intersection.spec.ts:21:3 › HalfHingeLine2D Intersection - Sibling Points › should create sibling point when intersecting with hinge line 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      14 |
+      15 | test.describe('HalfHingeLine2D Intersection - Sibling Points', () => {
+    > 16 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      17 |     await page.goto('http://localhost:5173');
+      18 |     await page.waitForSelector('svg#canvas');
+      19 |   });
+        at /work/diedrico/frontend/tests/e2e/hhl-intersection.spec.ts:16:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg#canvas') to be visible[22m
+
+
+      16 |   test.beforeEach(async ({ page }) => {
+      17 |     await page.goto('http://localhost:5173');
+    > 18 |     await page.waitForSelector('svg#canvas');
+         |                ^
+      19 |   });
+      20 |
+      21 |   test('should create sibling point when intersecting with hinge line', async ({ page }) => {
+        at /work/diedrico/frontend/tests/e2e/hhl-intersection.spec.ts:18:16
+
+    Error Context: test-results/hhl-intersection-HalfHinge-d314f-ntersecting-with-hinge-line-chromium/error-context.md
+
+
+[1A[2K  66) [chromium] › tests/e2e/hhl-intersection.spec.ts:62:3 › HalfHingeLine2D Intersection - Sibling Points › should delete both sibling points when deleting primary 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      14 |
+      15 | test.describe('HalfHingeLine2D Intersection - Sibling Points', () => {
+    > 16 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      17 |     await page.goto('http://localhost:5173');
+      18 |     await page.waitForSelector('svg#canvas');
+      19 |   });
+        at /work/diedrico/frontend/tests/e2e/hhl-intersection.spec.ts:16:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg#canvas') to be visible[22m
+
+
+      16 |   test.beforeEach(async ({ page }) => {
+      17 |     await page.goto('http://localhost:5173');
+    > 18 |     await page.waitForSelector('svg#canvas');
+         |                ^
+      19 |   });
+      20 |
+      21 |   test('should create sibling point when intersecting with hinge line', async ({ page }) => {
+        at /work/diedrico/frontend/tests/e2e/hhl-intersection.spec.ts:18:16
+
+    Error Context: test-results/hhl-intersection-HalfHinge-08a1a-oints-when-deleting-primary-chromium/error-context.md
+
+
+[1A[2K[87/188] [chromium] › tests/e2e/hhl-intersection.spec.ts:163:3 › HalfHingeLine2D Intersection - Sibling Points › should preserve sibling coordinates (HHL coordinate consistency)
+[1A[2K[88/188] [chromium] › tests/e2e/hover.spec.ts:9:3 › Hover Highlighting › should show tooltip when hovering over a point
+[1A[2K  67) [chromium] › tests/e2e/hhl-intersection.spec.ts:101:3 › HalfHingeLine2D Intersection - Sibling Points › should undo intersection creation with both siblings 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      14 |
+      15 | test.describe('HalfHingeLine2D Intersection - Sibling Points', () => {
+    > 16 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      17 |     await page.goto('http://localhost:5173');
+      18 |     await page.waitForSelector('svg#canvas');
+      19 |   });
+        at /work/diedrico/frontend/tests/e2e/hhl-intersection.spec.ts:16:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg#canvas') to be visible[22m
+
+
+      16 |   test.beforeEach(async ({ page }) => {
+      17 |     await page.goto('http://localhost:5173');
+    > 18 |     await page.waitForSelector('svg#canvas');
+         |                ^
+      19 |   });
+      20 |
+      21 |   test('should create sibling point when intersecting with hinge line', async ({ page }) => {
+        at /work/diedrico/frontend/tests/e2e/hhl-intersection.spec.ts:18:16
+
+    Error Context: test-results/hhl-intersection-HalfHinge-533cb-creation-with-both-siblings-chromium/error-context.md
+
+
+[1A[2K  68) [chromium] › tests/e2e/hhl-intersection.spec.ts:133:3 › HalfHingeLine2D Intersection - Sibling Points › should create sibling on correct plane (H ↔ V mapping) 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      14 |
+      15 | test.describe('HalfHingeLine2D Intersection - Sibling Points', () => {
+    > 16 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      17 |     await page.goto('http://localhost:5173');
+      18 |     await page.waitForSelector('svg#canvas');
+      19 |   });
+        at /work/diedrico/frontend/tests/e2e/hhl-intersection.spec.ts:16:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg#canvas') to be visible[22m
+
+
+      16 |   test.beforeEach(async ({ page }) => {
+      17 |     await page.goto('http://localhost:5173');
+    > 18 |     await page.waitForSelector('svg#canvas');
+         |                ^
+      19 |   });
+      20 |
+      21 |   test('should create sibling point when intersecting with hinge line', async ({ page }) => {
+        at /work/diedrico/frontend/tests/e2e/hhl-intersection.spec.ts:18:16
+
+    Error Context: test-results/hhl-intersection-HalfHinge-fba2f-orrect-plane-H-↔-V-mapping--chromium/error-context.md
+
+
+[1A[2K[89/188] [chromium] › tests/e2e/hover.spec.ts:33:3 › Hover Highlighting › should clear tooltip when mouse leaves element
+[1A[2K[90/188] [chromium] › tests/e2e/hover.spec.ts:56:3 › Hover Highlighting › should apply hover highlight to hovered element
+[1A[2K  69) [chromium] › tests/e2e/hhl-intersection.spec.ts:163:3 › HalfHingeLine2D Intersection - Sibling Points › should preserve sibling coordinates (HHL coordinate consistency) 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      14 |
+      15 | test.describe('HalfHingeLine2D Intersection - Sibling Points', () => {
+    > 16 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      17 |     await page.goto('http://localhost:5173');
+      18 |     await page.waitForSelector('svg#canvas');
+      19 |   });
+        at /work/diedrico/frontend/tests/e2e/hhl-intersection.spec.ts:16:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg#canvas') to be visible[22m
+
+
+      16 |   test.beforeEach(async ({ page }) => {
+      17 |     await page.goto('http://localhost:5173');
+    > 18 |     await page.waitForSelector('svg#canvas');
+         |                ^
+      19 |   });
+      20 |
+      21 |   test('should create sibling point when intersecting with hinge line', async ({ page }) => {
+        at /work/diedrico/frontend/tests/e2e/hhl-intersection.spec.ts:18:16
+
+    Error Context: test-results/hhl-intersection-HalfHinge-3c22a-HHL-coordinate-consistency--chromium/error-context.md
+
+
+[1A[2K  70) [chromium] › tests/e2e/hover.spec.ts:9:3 › Hover Highlighting › should show tooltip when hovering over a point 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Free Point")')[22m
+
+
+       9 |   test('should show tooltip when hovering over a point', async ({ page }) => {
+      10 |     // Create a free point
+    > 11 |     await page.click('button:has-text("Free Point")');
+         |                ^
+      12 |     await page.locator('.svg-canvas').click({ position: { x: 300, y: 300 } });
+      13 |     
+      14 |     // Wait for the point to be created
+        at /work/diedrico/frontend/tests/e2e/hover.spec.ts:11:16
+
+    Error Context: test-results/hover-Hover-Highlighting-s-e81a0--when-hovering-over-a-point-chromium/error-context.md
+
+
+[1A[2K[91/188] [chromium] › tests/e2e/hover.spec.ts:86:3 › Hover Highlighting › should distinguish hover from selection highlight
+[1A[2K[92/188] [chromium] › tests/e2e/hover.spec.ts:111:3 › Hover Highlighting › should show hover tooltip for different element types
+[1A[2K  71) [chromium] › tests/e2e/hover.spec.ts:33:3 › Hover Highlighting › should clear tooltip when mouse leaves element 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Free Point")')[22m
+
+
+      33 |   test('should clear tooltip when mouse leaves element', async ({ page }) => {
+      34 |     // Create a free point
+    > 35 |     await page.click('button:has-text("Free Point")');
+         |                ^
+      36 |     await page.locator('.svg-canvas').click({ position: { x: 300, y: 300 } });
+      37 |     await page.waitForTimeout(200);
+      38 |     
+        at /work/diedrico/frontend/tests/e2e/hover.spec.ts:35:16
+
+    Error Context: test-results/hover-Hover-Highlighting-s-b30d0-p-when-mouse-leaves-element-chromium/error-context.md
+
+
+[1A[2K  72) [chromium] › tests/e2e/hover.spec.ts:56:3 › Hover Highlighting › should apply hover highlight to hovered element 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Free Point")')[22m
+
+
+      56 |   test('should apply hover highlight to hovered element', async ({ page }) => {
+      57 |     // Create a line
+    > 58 |     await page.click('button:has-text("Free Point")');
+         |                ^
+      59 |     await page.locator('.svg-canvas').click({ position: { x: 200, y: 200 } });
+      60 |     await page.locator('.svg-canvas').click({ position: { x: 400, y: 200 } });
+      61 |     await page.waitForTimeout(200);
+        at /work/diedrico/frontend/tests/e2e/hover.spec.ts:58:16
+
+    Error Context: test-results/hover-Hover-Highlighting-s-8417a-ighlight-to-hovered-element-chromium/error-context.md
+
+
+[1A[2K[93/188] [chromium] › tests/e2e/hover.spec.ts:147:3 › Hover Highlighting › selection highlight should take precedence over hover
+[1A[2K[94/188] [chromium] › tests/e2e/infeasibility.spec.ts:24:3 › Infeasibility Detection and Rendering › should mark infeasible segment and render it in red dashed style
+[1A[2K[95/188] [chromium] › tests/e2e/infeasibility.spec.ts:56:3 › Infeasibility Detection and Rendering › should propagate infeasibility to dependent elements
+[1A[2K[96/188] [chromium] › tests/e2e/infeasibility.spec.ts:87:3 › Infeasibility Detection and Rendering › should show infeasibility reason in action panel
+[1A[2K[97/188] [chromium] › tests/e2e/infeasibility.spec.ts:108:3 › Infeasibility Detection and Rendering › should clear infeasibility when constraint is satisfied
+[1A[2K[98/188] [chromium] › tests/e2e/infeasibility.spec.ts:132:3 › Infeasibility Detection and Rendering › should not affect independent branches when one becomes infeasible
+[1A[2K[99/188] [chromium] › tests/e2e/infeasibility.spec.ts:162:3 › Infeasibility Detection and Rendering › should handle infeasibility during rapid updates
+[1A[2K[100/188] [chromium] › tests/e2e/intersection-creation.spec.ts:25:3 › Intersection Point Creation › should create intersection point between two lines
+[1A[2K  73) [chromium] › tests/e2e/hover.spec.ts:86:3 › Hover Highlighting › should distinguish hover from selection highlight 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Free Point")')[22m
+
+
+      86 |   test('should distinguish hover from selection highlight', async ({ page }) => {
+      87 |     // Create a point
+    > 88 |     await page.click('button:has-text("Free Point")');
+         |                ^
+      89 |     await page.locator('.svg-canvas').click({ position: { x: 300, y: 300 } });
+      90 |     await page.waitForTimeout(200);
+      91 |     
+        at /work/diedrico/frontend/tests/e2e/hover.spec.ts:88:16
+
+    Error Context: test-results/hover-Hover-Highlighting-s-e3ac7-er-from-selection-highlight-chromium/error-context.md
+
+
+[1A[2K  74) [chromium] › tests/e2e/hover.spec.ts:111:3 › Hover Highlighting › should show hover tooltip for different element types 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Free Point")')[22m
+
+
+      112 |     // Create multiple elements
+      113 |     // 1. Free point
+    > 114 |     await page.click('button:has-text("Free Point")');
+          |                ^
+      115 |     await page.locator('.svg-canvas').click({ position: { x: 200, y: 200 } });
+      116 |     await page.waitForTimeout(100);
+      117 |     
+        at /work/diedrico/frontend/tests/e2e/hover.spec.ts:114:16
+
+    Error Context: test-results/hover-Hover-Highlighting-s-93b1a-for-different-element-types-chromium/error-context.md
+
+
+[1A[2K[101/188] [chromium] › tests/e2e/intersection-creation.spec.ts:67:3 › Intersection Point Creation › should show error for parallel lines
+[1A[2K[102/188] [chromium] › tests/e2e/intersection-creation.spec.ts:95:3 › Intersection Point Creation › should undo intersection point creation
+[1A[2K  75) [chromium] › tests/e2e/hover.spec.ts:147:3 › Hover Highlighting › selection highlight should take precedence over hover 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Free Point")')[22m
+
+
+      147 |   test('selection highlight should take precedence over hover', async ({ page }) => {
+      148 |     // Create a point
+    > 149 |     await page.click('button:has-text("Free Point")');
+          |                ^
+      150 |     await page.locator('.svg-canvas').click({ position: { x: 300, y: 300 } });
+      151 |     await page.waitForTimeout(200);
+      152 |     
+        at /work/diedrico/frontend/tests/e2e/hover.spec.ts:149:16
+
+    Error Context: test-results/hover-Hover-Highlighting-s-ac99a--take-precedence-over-hover-chromium/error-context.md
+
+
+[1A[2K[103/188] [chromium] › tests/e2e/intersection-creation.spec.ts:120:3 › Intersection Point Creation › should redo intersection point creation
+[1A[2K  76) [chromium] › tests/e2e/intersection-creation.spec.ts:25:3 › Intersection Point Creation › should create intersection point between two lines 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      18 |
+      19 | test.describe('Intersection Point Creation', () => {
+    > 20 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      21 |     await page.goto('http://localhost:5173');
+      22 |     await page.waitForSelector('svg#canvas');
+      23 |   });
+        at /work/diedrico/frontend/tests/e2e/intersection-creation.spec.ts:20:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg#canvas') to be visible[22m
+
+
+      20 |   test.beforeEach(async ({ page }) => {
+      21 |     await page.goto('http://localhost:5173');
+    > 22 |     await page.waitForSelector('svg#canvas');
+         |                ^
+      23 |   });
+      24 |
+      25 |   test('should create intersection point between two lines', async ({ page }) => {
+        at /work/diedrico/frontend/tests/e2e/intersection-creation.spec.ts:22:16
+
+    Error Context: test-results/intersection-creation-Inte-76e8e-ion-point-between-two-lines-chromium/error-context.md
+
+
+[1A[2K[104/188] [chromium] › tests/e2e/intersection-creation.spec.ts:144:3 › Intersection Point Creation › should support keyboard shortcut for undo (Ctrl+Z)
+[1A[2K  77) [chromium] › tests/e2e/intersection-creation.spec.ts:95:3 › Intersection Point Creation › should undo intersection point creation 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      18 |
+      19 | test.describe('Intersection Point Creation', () => {
+    > 20 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      21 |     await page.goto('http://localhost:5173');
+      22 |     await page.waitForSelector('svg#canvas');
+      23 |   });
+        at /work/diedrico/frontend/tests/e2e/intersection-creation.spec.ts:20:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg#canvas') to be visible[22m
+
+
+      20 |   test.beforeEach(async ({ page }) => {
+      21 |     await page.goto('http://localhost:5173');
+    > 22 |     await page.waitForSelector('svg#canvas');
+         |                ^
+      23 |   });
+      24 |
+      25 |   test('should create intersection point between two lines', async ({ page }) => {
+        at /work/diedrico/frontend/tests/e2e/intersection-creation.spec.ts:22:16
+
+    Error Context: test-results/intersection-creation-Inte-834a9-intersection-point-creation-chromium/error-context.md
+
+
+[1A[2K  78) [chromium] › tests/e2e/intersection-creation.spec.ts:67:3 › Intersection Point Creation › should show error for parallel lines 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      18 |
+      19 | test.describe('Intersection Point Creation', () => {
+    > 20 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      21 |     await page.goto('http://localhost:5173');
+      22 |     await page.waitForSelector('svg#canvas');
+      23 |   });
+        at /work/diedrico/frontend/tests/e2e/intersection-creation.spec.ts:20:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg#canvas') to be visible[22m
+
+
+      20 |   test.beforeEach(async ({ page }) => {
+      21 |     await page.goto('http://localhost:5173');
+    > 22 |     await page.waitForSelector('svg#canvas');
+         |                ^
+      23 |   });
+      24 |
+      25 |   test('should create intersection point between two lines', async ({ page }) => {
+        at /work/diedrico/frontend/tests/e2e/intersection-creation.spec.ts:22:16
+
+    Error Context: test-results/intersection-creation-Inte-cf9e5-ow-error-for-parallel-lines-chromium/error-context.md
+
+
+[1A[2K[105/188] [chromium] › tests/e2e/intersection-creation.spec.ts:167:3 › Intersection Point Creation › should support keyboard shortcut for redo (Ctrl+Shift+Z)
+[1A[2K[106/188] [chromium] › tests/e2e/intersection-creation.spec.ts:189:3 › Intersection Point Creation › should create multiple intersections on different line pairs
+[1A[2K  79) [chromium] › tests/e2e/intersection-creation.spec.ts:120:3 › Intersection Point Creation › should redo intersection point creation 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      18 |
+      19 | test.describe('Intersection Point Creation', () => {
+    > 20 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      21 |     await page.goto('http://localhost:5173');
+      22 |     await page.waitForSelector('svg#canvas');
+      23 |   });
+        at /work/diedrico/frontend/tests/e2e/intersection-creation.spec.ts:20:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg#canvas') to be visible[22m
+
+
+      20 |   test.beforeEach(async ({ page }) => {
+      21 |     await page.goto('http://localhost:5173');
+    > 22 |     await page.waitForSelector('svg#canvas');
+         |                ^
+      23 |   });
+      24 |
+      25 |   test('should create intersection point between two lines', async ({ page }) => {
+        at /work/diedrico/frontend/tests/e2e/intersection-creation.spec.ts:22:16
+
+    Error Context: test-results/intersection-creation-Inte-07e43-intersection-point-creation-chromium/error-context.md
+
+
+[1A[2K[107/188] [chromium] › tests/e2e/intersection-creation.spec.ts:225:3 › Intersection Point Creation › should handle clicking same line twice (error case)
+[1A[2K  80) [chromium] › tests/e2e/intersection-creation.spec.ts:144:3 › Intersection Point Creation › should support keyboard shortcut for undo (Ctrl+Z) 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      18 |
+      19 | test.describe('Intersection Point Creation', () => {
+    > 20 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      21 |     await page.goto('http://localhost:5173');
+      22 |     await page.waitForSelector('svg#canvas');
+      23 |   });
+        at /work/diedrico/frontend/tests/e2e/intersection-creation.spec.ts:20:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg#canvas') to be visible[22m
+
+
+      20 |   test.beforeEach(async ({ page }) => {
+      21 |     await page.goto('http://localhost:5173');
+    > 22 |     await page.waitForSelector('svg#canvas');
+         |                ^
+      23 |   });
+      24 |
+      25 |   test('should create intersection point between two lines', async ({ page }) => {
+        at /work/diedrico/frontend/tests/e2e/intersection-creation.spec.ts:22:16
+
+    Error Context: test-results/intersection-creation-Inte-1ef1c-d-shortcut-for-undo-Ctrl-Z--chromium/error-context.md
+
+
+[1A[2K[108/188] [chromium] › tests/e2e/intersection-creation.spec.ts:243:3 › Intersection Point Creation › should highlight selected line before second click
+[1A[2K  81) [chromium] › tests/e2e/intersection-creation.spec.ts:167:3 › Intersection Point Creation › should support keyboard shortcut for redo (Ctrl+Shift+Z) 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      18 |
+      19 | test.describe('Intersection Point Creation', () => {
+    > 20 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      21 |     await page.goto('http://localhost:5173');
+      22 |     await page.waitForSelector('svg#canvas');
+      23 |   });
+        at /work/diedrico/frontend/tests/e2e/intersection-creation.spec.ts:20:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg#canvas') to be visible[22m
+
+
+      20 |   test.beforeEach(async ({ page }) => {
+      21 |     await page.goto('http://localhost:5173');
+    > 22 |     await page.waitForSelector('svg#canvas');
+         |                ^
+      23 |   });
+      24 |
+      25 |   test('should create intersection point between two lines', async ({ page }) => {
+        at /work/diedrico/frontend/tests/e2e/intersection-creation.spec.ts:22:16
+
+    Error Context: test-results/intersection-creation-Inte-55ea5-tcut-for-redo-Ctrl-Shift-Z--chromium/error-context.md
+
+
+[1A[2K  82) [chromium] › tests/e2e/intersection-creation.spec.ts:189:3 › Intersection Point Creation › should create multiple intersections on different line pairs 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      18 |
+      19 | test.describe('Intersection Point Creation', () => {
+    > 20 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      21 |     await page.goto('http://localhost:5173');
+      22 |     await page.waitForSelector('svg#canvas');
+      23 |   });
+        at /work/diedrico/frontend/tests/e2e/intersection-creation.spec.ts:20:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg#canvas') to be visible[22m
+
+
+      20 |   test.beforeEach(async ({ page }) => {
+      21 |     await page.goto('http://localhost:5173');
+    > 22 |     await page.waitForSelector('svg#canvas');
+         |                ^
+      23 |   });
+      24 |
+      25 |   test('should create intersection point between two lines', async ({ page }) => {
+        at /work/diedrico/frontend/tests/e2e/intersection-creation.spec.ts:22:16
+
+    Error Context: test-results/intersection-creation-Inte-a4994-ons-on-different-line-pairs-chromium/error-context.md
+
+
+[1A[2K[109/188] [chromium] › tests/e2e/intersection-creation.spec.ts:268:3 › Intersection Point Creation › should change cursor on hover over line
+[1A[2K[110/188] [chromium] › tests/e2e/intersection-creation.spec.ts:289:3 › Intersection Point Creation › should create intersection point between line and circle - secant
+[1A[2K  83) [chromium] › tests/e2e/intersection-creation.spec.ts:225:3 › Intersection Point Creation › should handle clicking same line twice (error case) 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      18 |
+      19 | test.describe('Intersection Point Creation', () => {
+    > 20 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      21 |     await page.goto('http://localhost:5173');
+      22 |     await page.waitForSelector('svg#canvas');
+      23 |   });
+        at /work/diedrico/frontend/tests/e2e/intersection-creation.spec.ts:20:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg#canvas') to be visible[22m
+
+
+      20 |   test.beforeEach(async ({ page }) => {
+      21 |     await page.goto('http://localhost:5173');
+    > 22 |     await page.waitForSelector('svg#canvas');
+         |                ^
+      23 |   });
+      24 |
+      25 |   test('should create intersection point between two lines', async ({ page }) => {
+        at /work/diedrico/frontend/tests/e2e/intersection-creation.spec.ts:22:16
+
+    Error Context: test-results/intersection-creation-Inte-6113f-same-line-twice-error-case--chromium/error-context.md
+
+
+[1A[2K[111/188] [chromium] › tests/e2e/intersection-creation.spec.ts:333:3 › Intersection Point Creation › should create intersection point between line and circle - tangent
+[1A[2K  84) [chromium] › tests/e2e/intersection-creation.spec.ts:243:3 › Intersection Point Creation › should highlight selected line before second click 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      18 |
+      19 | test.describe('Intersection Point Creation', () => {
+    > 20 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      21 |     await page.goto('http://localhost:5173');
+      22 |     await page.waitForSelector('svg#canvas');
+      23 |   });
+        at /work/diedrico/frontend/tests/e2e/intersection-creation.spec.ts:20:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg#canvas') to be visible[22m
+
+
+      20 |   test.beforeEach(async ({ page }) => {
+      21 |     await page.goto('http://localhost:5173');
+    > 22 |     await page.waitForSelector('svg#canvas');
+         |                ^
+      23 |   });
+      24 |
+      25 |   test('should create intersection point between two lines', async ({ page }) => {
+        at /work/diedrico/frontend/tests/e2e/intersection-creation.spec.ts:22:16
+
+    Error Context: test-results/intersection-creation-Inte-333a1-ed-line-before-second-click-chromium/error-context.md
+
+
+[1A[2K[112/188] [chromium] › tests/e2e/intersection-creation.spec.ts:358:3 › Intersection Point Creation › should select nearest intersection when multiple exist (circle-circle)
+[1A[2K  85) [chromium] › tests/e2e/intersection-creation.spec.ts:268:3 › Intersection Point Creation › should change cursor on hover over line 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      18 |
+      19 | test.describe('Intersection Point Creation', () => {
+    > 20 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      21 |     await page.goto('http://localhost:5173');
+      22 |     await page.waitForSelector('svg#canvas');
+      23 |   });
+        at /work/diedrico/frontend/tests/e2e/intersection-creation.spec.ts:20:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg#canvas') to be visible[22m
+
+
+      20 |   test.beforeEach(async ({ page }) => {
+      21 |     await page.goto('http://localhost:5173');
+    > 22 |     await page.waitForSelector('svg#canvas');
+         |                ^
+      23 |   });
+      24 |
+      25 |   test('should create intersection point between two lines', async ({ page }) => {
+        at /work/diedrico/frontend/tests/e2e/intersection-creation.spec.ts:22:16
+
+    Error Context: test-results/intersection-creation-Inte-06620-e-cursor-on-hover-over-line-chromium/error-context.md
+
+
+[1A[2K  86) [chromium] › tests/e2e/intersection-creation.spec.ts:289:3 › Intersection Point Creation › should create intersection point between line and circle - secant 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      18 |
+      19 | test.describe('Intersection Point Creation', () => {
+    > 20 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      21 |     await page.goto('http://localhost:5173');
+      22 |     await page.waitForSelector('svg#canvas');
+      23 |   });
+        at /work/diedrico/frontend/tests/e2e/intersection-creation.spec.ts:20:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg#canvas') to be visible[22m
+
+
+      20 |   test.beforeEach(async ({ page }) => {
+      21 |     await page.goto('http://localhost:5173');
+    > 22 |     await page.waitForSelector('svg#canvas');
+         |                ^
+      23 |   });
+      24 |
+      25 |   test('should create intersection point between two lines', async ({ page }) => {
+        at /work/diedrico/frontend/tests/e2e/intersection-creation.spec.ts:22:16
+
+    Error Context: test-results/intersection-creation-Inte-70134-en-line-and-circle---secant-chromium/error-context.md
+
+
+[1A[2K[113/188] [chromium] › tests/e2e/intersection-creation.spec.ts:397:3 › Intersection Point Creation › should create intersection between two circles - secant
+[1A[2K[114/188] [chromium] › tests/e2e/intersection-creation.spec.ts:421:3 › Intersection Point Creation › should undo line-circle intersection creation
+[1A[2K  87) [chromium] › tests/e2e/intersection-creation.spec.ts:333:3 › Intersection Point Creation › should create intersection point between line and circle - tangent 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      18 |
+      19 | test.describe('Intersection Point Creation', () => {
+    > 20 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      21 |     await page.goto('http://localhost:5173');
+      22 |     await page.waitForSelector('svg#canvas');
+      23 |   });
+        at /work/diedrico/frontend/tests/e2e/intersection-creation.spec.ts:20:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg#canvas') to be visible[22m
+
+
+      20 |   test.beforeEach(async ({ page }) => {
+      21 |     await page.goto('http://localhost:5173');
+    > 22 |     await page.waitForSelector('svg#canvas');
+         |                ^
+      23 |   });
+      24 |
+      25 |   test('should create intersection point between two lines', async ({ page }) => {
+        at /work/diedrico/frontend/tests/e2e/intersection-creation.spec.ts:22:16
+
+    Error Context: test-results/intersection-creation-Inte-e1e8e-n-line-and-circle---tangent-chromium/error-context.md
+
+
+[1A[2K[115/188] [chromium] › tests/e2e/intersection-creation.spec.ts:446:3 › Intersection Point Creation › should handle no intersection case (line too far from circle)
+[1A[2K  88) [chromium] › tests/e2e/intersection-creation.spec.ts:358:3 › Intersection Point Creation › should select nearest intersection when multiple exist (circle-circle) 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      18 |
+      19 | test.describe('Intersection Point Creation', () => {
+    > 20 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      21 |     await page.goto('http://localhost:5173');
+      22 |     await page.waitForSelector('svg#canvas');
+      23 |   });
+        at /work/diedrico/frontend/tests/e2e/intersection-creation.spec.ts:20:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg#canvas') to be visible[22m
+
+
+      20 |   test.beforeEach(async ({ page }) => {
+      21 |     await page.goto('http://localhost:5173');
+    > 22 |     await page.waitForSelector('svg#canvas');
+         |                ^
+      23 |   });
+      24 |
+      25 |   test('should create intersection point between two lines', async ({ page }) => {
+        at /work/diedrico/frontend/tests/e2e/intersection-creation.spec.ts:22:16
+
+    Error Context: test-results/intersection-creation-Inte-35ae2-ltiple-exist-circle-circle--chromium/error-context.md
+
+
+[1A[2K[116/188] [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:9:3 › Keyboard shortcuts › tool shortcut keys activate current tool buttons
+[1A[2K  89) [chromium] › tests/e2e/intersection-creation.spec.ts:397:3 › Intersection Point Creation › should create intersection between two circles - secant 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      18 |
+      19 | test.describe('Intersection Point Creation', () => {
+    > 20 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      21 |     await page.goto('http://localhost:5173');
+      22 |     await page.waitForSelector('svg#canvas');
+      23 |   });
+        at /work/diedrico/frontend/tests/e2e/intersection-creation.spec.ts:20:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg#canvas') to be visible[22m
+
+
+      20 |   test.beforeEach(async ({ page }) => {
+      21 |     await page.goto('http://localhost:5173');
+    > 22 |     await page.waitForSelector('svg#canvas');
+         |                ^
+      23 |   });
+      24 |
+      25 |   test('should create intersection point between two lines', async ({ page }) => {
+        at /work/diedrico/frontend/tests/e2e/intersection-creation.spec.ts:22:16
+
+    Error Context: test-results/intersection-creation-Inte-57c70-etween-two-circles---secant-chromium/error-context.md
+
+
+[1A[2K  90) [chromium] › tests/e2e/intersection-creation.spec.ts:421:3 › Intersection Point Creation › should undo line-circle intersection creation 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      18 |
+      19 | test.describe('Intersection Point Creation', () => {
+    > 20 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      21 |     await page.goto('http://localhost:5173');
+      22 |     await page.waitForSelector('svg#canvas');
+      23 |   });
+        at /work/diedrico/frontend/tests/e2e/intersection-creation.spec.ts:20:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg#canvas') to be visible[22m
+
+
+      20 |   test.beforeEach(async ({ page }) => {
+      21 |     await page.goto('http://localhost:5173');
+    > 22 |     await page.waitForSelector('svg#canvas');
+         |                ^
+      23 |   });
+      24 |
+      25 |   test('should create intersection point between two lines', async ({ page }) => {
+        at /work/diedrico/frontend/tests/e2e/intersection-creation.spec.ts:22:16
+
+    Error Context: test-results/intersection-creation-Inte-67651-ircle-intersection-creation-chromium/error-context.md
+
+
+[1A[2K[117/188] [chromium] › tests/e2e/line-creation.spec.ts:24:3 › Line Creation › should create line between two clicked points
+[1A[2K[118/188] [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:24:3 › Keyboard shortcuts › Escape returns to select tool after starting a point workflow
+[1A[2K  91) [chromium] › tests/e2e/line-creation.spec.ts:24:3 › Line Creation › should create line between two clicked points 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5175/
+    Call log:
+    [2m  - navigating to "http://localhost:5175/", waiting until "load"[22m
+
+
+      17 | test.describe('Line Creation', () => {
+      18 |   test.beforeEach(async ({ page }) => {
+    > 19 |     await page.goto('http://localhost:5175');
+         |                ^
+      20 |     // Wait for app to load
+      21 |     await page.waitForSelector('.svg-canvas');
+      22 |   });
+        at /work/diedrico/frontend/tests/e2e/line-creation.spec.ts:19:16
+
+    Error Context: test-results/line-creation-Line-Creatio-63cfc--between-two-clicked-points-chromium/error-context.md
+
+
+[1A[2K[119/188] [chromium] › tests/e2e/line-creation.spec.ts:64:3 › Line Creation › should snap to nearby points when creating line
+[1A[2K  92) [chromium] › tests/e2e/line-creation.spec.ts:64:3 › Line Creation › should snap to nearby points when creating line 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5175/
+    Call log:
+    [2m  - navigating to "http://localhost:5175/", waiting until "load"[22m
+
+
+      17 | test.describe('Line Creation', () => {
+      18 |   test.beforeEach(async ({ page }) => {
+    > 19 |     await page.goto('http://localhost:5175');
+         |                ^
+      20 |     // Wait for app to load
+      21 |     await page.waitForSelector('.svg-canvas');
+      22 |   });
+        at /work/diedrico/frontend/tests/e2e/line-creation.spec.ts:19:16
+
+    Error Context: test-results/line-creation-Line-Creatio-31c89-y-points-when-creating-line-chromium/error-context.md
+
+
+[1A[2K  93) [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:9:3 › Keyboard shortcuts › tool shortcut keys activate current tool buttons 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('svg.diedrico-canvas')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('svg.diedrico-canvas')[22m
+
+
+      4 |   test.beforeEach(async ({ page }) => {
+      5 |     await page.goto('/');
+    > 6 |     await expect(page.locator('svg.diedrico-canvas')).toBeVisible();
+        |                                                       ^
+      7 |   });
+      8 |
+      9 |   test('tool shortcut keys activate current tool buttons', async ({ page }) => {
+        at /work/diedrico/frontend/tests/e2e/keyboard-shortcuts.spec.ts:6:55
+
+    Error Context: test-results/keyboard-shortcuts-Keyboar-67ef4-tivate-current-tool-buttons-chromium/error-context.md
+
+
+[1A[2K[120/188] [chromium] › tests/e2e/line-creation.spec.ts:111:3 › Line Creation › should highlight points on hover during line creation
+[1A[2K[121/188] [chromium] › tests/e2e/line-creation.spec.ts:85:3 › Line Creation › should create multiple lines
+[1A[2K  94) [chromium] › tests/e2e/line-creation.spec.ts:111:3 › Line Creation › should highlight points on hover during line creation 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5175/
+    Call log:
+    [2m  - navigating to "http://localhost:5175/", waiting until "load"[22m
+
+
+      17 | test.describe('Line Creation', () => {
+      18 |   test.beforeEach(async ({ page }) => {
+    > 19 |     await page.goto('http://localhost:5175');
+         |                ^
+      20 |     // Wait for app to load
+      21 |     await page.waitForSelector('.svg-canvas');
+      22 |   });
+        at /work/diedrico/frontend/tests/e2e/line-creation.spec.ts:19:16
+
+    Error Context: test-results/line-creation-Line-Creatio-d1ba9--hover-during-line-creation-chromium/error-context.md
+
+
+[1A[2K  95) [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:24:3 › Keyboard shortcuts › Escape returns to select tool after starting a point workflow 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('svg.diedrico-canvas')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('svg.diedrico-canvas')[22m
+
+
+      4 |   test.beforeEach(async ({ page }) => {
+      5 |     await page.goto('/');
+    > 6 |     await expect(page.locator('svg.diedrico-canvas')).toBeVisible();
+        |                                                       ^
+      7 |   });
+      8 |
+      9 |   test('tool shortcut keys activate current tool buttons', async ({ page }) => {
+        at /work/diedrico/frontend/tests/e2e/keyboard-shortcuts.spec.ts:6:55
+
+    Error Context: test-results/keyboard-shortcuts-Keyboar-16ba9-r-starting-a-point-workflow-chromium/error-context.md
+
+
+[1A[2K  96) [chromium] › tests/e2e/intersection-creation.spec.ts:446:3 › Intersection Point Creation › should handle no intersection case (line too far from circle) 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      18 |
+      19 | test.describe('Intersection Point Creation', () => {
+    > 20 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      21 |     await page.goto('http://localhost:5173');
+      22 |     await page.waitForSelector('svg#canvas');
+      23 |   });
+        at /work/diedrico/frontend/tests/e2e/intersection-creation.spec.ts:20:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg#canvas') to be visible[22m
+
+
+      20 |   test.beforeEach(async ({ page }) => {
+      21 |     await page.goto('http://localhost:5173');
+    > 22 |     await page.waitForSelector('svg#canvas');
+         |                ^
+      23 |   });
+      24 |
+      25 |   test('should create intersection point between two lines', async ({ page }) => {
+        at /work/diedrico/frontend/tests/e2e/intersection-creation.spec.ts:22:16
+
+    Error Context: test-results/intersection-creation-Inte-c6a8c-e-line-too-far-from-circle--chromium/error-context.md
+
+
+[1A[2K  97) [chromium] › tests/e2e/line-creation.spec.ts:85:3 › Line Creation › should create multiple lines 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5175/
+    Call log:
+    [2m  - navigating to "http://localhost:5175/", waiting until "load"[22m
+
+
+      17 | test.describe('Line Creation', () => {
+      18 |   test.beforeEach(async ({ page }) => {
+    > 19 |     await page.goto('http://localhost:5175');
+         |                ^
+      20 |     // Wait for app to load
+      21 |     await page.waitForSelector('.svg-canvas');
+      22 |   });
+        at /work/diedrico/frontend/tests/e2e/line-creation.spec.ts:19:16
+
+    Error Context: test-results/line-creation-Line-Creation-should-create-multiple-lines-chromium/error-context.md
+
+
+[1A[2K[122/188] [chromium] › tests/e2e/line-creation.spec.ts:136:3 › Line Creation › should switch from Point tool to Line tool
+[1A[2K[123/188] [chromium] › tests/e2e/navigation.spec.ts:24:3 › Navigation and Tool Interaction › should pan viewport without canceling active tool
+[1A[2K[124/188] [chromium] › tests/e2e/navigation.spec.ts:51:3 › Navigation and Tool Interaction › should zoom viewport without canceling active tool
+[1A[2K  98) [chromium] › tests/e2e/line-creation.spec.ts:136:3 › Line Creation › should switch from Point tool to Line tool 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5175/
+    Call log:
+    [2m  - navigating to "http://localhost:5175/", waiting until "load"[22m
+
+
+      17 | test.describe('Line Creation', () => {
+      18 |   test.beforeEach(async ({ page }) => {
+    > 19 |     await page.goto('http://localhost:5175');
+         |                ^
+      20 |     // Wait for app to load
+      21 |     await page.waitForSelector('.svg-canvas');
+      22 |   });
+        at /work/diedrico/frontend/tests/e2e/line-creation.spec.ts:19:16
+
+    Error Context: test-results/line-creation-Line-Creatio-0474b-rom-Point-tool-to-Line-tool-chromium/error-context.md
+
+
+[1A[2K[125/188] [chromium] › tests/e2e/navigation.spec.ts:78:3 › Navigation and Tool Interaction › should maintain viewport state during tool usage
+[1A[2K[126/188] [chromium] › tests/e2e/navigation.spec.ts:128:3 › Navigation and Tool Interaction › should support mouse navigation controls
+[1A[2K[127/188] [chromium] › tests/e2e/navigation.spec.ts:100:3 › Navigation and Tool Interaction › should support keyboard navigation shortcuts
+[1A[2K[128/188] [chromium] › tests/e2e/navigation.spec.ts:155:3 › Navigation and Tool Interaction › should perform pan/zoom with acceptable performance (SC-002)
+[1A[2K[129/188] [chromium] › tests/e2e/navigation.spec.ts:188:3 › Navigation and Tool Interaction › should preserve tool preview during navigation
+[1A[2K[130/188] [chromium] › tests/e2e/navigation.spec.ts:219:3 › Navigation and Tool Interaction › should handle touch gestures for navigation on mobile
+[1A[2K[131/188] [chromium] › tests/e2e/parametric-update.spec.ts:24:3 › Parametric Update and Recomputation › should update segment when endpoint is moved
+[1A[2K[132/188] [chromium] › tests/e2e/parametric-update.spec.ts:53:3 › Parametric Update and Recomputation › should propagate changes through dependency chain
+[1A[2K[133/188] [chromium] › tests/e2e/parametric-update.spec.ts:84:3 › Parametric Update and Recomputation › should handle circular dependencies gracefully
+[1A[2K[134/188] [chromium] › tests/e2e/parametric-update.spec.ts:105:3 › Parametric Update and Recomputation › should recompute only affected elements
+[1A[2K[135/188] [chromium] › tests/e2e/parametric-update.spec.ts:128:3 › Parametric Update and Recomputation › should handle rapid updates without lag
+[1A[2K[136/188] [chromium] › tests/e2e/point-transport.spec.ts:24:3 › Point Transport › should transport point between planes via guide
+[1A[2K[137/188] [chromium] › tests/e2e/point-transport.spec.ts:43:3 › Point Transport › should handle invalid transport selection gracefully
+[1A[2K[138/188] [chromium] › tests/e2e/point-transport.spec.ts:55:3 › Point Transport › should undo transport operation
+[1A[2K[139/188] [chromium] › tests/e2e/properties.spec.ts:23:3 › Properties Dialog › should open properties dialog on double-click
+[1A[2K  99) [chromium] › tests/e2e/point-transport.spec.ts:24:3 › Point Transport › should transport point between planes via guide 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('button:has-text("Transport")')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('button:has-text("Transport")')[22m
+
+
+      32 |     // For now, verify transport tool button exists
+      33 |     const transportButton = page.locator('button:has-text("Transport")');
+    > 34 |     await expect(transportButton).toBeVisible();
+         |                                   ^
+      35 |     
+      36 |     // Verify transport tool can be selected
+      37 |     await transportButton.click();
+        at /work/diedrico/frontend/tests/e2e/point-transport.spec.ts:34:35
+
+    Error Context: test-results/point-transport-Point-Tran-df01c-nt-between-planes-via-guide-chromium/error-context.md
+
+
+[1A[2K  100) [chromium] › tests/e2e/point-transport.spec.ts:55:3 › Point Transport › should undo transport operation 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('button:has-text("Undo")')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('button:has-text("Undo")')[22m
+
+
+      63 |     // Placeholder: verify undo button exists
+      64 |     const undoButton = page.locator('button:has-text("Undo")');
+    > 65 |     await expect(undoButton).toBeVisible();
+         |                              ^
+      66 |   });
+      67 | });
+      68 |
+        at /work/diedrico/frontend/tests/e2e/point-transport.spec.ts:65:30
+
+    Error Context: test-results/point-transport-Point-Tran-15e86-ld-undo-transport-operation-chromium/error-context.md
+
+
+[1A[2K[140/188] [chromium] › tests/e2e/properties.spec.ts:39:3 › Properties Dialog › should display geometry info for point element
+[1A[2K[141/188] [chromium] › tests/e2e/properties.spec.ts:57:3 › Properties Dialog › should allow editing color property
+[1A[2K  101) [chromium] › tests/e2e/point-transport.spec.ts:43:3 › Point Transport › should handle invalid transport selection gracefully 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Transport")')[22m
+
+
+      49 |     // Placeholder: verify tool can be activated
+      50 |     const transportButton = page.locator('button:has-text("Transport")');
+    > 51 |     await transportButton.click();
+         |                           ^
+      52 |     await expect(transportButton).toHaveClass(/active/);
+      53 |   });
+      54 |
+        at /work/diedrico/frontend/tests/e2e/point-transport.spec.ts:51:27
+
+    Error Context: test-results/point-transport-Point-Tran-fc916-nsport-selection-gracefully-chromium/error-context.md
+
+
+[1A[2K  102) [chromium] › tests/e2e/properties.spec.ts:23:3 › Properties Dialog › should open properties dialog on double-click 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Point")')[22m
+
+
+      23 |   test('should open properties dialog on double-click', async ({ page }) => {
+      24 |     // Create a point
+    > 25 |     await page.click('button:has-text("Point")');
+         |                ^
+      26 |     await page.click('.svg-canvas', { position: { x: 200, y: 200 } });
+      27 |     
+      28 |     // Wait for point to be created
+        at /work/diedrico/frontend/tests/e2e/properties.spec.ts:25:16
+
+    Error Context: test-results/properties-Properties-Dial-a75b5-ties-dialog-on-double-click-chromium/error-context.md
+
+
+[1A[2K[142/188] [chromium] › tests/e2e/properties.spec.ts:81:3 › Properties Dialog › should validate invalid hex color
+[1A[2K[143/188] [chromium] › tests/e2e/properties.spec.ts:107:3 › Properties Dialog › should validate line width range
+[1A[2K  103) [chromium] › tests/e2e/properties.spec.ts:39:3 › Properties Dialog › should display geometry info for point element 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Point")')[22m
+
+
+      39 |   test('should display geometry info for point element', async ({ page }) => {
+      40 |     // Create a point
+    > 41 |     await page.click('button:has-text("Point")');
+         |                ^
+      42 |     await page.click('.svg-canvas', { position: { x: 300, y: 300 } });
+      43 |     await page.waitForTimeout(100);
+      44 |     
+        at /work/diedrico/frontend/tests/e2e/properties.spec.ts:41:16
+
+    Error Context: test-results/properties-Properties-Dial-b7bbc-etry-info-for-point-element-chromium/error-context.md
+
+
+[1A[2K  104) [chromium] › tests/e2e/properties.spec.ts:57:3 › Properties Dialog › should allow editing color property 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Point")')[22m
+
+
+      57 |   test('should allow editing color property', async ({ page }) => {
+      58 |     // Create a point
+    > 59 |     await page.click('button:has-text("Point")');
+         |                ^
+      60 |     await page.click('.svg-canvas', { position: { x: 400, y: 400 } });
+      61 |     await page.waitForTimeout(100);
+      62 |     
+        at /work/diedrico/frontend/tests/e2e/properties.spec.ts:59:16
+
+    Error Context: test-results/properties-Properties-Dial-2f6a6-llow-editing-color-property-chromium/error-context.md
+
+
+[1A[2K[144/188] [chromium] › tests/e2e/properties.spec.ts:138:3 › Properties Dialog › should reset properties to default
+[1A[2K[145/188] [chromium] › tests/e2e/properties.spec.ts:164:3 › Properties Dialog › should close dialog on cancel
+[1A[2K  105) [chromium] › tests/e2e/properties.spec.ts:81:3 › Properties Dialog › should validate invalid hex color 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Point")')[22m
+
+
+      81 |   test('should validate invalid hex color', async ({ page }) => {
+      82 |     // Create a point
+    > 83 |     await page.click('button:has-text("Point")');
+         |                ^
+      84 |     await page.click('.svg-canvas', { position: { x: 100, y: 100 } });
+      85 |     await page.waitForTimeout(100);
+      86 |     
+        at /work/diedrico/frontend/tests/e2e/properties.spec.ts:83:16
+
+    Error Context: test-results/properties-Properties-Dial-8ee91--validate-invalid-hex-color-chromium/error-context.md
+
+
+[1A[2K  106) [chromium] › tests/e2e/properties.spec.ts:107:3 › Properties Dialog › should validate line width range 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Point")')[22m
+
+
+      107 |   test('should validate line width range', async ({ page }) => {
+      108 |     // Create two points
+    > 109 |     await page.click('button:has-text("Point")');
+          |                ^
+      110 |     await page.click('.svg-canvas', { position: { x: 100, y: 100 } });
+      111 |     await page.waitForTimeout(100);
+      112 |     await page.click('.svg-canvas', { position: { x: 300, y: 100 } });
+        at /work/diedrico/frontend/tests/e2e/properties.spec.ts:109:16
+
+    Error Context: test-results/properties-Properties-Dial-11c57-d-validate-line-width-range-chromium/error-context.md
+
+
+[1A[2K[146/188] [chromium] › tests/e2e/properties.spec.ts:187:3 › Properties Dialog › should close dialog on overlay click
+[1A[2K[147/188] [chromium] › tests/e2e/properties.spec.ts:204:3 › Properties Dialog › should show different properties for different element types
+[1A[2K  107) [chromium] › tests/e2e/properties.spec.ts:138:3 › Properties Dialog › should reset properties to default 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Point")')[22m
+
+
+      138 |   test('should reset properties to default', async ({ page }) => {
+      139 |     // Create a point
+    > 140 |     await page.click('button:has-text("Point")');
+          |                ^
+      141 |     await page.click('.svg-canvas', { position: { x: 250, y: 250 } });
+      142 |     await page.waitForTimeout(100);
+      143 |     
+        at /work/diedrico/frontend/tests/e2e/properties.spec.ts:140:16
+
+    Error Context: test-results/properties-Properties-Dial-71168-reset-properties-to-default-chromium/error-context.md
+
+
+[1A[2K  108) [chromium] › tests/e2e/properties.spec.ts:164:3 › Properties Dialog › should close dialog on cancel 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Point")')[22m
+
+
+      164 |   test('should close dialog on cancel', async ({ page }) => {
+      165 |     // Create a point
+    > 166 |     await page.click('button:has-text("Point")');
+          |                ^
+      167 |     await page.click('.svg-canvas', { position: { x: 350, y: 350 } });
+      168 |     await page.waitForTimeout(100);
+      169 |     
+        at /work/diedrico/frontend/tests/e2e/properties.spec.ts:166:16
+
+    Error Context: test-results/properties-Properties-Dialog-should-close-dialog-on-cancel-chromium/error-context.md
+
+
+[1A[2K[148/188] [chromium] › tests/e2e/properties.spec.ts:235:3 › Properties Dialog › should allow multiple override properties
+[1A[2K[149/188] [chromium] › tests/e2e/selection-mask.spec.ts:9:3 › Selection mask system › line tool exposes point-only target flow after point creation
+[1A[2K  109) [chromium] › tests/e2e/selection-mask.spec.ts:9:3 › Selection mask system › line tool exposes point-only target flow after point creation 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('svg.diedrico-canvas')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('svg.diedrico-canvas')[22m
+
+
+      4 |   test.beforeEach(async ({ page }) => {
+      5 |     await page.goto('/');
+    > 6 |     await expect(page.locator('svg.diedrico-canvas')).toBeVisible();
+        |                                                       ^
+      7 |   });
+      8 |
+      9 |   test('line tool exposes point-only target flow after point creation', async ({ page }) => {
+        at /work/diedrico/frontend/tests/e2e/selection-mask.spec.ts:6:55
+
+    Error Context: test-results/selection-mask-Selection-m-4c4a3-t-flow-after-point-creation-chromium/error-context.md
+
+
+[1A[2K[150/188] [chromium] › tests/e2e/selection-mask.spec.ts:20:3 › Selection mask system › intersection tool can be selected for line-selection masks
+[1A[2K  110) [chromium] › tests/e2e/properties.spec.ts:187:3 › Properties Dialog › should close dialog on overlay click 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Point")')[22m
+
+
+      187 |   test('should close dialog on overlay click', async ({ page }) => {
+      188 |     // Create a point
+    > 189 |     await page.click('button:has-text("Point")');
+          |                ^
+      190 |     await page.click('.svg-canvas', { position: { x: 150, y: 150 } });
+      191 |     await page.waitForTimeout(100);
+      192 |     
+        at /work/diedrico/frontend/tests/e2e/properties.spec.ts:189:16
+
+    Error Context: test-results/properties-Properties-Dial-c1bf4-ose-dialog-on-overlay-click-chromium/error-context.md
+
+
+[1A[2K  111) [chromium] › tests/e2e/properties.spec.ts:204:3 › Properties Dialog › should show different properties for different element types 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Point")')[22m
+
+
+      204 |   test('should show different properties for different element types', async ({ page }) => {
+      205 |     // Create a point
+    > 206 |     await page.click('button:has-text("Point")');
+          |                ^
+      207 |     await page.click('.svg-canvas', { position: { x: 100, y: 200 } });
+      208 |     await page.waitForTimeout(100);
+      209 |     
+        at /work/diedrico/frontend/tests/e2e/properties.spec.ts:206:16
+
+    Error Context: test-results/properties-Properties-Dial-68ad9-for-different-element-types-chromium/error-context.md
+
+
+[1A[2K[151/188] [chromium] › tests/e2e/selection.spec.ts:45:3 › Object Selection › should select single element on click
+[1A[2K[152/188] [chromium] › tests/e2e/selection.spec.ts:63:3 › Object Selection › should replace selection when clicking different element
+[1A[2K  112) [chromium] › tests/e2e/selection-mask.spec.ts:20:3 › Selection mask system › intersection tool can be selected for line-selection masks 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('svg.diedrico-canvas')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('svg.diedrico-canvas')[22m
+
+
+      4 |   test.beforeEach(async ({ page }) => {
+      5 |     await page.goto('/');
+    > 6 |     await expect(page.locator('svg.diedrico-canvas')).toBeVisible();
+        |                                                       ^
+      7 |   });
+      8 |
+      9 |   test('line tool exposes point-only target flow after point creation', async ({ page }) => {
+        at /work/diedrico/frontend/tests/e2e/selection-mask.spec.ts:6:55
+
+    Error Context: test-results/selection-mask-Selection-m-4817c-ed-for-line-selection-masks-chromium/error-context.md
+
+
+[1A[2K[153/188] [chromium] › tests/e2e/selection.spec.ts:79:3 › Object Selection › should add to selection with Shift+click (multi-select)
+[1A[2K  113) [chromium] › tests/e2e/properties.spec.ts:235:3 › Properties Dialog › should allow multiple override properties 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('button:has-text("Point")')[22m
+
+
+      235 |   test('should allow multiple override properties', async ({ page }) => {
+      236 |     // Create two points for a line
+    > 237 |     await page.click('button:has-text("Point")');
+          |                ^
+      238 |     await page.click('.svg-canvas', { position: { x: 100, y: 300 } });
+      239 |     await page.waitForTimeout(100);
+      240 |     await page.click('.svg-canvas', { position: { x: 300, y: 300 } });
+        at /work/diedrico/frontend/tests/e2e/properties.spec.ts:237:16
+
+    Error Context: test-results/properties-Properties-Dial-5aca1-ultiple-override-properties-chromium/error-context.md
+
+
+[1A[2K[154/188] [chromium] › tests/e2e/selection.spec.ts:98:3 › Object Selection › should add multiple elements to selection with repeated Shift+click
+[1A[2K  114) [chromium] › tests/e2e/selection.spec.ts:45:3 › Object Selection › should select single element on click 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      16 |
+      17 | test.describe('Object Selection', () => {
+    > 18 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      19 |     await page.goto('/');
+      20 |     // Wait for app to load
+      21 |     await page.waitForSelector('svg.diedrico-canvas');
+        at /work/diedrico/frontend/tests/e2e/selection.spec.ts:18:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg.diedrico-canvas') to be visible[22m
+
+
+      19 |     await page.goto('/');
+      20 |     // Wait for app to load
+    > 21 |     await page.waitForSelector('svg.diedrico-canvas');
+         |                ^
+      22 |     
+      23 |     // Setup: Create some geometric objects to test selection
+      24 |     // Create 3 points
+        at /work/diedrico/frontend/tests/e2e/selection.spec.ts:21:16
+
+    Error Context: test-results/selection-Object-Selection-26100-ect-single-element-on-click-chromium/error-context.md
+
+
+[1A[2K[155/188] [chromium] › tests/e2e/selection.spec.ts:124:3 › Object Selection › should clear selection when clicking empty space
+[1A[2K  115) [chromium] › tests/e2e/selection.spec.ts:63:3 › Object Selection › should replace selection when clicking different element 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      16 |
+      17 | test.describe('Object Selection', () => {
+    > 18 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      19 |     await page.goto('/');
+      20 |     // Wait for app to load
+      21 |     await page.waitForSelector('svg.diedrico-canvas');
+        at /work/diedrico/frontend/tests/e2e/selection.spec.ts:18:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg.diedrico-canvas') to be visible[22m
+
+
+      19 |     await page.goto('/');
+      20 |     // Wait for app to load
+    > 21 |     await page.waitForSelector('svg.diedrico-canvas');
+         |                ^
+      22 |     
+      23 |     // Setup: Create some geometric objects to test selection
+      24 |     // Create 3 points
+        at /work/diedrico/frontend/tests/e2e/selection.spec.ts:21:16
+
+    Error Context: test-results/selection-Object-Selection-5f367--clicking-different-element-chromium/error-context.md
+
+
+[1A[2K[156/188] [chromium] › tests/e2e/selection.spec.ts:144:3 › Object Selection › should show selection highlighting (visual feedback)
+[1A[2K  116) [chromium] › tests/e2e/selection.spec.ts:79:3 › Object Selection › should add to selection with Shift+click (multi-select) 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      16 |
+      17 | test.describe('Object Selection', () => {
+    > 18 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      19 |     await page.goto('/');
+      20 |     // Wait for app to load
+      21 |     await page.waitForSelector('svg.diedrico-canvas');
+        at /work/diedrico/frontend/tests/e2e/selection.spec.ts:18:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg.diedrico-canvas') to be visible[22m
+
+
+      19 |     await page.goto('/');
+      20 |     // Wait for app to load
+    > 21 |     await page.waitForSelector('svg.diedrico-canvas');
+         |                ^
+      22 |     
+      23 |     // Setup: Create some geometric objects to test selection
+      24 |     // Create 3 points
+        at /work/diedrico/frontend/tests/e2e/selection.spec.ts:21:16
+
+    Error Context: test-results/selection-Object-Selection-80f4c-h-Shift-click-multi-select--chromium/error-context.md
+
+
+[1A[2K[157/188] [chromium] › tests/e2e/selection.spec.ts:173:8 › Object Selection › should sync selection between canvas and ElementsPanel (canvas -> panel)
+[1A[2K[158/188] [chromium] › tests/e2e/selection.spec.ts:189:8 › Object Selection › should sync selection between ElementsPanel and canvas (panel -> canvas)
+[1A[2K[159/188] [chromium] › tests/e2e/selection.spec.ts:206:8 › Object Selection › should maintain multi-select when switching between canvas and panel
+[1A[2K[160/188] [chromium] › tests/e2e/selection.spec.ts:230:3 › Object Selection › should deselect element with Shift+click on already selected element
+[1A[2K  117) [chromium] › tests/e2e/selection.spec.ts:98:3 › Object Selection › should add multiple elements to selection with repeated Shift+click 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      16 |
+      17 | test.describe('Object Selection', () => {
+    > 18 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      19 |     await page.goto('/');
+      20 |     // Wait for app to load
+      21 |     await page.waitForSelector('svg.diedrico-canvas');
+        at /work/diedrico/frontend/tests/e2e/selection.spec.ts:18:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg.diedrico-canvas') to be visible[22m
+
+
+      19 |     await page.goto('/');
+      20 |     // Wait for app to load
+    > 21 |     await page.waitForSelector('svg.diedrico-canvas');
+         |                ^
+      22 |     
+      23 |     // Setup: Create some geometric objects to test selection
+      24 |     // Create 3 points
+        at /work/diedrico/frontend/tests/e2e/selection.spec.ts:21:16
+
+    Error Context: test-results/selection-Object-Selection-f3129-n-with-repeated-Shift-click-chromium/error-context.md
+
+
+[1A[2K[161/188] [chromium] › tests/e2e/selection.spec.ts:258:8 › Object Selection › should select different element types (point, line, segment)
+[1A[2K[162/188] [chromium] › tests/e2e/selection.spec.ts:285:3 › Object Selection › should not select elements when using drawing tools
+[1A[2K  118) [chromium] › tests/e2e/selection.spec.ts:124:3 › Object Selection › should clear selection when clicking empty space 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      16 |
+      17 | test.describe('Object Selection', () => {
+    > 18 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      19 |     await page.goto('/');
+      20 |     // Wait for app to load
+      21 |     await page.waitForSelector('svg.diedrico-canvas');
+        at /work/diedrico/frontend/tests/e2e/selection.spec.ts:18:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg.diedrico-canvas') to be visible[22m
+
+
+      19 |     await page.goto('/');
+      20 |     // Wait for app to load
+    > 21 |     await page.waitForSelector('svg.diedrico-canvas');
+         |                ^
+      22 |     
+      23 |     // Setup: Create some geometric objects to test selection
+      24 |     // Create 3 points
+        at /work/diedrico/frontend/tests/e2e/selection.spec.ts:21:16
+
+    Error Context: test-results/selection-Object-Selection-c064c-n-when-clicking-empty-space-chromium/error-context.md
+
+
+[1A[2K  119) [chromium] › tests/e2e/selection.spec.ts:144:3 › Object Selection › should show selection highlighting (visual feedback) 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      16 |
+      17 | test.describe('Object Selection', () => {
+    > 18 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      19 |     await page.goto('/');
+      20 |     // Wait for app to load
+      21 |     await page.waitForSelector('svg.diedrico-canvas');
+        at /work/diedrico/frontend/tests/e2e/selection.spec.ts:18:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg.diedrico-canvas') to be visible[22m
+
+
+      19 |     await page.goto('/');
+      20 |     // Wait for app to load
+    > 21 |     await page.waitForSelector('svg.diedrico-canvas');
+         |                ^
+      22 |     
+      23 |     // Setup: Create some geometric objects to test selection
+      24 |     // Create 3 points
+        at /work/diedrico/frontend/tests/e2e/selection.spec.ts:21:16
+
+    Error Context: test-results/selection-Object-Selection-e43c2-ghlighting-visual-feedback--chromium/error-context.md
+
+
+[1A[2K[163/188] [chromium] › tests/e2e/selection.spec.ts:300:3 › Object Selection › should clear selection when switching tools
+[1A[2K[164/188] [chromium] › tests/e2e/selection.spec.ts:320:3 › Object Selection › should handle rapid selection changes
+[1A[2K  120) [chromium] › tests/e2e/selection.spec.ts:230:3 › Object Selection › should deselect element with Shift+click on already selected element 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      16 |
+      17 | test.describe('Object Selection', () => {
+    > 18 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      19 |     await page.goto('/');
+      20 |     // Wait for app to load
+      21 |     await page.waitForSelector('svg.diedrico-canvas');
+        at /work/diedrico/frontend/tests/e2e/selection.spec.ts:18:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg.diedrico-canvas') to be visible[22m
+
+
+      19 |     await page.goto('/');
+      20 |     // Wait for app to load
+    > 21 |     await page.waitForSelector('svg.diedrico-canvas');
+         |                ^
+      22 |     
+      23 |     // Setup: Create some geometric objects to test selection
+      24 |     // Create 3 points
+        at /work/diedrico/frontend/tests/e2e/selection.spec.ts:21:16
+
+    Error Context: test-results/selection-Object-Selection-2bf58-on-already-selected-element-chromium/error-context.md
+
+
+[1A[2K[165/188] [chromium] › tests/e2e/selection.spec.ts:334:8 › Object Selection › should persist selection across plane switches
+[1A[2K[166/188] [chromium] › tests/e2e/undo-redo-fix.spec.ts:23:3 › Undo/Redo › undo button should be disabled initially
+[1A[2K  121) [chromium] › tests/e2e/undo-redo-fix.spec.ts:23:3 › Undo/Redo › undo button should be disabled initially 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Call log:
+    [2m  - navigating to "http://localhost:5180/", waiting until "load"[22m
+
+
+      17 | test.describe('Undo/Redo', () => {
+      18 |   test.beforeEach(async ({ page }) => {
+    > 19 |     await page.goto('http://localhost:5180');
+         |                ^
+      20 |     await page.waitForSelector('svg.svg-canvas');
+      21 |   });
+      22 |
+        at /work/diedrico/frontend/tests/e2e/undo-redo-fix.spec.ts:19:16
+
+    Error Context: test-results/undo-redo-fix-Undo-Redo-un-c3896-hould-be-disabled-initially-chromium/error-context.md
+
+
+[1A[2K  122) [chromium] › tests/e2e/selection.spec.ts:285:3 › Object Selection › should not select elements when using drawing tools 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      16 |
+      17 | test.describe('Object Selection', () => {
+    > 18 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      19 |     await page.goto('/');
+      20 |     // Wait for app to load
+      21 |     await page.waitForSelector('svg.diedrico-canvas');
+        at /work/diedrico/frontend/tests/e2e/selection.spec.ts:18:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg.diedrico-canvas') to be visible[22m
+
+
+      19 |     await page.goto('/');
+      20 |     // Wait for app to load
+    > 21 |     await page.waitForSelector('svg.diedrico-canvas');
+         |                ^
+      22 |     
+      23 |     // Setup: Create some geometric objects to test selection
+      24 |     // Create 3 points
+        at /work/diedrico/frontend/tests/e2e/selection.spec.ts:21:16
+
+    Error Context: test-results/selection-Object-Selection-302c7-ts-when-using-drawing-tools-chromium/error-context.md
+
+
+[1A[2K[167/188] [chromium] › tests/e2e/undo-redo-fix.spec.ts:33:3 › Undo/Redo › should enable undo after creating a point
+[1A[2K[168/188] [chromium] › tests/e2e/undo-redo-fix.spec.ts:28:3 › Undo/Redo › redo button should be disabled initially
+[1A[2K  123) [chromium] › tests/e2e/undo-redo-fix.spec.ts:33:3 › Undo/Redo › should enable undo after creating a point 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Call log:
+    [2m  - navigating to "http://localhost:5180/", waiting until "load"[22m
+
+
+      17 | test.describe('Undo/Redo', () => {
+      18 |   test.beforeEach(async ({ page }) => {
+    > 19 |     await page.goto('http://localhost:5180');
+         |                ^
+      20 |     await page.waitForSelector('svg.svg-canvas');
+      21 |   });
+      22 |
+        at /work/diedrico/frontend/tests/e2e/undo-redo-fix.spec.ts:19:16
+
+    Error Context: test-results/undo-redo-fix-Undo-Redo-sh-ec7fa-undo-after-creating-a-point-chromium/error-context.md
+
+
+[1A[2K  124) [chromium] › tests/e2e/undo-redo-fix.spec.ts:28:3 › Undo/Redo › redo button should be disabled initially 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Call log:
+    [2m  - navigating to "http://localhost:5180/", waiting until "load"[22m
+
+
+      17 | test.describe('Undo/Redo', () => {
+      18 |   test.beforeEach(async ({ page }) => {
+    > 19 |     await page.goto('http://localhost:5180');
+         |                ^
+      20 |     await page.waitForSelector('svg.svg-canvas');
+      21 |   });
+      22 |
+        at /work/diedrico/frontend/tests/e2e/undo-redo-fix.spec.ts:19:16
+
+    Error Context: test-results/undo-redo-fix-Undo-Redo-re-f072d-hould-be-disabled-initially-chromium/error-context.md
+
+
+[1A[2K[169/188] [chromium] › tests/e2e/undo-redo-fix.spec.ts:49:3 › Undo/Redo › should undo point creation via button
+[1A[2K[170/188] [chromium] › tests/e2e/undo-redo-fix.spec.ts:69:3 › Undo/Redo › should undo point creation via keyboard (Ctrl+Z)
+[1A[2K  125) [chromium] › tests/e2e/undo-redo-fix.spec.ts:49:3 › Undo/Redo › should undo point creation via button 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Call log:
+    [2m  - navigating to "http://localhost:5180/", waiting until "load"[22m
+
+
+      17 | test.describe('Undo/Redo', () => {
+      18 |   test.beforeEach(async ({ page }) => {
+    > 19 |     await page.goto('http://localhost:5180');
+         |                ^
+      20 |     await page.waitForSelector('svg.svg-canvas');
+      21 |   });
+      22 |
+        at /work/diedrico/frontend/tests/e2e/undo-redo-fix.spec.ts:19:16
+
+    Error Context: test-results/undo-redo-fix-Undo-Redo-sh-db451-o-point-creation-via-button-chromium/error-context.md
+
+
+[1A[2K  126) [chromium] › tests/e2e/undo-redo-fix.spec.ts:69:3 › Undo/Redo › should undo point creation via keyboard (Ctrl+Z) 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Call log:
+    [2m  - navigating to "http://localhost:5180/", waiting until "load"[22m
+
+
+      17 | test.describe('Undo/Redo', () => {
+      18 |   test.beforeEach(async ({ page }) => {
+    > 19 |     await page.goto('http://localhost:5180');
+         |                ^
+      20 |     await page.waitForSelector('svg.svg-canvas');
+      21 |   });
+      22 |
+        at /work/diedrico/frontend/tests/e2e/undo-redo-fix.spec.ts:19:16
+
+    Error Context: test-results/undo-redo-fix-Undo-Redo-sh-fd0e5-eation-via-keyboard-Ctrl-Z--chromium/error-context.md
+
+
+[1A[2K[171/188] [chromium] › tests/e2e/undo-redo-fix.spec.ts:87:3 › Undo/Redo › should enable redo after undo
+[1A[2K[172/188] [chromium] › tests/e2e/undo-redo-fix.spec.ts:102:3 › Undo/Redo › should redo point creation via button
+[1A[2K  127) [chromium] › tests/e2e/undo-redo-fix.spec.ts:87:3 › Undo/Redo › should enable redo after undo 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Call log:
+    [2m  - navigating to "http://localhost:5180/", waiting until "load"[22m
+
+
+      17 | test.describe('Undo/Redo', () => {
+      18 |   test.beforeEach(async ({ page }) => {
+    > 19 |     await page.goto('http://localhost:5180');
+         |                ^
+      20 |     await page.waitForSelector('svg.svg-canvas');
+      21 |   });
+      22 |
+        at /work/diedrico/frontend/tests/e2e/undo-redo-fix.spec.ts:19:16
+
+    Error Context: test-results/undo-redo-fix-Undo-Redo-should-enable-redo-after-undo-chromium/error-context.md
+
+
+[1A[2K  128) [chromium] › tests/e2e/undo-redo-fix.spec.ts:102:3 › Undo/Redo › should redo point creation via button 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Call log:
+    [2m  - navigating to "http://localhost:5180/", waiting until "load"[22m
+
+
+      17 | test.describe('Undo/Redo', () => {
+      18 |   test.beforeEach(async ({ page }) => {
+    > 19 |     await page.goto('http://localhost:5180');
+         |                ^
+      20 |     await page.waitForSelector('svg.svg-canvas');
+      21 |   });
+      22 |
+        at /work/diedrico/frontend/tests/e2e/undo-redo-fix.spec.ts:19:16
+
+    Error Context: test-results/undo-redo-fix-Undo-Redo-sh-63116-o-point-creation-via-button-chromium/error-context.md
+
+
+[1A[2K[173/188] [chromium] › tests/e2e/undo-redo-fix.spec.ts:124:3 › Undo/Redo › should redo point creation via keyboard (Ctrl+Y)
+[1A[2K[174/188] [chromium] › tests/e2e/undo-redo-fix.spec.ts:144:3 › Undo/Redo › should clear redo stack on new action
+[1A[2K  129) [chromium] › tests/e2e/undo-redo-fix.spec.ts:124:3 › Undo/Redo › should redo point creation via keyboard (Ctrl+Y) 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Call log:
+    [2m  - navigating to "http://localhost:5180/", waiting until "load"[22m
+
+
+      17 | test.describe('Undo/Redo', () => {
+      18 |   test.beforeEach(async ({ page }) => {
+    > 19 |     await page.goto('http://localhost:5180');
+         |                ^
+      20 |     await page.waitForSelector('svg.svg-canvas');
+      21 |   });
+      22 |
+        at /work/diedrico/frontend/tests/e2e/undo-redo-fix.spec.ts:19:16
+
+    Error Context: test-results/undo-redo-fix-Undo-Redo-sh-6a7bf-eation-via-keyboard-Ctrl-Y--chromium/error-context.md
+
+
+[1A[2K  130) [chromium] › tests/e2e/undo-redo-fix.spec.ts:144:3 › Undo/Redo › should clear redo stack on new action 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Call log:
+    [2m  - navigating to "http://localhost:5180/", waiting until "load"[22m
+
+
+      17 | test.describe('Undo/Redo', () => {
+      18 |   test.beforeEach(async ({ page }) => {
+    > 19 |     await page.goto('http://localhost:5180');
+         |                ^
+      20 |     await page.waitForSelector('svg.svg-canvas');
+      21 |   });
+      22 |
+        at /work/diedrico/frontend/tests/e2e/undo-redo-fix.spec.ts:19:16
+
+    Error Context: test-results/undo-redo-fix-Undo-Redo-sh-d6a21-ar-redo-stack-on-new-action-chromium/error-context.md
+
+
+[1A[2K[175/188] [chromium] › tests/e2e/undo-redo-fix.spec.ts:169:3 › Undo/Redo › should undo/redo multiple actions in correct order
+[1A[2K[176/188] [chromium] › tests/e2e/undo-redo-fix.spec.ts:206:3 › Undo/Redo › should undo/redo line creation
+[1A[2K  131) [chromium] › tests/e2e/selection.spec.ts:300:3 › Object Selection › should clear selection when switching tools 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      16 |
+      17 | test.describe('Object Selection', () => {
+    > 18 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      19 |     await page.goto('/');
+      20 |     // Wait for app to load
+      21 |     await page.waitForSelector('svg.diedrico-canvas');
+        at /work/diedrico/frontend/tests/e2e/selection.spec.ts:18:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg.diedrico-canvas') to be visible[22m
+
+
+      19 |     await page.goto('/');
+      20 |     // Wait for app to load
+    > 21 |     await page.waitForSelector('svg.diedrico-canvas');
+         |                ^
+      22 |     
+      23 |     // Setup: Create some geometric objects to test selection
+      24 |     // Create 3 points
+        at /work/diedrico/frontend/tests/e2e/selection.spec.ts:21:16
+
+    Error Context: test-results/selection-Object-Selection-8ab9c-ection-when-switching-tools-chromium/error-context.md
+
+
+[1A[2K  132) [chromium] › tests/e2e/undo-redo-fix.spec.ts:169:3 › Undo/Redo › should undo/redo multiple actions in correct order 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Call log:
+    [2m  - navigating to "http://localhost:5180/", waiting until "load"[22m
+
+
+      17 | test.describe('Undo/Redo', () => {
+      18 |   test.beforeEach(async ({ page }) => {
+    > 19 |     await page.goto('http://localhost:5180');
+         |                ^
+      20 |     await page.waitForSelector('svg.svg-canvas');
+      21 |   });
+      22 |
+        at /work/diedrico/frontend/tests/e2e/undo-redo-fix.spec.ts:19:16
+
+    Error Context: test-results/undo-redo-fix-Undo-Redo-sh-30958-le-actions-in-correct-order-chromium/error-context.md
+
+
+[1A[2K  133) [chromium] › tests/e2e/undo-redo-fix.spec.ts:206:3 › Undo/Redo › should undo/redo line creation 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Call log:
+    [2m  - navigating to "http://localhost:5180/", waiting until "load"[22m
+
+
+      17 | test.describe('Undo/Redo', () => {
+      18 |   test.beforeEach(async ({ page }) => {
+    > 19 |     await page.goto('http://localhost:5180');
+         |                ^
+      20 |     await page.waitForSelector('svg.svg-canvas');
+      21 |   });
+      22 |
+        at /work/diedrico/frontend/tests/e2e/undo-redo-fix.spec.ts:19:16
+
+    Error Context: test-results/undo-redo-fix-Undo-Redo-should-undo-redo-line-creation-chromium/error-context.md
+
+
+[1A[2K[177/188] [chromium] › tests/e2e/undo-redo.spec.ts:23:3 › Undo/Redo › undo button should be disabled initially
+[1A[2K  134) [chromium] › tests/e2e/selection.spec.ts:320:3 › Object Selection › should handle rapid selection changes 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      16 |
+      17 | test.describe('Object Selection', () => {
+    > 18 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      19 |     await page.goto('/');
+      20 |     // Wait for app to load
+      21 |     await page.waitForSelector('svg.diedrico-canvas');
+        at /work/diedrico/frontend/tests/e2e/selection.spec.ts:18:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('svg.diedrico-canvas') to be visible[22m
+
+
+      19 |     await page.goto('/');
+      20 |     // Wait for app to load
+    > 21 |     await page.waitForSelector('svg.diedrico-canvas');
+         |                ^
+      22 |     
+      23 |     // Setup: Create some geometric objects to test selection
+      24 |     // Create 3 points
+        at /work/diedrico/frontend/tests/e2e/selection.spec.ts:21:16
+
+    Error Context: test-results/selection-Object-Selection-81956-dle-rapid-selection-changes-chromium/error-context.md
+
+
+[1A[2K[178/188] [chromium] › tests/e2e/undo-redo.spec.ts:28:3 › Undo/Redo › redo button should be disabled initially
+[1A[2K[179/188] [chromium] › tests/e2e/undo-redo.spec.ts:33:3 › Undo/Redo › should enable undo after creating a point
+[1A[2K  135) [chromium] › tests/e2e/undo-redo.spec.ts:28:3 › Undo/Redo › redo button should be disabled initially 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Call log:
+    [2m  - navigating to "http://localhost:5180/", waiting until "load"[22m
+
+
+      17 | test.describe('Undo/Redo', () => {
+      18 |   test.beforeEach(async ({ page }) => {
+    > 19 |     await page.goto('http://localhost:5180');
+         |                ^
+      20 |     await page.waitForSelector('svg.svg-canvas');
+      21 |   });
+      22 |
+        at /work/diedrico/frontend/tests/e2e/undo-redo.spec.ts:19:16
+
+    Error Context: test-results/undo-redo-Undo-Redo-redo-button-should-be-disabled-initially-chromium/error-context.md
+
+
+[1A[2K  136) [chromium] › tests/e2e/undo-redo.spec.ts:23:3 › Undo/Redo › undo button should be disabled initially 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Call log:
+    [2m  - navigating to "http://localhost:5180/", waiting until "load"[22m
+
+
+      17 | test.describe('Undo/Redo', () => {
+      18 |   test.beforeEach(async ({ page }) => {
+    > 19 |     await page.goto('http://localhost:5180');
+         |                ^
+      20 |     await page.waitForSelector('svg.svg-canvas');
+      21 |   });
+      22 |
+        at /work/diedrico/frontend/tests/e2e/undo-redo.spec.ts:19:16
+
+    Error Context: test-results/undo-redo-Undo-Redo-undo-button-should-be-disabled-initially-chromium/error-context.md
+
+
+[1A[2K[180/188] [chromium] › tests/e2e/undo-redo.spec.ts:49:3 › Undo/Redo › should undo point creation via button
+[1A[2K[181/188] [chromium] › tests/e2e/undo-redo.spec.ts:69:3 › Undo/Redo › should undo point creation via keyboard (Ctrl+Z)
+[1A[2K  137) [chromium] › tests/e2e/undo-redo.spec.ts:33:3 › Undo/Redo › should enable undo after creating a point 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Call log:
+    [2m  - navigating to "http://localhost:5180/", waiting until "load"[22m
+
+
+      17 | test.describe('Undo/Redo', () => {
+      18 |   test.beforeEach(async ({ page }) => {
+    > 19 |     await page.goto('http://localhost:5180');
+         |                ^
+      20 |     await page.waitForSelector('svg.svg-canvas');
+      21 |   });
+      22 |
+        at /work/diedrico/frontend/tests/e2e/undo-redo.spec.ts:19:16
+
+    Error Context: test-results/undo-redo-Undo-Redo-should-9e1fe-undo-after-creating-a-point-chromium/error-context.md
+
+
+[1A[2K[182/188] [chromium] › tests/e2e/undo-redo.spec.ts:87:3 › Undo/Redo › should enable redo after undo
+[1A[2K  138) [chromium] › tests/e2e/undo-redo.spec.ts:49:3 › Undo/Redo › should undo point creation via button 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Call log:
+    [2m  - navigating to "http://localhost:5180/", waiting until "load"[22m
+
+
+      17 | test.describe('Undo/Redo', () => {
+      18 |   test.beforeEach(async ({ page }) => {
+    > 19 |     await page.goto('http://localhost:5180');
+         |                ^
+      20 |     await page.waitForSelector('svg.svg-canvas');
+      21 |   });
+      22 |
+        at /work/diedrico/frontend/tests/e2e/undo-redo.spec.ts:19:16
+
+    Error Context: test-results/undo-redo-Undo-Redo-should-undo-point-creation-via-button-chromium/error-context.md
+
+
+[1A[2K[183/188] [chromium] › tests/e2e/undo-redo.spec.ts:102:3 › Undo/Redo › should redo point creation via button
+[1A[2K  139) [chromium] › tests/e2e/undo-redo.spec.ts:69:3 › Undo/Redo › should undo point creation via keyboard (Ctrl+Z) 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Call log:
+    [2m  - navigating to "http://localhost:5180/", waiting until "load"[22m
+
+
+      17 | test.describe('Undo/Redo', () => {
+      18 |   test.beforeEach(async ({ page }) => {
+    > 19 |     await page.goto('http://localhost:5180');
+         |                ^
+      20 |     await page.waitForSelector('svg.svg-canvas');
+      21 |   });
+      22 |
+        at /work/diedrico/frontend/tests/e2e/undo-redo.spec.ts:19:16
+
+    Error Context: test-results/undo-redo-Undo-Redo-should-d04de-eation-via-keyboard-Ctrl-Z--chromium/error-context.md
+
+
+[1A[2K  140) [chromium] › tests/e2e/undo-redo.spec.ts:87:3 › Undo/Redo › should enable redo after undo ───
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Call log:
+    [2m  - navigating to "http://localhost:5180/", waiting until "load"[22m
+
+
+      17 | test.describe('Undo/Redo', () => {
+      18 |   test.beforeEach(async ({ page }) => {
+    > 19 |     await page.goto('http://localhost:5180');
+         |                ^
+      20 |     await page.waitForSelector('svg.svg-canvas');
+      21 |   });
+      22 |
+        at /work/diedrico/frontend/tests/e2e/undo-redo.spec.ts:19:16
+
+    Error Context: test-results/undo-redo-Undo-Redo-should-enable-redo-after-undo-chromium/error-context.md
+
+
+[1A[2K[184/188] [chromium] › tests/e2e/undo-redo.spec.ts:124:3 › Undo/Redo › should redo point creation via keyboard (Ctrl+Y)
+[1A[2K[185/188] [chromium] › tests/e2e/undo-redo.spec.ts:144:3 › Undo/Redo › should clear redo stack on new action
+[1A[2K  141) [chromium] › tests/e2e/undo-redo.spec.ts:102:3 › Undo/Redo › should redo point creation via button 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Call log:
+    [2m  - navigating to "http://localhost:5180/", waiting until "load"[22m
+
+
+      17 | test.describe('Undo/Redo', () => {
+      18 |   test.beforeEach(async ({ page }) => {
+    > 19 |     await page.goto('http://localhost:5180');
+         |                ^
+      20 |     await page.waitForSelector('svg.svg-canvas');
+      21 |   });
+      22 |
+        at /work/diedrico/frontend/tests/e2e/undo-redo.spec.ts:19:16
+
+    Error Context: test-results/undo-redo-Undo-Redo-should-redo-point-creation-via-button-chromium/error-context.md
+
+
+[1A[2K[186/188] [chromium] › tests/e2e/undo-redo.spec.ts:169:3 › Undo/Redo › should undo/redo multiple actions in correct order
+[1A[2K  142) [chromium] › tests/e2e/undo-redo.spec.ts:124:3 › Undo/Redo › should redo point creation via keyboard (Ctrl+Y) 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Call log:
+    [2m  - navigating to "http://localhost:5180/", waiting until "load"[22m
+
+
+      17 | test.describe('Undo/Redo', () => {
+      18 |   test.beforeEach(async ({ page }) => {
+    > 19 |     await page.goto('http://localhost:5180');
+         |                ^
+      20 |     await page.waitForSelector('svg.svg-canvas');
+      21 |   });
+      22 |
+        at /work/diedrico/frontend/tests/e2e/undo-redo.spec.ts:19:16
+
+    Error Context: test-results/undo-redo-Undo-Redo-should-75b34-eation-via-keyboard-Ctrl-Y--chromium/error-context.md
+
+
+[1A[2K[187/188] [chromium] › tests/e2e/undo-redo.spec.ts:206:3 › Undo/Redo › should undo/redo line creation
+[1A[2K  143) [chromium] › tests/e2e/undo-redo.spec.ts:144:3 › Undo/Redo › should clear redo stack on new action 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Call log:
+    [2m  - navigating to "http://localhost:5180/", waiting until "load"[22m
+
+
+      17 | test.describe('Undo/Redo', () => {
+      18 |   test.beforeEach(async ({ page }) => {
+    > 19 |     await page.goto('http://localhost:5180');
+         |                ^
+      20 |     await page.waitForSelector('svg.svg-canvas');
+      21 |   });
+      22 |
+        at /work/diedrico/frontend/tests/e2e/undo-redo.spec.ts:19:16
+
+    Error Context: test-results/undo-redo-Undo-Redo-should-clear-redo-stack-on-new-action-chromium/error-context.md
+
+
+[1A[2K[188/188] [chromium] › tests/e2e/wave010-app-shell-project-flow.spec.ts:4:3 › Wave 010 app-shell project boundary › starts without Google credentials and opens the app-shell project chooser without backend project API calls
+[1A[2K  144) [chromium] › tests/e2e/undo-redo.spec.ts:169:3 › Undo/Redo › should undo/redo multiple actions in correct order 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Call log:
+    [2m  - navigating to "http://localhost:5180/", waiting until "load"[22m
+
+
+      17 | test.describe('Undo/Redo', () => {
+      18 |   test.beforeEach(async ({ page }) => {
+    > 19 |     await page.goto('http://localhost:5180');
+         |                ^
+      20 |     await page.waitForSelector('svg.svg-canvas');
+      21 |   });
+      22 |
+        at /work/diedrico/frontend/tests/e2e/undo-redo.spec.ts:19:16
+
+    Error Context: test-results/undo-redo-Undo-Redo-should-ac491-le-actions-in-correct-order-chromium/error-context.md
+
+
+[1A[2K  145) [chromium] › tests/e2e/undo-redo.spec.ts:206:3 › Undo/Redo › should undo/redo line creation ─
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Call log:
+    [2m  - navigating to "http://localhost:5180/", waiting until "load"[22m
+
+
+      17 | test.describe('Undo/Redo', () => {
+      18 |   test.beforeEach(async ({ page }) => {
+    > 19 |     await page.goto('http://localhost:5180');
+         |                ^
+      20 |     await page.waitForSelector('svg.svg-canvas');
+      21 |   });
+      22 |
+        at /work/diedrico/frontend/tests/e2e/undo-redo.spec.ts:19:16
+
+    Error Context: test-results/undo-redo-Undo-Redo-should-undo-redo-line-creation-chromium/error-context.md
+
+
+[1A[2K  145 failed
+    [chromium] › tests/e2e/active-plane-emphasis.spec.ts:18:3 › Active Plane Visual Emphasis › should display active plane elements with full opacity 
+    [chromium] › tests/e2e/active-plane-emphasis.spec.ts:50:3 › Active Plane Visual Emphasis › should reduce opacity of inactive plane elements when switching planes 
+    [chromium] › tests/e2e/active-plane-emphasis.spec.ts:167:3 › Active Plane Visual Emphasis › should apply smooth opacity transitions when switching planes 
+    [chromium] › tests/e2e/active-plane-emphasis.spec.ts:207:3 › Active Plane Visual Emphasis › should not allow clicking elements on inactive plane 
+    [chromium] › tests/e2e/active-plane-shortcuts.spec.ts:9:3 › Active Plane Shortcuts (Phase 89) › should cycle active plane with Tab and Shift+Tab 
+    [chromium] › tests/e2e/circle-tool-snapping.spec.ts:25:3 › Circle Tool: Circumference Point Snapping › T986: Both clicks snap to existing points - no duplicates created 
+    [chromium] › tests/e2e/circle-tool-snapping.spec.ts:64:3 › Circle Tool: Circumference Point Snapping › T986: Center snaps, circumference creates new point 
+    [chromium] › tests/e2e/circle-tool-snapping.spec.ts:97:3 › Circle Tool: Circumference Point Snapping › T986: Visual snap feedback on hover (both clicks) 
+    [chromium] › tests/e2e/circle-tool-snapping.spec.ts:134:3 › Circle Tool: Circumference Point Snapping › T986: Multiple circles with snapping - point count remains stable 
+    [chromium] › tests/e2e/circle-tool-snapping.spec.ts:169:3 › Circle Tool: Circumference Point Snapping › T986: Minimum radius validation prevents tiny circles 
+    [chromium] › tests/e2e/circle-tool-snapping.spec.ts:191:3 › Circle Tool: Circumference Point Snapping › T986: Snap radius consistency with other tools 
+    [chromium] › tests/e2e/circle-tool-snapping.spec.ts:219:3 › Circle Tool: Circumference Point Snapping › T986: Cancel circle creation with Escape key 
+    [chromium] › tests/e2e/circle-tool-snapping.spec.ts:249:3 › Circle Tool: Circumference Point Snapping › T986: Consistent snapping across plane switches 
+    [chromium] › tests/e2e/coordinate-display.spec.ts:28:3 › 3D Coordinate Display › displays coordinates when cursor is over P_H 
+    [chromium] › tests/e2e/coordinate-display.spec.ts:76:3 › 3D Coordinate Display › updates coordinates smoothly as cursor moves 
+    [chromium] › tests/e2e/coordinate-display.spec.ts:133:3 › 3D Coordinate Display › coordinates update when switching planes 
+    [chromium] › tests/e2e/create-circle.spec.ts:22:3 › Circle Creation › should create circle with center and radius 
+    [chromium] › tests/e2e/create-circle.spec.ts:50:3 › Circle Creation › should undo circle creation 
+    [chromium] › tests/e2e/create-circle.spec.ts:72:3 › Circle Creation › should redo circle creation 
+    [chromium] › tests/e2e/create-circle.spec.ts:96:3 › Circle Creation › should use keyboard shortcut for undo 
+    [chromium] › tests/e2e/create-circle.spec.ts:113:3 › Circle Creation › should create multiple circles 
+    [chromium] › tests/e2e/create-circle.spec.ts:144:3 › Circle Creation › should create circles on different planes 
+    [chromium] › tests/e2e/create-circle.spec.ts:171:3 › Circle Creation › should reject circle with zero radius 
+    [chromium] › tests/e2e/create-circle.spec.ts:186:3 › Circle Creation › should create circles with different radii 
+    [chromium] › tests/e2e/create-circle.spec.ts:219:3 › Circle Creation › should display circle with distinct visual style 
+    [chromium] › tests/e2e/create-circle.spec.ts:239:3 › Circle Creation › should require center point to exist 
+    [chromium] › tests/e2e/create-point.spec.ts:22:3 › Point Creation › should create point when Point tool is active and canvas is clicked 
+    [chromium] › tests/e2e/create-point.spec.ts:47:3 › Point Creation › should create multiple points with repeated clicks 
+    [chromium] › tests/e2e/create-point.spec.ts:63:3 › Point Creation › should create points on horizontal plane (P_H) 
+    [chromium] › tests/e2e/create-point.spec.ts:79:3 › Point Creation › should create points on vertical plane (P_V) 
+    [chromium] › tests/e2e/create-point.spec.ts:95:3 › Point Creation › should not create points when Point tool is not active 
+    [chromium] › tests/e2e/create-point.spec.ts:114:3 › Point Creation › should deactivate tool when Select tool is clicked 
+    [chromium] › tests/e2e/create-point.spec.ts:128:3 › Point Creation › should show visual feedback when hovering over canvas with Point tool active 
+    [chromium] › tests/e2e/create-segment.spec.ts:22:3 › Segment Creation › should create segment between two points 
+    [chromium] › tests/e2e/create-segment.spec.ts:66:3 › Segment Creation › should undo segment creation 
+    [chromium] › tests/e2e/create-segment.spec.ts:91:3 › Segment Creation › should redo segment creation 
+    [chromium] › tests/e2e/create-segment.spec.ts:119:3 › Segment Creation › should use keyboard shortcut for undo 
+    [chromium] › tests/e2e/create-segment.spec.ts:139:3 › Segment Creation › should create multiple segments 
+    [chromium] › tests/e2e/create-segment.spec.ts:170:3 › Segment Creation › should create segments on different planes 
+    [chromium] › tests/e2e/create-segment.spec.ts:203:3 › Segment Creation › should reject segment with same point twice 
+    [chromium] › tests/e2e/create-segment.spec.ts:218:3 › Segment Creation › should display segment with distinct visual style 
+    [chromium] › tests/e2e/debug.spec.ts:3:1 › debug console ───────────────────────────────────────
+    [chromium] › tests/e2e/dependencies.spec.ts:15:3 › Dependency Tracking › intersection point updates when base line moves 
+    [chromium] › tests/e2e/dependencies.spec.ts:49:3 › Dependency Tracking › circle updates when center point moves 
+    [chromium] › tests/e2e/dependencies.spec.ts:72:3 › Dependency Tracking › line updates when defining points move 
+    [chromium] › tests/e2e/dependencies.spec.ts:96:3 › Dependency Tracking › dependency chain updates transitively 
+    [chromium] › tests/e2e/dependencies.spec.ts:138:3 › Dependency Tracking › multiple dependents update when base element changes 
+    [chromium] › tests/e2e/dependencies.spec.ts:172:3 › Dependency Tracking › dependency tracking shows in process tree 
+    [chromium] › tests/e2e/dependencies.spec.ts:199:3 › Dependency Tracking › circular dependency prevention 
+    [chromium] › tests/e2e/dependencies.spec.ts:233:3 › Parametric Updates (Integration) › realization cache invalidation cascades to dependents 
+    [chromium] › tests/e2e/distance-adjusted-hit-testing.spec.ts:22:3 › Distance-Adjusted Hit-Testing › T978: Point highlighted over line when overlapping 
+    [chromium] › tests/e2e/distance-adjusted-hit-testing.spec.ts:53:3 › Distance-Adjusted Hit-Testing › T978: Point selected over line on click 
+    [chromium] › tests/e2e/distance-adjusted-hit-testing.spec.ts:84:3 › Distance-Adjusted Hit-Testing › T979: Construction workflow with point on line 
+    [chromium] › tests/e2e/distance-adjusted-hit-testing.spec.ts:131:3 › Distance-Adjusted Hit-Testing › T979: Tool input respects distance adjustment 
+    [chromium] › tests/e2e/distance-adjusted-hit-testing.spec.ts:166:3 › Distance-Adjusted Hit-Testing › Line wins when significantly closer than point 
+    [chromium] › tests/e2e/distance-adjusted-hit-testing.spec.ts:201:3 › Distance-Adjusted Hit-Testing › Distance adjustment works with hover highlighting 
+    [chromium] › tests/e2e/guide-creation.spec.ts:22:3 › Guide Creation › should create guide perpendicular to line through point 
+    [chromium] › tests/e2e/guide-creation.spec.ts:58:3 › Guide Creation › should render guide with dashed stroke style 
+    [chromium] › tests/e2e/guide-creation.spec.ts:94:3 › Guide Creation › should undo guide creation 
+    [chromium] › tests/e2e/guide-creation.spec.ts:129:3 › Guide Creation › should redo guide creation 
+    [chromium] › tests/e2e/guide-creation.spec.ts:166:3 › Guide Creation › should use keyboard shortcut for undo 
+    [chromium] › tests/e2e/guide-creation.spec.ts:195:3 › Guide Creation › should create multiple guides on same reference line 
+    [chromium] › tests/e2e/guide-creation.spec.ts:239:3 › Guide Creation › should create guide perpendicular to vertical line 
+    [chromium] › tests/e2e/guide-creation.spec.ts:265:3 › Guide Creation › should require reference line before through-point 
+    [chromium] › tests/e2e/hhl-intersection.spec.ts:21:3 › HalfHingeLine2D Intersection - Sibling Points › should create sibling point when intersecting with hinge line 
+    [chromium] › tests/e2e/hhl-intersection.spec.ts:62:3 › HalfHingeLine2D Intersection - Sibling Points › should delete both sibling points when deleting primary 
+    [chromium] › tests/e2e/hhl-intersection.spec.ts:101:3 › HalfHingeLine2D Intersection - Sibling Points › should undo intersection creation with both siblings 
+    [chromium] › tests/e2e/hhl-intersection.spec.ts:133:3 › HalfHingeLine2D Intersection - Sibling Points › should create sibling on correct plane (H ↔ V mapping) 
+    [chromium] › tests/e2e/hhl-intersection.spec.ts:163:3 › HalfHingeLine2D Intersection - Sibling Points › should preserve sibling coordinates (HHL coordinate consistency) 
+    [chromium] › tests/e2e/hover.spec.ts:9:3 › Hover Highlighting › should show tooltip when hovering over a point 
+    [chromium] › tests/e2e/hover.spec.ts:33:3 › Hover Highlighting › should clear tooltip when mouse leaves element 
+    [chromium] › tests/e2e/hover.spec.ts:56:3 › Hover Highlighting › should apply hover highlight to hovered element 
+    [chromium] › tests/e2e/hover.spec.ts:86:3 › Hover Highlighting › should distinguish hover from selection highlight 
+    [chromium] › tests/e2e/hover.spec.ts:111:3 › Hover Highlighting › should show hover tooltip for different element types 
+    [chromium] › tests/e2e/hover.spec.ts:147:3 › Hover Highlighting › selection highlight should take precedence over hover 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:25:3 › Intersection Point Creation › should create intersection point between two lines 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:67:3 › Intersection Point Creation › should show error for parallel lines 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:95:3 › Intersection Point Creation › should undo intersection point creation 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:120:3 › Intersection Point Creation › should redo intersection point creation 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:144:3 › Intersection Point Creation › should support keyboard shortcut for undo (Ctrl+Z) 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:167:3 › Intersection Point Creation › should support keyboard shortcut for redo (Ctrl+Shift+Z) 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:189:3 › Intersection Point Creation › should create multiple intersections on different line pairs 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:225:3 › Intersection Point Creation › should handle clicking same line twice (error case) 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:243:3 › Intersection Point Creation › should highlight selected line before second click 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:268:3 › Intersection Point Creation › should change cursor on hover over line 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:289:3 › Intersection Point Creation › should create intersection point between line and circle - secant 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:333:3 › Intersection Point Creation › should create intersection point between line and circle - tangent 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:358:3 › Intersection Point Creation › should select nearest intersection when multiple exist (circle-circle) 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:397:3 › Intersection Point Creation › should create intersection between two circles - secant 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:421:3 › Intersection Point Creation › should undo line-circle intersection creation 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:446:3 › Intersection Point Creation › should handle no intersection case (line too far from circle) 
+    [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:9:3 › Keyboard shortcuts › tool shortcut keys activate current tool buttons 
+    [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:24:3 › Keyboard shortcuts › Escape returns to select tool after starting a point workflow 
+    [chromium] › tests/e2e/line-creation.spec.ts:24:3 › Line Creation › should create line between two clicked points 
+    [chromium] › tests/e2e/line-creation.spec.ts:64:3 › Line Creation › should snap to nearby points when creating line 
+    [chromium] › tests/e2e/line-creation.spec.ts:85:3 › Line Creation › should create multiple lines 
+    [chromium] › tests/e2e/line-creation.spec.ts:111:3 › Line Creation › should highlight points on hover during line creation 
+    [chromium] › tests/e2e/line-creation.spec.ts:136:3 › Line Creation › should switch from Point tool to Line tool 
+    [chromium] › tests/e2e/point-transport.spec.ts:24:3 › Point Transport › should transport point between planes via guide 
+    [chromium] › tests/e2e/point-transport.spec.ts:43:3 › Point Transport › should handle invalid transport selection gracefully 
+    [chromium] › tests/e2e/point-transport.spec.ts:55:3 › Point Transport › should undo transport operation 
+    [chromium] › tests/e2e/properties.spec.ts:23:3 › Properties Dialog › should open properties dialog on double-click 
+    [chromium] › tests/e2e/properties.spec.ts:39:3 › Properties Dialog › should display geometry info for point element 
+    [chromium] › tests/e2e/properties.spec.ts:57:3 › Properties Dialog › should allow editing color property 
+    [chromium] › tests/e2e/properties.spec.ts:81:3 › Properties Dialog › should validate invalid hex color 
+    [chromium] › tests/e2e/properties.spec.ts:107:3 › Properties Dialog › should validate line width range 
+    [chromium] › tests/e2e/properties.spec.ts:138:3 › Properties Dialog › should reset properties to default 
+    [chromium] › tests/e2e/properties.spec.ts:164:3 › Properties Dialog › should close dialog on cancel 
+    [chromium] › tests/e2e/properties.spec.ts:187:3 › Properties Dialog › should close dialog on overlay click 
+    [chromium] › tests/e2e/properties.spec.ts:204:3 › Properties Dialog › should show different properties for different element types 
+    [chromium] › tests/e2e/properties.spec.ts:235:3 › Properties Dialog › should allow multiple override properties 
+    [chromium] › tests/e2e/selection-mask.spec.ts:9:3 › Selection mask system › line tool exposes point-only target flow after point creation 
+    [chromium] › tests/e2e/selection-mask.spec.ts:20:3 › Selection mask system › intersection tool can be selected for line-selection masks 
+    [chromium] › tests/e2e/selection.spec.ts:45:3 › Object Selection › should select single element on click 
+    [chromium] › tests/e2e/selection.spec.ts:63:3 › Object Selection › should replace selection when clicking different element 
+    [chromium] › tests/e2e/selection.spec.ts:79:3 › Object Selection › should add to selection with Shift+click (multi-select) 
+    [chromium] › tests/e2e/selection.spec.ts:98:3 › Object Selection › should add multiple elements to selection with repeated Shift+click 
+    [chromium] › tests/e2e/selection.spec.ts:124:3 › Object Selection › should clear selection when clicking empty space 
+    [chromium] › tests/e2e/selection.spec.ts:144:3 › Object Selection › should show selection highlighting (visual feedback) 
+    [chromium] › tests/e2e/selection.spec.ts:230:3 › Object Selection › should deselect element with Shift+click on already selected element 
+    [chromium] › tests/e2e/selection.spec.ts:285:3 › Object Selection › should not select elements when using drawing tools 
+    [chromium] › tests/e2e/selection.spec.ts:300:3 › Object Selection › should clear selection when switching tools 
+    [chromium] › tests/e2e/selection.spec.ts:320:3 › Object Selection › should handle rapid selection changes 
+    [chromium] › tests/e2e/undo-redo-fix.spec.ts:23:3 › Undo/Redo › undo button should be disabled initially 
+    [chromium] › tests/e2e/undo-redo-fix.spec.ts:28:3 › Undo/Redo › redo button should be disabled initially 
+    [chromium] › tests/e2e/undo-redo-fix.spec.ts:33:3 › Undo/Redo › should enable undo after creating a point 
+    [chromium] › tests/e2e/undo-redo-fix.spec.ts:49:3 › Undo/Redo › should undo point creation via button 
+    [chromium] › tests/e2e/undo-redo-fix.spec.ts:69:3 › Undo/Redo › should undo point creation via keyboard (Ctrl+Z) 
+    [chromium] › tests/e2e/undo-redo-fix.spec.ts:87:3 › Undo/Redo › should enable redo after undo ──
+    [chromium] › tests/e2e/undo-redo-fix.spec.ts:102:3 › Undo/Redo › should redo point creation via button 
+    [chromium] › tests/e2e/undo-redo-fix.spec.ts:124:3 › Undo/Redo › should redo point creation via keyboard (Ctrl+Y) 
+    [chromium] › tests/e2e/undo-redo-fix.spec.ts:144:3 › Undo/Redo › should clear redo stack on new action 
+    [chromium] › tests/e2e/undo-redo-fix.spec.ts:169:3 › Undo/Redo › should undo/redo multiple actions in correct order 
+    [chromium] › tests/e2e/undo-redo-fix.spec.ts:206:3 › Undo/Redo › should undo/redo line creation 
+    [chromium] › tests/e2e/undo-redo.spec.ts:23:3 › Undo/Redo › undo button should be disabled initially 
+    [chromium] › tests/e2e/undo-redo.spec.ts:28:3 › Undo/Redo › redo button should be disabled initially 
+    [chromium] › tests/e2e/undo-redo.spec.ts:33:3 › Undo/Redo › should enable undo after creating a point 
+    [chromium] › tests/e2e/undo-redo.spec.ts:49:3 › Undo/Redo › should undo point creation via button 
+    [chromium] › tests/e2e/undo-redo.spec.ts:69:3 › Undo/Redo › should undo point creation via keyboard (Ctrl+Z) 
+    [chromium] › tests/e2e/undo-redo.spec.ts:87:3 › Undo/Redo › should enable redo after undo ──────
+    [chromium] › tests/e2e/undo-redo.spec.ts:102:3 › Undo/Redo › should redo point creation via button 
+    [chromium] › tests/e2e/undo-redo.spec.ts:124:3 › Undo/Redo › should redo point creation via keyboard (Ctrl+Y) 
+    [chromium] › tests/e2e/undo-redo.spec.ts:144:3 › Undo/Redo › should clear redo stack on new action 
+    [chromium] › tests/e2e/undo-redo.spec.ts:169:3 › Undo/Redo › should undo/redo multiple actions in correct order 
+    [chromium] › tests/e2e/undo-redo.spec.ts:206:3 › Undo/Redo › should undo/redo line creation ────
+  8 skipped
+  35 passed (15.5m)

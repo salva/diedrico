@@ -424,3 +424,56 @@ Disposition for this task: both blockers remain real blockers for a later valida
 ### Protected-surface check for this documentation-only task
 
 This task changed only this implementation log and its Saivage task report. It did not edit `frontend/` source, tests, package files, Playwright configuration, browser cache paths, live-preview scripts/processes, `.saivage/saivage.json`, auth/provider config, or env files. Completed projection/world, command/factory, process/view-state, UI/store/render DTO, and service/domain source lanes remain untouched by this disposition.
+
+## t1 final validation and preview closure — validation incomplete on e2e contract failures
+
+Task `t1-final-validation-preview-closure` performed the Wave 015 validation-and-preview closure pass after all TypeScript build-contract lanes were reported green. No production source, tests, package metadata, provider/auth config, env files, or `.saivage/saivage.json` were read or edited. This task modified only this implementation log, validation evidence under `architecture-audit/cycle-015-typescript-build-contracts/validation/`, and its Saivage task report.
+
+### Fresh workspace / scope check
+
+- Current workspace state was inspected with MCP `git_status` before validation. The repository still contains broad inherited dirty/untracked Saivage/audit/source changes from earlier stages; this closure task did not revert or normalize them.
+- The final closure pass did not make refactor/source corrections. The only environment mutation was documented Playwright Chromium provisioning via `npx playwright install chromium` after the prior e2e blocker identified the missing browser cache.
+- Protected secret surfaces were not read or logged: no `.saivage/auth-profiles.json`, `.saivage/saivage.json`, provider config, env file, OAuth token, Google credential, or shell history content was opened.
+
+### Final validation log index
+
+All fresh closure evidence is under `architecture-audit/cycle-015-typescript-build-contracts/validation/`:
+
+- `final-closure-root-lint.stdout` / `.stderr`: `npm run lint` passed; architecture tests 4 files / 11 tests.
+- `final-closure-frontend-lint.stdout` / `.stderr`: `npm run lint --workspace=frontend` passed; architecture tests 4 files / 11 tests.
+- `final-closure-focused-wave015-vitest.stdout` / `.stderr`: focused Wave 015 lane Vitest passed; 13 files, 161 passed, 3 skipped.
+- `final-closure-frontend-full-vitest.stdout` / `.stderr`: `npm run test --workspace=frontend` passed; 105 files passed, 1 skipped; 1227 tests passed, 45 skipped, 11 todo. Stderr contains expected error-path logging from tests, not failed assertions.
+- `final-closure-root-full-vitest.stdout` / `.stderr`: root `npm run test` passed with the same frontend suite summary; 105 files passed, 1 skipped; 1227 tests passed, 45 skipped, 11 todo.
+- `final-closure-root-build.stdout` / `.stderr`: root `npm run build` passed, delegating to frontend build. Vite emitted only the existing large-chunk warning.
+- `final-closure-frontend-build.stdout` / `.stderr`: `npm run build --workspace=frontend` passed. `vue-tsc` and Vite completed successfully; Vite emitted only the existing large-chunk warning.
+- `final-closure-playwright-install-chromium.stdout` / `.stderr`: `npx playwright install chromium` succeeded and installed Playwright Chromium/headless-shell v1223 into the local browser cache, resolving the previous missing-browser executable blocker.
+- `final-closure-root-e2e.stdout` / `.stderr`: root `npm run test:e2e` launched browsers and ran the suite, but failed: 35 passed, 8 skipped, 145 failed. This is no longer the prior external missing-browser blocker.
+- `final-closure-live-preview-start2.stdout` / `.stderr`, `final-closure-live-preview.stdout` / `.stderr`, `final-closure-live-preview.pid`: persistent Vite dev preview was started with `npm run dev --workspace=frontend -- --host 0.0.0.0`; PID recorded as `457027`.
+- `final-closure-preview-reachability.stdout` / `.stderr`: reachability probe returned HTTP 200 from `http://127.0.0.1:5173/` and captured the served Diedrico HTML title. Vite reported local `http://localhost:5173/` and network `http://10.0.3.113:5173/`, demonstrating the preview is bound beyond localhost by `--host 0.0.0.0`.
+
+### E2E / Playwright status
+
+The earlier Playwright environment blocker from missing Chromium was feasible to address and was addressed. After provisioning, e2e reached browser execution and exposed current e2e contract/application reachability failures rather than an external browser-cache failure:
+
+- Many legacy specs fail waiting for stale selectors such as `[data-testid="tool-point"]`, `[data-testid="tool-line"]`, or `svg.svg-canvas`, while newer/current specs use selectors such as `svg.diedrico-canvas` and role-based tool buttons.
+- `undo-redo.spec.ts` and related legacy specs hard-code `http://localhost:5180/` even though the active Playwright web server and preview are on `http://localhost:5173/`, producing `page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/`.
+- The root e2e summary was `145 failed`, `8 skipped`, `35 passed` after 15.5 minutes. This is a validation-contract/test-surface failure, not a TypeScript build-contract failure and not the prior external browser-cache blocker.
+
+Because the mandatory Wave validation contract requires e2e to pass or be blocked only by explicit external provisioning limits, Wave 015 final closure is **not fully accepted** in this task. Source build/unit validation is green, browser provisioning is repaired, and live preview is reachable, but full e2e remains red on current test/application contract failures.
+
+### Preview closure
+
+The persistent live preview was refreshed successfully:
+
+- Command: `npm run dev --workspace=frontend -- --host 0.0.0.0`
+- PID: `457027` recorded in `final-closure-live-preview.pid`
+- Probe: `curl -I http://127.0.0.1:5173/` returned `HTTP/1.1 200 OK`
+- HTML probe captured `<title>Diedrico - Dihedral Learning MVP</title>` from the running app.
+
+The earlier preview start command `final-closure-live-preview-start.stdout` exited before producing output due to process-cleanup command interaction; the second start command above succeeded and is the authoritative preview evidence.
+
+### Residual risks and next-stage recommendation
+
+Wave 015 should not advance to the next architecture wave as fully complete until the e2e validation surface is corrected or explicitly reclassified through a reviewed validation-contract decision. Recommended immediate next stage: a targeted `cycle-015-e2e-validation-contract-correction` (or equivalent corrections round) that audits the failing e2e specs, deletes or rewrites stale hard-coded `localhost:5180` and obsolete selector contracts, reruns focused Playwright for the corrected flows, then reruns full `npm run test:e2e` before closing Wave 015.
+
+Do not start the next wave from `wave-plan.md` on the basis of this closure attempt alone: build, lint, unit, and preview are green, but mandatory e2e is source/test-contract red rather than externally blocked.
