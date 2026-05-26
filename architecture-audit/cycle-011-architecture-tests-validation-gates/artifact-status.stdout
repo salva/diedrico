@@ -1,0 +1,17 @@
+Wave 011 artifacts:
+architecture-audit/cycle-011-architecture-tests-validation-gates/artifact-status.stderr
+architecture-audit/cycle-011-architecture-tests-validation-gates/artifact-status.stdout
+architecture-audit/cycle-011-architecture-tests-validation-gates/boundary-source-excerpts.stderr
+architecture-audit/cycle-011-architecture-tests-validation-gates/boundary-source-excerpts.stdout
+architecture-audit/cycle-011-architecture-tests-validation-gates/proposals/proposal-direct.md
+architecture-audit/cycle-011-architecture-tests-validation-gates/proposals/proposal-restructure.md
+architecture-audit/cycle-011-architecture-tests-validation-gates/scope-check.md
+architecture-audit/cycle-011-architecture-tests-validation-gates/scout-line-evidence.stderr
+architecture-audit/cycle-011-architecture-tests-validation-gates/scout-line-evidence.stdout
+architecture-audit/cycle-011-architecture-tests-validation-gates/static-scout-scans.stderr
+architecture-audit/cycle-011-architecture-tests-validation-gates/static-scout-scans.stdout
+research/wave011-architecture-tests-validation-gates/summary.md
+
+Tracked/untracked status for Wave 011 artifacts only:
+?? architecture-audit/cycle-011-architecture-tests-validation-gates/
+?? research/wave011-architecture-tests-validation-gates/

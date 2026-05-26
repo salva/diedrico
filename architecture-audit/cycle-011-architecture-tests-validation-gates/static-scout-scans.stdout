@@ -1,0 +1,134 @@
+## domain importing commands/services/application/components/stores/persistence
+
+## UI importing commands/operations/command stack
+frontend/src/components/menus/ExamplesMenu.vue:52:import { Command } from '@/commands/Command';
+frontend/src/components/menus/ExamplesMenu.vue:53:import { AddExampleSetupOp, type ExampleSetupType } from '@/commands/operations/debug/AddExampleSetupOp';
+frontend/src/components/menus/ExamplesMenu.vue:54:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/appShell/AppShellRuntime.ts:2:import { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/appShell/SelectionUseCases.ts:2:import { Command } from '@/commands/Command';
+frontend/src/application/appShell/SelectionUseCases.ts:3:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/appShell/SelectionUseCases.ts:4:import { DeletionSequenceFactory } from '@/commands/factories/DeletionSequenceFactory';
+frontend/src/application/processHistory/ProcessHistoryController.ts:1:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/appShell/AppShellPorts.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/appShell/AutoSaveUseCases.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/toolbar/ToolbarHistoryController.ts:1:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/appShell/ProjectSessionUseCases.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/toolbar/ToolbarHistoryUseCases.ts:1:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:2:import { Command } from '@/commands/Command';
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:3:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:5:import { UpdateFreePoint2DPositionOp } from '@/commands/operations/world/UpdateFreePoint2DPositionOp';
+frontend/src/application/tools/CanvasToolController.ts:1:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/world/initializeWorld.ts:1:import { Command } from '@/commands/Command';
+frontend/src/application/world/initializeWorld.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/world/initializeWorld.ts:3:import { buildWorldInitialization } from '@/commands/factories/InitializationSequenceFactory';
+frontend/src/application/world/initializeWorld.ts:4:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/application/world/initializeWorld.ts:5:import { PopSubprocessOp, PushSubprocessOp } from '@/commands/operations/processTree';
+frontend/src/application/processHistory/ProcessHistoryUseCases.ts:1:import { Command } from '@/commands/Command';
+frontend/src/application/processHistory/ProcessHistoryUseCases.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/processHistory/ProcessHistoryUseCases.ts:3:import { PopSubprocessOp } from '@/commands/operations/processTree/PopSubprocessOp';
+frontend/src/application/processHistory/ProcessHistoryUseCases.ts:4:import { PushSubprocessOp } from '@/commands/operations/processTree/PushSubprocessOp';
+frontend/src/application/processHistory/ProcessHistoryUseCases.ts:5:import { RenameSubprocessOp } from '@/commands/operations/processTree/RenameSubprocessOp';
+frontend/src/application/processHistory/ProcessHistoryUseCases.ts:6:import { ToggleEncapsulationOp } from '@/commands/operations/processTree/ToggleEncapsulationOp';
+frontend/src/application/processHistory/ProcessHistoryUseCases.ts:7:import { ToggleOutputOp } from '@/commands/operations/processTree/ToggleOutputOp';
+frontend/src/application/processHistory/ProcessHistoryUseCases.ts:8:import type { IOperation } from '@/commands/operations/IOperation';
+frontend/src/application/construction/QuickToolUseCases.ts:1:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/construction/ConstructionUseCases.ts:1:import { Command } from '@/commands/Command';
+frontend/src/application/construction/ConstructionUseCases.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/construction/ConstructionUseCases.ts:8:import { PointSequenceFactory } from '@/commands/factories/PointSequenceFactory';
+frontend/src/application/construction/ConstructionUseCases.ts:9:import { LineSequenceFactory } from '@/commands/factories/LineSequenceFactory';
+frontend/src/application/construction/ConstructionUseCases.ts:10:import { CircleSequenceFactory } from '@/commands/factories/CircleSequenceFactory';
+frontend/src/application/construction/ConstructionUseCases.ts:11:import { GuideSequenceFactory } from '@/commands/factories/GuideSequenceFactory';
+frontend/src/application/construction/ConstructionUseCases.ts:12:import { IntersectionSequenceFactory } from '@/commands/factories/IntersectionSequenceFactory';
+frontend/src/application/construction/ConstructionUseCases.ts:14:import { AddSegment2DByPointsOp } from '@/commands/operations/world/AddSegmentOp';
+frontend/src/application/construction/ConstructionUseCases.ts:15:import { Add3DPointOp } from '@/commands/operations/world/Add3DPointOp';
+frontend/src/application/construction/ConstructionUseCases.ts:16:import { Add3DLineOp } from '@/commands/operations/world/Add3DLineOp';
+frontend/src/application/construction/ConstructionUseCases.ts:17:import { Add3DSegmentOp } from '@/commands/operations/world/Add3DSegmentOp';
+frontend/src/application/construction/ConstructionUseCases.ts:18:import { AddLine2DTangentToCircleThroughPointOp, AddLine2DTangentToCircleParallelToLineOp } from '@/commands/operations/world/AddLineOp';
+frontend/src/application/construction/ConstructionUseCases.ts:20:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/application/construction/ConstructionUseCases.ts:21:import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+frontend/src/application/canvas/CanvasStyleUseCase.ts:1:import { Command } from '@/commands/Command';
+frontend/src/application/canvas/CanvasStyleUseCase.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/canvas/CanvasStyleUseCase.ts:4:import { UpdateElementStyleOp } from '@/commands/operations/world/UpdateElementStyleOp';
+frontend/src/application/appShell/KeyboardShortcutRouter.ts:1:import type { CommandStack } from '@/commands/CommandStack';
+
+## frontend backend references
+frontend/tests/e2e/wave010-app-shell-project-flow.spec.ts:9:      if (url.includes('localhost:3000/api/projects') || url.includes('/api/projects')) {
+frontend/tests/e2e/wave010-app-shell-project-flow.spec.ts:14:    await page.route('**/api/projects**', (route) => {
+
+## legacy duplicate geometry/state terms
+frontend/tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts:4:  'worldStore',
+frontend/tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts:5:  'useWorldStore',
+frontend/tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts:6:  'Workspace2D',
+frontend/tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts:7:  'ElementRenderer',
+frontend/tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts:8:  'ElementTypes',
+frontend/tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts:9:  'useSnapping',
+frontend/tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts:10:  'useElementGeometry',
+frontend/tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts:11:  'getWorld',
+
+## architecture test helper patterns
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:13:const frontendSourceAndTests = import.meta.glob('/{src,tests}/**/*.{ts,tsx,vue,js,mjs,cjs}', {
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:19:function findOffenders(pattern: RegExp): string[] {
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:45:    expect(findOffenders(/from ['\"][^'\"]*backend\/src|import\([^)]*backend\/src|backend\/src\//)).toEqual([]);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:49:    expect(findOffenders(new RegExp([['localhost:3000', 'api', 'projects'].join('/'), '/api/' + 'projects', 'Project' + 'DTO', 'Project' + 'Metadata', 'Open' + 'Project' + 'Dialog'].join('|')))).toEqual([]);
+frontend/tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts:14:describe('Architecture: deleted legacy world-state paths', () => {
+frontend/tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts:16:    const fs = require('fs');
+frontend/tests/unit/architecture/noCommandSubclasses.spec.ts:6: * - "Architecture: Single Command class (not subclasses) - the real logic is in Operation classes"
+frontend/tests/unit/architecture/noCommandSubclasses.spec.ts:25:import { execSync } from 'child_process';
+frontend/tests/unit/architecture/noCommandSubclasses.spec.ts:28:describe('Architecture: Command Pattern', () => {
+frontend/tests/unit/architecture/noCommandSubclasses.spec.ts:40:      const command = `cd ${projectRoot} && grep -rn "extends Command" \
+frontend/tests/unit/architecture/noCommandSubclasses.spec.ts:51:      const output = execSync(command, { encoding: 'utf-8' });
+frontend/tests/unit/architecture/noCommandSubclasses.spec.ts:113:    const fs = require('fs');
+frontend/tests/unit/architecture/worldBoundary.spec.ts:3:describe('Architecture: World boundary', () => {
+frontend/tests/unit/architecture/worldBoundary.spec.ts:5:    const fs = require('fs');
+
+## validation config files
+./frontend/playwright.config.ts
+./frontend/tsconfig.json
+./frontend/tsconfig.node.json
+./frontend/vitest.config.ts
+./node_modules/call-bind-apply-helpers/.eslintrc
+./node_modules/call-bind-apply-helpers/tsconfig.json
+./node_modules/call-bound/.eslintrc
+./node_modules/call-bound/tsconfig.json
+./node_modules/debug/.eslintrc
+./node_modules/dunder-proto/.eslintrc
+./node_modules/dunder-proto/tsconfig.json
+./node_modules/es-define-property/.eslintrc
+./node_modules/es-define-property/tsconfig.json
+./node_modules/es-errors/.eslintrc
+./node_modules/es-errors/tsconfig.json
+./node_modules/es-object-atoms/.eslintrc
+./node_modules/es-object-atoms/tsconfig.json
+./node_modules/es-set-tostringtag/.eslintrc
+./node_modules/es-set-tostringtag/tsconfig.json
+./node_modules/fastq/eslint.config.js
+./node_modules/function-bind/.eslintrc
+./node_modules/get-intrinsic/.eslintrc
+./node_modules/get-proto/.eslintrc
+./node_modules/get-proto/tsconfig.json
+./node_modules/gopd/.eslintrc
+./node_modules/gopd/tsconfig.json
+./node_modules/hasown/.eslintrc
+./node_modules/hasown/tsconfig.json
+./node_modules/has-symbols/.eslintrc
+./node_modules/has-symbols/tsconfig.json
+./node_modules/has-tostringtag/.eslintrc
+./node_modules/has-tostringtag/tsconfig.json
+./node_modules/mark.js/.eslintrc
+./node_modules/math-intrinsics/.eslintrc
+./node_modules/math-intrinsics/tsconfig.json
+./node_modules/object-inspect/.eslintrc
+./node_modules/qs/.eslintrc
+./node_modules/reusify/eslint.config.js
+./node_modules/reusify/tsconfig.json
+./node_modules/rw/.eslintrc
+./node_modules/rxjs/tsconfig.json
+./node_modules/shell-quote/.eslintrc
+./node_modules/side-channel/.eslintrc
+./node_modules/side-channel-list/.eslintrc
+./node_modules/side-channel-list/tsconfig.json
+./node_modules/side-channel-map/.eslintrc
+./node_modules/side-channel-map/tsconfig.json
+./node_modules/side-channel/tsconfig.json
+./node_modules/side-channel-weakmap/.eslintrc
+./node_modules/side-channel-weakmap/tsconfig.json

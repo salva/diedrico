@@ -1,0 +1,720 @@
+
+## architecture test files
+--- frontend/tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts
+     1	import { describe, expect, it } from 'vitest';
+     2	
+     3	const deletedPathTerms = [
+     4	  'worldStore',
+     5	  'useWorldStore',
+     6	  'Workspace2D',
+     7	  'ElementRenderer',
+     8	  'ElementTypes',
+     9	  'useSnapping',
+    10	  'useElementGeometry',
+    11	  'getWorld',
+    12	];
+    13	
+    14	describe('Architecture: deleted legacy world-state paths', () => {
+    15	  it('active source and tests do not reference deleted store/workspace geometry surfaces', () => {
+    16	    const fs = require('fs');
+    17	    const path = require('path');
+    18	    const sourceRoots = ['src', 'tests'].map((sourceRoot: string) => path.join(process.cwd(), sourceRoot));
+    19	    const ignoredPathFragments = [
+    20	      path.join('tests', 'unit', 'architecture', 'deletedLegacyWorldStatePaths.spec.ts'),
+    21	    ];
+    22	
+    23	    function listTextFiles(directory: string): string[] {
+    24	      return fs.readdirSync(directory).flatMap((entry: string) => {
+    25	        const filePath = path.join(directory, entry);
+    26	        const stat = fs.statSync(filePath);
+    27	
+    28	        if (stat.isDirectory()) {
+    29	          return listTextFiles(filePath);
+    30	        }
+    31	
+    32	        if (/\.(ts|tsx|vue)$/.test(filePath)) {
+    33	          return [filePath];
+    34	        }
+    35	
+    36	        return [];
+    37	      });
+    38	    }
+    39	
+    40	    const violations = sourceRoots
+    41	      .flatMap(listTextFiles)
+    42	      .filter((filePath: string) => !ignoredPathFragments.some(fragment => filePath.endsWith(fragment)))
+    43	      .flatMap((filePath: string) => {
+    44	        const content = fs.readFileSync(filePath, 'utf-8');
+    45	        return deletedPathTerms
+    46	          .filter(term => content.includes(term))
+    47	          .map(term => `${path.relative(process.cwd(), filePath)} contains ${term}`);
+    48	      });
+    49	
+    50	    expect(violations).toEqual([]);
+    51	  });
+    52	});
+--- frontend/tests/unit/architecture/noCommandSubclasses.spec.ts
+     1	/**
+     2	 * Architectural Test: No Command Subclasses
+     3	 * 
+     4	 * This test enforces the architectural principle that Command must NOT be subclassed.
+     5	 * Per data-model.md §Command Pattern:
+     6	 * - "Architecture: Single Command class (not subclasses) - the real logic is in Operation classes"
+     7	 * - "No Subclasses Needed: Tools create operations directly and pass to generic Command"
+     8	 * 
+     9	 * WHY THIS MATTERS:
+    10	 * Command is a generic container for Operations. All domain logic belongs in Operation
+    11	 * classes (AddFreePoint2DOp, AddLine2DOp, UpdateElementStyleOp, etc.) that implement
+    12	 * the IOperation interface.
+    13	 * 
+    14	 * Having Command subclasses violates the Command/Operation pattern and leads to
+    15	 * inconsistent architecture where some logic is in Commands and some in Operations.
+    16	 * 
+    17	 * This test scans the codebase for any `extends Command` patterns and fails if found.
+    18	 * Test files are excluded as they may contain mock subclasses for testing purposes.
+    19	 * 
+    20	 * Reference: specs/001-dihedral-learning-mvp/data-model.md §Command Pattern
+    21	 * Reference: frontend/src/commands/Command.ts - @sealed documentation
+    22	 */
+    23	
+    24	import { describe, it, expect } from 'vitest';
+    25	import { execSync } from 'child_process';
+    26	import path from 'path';
+    27	
+    28	describe('Architecture: Command Pattern', () => {
+    29	  it('should NOT have any Command subclasses in production code', () => {
+    30	    // Search for "extends Command" pattern in TypeScript files
+    31	    // Exclude test files, node_modules, and dist
+    32	    const projectRoot = path.resolve(__dirname, '../../..');
+    33	    
+    34	    try {
+    35	      // Use grep to find "extends Command" pattern
+    36	      // -r: recursive
+    37	      // -n: show line numbers
+    38	      // --include: only .ts and .vue files
+    39	      // --exclude-dir: exclude test directories and build outputs
+    40	      const command = `cd ${projectRoot} && grep -rn "extends Command" \
+    41	        --include="*.ts" \
+    42	        --include="*.vue" \
+    43	        --exclude-dir=node_modules \
+    44	        --exclude-dir=dist \
+    45	        --exclude-dir=.vite \
+    46	        --exclude-dir=playwright-report \
+    47	        --exclude-dir=test-results \
+    48	        src/ \
+    49	        || echo "NO_MATCHES"`;
+    50	      
+    51	      const output = execSync(command, { encoding: 'utf-8' });
+    52	      
+    53	      // If grep found no matches, it returns "NO_MATCHES" (our echo)
+    54	      if (output.trim() === 'NO_MATCHES') {
+    55	        // Success: No Command subclasses found
+    56	        expect(true).toBe(true);
+    57	        return;
+    58	      }
+    59	      
+    60	      // Parse grep output (format: file:line:content)
+    61	      const matches = output.trim().split('\n').filter(line => line.length > 0);
+    62	      
+    63	      // Filter out false positives (comments, strings, etc.)
+    64	      const realSubclasses = matches.filter(match => {
+    65	        // Skip if it's just a comment or documentation
+    66	        if (match.includes('//') || match.includes('*')) {
+    67	          return false;
+    68	        }
+    69	        // Skip if it's in a string literal
+    70	        if (match.includes('"extends Command"') || match.includes("'extends Command'")) {
+    71	          return false;
+    72	        }
+    73	        return true;
+    74	      });
+    75	      
+    76	      if (realSubclasses.length > 0) {
+    77	        const filesList = realSubclasses.join('\n');
+    78	        throw new Error(
+    79	          `❌ ARCHITECTURAL VIOLATION: Found Command subclasses in production code!\n\n` +
+    80	          `Per data-model.md §Command Pattern, Command must NOT be subclassed.\n` +
+    81	          `All domain logic belongs in Operation classes (IOperation implementations).\n\n` +
+    82	          `Found violations in:\n${filesList}\n\n` +
+    83	          `HOW TO FIX:\n` +
+    84	          `1. Create an Operation class (e.g., MyFeatureOp implements IOperation)\n` +
+    85	          `2. Move logic from Command subclass to Operation's apply() and undo() methods\n` +
+    86	          `3. In tool/UI code, create generic Command and add your Operation:\n` +
+    87	          `   const cmd = new Command("My action", world);\n` +
+    88	          `   cmd.addAndExecute(new MyFeatureOp(...));\n` +
+    89	          `   cmd.commit();\n` +
+    90	          `4. Delete the Command subclass\n\n` +
+    91	          `See UpdateElementStyleOp as an example of correct pattern.\n` +
+    92	          `See frontend/src/commands/Command.ts for detailed architecture documentation.`
+    93	        );
+    94	      }
+    95	      
+    96	      // Success: No real Command subclasses found
+    97	      expect(true).toBe(true);
+    98	      
+    99	    } catch (error) {
+   100	      if (error instanceof Error && error.message.includes('ARCHITECTURAL VIOLATION')) {
+   101	        // Re-throw our architectural violation error
+   102	        throw error;
+   103	      }
+   104	      // Other errors (e.g., grep not found) - just warn
+   105	      console.warn('Could not run architectural check:', error);
+   106	      // Don't fail the test if grep is not available
+   107	      expect(true).toBe(true);
+   108	    }
+   109	  });
+   110	  
+   111	  it('should document Command as @sealed in source code', () => {
+   112	    // Verify that Command.ts has proper @sealed annotation and documentation
+   113	    const fs = require('fs');
+   114	    const path = require('path');
+   115	    const commandPath = path.resolve(__dirname, '../../../src/commands/Command.ts');
+   116	    
+   117	    try {
+   118	      const content = fs.readFileSync(commandPath, 'utf-8');
+   119	      
+   120	      // Check for @sealed annotation
+   121	      expect(content).toContain('@sealed');
+   122	      
+   123	      // Check for key documentation phrases
+   124	      expect(content).toContain('MUST NOT be subclassed');
+   125	      expect(content).toContain('All domain logic belongs in Operation classes');
+   126	      
+   127	      // Check that it references data-model.md
+   128	      expect(content).toContain('data-model.md');
+   129	      
+   130	    } catch (error) {
+   131	      throw new Error(
+   132	        `Could not verify Command.ts documentation: ${error}\n` +
+   133	        `Ensure Command.ts exists and has proper @sealed annotation.`
+   134	      );
+   135	    }
+   136	  });
+   137	});
+--- frontend/tests/unit/architecture/worldBoundary.spec.ts
+     1	import { describe, expect, it } from 'vitest';
+     2	
+     3	describe('Architecture: World boundary', () => {
+     4	  it('World.ts should not import application, commands, services, UI, stores, or persistence layers', () => {
+     5	    const fs = require('fs');
+     6	    const content = fs.readFileSync('src/domain/world/World.ts', 'utf-8');
+     7	    const importLines = content
+     8	      .split('\n')
+     9	      .filter(line => /^import\s/.test(line.trim()));
+    10	
+    11	    const forbiddenPatterns = [
+    12	      /@\/application\//,
+    13	      /@\/commands\//,
+    14	      /@\/services\//,
+    15	      /@\/components\//,
+    16	      /@\/stores\//,
+    17	      /@\/persistence\//,
+    18	      /\.\.\/\.\.\/application\//,
+    19	      /\.\.\/\.\.\/commands\//,
+    20	      /\.\.\/\.\.\/services\//,
+    21	      /\.\.\/\.\.\/components\//,
+    22	      /\.\.\/\.\.\/stores\//,
+    23	      /\.\.\/\.\.\/persistence\//,
+    24	    ];
+    25	
+    26	    const violations = importLines.filter(line =>
+    27	      forbiddenPatterns.some(pattern => pattern.test(line))
+    28	    );
+    29	
+    30	    expect(violations).toEqual([]);
+    31	  });
+    32	});
+
+## package manifests
+--- package.json
+     1	{
+     2	  "name": "diedrico",
+     3	  "version": "0.1.0",
+     4	  "description": "Educational web application for teaching dihedral/orthographic projection",
+     5	  "private": true,
+     6	  "license": "GPL-3.0-or-later",
+     7	  "workspaces": [
+     8	    "frontend"
+     9	  ],
+    10	  "scripts": {
+    11	    "dev": "npm run dev:frontend",
+    12	    "dev:frontend": "npm run dev --workspace=frontend",
+    13	    "build": "npm run build --workspace=frontend",
+    14	    "test": "npm run test --workspace=frontend",
+    15	    "test:frontend": "npm run test --workspace=frontend",
+    16	    "lint": "npm run lint --workspace=frontend",
+    17	    "docs:dev": "vitepress dev docs",
+    18	    "docs:build": "vitepress build docs",
+    19	    "docs:preview": "vitepress preview docs"
+    20	  },
+    21	  "devDependencies": {
+    22	    "concurrently": "^8.2.2",
+    23	    "vitepress": "^1.6.4"
+    24	  },
+    25	  "engines": {
+    26	    "node": ">=18.0.0",
+    27	    "npm": ">=9.0.0"
+    28	  }
+    29	}
+--- frontend/package.json
+     1	{
+     2	  "name": "diedrico-frontend",
+     3	  "version": "0.1.0",
+     4	  "type": "module",
+     5	  "license": "GPL-3.0-or-later",
+     6	  "scripts": {
+     7	    "dev": "vite",
+     8	    "build": "vue-tsc && vite build",
+     9	    "preview": "vite preview",
+    10	    "test": "vitest run",
+    11	    "test:watch": "vitest",
+    12	    "test:ui": "vitest --ui",
+    13	    "test:e2e": "playwright test",
+    14	    "test:e2e:headed": "playwright test --headed",
+    15	    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore"
+    16	  },
+    17	  "dependencies": {
+    18	    "@types/katex": "^0.16.8",
+    19	    "d3": "^7.8.5",
+    20	    "katex": "^0.16.28",
+    21	    "pinia": "^2.1.7",
+    22	    "three": "^0.160.0",
+    23	    "vue": "^3.4.0"
+    24	  },
+    25	  "devDependencies": {
+    26	    "@playwright/test": "^1.40.0",
+    27	    "@types/d3": "^7.4.3",
+    28	    "@types/gapi": "^0.0.47",
+    29	    "@types/gapi.client.drive-v3": "^0.0.5",
+    30	    "@types/three": "^0.160.0",
+    31	    "@vitejs/plugin-vue": "^5.0.0",
+    32	    "@vitest/ui": "^1.0.0",
+    33	    "@vue/test-utils": "^2.4.6",
+    34	    "@vue/tsconfig": "^0.5.0",
+    35	    "jsdom": "^27.3.0",
+    36	    "typescript": "^5.3.0",
+    37	    "vite": "^5.0.0",
+    38	    "vitest": "^1.0.0",
+    39	    "vue-tsc": "^1.8.0"
+    40	  }
+    41	}
+
+## app shell boundary tests
+--- frontend/tests/unit/application/appShell/AppShellBoundary.test.ts
+     1	import { describe, expect, it } from 'vitest';
+     2	import appVue from '@/App.vue?raw';
+     3	import toolbarVue from '@/components/toolbars/Toolbar.vue?raw';
+     4	import startupDialogVue from '@/components/dialogs/StartupDialog.vue?raw';
+     5	import appShellRuntime from '@/application/appShell/AppShellRuntime.ts?raw';
+     6	import appShellPorts from '@/application/appShell/AppShellPorts.ts?raw';
+     7	import activePlane from '@/application/appShell/ActivePlaneUseCases.ts?raw';
+     8	import autoSave from '@/application/appShell/AutoSaveUseCases.ts?raw';
+     9	import keyboard from '@/application/appShell/KeyboardShortcutRouter.ts?raw';
+    10	import projectSession from '@/application/appShell/ProjectSessionUseCases.ts?raw';
+    11	import selection from '@/application/appShell/SelectionUseCases.ts?raw';
+    12	
+    13	const frontendSourceAndTests = import.meta.glob('/{src,tests}/**/*.{ts,tsx,vue,js,mjs,cjs}', {
+    14	  eager: true,
+    15	  query: '?raw',
+    16	  import: 'default',
+    17	}) as Record<string, string>;
+    18	
+    19	function findOffenders(pattern: RegExp): string[] {
+    20	  return Object.entries(frontendSourceAndTests)
+    21	    .filter(([file]) => !file.endsWith('/tests/unit/application/appShell/AppShellBoundary.test.ts'))
+    22	    .flatMap(([file, content]) => pattern.test(content) ? [file] : []);
+    23	}
+    24	
+    25	describe('Wave 009 app-shell boundaries', () => {
+    26	  it('keeps App.vue free of moved shell orchestration imports and browser bridges', () => {
+    27	    expect(appVue).not.toMatch(/DeletionSequenceFactory|ProjectService|GoogleDriveService|window as any|__autoSaveInterval|CustomEvent\('load-files'\)|Environment variables/);
+    28	    expect(appVue).not.toMatch(/function handleKeyDown|addEventListener\('keydown'/);
+    29	  });
+    30	
+    31	  it('keeps Toolbar and StartupDialog passive for global browser events', () => {
+    32	    expect(toolbarVue).not.toMatch(/addEventListener\('keydown'|removeEventListener\('keydown'|function handleKeyDown|switch \(event\.key/);
+    33	    expect(startupDialogVue).not.toMatch(/window\.dispatchEvent|CustomEvent\('load-files'\)|defineExpose/);
+    34	  });
+    35	
+    36	  it('keeps appShell modules independent of Vue components', () => {
+    37	    for (const content of [appShellRuntime, appShellPorts, activePlane, autoSave, keyboard, projectSession, selection]) {
+    38	      expect(content).not.toMatch(/components\//);
+    39	    }
+    40	  });
+    41	});
+    42	
+    43	describe('Wave 010 project persistence boundary', () => {
+    44	  it('forbids frontend source and tests from importing backend implementation files', () => {
+    45	    expect(findOffenders(/from ['\"][^'\"]*backend\/src|import\([^)]*backend\/src|backend\/src\//)).toEqual([]);
+    46	  });
+    47	
+    48	  it('keeps stale backend project route assumptions out of frontend source and tests', () => {
+    49	    expect(findOffenders(new RegExp([['localhost:3000', 'api', 'projects'].join('/'), '/api/' + 'projects', 'Project' + 'DTO', 'Project' + 'Metadata', 'Open' + 'Project' + 'Dialog'].join('|')))).toEqual([]);
+    50	  });
+    51	});
+--- frontend/tests/unit/application/appShell/KeyboardShortcutRouter.test.ts
+     1	import { describe, expect, it, vi } from 'vitest';
+     2	import { KeyboardShortcutRouter } from '@/application/appShell/KeyboardShortcutRouter';
+     3	
+     4	function event(key: string, options: Partial<KeyboardEvent> = {}) {
+     5	  return {
+     6	    key,
+     7	    ctrlKey: false,
+     8	    metaKey: false,
+     9	    shiftKey: false,
+    10	    altKey: false,
+    11	    target: document.body,
+    12	    preventDefault: vi.fn(),
+    13	    ...options,
+    14	  } as unknown as KeyboardEvent & { preventDefault: ReturnType<typeof vi.fn> };
+    15	}
+    16	
+    17	function deps() {
+    18	  return {
+    19	    commandStack: { canUndo: () => false, canRedo: () => false, undo: vi.fn(), redo: vi.fn() },
+    20	    toolStore: { setTool: vi.fn(), selectSubTool: vi.fn() },
+    21	    viewStore: { toggleProjectedElements: vi.fn() },
+    22	    projectSession: { newProject: vi.fn(), showStartupProjectChooser: vi.fn() },
+    23	    selection: { clearSelection: vi.fn(), deleteSelected: vi.fn(), selectAllInActivePlane: vi.fn() },
+    24	    activePlane: { cycle: vi.fn() },
+    25	    fitToView: vi.fn(),
+    26	    startRename: vi.fn(),
+    27	  } as any;
+    28	}
+    29	
+    30	describe('KeyboardShortcutRouter', () => {
+    31	  it('installs exactly one listener and removes it on dispose', () => {
+    32	    const d = deps();
+    33	    const router = new KeyboardShortcutRouter(d);
+    34	    const target = { addEventListener: vi.fn(), removeEventListener: vi.fn() };
+    35	    router.install(target as any);
+    36	    router.install(target as any);
+    37	    expect(target.addEventListener).toHaveBeenCalledTimes(1);
+    38	    router.dispose();
+    39	    router.dispose();
+    40	    expect(target.removeEventListener).toHaveBeenCalledTimes(1);
+    41	  });
+    42	
+    43	  it('routes Escape, Delete, D, Ctrl+A and Tab through shell actions', () => {
+    44	    const d = deps();
+    45	    const router = new KeyboardShortcutRouter(d);
+    46	    router.handle(event('Escape'));
+    47	    expect(d.toolStore.setTool).toHaveBeenCalledWith('select');
+    48	    expect(d.selection.clearSelection).toHaveBeenCalled();
+    49	    router.handle(event('Delete'));
+    50	    expect(d.selection.deleteSelected).toHaveBeenCalled();
+    51	    router.handle(event('D'));
+    52	    expect(d.viewStore.toggleProjectedElements).toHaveBeenCalled();
+    53	    router.handle(event('a', { ctrlKey: true }));
+    54	    expect(d.selection.selectAllInActivePlane).toHaveBeenCalled();
+    55	    router.handle(event('Tab', { shiftKey: true }));
+    56	    expect(d.activePlane.cycle).toHaveBeenCalledWith(-1);
+    57	  });
+    58	
+    59	  it('does not consume text input Delete or tool letters', () => {
+    60	    const d = deps();
+    61	    const router = new KeyboardShortcutRouter(d);
+    62	    const input = document.createElement('input');
+    63	    router.handle(event('Delete', { target: input }));
+    64	    router.handle(event('p', { target: input }));
+    65	    expect(d.selection.deleteSelected).not.toHaveBeenCalled();
+    66	    expect(d.toolStore.setTool).not.toHaveBeenCalled();
+    67	  });
+    68	});
+
+## e2e syntax debt regions
+--- frontend/tests/e2e/keyboard-shortcuts.spec.ts
+   240	
+   241	
+   242	
+   243	
+   244	
+   245	
+   246	
+   247	
+   248	
+   249	
+   250	
+   251	
+   252	
+   253	
+   254	
+   255	
+   256	
+   257	
+   258	
+   259	
+   260	
+   261	
+   262	
+   263	
+   264	
+   265	
+   266	
+   267	});  });    await expect(cascadeWarning).toContainText('2 elements will be cascade deleted');    await expect(cascadeWarning).toBeVisible();    const cascadeWarning = statusBar.locator('.cascade-warning');    const statusBar = page.locator('.status-bar');    // Verify cascade warning shows both lines will be deleted        await page.waitForTimeout(100);    await page.keyboard.up('Shift');    await canvas.click({ position: { x: 200, y: 100 } });    await page.keyboard.down('Shift');    await canvas.click({ position: { x: 100, y: 100 } });    await page.getByRole('button', { name: /select/i }).click();    // Select point 1 with Shift+click on point 2 to multi-select        await page.waitForTimeout(300);        await canvas.click({ position: { x: 150, y: 50 } });    await canvas.click({ position: { x: 100, y: 100 } }); // Line 1-3    await canvas.click({ position: { x: 200, y: 100 } });    await canvas.click({ position: { x: 100, y: 100 } }); // Line 1-2    await page.keyboard.press('l');        await canvas.click({ position: { x: 150, y: 50 } });  // Point 3    await canvas.click({ position: { x: 200, y: 100 } }); // Point 2    await canvas.click({ position: { x: 100, y: 100 } }); // Point 1    await page.keyboard.press('p');    // Create: 3 points + 2 lines forming a triangle        const canvas = page.locator('svg.diedrico-canvas');  test('should show correct cascade count for multiple selected elements', async ({ page }) => {  });    await expect(cascadeWarning).not.toBeVisible();    // Verify cascade warning is gone        await page.waitForTimeout(100);    await page.keyboard.press('Escape');    // Press Escape to clear selection        await expect(cascadeWarning).toBeVisible();    const cascadeWarning = statusBar.locator('.cascade-warning');    const statusBar = page.locator('.status-bar');    // Verify cascade warning is shown        await page.waitForTimeout(100);    await canvas.click({ position: { x: 100, y: 100 } });    await page.getByRole('button', { name: /select/i }).click();    // Select point to show cascade preview        await page.waitForTimeout(300);        await canvas.click({ position: { x: 200, y: 100 } });    await canvas.click({ position: { x: 100, y: 100 } });    await page.keyboard.press('l');        await canvas.click({ position: { x: 200, y: 100 } });    await canvas.click({ position: { x: 100, y: 100 } });    await page.keyboard.press('p');    // Create point and line        const canvas = page.locator('svg.diedrico-canvas');  test('should clear cascade preview when selection is cleared', async ({ page }) => {  });    expect(lines).toBe(1);  // Only line 2 remains    expect(points).toBe(3); // Points 2, 3, 4 remain    lines = await page.locator('line[id^="line-"]').count();    points = await page.locator('circle.point-marker').count();    // Verify cascade: point 1 and line 1 deleted, but line 2 and points 3,4 remain        await page.waitForTimeout(300);    await page.keyboard.press('Delete');        await page.waitForTimeout(100);    await canvas.click({ position: { x: 100, y: 100 } });    await page.getByRole('button', { name: /select/i }).click();    // Delete point 1 (should cascade delete line 1)        expect(lines).toBe(2);    expect(points).toBe(4);    let lines = await page.locator('line[id^="line-"]').count();    let points = await page.locator('circle.point-marker').count();        // For now, just verify we have the base construction    // This would be at (150, 100) where the two lines cross    // Create intersection point (if tool exists)        await page.waitForTimeout(300);        await canvas.click({ position: { x: 150, y: 150 } });    await canvas.click({ position: { x: 150, y: 50 } });    // Create line 2 (vertical through points 3-4)        await canvas.click({ position: { x: 200, y: 100 } });    await canvas.click({ position: { x: 100, y: 100 } });    // Create line 1 (horizontal through points 1-2)    await page.keyboard.press('l');        await canvas.click({ position: { x: 150, y: 150 } }); // Point 4    await canvas.click({ position: { x: 150, y: 50 } });  // Point 3    await canvas.click({ position: { x: 200, y: 100 } }); // Point 2    await canvas.click({ position: { x: 100, y: 100 } }); // Point 1    await page.keyboard.press('p');        // When Point 1 is deleted, everything should cascade    // Create chain: Point 1 → Line → Intersection Point → Circle        const canvas = page.locator('svg.diedrico-canvas');  test('should delete multiple levels of dependencies', async ({ page }) => {  });    expect(circles).toBe(0);    expect(lines).toBe(0);    circles = await page.locator('circle[id^="circle-"]').count();    lines = await page.locator('line[id^="line-"]').count();    // Verify cascade deletion again        await page.waitForTimeout(300);    await page.keyboard.press('Control+y');    // Redo deletion        expect(circles).toBe(1); // Circle restored    expect(lines).toBe(1);   // Line restored    expect(points).toBeGreaterThanOrEqual(2);    circles = await page.locator('circle[id^="circle-"]').count();    lines = await page.locator('line[id^="line-"]').count();    points = await page.locator('circle.point-marker').count();    // Verify all elements restored        await page.waitForTimeout(300);    await page.keyboard.press('Control+z');    // Undo deletion        expect(circles).toBe(0); // Circle deleted    expect(lines).toBe(0);   // Line deleted    circles = await page.locator('circle[id^="circle-"]').count();    lines = await page.locator('line[id^="line-"]').count();    // Verify cascade deletion        await page.waitForTimeout(300);    await page.keyboard.press('Delete');        await page.waitForTimeout(100);    await canvas.click({ position: { x: 100, y: 100 } });    await page.getByRole('button', { name: /select/i }).click();    // Delete point 1 (should cascade delete line and circle)        expect(circles).toBe(1);    expect(lines).toBe(1);    expect(points).toBeGreaterThanOrEqual(2); // At least 2 points (may have more from circle)    let circles = await page.locator('circle[id^="circle-"]').count();    let lines = await page.locator('line[id^="line-"]').count();    let points = await page.locator('circle.point-marker').count();    // Verify initial state        await page.waitForTimeout(300);        await canvas.click({ position: { x: 150, y: 100 } }); // Radius point    await canvas.click({ position: { x: 100, y: 100 } }); // Circle center at point 1    await page.keyboard.press('c');        await canvas.click({ position: { x: 200, y: 100 } }); // to point 2    await canvas.click({ position: { x: 100, y: 100 } }); // Line from point 1    await page.keyboard.press('l');        await canvas.click({ position: { x: 200, y: 100 } }); // Point 2    await canvas.click({ position: { x: 100, y: 100 } }); // Point 1    await page.keyboard.press('p');    // Create: 2 points + line + circle on first point        const canvas = page.locator('svg.diedrico-canvas');  test('should undo cascade deletion and restore all elements (T291, T292)', async ({ page }) => {  });    expect(lines).toBe(0);  // Line deleted due to cascade    expect(points).toBe(1); // Only point 2 remains    lines = await page.locator('line[id^="line-"]').count();    points = await page.locator('circle.point-marker').count();    // Verify cascade deletion: both line and point are deleted        await page.waitForTimeout(300);    await page.keyboard.press('Delete');        await page.waitForTimeout(100);    await canvas.click({ position: { x: 100, y: 100 } });    await page.getByRole('button', { name: /select/i }).click();    // Select and delete point 1        expect(lines).toBe(1);    expect(points).toBe(2);    let lines = await page.locator('line[id^="line-"]').count();    let points = await page.locator('circle.point-marker').count();    // Verify initial state        await page.waitForTimeout(300);        await canvas.click({ position: { x: 200, y: 100 } }); // Click point 2    await canvas.click({ position: { x: 100, y: 100 } }); // Click point 1    await page.keyboard.press('l');        await canvas.click({ position: { x: 200, y: 100 } }); // Point 2    await canvas.click({ position: { x: 100, y: 100 } }); // Point 1    await page.keyboard.press('p');    // Create construction: 2 points + 1 line between them        const canvas = page.locator('svg.diedrico-canvas');  test('should delete dependents when deleting a point (T288, T292)', async ({ page }) => {  });    // For now we verify the warning message which confirms cascade detection works    // Note: This would require checking SVG element styles, which is complex in Playwright    // Verify cascade highlighted elements have orange color        await expect(cascadeWarning).toContainText('1 element will be cascade deleted');    // Verify it shows the correct count (1 line will be cascade deleted)        await expect(cascadeWarning).toBeVisible();    const cascadeWarning = statusBar.locator('.cascade-warning');    const statusBar = page.locator('.status-bar');    // Verify cascade warning appears in status bar        await page.waitForTimeout(300);        await canvas.click({ position: { x: 100, y: 100 } });    await page.getByRole('button', { name: /select/i }).click();    // Switch to select tool and select point 1        await page.waitForTimeout(300);        await canvas.click({ position: { x: 200, y: 100 } }); // Click point 2 to create line    await canvas.click({ position: { x: 100, y: 100 } }); // Click point 1    await page.keyboard.press('l');        await canvas.click({ position: { x: 200, y: 100 } }); // Point 2    await canvas.click({ position: { x: 100, y: 100 } }); // Point 1    await page.keyboard.press('p');    // Create a point and a line that depends on it        const canvas = page.locator('svg.diedrico-canvas');  test('should show cascade preview when selecting element with dependents (T289)', async ({ page }) => {  });    await page.waitForSelector('svg.diedrico-canvas');    // Wait for app to load    await page.goto('/');  test.beforeEach(async ({ page }) => {test.describe('Cascade Deletion', () => {import { test, expect } from '@playwright/test'; */ * Reference: specs/001-dihedral-learning-mvp/data-model.md - Deletion and Dependency Cascading * Reference: specs/001-dihedral-learning-mvp/tasks.md - Phase 30: T285-T292 *  * - Dependency tracking and cascade computation * - Undo/redo support for cascade deletion * - Proper deletion order (dependents before dependencies) * - Status bar message showing count of cascade elements * - Visual feedback showing which elements will be cascade deleted (orange highlight) * Tests the cascade deletion functionality implemented in Phase 30: *  * 
+   268	 * Tests the complete keyboard shortcut functionality implemented in Phase 27:
+   269	 * - Tool shortcuts (P, L, S, C, G) for activating tools
+   270	 * - Ctrl+A: Select all elements in active plane
+   271	 * - Ctrl+0: Fit to view
+   272	 * - Esc: Cancel/deselect
+   273	 * - Delete/Backspace: Delete selected elements
+   274	 * - Ctrl+Z/Y: Undo/Redo
+   275	 * 
+   276	 * Reference: specs/001-dihedral-learning-mvp/tasks.md - Phase 27: T268-T274
+   277	 * Reference: specs/001-dihedral-learning-mvp/ui-spec.md - Keyboard Shortcuts
+   278	 */
+   279	
+   280	import { test, expect } from '@playwright/test';
+   281	
+   282	test.describe('Keyboard Shortcuts', () => {
+   283	  test.beforeEach(async ({ page }) => {
+   284	    await page.goto('/');
+   285	    // Wait for app to load
+   286	    await page.waitForSelector('svg.diedrico-canvas');
+   287	  });
+   288	
+   289	  test.describe('Tool Shortcuts (T273)', () => {
+   290	    test('P key should activate Point tool', async ({ page }) => {
+--- frontend/tests/e2e/selection-mask.spec.ts
+   240	    await page.mouse.move(100, 100);
+   241	    await page.waitForTimeout(200);
+   242	    
+   243	    const pointElement = page.locator('[data-element-type="point"]').first();
+   244	    const pointHasHover = await pointElement.evaluate(el => 
+   245	      el.classList.contains('hover') || el.classList.contains('hovered')
+   246	    );
+   247	    expect(pointHasHover).toBe(true);
+   248	
+   249	    // Hover over circle - should NOT highlight
+   250	    await page.mouse.move(150, 100);
+   251	    await page.waitForTimeout(200);
+   252	    
+   253	    const circleElement = page.locator('[data-element-type="circle"]').first();
+   254	    const circleHasHover = await circleElement.evaluate(el => 
+   255	      el.classList.contains('hover') || el.classList.contains('hovered')
+   256	    );
+   257	    expect(circleHasHover).toBe(false);
+   258	  });
+   259	});
+
+## intersections debt head
+     1	/**
+     2	 * Unit tests for Intersections module
+     3	 * 
+     4	 * Tests geometric intersection calculations using homogeneous coordinates.
+     5	 * Validates:
+     6	 * - Line-line intersections (cross product algorithm)
+     7	 * - Line-circle intersections (quadratic formula)
+     8	 * - Circle-circle intersections (geometric formula)
+     9	 * 
+    10	 * Test coverage:
+    11	 * - Standard intersections (perpendicular, diagonal, tangent, secant)
+    12	 * - Edge cases (parallel, coincident, no intersection, multiple solutions)
+    13	 * - Homogeneous coordinate correctness
+    14	 * - Numerical stability
+    15	 */
+    16	
+    17	import { describe, it, expect } from 'vitest';
+    18	import { Vector3 } from 'three';
+    19	import { 
+    20	  intersectLineLine, 
+    21	  areLinesParallel,
+    22	  intersectLineCircle,
+    23	  intersectCircleCircle
+    24	} from '../../../src/domain/calculations/Intersections';
+    25	import { Line2DRealization2D } from '../../../src/domain/world/Line';
+    26	import { Circle2DRealization2D } from '../../../src/domain/world/Circle';
+    27	
+    28	describe('Intersections', () => {
+    29	  describe('intersectLineLine', () => {
+    30	    it('should find intersection of perpendicular lines', () => {
+    31	      // Horizontal line through (0, 2): y = 2
+    32	      // Parametric: P(t) = (0, 2, 1) + t*(1, 0, 0)
+    33	      const line1 = new Line2DRealization2D(
+    34	        new Vector3(0, 2, 1),  // point
+    35	        new Vector3(1, 0, 0)   // direction (horizontal)
+    36	      );
+    37	      
+    38	      // Vertical line through (3, 0): x = 3
+    39	      // Parametric: P(t) = (3, 0, 1) + t*(0, 1, 0)
+    40	      const line2 = new Line2DRealization2D(
+    41	        new Vector3(3, 0, 1),  // point
+    42	        new Vector3(0, 1, 0)   // direction (vertical)
+    43	      );
+    44	      
+    45	      const result = intersectLineLine(line1, line2);
+    46	      
+    47	      expect(result).not.toBeNull();
+    48	      expect(result!.x).toBeCloseTo(3, 6);
+    49	      expect(result!.y).toBeCloseTo(2, 6);
+    50	      expect(result!.z).toBe(1); // homogeneous coordinate
+    51	    });
+    52	    
+    53	    it('should find intersection of diagonal lines', () => {
+    54	      // Line 1: passing through (0, 0) with direction (1, 1)
+    55	      // Equation: y = x
+    56	      const line1 = new Line2DRealization2D(
+    57	        new Vector3(0, 0, 1),
+    58	        new Vector3(1, 1, 0).normalize()
+    59	      );
+    60	      
+    61	      // Line 2: passing through (0, 4) with direction (1, -1)
+    62	      // Equation: y = -x + 4
+    63	      const line2 = new Line2DRealization2D(
+    64	        new Vector3(0, 4, 1),
+    65	        new Vector3(1, -1, 0).normalize()
+    66	      );
+    67	      
+    68	      const result = intersectLineLine(line1, line2);
+    69	      
+    70	      // Intersection: y = x and y = -x + 4
+    71	      // x = -x + 4 => 2x = 4 => x = 2, y = 2
+    72	      expect(result).not.toBeNull();
+    73	      expect(result!.x).toBeCloseTo(2, 6);
+    74	      expect(result!.y).toBeCloseTo(2, 6);
+    75	      expect(result!.z).toBe(1);
+    76	    });
+    77	    
+    78	    it('should detect parallel horizontal lines', () => {
+    79	      // Line 1: y = 2
+    80	      const line1 = new Line2DRealization2D(
+    81	        new Vector3(0, 2, 1),
+    82	        new Vector3(1, 0, 0)
+    83	      );
+    84	      
+    85	      // Line 2: y = 5 (parallel to line1)
+    86	      const line2 = new Line2DRealization2D(
+    87	        new Vector3(0, 5, 1),
+    88	        new Vector3(1, 0, 0)
+    89	      );
+    90	      
+    91	      const result = intersectLineLine(line1, line2);
+    92	      
+    93	      expect(result).toBeNull();
+    94	    });
+    95	    
+    96	    it('should detect parallel vertical lines', () => {
+    97	      // Line 1: x = 3
+    98	      const line1 = new Line2DRealization2D(
+    99	        new Vector3(3, 0, 1),
+   100	        new Vector3(0, 1, 0)
+   101	      );
+   102	      
+   103	      // Line 2: x = -2 (parallel to line1)
+   104	      const line2 = new Line2DRealization2D(
+   105	        new Vector3(-2, 0, 1),
+   106	        new Vector3(0, 1, 0)
+   107	      );
+   108	      
+   109	      const result = intersectLineLine(line1, line2);
+   110	      
+   111	      expect(result).toBeNull();
+   112	    });
+   113	    
+   114	    it('should detect parallel diagonal lines', () => {
+   115	      // Line 1: y = x
+   116	      const line1 = new Line2DRealization2D(
+   117	        new Vector3(0, 0, 1),
+   118	        new Vector3(1, 1, 0).normalize()
+   119	      );
+   120	      
+   121	      // Line 2: y = x + 3 (parallel to line1)
+   122	      const line2 = new Line2DRealization2D(
+   123	        new Vector3(0, 3, 1),
+   124	        new Vector3(1, 1, 0).normalize()
+   125	      );
+   126	      
+   127	      const result = intersectLineLine(line1, line2);
+   128	      
+   129	      expect(result).toBeNull();
+   130	    });
+   131	    
+   132	    it('should detect coincident lines', () => {
+   133	      // Line 1: y = 2x through (0, 0)
+   134	      const line1 = new Line2DRealization2D(
+   135	        new Vector3(0, 0, 1),
+   136	        new Vector3(1, 2, 0).normalize()
+   137	      );
+   138	      
+   139	      // Line 2: Same line through different point (1, 2)
+   140	      const line2 = new Line2DRealization2D(
+   141	        new Vector3(1, 2, 1),
+   142	        new Vector3(1, 2, 0).normalize()
+   143	      );
+   144	      
+   145	      const result = intersectLineLine(line1, line2);
+   146	      
+   147	      expect(result).toBeNull();
+   148	    });
+   149	    
+   150	    it('should handle lines with non-unit direction vectors', () => {
+   151	      // Line 1 with direction (2, 0) instead of normalized (1, 0)
+   152	      const line1 = new Line2DRealization2D(
+   153	        new Vector3(0, 1, 1),
+   154	        new Vector3(2, 0, 0)  // Not normalized
+   155	      );
+   156	      
+   157	      // Line 2 with direction (0, 3) instead of normalized (0, 1)
+   158	      const line2 = new Line2DRealization2D(
+   159	        new Vector3(4, 0, 1),
+   160	        new Vector3(0, 3, 0)  // Not normalized
+   161	      );
+   162	      
+   163	      const result = intersectLineLine(line1, line2);
+   164	      
+   165	      // Should still find correct intersection at (4, 1)
+   166	      expect(result).not.toBeNull();
+   167	      expect(result!.x).toBeCloseTo(4, 6);
+   168	      expect(result!.y).toBeCloseTo(1, 6);
+   169	    });
+   170	    
+   171	    it('should produce homogeneous points with z=1', () => {
+   172	      const line1 = new Line2DRealization2D(
+   173	        new Vector3(0, 0, 1),
+   174	        new Vector3(1, 0, 0)
+   175	      );
+   176	      
+   177	      const line2 = new Line2DRealization2D(
+   178	        new Vector3(5, 5, 1),
+   179	        new Vector3(0, 1, 0)
+   180	      );
+   181	      
+   182	      const result = intersectLineLine(line1, line2);
+   183	      
+   184	      expect(result).not.toBeNull();
+   185	      expect(result!.z).toBe(1); // Homogeneous coordinate
+   186	    });
+   187	    
+   188	    it('should handle intersection at origin', () => {
+   189	      // Line 1: y = x through origin
+   190	      const line1 = new Line2DRealization2D(
+   191	        new Vector3(0, 0, 1),
+   192	        new Vector3(1, 1, 0).normalize()
+   193	      );
+   194	      
+   195	      // Line 2: y = -x through origin
+   196	      const line2 = new Line2DRealization2D(
+   197	        new Vector3(0, 0, 1),
+   198	        new Vector3(1, -1, 0).normalize()
+   199	      );
+   200	      
+   201	      const result = intersectLineLine(line1, line2);
+   202	      
+   203	      expect(result).not.toBeNull();
+   204	      expect(result!.x).toBeCloseTo(0, 6);
+   205	      expect(result!.y).toBeCloseTo(0, 6);
+   206	    });
+   207	    
+   208	    it('should handle intersection with negative coordinates', () => {
+   209	      // Line 1: horizontal through y = -3
+   210	      const line1 = new Line2DRealization2D(
+   211	        new Vector3(0, -3, 1),
+   212	        new Vector3(1, 0, 0)
+   213	      );
+   214	      
+   215	      // Line 2: vertical through x = -5
+   216	      const line2 = new Line2DRealization2D(
+   217	        new Vector3(-5, 0, 1),
+   218	        new Vector3(0, 1, 0)
+   219	      );
+   220	      
