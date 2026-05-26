@@ -1,0 +1,16 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run --run tests/unit/processTree.spec.ts tests/unit/commands/removeElementOps.spec.ts tests/unit/commands/viewStateOperations.spec.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/processTree.spec.ts  (15 tests) 36ms
+ ✓ tests/unit/commands/viewStateOperations.spec.ts  (4 tests) 20ms
+ ✓ tests/unit/commands/removeElementOps.spec.ts  (9 tests) 34ms
+
+ Test Files  3 passed (3)
+      Tests  28 passed (28)
+   Start at  18:09:13
+   Duration  3.72s (transform 1.72s, setup 1ms, collect 2.79s, tests 90ms, environment 3.36s, prepare 795ms)
+

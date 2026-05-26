@@ -213,3 +213,30 @@ All command output was captured under `architecture-audit/cycle-015-typescript-b
 ### Residual risks / next action
 
 This task does not claim full Wave 015 completion because the frontend build remains red on unrelated UI/store/render DTO and service/domain strictness categories. The assigned process-tree/view-state operation build category is closed in the final build output. The stale `viewStore.spec.ts` expectations around `showReferenceAxes` are recorded as an existing test-data drift outside this lane; the scoped process-tree/remove-element identity tests pass.
+
+## t3 process/view-state operation lane — direct ViewStateOperations test coverage
+
+Task `t3-add-viewstate-operation-tests` resolved the reviewer blocker that the rewritten `ViewStateOperations` apply/undo behavior lacked direct focused tests.
+
+### Source files changed
+
+- `frontend/tests/unit/commands/viewStateOperations.spec.ts`: added direct Vitest coverage for the three rewritten view-state operation classes:
+  - `SetActivePlaneOp` applies the after plane path, records `{ activePlanePath }` outputs, exposes constructor parameters, and undo restores the before plane path.
+  - `UpdateView2DOp` applies the after 2D viewport state, records `{ updated: true }`, and undo restores the before state.
+  - `TogglePlaneVisibilityOp` applies the after visibility value, records `{ visible }`, and undo restores the before visibility.
+  - Invalid plane paths return an `OperationResult` failure with explicit empty `outputs` and do not call the view-store port.
+
+No production source, projection/world lane file, command/factory lane file, UI/panel DTO file, service file, package/tooling file, Wave 014 protected file, or `ActionsPanel.vue` file was edited in this follow-up. No source module, fixture, or documentation file was deleted.
+
+### Validation evidence
+
+All command output was captured under `architecture-audit/cycle-015-typescript-build-contracts/validation/`:
+
+- `t3-viewstate-operations-focused.stdout` / `.stderr`: `npm run test --workspace=frontend -- --run tests/unit/commands/viewStateOperations.spec.ts` passed, 1 file / 4 tests.
+- `t3-process-remove-viewstate-combined.stdout` / `.stderr`: `npm run test --workspace=frontend -- --run tests/unit/processTree.spec.ts tests/unit/commands/removeElementOps.spec.ts tests/unit/commands/viewStateOperations.spec.ts` passed, 3 files / 28 tests. This keeps the process-tree identity deletion/undo regression in the same evidence set as the new direct ViewState coverage.
+- `t3-viewstate-forbidden-scan.stdout` / `.stderr`: scoped scan over `frontend/tests/unit/commands/viewStateOperations.spec.ts` and `frontend/src/commands/operations/viewState/ViewStateOperations.ts` for `@ts-ignore`, `@ts-expect-error`, `as any`, `as unknown as`, and `require(` produced no matches. The grep command exited 1 because no forbidden pattern was found.
+- `t3-viewstate-tests-frontend-build.stdout` / `.stderr`: `npm run build --workspace=frontend` remains red on out-of-scope UI/store/render DTO and service/domain strictness categories. The build output contains no errors from `PushSubprocessOp.ts`, `RenameSubprocessOp.ts`, `ViewStateOperations.ts`, `RemoveElementOps.ts`, or the new `viewStateOperations.spec.ts` test file.
+
+### Residual categorization and stage status
+
+The process/view-state operation lane now has direct passing tests for the rewritten view-state apply/undo contracts plus the earlier passing process-tree/remove-element identity coverage. Full Wave 015 completion is still not claimed because the frontend build remains red on residual categories outside this task scope, including `NewProjectDialog.vue`, `PropertiesDialog.vue`, `ActionsPanel.vue`, `ElementTypeGroup.vue`, `ElementsPanel.vue`, `ProcessTreeNode.vue`, `PlaneSelector.vue`, `SvgCanvas.vue`, `CoordinateTransform.ts`, `GeometryService.ts`, `GoogleDriveService.ts`, and `ProjectService.ts`.
