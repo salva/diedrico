@@ -137,3 +137,38 @@ After reviewer round 01 flagged omitted mandatory command evidence, the Manager 
 - `t3-frontend-e2e.stdout.log` / `.stderr.log`: `npm run test:e2e --workspace=frontend` exited 1. Classification: Playwright/e2e command was executed and failed at the existing suite level; focused browser smoke evidence for the 3D canvas/control surface is recorded separately in `t3-live-3d-playwright-smoke-rerun.stdout.log` / `.stderr.log` and passed.
 
 These command failures are recorded as residual project/tooling risks rather than Wave 008 implementation blockers because the focused Wave 008 selector/shell/adapter/registry tests and static boundary scans pass, the live 3D smoke/reachability probes pass, and the failing broad-suite/tooling errors are outside the changed 3D presentation/adapter boundary.
+
+
+## Validation-and-preview stage results (cycle-008-validation-and-preview-refresh)
+
+Validation logs for this stage are under `architecture-audit/cycle-008-3d-rendering-scene-adapters/validation/` with the `t1-` prefix.
+
+### Static architecture checks
+
+- `t1-static-architecture-checks-refined.stdout.log` / `.stderr.log`: **passed**. Confirms `ThreeView.vue` is a shell delegating to `ThreeViewRuntime`, contains no low-level Three.js/CSS2D construction, no scene-child clearing, no direct raw-domain traversal/realization calls, and no guide predicate/math leakage. Confirms `frontend/src/rendering/threeView/**` has no `World`/domain traversal usage, `frontend/src/application/threePresentation/**` has no Vue/Pinia/renderer construction imports, routine `console.log`/`debug`/`info` is absent from Wave 008 modules, and no App.vue/SvgCanvas/Wave 007/Wave 009 source diff is present.
+- `t1-static-element2drenderer-refined.stdout.log` / `.stderr.log`: **passed**. `frontend/src/services/Element2DRenderer3D.ts` is absent; no source/import/runtime references remain. A broader raw-symbol scan in `t1-static-architecture-checks.stdout.log` failed only because `frontend/tests/unit/components/panels/threeViewShellBoundary.spec.ts` contains a negative assertion that the deleted name is absent from `ThreeView.vue`; this is validation text, not a live dependency.
+
+### Mandatory command cadence
+
+- `t1-root-lint.stdout.log` / `.stderr.log`: **failed, classified pre-existing/tooling**. `npm run lint` delegates to frontend and exits 127 because `eslint` is not installed/resolvable (`sh: 1: eslint: not found`). This matches the previously recorded implementation-stage blocker and is not caused by Wave 008 source changes.
+- `t1-frontend-lint.stdout.log` / `.stderr.log`: **failed, classified pre-existing/tooling** for the same missing `eslint` executable.
+- `t1-focused-vitest.stdout.log` / `.stderr.log`: **passed**. Command: `npm run test --workspace=frontend -- threePresentation threeViewShellBoundary threeObjectRegistry threeSceneAdapters`; result: 5 files / 11 tests passed. Coverage includes 3D presentation selectors/read models, concern selectors for projection planes/planar elements/reconstructed elements/guides/hinges, shell-boundary assertions, grouped registry replacement/disposal, scene adapters, and CSS2D label cleanup/replacement.
+- `t1-root-vitest.stdout.log` / `.stderr.log` plus `t1-root-vitest-failure-excerpts.stdout.log`: **failed, classified pre-existing/unrelated**. Failures are outside Wave 008 modules: stale import in `tests/integration/guide-creation.test.ts` for `../../src/commands/operations/AddFreePoint2DOp`, Node built-in import-shape failure in `tests/unit/architecture/noCommandSubclasses.spec.ts`, longstanding `tests/unit/calculations/intersections.spec.ts` expectation mismatches, and `tests/unit/components/propertiesDialog.spec.ts` event expectation failures. Focused Wave 008 tests pass in the separate focused log.
+- `t1-frontend-vitest.stdout.log` / `.stderr.log` plus `t1-frontend-vitest-failure-excerpts.stdout.log`: **failed, classified pre-existing/unrelated** with the same broad-suite failures as root Vitest.
+- `t1-root-build.stdout.log` / `.stderr.log`: **failed, classified pre-existing/tooling**. `vue-tsc` aborts before project compilation on Node v24.15.0 with `Search string not found: "/supportedTSExtensions = .*(?=;)"`.
+- `t1-frontend-build.stdout.log` / `.stderr.log`: **failed, classified pre-existing/tooling** with the same `vue-tsc` / Node 24 compatibility error.
+- `t1-frontend-e2e.stdout.log` / `.stderr.log`: **failed, classified pre-existing/unrelated e2e-suite syntax corruption**. Playwright cannot parse existing specs before running browser assertions: `frontend/tests/e2e/keyboard-shortcuts.spec.ts: Unexpected token (267:10160)` and `frontend/tests/e2e/selection-mask.spec.ts: Unexpected token (188:2)`. Focused live browser smoke is recorded separately and passes.
+
+### Live preview refresh and 3D smoke
+
+- `t1-live-preview-refresh.stdout.log` / `.stderr.log`, `t1-live-preview-probe.stdout.log` / `.stderr.log`, and `t1-live-preview.pid`: **passed** after retrying earlier wrapper mistakes. The live preview was refreshed with `npm run dev --workspace=frontend -- --host 0.0.0.0`; probe evidence shows listener `0.0.0.0:5173`, HTTP `status=200`, the Diedrico title, `id="app"`, and `/src/main.ts` script.
+- `t1-live-3d-smoke-rerun2.stdout.log` / `.stderr.log`: **passed**. Headless Chromium loaded `http://127.0.0.1:5173/`, found `#app`, found `canvas_count=1` and `three_canvas_count=1`, and found the representative 3D controls `Show Planes`, `Show 2D Elements on Planes`, `Show Grid`, and `Show Reference Axes`. Console output includes existing Vite/debug/local-only Google Drive messages and WebGL software-rendering warnings, but no Wave 008 crash or missing 3D shell behavior.
+
+### Classification summary
+
+No Wave-008-attributable validation failure remains. Static architecture checks, focused Wave 008 tests, preview reachability, and live 3D smoke pass. The failing mandatory broad commands are classified as pre-existing/tooling or unrelated suite corruption with log evidence: missing `eslint`, Node 24 incompatible `vue-tsc`, stale broad Vitest imports/expectations, and syntactically corrupted existing Playwright specs.
+
+### Residual risks for future waves
+
+- Project-level validation remains noisy until lint dependencies, Node/vue-tsc compatibility, stale command imports, old geometry expectations, properties-dialog expectations, and corrupted e2e specs are addressed in their own scoped waves or cleanup stages.
+- Live smoke confirms the 3D shell/control/canvas surface and default projection planes, but deeper e2e construction of every geometric object remains blocked by the existing Playwright suite syntax failures.
