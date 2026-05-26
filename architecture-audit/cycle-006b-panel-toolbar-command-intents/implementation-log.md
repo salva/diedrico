@@ -75,3 +75,59 @@ All logs are under `architecture-audit/cycle-006b-panel-toolbar-command-intents/
 
 - Consider a focused cleanup of remaining `console.log` calls inside process-tree operations/domain methods if they are not useful exceptional diagnostics.
 - Consider adding mounted component tests for ActionsPanel and Toolbar event wiring once the test harness has stable component mounting providers for Pinia, World, and CommandStack.
+
+## Validation stage — cycle-006b-validation-and-preview-refresh
+
+Validation run timestamp: 2026-05-26 UTC. All validation artifacts below are under `architecture-audit/cycle-006b-panel-toolbar-command-intents/validation/`.
+
+### Command results and classifications
+
+| Command | Result | stdout | stderr | Classification |
+| --- | --- | --- | --- | --- |
+| `npm run lint` | Failed | `root-lint.stdout.log` | `root-lint.stderr.log` | **Non-attributable tooling blocker.** Root lint delegates to the frontend lint script, which invokes `eslint`; the workspace does not have an executable `eslint` binary (`sh: 1: eslint: not found`). This matches the implementation-stage lint blocker and occurs before Wave 006b source analysis. |
+| `npm run lint --workspace=frontend` | Failed | `frontend-lint-validation.stdout.log` | `frontend-lint-validation.stderr.log` | **Non-attributable tooling blocker.** Same unresolved `eslint` binary as root lint. |
+| Backend lint | Not applicable | n/a | n/a | `backend/package.json` has no `lint` script. |
+| `npm run test --workspace=frontend -- --run tests/unit/application/panelToolbarIntentControllers.spec.ts` | Passed | `focused-panel-toolbar-vitest-validation.stdout.log` | `focused-panel-toolbar-vitest-validation.stderr.log` | **Wave 006b focused validation passed.** 5/5 focused process-history/toolbar intent controller and static component-boundary tests passed. Routine stdout from process-tree operations remains outside component scope. |
+| `npm run test` | Failed | `root-vitest.stdout.log` | `root-vitest.stderr.log` | **Non-attributable pre-existing/unrelated suite failures.** Failures are outside Wave 006b touched panel/toolbar code: stale import in `frontend/tests/integration/guide-creation.test.ts` for deleted `AddFreePoint2DOp`, geometry failures in `frontend/tests/unit/calculations/intersections.spec.ts`, selection mask expectation failure, path import bug in `frontend/tests/unit/architecture/noCommandSubclasses.spec.ts`, and `PropertiesDialog` event assertions. Focused Wave 006b tests passed in the same environment. |
+| `npm run test --workspace=backend` | Passed | `backend-vitest.stdout.log` | `backend-vitest.stderr.log` | Backend suite passed: 15/15 tests. |
+| `npm run build` | Failed | `root-build.stdout.log` | `root-build.stderr.log` | **Non-attributable tooling blocker.** Root build delegates to frontend build; `vue-tsc` crashes before project typechecking with `Search string not found: "/supportedTSExtensions = .*(?=;)"` under Node.js v24.15.0. This is the same environment/tooling failure recorded during implementation. |
+| `npm run build --workspace=frontend` | Failed | `frontend-build-validation.stdout.log` | `frontend-build-validation.stderr.log` | **Non-attributable tooling blocker.** Same `vue-tsc`/TypeScript patch compatibility crash before Wave 006b diagnostics. |
+| `npm run build --workspace=backend` | Passed | `backend-build.stdout.log` | `backend-build.stderr.log` | Backend TypeScript build passed. |
+| `npm run test:e2e --workspace=frontend` | Failed | `frontend-e2e.stdout.log` | `frontend-e2e.stderr.log` | **Non-attributable pre-existing e2e syntax blocker.** Playwright cannot parse `frontend/tests/e2e/keyboard-shortcuts.spec.ts` and `frontend/tests/e2e/selection-mask.spec.ts` due malformed test files before executing browser scenarios. These files are outside Wave 006b touched source/tests. |
+| Static component boundary scan (`python3` script over `ActionsPanel.vue` and `Toolbar.vue`) | Passed | `static-component-boundary-validation-rerun.stdout.log` | `static-component-boundary-validation-rerun.stderr.log` | Confirms both components no longer contain prohibited `Command`, concrete operation, `Vector3`, direct `commandStack` execution, Alt+E setup, or `console.log` patterns. Initial `python` attempt failed because `/bin/sh` lacks a `python` binary; rerun with `python3` passed. |
+| Live preview refresh/probe | Passed | `live-preview-start-probe.stdout.log`, `live-preview.stdout.log` | `live-preview-start-probe.stderr.log`, `live-preview.stderr.log` | Started `npm run dev --workspace=frontend -- --host 0.0.0.0` (PID recorded in `live-preview.pid`) and probed `http://127.0.0.1:5173/` with `HTTP/1.1 200 OK`. |
+| Live Playwright smoke against preview | Passed | `live-playwright-smoke.stdout.log` | `live-playwright-smoke.stderr.log` | Chromium loaded `http://127.0.0.1:5173/`, title was `Diedrico - Dihedral Learning MVP`, and toolbar/canvas SVG elements were present. Full e2e remains blocked by malformed e2e test files above. |
+
+### Static architecture compliance
+
+The validation-stage static scan passed for `frontend/src/components/panels/ActionsPanel.vue` and `frontend/src/components/toolbars/Toolbar.vue`:
+
+- no `Command` imports/usages;
+- no `commands/operations` imports;
+- no `Vector3` construction-only dependency;
+- no `new Command` or `.addAndExecute(new ...Op` command assembly;
+- no `commandStack.push`, `commandStack.undo`, or `commandStack.redo` paths;
+- no Alt+E/debug setup path (`Alt+E`, `key === 'e'`, `addProjectionPlaneSetup` absent);
+- no routine `console.log` calls.
+
+No validation-stage source refactor was introduced; Wave 006a canvas/tool surfaces and Wave 009 app-shell cleanup were not modified by this task.
+
+### Failure classification summary
+
+No remaining failure is attributed to Wave 006b. The Wave 006b focused tests and static boundary checks passed. Blocking full-cadence failures are existing project/tooling issues: missing lint dependency, `vue-tsc` incompatibility under the current Node/TypeScript toolchain, stale/full-suite test failures outside panel/toolbar intent code, and malformed e2e files that prevent Playwright suite collection.
+
+### Live preview refresh
+
+The live preview was refreshed with:
+
+```bash
+npm run dev --workspace=frontend -- --host 0.0.0.0
+```
+
+The process PID was written to `validation/live-preview.pid`. Reachability probe evidence is in `validation/live-preview-start-probe.stdout.log` and shows `HTTP/1.1 200 OK` from `http://127.0.0.1:5173/`. A Playwright smoke test also loaded the app successfully and found toolbar/canvas content.
+
+### Residual risks after validation
+
+- Mandatory root/frontend lint and build cannot be used as acceptance gates until the missing `eslint` executable and `vue-tsc` compatibility crash are corrected.
+- Full frontend Vitest and Playwright e2e remain red for unrelated existing tests; these should become future cleanup/correctness waves or environment-fix tasks rather than being accepted as Wave 006b defects.
+- Focused Wave 006b component behavior coverage is still mostly controller/static-boundary based; malformed e2e suite collection prevented full browser-level process-tree/toolbar regression coverage.

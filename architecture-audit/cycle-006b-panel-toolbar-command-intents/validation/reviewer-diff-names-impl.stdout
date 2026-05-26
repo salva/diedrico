@@ -1,0 +1,10 @@
+architecture-audit/cycle-006b-panel-toolbar-command-intents/implementation-log.md
+frontend/src/application/processHistory/ProcessHistoryController.ts
+frontend/src/application/processHistory/ProcessHistoryIntents.ts
+frontend/src/application/processHistory/ProcessHistoryUseCases.ts
+frontend/src/application/toolbar/ToolbarHistoryController.ts
+frontend/src/application/toolbar/ToolbarHistoryIntents.ts
+frontend/src/application/toolbar/ToolbarHistoryUseCases.ts
+frontend/src/components/panels/ActionsPanel.vue
+frontend/src/components/toolbars/Toolbar.vue
+frontend/tests/unit/application/panelToolbarIntentControllers.spec.ts

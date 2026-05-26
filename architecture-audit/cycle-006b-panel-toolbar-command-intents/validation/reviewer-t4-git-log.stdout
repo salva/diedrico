@@ -1,0 +1,3 @@
+acba22a (HEAD -> develop) [tsk-t3-correct-toolbar-log-and-evidence-claims] [t3-correct-toolbar-log-and-evidence-claims] Remove toolbar logging and align evidence claims
+4ec7d4c [tsk-t1-implement-panel-toolbar-intent-controllers] [t1-implement-panel-toolbar-intent-controllers] extract panel toolbar command intents
+04839b8 [t1-write-wave-006b-decision] finalize task report

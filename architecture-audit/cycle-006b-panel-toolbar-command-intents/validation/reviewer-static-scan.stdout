@@ -1,0 +1,2 @@
+frontend/src/components/toolbars/Toolbar.vue:186:  console.log('Selecting tool:', tool);
+frontend/src/components/toolbars/Toolbar.vue:188:  console.log('Tool set. Current tool:', toolStore.currentTool);

@@ -1,0 +1,260 @@
+     1	<template>
+     2	  <aside class="actions-panel">
+     3	    <header class="panel-header">
+     4	      <h2 class="panel-title">Construction History</h2>
+     5	      <div class="header-controls">
+     6	        <!-- Stack management buttons -->
+     7	        <div class="stack-controls">
+     8	          <button 
+     9	            class="stack-btn stack-pop-btn"
+    10	            :disabled="!canPop"
+    11	            @click="popSubprocess"
+    12	            :title="canPop ? 'Close current subprocess (Ctrl+Shift+[)' : 'Cannot close root'"
+    13	            aria-label="Pop subprocess from stack"
+    14	          >
+    15	            &lt;
+    16	          </button>
+    17	          <button 
+    18	            class="stack-btn stack-push-btn"
+    19	            @click="pushSubprocess"
+    20	            title="Create and enter new subprocess (Ctrl+Shift+])"
+    21	            aria-label="Push subprocess to stack"
+    22	          >
+    23	            &gt;
+    24	          </button>
+    25	        </div>
+    26	      </div>
+    27	    </header>
+    28	
+    29	    <!-- Process Tree -->
+    30	    <div class="process-tree" ref="treeContainer">
+    31	      <ProcessTreeNode
+    32	        v-if="processTree"
+    33	        :node="processTree.root"
+    34	        :world="world"
+    35	        :data-version="treeVersion"
+    36	        :selected-node-id="selectedNodeId"
+    37	        :active-subprocess-id="activeSubprocessId"
+    38	        :related-action-ids="relatedActionIds"
+    39	        @select-node="handleNodeSelect"
+    40	        @toggle-encapsulate="handleToggleEncapsulate"
+    41	        @toggle-output="handleToggleOutput"
+    42	        @highlight-elements="(...args) => emit('highlightElements', ...args)"
+    43	        @clear-highlight="emit('clearHighlight')"
+    44	        @rename-node="handleRenameNode"
+    45	      />
+    46	    </div>
+    47	  </aside>
+    48	</template>
+    49	
+    50	<script setup lang="ts">
+    51	import { ref, computed, inject, onMounted, onUnmounted, watch, nextTick } from 'vue';
+    52	import type { World } from '@/domain/world/World';
+    53	import type { ProcessTreeNode as ProcessTreeNodeType } from '@/domain/processTree/ProcessTreeNode';
+    54	import { createProcessHistoryController } from '@/application/processHistory/ProcessHistoryController';
+    55	import ProcessTreeNode from './ProcessTreeNode.vue';
+    56	import { useSelectionStore } from '@/stores/selectionStore';
+    57	import { useProcessTreeStore } from '@/stores/processTreeStore';
+    58	
+    59	// Emits
+    60	const emit = defineEmits<{
+    61	  highlightElements: [elementIds: string[], temporary: boolean];
+    62	  clearHighlight: [];
+    63	}>();
+    64	
+    65	// Injected dependencies
+    66	const world = inject<World>('world')!;
+    67	const processHistoryController = createProcessHistoryController({
+    68	  world,
+    69	  commandStack: inject<unknown>('commandStack')
+    70	});
+    71	
+    72	// Selection store
+    73	const selectionStore = useSelectionStore();
+    74	const processTreeStore = useProcessTreeStore();
+    75	
+    76	// Local state
+    77	const treeContainer = ref<HTMLElement | null>(null);
+    78	const selectedNodeId = ref<string | null>(null);
+    79	const relatedActionIds = ref<Set<string>>(new Set());
+    80	const stackVersion = ref(0); // Track stack changes
+    81	const lastNodeCount = ref(0); // Track number of nodes for auto-scroll
+    82	
+    83	// Get current ProcessTree - use reactive ref that we update when World changes
+    84	const processTree = ref(world.getProcessTree());
+    85	
+    86	// Stack management computed properties
+    87	const canPop = computed(() => {
+    88	  stackVersion.value; // Depend on stack changes
+    89	  return processHistoryController.getState().canPop;
+    90	});
+    91	const activeSubprocessId = computed(() => {
+    92	  stackVersion.value; // Depend on stack changes
+    93	  return processHistoryController.getState().activeSubprocessId;
+    94	});
+    95	
+    96	// Watch ProcessTree version for reactivity, triggered by stackVersion changes
+    97	const treeVersion = computed(() => {
+    98	  // Depend on stackVersion to trigger updates when push/pop occurs
+    99	  stackVersion.value;
+   100	  return processTree.value.getVersion();
+   101	});
+   102	
+   103	// Keyboard shortcuts for stack management
+   104	function handleKeyDown(event: KeyboardEvent) {
+   105	  if (event.ctrlKey && event.shiftKey) {
+   106	    if (event.key === '[') {
+   107	      event.preventDefault();
+   108	      popSubprocess();
+   109	    } else if (event.key === ']') {
+   110	      event.preventDefault();
+   111	      pushSubprocess();
+   112	    }
+   113	  }
+   114	}
+   115	
+   116	// Subscription cleanup
+   117	let unsubscribeTree: (() => void) | null = null;
+   118	let unsubscribeWorld: (() => void) | null = null;
+   119	
+   120	function scrollToBottom() {
+   121	  if (treeContainer.value) {
+   122	    treeContainer.value.scrollTop = treeContainer.value.scrollHeight;
+   123	  }
+   124	}
+   125	
+   126	function refreshAfterTreeChange(ensureExpandedForActiveSubprocess: boolean) {
+   127	  const currentCount = countNodes(processTree.value.root);
+   128	  const shouldScroll = currentCount > lastNodeCount.value;
+   129	  lastNodeCount.value = currentCount;
+   130	
+   131	  stackVersion.value++;
+   132	
+   133	  if (shouldScroll && ensureExpandedForActiveSubprocess) {
+   134	    processTreeStore.ensureExpanded(processTree.value.getCurrentSubprocess().id);
+   135	  }
+   136	
+   137	  if (shouldScroll) {
+   138	    nextTick(() => {
+   139	      scrollToBottom();
+   140	    });
+   141	  }
+   142	}
+   143	
+   144	function subscribeToCurrentProcessTree(ensureExpandedForActiveSubprocess: boolean) {
+   145	  unsubscribeTree = processTree.value.subscribe(() => {
+   146	    refreshAfterTreeChange(ensureExpandedForActiveSubprocess);
+   147	  });
+   148	}
+   149	
+   150	function handleWorldChange() {
+   151	  if (unsubscribeTree) {
+   152	    unsubscribeTree();
+   153	  }
+   154	
+   155	  processTree.value = world.getProcessTree();
+   156	  lastNodeCount.value = countNodes(processTree.value.root);
+   157	  subscribeToCurrentProcessTree(false);
+   158	  stackVersion.value++;
+   159	}
+   160	
+   161	onMounted(() => {
+   162	  // Register keyboard shortcuts
+   163	  window.addEventListener('keydown', handleKeyDown);
+   164	
+   165	  // Initialize node count
+   166	  lastNodeCount.value = countNodes(processTree.value.root);
+   167	
+   168	  // Subscribe to ProcessTree changes
+   169	  subscribeToCurrentProcessTree(true);
+   170	
+   171	  // Subscribe to World changes to detect when clear() creates new ProcessTree
+   172	  world.subscribeToChanges(handleWorldChange);
+   173	  unsubscribeWorld = () => world.unsubscribeFromChanges(handleWorldChange);
+   174	});
+   175	
+   176	onUnmounted(() => {
+   177	  window.removeEventListener('keydown', handleKeyDown);
+   178	  if (unsubscribeTree) {
+   179	    unsubscribeTree();
+   180	  }
+   181	  if (unsubscribeWorld) {
+   182	    unsubscribeWorld();
+   183	  }
+   184	});
+   185	
+   186	// Watch selection changes and find related actions
+   187	watch(
+   188	  () => selectionStore.selectedIdsArray,
+   189	  (selectedIds) => {
+   190	    if (selectedIds.length === 0) {
+   191	      // No selection, clear related actions
+   192	      relatedActionIds.value.clear();
+   193	    } else {
+   194	      // Find actions related to selected elements
+   195	      findRelatedActions(selectedIds);
+   196	    }
+   197	  },
+   198	  { immediate: true }
+   199	);
+   200	
+   201	/**
+   202	 * Find actions that have any of the selected element IDs in their inputs or outputs
+   203	 */
+   204	function findRelatedActions(selectedIds: string[]): void {
+   205	  const related = new Set<string>();
+   206	  const selectedIdSet = new Set(selectedIds);
+   207	
+   208	  // Get all actions from process tree
+   209	  const allActions = processTree.value.getAllActions();
+   210	
+   211	  // Check each action's elementId and dependencies (Phase 92)
+   212	  for (const action of allActions) {
+   213	    // Check if action produces any selected element
+   214	    const producesSelected = selectedIdSet.has(action.elementId);
+   215	
+   216	    // Check if action depends on any selected element
+   217	    // Dependencies are now in DependencyService, accessible via element
+   218	    const dependsOnSelected = world && world.dependencyService
+   219	      ? world.dependencyService.getDependencies(action.elementId).some(depId => selectedIdSet.has(depId))
+   220	      : false;
+   221	
+   222	    if (producesSelected || dependsOnSelected) {
+   223	      related.add(action.id);
+   224	    }
+   225	  }
+   226	
+   227	  relatedActionIds.value = related;
+   228	}
+   229	
+   230	/**
+   231	 * Recursively count total nodes in the tree
+   232	 */
+   233	function countNodes(node: ProcessTreeNodeType): number {
+   234	  let count = 1;
+   235	  if (node.children) {
+   236	    for (const child of node.children) {
+   237	      if (child) {
+   238	        count += countNodes(child);
+   239	      }
+   240	    }
+   241	  }
+   242	  return count;
+   243	}
+   244	
+   245	function refreshAfterIntent() {
+   246	  stackVersion.value++;
+   247	}
+   248	
+   249	// Stack management handlers
+   250	function pushSubprocess() {
+   251	  processHistoryController.pushSubprocess();
+   252	  refreshAfterIntent();
+   253	}
+   254	
+   255	function popSubprocess() {
+   256	  if (canPop.value) {
+   257	    processHistoryController.popSubprocess();
+   258	    refreshAfterIntent();
+   259	  }
+   260	}

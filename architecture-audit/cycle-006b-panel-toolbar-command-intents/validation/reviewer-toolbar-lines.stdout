@@ -1,0 +1,260 @@
+     1	<template>
+     2	  <div class="toolbar">
+     3	    <!-- File operation buttons -->
+     4	    <div class="file-controls">
+     5	      <button
+     6	        class="file-button"
+     7	        @click="handleNew"
+     8	        title="New Project (Ctrl+N)"
+     9	        aria-label="New Project"
+    10	      >
+    11	        <NewFileIcon class="button-icon" />
+    12	      </button>
+    13	      
+    14	      <button
+    15	        class="file-button"
+    16	        @click="handleOpen"
+    17	        title="Open Project (Ctrl+O)"
+    18	        aria-label="Open Project"
+    19	      >
+    20	        <OpenFileIcon class="button-icon" />
+    21	      </button>
+    22	    </div>
+    23	    
+    24	    <div class="toolbar-separator"></div>
+    25	    
+    26	    <!-- Undo/Redo buttons -->
+    27	    <div class="history-controls">
+    28	      <button
+    29	        class="history-button"
+    30	        :disabled="!canUndo"
+    31	        @click="handleUndo"
+    32	        title="Undo (Ctrl+Z)"
+    33	        aria-label="Undo"
+    34	      >
+    35	        <UndoIcon class="button-icon" />
+    36	      </button>
+    37	      
+    38	      <button
+    39	        class="history-button"
+    40	        :disabled="!canRedo"
+    41	        @click="handleRedo"
+    42	        title="Redo (Ctrl+Y)"
+    43	        aria-label="Redo"
+    44	      >
+    45	        <RedoIcon class="button-icon" />
+    46	      </button>
+    47	    </div>
+    48	    
+    49	    <div class="toolbar-separator"></div>
+    50	
+    51	    <!-- Active Plane selector -->
+    52	    <PlaneSelector />
+    53	    
+    54	    <div class="toolbar-separator"></div>
+    55	    
+    56	    <!-- Navigation controls -->
+    57	    <div class="navigation-controls">
+    58	      <button
+    59	        class="nav-button"
+    60	        @click="handleToggleGrid"
+    61	        :class="{ active: gridVisible }"
+    62	        title="Toggle Grid (G)"
+    63	        aria-label="Toggle Grid"
+    64	      >
+    65	        <GridIcon class="button-icon" />
+    66	      </button>
+    67	
+    68	      <button
+    69	        class="nav-button"
+    70	        @click="handleToggleProjections"
+    71	        :class="{ active: showProjectedElements }"
+    72	        title="Toggle 3D Projections (D)"
+    73	        aria-label="Toggle 3D Projections"
+    74	      >
+    75	        <ProjectionIcon class="button-icon" />
+    76	      </button>
+    77	
+    78	      <button
+    79	        class="nav-button"
+    80	        @click="handleFitToView"
+    81	        title="Fit to View (Ctrl+0)"
+    82	        aria-label="Fit to View"
+    83	      >
+    84	        <ZoomFitIcon class="button-icon" />
+    85	      </button>
+    86	    </div>
+    87	    
+    88	    <div class="toolbar-separator"></div>
+    89	    
+    90	    <!-- Tool buttons -->
+    91	    <!-- Phase 54.5: Selection Tool (standalone, not in family) -->
+    92	    <button
+    93	      class="tool-button"
+    94	      :class="{ active: toolStore.isToolActive('select') }"
+    95	      @click="selectTool('select')"
+    96	      title="Selection Tool - Pick, move, and edit objects (Esc)"
+    97	      aria-label="Selection Tool"
+    98	    >
+    99	      <SelectionToolIcon class="button-icon" />
+   100	    </button>
+   101	    
+   102	    <!-- Phase 67: Tool Family Buttons with Dropdowns -->
+   103	    <ToolFamilyButton
+   104	      v-for="family in TOOL_FAMILIES"
+   105	      :key="family.id"
+   106	      :family="family"
+   107	    />
+   108	
+   109	    <!-- T406: Login Status Widget at far right -->
+   110	    <LoginStatusWidget
+   111	      @sign-in="handleSignIn"
+   112	      @sign-out="handleSignOut"
+   113	    />
+   114	  </div>
+   115	</template>
+   116	
+   117	<script setup lang="ts">
+   118	import { inject, computed, onMounted, onUnmounted, ref } from 'vue';
+   119	import { useToolStore } from '@/stores/toolStore';
+   120	import { useViewStore } from '@/stores/viewStore';
+   121	import { createToolbarHistoryController } from '@/application/toolbar/ToolbarHistoryController';
+   122	import LoginStatusWidget from '@/components/LoginStatusWidget.vue';
+   123	import PlaneSelector from '@/components/toolbars/PlaneSelector.vue';
+   124	import ToolFamilyButton from '@/components/toolbars/ToolFamilyButton.vue';
+   125	import { TOOL_FAMILIES } from '@/config/toolFamilies';
+   126	import SelectionToolIcon from '@/components/icons/toolbar/SelectionToolIcon.vue';
+   127	import NewFileIcon from '@/components/icons/toolbar/NewFileIcon.vue';
+   128	import OpenFileIcon from '@/components/icons/toolbar/OpenFileIcon.vue';
+   129	import UndoIcon from '@/components/icons/toolbar/UndoIcon.vue';
+   130	import RedoIcon from '@/components/icons/toolbar/RedoIcon.vue';
+   131	import GridIcon from '@/components/icons/toolbar/GridIcon.vue';
+   132	import ProjectionIcon from '@/components/icons/toolbar/ProjectionIcon.vue';
+   133	import ZoomFitIcon from '@/components/icons/toolbar/ZoomFitIcon.vue';
+   134	
+   135	/**
+   136	 * Toolbar.vue - Tool selection toolbar
+   137	 *
+   138	 * Provides buttons for selecting geometric construction tools (Point, Line, etc.),
+   139	 * file operations (New, Open), and history controls (Undo/Redo).
+   140	 * Manages active tool state via tool store.
+   141	 *
+   142	 * Reference: specs/001-dihedral-learning-mvp/ui-spec.md - Toolbar Component
+   143	 */
+   144	
+   145	interface Emits {
+   146	  (e: 'new-project'): void;
+   147	  (e: 'open-project'): void;
+   148	  (e: 'fit-to-view'): void;
+   149	  (e: 'sign-in'): void;
+   150	  (e: 'sign-out'): void;
+   151	}
+   152	
+   153	const emit = defineEmits<Emits>();
+   154	
+   155	const toolStore = useToolStore();
+   156	const viewStore = useViewStore();
+   157	const toolbarHistoryController = createToolbarHistoryController({
+   158	  commandStack: inject<unknown>('commandStack')
+   159	});
+   160	
+   161	// Reactive trigger for history updates (Phase 91)
+   162	const historyUpdate = ref(0);
+   163	let unsubscribeHistory: (() => void) | undefined;
+   164	
+   165	// Computed properties for undo/redo availability
+   166	const canUndo = computed(() => {
+   167	  historyUpdate.value; // Create dependency
+   168	  return toolbarHistoryController.getState().canUndo;
+   169	});
+   170	
+   171	const canRedo = computed(() => {
+   172	  historyUpdate.value; // Create dependency
+   173	  return toolbarHistoryController.getState().canRedo;
+   174	});
+   175	
+   176	// Grid visibility
+   177	const gridVisible = computed(() => viewStore.gridVisible.value);
+   178	
+   179	// Phase 106: 3D element projection display
+   180	const showProjectedElements = computed(() => viewStore.showProjectedElements.value);
+   181	
+   182	/**
+   183	 * Select a tool
+   184	 */
+   185	function selectTool(tool: 'select' | 'point' | 'line' | 'circle' | 'segment' | 'guide' | 'intersection') {
+   186	  console.log('Selecting tool:', tool);
+   187	  toolStore.setTool(tool);
+   188	  console.log('Tool set. Current tool:', toolStore.currentTool);
+   189	}
+   190	
+   191	/**
+   192	 * Handle global keyboard shortcuts
+   193	 * Phase 54.5: Esc activates Selection Tool
+   194	 * Phase 67: Letter shortcuts activate specific sub-tools and update last-used
+   195	 */
+   196	function handleKeyDown(event: KeyboardEvent) {
+   197	  if (event.key === 'Escape') {
+   198	    selectTool('select');
+   199	    event.preventDefault();
+   200	    return;
+   201	  }
+   202	
+   203	  // Handle letter shortcuts for tools
+   204	  const key = event.key.toUpperCase();
+   205	
+   206	  // Phase 106: D key toggles 3D element projection display
+   207	  if (key === 'D') {
+   208	    handleToggleProjections();
+   209	    event.preventDefault();
+   210	    return;
+   211	  }
+   212	
+   213	  // Find tool with matching shortcut across all families
+   214	  for (const family of TOOL_FAMILIES) {
+   215	    for (const tool of family.tools) {
+   216	      if (tool.shortcut === key) {
+   217	        // Activate tool directly and update last-used for its family
+   218	        toolStore.selectSubTool(family.id, tool.id);
+   219	        event.preventDefault();
+   220	        return;
+   221	      }
+   222	    }
+   223	  }
+   224	}
+   225	
+   226	onMounted(() => {
+   227	  window.addEventListener('keydown', handleKeyDown);
+   228	
+   229	  // Subscribe to history changes
+   230	  unsubscribeHistory = toolbarHistoryController.subscribe(() => {
+   231	    historyUpdate.value++;
+   232	  });
+   233	});
+   234	
+   235	onUnmounted(() => {
+   236	  window.removeEventListener('keydown', handleKeyDown);
+   237	
+   238	  if (unsubscribeHistory) {
+   239	    unsubscribeHistory();
+   240	  }
+   241	});
+   242	
+   243	/**
+   244	 * Handle undo action
+   245	 */
+   246	function handleUndo() {
+   247	  toolbarHistoryController.undo();
+   248	  historyUpdate.value++;
+   249	}
+   250	
+   251	/**
+   252	 * Handle redo action
+   253	 */
+   254	function handleRedo() {
+   255	  toolbarHistoryController.redo();
+   256	  historyUpdate.value++;
+   257	}
+   258	
+   259	/**
+   260	 * Handle new project button
