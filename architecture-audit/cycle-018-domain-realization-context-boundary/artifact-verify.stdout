@@ -1,0 +1,43 @@
+architecture-audit/cycle-018-domain-realization-context-boundary:
+total 324
+drwxr-xr-x 1 salva salva  1458 May 26 23:56 .
+drwxr-xr-x 1 salva salva  3598 May 26 23:53 ..
+-rw-r--r-- 1 salva salva     0 May 26 23:56 artifact-verify.stderr
+-rw-r--r-- 1 salva salva     0 May 26 23:56 artifact-verify.stdout
+-rw-r--r-- 1 salva salva     0 May 26 23:54 caller-inventory-scan.stderr
+-rw-r--r-- 1 salva salva 35215 May 26 23:54 caller-inventory-scan.stdout
+-rw-r--r-- 1 salva salva    83 May 26 23:53 manager-source-evidence-1.stderr
+-rw-r--r-- 1 salva salva 10867 May 26 23:53 manager-source-evidence-1.stdout
+-rw-r--r-- 1 salva salva     0 May 26 23:53 manager-static-scan-realization.stderr
+-rw-r--r-- 1 salva salva 27403 May 26 23:53 manager-static-scan-realization.stdout
+-rw-r--r-- 1 salva salva     0 May 26 23:53 manager-status-pre.stderr
+-rw-r--r-- 1 salva salva 21265 May 26 23:53 manager-status-pre.stdout
+-rw-r--r-- 1 salva salva     0 May 26 23:53 manager-wave018-grep.stderr
+-rw-r--r-- 1 salva salva 12647 May 26 23:53 manager-wave018-grep.stdout
+drwxr-xr-x 1 salva salva    82 May 26 23:56 proposals
+-rw-r--r-- 1 salva salva     0 May 26 23:54 realization-seam-scan.stderr
+-rw-r--r-- 1 salva salva 26452 May 26 23:54 realization-seam-scan.stdout
+-rw-r--r-- 1 salva salva 14066 May 26 23:56 scope-check.md
+-rw-r--r-- 1 salva salva    83 May 26 23:54 source-line-evidence.stderr
+-rw-r--r-- 1 salva salva 22381 May 26 23:54 source-line-evidence.stdout
+-rw-r--r-- 1 salva salva     0 May 26 23:54 source-line-evidence-targeted.stderr
+-rw-r--r-- 1 salva salva 83355 May 26 23:54 source-line-evidence-targeted.stdout
+-rw-r--r-- 1 salva salva     0 May 26 23:54 status-pre-scout.stderr
+-rw-r--r-- 1 salva salva 25202 May 26 23:54 status-pre-scout.stdout
+-rw-r--r-- 1 salva salva     0 May 26 23:54 test-surface-scan.stderr
+-rw-r--r-- 1 salva salva   638 May 26 23:54 test-surface-scan.stdout
+-rw-r--r-- 1 salva salva     0 May 26 23:54 wave-018-entry.stderr
+-rw-r--r-- 1 salva salva 12757 May 26 23:54 wave-018-entry.stdout
+-rw-r--r-- 1 salva salva     0 May 26 23:56 write-artifacts.stderr
+-rw-r--r-- 1 salva salva     0 May 26 23:56 write-artifacts.stdout
+
+architecture-audit/cycle-018-domain-realization-context-boundary/proposals:
+total 20
+drwxr-xr-x 1 salva salva   82 May 26 23:56 .
+drwxr-xr-x 1 salva salva 1458 May 26 23:56 ..
+-rw-r--r-- 1 salva salva 8794 May 26 23:56 proposal-direct.md
+-rw-r--r-- 1 salva salva 7087 May 26 23:56 proposal-restructure.md
+  102 architecture-audit/cycle-018-domain-realization-context-boundary/scope-check.md
+   94 architecture-audit/cycle-018-domain-realization-context-boundary/proposals/proposal-direct.md
+   78 architecture-audit/cycle-018-domain-realization-context-boundary/proposals/proposal-restructure.md
+  274 total

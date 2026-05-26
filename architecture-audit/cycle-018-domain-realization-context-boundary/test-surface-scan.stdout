@@ -1,0 +1,8 @@
+frontend/tests/unit/application/canvasPresentation/canvasGridSelector.spec.ts
+frontend/tests/unit/application/canvasPresentation/canvasInteractionQuery.spec.ts
+frontend/tests/unit/application/canvasPresentation/canvasPresentationSelector.spec.ts
+frontend/tests/unit/application/canvasPresentation/canvasWorldReadPort.spec.ts
+frontend/tests/unit/application/canvasPresentation/projected3DCanvasSelector.spec.ts
+frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts
+frontend/tests/unit/application/threePresentation/threePresentationSelector.spec.ts
+frontend/tests/unit/domain/realizationCache.spec.ts

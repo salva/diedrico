@@ -1,0 +1,95 @@
+939:## Wave 018 — Domain realization context boundary
+940:
+941:**Status**
+942:
+943:Added by `cycle-018-wave-plan-extension` as the recommended next wave after Wave 017. Requires `cycle-018-wave-plan-extension-review` sign-off before the canonical `cycle-018-fresh-scout-proposals` stage and before any implementation.
+944:
+945:**Scope**
+946:
+947:- `frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts`
+948:- `frontend/src/domain/world/Element2D.ts`
+949:- `frontend/src/domain/world/Element3D.ts`
+950:- 3D realization classes that still type realization against concrete `World` or `any`:
+951:  - `frontend/src/domain/world/Point3D.ts`
+952:  - `frontend/src/domain/world/Line3D.ts`
+953:  - `frontend/src/domain/world/Segment3D.ts`
+954:  - `frontend/src/domain/world/Plane.ts`
+955:  - `frontend/src/domain/world/HingeLine.ts`
+956:  - `frontend/src/domain/world/BrokenHingeLine.ts`
+957:- 2D realization classes only where needed to align naming/types with the existing projection-element context:
+958:  - `frontend/src/domain/world/Point.ts`
+959:  - `frontend/src/domain/world/Line.ts`
+960:  - `frontend/src/domain/world/Segment.ts`
+961:  - `frontend/src/domain/world/Circle.ts`
+962:  - `frontend/src/domain/world/Guide.ts`
+963:  - `frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts`
+964:- Presentation read-port adapters that currently pass concrete `World` into domain realization:
+965:  - `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts`
+966:  - `frontend/src/application/threePresentation/ThreeWorldReadPort.ts`
+967:- focused realization-context, canvas-read-port, three-read-port, and representative rendering tests
+968:
+969:**Scope guard**
+970:
+971:This wave owns the domain realization context contract, not a broad rendering, scene-host, command, persistence, app-shell, backend, validation-platform, docs/spec, or package/tooling redesign. It must begin with a current caller inventory for `realize2D(...)`, `realize3D(...)`, `getPlaneEquation(...)`, and projection-plane realization helper APIs, then choose the smallest typed context boundary that removes concrete `World`/`any` from active realization contracts without introducing a new god context.
+972:
+973:Do not reopen the Wave 016/017 presentation selector read-port architecture except to update adapters to the new realization context. Do not move ownership of style, visibility, process-tree rendering, command execution, or persistence into the realization context. If the caller inventory proves that projection-plane mutation APIs or dependency registration must be redesigned first, stop and run a reviewed plan-edit mini-cycle rather than hiding that redesign in this wave.
+974:
+975:**Baseline/current grounding**
+976:
+977:The baseline already identified domain-internal realization coupling as a residual central risk: `Element2D` required realization through a whole `World`, `styleService` walked `World`/`ProcessTree`, and weak realization contexts used `any` (`architecture-audit/baseline/risk-register.md`, R6 and R11; `architecture-audit/baseline/architecture-map.md`, “Additional service/domain coupling paths”). Waves 016 and 017 deliberately narrowed canvas and 3D presentation selectors to read ports, but both closure logs record the same residual: presentation read-port adapters still call domain realization APIs with concrete runtime `World` (`architecture-audit/cycle-016-canvas-presentation-overlay-boundary/implementation-log.md`, “Residual risks / future candidates”; `architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/implementation-log.md`, “Residual risks after closure”).
+978:
+979:Current source evidence confirms that the residual is now a domain-realization boundary, not a selector-boundary problem. `CanvasWorldReadPort` exposes realization methods and its adapter calls `plane.realizePoint2D(point, world)`, `plane.realizeLine2D(line, world)`, `plane.realizeCircle2D(circle, world)`, `point.realize3D(world)`, `line.realize3D(world)`, and `segment.realize3D(world)` (`frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:14`, `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:21`, `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:30`, `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:46`, `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:51`). `ThreeWorldReadPort` similarly wraps `World` and builds read models by calling `point.realize2D(world)`, `line.realize2D(world)`, `circle.realize2D(world)`, selected-guide `line.realize2D(world)`, and hinge `realize3D(world)` inside the adapter (`frontend/src/application/threePresentation/ThreeWorldReadPort.ts:55`, `frontend/src/application/threePresentation/ThreeWorldReadPort.ts:65`, `frontend/src/application/threePresentation/ThreeWorldReadPort.ts:84`, `frontend/src/application/threePresentation/ThreeWorldReadPort.ts:98`, `frontend/src/application/threePresentation/ThreeWorldReadPort.ts:117`).
+980:
+981:The domain has already started the right vocabulary for 2D realization with `ProjectionElementRealizationContext` (`frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:9`, `frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:20`), and `Element2D.realize2D(context: ProjectionElementRealizationContext)` now uses that type (`frontend/src/domain/world/Element2D.ts:1`, `frontend/src/domain/world/Element2D.ts:108`). The remaining central weakness is that 3D realization and plane-equation contracts still use concrete `World` or `any`: `Element3D.realize3D(world: any): any` (`frontend/src/domain/world/Element3D.ts:40`), `Point3D`/`Line3D`/`Segment3D` import `World` for realization (`frontend/src/domain/world/Point3D.ts`, `frontend/src/domain/world/Line3D.ts`, `frontend/src/domain/world/Segment3D.ts`), and `Plane` uses `any` in plane-equation/realization APIs (`frontend/src/domain/world/Plane.ts`). Static scans in `architecture-audit/cycle-018-wave-plan-extension/static-realization-world-scan.stdout` and `static-any-scan.stdout` capture the current residual seams.
+982:
+983:**Target outcome**
+984:
+985:Domain realization APIs consume explicit typed realization/read contexts rather than full mutable `World` or broad `any`. 2D and 3D realization share a coherent context vocabulary where their lookup needs overlap, with separate narrow capabilities where they do not. Canvas and three presentation read-port adapters may still be the runtime boundary that wraps a concrete `World`, but they pass only the selected realization context into domain realization APIs. The active source no longer has a parallel situation where selectors use read ports while domain realization contracts force adapters back to full `World`/`any`.
+986:
+987:**Explicit DELETE list**
+988:
+989:- Delete `Element3D.realize3D(world: any): any` and replace it with a typed 3D realization context/result contract.
+990:- Delete `Plane.getPlaneEquation(world: any)` / `Plane.realize3D(world: any)` broad `any` contracts in touched plane classes.
+991:- Delete concrete `World` realization signatures from active 3D domain elements where a typed context is sufficient, including point/line/segment/plane/hinge realization paths covered by the caller inventory.
+992:- Delete presentation adapter calls that pass full `World` directly to `realize2D(...)`, `realize3D(...)`, or plane-equation APIs when the new context is available.
+993:- Delete redundant realization-context names or shims if implementation discovers the existing `ProjectionElementRealizationContext` can be evolved cleanly instead of duplicated.
+994:- Delete touched unit-test helper `as any`/broad mock contexts that only exist because realization contracts are weak; replace with typed test context builders.
+995:- Delete transitional overloads, compatibility wrappers, dead exports, and type aliases that preserve both old full-`World` and new context APIs.
+996:
+997:**Success criteria**
+998:
+999:- A caller inventory in `implementation-log.md` lists active `realize2D`, `realize3D`, `getPlaneEquation`, projection-plane realization helper, and presentation-read-port adapter call sites before edits and states which are changed, deferred, or explicitly out of scope.
+1000:- Active 3D realization base contracts no longer use `any` or concrete `World` where a typed realization context is sufficient.
+1001:- Existing 2D `ProjectionElementRealizationContext` usage is preserved or evolved into a clearly named realization context family; no second duplicate context is introduced for the same lookup responsibility.
+1002:- `CanvasWorldReadPort` and `ThreeWorldReadPort` pass typed realization contexts into domain realization calls rather than exposing selector-side read ports that internally depend on full-`World` realization signatures.
+1003:- Focused tests cover the selected realization context using typed test fixtures for representative 2D point/line/circle/guide, 3D point/line/segment/plane/hinge, and canvas/three read-port adapter paths changed by the wave.
+1004:- No source change is made to command/undo, persistence/project schema, app-shell orchestration, backend contracts, package/tooling, docs/specs, Drive/local services, or broad rendering/scene-host modules except if a reviewed mini-cycle explicitly broadens scope.
+1005:- Mandatory validation cadence passes with stable logs: root/frontend lint where defined, focused Vitest for realization/read-port tests, full root/frontend Vitest, root/frontend build, root/frontend e2e because canvas/3D rendering is user-observable, live preview refresh on `0.0.0.0:5173`, HTTP reachability probe, and Playwright/live smoke for representative 2D canvas plus 3D view rendering.
+1006:
+1007:**Dependencies**
+1008:
+1009:Depends on Waves 016 and 017 because those waves moved presentation selectors behind canvas/three read ports and exposed the remaining full-`World` seam as a domain realization issue. It is ordered before broader 3D scene-host lifecycle, app-shell service concentration, backend/frontend contract stance, validation-gate hardening beyond existing gates, placeholder/debug cleanup, and docs/spec drift because those later topics should consume a stable domain realization/read-context contract rather than preserve the current full-`World` realization API.
+1010:
+1011:**Validation requirements**
+1012:
+1013:1. Capture pre-edit static scans for `realize2D`, `realize3D`, `getPlaneEquation`, `World` imports in realization classes, `any` realization contracts, and read-port adapter calls that pass full `World` into realization.
+1014:2. Run focused Vitest for changed realization context/domain element/read-port adapter modules.
+1015:3. Run root and frontend lint where scripts exist.
+1016:4. Run full root and frontend Vitest.
+1017:5. Run root and frontend build.
+1018:6. Run root and frontend Playwright e2e because realization affects user-visible 2D/3D rendering, construction, intersections, guides, and projection-plane behavior.
+1019:7. Refresh the live preview on `0.0.0.0:5173`, capture HTTP 200, and run focused Playwright/live browser smoke that confirms representative 2D canvas primitives and the 3D view still render.
+1020:
+1021:**Risks**
+1022:
+1023:- A single “realization context” can become a renamed `World` facade if it exposes every lookup/mutation method. Keep capabilities read-only and scoped to actual realization caller needs from the inventory.
+1024:- Changing realization signatures can ripple widely through geometry construction and rendering. Use typed context builders and focused tests before full validation.
+1025:- Projection-plane mutation methods use realization while also registering dependencies and marking dirty; do not mix mutation/dependency ownership into this realization-context wave unless a reviewed plan edit broadens scope.
+1026:- Some domain comments still reference old phase-era `World` examples. Do not convert this into a docs/comment cleanup wave; update only comments adjacent to changed contracts if needed for correctness.
+1027:- If the source tree has unrelated dirty build-contract work in progress, implementation must inspect path-focused diffs first and avoid reverting or masking those changes.
+1028:
+1029:**No-backcompat rationale**
+1030:
+1031:The old full-`World`/`any` realization signatures are architectural debt, not a compatibility surface worth preserving. Keeping overloads or aliases would leave the core domain contract ambiguous and would let future presentation adapters continue bypassing narrow read contexts. Under the project priorities, delete the old signatures and update active callers/tests directly once the reviewed proposal chooses the exact context shape.
+1032:
+1033:---

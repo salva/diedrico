@@ -1,0 +1,314 @@
+frontend/src/commands/operations/world/Add3DLineOp.ts:78:      const proj1Real = proj1.realize2D(world);
+frontend/src/commands/operations/world/Add3DLineOp.ts:79:      const proj2Real = proj2.realize2D(world);
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:79:      const trace1Real = trace1.realize2D(world);
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:80:      const trace2Real = trace2.realize2D(world);
+frontend/src/commands/operations/world/Add3DPointOp.ts:85:      const proj1Real = proj1.realize2D(world);
+frontend/src/commands/operations/world/Add3DPointOp.ts:86:      const proj2Real = proj2.realize2D(world);
+frontend/src/commands/operations/world/Add3DSegmentOp.ts:79:      const proj1Real = proj1.realize2D(world);
+frontend/src/commands/operations/world/Add3DSegmentOp.ts:80:      const proj2Real = proj2.realize2D(world);
+frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts:80:      const t1Real = t1Line.realize2D(world);
+frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts:81:      const t2Real = t2Line.realize2D(world);
+frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts:82:      const t2PrimeReal = t2PrimeLine.realize2D(world);
+frontend/src/components/dialogs/PropertiesDialog.vue:265:    const realization = plane?.getPoint(props.elementId)?.realize2D(props.world);
+frontend/src/components/dialogs/PropertiesDialog.vue:275:    const realization = plane?.getCircle(props.elementId)?.realize2D(props.world);
+frontend/src/components/panels/ProcessTreeNode.vue:261:    const realization = element.realize2D(props.world);
+frontend/src/domain/world/BrokenHingeLine.ts:99:    const t2Real2D = t2Line.realize2D(world);
+frontend/src/domain/world/Circle.ts:153:    const centerRealization = centerPoint.realize2D(world);
+frontend/src/domain/world/Circle.ts:154:    const circumferenceRealization = circumferencePoint.realize2D(world);
+frontend/src/domain/world/Circle.ts:256:    const p1Realization = point1.realize2D(world);
+frontend/src/domain/world/Circle.ts:257:    const p2Realization = point2.realize2D(world);
+frontend/src/domain/world/Circle.ts:258:    const p3Realization = point3.realize2D(world);
+frontend/src/domain/world/Guide.ts:109:    const referenceLine = refLine.realize2D(world);
+frontend/src/domain/world/Guide.ts:124:    const throughPointRealization = throughPoint.realize2D(world);
+frontend/src/domain/world/Guide.ts:277:    const primaryGuideRealization = primaryGuide.realize2D(world);
+frontend/src/domain/world/Guide.ts:285:    const primaryHalfHingeLineRealization = primaryHHL.realize2D(world);
+frontend/src/domain/world/Guide.ts:297:    const siblingHalfHingeLineRealization = myHHL.realize2D(world);
+frontend/src/domain/world/HingeLine.ts:170:    const line3D = hingeLine.realize3D(world);
+frontend/src/domain/world/Line.ts:230:    const p1Realization = point1.realize2D(world);
+frontend/src/domain/world/Line.ts:231:    const p2Realization = point2.realize2D(world);
+frontend/src/domain/world/Line.ts:316:    const referenceLine = refLine.realize2D(world);
+frontend/src/domain/world/Line.ts:328:    const throughPointRealization = throughPoint.realize2D(world);
+frontend/src/domain/world/Line.ts:431:    const referenceLine = refLine.realize2D(world);
+frontend/src/domain/world/Line.ts:442:    const throughPointRealization = throughPoint.realize2D(world);
+frontend/src/domain/world/Line.ts:566:    const circleRealization = circle.realize2D(world);
+frontend/src/domain/world/Line.ts:572:    const throughPointRealization = throughPoint.realize2D(world);
+frontend/src/domain/world/Line.ts:743:    const circleRealization = circle.realize2D(world);
+frontend/src/domain/world/Line.ts:750:    const refLineRealization = refLine.realize2D(world);
+frontend/src/domain/world/Line3D.ts:99:      const line1Real = line1Element.realize2D(world);
+frontend/src/domain/world/Line3D.ts:100:      const line2Real = line2Element.realize2D(world);
+frontend/src/domain/world/Line3D.ts:122:      const plane1Real = plane1.realize3D(world);
+frontend/src/domain/world/Line3D.ts:123:      const plane2Real = plane2.realize3D(world);
+frontend/src/domain/world/Plane.ts:30:  abstract getPlaneEquation(world: any): Vector4 | null;
+frontend/src/domain/world/Plane.ts:37:    const equation = this.getPlaneEquation(world);
+frontend/src/domain/world/Plane.ts:159:  getPlaneEquation(_world: any): Vector4 {
+frontend/src/domain/world/Plane.ts:269:  getPlaneEquation(world: any): Vector4 | null {
+frontend/src/domain/world/Plane.ts:277:    const t1InP1 = t1Line.realize2D(world);
+frontend/src/domain/world/Plane.ts:278:    const t2InP2 = t2Line.realize2D(world);
+frontend/src/domain/world/Point.ts:246:    const line1 = l1.realize2D(world);
+frontend/src/domain/world/Point.ts:247:    const line2 = l2.realize2D(world);
+frontend/src/domain/world/Point.ts:389:    const line = l.realize2D(world);
+frontend/src/domain/world/Point.ts:390:    const circle = c.realize2D(world);
+frontend/src/domain/world/Point.ts:517:    const circle1 = c1.realize2D(world);
+frontend/src/domain/world/Point.ts:518:    const circle2 = c2.realize2D(world);
+frontend/src/domain/world/Point.ts:607:    const primaryRealization = primaryPoint.realize2D(world);
+frontend/src/domain/world/Point3D.ts:124:      const proj1Realization = proj1Element.realize2D(world);
+frontend/src/domain/world/Point3D.ts:125:      const proj2Realization = proj2Element.realize2D(world);
+frontend/src/domain/world/Segment.ts:90:    const p1Realization = p1.realize2D(world);
+frontend/src/domain/world/Segment.ts:91:    const p2Realization = p2.realize2D(world);
+frontend/src/domain/world/Segment3D.ts:84:      const seg1Real = seg1Element.realize2D(world);
+frontend/src/domain/world/Segment3D.ts:85:      const seg2Real = seg2Element.realize2D(world);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:125:    const t2Real2D = t2Line.realize2D(world);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:199:    const t1Realization = t1HalfHinge.realize2D(world);
+frontend/src/domain/world/World.ts:42: *    const realization = point?.realize2D(world);  // Get computed coordinates
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:252:  realizePoint2D(point: Point2D, world: ProjectionPlaneMutationContext): Point2DRealization2D | undefined {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:260:    const realization = point.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:276:  realizeLine2D(line: Line2D, world: ProjectionPlaneMutationContext): Line2DRealization2D | undefined {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:284:    const realization = line.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:300:  realizeCircle2D(circle: Circle2D, world: ProjectionPlaneMutationContext): Circle2DRealization2D | undefined {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:308:    const realization = circle.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:434:    const line1 = l1.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:435:    const line2 = l2.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:487:    const line = lineElement.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:488:    const circle = circleElement.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:545:    const circle1 = circle1Element.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:546:    const circle2 = circle2Element.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:611:    const point1Realization = point1.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:612:    const point2Realization = point2.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:668:    const referenceLine = refLineElement.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:718:    const referenceLine = refLineElement.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:832:    const referenceLine = refLineElement.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:995:    const referenceLine = refLineElement.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1044:    const referenceLine = refLineElement.realize2D(world);
+frontend/src/tools/CircleTool.ts:55:          const centerRealization = center.realize2D(context.world);
+frontend/src/tools/CircleTool.ts:56:          const circumferenceRealization = circumferencePoint.realize2D(context.world);
+frontend/src/tools/CreateProjectionPlaneTool.ts:118:                const t2PrimeRealization = t2PrimeLineModel.realize2D(context.world);
+frontend/src/tools/ParallelLineTool.ts:54:            const realization = refLine.realize2D(context.world);
+frontend/src/tools/PerpendicularLineTool.ts:54:            const realization = refLine.realize2D(context.world);
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts:61:            const realization = refLine.realize2D(context.world);
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts:96:    const circleRealization = circle?.realize2D(context.world);
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts:97:    const lineRealization = referenceLine?.realize2D(context.world);
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts:60:            const circleRealization = context.world.getCircle2D(circleEl.id)?.realize2D(context.world);
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts:61:            const pointRealization = context.world.getPoint2D(pointEl.id)?.realize2D(context.world);
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts:101:    const circleRealization = circle?.realize2D(context.world);
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts:102:    const pointRealization = throughPoint?.realize2D(context.world);
+frontend/src/utils/arcGeometry.ts:45:    const primaryReal = primaryGuide.realize2D(world);
+frontend/src/utils/arcGeometry.ts:46:    const siblingReal = siblingGuide.realize2D(world);
+frontend/src/utils/projectionPlaneUtils.ts:195:  const t1Realization = t1Line.realize2D(world);
+frontend/src/utils/projectionPlaneUtils.ts:196:  const t2Realization = t2Line.realize2D(world);
+frontend/src/utils/projectionPlaneUtils.ts:197:  const t2PrimeRealization = t2PrimeLine.realize2D(world);
+frontend/src/utils/projectionPlaneUtils.ts:203:  const planeP1Realization2D = planeP1.realize2D(world);
+frontend/src/utils/projectionPlaneUtils.ts:402:    const t1Realization = t1Line.realize2D(world);
+frontend/src/utils/projectionPlaneUtils.ts:403:    const t2Realization = t2Line.realize2D(world);
+frontend/src/application/construction/ConstructionUseCases.ts:171:    const r1 = element1.realize2D(world);
+frontend/src/application/construction/ConstructionUseCases.ts:172:    const r2 = element2.realize2D(world);
+frontend/src/application/construction/ConstructionUseCases.ts:197:  const lr = line.realize2D(world);
+frontend/src/application/construction/ConstructionUseCases.ts:198:  const cr = circle.realize2D(world);
+frontend/src/application/construction/ConstructionUseCases.ts:210:  const r1 = c1.realize2D(world);
+frontend/src/application/construction/ConstructionUseCases.ts:211:  const r2 = c2.realize2D(world);
+frontend/src/application/construction/ConstructionUseCases.ts:231:        const realization = element?.realize2D(world);
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:38:        const realization = readPort.realizePoint2D(plane, point);
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:49:        const realization = readPort.realizeLine2D(plane, line);
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:76:        const realization = readPort.realizeCircle2D(plane, circle);
+frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:21:  realizePoint2D(plane: ProjectionPlane, point: Point2D): Point2DRealization2D | undefined;
+frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:22:  realizeLine2D(plane: ProjectionPlane, line: Line2D): Line2DRealization2D | undefined;
+frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:23:  realizeCircle2D(plane: ProjectionPlane, circle: Circle2D): Circle2DRealization2D | undefined | null;
+frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:46:    realizePoint2D: (plane, point) => plane.realizePoint2D(point, world),
+frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:47:    realizeLine2D: (plane, line) => plane.realizeLine2D(line, world),
+frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:48:    realizeCircle2D: (plane, circle) => plane.realizeCircle2D(circle, world),
+frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:49:    realizePoint3D: point => point.realize3D(world),
+frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:50:    realizeLine3D: line => line.realize3D(world),
+frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:51:    realizeSegment3D: segment => segment.realize3D(world),
+frontend/src/application/threePresentation/ThreeWorldReadPort.ts:84:      points: plane.getAllPoints().map(point => ({ id: point.id, visualStyle: point.visualStyle, realization: point.realize2D(world) })),
+frontend/src/application/threePresentation/ThreeWorldReadPort.ts:85:      lines: plane.getAllLines().map(line => ({ id: line.id, visualStyle: line.visualStyle, realization: line.realize2D(world), isSegment: line instanceof Segment2DByPoints })),
+frontend/src/application/threePresentation/ThreeWorldReadPort.ts:86:      circles: plane.getAllCircles().map(circle => ({ id: circle.id, visualStyle: circle.visualStyle, realization: circle.realize2D(world) })),
+frontend/src/application/threePresentation/ThreeWorldReadPort.ts:98:        return [{ id: line.id, visualStyle: line.visualStyle, planeId: line.planeId, planeRealization: world.getProjectionPlane3DRealization(line.planeId), realization: line.realize2D(world) }];
+frontend/src/application/threePresentation/ThreeWorldReadPort.ts:117:    getHingeModels: () => world.getAllHingeLines().map(hingeLine => ({ id: hingeLine.id, visualStyle: hingeLine.visualStyle, realization: hingeLine.realize3D(world) })),
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:102:      const primaryRealization = horizontalPlane.realizePoint2D(primaryPoint!, world);
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:103:      const siblingRealization = verticalPlane.realizePoint2D(siblingPoint!, world);
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:121:    const realization = world.get3DLine(line3D)?.realize3D(world);
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:150:    const realization = world.get3DLine(line3D)?.realize3D(world);
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:179:    const realization = world.get3DLine(line3D)?.realize3D(world);
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:208:    const realization = world.get3DLine(line3D)?.realize3D(world);
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:235:    const realization = world.get3DLine(line3D)?.realize3D(world);
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:262:    const realization = world.get3DLine(line3D)?.realize3D(world);
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:293:    const real_HV = world.get3DLine(line3D_HV)?.realize3D(world);
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:294:    const real_VH = world.get3DLine(line3D_VH)?.realize3D(world);
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:319:    const realization = world.get3DLine(line3D)?.realize3D(world);
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:350:    const realization = world.get3DLine(line3D)?.realize3D(world);
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:391:    const realization = world.get3DLine(line3D)?.realize3D(world);
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:97:    const cRealization = pointC.realize2D(world);
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:98:    const cPrimeRealization = pointCPrime.realize2D(world);
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:136:    const realization = planeP.realize3D(world);
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:139:    const coordsC = pointC.realize2D(world);
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:140:    const coordsCPrime = pointCPrime!.realize2D(world);
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:226:    const realization = plane3D.realize3D(world);
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:229:    const lineV_2D = lineV.realize2D(world);
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:230:    const lineH_2D = lineH.realize2D(world);
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:236:    const pointV_real = pointV.realize2D(world);
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:237:    const pointH_real = pointH.realize2D(world);
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:74:    const realization = point3D.realize3D(world);
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:128:    const realization = point3D.realize3D(world);
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:163:    const realization = point3D.realize3D(world);
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:196:    const realization = point3D.realize3D(world);
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:232:    const realization = point3D.realize3D(world);
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:274:    const real_VH = point3D_VH.realize3D(world);
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:275:    const real_HV = point3D_HV.realize3D(world);
+frontend/tests/unit/domain/circle.spec.ts:70:      const realization = plane.realizeCircle2D(world.getCircle2D(circle.id)!, world);
+frontend/tests/unit/domain/circle.spec.ts:91:      const realization = plane.realizeCircle2D(world.getCircle2D(circle.id)!, world);
+frontend/tests/unit/domain/circle.spec.ts:116:      const realization = plane.realizeCircle2D(world.getCircle2D(circle.id)!, world);
+frontend/tests/unit/domain/circle.spec.ts:138:      const realization = plane.realizeCircle2D(world.getCircle2D(circle.id)!, world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:34:      const realization = line.realize2D(world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:47:      const realization = line.realize2D(world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:65:      expect(refLine.realize2D(world)!.feasible).toBe(false);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:72:      const realization = parallelLine.realize2D(world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:88:      const realization = parallelLine.realize2D(world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:113:      const pointRealization = infeasiblePoint.realize2D(world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:118:      const realization = parallelLine.realize2D(world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:133:      const realization = segment.realize2D(world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:146:      const realization = segment.realize2D(world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:161:      const realization = circle.realize2D(world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:174:      const realization = circle.realize2D(world);
+frontend/tests/unit/domain/element2d.spec.ts:186:      const realization = point.realize2D(world);
+frontend/tests/unit/domain/element2d.spec.ts:200:      const realization = line.realize2D(world);
+frontend/tests/unit/domain/element2d.spec.ts:213:      const realization = circle.realize2D(world);
+frontend/tests/unit/domain/guide.spec.ts:90:      const realization = guide.realize2D(world);
+frontend/tests/unit/domain/guide.spec.ts:121:      const realization = guide.realize2D(world);
+frontend/tests/unit/domain/guide.spec.ts:152:      const realization = guide.realize2D(world);
+frontend/tests/unit/domain/guide.spec.ts:187:      const realization = guide.realize2D(world);
+frontend/tests/unit/domain/guide.spec.ts:265:      const primaryRealization = primaryGuide.realize2D(world);
+frontend/tests/unit/domain/guide.spec.ts:279:      const siblingRealization = siblingGuide.realize2D(world);
+frontend/tests/unit/domain/line.spec.ts:94:    const realization = line.realize2D(world);
+frontend/tests/unit/domain/line.spec.ts:115:    const realization = line.realize2D(world);
+frontend/tests/unit/domain/line.spec.ts:133:    const realization = line.realize2D(world);
+frontend/tests/unit/domain/line.spec.ts:148:    const realization = line.realize2D(world);
+frontend/tests/unit/domain/line.spec.ts:167:    const realization = line.realize2D(world);
+frontend/tests/unit/domain/line.spec.ts:185:    const realization = line.realize2D(world);
+frontend/tests/unit/domain/lineHierarchy.spec.ts:186:      const realization = segment.realize2D(world);
+frontend/tests/unit/domain/lineHierarchy.spec.ts:198:      const realization = segment.realize2D(world);
+frontend/tests/unit/domain/lineHierarchy.spec.ts:211:      const realization = segment.realize2D(world);
+frontend/tests/unit/domain/lineHierarchy.spec.ts:231:      const realization = line.realize2D(world);
+frontend/tests/unit/domain/lineHierarchy.spec.ts:246:      const realization = line.realize2D(world);
+frontend/tests/unit/domain/lineHierarchy.spec.ts:273:      const realization = guide.realize2D(world);
+frontend/tests/unit/domain/lineHierarchy.spec.ts:314:      const realizations = lines.map(line => line.realize2D(world));
+frontend/tests/unit/domain/point.spec.ts:266:        const realization = sibling.realize2D(world);
+frontend/tests/unit/domain/point.spec.ts:280:        const realization1 = sibling.realize2D(world);
+frontend/tests/unit/domain/point.spec.ts:281:        const realization2 = sibling.realize2D(world);
+frontend/tests/unit/domain/point.spec.ts:296:        const realization1 = sibling.realize2D(world);
+frontend/tests/unit/domain/point.spec.ts:308:        const realization2 = sibling.realize2D(world);
+frontend/tests/unit/domain/point.spec.ts:320:        const realization = sibling.realize2D(world);
+frontend/tests/unit/domain/point.spec.ts:343:        const realizationSibling = sibling.realize2D(world);
+frontend/tests/unit/domain/point.spec.ts:344:        const realizationPrimary = primary.realize2D(world);
+frontend/tests/unit/domain/point.spec.ts:377:    expect(() => point.realize2D(world)).toThrow(
+frontend/tests/unit/domain/point.spec.ts:391:    expect(() => point.realize2D(world)).toThrow(
+frontend/tests/unit/domain/point.spec.ts:405:    expect(() => point.realize2D(world)).toThrow(
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:39:    it('ProjectionPlane.realizePoint2D() should compute and cache point realization', () => {
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:46:      const realization = planeH.realizePoint2D(point, world);
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:65:      const realization = point!.realize2D(world);
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:72:      // Note: realize2D() doesn't automatically cache. Use plane.realizePoint2D() for caching.
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:79:      const first = planeH.realizePoint2D(point, world);
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:82:      const second = planeH.realizePoint2D(point, world);
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:89:    it('ProjectionPlane.realizeLine2D() should compute and cache line realization', () => {
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:96:      const realization = planeH.realizeLine2D(line, world);
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:110:      // to enforce ProjectionPlane ownership. Use plane.realizeLine2D() instead.
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:118:      const realization = planeH.realizeLine2D(segment, world);
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:133:    it('ProjectionPlane.realizeCircle2D() should compute and cache circle realization', () => {
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:142:      const realization = planeH.realizeCircle2D(circle, world);
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:158:      // to enforce ProjectionPlane ownership. Use plane.realizeCircle2D() instead.
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:171:      planeH.realizePoint2D(p1H, world);
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:172:      planeV.realizePoint2D(p1V, world);
+frontend/tests/unit/domain/realizationCache.spec.ts:29:    it('realizePoint2D returns same instance on second call', () => {
+frontend/tests/unit/domain/realizationCache.spec.ts:32:      const first = planeH.realizePoint2D(p, world);
+frontend/tests/unit/domain/realizationCache.spec.ts:33:      const second = planeH.realizePoint2D(p, world);
+frontend/tests/unit/domain/realizationCache.spec.ts:39:    it('realizeLine2D returns same instance on second call', () => {
+frontend/tests/unit/domain/realizationCache.spec.ts:44:      const first = planeH.realizeLine2D(line, world);
+frontend/tests/unit/domain/realizationCache.spec.ts:45:      const second = planeH.realizeLine2D(line, world);
+frontend/tests/unit/domain/realizationCache.spec.ts:51:    it('realizeCircle2D returns same instance on second call', () => {
+frontend/tests/unit/domain/realizationCache.spec.ts:56:      const first = planeH.realizeCircle2D(circle, world);
+frontend/tests/unit/domain/realizationCache.spec.ts:57:      const second = planeH.realizeCircle2D(circle, world);
+frontend/tests/unit/domain/realizationCache.spec.ts:67:      const realized = planeH.realizePoint2D(p, world);
+frontend/tests/unit/domain/realizationCache.spec.ts:77:      const first = planeH.realizePoint2D(p, world);
+frontend/tests/unit/domain/realizationCache.spec.ts:83:      const second = planeH.realizePoint2D(p, world);
+frontend/tests/unit/domain/realizationCache.spec.ts:93:      planeH.realizeLine2D(line, world);
+frontend/tests/unit/domain/realizationCache.spec.ts:106:      planeH.realizeCircle2D(circle, world);
+frontend/tests/unit/domain/realizationCache.spec.ts:123:      const pReal = planeH.realizePoint2D(p1, world);
+frontend/tests/unit/domain/realizationCache.spec.ts:124:      const p2Real = planeH.realizePoint2D(p2, world);
+frontend/tests/unit/domain/realizationCache.spec.ts:125:      const lReal = planeH.realizeLine2D(line, world);
+frontend/tests/unit/domain/realizationCache.spec.ts:144:      planeH.realizePoint2D(center, world);
+frontend/tests/unit/domain/realizationCache.spec.ts:145:      planeH.realizePoint2D(circPt, world);
+frontend/tests/unit/domain/realizationCache.spec.ts:146:      planeH.realizeCircle2D(circle, world);
+frontend/tests/unit/domain/realizationCache.spec.ts:167:      planeH.realizePoint2D(p1, world);
+frontend/tests/unit/domain/realizationCache.spec.ts:168:      planeH.realizePoint2D(p2, world);
+frontend/tests/unit/domain/realizationCache.spec.ts:169:      planeH.realizePoint2D(p3, world);
+frontend/tests/unit/domain/realizationCache.spec.ts:170:      planeH.realizePoint2D(p4, world);
+frontend/tests/unit/domain/realizationCache.spec.ts:171:      planeH.realizeLine2D(line1, world);
+frontend/tests/unit/domain/realizationCache.spec.ts:172:      planeH.realizeLine2D(line2, world);
+frontend/tests/unit/domain/realizationCache.spec.ts:173:      planeH.realizePoint2D(intPt, world);
+frontend/tests/unit/domain/realizationCache.spec.ts:197:      planeH.realizePoint2D(pH, world);
+frontend/tests/unit/domain/realizationCache.spec.ts:198:      planeV.realizePoint2D(pV, world);
+frontend/tests/unit/domain/realizationCache.spec.ts:218:      planeH.realizePoint2D(pA, world);
+frontend/tests/unit/domain/realizationCache.spec.ts:219:      planeH.realizePoint2D(pB, world);
+frontend/tests/unit/domain/realizationCache.spec.ts:220:      planeH.realizeLine2D(lineH, world);
+frontend/tests/unit/domain/realizationCache.spec.ts:221:      planeV.realizePoint2D(pC, world);
+frontend/tests/unit/domain/realizationCache.spec.ts:222:      planeV.realizePoint2D(pD, world);
+frontend/tests/unit/domain/realizationCache.spec.ts:223:      planeV.realizeLine2D(lineV, world);
+frontend/tests/unit/domain/realizationCache.spec.ts:248:      planeH.realizePoint2D(p1, world);
+frontend/tests/unit/domain/realizationCache.spec.ts:249:      planeH.realizePoint2D(p2, world);
+frontend/tests/unit/domain/realizationCache.spec.ts:250:      planeH.realizeLine2D(line, world);
+frontend/tests/unit/domain/realizationCache.spec.ts:251:      planeH.realizeCircle2D(circle, world);
+frontend/tests/unit/domain/realizationCache.spec.ts:270:      planeH.realizePoint2D(pH, world);
+frontend/tests/unit/domain/realizationCache.spec.ts:271:      planeV.realizePoint2D(pV, world);
+frontend/tests/unit/domain/segment.spec.ts:62:      const realization = segment.realize2D(world);
+frontend/tests/unit/domain/segment.spec.ts:77:      const realization = segment.realize2D(world);
+frontend/tests/unit/domain/segment3DRealization.spec.ts:123:    const realization = segment3D.realize3D(world);
+frontend/tests/unit/domain/segment3DRealization.spec.ts:159:    const realization = segment3D.realize3D(world);
+frontend/tests/unit/domain/segment3DRealization.spec.ts:192:    const realization = segment3D.realize3D(world);
+frontend/tests/unit/domain/segment3DRealization.spec.ts:214:    const realization = segment3D.realize3D(world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:45:      const r = intersection.realize2D(world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:64:      const r = intersection.realize2D(world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:86:      const r = intersection.realize2D(world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:108:      const r = intersection.realize2D(world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:132:      const r = intersection.realize2D(world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:153:      const r = intersection.realize2D(world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:172:      const r = intersection.realize2D(world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:191:      const r = intersection.realize2D(world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:215:      const r0 = int0.realize2D(world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:216:      const r1 = int1.realize2D(world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:241:      const r0 = int0.realize2D(world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:261:      const r0 = int0.realize2D(world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:262:      const r1 = int1.realize2D(world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:288:      const r0 = int0.realize2D(world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:307:      const r0 = int0.realize2D(world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:327:      const r0 = int0.realize2D(world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:328:      const r1 = int1.realize2D(world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:354:      const r0 = int0.realize2D(world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:355:      const r1 = int1.realize2D(world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:383:      const r0 = int0.realize2D(world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:403:      const r0 = int0.realize2D(world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:404:      const r1 = int1.realize2D(world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:430:      const r = intersection.realize2D(world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:449:      const r0 = int0.realize2D(world);
+frontend/tests/unit/domain/tangentLine.spec.ts:74:    const lineRealization = tangentLine.realize2D(world);
+frontend/tests/unit/domain/tangentLine.spec.ts:79:    const circleRealization = circle.realize2D(world);
+frontend/tests/unit/domain/tangentLine.spec.ts:111:    const lineRealization = tangentLine.realize2D(world);
+frontend/tests/unit/domain/tangentLine.spec.ts:112:    const circleRealization = circle.realize2D(world);
+frontend/tests/unit/domain/tangentLine.spec.ts:145:      const lineRealization = tangentLine.realize2D(world);
+frontend/tests/unit/domain/tangentLine.spec.ts:146:      const circleRealization = circle.realize2D(world);
+frontend/tests/unit/domain/tangentLine.spec.ts:178:      const lineRealization = tangentLine.realize2D(world);
+frontend/tests/unit/domain/tangentLine.spec.ts:179:      const circleRealization = circle.realize2D(world);
+frontend/tests/unit/domain/tangentLine.spec.ts:210:    const lineRealization = tangentLine.realize2D(world);
+frontend/tests/unit/domain/tangentLine.spec.ts:266:    const lineRealization = tangentLine.realize2D(world);
+frontend/tests/unit/domain/tangentLine.spec.ts:270:    const circleRealization = circle.realize2D(world);
+frontend/tests/unit/domain/tangentLine.spec.ts:304:      const lineRealization = tangentLine.realize2D(world);
+frontend/tests/unit/domain/tangentLine.spec.ts:305:      const circleRealization = circle.realize2D(world);
+frontend/tests/unit/domain/tangentLine.spec.ts:338:    const lineRealization = tangentLine.realize2D(world);
+frontend/tests/unit/domain/world.spec.ts:142:        const realization = point.realize2D(world);
+frontend/tests/unit/domain/world.spec.ts:541:        const realization = point.realize2D(world);
+frontend/tests/unit/domain/world.spec.ts:553:        const realization = line.realize2D(world);
+frontend/tests/unit/domain/world.spec.ts:564:        const realization = segment.realize2D(world);
+frontend/tests/unit/tools/CircleTool.spec.ts:445:      const initialRealization = circle.realize2D(world);
+frontend/tests/unit/tools/CircleTool.spec.ts:463:      const updatedRealization = circle.realize2D(world);
+frontend/tests/unit/tools/CircleTool.spec.ts:532:      const updatedRealization = circle.realize2D(world);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:105:    const realization = created.realize2D(world);
+frontend/tests/unit/application/canvasPresentation/projected3DCanvasSelector.spec.ts:24:    realizePoint2D: () => undefined,
+frontend/tests/unit/application/canvasPresentation/projected3DCanvasSelector.spec.ts:25:    realizeLine2D: () => undefined,
+frontend/tests/unit/application/canvasPresentation/projected3DCanvasSelector.spec.ts:26:    realizeCircle2D: () => undefined,
