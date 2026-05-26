@@ -25,7 +25,7 @@
       />
       <Toolbar 
         @new-project="runtime.actions.newProject"
-        @open-project="runtime.actions.openProjectDialog"
+        @open-project="runtime.actions.showProjectChooser"
         @fit-to-view="handleFitToView"
         @sign-in="runtime.actions.toolbarSignIn"
         @sign-out="runtime.actions.toolbarSignOut"

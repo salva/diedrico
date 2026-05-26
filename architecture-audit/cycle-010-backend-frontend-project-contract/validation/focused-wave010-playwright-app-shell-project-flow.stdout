@@ -1,0 +1,32 @@
+
+Running 1 test using 1 worker
+
+[1A[2K[1/1] [chromium] › tests/e2e/wave010-app-shell-project-flow.spec.ts:3:3 › Wave 010 app-shell project boundary › starts without Google credentials and opens the app-shell project chooser without backend project API calls
+[1A[2K  1) [chromium] › tests/e2e/wave010-app-shell-project-flow.spec.ts:3:3 › Wave 010 app-shell project boundary › starts without Google credentials and opens the app-shell project chooser without backend project API calls 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByText('Diedrico - Project Selection')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for getByText('Diedrico - Project Selection')[22m
+
+
+      29 |     await page.getByRole('button', { name: 'Open Project' }).click();
+      30 |
+    > 31 |     await expect(page.getByText('Diedrico - Project Selection')).toBeVisible();
+         |                                                                  ^
+      32 |     await expect(page.getByText('Sign in with your Google account to access your projects')).toBeVisible();
+      33 |     await expect(page.getByRole('button', { name: 'Sign in with Google' })).toBeVisible();
+      34 |
+        at /work/diedrico/frontend/tests/e2e/wave010-app-shell-project-flow.spec.ts:31:66
+
+    Error Context: test-results/wave010-app-shell-project--894d5-t-backend-project-API-calls-chromium/error-context.md
+
+
+[1A[2K  1 failed
+    [chromium] › tests/e2e/wave010-app-shell-project-flow.spec.ts:3:3 › Wave 010 app-shell project boundary › starts without Google credentials and opens the app-shell project chooser without backend project API calls 

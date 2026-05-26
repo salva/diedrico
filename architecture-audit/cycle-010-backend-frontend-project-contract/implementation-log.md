@@ -82,3 +82,22 @@ Validation logs were captured under `architecture-audit/cycle-010-backend-fronte
 - Did not perform Wave 012 debug/log cleanup.
 - Did not perform broad Wave 013 docs/spec reconciliation beyond directly false backend project API/storage references.
 - Did not retain compatibility shims, DTO adapters, stale route fixtures/tests, or a placeholder backend shell.
+
+## Reviewer-blocker correction — focused app-shell Playwright evidence
+
+Task `t3-correct-focused-e2e-evidence` added focused user-facing Playwright evidence for the active app-shell/startup/open-project boundary without depending on the corrupted broad e2e suite.
+
+### Additional source/test changes
+
+- `frontend/src/App.vue`: corrected the toolbar `@open-project` binding from the stale deleted `runtime.actions.openProjectDialog` name to the active `runtime.actions.showProjectChooser` app-shell action. This is directly within Wave 010 because the selected implementation renamed the app-shell chooser action and deleted the stale `OpenProjectDialog.vue` surface.
+- `frontend/tests/e2e/wave010-app-shell-project-flow.spec.ts`: added a dedicated Playwright spec that starts the app with no Google credentials, verifies the app-shell initializes to the local `Untitled Project` state, opens the project chooser via the user-facing toolbar `Open Project` control, verifies the StartupDialog sign-in/open-project affordance appears, and fails if any stale `localhost:3000/api/projects` or `/api/projects` request is attempted.
+
+### Additional focused validation logs
+
+- `focused-wave010-playwright-app-shell-project-flow.stdout` / `.stderr`: initial focused run failed because the combined shell command attempted to patch `App.vue` with unavailable `python`, so the app still used the stale `openProjectDialog` handler and the chooser did not open. The failure exposed a real Wave 010 binding gap in `frontend/src/App.vue`.
+- `focused-wave010-playwright-app-shell-project-flow-rerun.stdout` / `.stderr`: PASS. Ran `npx playwright test tests/e2e/wave010-app-shell-project-flow.spec.ts --reporter=line` from `frontend/`; result: 1 Chromium test passed. This is the focused user-facing evidence for app startup/open-project chooser behavior while avoiding the known syntactically corrupted broad e2e files.
+- `t3-static-scan-focused-e2e-stale-project-api.stdout` / `.stderr`: informational scan. The only `localhost:3000/api/projects` and `/api/projects` matches in the focused e2e surface are guard strings inside `wave010-app-shell-project-flow.spec.ts` that abort/fail stale backend-project requests; they are not active route expectations or compatibility coverage.
+
+### Scope note
+
+This correction did not harden the broad e2e suite, root validation gates, lint/build tooling, debug output, or unrelated docs. The broad `npm run test:e2e` result remains classified as pre-existing e2e corruption (`keyboard-shortcuts.spec.ts`, `selection-mask.spec.ts`), while the focused Wave 010 Playwright evidence now covers the reviewed app-shell/startup/open-project project-boundary requirement.

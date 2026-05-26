@@ -1,0 +1,2 @@
+frontend/tests/e2e/wave010-app-shell-project-flow.spec.ts:9:      if (url.includes('localhost:3000/api/projects') || url.includes('/api/projects')) {
+frontend/tests/e2e/wave010-app-shell-project-flow.spec.ts:14:    await page.route('**/api/projects**', (route) => {
