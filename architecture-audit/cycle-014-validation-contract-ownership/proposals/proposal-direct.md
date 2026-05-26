@@ -16,10 +16,10 @@ Implementation must begin by copying the audited active caller inventory from `s
 
 1. **Line-line intersection:** preserve the current active source/caller contract: `intersectLineLine()` returns `Point2DRealization2D`; parallel/coincident/no finite intersection returns `feasible=false`, not `null`. Evidence: implementation returns infeasible realization at `frontend/src/domain/calculations/Intersections.ts:110-115`, and both active callers read `.feasible` (`frontend/src/domain/world/Point.ts:258-263`, `frontend/src/domain/world/Guide.ts:287-292`). Repair unit tests to assert `.position`/`getPosition()` and `.feasible`, not nullable/vector results. Do not redesign the geometry model.
 2. **PropertiesDialog:** treat the current close/save events as the UI component contract. Repair stale or brittle tests around emitted `close` and `save`; change component code only if the test reveals a genuine current-contract bug. Do not redesign the dialog, style model, dependency display, or ProcessTree placeholder.
-3. **Guide integration:** keep executable current guide behavior tests. Delete or convert the placeholder-only BrokenHalfHingeLine2D test body. Diagnose the `0 test` collection symptom without adding a custom runner or broad discovery framework.
+3. **Guide integration:** keep executable current guide behavior tests. Delete or convert the placeholder-only BrokenHalfHingeLine2D test body. Any `0 test` diagnosis or fix must remain limited to `frontend/tests/integration/guide-creation.test.ts`, its placeholder BHHL case, and the exact local Vitest collection/discovery contract needed to explain this file's status. Wave 014 must not broaden into general Vitest discovery/config cleanup unless evidence forces a reviewed plan-edit mini-cycle. Do not add a custom runner or broad discovery framework.
 4. **Keyboard shortcuts e2e:** delete corrupted reversed/orphaned cascade fragments and stale spec-reference comments. Keep or replace with smaller current keyboard-shortcut flows that parse and exercise current user-facing shortcuts.
 5. **Selection mask e2e:** delete orphaned test-body fragments after the suite close and stale spec-reference comments. Keep or replace with current selection-mask behavior checks.
-6. **Build tooling:** make the existing `vue-tsc && vite build` contract work under the supported runtime/tool versions, or constrain the supported runtime truthfully. Do not keep parallel type-check/build paths or compatibility shims.
+6. **Build tooling:** make the existing `vue-tsc && vite build` contract work under the supported runtime/tool versions, or constrain the supported runtime truthfully. Docs-only, engines-only, or runtime-policy edits cannot satisfy Wave 014 if `npm run build` and `npm run build --workspace=frontend` still fail in the actual validation environment used for this wave. The selected single supported contract must be executable where the required validation cadence runs, or the wave must stop for review instead of declaring success. Do not keep parallel type-check/build paths or compatibility shims.
 
 ## Scope guard
 
@@ -36,7 +36,7 @@ This proposal forbids:
 - selector or rendering cleanup unrelated to the red surfaces;
 - introducing `skip`, `todo`, or allowlist entries merely to make gates green.
 
-If the intersection caller inventory proves the current infeasible-realization result model is insufficient, stop and request a reviewed plan-edit mini-cycle before changing the domain model. If the build fix requires choosing a different architectural tooling stance than the single active frontend build gate, stop for review rather than adding an alternate path.
+If the intersection caller inventory proves the current infeasible-realization result model is insufficient, stop and request a reviewed plan-edit mini-cycle before changing the domain model. If guide `0 test` evidence points beyond the local `guide-creation.test.ts` file/placeholder/discovery contract, stop for a reviewed plan-edit mini-cycle before touching generalized Vitest discovery/config. If the build fix requires choosing a different architectural tooling stance than the single active frontend build gate, or if the chosen runtime/tool policy cannot make the mandatory root/frontend build commands pass in the active validation environment, stop for review rather than adding an alternate path or declaring the gate repaired.
 
 ## Target outcome
 
@@ -106,7 +106,7 @@ The implementation log must include a short validation-ownership note classifyin
 - Aligning tests to the infeasible-realization contract may hide a better long-term discriminated result model. This is acceptable only if caller inventory remains limited and active callers already depend on realizations.
 - E2E corruption repair may reveal selectors or flows are stale after parsing succeeds; repairs must stay limited to current keyboard/selection-mask contracts.
 - Build tooling may require dependency changes; implementation must avoid parallel toolchains or suppressed type-checking.
-- Guide collection reporting `(0 test)` may have a discovery/config cause; fix only the exact invalid artifact class unless broader validation architecture is reviewed.
+- Guide collection reporting `(0 test)` may have a discovery/config cause; fix only `frontend/tests/integration/guide-creation.test.ts`, its placeholder BHHL case, and the exact local collection/discovery contract for that file unless broader validation architecture is reviewed through a plan-edit mini-cycle.
 
 ## Dependencies
 

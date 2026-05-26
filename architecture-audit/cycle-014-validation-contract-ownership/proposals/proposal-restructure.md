@@ -43,7 +43,7 @@ Layer decision for Wave 014: repair/delete stale event tests or a focused event 
 
 Ownership is integration behavior, but the current file mixes executable guide behavior with a placeholder BHHL case (`frontend/tests/integration/guide-creation.test.ts:127-141`) and Wave 013 reported `(0 test)`. This is not evidence for a guide-domain redesign by itself.
 
-Layer decision for Wave 014: make the file an executable current-owner integration test or delete placeholder cases. Diagnose collection truth narrowly; do not redesign guides.
+Layer decision for Wave 014: make the file an executable current-owner integration test or delete placeholder cases. Any `0 test` diagnosis or fix must remain limited to `frontend/tests/integration/guide-creation.test.ts`, its placeholder BHHL case, and the exact local Vitest collection/discovery contract needed to explain this file's status. Wave 014 must not broaden into general Vitest discovery/config cleanup unless evidence forces a reviewed plan-edit mini-cycle. Diagnose collection truth narrowly; do not redesign guides.
 
 ### E2E keyboard/selection contracts
 
@@ -55,7 +55,7 @@ Layer decision for Wave 014: delete corruption aggressively, then keep/replace o
 
 Ownership is the active frontend build gate. The root package delegates build to frontend (`package.json:13`), frontend runs `vue-tsc && vite build` (`frontend/package.json:8`), and Wave 013 shows `vue-tsc` fails under Node `v24.15.0` before Vite starts.
 
-Layer decision for Wave 014: pick one supported build-tool/runtime contract and encode it truthfully. Do not create an alternate toolchain or suppress `vue-tsc`.
+Layer decision for Wave 014: pick one supported build-tool/runtime contract and encode it truthfully. Docs-only, engines-only, or runtime-policy edits cannot satisfy Wave 014 if `npm run build` and `npm run build --workspace=frontend` still fail in the actual validation environment used for this wave. The selected single supported contract must be executable where the required validation cadence runs, or the wave must stop for review instead of declaring success. Do not create an alternate toolchain or suppress `vue-tsc`.
 
 ## Anti-overreach constraints
 
@@ -123,7 +123,9 @@ Implementation must stop and request a reviewed plan-edit mini-cycle if any of t
 - the selected result contract requires changing unrelated construction, rendering, persistence, or tool-controller layers;
 - build repair requires maintaining two build/type-check paths;
 - e2e repair implies a broad selection/tool UI redesign rather than spec corruption cleanup;
-- guide validation requires changing guide-domain semantics beyond placeholder/current-contract repair.
+- guide validation requires changing guide-domain semantics beyond placeholder/current-contract repair;
+- guide `0 test` evidence points beyond `frontend/tests/integration/guide-creation.test.ts`, its placeholder BHHL case, and that file's exact local collection/discovery contract into generalized Vitest discovery/config cleanup;
+- docs-only, engines-only, or runtime-policy build edits would leave mandatory root/frontend build commands failing in the actual validation environment;
 
 ## Success criteria and validation plan
 
@@ -132,7 +134,7 @@ Implementation succeeds only if:
 - `implementation-log.md` contains the validation-ownership map, intersection caller inventory, and selected line-line result-contract statement before source/test change summaries;
 - no Vitest file is collected as `0 test` unless intentionally moved outside test discovery as a helper;
 - Playwright no longer fails during parsing;
-- root/frontend `test`, `build`, and `test:e2e` pass;
+- root/frontend `test`, `build`, and `test:e2e` pass in the actual validation environment used for this wave, including both mandatory build commands (`npm run build` and `npm run build --workspace=frontend`);
 - live preview is refreshed on `0.0.0.0:5173`, returns HTTP 200, and Playwright MCP/live browser checks exercise repaired/replaced keyboard shortcut and selection-mask flows;
 - any static recurrence check is narrow and tied to the exact invalid artifact classes evidenced in this wave.
 
@@ -157,7 +159,7 @@ Product behavior should remain current unless a focused validation reveals a rea
 
 - The current infeasible-realization intersection contract may be expedient but not the ideal long-term domain model. The stop/review rule prevents hidden redesign.
 - Deleting corrupted e2e fragments may reduce historical test count; this is acceptable because parse-failing specs currently provide no coverage.
-- Build tooling repair may require dependency updates that affect lockfiles; keep the result as one supported path.
+- Build tooling repair may require dependency updates that affect lockfiles; keep the result as one supported path and do not claim success from docs-only/engines-only/runtime-policy edits unless mandatory root/frontend builds pass in the active validation environment.
 - Narrow recurrence checks can still drift into framework work; reviewers should reject anything broader than exact corruption/placeholder/tool-runtime classes.
 
 ## Dependencies
