@@ -279,10 +279,6 @@ export function computeProjectionPlaneMatrices(
     t2PrimeDirInP1.multiplyScalar(-1);
   }
   
-  console.log('[computeProjectionPlaneMatrices] dot_t1_t2_In3D:', dot_t1_t2_In3D);
-  console.log('[computeProjectionPlaneMatrices] dot_t1_t2Prime_InP1:', dot_t1_t2Prime_InP1);
-  console.log('[computeProjectionPlaneMatrices] needsFlip:', needsFlip);
-  
   // V-axis using double cross product with corrected T2' direction
   // For 2D vectors, t1 × (t1 × t2') simplifies to:
   // z = t1x*t2'y - t1y*t2'x (2D cross product scalar)
@@ -290,17 +286,11 @@ export function computeProjectionPlaneMatrices(
   const z = t1DirInP1.x * t2PrimeDirInP1.y - t1DirInP1.y * t2PrimeDirInP1.x;
   const auxVDirInP1 = new Vector3(t1DirInP1.y * z, -t1DirInP1.x * z, 0).normalize();
   
-  console.log('[computeProjectionPlaneMatrices] auxVDirInP1 (after correction):', auxVDirInP1);
-  
   // Transform V-axis from P1 plane coords to paper coords
   const auxVDirInPaper = auxVDirInP1.clone().applyMatrix3(planeP1Realization2D.planeToPaper2D);
   
   // 1.5: Build planeToPaper matrix (homogeneous 2D transform)
   // Now that we have auxUDirInPaper and auxVDirInPaper, we can construct the matrix
-  console.log('[computeProjectionPlaneMatrices] auxUDirInPaper:', auxUDirInPaper);
-  console.log('[computeProjectionPlaneMatrices] auxVDirInPaper:', auxVDirInPaper);
-  console.log('[computeProjectionPlaneMatrices] auxOriginInPaper (in P1 paper coords):', auxOriginInPaper);
-  
   const planeToPaper = new Matrix3();
   planeToPaper.set(
     auxUDirInPaper.x, auxVDirInPaper.x, auxOriginInPaper.x,  // Column 0, 1, 2 (row 0)
@@ -337,18 +327,6 @@ export function computeProjectionPlaneMatrices(
   }
   
   const auxOriginIn3D = auxOriginRealization.position;
-  
-  console.log('[computeProjectionPlaneMatrices] auxUDirIn3D:', auxUDirIn3D);
-  console.log('[computeProjectionPlaneMatrices] auxVDirIn3D:', auxVDirIn3D);
-  console.log('[computeProjectionPlaneMatrices] auxOriginIn3D:', auxOriginIn3D);
-  
-  // Verify: compute normal as u × v (extract Vector3 for Three.js operation)
-  const auxNormalIn3D = new Vector3().crossVectors(
-    new Vector3(auxUDirIn3D.x, auxUDirIn3D.y, auxUDirIn3D.z),
-    new Vector3(auxVDirIn3D.x, auxVDirIn3D.y, auxVDirIn3D.z)
-  );
-  console.log('[computeProjectionPlaneMatrices] Auxiliary plane normal (u×v):', auxNormalIn3D);
-  console.log('[computeProjectionPlaneMatrices] Normal should match Plane3DFromTraces normal: (0.408, 0.816, 0.408)');
   
   // 2.7: Build planeTo3D matrix (homogeneous 2D → 3D)
   // Transformation: (u, v, 0) → (x, y, z, 0) for directions

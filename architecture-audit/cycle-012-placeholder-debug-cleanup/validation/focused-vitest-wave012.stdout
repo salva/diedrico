@@ -1,0 +1,31 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run tests/unit/commands/operations/operationRegistry.spec.ts tests/integration/processTree-stack.test.ts tests/unit/processTree.spec.ts tests/unit/commands/removeElementOps.spec.ts tests/unit/components/propertiesDialog.spec.ts tests/unit/rectangleGrid.test.ts tests/unit/utils/projectionPlaneUtils.spec.ts tests/unit/domain/guide.spec.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/rectangleGrid.test.ts  (6 tests) 7ms
+ ✓ tests/unit/processTree.spec.ts  (15 tests) 26ms
+ ✓ tests/unit/utils/projectionPlaneUtils.spec.ts  (19 tests | 11 skipped) 12ms
+ ✓ tests/unit/commands/removeElementOps.spec.ts  (9 tests) 29ms
+ ✓ tests/integration/processTree-stack.test.ts  (16 tests) 36ms
+ ✓ tests/unit/domain/guide.spec.ts  (13 tests) 43ms
+ ❯ tests/unit/components/propertiesDialog.spec.ts  (18 tests | 5 failed) 441ms
+   ❯ tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Dialog visibility > should emit close event when close button clicked
+     → expected undefined to be truthy
+   ❯ tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Dialog visibility > should emit close event when overlay clicked
+     → expected undefined to be truthy
+   ❯ tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Dialog visibility > should emit close event when cancel button clicked
+     → expected undefined to be truthy
+   ❯ tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Save behavior > should emit save event with valid changes
+     → expected undefined to be truthy
+   ❯ tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Save behavior > should only include overridden properties in save event
+     → Cannot read properties of undefined (reading 'color')
+ ✓ tests/unit/commands/operations/operationRegistry.spec.ts  (6 tests) 12ms
+
+ Test Files  1 failed | 7 passed (8)
+      Tests  5 failed | 86 passed | 11 todo (102)
+   Start at  10:34:36
+   Duration  4.28s (transform 3.16s, setup 10ms, collect 8.83s, tests 606ms, environment 9.54s, prepare 2.15s)
+

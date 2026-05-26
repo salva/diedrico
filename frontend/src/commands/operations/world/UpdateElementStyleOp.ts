@@ -94,8 +94,6 @@ export class UpdateElementStyleOp implements IOperation {
         element.visualStyle.visible = this.newStyle.visible;
       }
       
-      console.log('[UpdateElementStyleOp] Applied style to:', this.elementId, element.visualStyle);
-      
       return {
         success: true,
         outputs: { elementId: this.elementId }
@@ -134,7 +132,6 @@ export class UpdateElementStyleOp implements IOperation {
       // Restore previous style
       element.visualStyle = this.previousStyle ? { ...this.previousStyle } : undefined;
       
-      console.log('[UpdateElementStyleOp] Restored style for:', this.elementId, element.visualStyle);
     } catch (error) {
       console.error('[UpdateElementStyleOp] Undo failed:', error);
     }

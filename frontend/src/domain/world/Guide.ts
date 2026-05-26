@@ -273,14 +273,10 @@ export class SiblingGuide2D extends Line2D {
    * @returns Line2DRealization2D with perpendicular line to sibling HalfHingeLine
    */
   realize2D(world: import('./World').World): Line2DRealization2D {
-    console.log(`[SiblingGuide2D] realize2D called for ${this.id}, primaryGuideId: ${this.primaryGuideId}`);
-    
     // Get primary guide via: myHHL → HingeLine → otherPlane → primaryGuide
     const { primaryGuide, primaryHHL, myHHL } = this.getPrimaryGuideContext(world);
     
     const primaryGuideRealization = primaryGuide.realize2D(world);
-    console.log(`[SiblingGuide2D] Primary guide realization feasible:`, primaryGuideRealization.feasible);
-
     // Check if primary guide is infeasible - propagate infeasibility
     if (!primaryGuideRealization.feasible) {
       console.warn('[SiblingGuide2D] Primary guide is infeasible, marking sibling guide as infeasible');
@@ -332,7 +328,6 @@ export class SiblingGuide2D extends Line2D {
 
       twinPosition = new Vector3(R_prime.x, R_prime.y, 1);
 
-      console.log(`[SiblingGuide2D] BHHL 3D round-trip: R=(${R.x.toFixed(2)},${R.y.toFixed(2)}) → 3D=(${R_3D.x.toFixed(2)},${R_3D.y.toFixed(2)},${R_3D.z.toFixed(2)}) → twin=(${twinPosition.x.toFixed(2)},${twinPosition.y.toFixed(2)})`);
     } else {
       // Regular HHL case: Both planes share canonical coordinates.
       // Use parametric scalar correspondence: R = Q + d·D, R' = Q' + d·D'

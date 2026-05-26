@@ -17,7 +17,6 @@ export class ToggleOutputOp implements IOperation {
   apply(world: World): OperationResult {
     const processTree = world.getProcessTree();
     try {
-      console.log(`[ToggleOutputOp.apply] nodeId: ${this.nodeId}`);
       processTree.toggleOutput(this.nodeId);
       return { success: true, outputs: this.outputs };
     } catch (e: any) {
@@ -32,7 +31,6 @@ export class ToggleOutputOp implements IOperation {
 
   redo(world: World): void {
     const processTree = world.getProcessTree();
-    console.log(`[ToggleOutputOp.redo] nodeId: ${this.nodeId}`);
     processTree.toggleOutput(this.nodeId);
   }
 

@@ -103,22 +103,11 @@ export class HalfHingeLine2D extends Line2D {
     halfHingeLineId: string,
     currentPlaneId: string
   ): { siblingPlaneId: string; siblingHalfHingeLineId: string } | undefined {
-    // Extract numeric ID for conditional logging
-    const numericId = parseInt(halfHingeLineId.match(/\d+/)?.[0] || '0');
-    const shouldLog = numericId > 10;
-    
-    if (shouldLog) {
-      console.log(`[HalfHingeLine2D.getSiblingInfo] Called with halfHingeLineId=${halfHingeLineId}, currentPlaneId=${currentPlaneId}`);
-    }
-    
     // Get current plane and HalfHingeLine2D
     const currentPlane = world.getProjectionPlaneById(currentPlaneId)!;
     const halfHingeLine = currentPlane.getLine(halfHingeLineId);
     
     if (!halfHingeLine || !(halfHingeLine instanceof HalfHingeLine2D)) {
-      if (shouldLog) {
-        console.log(`[HalfHingeLine2D.getSiblingInfo] Early return: not a HalfHingeLine2D`);
-      }
       return undefined;
     }
 
@@ -127,18 +116,10 @@ export class HalfHingeLine2D extends Line2D {
     const siblingPlaneId = hingeLine.getOtherPlane(currentPlaneId)!;
     const siblingPlane = world.getProjectionPlaneById(siblingPlaneId)!;
 
-    if (shouldLog) {
-      console.log(`[HalfHingeLine2D.getSiblingInfo] Sibling plane: ${siblingPlaneId}`);
-    }
-
     // Find HalfHingeLine2D with same hingeLineId in sibling plane
     const siblingHalfHingeLine = siblingPlane.getAllLines().find(
       (line): line is HalfHingeLine2D => line instanceof HalfHingeLine2D && line.hingeLineId === halfHingeLine.hingeLineId
     )!;
-
-    if (shouldLog) {
-      console.log(`[HalfHingeLine2D.getSiblingInfo] Found sibling HHL: ${siblingHalfHingeLine.id}`);
-    }
 
     return {
       siblingPlaneId,

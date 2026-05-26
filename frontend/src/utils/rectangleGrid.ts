@@ -91,8 +91,6 @@ export function computeBounds(rect: Rectangle2D): { minU: number; maxU: number; 
   return { minU, maxU, minV, maxV };
 }
 
-let clipDebugDone = false;  // Debug flag for first segment only
-
 /**
  * Clip a line segment against a rectangle
  * 
@@ -109,15 +107,6 @@ export function clipSegmentToRectangle(segment: Segment2D, rect: Rectangle2D): S
   
   const dx = segment.end.u - segment.start.u;
   const dy = segment.end.v - segment.start.v;
-  
-  let debugFirstSegment = false;
-  if (!clipDebugDone) {
-    clipDebugDone = true;
-    debugFirstSegment = true;
-    console.log('[clipSegmentToRectangle] First segment debug:');
-    console.log('  Segment:', segment);
-    console.log('  dx:', dx, 'dy:', dy);
-  }
   
   // Clip against each edge of the rectangle
   for (let i = 0; i < 4; i++) {
@@ -139,51 +128,31 @@ export function clipSegmentToRectangle(segment: Segment2D, rect: Rectangle2D): S
     // Check if segment crosses this edge
     const denominator = normalU * dx + normalV * dy;
     
-    if (debugFirstSegment) {
-      console.log(`  Edge ${i}: corner1=(${corner1.u.toFixed(2)}, ${corner1.v.toFixed(2)}) corner2=(${corner2.u.toFixed(2)}, ${corner2.v.toFixed(2)})`);
-      console.log(`    edge=(${edgeU.toFixed(2)}, ${edgeV.toFixed(2)}) normal=(${normalU.toFixed(2)}, ${normalV.toFixed(2)})`);
-      console.log(`    dist1=${dist1.toFixed(4)} denom=${denominator.toFixed(4)}`);
-    }
-    
     if (Math.abs(denominator) < 1e-10) {
       // Segment parallel to edge
       if (dist1 < -1e-10) {
         // Segment outside this edge - mark as impossible range
-        if (debugFirstSegment) console.log(`    -> Parallel and outside, marking invalid`);
         tMax = -1; // Force tMin > tMax
-      } else {
-        if (debugFirstSegment) console.log(`    -> Parallel and inside/on edge`);
       }
       continue;
     }
     
     const t = -dist1 / denominator;
     
-    if (debugFirstSegment) {
-      console.log(`    t=${t.toFixed(4)}`);
-    }
-    
     if (denominator < 0) {
       // Leaving half-space (moving away from inside)
       const newTMax = Math.min(tMax, t);
-      if (debugFirstSegment) console.log(`    -> Leaving: tMax ${tMax.toFixed(4)} -> ${newTMax.toFixed(4)}`);
       tMax = newTMax;
     } else {
       // Entering half-space (moving toward inside)
       const newTMin = Math.max(tMin, t);
-      if (debugFirstSegment) console.log(`    -> Entering: tMin ${tMin.toFixed(4)} -> ${newTMin.toFixed(4)}`);
       tMin = newTMin;
     }
     
     if (tMin > tMax) {
       // Segment entirely outside
-      if (debugFirstSegment) console.log(`    -> tMin > tMax (${tMin.toFixed(4)} > ${tMax.toFixed(4)}), rejecting`);
       return null;
     }
-  }
-  
-  if (debugFirstSegment) {
-    console.log(`  Final: tMin=${tMin.toFixed(4)} tMax=${tMax.toFixed(4)} - ACCEPTED`);
   }
   
   // Compute clipped segment
@@ -208,8 +177,6 @@ export function clipSegmentToRectangle(segment: Segment2D, rect: Rectangle2D): S
  */
 export function generateClippedGrid(rect: Rectangle2D, divisions: number = 20): Segment2D[] {
   const bounds = computeBounds(rect);
-  console.log('[generateClippedGrid] Bounds:', bounds);
-  console.log('[generateClippedGrid] Rectangle corners:', rect.corners);
   const segments: Segment2D[] = [];
   
   // Extend bounds slightly to ensure coverage
@@ -218,9 +185,6 @@ export function generateClippedGrid(rect: Rectangle2D, divisions: number = 20): 
   const maxU = bounds.maxU + margin;
   const minV = bounds.minV - margin;
   const maxV = bounds.maxV + margin;
-  
-  console.log('[generateClippedGrid] Extended bounds: u=[', minU, ',', maxU, '] v=[', minV, ',', maxV, ']');
-  console.log('[generateClippedGrid] divisions:', divisions);
   
   // Calculate step size to get approximately the desired number of divisions
   const rangeU = maxU - minU;
@@ -232,7 +196,6 @@ export function generateClippedGrid(rect: Rectangle2D, divisions: number = 20): 
   // Grid lines should pass through (0,0) in the intrinsic coordinate system
   
   // Lines parallel to U-axis (constant v, vertical grid lines)
-  let clippedCount = 0;
   // Start from origin and extend in both directions
   for (let i = 0; ; i++) {
     const v = i * stepV;
@@ -246,7 +209,6 @@ export function generateClippedGrid(rect: Rectangle2D, divisions: number = 20): 
     const clipped = clipSegmentToRectangle(segment, rect);
     if (clipped) {
       segments.push(clipped);
-      clippedCount++;
     }
   }
   
@@ -263,13 +225,10 @@ export function generateClippedGrid(rect: Rectangle2D, divisions: number = 20): 
     const clipped = clipSegmentToRectangle(segment, rect);
     if (clipped) {
       segments.push(clipped);
-      clippedCount++;
     }
   }
-  console.log('[generateClippedGrid] U-parallel lines clipped:', clippedCount);
   
   // Lines parallel to V-axis (constant u, horizontal grid lines)
-  clippedCount = 0;
   // Start from origin and extend in both directions
   for (let i = 0; ; i++) {
     const u = i * stepU;
@@ -283,7 +242,6 @@ export function generateClippedGrid(rect: Rectangle2D, divisions: number = 20): 
     const clipped = clipSegmentToRectangle(segment, rect);
     if (clipped) {
       segments.push(clipped);
-      clippedCount++;
     }
   }
   
@@ -300,11 +258,8 @@ export function generateClippedGrid(rect: Rectangle2D, divisions: number = 20): 
     const clipped = clipSegmentToRectangle(segment, rect);
     if (clipped) {
       segments.push(clipped);
-      clippedCount++;
     }
   }
-  console.log('[generateClippedGrid] V-parallel lines clipped:', clippedCount);
-  console.log('[generateClippedGrid] Total segments:', segments.length);
   
   return segments;
 }

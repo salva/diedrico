@@ -436,8 +436,6 @@ export class RemoveGuide2DOp implements IOperation {
             const siblingRemoved = siblingPlane.removeLine(siblingGuideId, world);
             if (!siblingRemoved) {
               console.warn(`[RemoveGuide2DOp] Failed to remove sibling guide ${siblingGuideId}`);
-            } else {
-              console.log(`[RemoveGuide2DOp] Removed sibling guide ${siblingGuideId} from plane ${this.siblingPlaneId}`);
             }
           }
         }

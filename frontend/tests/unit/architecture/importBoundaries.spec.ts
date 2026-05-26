@@ -15,6 +15,23 @@ function isArchitectureSpec(file: ScannedFile): boolean {
   return file.projectPath.startsWith('tests/unit/architecture/');
 }
 
+
+const wave012ConsoleHygieneFiles = [
+  'src/services/GoogleDriveService.ts',
+  'src/utils/rectangleGrid.ts',
+  'src/utils/projectionPlaneUtils.ts',
+  'src/domain/world/HingeLine.ts',
+  'src/domain/world/Guide.ts',
+  'src/commands/operations/world/UpdateElementStyleOp.ts',
+  'src/commands/operations/world/RemoveElementOps.ts',
+  'src/commands/operations/processTree/ToggleOutputOp.ts',
+  'src/commands/operations/processTree/ToggleEncapsulationOp.ts',
+];
+
+function isWave012ConsoleHygieneFile(file: ScannedFile): boolean {
+  return wave012ConsoleHygieneFiles.includes(file.projectPath);
+}
+
 function isWave010NegativeE2EGuard(file: ScannedFile): boolean {
   return file.projectPath === 'tests/e2e/wave010-app-shell-project-flow.spec.ts';
 }
@@ -58,11 +75,18 @@ describe('Architecture: import boundaries', () => {
     })).toEqual([]);
   });
 
-  it('does not reference the deleted debug examples setup surface from active source or tests', () => {
+  it('does not reference deleted debug/example/placeholder operation surfaces from active source or tests', () => {
     const files = frontendSourceAndTests();
 
-    expect(findContentMatches(files, /ExamplesMenu|AddExampleSetupOp|projection-plane-setup|basic-3d-point-setup/g, {
+    expect(findContentMatches(files, /operations\/(paper|toolbar|debug)|ExamplesMenu|AddExampleSetupOp|projection-plane-setup|basic-3d-point-setup/g, {
       exclude: isArchitectureSpec,
     })).toEqual([]);
+  });
+
+  it('keeps routine console noise out of the Wave 012 cleanup files only', () => {
+    const files = frontendSourceAndTests().filter(isWave012ConsoleHygieneFile);
+
+    expect(files.map(file => file.projectPath).sort()).toEqual([...wave012ConsoleHygieneFiles].sort());
+    expect(findContentMatches(files, /console\.(log|debug|info)\s*\(/g)).toEqual([]);
   });
 });

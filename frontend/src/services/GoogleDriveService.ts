@@ -79,12 +79,6 @@ export class GoogleDriveService {
       // Load gapi client
       gapi.load('client', async () => {
         try {
-          console.log('[GoogleDrive] Initializing with config:', {
-            clientId: this.config.clientId?.substring(0, 20) + '...',
-            hasApiKey: !!this.config.apiKey,
-            scope: GoogleDriveService.SCOPES,
-          });
-          
           // Initialize gapi client (for Drive API calls)
           const initConfig: any = {
             discoveryDocs: GoogleDriveService.DISCOVERY_DOCS,
@@ -105,8 +99,6 @@ export class GoogleDriveService {
           
           this.initialized = true;
           this.initializing = false;
-          console.log('[GoogleDrive] Initialization successful');
-          
           // Try to restore previous session AFTER initialization is complete
           await this.tryRestoreSession();
           resolve();
@@ -128,9 +120,7 @@ export class GoogleDriveService {
       try {
         // Try silent sign-in (no popup if user is still signed in to Google)
         await this.signInSilently();
-        console.log('[GoogleDrive] Session restored automatically');
       } catch (error) {
-        console.log('[GoogleDrive] Could not restore session:', error);
         localStorage.removeItem('diedrico_was_signed_in');
       }
     }
@@ -201,7 +191,6 @@ export class GoogleDriveService {
           this.accessToken = response.access_token;
           gapi.client.setToken({ access_token: this.accessToken });
           localStorage.setItem('diedrico_was_signed_in', 'true');
-          console.log('[GoogleDrive] Sign-in successful');
           resolve();
         };
         
@@ -472,7 +461,6 @@ export class GoogleDriveService {
 
     try {
       // First, check if file exists and is not trashed
-      console.log('[GoogleDrive] Checking file status before update:', fileId);
       const fileCheckRequest = gapi.client.request({
         path: `/drive/v3/files/${fileId}`,
         method: 'GET',
@@ -480,8 +468,6 @@ export class GoogleDriveService {
       });
       
       const fileCheckResponse = await fileCheckRequest;
-      console.log('[GoogleDrive] File status:', fileCheckResponse.result);
-      
       if (fileCheckResponse.result.trashed) {
         console.warn('[GoogleDrive] File is in trash, throwing error');
         throw new Error('File not found. It has been deleted (moved to trash).');
@@ -523,9 +509,7 @@ export class GoogleDriveService {
         body: multipartRequestBody,
       });
 
-      const response = await request;
-      console.log('[GoogleDrive] File updated successfully:', fileId);
-
+      await request;
     } catch (error: any) {
       if (error.status === 401) {
         throw new Error('Authentication expired. Please sign in again.');
@@ -553,8 +537,6 @@ export class GoogleDriveService {
     try {
       // List all .diedrico files in the diedrico folder
       const files = await this.listFiles();
-      console.log('[GoogleDrive] generateDefaultProjectName - files found:', files.length);
-      
       // Extract numbers from "untitled N" pattern (remove .diedrico extension first)
       const untitledPattern = /^untitled (\d+)\.diedrico$/i;
       const numbers: number[] = [];
@@ -563,16 +545,12 @@ export class GoogleDriveService {
         const match = file.name.match(untitledPattern);
         if (match) {
           const num = parseInt(match[1], 10);
-          console.log(`[GoogleDrive] Found untitled file: ${file.name} -> number ${num}`);
           numbers.push(num);
         }
       }
       
-      console.log('[GoogleDrive] Extracted numbers:', numbers);
-      
       // Find first available number (fill gaps before incrementing)
       if (numbers.length === 0) {
-        console.log('[GoogleDrive] No untitled files found, returning "untitled 1"');
         return 'untitled 1';
       }
       
@@ -582,14 +560,12 @@ export class GoogleDriveService {
       // Check for gaps in sequence
       for (let i = 1; i <= numbers.length; i++) {
         if (!numbers.includes(i)) {
-          console.log(`[GoogleDrive] Found gap at ${i}, returning "untitled ${i}"`);
           return `untitled ${i}`;
         }
       }
       
       // No gaps found, use next sequential number
       const nextNum = numbers.length + 1;
-      console.log(`[GoogleDrive] No gaps, returning "untitled ${nextNum}"`);
       return `untitled ${nextNum}`;
     } catch (error) {
       console.error('Failed to generate default name, using "untitled 1":', error);
@@ -628,7 +604,6 @@ export class GoogleDriveService {
         },
       });
       
-      console.log(`[GoogleDriveService] File renamed to: ${fileName}`);
     } catch (error: any) {
       if (error.status === 401) {
         throw new Error('Authentication expired. Please sign in again.');
