@@ -1,0 +1,5 @@
+ThreeView low-level forbidden pattern scan:
+rendering/threeView domain World import scan:
+application/threePresentation Vue/Pinia/scene-object import scan:
+Element2DRenderer3D deletion/source-reference scan:
+All corrected static source scans passed.

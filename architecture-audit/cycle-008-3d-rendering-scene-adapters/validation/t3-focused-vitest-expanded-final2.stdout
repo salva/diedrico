@@ -1,0 +1,18 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run threePresentation threeViewShellBoundary threeObjectRegistry threeSceneAdapters
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/components/panels/threeViewShellBoundary.spec.ts  (1 test) 4ms
+ ✓ tests/unit/rendering/threeView/threeObjectRegistry.spec.ts  (2 tests) 27ms
+ ✓ tests/unit/rendering/threeView/threeSceneAdapters.spec.ts  (2 tests) 107ms
+ ✓ tests/unit/application/threePresentation/threePresentationSelector.spec.ts  (1 test) 6ms
+ ✓ tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts  (5 tests) 15ms
+
+ Test Files  5 passed (5)
+      Tests  11 passed (11)
+   Start at  04:25:43
+   Duration  1.96s (transform 1.12s, setup 2ms, collect 1.96s, tests 159ms, environment 4.01s, prepare 800ms)
+

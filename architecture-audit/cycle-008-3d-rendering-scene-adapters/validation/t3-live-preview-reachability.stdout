@@ -1,0 +1,6 @@
+probe http://127.0.0.1:5173/ -> 200
+reachable_url=http://127.0.0.1:5173/
+html_title_or_root_snippet:
+<title>Diedrico - Dihedral Learning MVP</title>
+id="app"
+/src/main.ts

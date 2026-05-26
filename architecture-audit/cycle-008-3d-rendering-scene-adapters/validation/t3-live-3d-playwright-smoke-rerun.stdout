@@ -1,0 +1,26 @@
+title=Diedrico - Dihedral Learning MVP
+app_root_count=2
+initial_3d_related_text_count=6
+canvas_count_after_3d_navigation_attempt=1
+three_controls_counts showPlanes=1 show2D=1 grid=1 axes=1
+console_message_count=22
+console=debug: [vite] connecting...
+console=debug: [vite] connected.
+console=log: [DEBUG] Environment variables: {clientId: NOT SET, hasApiKey: false, hasAppId: false, allEnvVars: Object}
+console=log: [DEBUG] hasGoogleCredentials: 
+console=log: [ElementsPanel] Computing projection planes list, version: 0 forceUpdate: 0
+console=log: [ElementsPanel] Computing 3D elements
+console=log: [ElementsPanel] 3D elements: {points: 0, lines: 0, segments: 0, planes: 0}
+console=log: [ElementsPanel] Mounted, initial World version: 0
+console=log: World initialized
+console=log: Points in world: 0
+console=warning: Google Drive credentials not configured. Running in local-only mode.
+console=info: To enable Google Drive integration, create a .env file with VITE_GOOGLE_CLIENT_ID, VITE_GOOGLE_API_KEY, and VITE_GOOGLE_APP_ID
+console=warning: [GroupMarkerNotSet(crbug.com/242999)!:A0901800C4050000]Automatic fallback to software WebGL has been deprecated. Please use the --enable-unsafe-swiftshader (about:flags#enable-unsafe-swiftshader) flag to opt in to lower security guarantees for trusted content.
+console=log: [ElementsPanel] World version changed: 0 → 27
+console=log: [ElementsPanel] Computing projection planes list, version: 0 forceUpdate: 1
+console=log: [ElementsPanel] Computing projection planes list, version: 0 forceUpdate: 1
+console=log: [ElementsPanel] Computing 3D elements
+console=log: [ElementsPanel] 3D elements: {points: 0, lines: 0, segments: 0, planes: 2}
+console=warning: [.WebGL-0x1dec00148200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+console=warning: [.WebGL-0x1dec00148200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels

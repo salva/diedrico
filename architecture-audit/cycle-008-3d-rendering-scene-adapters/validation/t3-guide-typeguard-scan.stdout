@@ -1,0 +1,7 @@
+frontend/src/domain/world/Guide.ts:41:export class Guide2D extends Line2DPerpendicularToLine {
+frontend/src/domain/world/Guide.ts:390:export function isGuide2D(line: Line2D): line is Guide2D {
+frontend/src/domain/world/Guide.ts:394:export function isSiblingGuide2D(line: Line2D): line is SiblingGuide2D {
+frontend/src/domain/world/Guide.ts:41:export class Guide2D extends Line2DPerpendicularToLine {
+frontend/src/domain/world/Guide.ts:390:export function isGuide2D(line: Line2D): line is Guide2D {
+frontend/src/domain/world/Guide.ts:394:export function isSiblingGuide2D(line: Line2D): line is SiblingGuide2D {
+frontend/src/domain/world/descriptors/CircleSegmentGuideDescriptors.ts:98:export class Guide2DDescriptor implements ElementDescriptor<Guide2D> {
