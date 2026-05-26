@@ -1,0 +1,2 @@
+salva     516834  516822  0 23:28 ?        00:00:00 sh -c vite --host 0.0.0.0
+salva     516835  516834  0 23:28 ?        00:00:00 node /work/diedrico/frontend/node_modules/.bin/vite --host 0.0.0.0

@@ -1,0 +1,16 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run --run tests/unit/application/threePresentation/threePresentationSelector.spec.ts tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts tests/unit/components/panels/threeViewShellBoundary.spec.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/components/panels/threeViewShellBoundary.spec.ts  (1 test) 4ms
+ ✓ tests/unit/application/threePresentation/threePresentationSelector.spec.ts  (1 test) 6ms
+ ✓ tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts  (6 tests) 9ms
+
+ Test Files  3 passed (3)
+      Tests  8 passed (8)
+   Start at  23:26:18
+   Duration  1.18s (transform 393ms, setup 0ms, collect 610ms, tests 19ms, environment 1.40s, prepare 313ms)
+

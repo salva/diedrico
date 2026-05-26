@@ -1,0 +1,59 @@
+diff --git a/architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/implementation-log.md b/architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/implementation-log.md
+index c4215b2..76aeca2 100644
+--- a/architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/implementation-log.md
++++ b/architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/implementation-log.md
+@@ -95,3 +95,54 @@ Additional retry evidence:
+ - Retry preview probe: `validation/retry-preview-probe.stdout`, `validation/retry-preview-probe.stderr`, `validation/retry-preview-probe.html` — live preview remained reachable at `127.0.0.1:5173` (bound by the existing Vite process recorded earlier for `0.0.0.0:5173`).
+ 
+ The original mandatory validation log index above remains the canonical full validation record for lint, focused/full Vitest, build, e2e, preview refresh, and live smoke. This retry did not touch protected out-of-scope source surfaces and did not introduce fallback/restructure broadening.
++
++## Manager review-hygiene addendum
++
++The implementation reviewer flagged dirty cycle-directory artifacts as a stage-hygiene blocker. Manager inspection captured the exact diff/status in `validation/manager-hygiene-inspection.stdout` and `validation/manager-hygiene-inspection.stderr`.
++
++Resolution/proof:
++
++- `architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/scope-check.md` was already modified before this implementation stage began, as shown in the Manager's first path-focused status logs (`validation/manager-status-before.stdout` and `validation/manager-status-before-review.stdout`). The implementation task instructions explicitly told the retry worker not to modify it, and the implementation log's protected-surface section records that pre-existing dirty audit paths were not reverted or edited by this implementation. The file remains dirty because source-control discipline forbids reverting unrelated pre-existing changes.
++- `.saivage/stages/cycle-017-implement-three-presentation-read-port-realization-boundary/tasks.json`, task reports, reviewer reports, and the forthcoming summary are required stage-management artifacts for this implementation stage.
++- Manager-created `validation/manager-*` logs, reviewer-created `validation/reviewer-*` logs, retry provenance logs, and `status-before-implementation.txt` are provenance/status evidence for this implementation/review loop. They do not broaden source scope and do not alter protected production surfaces.
++- `architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/reviews/round-01-review.md` is the Cycle 017 proposal review artifact referenced by the decision; it is not a production/source modification and is retained as audit evidence rather than deleted.
++
++No source, package/tooling, backend, persistence, command/undo, construction, scene-host, broad app-shell, docs/spec, or secret/config surface was changed by this hygiene clarification. The only post-review material change is this implementation-log addendum plus its supporting Manager status log.
++
++## Validation-and-preview closure addendum
++
++**WAVE 017 COMPLETE.** The independent closure stage re-read the implementation summary, implementation log, validation directory, current status evidence, package scripts, and `architecture-audit/wave-plan.md` before making this closure claim. No production source refactor, package/tooling change, next-wave implementation, or forbidden secret/config access was performed in this closure stage.
++
++### Closure validation log index
++
++Fresh closure reruns supersede any earlier stale failing/diagnostic validation attempts retained above for provenance:
++
++- Closure git/status evidence: `validation/closure-git-status-pre.stdout`, `validation/closure-git-status-pre.stderr`; command wrapper logs `validation/closure-git-status-pre.command.stdout`, `validation/closure-git-status-pre.command.stderr`.
++- Wave-plan heading/rerank evidence: `validation/closure-wave-headings.stdout`, `validation/closure-wave-headings.stderr`; command wrapper logs `validation/closure-wave-headings.command.stdout`, `validation/closure-wave-headings.command.stderr`.
++- Root lint: `validation/closure-root-lint.stdout`, `validation/closure-root-lint.stderr` — pass.
++- Frontend lint: `validation/closure-frontend-lint.stdout`, `validation/closure-frontend-lint.stderr` — pass.
++- Focused three-presentation/read-port/ThreeView Vitest: `validation/closure-focused-three-vitest.stdout`, `validation/closure-focused-three-vitest.stderr` — pass, 3 files / 8 tests.
++- Full root Vitest: `validation/closure-root-vitest-full.stdout`, `validation/closure-root-vitest-full.stderr` — pass.
++- Full frontend Vitest: `validation/closure-frontend-vitest-full.stdout`, `validation/closure-frontend-vitest-full.stderr` — pass.
++- Root build: `validation/closure-root-build.stdout`, `validation/closure-root-build.stderr` — pass. Vite chunk-size warning remains non-blocking and pre-existing.
++- Frontend build: `validation/closure-frontend-build.stdout`, `validation/closure-frontend-build.stderr` — pass. Vite chunk-size warning remains non-blocking and pre-existing.
++- Root Playwright e2e: `validation/closure-root-e2e.stdout`, `validation/closure-root-e2e.stderr` — pass, 8/8.
++- Frontend Playwright e2e: `validation/closure-frontend-e2e.stdout`, `validation/closure-frontend-e2e.stderr` — pass, 8/8.
++- Live preview refresh: `validation/closure-preview-refresh.pid`, `validation/closure-preview-refresh.stdout`, `validation/closure-preview-refresh.stderr`; the preview was started with `npm run -w frontend dev -- --host 0.0.0.0`.
++- Preview reachability probe: `validation/closure-preview-probe.headers`, `validation/closure-preview-probe.stdout`, `validation/closure-preview-probe.stderr`, `validation/closure-preview-probe.html` — HTTP 200 from the 0.0.0.0-bound Vite server via `127.0.0.1:5173`.
++- Preview process evidence: `validation/closure-preview-ps-before.stdout`, `validation/closure-preview-ps-before.stderr`, `validation/closure-preview-ps-after.stdout`, `validation/closure-preview-ps-after.stderr`.
++- Focused live 3D/canvas browser smoke: `validation/closure-live-3d-canvas-smoke.stdout`, `validation/closure-live-3d-canvas-smoke.stderr`, screenshot `validation/closure-live-3d-canvas-smoke.png` — app loaded, one canvas found, 3D/presentation controls present, Show Planes label present.
++
++### Closure protected-surface check
++
++Closure modified only audit/stage artifacts: this implementation log, validation evidence under `architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/`, and the stage task report. It did not modify production source, tests, package metadata, backend, persistence, command/undo, construction, scene-host, docs/spec content, Drive/local project services, or secret/config paths. The failed `closure-preview.command.*` attempt is retained as diagnostic evidence only; the successful `closure-preview-start.command.*`, probe, process, and live-smoke logs supersede it.
++
++### Residual risks after closure
++
++- `ThreeWorldReadPort` remains intentionally narrow/read-only but now owns several 3D selector slices; future waves should prevent it from becoming a renamed `World` facade.
++- Both canvas and three presentation read ports still call domain realization APIs that require full runtime `World` inside boundary adapters. That is now the most central residual presentation/domain boundary risk observed from Wave 016/017.
++- Broader 3D scene-host lifecycle and geometry adapter debt remains real but is lower centrality than the domain-realization context leak because scene extraction should consume a stable realization/read contract.
++
++### Next-wave recommendation / re-rank
++
++`architecture-audit/wave-plan.md` currently ends at Wave 017. After Wave 017, the highest-centrality remaining candidate is a new reviewed Wave 018 focused on the **domain realization context boundary shared by canvas and three presentation read ports**: decide whether domain realization APIs should consume narrower typed realization/read contexts instead of full `World`, then delete full-`World` realization seams at the adapter/domain boundary where the reviewed scope allows. The recommended next canonical stage is therefore `cycle-018-fresh-scout-proposals` for `domain-realization-context-boundary`, beginning with a scope check and proposal pair rather than implementation. If the Manager determines the plan must be extended before proposals because the current wave plan has no Wave 018 entry, run a reviewed wave-plan edit mini-cycle first, then start the same canonical scout/proposal stage.
