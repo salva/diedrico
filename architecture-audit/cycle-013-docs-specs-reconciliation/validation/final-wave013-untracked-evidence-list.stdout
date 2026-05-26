@@ -1,0 +1,12 @@
+architecture-audit/cycle-013-docs-specs-reconciliation/manager-artifact-check.stderr 0 bytes
+architecture-audit/cycle-013-docs-specs-reconciliation/manager-artifact-check.stdout 1177 bytes
+architecture-audit/cycle-013-docs-specs-reconciliation/manager-post-correction-status.stderr 0 bytes
+architecture-audit/cycle-013-docs-specs-reconciliation/manager-post-correction-status.stdout 692 bytes
+architecture-audit/cycle-013-docs-specs-reconciliation/manager-status-check.stderr 0 bytes
+architecture-audit/cycle-013-docs-specs-reconciliation/manager-status-check.stdout 324 bytes
+architecture-audit/cycle-013-docs-specs-reconciliation/reviews/find-spec-files.stderr 0 bytes
+architecture-audit/cycle-013-docs-specs-reconciliation/reviews/find-spec-files.stdout 914 bytes
+architecture-audit/cycle-013-docs-specs-reconciliation/reviews/round-01-review.md 9751 bytes
+architecture-audit/cycle-013-docs-specs-reconciliation/reviews/round-02-review.md 6253 bytes
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/final-current-stage-git-status-after-commit.stderr 0 bytes
+architecture-audit/cycle-013-docs-specs-reconciliation/validation/final-current-stage-git-status-after-commit.stdout 910 bytes

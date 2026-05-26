@@ -1,0 +1,45 @@
+architecture-audit/cycle-013-docs-specs-reconciliation/scope-check.md EXISTS 11340
+  Wave 012: True
+  vue-tsc: True
+  test:e2e: True
+  docs:build: True
+  DELETE: False
+  validation: True
+  backend: True
+  specs/001-dihedral-learning-mvp: True
+  README.md:: True
+  docs/architecture: True
+  docs/api: True
+  docs/guide: True
+  docs/contributing/testing.md: True
+  frontend/src: True
+architecture-audit/cycle-013-docs-specs-reconciliation/proposals/proposal-direct.md EXISTS 10244
+  Wave 012: True
+  vue-tsc: True
+  test:e2e: True
+  docs:build: True
+  DELETE: True
+  validation: True
+  backend: True
+  specs/001-dihedral-learning-mvp: True
+  README.md:: True
+  docs/architecture: True
+  docs/api: True
+  docs/guide: True
+  docs/contributing/testing.md: True
+  frontend/src: True
+architecture-audit/cycle-013-docs-specs-reconciliation/proposals/proposal-restructure.md EXISTS 10252
+  Wave 012: True
+  vue-tsc: True
+  test:e2e: True
+  docs:build: True
+  DELETE: True
+  validation: True
+  backend: True
+  specs/001-dihedral-learning-mvp: True
+  README.md:: True
+  docs/architecture: True
+  docs/api: True
+  docs/guide: True
+  docs/contributing/testing.md: True
+  frontend/src: True
