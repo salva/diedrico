@@ -1,0 +1,112 @@
+
+## frontend/src/App.vue
+frontend/src/App.vue:43:               @highlight-elements="handleHighlightElements"
+frontend/src/App.vue:44:               @clear-highlight="handleClearHighlight"
+frontend/src/App.vue:54:               @highlight-elements="handleHighlightElements"
+frontend/src/App.vue:55:               @clear-highlight="handleClearHighlight"
+frontend/src/App.vue:70:         <div class="three-view-overlay" v-if="show3DView">
+frontend/src/App.vue:84:         :cascade-count="selectionStore.cascadeHighlightIdsArray.length"
+frontend/src/App.vue:143: provide('commandStack', runtime.commandStack);
+frontend/src/App.vue:160: function handleHighlightElements(elementIds: string[], temporary: boolean) {
+frontend/src/App.vue:165: function handleClearHighlight() {}
+frontend/src/App.vue:261: .three-view-overlay {
+
+## frontend/src/components/panels/ElementsPanel.vue
+frontend/src/components/panels/ElementsPanel.vue:141:   highlightElements: [elementIds: string[], temporary: boolean];
+frontend/src/components/panels/ElementsPanel.vue:142:   clearHighlight: [];
+frontend/src/components/panels/ElementsPanel.vue:165:   console.log('[ElementsPanel] Mounted, initial World version:', world.getVersion());
+frontend/src/components/panels/ElementsPanel.vue:169:       console.log('[ElementsPanel] World version changed:', lastVersion, '→', currentVersion);
+frontend/src/components/panels/ElementsPanel.vue:188:   console.log('[ElementsPanel] Computing projection planes list, version:', version, 'forceUpdate:', update);
+frontend/src/components/panels/ElementsPanel.vue:241:   console.log('[ElementsPanel] Computing 3D elements');
+frontend/src/components/panels/ElementsPanel.vue:249:   console.log('[ElementsPanel] 3D elements:', {
+frontend/src/components/panels/ElementsPanel.vue:338:   // Emit for highlighting on canvas
+frontend/src/components/panels/ElementsPanel.vue:339:   emit('highlightElements', [elementId], false);
+frontend/src/components/panels/ElementsPanel.vue:405:   cursor: pointer;
+frontend/src/components/panels/ElementsPanel.vue:431:   cursor: pointer;
+
+## frontend/src/components/panels/ActionsPanel.vue
+frontend/src/components/panels/ActionsPanel.vue:42:         @highlight-elements="(...args) => emit('highlightElements', ...args)"
+frontend/src/components/panels/ActionsPanel.vue:43:         @clear-highlight="emit('clearHighlight')"
+frontend/src/components/panels/ActionsPanel.vue:61:   highlightElements: [elementIds: string[], temporary: boolean];
+frontend/src/components/panels/ActionsPanel.vue:62:   clearHighlight: [];
+frontend/src/components/panels/ActionsPanel.vue:69:   commandStack: inject<unknown>('commandStack')
+frontend/src/components/panels/ActionsPanel.vue:341:   cursor: pointer;
+
+## frontend/src/components/panels/ProcessTreeNode.vue
+frontend/src/components/panels/ProcessTreeNode.vue:77:           @highlight-elements="(...args) => emit('highlightElements', ...args)"
+frontend/src/components/panels/ProcessTreeNode.vue:78:           @clear-highlight="emit('clearHighlight')"
+frontend/src/components/panels/ProcessTreeNode.vue:121:           @highlight-elements="(...args) => emit('highlightElements', ...args)"
+frontend/src/components/panels/ProcessTreeNode.vue:122:           @clear-highlight="emit('clearHighlight')"
+frontend/src/components/panels/ProcessTreeNode.vue:212:   highlightElements: [elementIds: string[], temporary: boolean];
+frontend/src/components/panels/ProcessTreeNode.vue:213:   clearHighlight: [];
+frontend/src/components/panels/ProcessTreeNode.vue:378:     emit('highlightElements', elementIds, false);
+frontend/src/components/panels/ProcessTreeNode.vue:389:       emit('highlightElements', elementIds, true);
+frontend/src/components/panels/ProcessTreeNode.vue:392:     emit('clearHighlight');
+frontend/src/components/panels/ProcessTreeNode.vue:439:   cursor: pointer;
+frontend/src/components/panels/ProcessTreeNode.vue:495:   cursor: pointer;
+frontend/src/components/panels/ProcessTreeNode.vue:558:   cursor: pointer;
+frontend/src/components/panels/ProcessTreeNode.vue:641:   cursor: pointer;
+frontend/src/components/panels/ProcessTreeNode.vue:660:   cursor: pointer;
+frontend/src/components/panels/ProcessTreeNode.vue:712:   cursor: pointer;
+
+## frontend/src/components/workspace/SvgCanvas.vue
+frontend/src/components/workspace/SvgCanvas.vue:141:       v-if="hoverHighlight.isHovering.value && hoverHighlight.hoveredElementLabel.value && !hoverHighlight.hoverState.value.temporary"
+frontend/src/components/workspace/SvgCanvas.vue:145:       {{ hoverHighlight.hoveredElementLabel.value }}
+frontend/src/components/workspace/SvgCanvas.vue:205: import { useGlobalHoverHighlight } from '@/composables/useHoverHighlight';
+frontend/src/components/workspace/SvgCanvas.vue:258: const hoverHighlight = useGlobalHoverHighlight();
+frontend/src/components/workspace/SvgCanvas.vue:418:   commandStack: inject('commandStack'),
+frontend/src/components/workspace/SvgCanvas.vue:490:   console.log('World initialized');
+frontend/src/components/workspace/SvgCanvas.vue:493:   console.log('Points in world:', totalPoints);
+frontend/src/components/workspace/SvgCanvas.vue:515:     console.log(`[SvgCanvas] Created new tool instance: ${newTool}`);
+frontend/src/components/workspace/SvgCanvas.vue:549:   const cascadeHighlightIds = selectionStore.cascadeHighlightIdsArray;
+frontend/src/components/workspace/SvgCanvas.vue:550:   return canvasPresentationController.buildModel(
+frontend/src/components/workspace/SvgCanvas.vue:556:       cascadeHighlightIds: cascadeHighlightIds.length > 0 ? new Set(cascadeHighlightIds) : undefined,
+frontend/src/components/workspace/SvgCanvas.vue:575:       // console.log('Rendering point primitive:', p, '→ SVG attrs:', result.attributes);
+frontend/src/components/workspace/SvgCanvas.vue:599:       // console.log('Rendering segment primitive:', p, '→ SVG attrs:', result.attributes);
+frontend/src/components/workspace/SvgCanvas.vue:612:       // console.log('Rendering circle primitive:', p, '→ SVG attrs:', result.attributes);
+frontend/src/components/workspace/SvgCanvas.vue:670:   // console.log('[SvgCanvas] Click at canvas coords:', { x: canvasPoint.x, y: canvasPoint.y });
+frontend/src/components/workspace/SvgCanvas.vue:698:   // console.log('[SvgCanvas] Plane coords (u,v,w):', planePos);
+frontend/src/components/workspace/SvgCanvas.vue:718:         // console.log('[SvgCanvas] Added to selection:', hit.elementId);
+frontend/src/components/workspace/SvgCanvas.vue:722:         // console.log('[SvgCanvas] Selected:', hit.elementId);
+frontend/src/components/workspace/SvgCanvas.vue:727:       // console.log('[SvgCanvas] Cleared selection');
+frontend/src/components/workspace/SvgCanvas.vue:757:   // console.log('[SvgCanvas] Reactivity triggered, renderTick:', renderTick.value);
+frontend/src/components/workspace/SvgCanvas.vue:760:     console.log('[SvgCanvas] Tool operation succeeded:', result.message);
+frontend/src/components/workspace/SvgCanvas.vue:789:   console.log('[Zoom] BEFORE:', {
+frontend/src/components/workspace/SvgCanvas.vue:805:   console.log('[Zoom] AFTER:', {
+frontend/src/components/workspace/SvgCanvas.vue:912:     console.log('[SvgCanvas] Opening properties dialog for:', hit.elementId);
+frontend/src/components/workspace/SvgCanvas.vue:927:   console.log('[SvgCanvas] Saving property changes:', changes);
+frontend/src/components/workspace/SvgCanvas.vue:942:     console.log('[SvgCanvas] Style updated and command added to stack');
+frontend/src/components/workspace/SvgCanvas.vue:1069:       hoverHighlight.setHoveredElement(
+frontend/src/components/workspace/SvgCanvas.vue:1076:       hoverHighlight.clearHover();
+frontend/src/components/workspace/SvgCanvas.vue:1165:   console.log('[SvgCanvas] fitToView called');
+frontend/src/components/workspace/SvgCanvas.vue:1172:     console.log('[SvgCanvas] No elements to fit, resetting to default view');
+frontend/src/components/workspace/SvgCanvas.vue:1206:     console.log('[SvgCanvas] No valid bounds found, resetting to default view');
+frontend/src/components/workspace/SvgCanvas.vue:1230:   console.log('[SvgCanvas] Fit to view:', {
+frontend/src/components/workspace/SvgCanvas.vue:1280:   cursor: pointer;
+frontend/src/components/workspace/SvgCanvas.vue:1318:   pointer-events: none;
+frontend/src/components/workspace/SvgCanvas.vue:1332:   pointer-events: none;
+
+## frontend/src/components/panels/ThreeView.vue
+frontend/src/components/panels/ThreeView.vue:108:   cursor: pointer;
+frontend/src/components/panels/ThreeView.vue:112: .control-label input[type="checkbox"] { cursor: pointer; }
+
+## frontend/src/components/toolbars/ToolFamilyButton.vue
+frontend/src/components/toolbars/ToolFamilyButton.vue:98:     console.log('[ToolFamilyButton] Dropdown opened for family:', props.family.id);
+frontend/src/components/toolbars/ToolFamilyButton.vue:99:     console.log('[ToolFamilyButton] Tools in family:', props.family.tools);
+frontend/src/components/toolbars/ToolFamilyButton.vue:104:   console.log('[ToolFamilyButton] Selecting tool:', toolId);
+frontend/src/components/toolbars/ToolFamilyButton.vue:138:   cursor: pointer;
+frontend/src/components/toolbars/ToolFamilyButton.vue:208:   cursor: pointer;
+
+## frontend/vite.config.ts
+frontend/vite.config.ts:17:       '/api': {
+
+## frontend/src/stores/processStore.ts
+frontend/src/stores/processStore.ts:7: import { CommandStack } from '../commands/CommandStack';
+frontend/src/stores/processStore.ts:11:   commandHistory: CommandStack;
+frontend/src/stores/processStore.ts:17:     commandHistory: new CommandStack()
+
+## package.json
+package.json:7:   "workspaces": [
+package.json:13:     "build": "npm run build --workspace=frontend",
+package.json:18:     "docs:build": "vitepress build docs",
+package.json:21:     "test:e2e": "npm run test:e2e --workspace=frontend"
