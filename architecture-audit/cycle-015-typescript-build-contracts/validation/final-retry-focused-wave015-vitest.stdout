@@ -1,0 +1,146 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run --run tests/unit/domain/projectionPlaneRealization.spec.ts tests/unit/projectionPlane.spec.ts tests/unit/domain/point.spec.ts tests/unit/domain/guide.spec.ts tests/unit/commands/factories/GuideSequenceFactory.spec.ts tests/unit/utils/projectionPlaneUtils.spec.ts tests/unit/projectionPlaneMatrix.test.ts tests/unit/utils/guidePerpendicularPlane.spec.ts tests/unit/commands/factories/DeletionSequenceFactory.spec.ts tests/unit/processTree.spec.ts tests/unit/commands/removeElementOps.spec.ts tests/unit/commands/viewStateOperations.spec.ts tests/unit/services/GeometryService.spec.ts tests/unit/services/ProjectService.roundTrip.spec.ts tests/unit/services/ProjectService.selfContainment.spec.ts tests/unit/services/ProjectService.subprocess.spec.ts tests/unit/stores/viewStore.spec.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/utils/guidePerpendicularPlane.spec.ts  (20 tests) 31ms
+ ✓ tests/unit/services/ProjectService.roundTrip.spec.ts  (18 tests) 77ms
+stdout | tests/unit/commands/factories/GuideSequenceFactory.spec.ts > GuideSequenceFactory > createGuideWithSibling > should create single operation for non-HHL reference line
+[GuideSequenceFactory] createGuideWithSibling called: plane=projPlane3, refLine=projPlane3/line2d12, point=projPlane3/point2d13
+[GuideSequenceFactory] Primary guide created: projPlane3/guide2d14
+[GuideSequenceFactory] Getting sibling plane info...
+[GuideSequenceFactory] No sibling info - reference line is not a HalfHingeLine or BrokenHalfHingeLine2D
+
+stdout | tests/unit/commands/factories/GuideSequenceFactory.spec.ts > GuideSequenceFactory > createGuideWithSibling > should create two operations for HHL reference line
+[GuideSequenceFactory] createGuideWithSibling called: plane=projPlane3, refLine=projPlane3/line2d8, point=projPlane3/point2d10
+[GuideSequenceFactory] Primary guide created: projPlane3/guide2d11
+[GuideSequenceFactory] Getting sibling plane info...
+[GuideSequenceFactory] Sibling plane: projPlane4, HHL: projPlane4/line2d9
+[GuideSequenceFactory] Created sibling guide projPlane4/guide2d12 in plane projPlane4
+
+stdout | tests/unit/commands/factories/GuideSequenceFactory.spec.ts > GuideSequenceFactory > createGuideWithSibling > should handle HHL with no sibling info available gracefully
+[GuideSequenceFactory] createGuideWithSibling called: plane=projPlane3, refLine=projPlane3/line2d12, point=projPlane3/point2d13
+[GuideSequenceFactory] Primary guide created: projPlane3/guide2d14
+[GuideSequenceFactory] Getting sibling plane info...
+[GuideSequenceFactory] No sibling info - reference line is not a HalfHingeLine or BrokenHalfHingeLine2D
+
+stdout | tests/unit/commands/factories/GuideSequenceFactory.spec.ts > GuideSequenceFactory > createGuideWithSibling > should handle invalid reference line ID gracefully
+[GuideSequenceFactory] createGuideWithSibling called: plane=projPlane3, refLine=invalid_line_id, point=projPlane3/point2d10
+
+stdout | tests/unit/commands/factories/GuideSequenceFactory.spec.ts > GuideSequenceFactory > createGuideWithSibling > should handle invalid through point ID gracefully
+[GuideSequenceFactory] createGuideWithSibling called: plane=projPlane3, refLine=projPlane3/line2d12, point=invalid_point_id
+
+stdout | tests/unit/commands/factories/GuideSequenceFactory.spec.ts > GuideSequenceFactory > createGuideWithSibling > should work with command commit and verify state
+[GuideSequenceFactory] createGuideWithSibling called: plane=projPlane3, refLine=projPlane3/line2d8, point=projPlane3/point2d10
+[GuideSequenceFactory] Primary guide created: projPlane3/guide2d11
+[GuideSequenceFactory] Getting sibling plane info...
+[GuideSequenceFactory] Sibling plane: projPlane4, HHL: projPlane4/line2d9
+[GuideSequenceFactory] Created sibling guide projPlane4/guide2d12 in plane projPlane4
+
+stdout | tests/unit/commands/factories/GuideSequenceFactory.spec.ts > GuideSequenceFactory > createGuideWithSibling > should handle multiple sequential guide creations
+[GuideSequenceFactory] createGuideWithSibling called: plane=projPlane3, refLine=projPlane3/line2d8, point=projPlane3/point2d10
+[GuideSequenceFactory] Primary guide created: projPlane3/guide2d11
+[GuideSequenceFactory] Getting sibling plane info...
+[GuideSequenceFactory] Sibling plane: projPlane4, HHL: projPlane4/line2d9
+[GuideSequenceFactory] Created sibling guide projPlane4/guide2d12 in plane projPlane4
+[GuideSequenceFactory] createGuideWithSibling called: plane=projPlane3, refLine=projPlane3/line2d8, point=projPlane3/point2d13
+[GuideSequenceFactory] Primary guide created: projPlane3/guide2d14
+[GuideSequenceFactory] Getting sibling plane info...
+[GuideSequenceFactory] Sibling plane: projPlane4, HHL: projPlane4/line2d9
+[GuideSequenceFactory] Created sibling guide projPlane4/guide2d15 in plane projPlane4
+
+ ✓ tests/unit/commands/factories/GuideSequenceFactory.spec.ts  (7 tests) 74ms
+ ✓ tests/unit/domain/point.spec.ts  (28 tests) 121ms
+ ✓ tests/unit/commands/factories/DeletionSequenceFactory.spec.ts  (8 tests) 52ms
+stdout | tests/unit/commands/factories/DeletionSequenceFactory.spec.ts > DeletionSequenceFactory > createCascadeDeletion > should handle empty selection gracefully
+[DeletionSequenceFactory] Cascade deletion: {
+  direct: [],
+  cascaded: [],
+  total: [],
+  order: 'dependents-first (proper deletion order)'
+}
+
+stdout | tests/unit/commands/factories/DeletionSequenceFactory.spec.ts > DeletionSequenceFactory > createCascadeDeletion > should delete a single point and tombstone its explicit process-tree action
+[DeletionSequenceFactory] Cascade deletion: {
+  direct: [ 'projPlane3/point2d10' ],
+  cascaded: [],
+  total: [ 'projPlane3/point2d10' ],
+  order: 'dependents-first (proper deletion order)'
+}
+
+stdout | tests/unit/commands/factories/DeletionSequenceFactory.spec.ts > DeletionSequenceFactory > createCascadeDeletion > should handle element without process tree action
+[DeletionSequenceFactory] Cascade deletion: {
+  direct: [ 'projPlane3/point2d10' ],
+  cascaded: [],
+  total: [ 'projPlane3/point2d10' ],
+  order: 'dependents-first (proper deletion order)'
+}
+
+stdout | tests/unit/commands/factories/DeletionSequenceFactory.spec.ts > DeletionSequenceFactory > createCascadeDeletion > should cascade delete a dependent line before deleting its defining point
+[DeletionSequenceFactory] Cascade deletion: {
+  direct: [ 'projPlane3/point2d10' ],
+  cascaded: [ 'projPlane3/line2d12' ],
+  total: [ 'projPlane3/line2d12', 'projPlane3/point2d10' ],
+  order: 'dependents-first (proper deletion order)'
+}
+
+stdout | tests/unit/commands/factories/DeletionSequenceFactory.spec.ts > DeletionSequenceFactory > createCascadeDeletion > should cascade delete a dependent circle through real dependency registration
+[DeletionSequenceFactory] Cascade deletion: {
+  direct: [ 'projPlane3/point2d10' ],
+  cascaded: [ 'projPlane3/circle2d12' ],
+  total: [ 'projPlane3/circle2d12', 'projPlane3/point2d10' ],
+  order: 'dependents-first (proper deletion order)'
+}
+
+stdout | tests/unit/commands/factories/DeletionSequenceFactory.spec.ts > DeletionSequenceFactory > createCascadeDeletion > should delete multiple independent points and their explicit process-tree actions
+[DeletionSequenceFactory] Cascade deletion: {
+  direct: [
+    'projPlane3/point2d10',
+    'projPlane3/point2d11',
+    'projPlane3/point2d12'
+  ],
+  cascaded: [],
+  total: [
+    'projPlane3/point2d10',
+    'projPlane3/point2d11',
+    'projPlane3/point2d12'
+  ],
+  order: 'dependents-first (proper deletion order)'
+}
+
+stdout | tests/unit/commands/factories/DeletionSequenceFactory.spec.ts > DeletionSequenceFactory > createCascadeDeletion > should support undo and redo for dependency-driven cascade deletion
+[DeletionSequenceFactory] Cascade deletion: {
+  direct: [ 'projPlane3/point2d10' ],
+  cascaded: [ 'projPlane3/line2d12' ],
+  total: [ 'projPlane3/line2d12', 'projPlane3/point2d10' ],
+  order: 'dependents-first (proper deletion order)'
+}
+
+stdout | tests/unit/commands/factories/DeletionSequenceFactory.spec.ts > DeletionSequenceFactory > createCascadeDeletion > should dispatch segment deletion to RemoveSegment2D without deleting defining points
+[DeletionSequenceFactory] Cascade deletion: {
+  direct: [ 'projPlane3/segment2d12' ],
+  cascaded: [],
+  total: [ 'projPlane3/segment2d12' ],
+  order: 'dependents-first (proper deletion order)'
+}
+
+ ✓ tests/unit/domain/guide.spec.ts  (13 tests) 122ms
+ ✓ tests/unit/projectionPlane.spec.ts  (28 tests) 128ms
+ ✓ tests/unit/services/ProjectService.selfContainment.spec.ts  (8 tests) 80ms
+ ✓ tests/unit/utils/projectionPlaneUtils.spec.ts  (19 tests | 11 skipped) 13ms
+ ✓ tests/unit/processTree.spec.ts  (15 tests) 136ms
+ ✓ tests/unit/stores/viewStore.spec.ts  (23 tests) 123ms
+ ✓ tests/unit/projectionPlaneMatrix.test.ts  (5 tests) 17ms
+ ✓ tests/unit/commands/removeElementOps.spec.ts  (9 tests) 66ms
+ ✓ tests/unit/domain/projectionPlaneRealization.spec.ts  (10 tests | 3 skipped) 21ms
+ ✓ tests/unit/services/GeometryService.spec.ts  (2 tests) 9ms
+ ✓ tests/unit/commands/viewStateOperations.spec.ts  (4 tests) 17ms
+ ✓ tests/unit/services/ProjectService.subprocess.spec.ts  (5 tests) 19ms
+
+ Test Files  17 passed (17)
+      Tests  208 passed | 3 skipped | 11 todo (222)
+   Start at  20:17:49
+   Duration  9.87s (transform 2.50s, setup 8ms, collect 10.60s, tests 1.11s, environment 33.78s, prepare 5.55s)
+

@@ -592,3 +592,57 @@ All command output was captured under `architecture-audit/cycle-015-typescript-b
 - Full e2e is now green against the retained current e2e contract set. The intentionally deleted legacy specs no longer provide direct e2e coverage for every geometry operation; their old assertions were stale, duplicated, placeholder-only, or coupled to discarded UI/test contracts. Current domain/command behavior remains covered by the existing unit/build validation lanes, and future waves should add small current-contract e2e specs only when the current UI exposes stable behavior worth testing.
 - The current 3D overlay occupies the lower-right canvas area and intercepts pointer events there; this is current user-observable behavior, not repaired in this validation-contract cleanup because the retained free-point e2e can exercise the current SVG canvas outside the overlay without changing architecture scope.
 - Wave 015 build/unit/preview evidence remains valid; this cleanup only touched e2e specs and neutral toolbar test hooks.
+
+## t1 final validation/preview retry — Wave 015 complete
+
+Task `t1-final-validation-preview-retry` retried Wave 015 final validation/preview closure after the dedicated e2e validation-contract cleanup stage. The retry began by inspecting the current git status, the prior validation-and-preview escalation summary, the completed e2e cleanup summary, this implementation log, the validation log directory, and `architecture-audit/wave-plan.md`. No production source refactor, package/tooling churn, secret/provider/env file read, or next-wave implementation was performed in this retry.
+
+### Current workspace / scope disposition
+
+The working tree still contains broad inherited dirty/untracked Saivage/audit/source changes from earlier stages. This retry did not revert or normalize unrelated changes and modified only this implementation log, fresh validation evidence under `architecture-audit/cycle-015-typescript-build-contracts/validation/`, and its Saivage task report.
+
+Prior red e2e logs from `final-closure-root-e2e.*` and `t2-e2e-contracts-root-e2e-full.*` are now superseded by the dedicated cleanup evidence (`e2e-cleanup-root-e2e-full.*`, `e2e-cleanup-frontend-e2e-full.*`) and by the fresh final retry logs listed below.
+
+### Final retry validation log index
+
+All fresh retry evidence is under `architecture-audit/cycle-015-typescript-build-contracts/validation/`:
+
+- `final-retry-root-lint.stdout` / `.stderr`: `npm run lint` passed; frontend architecture tests 4 files / 11 tests.
+- `final-retry-frontend-lint.stdout` / `.stderr`: `npm run lint --workspace=frontend` passed; frontend architecture tests 4 files / 11 tests.
+- `final-retry-focused-wave015-vitest.stdout` / `.stderr`: focused Wave 015 suite passed; 17 files, 208 passed, 3 skipped, 11 todo. Stderr contains the expected deletion-factory warning-path log, not a failed assertion.
+- `final-retry-frontend-full-vitest.stdout` / `.stderr`: `npm run test --workspace=frontend` passed; command exit code 0. Stderr contains expected error-path logging from tests, not failed assertions.
+- `final-retry-root-full-vitest.stdout` / `.stderr`: root `npm run test` passed; command exit code 0 with the same frontend suite.
+- `final-retry-frontend-build.stdout` / `.stderr`: `npm run build --workspace=frontend` passed. Vite emitted only the existing large chunk-size warning.
+- `final-retry-root-build.stdout` / `.stderr`: root `npm run build` passed, delegating to the frontend build. Vite emitted only the existing large chunk-size warning.
+- `final-retry-root-e2e-full.stdout` / `.stderr`: root `npm run test:e2e` passed; Playwright ran 7 tests and all 7 passed.
+- `final-retry-frontend-e2e-full.stdout` / `.stderr`: frontend workspace `npm run test:e2e --workspace=frontend` passed; Playwright ran 7 tests and all 7 passed.
+- `final-retry-preview-refresh-command.stdout` / `.stderr`: superseded failed wrapper attempt; `/bin/sh` did not support `set -o pipefail`, so no preview closure claim is based on this log.
+- `final-retry-preview-refresh-command-rerun.stdout` / `.stderr`: superseded failed wrapper attempt; the process-stop pattern matched the wrapper command itself before startup, so no preview closure claim is based on this log.
+- `final-retry-preview-refresh-python.stdout` / `.stderr`: authoritative preview refresh command. It started the persistent preview with `npm run dev --workspace=frontend -- --host 0.0.0.0`, recorded PID `480019`, and the reachability probe passed on attempt 2. Stderr notes `lsof` is unavailable in the container; the fallback start/probe still succeeded.
+- `final-retry-live-preview.pid`: persistent preview PID `480019`.
+- `final-retry-live-preview.stdout` / `.stderr`: Vite dev preview output for the persistent preview. The command used `--host 0.0.0.0`.
+- `final-retry-preview-reachability.stdout` / `.stderr`: HTTP reachability evidence from `http://127.0.0.1:5173/`, including HTTP 200 response metadata and the served app HTML. This confirms the refreshed preview is reachable locally from the container; `--host 0.0.0.0` is recorded in the launch command above.
+
+### E2E cleanup/deletion inventory and no-backcompat rationale
+
+The e2e validation-contract cleanup remains part of the Wave 015 closure evidence. It deleted obsolete legacy/placeholder e2e coverage theater rather than preserving stale selectors, hard-coded non-configured ports, duplicate undo/redo scripts, placeholder TODO specs, or spec-era assertions that no longer describe the current UI/app shell. Deleted specs are indexed in the `t1 e2e validation-contract cleanup` section above and in `.saivage/stages/cycle-015-e2e-validation-contract-cleanup/summary.json`.
+
+Retained current e2e coverage is now the green 7-test contract set:
+
+- `frontend/tests/e2e/current-ui-contract.spec.ts`
+- `frontend/tests/e2e/keyboard-shortcuts.spec.ts`
+- `frontend/tests/e2e/wave010-app-shell-project-flow.spec.ts`
+
+This is intentionally smaller than the deleted legacy suite. The deleted specs were not migrated wholesale because they asserted obsolete contracts and would have preserved validation theater contrary to the no-backcompat priority.
+
+### Residual risks
+
+- The current 3D overlay still intercepts pointer events over part of the SVG canvas. The retained e2e suite deliberately clicks/probes current reachable canvas regions rather than changing overlay interaction policy in a validation-closure task. If the overlay behavior is unintended UX, schedule a later reviewed UI/render wave to define the policy and add coverage.
+- Vite build still emits the existing large chunk-size warning. This does not block Wave 015 TypeScript/build-contract closure and should be considered only in a later architecture/performance-oriented wave if it becomes central.
+- The retained e2e suite is intentionally current-contract focused after deleting stale coverage theater. Detailed geometry/command correctness remains covered primarily by unit/build validation lanes until future UI flows expose stable behavior worth testing end-to-end.
+
+### Wave 015 status and next-stage recommendation
+
+Wave 015 is complete as of this retry: root/frontend lint, focused Wave 015 Vitest, full root/frontend Vitest, root/frontend build, full root/frontend e2e, and persistent live-preview reachability are all green in current `final-retry-*` logs.
+
+`architecture-audit/wave-plan.md` was re-read. Its Wave 015 entry explicitly says that after Wave 015 completes, the project should not proceed to an unrelated refactor wave; it should re-enter `cycle-014-validation-and-preview-refresh` and run the full Wave 014 validation cadence against the source tree containing both Wave 014 validation repairs and Wave 015 build/type-contract repairs. Recommended next canonical stage: `cycle-014-validation-and-preview-refresh` (return-to-Wave-014 closure), not a new implementation wave. No next-wave implementation was started here.
