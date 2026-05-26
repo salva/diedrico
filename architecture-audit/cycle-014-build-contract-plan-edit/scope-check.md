@@ -20,6 +20,22 @@ Wave 014's approved implementation scope was validation contract ownership for k
 
 The implementation log confirms the approved Wave 014 repairs were bounded to validation-ownership surfaces: intersection test contract, PropertiesDialog event typing/test expectations, guide integration repair/deletion of placeholder content, corrupted Playwright spec replacement, and a single frontend build-tool dependency update from `vue-tsc ^1.8.0` to `^2.2.12` so the active build gate could execute under Node 24. That dependency update did not hide the build failure; it revealed real TypeScript checking failures.
 
+### Explicit boundary: completed Wave 014 repair files versus remaining backlog
+
+The completed Wave 014 implementation files are the preserved, reviewed validation-ownership repairs. They are **not** the remaining build/type-contract backlog:
+
+| Completed scoped repair file | Wave 014 ownership reason | Current boundary conclusion |
+| --- | --- | --- |
+| `frontend/tests/unit/calculations/intersections.spec.ts` | Replaced stale nullable/vector expectations with the selected `intersectLineLine()` infeasible-realization result contract. | Completed inside Wave 014; do not reopen except if a later type-contract wave proves a direct regression. |
+| `frontend/src/components/dialogs/PropertiesDialog.vue` | Narrow emit typing adjustment for the repaired close/save test contract. | Completed inside Wave 014; not representative of the broader UI/store build backlog. |
+| `frontend/tests/unit/components/propertiesDialog.spec.ts` | Replaced stale `wrapper.emitted()` expectations with current mounted listener assertions. | Completed inside Wave 014; focused validation passed. |
+| `frontend/tests/integration/guide-creation.test.ts` | Repaired imports/world access and deleted placeholder BrokenHalfHingeLine2D content. | Completed inside Wave 014; focused validation passed. |
+| `frontend/tests/e2e/keyboard-shortcuts.spec.ts` | Replaced corrupted, unparsable Playwright content with a small current shortcut-flow spec. | Completed inside Wave 014; Playwright test listing passed. |
+| `frontend/tests/e2e/selection-mask.spec.ts` | Replaced corrupted, unparsable Playwright content with a small current selection-mask entry-flow spec. | Completed inside Wave 014; Playwright test listing passed. |
+| `frontend/package.json` | Updated the single active frontend build-tool dependency from `vue-tsc ^1.8.0` to `^2.2.12` so the build gate runs under Node 24. | Completed inside Wave 014; this exposed, rather than caused or suppresses, the repository-wide TypeScript errors. |
+
+By contrast, the remaining build failure backlog is in modules that were **not** approved Wave 014 implementation files and should not be changed in this scout stage: `frontend/src/App.vue`, `frontend/src/commands/**`, `frontend/src/domain/processTree/**`, `frontend/src/domain/world/**`, `frontend/src/components/**` outside the repaired `PropertiesDialog.vue` boundary, `frontend/src/composables/**`, `frontend/src/services/**`, and `frontend/src/stores/**`. These files own app-shell, command descriptor, process-tree, projection-plane/world, UI/rendering, service, and store type contracts. They require reviewed plan-edit ownership before implementation.
+
 ## Exact current build failure
 
 `npm run build --workspace=frontend` now executes the active frontend build script:
