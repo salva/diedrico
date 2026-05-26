@@ -1,5 +1,9 @@
 # Cycle 016 Implementation Log — Canvas presentation read ports and overlay interaction boundary
 
+## Wave 016 status
+
+**WAVE 016 COMPLETE.** The implementation and independent closure verification are green. The selected direct proposal was implemented without source broadening, all mandatory validation gates have current stable logs, and the live preview has been refreshed on `0.0.0.0:5173` with a reachability probe and focused overlay/canvas browser evidence.
+
 ## Selected path and scope
 
 Implemented the decision-selected direct path from `proposal-direct.md`. No restructure/shared presentation snapshot layer was introduced. The work stayed within the decision-authorized canvas presentation, overlay boundary, focused tests, validation, and implementation-log surfaces.
@@ -33,17 +37,21 @@ Implemented the decision-selected direct path from `proposal-direct.md`. No rest
 
 ## Protected-surface checks
 
-No backend files, package metadata, dependency versions, command/undo/persistence contracts, broad app-shell/runtime services, Vite/Vitest/Playwright config, Drive/local persistence, or secret/config files were modified. `SvgCanvas.vue` still uses `World` for tool/command/runtime interactions outside the decision-bound presentation read-port scope.
+No backend files, package metadata, dependency versions, command/undo/persistence contracts, broad app-shell/runtime services, Vite/Vitest/Playwright config, Drive/local persistence, or secret/config files were modified by the Wave 016 implementation or closure verification. `SvgCanvas.vue` still uses `World` for tool/command/runtime interactions outside the decision-bound presentation read-port scope. Closure verification did not read forbidden `.saivage` secret/config files.
 
-## Static evidence
+## Static and status evidence
 
 - Pre-edit scans: `validation/pre-edit-static-scans.stdout`.
 - Post-edit scans: `validation/post-edit-static-scans.stdout`.
 - Post-edit scan shows no active `any` seams in `frontend/src/application/canvasPresentation` or `frontend/src/domain/presentation/Paper.ts`, projected-3D loops owned by `Projected3DCanvasSelector`, no `class Paper`/`new Paper(` mutable collection usage, and explicit overlay pointer ownership in `App.vue`/`ThreeView.vue`.
+- Closure status/diff snapshots: `validation/closure-verify-git-status.short.stdout`, `validation/closure-verify-git-diff.stat.stdout`, `validation/closure-verify-relevant-diff.patch`, `validation/closure-final-git-status.short.stdout`, and `validation/closure-final-git-diff.stat.stdout`. The workspace contains many pre-existing unrelated modified/untracked paths; the closure task only updated Wave 016 audit artifacts and did not revert unrelated changes.
+- Wave-plan re-read evidence: `validation/closure-verify-wave-plan-current-next.stdout` and `validation/closure-verify-wave-plan-tail.stdout`.
 
 ## Validation log index
 
 All validation output was captured under `architecture-audit/cycle-016-canvas-presentation-overlay-boundary/validation/`.
+
+### Implementation-stage logs
 
 - Root lint: `root-lint.stdout` / `root-lint.stderr` — PASS.
 - Frontend lint: `frontend-lint.stdout` / `frontend-lint.stderr` — PASS.
@@ -54,11 +62,44 @@ All validation output was captured under `architecture-audit/cycle-016-canvas-pr
 - Frontend build: `frontend-build.stdout` / `frontend-build.stderr` — PASS. Vite emitted the pre-existing large chunk warning only.
 - Root e2e: `root-e2e.stdout` / `root-e2e.stderr` — PASS, 8 Playwright tests.
 - Frontend e2e: `frontend-e2e.stdout` / `frontend-e2e.stderr` — PASS, 8 Playwright tests.
-- Preview refresh/probe: `preview-refresh-frontend.stdout` / `.stderr`, `preview-server-frontend.stdout` / `.stderr`, `preview-probe.body` — PASS. A corrected frontend-workspace Vite server is running with `vite --host 0.0.0.0`; probe reached `127.0.0.1:5173` after 2 seconds. Earlier root-script preview attempts failed because npm forwarded `--host` incorrectly; see `preview-refresh-final.stderr` and `preview-server.stdout`.
+- Preview refresh/probe: `preview-refresh-frontend.stdout` / `.stderr`, `preview-server-frontend.stdout` / `.stderr`, `preview-probe.body` — PASS. A corrected frontend-workspace Vite server was running with `vite --host 0.0.0.0`; probe reached `127.0.0.1:5173` after 2 seconds. Earlier root-script preview attempts failed because npm forwarded `--host` incorrectly; see `preview-refresh-final.stderr` and `preview-server.stdout`.
 - Focused live Playwright/browser evidence: `live-overlay-canvas-playwright-rerun.stdout` / `.stderr` — PASS. Evidence shows overlay present, canvas present, overlay `pointer-events: none`, controls `pointer-events: auto`, and an element under the overlay center resolves to underlying SVG content.
 
-## Residual risks / next-wave candidates
+### Independent closure verification logs
+
+- Root lint: `closure-verify-root-lint.stdout` / `closure-verify-root-lint.stderr` — PASS, 4 architecture test files / 11 tests.
+- Frontend lint: `closure-verify-frontend-lint.stdout` / `closure-verify-frontend-lint.stderr` — PASS, 4 architecture test files / 11 tests.
+- Focused read-port/overlay Vitest: `closure-verify-focused-vitest.stdout` / `closure-verify-focused-vitest.stderr` — PASS, 4 files / 7 tests.
+- Full root Vitest: `closure-verify-root-vitest.stdout` / `closure-verify-root-vitest.stderr` — PASS, 107 passed files / 1 skipped, 1230 passed tests / 45 skipped / 11 todo.
+- Full frontend Vitest: `closure-verify-frontend-vitest.stdout` / `closure-verify-frontend-vitest.stderr` — PASS, 107 passed files / 1 skipped, 1230 passed tests / 45 skipped / 11 todo.
+- Root build: `closure-verify-root-build.stdout` / `closure-verify-root-build.stderr` — PASS, `vue-tsc && vite build` completed; Vite emitted the existing large-chunk warning only.
+- Frontend build: `closure-verify-frontend-build.stdout` / `closure-verify-frontend-build.stderr` — PASS, `vue-tsc && vite build` completed; Vite emitted the existing large-chunk warning only.
+- Root e2e: `closure-verify-root-e2e.stdout` / `closure-verify-root-e2e.stderr` — PASS, 8 Playwright tests.
+- Frontend e2e: `closure-verify-frontend-e2e.stdout` / `closure-verify-frontend-e2e.stderr` — PASS, 8 Playwright tests.
+- Validation suite wrapper: first attempt `closure-verify-validation-suite-command.stderr` recorded `/bin/sh: set: Illegal option -o pipefail`; this was a wrapper-shell issue before any gate ran. It was superseded by the successful bash rerun in the same `closure-verify-*` gate logs.
+- Closure log summary: `closure-verify-log-summary.stdout` / `.stderr` — PASS summary of all current closure gates.
+
+## Live preview refresh and focused browser evidence
+
+- Preview refresh command: `validation/closure-verify-preview-command.stdout` / `.stderr` — PASS.
+- Old process cleanup: `validation/closure-verify-preview-refresh.stdout` / `.stderr`.
+- Persistent preview process: `validation/closure-verify-preview-server.pid` records the npm wrapper PID; `validation/closure-verify-preview-listener.stdout` records a listener on `0.0.0.0:5173` (`MainThread`, pid shown by `ss`).
+- Preview server logs: `validation/closure-verify-preview-server.stdout` / `.stderr`.
+- Reachability probe: `validation/closure-verify-preview-probe.stdout`, `validation/closure-verify-preview-probe.stderr`, and `validation/closure-verify-preview-probe.body` — PASS; the app returned HTML at `http://127.0.0.1:5173/` after 1 second while bound to `0.0.0.0:5173`.
+- Focused live overlay/canvas Playwright evidence: `validation/closure-verify-live-overlay-canvas-playwright.stdout` / `.stderr` — PASS. Evidence reports URL/title, overlay and canvas present, overlay `pointer-events: none`, controls `pointer-events: auto`, and the element under the overlay center is an underlying SVG `line` rather than the overlay container.
+
+## Residual risks / future candidates
 
 - The `CanvasWorldReadPort` adapter still delegates some realization calls to the concrete runtime `World`; this is intentional for the bounded direct path and avoids broad domain/context restructuring. A future wave could introduce a domain-level realization read context if broader selector/3D traversal boundaries become central.
 - Existing tool unit tests still use local helper `any` parameters for mock `hitTest` functions; these are test-helper seams outside the decision-bound active presentation source. They were not broadened here.
 - Three.js `OrbitControls` still exists inside `ThreeSceneHost`; the overlay canvas is non-intercepting in the current app overlay so broad 3D scene interaction redesign remains deferred.
+
+## Next-wave recommendation / re-rank
+
+`architecture-audit/wave-plan.md` currently ends at Wave 016, so there is no already-authored Wave 017 entry to execute directly. Based on the Wave 016 learnings and the remaining residual risks above, the next canonical stage should be a fresh scout/proposal stage named `cycle-017-fresh-scout-proposals` whose first task is to re-read the current source tree and update `architecture-audit/wave-plan.md` with the next central wave before any implementation. Candidate central topics to evaluate, in order, are:
+
+1. Whether the remaining concrete-`World` realization delegation inside `CanvasWorldReadPort` should become a domain-level realization/read-context boundary.
+2. Whether remaining interaction/tool test-helper `any` seams indicate a broader typed interaction-query/test-fixture boundary worth cleaning.
+3. Whether any remaining 3D scene interaction ownership around `ThreeSceneHost`/`OrbitControls` is architectural debt now that overlay pointer ownership is explicit.
+
+No Wave 017 implementation was started during this closure task.

@@ -1,0 +1,23 @@
+{
+  "url": "http://127.0.0.1:5173/",
+  "title": "Diedrico - Dihedral Learning MVP",
+  "overlayPresent": true,
+  "canvasPresent": true,
+  "overlayPointerEvents": "none",
+  "controlsPointerEvents": "auto",
+  "overlayBox": {
+    "x": 460,
+    "y": 252,
+    "width": 800,
+    "height": 600
+  },
+  "canvasBox": {
+    "x": 300,
+    "y": 91,
+    "width": 980,
+    "height": 612.5
+  },
+  "elementAtOverlayCenterTag": "line",
+  "elementAtOverlayCenterTestId": null,
+  "elementAtOverlayCenterClass": null
+}
