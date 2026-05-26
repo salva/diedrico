@@ -1,0 +1,90 @@
+
+> diedrico-frontend@0.1.0 test:e2e
+> playwright test tests/e2e/current-ui-contract.spec.ts tests/e2e/keyboard-shortcuts.spec.ts tests/e2e/wave010-app-shell-project-flow.spec.ts
+
+
+Running 7 tests using 4 workers
+
+[1A[2K[1/7] [chromium] › tests/e2e/current-ui-contract.spec.ts:57:3 › Current Diedrico UI contract › updates 3D coordinate status through the current canvas mouse contract
+[1A[2K[2/7] [chromium] › tests/e2e/current-ui-contract.spec.ts:26:3 › Current Diedrico UI contract › creates a free point through stable tool and canvas test IDs
+[1A[2K[3/7] [chromium] › tests/e2e/current-ui-contract.spec.ts:12:3 › Current Diedrico UI contract › renders the current app shell, canvas, toolbar, status bar, and plane selector
+[1A[2K[4/7] [chromium] › tests/e2e/current-ui-contract.spec.ts:40:3 › Current Diedrico UI contract › plane selector exposes current projection planes and switches active plane
+[1A[2K[5/7] [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:9:3 › Keyboard shortcuts › tool shortcut keys activate current tool buttons
+[1A[2K[6/7] [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:24:3 › Keyboard shortcuts › Escape returns to select tool after starting a point workflow
+[1A[2K[7/7] [chromium] › tests/e2e/wave010-app-shell-project-flow.spec.ts:4:3 › Wave 010 app-shell project boundary › starts without Google credentials and opens the app-shell project chooser without backend project API calls
+[1A[2K  1) [chromium] › tests/e2e/current-ui-contract.spec.ts:12:3 › Current Diedrico UI contract › renders the current app shell, canvas, toolbar, status bar, and plane selector 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeDisabled[2m([22m[2m)[22m failed
+
+    Locator:  getByTestId('toolbar-undo')
+    Expected: disabled
+    Received: enabled
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toBeDisabled" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('toolbar-undo')[22m
+    [2m    13 × locator resolved to <button aria-label="Undo" data-v-c8d3f184="" title="Undo (Ctrl+Z)" class="history-button" data-testid="toolbar-undo">…</button>[22m
+    [2m       - unexpected value "enabled"[22m
+
+
+      17 |     await expect(page.getByTestId('tool-line')).toBeVisible();
+      18 |     await expect(page.getByTestId('tool-circle')).toBeVisible();
+    > 19 |     await expect(page.getByTestId('toolbar-undo')).toBeDisabled();
+         |                                                    ^
+      20 |     await expect(page.getByTestId('toolbar-redo')).toBeDisabled();
+      21 |     await expect(page.getByTestId('active-plane-status')).toContainText(/P_[HV]/);
+      22 |     await expect(page.getByTestId('active-tool-status')).toContainText('Select');
+        at /work/diedrico/frontend/tests/e2e/current-ui-contract.spec.ts:19:52
+
+    Error Context: test-results/current-ui-contract-Curren-81d05-atus-bar-and-plane-selector-chromium/error-context.md
+
+
+[1A[2K  2) [chromium] › tests/e2e/current-ui-contract.spec.ts:26:3 › Current Diedrico UI contract › creates a free point through stable tool and canvas test IDs 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByTestId('svg-canvas')[22m
+    [2m    - locator resolved to <svg data-v-35319051="" viewBox="0 0 980 612.5" data-testid="svg-canvas" class="svg-canvas diedrico-canvas" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">…</svg>[22m
+    [2m  - attempting click action[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is visible, enabled and stable[22m
+    [2m      - scrolling into view if needed[22m
+    [2m      - done scrolling[22m
+    [2m      - <canvas width="800" height="600" data-v-be45d60d="" class="three-canvas" data-engine="three.js r160"></canvas> from <div data-v-d2cd657d="" class="three-view-overlay">…</div> subtree intercepts pointer events[22m
+    [2m    - retrying click action[22m
+    [2m    - waiting 20ms[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is visible, enabled and stable[22m
+    [2m      - scrolling into view if needed[22m
+    [2m      - done scrolling[22m
+    [2m      - <canvas width="800" height="600" data-v-be45d60d="" class="three-canvas" data-engine="three.js r160"></canvas> from <div data-v-d2cd657d="" class="three-view-overlay">…</div> subtree intercepts pointer events[22m
+    [2m    - retrying click action[22m
+    [2m      - waiting 100ms[22m
+    [2m    31 × waiting for element to be visible, enabled and stable[22m
+    [2m       - element is visible, enabled and stable[22m
+    [2m       - scrolling into view if needed[22m
+    [2m       - done scrolling[22m
+    [2m       - <canvas width="800" height="600" data-v-be45d60d="" class="three-canvas" data-engine="three.js r160"></canvas> from <div data-v-d2cd657d="" class="three-view-overlay">…</div> subtree intercepts pointer events[22m
+    [2m     - retrying click action[22m
+    [2m       - waiting 500ms[22m
+
+
+      33 |     await expect(page.getByTestId('active-tool-status')).toContainText('Point');
+      34 |
+    > 35 |     await svg.click({ position: { x: 320, y: 260 } });
+         |               ^
+      36 |     await expect.poll(async () => svg.locator('circle').count()).toBeGreaterThan(initialPointCount);
+      37 |     await expect(page.getByTestId('toolbar-undo')).toBeEnabled();
+      38 |   });
+        at /work/diedrico/frontend/tests/e2e/current-ui-contract.spec.ts:35:15
+
+    Error Context: test-results/current-ui-contract-Curren-8375d-le-tool-and-canvas-test-IDs-chromium/error-context.md
+
+
+[1A[2K  2 failed
+    [chromium] › tests/e2e/current-ui-contract.spec.ts:12:3 › Current Diedrico UI contract › renders the current app shell, canvas, toolbar, status bar, and plane selector 
+    [chromium] › tests/e2e/current-ui-contract.spec.ts:26:3 › Current Diedrico UI contract › creates a free point through stable tool and canvas test IDs 
+  5 passed (31.9s)

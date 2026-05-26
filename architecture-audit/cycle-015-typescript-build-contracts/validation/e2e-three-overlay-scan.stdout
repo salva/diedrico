@@ -1,0 +1,4 @@
+frontend/src/components/panels/ThreeView.vue:3:    <canvas ref="canvasRef" class="three-canvas"></canvas>
+frontend/src/components/panels/ThreeView.vue:81:.three-canvas {
+frontend/src/App.vue:70:        <div class="three-view-overlay" v-if="show3DView">
+frontend/src/App.vue:261:.three-view-overlay {

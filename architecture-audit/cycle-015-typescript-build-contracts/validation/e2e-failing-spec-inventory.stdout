@@ -1,0 +1,222 @@
+tests/e2e/active-plane-emphasis.spec.ts:18 Active Plane Visual Emphasis › should display active plane elements with full opacity 
+tests/e2e/active-plane-emphasis.spec.ts:94 Active Plane Visual Emphasis › should maintain full opacity for guides regardless of active plane 
+tests/e2e/active-plane-emphasis.spec.ts:50 Active Plane Visual Emphasis › should reduce opacity of inactive plane elements when switching planes 
+tests/e2e/active-plane-emphasis.spec.ts:167 Active Plane Visual Emphasis › should apply smooth opacity transitions when switching planes 
+tests/e2e/active-plane-emphasis.spec.ts:207 Active Plane Visual Emphasis › should not allow clicking elements on inactive plane 
+tests/e2e/circle-tool-snapping.spec.ts:25 Circle Tool: Circumference Point Snapping › T986: Both clicks snap to existing points - no duplicates created 
+tests/e2e/circle-tool-snapping.spec.ts:64 Circle Tool: Circumference Point Snapping › T986: Center snaps, circumference creates new point 
+tests/e2e/circle-tool-snapping.spec.ts:97 Circle Tool: Circumference Point Snapping › T986: Visual snap feedback on hover (both clicks) 
+tests/e2e/circle-tool-snapping.spec.ts:191 Circle Tool: Circumference Point Snapping › T986: Snap radius consistency with other tools 
+tests/e2e/circle-tool-snapping.spec.ts:134 Circle Tool: Circumference Point Snapping › T986: Multiple circles with snapping - point count remains stable 
+tests/e2e/circle-tool-snapping.spec.ts:169 Circle Tool: Circumference Point Snapping › T986: Minimum radius validation prevents tiny circles 
+tests/e2e/circle-tool-snapping.spec.ts:219 Circle Tool: Circumference Point Snapping › T986: Cancel circle creation with Escape key 
+tests/e2e/circle-tool-snapping.spec.ts:249 Circle Tool: Circumference Point Snapping › T986: Consistent snapping across plane switches 
+tests/e2e/coordinate-display.spec.ts:28 3D Coordinate Display › displays coordinates when cursor is over P_H 
+tests/e2e/coordinate-display.spec.ts:76 3D Coordinate Display › updates coordinates smoothly as cursor moves 
+tests/e2e/coordinate-display.spec.ts:133 3D Coordinate Display › coordinates update when switching planes 
+tests/e2e/create-circle.spec.ts:50 Circle Creation › should undo circle creation 
+tests/e2e/create-circle.spec.ts:72 Circle Creation › should redo circle creation 
+tests/e2e/create-circle.spec.ts:22 Circle Creation › should create circle with center and radius 
+tests/e2e/create-circle.spec.ts:96 Circle Creation › should use keyboard shortcut for undo 
+tests/e2e/create-circle.spec.ts:113 Circle Creation › should create multiple circles 
+tests/e2e/create-circle.spec.ts:144 Circle Creation › should create circles on different planes 
+tests/e2e/create-circle.spec.ts:186 Circle Creation › should create circles with different radii 
+tests/e2e/create-circle.spec.ts:171 Circle Creation › should reject circle with zero radius 
+tests/e2e/create-point.spec.ts:22 Point Creation › should create point when Point tool is active and canvas is clicked 
+tests/e2e/create-point.spec.ts:47 Point Creation › should create multiple points with repeated clicks 
+tests/e2e/create-point.spec.ts:63 Point Creation › should create points on horizontal plane (P_H) 
+tests/e2e/create-point.spec.ts:79 Point Creation › should create points on vertical plane (P_V) 
+tests/e2e/create-point.spec.ts:95 Point Creation › should not create points when Point tool is not active 
+tests/e2e/create-point.spec.ts:114 Point Creation › should deactivate tool when Select tool is clicked 
+tests/e2e/create-point.spec.ts:128 Point Creation › should show visual feedback when hovering over canvas with Point tool active 
+tests/e2e/create-circle.spec.ts:219 Circle Creation › should display circle with distinct visual style 
+tests/e2e/create-circle.spec.ts:239 Circle Creation › should require center point to exist 
+tests/e2e/create-segment.spec.ts:22 Segment Creation › should create segment between two points 
+tests/e2e/create-segment.spec.ts:66 Segment Creation › should undo segment creation 
+tests/e2e/create-segment.spec.ts:119 Segment Creation › should use keyboard shortcut for undo 
+tests/e2e/create-segment.spec.ts:91 Segment Creation › should redo segment creation 
+tests/e2e/create-segment.spec.ts:139 Segment Creation › should create multiple segments 
+tests/e2e/create-segment.spec.ts:170 Segment Creation › should create segments on different planes 
+tests/e2e/debug.spec.ts:3 debug console ─────────────────────────────────────
+tests/e2e/create-segment.spec.ts:203 Segment Creation › should reject segment with same point twice 
+tests/e2e/create-segment.spec.ts:218 Segment Creation › should display segment with distinct visual style 
+tests/e2e/dependencies.spec.ts:15 Dependency Tracking › intersection point updates when base line moves 
+tests/e2e/dependencies.spec.ts:49 Dependency Tracking › circle updates when center point moves 
+tests/e2e/dependencies.spec.ts:72 Dependency Tracking › line updates when defining points move 
+tests/e2e/dependencies.spec.ts:96 Dependency Tracking › dependency chain updates transitively 
+tests/e2e/dependencies.spec.ts:138 Dependency Tracking › multiple dependents update when base element changes 
+tests/e2e/dependencies.spec.ts:172 Dependency Tracking › dependency tracking shows in process tree 
+tests/e2e/distance-adjusted-hit-testing.spec.ts:22 Distance-Adjusted Hit-Testing › T978: Point highlighted over line when overlapping 
+tests/e2e/distance-adjusted-hit-testing.spec.ts:53 Distance-Adjusted Hit-Testing › T978: Point selected over line on click 
+tests/e2e/dependencies.spec.ts:199 Dependency Tracking › circular dependency prevention 
+tests/e2e/dependencies.spec.ts:233 Parametric Updates (Integration) › realization cache invalidation cascades to dependents 
+tests/e2e/distance-adjusted-hit-testing.spec.ts:131 Distance-Adjusted Hit-Testing › T979: Tool input respects distance adjustment 
+tests/e2e/distance-adjusted-hit-testing.spec.ts:84 Distance-Adjusted Hit-Testing › T979: Construction workflow with point on line 
+tests/e2e/distance-adjusted-hit-testing.spec.ts:166 Distance-Adjusted Hit-Testing › Line wins when significantly closer than point 
+tests/e2e/distance-adjusted-hit-testing.spec.ts:201 Distance-Adjusted Hit-Testing › Distance adjustment works with hover highlighting 
+tests/e2e/guide-creation.spec.ts:22 Guide Creation › should create guide perpendicular to line through point 
+tests/e2e/guide-creation.spec.ts:58 Guide Creation › should render guide with dashed stroke style 
+tests/e2e/guide-creation.spec.ts:94 Guide Creation › should undo guide creation 
+tests/e2e/guide-creation.spec.ts:129 Guide Creation › should redo guide creation 
+tests/e2e/guide-creation.spec.ts:166 Guide Creation › should use keyboard shortcut for undo 
+tests/e2e/guide-creation.spec.ts:195 Guide Creation › should create multiple guides on same reference line 
+tests/e2e/guide-creation.spec.ts:239 Guide Creation › should create guide perpendicular to vertical line 
+tests/e2e/guide-creation.spec.ts:265 Guide Creation › should require reference line before through-point 
+tests/e2e/hhl-intersection.spec.ts:21 HalfHingeLine2D Intersection - Sibling Points › should create sibling point when intersecting with hinge line 
+tests/e2e/hhl-intersection.spec.ts:62 HalfHingeLine2D Intersection - Sibling Points › should delete both sibling points when deleting primary 
+tests/e2e/hhl-intersection.spec.ts:101 HalfHingeLine2D Intersection - Sibling Points › should undo intersection creation with both siblings 
+tests/e2e/hhl-intersection.spec.ts:133 HalfHingeLine2D Intersection - Sibling Points › should create sibling on correct plane (H ↔ V mapping) 
+tests/e2e/hhl-intersection.spec.ts:163 HalfHingeLine2D Intersection - Sibling Points › should preserve sibling coordinates (HHL coordinate consistency) 
+tests/e2e/hover.spec.ts:9 Hover Highlighting › should show tooltip when hovering over a point 
+tests/e2e/hover.spec.ts:33 Hover Highlighting › should clear tooltip when mouse leaves element 
+tests/e2e/hover.spec.ts:56 Hover Highlighting › should apply hover highlight to hovered element 
+tests/e2e/hover.spec.ts:111 Hover Highlighting › should show hover tooltip for different element types 
+tests/e2e/hover.spec.ts:86 Hover Highlighting › should distinguish hover from selection highlight 
+tests/e2e/hover.spec.ts:147 Hover Highlighting › selection highlight should take precedence over hover 
+tests/e2e/intersection-creation.spec.ts:25 Intersection Point Creation › should create intersection point between two lines 
+tests/e2e/intersection-creation.spec.ts:67 Intersection Point Creation › should show error for parallel lines 
+tests/e2e/intersection-creation.spec.ts:95 Intersection Point Creation › should undo intersection point creation 
+tests/e2e/intersection-creation.spec.ts:120 Intersection Point Creation › should redo intersection point creation 
+tests/e2e/intersection-creation.spec.ts:144 Intersection Point Creation › should support keyboard shortcut for undo (Ctrl+Z) 
+tests/e2e/intersection-creation.spec.ts:167 Intersection Point Creation › should support keyboard shortcut for redo (Ctrl+Shift+Z) 
+tests/e2e/intersection-creation.spec.ts:225 Intersection Point Creation › should handle clicking same line twice (error case) 
+tests/e2e/intersection-creation.spec.ts:189 Intersection Point Creation › should create multiple intersections on different line pairs 
+tests/e2e/intersection-creation.spec.ts:243 Intersection Point Creation › should highlight selected line before second click 
+tests/e2e/intersection-creation.spec.ts:268 Intersection Point Creation › should change cursor on hover over line 
+tests/e2e/intersection-creation.spec.ts:333 Intersection Point Creation › should create intersection point between line and circle - tangent 
+tests/e2e/intersection-creation.spec.ts:289 Intersection Point Creation › should create intersection point between line and circle - secant 
+tests/e2e/intersection-creation.spec.ts:358 Intersection Point Creation › should select nearest intersection when multiple exist (circle-circle) 
+tests/e2e/intersection-creation.spec.ts:421 Intersection Point Creation › should undo line-circle intersection creation 
+tests/e2e/intersection-creation.spec.ts:397 Intersection Point Creation › should create intersection between two circles - secant 
+tests/e2e/intersection-creation.spec.ts:446 Intersection Point Creation › should handle no intersection case (line too far from circle) 
+tests/e2e/line-creation.spec.ts:85 Line Creation › should create multiple lines 
+tests/e2e/line-creation.spec.ts:24 Line Creation › should create line between two clicked points 
+tests/e2e/line-creation.spec.ts:64 Line Creation › should snap to nearby points when creating line 
+tests/e2e/line-creation.spec.ts:111 Line Creation › should highlight points on hover during line creation 
+tests/e2e/line-creation.spec.ts:136 Line Creation › should switch from Point tool to Line tool 
+tests/e2e/point-transport.spec.ts:24 Point Transport › should transport point between planes via guide 
+tests/e2e/point-transport.spec.ts:55 Point Transport › should undo transport operation 
+tests/e2e/point-transport.spec.ts:43 Point Transport › should handle invalid transport selection gracefully 
+tests/e2e/properties.spec.ts:23 Properties Dialog › should open properties dialog on double-click 
+tests/e2e/properties.spec.ts:39 Properties Dialog › should display geometry info for point element 
+tests/e2e/properties.spec.ts:57 Properties Dialog › should allow editing color property 
+tests/e2e/properties.spec.ts:81 Properties Dialog › should validate invalid hex color 
+tests/e2e/properties.spec.ts:107 Properties Dialog › should validate line width range 
+tests/e2e/properties.spec.ts:138 Properties Dialog › should reset properties to default 
+tests/e2e/properties.spec.ts:164 Properties Dialog › should close dialog on cancel 
+tests/e2e/properties.spec.ts:187 Properties Dialog › should close dialog on overlay click 
+tests/e2e/selection.spec.ts:45 Object Selection › should select single element on click 
+tests/e2e/properties.spec.ts:204 Properties Dialog › should show different properties for different element types 
+tests/e2e/selection.spec.ts:63 Object Selection › should replace selection when clicking different element 
+tests/e2e/selection.spec.ts:79 Object Selection › should add to selection with Shift+click (multi-select) 
+tests/e2e/selection.spec.ts:98 Object Selection › should add multiple elements to selection with repeated Shift+click 
+tests/e2e/properties.spec.ts:235 Properties Dialog › should allow multiple override properties 
+tests/e2e/selection.spec.ts:230 Object Selection › should deselect element with Shift+click on already selected element 
+tests/e2e/selection.spec.ts:144 Object Selection › should show selection highlighting (visual feedback) 
+tests/e2e/selection.spec.ts:124 Object Selection › should clear selection when clicking empty space 
+tests/e2e/undo-redo-fix.spec.ts:23 Undo/Redo › undo button should be disabled initially 
+tests/e2e/selection.spec.ts:285 Object Selection › should not select elements when using drawing tools 
+tests/e2e/selection.spec.ts:300 Object Selection › should clear selection when switching tools 
+tests/e2e/selection.spec.ts:320 Object Selection › should handle rapid selection changes 
+tests/e2e/undo-redo-fix.spec.ts:28 Undo/Redo › redo button should be disabled initially 
+tests/e2e/undo-redo-fix.spec.ts:33 Undo/Redo › should enable undo after creating a point 
+tests/e2e/undo-redo-fix.spec.ts:49 Undo/Redo › should undo point creation via button 
+tests/e2e/undo-redo-fix.spec.ts:69 Undo/Redo › should undo point creation via keyboard (Ctrl+Z) 
+tests/e2e/undo-redo-fix.spec.ts:102 Undo/Redo › should redo point creation via button 
+tests/e2e/undo-redo-fix.spec.ts:87 Undo/Redo › should enable redo after undo 
+tests/e2e/undo-redo-fix.spec.ts:124 Undo/Redo › should redo point creation via keyboard (Ctrl+Y) 
+tests/e2e/undo-redo-fix.spec.ts:144 Undo/Redo › should clear redo stack on new action 
+tests/e2e/undo-redo-fix.spec.ts:206 Undo/Redo › should undo/redo line creation 
+tests/e2e/undo-redo-fix.spec.ts:169 Undo/Redo › should undo/redo multiple actions in correct order 
+tests/e2e/undo-redo.spec.ts:23 Undo/Redo › undo button should be disabled initially 
+tests/e2e/undo-redo.spec.ts:28 Undo/Redo › redo button should be disabled initially 
+tests/e2e/undo-redo.spec.ts:33 Undo/Redo › should enable undo after creating a point 
+tests/e2e/undo-redo.spec.ts:49 Undo/Redo › should undo point creation via button 
+tests/e2e/undo-redo.spec.ts:69 Undo/Redo › should undo point creation via keyboard (Ctrl+Z) 
+tests/e2e/undo-redo.spec.ts:87 Undo/Redo › should enable redo after undo ───
+tests/e2e/undo-redo.spec.ts:102 Undo/Redo › should redo point creation via button 
+tests/e2e/undo-redo.spec.ts:124 Undo/Redo › should redo point creation via keyboard (Ctrl+Y) 
+tests/e2e/undo-redo.spec.ts:144 Undo/Redo › should clear redo stack on new action 
+tests/e2e/undo-redo.spec.ts:169 Undo/Redo › should undo/redo multiple actions in correct order 
+tests/e2e/undo-redo.spec.ts:206 Undo/Redo › should undo/redo line creation ─
+--- summary lines ---
+    [chromium] › tests/e2e/guide-creation.spec.ts:265:3 › Guide Creation › should require reference line before through-point 
+    [chromium] › tests/e2e/hhl-intersection.spec.ts:21:3 › HalfHingeLine2D Intersection - Sibling Points › should create sibling point when intersecting with hinge line 
+    [chromium] › tests/e2e/hhl-intersection.spec.ts:62:3 › HalfHingeLine2D Intersection - Sibling Points › should delete both sibling points when deleting primary 
+    [chromium] › tests/e2e/hhl-intersection.spec.ts:101:3 › HalfHingeLine2D Intersection - Sibling Points › should undo intersection creation with both siblings 
+    [chromium] › tests/e2e/hhl-intersection.spec.ts:133:3 › HalfHingeLine2D Intersection - Sibling Points › should create sibling on correct plane (H ↔ V mapping) 
+    [chromium] › tests/e2e/hhl-intersection.spec.ts:163:3 › HalfHingeLine2D Intersection - Sibling Points › should preserve sibling coordinates (HHL coordinate consistency) 
+    [chromium] › tests/e2e/hover.spec.ts:9:3 › Hover Highlighting › should show tooltip when hovering over a point 
+    [chromium] › tests/e2e/hover.spec.ts:33:3 › Hover Highlighting › should clear tooltip when mouse leaves element 
+    [chromium] › tests/e2e/hover.spec.ts:56:3 › Hover Highlighting › should apply hover highlight to hovered element 
+    [chromium] › tests/e2e/hover.spec.ts:86:3 › Hover Highlighting › should distinguish hover from selection highlight 
+    [chromium] › tests/e2e/hover.spec.ts:111:3 › Hover Highlighting › should show hover tooltip for different element types 
+    [chromium] › tests/e2e/hover.spec.ts:147:3 › Hover Highlighting › selection highlight should take precedence over hover 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:25:3 › Intersection Point Creation › should create intersection point between two lines 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:67:3 › Intersection Point Creation › should show error for parallel lines 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:95:3 › Intersection Point Creation › should undo intersection point creation 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:120:3 › Intersection Point Creation › should redo intersection point creation 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:144:3 › Intersection Point Creation › should support keyboard shortcut for undo (Ctrl+Z) 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:167:3 › Intersection Point Creation › should support keyboard shortcut for redo (Ctrl+Shift+Z) 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:189:3 › Intersection Point Creation › should create multiple intersections on different line pairs 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:225:3 › Intersection Point Creation › should handle clicking same line twice (error case) 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:243:3 › Intersection Point Creation › should highlight selected line before second click 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:268:3 › Intersection Point Creation › should change cursor on hover over line 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:289:3 › Intersection Point Creation › should create intersection point between line and circle - secant 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:333:3 › Intersection Point Creation › should create intersection point between line and circle - tangent 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:358:3 › Intersection Point Creation › should select nearest intersection when multiple exist (circle-circle) 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:397:3 › Intersection Point Creation › should create intersection between two circles - secant 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:421:3 › Intersection Point Creation › should undo line-circle intersection creation 
+    [chromium] › tests/e2e/intersection-creation.spec.ts:446:3 › Intersection Point Creation › should handle no intersection case (line too far from circle) 
+    [chromium] › tests/e2e/line-creation.spec.ts:24:3 › Line Creation › should create line between two clicked points 
+    [chromium] › tests/e2e/line-creation.spec.ts:64:3 › Line Creation › should snap to nearby points when creating line 
+    [chromium] › tests/e2e/line-creation.spec.ts:85:3 › Line Creation › should create multiple lines 
+    [chromium] › tests/e2e/line-creation.spec.ts:111:3 › Line Creation › should highlight points on hover during line creation 
+    [chromium] › tests/e2e/line-creation.spec.ts:136:3 › Line Creation › should switch from Point tool to Line tool 
+    [chromium] › tests/e2e/point-transport.spec.ts:24:3 › Point Transport › should transport point between planes via guide 
+    [chromium] › tests/e2e/point-transport.spec.ts:43:3 › Point Transport › should handle invalid transport selection gracefully 
+    [chromium] › tests/e2e/point-transport.spec.ts:55:3 › Point Transport › should undo transport operation 
+    [chromium] › tests/e2e/properties.spec.ts:23:3 › Properties Dialog › should open properties dialog on double-click 
+    [chromium] › tests/e2e/properties.spec.ts:39:3 › Properties Dialog › should display geometry info for point element 
+    [chromium] › tests/e2e/properties.spec.ts:57:3 › Properties Dialog › should allow editing color property 
+    [chromium] › tests/e2e/properties.spec.ts:81:3 › Properties Dialog › should validate invalid hex color 
+    [chromium] › tests/e2e/properties.spec.ts:107:3 › Properties Dialog › should validate line width range 
+    [chromium] › tests/e2e/properties.spec.ts:138:3 › Properties Dialog › should reset properties to default 
+    [chromium] › tests/e2e/properties.spec.ts:164:3 › Properties Dialog › should close dialog on cancel 
+    [chromium] › tests/e2e/properties.spec.ts:187:3 › Properties Dialog › should close dialog on overlay click 
+    [chromium] › tests/e2e/properties.spec.ts:204:3 › Properties Dialog › should show different properties for different element types 
+    [chromium] › tests/e2e/properties.spec.ts:235:3 › Properties Dialog › should allow multiple override properties 
+    [chromium] › tests/e2e/selection.spec.ts:45:3 › Object Selection › should select single element on click 
+    [chromium] › tests/e2e/selection.spec.ts:63:3 › Object Selection › should replace selection when clicking different element 
+    [chromium] › tests/e2e/selection.spec.ts:79:3 › Object Selection › should add to selection with Shift+click (multi-select) 
+    [chromium] › tests/e2e/selection.spec.ts:98:3 › Object Selection › should add multiple elements to selection with repeated Shift+click 
+    [chromium] › tests/e2e/selection.spec.ts:124:3 › Object Selection › should clear selection when clicking empty space 
+    [chromium] › tests/e2e/selection.spec.ts:144:3 › Object Selection › should show selection highlighting (visual feedback) 
+    [chromium] › tests/e2e/selection.spec.ts:230:3 › Object Selection › should deselect element with Shift+click on already selected element 
+    [chromium] › tests/e2e/selection.spec.ts:285:3 › Object Selection › should not select elements when using drawing tools 
+    [chromium] › tests/e2e/selection.spec.ts:300:3 › Object Selection › should clear selection when switching tools 
+    [chromium] › tests/e2e/selection.spec.ts:320:3 › Object Selection › should handle rapid selection changes 
+    [chromium] › tests/e2e/undo-redo-fix.spec.ts:23:3 › Undo/Redo › undo button should be disabled initially 
+    [chromium] › tests/e2e/undo-redo-fix.spec.ts:28:3 › Undo/Redo › redo button should be disabled initially 
+    [chromium] › tests/e2e/undo-redo-fix.spec.ts:33:3 › Undo/Redo › should enable undo after creating a point 
+    [chromium] › tests/e2e/undo-redo-fix.spec.ts:49:3 › Undo/Redo › should undo point creation via button 
+    [chromium] › tests/e2e/undo-redo-fix.spec.ts:69:3 › Undo/Redo › should undo point creation via keyboard (Ctrl+Z) 
+    [chromium] › tests/e2e/undo-redo-fix.spec.ts:87:3 › Undo/Redo › should enable redo after undo ──
+    [chromium] › tests/e2e/undo-redo-fix.spec.ts:102:3 › Undo/Redo › should redo point creation via button 
+    [chromium] › tests/e2e/undo-redo-fix.spec.ts:124:3 › Undo/Redo › should redo point creation via keyboard (Ctrl+Y) 
+    [chromium] › tests/e2e/undo-redo-fix.spec.ts:144:3 › Undo/Redo › should clear redo stack on new action 
+    [chromium] › tests/e2e/undo-redo-fix.spec.ts:169:3 › Undo/Redo › should undo/redo multiple actions in correct order 
+    [chromium] › tests/e2e/undo-redo-fix.spec.ts:206:3 › Undo/Redo › should undo/redo line creation 
+    [chromium] › tests/e2e/undo-redo.spec.ts:23:3 › Undo/Redo › undo button should be disabled initially 
+    [chromium] › tests/e2e/undo-redo.spec.ts:28:3 › Undo/Redo › redo button should be disabled initially 
+    [chromium] › tests/e2e/undo-redo.spec.ts:33:3 › Undo/Redo › should enable undo after creating a point 
+    [chromium] › tests/e2e/undo-redo.spec.ts:49:3 › Undo/Redo › should undo point creation via button 
+    [chromium] › tests/e2e/undo-redo.spec.ts:69:3 › Undo/Redo › should undo point creation via keyboard (Ctrl+Z) 
+    [chromium] › tests/e2e/undo-redo.spec.ts:87:3 › Undo/Redo › should enable redo after undo ──────
+    [chromium] › tests/e2e/undo-redo.spec.ts:102:3 › Undo/Redo › should redo point creation via button 
+    [chromium] › tests/e2e/undo-redo.spec.ts:124:3 › Undo/Redo › should redo point creation via keyboard (Ctrl+Y) 
+    [chromium] › tests/e2e/undo-redo.spec.ts:144:3 › Undo/Redo › should clear redo stack on new action 
+    [chromium] › tests/e2e/undo-redo.spec.ts:169:3 › Undo/Redo › should undo/redo multiple actions in correct order 
+    [chromium] › tests/e2e/undo-redo.spec.ts:206:3 › Undo/Redo › should undo/redo line creation ────
+  7 skipped
+  40 passed (12.1m)

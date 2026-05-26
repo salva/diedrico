@@ -1,0 +1,222 @@
+    Error: locator.boundingBox: Error: strict mode violation: locator('svg') resolved to 19 elements:
+    Error: locator.boundingBox: Error: strict mode violation: locator('svg') resolved to 19 elements:
+    Error: locator.boundingBox: Error: strict mode violation: locator('svg') resolved to 19 elements:
+    Error: locator.boundingBox: Error: strict mode violation: locator('svg') resolved to 19 elements:
+    Error: locator.boundingBox: Error: strict mode violation: locator('svg') resolved to 19 elements:
+    Error: locator.click: Error: strict mode violation: getByRole('button', { name: /point/i }) resolved to 4 elements:
+    Error: locator.click: Error: strict mode violation: getByRole('button', { name: /point/i }) resolved to 4 elements:
+    Error: locator.click: Error: strict mode violation: getByRole('button', { name: /point/i }) resolved to 4 elements:
+    Error: locator.click: Error: strict mode violation: getByRole('button', { name: /point/i }) resolved to 4 elements:
+    Error: locator.click: Error: strict mode violation: getByRole('button', { name: /point/i }) resolved to 4 elements:
+    Error: locator.click: Error: strict mode violation: getByRole('button', { name: /point/i }) resolved to 4 elements:
+    Error: locator.click: Error: strict mode violation: getByRole('button', { name: /point/i }) resolved to 4 elements:
+    Error: locator.click: Error: strict mode violation: getByRole('button', { name: /point/i }) resolved to 4 elements:
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mnot[2m.[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+    > 51 |     expect(coordText).not.toBe('---');
+      54 |     expect(coordText).toMatch(/\(-?\d+\.\d{2}, -?\d+\.\d{2}, -?\d+\.\d{2}\)/);
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mnot[2m.[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+    > 88 |     expect(coord1).not.toBe('---');
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoMatch[2m([22m[32mexpected[39m[2m)[22m
+    > 155 |     expect(coord1).toMatch(/\(-?\d+\.\d{2}, -?\d+\.\d{2}, -?\d+\.\d{2}\)/);
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5175/
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5175/
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5175/
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5175/
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5175/
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5175/
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5175/
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Error: locator.click: Error: strict mode violation: getByRole('button', { name: /point/i }) resolved to 4 elements:
+    Error: locator.click: Error: strict mode violation: getByRole('button', { name: /point/i }) resolved to 4 elements:
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Error: locator.click: Error: strict mode violation: getByRole('button', { name: /point/i }) resolved to 4 elements:
+    Error: locator.click: Error: strict mode violation: getByRole('button', { name: /point/i }) resolved to 4 elements:
+    Error: locator.click: Error: strict mode violation: getByRole('button', { name: /point/i }) resolved to 4 elements:
+    Error: locator.click: Error: strict mode violation: getByRole('button', { name: /point/i }) resolved to 4 elements:
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5175/
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5175/
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5175/
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5175/
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5175/
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+    Error: element(s) not found
+    > 34 |     await expect(transportButton).toBeVisible();
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+    Error: element(s) not found
+    > 65 |     await expect(undoButton).toBeVisible();
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: locator.click: Test timeout of 30000ms exceeded.
+      52 |     await expect(transportButton).toHaveClass(/active/);
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Error: locator.click: Error: strict mode violation: getByRole('button', { name: /point/i }) resolved to 4 elements:
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Error: locator.click: Error: strict mode violation: getByRole('button', { name: /point/i }) resolved to 4 elements:
+    Error: locator.click: Error: strict mode violation: getByRole('button', { name: /point/i }) resolved to 4 elements:
+    Error: locator.click: Error: strict mode violation: getByRole('button', { name: /point/i }) resolved to 4 elements:
+    [31mTest timeout of 30000ms exceeded.[39m
+    Error: page.click: Test timeout of 30000ms exceeded.
+    Error: locator.click: Error: strict mode violation: getByRole('button', { name: /point/i }) resolved to 4 elements:
+    Error: locator.click: Error: strict mode violation: getByRole('button', { name: /point/i }) resolved to 4 elements:
+    Error: locator.click: Error: strict mode violation: getByRole('button', { name: /point/i }) resolved to 4 elements:
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Error: locator.click: Error: strict mode violation: getByRole('button', { name: /point/i }) resolved to 4 elements:
+    Error: locator.click: Error: strict mode violation: getByRole('button', { name: /point/i }) resolved to 4 elements:
+    Error: locator.click: Error: strict mode violation: getByRole('button', { name: /point/i }) resolved to 4 elements:
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5180/

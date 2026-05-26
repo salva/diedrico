@@ -7,6 +7,7 @@
         @click="handleNew"
         title="New Project (Ctrl+N)"
         aria-label="New Project"
+        data-testid="toolbar-new-project"
       >
         <NewFileIcon class="button-icon" />
       </button>
@@ -16,6 +17,7 @@
         @click="handleOpen"
         title="Open Project (Ctrl+O)"
         aria-label="Open Project"
+        data-testid="toolbar-open-project"
       >
         <OpenFileIcon class="button-icon" />
       </button>
@@ -31,6 +33,7 @@
         @click="handleUndo"
         title="Undo (Ctrl+Z)"
         aria-label="Undo"
+        data-testid="toolbar-undo"
       >
         <UndoIcon class="button-icon" />
       </button>
@@ -41,6 +44,7 @@
         @click="handleRedo"
         title="Redo (Ctrl+Y)"
         aria-label="Redo"
+        data-testid="toolbar-redo"
       >
         <RedoIcon class="button-icon" />
       </button>
@@ -61,6 +65,7 @@
         :class="{ active: gridVisible }"
         title="Toggle Grid (G)"
         aria-label="Toggle Grid"
+        data-testid="toolbar-toggle-grid"
       >
         <GridIcon class="button-icon" />
       </button>
@@ -71,6 +76,7 @@
         :class="{ active: showProjectedElements }"
         title="Toggle 3D Projections (D)"
         aria-label="Toggle 3D Projections"
+        data-testid="toolbar-toggle-projections"
       >
         <ProjectionIcon class="button-icon" />
       </button>
@@ -80,6 +86,7 @@
         @click="handleFitToView"
         title="Fit to View (Ctrl+0)"
         aria-label="Fit to View"
+        data-testid="toolbar-fit-to-view"
       >
         <ZoomFitIcon class="button-icon" />
       </button>
