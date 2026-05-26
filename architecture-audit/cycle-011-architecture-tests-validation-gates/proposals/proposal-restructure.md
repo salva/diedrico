@@ -6,6 +6,16 @@ Implement Wave 011 one conceptual layer higher than direct test additions: creat
 
 This proposal still avoids broad Wave 012 placeholder/debug cleanup and Wave 013 docs/spec reconciliation. It only touches the debug/example surface because it directly blocks a truthful Wave 011 UI-to-operation gate.
 
+
+## Round-01 blocker corrections incorporated
+
+This proposal was corrected after `reviews/round-01-review.md` to remove ambiguity from the validation contract and source-cleanup scope:
+
+- **Executable lint/static gate:** root `npm run lint` must delegate to a real frontend command, and frontend lint must either gain minimal ESLint dependencies/config or be replaced by the installed `vue-tsc --noEmit` static gate. The current missing `eslint` executable may not remain as classified residual debt, and no no-op lint script is allowed.
+- **Root/frontend validation contract:** the command table now states the exact root and frontend `lint`, `test`, `build`, `test:e2e`, and `test:architecture` surfaces after backend deletion. Restructure explicitly adds root `test:e2e` as a transparent delegation to `npm run test:e2e --workspace=frontend` so the root cadence is directly executable.
+- **ExamplesMenu leak handling:** this proposal does not keep an allowlist. It requires either deleting the debug examples path or moving command construction behind an application use case before enforcing the strict UI boundary. The selected cleanup is the only Wave 012-adjacent source change allowed in Wave 011.
+- **Validation debt scope:** stale backend Playwright comments are required deletes, Node 24/`vue-tsc`, intersections, and broad e2e failures must be remediated only when narrowly validation-gate-related or classified with exact output, and unrelated Wave 012/013 cleanup remains excluded.
+
 ## Why the fix belongs higher than test additions
 
 Architecture tests should express the intended architecture, not memorize known exceptions. Current evidence shows one active component still violates the post-Wave-006 UI command boundary:

@@ -6,6 +6,16 @@ Implement Wave 011 as a focused architecture-test and script hardening wave. Kee
 
 This proposal intentionally does **not** delete `ExamplesMenu.vue` or debug/example operations. Instead, it adds a named, single-file, temporary allowlist for that one residual UI-to-operation violation so the architecture gate is truthful today while making the exception visible, narrow, and scheduled for deletion/migration in Wave 012.
 
+
+## Round-01 blocker corrections incorporated
+
+This proposal was corrected after `reviews/round-01-review.md` to make the previously ambiguous validation gates executable and reviewable:
+
+- **Executable lint/static gate:** the command contract now requires root `npm run lint` to delegate to a real frontend static gate and requires frontend lint to stop calling a missing `eslint` binary. The preferred direct implementation is `vue-tsc --noEmit` using installed tooling; the only allowed alternative is adding/restoring minimal ESLint dependencies/config. No no-op scripts, missing executables, `--fix`-only churn, or residual `eslint: not found` classification are allowed.
+- **Root/frontend validation contract:** the command table explicitly defines root versus frontend `lint`, `test`, `build`, `test:e2e`, and `test:architecture` behavior after Wave 010 backend deletion. Direct intentionally does not add a root `test:e2e` alias; the mandatory e2e cadence is satisfied by running `npm run test:e2e --workspace=frontend` and recording root alias absence in the implementation log.
+- **ExamplesMenu temporary exception:** the UI-to-command exception is limited to the exact file `frontend/src/components/menus/ExamplesMenu.vue` and the known command/operation surfaces only. Test output and implementation-log text must name it as `TEMPORARY Wave 012 ExamplesMenu debug/example command leak`; any broader allowlist requires a reviewed proposal.
+- **Validation debt scope:** stale backend Playwright comments are required deletes, known Node 24/`vue-tsc`, intersections, and broad e2e debt must be remediated only when small and validation-gate-scoped or classified with exact output, and broad Wave 012/013 cleanup remains out of scope.
+
 ## Evidence driving the proposal
 
 - Root workspaces now include only `frontend` (`package.json:7-9`), so root build/test/lint delegation to `--workspace=frontend` is structurally correct after Wave 010 (`package.json:13-16`).

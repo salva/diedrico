@@ -1,89 +1,72 @@
 # Wave 011 Corrections Round 01 Note
 
-## Source review
+## Source of corrections
 
-Corrections are based on `architecture-audit/cycle-011-architecture-tests-validation-gates/reviews/round-01-review.md`, especially the three blocking issues under “Blocking issues”. No application/source implementation files were changed during this correction task.
+Corrections address every blocking issue in `architecture-audit/cycle-011-architecture-tests-validation-gates/reviews/round-01-review.md`. No application source files were changed in this corrections task.
 
-## Blocker 1 — Sharpen root/frontend lint gate plan
+## Blocker-to-edit map
 
-**Reviewer blocker:** Both proposals left open a non-truthful outcome where `lint` remains declared but non-executable because `frontend/package.json` invokes missing `eslint`. Each proposal must say exactly which real executable gate Wave 011 leaves in place and whether that means installing/configuring ESLint or replacing lint with another supported static command.
+### Blocker 1 — Both proposals must sharpen the root/frontend lint gate plan
 
-### Edits made in `proposals/proposal-direct.md`
+**Reviewer concern:** the proposals allowed a non-truthful outcome where `frontend/package.json` kept declaring `eslint ... --fix` while `eslint` was absent from dev dependencies; “classify if still red” was insufficient for a missing executable.
 
-- Added `## Concrete validation command contract after Wave 010`.
-- In the command table, specified:
-  - root `npm run lint` remains a frontend delegator but must execute a real static gate;
-  - frontend `npm run lint --workspace=frontend` must replace missing `eslint` with an installed TypeScript static gate such as `vue-tsc --noEmit`, unless implementation deliberately adds minimal ESLint dependencies/config;
-  - no no-op, missing executable, `true`, `echo`, or `|| true` lint outcome is allowed.
-- Added an explicit implementation choice list:
-  - preferred direct path: `vue-tsc --noEmit` or equivalent installed static check;
-  - allowed alternative: add/restore minimal ESLint dependencies/config.
-- Updated `### Package/script/config changes`, `## Validation plan`, and `## Known debt classification/remediation strategy` to require proof that the `eslint: not found` failure is gone and to reject “classify if still red” for the missing executable.
+**Proposal Direct edits:**
 
-### Edits made in `proposals/proposal-restructure.md`
+- Added `## Round-01 blocker corrections incorporated`, bullet **Executable lint/static gate**, requiring a real command and forbidding missing executables/no-op scripts/residual `eslint: not found` classification.
+- Tightened `## Concrete validation command contract after Wave 010`, rows for root `npm run lint` and frontend `npm run lint --workspace=frontend`, to prefer `vue-tsc --noEmit` with installed tooling or require minimal ESLint dependencies/config as the only alternative.
+- Tightened `## Package/script/config changes`, `## Validation plan`, and `## Known debt classification/remediation strategy` so lint/static remediation is mandatory in Wave 011 and a missing ESLint binary cannot be accepted as debt.
 
-- Added `## Concrete validation command contract after Wave 010`.
-- In the command table, specified:
-  - root `npm run lint` remains a frontend delegator but must execute a real static gate;
-  - frontend lint must either add minimal ESLint dependencies/config or use `vue-tsc --noEmit` as an installed static gate;
-  - no missing executable/no-op lint outcome is allowed.
-- Added an explicit implementation choice list:
-  - preferred restructure path: minimal ESLint dependency/config so `lint` remains semantically a lint command;
-  - allowed fallback: `vue-tsc --noEmit` if ESLint would expand scope.
-- Updated `### Package/script/config changes`, `## Validation plan`, and `## Known debt classification/remediation strategy` to require remediation of the missing executable rather than classification.
+**Proposal Restructure edits:**
 
-## Blocker 2 — State root validation contract after Wave 010 backend deletion
+- Added `## Round-01 blocker corrections incorporated`, bullet **Executable lint/static gate**, requiring either minimal ESLint dependencies/config or the installed `vue-tsc --noEmit` gate.
+- Tightened `## Concrete validation command contract after Wave 010`, root/frontend lint rows and implementation-path bullets, to remove the current missing executable failure.
+- Tightened `## Package/script/config changes`, `## Validation plan`, and `## Known debt classification/remediation strategy` to forbid no-op lint scripts and residual `eslint: not found` classification.
 
-**Reviewer blocker:** Both proposals needed to explicitly state whether root `package.json` gains a root `test:e2e` alias and, if not, how mandatory cadence is satisfied truthfully from root versus workspace level.
+### Blocker 2 — Both proposals must state the root validation contract after Wave 010 backend deletion more explicitly
 
-### Edits made in `proposals/proposal-direct.md`
+**Reviewer concern:** root/workspace validation cadence was underspecified, especially whether root `test:e2e` would exist and how e2e would be invoked without backend workspace assumptions.
 
-- Added command-table rows for root/frontend `test`, `build`, `test:e2e`, and `test:architecture`.
-- Explicitly chose **not** to add root `test:e2e` in Proposal Direct.
-- Required implementation logs to state that root e2e is intentionally absent after backend deletion and that the mandatory e2e cadence is satisfied by running `npm run test:e2e --workspace=frontend`.
-- Updated `### Package/script/config changes` to say root `test:e2e` is not added.
-- Updated `## Validation plan` to list root mandatory commands separately from the active workspace e2e command and to avoid implying a root e2e alias exists.
+**Proposal Direct edits:**
 
-### Edits made in `proposals/proposal-restructure.md`
+- Added `## Round-01 blocker corrections incorporated`, bullet **Root/frontend validation contract**.
+- Added a full command-surface table in `## Concrete validation command contract after Wave 010` covering root and frontend `lint`, `test`, `build`, `test:e2e`, and `test:architecture`.
+- Explicitly states **do not add a root `test:e2e` alias**; mandatory e2e is satisfied by `npm run test:e2e --workspace=frontend`, with the intentional root alias absence recorded in `implementation-log.md`.
+- `## Validation plan` now lists root/frontend mandatory cadence separately and calls out workspace e2e plus focused Playwright guard invocation.
 
-- Added command-table rows for root/frontend `test`, `build`, `test:e2e`, and `test:architecture`.
-- Explicitly chose to **add** root `test:e2e` as `npm run test:e2e --workspace=frontend` in Proposal Restructure.
-- Updated `### Package/script/config changes` to require the root e2e alias.
-- Updated `## Validation plan` to require both root `npm run test:e2e` and frontend `npm run test:e2e --workspace=frontend`, plus focused Wave 010 e2e.
+**Proposal Restructure edits:**
 
-## Blocker 3 — Tighten Proposal Direct `ExamplesMenu.vue` exception language
+- Added `## Round-01 blocker corrections incorporated`, bullet **Root/frontend validation contract**.
+- Added a full command-surface table in `## Concrete validation command contract after Wave 010` covering root and frontend commands.
+- Explicitly states **add root `test:e2e`** as `npm run test:e2e --workspace=frontend`, while frontend remains the sole implementation e2e entrypoint.
+- `## Validation plan` now requires root `npm run test:e2e` and frontend `npm run test:e2e --workspace=frontend`.
 
-**Reviewer blocker:** Proposal Direct could keep the allowlist only if it explicitly restricts the exception to one file, requires test failure output to name the residual as temporary, and points to Wave 012 removal/move as the planned delete target.
+### Blocker 3 — Proposal Direct must tighten the `ExamplesMenu.vue` exception language
 
-### Edits made in `proposals/proposal-direct.md`
+**Reviewer concern:** the direct allowlist could become a durable exception unless made single-file, visible, and tied to Wave 012 deletion/migration.
 
-- Strengthened `## Summary` to call the allowlist “named, single-file, temporary”.
-- Updated `### Test/helper changes` / `importBoundaries.spec.ts` requirements to state:
-  - the only exception is exactly `frontend/src/components/menus/ExamplesMenu.vue`;
-  - the exception is not a glob and only covers the known `Command`, `AddExampleSetupOp`, and `CommandStack` leak;
-  - the test output must name it as `TEMPORARY Wave 012 ExamplesMenu debug/example command leak`;
-  - adding any other component or import to the allowlist is forbidden without reviewed proposal change;
-  - the exception must be recorded in `implementation-log.md` as a Wave 012 delete/move target.
-- Updated `## Expected behavior change`, `## Validation plan`, `## Known debt classification/remediation strategy`, and `## Risks` to keep the exception visible and time-boxed.
+**Proposal Direct edits:**
 
-### Edits made in `proposals/proposal-restructure.md`
+- Added `## Round-01 blocker corrections incorporated`, bullet **ExamplesMenu temporary exception**.
+- `## Summary` now states the allowlist is named, single-file, temporary, visible, narrow, and scheduled for Wave 012 deletion/migration.
+- `## Files to change` / `importBoundaries.spec.ts` requirements now restrict the exception to exact path `frontend/src/components/menus/ExamplesMenu.vue`, exact known `Command`, `AddExampleSetupOp`, and `CommandStack` imports/usage, with failure output naming `TEMPORARY Wave 012 ExamplesMenu debug/example command leak` and forbidding additional components/imports without reviewed proposal.
+- `## Risks` now calls out the allowlist shim risk and mitigation through exact-path failure text and implementation-log tracking.
 
-- Preserved and clarified the no-allowlist stance.
-- Updated source-cleanup sections and validation scans to require either deletion of `ExamplesMenu.vue`/`AddExampleSetupOp` or moving command construction behind an application use case before enforcing the strict UI rule.
+**Proposal Restructure relation:**
 
-## Additional reviewer findings addressed
+- Restructure keeps no `ExamplesMenu.vue` allowlist. Its `## Round-01 blocker corrections incorporated`, `## Source cleanup required for a truthful UI gate`, and `## Validation plan` clarify that the leak is either deleted or moved behind an application use case before strict no-UI-command-import tests are enforced.
 
-- **Stale backend Playwright config:** Both proposals now keep deletion of `frontend/playwright.config.ts:46-53` as a required config cleanup and include it in files-to-delete/validation language.
-- **Known Node 24 / `vue-tsc`, intersections, and e2e debt:** Both proposals now distinguish missing lint executable remediation from classifiable pre-existing build/Vitest/e2e debt. The proposals prohibit treating `eslint: not found` as residual debt while allowing exact classification of unrelated Node 24/`vue-tsc`, intersections, and broad e2e syntax failures.
-- **No Wave 012/013 overreach:** Proposal Direct explicitly does not delete examples/debug surfaces; it only tracks the residual for Wave 012. Proposal Restructure permits only the `ExamplesMenu.vue`/debug operation cleanup needed for a strict UI architecture gate and leaves unrelated placeholders/debug docs and broad docs/spec reconciliation to Wave 012/013.
-- **Architecture import-boundary focused tests/static scans:** Both proposals now explicitly require focused architecture scripts, domain/UI/backend-boundary scans, shared scanner helpers, app-shell boundary tests after moving generic guards, and focused Wave 010 e2e validation.
+## Additional validation-language tightening
 
-## Files edited in this corrections round
+Both proposals now explicitly require:
+
+- focused architecture import-boundary tests/static scans;
+- root/frontend package-script validation after backend deletion;
+- stale backend Playwright webServer comment deletion;
+- exact classification or narrow remediation of known Node 24/`vue-tsc`, intersections, and broad e2e debt;
+- no broad Wave 012/013 overreach beyond the selected direct allowlist tracking or restructure examples cleanup.
+
+## Files edited in this corrections task
 
 - `architecture-audit/cycle-011-architecture-tests-validation-gates/proposals/proposal-direct.md`
 - `architecture-audit/cycle-011-architecture-tests-validation-gates/proposals/proposal-restructure.md`
 - `architecture-audit/cycle-011-architecture-tests-validation-gates/corrections-round-01-note.md`
-
-## Source immutability statement
-
-This corrections round was limited to Wave 011 audit/proposal artifacts. It did not edit `frontend/`, `backend/`, `specs/`, or `docs/` application/source files.
