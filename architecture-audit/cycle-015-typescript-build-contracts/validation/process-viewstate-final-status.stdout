@@ -1,0 +1,25 @@
+ M architecture-audit/cycle-015-typescript-build-contracts/implementation-log.md
+ M frontend/src/commands/operations/processTree/PushSubprocessOp.ts
+ M frontend/src/commands/operations/processTree/RenameSubprocessOp.ts
+ M frontend/src/commands/operations/viewState/ViewStateOperations.ts
+ M frontend/src/commands/operations/world/RemoveElementOps.ts
+?? architecture-audit/cycle-015-typescript-build-contracts/validation/process-viewstate-build-final.stderr
+?? architecture-audit/cycle-015-typescript-build-contracts/validation/process-viewstate-build-final.stdout
+?? architecture-audit/cycle-015-typescript-build-contracts/validation/process-viewstate-build-postpatch.stderr
+?? architecture-audit/cycle-015-typescript-build-contracts/validation/process-viewstate-build-postpatch.stdout
+?? architecture-audit/cycle-015-typescript-build-contracts/validation/process-viewstate-focused-process-remove-tests.stderr
+?? architecture-audit/cycle-015-typescript-build-contracts/validation/process-viewstate-focused-process-remove-tests.stdout
+?? architecture-audit/cycle-015-typescript-build-contracts/validation/process-viewstate-focused-tests.stderr
+?? architecture-audit/cycle-015-typescript-build-contracts/validation/process-viewstate-focused-tests.stdout
+?? architecture-audit/cycle-015-typescript-build-contracts/validation/process-viewstate-forbidden-scan.stderr
+?? architecture-audit/cycle-015-typescript-build-contracts/validation/process-viewstate-forbidden-scan.stdout
+?? architecture-audit/cycle-015-typescript-build-contracts/validation/process-viewstate-git-status.stderr
+?? architecture-audit/cycle-015-typescript-build-contracts/validation/process-viewstate-git-status.stdout
+?? architecture-audit/cycle-015-typescript-build-contracts/validation/process-viewstate-jsonobject-patch.stderr
+?? architecture-audit/cycle-015-typescript-build-contracts/validation/process-viewstate-jsonobject-patch.stdout
+?? architecture-audit/cycle-015-typescript-build-contracts/validation/process-viewstate-log-append.stderr
+?? architecture-audit/cycle-015-typescript-build-contracts/validation/process-viewstate-log-append.stdout
+?? architecture-audit/cycle-015-typescript-build-contracts/validation/process-viewstate-patch-ops.stderr
+?? architecture-audit/cycle-015-typescript-build-contracts/validation/process-viewstate-patch-ops.stdout
+?? architecture-audit/cycle-015-typescript-build-contracts/validation/process-viewstate-symbol-scan.stderr
+?? architecture-audit/cycle-015-typescript-build-contracts/validation/process-viewstate-symbol-scan.stdout

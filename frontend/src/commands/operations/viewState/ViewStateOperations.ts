@@ -2,43 +2,54 @@
  * ViewState Operations - Operations for modifying UI state
  */
 
-import type { Operation } from '../Command';
-import type { OperationResult } from '../../types/CommandTypes';
+import type { IOperation, JsonObject, OperationResult } from '../IOperation';
+import type { World } from '@/domain/world/World';
+
+interface ActivePlaneViewStore {
+  setActivePlane(planeId: string): void;
+}
+
+interface View2DViewStore {
+  updateView2D(planeId: string, state: Record<string, unknown>): void;
+}
+
+interface PlaneVisibilityViewStore {
+  setPlaneVisibility(planeId: string, visible: boolean): void;
+}
+
+function planeIdFromPath(planePath: string): string {
+  const planeId = planePath.split('/').pop();
+  if (!planeId) {
+    throw new Error(`Invalid plane path: ${planePath}`);
+  }
+  return planeId;
+}
 
 /**
  * SetActivePlane operation - changes the active projection plane
  */
-export class SetActivePlaneOp implements Operation {
-  id: string;
-  type = 'SetActivePlane';
-  args: {
-    beforePlanePath: string;
-    afterPlanePath: string;
-  };
-
-  private viewStore: any;
+export class SetActivePlaneOp implements IOperation {
+  readonly type = 'SetActivePlane';
+  readonly parameters: Record<string, unknown>;
+  outputs: JsonObject = {};
 
   constructor(
-    id: string,
-    beforePlanePath: string,
-    afterPlanePath: string,
-    viewStore: any
+    private readonly beforePlanePath: string,
+    private readonly afterPlanePath: string,
+    private readonly viewStore: ActivePlaneViewStore
   ) {
-    this.id = id;
-    this.args = { beforePlanePath, afterPlanePath };
-    this.viewStore = viewStore;
+    this.parameters = { beforePlanePath, afterPlanePath };
   }
 
-  execute(): OperationResult {
+  apply(_world: World): OperationResult {
     try {
-      const planeId = this.args.afterPlanePath.split('/').pop()!;
+      const planeId = planeIdFromPath(this.afterPlanePath);
       this.viewStore.setActivePlane(planeId);
+      this.outputs = { activePlanePath: this.afterPlanePath };
 
       return {
         success: true,
-        outputs: {
-          activePlanePath: this.args.afterPlanePath
-        }
+        outputs: this.outputs
       };
     } catch (error) {
       return {
@@ -49,8 +60,8 @@ export class SetActivePlaneOp implements Operation {
     }
   }
 
-  rollback(): void {
-    const planeId = this.args.beforePlanePath.split('/').pop()!;
+  undo(_world: World): void {
+    const planeId = planeIdFromPath(this.beforePlanePath);
     this.viewStore.setActivePlane(planeId);
   }
 }
@@ -58,39 +69,29 @@ export class SetActivePlaneOp implements Operation {
 /**
  * UpdateView2D operation - updates 2D view state (pan/zoom)
  */
-export class UpdateView2DOp implements Operation {
-  id: string;
-  type = 'UpdateView2D';
-  args: {
-    planePath: string;
-    beforeState: Record<string, any>;
-    afterState: Record<string, any>;
-  };
-
-  private viewStore: any;
+export class UpdateView2DOp implements IOperation {
+  readonly type = 'UpdateView2D';
+  readonly parameters: Record<string, unknown>;
+  outputs: JsonObject = {};
 
   constructor(
-    id: string,
-    planePath: string,
-    beforeState: Record<string, any>,
-    afterState: Record<string, any>,
-    viewStore: any
+    private readonly planePath: string,
+    private readonly beforeState: Record<string, unknown>,
+    private readonly afterState: Record<string, unknown>,
+    private readonly viewStore: View2DViewStore
   ) {
-    this.id = id;
-    this.args = { planePath, beforeState, afterState };
-    this.viewStore = viewStore;
+    this.parameters = { planePath, beforeState, afterState };
   }
 
-  execute(): OperationResult {
+  apply(_world: World): OperationResult {
     try {
-      const planeId = this.args.planePath.split('/').pop()!;
-      this.viewStore.updateView2D(planeId, this.args.afterState);
+      const planeId = planeIdFromPath(this.planePath);
+      this.viewStore.updateView2D(planeId, this.afterState);
+      this.outputs = { updated: true };
 
       return {
         success: true,
-        outputs: {
-          updated: true
-        }
+        outputs: this.outputs
       };
     } catch (error) {
       return {
@@ -101,48 +102,38 @@ export class UpdateView2DOp implements Operation {
     }
   }
 
-  rollback(): void {
-    const planeId = this.args.planePath.split('/').pop()!;
-    this.viewStore.updateView2D(planeId, this.args.beforeState);
+  undo(_world: World): void {
+    const planeId = planeIdFromPath(this.planePath);
+    this.viewStore.updateView2D(planeId, this.beforeState);
   }
 }
 
 /**
  * TogglePlaneVisibility operation - shows/hides a projection plane
  */
-export class TogglePlaneVisibilityOp implements Operation {
-  id: string;
-  type = 'TogglePlaneVisibility';
-  args: {
-    planePath: string;
-    beforeVisible: boolean;
-    afterVisible: boolean;
-  };
-
-  private viewStore: any;
+export class TogglePlaneVisibilityOp implements IOperation {
+  readonly type = 'TogglePlaneVisibility';
+  readonly parameters: Record<string, unknown>;
+  outputs: JsonObject = {};
 
   constructor(
-    id: string,
-    planePath: string,
-    beforeVisible: boolean,
-    afterVisible: boolean,
-    viewStore: any
+    private readonly planePath: string,
+    private readonly beforeVisible: boolean,
+    private readonly afterVisible: boolean,
+    private readonly viewStore: PlaneVisibilityViewStore
   ) {
-    this.id = id;
-    this.args = { planePath, beforeVisible, afterVisible };
-    this.viewStore = viewStore;
+    this.parameters = { planePath, beforeVisible, afterVisible };
   }
 
-  execute(): OperationResult {
+  apply(_world: World): OperationResult {
     try {
-      const planeId = this.args.planePath.split('/').pop()!;
-      this.viewStore.setPlaneVisibility(planeId, this.args.afterVisible);
+      const planeId = planeIdFromPath(this.planePath);
+      this.viewStore.setPlaneVisibility(planeId, this.afterVisible);
+      this.outputs = { visible: this.afterVisible };
 
       return {
         success: true,
-        outputs: {
-          visible: this.args.afterVisible
-        }
+        outputs: this.outputs
       };
     } catch (error) {
       return {
@@ -153,8 +144,8 @@ export class TogglePlaneVisibilityOp implements Operation {
     }
   }
 
-  rollback(): void {
-    const planeId = this.args.planePath.split('/').pop()!;
-    this.viewStore.setPlaneVisibility(planeId, this.args.beforeVisible);
+  undo(_world: World): void {
+    const planeId = planeIdFromPath(this.planePath);
+    this.viewStore.setPlaneVisibility(planeId, this.beforeVisible);
   }
 }

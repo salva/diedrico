@@ -12,7 +12,7 @@ import type { Point2D } from '@/domain/world/Point';
 import type { Line2D } from '@/domain/world/Line';
 import { Segment2DByPoints, type Segment2D } from '@/domain/world/Segment';
 import type { Circle2D } from '@/domain/world/Circle';
-import type { Guide2D } from '@/domain/world/Guide';
+import { isGuide2D, isSiblingGuide2D, type Guide2D, type SiblingGuide2D } from '@/domain/world/Guide';
 
 /**
  * RemovePoint2DOp - Remove a point from a projection plane
@@ -373,7 +373,7 @@ export class RemoveGuide2DOp implements IOperation {
   outputs: Record<string, any> = {};
   
   private removedGuide?: Guide2D;
-  private removedSibling?: import('@/domain/world/Guide').SiblingGuide2D;
+  private removedSibling?: SiblingGuide2D;
   private siblingPlaneId?: string;
 
   constructor(
@@ -405,31 +405,36 @@ export class RemoveGuide2DOp implements IOperation {
       }
 
       // Check if this is a SiblingGuide2D → redirect to delete primary
-      const { isSiblingGuide2D } = require('@/domain/world/Guide');
       if (isSiblingGuide2D(guide)) {
-        const siblingGuide = guide as import('@/domain/world/Guide').SiblingGuide2D;
-        console.warn(`[RemoveGuide2DOp] Cannot delete sibling guide ${this.guideId} directly. Redirect to delete primary guide ${siblingGuide.primaryGuideId} instead.`);
+        console.warn(`[RemoveGuide2DOp] Cannot delete sibling guide ${this.guideId} directly. Redirect to delete primary guide ${guide.primaryGuideId} instead.`);
         return {
           success: false,
           outputs: {},
-          error: `Cannot delete sibling guide directly. Delete primary guide ${siblingGuide.primaryGuideId} instead.`
+          error: `Cannot delete sibling guide directly. Delete primary guide ${guide.primaryGuideId} instead.`
+        };
+      }
+
+      if (!isGuide2D(guide)) {
+        return {
+          success: false,
+          outputs: {},
+          error: `Line ${this.guideId} is not a guide`
         };
       }
 
       // This is a primary Guide2D - proceed with deletion
-      this.removedGuide = guide as Guide2D;
+      this.removedGuide = guide;
 
       // Check if it has a sibling → delete sibling first
-      if ('siblingGuideId' in this.removedGuide && (this.removedGuide as any).siblingGuideId) {
-        const siblingGuideId = (this.removedGuide as any).siblingGuideId;
-        
+      const siblingGuideId = this.removedGuide.siblingGuideId;
+      if (siblingGuideId) {
         // Find sibling's plane and delete sibling
         const siblingGuide = world.getLine2D(siblingGuideId);
-        if (siblingGuide) {
+        if (siblingGuide && isSiblingGuide2D(siblingGuide)) {
           const siblingPlane = world.getProjectionPlaneById(siblingGuide.planeId);
           if (siblingPlane) {
             this.siblingPlaneId = siblingGuide.planeId;
-            this.removedSibling = siblingGuide as import('@/domain/world/Guide').SiblingGuide2D;
+            this.removedSibling = siblingGuide;
             
             // Remove sibling guide
             const siblingRemoved = siblingPlane.removeLine(siblingGuideId, world);

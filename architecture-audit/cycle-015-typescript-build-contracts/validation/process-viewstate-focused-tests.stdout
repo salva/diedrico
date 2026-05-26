@@ -1,0 +1,20 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run --run tests/unit/processTree.spec.ts tests/unit/commands/removeElementOps.spec.ts tests/unit/stores/viewStore.spec.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/processTree.spec.ts  (15 tests) 28ms
+ ❯ tests/unit/stores/viewStore.spec.ts  (23 tests | 2 failed) 104ms
+   ❯ tests/unit/stores/viewStore.spec.ts > viewStore > Initial State > should provide viewport state object
+     → expected { zoom: 1, panX: +0, panY: +0, …(2) } to deeply equal { zoom: 1, panX: +0, panY: +0, …(2) }
+   ❯ tests/unit/stores/viewStore.spec.ts > viewStore > Integration Scenarios > should handle combined zoom and pan
+     → expected { zoom: 2, panX: 100, panY: 100, …(2) } to deeply equal { zoom: 2, panX: 100, panY: 100, …(2) }
+ ✓ tests/unit/commands/removeElementOps.spec.ts  (9 tests) 23ms
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  2 failed | 45 passed (47)
+   Start at  18:02:44
+   Duration  3.70s (transform 1.23s, setup 0ms, collect 1.96s, tests 155ms, environment 3.02s, prepare 855ms)
+

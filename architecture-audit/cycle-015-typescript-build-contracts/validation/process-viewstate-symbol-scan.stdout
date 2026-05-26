@@ -1,0 +1,95 @@
+frontend/src/commands/operations/processTree/AddProcessTreeActionGroupOp.ts:8:import type { IOperation, OperationResult } from '../IOperation';
+frontend/src/commands/operations/processTree/AddProcessTreeActionGroupOp.ts:29:  apply(world: World): OperationResult {
+frontend/src/commands/operations/processTree/AddProcessTreeActionOp.ts:10:import type { IOperation, OperationResult } from '../IOperation';
+frontend/src/commands/operations/processTree/AddProcessTreeActionOp.ts:27:  apply(world: World): OperationResult {
+frontend/src/commands/operations/processTree/PopSubprocessOp.ts:10:import type { IOperation, OperationResult } from '../IOperation';
+frontend/src/commands/operations/processTree/PopSubprocessOp.ts:20:  apply(world: World): OperationResult {
+frontend/src/commands/operations/processTree/ProcessTreeOperations.ts:11:import type { IOperation, OperationResult } from '../IOperation';
+frontend/src/commands/operations/processTree/ProcessTreeOperations.ts:39:  apply(world: World): OperationResult {
+frontend/src/commands/operations/processTree/ProcessTreeOperations.ts:113:  apply(_world: World): OperationResult {
+frontend/src/commands/operations/processTree/ProcessTreeOperations.ts:153:  apply(_world: World): OperationResult {
+frontend/src/commands/operations/processTree/PushSubprocessOp.ts:10:import type { IOperation, OperationResult } from '../IOperation';
+frontend/src/commands/operations/processTree/PushSubprocessOp.ts:26:  apply(world: World): OperationResult {
+frontend/src/commands/operations/processTree/RenameSubprocessOp.ts:5:import type { IOperation, OperationResult } from '../IOperation';
+frontend/src/commands/operations/processTree/RenameSubprocessOp.ts:18:  apply(world: World): OperationResult {
+frontend/src/commands/operations/processTree/ToggleEncapsulationOp.ts:5:import type { IOperation, OperationResult } from '../IOperation';
+frontend/src/commands/operations/processTree/ToggleEncapsulationOp.ts:17:  apply(world: World): OperationResult {
+frontend/src/commands/operations/processTree/ToggleOutputOp.ts:5:import type { IOperation, OperationResult } from '../IOperation';
+frontend/src/commands/operations/processTree/ToggleOutputOp.ts:17:  apply(world: World): OperationResult {
+frontend/src/commands/operations/world/Add3DLineOp.ts:18:import type { IOperation, OperationResult } from '../IOperation';
+frontend/src/commands/operations/world/Add3DLineOp.ts:45:  apply(world: World): OperationResult {
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:18:import type { IOperation, OperationResult } from '../IOperation';
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:46:  apply(world: World): OperationResult {
+frontend/src/commands/operations/world/Add3DPointOp.ts:24:import type { IOperation, OperationResult } from '../IOperation';
+frontend/src/commands/operations/world/Add3DPointOp.ts:51:  apply(world: World): OperationResult {
+frontend/src/commands/operations/world/Add3DSegmentOp.ts:18:import type { IOperation, OperationResult } from '../IOperation';
+frontend/src/commands/operations/world/Add3DSegmentOp.ts:46:  apply(world: World): OperationResult {
+frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts:21:import type { IOperation, OperationResult } from '../IOperation';
+frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts:46:  apply(world: World): OperationResult {
+frontend/src/commands/operations/world/AddBrokenHingeLineOp.ts:21:import type { IOperation, OperationResult } from '../IOperation';
+frontend/src/commands/operations/world/AddBrokenHingeLineOp.ts:51:  apply(world: World): OperationResult {
+frontend/src/commands/operations/world/AddCircleCircleIntersectionPoint2DOp.ts:10:import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
+frontend/src/commands/operations/world/AddCircleCircleIntersectionPoint2DOp.ts:31:  apply(world: World): OperationResult<CircleCircleIntersectionOutput> {
+frontend/src/commands/operations/world/AddCircleOp.ts:8:import type { IOperation, OperationResult } from '../IOperation';
+frontend/src/commands/operations/world/AddCircleOp.ts:24:  apply(world: World): OperationResult {
+frontend/src/commands/operations/world/AddFreePointOp.ts:8:import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
+frontend/src/commands/operations/world/AddFreePointOp.ts:27:  apply(world: World): OperationResult<AddFreePoint2DOutput> {
+frontend/src/commands/operations/world/AddGuideOp.ts:7:import type { IOperation, JsonObject, OperationResult } from '../IOperation';
+frontend/src/commands/operations/world/AddGuideOp.ts:29:  apply(world: World): OperationResult<AddGuideOutput> {
+frontend/src/commands/operations/world/AddGuideOp.ts:96:  apply(world: World): OperationResult<AddSiblingGuideOutput> {
+frontend/src/commands/operations/world/AddIntersectionPointOp.ts:10:import type { IOperation, OperationResult } from '../IOperation';
+frontend/src/commands/operations/world/AddIntersectionPointOp.ts:26:  apply(world: World): OperationResult {
+frontend/src/commands/operations/world/AddLineCircleIntersectionPoint2DOp.ts:10:import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
+frontend/src/commands/operations/world/AddLineCircleIntersectionPoint2DOp.ts:31:  apply(world: World): OperationResult<LineCircleIntersectionOutput> {
+frontend/src/commands/operations/world/AddLineLineIntersectionPoint2DOp.ts:10:import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
+frontend/src/commands/operations/world/AddLineLineIntersectionPoint2DOp.ts:30:  apply(world: World): OperationResult<LineLineIntersectionOutput> {
+frontend/src/commands/operations/world/AddLineOp.ts:7:import type { IOperation, OperationResult } from '../IOperation';
+frontend/src/commands/operations/world/AddLineOp.ts:23:  apply(world: World): OperationResult {
+frontend/src/commands/operations/world/AddLineOp.ts:89:  apply(world: World): OperationResult {
+frontend/src/commands/operations/world/AddLineOp.ts:155:  apply(world: World): OperationResult {
+frontend/src/commands/operations/world/AddLineOp.ts:222:  apply(world: World): OperationResult {
+frontend/src/commands/operations/world/AddLineOp.ts:291:  apply(world: World): OperationResult {
+frontend/src/commands/operations/world/AddSegmentOp.ts:7:import type { IOperation, OperationResult } from '../IOperation';
+frontend/src/commands/operations/world/AddSegmentOp.ts:23:  apply(world: World): OperationResult {
+frontend/src/commands/operations/world/AddSiblingIntersectionPoint2DOp.ts:1:import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
+frontend/src/commands/operations/world/AddSiblingIntersectionPoint2DOp.ts:36:  apply(world: World): OperationResult<SiblingIntersectionOutput> {
+frontend/src/commands/operations/world/InitializationOps.ts:20:import type { IOperation, OperationResult } from '../IOperation';
+frontend/src/commands/operations/world/InitializationOps.ts:50:  apply(world: World): OperationResult {
+frontend/src/commands/operations/world/InitializationOps.ts:125:  apply(world: World): OperationResult {
+frontend/src/commands/operations/world/InitializationOps.ts:201:  apply(world: World): OperationResult {
+frontend/src/commands/operations/world/InitializationOps.ts:285:  apply(world: World): OperationResult {
+frontend/src/commands/operations/world/InitializationOps.ts:352:  apply(world: World): OperationResult {
+frontend/src/commands/operations/world/InitializationOps.ts:428:  apply(world: World): OperationResult {
+frontend/src/commands/operations/world/RemoveElementOps.ts:9:import type { IOperation, OperationResult } from '../IOperation';
+frontend/src/commands/operations/world/RemoveElementOps.ts:38:  apply(world: World): OperationResult {
+frontend/src/commands/operations/world/RemoveElementOps.ts:124:  apply(world: World): OperationResult {
+frontend/src/commands/operations/world/RemoveElementOps.ts:208:  apply(world: World): OperationResult {
+frontend/src/commands/operations/world/RemoveElementOps.ts:293:  apply(world: World): OperationResult {
+frontend/src/commands/operations/world/RemoveElementOps.ts:386:  apply(world: World): OperationResult {
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:11:import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:102:  apply(world: World): OperationResult {
+frontend/src/commands/operations/world/UpdateFreePoint2DPositionOp.ts:9:import type { IOperation, OperationResult } from '../IOperation';
+frontend/src/commands/operations/world/UpdateFreePoint2DPositionOp.ts:42:  apply(world: World): OperationResult {
+frontend/src/commands/operations/viewState/README.md:8:- `SetActivePlaneOp` - Change active projection plane
+frontend/src/commands/operations/viewState/ViewStateOperations.ts:6:import type { OperationResult } from '../../types/CommandTypes';
+frontend/src/commands/operations/viewState/ViewStateOperations.ts:11:export class SetActivePlaneOp implements Operation {
+frontend/src/commands/operations/viewState/ViewStateOperations.ts:32:  execute(): OperationResult {
+frontend/src/commands/operations/viewState/ViewStateOperations.ts:61:export class UpdateView2DOp implements Operation {
+frontend/src/commands/operations/viewState/ViewStateOperations.ts:84:  execute(): OperationResult {
+frontend/src/commands/operations/viewState/ViewStateOperations.ts:113:export class TogglePlaneVisibilityOp implements Operation {
+frontend/src/commands/operations/viewState/ViewStateOperations.ts:136:  execute(): OperationResult {
+frontend/src/commands/operations/IOperation.ts:17:export interface OperationResult<TOutputs extends JsonObject = JsonObject> {
+frontend/src/commands/operations/IOperation.ts:23:export interface OperationDescriptor<TType extends string = string, TPayload extends JsonObject = JsonObject> extends JsonObject {
+frontend/src/commands/operations/IOperation.ts:35:  apply(world: World): OperationResult<TOutputs>;
+frontend/src/types/CommandTypes.ts:14:export interface OperationResult {
+frontend/tests/unit/commands/command.spec.ts:6: * - addAndExecute() returns OperationResult with outputs
+frontend/tests/unit/commands/command.spec.ts:18:import type { IOperation, OperationResult } from '@/commands/operations/IOperation';
+frontend/tests/unit/commands/command.spec.ts:39:  apply(_world: World): OperationResult {
+frontend/tests/unit/commands/command.spec.ts:81:  apply(_world: World): OperationResult {
+frontend/tests/unit/commands/command.spec.ts:142:  describe('addAndExecute - Returns OperationResult with outputs', () => {
+frontend/tests/unit/commands/command.spec.ts:143:    it('should return OperationResult with outputs', () => {
+frontend/tests/unit/commands/command.spec.ts:496:        apply(world: World): OperationResult {
+frontend/tests/unit/commandStack.spec.ts:5:import type { OperationResult } from '../../src/commands/operations/IOperation';
+frontend/tests/unit/commandStack.spec.ts:21:  apply(_world: World): OperationResult {
+frontend/tests/unit/commands.spec.ts:4:import type { OperationResult } from '../../src/commands/operations/IOperation';
+frontend/tests/unit/commands.spec.ts:25:  apply(_world: World): OperationResult {

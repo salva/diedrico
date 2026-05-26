@@ -184,3 +184,32 @@ Completed projection/world lane files and the process-tree identity correction w
 This task does not claim full Wave 015 completion because the frontend build is still red on out-of-scope categories listed above. The command/factory/operation descriptor category named by this stage is closed in the current build output.
 
 Additional focused coverage was added for `UpdateElementStyle` typed JSON payload round-tripping in `frontend/tests/unit/commands/operations/operationRegistry.spec.ts`. The rerun evidence is `command-factory-focused-tests-rerun.stdout` / `.stderr`: focused Vitest passed (`14 passed`).
+
+## t1 process/view-state operation lane — closure attempt
+
+Task `t1-close-process-viewstate-operation-contracts` closed the residual process-tree/view-state operation TypeScript build category assigned after the command/factory lane.
+
+### Process/view-state operation ownership map and source changes
+
+- `frontend/src/commands/operations/processTree/PushSubprocessOp.ts`: deleted the stale private `subprocessId` constructor member. The optional replay id remains a constructor parameter only long enough to seed authoritative `outputs.subprocessId`, which is what `apply()` reuses when replaying/deserializing subprocess creation.
+- `frontend/src/commands/operations/processTree/RenameSubprocessOp.ts`: normalized the not-found failure path to the current `OperationResult<JsonObject>` contract by returning explicit `outputs: {}` alongside the error.
+- `frontend/src/commands/operations/viewState/ViewStateOperations.ts`: removed obsolete imports from nonexistent `../Command` and `../../types/CommandTypes` paths. The view-state operations now implement the current `IOperation` contract directly (`apply(world)`, `undo(world)`, `outputs`) and depend only on narrow view-store ports (`setActivePlane`, `updateView2D`, `setPlaneVisibility`). No compatibility module or legacy command operation interface was recreated.
+- `frontend/src/commands/operations/world/RemoveElementOps.ts`: replaced the CommonJS `require('@/domain/world/Guide')` guard lookup with static `isGuide2D` / `isSiblingGuide2D` imports. Primary/sibling guide deletion and undo still store authoritative guide objects and sibling plane identity; direct sibling deletion is still rejected with the primary guide id.
+
+No UI/panel DTO files, ActionsPanel, project dialogs, Google Drive, ProjectService, package/tooling files, projection/world lane files, command/factory lane files, or Wave 014 protected files were modified in this lane.
+
+### Validation evidence
+
+All command output was captured under `architecture-audit/cycle-015-typescript-build-contracts/validation/`:
+
+- `process-viewstate-git-status.stdout` / `.stderr`: recorded the pre-edit dirty workspace status for scope awareness.
+- `process-viewstate-symbol-scan.stdout` / `.stderr`: confirmed `ViewStateOperations.ts` was the only source consumer of the obsolete `Operation`/`CommandTypes` imports while current operation implementations use `IOperation`.
+- `process-viewstate-focused-tests.stdout` / `.stderr`: initial focused run included `tests/unit/stores/viewStore.spec.ts`; process-tree and remove-element tests passed, while two stale viewStore expectations failed because current viewport state includes `threeViewOptions.showReferenceAxes`.
+- `process-viewstate-focused-process-remove-tests.stdout` / `.stderr`: scoped process-tree/remove-element rerun passed (`tests/unit/processTree.spec.ts` and `tests/unit/commands/removeElementOps.spec.ts`, 24 passed). This preserves the deletion/undo identity regression covered by the remove-element command tests.
+- `process-viewstate-build-postpatch.stdout` / `.stderr`: caught a local `JsonObject` output typing issue in the first `ViewStateOperations.ts` rewrite; fixed immediately by typing `outputs` as `JsonObject`.
+- `process-viewstate-build-final.stdout` / `.stderr`: `npm run build --workspace=frontend` remains red, but no errors from `PushSubprocessOp.ts`, `RenameSubprocessOp.ts`, `ViewStateOperations.ts`, or `RemoveElementOps.ts` remain. Remaining build failures are outside this lane: project dialogs/properties, protected process-tree panels, element panels, plane selector, `SvgCanvas.vue`, `CoordinateTransform.ts`, `GeometryService.ts`, `GoogleDriveService.ts`, and `ProjectService.ts`.
+- `process-viewstate-forbidden-scan.stdout` / `.stderr`: scoped scan over the four touched operation files found no `@ts-ignore`, `@ts-expect-error`, `as any`, `as unknown as`, or `require(`.
+
+### Residual risks / next action
+
+This task does not claim full Wave 015 completion because the frontend build remains red on unrelated UI/store/render DTO and service/domain strictness categories. The assigned process-tree/view-state operation build category is closed in the final build output. The stale `viewStore.spec.ts` expectations around `showReferenceAxes` are recorded as an existing test-data drift outside this lane; the scoped process-tree/remove-element identity tests pass.

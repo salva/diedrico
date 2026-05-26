@@ -15,7 +15,7 @@ export class PushSubprocessOp implements IOperation {
   parameters: Record<string, any>;
   outputs: Record<string, any> = {};
 
-  constructor(private readonly subprocessName: string, private subprocessId?: string) {
+  constructor(private readonly subprocessName: string, subprocessId?: string) {
     this.parameters = { subprocessName };
     // If subprocessId provided (during deserialization), store it in outputs
     if (subprocessId) {

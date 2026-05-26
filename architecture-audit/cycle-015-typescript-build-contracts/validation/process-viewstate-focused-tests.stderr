@@ -1,0 +1,69 @@
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/stores/viewStore.spec.ts > viewStore > Initial State > should provide viewport state object
+AssertionError: expected { zoom: 1, panX: +0, panY: +0, …(2) } to deeply equal { zoom: 1, panX: +0, panY: +0, …(2) }
+
+- Expected
++ Received
+
+  Object {
+    "gridVisible": true,
+    "panX": 0,
+    "panY": 0,
+    "threeViewOptions": Object {
+      "show2DElementsOnPlanes": false,
+      "showGrid": true,
+      "showLinkingVisuals": false,
+      "showPlanes": true,
++     "showReferenceAxes": true,
+    },
+    "zoom": 1,
+  }
+
+ ❯ tests/unit/stores/viewStore.spec.ts:29:21
+     27|     it('should provide viewport state object', () => {
+     28|       const state = viewStore.viewportState.value;
+     29|       expect(state).toEqual({
+       |                     ^
+     30|         zoom: 1.0,
+     31|         panX: 0,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/unit/stores/viewStore.spec.ts > viewStore > Integration Scenarios > should handle combined zoom and pan
+AssertionError: expected { zoom: 2, panX: 100, panY: 100, …(2) } to deeply equal { zoom: 2, panX: 100, panY: 100, …(2) }
+
+- Expected
++ Received
+
+  Object {
+    "gridVisible": true,
+    "panX": 100,
+    "panY": 100,
+    "threeViewOptions": Object {
+      "show2DElementsOnPlanes": false,
+      "showGrid": true,
+      "showLinkingVisuals": false,
+      "showPlanes": true,
++     "showReferenceAxes": true,
+    },
+    "zoom": 2,
+  }
+
+ ❯ tests/unit/stores/viewStore.spec.ts:207:45
+    205|       viewStore.setPan(100, 100);
+    206|       
+    207|       expect(viewStore.viewportState.value).toEqual({
+       |                                             ^
+    208|         zoom: 2.0,
+    209|         panX: 100,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c vitest run --run tests/unit/processTree.spec.ts tests/unit/commands/removeElementOps.spec.ts tests/unit/stores/viewStore.spec.ts

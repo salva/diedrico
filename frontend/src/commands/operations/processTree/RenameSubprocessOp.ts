@@ -20,7 +20,7 @@ export class RenameSubprocessOp implements IOperation {
     const subprocess = processTree.findSubprocessById(this.subprocessId);
     
     if (!subprocess) {
-      return { success: false, error: `Subprocess not found: ${this.subprocessId}` };
+      return { success: false, outputs: {}, error: `Subprocess not found: ${this.subprocessId}` };
     }
 
     if (this.oldName === null) {
