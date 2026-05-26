@@ -1,0 +1,12 @@
+867f7ad [tsk-t1-record-decision-and-wave-015-plan-edit] [t1-record-decision-and-wave-015-plan-edit] record build contract plan decision
+.saivage/stages/cycle-014-build-contract-plan-edit-decision/reports/t1-record-decision-and-wave-015-plan-edit.json
+?? .saivage/stages/cycle-014-build-contract-plan-edit-decision/reports/t2-review-stage-artifacts.json
+?? .saivage/stages/cycle-014-build-contract-plan-edit-decision/reports/t3-review-citation-blocker-recheck.json
+?? .saivage/stages/cycle-014-build-contract-plan-edit-decision/tasks.json
+?? architecture-audit/cycle-014-build-contract-plan-edit/reviews/
+?? architecture-audit/cycle-014-build-contract-plan-edit/validation-decision-citation-grep.stderr
+?? architecture-audit/cycle-014-build-contract-plan-edit/validation-decision-citation-grep.stdout
+?? architecture-audit/cycle-014-build-contract-plan-edit/validation-stage-commit-stat.stderr
+?? architecture-audit/cycle-014-build-contract-plan-edit/validation-stage-commit-stat.stdout
+?? architecture-audit/cycle-014-build-contract-plan-edit/validation-stage-final-status.stderr
+?? architecture-audit/cycle-014-build-contract-plan-edit/validation-stage-final-status.stdout
