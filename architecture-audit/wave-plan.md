@@ -855,3 +855,81 @@ Depends on Wave 015 and the subsequent Wave 014 validation closure, because this
 - `Paper.ts` query deletion can remove still-used behavior if based on assumption rather than static usage plus tests.
 - The scope is near rendering and interaction, so broad visual redesign is tempting; reject changes not required by the read-port/projected-3D/overlay ownership boundary.
 
+
+---
+
+## Wave 017 — Three presentation read ports and realization boundary
+
+**Status**
+
+Proposed by `cycle-017-fresh-scout-proposals`; requires canonical review in `cycle-017-review-round-01` before implementation.
+
+**Scope**
+
+- `frontend/src/application/threePresentation/ThreePresentationModel.ts`
+- `frontend/src/application/threePresentation/ThreePresentationController.ts`
+- `frontend/src/application/threePresentation/ThreePresentationSelector.ts`
+- `frontend/src/application/threePresentation/ProjectionPlane3DSelector.ts`
+- `frontend/src/application/threePresentation/PlanarElement3DSelector.ts`
+- `frontend/src/application/threePresentation/ReconstructedElement3DSelector.ts`
+- `frontend/src/application/threePresentation/Guide3DSelector.ts`
+- `frontend/src/application/threePresentation/Hinge3DSelector.ts`
+- a new narrow 3D presentation read-port module, or a reviewed shared presentation read-context module if the restructure proposal wins
+- `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts` only where needed to align realization/read-context ownership and avoid duplicate presentation adapters
+- `frontend/src/application/canvasPresentation/CanvasVisibilityPolicy.ts` only if the reviewed implementation can delete its `world as World` cast through a narrow visibility/process-tree capability without broad style/process redesign
+- `frontend/src/rendering/threeView/ThreeViewRuntime.ts`
+- `frontend/src/components/panels/ThreeView.vue`
+- focused three-presentation/canvas-read-port/component-shell tests
+
+**Scope guard**
+
+This wave continues Wave 016's active presentation-boundary cleanup. It must not reopen broad rendering, scene-host/OrbitControls, app-shell, command/undo, persistence, backend, docs/spec, package/tooling, validation-platform, or Drive/local project architecture. It may touch canvas presentation only to share or align the read-port/realization context; it must not rewrite the Wave 016 selector model or introduce a global presentation snapshot god-module. If implementation proves that domain realization itself needs a larger redesign, stop for a reviewed plan-edit mini-cycle rather than hiding it in this wave.
+
+**Baseline/current grounding**
+
+Wave 016 completed the 2D canvas presentation read-port/overlay boundary and recorded a residual risk that `CanvasWorldReadPort` still delegates realization calls through concrete runtime `World` (`architecture-audit/cycle-016-canvas-presentation-overlay-boundary/implementation-log.md`, “Residual risks / future candidates”). Current source shows `CanvasWorldReadPort` exposes 2D/3D realization capabilities and the adapter calls entity realization with `world` (`frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:14`, `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:21`, `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:24`, `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:46`, `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:49`, `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:50`, `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:51`).
+
+The active 3D presentation path still accepts full mutable `World`: `ThreePresentationInput` embeds `world: World` (`frontend/src/application/threePresentation/ThreePresentationModel.ts:1`, `frontend/src/application/threePresentation/ThreePresentationModel.ts:10`), `ThreePresentationSelector` passes it to every concern selector (`frontend/src/application/threePresentation/ThreePresentationSelector.ts:17`, `frontend/src/application/threePresentation/ThreePresentationSelector.ts:20`, `frontend/src/application/threePresentation/ThreePresentationSelector.ts:21`, `frontend/src/application/threePresentation/ThreePresentationSelector.ts:22`, `frontend/src/application/threePresentation/ThreePresentationSelector.ts:23`, `frontend/src/application/threePresentation/ThreePresentationSelector.ts:24`), and `ThreeView.vue` still injects `World` and passes it into the runtime refresh input (`frontend/src/components/panels/ThreeView.vue:29`, `frontend/src/components/panels/ThreeView.vue:41`, `frontend/src/components/panels/ThreeView.vue:46`). Existing domain projection realization context interfaces provide a possible lower-level read-capability vocabulary (`frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:9`, `frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:20`).
+
+**Target outcome**
+
+3D presentation selectors/controllers consume explicit read ports or read-context slices instead of full mutable `World`. Canvas and 3D presentation do not maintain contradictory realization/read adapter models: either a small 3D read port mirrors the successful Wave 016 boundary without duplicating broad world access, or a reviewed shared presentation read-context replaces duplicate adapters. Internal full-`World` selector APIs and touched test `any` workarounds are deleted, not wrapped. User-visible 2D and 3D rendering remains equivalent.
+
+**Explicit DELETE list**
+
+- Delete `ThreePresentationInput.world: World` as the active 3D presentation input contract.
+- Delete full-`World` selector signatures in active three-presentation selectors where a read port/context slice is sufficient.
+- Delete touched three-presentation unit-test `as any` workarounds that only exist to bypass broad concrete selector dependencies.
+- Delete duplicate read-port/realization helper code if the reviewed implementation introduces a shared presentation context.
+- Delete the `CanvasVisibilityPolicy` `world as World` cast only if replaced by a narrow typed visibility/process-tree capability inside the reviewed scope.
+- Delete transitional overloads, compatibility wrappers, and dead exports created while moving from full `World` to read ports.
+
+**Success criteria**
+
+- `frontend/src/application/threePresentation/*` no longer exposes a public application-presentation input or selector API requiring full mutable `World` where a read port/context slice is sufficient.
+- `ThreeView.vue` remains a composition shell and wraps the injected runtime `World` only at the boundary needed to create the selected read port/context.
+- Canvas and 3D presentation realization/read access are aligned by a documented boundary; no parallel full-World and read-port paths remain for the same selector responsibility.
+- Focused tests cover the new read-port/context contract and update three-presentation selector tests without broad `as any` spy seams for touched constructors/input shapes.
+- No scene-host/OrbitControls redesign, app-shell redesign, command/persistence/backend change, package/tooling change, or docs/spec rewrite is introduced.
+- Mandatory validation cadence passes with stable logs: root/frontend lint where defined, focused Vitest for touched presentation/read-port modules, full root/frontend Vitest, root/frontend build, root/frontend e2e, live preview refresh on `0.0.0.0:5173`, HTTP reachability probe, and Playwright/live browser evidence for 3D view plus representative 2D canvas rendering.
+
+**Dependencies**
+
+Depends on Wave 016 because it builds on the completed canvas presentation read-port and overlay boundary. It is ordered before scene-host interaction or peripheral cleanup because it is the most central remaining active rendering/read-model boundary.
+
+**Validation requirements**
+
+1. Capture pre-edit static scans for full-`World` APIs/imports in three presentation, `CanvasWorldReadPort` realization delegation, `CanvasVisibilityPolicy` casts, and touched-test `as any` seams.
+2. Run focused three-presentation and canvas-read-port Vitest for every behavior-bearing change.
+3. Run root/frontend lint where scripts exist.
+4. Run full root/frontend Vitest.
+5. Run root/frontend build.
+6. Run root/frontend Playwright e2e because 3D/canvas rendering is user-observable.
+7. Refresh live preview on `0.0.0.0:5173`, capture HTTP 200, and run focused live browser evidence for 3D view rendering plus representative 2D canvas rendering.
+
+**Risks**
+
+- A read port can become a renamed `World` facade if it mirrors too many methods. Keep capabilities tied to selector responsibilities.
+- A shared presentation context can become a god snapshot if it owns traversal, style, visibility, geometry conversion, and scene concerns. Prefer slices/composition over a large behavior class.
+- Over-eager canvas changes can destabilize the just-completed Wave 016 boundary. Touch canvas only for read-context alignment.
+- Scene-host interaction debt remains real but should not distract from the higher-level presentation data boundary in this wave.
