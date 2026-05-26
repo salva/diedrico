@@ -1,0 +1,25 @@
+ M architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/implementation-log.md
+ M architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/scope-check.md
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/reviews/
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/status-before-implementation.txt
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/diff-pre-fix.stderr
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/diff-pre-fix.stdout
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/focused-three-presentation.stderr
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/focused-three-presentation.stdout
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/manager-status-after-failed-coder.stderr
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/manager-status-after-failed-coder.stdout
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/retry-focused-three-vitest.stderr
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/retry-focused-three-vitest.stdout
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/retry-preview-probe.html
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/retry-preview-probe.stderr
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/retry-preview-probe.stdout
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/retry-static-scan-three-world.stderr
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/retry-static-scan-three-world.stdout
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/retry-status-after-log.stderr
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/retry-status-after-log.stdout
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/source-status.stderr
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/source-status.stdout
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/static-scan-pre-fix.stderr
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/static-scan-pre-fix.stdout
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/status-pre-edit.stderr
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/status-pre-edit.stdout

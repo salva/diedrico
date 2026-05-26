@@ -1,0 +1,6 @@
+filter:  frontend/tests/unit/application/threePresentation/threePresentationSelector.spec.ts, frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts
+include: **/*.{test,spec}.?(c|m)[jt]s?(x)
+exclude:  **/node_modules/**, **/dist/**, **/e2e/**
+watch exclude:  **/node_modules/**, **/dist/**
+
+No test files found, exiting with code 1

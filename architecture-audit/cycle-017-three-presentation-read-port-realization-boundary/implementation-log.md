@@ -82,3 +82,16 @@ Earlier failed/diagnostic runs retained for provenance:
 - Canvas realization delegation through `CanvasWorldReadPort` remains unchanged; a later wave can decide whether a shared realization context is warranted.
 - Broader 3D scene-host/runtime lifecycle debt remains out of scope for this cycle.
 - Domain realization calls still need the full `World` inside the read-port adapter because current domain realization APIs require that context; changing those APIs would be a larger domain-realization wave, not this presentation-boundary wave.
+
+## Retry-01 verification addendum
+
+Retry worker verified that the Cycle 017 implementation already exists in commits `996d2040`, `1866715b`, and `69c39263` after the prior worker returned an invalid report schema. No additional source refactor was required.
+
+Additional retry evidence:
+
+- Path-focused status before retry edits: `validation/status-pre-edit.stdout`, `validation/status-pre-edit.stderr`.
+- Retry static scan: `validation/retry-static-scan-three-world.stdout`, `validation/retry-static-scan-three-world.stderr` — only the approved `createThreeWorldReadPort(world)` boundary adapter still mentions `world: World`; no active three-presentation selector full-`World` signatures, `.select(world...)` calls, `getWorld`, or `matrix: any` seams were found.
+- Retry focused Vitest: `validation/retry-focused-three-vitest.stdout`, `validation/retry-focused-three-vitest.stderr` — pass, 3 files / 8 tests for three-presentation selector, concern selectors, and ThreeView shell boundary.
+- Retry preview probe: `validation/retry-preview-probe.stdout`, `validation/retry-preview-probe.stderr`, `validation/retry-preview-probe.html` — live preview remained reachable at `127.0.0.1:5173` (bound by the existing Vite process recorded earlier for `0.0.0.0:5173`).
+
+The original mandatory validation log index above remains the canonical full validation record for lint, focused/full Vitest, build, e2e, preview refresh, and live smoke. This retry did not touch protected out-of-scope source surfaces and did not introduce fallback/restructure broadening.
