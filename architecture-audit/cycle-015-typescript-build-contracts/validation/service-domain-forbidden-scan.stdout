@@ -1,0 +1,3 @@
+frontend/src/services/GoogleDriveService.ts:92:          this.tokenClient = (window as any).google.accounts.oauth2.initTokenClient({
+frontend/src/services/GoogleDriveService.ts:223:        await (window as any).google.accounts.oauth2.revoke(this.accessToken);
+frontend/src/services/GoogleDriveService.ts:492:      const rawName = (data as any).name;

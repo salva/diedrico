@@ -35,7 +35,8 @@ describe('viewStore', () => {
           showPlanes: true,
           showGrid: true,
           showLinkingVisuals: false,
-          show2DElementsOnPlanes: false
+          show2DElementsOnPlanes: false,
+          showReferenceAxes: true
         }
       });
     });
@@ -213,7 +214,8 @@ describe('viewStore', () => {
           showPlanes: true,
           showGrid: true,
           showLinkingVisuals: false,
-          show2DElementsOnPlanes: false
+          show2DElementsOnPlanes: false,
+          showReferenceAxes: true
         }
       });
     });

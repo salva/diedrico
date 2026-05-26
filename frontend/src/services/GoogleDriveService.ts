@@ -33,6 +33,38 @@ export interface GoogleUserProfile {
   sub: string;        // Google user ID (unique identifier)
 }
 
+interface GoogleIdentityServices {
+  accounts: {
+    oauth2: {
+      initTokenClient(config: { client_id: string; scope: string; callback: string }): unknown;
+      revoke(accessToken: string): Promise<void>;
+    };
+  };
+}
+
+declare global {
+  interface Window {
+    google?: GoogleIdentityServices;
+  }
+}
+
+interface ProjectNamePayload {
+  name?: unknown;
+}
+
+function googleIdentityServices(): GoogleIdentityServices {
+  const google = window.google;
+  if (!google?.accounts?.oauth2) {
+    throw new Error('Google Identity Services is not available');
+  }
+  return google;
+}
+
+function projectNameFromData(data: object): string | undefined {
+  const name = (data as ProjectNamePayload).name;
+  return typeof name === 'string' && name.length > 0 ? name : undefined;
+}
+
 /**
  * Service for Google Drive operations
  */
@@ -89,7 +121,7 @@ export class GoogleDriveService {
           await gapi.client.init(initConfig);
           
           // Initialize Token Client (new GIS auth)
-          this.tokenClient = (window as any).google.accounts.oauth2.initTokenClient({
+          this.tokenClient = googleIdentityServices().accounts.oauth2.initTokenClient({
             client_id: this.config.clientId,
             scope: GoogleDriveService.SCOPES,
             callback: '', // Will be set during signIn
@@ -150,8 +182,9 @@ export class GoogleDriveService {
             return;
           }
           
-          this.accessToken = response.access_token;
-          gapi.client.setToken({ access_token: this.accessToken });
+          const accessToken = this.requireAccessToken(response);
+          this.accessToken = accessToken;
+          gapi.client.setToken({ access_token: accessToken });
           localStorage.setItem('diedrico_was_signed_in', 'true');
           resolve();
         };
@@ -186,8 +219,9 @@ export class GoogleDriveService {
             return;
           }
           
-          this.accessToken = response.access_token;
-          gapi.client.setToken({ access_token: this.accessToken });
+          const accessToken = this.requireAccessToken(response);
+          this.accessToken = accessToken;
+          gapi.client.setToken({ access_token: accessToken });
           localStorage.setItem('diedrico_was_signed_in', 'true');
           resolve();
         };
@@ -200,6 +234,14 @@ export class GoogleDriveService {
     });
   }
 
+
+  private requireAccessToken(response: { access_token?: unknown }): string {
+    if (typeof response.access_token !== 'string' || response.access_token.length === 0) {
+      throw new Error('Sign-in response did not include an access token');
+    }
+    return response.access_token;
+  }
+
   /**
    * Sign out from Google (revoke access token)
    */
@@ -210,7 +252,7 @@ export class GoogleDriveService {
 
     try {
       if (this.accessToken) {
-        await (window as any).google.accounts.oauth2.revoke(this.accessToken);
+        await googleIdentityServices().accounts.oauth2.revoke(this.accessToken);
         this.accessToken = null;
         gapi.client.setToken(null);
       }
@@ -479,7 +521,7 @@ export class GoogleDriveService {
       const closeDelimiter = '\r\n--' + boundary + '--';
 
       // Create metadata part
-      const rawName = (data as any).name;
+      const rawName = projectNameFromData(data);
       const fullFileName = rawName && !rawName.endsWith(GoogleDriveService.FILE_EXTENSION) 
         ? `${rawName}${GoogleDriveService.FILE_EXTENSION}` 
         : rawName;

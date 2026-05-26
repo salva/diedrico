@@ -203,14 +203,14 @@ describe('Round-Trip Serialization Tests', () => {
   });
 
   it('UpdateElementStyle survives round-trip', () => {
-    const op = new UpdateElementStyleOp('point1', 'projPlaneH', { color: '#FF0000', strokeWidth: 2 });
+    const op = new UpdateElementStyleOp('point1', 'projPlaneH', { color: '#FF0000', lineWidth: 2 });
     
     const result = roundTripOperation(op, world, commandStack);
     
     expect(result.type).toBe('UpdateElementStyle');
     expect(result.parameters.elementId).toBe('point1');
     expect(result.parameters.planeId).toBe('projPlaneH');
-    expect(result.parameters.newStyle).toEqual({ color: '#FF0000', strokeWidth: 2 });
+    expect(result.parameters.newStyle).toEqual({ color: '#FF0000', lineWidth: 2 });
   });
 
   it('RemoveActionFromProcessTree survives round-trip', () => {

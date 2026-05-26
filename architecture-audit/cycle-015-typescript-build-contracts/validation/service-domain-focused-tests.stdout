@@ -1,0 +1,20 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run --run tests/unit/services/GeometryService.spec.ts tests/unit/services/ProjectService.roundTrip.spec.ts tests/unit/services/ProjectService.selfContainment.spec.ts tests/unit/services/ProjectService.subprocess.spec.ts tests/unit/stores/viewStore.spec.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/stores/viewStore.spec.ts  (23 tests) 32ms
+ ✓ tests/unit/services/GeometryService.spec.ts  (2 tests) 6ms
+ ✓ tests/unit/services/ProjectService.subprocess.spec.ts  (5 tests) 18ms
+ ✓ tests/unit/services/ProjectService.selfContainment.spec.ts  (8 tests) 28ms
+ ❯ tests/unit/services/ProjectService.roundTrip.spec.ts  (18 tests | 1 failed) 39ms
+   ❯ tests/unit/services/ProjectService.roundTrip.spec.ts > Round-Trip Serialization Tests > UpdateElementStyle survives round-trip
+     → expected { color: '#FF0000' } to deeply equal { color: '#FF0000', strokeWidth: 2 }
+
+ Test Files  1 failed | 4 passed (5)
+      Tests  1 failed | 55 passed (56)
+   Start at  18:43:20
+   Duration  2.98s (transform 1.11s, setup 0ms, collect 3.78s, tests 123ms, environment 5.48s, prepare 1.27s)
+

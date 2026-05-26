@@ -1,0 +1,30 @@
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/services/ProjectService.roundTrip.spec.ts > Round-Trip Serialization Tests > UpdateElementStyle survives round-trip
+AssertionError: expected { color: '#FF0000' } to deeply equal { color: '#FF0000', strokeWidth: 2 }
+
+- Expected
++ Received
+
+  Object {
+    "color": "#FF0000",
+-   "strokeWidth": 2,
+  }
+
+ ❯ tests/unit/services/ProjectService.roundTrip.spec.ts:213:40
+    211|     expect(result.parameters.elementId).toBe('point1');
+    212|     expect(result.parameters.planeId).toBe('projPlaneH');
+    213|     expect(result.parameters.newStyle).toEqual({ color: '#FF0000', str…
+       |                                        ^
+    214|   });
+    215| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c vitest run --run tests/unit/services/GeometryService.spec.ts tests/unit/services/ProjectService.roundTrip.spec.ts tests/unit/services/ProjectService.selfContainment.spec.ts tests/unit/services/ProjectService.subprocess.spec.ts tests/unit/stores/viewStore.spec.ts

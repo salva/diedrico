@@ -1,0 +1,6 @@
+
+> diedrico-frontend@0.1.0 build
+> vue-tsc && vite build
+
+src/services/GoogleDriveService.ts(52,19): error TS2352: Conversion of type 'Window & typeof globalThis' to type 'GoogleIdentityServicesWindow' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Property 'google' is missing in type 'Window & typeof globalThis' but required in type 'GoogleIdentityServicesWindow'.

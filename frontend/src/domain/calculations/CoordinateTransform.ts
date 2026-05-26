@@ -15,7 +15,7 @@
  * 
  */
 
-import type { Plane3DCoordinateSystem } from '../world/Plane';
+import type { Vector4 } from 'three';
 
 /**
  * 3x3 matrix for 2D homogeneous transformations
@@ -144,7 +144,7 @@ export function canvasToPlane(
 export function planeTo3D(
   u: number,
   v: number,
-  coordinateSystem: Plane3DCoordinateSystem
+  coordinateSystem: { origin: Vector4; uAxis: Vector4; vAxis: Vector4 }
 ): Vector3D {
   const { origin, uAxis, vAxis } = coordinateSystem;
   

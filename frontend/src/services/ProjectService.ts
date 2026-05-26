@@ -90,7 +90,7 @@ export class ProjectService {
         throw new Error(`Invalid project file - missing required field: ${field}`);
       }
     }
-    if (!Number.isInteger(record.nextElementId) || record.nextElementId < 1) {
+    if (typeof record.nextElementId !== 'number' || !Number.isInteger(record.nextElementId) || record.nextElementId < 1) {
       throw new Error('Invalid project file - nextElementId must be a positive integer');
     }
     if (!Array.isArray(record.commands)) {

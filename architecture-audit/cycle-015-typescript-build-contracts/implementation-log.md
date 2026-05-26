@@ -353,3 +353,50 @@ The UI/store/render DTO TypeScript category remains closed in current build outp
 - Persistent live preview: not refreshed successfully in this correction; the only observed server was Playwright's temporary localhost Vite web server, and post-run probes to 5173/4173 failed.
 
 These stop conditions are now explicit for reviewer consumption. The corrected log satisfies the stage-scoped UI/store/render DTO finalization requirement without broadening the implementation into forbidden service/domain, tooling, or preview-management repairs.
+
+## t1 service/domain strictness lane — closure attempt
+
+Task `t1-close-service-domain-strictness` closed the residual service/domain TypeScript build category left after the UI/store/render DTO lane.
+
+### Service/domain ownership map and source changes
+
+- `frontend/src/domain/calculations/CoordinateTransform.ts`: deleted the stale `Plane3DCoordinateSystem` import from `../world/Plane`. `planeTo3D()` now names the current coordinate-system shape directly with `Vector4` axes/origin, matching `Plane3DFixed.coordinateSystem` without restoring a removed Plane export for compatibility.
+- `frontend/src/services/GeometryService.ts`: deleted the stale `lineLineIntersection` import from `Intersections.ts`. The service now owns its simple `{ x1, y1, x2, y2 }` line DTO boundary and computes line-line intersection with an explicit determinant formula, returning `Ok(null)` for parallel/coincident lines and a precise `Result<{ x; y } | null, string>` without casts.
+- `frontend/src/services/GoogleDriveService.ts`: added explicit Google Identity Services and project-name payload boundary helpers. Silent and popup sign-in paths now require a non-empty access token before calling `gapi.client.setToken`; Google Identity access and update-file name extraction no longer use broad `as any` casts. No secret files, env files, provider configs, OAuth token files, or `.saivage/saivage.json` were read or logged.
+- `frontend/src/services/ProjectService.ts`: strengthened `validateProjectData()` so `record.nextElementId` is first proven to be a number before integer/range checks. This preserves the current schema contract (`nextElementId` is required) and does not add a migration/back-compat default shim.
+- `frontend/tests/unit/services/GeometryService.spec.ts`: added focused coverage for finite and parallel line-line intersection results at the service DTO boundary.
+- `frontend/tests/unit/services/ProjectService.roundTrip.spec.ts`: updated the stale style payload expectation from obsolete `strokeWidth` to the current `UpdateElementStyleOp.StyleProperties.lineWidth` contract.
+- `frontend/tests/unit/stores/viewStore.spec.ts`: updated stale viewport fixtures to include current `threeViewOptions.showReferenceAxes: true`.
+
+No UI/store/render DTO source files, `ActionsPanel.vue`, projection/world files, command/factory files, process/view-state operation files, package/tooling files, browser-cache files, provider config files, or Wave 014 protected files were edited in this lane. No source module, fixture, package script, or documentation file was deleted; deleted legacy surfaces were stale imports/field assumptions and broad casts only.
+
+### Validation evidence
+
+All command output was captured under `architecture-audit/cycle-015-typescript-build-contracts/validation/`:
+
+- `service-domain-geometryservice-grep.stdout` / `.stderr`: confirmed `GeometryService.calculateLineLineIntersection` had no other consumers and identified the service as the owner boundary for the stale calculation import.
+- `service-domain-build-postpatch.stdout` / `.stderr`: initial postpatch `npm run build --workspace=frontend` passed, proving the original `CoordinateTransform.ts`, `GeometryService.ts`, `GoogleDriveService.ts`, and `ProjectService.ts` build residuals were removed.
+- `service-domain-focused-tests.stdout` / `.stderr`: first focused service/domain run passed GeometryService, ProjectService subprocess/self-containment, and viewStore tests but failed the known `ProjectService.roundTrip.spec.ts` stale style expectation (`strokeWidth` vs current `lineWidth`). This was categorized as direct fixture drift from the current style contract and fixed in-place.
+- `service-domain-style-contract-grep.stdout` / `.stderr`: recorded the authoritative `UpdateElementStyleOp` style contract (`lineWidth`) and existing operation-registry coverage before updating the round-trip fixture.
+- `service-domain-focused-tests-rerun.stdout` / `.stderr`: focused rerun passed `tests/unit/services/GeometryService.spec.ts`, `tests/unit/services/ProjectService.roundTrip.spec.ts`, `tests/unit/services/ProjectService.selfContainment.spec.ts`, `tests/unit/services/ProjectService.subprocess.spec.ts`, and `tests/unit/stores/viewStore.spec.ts` — 5 files / 56 tests passed.
+- `service-domain-root-lint.stdout` / `.stderr`: `npm run lint` passed — architecture tests 4 files / 11 tests.
+- `service-domain-frontend-lint.stdout` / `.stderr`: `npm run lint --workspace=frontend` passed — architecture tests 4 files / 11 tests.
+- `service-domain-forbidden-scan.stdout` / `.stderr`: first scoped forbidden-pattern scan found inherited broad casts in the touched GoogleDriveService owner file. They were removed rather than accepted.
+- `service-domain-build-after-cast-removal.stdout` / `.stderr`: first cast-removal build exposed a local `Window` augmentation typing issue in GoogleDriveService; fixed immediately with a global `Window.google` declaration.
+- `service-domain-build-forbidden-final.stdout` / `.stderr`: final `npm run build --workspace=frontend` passed; the appended forbidden-pattern grep exited 1 because no scoped matches remained for TypeScript suppressions, broad casts, stale `Plane3DCoordinateSystem`, or stale `lineLineIntersection` references.
+- `service-domain-frontend-full-vitest.stdout` / `.stderr`: full frontend Vitest passed — 105 files passed, 1 skipped; 1227 tests passed, 45 skipped, 11 todo. Expected stderr contains tests intentionally exercising error logging (Google initialization failure, infeasible geometry, corrupted auth-store profile fixture), not failures.
+- `service-domain-root-full-vitest.stdout` / `.stderr`: root `npm run test` passed with the same frontend suite summary — 105 files passed, 1 skipped; 1227 tests passed, 45 skipped, 11 todo.
+- `service-domain-root-build.stdout` / `.stderr`: root `npm run build` passed, delegating to frontend build. Vite emitted only the existing large-chunk warning.
+- `service-domain-frontend-e2e.stdout` / `.stderr`: `npm run test:e2e --workspace=frontend` started the Playwright web server and Vite reported `http://localhost:5173/`, but Chromium could not launch because the executable is missing at `/home/salva/.cache/ms-playwright/chromium_headless_shell-1223/chrome-headless-shell-linux64/chrome-headless-shell`. The failure recommends `npx playwright install`. This is the same browser-cache environment residual previously recorded; no package/tooling or browser-cache repair was performed in this service/domain lane.
+
+### Protected-surface and secret-safety checks
+
+- Forbidden secret paths were not read: no `.saivage/auth-profiles.json`, `.saivage/saivage.json`, env files, provider configs, OAuth token stores, Google credentials, or shell history were opened or logged. Google Drive changes cite only source behavior and typed invariants.
+- Final scoped scan contains no `@ts-ignore`, `@ts-expect-error`, `as any`, `as unknown as`, stale `Plane3DCoordinateSystem`, or stale `lineLineIntersection` in the service/domain files and directly updated tests.
+- Completed projection/world, command/factory, process/view-state, and UI/store/render DTO lanes remain preserved. This lane did not repair or reopen their source surfaces, except for direct test fixture drift in `viewStore.spec.ts` already identified by earlier validation.
+
+### Residual categorization and stage status
+
+The assigned service/domain strictness build category is closed: frontend and root builds are green, and the current build no longer reports `CoordinateTransform.ts`, `GeometryService.ts`, `GoogleDriveService.ts`, or `ProjectService.ts` errors. The full frontend/root Vitest suites are also green after resolving the direct `ProjectService.roundTrip` style fixture drift and `viewStore` `showReferenceAxes` fixture drift.
+
+The only remaining validation residual observed in this lane is environment/tooling outside the source changes: Playwright Chromium is missing from the local browser cache, so e2e cannot launch browsers. This is suitable for the validation/preview environment follow-up and does not indicate a service/domain source regression.

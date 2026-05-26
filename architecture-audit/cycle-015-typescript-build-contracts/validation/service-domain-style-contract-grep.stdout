@@ -1,0 +1,73 @@
+frontend/src/commands/operations/world/README.md:11:- `UpdateElementStyleOp` - Change element styling
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:2: * UpdateElementStyleOp - Operation to update visual style properties of an element
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:20:export interface StyleProperties extends JsonObject {
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:29:interface UpdateElementStylePayload extends JsonObject {
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:57:    if (typeof payload.color !== 'string') throw new Error('Invalid UpdateElementStyle descriptor: newStyle.color must be string');
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:61:    if (typeof payload.lineWidth !== 'number') throw new Error('Invalid UpdateElementStyle descriptor: newStyle.lineWidth must be number');
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:66:      throw new Error('Invalid UpdateElementStyle descriptor: newStyle.lineStyle must be solid, dashed, or dotted');
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:71:    if (typeof payload.opacity !== 'number') throw new Error('Invalid UpdateElementStyle descriptor: newStyle.opacity must be number');
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:75:    if (typeof payload.visible !== 'boolean') throw new Error('Invalid UpdateElementStyle descriptor: newStyle.visible must be boolean');
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:82: * UpdateElementStyleOp - Updates element visual style
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:87:export class UpdateElementStyleOp implements IOperation<OperationDescriptor<'UpdateElementStyle', UpdateElementStylePayload>> {
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:88:  readonly type = 'UpdateElementStyle';
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:152:        console.error('[UpdateElementStyleOp] Cannot undo: Element not found:', this.elementId);
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:160:      console.error('[UpdateElementStyleOp] Undo failed:', error);
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:164:  serialize(): OperationDescriptor<'UpdateElementStyle', UpdateElementStylePayload> {
+frontend/src/commands/operations/world/index.ts:12:export * from './UpdateElementStyleOp';
+frontend/src/commands/operations/world/registerWorldOperationDescriptors.ts:22:import { UpdateElementStyleOp, parseStyleProperties } from './UpdateElementStyleOp';
+frontend/src/commands/operations/world/registerWorldOperationDescriptors.ts:67:  registry.register('UpdateElementStyle', d => { const payload = obj(d, 'payload'); return new UpdateElementStyleOp(s(payload, 'elementId'), s(payload, 'planeId'), parseStyleProperties(obj(payload, 'newStyle'))); });
+frontend/src/commands/Command.ts:21: *    belongs in Operation classes (AddFreePoint2DOp, AddLine2DOp, UpdateElementStyleOp).
+frontend/src/commands/Command.ts:50: * See UpdateElementStyleOp as example of correct pattern - it's an Operation,
+frontend/src/components/icons/toolbar/TransportPointIcon.vue:40:        markerUnits="strokeWidth"
+frontend/src/domain/presentation/Paper.ts:16:  strokeWidth: number;              // Line width in pixels
+frontend/src/services/SVGRenderer.ts:105:      'stroke-width': primitive.style.strokeWidth,
+frontend/src/services/SVGRenderer.ts:153:      'stroke-width': primitive.style.strokeWidth,
+frontend/src/services/SVGRenderer.ts:182:      'stroke-width': primitive.style.strokeWidth,
+frontend/src/services/SVGRenderer.ts:308:      'stroke-width': primitive.style.strokeWidth,
+frontend/src/services/SVGRenderer.ts:335:      'stroke-width': primitive.style.strokeWidth,
+frontend/src/services/SVGRenderer.ts:373:      'stroke-width': primitive.style.strokeWidth,
+frontend/src/services/factories/PlaneSequenceFactory.ts:24:import { UpdateElementStyleOp } from '@/commands/operations/world/UpdateElementStyleOp';
+frontend/src/services/factories/PlaneSequenceFactory.ts:184:        cmd.addAndExecute(new UpdateElementStyleOp(
+frontend/src/application/canvas/CanvasStyleUseCase.ts:4:import { UpdateElementStyleOp } from '@/commands/operations/world/UpdateElementStyleOp';
+frontend/src/application/canvas/CanvasStyleUseCase.ts:13:      cmd.addAndExecute(new UpdateElementStyleOp(request.elementId, request.planeId, request.style) as any);
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:15:  let fill: string; let stroke: string; let strokeWidth: number;
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:16:  if (ctx.cascade) { fill = '#FF9800'; stroke = '#F57C00'; strokeWidth = 2.5; }
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:17:  else if (ctx.snapTarget) { fill = '#FFA500'; stroke = '#FF8C00'; strokeWidth = 2; }
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:18:  else if (ctx.selected) { fill = point instanceof FreePoint2D ? '#4A90E2' : '#E94E77'; stroke = '#0066CC'; strokeWidth = 2; }
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:19:  else if (ctx.hovered) { fill = point instanceof FreePoint2D ? '#6BB6FF' : '#FF6B9D'; stroke = '#4A90E2'; strokeWidth = 1.5; }
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:20:  else { fill = point instanceof FreePoint2D ? '#4A90E2' : '#E94E77'; stroke = '#333333'; strokeWidth = 1.5; }
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:21:  return { layer: ctx.snapTarget ? RenderLayer.Highlights : RenderLayer.Elements, radius: point instanceof FreePoint2D ? 5 : 4, style: { stroke, strokeWidth, strokeStyle: 'solid', fill, opacity: opacity(point.planeId, ctx.activePlaneId), zIndex: 10 + zBoost(point.planeId, ctx.activePlaneId) } };
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:25:  let stroke: string; let strokeWidth: number;
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:26:  if (ctx.cascade) { stroke = '#FF9800'; strokeWidth = 2.5; }
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:27:  else if (ctx.selected) { stroke = '#0066CC'; strokeWidth = 2; }
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:28:  else if (ctx.hovered) { stroke = '#4A90E2'; strokeWidth = 1.8; }
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:29:  else { stroke = '#333333'; strokeWidth = 1.5; }
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:30:  return { stroke, strokeWidth, strokeStyle: 'solid', fill: 'none', opacity: opacity(line.planeId, ctx.activePlaneId), zIndex: 5 + zBoost(line.planeId, ctx.activePlaneId) };
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:34:  let stroke: string; let strokeWidth: number;
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:35:  if (ctx.cascade) { stroke = '#FF9800'; strokeWidth = 3; }
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:36:  else if (ctx.selected) { stroke = '#0066CC'; strokeWidth = 2.5; }
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:37:  else if (ctx.hovered) { stroke = '#4A90E2'; strokeWidth = 2.2; }
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:38:  else { stroke = '#2C3E50'; strokeWidth = 2; }
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:39:  return { stroke, strokeWidth, strokeStyle: 'solid', fill: 'none', opacity: opacity(line.planeId, ctx.activePlaneId), zIndex: 5 + zBoost(line.planeId, ctx.activePlaneId) };
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:43:  let stroke: string; let strokeWidth: number;
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:44:  if (ctx.cascade) { stroke = '#FF9800'; strokeWidth = 2.5; }
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:45:  else if (ctx.selected) { stroke = '#0066CC'; strokeWidth = 2; }
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:46:  else if (ctx.hovered) { stroke = '#4A90E2'; strokeWidth = 1.8; }
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:47:  else { stroke = '#333333'; strokeWidth = 1.5; }
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:48:  return { stroke, strokeWidth, strokeStyle: 'solid', fill: 'none', opacity: opacity(circle.planeId, ctx.activePlaneId), zIndex: 5 + zBoost(circle.planeId, ctx.activePlaneId) };
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:52:  let stroke: string; let strokeWidth: number;
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:53:  if (ctx.cascade) { stroke = '#FF9800'; strokeWidth = 2.5; }
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:54:  else if (ctx.selected) { stroke = '#0066CC'; strokeWidth = 2; }
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:55:  else if (ctx.hovered) { stroke = '#BA68C8'; strokeWidth = 1.8; }
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:56:  else { stroke = '#9C27B0'; strokeWidth = 1.5; }
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:57:  return { stroke, strokeWidth, strokeStyle: 'dashed', fill: 'none', opacity: 1, zIndex: 3 };
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:62:  return { stroke: highlighted ? '#6BB6FF' : '#333333', strokeWidth: highlighted ? 2 : 1.5, strokeStyle: 'dashed', fill: 'none', opacity: 1, zIndex: 2 + zBoost((_hinge as HalfHingeLine2D).planeId, ctx.activePlaneId) };
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:65:export const PROJECTED_POINT_STYLE: ResolvedStyle = { stroke: '#9B59B6', strokeWidth: 1.5, strokeStyle: 'solid', fill: '#9B59B6', opacity: 0.35, zIndex: 5 };
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:66:export const PROJECTED_LINE_STYLE: ResolvedStyle = { stroke: '#9B59B6', strokeWidth: 3, strokeStyle: 'solid', fill: 'none', opacity: 0.35, zIndex: 5 };
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:67:export const PROJECTED_SEGMENT_STYLE: ResolvedStyle = { stroke: '#9B59B6', strokeWidth: 3, strokeStyle: 'solid', fill: 'none', opacity: 0.35, zIndex: 5 };
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:51:            const style = { stroke: arcGeometry.style.color, strokeWidth: arcGeometry.style.width, strokeStyle: arcGeometry.style.dashArray ? 'dashed' as const : 'solid' as const, fill: 'none', opacity: arcGeometry.style.opacity, zIndex: 2 };
+frontend/tests/unit/commands/operations/operationRegistry.spec.ts:6:import { UpdateElementStyleOp } from '@/commands/operations/world/UpdateElementStyleOp';
+frontend/tests/unit/commands/operations/operationRegistry.spec.ts:55:  it('round-trips UpdateElementStyle through its typed JSON payload', () => {
+frontend/tests/unit/commands/operations/operationRegistry.spec.ts:57:      opType: 'UpdateElementStyle',
+frontend/tests/unit/commands/operations/operationRegistry.spec.ts:72:    expect(restored.type).toBe('UpdateElementStyle');
+frontend/tests/unit/commands/operations/operationRegistry.spec.ts:75:    const created = new UpdateElementStyleOp('projPlane3/line2d4', 'projPlane3', descriptor.payload.newStyle);

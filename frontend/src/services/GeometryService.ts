@@ -1,9 +1,6 @@
 import type { Result } from '../types/ResultTypes';
 import { Ok, Err, isOk } from '../types/ResultTypes';
 import {
-  lineLineIntersection
-} from '../domain/calculations/intersections';
-import {
   perpendicularThroughPoint,
   perpendicularFoot,
   arePerpendicular
@@ -29,12 +26,21 @@ export class GeometryService {
     line2: { x1: number; y1: number; x2: number; y2: number }
   ): Result<{ x: number; y: number } | null, string> {
     try {
-      const result = lineLineIntersection(line1, line2);
-      if (isOk(result)) {
-        return Ok(result.value);
-      } else {
-        return Err(result.error);
+      const denominator =
+        (line1.x1 - line1.x2) * (line2.y1 - line2.y2) -
+        (line1.y1 - line1.y2) * (line2.x1 - line2.x2);
+
+      if (Math.abs(denominator) < 1e-10) {
+        return Ok(null);
       }
+
+      const line1Determinant = line1.x1 * line1.y2 - line1.y1 * line1.x2;
+      const line2Determinant = line2.x1 * line2.y2 - line2.y1 * line2.x2;
+
+      return Ok({
+        x: (line1Determinant * (line2.x1 - line2.x2) - (line1.x1 - line1.x2) * line2Determinant) / denominator,
+        y: (line1Determinant * (line2.y1 - line2.y2) - (line1.y1 - line1.y2) * line2Determinant) / denominator
+      });
     } catch (error) {
       return Err(error instanceof Error ? error.message : 'Unknown error');
     }
