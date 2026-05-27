@@ -1177,7 +1177,7 @@ The persistence-facing port should express the app shell's need to save/load a c
 - Selection/delete and keyboard routing behavior remains user-visible equivalent; any retained direct `World`/`CommandStack` use in app-shell use cases is documented as an intentional application-use-case dependency rather than a composition leak.
 - No domain realization, rendering/presentation, Three.js scene-host, command/undo descriptor, persistence schema, backend, docs/spec, package/tooling, or validation-platform change is introduced without a reviewed plan edit.
 - Focused app-shell tests cover runtime composition, project create/open/rename/sign-in/sign-out, autosave debounce/error policies, keyboard install/dispose/routing, and session-storage behavior with fake ports.
-- Mandatory validation cadence passes with stable logs: root/frontend lint where defined, focused app-shell and service-adapter Vitest, full root/frontend Vitest, root/frontend build, root/frontend e2e because project/session and keyboard flows are user-observable, live preview refresh on `0.0.0.0:5173`, HTTP reachability probe, and Playwright/live browser evidence for startup/new project, keyboard routing, and save/autosave-visible status where practical.
+- Mandatory validation cadence passes with stable logs captured under the Wave 020 `validation/` directory: `npm run lint` at the root and in every workspace where defined; focused app-shell/service-adapter Vitest for touched modules; full Vitest at the root and in every workspace where defined; `npm run build` at the root and in every workspace where defined; Playwright/e2e at the root and in every workspace where defined because project/session and keyboard flows are user-observable; live preview refresh on `0.0.0.0:5173`; HTTP reachability probe; and Playwright MCP/live browser evidence for startup/new project, keyboard routing, and save/autosave-visible status where practical.
 
 **Dependencies**
 
@@ -1185,13 +1185,15 @@ Depends on Waves 014–019 because it should consume green validation gates, sta
 
 **Validation requirements**
 
+All Wave 020 validation stdout/stderr must be captured to stable files under `architecture-audit/cycle-020-app-shell-project-session-browser-integration/validation/` (or the reviewed final Cycle 020 directory name). Undefined commands may be skipped only with exact package-script evidence in the implementation log; defined root or workspace commands are mandatory.
+
 1. Capture pre-edit scoped git status/diff and static scans for hidden app-shell concrete construction/browser globals, project-session storage-key duplication, app-shell persistence/Drive port shapes, keyboard target installation, and direct `World`/`CommandStack` mutation in app-shell use cases.
-2. Run focused Vitest for changed app-shell runtime/use cases/ports/adapters and any touched ProjectService/GoogleDriveService adapter tests.
-3. Run root and frontend lint where scripts exist.
-4. Run full root and frontend Vitest.
-5. Run root and frontend build.
-6. Run root/frontend Playwright e2e because startup/project/session/keyboard behavior is user-observable.
-7. Refresh the live preview on `0.0.0.0:5173`, capture HTTP 200, and run focused Playwright/live browser smoke for startup/new project, representative keyboard shortcuts, and visible save/status behavior where possible without real Drive credentials.
+2. Run focused Vitest for changed app-shell runtime/use cases/ports/adapters and any touched ProjectService/GoogleDriveService adapter tests, with stable stdout/stderr logs.
+3. Run `npm run lint` at the repository root and in every workspace where a lint script is defined, including `frontend` while it remains the active workspace.
+4. Run full Vitest at the repository root and in every workspace where a test/Vitest script is defined, including `frontend` while it remains the active workspace.
+5. Run `npm run build` at the repository root and in every workspace where a build script is defined, including `frontend` while it remains the active workspace.
+6. Run Playwright/e2e at the repository root and in every workspace where an e2e script is defined because startup/project/session/keyboard behavior is user-observable.
+7. Refresh the live preview bound to `0.0.0.0:5173`, capture an HTTP 200 reachability probe, and run focused Playwright MCP/live browser smoke for startup/new project, representative keyboard shortcuts, and visible save/status behavior where possible without real Drive credentials.
 
 **Risks**
 

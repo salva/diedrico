@@ -36,9 +36,9 @@ This wave is more central than docs/spec cleanup because future docs should desc
 - scope: app-shell runtime/ports/session/autosave/keyboard/selection boundaries plus narrow ProjectService/GoogleDriveService adapter seams
 - target outcome: explicit production composition boundary and testable use cases without hidden browser globals/static services
 - explicit DELETE list: hidden default construction/global paths, duplicated local-storage keys, broad use-case error `any`, obsolete tests/wrappers, and dual paths
-- success criteria: narrow ports/adapters, App.vue remains passive, focused tests and mandatory validation
+- success criteria: narrow ports/adapters, App.vue remains passive, focused tests, mandatory root/per-workspace validation where defined, stable validation-log capture, and live-preview/browser evidence
 - dependencies: Waves 014–019
-- validation requirements and risks
+- validation requirements and risks, tightened after review to preserve the binding root/per-workspace cadence explicitly
 - no-backcompat rationale
 
 ## Deferred candidates
@@ -47,6 +47,10 @@ This wave is more central than docs/spec cleanup because future docs should desc
 - **Docs/spec reconciliation:** defer until after app-shell/session architecture is cleaned so docs do not freeze another intermediate boundary.
 - **Placeholder/debug cleanup:** defer because current scans did not find the old README-only operation placeholder directories; any remaining debug/noise cleanup is peripheral.
 - **Validation gate hardening:** defer until a concrete red/weak gate is observed; current Wave 019 closure records green validation and preview evidence.
+
+## Review-blocker correction
+
+The reviewer identified one blocker: Wave 020's validation wording was close but not explicit enough about preserving the mandatory root/per-workspace validation cadence and stable evidence capture. I corrected `architecture-audit/wave-plan.md` so Wave 020 now requires stable stdout/stderr logs under the Cycle 020 validation directory; root and every workspace where defined for lint, full Vitest, build, and Playwright/e2e; focused Vitest for touched app-shell/adapter modules; exact package-script evidence for any undefined command; live preview refresh bound to `0.0.0.0:5173`; HTTP 200 reachability; and Playwright MCP/live browser smoke for startup/new-project, keyboard, and visible save/status behavior. This is a planning-artifact correction only; no source implementation or package/tooling files were changed.
 
 ## Recommended next stage
 
