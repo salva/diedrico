@@ -1,0 +1,65 @@
+frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts-15-  getProjectionPlane3DRealization(id: string): ProjectionPlaneRealization3D | undefined;
+frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts-16-  get3DPlaneRealization(id: string): Plane3DRealization3D | undefined;
+frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts-17-  getHingeLineById(id: string): HingeLine | undefined;
+frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:18:  getAllProjectionPlanes(): ProjectionPlane[];
+frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:19:  getAllHingeLines(): HingeLine[];
+frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts-20-}
+frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts-21-
+frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts-22-export interface ProjectionPlaneRealizationContext extends ProjectionElementRealizationContext {}
+--
+frontend/src/domain/world/World.ts-47- * 
+frontend/src/domain/world/World.ts-48- * 4. **Iterating All Elements** (for operations like select-all, export):
+frontend/src/domain/world/World.ts-49- *    ```typescript
+frontend/src/domain/world/World.ts:50: *    for (const plane of world.getAllProjectionPlanes()) {
+frontend/src/domain/world/World.ts-51- *      for (const point of plane.getAllPoints()) {
+frontend/src/domain/world/World.ts-52- *        // Process each point
+frontend/src/domain/world/World.ts-53- *      }
+--
+frontend/src/domain/world/World.ts-751-   * Get all projection planes
+frontend/src/domain/world/World.ts-752-   * @returns Array of all ProjectionPlane objects
+frontend/src/domain/world/World.ts-753-   */
+frontend/src/domain/world/World.ts:754:  getAllProjectionPlanes(): ProjectionPlane[] {
+frontend/src/domain/world/World.ts-755-    return Array.from(this.projectionPlanes.values());
+frontend/src/domain/world/World.ts-756-  }
+frontend/src/domain/world/World.ts-757-
+--
+frontend/src/domain/world/World.ts-929-  /**
+frontend/src/domain/world/World.ts-930-   * Get all hinge lines
+frontend/src/domain/world/World.ts-931-   */
+frontend/src/domain/world/World.ts:932:  getAllHingeLines(): HingeLine[] {
+frontend/src/domain/world/World.ts-933-    return Array.from(this.hingeLines.values());
+frontend/src/domain/world/World.ts-934-  }
+frontend/src/domain/world/World.ts-935-
+--
+frontend/src/domain/world/World.ts-1045-  /**
+frontend/src/domain/world/World.ts-1046-   * Get all lines across all planes
+frontend/src/domain/world/World.ts-1047-   * Deprecated: Use plane.getAllLines() for plane-specific access
+frontend/src/domain/world/World.ts:1048:   * Or world.getAllProjectionPlanes() to iterate planes
+frontend/src/domain/world/World.ts-1049-   */
+frontend/src/domain/world/World.ts-1050-  /**
+frontend/src/domain/world/World.ts-1051-   * Get a point by ID (searches all planes)
+--
+frontend/src/domain/world/HingeLine.ts-247-        plane2Id: this.plane2Id,
+frontend/src/domain/world/HingeLine.ts-248-        projPlane1Exists: !!projPlane1,
+frontend/src/domain/world/HingeLine.ts-249-        projPlane2Exists: !!projPlane2,
+frontend/src/domain/world/HingeLine.ts:250:        allProjectionPlanes: world.getAllProjectionPlanes().map(p => ({ id: p.id })),
+frontend/src/domain/world/HingeLine.ts:251:        allHingeLines: world.getAllHingeLines().map(hl => ({ 
+frontend/src/domain/world/HingeLine.ts-252-          id: hl.id, 
+frontend/src/domain/world/HingeLine.ts-253-          label: hl.label, 
+frontend/src/domain/world/HingeLine.ts-254-          plane1Id: hl.plane1Id, 
+--
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts-164-
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts-165-    // Find hinge line connecting this plane to mainHinge.plane1Id
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts-166-    console.log(`[BHHL ${this.label}] Looking for T1 hinge between ${this.planeId} and ${mainHinge.plane1Id}`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:167:    const allHingeLines = world.getAllHingeLines();
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts-168-    console.log(`[BHHL ${this.label}] Available hinge lines:`, allHingeLines.map(hl => `${hl.id}(${hl.plane1Id}-${hl.plane2Id})`));
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts-169-    
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts-170-    const t1HingeLine = allHingeLines.find(hl => 
+--
+frontend/src/domain/world/descriptors/Element3DDescriptors.ts-149-    
+frontend/src/domain/world/descriptors/Element3DDescriptors.ts-150-    // Get hinge line (T1 is associated with a hinge line)
+frontend/src/domain/world/descriptors/Element3DDescriptors.ts-151-    // We need to find the hinge line that T1 is part of
+frontend/src/domain/world/descriptors/Element3DDescriptors.ts:152:    const hingeLine = world.getAllHingeLines().find(hl => {
+frontend/src/domain/world/descriptors/Element3DDescriptors.ts-153-      const halfHingeLines = basePlane ? world.getHalfHingeLines2D(basePlane.id!) : [];
+frontend/src/domain/world/descriptors/Element3DDescriptors.ts-154-      return halfHingeLines.some(hhl => 
+frontend/src/domain/world/descriptors/Element3DDescriptors.ts-155-        (hhl as any).hingeLineId === hl.id && hhl.id === element.t1HingeTraceId

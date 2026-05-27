@@ -24,7 +24,10 @@ export interface ThreeGuideReadPort {
 }
 
 export function createThreeGuideReadPort(world: World): ThreeGuideReadPort {
-  const realizationContext = createThreeRealizationContext(world);
+  const realizationContext = createThreeRealizationContext(world, {
+    getProjectionPlanes: () => [],
+    getHingeLines: () => [],
+  });
   return {
     getSelectedGuideModels: (selectedIds: readonly string[]) => selectedIds.flatMap(selectedId => {
       try {

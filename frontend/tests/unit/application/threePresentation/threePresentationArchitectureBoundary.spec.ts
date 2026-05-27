@@ -40,6 +40,12 @@ describe('three presentation architecture boundary', () => {
     }
   });
 
+  it('keeps realization context helper free of broad world collection traversal', () => {
+    expect(realizationContextSource).not.toMatch(/world\.getAllProjectionPlanes|world\.getAllHingeLines/);
+    expect(planarReadPortSource).toContain('const getProjectionPlanes = () => world.getAllProjectionPlanes()');
+    expect(hingeReadPortSource).toContain('const getHingeLines = () => world.getAllHingeLines()');
+  });
+
   it('does not introduce generic world/read-model facades or canvas raw seams', () => {
     const searchedSources = [presentationSelectorSource, runtimeViewPortsSource, canvasReadPortSource, ...readPortSources].join('\n');
     expect(searchedSources).not.toMatch(new RegExp(['RuntimeWorld', 'WorldReadModel', 'PresentationWorld', 'get' + 'World\\s*\\('].join('|')));

@@ -153,3 +153,26 @@ Live preview:
 
 - Consider a narrow follow-up naming cleanup to rename the composition module from `ThreeWorldReadPort.ts` to a neutral `ThreePresentationReadPorts.ts` once no adjacent wave is using the historical filename.
 - Wave 018/domain realization work may still centralize or improve realization context contracts, but this implementation did not require domain realization API/semantic changes.
+
+## Reviewer correction — realization-context collection traversal boundary (t3)
+
+A reviewer-blocking issue was corrected after the initial implementation: `ThreeRealizationContext.ts` no longer owns broad `World` collection traversal for projection planes or hinge lines. The helper now remains a typed realization-context binder for lookup/realization methods and receives concern-owned collection providers from the adapters that actually need them.
+
+Files changed for this correction:
+
+- `frontend/src/application/threePresentation/ThreeRealizationContext.ts` — removed direct `world.getAllProjectionPlanes()` / `world.getAllHingeLines()` ownership from the helper.
+- `frontend/src/application/threePresentation/ThreePlanarElementReadPort.ts` — owns projection-plane collection traversal for planar element DTO construction and passes that provider into the realization context.
+- `frontend/src/application/threePresentation/ThreeHingeReadPort.ts` — owns hinge-line traversal for hinge DTO construction and supplies hinge/projection-plane collection providers needed by hinge realization.
+- `frontend/src/application/threePresentation/ThreeGuideReadPort.ts` — supplies empty collection providers because selected guide realization does not own broad collection traversal.
+- `frontend/tests/unit/application/threePresentation/threePresentationArchitectureBoundary.spec.ts` — added a guard proving the realization-context helper does not call broad collection traversal and that traversal remains in owning concern adapters.
+
+Validation evidence added under `architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/`:
+
+- `t3-context-collection-usage-search.*` and `t3-domain-context-call-sites.*` — scoped inspection of collection-context call sites before the fix.
+- `t3-realization-context-static-scan.*` — confirms `ThreeRealizationContext.ts` has no direct broad collection traversal; remaining traversal is localized in `ThreePlanarElementReadPort.ts` and `ThreeHingeReadPort.ts`.
+- `t3-focused-vitest-rerun.*` — corrected focused Vitest invocation passed 13 tests after the helper signature change.
+- `t3-focused-vitest-after-guard.*` — focused Vitest passed 14 tests after adding the static architecture guard.
+- `t3-frontend-lint.*` — frontend architecture lint passed 11 tests.
+- `t3-frontend-build.*` — frontend `vue-tsc && vite build` passed; Vite chunk-size warning only.
+
+The initial `t3-focused-vitest.*` command failed because it used root-relative test paths while running from `frontend/`; it was rerun with frontend-relative paths and passed. No canvas, persistence, command, backend/docs/specs, scene-host, OrbitControls, overlay CSS/layout, package/tooling, or unrelated protected domain files were touched for this correction.

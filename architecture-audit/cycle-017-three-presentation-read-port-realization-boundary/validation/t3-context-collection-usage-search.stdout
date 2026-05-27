@@ -1,0 +1,17 @@
+frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:96:      getAllProjectionPlanes: () => [{ ...plane, getAllPoints: () => [point] }],
+frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:105:      getAllHingeLines: () => [],
+frontend/src/application/threePresentation/ThreeHingeReadPort.ts:15:    getHingeModels: () => world.getAllHingeLines().map(hingeLine => ({ id: hingeLine.id, visualStyle: hingeLine.visualStyle, realization: hingeLine.realize3D(realizationContext) })),
+frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:18:  getAllProjectionPlanes(): ProjectionPlane[];
+frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:19:  getAllHingeLines(): HingeLine[];
+frontend/src/application/threePresentation/ThreePlanarElementReadPort.ts:29:    getPlanarPlaneModels: () => world.getAllProjectionPlanes().map(plane => ({
+frontend/src/domain/world/HingeLine.ts:250:        allProjectionPlanes: world.getAllProjectionPlanes().map(p => ({ id: p.id })),
+frontend/src/domain/world/HingeLine.ts:251:        allHingeLines: world.getAllHingeLines().map(hl => ({ 
+frontend/src/domain/world/World.ts:50: *    for (const plane of world.getAllProjectionPlanes()) {
+frontend/src/domain/world/World.ts:754:  getAllProjectionPlanes(): ProjectionPlane[] {
+frontend/src/domain/world/World.ts:932:  getAllHingeLines(): HingeLine[] {
+frontend/src/domain/world/World.ts:1048:   * Or world.getAllProjectionPlanes() to iterate planes
+frontend/src/application/threePresentation/ThreeProjectionPlaneReadPort.ts:25:    getProjectionPlaneModels: () => world.getAllProjectionPlanes().map(plane => ({
+frontend/src/application/threePresentation/ThreeRealizationContext.ts:14:    getAllProjectionPlanes: () => world.getAllProjectionPlanes(),
+frontend/src/application/threePresentation/ThreeRealizationContext.ts:15:    getAllHingeLines: () => world.getAllHingeLines(),
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:167:    const allHingeLines = world.getAllHingeLines();
+frontend/src/domain/world/descriptors/Element3DDescriptors.ts:152:    const hingeLine = world.getAllHingeLines().find(hl => {

@@ -1,0 +1,7 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run frontend/tests/unit/application/threePresentation/threePresentationSelector.spec.ts frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts frontend/tests/unit/application/threePresentation/threePresentationArchitectureBoundary.spec.ts frontend/tests/unit/components/panels/threeViewShellBoundary.spec.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+

@@ -24,9 +24,13 @@ export interface ThreePlanarElementReadPort {
 }
 
 export function createThreePlanarElementReadPort(world: World): ThreePlanarElementReadPort {
-  const realizationContext = createThreeRealizationContext(world);
+  const getProjectionPlanes = () => world.getAllProjectionPlanes();
+  const realizationContext = createThreeRealizationContext(world, {
+    getProjectionPlanes,
+    getHingeLines: () => [],
+  });
   return {
-    getPlanarPlaneModels: () => world.getAllProjectionPlanes().map(plane => ({
+    getPlanarPlaneModels: () => getProjectionPlanes().map(plane => ({
       id: plane.id,
       realization: world.getProjectionPlane3DRealization(plane.id),
       points: plane.getAllPoints().map(point => ({ id: point.id, visualStyle: point.visualStyle, realization: point.realize2D(realizationContext) })),

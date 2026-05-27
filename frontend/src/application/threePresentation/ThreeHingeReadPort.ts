@@ -10,8 +10,12 @@ export interface ThreeHingeReadPort {
 }
 
 export function createThreeHingeReadPort(world: World): ThreeHingeReadPort {
-  const realizationContext = createThreeRealizationContext(world);
+  const getHingeLines = () => world.getAllHingeLines();
+  const realizationContext = createThreeRealizationContext(world, {
+    getProjectionPlanes: () => world.getAllProjectionPlanes(),
+    getHingeLines,
+  });
   return {
-    getHingeModels: () => world.getAllHingeLines().map(hingeLine => ({ id: hingeLine.id, visualStyle: hingeLine.visualStyle, realization: hingeLine.realize3D(realizationContext) })),
+    getHingeModels: () => getHingeLines().map(hingeLine => ({ id: hingeLine.id, visualStyle: hingeLine.visualStyle, realization: hingeLine.realize3D(realizationContext) })),
   };
 }

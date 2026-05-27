@@ -1,0 +1,4 @@
+ThreeRealizationContext collection traversal scan
+frontend/src/application/threePresentation/ThreePlanarElementReadPort.ts:27:  const getProjectionPlanes = () => world.getAllProjectionPlanes();
+frontend/src/application/threePresentation/ThreeHingeReadPort.ts:13:  const getHingeLines = () => world.getAllHingeLines();
+frontend/src/application/threePresentation/ThreeHingeReadPort.ts:15:    getProjectionPlanes: () => world.getAllProjectionPlanes(),
