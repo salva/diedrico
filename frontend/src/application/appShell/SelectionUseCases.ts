@@ -1,13 +1,12 @@
 import { watch, type WatchStopHandle } from 'vue';
-import type { World } from '@/domain/world/World';
 import type { SelectionDeletionCommandPort } from '@/application/selectionDeletion/SelectionDeletionPorts';
-import type { SelectionStorePort } from './AppShellPorts';
+import type { SelectionReadPort, SelectionStorePort } from './AppShellPorts';
 
 export class SelectionUseCases {
   private stopSelectionWatch: WatchStopHandle | null = null;
 
   constructor(
-    private readonly world: World,
+    private readonly selectionRead: SelectionReadPort,
     private readonly deleteSelectionCommand: SelectionDeletionCommandPort,
     private readonly selectionStore: SelectionStorePort,
     private readonly getActivePlaneId: () => string | undefined,
@@ -42,13 +41,8 @@ export class SelectionUseCases {
   selectAllInActivePlane(): void {
     const activePlaneId = this.getActivePlaneId();
     if (!activePlaneId) return;
-    const activePlane = this.world.getProjectionPlaneById(activePlaneId);
-    if (!activePlane) return;
-    const selectedIds: string[] = [];
-    for (const point of activePlane.getAllPoints()) selectedIds.push(point.id);
-    for (const line of activePlane.getAllLines()) selectedIds.push(line.id);
-    for (const circle of activePlane.getAllCircles()) selectedIds.push(circle.id);
-    if (selectedIds.length > 0) this.selectionStore.selectMultiple(selectedIds);
+    const selectedIds = this.selectionRead.getSelectableIdsInPlane(activePlaneId);
+    if (selectedIds.length > 0) this.selectionStore.selectMultiple([...selectedIds]);
   }
 
   private updateCascadePreview(selectedIds: string[]): void {
@@ -56,7 +50,7 @@ export class SelectionUseCases {
       this.selectionStore.clearCascadeHighlight();
       return;
     }
-    const allElementsToDelete = this.world.getDependencyService().getElementsInDeletionOrder(selectedIds);
-    this.selectionStore.setCascadeHighlight(allElementsToDelete.filter((id) => !selectedIds.includes(id)));
+    const cascadePreviewIds = this.selectionRead.getCascadePreviewIds(selectedIds);
+    this.selectionStore.setCascadeHighlight([...cascadePreviewIds]);
   }
 }

@@ -1,12 +1,10 @@
 import { ProjectService, type ProjectData } from '@/services/ProjectService';
-import type { OpenedProjectSession, PersistedProjectSession, ProjectSessionPersistencePort, RuntimeSessionRestoreHandle, RuntimeSessionSnapshotHandle } from './AppShellPorts';
-import type { CommandStack } from '@/commands/CommandStack';
-import type { World } from '@/domain/world/World';
+import type { OpenedProjectSession, PersistedProjectSession, ProjectSessionPersistencePort } from './AppShellPorts';
+import type { RuntimeSessionPersistenceRestoreHandle, RuntimeSessionPersistenceSnapshotHandle } from './RuntimeSession';
 
 export class ProjectSessionPersistenceAdapter implements ProjectSessionPersistencePort {
-  snapshotCurrentSession(session: RuntimeSessionSnapshotHandle, projectName: string): object {
-    const runtime = session as RuntimeSessionSnapshotHandle & { commandStack: CommandStack };
-    return ProjectService.serializeCommands(runtime.commandStack, runtime.nextElementId, projectName);
+  snapshotCurrentSession(session: RuntimeSessionPersistenceSnapshotHandle, projectName: string): object {
+    return ProjectService.serializeCommands(session.commandStack, session.nextElementId, projectName);
   }
 
   validateProjectData(data: unknown): OpenedProjectSession {
@@ -18,8 +16,7 @@ export class ProjectSessionPersistenceAdapter implements ProjectSessionPersisten
     };
   }
 
-  restoreSession(data: PersistedProjectSession, target: RuntimeSessionRestoreHandle): void {
-    const runtime = target as { world: World; commandStack: CommandStack };
-    ProjectService.deserializeCommands(data as unknown as ProjectData, runtime.world, runtime.commandStack);
+  restoreSession(data: PersistedProjectSession, target: RuntimeSessionPersistenceRestoreHandle): void {
+    ProjectService.deserializeCommands(data as unknown as ProjectData, target.world, target.commandStack);
   }
 }

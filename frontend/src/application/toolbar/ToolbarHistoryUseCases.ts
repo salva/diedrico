@@ -1,22 +1,22 @@
-import type { CommandStack } from '@/commands/CommandStack';
+import type { CommandHistoryPort } from '@/application/appShell/AppShellPorts';
 import type { ToolbarHistoryResult, ToolbarHistoryState } from './ToolbarHistoryIntents';
 
 export class ToolbarHistoryUseCases {
-  constructor(private readonly commandStack: CommandStack) {}
+  constructor(private readonly commandHistory: CommandHistoryPort) {}
 
   getState(): ToolbarHistoryState {
     return {
-      canUndo: this.commandStack.canUndo(),
-      canRedo: this.commandStack.canRedo()
+      canUndo: this.commandHistory.canUndo(),
+      canRedo: this.commandHistory.canRedo()
     };
   }
 
   subscribe(listener: () => void): () => void {
-    return this.commandStack.subscribe(listener);
+    return this.commandHistory.subscribe(listener);
   }
 
   undo(): ToolbarHistoryResult {
-    if (!this.commandStack.canUndo()) {
+    if (!this.commandHistory.canUndo()) {
       return {
         success: false,
         state: this.getState(),
@@ -25,7 +25,7 @@ export class ToolbarHistoryUseCases {
     }
 
     try {
-      this.commandStack.undo();
+      this.commandHistory.undo();
       return {
         success: true,
         state: this.getState()
@@ -40,7 +40,7 @@ export class ToolbarHistoryUseCases {
   }
 
   redo(): ToolbarHistoryResult {
-    if (!this.commandStack.canRedo()) {
+    if (!this.commandHistory.canRedo()) {
       return {
         success: false,
         state: this.getState(),
@@ -49,7 +49,7 @@ export class ToolbarHistoryUseCases {
     }
 
     try {
-      this.commandStack.redo();
+      this.commandHistory.redo();
       return {
         success: true,
         state: this.getState()

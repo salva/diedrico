@@ -1,5 +1,5 @@
 import type { Ref } from 'vue';
-import type { World } from '@/domain/world/World';
+import type { ActivePlanePort } from './AppShellPorts';
 
 export interface ActivePlaneState {
   activePlaneId: Ref<string | undefined>;
@@ -9,41 +9,41 @@ export interface ActivePlaneState {
 export class ActivePlaneUseCases {
   private updateHandler: (() => void) | null = null;
 
-  constructor(private readonly world: World, private readonly state: ActivePlaneState) {}
+  constructor(private readonly activePlane: ActivePlanePort, private readonly state: ActivePlaneState) {}
 
   start(): void {
     if (this.updateHandler) return;
     this.updateHandler = () => this.updateFromWorld();
-    this.world.subscribeToChanges(this.updateHandler);
+    this.activePlane.subscribeToChanges(this.updateHandler);
     this.updateFromWorld();
   }
 
   dispose(): void {
     if (!this.updateHandler) return;
-    this.world.unsubscribeFromChanges(this.updateHandler);
+    this.activePlane.unsubscribeFromChanges(this.updateHandler);
     this.updateHandler = null;
   }
 
   updateActivePlane(planeInfo: { id: string; name: string }): void {
-    if (this.world.getActivePlaneId() !== planeInfo.id) {
-      this.world.setActivePlaneId(planeInfo.id);
+    if (this.activePlane.getActivePlaneId() !== planeInfo.id) {
+      this.activePlane.setActivePlaneId(planeInfo.id);
     }
   }
 
   cycle(direction: number): void {
-    const planes = this.world.getAllProjectionPlanes();
+    const planes = this.activePlane.getProjectionPlaneSummaries();
     if (planes.length < 2) return;
-    const currentId = this.world.getActivePlaneId();
+    const currentId = this.activePlane.getActivePlaneId();
     if (!currentId) return;
     const currentIndex = planes.findIndex((plane) => plane.id === currentId);
     if (currentIndex === -1) return;
     let newIndex = (currentIndex + direction) % planes.length;
     if (newIndex < 0) newIndex += planes.length;
-    this.world.setActivePlaneId(planes[newIndex].id);
+    this.activePlane.setActivePlaneId(planes[newIndex].id);
   }
 
   private updateFromWorld(): void {
-    const newPlaneId = this.world.getActivePlaneId();
+    const newPlaneId = this.activePlane.getActivePlaneId();
     if (newPlaneId !== this.state.activePlaneId.value) {
       this.state.activePlaneId.value = newPlaneId;
     }
@@ -51,7 +51,7 @@ export class ActivePlaneUseCases {
       this.state.activePlaneName.value = '';
       return;
     }
-    const plane = this.world.getProjectionPlaneById(newPlaneId);
-    this.state.activePlaneName.value = plane?.name || newPlaneId;
+    const planeName = this.activePlane.getProjectionPlaneName(newPlaneId);
+    this.state.activePlaneName.value = planeName || newPlaneId;
   }
 }

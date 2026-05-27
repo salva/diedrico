@@ -166,7 +166,7 @@ describe('Wave 006b Toolbar component behavior', () => {
 
     const wrapper = mount(Toolbar, {
       global: {
-        provide: { commandStack },
+        provide: { commandHistory: commandStack },
         stubs: { ...toolbarStubs(), 'plane-selector': true, 'tool-family-button': true, 'login-status-widget': true }
       }
     });
@@ -199,7 +199,7 @@ describe('Wave 006b Toolbar component behavior', () => {
     commandStack.clear();
     const wrapper = mount(Toolbar, {
       global: {
-        provide: { commandStack },
+        provide: { commandHistory: commandStack },
         stubs: { ...toolbarStubs(), 'plane-selector': true, 'tool-family-button': true, 'login-status-widget': true }
       }
     });

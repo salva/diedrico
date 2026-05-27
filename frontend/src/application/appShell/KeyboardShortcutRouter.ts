@@ -1,9 +1,8 @@
-import type { CommandStack } from '@/commands/CommandStack';
 import { TOOL_FAMILIES } from '@/config/toolFamilies';
 import type { ActivePlaneUseCases } from './ActivePlaneUseCases';
 import type { ProjectSessionUseCases } from './ProjectSessionUseCases';
 import type { SelectionUseCases } from './SelectionUseCases';
-import type { ToolStorePort, ViewStorePort } from './AppShellPorts';
+import type { CommandHistoryPort, ToolStorePort, ViewStorePort } from './AppShellPorts';
 
 export interface KeyboardShortcutRouterTarget {
   addEventListener(type: 'keydown', listener: (event: KeyboardEvent) => void): void;
@@ -15,7 +14,7 @@ export class KeyboardShortcutRouter {
   private readonly boundHandler = (event: KeyboardEvent) => this.handle(event);
 
   constructor(private readonly deps: {
-    commandStack: CommandStack;
+    commandHistory: CommandHistoryPort;
     toolStore: ToolStorePort;
     viewStore: ViewStorePort;
     projectSession: ProjectSessionUseCases;
@@ -94,10 +93,10 @@ export class KeyboardShortcutRouter {
     if (key === 'o') { event.preventDefault(); this.deps.projectSession.showStartupProjectChooser(); return; }
     if (key === 'a') { event.preventDefault(); this.deps.selection.selectAllInActivePlane(); return; }
     if (event.key === '0') { event.preventDefault(); this.deps.fitToView(); return; }
-    if (key === 'z' && !event.shiftKey && this.deps.commandStack.canUndo()) { event.preventDefault(); this.deps.commandStack.undo(); return; }
-    if ((key === 'y' || (key === 'z' && event.shiftKey)) && this.deps.commandStack.canRedo()) {
+    if (key === 'z' && !event.shiftKey && this.deps.commandHistory.canUndo()) { event.preventDefault(); this.deps.commandHistory.undo(); return; }
+    if ((key === 'y' || (key === 'z' && event.shiftKey)) && this.deps.commandHistory.canRedo()) {
       event.preventDefault();
-      this.deps.commandStack.redo();
+      this.deps.commandHistory.redo();
     }
   }
 }

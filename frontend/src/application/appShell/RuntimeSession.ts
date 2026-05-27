@@ -1,14 +1,15 @@
 import { CommandStack } from '@/commands/CommandStack';
 import { World } from '@/domain/world/World';
 import { initializeWorld } from '@/application/world/initializeWorld';
-import type { OpenedProjectSession, ProjectSessionPersistencePort, RuntimeSessionRestoreHandle, RuntimeSessionSnapshotHandle } from './AppShellPorts';
+import { SelectionDeletionCommandService } from '@/application/selectionDeletion/SelectionDeletionCommandService';
+import type { SelectionDeletionCommandPort } from '@/application/selectionDeletion/SelectionDeletionPorts';
+import type { ActivePlanePort, CommandHistoryPort, OpenedProjectSession, ProjectSessionPersistencePort, RuntimeSessionRestoreHandle, RuntimeSessionSnapshotHandle, SelectionReadPort } from './AppShellPorts';
 
-export interface RuntimeSessionReader extends RuntimeSessionSnapshotHandle {
-  readonly world: World;
+export interface RuntimeSessionPersistenceSnapshotHandle extends RuntimeSessionSnapshotHandle {
   readonly commandStack: CommandStack;
 }
 
-export interface RuntimeSessionRestoreTarget extends RuntimeSessionRestoreHandle {
+export interface RuntimeSessionPersistenceRestoreHandle extends RuntimeSessionRestoreHandle {
   readonly world: World;
   readonly commandStack: CommandStack;
 }
@@ -21,16 +22,51 @@ export class RuntimeSession {
     return this.world;
   }
 
-  commandStackForShortcuts(): CommandStack {
+  commandStackForView(): CommandStack {
     return this.commandStack;
   }
 
-  worldForUseCases(): World {
-    return this.world;
+  activePlanePort(): ActivePlanePort {
+    return {
+      subscribeToChanges: (listener) => this.world.subscribeToChanges(listener),
+      unsubscribeFromChanges: (listener) => this.world.unsubscribeFromChanges(listener),
+      getActivePlaneId: () => this.world.getActivePlaneId(),
+      setActivePlaneId: (id) => this.world.setActivePlaneId(id),
+      getProjectionPlaneSummaries: () => this.world.getAllProjectionPlanes().map((plane) => ({ id: plane.id, name: plane.name })),
+      getProjectionPlaneName: (id) => this.world.getProjectionPlaneById(id)?.name,
+    };
   }
 
-  commandStackForCommandServices(): CommandStack {
-    return this.commandStack;
+  selectionReadPort(): SelectionReadPort {
+    return {
+      getSelectableIdsInPlane: (planeId) => {
+        const plane = this.world.getProjectionPlaneById(planeId);
+        if (!plane) return [];
+        return [
+          ...plane.getAllPoints().map((point) => point.id),
+          ...plane.getAllLines().map((line) => line.id),
+          ...plane.getAllCircles().map((circle) => circle.id),
+        ];
+      },
+      getCascadePreviewIds: (selectedIds) => {
+        const deletionOrder = this.world.getDependencyService().getElementsInDeletionOrder([...selectedIds]);
+        return deletionOrder.filter((id) => !selectedIds.includes(id));
+      },
+    };
+  }
+
+  commandHistoryPort(): CommandHistoryPort {
+    return {
+      canUndo: () => this.commandStack.canUndo(),
+      undo: () => this.commandStack.undo(),
+      canRedo: () => this.commandStack.canRedo(),
+      redo: () => this.commandStack.redo(),
+      subscribe: (listener) => this.commandStack.subscribe(listener),
+    };
+  }
+
+  selectionDeletionCommandPort(): SelectionDeletionCommandPort {
+    return new SelectionDeletionCommandService(this.world, this.commandStack);
   }
 
   initializeDefaultWorldIfNeeded(): void {
@@ -53,7 +89,7 @@ export class RuntimeSession {
   }
 
   snapshot(projectName: string, persistence: ProjectSessionPersistencePort): object {
-    return persistence.snapshotCurrentSession(this.reader(), projectName);
+    return persistence.snapshotCurrentSession(this.snapshotHandle(), projectName);
   }
 
   validateProjectData(data: unknown, persistence: ProjectSessionPersistencePort): OpenedProjectSession {
@@ -74,15 +110,14 @@ export class RuntimeSession {
     this.world.markDirty();
   }
 
-  private reader(): RuntimeSessionReader {
+  private snapshotHandle(): RuntimeSessionPersistenceSnapshotHandle {
     return {
-      world: this.world,
       commandStack: this.commandStack,
       nextElementId: this.world.peekNextId(),
     };
   }
 
-  private restoreTarget(): RuntimeSessionRestoreTarget {
+  private restoreTarget(): RuntimeSessionPersistenceRestoreHandle {
     return {
       world: this.world,
       commandStack: this.commandStack,

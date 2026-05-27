@@ -64,7 +64,7 @@ describe('Cycle 020 app-shell production boundary', () => {
     expect(selectionDeletionService).toMatch(/new Command/);
     expect(selectionDeletionService).toMatch(/commandStack\.push/);
     expect(selectionDeletionService).toMatch(/\.commit\(/);
-    expect(appShellRuntime).toMatch(/new SelectionDeletionCommandService\(session\.worldForUseCases\(\), session\.commandStackForCommandServices\(\)\)/);
+    expect(appShellRuntime).toMatch(/session\.selectionDeletionCommandPort\(\)/);
   });
 });
 
@@ -94,5 +94,42 @@ describe('Cycle 022 runtime session persistence boundary', () => {
       expect(content).not.toMatch(/@\/services\/ProjectService/);
     }
     expect(projectSessionPersistenceAdapter).toMatch(/@\/services\/ProjectService/);
+  });
+});
+
+
+describe('Cycle 023 runtime-session consumer ports and command-history boundary', () => {
+  it('removes selected raw RuntimeSession use-case and shortcut accessors', () => {
+    expect(runtimeSession).not.toMatch(/worldForUseCases\(/);
+    expect(runtimeSession).not.toMatch(/commandStackForCommandServices\(/);
+    expect(runtimeSession).not.toMatch(/commandStackForShortcuts\(/);
+    expect(runtimeSession).toMatch(/activePlanePort\(/);
+    expect(runtimeSession).toMatch(/selectionReadPort\(/);
+    expect(runtimeSession).toMatch(/commandHistoryPort\(/);
+    expect(runtimeSession).toMatch(/selectionDeletionCommandPort\(/);
+  });
+
+  it('keeps active-plane, selection, keyboard, and toolbar history consumers on narrow ports', () => {
+    expect(activePlane).not.toMatch(/@\/domain\/world\/World/);
+    expect(selection).not.toMatch(/@\/domain\/world\/World/);
+    expect(keyboard).not.toMatch(/@\/commands\/CommandStack/);
+    expect(toolbarVue).toMatch(/inject<unknown>\('commandHistory'\)/);
+    expect(toolbarVue).not.toMatch(/inject<unknown>\('commandStack'\)/);
+  });
+
+  it('keeps keyboard and toolbar undo-redo on the shared command-history port without raw dual paths', () => {
+    expect(appShellRuntime).toMatch(/const commandHistory = session\.commandHistoryPort\(\)/);
+    expect(appShellRuntime).toMatch(/commandHistory,/);
+    expect(keyboard).toMatch(/CommandHistoryPort/);
+    expect(keyboard).toMatch(/commandHistory\.canUndo\(\)/);
+    expect(keyboard).not.toMatch(/commandStack\.canUndo|commandStack\.undo|commandStack\.canRedo|commandStack\.redo/);
+    expect(toolbarVue).not.toMatch(/commandStack/);
+  });
+
+  it('keeps persistence concrete handles adapter-local instead of general app-shell ports', () => {
+    expect(appShellPorts).not.toMatch(/RuntimeSessionPersistenceSnapshotHandle|RuntimeSessionPersistenceRestoreHandle/);
+    expect(projectSessionPersistenceAdapter).toMatch(/RuntimeSessionPersistenceSnapshotHandle/);
+    expect(projectSessionPersistenceAdapter).toMatch(/RuntimeSessionPersistenceRestoreHandle/);
+    expect(projectSessionPersistenceAdapter).not.toMatch(/ as RuntimeSessionPersistence/);
   });
 });

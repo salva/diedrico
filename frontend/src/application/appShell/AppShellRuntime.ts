@@ -1,5 +1,4 @@
 import { computed, ref } from 'vue';
-import { SelectionDeletionCommandService } from '@/application/selectionDeletion/SelectionDeletionCommandService';
 import { ActivePlaneUseCases } from './ActivePlaneUseCases';
 import { AutoSaveUseCases } from './AutoSaveUseCases';
 import { KeyboardShortcutRouter } from './KeyboardShortcutRouter';
@@ -15,7 +14,8 @@ export interface AppShellRuntimeOptions {
 export function createAppShellRuntime(options: AppShellRuntimeOptions) {
   const session = new RuntimeSession();
   const world = session.worldForView();
-  const commandStack = session.commandStackForShortcuts();
+  const commandStack = session.commandStackForView();
+  const commandHistory = session.commandHistoryPort();
   const ports = options.ports;
   const drive = ports.drive;
 
@@ -36,9 +36,9 @@ export function createAppShellRuntime(options: AppShellRuntimeOptions) {
     error: ref<string | null>(null),
   };
 
-  const activePlane = new ActivePlaneUseCases(session.worldForUseCases(), { activePlaneId, activePlaneName });
-  const selectionDeletion = new SelectionDeletionCommandService(session.worldForUseCases(), session.commandStackForCommandServices());
-  const selection = new SelectionUseCases(session.worldForUseCases(), selectionDeletion, ports.selectionStore, () => activePlaneId.value);
+  const activePlane = new ActivePlaneUseCases(session.activePlanePort(), { activePlaneId, activePlaneName });
+  const selectionDeletion = session.selectionDeletionCommandPort();
+  const selection = new SelectionUseCases(session.selectionReadPort(), selectionDeletion, ports.selectionStore, () => activePlaneId.value);
   const autoSave = new AutoSaveUseCases({
     session,
     drive,
@@ -66,7 +66,7 @@ export function createAppShellRuntime(options: AppShellRuntimeOptions) {
     ports,
   });
   const keyboard = new KeyboardShortcutRouter({
-    commandStack,
+    commandHistory,
     toolStore: ports.toolStore,
     viewStore: ports.viewStore,
     projectSession,
@@ -99,6 +99,7 @@ export function createAppShellRuntime(options: AppShellRuntimeOptions) {
   return {
     world,
     commandStack,
+    commandHistory,
     state: {
       activePlaneId,
       activePlaneName,

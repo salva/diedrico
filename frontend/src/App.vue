@@ -141,6 +141,7 @@ const runtime = createProductionAppShellRuntime({
 
 provide('world', runtime.world);
 provide('commandStack', runtime.commandStack);
+provide('commandHistory', runtime.commandHistory);
 
 const activeTool = toolStore.currentTool;
 const activePlaneId = runtime.state.activePlaneId;

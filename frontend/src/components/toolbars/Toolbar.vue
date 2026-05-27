@@ -162,7 +162,7 @@ const emit = defineEmits<Emits>();
 const toolStore = useToolStore();
 const viewStore = useViewStore();
 const toolbarHistoryController = createToolbarHistoryController({
-  commandStack: inject<unknown>('commandStack')
+  commandHistory: inject<unknown>('commandHistory')
 });
 
 // Reactive trigger for history updates (Phase 91)

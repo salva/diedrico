@@ -198,7 +198,7 @@ describe('AutoSaveUseCases', () => {
     const currentFileId = ref('file-1');
     const currentProjectName = ref('Project');
     const autoSave = new AutoSaveUseCases({
-      session: { getVersion: () => version, snapshot: (_projectName: string, p: ProjectSessionPersistencePort) => p.snapshotCurrentSession({ world: {} as any, commandStack: {} as any, nextElementId: 10 }, _projectName) } as any,
+      session: { getVersion: () => version, snapshot: (_projectName: string, p: ProjectSessionPersistencePort) => p.snapshotCurrentSession({ commandStack: {} as any, nextElementId: 10 } as any, _projectName) } as any,
       drive: drive(),
       persistence: persistence(),
       lastProjectRepository: lastProjectRepository(),
@@ -235,7 +235,7 @@ describe('AutoSaveUseCases', () => {
     const isSignedIn = ref(true);
     const saveStatus = ref<'idle' | 'saving' | 'saved'>('idle');
     const autoSave = new AutoSaveUseCases({
-      session: { getVersion: () => 1, snapshot: (_projectName: string, p: ProjectSessionPersistencePort) => p.snapshotCurrentSession({ world: {} as any, commandStack: {} as any, nextElementId: 10 }, _projectName) } as any,
+      session: { getVersion: () => 1, snapshot: (_projectName: string, p: ProjectSessionPersistencePort) => p.snapshotCurrentSession({ commandStack: {} as any, nextElementId: 10 } as any, _projectName) } as any,
       drive: drive({ updateFile: vi.fn().mockRejectedValue(new Error('401 authentication expired')) }),
       persistence: persistence(),
       lastProjectRepository: lastProjectRepository(),
@@ -263,7 +263,7 @@ describe('AutoSaveUseCases', () => {
     const currentFileId = ref('missing-file');
     const currentProjectName = ref('Project');
     const autoSave = new AutoSaveUseCases({
-      session: { getVersion: () => 1, snapshot: (_projectName: string, p: ProjectSessionPersistencePort) => p.snapshotCurrentSession({ world: {} as any, commandStack: {} as any, nextElementId: 10 }, _projectName) } as any,
+      session: { getVersion: () => 1, snapshot: (_projectName: string, p: ProjectSessionPersistencePort) => p.snapshotCurrentSession({ commandStack: {} as any, nextElementId: 10 } as any, _projectName) } as any,
       drive: drive({
         updateFile: vi.fn().mockRejectedValue(new Error('File not found')),
         createFile: vi.fn().mockResolvedValue('replacement-file'),
@@ -317,8 +317,8 @@ describe('ActivePlaneUseCases', () => {
       unsubscribeFromChanges: vi.fn(),
       getActivePlaneId: vi.fn(() => activePlaneId),
       setActivePlaneId: vi.fn((id: string) => { activePlaneId = id; listener?.(); }),
-      getProjectionPlaneById: vi.fn((id: string) => id === 'plane-a' ? planeA : planeB),
-      getAllProjectionPlanes: vi.fn(() => [planeA, planeB]),
+      getProjectionPlaneSummaries: vi.fn(() => [planeA, planeB]),
+      getProjectionPlaneName: vi.fn((id: string) => (id === 'plane-a' ? planeA : planeB).name),
     };
     const state = { activePlaneId: ref<string | undefined>(), activePlaneName: ref('') };
     const useCases = new ActivePlaneUseCases(world as any, state);
@@ -350,7 +350,7 @@ describe('SelectionUseCases', () => {
       clearCascadeHighlight: vi.fn(),
     });
     const useCases = new SelectionUseCases(
-      { getDependencyService: () => ({ getElementsInDeletionOrder: vi.fn(() => ['selected', 'dependent']) }) } as any,
+      { getSelectableIdsInPlane: vi.fn(() => []), getCascadePreviewIds: vi.fn(() => ['dependent']) },
       { execute: vi.fn() },
       selectionStore as any,
       () => 'plane-a',
@@ -378,13 +378,8 @@ describe('SelectionUseCases', () => {
       setCascadeHighlight: vi.fn(),
       clearCascadeHighlight: vi.fn(),
     };
-    const activePlane = {
-      getAllPoints: () => [{ id: 'p1' }, { id: 'p2' }],
-      getAllLines: () => [{ id: 'l1' }],
-      getAllCircles: () => [{ id: 'c1' }],
-    };
     const useCases = new SelectionUseCases(
-      { getProjectionPlaneById: vi.fn(() => activePlane) } as any,
+      { getSelectableIdsInPlane: vi.fn(() => ['p1', 'p2', 'l1', 'c1']), getCascadePreviewIds: vi.fn(() => []) },
       { execute: vi.fn() },
       selectionStore,
       () => 'plane-a',
@@ -405,7 +400,7 @@ describe('SelectionUseCases', () => {
     };
     const deleteSelectionCommand = { execute: vi.fn() };
     const useCases = new SelectionUseCases(
-      {} as any,
+      { getSelectableIdsInPlane: vi.fn(() => []), getCascadePreviewIds: vi.fn(() => []) },
       deleteSelectionCommand,
       selectionStore,
       () => 'plane-a',
@@ -427,7 +422,7 @@ describe('SelectionUseCases', () => {
     };
     const deleteSelectionCommand = { execute: vi.fn(() => { throw new Error('delete failed'); }) };
     const useCases = new SelectionUseCases(
-      {} as any,
+      { getSelectableIdsInPlane: vi.fn(() => []), getCascadePreviewIds: vi.fn(() => []) },
       deleteSelectionCommand,
       selectionStore,
       () => 'plane-a',
@@ -447,7 +442,7 @@ describe('SelectionUseCases', () => {
     };
     const deleteSelectionCommand = { execute: vi.fn() };
     const useCases = new SelectionUseCases(
-      {} as any,
+      { getSelectableIdsInPlane: vi.fn(() => []), getCascadePreviewIds: vi.fn(() => []) },
       deleteSelectionCommand,
       selectionStore,
       () => 'plane-a',
@@ -521,7 +516,7 @@ describe('ProjectSessionUseCases startup and project flows', () => {
     deps.currentProjectName.value = 'Existing';
     deps.currentFileId.value = 'existing-file';
     const preOpenWorld = deps.session.worldForView();
-    const preOpenCommandStack = deps.session.commandStackForShortcuts();
+    const preOpenCommandStack = deps.session.commandStackForView();
     const preOpenPlaneCount = preOpenWorld.getAllProjectionPlanes().length;
     const preOpenNextId = preOpenWorld.peekNextId();
     const preOpenUndoCount = preOpenCommandStack.getUndoCount();
@@ -530,7 +525,7 @@ describe('ProjectSessionUseCases startup and project flows', () => {
     await expect(useCases.openProject('bad-file')).rejects.toThrow('invalid payload');
 
     expect(deps.session.worldForView()).toBe(preOpenWorld);
-    expect(deps.session.commandStackForShortcuts()).toBe(preOpenCommandStack);
+    expect(deps.session.commandStackForView()).toBe(preOpenCommandStack);
     expect(preOpenWorld.getAllProjectionPlanes()).toHaveLength(preOpenPlaneCount);
     expect(preOpenWorld.peekNextId()).toBe(preOpenNextId);
     expect(preOpenCommandStack.getUndoCount()).toBe(preOpenUndoCount);
@@ -554,7 +549,7 @@ describe('ProjectSessionUseCases startup and project flows', () => {
     deps.currentProjectName.value = 'Existing';
     deps.currentFileId.value = 'existing-file';
     const preOpenWorld = deps.session.worldForView();
-    const preOpenCommandStack = deps.session.commandStackForShortcuts();
+    const preOpenCommandStack = deps.session.commandStackForView();
     const preOpenPlaneCount = preOpenWorld.getAllProjectionPlanes().length;
     const preOpenNextId = preOpenWorld.peekNextId();
     const preOpenUndoCount = preOpenCommandStack.getUndoCount();
@@ -565,7 +560,7 @@ describe('ProjectSessionUseCases startup and project flows', () => {
     expect(ports.persistence.restoreSession).toHaveBeenCalledTimes(1);
     expect(ports.persistence.restoreSession).not.toHaveBeenCalledWith(expect.anything(), { world: preOpenWorld, commandStack: preOpenCommandStack });
     expect(deps.session.worldForView()).toBe(preOpenWorld);
-    expect(deps.session.commandStackForShortcuts()).toBe(preOpenCommandStack);
+    expect(deps.session.commandStackForView()).toBe(preOpenCommandStack);
     expect(preOpenWorld.getAllProjectionPlanes()).toHaveLength(preOpenPlaneCount);
     expect(preOpenWorld.peekNextId()).toBe(preOpenNextId);
     expect(preOpenCommandStack.getUndoCount()).toBe(preOpenUndoCount);
@@ -602,7 +597,7 @@ describe('ProjectSessionUseCases startup and project flows', () => {
   it('creates, opens, renames, and signs out without replacing stable world or command stack references', async () => {
     const deps = projectSessionDeps();
     const originalWorld = deps.session.worldForView();
-    const originalCommandStack = deps.session.commandStackForShortcuts();
+    const originalCommandStack = deps.session.commandStackForView();
     const useCases = new ProjectSessionUseCases(deps as any);
 
     await useCases.createProject('Created');
@@ -623,7 +618,7 @@ describe('ProjectSessionUseCases startup and project flows', () => {
 
     await useCases.signOut();
     expect(deps.session.worldForView()).toBe(originalWorld);
-    expect(deps.session.commandStackForShortcuts()).toBe(originalCommandStack);
+    expect(deps.session.commandStackForView()).toBe(originalCommandStack);
     expect(deps.currentProjectName.value).toBeNull();
     expect(deps.currentFileId.value).toBeNull();
     expect(deps.showStartupDialog.value).toBe(true);
