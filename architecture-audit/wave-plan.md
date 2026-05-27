@@ -1700,3 +1700,109 @@ All Wave 025 validation stdout/stderr must be captured to stable files under the
 **No-backcompat rationale**
 
 `worldForView()` and `WorldInjectionKey: InjectionKey<World>` are internal runtime wiring seams, not compatibility contracts. Preserving both concrete world injection and new view/read ports would keep rendering and panels free to bypass application selectors and mutate the domain root directly. Delete the broad seam and update active consumers/tests directly once reviewed read ports are selected; do not keep shims, overloads, broad facades, or dual paths.
+
+---
+
+## Wave 026 — Tool interaction read context and realization adapter seam
+
+**Status**
+
+Added by `cycle-026-wave-plan-extension` after Wave 025 completed. Requires bounded review of this plan extension before the canonical `cycle-026-fresh-scout-proposals` stage and before any implementation. This entry is grounded in current post-Wave-025 source evidence and the Wave 025 implementation/validation closure, which explicitly marks Wave 025 complete while naming `CanvasViewPort.invokeToolClick` / `ITool.ToolContext.world` and domain-heavy canvas/three realization adapters as the next inward seams.
+
+**Scope**
+
+- `frontend/src/application/appShell/RuntimeSession.ts`
+- `frontend/src/application/appShell/RuntimeViewPorts.ts`
+- `frontend/src/tools/ITool.ts`
+- `frontend/src/tools/ArgumentCollectorTool.ts`
+- concrete tools under `frontend/src/tools/` only where they read `context.world`, `realize2D(context.world)`, or tool collection context world data
+- `frontend/src/types/ToolArgumentCollector.ts` only where collection/validation context needs a narrowed read context
+- `frontend/src/application/tools/CanvasToolController.ts` and `frontend/src/application/tools/ToolCommandIntents.ts` only where tool invocation typing needs to stay aligned with the command sink
+- `frontend/src/application/canvasPresentation/CanvasInteractionQuery.ts`
+- `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts`
+- `frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts`
+- `frontend/src/application/canvasPresentation/CanvasVisibilityPolicy.ts`
+- `frontend/src/application/threePresentation/ThreeWorldReadPort.ts`
+- `frontend/src/components/workspace/SvgCanvas.vue` only for tool invocation wiring and typed `CanvasToolInvocationContext` changes
+- focused tool interaction, argument collection, construction intent, realization/read-context, canvas/three presentation, runtime wiring, and architecture-boundary tests
+
+**Scope guard**
+
+This wave owns the residual tool interaction/read context seam left by Wave 025: `CanvasViewPort.invokeToolClick` adds the private concrete `World` back into `ITool.ToolContext`, and tool implementations use that full root for element lookup, plane lookup, selection validation, and realization reads. It may also narrow the immediately adjacent canvas/three realization adapter contexts where they are part of the same read-context shape. It must not absorb persistence schema/replay, command descriptor/replay redesign, command-history/producer redesign, backend/frontend contract stance, Drive/auth/browser adapters, package/tooling churn, validation-platform hardening, docs/spec reconciliation, broad domain realization redesign, generic application-kernel work, or visibility-as-command redesign.
+
+The proposals must start with a current inventory of every active `ToolContext.world`, `context.world`, `realize2D(context.world)`, collection-context world, `CanvasViewPort.invokeToolClick`, `createCanvasWorldReadPort(this.world)`, and `createThreeWorldReadPort(this.world)` use. Classify each use by behavior: active-plane/plane lookup, hit-result element lookup, argument collection validation, tool-specific geometric realization, tangent/parallel/perpendicular choice computation, screen-to-3D coordinate support, presentation snapshot, three-scene read model, visibility/read policy, properties/process-tree infeasibility display, and command mutation. The selected design should introduce one or more behavior-sized read/realization contexts, not a renamed `World` facade. If the inventory proves that deleting `ToolContext.world` requires redesigning domain `Element2D.realize2D(world)` / realization ownership broadly, stop and run a reviewed plan-edit mini-cycle rather than hiding a domain-realization wave inside Wave 026.
+
+**Current grounding**
+
+Wave 025 completed the runtime view/read-port cleanup: `RuntimeSession` privately owns `World`, raw `worldForView()`, `WorldInjectionKey`, component-local world injection, raw-world properties dialog props, and raw process-tree node traversal are absent, with green validation and preview evidence (`architecture-audit/cycle-025-runtime-view-read-ports/implementation-log.md`, “Wave 025 status: COMPLETE”; `architecture-audit/cycle-025-runtime-view-read-ports/reviews/validation-closure-review.md`). The same closure accepted residual future-wave risks: `CanvasViewPort.invokeToolClick` still supplies raw `World` internally to `ITool.ToolContext`, and canvas/three presentation adapters still contain domain-heavy realization/read logic (`architecture-audit/cycle-025-runtime-view-read-ports/implementation-log.md`, “Residual risks / next-wave candidates”; “Residual risks and next-wave recommendation”).
+
+Current source confirms the residual seam is active and central but bounded. `RuntimeSession.canvasViewPort()` constructs the canvas read adapter from the private world, exposes input transforms from all projection planes, and calls `tool.handleClick({ ...context, world: this.world })` through `invokeToolClick` (`frontend/src/application/appShell/RuntimeSession.ts:41-77`). `RuntimeViewPorts.ts` names `CanvasToolInvocationContext` without `world`, but keeps `invokeToolClick(tool, context)` as the bridge into `ITool` (`frontend/src/application/appShell/RuntimeViewPorts.ts:25-34`, `frontend/src/application/appShell/RuntimeViewPorts.ts:52-60`). `ITool.ts` imports concrete `World`, includes `world: World` and `paperToPlaneTransform: any` in `ToolContext`, and keeps `getState(): Record<string, any>` (`frontend/src/tools/ITool.ts:9-29`, `frontend/src/tools/ITool.ts:42-49`).
+
+Tool implementations use the raw context for interaction reads rather than command-stack mutation. `ArgumentCollectorTool.handleClick` destructures `world`, looks up the active projection plane, converts hit results to `world.getElement2D(...)`, and passes `{ world, plane, collected }` into collection validation (`frontend/src/tools/ArgumentCollectorTool.ts:162-216`). Static scan evidence shows concrete tools using `realize2D(context.world)` for circle radius checks, auxiliary-plane setup, parallel/perpendicular reference-line validation, tangent-index choice, and tangent-through-point validation (`architecture-audit/cycle-026-wave-plan-extension/residual-seam-scan.stdout.log`). This supports a tool interaction/read-context wave rather than reopening command-producer work, because command execution already flows through `context.commandSink`.
+
+Adjacent presentation adapters show the same context shape leaking through runtime-local adapters. `CanvasWorldReadPort` returns raw `ProjectionPlane[]`, `Point3D[]`, `Line3D[]`, `Segment3D[]`, exposes `getProcessTree()`, and builds realization contexts by mirroring many `World` methods (`frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:15-29`, `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:31-70`). `ThreeWorldReadPort` is read-model oriented but still imports concrete `World`, builds a broad realization context, traverses all projection planes and 3D elements, uses domain `instanceof` checks, and calls domain `realize2D`/realize getters inside the adapter (`frontend/src/application/threePresentation/ThreeWorldReadPort.ts:56-64`, `frontend/src/application/threePresentation/ThreeWorldReadPort.ts:66-135`). `RuntimeSession` also still uses `as any` and raw realization calls in view-model helpers for properties and process infeasibility (`frontend/src/application/appShell/RuntimeSession.ts:301-340`, `frontend/src/application/appShell/RuntimeSession.ts:399-417`). These are evidence for including related adapter/read-context seams in the proposals, while keeping any deeper domain realization contract redesign out of implementation unless separately reviewed.
+
+Lower-priority candidates remain real but are deferred by centrality. Elements visibility is now a named view intent and may later become command-backed, but that would touch command/persistence semantics beyond this tool-read context. Toolbar-history unknown-provider typing, ProjectSessionPersistenceAdapter/ProjectService DTO casts, validation-gate hardening, docs/spec drift, backend/frontend contract stance, Drive/auth, and package/tooling are leaf/enforcement/integration concerns relative to the current raw `World` tool seam. Broad domain realization redesign is more central in concept but too large for a single implementation wave unless the Wave 026 scout proves the narrow tool/read-context deletion is impossible without it.
+
+**Target outcome**
+
+Tools receive an explicit interaction/read context instead of the concrete domain root. Tool click handling, argument collection, set validation, hit-result element lookup, plane lookup, and tool-specific realization reads are expressed through behavior-sized ports such as a tool element lookup/read port, argument collection context, and/or realization read context. `CanvasViewPort.invokeToolClick` no longer rehydrates a raw `World` into `ITool.ToolContext`; the runtime/session boundary remains the only owner of the concrete world and provides named read capabilities to tools and presentation adapters.
+
+Canvas and three presentation adapters are narrowed where they share the same realization/read context: adapter methods should return presentation/read DTOs or invoke named realization services rather than broad raw domain collections where practical within the bounded scope. Any remaining domain-class or realization-context dependency must be localized to runtime/session adapter internals and documented as a follow-up domain-realization wave candidate, not exposed to tools or Vue components.
+
+**Explicit DELETE list**
+
+- Delete `world: World` from `ITool.ToolContext` once reviewed tool interaction/read ports cover active tool behavior.
+- Delete the `World` import from `frontend/src/tools/ITool.ts` if no longer needed after the context split.
+- Delete `CanvasViewPort.invokeToolClick` implementation that calls `tool.handleClick({ ...context, world: this.world })`; replace with invocation that passes named read/realization contexts or delete the wrapper if tool calls can be typed directly.
+- Delete concrete tool reads of `context.world`, `world.getProjectionPlaneById(...)`, `world.getElement2D(...)`, and `realize2D(context.world)` where replaced by the selected tool read/realization context.
+- Delete `CollectionContext.world` and collection validators that require the full root if a narrower plane/element/realization context covers them.
+- Delete `paperToPlaneTransform: any`, `CanvasToolInvocationContext.toolStore: any`, `getState(): Record<string, any>`, and adjacent broad `any` tool-state seams where directly touched by the tool context split; do not expand into unrelated type cleanup.
+- Delete `CanvasWorldReadPort` raw domain collection returns and `getProcessTree()` exposure where selector/read-model methods replace them in this wave.
+- Delete `CanvasVisibilityPolicy` casts back to concrete `World` where a named process/visibility read context covers the behavior.
+- Delete `ThreeWorldReadPort` broad world-mirroring realization context methods where narrower scene read-model/realization context methods replace them in this wave.
+- Delete transitional raw-and-port dual paths, compatibility wrappers, broad `WorldView`/`ToolWorld` facades, dead exports, and tests that assert full `World` injection into tool contexts.
+- Do not delete or rewrite command producer services, command descriptors/serialization/replay, `CommandStack`, persistence schema/replay, `ProjectService`, backend, Drive/auth, package/tooling, docs/specs, validation-platform code, or broad domain realization internals without reviewed plan edit.
+
+**Success criteria**
+
+- `ITool.ToolContext` no longer imports or exposes concrete `World`.
+- No production tool implementation reads `context.world` or calls `realize2D(context.world)` / `realize3D(context.world)`; equivalent behavior uses the selected tool interaction/read/realization context.
+- `RuntimeSession.canvasViewPort().invokeToolClick` no longer injects raw `World` into tool calls; if an invocation wrapper remains, its contract is behavior-sized and typed without `World` or broad `any`.
+- Argument collection still supports hit testing, null-position arguments, any-order viable-set pruning, set validators, dynamic selection masks, and typed construction intent emission through the existing command sink.
+- Concrete tool behaviors remain user-visible equivalent for point, line, segment, circle, guide, intersection, projection-plane, 3D point/line/segment/plane, parallel/perpendicular, and tangent construction flows.
+- Canvas/three realization/read adapters are narrowed at least along the seams directly used by tools and active presentation selectors; any residual broad adapter or domain realization dependency is documented with evidence as a future wave candidate rather than hidden behind a renamed facade.
+- No command-production, command-history, persistence schema/replay, backend/frontend contract, Drive/auth, package/tooling, docs/spec, validation-platform, visibility-command redesign, or broad domain-realization changes occur without reviewed plan edit.
+- Focused tests cover tool-context port behavior, argument collection validation, representative concrete tool realization choices, runtime invocation wiring, canvas presentation/read-context behavior, and three presentation read-model behavior where touched.
+- Architecture/static scans prove `ToolContext.world`, `context.world`, `realize2D(context.world)`, and broad raw-world injection through `invokeToolClick` are absent from production code, with any allowed runtime-local adapter residuals explicitly listed.
+- Mandatory validation cadence passes with stable logs: root/frontend lint where defined, focused Vitest for touched tool/runtime/presentation modules, full root/frontend Vitest, root/frontend build, root/frontend Playwright e2e because construction/canvas/3D behavior is user-observable, live preview refresh on `0.0.0.0:5173`, HTTP reachability probe, and Playwright/live smoke for representative construction, tangent/parallel/perpendicular, projection-plane/3D construction, canvas hit/hover, 3D refresh, and undo/redo regression checks without real Drive credentials.
+
+**Dependencies**
+
+Depends on Wave 025 because Wave 025 made `RuntimeSession` the private owner of `World` and deleted raw Vue view-world injection, leaving `invokeToolClick` / `ITool.ToolContext.world` as the isolated internal tool interaction/read seam. It is ordered before elements-visibility command ownership, ProjectSessionPersistenceAdapter/ProjectService DTO-cast cleanup, backend/frontend contract stance, toolbar-history typing cleanup, validation-gate hardening, placeholder/debug cleanup, docs/spec drift, Drive/auth, package/tooling, and broad domain-realization redesign because those later waves should consume a stable tool/read context rather than perpetuating a raw world handoff into tools.
+
+**Validation requirements**
+
+All Wave 026 validation stdout/stderr must be captured to stable files under the reviewed Cycle 026 implementation directory's `validation/` subdirectory. Undefined commands may be skipped only with exact package-script evidence in the implementation log; defined root or workspace commands are mandatory.
+
+1. Capture pre-edit scoped git status/diff and static scans for `ToolContext.world`, `context.world`, `invokeToolClick`, `realize2D(context.world)`, `CollectionContext.world`, tool `any` state/context seams, `createCanvasWorldReadPort(this.world)`, `createThreeWorldReadPort(this.world)`, raw domain collection returns, and intentionally deferred non-tool candidates.
+2. Run focused Vitest for `ITool`/tool context typing, `ArgumentCollectorTool`, representative concrete tools that previously used realization reads, `CanvasToolController` invocation wiring, runtime canvas view port invocation, `CanvasWorldReadPort`/presentation selectors where changed, and `ThreeWorldReadPort` where changed.
+3. Run architecture/static tests or focused boundary scans proving active tools no longer receive the concrete `World` and no dual raw-world/tool-read-context path remains.
+4. Run `npm run lint` at the repository root and in every workspace where a lint script is defined, including `frontend` while it remains the active workspace.
+5. Run full Vitest at the repository root and in every workspace where a test/Vitest script is defined, including `frontend` while it remains the active workspace.
+6. Run `npm run build` at the repository root and in every workspace where a build script is defined, including `frontend` while it remains the active workspace.
+7. Run Playwright/e2e at the repository root and in every workspace where an e2e script is defined because construction, canvas hit/hover, projection-plane, 3D construction, and undo/redo behavior are user-observable.
+8. Refresh the live preview bound to `0.0.0.0:5173`, capture HTTP 200 reachability probes, and run focused Playwright/live browser smoke for representative 2D construction, tangent/parallel/perpendicular flows, projection-plane or 3D construction, canvas hit/hover, 3D refresh, and undo/redo without real Drive credentials.
+
+**Risks**
+
+- A tool read context can become a renamed `World` facade if it mirrors too many root methods. Keep it behavior-sized and prove every method by the required source inventory.
+- Argument collection interleaves hit testing, plane lookup, selection masks, validators, and construction intent emission. Splitting context too aggressively can break any-order collection or null-position arguments if focused tests are shallow.
+- Tangent/parallel/perpendicular and dynamic projection-plane tools use realization reads to choose geometric variants. The selected context must preserve those computations without smuggling a full world root back into tools.
+- Canvas and three presentation adapters still depend on domain realization internals. If narrowing them requires changing `Element2D.realize2D(world)` or projection realization ownership broadly, stop for a reviewed plan edit rather than expanding Wave 026.
+- Elements visibility, process infeasibility, and properties coordinate display still use runtime-local world traversal. Include only the parts directly needed by the tool/read-context seam; defer command-backed visibility and broad properties/process-tree realization cleanup unless proven necessary.
+- Existing unrelated dirty source state is present in the worktree. Implementation must use path-scoped status/diff, avoid reverting unrelated work, and not depend on unowned dirty files.
+
+**No-backcompat rationale**
+
+`ITool.ToolContext.world` and `CanvasViewPort.invokeToolClick` raw-world injection are internal architecture seams, not compatibility contracts. Preserving both full `World` access and new tool read/realization ports would keep every tool free to bypass application/runtime boundaries and would undo the private-world ownership established by Wave 025. Delete the raw context field and update active tools/tests directly once reviewed read contexts exist; do not keep shims, overloads, broad facades, or dual raw-and-port paths.
