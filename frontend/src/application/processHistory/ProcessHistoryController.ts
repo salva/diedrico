@@ -17,24 +17,6 @@ export interface ProcessHistoryControllerDependencies {
   commandStack: CommandStack;
 }
 
-export interface ProcessHistoryControllerProviderDependencies {
-  world: World;
-  commandStack: unknown;
-}
-
-export function createProcessHistoryController(
-  deps: ProcessHistoryControllerProviderDependencies
-): ProcessHistoryController {
-  if (!deps.commandStack) {
-    throw new Error('CommandStack not provided');
-  }
-
-  return new ProcessHistoryController({
-    world: deps.world,
-    commandStack: deps.commandStack as CommandStack
-  });
-}
-
 export class ProcessHistoryController implements ProcessHistoryIntentSink {
   private readonly useCases: ProcessHistoryUseCases;
 

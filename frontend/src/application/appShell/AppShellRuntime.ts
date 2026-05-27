@@ -14,8 +14,9 @@ export interface AppShellRuntimeOptions {
 export function createAppShellRuntime(options: AppShellRuntimeOptions) {
   const session = new RuntimeSession();
   const world = session.worldForView();
-  const commandStack = session.commandStackForDeferredCommandProducers();
   const commandHistory = session.commandHistoryPort();
+  const canvasCommandProducerPort = session.canvasCommandProducerPort(options.ports.toolStore);
+  const processHistoryCommandPort = session.processHistoryCommandPort();
   const ports = options.ports;
   const drive = ports.drive;
 
@@ -98,7 +99,8 @@ export function createAppShellRuntime(options: AppShellRuntimeOptions) {
 
   return {
     world,
-    commandStack,
+    canvasCommandProducerPort,
+    processHistoryCommandPort,
     commandHistory,
     state: {
       activePlaneId,

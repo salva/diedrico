@@ -179,7 +179,6 @@
 
 import { ref, computed, watch, onMounted, onUnmounted, inject } from 'vue';
 import { Matrix3, Vector3 } from 'three';
-import { World } from '@/domain/world/World';
 import { SVGRenderer, type ViewportTransform } from '@/services/SVGRenderer';
 import { InputService } from '@/services/InputService';
 import { PointTool } from '@/tools/PointTool';
@@ -206,8 +205,8 @@ import { useGlobalHoverHighlight } from '@/composables/useHoverHighlight';
 import { screenTo3D } from '@/utils/coordinateTransform';
 import PropertiesDialog from '@/components/dialogs/PropertiesDialog.vue';
 import type { ITool } from '@/tools/ITool';
-import { createCanvasToolController } from '@/application/tools/CanvasToolController';
-import type { FreePointMoveSession } from '@/application/tools/ToolCommandIntents';
+import type { FreePointMoveSession, ToolCommandSink } from '@/application/tools/ToolCommandIntents';
+import { CanvasCommandProducerInjectionKey, WorldInjectionKey } from '@/application/appShell/RuntimeInjectionKeys';
 import { CanvasPresentationController } from '@/application/canvasPresentation/CanvasPresentationController';
 import { CanvasInteractionQuery } from '@/application/canvasPresentation/CanvasInteractionQuery';
 import { createCanvasWorldReadPort } from '@/application/canvasPresentation/CanvasWorldReadPort';
@@ -229,7 +228,7 @@ let lastWorldVersion = 0;
 const activePlane = computed(() => {
   // Depend on worldVersion so plane switching triggers recomputation
   worldVersion.value;
-  return world.getActivePlaneId();
+  return worldForCanvas.getActivePlaneId();
 });
 
 // Dynamic canvas dimensions - updated based on container size
@@ -367,7 +366,7 @@ function getElementLabel(elementId: string, elementType: string, planeId?: strin
   
   // If planeId is provided, only search that plane
   if (planeId) {
-    const plane = world.getProjectionPlaneById(planeId);
+    const plane = worldForCanvas.getProjectionPlaneById(planeId);
     if (plane) {
       switch (elementType) {
         case 'point':
@@ -386,7 +385,7 @@ function getElementLabel(elementId: string, elementType: string, planeId?: strin
     }
   } else {
     // Search all planes if no planeId provided
-    for (const plane of world.getAllProjectionPlanes()) {
+    for (const plane of worldForCanvas.getAllProjectionPlanes()) {
       switch (elementType) {
         case 'point':
           element = plane.getPoint(elementId);
@@ -409,16 +408,17 @@ function getElementLabel(elementId: string, elementType: string, planeId?: strin
 }
 
 // World instance - injected from App.vue
-const world = inject<World>('world')!;
+const world = inject(WorldInjectionKey);
 if (!world) {
   throw new Error('World not provided');
 }
+const worldForCanvas = world;
 
-const canvasToolController = createCanvasToolController({
-  world,
-  commandStack: inject('commandStack'),
-  toolStore
-});
+const injectedCanvasToolController = inject(CanvasCommandProducerInjectionKey) as ToolCommandSink | undefined;
+if (!injectedCanvasToolController) {
+  throw new Error('Canvas command producer port not provided');
+}
+const canvasToolController = injectedCanvasToolController;
 
 // Tool factory registry - map tool names to factory functions
 // Creates new instances instead of reusing singletons to avoid state leakage
@@ -477,10 +477,10 @@ onMounted(() => {
   window.addEventListener('resize', resizeHandler);
 
   // Poll World version so UI reacts to domain changes (e.g. active plane switching)
-  lastWorldVersion = world.getVersion();
+  lastWorldVersion = worldForCanvas.getVersion();
   worldVersion.value = lastWorldVersion;
   versionPollId = window.setInterval(() => {
-    const current = world.getVersion();
+    const current = worldForCanvas.getVersion();
     if (current !== lastWorldVersion) {
       lastWorldVersion = current;
       worldVersion.value = current;
@@ -489,7 +489,7 @@ onMounted(() => {
   }, 100);
 
   console.log('World initialized');
-  const allPlanes = world.getAllProjectionPlanes();
+  const allPlanes = worldForCanvas.getAllProjectionPlanes();
   const totalPoints = allPlanes.reduce((sum, plane) => sum + plane.getAllPoints().length, 0);
   console.log('Points in world:', totalPoints);
 });
@@ -532,8 +532,8 @@ function getPlaneTransformsForInput(): Map<string, Matrix3> {
   const transforms = new Map<string, Matrix3>();
   
   // Get all projection planes dynamically
-  for (const plane of world.getAllProjectionPlanes()) {
-    const realization = world.getProjectionPlane2DRealization(plane.id);
+  for (const plane of worldForCanvas.getAllProjectionPlanes()) {
+    const realization = worldForCanvas.getProjectionPlane2DRealization(plane.id);
     if (realization) {
       transforms.set(plane.id, realization.paperToPlane2D);
     }
@@ -549,7 +549,7 @@ const canvasPresentation = computed(() => {
   const selectedIds = selectionStore.selectedIdsArray;
   const cascadeHighlightIds = selectionStore.cascadeHighlightIdsArray;
   return canvasPresentationController.buildModel(
-    createCanvasWorldReadPort(world),
+    createCanvasWorldReadPort(worldForCanvas),
     { ...viewport.value, width: canvasWidth.value, height: canvasHeight.value },
     {
       hoveredIds: hoveredId ? new Set([hoveredId]) : undefined,
@@ -745,7 +745,7 @@ function handleCanvasClick(event: MouseEvent) {
     planeCoords: planePos,
     canvasCoords: { x: canvasPoint.x, y: canvasPoint.y },
     commandSink: canvasToolController,
-    world,
+    world: worldForCanvas,
     interactionQuery: interactionQuery.value,
     paperToPlaneTransform: paperToPlane,
     viewport: viewport.value,
@@ -846,7 +846,7 @@ function handleMouseDown(event: MouseEvent) {
   
   // Check if we hit a movable point
   if (hit && hit.elementType === 'point') {
-    const plane = world.getProjectionPlaneById(activePlaneId);
+    const plane = worldForCanvas.getProjectionPlaneById(activePlaneId);
     if (!plane) throw new Error(`Active plane not found: ${activePlaneId}`);
     const point = plane.getPoint(hit.elementId);
     
@@ -1108,7 +1108,7 @@ function handleMouseMove(event: MouseEvent) {
     svg,
     viewportMatrix,
     activePlaneId,
-    world
+    worldForCanvas
   );
   
   if (result.success && result.coordinates) {

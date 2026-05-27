@@ -4,10 +4,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextTick } from 'vue';
 import ActionsPanel from '@/components/panels/ActionsPanel.vue';
 import Toolbar from '@/components/toolbars/Toolbar.vue';
+import { ProcessHistoryController } from '@/application/processHistory/ProcessHistoryController';
 import { ProcessHistoryUseCases } from '@/application/processHistory/ProcessHistoryUseCases';
 import { useToolStore } from '@/stores/toolStore';
 import { useViewStore } from '@/stores/viewStore';
 import { createTestWorld } from '../../helpers/worldHelpers';
+import { CommandHistoryInjectionKey, ProcessHistoryCommandInjectionKey, WorldInjectionKey } from '@/application/appShell/RuntimeInjectionKeys';
 
 vi.mock('@/components/panels/ProcessTreeNode.vue', () => ({
   default: {
@@ -70,7 +72,7 @@ describe('Wave 006b ActionsPanel component behavior', () => {
 
     const wrapper = mount(ActionsPanel, {
       global: {
-        provide: { world, commandStack },
+        provide: { [WorldInjectionKey as symbol]: world, [ProcessHistoryCommandInjectionKey as symbol]: new ProcessHistoryController({ world, commandStack }) },
         stubs: {
           ProcessTreeNode: {
             template: '<div class="process-tree-node-stub" />',
@@ -110,7 +112,7 @@ describe('Wave 006b ActionsPanel component behavior', () => {
 
     const wrapper = mount(ActionsPanel, {
       global: {
-        provide: { world, commandStack },
+        provide: { [WorldInjectionKey as symbol]: world, [ProcessHistoryCommandInjectionKey as symbol]: new ProcessHistoryController({ world, commandStack }) },
         stubs: {
           ProcessTreeNode: {
             name: 'ProcessTreeNode',
@@ -166,7 +168,7 @@ describe('Wave 006b Toolbar component behavior', () => {
 
     const wrapper = mount(Toolbar, {
       global: {
-        provide: { commandHistory: commandStack },
+        provide: { [CommandHistoryInjectionKey as symbol]: commandStack },
         stubs: { ...toolbarStubs(), 'plane-selector': true, 'tool-family-button': true, 'login-status-widget': true }
       }
     });
@@ -199,7 +201,7 @@ describe('Wave 006b Toolbar component behavior', () => {
     commandStack.clear();
     const wrapper = mount(Toolbar, {
       global: {
-        provide: { commandHistory: commandStack },
+        provide: { [CommandHistoryInjectionKey as symbol]: commandStack },
         stubs: { ...toolbarStubs(), 'plane-selector': true, 'tool-family-button': true, 'login-status-widget': true }
       }
     });

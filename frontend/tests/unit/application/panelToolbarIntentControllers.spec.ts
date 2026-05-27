@@ -31,8 +31,10 @@ describe('Wave 006b panel/toolbar intent controllers', () => {
       'Alt+E'
     ];
 
-    expect(actionsPanelSource).toContain('createProcessHistoryController');
+    expect(actionsPanelSource).toContain('ProcessHistoryCommandInjectionKey');
+    expect(actionsPanelSource).not.toContain("inject<unknown>('commandStack')");
     expect(toolbarSource).toContain('createToolbarHistoryController');
+    expect(toolbarSource).toContain('CommandHistoryInjectionKey');
 
     for (const pattern of prohibitedActionsPanelPatterns) {
       expect(actionsPanelSource).not.toContain(pattern);

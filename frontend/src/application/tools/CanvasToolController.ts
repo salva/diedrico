@@ -1,33 +1,19 @@
 import type { CommandStack } from '@/commands/CommandStack';
 import type { World } from '@/domain/world/World';
-import type { useToolStore } from '@/stores/toolStore';
 import type { ToolCommandSink, ToolConstructionIntent, QuickToolIntent, MoveFreePointRequest, FreePointMoveSession, StyleUpdateRequest, ToolCommandResult } from './ToolCommandIntents';
 import { executeConstructionIntent } from '@/application/construction/ConstructionUseCases';
 import { executeQuickToolIntent } from '@/application/construction/QuickToolUseCases';
 import { CanvasPointMovementUseCase } from '@/application/canvas/CanvasPointMovementUseCase';
 import { CanvasStyleUseCase } from '@/application/canvas/CanvasStyleUseCase';
 
+export interface CanvasToolControllerToolStore {
+  setTool(tool: 'select'): void;
+}
+
 export interface CanvasToolControllerDependencies {
   world: World;
   commandStack: CommandStack;
-  toolStore: ReturnType<typeof useToolStore>;
-}
-
-export interface CanvasToolControllerProviderDependencies {
-  world: World;
-  commandStack: unknown;
-  toolStore: ReturnType<typeof useToolStore>;
-}
-
-export function createCanvasToolController(deps: CanvasToolControllerProviderDependencies): CanvasToolController {
-  if (!deps.commandStack) {
-    throw new Error('CommandStack not provided');
-  }
-  return new CanvasToolController({
-    world: deps.world,
-    commandStack: deps.commandStack as CommandStack,
-    toolStore: deps.toolStore
-  });
+  toolStore: CanvasToolControllerToolStore;
 }
 
 export class CanvasToolController implements ToolCommandSink {

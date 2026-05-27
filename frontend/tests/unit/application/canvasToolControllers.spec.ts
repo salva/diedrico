@@ -241,7 +241,8 @@ describe('Wave 006a canvas/tool command controllers', () => {
   it('keeps SvgCanvas on the controller boundary for movement and style delegation', () => {
     const source = svgCanvasSource;
 
-    expect(source).toContain('createCanvasToolController');
+    expect(source).toContain('CanvasCommandProducerInjectionKey');
+    expect(source).not.toContain("inject('commandStack')");
     expect(source).toContain('.startFreePointMove(');
     expect(source).toContain('.updateElementStyle(');
     expect(source).not.toContain("from '@/commands/Command'");

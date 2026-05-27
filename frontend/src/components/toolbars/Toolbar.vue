@@ -139,6 +139,7 @@ import RedoIcon from '@/components/icons/toolbar/RedoIcon.vue';
 import GridIcon from '@/components/icons/toolbar/GridIcon.vue';
 import ProjectionIcon from '@/components/icons/toolbar/ProjectionIcon.vue';
 import ZoomFitIcon from '@/components/icons/toolbar/ZoomFitIcon.vue';
+import { CommandHistoryInjectionKey } from '@/application/appShell/RuntimeInjectionKeys';
 
 /**
  * Toolbar.vue - Tool selection toolbar
@@ -161,8 +162,12 @@ const emit = defineEmits<Emits>();
 
 const toolStore = useToolStore();
 const viewStore = useViewStore();
+const commandHistory = inject(CommandHistoryInjectionKey);
+if (!commandHistory) {
+  throw new Error('Command history port not provided');
+}
 const toolbarHistoryController = createToolbarHistoryController({
-  commandHistory: inject<unknown>('commandHistory')
+  commandHistory
 });
 
 // Reactive trigger for history updates (Phase 91)

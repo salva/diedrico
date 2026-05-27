@@ -26,7 +26,7 @@
 
 <script setup lang="ts">
 import { inject, onMounted, onUnmounted, ref, watch } from 'vue';
-import type { World } from '@/domain/world/World';
+import { WorldInjectionKey } from '@/application/appShell/RuntimeInjectionKeys';
 import { useSelectionStore } from '@/stores/selectionStore';
 import { useViewStore } from '@/stores/viewStore';
 import { ThreeViewRuntime } from '@/rendering/threeView/ThreeViewRuntime';
@@ -39,7 +39,7 @@ const renderTick = ref(0);
 const viewStore = useViewStore();
 const displayOptions = viewStore.threeViewOptions;
 const selectionStore = useSelectionStore();
-const world = inject<World>('world')!;
+const world = inject(WorldInjectionKey)!;
 const readPort = createThreeWorldReadPort(world);
 const runtime = new ThreeViewRuntime();
 let unsubscribeWorldChanges: (() => void) | undefined;

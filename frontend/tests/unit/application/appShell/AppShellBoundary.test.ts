@@ -5,6 +5,7 @@ import startupDialogVue from '@/components/dialogs/StartupDialog.vue?raw';
 import appShellRuntime from '@/application/appShell/AppShellRuntime.ts?raw';
 import appShellProductionRuntime from '@/application/appShell/AppShellProductionRuntime.ts?raw';
 import appShellPorts from '@/application/appShell/AppShellPorts.ts?raw';
+import runtimeInjectionKeys from '@/application/appShell/RuntimeInjectionKeys.ts?raw';
 import browserLastProjectRepository from '@/application/appShell/BrowserLastProjectRepository.ts?raw';
 import activePlane from '@/application/appShell/ActivePlaneUseCases.ts?raw';
 import autoSave from '@/application/appShell/AutoSaveUseCases.ts?raw';
@@ -104,7 +105,9 @@ describe('Cycle 023 runtime-session consumer ports and command-history boundary'
     expect(runtimeSession).not.toMatch(/commandStackForCommandServices\(/);
     expect(runtimeSession).not.toMatch(/commandStackForShortcuts\(/);
     expect(runtimeSession).not.toMatch(/commandStackForView\(/);
-    expect(runtimeSession).toMatch(/commandStackForDeferredCommandProducers\(/);
+    expect(runtimeSession).not.toMatch(/commandStackForDeferredCommandProducers\(/);
+    expect(runtimeSession).toMatch(/canvasCommandProducerPort\(/);
+    expect(runtimeSession).toMatch(/processHistoryCommandPort\(/);
     expect(runtimeSession).toMatch(/activePlanePort\(/);
     expect(runtimeSession).toMatch(/selectionReadPort\(/);
     expect(runtimeSession).toMatch(/commandHistoryPort\(/);
@@ -115,8 +118,17 @@ describe('Cycle 023 runtime-session consumer ports and command-history boundary'
     expect(activePlane).not.toMatch(/@\/domain\/world\/World/);
     expect(selection).not.toMatch(/@\/domain\/world\/World/);
     expect(keyboard).not.toMatch(/@\/commands\/CommandStack/);
-    expect(toolbarVue).toMatch(/inject<unknown>\('commandHistory'\)/);
+    expect(toolbarVue).toMatch(/CommandHistoryInjectionKey/);
     expect(toolbarVue).not.toMatch(/inject<unknown>\('commandStack'\)/);
+  });
+
+  it('replaces raw command-stack producer wiring with typed runtime command ports', () => {
+    expect(runtimeInjectionKeys).toMatch(/InjectionKey<ToolCommandSink>/);
+    expect(runtimeInjectionKeys).toMatch(/InjectionKey<ProcessHistoryIntentSink>/);
+    expect(appVue).toMatch(/CanvasCommandProducerInjectionKey/);
+    expect(appVue).toMatch(/ProcessHistoryCommandInjectionKey/);
+    expect(appVue).not.toMatch(/provide\('commandStack'/);
+    expect(appShellRuntime).not.toMatch(/commandStackForDeferredCommandProducers|commandStack,/);
   });
 
   it('keeps keyboard and toolbar undo-redo on the shared command-history port without raw dual paths', () => {

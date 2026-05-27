@@ -51,9 +51,10 @@
 <script setup lang="ts">
 import { computed, inject, onMounted, onUnmounted, ref } from 'vue';
 import type { World } from '@/domain/world/World';
+import { WorldInjectionKey } from '@/application/appShell/RuntimeInjectionKeys';
 import { formatElementLabel } from '@/utils/formatUtils';
 
-const injectedWorld = inject<World>('world');
+const injectedWorld = inject(WorldInjectionKey);
 if (!injectedWorld) {
   throw new Error('[PlaneSelector] World not provided');
 }

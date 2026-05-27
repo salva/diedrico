@@ -49,9 +49,8 @@
 
 <script setup lang="ts">
 import { ref, computed, inject, onMounted, onUnmounted, watch, nextTick } from 'vue';
-import type { World } from '@/domain/world/World';
 import type { ProcessNode as ProcessTreeNodeType } from '@/domain/processTree/ProcessTree';
-import { createProcessHistoryController } from '@/application/processHistory/ProcessHistoryController';
+import { ProcessHistoryCommandInjectionKey, WorldInjectionKey } from '@/application/appShell/RuntimeInjectionKeys';
 import ProcessTreeNode from './ProcessTreeNode.vue';
 import { useSelectionStore } from '@/stores/selectionStore';
 import { useProcessTreeStore } from '@/stores/processTreeStore';
@@ -63,11 +62,16 @@ const emit = defineEmits<{
 }>();
 
 // Injected dependencies
-const world = inject<World>('world')!;
-const processHistoryController = createProcessHistoryController({
-  world,
-  commandStack: inject<unknown>('commandStack')
-});
+const world = inject(WorldInjectionKey);
+if (!world) {
+  throw new Error('World not provided');
+}
+const worldForProcessHistory = world;
+const injectedProcessHistoryController = inject(ProcessHistoryCommandInjectionKey);
+if (!injectedProcessHistoryController) {
+  throw new Error('Process history command port not provided');
+}
+const processHistoryController = injectedProcessHistoryController;
 
 // Selection store
 const selectionStore = useSelectionStore();
@@ -81,7 +85,7 @@ const stackVersion = ref(0); // Track stack changes
 const lastNodeCount = ref(0); // Track number of nodes for auto-scroll
 
 // Get current ProcessTree - use reactive ref that we update when World changes
-const processTree = ref(world.getProcessTree());
+const processTree = ref(worldForProcessHistory.getProcessTree());
 
 // Stack management computed properties
 const canPop = computed(() => {
@@ -152,7 +156,7 @@ function handleWorldChange() {
     unsubscribeTree();
   }
 
-  processTree.value = world.getProcessTree();
+  processTree.value = worldForProcessHistory.getProcessTree();
   lastNodeCount.value = countNodes(processTree.value.root);
   subscribeToCurrentProcessTree(false);
   stackVersion.value++;
@@ -169,8 +173,8 @@ onMounted(() => {
   subscribeToCurrentProcessTree(true);
 
   // Subscribe to World changes to detect when clear() creates new ProcessTree
-  world.subscribeToChanges(handleWorldChange);
-  unsubscribeWorld = () => world.unsubscribeFromChanges(handleWorldChange);
+  worldForProcessHistory.subscribeToChanges(handleWorldChange);
+  unsubscribeWorld = () => worldForProcessHistory.unsubscribeFromChanges(handleWorldChange);
 });
 
 onUnmounted(() => {
@@ -215,7 +219,7 @@ function findRelatedActions(selectedIds: string[]): void {
 
     // Check if action depends on any selected element
     // Dependencies are now in DependencyService, accessible via element
-    const dependsOnSelected = world
+    const dependsOnSelected = worldForProcessHistory
       .getDependencyService()
       .getDependencies(action.elementId)
       .some(depId => selectedIdSet.has(depId));

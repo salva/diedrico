@@ -3,6 +3,9 @@ import { World } from '@/domain/world/World';
 import { initializeWorld } from '@/application/world/initializeWorld';
 import { SelectionDeletionCommandService } from '@/application/selectionDeletion/SelectionDeletionCommandService';
 import type { SelectionDeletionCommandPort } from '@/application/selectionDeletion/SelectionDeletionPorts';
+import { CanvasToolController } from '@/application/tools/CanvasToolController';
+import type { CanvasToolControllerToolStore } from '@/application/tools/CanvasToolController';
+import { ProcessHistoryController } from '@/application/processHistory/ProcessHistoryController';
 import type { ActivePlanePort, CommandHistoryPort, OpenedProjectSession, ProjectSessionPersistencePort, RuntimeSessionRestoreHandle, RuntimeSessionSnapshotHandle, SelectionReadPort } from './AppShellPorts';
 
 export interface RuntimeSessionPersistenceSnapshotHandle extends RuntimeSessionSnapshotHandle {
@@ -22,8 +25,19 @@ export class RuntimeSession {
     return this.world;
   }
 
-  commandStackForDeferredCommandProducers(): CommandStack {
-    return this.commandStack;
+  canvasCommandProducerPort(toolStore: CanvasToolControllerToolStore): CanvasToolController {
+    return new CanvasToolController({
+      world: this.world,
+      commandStack: this.commandStack,
+      toolStore,
+    });
+  }
+
+  processHistoryCommandPort(): ProcessHistoryController {
+    return new ProcessHistoryController({
+      world: this.world,
+      commandStack: this.commandStack,
+    });
   }
 
   activePlanePort(): ActivePlanePort {

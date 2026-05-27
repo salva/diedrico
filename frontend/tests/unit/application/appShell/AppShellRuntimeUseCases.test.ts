@@ -516,21 +516,20 @@ describe('ProjectSessionUseCases startup and project flows', () => {
     deps.currentProjectName.value = 'Existing';
     deps.currentFileId.value = 'existing-file';
     const preOpenWorld = deps.session.worldForView();
-    const preOpenCommandStack = deps.session.commandStackForDeferredCommandProducers();
+    const preOpenCommandHistory = deps.session.commandHistoryPort();
     const preOpenPlaneCount = preOpenWorld.getAllProjectionPlanes().length;
     const preOpenNextId = preOpenWorld.peekNextId();
-    const preOpenUndoCount = preOpenCommandStack.getUndoCount();
+    const preOpenCanUndo = preOpenCommandHistory.canUndo();
     const useCases = new ProjectSessionUseCases(deps as any);
 
     await expect(useCases.openProject('bad-file')).rejects.toThrow('invalid payload');
 
     expect(deps.session.worldForView()).toBe(preOpenWorld);
-    expect(deps.session.commandStackForDeferredCommandProducers()).toBe(preOpenCommandStack);
+    expect(deps.session.commandHistoryPort().canUndo()).toBe(preOpenCanUndo);
     expect(preOpenWorld.getAllProjectionPlanes()).toHaveLength(preOpenPlaneCount);
     expect(preOpenWorld.peekNextId()).toBe(preOpenNextId);
-    expect(preOpenCommandStack.getUndoCount()).toBe(preOpenUndoCount);
-    expect(preOpenCommandStack.canUndo()).toBe(preOpenUndoCount > 0);
-    expect(preOpenCommandStack.canRedo()).toBe(false);
+    expect(preOpenCommandHistory.canUndo()).toBe(preOpenCanUndo);
+    expect(preOpenCommandHistory.canRedo()).toBe(false);
     expect(deps.currentProjectName.value).toBe('Existing');
     expect(deps.currentFileId.value).toBe('existing-file');
     expect(deps.autoSave.start).not.toHaveBeenCalled();
@@ -549,23 +548,22 @@ describe('ProjectSessionUseCases startup and project flows', () => {
     deps.currentProjectName.value = 'Existing';
     deps.currentFileId.value = 'existing-file';
     const preOpenWorld = deps.session.worldForView();
-    const preOpenCommandStack = deps.session.commandStackForDeferredCommandProducers();
+    const preOpenCommandHistory = deps.session.commandHistoryPort();
     const preOpenPlaneCount = preOpenWorld.getAllProjectionPlanes().length;
     const preOpenNextId = preOpenWorld.peekNextId();
-    const preOpenUndoCount = preOpenCommandStack.getUndoCount();
+    const preOpenCanUndo = preOpenCommandHistory.canUndo();
     const useCases = new ProjectSessionUseCases(deps as any);
 
     await expect(useCases.openProject('file-opened')).rejects.toThrow('restore exploded');
 
     expect(ports.persistence.restoreSession).toHaveBeenCalledTimes(1);
-    expect(ports.persistence.restoreSession).not.toHaveBeenCalledWith(expect.anything(), { world: preOpenWorld, commandStack: preOpenCommandStack });
+    expect(ports.persistence.restoreSession).not.toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ world: preOpenWorld }));
     expect(deps.session.worldForView()).toBe(preOpenWorld);
-    expect(deps.session.commandStackForDeferredCommandProducers()).toBe(preOpenCommandStack);
+    expect(deps.session.commandHistoryPort().canUndo()).toBe(preOpenCanUndo);
     expect(preOpenWorld.getAllProjectionPlanes()).toHaveLength(preOpenPlaneCount);
     expect(preOpenWorld.peekNextId()).toBe(preOpenNextId);
-    expect(preOpenCommandStack.getUndoCount()).toBe(preOpenUndoCount);
-    expect(preOpenCommandStack.canUndo()).toBe(preOpenUndoCount > 0);
-    expect(preOpenCommandStack.canRedo()).toBe(false);
+    expect(preOpenCommandHistory.canUndo()).toBe(preOpenCanUndo);
+    expect(preOpenCommandHistory.canRedo()).toBe(false);
     expect(deps.currentProjectName.value).toBe('Existing');
     expect(deps.currentFileId.value).toBe('existing-file');
     expect(deps.autoSave.start).not.toHaveBeenCalled();
@@ -597,7 +595,7 @@ describe('ProjectSessionUseCases startup and project flows', () => {
   it('creates, opens, renames, and signs out without replacing stable world or command stack references', async () => {
     const deps = projectSessionDeps();
     const originalWorld = deps.session.worldForView();
-    const originalCommandStack = deps.session.commandStackForDeferredCommandProducers();
+    const originalCommandHistory = deps.session.commandHistoryPort();
     const useCases = new ProjectSessionUseCases(deps as any);
 
     await useCases.createProject('Created');
@@ -618,7 +616,7 @@ describe('ProjectSessionUseCases startup and project flows', () => {
 
     await useCases.signOut();
     expect(deps.session.worldForView()).toBe(originalWorld);
-    expect(deps.session.commandStackForDeferredCommandProducers()).toBe(originalCommandStack);
+    expect(deps.session.commandHistoryPort().canUndo()).toBe(originalCommandHistory.canUndo());
     expect(deps.currentProjectName.value).toBeNull();
     expect(deps.currentFileId.value).toBeNull();
     expect(deps.showStartupDialog.value).toBe(true);

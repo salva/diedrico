@@ -125,7 +125,7 @@
 
 <script setup lang="ts">
 import { ref, computed, inject, onMounted, onUnmounted } from 'vue';
-import type { World } from '@/domain/world/World';
+import { WorldInjectionKey } from '@/application/appShell/RuntimeInjectionKeys';
 import { useSelectionStore } from '@/stores/selectionStore';
 import ElementTypeGroup from './ElementTypeGroup.vue';
 import { Point2D } from '@/domain/world/Point';
@@ -143,7 +143,7 @@ const emit = defineEmits<{
 }>();
 
 // Injected dependencies
-const world = inject<World>('world')!;
+const world = inject(WorldInjectionKey)!;
 
 // Selection store for bidirectional sync
 const selectionStore = useSelectionStore();

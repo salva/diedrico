@@ -105,6 +105,12 @@ import { useSettingsStore } from './stores/settingsStore';
 import { useAuthStore } from './stores/authStore';
 import { useViewStore } from './stores/viewStore';
 import { createProductionAppShellRuntime } from './application/appShell/AppShellProductionRuntime';
+import {
+  CanvasCommandProducerInjectionKey,
+  CommandHistoryInjectionKey,
+  ProcessHistoryCommandInjectionKey,
+  WorldInjectionKey,
+} from './application/appShell/RuntimeInjectionKeys';
 
 const GOOGLE_CONFIG = {
   clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID || '',
@@ -139,9 +145,10 @@ const runtime = createProductionAppShellRuntime({
   },
 });
 
-provide('world', runtime.world);
-provide('commandStack', runtime.commandStack);
-provide('commandHistory', runtime.commandHistory);
+provide(WorldInjectionKey, runtime.world);
+provide(CanvasCommandProducerInjectionKey, runtime.canvasCommandProducerPort);
+provide(ProcessHistoryCommandInjectionKey, runtime.processHistoryCommandPort);
+provide(CommandHistoryInjectionKey, runtime.commandHistory);
 
 const activeTool = toolStore.currentTool;
 const activePlaneId = runtime.state.activePlaneId;
