@@ -12,7 +12,7 @@ Implemented the decision-selected direct path from `decision.md` / `proposal-dir
   - Added behavior-sized ports: `activePlanePort()`, `selectionReadPort()`, `commandHistoryPort()`, and `selectionDeletionCommandPort()`.
   - Added adapter-local typed persistence handles exported from `RuntimeSession`: `RuntimeSessionPersistenceSnapshotHandle` and `RuntimeSessionPersistenceRestoreHandle`.
   - Deleted selected raw accessors: `worldForUseCases()`, `commandStackForCommandServices()`, and `commandStackForShortcuts()`.
-  - Retained `worldForView()` and added `commandStackForView()` only for the existing deferred view/tool/provide seam; this is not used by active-plane, selection, keyboard, toolbar history, or persistence consumers migrated in this cycle.
+  - Retained `worldForView()` as the decision-approved rendering/view seam. After reviewer correction, the remaining raw command-stack handoff is explicitly named `commandStackForDeferredCommandProducers()` for deferred canvas/tool/process-history command producers; it is not a view/history accessor and is not used by active-plane, selection, keyboard, toolbar history, selection-delete, or persistence consumers migrated in this cycle.
 - `frontend/src/application/appShell/AppShellRuntime.ts`
   - Wires active-plane, selection, selection-delete, keyboard history, and toolbar-visible command history through `RuntimeSession` ports.
   - Exposes `commandHistory` to production composition while retaining raw `commandStack` only for out-of-scope legacy view/tool consumers.
@@ -113,10 +113,14 @@ The process id is recorded in `validation/live-preview.pid`. Reachability probe 
 - `AppShellRuntime.ts` creates one `const commandHistory = session.commandHistoryPort()` and wires it to keyboard plus production provide.
 - Boundary assertions in `AppShellBoundary.test.ts` enforce that keyboard/toolbar history no longer use raw `CommandStack` and that selected raw `RuntimeSession` accessors remain deleted.
 
+## Corrective review follow-up
+
+Reviewer follow-up identified `commandStackForView()` as an unauthorized new raw RuntimeSession accessor because the Cycle 023 decision approved retaining only `worldForView()` as a view/rendering seam. Corrective commit `eaf4b9cdbc31d1064e44e5c4b5b768513e45c02e` removed that accessor name, updated `AppShellRuntime` and focused app-shell tests, and added a boundary assertion that `commandStackForView()` remains absent. The residual raw command-stack handoff is now named `commandStackForDeferredCommandProducers()` to document the decision-deferred canvas/tool/process-history command-producer seam without presenting it as a view or history consumer path. Correction validation logs: `validation/t3-focused-appshell-tests.stdout.log` (PASS: 2 files, 34 tests) and `validation/t3-postedit-command-stack-view-scan.stdout.log` (no production `commandStackForView()` hits).
+
 ## Residual risks and deferred seams
 
 - `worldForView()` remains the decision-approved raw rendering/view seam.
-- `commandStackForView()` remains as a scoped residual raw handoff for existing out-of-scope canvas/tool/process-history producers still injecting `commandStack`. It is not used by the migrated app-shell active-plane, selection, keyboard-history, toolbar-history, selection-delete, or persistence adapter consumers. A future wave should address broad view/tool command-producer ports.
+- `commandStackForDeferredCommandProducers()` remains as a scoped residual raw handoff for existing out-of-scope canvas/tool/process-history producers still injecting `commandStack`. The reviewer-rejected `commandStackForView()` accessor was removed in corrective commit `eaf4b9cdbc31d1064e44e5c4b5b768513e45c02e`; boundary tests now assert it stays absent. A future wave should address broad command-producer ports.
 - `ProjectSessionPersistenceAdapter` still imports `ProjectService` and casts persisted payload to `ProjectData`; this is intentionally outside Cycle 023 because changing serialized DTO/schema/replay/ProjectService internals was protected.
 - Build emits the pre-existing Vite chunk-size warning; validation passed.
 
