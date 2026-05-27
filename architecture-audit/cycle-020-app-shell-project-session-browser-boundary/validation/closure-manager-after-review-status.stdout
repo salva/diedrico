@@ -1,0 +1,17 @@
+3b8b88b [tsk-t1-verify-validation-preview-close-wave] [t1-verify-validation-preview-close-wave] record closure commit sha
+?? .saivage/stages/cycle-020-validation-and-preview-refresh/reports/t2-review-closure.json
+?? .saivage/stages/cycle-020-validation-and-preview-refresh/tasks.json
+?? architecture-audit/cycle-020-app-shell-project-session-browser-boundary/validation/closure-manager-after-coder-status.stderr
+?? architecture-audit/cycle-020-app-shell-project-session-browser-boundary/validation/closure-manager-after-coder-status.stdout
+?? architecture-audit/cycle-020-app-shell-project-session-browser-boundary/validation/closure-manager-after-review-status.stderr
+?? architecture-audit/cycle-020-app-shell-project-session-browser-boundary/validation/closure-manager-after-review-status.stdout
+?? architecture-audit/cycle-020-app-shell-project-session-browser-boundary/validation/closure-manager-status-diff.stderr
+?? architecture-audit/cycle-020-app-shell-project-session-browser-boundary/validation/closure-manager-status-diff.stdout
+?? architecture-audit/cycle-020-app-shell-project-session-browser-boundary/validation/closure-manager-validation-tail-index.stderr
+?? architecture-audit/cycle-020-app-shell-project-session-browser-boundary/validation/closure-manager-validation-tail-index.stdout
+?? architecture-audit/cycle-020-app-shell-project-session-browser-boundary/validation/closure-manager-wave-plan-relevant.stderr
+?? architecture-audit/cycle-020-app-shell-project-session-browser-boundary/validation/closure-manager-wave-plan-relevant.stdout
+?? architecture-audit/cycle-020-app-shell-project-session-browser-boundary/validation/manager-synthesis-static-check.stderr
+?? architecture-audit/cycle-020-app-shell-project-session-browser-boundary/validation/manager-synthesis-static-check.stdout
+?? architecture-audit/cycle-020-app-shell-project-session-browser-boundary/validation/reviewer-log-summaries.stderr
+?? architecture-audit/cycle-020-app-shell-project-session-browser-boundary/validation/reviewer-log-summaries.stdout

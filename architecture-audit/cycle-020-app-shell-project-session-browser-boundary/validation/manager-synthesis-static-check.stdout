@@ -1,0 +1,17 @@
+Static ownership scan:
+frontend/src/application/appShell/AppShellPorts.ts:5:import type { ProjectData } from '@/services/ProjectService';
+frontend/src/application/appShell/ProjectSessionUseCases.ts:5:import type { ProjectData } from '@/services/ProjectService';
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:3:import { ProjectService, type ProjectData } from '@/services/ProjectService';
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:8:    return ProjectService.serializeCommands(deps.commandStack, deps.world.peekNextId(), deps.projectName);
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:12:    ProjectService.validateProjectData(data);
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:16:    ProjectService.deserializeCommands(data, deps.world, deps.commandStack);
+frontend/src/application/appShell/BrowserLastProjectRepository.ts:3:const LAST_PROJECT_ID_KEY = 'diedrico_last_file_id';
+frontend/src/application/appShell/BrowserLastProjectRepository.ts:4:const LAST_PROJECT_NAME_KEY = 'diedrico_last_file_name';
+frontend/src/application/appShell/AppShellProductionRuntime.ts:23:      drive: options.hasGoogleCredentials ? new GoogleDriveService(options.googleConfig) : null,
+frontend/src/application/appShell/AppShellProductionRuntime.ts:25:      lastProjectRepository: new BrowserLastProjectRepository(window.localStorage),
+
+AppShellRuntime hidden default scan:
+
+Last project key owners:
+frontend/src/application/appShell/BrowserLastProjectRepository.ts:3:const LAST_PROJECT_ID_KEY = 'diedrico_last_file_id';
+frontend/src/application/appShell/BrowserLastProjectRepository.ts:4:const LAST_PROJECT_NAME_KEY = 'diedrico_last_file_name';
