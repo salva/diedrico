@@ -1,0 +1,13 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+locator.waitFor: Timeout 10000ms exceeded.
+Call log:
+  - waiting for getByTestId('canvas-svg') to be visible
+
+    at /tmp/wave018-live-smoke.mjs:6:38 {
+  name: 'TimeoutError'
+}
+
+Node.js v24.15.0

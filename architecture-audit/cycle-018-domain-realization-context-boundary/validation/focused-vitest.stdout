@@ -1,7 +1,18 @@
 
 > diedrico-frontend@0.1.0 test
-> vitest run --run frontend/tests/unit/application/canvasPresentation/canvasWorldReadPort.spec.ts frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts frontend/tests/unit/domain/realizationCache.spec.ts
+> vitest run tests/unit/application/canvasPresentation/canvasWorldReadPort.spec.ts tests/unit/application/canvasPresentation/projected3DCanvasSelector.spec.ts tests/unit/application/appShell/Cycle027Architecture.test.ts tests/unit/application/threePresentation/threePresentationArchitectureBoundary.spec.ts tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts tests/unit/domain/world/projectionPlane tests/unit/domain/world/*3D* tests/unit/domain/world/*Realization*
 
 
  RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/application/appShell/Cycle027Architecture.test.ts  (3 tests) 6ms
+ ✓ tests/unit/application/threePresentation/threePresentationArchitectureBoundary.spec.ts  (5 tests) 6ms
+ ✓ tests/unit/application/canvasPresentation/projected3DCanvasSelector.spec.ts  (1 test) 7ms
+ ✓ tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts  (6 tests) 13ms
+ ✓ tests/unit/application/canvasPresentation/canvasWorldReadPort.spec.ts  (3 tests) 14ms
+
+ Test Files  5 passed (5)
+      Tests  18 passed (18)
+   Start at  23:06:56
+   Duration  1.85s (transform 1.22s, setup 0ms, collect 2.44s, tests 46ms, environment 3.03s, prepare 510ms)
 

@@ -21,6 +21,7 @@ import { BrokenHingeLine } from '../BrokenHingeLine';
 import { HalfHingeLineRealization2D } from '../HalfHingeLineRealization2D';
 import { AuxiliaryProjectionPlane } from '../projectionPlane/AuxiliaryProjectionPlane';
 import type { ProjectionElementRealizationContext } from '../projectionPlane/ProjectionPlaneContext';
+import { requireProjectionRealizationCollections } from '../projectionPlane/ProjectionPlaneContext';
 
 /**
  * BrokenHalfHingeLine2D - Broken hinge line projection on one plane
@@ -164,6 +165,7 @@ export class BrokenHalfHingeLine2D extends HalfHingeLine2D {
 
     // Find hinge line connecting this plane to mainHinge.plane1Id
     console.log(`[BHHL ${this.label}] Looking for T1 hinge between ${this.planeId} and ${mainHinge.plane1Id}`);
+    requireProjectionRealizationCollections(world, 'BrokenHalfHingeLine2D.realize2D');
     const allHingeLines = world.getAllHingeLines();
     console.log(`[BHHL ${this.label}] Available hinge lines:`, allHingeLines.map(hl => `${hl.id}(${hl.plane1Id}-${hl.plane2Id})`));
     

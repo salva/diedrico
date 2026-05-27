@@ -14,6 +14,7 @@
  */
 
 import type { ProjectionElementRealizationContext } from './projectionPlane/ProjectionPlaneContext';
+import { requireProjectionRealizationCollections } from './projectionPlane/ProjectionPlaneContext';
 import { Vector3 } from 'three';
 import { Line2D } from './Line';
 import { Line3D } from './Line3D';
@@ -240,6 +241,7 @@ export class HingeLine extends Line3D {
 
     // Check that both planes exist (structural integrity)
     if (!projPlane1 || !projPlane2) {
+      requireProjectionRealizationCollections(world, 'HingeLine.realize3D');
       const errorInfo = {
         hingeLineId: this.id,
         hingeLineLabel: this.label,

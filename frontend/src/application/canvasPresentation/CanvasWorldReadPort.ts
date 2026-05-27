@@ -1,32 +1,18 @@
 import { Guide2D, SiblingGuide2D } from '@/domain/world/Guide';
 import { HalfHingeLine2D } from '@/domain/world/HingeLine';
 import { Segment2DByPoints } from '@/domain/world/Segment';
-import type { ProjectionElementRealizationContext, Element3DRealizationContext } from '@/domain/world/projectionPlane/ProjectionPlaneContext';
+import type { ProjectionElementRealizationContext } from '@/domain/world/projectionPlane/ProjectionPlaneContext';
 import type { World } from '@/domain/world/World';
 import type { CanvasPlaneCanvasItems, CanvasPlaneItem, CanvasPlaneLineItem, CanvasPlaneTransformModel, CanvasRenderItem } from './CanvasPresentationModel';
 import { resolveVisibility } from '@/domain/world/styleService';
 import { Projected3DCanvasSelector } from './Projected3DCanvasSelector';
 import { createProjected3DCanvasReadPort } from './Projected3DCanvasReadPort';
+import { createWorldRealizationContext } from '@/application/presentation/WorldRealizationContext';
 
 export interface CanvasWorldReadPort {
   getCanvasPlaneTransforms(): CanvasPlaneTransformModel[];
   getPlaneCanvasItems(): CanvasPlaneCanvasItems[];
   getProjected3DCanvasItems(planeTransforms: Map<string, CanvasPlaneTransformModel>): CanvasRenderItem[];
-}
-
-function createCanvasRealizationContext(world: World): ProjectionElementRealizationContext & Element3DRealizationContext {
-  return {
-    getProjectionPlaneById: id => world.getProjectionPlaneById(id),
-    getPoint2D: id => world.getPoint2D(id),
-    getLine2D: id => world.getLine2D(id),
-    getCircle2D: id => world.getCircle2D(id),
-    getProjectionPlane2DRealization: id => world.getProjectionPlane2DRealization(id),
-    getProjectionPlane3DRealization: id => world.getProjectionPlane3DRealization(id),
-    get3DPlaneRealization: id => world.get3DPlaneRealization(id),
-    getHingeLineById: id => world.getHingeLineById(id),
-    getAllProjectionPlanes: () => world.getAllProjectionPlanes(),
-    getAllHingeLines: () => world.getAllHingeLines(),
-  };
 }
 
 function getCanvasPlaneTransforms(world: World): CanvasPlaneTransformModel[] {
@@ -100,7 +86,7 @@ function getPlaneCanvasItems(world: World, context: ProjectionElementRealization
 }
 
 export function createCanvasWorldReadPort(world: World): CanvasWorldReadPort {
-  const realizationContext = createCanvasRealizationContext(world);
+  const realizationContext = createWorldRealizationContext(world);
   const projected3DSelector = new Projected3DCanvasSelector();
   return {
     getCanvasPlaneTransforms: () => getCanvasPlaneTransforms(world),

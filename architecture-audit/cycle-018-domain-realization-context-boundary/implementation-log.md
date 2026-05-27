@@ -1,151 +1,138 @@
 # Cycle 018 Implementation Log — Domain realization context boundary
 
-## Selected path followed
+## Scope and source-control reconciliation
 
-Implemented the Cycle 018 decision-selected direct path from `proposal-direct.md`. No proposal-restructure work was introduced: there is no new realization query service, no projection-plane mutation/cache ownership redesign, no Wave 019 scene-host/platform work, and no broad selector/rendering/app-shell/persistence/backend/tooling changes.
+Implemented the decision-selected direct path from `decision-post-017.md` / `proposal-direct.md` only. The implementation touched the realization-context contracts, the canvas/three context binders, one projection-plane utility signature, and the two known collection-traversal realization paths.
 
-The implementation found that most central domain contracts had already been narrowed in the current source before this retry began: `Element3D.realize3D(context: Element3DRealizationContext)`, `Plane3D.getPlaneEquation(context: PlaneEquationRealizationContext)`, `Plane3D.realize3D(context: PlaneEquationRealizationContext)`, and active `Point3D`/`Line3D`/`Segment3D`/`BrokenHingeLine` realization signatures were typed and no longer imported concrete `World`. This retry completed the remaining approved presentation/domain seam: the canvas and three read ports now wrap runtime `World` in explicit named typed realization-context adapter objects rather than assigning/passing the full `World` directly as the realization context.
+Path-scoped diff/status was used because broad `git status` is too noisy in this workspace. Scoped reconciliation is captured in `validation/scoped-source-control-reconciliation.stdout`.
 
-## Caller inventory and classification
+Protected unrelated dirty production files remained out of scope and were not read for implementation, staged, reverted, or depended on:
 
-Inventory evidence is captured in validation logs:
+- `frontend/src/domain/calculations/Intersections.ts`
+- `frontend/src/domain/processTree/ActionGroup.ts`
 
-- `validation/static-scan-current.stdout` — current pre-edit scan for broad realization contracts, concrete `World` imports, and read-port raw-world calls.
-- `validation/remaining-any-world-scan.stdout` — supplemental broad pattern scan across source/tests.
-- `validation/static-scan-post-edit.stdout` — broad scan after first adapter edit; intentionally broad and includes many already-typed 2D calls with variables named `world` in domain/tests.
-- `validation/static-scan-final.stdout` — final decision-targeted scan.
-
-Classifications:
-
-- `Element3D.realize3D(world: any): any`: proven already deleted/inapplicable in current source; final scan has no match.
-- `Plane.getPlaneEquation(world: any)` / `Plane.realize3D(world: any)`: proven already deleted/inapplicable in current source; final scan has no match.
-- Concrete `World` imports in active realization domain files (`Element3D.ts`, `Point3D.ts`, `Line3D.ts`, `Segment3D.ts`, `Plane.ts`, `BrokenHingeLine.ts`): proven already absent; final scan has no match.
-- `CanvasWorldReadPort` realization seam: changed. Added `createCanvasRealizationContext(world)` returning `ProjectionElementRealizationContext & Element3DRealizationContext`, and all canvas realization calls now use that adapter object.
-- `ThreeWorldReadPort` realization seam: changed. Added `createThreeRealizationContext(world)` returning `ProjectionElementRealizationContext & Element3DRealizationContext`, and planar/guide/hinge realization calls now use that adapter object.
-- Projection-plane realization helpers: mechanical naming alignment only. `realizePoint2D`, `realizeLine2D`, and `realizeCircle2D` parameters are named/documented as typed `context`, preserving existing plane-owned cache mutation semantics.
-- Existing domain/tests calls such as `line.realize2D(world)` where `world` structurally satisfies `ProjectionElementRealizationContext`: deferred/out of scope unless tied to the presentation read-port seam. The decision explicitly states the important boundary is concrete `World`/`any` capability, not variable naming.
+No backend, docs/specs, package/tooling, persistence/schema/replay, command history/producer redesign, scene-host/OrbitControls/CSS/pointer behavior, app-kernel facade, Drive/auth, or UI feature work was touched.
 
 ## Source files changed
 
+- `frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts`
+  - Split the former broad `ProjectionElementRealizationContext` into explicit lookup capabilities:
+    - `ProjectionElementLookupContext`
+    - `ProjectionRealizationLookupContext`
+    - default `ProjectionElementRealizationContext` = lookup + realization lookup only
+    - `ProjectionRealizationCollectionContext` for collection traversal
+    - `ProjectionElementDiagnosticRealizationContext` for explicitly collection-aware diagnostic realization paths
+    - `HingeLineRealizationContext` for hinge realization paths that need collection diagnostics
+  - `getAllProjectionPlanes()` and `getAllHingeLines()` were removed from the default realization context.
+  - `ProjectionPlaneRealizationContext`, `Element3DRealizationContext`, and `PlaneEquationRealizationContext` now explicitly compose narrow lookup interfaces instead of extending a full broad context.
+  - `ProjectionPlaneMutationContext` remains separate and continues to add mutation-only capabilities (`getNextId`, label generation, dependency service, `markDirty`, sibling-plane query) on top of read-only realization/owner lookup.
+  - Added `requireProjectionRealizationCollections(...)` as a narrow assertion for the two existing collection-diagnostic realization paths instead of broadening the default context.
+- `frontend/src/application/presentation/WorldRealizationContext.ts` (new)
+  - Tiny pure `World` → realization-context binder for lookup and realization lookup only.
+  - Does not expose `getWorld()`, selector DTOs, app-shell state, command state, persistence, renderer lifecycle, style/visibility policy, or a generic read-model/app-kernel facade.
 - `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts`
-  - Added a local `createCanvasRealizationContext(world)` adapter exposing only named realization lookup/read methods required by `ProjectionElementRealizationContext & Element3DRealizationContext`.
-  - Removed the direct full-`World` structural assignment `const realizationContext: ... = world`.
-- `frontend/src/application/threePresentation/ThreeWorldReadPort.ts`
-  - Added a local `createThreeRealizationContext(world)` adapter exposing only named realization lookup/read methods required by `ProjectionElementRealizationContext & Element3DRealizationContext`.
-  - Removed the direct full-`World` structural assignment `const realizationContext: ... = world`.
-- `frontend/src/domain/world/projectionPlane/ProjectionPlane.ts`
-  - Renamed the read-only realization helper parameter/docs from `world` to `context` for `realizePoint2D`, `realizeLine2D`, and `realizeCircle2D`; cache ownership remains plane-owned and unchanged.
-- `frontend/src/domain/world/Line3D.ts`
-  - Updated stale documentation to refer to the typed realization context instead of a `World` instance.
+  - Deleted duplicate canvas-local `createCanvasRealizationContext` binder body.
+  - Uses the shared narrow binder while preserving public `CanvasWorldReadPort` methods: `getCanvasPlaneTransforms`, `getPlaneCanvasItems`, `getProjected3DCanvasItems`.
+- `frontend/src/application/threePresentation/ThreeRealizationContext.ts`
+  - Reuses the shared narrow binder and adds only concern-supplied collection functions.
+  - ThreeRealizationContext still does not directly call `world.getAllProjectionPlanes()` / `world.getAllHingeLines()`; traversal ownership remains in `ThreePlanarElementReadPort`, `ThreeGuideReadPort`, and `ThreeHingeReadPort` via supplied callbacks.
+- `frontend/src/domain/world/HingeLine.ts`
+  - Keeps normal realization signature compatible with `ProjectionElementRealizationContext`.
+  - Requires the named collection capability only inside the structural-error diagnostic branch that logs all planes/hinges when referenced planes are missing.
+- `frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts`
+  - Keeps normal realization signature compatible with `ProjectionElementRealizationContext`.
+  - Requires the named collection capability only at the T1 hinge discovery path that genuinely traverses all hinge lines.
+- `frontend/src/utils/projectionPlaneUtils.ts`
+  - `computeAuxiliaryPlaneLayout(...)` now requests `ProjectionRealizationCollectionContext` directly because it only needs collection traversal for layout counting and does not need realization lookup.
 
-## Required deletes / proof of inapplicability
+## Deleted / narrowed surfaces
 
-- Deleted in current source before this retry and verified absent: `Element3D.realize3D(world: any): any`.
-- Deleted in current source before this retry and verified absent: `Plane.getPlaneEquation(world: any)` and `Plane.realize3D(world: any)` broad contracts.
-- Deleted in current source before this retry and verified absent: concrete `World` imports in active `Point3D`, `Line3D`, `Segment3D`, `Plane`, and `BrokenHingeLine` realization paths.
-- Deleted by this retry: direct read-port full-`World` realization-context assignments in `CanvasWorldReadPort.ts` and `ThreeWorldReadPort.ts`.
-- No transitional overloads, compatibility wrappers, duplicate aliases, or new service-locator contexts were added.
-- No obsolete tests/fixtures were found that existed solely to preserve the removed full-`World`/`any` contracts; focused tests remained valid.
+Deleted or narrowed as approved:
 
-Final proof: `validation/static-scan-final.stdout` contains no matches under these sections:
+- Deleted default-context `getAllProjectionPlanes()` and `getAllHingeLines()` from `ProjectionElementRealizationContext`.
+- Deleted duplicate canvas binder body `createCanvasRealizationContext`.
+- Removed collection traversal from the canvas realization context output.
+- Converted weak broad context aliases into explicit narrow interface compositions.
+- Kept collection traversal only in named capabilities (`ProjectionRealizationCollectionContext`, `ProjectionElementDiagnosticRealizationContext`, `HingeLineRealizationContext`) and only at callers that need it.
 
-- Forbidden broad realization contracts
-- Concrete World imports in active realization domain files
-- Read-port direct full-World realization context assignment/calls
-- Duplicate realization context aliases
+Already-deleted protected surfaces stayed deleted by static scan evidence:
+
+- No `realize3D(world: any)` or `getPlaneEquation(world: any)` signature was reintroduced.
+- No `RuntimeWorld`, `WorldReadModel`, `PresentationWorld`, `getWorld()`, `WorldInjectionKey`, `worldForView`, or `Pick<ThreeWorldReadPort...>` seam was introduced.
+- Canvas public raw collection/realization seams remain absent.
+- No scene-host/OrbitControls/CSS/pointer implementation was changed.
+
+## Caller inventory
+
+Evidence: `validation/pre-edit-static-scan.stdout`, `validation/post-edit-static-scan.stdout`.
+
+- `realize2D(...)`: mechanically preserved across 2D element/domain/projection-plane callers; signatures remain typed against the narrowed default context. Special collection traversal in `BrokenHalfHingeLine2D.realize2D` was changed to assert the named collection capability at the exact traversal point.
+- `realize3D(...)`: mechanically preserved across 3D point/line/segment/plane/hinge and presentation read ports. `HingeLine.realize3D` was changed to assert the named collection capability only for structural diagnostics when referenced planes are missing.
+- `getPlaneEquation(...)`: mechanically preserved; `PlaneEquationRealizationContext` now explicitly composes lookup capabilities and does not carry default collection traversal.
+- Projection-plane helper APIs: `ProjectionPlane.realizePoint2D/Line2D/Circle2D`, `FixedProjectionPlane.realize2D/3D`, and `AuxiliaryProjectionPlane.realize2D/3D` remain behaviorally unchanged. `computeAuxiliaryPlaneLayout` was changed from broad realization context to explicit collection context.
+- `ProjectionElementRealizationContext`: changed; now default lookup/realization lookup only.
+- `Element3DRealizationContext`: changed; now explicit narrow lookup composition, not a broad alias.
+- `ProjectionPlaneRealizationContext`: changed; explicit narrow lookup composition.
+- `PlaneEquationRealizationContext`: changed; explicit narrow lookup composition.
+- Collection methods: changed; removed from default context and localized to named collection/diagnostic capabilities. Current in-scope consumers are three concern adapters, `HingeLine.realize3D` diagnostics, `BrokenHalfHingeLine2D.realize2D` T1 hinge lookup, `computeAuxiliaryPlaneLayout`, and raw traversal read ports that already own traversal.
+- Concrete `World` imports / `any` realization contracts: static scans found no reintroduced concrete `World` realization signatures or `any` contracts in active 3D/plane realization contracts.
+- Canvas/three adapter realization calls: changed mechanically to use `createWorldRealizationContext` for narrow lookup and concern-supplied collections where needed. Public read-port DTO seams unchanged.
+- Deferred/out of scope: no broad realization query-service restructure, no persistence/command/app-shell redesign, no rendering behavior redesign.
+
+## Protected boundary evidence
+
+- Wave 017 three-presentation boundary preserved: `ThreeRealizationContext.ts` remains a binder; concern read ports own/decline traversal through callbacks; no `ThreeView`, scene host, OrbitControls, camera, renderer, CSS, layout, or overlay pointer code changed.
+- Wave 028 canvas boundary preserved: `CanvasWorldReadPort` public API remains behavior-sized; `Projected3DCanvasReadPort` remains localized raw projected-3D adapter; no public raw world/collection seam added.
+- Wave 025–028 raw seams remained absent by static scans for `WorldInjectionKey`, `worldForView`, `getWorld()`, generic world/read-model facades, and broad ThreeWorldReadPort picks.
 
 ## Validation log index
 
-All validation logs are under `architecture-audit/cycle-018-domain-realization-context-boundary/validation/`.
+All logs are under `architecture-audit/cycle-018-domain-realization-context-boundary/validation/`.
 
-Static scans:
+Static/source-control:
 
-- `static-scan-current.stdout` / `.stderr` — pre-edit scan.
-- `remaining-any-world-scan.stdout` / `.stderr` — supplemental broad scan.
-- `static-scan-post-edit.stdout` / `.stderr` — broad post-edit scan; includes expected out-of-scope variable-name matches.
-- `static-scan-final.stdout` / `.stderr` — final targeted scan; no decision-targeted seams remain.
+- `pre-edit-static-scan.stdout` / `.stderr` — captured caller/context/collection/facade inventory before edits.
+- `post-edit-static-scan.stdout` / `.stderr` — captured caller/context/collection/facade inventory after edits.
+- `scoped-source-control-reconciliation.stdout` / `.stderr` — scoped source-control reconciliation and protected dirty path note.
 
-Focused tests:
+Focused and full tests:
 
-- `focused-vitest.stdout` / `.stderr` — failed because root-relative paths were passed while the command ran inside the frontend workspace (`No test files found`). This was a command invocation error, not a source failure.
-- `focused-vitest-rerun.stdout` / `.stderr` — passed with frontend-relative paths: `3 passed`, `22 passed`.
+- `focused-vitest-initial.stdout` / `.stderr` — focused read-port/architecture suite before final build fixes; passed.
+- `focused-vitest.stdout` / `.stderr` — focused read-port/architecture suite; passed (5 files, 18 tests).
+- `root-vitest.stdout` / `.stderr` — root `npm run test`; passed (exit 0).
+- `frontend-vitest.stdout` / `.stderr` — frontend full Vitest; passed (exit 0).
 
-Mandatory gates:
+Lint/build:
 
-- `root-lint.stdout` / `.stderr` — passed (`11 passed`).
-- `frontend-lint.stdout` / `.stderr` — passed (`11 passed`).
-- `root-vitest.stdout` / `.stderr` and `root-vitest-summary.stdout` — passed (`107 passed | 1 skipped`, `1231 passed | 45 skipped | 11 todo`).
-- `frontend-vitest.stdout` / `.stderr` and `frontend-vitest-summary.stdout` — passed (`107 passed | 1 skipped`, `1231 passed | 45 skipped | 11 todo`).
-- `root-build.stdout` / `.stderr` — passed (`✓ built`); Vite emitted the pre-existing large chunk warning.
-- `frontend-build.stdout` / `.stderr` — passed (`✓ built`); Vite emitted the pre-existing large chunk warning.
-- `root-e2e.stdout` / `.stderr` — passed (`8 passed`).
-- `frontend-e2e.stdout` / `.stderr` — passed (`8 passed`).
+- `root-lint.stdout` / `.stderr` — root `npm run lint`; passed.
+- `frontend-lint.stdout` / `.stderr` — frontend `npm run lint --workspace=frontend`; passed.
+- `frontend-build-initial.stdout` / `.stderr` — initial build failed because `computeAuxiliaryPlaneLayout` still used broad context after collection removal; fixed by typing it as `ProjectionRealizationCollectionContext`.
+- `frontend-build-after-context.stdout` / `.stderr` — frontend build passed after helper fix.
+- `root-build.stdout` / `.stderr` — root `npm run build`; passed.
+- `frontend-build.stdout` / `.stderr` — frontend `npm run build --workspace=frontend`; passed.
+- `frontend-build-after-explicit-contexts.stdout` / `.stderr` — final build after making aliases explicit; passed.
 
-Preview/live evidence:
+E2E and overlay pointer-boundary evidence:
 
-- `live-preview-refresh-rerun.stdout` / `.stderr` — refreshed frontend dev server on `0.0.0.0:5173` and received `HTTP 200` from `http://127.0.0.1:5173/`.
-- `live-preview-server.pid`, `live-preview-server.stdout`, `live-preview-server.stderr` — persistent preview process/logs.
-- `live-preview-probe.stdout` / `.stderr` — HTTP probe evidence (`200`).
-- `live-playwright-smoke.stdout` / `.stderr` — live browser smoke passed: title `Diedrico - Dihedral Learning MVP`, `canvasCount: 1`, `svgCount: 19`, `buttons: 45`, and recognizable app-shell text present.
+- `root-e2e.stdout` / `.stderr` — root `npm run test:e2e`; passed (10/10), including `current-ui-contract.spec.ts` overlay pointer-boundary test.
+- `frontend-e2e.stdout` / `.stderr` — frontend `npm run test:e2e --workspace=frontend`; passed (10/10), including the overlay pointer-boundary test.
 
-## Protected-surface checks
+Live preview / browser smoke:
 
-Not modified:
+- `live-preview.stdout` / `.stderr` — refreshed Vite dev server bound by `npm run dev --workspace=frontend -- --host 0.0.0.0`.
+- `live-preview.pid` — PID of the refreshed live preview server.
+- `live-preview-probe.stdout` / `.stderr` — HTTP 200 from `http://127.0.0.1:5173/` after refresh.
+- `live-browser-smoke.stdout` / `.stderr` — first smoke script failed due CommonJS named import; harness/script error, not source-attributable.
+- `live-browser-smoke-fixed.stdout` / `.stderr` — second smoke used wrong historical test id (`canvas-svg`), not source-attributable.
+- `live-browser-smoke-current-ui.stdout` / `.stderr` — credential-free browser smoke passed: SVG canvas visible, 2 circles rendered, 3D overlay visible, overlay pointer-events `auto`.
 
-- Wave 019 scene-host lifecycle/runtime/platform files.
-- Backend, docs/specs, package/tooling/dependency configuration, persistence/project services, Drive/local project services, command/undo architecture, process-tree ownership, app-shell orchestration, and tool/controller layers.
-- Secret/config paths and environment files were not read or modified.
-- Projection-plane cache/dependency mutation ownership was not redesigned; only typed read-context naming changed for realization helpers.
+## Residual risks and notes
 
-A broad `git status` through MCP exceeded the output buffer because the workspace contains substantial unrelated dirty work. This implementation used path-focused diffs and committed only the Cycle 018 source/artifact/report files listed in the task.
+- TypeScript structural typing can still allow callers to pass an object with more capability than requested. Mitigated by removing collection members from the default interface, isolating named collection capabilities, and static scans.
+- `requireProjectionRealizationCollections` throws if the special diagnostic paths receive a default-only context. Current adapter paths that can reach these branches supply collection-capable three contexts or full mutation/world contexts; ordinary canvas read-port realization no longer exposes collection traversal by default. This is acceptable because the assertion localizes the exceptional capability instead of broadening all realization algorithms.
+- Build warnings about large chunks are pre-existing package/build behavior and not attributable to this wave.
 
-## Residual risks / next-wave candidates
+## Next-wave candidates
 
-- The read-port realization-context factories are intentionally local to the two presentation adapters to avoid introducing a cross-layer service in Cycle 018. A future wave may decide whether a shared adapter module is worthwhile after additional realization-boundary cleanup, but no duplicate public context alias was added here.
-- Many domain/test call sites still use a parameter or variable named `world` for already-typed `ProjectionElementRealizationContext` calls. This is naming noise, not the deleted full-`World`/`any` seam; broad renaming across tests/tools/commands would exceed Cycle 018 scope.
-- Existing Vite build chunk-size warning remains pre-existing and unrelated to this implementation.
-
----
-
-## Validation/preview closure — cycle-018-validation-and-preview-refresh
-
-**Wave 018 COMPLETE.** The validation/preview closure stage independently rechecked the implementation evidence and reran the mandatory gates with fresh `closure-*` log names under `architecture-audit/cycle-018-domain-realization-context-boundary/validation/`. No production source, package/tooling, backend, docs/spec, app-shell, command/undo, persistence, or Wave 019 implementation files were modified during closure.
-
-### Current workspace and protected-surface check
-
-- `closure-targeted-status.stdout` / `.stderr` — path-focused status for Wave 018 source/artifact/report paths and `architecture-audit/wave-plan.md`. It shows no uncommitted production-source diff in the Wave 018 implementation files; remaining untracked entries are audit/report/log artifacts from this and prior Cycle 018 stages.
-- `closure-wave-plan-grep.stdout` / `.stderr` — reread evidence for Wave 018/Wave 019 ordering in `architecture-audit/wave-plan.md`.
-- MCP `git diff` for the Wave 018 source files and `implementation-log.md`/`wave-plan.md` was empty before this closure log append.
-
-### Fresh validation log index
-
-All gates below are current closure-stage evidence and supersede stale implementation attempts where named.
-
-- Root lint: `closure-root-lint.stdout` / `.stderr` — passed (`11 passed`).
-- Frontend lint: `closure-frontend-lint-rerun.stdout` / `.stderr` — passed (`11 passed`). The earlier `closure-frontend-lint.stdout` / `.stderr` showed architecture tests passed but the Node/V8 process aborted with exit code 134; it is superseded by the green rerun.
-- Focused realization/read-port Vitest: `closure-focused-vitest.stdout` / `.stderr` — passed (`3 passed`, `22 passed`).
-- Root full Vitest: `closure-root-vitest.stdout` / `.stderr` — passed (`107 passed | 1 skipped`, `1231 passed | 45 skipped | 11 todo`).
-- Frontend full Vitest: `closure-frontend-vitest.stdout` / `.stderr` — passed (`107 passed | 1 skipped`, `1231 passed | 45 skipped | 11 todo`).
-- Root build: `closure-root-build.stdout` / `.stderr` — passed (`✓ built in 3.71s`); Vite emitted the pre-existing large chunk warning.
-- Frontend build: `closure-frontend-build.stdout` / `.stderr` — passed (`✓ built in 3.62s`); Vite emitted the pre-existing large chunk warning.
-- Root e2e: `closure-root-e2e.stdout` / `.stderr` — passed (`8 passed`).
-- Frontend e2e: `closure-frontend-e2e.stdout` / `.stderr` — passed (`8 passed`).
-
-### Live preview and Playwright evidence
-
-- Preview refresh command target: `npm run dev --workspace=frontend -- --host 0.0.0.0`, recorded with PID in `validation/live-preview-server.pid` and live server logs in `closure-live-preview-server.stdout` / `.stderr`.
-- `closure-live-preview-refresh-rerun.stdout` / `.stderr` — captured preview PID, `http://127.0.0.1:5173/`, HTTP `200`, and explicit `0.0.0.0:5173` host binding evidence. The command wrapper returned a nonzero status despite printing the HTTP 200 evidence, so the separate probe below is the authoritative reachability result.
-- `closure-live-preview-probe.stdout` / `.stderr` — passed independent HTTP probe with `http_status=200`, `remote_ip=127.0.0.1`, `content_type=text/html`.
-- `closure-live-playwright-smoke-final.stdout` / `.stderr` — passed live browser smoke against the refreshed preview: title `Diedrico - Dihedral Learning MVP`, `canvasCount: 1`, `svgCount: 19`, `buttons: 45`, app-shell text containing `P_H`, `P_V`, `Tool: Select`, and 3D controls.
-- Superseded live smoke command errors: `closure-live-playwright-smoke.stdout` failed due to a `/tmp`-relative Playwright import; `closure-live-playwright-smoke-rerun.stdout` failed due to CommonJS named-export import shape. Both are command-script errors and are superseded by `closure-live-playwright-smoke-final.stdout`.
-- Superseded preview refresh command error: `closure-live-preview-refresh.stdout` failed because `/bin/sh` does not support `set -o pipefail`; it is superseded by the bash rerun plus independent probe.
-
-### Residual risks after closure
-
-- Existing Vite large-chunk warnings remain pre-existing and unrelated to Wave 018.
-- The closure stage observed substantial unrelated/unowned untracked Cycle 018 audit artifacts. They were not reverted or mined beyond necessary validation evidence and do not indicate a Wave 018 source gate failure.
-- Local read-port realization-context factories remain intentionally local to `CanvasWorldReadPort` and `ThreeWorldReadPort`; future cleanup may evaluate sharing only if it does not create a god context.
-
-### Next-wave recommendation / re-rank
-
-After rereading `architecture-audit/wave-plan.md`, Wave 019 remains the most central next wave because Wave 018 completed the typed domain-realization context boundary that Wave 019 depends on. Start the next canonical stage as `cycle-019-fresh-scout-proposals` for **Wave 019 — Three scene-host lifecycle and renderer platform boundary**. The Wave 019 scout must first re-read the current code and confirm that no residual full-`World`/`any` realization seam blocks scene-host/platform work; if a material premise changed, update `wave-plan.md` through a reviewed plan-edit mini-cycle before implementation.
+- Domain debug logging remains noisy in several realization algorithms (`Plane3DFromTraces`, `Line3DFromProjections`, `BrokenHalfHingeLine2D`). A future wave could separate domain diagnostics from console side effects.
+- Structural interface compatibility could be further hardened with architecture guard tests that parse `ProjectionPlaneContext.ts` and forbid collection methods on default contexts.

@@ -1,0 +1,13 @@
+Scoped status/diff names for Wave 018 files:
+frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts
+frontend/src/domain/world/HingeLine.ts
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts
+frontend/src/utils/projectionPlaneUtils.ts
+frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts
+frontend/src/application/threePresentation/ThreeRealizationContext.ts
+frontend/src/application/presentation/WorldRealizationContext.ts
+architecture-audit/cycle-018-domain-realization-context-boundary/implementation-log.md
+
+Known protected dirty paths (not inspected/staged):
+frontend/src/domain/calculations/Intersections.ts
+frontend/src/domain/processTree/ActionGroup.ts

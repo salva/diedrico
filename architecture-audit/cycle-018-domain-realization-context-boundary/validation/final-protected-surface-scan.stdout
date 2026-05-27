@@ -1,0 +1,13 @@
+--- final context collection definitions ---
+23:export interface ProjectionElementRealizationContext extends ProjectionElementLookupContext, ProjectionRealizationLookupContext {}
+25:export interface ProjectionRealizationCollectionContext {
+26:  getAllProjectionPlanes(): ProjectionPlane[];
+27:  getAllHingeLines(): HingeLine[];
+--- final forbidden facade scan ---
+frontend/tests/unit/application/threePresentation/threePresentationArchitectureBoundary.spec.ts:39:      expect(source).not.toMatch(new RegExp(['RuntimeWorld', 'WorldReadModel', 'PresentationWorld', 'get' + 'World\\s*\\('].join('|')));
+frontend/tests/unit/application/threePresentation/threePresentationArchitectureBoundary.spec.ts:51:    expect(searchedSources).not.toMatch(new RegExp(['RuntimeWorld', 'WorldReadModel', 'PresentationWorld', 'get' + 'World\\s*\\('].join('|')));
+frontend/tests/unit/application/threePresentation/threePresentationArchitectureBoundary.spec.ts:56:    expect(threeViewSource).not.toMatch(new RegExp(['@/domain/world/World', 'WorldInjectionKey', 'get' + 'World\\s*\\('].join('|')));
+--- three binder direct traversal scan ---
+--- canvas public seam scan ---
+19:  return world.getAllProjectionPlanes().flatMap((plane) => {
+27:  return world.getAllProjectionPlanes().flatMap((plane) => {

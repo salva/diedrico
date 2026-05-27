@@ -13,7 +13,7 @@
  */
 
 import { Matrix3, Vector3, Vector4 } from 'three';
-import type { ProjectionPlaneRealizationContext } from '@/domain/world/projectionPlane/ProjectionPlaneContext';
+import type { ProjectionPlaneRealizationContext, ProjectionRealizationCollectionContext } from '@/domain/world/projectionPlane/ProjectionPlaneContext';
 import { Matrix4x3, Matrix3x4, applyMatrix4x3, applyMatrix3x4, crossVector3Homogeneous, dotVector3Homogeneous, dotVector2Homogeneous } from './threeUtils';
 import { Line2DRealization2D } from '@/domain/world/Line';
 import { Point3DRealization3D } from '@/domain/world/Element3DRealization3D';
@@ -556,7 +556,7 @@ export function computeExpectedT2Prime(
  * @param world - World instance to query existing planes
  * @returns Paper-space offset {x, y} for new auxiliary plane
  */
-export function computeAuxiliaryPlaneLayout(world: ProjectionPlaneRealizationContext): { x: number; y: number } {
+export function computeAuxiliaryPlaneLayout(world: ProjectionRealizationCollectionContext): { x: number; y: number } {
   // Count existing auxiliary planes (exclude P_H and P_V)
   const allPlanes = world.getAllProjectionPlanes();
   const auxiliaryPlanes = allPlanes.filter(plane => 
