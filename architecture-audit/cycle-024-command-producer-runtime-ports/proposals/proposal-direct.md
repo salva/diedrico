@@ -12,12 +12,15 @@ Production source:
 
 - `frontend/src/application/appShell/RuntimeSession.ts`
   - Add behavior-sized factory/port methods for scoped command producers, e.g. `canvasCommandPort(toolStore)` or `canvasCommandProducerPort(...)`, and `processHistoryCommandPort()`.
+  - Own the concrete construction of those ports from the session's private `World` and `CommandStack`; no other runtime/app-shell object may unwrap or cache a raw stack for producers.
   - Delete `commandStackForDeferredCommandProducers()` after all consumers are rewired.
 - `frontend/src/application/appShell/AppShellRuntime.ts`
   - Stop unwrapping raw `commandStack` from the session.
   - Return named command-producer ports/controllers instead of `commandStack` for canvas and process-history consumers.
+  - The returned runtime shape should have explicit fields such as `canvasCommandProducerPort` and `processHistoryCommandPort` (or equivalently named behavior fields), not a generic `commands`, `services`, `runtimeContext`, or mutable dependency bag.
 - `frontend/src/App.vue`
   - Replace raw `provide('commandStack', runtime.commandStack)` with named provides for selected command-producer ports, e.g. canvas tool command port and process-history port.
+  - Use typed Vue `InjectionKey` exports or direct prop/factory wiring with named TypeScript interfaces; string-keyed catch-all provides are forbidden for the replacement path.
 - `frontend/src/components/workspace/SvgCanvas.vue`
   - Inject the selected canvas command-producer port or controller, not raw `commandStack`.
   - Continue using injected `world` for current rendering/interaction reads; cite it as deferred `worldForView()`/read seam.
@@ -36,6 +39,15 @@ Production source:
 - `frontend/src/application/processHistory/ProcessHistoryUseCases.ts`
   - Replace raw provider cast with typed process-history command port/controller dependency.
 - `frontend/src/application/tools/ToolCommandIntents.ts` and `frontend/src/application/processHistory/ProcessHistoryIntents.ts` only if a small type addition is needed to express the named ports.
+
+### Required runtime-port ownership contract
+
+The implementation must make command-producer ownership explicit and non-generic:
+
+- `RuntimeSession` remains the only object that owns the concrete `CommandStack` for scoped producers. It may create behavior-specific ports/controllers from its private stack, but it must not expose the stack, a stack-like wrapper, or a generic `execute(commandBuilder)` service to Vue components.
+- `AppShellRuntime` may return only named behavior fields for this wave, such as a canvas/tool command producer and a process-history command producer. It must not replace `runtime.commandStack` with another broad mutable service (`commandRuntime`, `commandServices`, `appServices`, `runtimeContext`, etc.) that gives consumers arbitrary command execution.
+- Vue wiring must be type-addressable: either typed `InjectionKey<Canvas...>` / `InjectionKey<ProcessHistory...>` constants with behavior-sized interfaces, or direct imports/factory/prop wiring. A new string-keyed provider such as `provide('commands', ...)` or `inject('runtime')` is a blocker because it recreates the current hidden dependency seam.
+- Port interfaces should name user/application behaviors already present in the scoped producers: construction intent execution, quick intent execution, free-point movement sessions, style updates, process-history state reads, and process-history mutations. They should not expose raw `World`, raw `CommandStack`, `Command.push`, `new Command`, persistence saves, rendering state, or arbitrary operation replay.
 
 Tests:
 
@@ -84,6 +96,8 @@ Architectural behavior changes:
 - Point movement preview relies on rollback semantics of a long-lived command. Tests must cover preview, commit with preview, commit without preview, cancel, and failed preview rollback.
 - Construction covers many operation families and process-tree action groups. Focused tests must cover representative point/line/circle/guide/intersection/3D/projection-plane flows rather than only one happy path.
 - Process-history state reads still need `World.getProcessTree()`. Keep this inside a process-history port/use case; do not expand to process-tree redesign.
+- `CanvasToolController` and `ProcessHistoryController` may be simplified, but deleting or merging them is allowed only if the resulting replacement remains equally narrow: canvas command production, process-history command production, and no unrelated read/render/persistence/tool-state responsibilities.
+- Tool/controller seam changes must preserve the existing `ToolCommandSink` intent boundary. Do not absorb tool hit-testing, argument collection, active-plane reads, `world` interaction reads, or the tool state machine into command-producer ports.
 - Existing dirty command operation files may affect validation. Implementation must capture scoped status/diff and avoid depending on unrelated edits.
 
 ## Validation plan
@@ -97,16 +111,20 @@ Capture logs under the implementation cycle’s `validation/` directory:
    - canvas tool controller and point/style movement tests
    - representative tool tests for construction intent execution
    - process-history controller/use-case tests
+   - keyboard and toolbar undo/redo tests proving history behavior still flows through the existing `commandHistoryPort`, not through any new command-producer port
 3. Post-edit static scans proving:
    - no `commandStackForDeferredCommandProducers` in production source;
    - no production `provide('commandStack')` or command-producer `inject('commandStack')`;
    - no provider cast from unknown to `CommandStack` in canvas/process-history controllers;
+   - no replacement string-keyed catch-all provider/injection or generic mutable command service has been introduced;
+   - keyboard/toolbar undo-redo call sites still use `commandHistoryPort`;
    - `worldForView()` remains only as an explicitly deferred view/read seam.
 4. Root/frontend lint where defined.
 5. Root/frontend full Vitest where defined.
 6. Root/frontend build where defined.
 7. Root/frontend Playwright/e2e because affected flows are user-observable.
-8. Refresh live preview on `0.0.0.0:5173`, capture HTTP 200 probe, and run credential-free live smoke for representative construction, point move/style, process-history edit, and undo/redo.
+8. Focused persistence/autosave guard evidence: run existing tests or smoke flows that verify command-producer changes still mark projects dirty, autosave/save through the same paths, and preserve project round-trip behavior without editing schema/replay code.
+9. Refresh live preview on `0.0.0.0:5173`, capture HTTP 200 probe, and run credential-free live smoke for representative construction, point move/style, process-history edit, and undo/redo.
 
 ## No-backcompat rationale
 
@@ -119,5 +137,8 @@ Stop for a reviewed plan edit if implementation requires any of the following:
 - Changing `CommandStack` history behavior, `Command` snapshot format, operation descriptors, or persistence replay semantics.
 - Redesigning `ProjectService`, schema, migrations, Drive/auth, or backend contracts.
 - Replacing `worldForView()` or introducing broad rendering/view/read selectors.
+- Moving `world` reads in `SvgCanvas.vue`, tool hit-testing, active-plane/argument collection reads, or process-tree rendering into command-producer ports.
 - Rewriting the whole tool state machine or domain realization model.
+- Deleting or merging `CanvasToolController` or `ProcessHistoryController` in a way that broadens responsibilities beyond the current command-producer seam.
+- Changing keyboard/toolbar history routing away from `commandHistoryPort`, or changing autosave dirty signaling / persistence round-trip behavior beyond the command-producer boundary.
 - Creating a generic application kernel/god service that absorbs selection, persistence, rendering, and construction/process command production in one facade.
