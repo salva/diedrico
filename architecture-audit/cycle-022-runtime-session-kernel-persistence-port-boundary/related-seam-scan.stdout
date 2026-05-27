@@ -1,0 +1,108 @@
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:4:import type { World } from '@/domain/world/World';
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:5:import type { SelectionDeletionCommandPort } from './SelectionDeletionPorts';
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:7:interface SelectionDeletionCommandServiceInternals {
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:8:  createCommand(description: string, world: World): Command;
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:9:  createCascadeDeletion(command: Command, selectedIds: string[], world: World): void;
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:12:const defaultInternals: SelectionDeletionCommandServiceInternals = {
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:13:  createCommand: (description, world) => new Command(description, world),
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:14:  createCascadeDeletion: (command, selectedIds, world) => {
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:15:    DeletionSequenceFactory.createCascadeDeletion(command, selectedIds, world);
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:19:export class SelectionDeletionCommandService implements SelectionDeletionCommandPort {
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:20:  private readonly internals: SelectionDeletionCommandServiceInternals;
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:23:    private readonly world: World,
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:24:    private readonly commandStack: CommandStack,
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:25:    internals: Partial<SelectionDeletionCommandServiceInternals> = {},
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:33:    const deleteCommand = this.internals.createCommand('Delete elements', this.world);
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:34:    this.internals.createCascadeDeletion(deleteCommand, [...selectedIds], this.world);
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:36:    this.commandStack.push(deleteCommand);
+frontend/src/application/selectionDeletion/SelectionDeletionPorts.ts:1:export interface SelectionDeletionCommandPort {
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:10:import autoSave from '@/application/appShell/AutoSaveUseCases.ts?raw';
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:12:import projectSession from '@/application/appShell/ProjectSessionUseCases.ts?raw';
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:14:import selectionDeletionService from '@/application/selectionDeletion/SelectionDeletionCommandService.ts?raw';
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:18:    expect(appVue).not.toMatch(/DeletionSequenceFactory|ProjectService|GoogleDriveService|window as any|__autoSaveInterval|CustomEvent\('load-files'\)|Environment variables/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:24:    expect(startupDialogVue).not.toMatch(/window\.dispatchEvent|CustomEvent\('load-files'\)|defineExpose/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:36:    expect(appShellRuntime).not.toMatch(/new GoogleDriveService|ProjectService|window\.localStorage|createBrowserScheduler|keyboard\.install\(window\)/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:42:    expect(appShellProductionRuntime).toMatch(/new ProjectSessionPersistenceAdapter\(\)/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:47:    expect(appVue).not.toMatch(/createBrowserScheduler|new BrowserLastProjectRepository|new ProjectSessionPersistenceAdapter|new GoogleDriveService/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:60:    expect(selection).not.toMatch(/DeletionSequenceFactory|new Command|CommandStack|commandStack\.push|\.commit\(/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:63:    expect(selectionDeletionService).toMatch(/commandStack\.push/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:65:    expect(appShellRuntime).toMatch(/new SelectionDeletionCommandService\(world, commandStack\)/);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:6:import { AutoSaveUseCases } from '@/application/appShell/AutoSaveUseCases';
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:8:import { ProjectSessionUseCases } from '@/application/appShell/ProjectSessionUseCases';
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:10:import { CommandStack } from '@/commands/CommandStack';
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:11:import { World } from '@/domain/world/World';
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:12:import type { AppShellRuntimePorts, DrivePort, LastProjectRepositoryPort, ProjectSessionPersistencePort, SchedulerPort } from '@/application/appShell/AppShellPorts';
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:51:    loadFile: vi.fn().mockResolvedValue({ id: 'project-id', schemaVersion: '6.0.0', name: 'Loaded project', created: 'now', modified: 'now', nextElementId: 1, commands: [] }),
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:59:function persistence(): ProjectSessionPersistencePort {
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:61:    snapshotCurrentSession: vi.fn(({ world, projectName }) => ({
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:67:      nextElementId: world.peekNextId(),
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:70:    assertProjectData: vi.fn(),
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:96:    persistence: persistence(),
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:121:  it('keeps world and command stack identity stable while start/dispose owns explicit listeners and subscriptions', async () => {
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:124:    const world = runtime.world;
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:125:    const commandStack = runtime.commandStack;
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:126:    const subscribe = vi.spyOn(world, 'subscribeToChanges');
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:127:    const unsubscribe = vi.spyOn(world, 'unsubscribeFromChanges');
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:133:    expect(runtime.world).toBe(world);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:134:    expect(runtime.commandStack).toBe(commandStack);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:141:    expect(runtime.world).toBe(world);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:142:    expect(runtime.commandStack).toBe(commandStack);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:171:    expect(runtime.world).toBeInstanceOf(World);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:174:  it('sign-out clears project state without replacing runtime-owned world or command stack', async () => {
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:177:    const world = runtime.world;
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:178:    const commandStack = runtime.commandStack;
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:184:    expect(runtime.world).toBe(world);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:185:    expect(runtime.commandStack).toBe(commandStack);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:193:describe('AutoSaveUseCases', () => {
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:194:  it('owns polling, debounce, saved-status timers and clears them on dispose', async () => {
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:197:    const saveStatus = ref<'idle' | 'saving' | 'saved'>('idle');
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:200:    const autoSave = new AutoSaveUseCases({
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:201:      world: { getVersion: () => version, peekNextId: () => 10 } as any,
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:202:      commandStack: {} as any,
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:204:      persistence: persistence(),
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:209:      saveStatus,
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:218:    expect(saveStatus.value).toBe('saving');
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:223:    expect(saveStatus.value).toBe('saved');
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:230:    expect(saveStatus.value).toBe('idle');
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:233:  it('stops autosave and reopens startup flow on authentication failures', async () => {
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:237:    const saveStatus = ref<'idle' | 'saving' | 'saved'>('idle');
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:238:    const autoSave = new AutoSaveUseCases({
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:239:      world: { getVersion: () => 1, peekNextId: () => 10 } as any,
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:240:      commandStack: {} as any,
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:242:      persistence: persistence(),
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:247:      saveStatus,
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:258:    expect(saveStatus.value).toBe('idle');
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:267:    const autoSave = new AutoSaveUseCases({
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:268:      world: { getVersion: () => 1, peekNextId: () => 10 } as any,
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:269:      commandStack: {} as any,
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:274:      persistence: persistence(),
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:279:      saveStatus: ref('idle'),
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:318:    const world = {
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:327:    const useCases = new ActivePlaneUseCases(world as any, state);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:331:    expect(world.subscribeToChanges).toHaveBeenCalledTimes(1);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:335:    expect(world.setActivePlaneId).toHaveBeenCalledWith('plane-b');
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:341:    expect(world.unsubscribeFromChanges).toHaveBeenCalledTimes(1);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:467:describe('ProjectSessionUseCases startup and project flows', () => {
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:468:  function projectSessionDeps(overrides: Partial<ConstructorParameters<typeof ProjectSessionUseCases>[0]> = {}) {
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:469:    const world = new World();
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:470:    const commandStack = new CommandStack();
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:473:      world,
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:474:      commandStack,
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:481:      saveStatus: ref<'idle' | 'saving' | 'saved'>('idle'),
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:482:      startupDialog: { files: ref([]), loading: ref(false), loadingFiles: ref(false), error: ref<string | null>(null) },
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:491:    const useCases = new ProjectSessionUseCases(deps as any);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:496:    expect(deps.world.getAllProjectionPlanes().length).toBeGreaterThan(0);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:499:  it('loads and resets startup-dialog file list through typed runtime state', async () => {
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:501:    const useCases = new ProjectSessionUseCases(deps as any);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:505:    expect(deps.startupDialog.loadingFiles.value).toBe(false);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:509:    expect(deps.startupDialog.loading.value).toBe(false);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:510:    expect(deps.startupDialog.loadingFiles.value).toBe(false);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:514:  it('creates, opens, renames, and signs out without replacing stable world or command stack references', async () => {
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:516:    const originalWorld = deps.world;
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:517:    const originalCommandStack = deps.commandStack;
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:518:    const useCases = new ProjectSessionUseCases(deps as any);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:529:    expect(deps.ports.persistence.restoreSession).toHaveBeenCalled();
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:537:    expect(deps.world).toBe(originalWorld);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:538:    expect(deps.commandStack).toBe(originalCommandStack);
+frontend/tests/unit/application/appShell/KeyboardShortcutRouter.test.ts:19:    commandStack: { canUndo: () => false, canRedo: () => false, undo: vi.fn(), redo: vi.fn() },
