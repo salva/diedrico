@@ -1,0 +1,4 @@
+preview_pid=534417
+probe_url=http://127.0.0.1:5173/
+http_status=200
+host_binding=0.0.0.0:5173 (npm run dev --workspace=frontend -- --host 0.0.0.0)

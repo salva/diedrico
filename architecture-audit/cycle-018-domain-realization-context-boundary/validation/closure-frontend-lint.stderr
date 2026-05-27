@@ -1,0 +1,37 @@
+FATAL ERROR: v8::ToLocalChecked Empty MaybeLocal
+----- Native stack trace -----
+
+ 1: 0x73f778 node::OnFatalError(char const*, char const*) [node (vitest)]
+ 2: 0xc06584  [node (vitest)]
+ 3: 0x8e7b85 node::cjs_lexer::Parse(v8::FunctionCallbackInfo<v8::Value> const&) [node (vitest)]
+ 4: 0x784453dcf08d 
+
+----- JavaScript stack trace -----
+
+1: cjsPreparseModuleExports (node:internal/modules/esm/translators:393:44)
+2: createCJSModuleWrap (node:internal/modules/esm/translators:212:35)
+3: commonjsStrategy (node:internal/modules/esm/translators:349:10)
+4: #translate (node:internal/modules/esm/loader:451:20)
+5: afterLoad (node:internal/modules/esm/loader:507:29)
+6: loadAndTranslate (node:internal/modules/esm/loader:512:12)
+7: #getOrCreateModuleJobAfterResolve (node:internal/modules/esm/loader:555:36)
+8: afterResolve (node:internal/modules/esm/loader:603:52)
+9: getOrCreateModuleJob (node:internal/modules/esm/loader:609:12)
+10: syncLink (node:internal/modules/esm/module_job:162:33)
+
+
+Aborted (core dumped)
+npm error Lifecycle script `test:architecture` failed with error:
+npm error code 134
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c vitest run tests/unit/architecture
+npm error Lifecycle script `lint` failed with error:
+npm error code 134
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c npm run test:architecture

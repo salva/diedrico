@@ -1,0 +1,8 @@
+{
+  "title": "Diedrico - Dihedral Learning MVP",
+  "canvasCount": 1,
+  "svgCount": 19,
+  "buttons": 45,
+  "bodyTextSample": "Untitled Project\nP\nH\n\t​\n\n▼\n▼\n▼\n▼\n▼\n▼\n▼\n▼\nSign in\nElements\n▼\n2D Elements\n▼\nP\nH\n\t​\n\n▼\nPoints (1)\n👁\nO\nH\n\t​\n\n(0.00, 0.00)\n▼\nP\nV\n\t​\n\n▼\nPoints (1)\n👁\nO\nV\n\t​\n\n(0.00, 0.00)\n▼\n3D Elements\n▼\nPlanes (2)\n👁\nP\nH\n\t​\n\n👁\nP\nV\n\t​\n\nConstruction History\n<\n>\n▼\nRoot Process\n●\n▼\n▲\n▶\nWorld Initialization\n▼\n▲\n➤\nShow Planes\nShow 2D Elements on Planes\nShow Grid\nShow Reference Axes\nX\nY\nZ\nPlane:\nP_H\nTool:\nSelect\n3D:\n---",
+  "hasDiedricoShell": true
+}

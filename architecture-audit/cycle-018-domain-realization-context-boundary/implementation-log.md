@@ -104,3 +104,48 @@ A broad `git status` through MCP exceeded the output buffer because the workspac
 - The read-port realization-context factories are intentionally local to the two presentation adapters to avoid introducing a cross-layer service in Cycle 018. A future wave may decide whether a shared adapter module is worthwhile after additional realization-boundary cleanup, but no duplicate public context alias was added here.
 - Many domain/test call sites still use a parameter or variable named `world` for already-typed `ProjectionElementRealizationContext` calls. This is naming noise, not the deleted full-`World`/`any` seam; broad renaming across tests/tools/commands would exceed Cycle 018 scope.
 - Existing Vite build chunk-size warning remains pre-existing and unrelated to this implementation.
+
+---
+
+## Validation/preview closure — cycle-018-validation-and-preview-refresh
+
+**Wave 018 COMPLETE.** The validation/preview closure stage independently rechecked the implementation evidence and reran the mandatory gates with fresh `closure-*` log names under `architecture-audit/cycle-018-domain-realization-context-boundary/validation/`. No production source, package/tooling, backend, docs/spec, app-shell, command/undo, persistence, or Wave 019 implementation files were modified during closure.
+
+### Current workspace and protected-surface check
+
+- `closure-targeted-status.stdout` / `.stderr` — path-focused status for Wave 018 source/artifact/report paths and `architecture-audit/wave-plan.md`. It shows no uncommitted production-source diff in the Wave 018 implementation files; remaining untracked entries are audit/report/log artifacts from this and prior Cycle 018 stages.
+- `closure-wave-plan-grep.stdout` / `.stderr` — reread evidence for Wave 018/Wave 019 ordering in `architecture-audit/wave-plan.md`.
+- MCP `git diff` for the Wave 018 source files and `implementation-log.md`/`wave-plan.md` was empty before this closure log append.
+
+### Fresh validation log index
+
+All gates below are current closure-stage evidence and supersede stale implementation attempts where named.
+
+- Root lint: `closure-root-lint.stdout` / `.stderr` — passed (`11 passed`).
+- Frontend lint: `closure-frontend-lint-rerun.stdout` / `.stderr` — passed (`11 passed`). The earlier `closure-frontend-lint.stdout` / `.stderr` showed architecture tests passed but the Node/V8 process aborted with exit code 134; it is superseded by the green rerun.
+- Focused realization/read-port Vitest: `closure-focused-vitest.stdout` / `.stderr` — passed (`3 passed`, `22 passed`).
+- Root full Vitest: `closure-root-vitest.stdout` / `.stderr` — passed (`107 passed | 1 skipped`, `1231 passed | 45 skipped | 11 todo`).
+- Frontend full Vitest: `closure-frontend-vitest.stdout` / `.stderr` — passed (`107 passed | 1 skipped`, `1231 passed | 45 skipped | 11 todo`).
+- Root build: `closure-root-build.stdout` / `.stderr` — passed (`✓ built in 3.71s`); Vite emitted the pre-existing large chunk warning.
+- Frontend build: `closure-frontend-build.stdout` / `.stderr` — passed (`✓ built in 3.62s`); Vite emitted the pre-existing large chunk warning.
+- Root e2e: `closure-root-e2e.stdout` / `.stderr` — passed (`8 passed`).
+- Frontend e2e: `closure-frontend-e2e.stdout` / `.stderr` — passed (`8 passed`).
+
+### Live preview and Playwright evidence
+
+- Preview refresh command target: `npm run dev --workspace=frontend -- --host 0.0.0.0`, recorded with PID in `validation/live-preview-server.pid` and live server logs in `closure-live-preview-server.stdout` / `.stderr`.
+- `closure-live-preview-refresh-rerun.stdout` / `.stderr` — captured preview PID, `http://127.0.0.1:5173/`, HTTP `200`, and explicit `0.0.0.0:5173` host binding evidence. The command wrapper returned a nonzero status despite printing the HTTP 200 evidence, so the separate probe below is the authoritative reachability result.
+- `closure-live-preview-probe.stdout` / `.stderr` — passed independent HTTP probe with `http_status=200`, `remote_ip=127.0.0.1`, `content_type=text/html`.
+- `closure-live-playwright-smoke-final.stdout` / `.stderr` — passed live browser smoke against the refreshed preview: title `Diedrico - Dihedral Learning MVP`, `canvasCount: 1`, `svgCount: 19`, `buttons: 45`, app-shell text containing `P_H`, `P_V`, `Tool: Select`, and 3D controls.
+- Superseded live smoke command errors: `closure-live-playwright-smoke.stdout` failed due to a `/tmp`-relative Playwright import; `closure-live-playwright-smoke-rerun.stdout` failed due to CommonJS named-export import shape. Both are command-script errors and are superseded by `closure-live-playwright-smoke-final.stdout`.
+- Superseded preview refresh command error: `closure-live-preview-refresh.stdout` failed because `/bin/sh` does not support `set -o pipefail`; it is superseded by the bash rerun plus independent probe.
+
+### Residual risks after closure
+
+- Existing Vite large-chunk warnings remain pre-existing and unrelated to Wave 018.
+- The closure stage observed substantial unrelated/unowned untracked Cycle 018 audit artifacts. They were not reverted or mined beyond necessary validation evidence and do not indicate a Wave 018 source gate failure.
+- Local read-port realization-context factories remain intentionally local to `CanvasWorldReadPort` and `ThreeWorldReadPort`; future cleanup may evaluate sharing only if it does not create a god context.
+
+### Next-wave recommendation / re-rank
+
+After rereading `architecture-audit/wave-plan.md`, Wave 019 remains the most central next wave because Wave 018 completed the typed domain-realization context boundary that Wave 019 depends on. Start the next canonical stage as `cycle-019-fresh-scout-proposals` for **Wave 019 — Three scene-host lifecycle and renderer platform boundary**. The Wave 019 scout must first re-read the current code and confirm that no residual full-`World`/`any` realization seam blocks scene-host/platform work; if a material premise changed, update `wave-plan.md` through a reviewed plan-edit mini-cycle before implementation.
