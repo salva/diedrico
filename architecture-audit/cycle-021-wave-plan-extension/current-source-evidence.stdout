@@ -1,0 +1,137 @@
+frontend/src/services/ProjectService.ts:2: * ProjectService - current-schema command-stream persistence orchestration.
+frontend/src/services/ProjectService.ts:6:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/services/ProjectService.ts:11:export interface ProjectData {
+frontend/src/services/ProjectService.ts:24:export class ProjectService {
+frontend/src/services/ProjectService.ts:27:  static serializeCommands(commandStack: CommandStack, nextElementId: number, projectName: string): ProjectData {
+frontend/src/services/ProjectService.ts:45:  static deserializeCommands(data: ProjectData, world: World, commandStack: CommandStack): void {
+frontend/src/services/ProjectService.ts:46:    this.validateProjectData(data);
+frontend/src/services/ProjectService.ts:80:  static validateProjectData(data: unknown): asserts data is ProjectData {
+frontend/src/services/ProjectService.ts:84:    const record = data as Partial<ProjectData>;
+frontend/src/application/appShell/KeyboardShortcutRouter.ts:1:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/appShell/KeyboardShortcutRouter.ts:18:    commandStack: CommandStack;
+frontend/src/commands/CommandStack.ts:2: * CommandStack - Manages undo/redo history
+frontend/src/commands/CommandStack.ts:19:export class CommandStack {
+frontend/src/components/LoginStatusWidget.vue:35:      <div v-else class="user-avatar-placeholder">
+frontend/src/components/LoginStatusWidget.vue:98: * Get initials from name for avatar placeholder
+frontend/src/components/LoginStatusWidget.vue:191:.user-avatar-placeholder {
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:1:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:3:import { ProjectService, type ProjectData } from '@/services/ProjectService';
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:7:  snapshotCurrentSession(deps: { commandStack: CommandStack; world: World; projectName: string }): ProjectData {
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:8:    return ProjectService.serializeCommands(deps.commandStack, deps.world.peekNextId(), deps.projectName);
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:11:  assertProjectData(data: unknown): asserts data is ProjectData {
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:12:    ProjectService.validateProjectData(data);
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:15:  restoreSession(data: ProjectData, deps: { world: World; commandStack: CommandStack }): void {
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:16:    ProjectService.deserializeCommands(data, deps.world, deps.commandStack);
+frontend/src/commands/Command.ts:27: *    const cmd = new Command("Create segment", world);
+frontend/src/commands/Command.ts:121:    const command = new Command(input.description, world);
+frontend/src/commands/Command.ts:195:   * undo stack. CommandStack checks this before adding commands.
+frontend/src/application/appShell/ProjectSessionUseCases.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/appShell/ProjectSessionUseCases.ts:5:import type { ProjectData } from '@/services/ProjectService';
+frontend/src/application/appShell/ProjectSessionUseCases.ts:14:      commandStack: CommandStack;
+frontend/src/application/appShell/ProjectSessionUseCases.ts:120:      const projectData = await drive.loadFile(fileId) as ProjectData;
+frontend/src/application/appShell/ProjectSessionUseCases.ts:122:      this.deps.ports.persistence.assertProjectData(projectData);
+frontend/src/application/appShell/AppShellRuntime.ts:2:import { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/appShell/AppShellRuntime.ts:16:  const world = new World();
+frontend/src/application/appShell/AppShellRuntime.ts:17:  const commandStack = new CommandStack();
+frontend/src/application/appShell/AutoSaveUseCases.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/appShell/AutoSaveUseCases.ts:16:      commandStack: CommandStack;
+frontend/src/application/appShell/SelectionUseCases.ts:3:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/appShell/SelectionUseCases.ts:4:import { DeletionSequenceFactory } from '@/commands/factories/DeletionSequenceFactory';
+frontend/src/application/appShell/SelectionUseCases.ts:13:    private readonly commandStack: CommandStack,
+frontend/src/application/appShell/SelectionUseCases.ts:36:    const deleteCommand = new Command('Delete elements', this.world);
+frontend/src/application/appShell/SelectionUseCases.ts:37:    DeletionSequenceFactory.createCascadeDeletion(deleteCommand, selectedIds, this.world);
+frontend/src/tools/ArgumentCollectorTool.ts:278:      console.warn('ArgumentCollectorTool: No viable next arguments, resetting tool state');
+frontend/src/tools/ArgumentCollectorTool.ts:351:   * Get current tool state (for debugging/testing)
+frontend/src/components/workspace/SvgCanvas.vue:320:        if (!result.success) console.error('[SvgCanvas] Point move commit failed:', result.message);
+frontend/src/components/workspace/SvgCanvas.vue:491:  console.log('World initialized');
+frontend/src/components/workspace/SvgCanvas.vue:494:  console.log('Points in world:', totalPoints);
+frontend/src/components/workspace/SvgCanvas.vue:516:    console.log(`[SvgCanvas] Created new tool instance: ${newTool}`);
+frontend/src/components/workspace/SvgCanvas.vue:525:      console.warn(`[SvgCanvas] No tool factory for: ${newTool}`);
+frontend/src/components/workspace/SvgCanvas.vue:576:      // console.log('Rendering point primitive:', p, '→ SVG attrs:', result.attributes);
+frontend/src/components/workspace/SvgCanvas.vue:600:      // console.log('Rendering segment primitive:', p, '→ SVG attrs:', result.attributes);
+frontend/src/components/workspace/SvgCanvas.vue:613:      // console.log('Rendering circle primitive:', p, '→ SVG attrs:', result.attributes);
+frontend/src/components/workspace/SvgCanvas.vue:671:  // console.log('[SvgCanvas] Click at canvas coords:', { x: canvasPoint.x, y: canvasPoint.y });
+frontend/src/components/workspace/SvgCanvas.vue:676:    console.error('[SvgCanvas] No active plane for canvas click');
+frontend/src/components/workspace/SvgCanvas.vue:683:    console.error('[SvgCanvas] No transform for active plane:', activePlaneId);
+frontend/src/components/workspace/SvgCanvas.vue:695:    console.error('[SvgCanvas] Failed to convert canvas to plane coordinates');
+frontend/src/components/workspace/SvgCanvas.vue:699:  // console.log('[SvgCanvas] Plane coords (u,v,w):', planePos);
+frontend/src/components/workspace/SvgCanvas.vue:719:        // console.log('[SvgCanvas] Added to selection:', hit.elementId);
+frontend/src/components/workspace/SvgCanvas.vue:723:        // console.log('[SvgCanvas] Selected:', hit.elementId);
+frontend/src/components/workspace/SvgCanvas.vue:728:      // console.log('[SvgCanvas] Cleared selection');
+frontend/src/components/workspace/SvgCanvas.vue:738:    console.warn(`[SvgCanvas] No tool instance for: ${activeToolName}`);
+frontend/src/components/workspace/SvgCanvas.vue:758:  // console.log('[SvgCanvas] Reactivity triggered, renderTick:', renderTick.value);
+frontend/src/components/workspace/SvgCanvas.vue:761:    console.log('[SvgCanvas] Tool operation succeeded:', result.message);
+frontend/src/components/workspace/SvgCanvas.vue:763:    console.error('[SvgCanvas] Tool operation failed:', result.message);
+frontend/src/components/workspace/SvgCanvas.vue:790:  console.log('[Zoom] BEFORE:', {
+frontend/src/components/workspace/SvgCanvas.vue:806:  console.log('[Zoom] AFTER:', {
+frontend/src/components/workspace/SvgCanvas.vue:913:    console.log('[SvgCanvas] Opening properties dialog for:', hit.elementId);
+frontend/src/components/workspace/SvgCanvas.vue:924:    console.error('[SvgCanvas] Cannot save properties without active plane');
+frontend/src/components/workspace/SvgCanvas.vue:928:  console.log('[SvgCanvas] Saving property changes:', changes);
+frontend/src/components/workspace/SvgCanvas.vue:943:    console.log('[SvgCanvas] Style updated and command added to stack');
+frontend/src/components/workspace/SvgCanvas.vue:945:    console.error('[SvgCanvas] Style update failed:', result.message);
+frontend/src/components/workspace/SvgCanvas.vue:1006:      console.error('[SvgCanvas] Point move preview failed:', result.message);
+frontend/src/components/workspace/SvgCanvas.vue:1166:  console.log('[SvgCanvas] fitToView called');
+frontend/src/components/workspace/SvgCanvas.vue:1173:    console.log('[SvgCanvas] No elements to fit, resetting to default view');
+frontend/src/components/workspace/SvgCanvas.vue:1207:    console.log('[SvgCanvas] No valid bounds found, resetting to default view');
+frontend/src/components/workspace/SvgCanvas.vue:1231:  console.log('[SvgCanvas] Fit to view:', {
+frontend/src/application/appShell/AppShellPorts.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/appShell/AppShellPorts.ts:5:import type { ProjectData } from '@/services/ProjectService';
+frontend/src/application/appShell/AppShellPorts.ts:26:  snapshotCurrentSession(deps: { commandStack: CommandStack; world: World; projectName: string }): ProjectData;
+frontend/src/application/appShell/AppShellPorts.ts:27:  assertProjectData(data: unknown): asserts data is ProjectData;
+frontend/src/application/appShell/AppShellPorts.ts:28:  restoreSession(data: ProjectData, deps: { world: World; commandStack: CommandStack }): void;
+frontend/src/commands/operations/IOperation.ts:5: * each operation's typed descriptor plus the operation registry; ProjectService must
+frontend/src/components/toolbars/ToolFamilyButton.vue:98:    console.log('[ToolFamilyButton] Dropdown opened for family:', props.family.id);
+frontend/src/components/toolbars/ToolFamilyButton.vue:99:    console.log('[ToolFamilyButton] Tools in family:', props.family.tools);
+frontend/src/components/toolbars/ToolFamilyButton.vue:104:  console.log('[ToolFamilyButton] Selecting tool:', toolId);
+frontend/src/components/dialogs/NewProjectDialog.vue:13:            placeholder="Enter project name..."
+frontend/src/components/dialogs/PropertiesDialog.vue:62:                placeholder="#000000"
+frontend/src/components/dialogs/PropertiesDialog.vue:329:  // TODO: Get creation action from ProcessTree
+frontend/src/components/dialogs/PropertiesDialog.vue:330:  // For now, just show placeholder
+frontend/src/components/dialogs/PropertiesDialog.vue:353:  // TODO: Load current element properties from world
+frontend/src/components/dialogs/PropertiesDialog.vue:432:    console.warn('[PropertiesDialog] Validation failed');
+frontend/src/components/panels/ThreeView.vue:18:        <label class="control-label" title="Show coordinate axes (X/Y/Z) at origin for spatial reference and debugging">
+frontend/src/components/panels/ElementsPanel.vue:165:  console.log('[ElementsPanel] Mounted, initial World version:', world.getVersion());
+frontend/src/components/panels/ElementsPanel.vue:169:      console.log('[ElementsPanel] World version changed:', lastVersion, '→', currentVersion);
+frontend/src/components/panels/ElementsPanel.vue:188:  console.log('[ElementsPanel] Computing projection planes list, version:', version, 'forceUpdate:', update);
+frontend/src/components/panels/ElementsPanel.vue:241:  console.log('[ElementsPanel] Computing 3D elements');
+frontend/src/components/panels/ElementsPanel.vue:249:  console.log('[ElementsPanel] 3D elements:', {
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:152:        console.error('[UpdateElementStyleOp] Cannot undo: Element not found:', this.elementId);
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:160:      console.error('[UpdateElementStyleOp] Undo failed:', error);
+frontend/src/components/panels/ElementTypeGroup.vue:64:  // TODO: Emit highlight event
+frontend/src/components/panels/ElementTypeGroup.vue:68:  // TODO: Clear highlight
+frontend/src/commands/operations/world/RemoveElementOps.ts:409:        console.warn(`[RemoveGuide2DOp] Cannot delete sibling guide ${this.guideId} directly. Redirect to delete primary guide ${guide.primaryGuideId} instead.`);
+frontend/src/commands/operations/world/RemoveElementOps.ts:442:              console.warn(`[RemoveGuide2DOp] Failed to remove sibling guide ${siblingGuideId}`);
+frontend/src/commands/operations/processTree/ProcessTreeOperations.ts:104:  // TODO: Implement when needed
+frontend/src/commands/operations/processTree/ProcessTreeOperations.ts:144:  // TODO: Implement when needed
+frontend/src/commands/factories/LineSequenceFactory.ts:21: * const cmd = new Command('Create construction', world);
+frontend/src/commands/factories/GuideSequenceFactory.ts:38:   * const cmd = new Command('Create guide', world);
+frontend/src/commands/factories/GuideSequenceFactory.ts:58:    console.log(`[GuideSequenceFactory] createGuideWithSibling called: plane=${planeId}, refLine=${referenceLineId}, point=${throughPointId}`);
+frontend/src/commands/factories/GuideSequenceFactory.ts:69:    console.log(`[GuideSequenceFactory] Primary guide created: ${guideId}`);
+frontend/src/commands/factories/GuideSequenceFactory.ts:71:    console.log(`[GuideSequenceFactory] Getting sibling plane info...`);
+frontend/src/commands/factories/GuideSequenceFactory.ts:83:      console.log(`[GuideSequenceFactory] No sibling info - reference line is not a HalfHingeLine or BrokenHalfHingeLine2D`);
+frontend/src/commands/factories/GuideSequenceFactory.ts:87:    console.log(`[GuideSequenceFactory] Sibling plane: ${siblingInfo.siblingPlaneId}, HHL: ${siblingInfo.siblingHalfHingeLineId}`);
+frontend/src/commands/factories/GuideSequenceFactory.ts:109:    console.log(
+frontend/src/commands/factories/GuideSequenceFactory.ts:117:      console.log(`[GuideSequenceFactory] Reference is BrokenHalfHingeLine2D - computing arc geometry`);
+frontend/src/commands/factories/GuideSequenceFactory.ts:133:        console.log(`[GuideSequenceFactory] Arc geometry computed and stored`);
+frontend/src/commands/factories/GuideSequenceFactory.ts:135:        console.warn(`[GuideSequenceFactory] Failed to compute arc geometry`);
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:27: * const cmd = new Command('Create intersection', world);
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:236:        console.log(
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:243:      console.warn('[IntersectionSequenceFactory] Failed to create sibling intersection:', siblingError);
+frontend/src/commands/factories/DeletionSequenceFactory.ts:2: * DeletionSequenceFactory - Factory for cascade deletion sequences
+frontend/src/commands/factories/DeletionSequenceFactory.ts:35: * DeletionSequenceFactory - Factory for cascade deletion sequences
+frontend/src/commands/factories/DeletionSequenceFactory.ts:40:export class DeletionSequenceFactory {
+frontend/src/commands/factories/DeletionSequenceFactory.ts:65:    console.log('[DeletionSequenceFactory] Cascade deletion:', {
+frontend/src/commands/factories/DeletionSequenceFactory.ts:79:        console.warn(`[DeletionSequenceFactory] Element ${elementId} has no producing action - skipping`);
+frontend/src/commands/factories/DeletionSequenceFactory.ts:131:        console.warn(`[DeletionSequenceFactory] Element ${elementId} not found in any plane`);
+frontend/src/commands/factories/README.md:14:- `DeletionSequenceFactory` - Handles cascade deletion with topological sorting
+frontend/src/commands/factories/README.md:62:const cmd = new Command('Create guide', world);
+frontend/src/commands/factories/README.md:79:const cmd = new Command('Create intersection', world);
+frontend/src/commands/factories/README.md:94:### DeletionSequenceFactory
+frontend/src/commands/factories/README.md:97:const cmd = new Command('Delete elements', world);
+frontend/src/commands/factories/README.md:99:DeletionSequenceFactory.createCascadeDeletion(
+frontend/src/commands/factories/README.md:137:    const cmd = new Command('Test', mockWorld);
+frontend/src/commands/factories/README.md:145:    const cmd = new Command('Test', mockWorldWithHHL);
+frontend/src/commands/factories/README.md:156:Test with real World and CommandStack:
+frontend/src/commands/factories/README.md:161:  const cmd = new Command('Create guide', world);
+frontend/src/commands/factories/README.md:198:### DeletionSequenceFactory
+frontend/src/commands/factories/README.md:207:**Tests**: `DeletionSequenceFactory.spec.ts`

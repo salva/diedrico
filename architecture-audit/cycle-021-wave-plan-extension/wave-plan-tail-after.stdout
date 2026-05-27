@@ -1,0 +1,180 @@
+
+## Wave 020 — App-shell project session and browser integration boundary
+
+**Status**
+
+Added by `cycle-020-wave-plan-extension` as the recommended next wave after Wave 019. Requires `cycle-020-wave-plan-extension-review` sign-off before the canonical `cycle-020-fresh-scout-proposals` stage and before any implementation.
+
+**Scope**
+
+- `frontend/src/application/appShell/AppShellRuntime.ts`
+- `frontend/src/application/appShell/AppShellPorts.ts`
+- `frontend/src/application/appShell/ProjectSessionUseCases.ts`
+- `frontend/src/application/appShell/AutoSaveUseCases.ts`
+- `frontend/src/application/appShell/SelectionUseCases.ts` only where selection/delete command ownership must be kept behind the app-shell/application boundary
+- `frontend/src/application/appShell/KeyboardShortcutRouter.ts` only where browser-event installation and shortcut routing interact with project/session lifecycle
+- a small production composition module/factory for browser-only adapters if the reviewed proposal selects one
+- `frontend/src/App.vue` only as the Vue composition shell that wires UI callbacks and provides the already-created runtime objects
+- `frontend/src/services/GoogleDriveService.ts` only at the adapter/port boundary; do not redesign Drive API behavior broadly
+- `frontend/src/services/ProjectService.ts` only where its app-shell-facing persistence port shape must be narrowed or moved behind a typed adapter
+- `frontend/src/stores/authStore.ts`, `frontend/src/stores/selectionStore.ts`, `frontend/src/stores/toolStore.ts`, and `frontend/src/stores/viewStore.ts` only as port consumers/adapters, not store redesigns
+- focused app-shell runtime/use-case/port tests, persistence/autosave tests, keyboard/session tests, and representative project-flow e2e/live checks
+
+**Scope guard**
+
+This wave owns the app-shell project/session/browser integration boundary after the domain, command, validation, presentation, realization, and 3D runtime boundaries have been stabilized. It must not reopen domain realization, canvas/three presentation selectors, Three.js scene-host lifecycle, command/undo descriptor architecture, project serialization internals, backend deletion/contract stance, package/tooling gates, docs/spec reconciliation, or broad store redesign. If implementation proves that persistence format or command serialization must be redesigned rather than merely hidden behind a stable app-shell port, stop and run a reviewed plan-edit mini-cycle before broadening scope.
+
+The wave must start with a current inventory of concrete construction and browser globals in the app shell: `World`, `CommandStack`, `GoogleDriveService`, `ProjectService`, `window.localStorage`, keyboard target installation, scheduler/timer installation, alert callbacks, auth/session storage keys, and runtime state exposed to `App.vue`. It must also inventory which app-shell use cases still directly mutate `World`/`CommandStack` and which of those are intentional application-use-case dependencies versus composition leaks.
+
+**Baseline/current grounding**
+
+The original baseline ranked `App.vue` as an app-shell god module that owned `World`, `CommandStack`, Drive/local project state, autosave, keyboard/delete/select-all behavior, active-plane state, project lifecycle, and command coordination (`architecture-audit/baseline/architecture-map.md`, “Entry points and workspace boundaries”; `architecture-audit/baseline/risk-register.md`, R2 and R5). Earlier waves have reduced the Vue shell itself: current `App.vue` delegates startup, toolbar, project-name, canvas, and lifecycle events to `runtime.actions`, creates the runtime through `createAppShellRuntime`, and only provides `runtime.world` plus `runtime.commandStack` to descendants (`frontend/src/App.vue:12`, `frontend/src/App.vue:24`, `frontend/src/App.vue:63`, `frontend/src/App.vue:107`, `frontend/src/App.vue:126`, `frontend/src/App.vue:142`, `frontend/src/App.vue:143`, `frontend/src/App.vue:171`).
+
+Current source evidence shows the remaining central problem moved into the application app-shell runtime/composition boundary, not into `App.vue` markup. `createAppShellRuntime` still constructs `World`, `CommandStack`, default `GoogleDriveService`, default `ProjectService`, browser `window.localStorage`, browser scheduler, and installs keyboard handling on `window` from the runtime (`frontend/src/application/appShell/AppShellRuntime.ts:21`, `frontend/src/application/appShell/AppShellRuntime.ts:22`, `frontend/src/application/appShell/AppShellRuntime.ts:23`, `frontend/src/application/appShell/AppShellRuntime.ts:24`, `frontend/src/application/appShell/AppShellRuntime.ts:27`, `frontend/src/application/appShell/AppShellRuntime.ts:28`, `frontend/src/application/appShell/AppShellRuntime.ts:29`, `frontend/src/application/appShell/AppShellRuntime.ts:101`). `AppShellPorts` still exposes a persistence port typed directly in terms of `CommandStack`, `World`, and `ProjectData` from `ProjectService`, so app-session orchestration is not insulated from concrete command/domain/persistence shapes (`frontend/src/application/appShell/AppShellPorts.ts:2`, `frontend/src/application/appShell/AppShellPorts.ts:3`, `frontend/src/application/appShell/AppShellPorts.ts:5`, `frontend/src/application/appShell/AppShellPorts.ts:24`, `frontend/src/application/appShell/AppShellPorts.ts:25`, `frontend/src/application/appShell/AppShellPorts.ts:27`).
+
+Project/session use cases still mix session state, Drive calls, local-storage keys, domain reset/initialization, command-stack clearing, persistence validation/deserialization, autosave start, and error UI state in one class (`frontend/src/application/appShell/ProjectSessionUseCases.ts:27`, `frontend/src/application/appShell/ProjectSessionUseCases.ts:40`, `frontend/src/application/appShell/ProjectSessionUseCases.ts:47`, `frontend/src/application/appShell/ProjectSessionUseCases.ts:96`, `frontend/src/application/appShell/ProjectSessionUseCases.ts:99`, `frontend/src/application/appShell/ProjectSessionUseCases.ts:102`, `frontend/src/application/appShell/ProjectSessionUseCases.ts:118`, `frontend/src/application/appShell/ProjectSessionUseCases.ts:121`, `frontend/src/application/appShell/ProjectSessionUseCases.ts:123`, `frontend/src/application/appShell/ProjectSessionUseCases.ts:124`, `frontend/src/application/appShell/ProjectSessionUseCases.ts:188`). `AutoSaveUseCases` owns dirty-version polling, debounce/status timers, persistence serialization, Drive update/create fallback, local-storage last-file update, auth-expiry UI behavior, and quota/file-deleted error policy (`frontend/src/application/appShell/AutoSaveUseCases.ts:30`, `frontend/src/application/appShell/AutoSaveUseCases.ts:33`, `frontend/src/application/appShell/AutoSaveUseCases.ts:42`, `frontend/src/application/appShell/AutoSaveUseCases.ts:50`, `frontend/src/application/appShell/AutoSaveUseCases.ts:54`, `frontend/src/application/appShell/AutoSaveUseCases.ts:59`, `frontend/src/application/appShell/AutoSaveUseCases.ts:92`, `frontend/src/application/appShell/AutoSaveUseCases.ts:103`, `frontend/src/application/appShell/AutoSaveUseCases.ts:112`).
+
+Recent Wave 019 closure confirms validation is green and the current plan ends at Wave 019, so a new central wave is required before implementation continues (`architecture-audit/cycle-019-three-scene-host-lifecycle-renderer-platform/implementation-log.md`, “Validation/preview closure — cycle-019-validation-and-preview-refresh”). Current scans also show lower-priority candidates are not more central right now: the backend directory is absent and root workspaces list only `frontend` (`package.json:7`, `package.json:8`, `package.json:13`, `.saivage/stages/cycle-020-wave-plan-extension/backend-contract-source-evidence.stdout`); README-only `paper/`/`toolbar/` operation placeholder directories were not found (`.saivage/stages/cycle-020-wave-plan-extension/deferred-candidates-evidence.stdout`); docs/spec drift remains real but intentionally follows structural waves.
+
+**Target outcome**
+
+The app shell has a clear composition boundary: Vue `App.vue` remains a passive composition shell; production-only browser adapters create Drive, storage, scheduler, alert, keyboard target, and optional environment-backed configuration; app-shell use cases consume typed ports and do not instantiate concrete browser services or reach for browser globals; project session/autosave state transitions are explicit and testable without `window`, real localStorage, real Google APIs, or concrete persistence static methods. Domain/command objects may remain the current in-memory runtime model provided to child construction/rendering paths, but their creation and persistence exposure are owned by one application composition contract rather than scattered through runtime/use-case classes.
+
+The persistence-facing port should express the app shell's need to save/load a current project session without forcing use-case code to know static `ProjectService` methods or serialization internals. The Drive-facing port should remain a Drive/project-file adapter contract, not a direct dependency on Google API globals. Browser state keys such as `diedrico_last_file_id` and `diedrico_last_file_name` should be centralized behind a small session-storage port or repository instead of duplicated string literals in project/session code.
+
+**Explicit DELETE list**
+
+- Delete default construction of `GoogleDriveService`, direct `ProjectService` static binding, direct `window.localStorage`, and direct `window` keyboard target installation from `createAppShellRuntime` if the reviewed proposal introduces a production composition factory/adapters.
+- Delete `ProjectPersistencePort` methods that expose concrete static `ProjectService` shape to app-session use cases if replaced by a narrower project-session persistence adapter.
+- Delete duplicated local-storage key string usage for last project file/name from `ProjectSessionUseCases` and `AutoSaveUseCases`; replace with a named session repository/port if the reviewed proposal chooses that path.
+- Delete app-shell use-case `any` error handling in touched save/session paths where a typed error classifier or narrow unknown-to-message helper is introduced.
+- Delete app-shell tests that assert concrete service construction or browser-global behavior from use cases; replace with port/adapter/composition tests.
+- Delete compatibility wrappers, dual browser/global and port-based paths, dead exports, or broad “AppShellService” facades that merely move the existing concentration without narrowing ownership.
+- Do not delete or rewrite `GoogleDriveService` internals, `ProjectService` serialization internals, command descriptors, or backend/docs/spec files in this wave unless a reviewed plan edit broadens scope.
+
+**Success criteria**
+
+- `createAppShellRuntime` can be constructed in tests and in production from explicit dependencies without directly reaching for `window.localStorage`, default `GoogleDriveService`, or static `ProjectService` as hidden globals inside the runtime core.
+- Browser-only concerns (Google API service construction, localStorage, scheduler/timers, alert, and keyboard event target) are isolated in a production composition adapter/module or explicit ports with focused tests.
+- Project session and autosave use cases consume named ports/repositories for last-project storage and persistence/Drive operations; stringly session-key duplication is removed from touched use-case code.
+- `App.vue` remains small and composition-focused, with no reintroduced direct project lifecycle/autosave/keyboard orchestration imports.
+- Selection/delete and keyboard routing behavior remains user-visible equivalent; any retained direct `World`/`CommandStack` use in app-shell use cases is documented as an intentional application-use-case dependency rather than a composition leak.
+- No domain realization, rendering/presentation, Three.js scene-host, command/undo descriptor, persistence schema, backend, docs/spec, package/tooling, or validation-platform change is introduced without a reviewed plan edit.
+- Focused app-shell tests cover runtime composition, project create/open/rename/sign-in/sign-out, autosave debounce/error policies, keyboard install/dispose/routing, and session-storage behavior with fake ports.
+- Mandatory validation cadence passes with stable logs captured under the Wave 020 `validation/` directory: `npm run lint` at the root and in every workspace where defined; focused app-shell/service-adapter Vitest for touched modules; full Vitest at the root and in every workspace where defined; `npm run build` at the root and in every workspace where defined; Playwright/e2e at the root and in every workspace where defined because project/session and keyboard flows are user-observable; live preview refresh on `0.0.0.0:5173`; HTTP reachability probe; and Playwright MCP/live browser evidence for startup/new project, keyboard routing, and save/autosave-visible status where practical.
+
+**Dependencies**
+
+Depends on Waves 014–019 because it should consume green validation gates, stable command/use-case contracts, current project persistence contracts, cleaned presentation/read-port contracts, typed realization contexts, and the explicit Three scene-host lifecycle boundary. It is ordered before backend/frontend contract stance, placeholder/debug cleanup, docs/spec reconciliation, and broad validation hardening because current evidence shows the active frontend app-shell project/session boundary is the next central runtime coordinator while the backend is absent from the active workspace and docs/debug cleanup would be peripheral.
+
+**Validation requirements**
+
+All Wave 020 validation stdout/stderr must be captured to stable files under `architecture-audit/cycle-020-app-shell-project-session-browser-integration/validation/` (or the reviewed final Cycle 020 directory name). Undefined commands may be skipped only with exact package-script evidence in the implementation log; defined root or workspace commands are mandatory.
+
+1. Capture pre-edit scoped git status/diff and static scans for hidden app-shell concrete construction/browser globals, project-session storage-key duplication, app-shell persistence/Drive port shapes, keyboard target installation, and direct `World`/`CommandStack` mutation in app-shell use cases.
+2. Run focused Vitest for changed app-shell runtime/use cases/ports/adapters and any touched ProjectService/GoogleDriveService adapter tests, with stable stdout/stderr logs.
+3. Run `npm run lint` at the repository root and in every workspace where a lint script is defined, including `frontend` while it remains the active workspace.
+4. Run full Vitest at the repository root and in every workspace where a test/Vitest script is defined, including `frontend` while it remains the active workspace.
+5. Run `npm run build` at the repository root and in every workspace where a build script is defined, including `frontend` while it remains the active workspace.
+6. Run Playwright/e2e at the repository root and in every workspace where an e2e script is defined because startup/project/session/keyboard behavior is user-observable.
+7. Refresh the live preview bound to `0.0.0.0:5173`, capture an HTTP 200 reachability probe, and run focused Playwright MCP/live browser smoke for startup/new project, representative keyboard shortcuts, and visible save/status behavior where possible without real Drive credentials.
+
+**Risks**
+
+- Over-abstracting every browser or Drive call can create an adapter maze. Keep ports at seams required for app-shell composition, testability, and ownership; do not wrap every Google API method twice.
+- Moving persistence-facing contracts can accidentally become a persistence-schema redesign. Keep serialization internals unchanged unless a reviewed mini-cycle broadens scope.
+- Autosave timing is user-visible and easy to break; use fake scheduler tests plus e2e/live smoke rather than relying on type checks.
+- Drive/auth behavior cannot rely on real credentials in validation. Use fake-port unit coverage and credential-free browser smoke; do not read env/secret/config files.
+- Existing unrelated dirty source files may be present from prior work. Implementation must use path-scoped status/diff and avoid reverting or depending on unrelated modifications.
+
+**No-backcompat rationale**
+
+The current hidden browser/static-service construction inside app-shell runtime is internal architecture debt, not a user-facing compatibility contract. If the reviewed proposal introduces an explicit production composition adapter or narrower project-session ports, delete the old hidden construction path and update tests/callers directly rather than preserving parallel runtime creation modes. A single clear app-shell composition boundary is more valuable than compatibility wrappers around implicit globals.
+
+
+---
+
+## Wave 021 — Selection/delete command-kernel boundary
+
+**Status**
+
+Added by `cycle-021-wave-plan-extension` after Wave 020 completed. Requires review of this plan extension before the canonical `cycle-021-fresh-scout-proposals` stage and before any implementation. This entry is grounded in post-Wave-020 source evidence and the Wave 020 decision/implementation logs, which explicitly retained `SelectionUseCases` direct delete-command construction as residual debt.
+
+**Scope**
+
+- `frontend/src/application/appShell/SelectionUseCases.ts`
+- command execution/kernel boundary modules that should own application command creation for selection/delete, expected under `frontend/src/application/` if the reviewed proposal introduces them
+- `frontend/src/application/appShell/AppShellRuntime.ts` only where it wires the selected selection/delete command service or command-kernel port; do not move `World`/`CommandStack` ownership broadly unless selected by reviewed proposal
+- `frontend/src/application/appShell/AppShellPorts.ts` only where selection/delete command execution needs a narrow typed port
+- `frontend/src/application/appShell/KeyboardShortcutRouter.ts` only to preserve delete/select-all shortcut routing through the cleaned selection API
+- `frontend/src/commands/factories/DeletionSequenceFactory.ts` and deletion-related command tests only as the command-side dependency that the new boundary consumes; do not redesign cascade deletion semantics unless current evidence proves the factory contract itself must move
+- focused app-shell selection/use-case/command-kernel tests and representative keyboard/delete/select-all e2e/live checks
+
+**Scope guard**
+
+This wave owns the post-Wave-020 selection/delete command-construction seam. It must start with a current inventory of all active delete-selection call sites, direct `new Command(...)` construction in application/UI layers, `DeletionSequenceFactory` consumers, `CommandStack` push paths reachable from keyboard/app-shell selection flows, and selection-store cascade-preview coupling.
+
+Do not reopen project persistence schema, command descriptor serialization, operation replay, Google Drive/auth, app-shell production browser composition, canvas/tool construction controllers, process-history panel/toolbar controllers, rendering selectors, Three scene-host lifecycle, backend stance, validation platform, docs/spec reconciliation, or placeholder/debug cleanup. If the inventory proves that a broader application kernel for all command execution is required before selection/delete can be cleaned, the proposals may select that higher-layer restructure, but implementation must remain bounded to the reviewed selection/delete slice and must not silently absorb canvas/tool/panel/toolbar command paths.
+
+**Baseline/current grounding**
+
+Wave 020 deliberately cleaned app-shell production composition but retained selection/delete command construction as accepted residual debt. The Wave 020 decision states that `frontend/src/application/appShell/SelectionUseCases.ts` direct construction of delete commands through `Command` / `DeletionSequenceFactory` is intentionally retained for that cycle and may need a future reviewed wave (`architecture-audit/cycle-020-app-shell-project-session-browser-boundary/decision.md`, “SelectionUseCases residual handling”; “Residual risks accepted for implementation”). The Wave 020 implementation log confirms the same residual after validation: `SelectionUseCases` still directly constructs delete commands via `Command` / `DeletionSequenceFactory`, while `AppShellRuntime.ts` still creates `World` and `CommandStack` as an allowed residual application-kernel question (`architecture-audit/cycle-020-app-shell-project-session-browser-boundary/implementation-log.md`, “Protected-surface checks”; “Residual risks / future wave candidates”; “Residual risks accepted after closure”).
+
+Current post-Wave-020 source evidence confirms the residual is active and central rather than historical. `SelectionUseCases` imports `Command`, `CommandStack`, `DeletionSequenceFactory`, and `World`; its constructor receives `world` and `commandStack`; `deleteSelected()` creates `new Command('Delete elements', this.world)`, asks `DeletionSequenceFactory.createCascadeDeletion(...)` to fill it, commits it, pushes it to `commandStack`, and clears selection (`frontend/src/application/appShell/SelectionUseCases.ts:2`, `frontend/src/application/appShell/SelectionUseCases.ts:3`, `frontend/src/application/appShell/SelectionUseCases.ts:4`, `frontend/src/application/appShell/SelectionUseCases.ts:12`, `frontend/src/application/appShell/SelectionUseCases.ts:13`, `frontend/src/application/appShell/SelectionUseCases.ts:36`, `frontend/src/application/appShell/SelectionUseCases.ts:37`, `frontend/src/application/appShell/SelectionUseCases.ts:38`, `frontend/src/application/appShell/SelectionUseCases.ts:39`). The same class also reaches through `World` for dependency cascade preview (`frontend/src/application/appShell/SelectionUseCases.ts:58`), so deletion behavior mixes selection state, dependency preview, command construction, command commit/push, and active-plane selection reads in one app-shell use case.
+
+`AppShellRuntime` remains the composition point that creates `new World()` and `new CommandStack()`, then passes both concrete objects into `SelectionUseCases` and other app-shell/session use cases (`frontend/src/application/appShell/AppShellRuntime.ts:16`, `frontend/src/application/appShell/AppShellRuntime.ts:17`, `frontend/src/application/appShell/AppShellRuntime.ts:31`). `AppShellPorts` still types project-session persistence in terms of concrete `CommandStack`, `World`, and `ProjectData` (`frontend/src/application/appShell/AppShellPorts.ts:2`, `frontend/src/application/appShell/AppShellPorts.ts:3`, `frontend/src/application/appShell/AppShellPorts.ts:5`, `frontend/src/application/appShell/AppShellPorts.ts:26`, `frontend/src/application/appShell/AppShellPorts.ts:28`), which shows the broader kernel/persistence contract question remains present but should not displace the narrower selection/delete seam unless a reviewed proposal proves it is necessary.
+
+Lower-priority candidates remain real but are less central for the immediate next wave. Current scans show `ProjectService` still owns command-stream persistence orchestration and is still reached through the narrow Wave 020 app-shell adapter (`frontend/src/services/ProjectService.ts:2`, `frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:7`, `frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:16`), but Wave 020 intentionally did not redesign persistence internals and a selection/delete command boundary is the active app-shell command leak directly called by keyboard behavior. Placeholder/debug/noisy logging surfaces exist in canvas/toolbars/panels and command factories (`frontend/src/components/workspace/SvgCanvas.vue:491`, `frontend/src/components/toolbars/ToolFamilyButton.vue:98`, `frontend/src/components/dialogs/PropertiesDialog.vue:329`, `frontend/src/commands/factories/DeletionSequenceFactory.ts:65`), but cleanup would be peripheral before the command-use-case seam is resolved. Backend/frontend contract stance, docs/spec drift, and validation-gate hardening remain deferred because the current active frontend application-kernel boundary still exposes concrete command construction.
+
+**Target outcome**
+
+Selection/delete application behavior is routed through a typed application command boundary rather than constructing and pushing concrete `Command` objects inside `SelectionUseCases`. `SelectionUseCases` owns selection intent orchestration and selection-store updates; a command-kernel/use-case service owns delete command creation, cascade deletion factory use, commit/push behavior, and error/result reporting for delete-selected. Cascade preview should be expressed through a narrow read/query dependency rather than making selection state reach through the entire mutable `World` unless the reviewed proposal explicitly keeps a minimal world-read port as the current bounded compromise.
+
+The wave should clarify, not broaden, runtime object ownership. `AppShellRuntime` may continue to own the current in-memory `World` and `CommandStack` if the selected proposal keeps the slice narrow, but it should wire them behind an explicit delete-selection command service/port so the app-shell selection use case no longer imports command construction primitives. If the restructure proposal selects a small command-kernel composition object, it must be limited to selection/delete and must leave canvas/tool, panel/toolbar, persistence, and project/session command paths untouched except for named wiring needed by this wave.
+
+**Explicit DELETE list**
+
+- Delete `SelectionUseCases.ts` imports of `Command`, `CommandStack`, and `DeletionSequenceFactory` once a typed delete-selection command boundary is introduced.
+- Delete `SelectionUseCases.deleteSelected()` direct `new Command(...)`, `DeletionSequenceFactory.createCascadeDeletion(...)`, `commit()`, and `commandStack.push(...)` calls.
+- Delete any selection-use-case test assertions that inspect concrete command internals or require `SelectionUseCases` to construct commands itself; replace with intent/result/port interaction tests and command-boundary tests.
+- Delete broad fake `World as any` / `CommandStack as any` test helpers in touched selection tests where typed test doubles or command-boundary fakes replace them.
+- Delete transitional overloads, compatibility wrappers, or parallel old/new delete-selected paths that preserve both direct command construction in `SelectionUseCases` and the new command boundary.
+- Do not delete or rewrite `DeletionSequenceFactory` cascade semantics, command descriptor persistence, project serialization, canvas/tool command controllers, process-history panel/toolbar controllers, backend files, docs/specs, package/tooling, or debug/placeholder surfaces in this wave unless a reviewed mini-cycle explicitly broadens scope.
+
+**Success criteria**
+
+- `SelectionUseCases.ts` no longer imports or directly instantiates `Command`, imports `CommandStack`, imports `DeletionSequenceFactory`, commits commands, or pushes commands to the stack.
+- Delete-selected behavior remains user-visible equivalent: empty selection is a no-op, selected elements and dependent cascade elements are removed in the existing order, selection is cleared after successful deletion, cascade highlight behavior remains correct, undo/redo restores/deletes as before, and keyboard Delete/Backspace routing still invokes the selection flow.
+- A focused command-boundary/use-case test covers successful cascade deletion, empty selection, failure/result handling if introduced, command-stack push/undo integration, and selection-store clearing without mounting Vue components.
+- A focused selection-use-case test covers selection intent orchestration and cascade-preview query behavior through typed fakes/ports rather than concrete command internals.
+- `AppShellRuntime` wiring makes the command ownership boundary explicit and does not reintroduce hidden browser/global or production-composition defaults cleaned in Wave 020.
+- No project persistence schema, command descriptor/replay behavior, Google Drive/auth behavior, rendering/Three/canvas/tool/panel/toolbar controller architecture, backend stance, package/tooling, docs/spec, or placeholder/debug cleanup is changed without reviewed plan edit.
+- Mandatory validation cadence passes with stable logs: root/frontend lint where defined, focused Vitest for selection/app-shell command-boundary tests, full root/frontend Vitest, root/frontend build, root/frontend Playwright e2e because delete/undo/keyboard behavior is user-observable, live preview refresh on `0.0.0.0:5173`, HTTP reachability probe, and Playwright/live smoke for representative selection-delete-undo keyboard behavior.
+
+**Dependencies**
+
+Depends on Wave 020 because Wave 020 established the explicit app-shell production composition and intentionally left `SelectionUseCases` direct command construction as residual debt. It is ordered before broader application-kernel/runtime-object ownership, persistence-contract residue cleanup, backend/frontend contract stance, validation-gate hardening, placeholder/debug cleanup, docs/spec drift, and remaining rendering/domain-contract seams because the active app-shell command leak sits on the keyboard/delete path and is a central application/use-case boundary violation.
+
+**Validation requirements**
+
+All Wave 021 validation stdout/stderr must be captured to stable files under the reviewed Cycle 021 implementation directory's `validation/` subdirectory. Undefined commands may be skipped only with exact package-script evidence in the implementation log; defined root or workspace commands are mandatory.
+
+1. Capture pre-edit scoped git status/diff and static scans for `SelectionUseCases`, delete-selected call sites, `new Command`, `DeletionSequenceFactory`, `CommandStack.push`, cascade-preview dependency reads, and keyboard delete routing.
+2. Run focused Vitest for changed selection use-case, command-boundary/kernel, app-shell runtime wiring, and keyboard routing modules.
+3. Run `npm run lint` at the repository root and in every workspace where a lint script is defined, including `frontend` while it remains the active workspace.
+4. Run full Vitest at the repository root and in every workspace where a test/Vitest script is defined, including `frontend` while it remains the active workspace.
+5. Run `npm run build` at the repository root and in every workspace where a build script is defined, including `frontend` while it remains the active workspace.
+6. Run Playwright/e2e at the repository root and in every workspace where an e2e script is defined because selection/delete/undo/keyboard behavior is user-observable.
+7. Refresh the live preview bound to `0.0.0.0:5173`, capture HTTP 200 reachability probes for loopback and in-container host binding where meaningful, and run focused Playwright/live browser smoke for creating/selecting/deleting/restoring representative elements via keyboard or UI without real Drive credentials.
+
+**Risks**
+
+- A “command kernel” can become a new god service if it absorbs canvas/tool, panel/toolbar, persistence, and project/session command concerns in one wave. Keep Wave 021 limited to selection/delete unless a reviewed proposal explicitly selects a bounded higher-layer design.
+- Deletion cascade order and dependency cleanup are correctness-critical; tests must prove dependent elements, process-tree actions, undo/redo, and selection clearing remain equivalent.
+- Moving command push/commit ownership can change autosave dirty-version behavior if command-stack mutation timing changes. Include focused assertions and e2e/live smoke for delete/undo and save-status-adjacent behavior where practical.
+- Cascade preview still needs dependency information from the domain. Avoid replacing full `World` with an equally broad read port; expose only the dependency/candidate lookups actually needed by the selection flow.
+- Existing unrelated dirty source files are present in command and component paths. Implementation must use path-scoped status/diff, avoid reverting unrelated work, and not depend on unowned dirty changes.
+
+**No-backcompat rationale**
+
+Direct command construction inside `SelectionUseCases` is internal architecture debt, not a compatibility surface. Preserving old and new delete-selected paths would keep the application/use-case boundary ambiguous and would let future app-shell behavior keep reaching into command internals. Delete the old direct command imports/calls once the reviewed boundary is in place, and update active callers/tests directly.
