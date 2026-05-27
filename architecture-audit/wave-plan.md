@@ -1583,3 +1583,120 @@ All Wave 024 validation stdout/stderr must be captured to stable files under the
 **No-backcompat rationale**
 
 `commandStackForDeferredCommandProducers()` and raw command-stack injection are internal architecture debt, not compatibility surfaces. Preserving both raw stack access and new command-production ports would keep runtime ownership ambiguous and encourage future UI/tool code to bypass application use cases. Delete the raw accessor and update active producers/tests directly once the reviewed command-production boundary is selected; do not keep shims, overloads, or dual execution paths.
+
+---
+
+## Wave 025 — Runtime view/read ports for rendering and panels
+
+**Status**
+
+Added by `cycle-025-wave-plan-extension` after Wave 024 completed. Requires bounded review of this plan extension before the canonical `cycle-025-fresh-scout-proposals` stage and before any implementation. This entry is grounded in current post-Wave-024 source evidence and the Wave 024 implementation/closure log, which explicitly marks Wave 024 complete while leaving `worldForView()` / `WorldInjectionKey` as the residual rendering and view-read seam.
+
+**Scope**
+
+- `frontend/src/application/appShell/RuntimeSession.ts`
+- `frontend/src/application/appShell/AppShellRuntime.ts`
+- `frontend/src/application/appShell/RuntimeInjectionKeys.ts`
+- `frontend/src/App.vue` only for provide/inject wiring of selected read ports
+- `frontend/src/components/workspace/SvgCanvas.vue`
+- `frontend/src/components/panels/ActionsPanel.vue`
+- `frontend/src/components/panels/ElementsPanel.vue`
+- `frontend/src/components/panels/ThreeView.vue`
+- `frontend/src/components/toolbars/PlaneSelector.vue`
+- `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts`
+- `frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts`
+- `frontend/src/application/canvasPresentation/Projected3DCanvasSelector.ts`
+- `frontend/src/application/canvasPresentation/CanvasVisibilityPolicy.ts`
+- `frontend/src/application/threePresentation/ThreeWorldReadPort.ts`
+- active view/read selector tests, app-shell wiring tests, canvas/three/panel focused tests, and boundary scans proving the selected raw-world view seam is gone
+
+**Scope guard**
+
+This wave owns the residual runtime rendering/view read seam left by Wave 024: `RuntimeSession.worldForView()`, the typed but broad `WorldInjectionKey`, and the view consumers that receive the full mutable `World` for rendering, panel listing, process-tree display, active-plane selection, element lookup, version polling, and 2D/3D presentation adapters. It must not absorb command producers, command descriptors, persistence schema/replay, `ProjectService` contract cleanup, domain realization redesign, backend/frontend contract stance, Drive/auth/browser adapters, package/tooling, validation-platform hardening, docs/spec reconciliation, or debug/placeholder cleanup.
+
+The proposals must start with a current inventory of every `worldForView()` and `WorldInjectionKey` consumer and classify each read need by behavior: canvas presentation snapshot, canvas input/hit/query transforms, element label lookup, process-tree panel read/subscription, elements-panel list/toggle behavior, 3D presentation snapshot, active-plane selector read/write, and world version/change notification. The selected design should introduce behavior-sized read ports/selectors supplied by `RuntimeSession` or small adapters, not a broad `WorldViewFacade` that mirrors `World`. If source inventory proves a needed fix requires changing domain realization contracts, process-tree ownership, command-production semantics, persistence DTOs/casts, or backend/schema boundaries, stop and run a reviewed plan-edit mini-cycle rather than hiding that redesign inside Wave 025.
+
+**Current grounding**
+
+Wave 024 deleted the raw command-producer stack seam and moved canvas/tool and process-history command production behind typed ports. Its implementation log records that `RuntimeSession.commandStackForDeferredCommandProducers()`, raw `provide('commandStack')`, raw `inject('commandStack')`, provider casts to `CommandStack`, and `runtime.commandStack` are gone, while `worldForView()` and typed `WorldInjectionKey` remain intentionally deferred as the rendering/view read seam (`architecture-audit/cycle-024-command-producer-runtime-ports/implementation-log.md`, “Deleted legacy surfaces / proofs”; “Residual risks after Wave 024”; “Wave-plan reread / next-wave recommendation”).
+
+Current source confirms the residual seam is small enough to plan but central enough to address next. `RuntimeSession` still exposes `worldForView(): World` (`frontend/src/application/appShell/RuntimeSession.ts:24`) and `AppShellRuntime` unwraps it into the runtime object (`frontend/src/application/appShell/AppShellRuntime.ts:16`). `RuntimeInjectionKeys.ts` types `WorldInjectionKey` directly as `InjectionKey<World>` (`frontend/src/application/appShell/RuntimeInjectionKeys.ts:7`), and `App.vue` provides `runtime.world` under that key (`frontend/src/App.vue:148`). Static scan evidence for this plan extension found active consumers in `SvgCanvas.vue`, `ActionsPanel.vue`, `ElementsPanel.vue`, `ThreeView.vue`, and `PlaneSelector.vue` (`architecture-audit/cycle-025-wave-plan-extension/world-read-seam-scan.stdout.log`).
+
+The consumer needs are behavior-specific rather than requiring the whole domain root. `SvgCanvas.vue` reads active-plane id, world version, all projection planes, 2D realizations, element labels, and passes `worldForCanvas` into `createCanvasWorldReadPort(...)` plus `screenTo3D(...)` (`frontend/src/components/workspace/SvgCanvas.vue:227-232`, `:364-407`, `:479-494`, `:530-553`, `:1104-1112`). `ActionsPanel.vue` reads/subscribes to the process tree from the world and renders it into `ProcessTreeNode` while command mutations already use the separate process-history command port (`frontend/src/components/panels/ActionsPanel.vue:65-70`, `:87-89`, `:148-160`, `:175-177`). `ElementsPanel.vue` polls `world.getVersion()`, enumerates projection planes and 3D elements, uses concrete element `instanceof` checks and `any` formatting, and mutates element visibility by calling `world.getElement2D(...)` / `getElement3DById(...)` / `getProjectionPlaneById(...)` then `world.markDirty()` (`frontend/src/components/panels/ElementsPanel.vue:146-167`, `:182-263`, `:270-312`, `:342-357`). `PlaneSelector.vue` injects `World`, polls `getVersion()`, lists projection planes, reads active plane id, and calls `world.setActivePlaneId(...)` (`frontend/src/components/toolbars/PlaneSelector.vue:53-57`, `:68-74`, `:95-112`, `:143-145`). `ThreeView.vue` injects `World`, creates a 3D read port adapter from it, and separately subscribes to world changes (`frontend/src/components/panels/ThreeView.vue:29-43`, `:58-60`).
+
+Current presentation adapters are partial progress but still leak broad domain objects and realization contexts. `CanvasWorldReadPort` is named as a read port, but its interface returns `ProjectionPlane[]`, `Point3D[]`, `Line3D[]`, and `Segment3D[]`, builds a realization context from the full `World`, exposes process-tree access for visibility, and imports the concrete `World` adapter source (`frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:12`, `:15-21`, `:31-46`, `:49-69`). `CanvasPresentationSelector` then iterates raw planes and plane-owned elements directly (`frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:22-36`, `:47-86`). `CanvasVisibilityPolicy` narrows to `Pick<World, 'getProcessTree'>` but casts back to `World` to call domain `resolveVisibility` (`frontend/src/application/canvasPresentation/CanvasVisibilityPolicy.ts:1-8`). `ThreeWorldReadPort` returns better read-model DTOs for the scene, but the adapter still imports `World`, creates broad realization contexts, reads all raw projection planes/3D elements/hinges, and performs type checks against domain classes (`frontend/src/application/threePresentation/ThreeWorldReadPort.ts:10-12`, `:56-64`, `:66-81`, `:84-135`). These are the right seams to narrow into behavior-sized selectors without reopening rendering scene-host or domain realization architecture.
+
+Lower-priority candidates remain real but should be deferred. `ProjectSessionPersistenceAdapter` still casts `unknown`/`ProjectData` around `ProjectService` (`frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:10-20` in `architecture-audit/cycle-025-wave-plan-extension/residual-candidate-scan.stdout.log`), `ToolbarHistoryController` still appears as a separate toolbar/history typing cleanup candidate, and `CanvasStyleUseCase` has an unrelated `as any` operation cast. Those are not more central than the runtime read seam after Wave 024 because command production and command history are already behind ports; the remaining broad `World` injection is the path through which rendering and panels can still observe/mutate the domain root directly.
+
+**Target outcome**
+
+`RuntimeSession` remains the single owner of the concrete `World`, but view/rendering descendants no longer receive a full mutable `World` through `worldForView()` / `WorldInjectionKey`. Instead, the app shell provides explicit behavior-sized read/write ports or selector DTO providers for:
+
+- canvas presentation snapshots and projected-3D-on-2D data;
+- canvas input transforms / hit-query / screen-to-3D coordinate support;
+- element label lookup needed for hover/tooltips;
+- process-tree panel read/subscription state;
+- elements-panel read models and visibility toggling as a named application/view behavior;
+- three-view presentation snapshots plus change notifications;
+- active-plane selector options/read/write behavior.
+
+Existing canvas and 3D presentation selector DTOs should be narrowed where practical so selectors consume DTO/read-model data rather than raw `ProjectionPlane`/domain entity arrays. Any remaining domain-class dependency must be localized to a runtime/session adapter or explicitly deferred with evidence if it belongs to a deeper domain-realization wave. Vue components should render/read through these named ports/selectors and emit intents; they should not import or receive the concrete `World` solely to enumerate, poll, or mutate view state.
+
+**Explicit DELETE list**
+
+- Delete `RuntimeSession.worldForView()` if the reviewed read ports replace all broad view/rendering exposure.
+- Delete `WorldInjectionKey` or change it away from `InjectionKey<World>` so production Vue descendants no longer inject the concrete domain root for view reads.
+- Delete `AppShellRuntime` / `App.vue` raw `world` return/provide paths once selected read ports are provided.
+- Delete direct `WorldInjectionKey` injection from `SvgCanvas.vue`, `ActionsPanel.vue`, `ElementsPanel.vue`, `ThreeView.vue`, and `PlaneSelector.vue` where replaced by behavior ports/selectors.
+- Delete component-side world version polling (`world.getVersion()` intervals) where replaced by explicit change subscriptions or reactive read-port invalidation.
+- Delete `ElementsPanel.vue` `any` element formatting and direct domain `instanceof` grouping where replaced by element-list DTOs.
+- Delete direct visibility mutation in `ElementsPanel.vue` (`world.getElement2D(...)` / `getElement3DById(...)` / `getProjectionPlaneById(...)` plus `world.markDirty()`) if a named visibility intent/port owns that behavior.
+- Delete `CanvasWorldReadPort` methods that return raw `ProjectionPlane[]`, `Point3D[]`, `Line3D[]`, or `Segment3D[]` if selector DTO methods replace them inside this wave.
+- Delete `CanvasVisibilityPolicy` casts from a narrowed world pick back to `World` if visibility can be expressed through a proper process/visibility read port.
+- Delete `ThreeWorldReadPort` raw-domain adapter methods that mirror broad `World` traversal if narrower scene read models can be produced at the runtime adapter boundary.
+- Delete transitional broad facades, compatibility wrappers, duplicate raw-world and port paths, dead exports, or tests that assert concrete world injection into view consumers.
+- Do not delete or rewrite command producers, command serialization/descriptors, `CommandStack`, persistence schema/replay, `ProjectService`, Drive/auth, backend, package/tooling, docs/specs, validation-platform code, or broad domain realization internals without a reviewed plan edit.
+
+**Success criteria**
+
+- No production Vue component injects `WorldInjectionKey` as `World`; either the key is deleted or replaced by behavior-sized injection keys/read ports that do not expose the concrete domain root.
+- `RuntimeSession.worldForView()` is deleted, or any residual raw-world exposure is explicitly justified in the implementation log as a blocked deeper domain-realization issue with a reviewed follow-up wave; no hidden broad facade may replace it.
+- `SvgCanvas.vue` consumes named canvas presentation/input/element-label/read ports and the existing command-producer port, not the whole `World`, while point drag, hover, hit testing, style dialog, fit-to-view, screen-to-3D coordinate display, and representative construction remain equivalent.
+- `ActionsPanel.vue` consumes a process-tree read/subscription port and existing process-history command port rather than reading the process tree from the full `World`.
+- `ElementsPanel.vue` consumes element-list DTOs and a named visibility intent/read port; direct `any` formatting, concrete `instanceof` grouping, direct world visibility mutation, and polling are deleted where the selected design covers them.
+- `PlaneSelector.vue` consumes an active-plane selector/read-write port instead of concrete `World` while preserving keyboard/dropdown behavior.
+- `ThreeView.vue` consumes a three-presentation read/change port rather than constructing `createThreeWorldReadPort(world)` from an injected domain root.
+- Canvas and Three presentation read ports/selectors are narrower by behavior and do not return broad raw domain collections to rendering selectors unless a residual is documented as accepted risk for a later domain-realization wave.
+- No command-production, persistence schema/replay, backend/frontend contract, Drive/auth, package/tooling, docs/spec, validation-platform, or broad domain-realization changes occur without reviewed plan edit.
+- Focused tests cover runtime read-port wiring, canvas presentation/input behavior, process-tree panel read/subscription behavior, elements-panel list/visibility behavior, plane selector read/write behavior, three-view presentation refresh, and boundary scans proving the broad view-world seam is gone.
+- Mandatory validation cadence passes with stable logs: root/frontend lint where defined, focused Vitest for touched runtime/view/read-port modules, full root/frontend Vitest, root/frontend build, root/frontend Playwright e2e because rendering/panels/plane selection are user-observable, live preview refresh on `0.0.0.0:5173`, HTTP reachability probe, and Playwright/live smoke for representative canvas rendering/hit/hover, elements panel visibility toggle, actions panel rendering, plane selector switching, 3D view refresh, and undo/redo still flowing through the existing command-history port.
+
+**Dependencies**
+
+Depends on Wave 024 because that wave deleted raw command-stack producer access and left `worldForView()` / `WorldInjectionKey` as the isolated runtime read seam. It is ordered before ProjectSessionPersistenceAdapter/ProjectService DTO-cast cleanup, backend/frontend contract stance, validation gate hardening, placeholder/debug cleanup, docs/spec drift, and toolbar-history typing cleanup because those are either leaf/adapter concerns or enforcement/documentation concerns. It follows earlier canvas/three presentation waves but supersedes their remaining raw-domain read-port residue by focusing on the runtime boundary that still hands a full `World` to view consumers.
+
+**Validation requirements**
+
+All Wave 025 validation stdout/stderr must be captured to stable files under the reviewed Cycle 025 implementation directory's `validation/` subdirectory. Undefined commands may be skipped only with exact package-script evidence in the implementation log; defined root or workspace commands are mandatory.
+
+1. Capture pre-edit scoped git status/diff and static scans for `worldForView`, `WorldInjectionKey`, `inject(WorldInjectionKey)`, `provide(WorldInjectionKey)`, component `world.getVersion()` polling, `createCanvasWorldReadPort(world)`, `createThreeWorldReadPort(world)`, raw domain collection returns from canvas/three read ports, and intentionally deferred non-view candidates.
+2. Run focused Vitest for new runtime read-port providers/selectors and changed canvas, process-tree panel, elements panel, plane selector, and three-view behavior.
+3. Run architecture/static tests or focused boundary scans proving no production Vue component receives a concrete `World` through app-shell injection and no dual raw-world/port path remains for scoped view consumers.
+4. Run `npm run lint` at the repository root and in every workspace where a lint script is defined, including `frontend` while it remains the active workspace.
+5. Run full Vitest at the repository root and in every workspace where a test/Vitest script is defined, including `frontend` while it remains the active workspace.
+6. Run `npm run build` at the repository root and in every workspace where a build script is defined, including `frontend` while it remains the active workspace.
+7. Run Playwright/e2e at the repository root and in every workspace where an e2e script is defined because canvas rendering, panel reads, active-plane selection, and 3D view refresh are user-observable.
+8. Refresh the live preview bound to `0.0.0.0:5173`, capture HTTP 200 reachability probes, and run focused Playwright/live browser smoke for canvas render/hit/hover, elements panel visibility toggle, actions panel rendering, plane selector switching, 3D view refresh, and undo/redo regression checks without real Drive credentials.
+
+**Risks**
+
+- A view/read port can become a renamed `World` facade if it mirrors domain methods. Keep ports behavior-sized and backed by the required consumer inventory.
+- Canvas rendering, hit testing, screen-to-3D coordinate display, and point-drag preview share transforms; splitting ports can introduce subtle coordinate regressions if focused and e2e tests are too shallow.
+- ElementsPanel currently mutates visibility directly and marks the world dirty. Moving that behind a port may reveal whether visibility should be command-backed; do not redesign command/persistence semantics in this wave without a plan edit.
+- Process-tree rendering currently passes `:world` into `ProcessTreeNode`; the fresh scout must include that child component before proposing deletion of all panel world access.
+- Canvas/Three read adapters still depend on domain realization contexts. If deleting raw-domain returns requires a deeper realization-context redesign, document it and stop for a plan edit rather than smuggling domain redesign into this wave.
+- Existing unrelated dirty audit/source state is broad. Implementation must use path-scoped status/diff, avoid reverting unrelated work, and not depend on unowned dirty files.
+
+**No-backcompat rationale**
+
+`worldForView()` and `WorldInjectionKey: InjectionKey<World>` are internal runtime wiring seams, not compatibility contracts. Preserving both concrete world injection and new view/read ports would keep rendering and panels free to bypass application selectors and mutate the domain root directly. Delete the broad seam and update active consumers/tests directly once reviewed read ports are selected; do not keep shims, overloads, broad facades, or dual paths.
