@@ -15,10 +15,10 @@ After implementation:
 - `AppShellRuntime` obtains capability objects from `RuntimeSession` and wires consumers to those interfaces.
 - `ActivePlaneUseCases`, `SelectionUseCases`, and `KeyboardShortcutRouter` depend only on capability interfaces.
 - `SelectionDeletionCommandService` is either hidden behind a capability or refactored to consume a small command-execution context.
-- Persistence adapter typed handles are represented as part of the persistence capability if they can be kept adapter-local and schema-neutral.
+- Persistence adapter typed handles are represented only as adapter-local/schema-neutral handles, not as general capabilities for ordinary app-shell consumers.
 - View-facing raw `World` exposure remains isolated as a named `viewWorld` / `viewReadRuntime` capability with an explicit future rendering-boundary citation.
 
-This provides a cleaner architectural seam for later waves that migrate toolbar history, canvas tools, process history, or rendering without expanding the `RuntimeSession` public class surface each time.
+This provides a cleaner architectural seam for later waves that migrate canvas tools, process history, or rendering without expanding the `RuntimeSession` public class surface each time. Toolbar history is not deferred in this corrected proposal: because it is already a direct command-history consumer and can share `CommandHistoryPort` without broader toolbar composition changes, it is included in Cycle 023.
 
 ## Files to change
 
@@ -28,11 +28,11 @@ This provides a cleaner architectural seam for later waves that migrate toolbar 
   - Define behavior-scoped interfaces such as:
     - `ActivePlaneSessionPort`;
     - `SelectionReadSessionPort`;
-    - `CommandHistoryPort`;
+    - `CommandHistoryPort` shared by keyboard shortcuts and toolbar history;
     - `SelectionDeletionPort`;
-    - `RuntimePersistenceSnapshotHandle` / `RuntimePersistenceRestoreHandle` or adapter-only equivalents;
+    - `RuntimePersistenceSnapshotHandle` / `RuntimePersistenceRestoreHandle` as adapter-only equivalents, clearly excluded from general consumer contracts;
     - `RuntimeViewHandoff` for explicitly deferred view/rendering `World` exposure.
-  - Avoid importing broad `World` / `CommandStack` in consumer-facing interfaces except the explicitly named view handoff or adapter-private handles if review accepts them.
+  - Avoid importing broad `World` / `CommandStack` in consumer-facing interfaces except the explicitly named view handoff and adapter-private persistence handles. Adapter-private handles must not be exported as a convenient runtime facade for active-plane, selection, keyboard, toolbar, or command services.
 
 - `frontend/src/application/appShell/RuntimeSession.ts`
   - Implement the capability aggregate/factory.
@@ -53,20 +53,27 @@ This provides a cleaner architectural seam for later waves that migrate toolbar 
 - `frontend/src/application/appShell/KeyboardShortcutRouter.ts`
   - Depend on `CommandHistoryPort`.
 
+- `frontend/src/application/toolbar/ToolbarHistoryUseCases.ts`
+  - Depend on the same `CommandHistoryPort` rather than direct `CommandStack`.
+
+- `frontend/src/application/toolbar/ToolbarHistoryController.ts`
+  - Update wiring/fakes only enough to provide `CommandHistoryPort`; do not redesign toolbar state or composition.
+
+- `frontend/src/components/toolbars/Toolbar.vue`
+  - Remove toolbar-history raw command-stack handoff only if current component wiring passes it; leave unrelated toolbar UI surfaces unchanged.
+
 - `frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts`
   - Move construction behind a runtime capability or narrow its constructor to a command-execution context.
 
 - `frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts`
-  - Consume typed persistence handles if the capability module can express them without schema/replay redesign.
-
-- Optionally `frontend/src/application/toolbar/ToolbarHistoryUseCases.ts` and `ToolbarHistoryController.ts`
-  - Only if current wiring proves they share the same app-shell command-history dependency and can be migrated without broad toolbar/UI redesign. Otherwise leave as adjacent future candidate documented in the implementation log.
+  - Consume typed persistence handles only as adapter-local persistence handles. They may carry the concrete internals required by `ProjectService.serializeCommands` / `deserializeCommands`, but they must not become a broader capability available to ordinary app-shell consumers.
+  - If removing casts requires changes to `ProjectService`, schema/replay, command descriptors, operation registry, or migration behavior, stop and defer persistence-handle cleanup instead of broadening Cycle 023.
 
 ### Tests / validation source
 
 - `frontend/tests/unit/application/appShell/AppShellBoundary.test.ts`
-  - Add assertions that consumer-facing capability interfaces do not import concrete runtime objects except named view/persistence internals.
-  - Assert `RuntimeSession` is the only app-shell owner/importer of concrete `World` / `CommandStack` for runtime ownership.
+  - Add assertions that consumer-facing capability interfaces do not import concrete runtime objects except named view handoff and adapter-only persistence internals.
+  - Assert `RuntimeSession` is the only app-shell owner/importer of concrete `World` / `CommandStack` for runtime ownership, and that keyboard plus toolbar history use `CommandHistoryPort` rather than raw `CommandStack`.
 
 - `frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts`
   - Update to use capability fakes and preserve behavior coverage.
@@ -77,18 +84,19 @@ This provides a cleaner architectural seam for later waves that migrate toolbar 
 
 - Delete `RuntimeSession.worldForUseCases()`.
 - Delete `RuntimeSession.commandStackForCommandServices()`.
-- Delete `RuntimeSession.commandStackForShortcuts()` if all app-shell/shortcut/history consumers use `CommandHistoryPort`.
+- Delete `RuntimeSession.commandStackForShortcuts()` after keyboard shortcuts and toolbar history both use `CommandHistoryPort`.
 - Delete direct `World` imports from `ActivePlaneUseCases.ts` and `SelectionUseCases.ts`.
 - Delete direct `CommandStack` import from `KeyboardShortcutRouter.ts`.
+- Delete direct `CommandStack` imports/constructor expectations from `ToolbarHistoryUseCases.ts` and touched toolbar history controller/wiring fakes.
 - Delete raw `World` / `CommandStack` injection tests and fakes for these app-shell consumers.
-- Delete adapter-private casts if typed capability handles can replace them cleanly.
+- Delete adapter-private casts by replacing them with adapter-local typed persistence handles; do not replace them with a general capability facade.
 - Delete transitional compatibility wrappers and any broad `RuntimeFacade` that simply mirrors `World` / `CommandStack`.
 
 Do not delete canvas/tool/construction/process-history producers, rendering read ports, persistence schema/replay fixtures, backend files, docs/spec source, package/tooling, or e2e specs without a reviewed scope edit.
 
 ## Expected behavior change
 
-No user-visible behavior change is intended. The architectural behavior changes more than the direct proposal: later consumers would see a stable `RuntimeCapabilities` boundary rather than reaching into `RuntimeSession`. Active-plane, keyboard, selection, deletion, autosave, restore, and rendering behavior should remain equivalent.
+No user-visible behavior change is intended. The architectural behavior changes more than the direct proposal: later consumers would see a stable `RuntimeCapabilities` boundary rather than reaching into `RuntimeSession`. Active-plane, keyboard undo/redo, toolbar undo/redo, selection, deletion, autosave, restore, and rendering behavior should remain equivalent.
 
 ## No-backcompat rationale
 
@@ -99,8 +107,8 @@ The restructure path deliberately refuses to preserve raw-object compatibility s
 - This may be too much abstraction if the capability aggregate becomes an anemic directory of interfaces with little additional value over direct `RuntimeSession` methods.
 - A poorly designed aggregate could centralize too many unrelated concerns and become a new god-boundary.
 - Introducing a new module increases test/update churn compared with the direct proposal.
-- Including toolbar history opportunistically could broaden the wave into UI composition if wiring is not simple.
-- Typed persistence handles could still pull schema/replay concerns into the wave; defer if they require `ProjectService` redesign.
+- Including toolbar history could broaden the wave into UI composition if wiring is not simple; stop rather than redesign toolbar composition if the migration cannot be limited to the command-history dependency.
+- Typed persistence handles could still pull schema/replay concerns into the wave; defer if they require `ProjectService`, schema, replay, descriptor, registry, or migration redesign.
 - The view handoff can become a sanctioned broad facade unless explicitly named as deferred rendering work.
 
 ## Validation plan
@@ -108,13 +116,13 @@ The restructure path deliberately refuses to preserve raw-object compatibility s
 Same mandatory cadence as the direct proposal, with added static checks for the new capability boundary:
 
 1. Pre-edit status/diff and scans for raw accessors/imports/casts plus any capability module imports.
-2. Focused Vitest for app-shell runtime capability wiring, active-plane, selection, keyboard, selection deletion, and persistence adapter if changed.
-3. Static architecture tests verifying consumer-facing capability interfaces stay behavior-scoped and selected consumers no longer import `World` / `CommandStack`.
+2. Focused Vitest for app-shell runtime capability wiring, active-plane, selection, keyboard history, toolbar history, selection deletion, and persistence adapter if changed.
+3. Static architecture tests verifying consumer-facing capability interfaces stay behavior-scoped and selected consumers no longer import `World` / `CommandStack`, including keyboard and toolbar undo/redo.
 4. Root and frontend lint.
 5. Root and frontend full Vitest.
 6. Root and frontend build.
 7. Root/frontend Playwright e2e where defined.
-8. Live preview refresh/probe plus browser smoke for active-plane cycling, select-all/delete/undo/redo, startup/new project, and credential-free behavior.
+8. Live preview refresh/probe plus browser smoke for active-plane cycling, select-all/delete/keyboard undo-redo/toolbar undo-redo, startup/new project, and credential-free behavior.
 
 ## Stop conditions / explicit non-goals
 
@@ -125,9 +133,9 @@ Stop and return to review if the restructure begins to require:
 - replacing `World` / `CommandStack` object identity;
 - persistence schema/replay/descriptor/registry/migration changes;
 - backend, Drive/auth, package/tooling, docs/spec, validation-platform, or debug cleanup;
-- broad UI/toolbar composition changes not necessary for the command-history boundary;
+- toolbar/UI composition changes beyond replacing toolbar history's raw command-stack dependency with `CommandHistoryPort`;
 - compatibility shims that keep raw accessors alive beside capability ports.
 
 ## Recommendation
 
-Choose this proposal if review believes Wave 023 should create a durable capability layer for subsequent waves, especially toolbar history and canvas/tool command cleanup. Otherwise choose the direct proposal: it deletes the known raw app-shell seams with less abstraction and less risk of creating a new central god-boundary.
+Choose this proposal if review believes Wave 023 should create a durable capability layer for subsequent waves, especially canvas/tool command cleanup after the included toolbar history migration. Otherwise choose the direct proposal: it deletes the known raw app-shell seams with less abstraction and less risk of creating a new central god-boundary.
