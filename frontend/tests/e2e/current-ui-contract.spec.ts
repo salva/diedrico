@@ -85,4 +85,35 @@ test.describe('Current Diedrico UI contract', () => {
     await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
     await expect.poll(async () => page.getByTestId('coordinates-3d').textContent()).toMatch(/---|\(-?\d+\.\d{2}, -?\d+\.\d{2}, -?\d+\.\d{2}\)/);
   });
+
+  test('3D overlay owns pointer interaction and does not pass drag gestures through to the 2D canvas', async ({ page }) => {
+    await openApp(page);
+
+    const overlay = page.getByTestId('three-view-overlay');
+    await expect(overlay).toBeVisible();
+
+    const overlayBox = await overlay.boundingBox();
+    if (!overlayBox) throw new Error('3D overlay bounding box unavailable');
+
+    const testPoint = {
+      x: overlayBox.x + overlayBox.width / 2,
+      y: overlayBox.y + overlayBox.height / 2,
+    };
+
+    await expect.poll(async () => overlay.evaluate(el => getComputedStyle(el).pointerEvents)).toBe('auto');
+    await expect.poll(async () => page.evaluate(({ x, y }) => {
+      const el = document.elementFromPoint(x, y);
+      return Boolean(el?.closest('[data-testid="three-view-overlay"]'));
+    }, testPoint)).toBe(true);
+
+    const svg = canvas(page);
+    const viewBoxBefore = await svg.getAttribute('viewBox');
+    await page.mouse.move(testPoint.x, testPoint.y);
+    await page.mouse.down();
+    await page.mouse.move(testPoint.x - 80, testPoint.y - 40, { steps: 6 });
+    await page.mouse.up();
+
+    await expect.poll(async () => svg.getAttribute('viewBox')).toBe(viewBoxBefore);
+  });
+
 });

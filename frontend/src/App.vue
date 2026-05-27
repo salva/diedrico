@@ -275,7 +275,7 @@ onUnmounted(() => runtime.actions.dispose());
 }
 
 .three-view-overlay {
-  pointer-events: none;
+  pointer-events: auto;
   position: absolute;
   bottom: 20px;
   right: 20px;
