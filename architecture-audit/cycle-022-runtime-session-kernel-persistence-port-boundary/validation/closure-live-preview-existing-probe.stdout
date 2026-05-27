@@ -1,0 +1,9 @@
+# existing vite/npm preview processes
+577258 /bin/sh -c bash -lc 'set +e VALIDATION="architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation" {   echo "# existing vite/npm preview processes"   pgrep -af "vite|npm run dev" || true   echo   echo "# 127.0.0.1 probe"   curl -i --max-time 10 http://127.0.0.1:5173/   PROBE1=$?   echo   echo "# localhost probe"   curl -i --max-time 10 http://localhost:5173/   PROBE2=$?   echo   echo "probe_exit_codes 127=$PROBE1 localhost=$PROBE2"   exit $(( PROBE1 || PROBE2 )) } > "$VALIDATION/closure-live-preview-existing-probe.stdout" 2> "$VALIDATION/closure-live-preview-existing-probe.stderr"'
+577259 bash -lc set +e VALIDATION="architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation" {   echo "# existing vite/npm preview processes"   pgrep -af "vite|npm run dev" || true   echo   echo "# 127.0.0.1 probe"   curl -i --max-time 10 http://127.0.0.1:5173/   PROBE1=$?   echo   echo "# localhost probe"   curl -i --max-time 10 http://localhost:5173/   PROBE2=$?   echo   echo "probe_exit_codes 127=$PROBE1 localhost=$PROBE2"   exit $(( PROBE1 || PROBE2 )) } > "$VALIDATION/closure-live-preview-existing-probe.stdout" 2> "$VALIDATION/closure-live-preview-existing-probe.stderr"
+
+# 127.0.0.1 probe
+
+# localhost probe
+
+probe_exit_codes 127=7 localhost=7

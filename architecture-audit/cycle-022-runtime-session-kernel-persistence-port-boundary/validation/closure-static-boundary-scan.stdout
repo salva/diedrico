@@ -1,0 +1,35 @@
+# Cycle 022 closure static boundary scan
+## AppShellPorts forbidden concrete types / DTO leakage
+38:  validateProjectData(data: unknown): OpenedProjectSession;
+## ProjectSessionUseCases raw-pair/DTO/direct init scan
+27:      this.deps.session.initializeDefaultWorldIfNeeded();
+34:      if (this.deps.isSignedIn.value && authStore.restoreSession()) {
+46:          this.deps.session.initializeDefaultWorldIfNeeded();
+93:      this.deps.session.resetToEmptyInitializedWorld();
+110:      const openedSession = this.deps.session.validateProjectData(loadedProject, this.deps.ports.persistence);
+## AutoSaveUseCases raw-pair scan
+## App-shell ProjectService imports
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:1:import { ProjectService, type ProjectData } from '@/services/ProjectService';
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:9:    return ProjectService.serializeCommands(runtime.commandStack, runtime.nextElementId, projectName);
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:13:    ProjectService.validateProjectData(data);
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:23:    ProjectService.deserializeCommands(data as unknown as ProjectData, runtime.world, runtime.commandStack);
+## RuntimeSession ownership markers
+3:import { initializeWorld } from '@/application/world/initializeWorld';
+17:  private readonly world = new World();
+18:  private readonly commandStack = new CommandStack();
+37:    initializeWorld(this.world, this.commandStack);
+40:  resetToEmptyInitializedWorld(): void {
+41:    this.world.clear();
+42:    this.commandStack.clear();
+46:  clear(): void {
+47:    this.world.clear();
+48:    this.commandStack.clear();
+59:  validateProjectData(data: unknown, persistence: ProjectSessionPersistencePort): OpenedProjectSession {
+60:    return persistence.validateProjectData(data);
+63:  restoreValidatedProject(openedSession: OpenedProjectSession, persistence: ProjectSessionPersistencePort): void {
+64:    const candidateWorld = new World();
+65:    const candidateCommandStack = new CommandStack();
+67:    if (candidateWorld.getAllProjectionPlanes().length === 0) initializeWorld(candidateWorld, candidateCommandStack);
+70:    this.world.clear();
+71:    this.commandStack.clear();
+## Obsolete raw persistence methods

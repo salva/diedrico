@@ -145,3 +145,48 @@ New correction-round logs under `validation/`:
 - `t3-final-boundary-scan.stdout`, `t3-final-boundary-scan.stderr` — confirms obsolete `SerializedProjectSession`, `assertProjectData`, and use-case `projectData.name` usage are gone from app-shell production files; remaining DTO field mentions are adapter-private or test fixtures/boundary assertions.
 
 No protected out-of-scope surfaces were modified during this correction.
+
+
+## Validation-and-preview closure — t1 independent verification
+
+**Wave 022 COMPLETE.** The validation-and-preview stage independently rechecked the Cycle 022 implementation evidence and supplemented it with fresh closure logs. No production source, tests, package/tooling, backend, docs/spec source, protected config/env/provider files, or next-wave implementation changes were made during closure.
+
+### Fresh closure validation log index
+
+All commands were run from `/work/diedrico` and captured under `architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/`.
+
+- Static app-shell/session boundary scan: `closure-static-boundary-scan.stdout`, `closure-static-boundary-scan.stderr` — pass. `AppShellPorts.ts` does not expose concrete `World`, `CommandStack`, `ProjectData`, `ProjectService`, or serialized DTO names/fields; `ProjectSessionUseCases.ts` and `AutoSaveUseCases.ts` do not pass raw world/command-stack pairs to persistence; `ProjectSessionPersistenceAdapter.ts` is the only app-shell `ProjectService` import; `RuntimeSession.ts` is the explicit allowed owner of `World`, `CommandStack`, and initialization/restore lifecycle.
+- Root lint: `closure-root-lint.stdout`, `closure-root-lint.stderr` — pass, 4 architecture test files / 11 tests.
+- Root workspace frontend lint: `closure-root-workspace-frontend-lint.stdout`, `closure-root-workspace-frontend-lint.stderr` — pass, 4 architecture test files / 11 tests.
+- Focused app-shell Vitest: `closure-focused-appshell-vitest.stdout`, `closure-focused-appshell-vitest.stderr` — pass, `AppShellBoundary` + `AppShellRuntimeUseCases`, 30/30 tests.
+- Root full Vitest: `closure-root-full-vitest.stdout`, `closure-root-full-vitest.stderr` — pass via root `npm run test`; stderr contains expected exercised warning/error paths from existing negative tests, not command failure.
+- Frontend full Vitest: `closure-frontend-full-vitest.stdout`, `closure-frontend-full-vitest.stderr` — pass via `npm run test --workspace=frontend`; stderr contains the same expected negative-test warnings.
+- Root build: `closure-root-build.stdout`, `closure-root-build.stderr` — pass with existing Vite large-chunk warning only.
+- Frontend build: `closure-frontend-build.stdout`, `closure-frontend-build.stderr` — pass with existing Vite large-chunk warning only.
+- Root e2e/Playwright: `closure-root-e2e.stdout`, `closure-root-e2e.stderr` — pass, 9/9 Chromium tests including startup/project chooser without Google credentials and delete/undo/keyboard behavior.
+- Existing preview probe before refresh: `closure-live-preview-existing-probe.stdout`, `closure-live-preview-existing-probe.stderr` — no server was reachable; this supersedes stale earlier preview process assumptions.
+- Live preview refresh/probe: `closure-live-preview-refresh.stdout`, `closure-live-preview-refresh.stderr`, `closure-live-preview.pid`, `closure-live-preview-probe.stdout`, `closure-live-preview-probe.stderr` — pass. A fresh Vite dev server was started with `npm run dev --workspace=frontend -- --host 0.0.0.0`; `curl` probes to `http://127.0.0.1:5173/` and `http://localhost:5173/` returned HTTP 200.
+- Final source-control reconciliation: `closure-final-status-diff.stdout`, `closure-final-status-diff.stderr` — captured. The workspace still contains broad pre-existing dirty/untracked audit, stage, protected-config, and adjacent source changes. Closure intentionally changed only this implementation log and validation/report artifacts; no protected file contents were read or copied.
+- Wave-plan reread/index: `closure-wave-plan-index.stdout`, `closure-wave-plan-index.stderr` — captured. The current plan ends at Wave 022; the next bounded action should be a wave-plan-extension/scout stage, not implementation.
+
+### Atomic restore / failure-path verification
+
+Focused app-shell tests and boundary tests remain green and cover the required Cycle 022 failure paths: invalid/corrupt payload validation before destructive reset, isolated candidate restore/deserialization failure without clearing active runtime state, command-stack/world/session metadata preservation after failed open, autosave snapshot exception status recovery, and explicit selection-delete runtime wiring. The fresh static scan confirms the implementation still places raw runtime ownership only in `RuntimeSession` and the adapter-private `ProjectSessionPersistenceAdapter` bridge.
+
+### Stale/non-source evidence disposition
+
+Earlier failed validation attempts in this cycle are superseded by the green closure logs above: wrong focused-test paths, overly strict intermediate assertions, an earlier `SerializedProjectSession` typing/build failure, and unsafe preview restart commands. Nonstandard worker/reviewer envelope issues are harness-only/stage-artifact concerns and are not source validation failures.
+
+### Source-control and protected-surface reconciliation
+
+The final status evidence is intentionally noisy because the repository contains many pre-existing deleted/modified/untracked files outside Cycle 022, including protected `.saivage` config paths listed only by name in `git status`. This closure did not inspect protected file contents and did not revert, incorporate, or normalize unrelated dirty work. Cycle 022 source changes remain limited to the reviewed app-shell runtime/session/persistence boundary and tests from the implementation stage; closure added only validation artifacts, this log update, and the task report.
+
+### Next-wave recommendation / re-rank
+
+After rereading `architecture-audit/wave-plan.md`, Wave 022 is the last currently defined wave. Because Wave 022 establishes the runtime-session/persistence boundary and intentionally leaves leaf command producers plus private persistence casts as residual debt, the next canonical action should be a bounded **cycle-023-wave-plan-extension / scout-proposals** stage before any implementation. Recommended highest-centrality candidates for that plan extension are:
+
+1. shrink remaining direct `World`/`CommandStack` dependencies behind the new `RuntimeSession` for active-plane, keyboard/history, selection, canvas/tool, and rendering-facing consumers;
+2. remove the adapter-private `ProjectSessionPersistenceAdapter` casts by defining a stricter package-private persistence/runtime adapter contract, if that proves more central than leaf command cleanup;
+3. then resume leaf command-producer cleanup for canvas/style/construction/process-history only after the runtime-session boundary is stable.
+
+Do not implement any of these next-wave candidates in the validation closure stage.

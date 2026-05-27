@@ -1,0 +1,53 @@
+5:**Status:** draft for dual-reviewer convergence.  
+30:## Wave 001 — Invert the World/application boundary
+67:**Dependencies**
+73:## Wave 002 — Split the projection-plane domain god-module around stable domain responsibilities
+106:**Dependencies**
+112:## Wave 003 — Establish one authoritative world state and delete dead store/workspace paths
+147:**Dependencies**
+153:## Wave 004 — Define the command/undo and persistence contract, then delete migration/private-cast paths
+186:**Dependencies**
+192:## Wave 005 — Clean process-tree/dependency ownership and remove deprecated process APIs
+224:**Dependencies**
+230:## Wave 006a — Canvas/tool command controllers
+272:**Dependencies**
+278:## Wave 006b — Panel/toolbar command-intent cleanup
+318:**Dependencies**
+324:## Wave 007 — Extract 2D rendering selectors and renderer adapters
+357:**Dependencies**
+363:## Wave 008 — Extract 3D rendering scene adapters from `ThreeView.vue`
+393:**Dependencies**
+399:## Wave 009 — Extract application shell services from `App.vue`
+431:**Dependencies**
+437:## Wave 010 — Resolve backend/frontend project-contract architecture
+470:**Dependencies**
+476:## Wave 011 — Tighten architecture tests and root validation gates
+507:**Dependencies**
+513:## Wave 012 — Remove vacant placeholders, noisy debug surfaces, and obsolete operation docs
+545:**Dependencies**
+551:## Wave 013 — Reconcile docs/specs with the cleaned architecture
+582:**Dependencies**
+588:## Wave 014 — Establish validation contract ownership and delete invalid gates
+660:**Dependencies**
+666:## Wave 015 — Converge frontend TypeScript contracts around owned boundaries
+779:**Dependencies**
+789:## Wave 016 — Canvas presentation read ports and overlay interaction boundary
+837:**Dependencies**
+861:## Wave 017 — Three presentation read ports and realization boundary
+863:**Status**
+916:**Dependencies**
+939:## Wave 018 — Domain realization context boundary
+941:**Status**
+1007:**Dependencies**
+1035:## Wave 019 — Three scene-host lifecycle and renderer platform boundary
+1037:**Status**
+1090:**Dependencies**
+1118:## Wave 020 — App-shell project session and browser integration boundary
+1120:**Status**
+1182:**Dependencies**
+1213:## Wave 021 — Selection/delete command-kernel boundary
+1215:**Status**
+1270:**Dependencies**
+1299:## Wave 022 — Runtime session kernel and persistence port boundary
+1301:**Status**
+1359:**Dependencies**
