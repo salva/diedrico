@@ -1,0 +1,260 @@
+     1	import { watch, type WatchStopHandle } from 'vue';
+     2	import { Command } from '@/commands/Command';
+     3	import type { CommandStack } from '@/commands/CommandStack';
+     4	import { DeletionSequenceFactory } from '@/commands/factories/DeletionSequenceFactory';
+     5	import type { World } from '@/domain/world/World';
+     6	import type { SelectionStorePort } from './AppShellPorts';
+     7	
+     8	export class SelectionUseCases {
+     9	  private stopSelectionWatch: WatchStopHandle | null = null;
+    10	
+    11	  constructor(
+    12	    private readonly world: World,
+    13	    private readonly commandStack: CommandStack,
+    14	    private readonly selectionStore: SelectionStorePort,
+    15	    private readonly getActivePlaneId: () => string | undefined,
+    16	  ) {}
+    17	
+    18	  start(): void {
+    19	    if (this.stopSelectionWatch) return;
+    20	    this.stopSelectionWatch = watch(
+    21	      () => this.selectionStore.selectedIdsArray,
+    22	      (selectedIds) => this.updateCascadePreview(selectedIds),
+    23	      { immediate: true },
+    24	    );
+    25	  }
+    26	
+    27	  dispose(): void {
+    28	    this.stopSelectionWatch?.();
+    29	    this.stopSelectionWatch = null;
+    30	    this.selectionStore.clearCascadeHighlight();
+    31	  }
+    32	
+    33	  deleteSelected(): void {
+    34	    const selectedIds = this.selectionStore.selectedIdsArray;
+    35	    if (selectedIds.length === 0) return;
+    36	    const deleteCommand = new Command('Delete elements', this.world);
+    37	    DeletionSequenceFactory.createCascadeDeletion(deleteCommand, selectedIds, this.world);
+    38	    deleteCommand.commit();
+    39	    this.commandStack.push(deleteCommand);
+    40	    this.selectionStore.clearSelection();
+    41	  }
+    42	
+    43	  clearSelection(): void {
+    44	    this.selectionStore.clearSelection();
+    45	  }
+    46	
+    47	  selectAllInActivePlane(): void {
+    48	    const activePlaneId = this.getActivePlaneId();
+    49	    if (!activePlaneId) return;
+    50	    const activePlane = this.world.getProjectionPlaneById(activePlaneId);
+    51	    if (!activePlane) return;
+    52	    const selectedIds: string[] = [];
+    53	    for (const point of activePlane.getAllPoints()) selectedIds.push(point.id);
+    54	    for (const line of activePlane.getAllLines()) selectedIds.push(line.id);
+    55	    for (const circle of activePlane.getAllCircles()) selectedIds.push(circle.id);
+    56	    if (selectedIds.length > 0) this.selectionStore.selectMultiple(selectedIds);
+    57	  }
+    58	
+    59	  private updateCascadePreview(selectedIds: string[]): void {
+    60	    if (selectedIds.length === 0) {
+    61	      this.selectionStore.clearCascadeHighlight();
+    62	      return;
+    63	    }
+    64	    const allElementsToDelete = this.world.getDependencyService().getElementsInDeletionOrder(selectedIds);
+    65	    this.selectionStore.setCascadeHighlight(allElementsToDelete.filter((id) => !selectedIds.includes(id)));
+    66	  }
+    67	}
+    68	import type { CommandStack } from '@/commands/CommandStack';
+    69	import { TOOL_FAMILIES } from '@/config/toolFamilies';
+    70	import type { ActivePlaneUseCases } from './ActivePlaneUseCases';
+    71	import type { ProjectSessionUseCases } from './ProjectSessionUseCases';
+    72	import type { SelectionUseCases } from './SelectionUseCases';
+    73	import type { ToolStorePort, ViewStorePort } from './AppShellPorts';
+    74	
+    75	export interface KeyboardShortcutRouterTarget {
+    76	  addEventListener(type: 'keydown', listener: (event: KeyboardEvent) => void): void;
+    77	  removeEventListener(type: 'keydown', listener: (event: KeyboardEvent) => void): void;
+    78	}
+    79	
+    80	export class KeyboardShortcutRouter {
+    81	  private target: KeyboardShortcutRouterTarget | null = null;
+    82	  private readonly boundHandler = (event: KeyboardEvent) => this.handle(event);
+    83	
+    84	  constructor(private readonly deps: {
+    85	    commandStack: CommandStack;
+    86	    toolStore: ToolStorePort;
+    87	    viewStore: ViewStorePort;
+    88	    projectSession: ProjectSessionUseCases;
+    89	    selection: SelectionUseCases;
+    90	    activePlane: ActivePlaneUseCases;
+    91	    fitToView: () => void;
+    92	    startRename: () => void;
+    93	  }) {}
+    94	
+    95	  install(target: KeyboardShortcutRouterTarget): void {
+    96	    if (this.target === target) return;
+    97	    this.dispose();
+    98	    this.target = target;
+    99	    this.target.addEventListener('keydown', this.boundHandler);
+   100	  }
+   101	
+   102	  dispose(): void {
+   103	    if (!this.target) return;
+   104	    this.target.removeEventListener('keydown', this.boundHandler);
+   105	    this.target = null;
+   106	  }
+   107	
+   108	  handle(event: Pick<KeyboardEvent, 'key' | 'ctrlKey' | 'metaKey' | 'shiftKey' | 'altKey' | 'target' | 'preventDefault'>): void {
+   109	    const target = event.target as HTMLElement | null;
+   110	    const isTextInput = target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA' || target?.isContentEditable;
+   111	    const isModifier = event.ctrlKey || event.metaKey;
+   112	
+   113	    if (event.key === 'Escape') {
+   114	      event.preventDefault();
+   115	      this.deps.toolStore.setTool('select');
+   116	      this.deps.selection.clearSelection();
+   117	      return;
+   118	    }
+   119	    if ((event.key === 'Delete' || event.key === 'Backspace') && !isTextInput) {
+   120	      event.preventDefault();
+   121	      this.deps.selection.deleteSelected();
+   122	      return;
+   123	    }
+   124	    if (event.key === 'F2') {
+   125	      event.preventDefault();
+   126	      this.deps.startRename();
+   127	      return;
+   128	    }
+   129	    if (event.key === 'Tab' && !isTextInput) {
+   130	      event.preventDefault();
+   131	      this.deps.activePlane.cycle(event.shiftKey ? -1 : 1);
+   132	      return;
+   133	    }
+   134	    if (!isModifier && !event.shiftKey && !event.altKey && !isTextInput) {
+   135	      const key = event.key.toUpperCase();
+   136	      if (key === 'D') {
+   137	        event.preventDefault();
+   138	        this.deps.viewStore.toggleProjectedElements();
+   139	        return;
+   140	      }
+   141	      for (const family of TOOL_FAMILIES) {
+   142	        for (const tool of family.tools) {
+   143	          if (tool.shortcut === key) {
+   144	            event.preventDefault();
+   145	            this.deps.toolStore.selectSubTool(family.id, tool.id);
+   146	            return;
+   147	          }
+   148	        }
+   149	      }
+   150	      switch (event.key.toLowerCase()) {
+   151	        case 'p': this.deps.toolStore.setTool('point'); event.preventDefault(); return;
+   152	        case 'l': this.deps.toolStore.setTool('line'); event.preventDefault(); return;
+   153	        case 's': this.deps.toolStore.setTool('segment'); event.preventDefault(); return;
+   154	        case 'c': this.deps.toolStore.setTool('circle'); event.preventDefault(); return;
+   155	        case 'g': this.deps.toolStore.setTool('guide'); event.preventDefault(); return;
+   156	      }
+   157	    }
+   158	    if (!isModifier) return;
+   159	    const key = event.key.toLowerCase();
+   160	    if (key === 'n') { event.preventDefault(); void this.deps.projectSession.newProject(); return; }
+   161	    if (key === 'o') { event.preventDefault(); this.deps.projectSession.showStartupProjectChooser(); return; }
+   162	    if (key === 'a') { event.preventDefault(); this.deps.selection.selectAllInActivePlane(); return; }
+   163	    if (event.key === '0') { event.preventDefault(); this.deps.fitToView(); return; }
+   164	    if (key === 'z' && !event.shiftKey && this.deps.commandStack.canUndo()) { event.preventDefault(); this.deps.commandStack.undo(); return; }
+   165	    if ((key === 'y' || (key === 'z' && event.shiftKey)) && this.deps.commandStack.canRedo()) {
+   166	      event.preventDefault();
+   167	      this.deps.commandStack.redo();
+   168	    }
+   169	  }
+   170	}
+   171	import { computed, ref } from 'vue';
+   172	import { CommandStack } from '@/commands/CommandStack';
+   173	import { World } from '@/domain/world/World';
+   174	import { ActivePlaneUseCases } from './ActivePlaneUseCases';
+   175	import { AutoSaveUseCases } from './AutoSaveUseCases';
+   176	import { KeyboardShortcutRouter } from './KeyboardShortcutRouter';
+   177	import type { AppShellRuntimePorts, SaveStatus } from './AppShellPorts';
+   178	import { ProjectSessionUseCases } from './ProjectSessionUseCases';
+   179	import { SelectionUseCases } from './SelectionUseCases';
+   180	
+   181	export interface AppShellRuntimeOptions {
+   182	  ports: AppShellRuntimePorts;
+   183	}
+   184	
+   185	export function createAppShellRuntime(options: AppShellRuntimeOptions) {
+   186	  const world = new World();
+   187	  const commandStack = new CommandStack();
+   188	  const ports = options.ports;
+   189	  const drive = ports.drive;
+   190	
+   191	  const activePlaneId = ref<string | undefined>(world.getActivePlaneId());
+   192	  const activePlaneName = ref('');
+   193	  const coordinates3D = ref<{ x: number; y: number; z: number } | null>(null);
+   194	  const show3DView = ref(true);
+   195	  const showStartupDialog = ref(false);
+   196	  const isSignedIn = ref(false);
+   197	  const currentProjectName = ref<string | null>(null);
+   198	  const currentFileId = ref<string | null>(null);
+   199	  const isRenamingProject = ref(false);
+   200	  const saveStatus = ref<SaveStatus>('idle');
+   201	  const startupDialog = {
+   202	    files: ref([]),
+   203	    loading: ref(false),
+   204	    loadingFiles: ref(false),
+   205	    error: ref<string | null>(null),
+   206	  };
+   207	
+   208	  const activePlane = new ActivePlaneUseCases(world, { activePlaneId, activePlaneName });
+   209	  const selection = new SelectionUseCases(world, commandStack, ports.selectionStore, () => activePlaneId.value);
+   210	  const autoSave = new AutoSaveUseCases({
+   211	    world,
+   212	    commandStack,
+   213	    drive,
+   214	    persistence: ports.persistence,
+   215	    lastProjectRepository: ports.lastProjectRepository,
+   216	    scheduler: ports.scheduler,
+   217	    currentFileId,
+   218	    currentProjectName,
+   219	    saveStatus,
+   220	    showStartupDialog,
+   221	    isSignedIn,
+   222	    alert: ports.callbacks.alert,
+   223	  });
+   224	  const projectSession = new ProjectSessionUseCases({
+   225	    world,
+   226	    commandStack,
+   227	    hasGoogleCredentials: drive !== null,
+   228	    showStartupDialog,
+   229	    isSignedIn,
+   230	    currentProjectName,
+   231	    currentFileId,
+   232	    isRenamingProject,
+   233	    saveStatus,
+   234	    startupDialog,
+   235	    autoSave,
+   236	    ports,
+   237	  });
+   238	  const keyboard = new KeyboardShortcutRouter({
+   239	    commandStack,
+   240	    toolStore: ports.toolStore,
+   241	    viewStore: ports.viewStore,
+   242	    projectSession,
+   243	    selection,
+   244	    activePlane,
+   245	    fitToView: ports.callbacks.fitToView,
+   246	    startRename: ports.callbacks.startRename,
+   247	  });
+   248	
+   249	  let started = false;
+   250	  function start(): void {
+   251	    if (started) return;
+   252	    started = true;
+   253	    activePlane.start();
+   254	    selection.start();
+   255	    keyboard.install(ports.keyboardTarget);
+   256	    void projectSession.initialize();
+   257	  }
+   258	
+   259	  function dispose(): void {
+   260	    if (!started) return;

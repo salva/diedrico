@@ -1,0 +1,99 @@
+# Proposal Restructure — Introduce a tiny application command executor, then migrate selection/delete first
+
+## Summary
+
+Create a small application command-execution primitive that owns the generic `new Command` → build operations → `commit()` → `CommandStack.push()` lifecycle, and use it immediately for selection/delete. This asks whether the right fix is one conceptual layer higher than a delete-only service: application use cases should not repeat commit/push/error/rollback choreography. However, the implementation slice remains bounded to selection/delete; other application command paths are left as explicit future candidates.
+
+This proposal is more structural than the direct path, but still rejects a broad all-command kernel wave.
+
+## Files to change
+
+Production source:
+
+- `frontend/src/application/commandKernel/ApplicationCommandExecutor.ts` (new)
+  - Defines an executor such as `execute(description, buildOperations)` where `buildOperations` receives an open `Command` and may call existing factories/operations.
+  - Owns `Command`, `World`, `CommandStack`, `commit()`, `push()`, and consistent failure behavior.
+  - Returns a narrow success/failure result or throws using the current project style; no persistence descriptor behavior is changed.
+- `frontend/src/application/selectionDeletion/SelectionDeletionUseCase.ts` or `SelectionDeletionCommandService.ts` (new)
+  - Uses `ApplicationCommandExecutor` plus `DeletionSequenceFactory` to implement selection deletion.
+  - Owns selected-id deletion command naming and cascade factory invocation.
+- `frontend/src/application/appShell/SelectionUseCases.ts`
+  - Depends on a `SelectionDeletionPort` and narrow read/query ports rather than `Command`, `CommandStack`, or `DeletionSequenceFactory`.
+  - Keeps selection clearing, no-op, select-all, and cascade-preview orchestration.
+- `frontend/src/application/appShell/AppShellRuntime.ts`
+  - Instantiates the `ApplicationCommandExecutor` with the existing `world` and `commandStack`.
+  - Instantiates the selection deletion service with the executor and wires it into `SelectionUseCases`.
+- `frontend/src/application/appShell/KeyboardShortcutRouter.ts`
+  - No user-visible change. Optionally narrow the dependency on selection to a keyboard-facing interface only if this falls out naturally.
+- `frontend/src/application/appShell/AppShellPorts.ts`
+  - Avoid changes unless needed for a typed selection port; do not fold the whole command executor into app-shell persistence ports.
+
+Tests:
+
+- New `frontend/tests/unit/application/commandKernel/ApplicationCommandExecutor.test.ts`
+  - Covers committed command push, rollback/failure propagation, empty command handling, non-undoable command behavior if currently needed, and stack notification/count behavior.
+- New or updated selection deletion tests as in the direct proposal.
+- Updated app-shell boundary/runtime tests to enforce that `SelectionUseCases` no longer imports command primitives and that the executor is wired at runtime.
+- Existing keyboard shortcut router tests remain focused on routing.
+
+## Files/tests/docs/fixtures to DELETE
+
+- Delete `SelectionUseCases.ts` imports of `Command`, `CommandStack`, and `DeletionSequenceFactory`.
+- Delete direct command construction/commit/push calls from `SelectionUseCases.deleteSelected()`.
+- Delete tests that assert the residual remains in `SelectionUseCases`, especially the boundary assertion currently matching `DeletionSequenceFactory|new Command`.
+- Delete any duplicate helper introduced by the direct path if the executor owns the lifecycle instead.
+- Delete compatibility wrappers that allow selection deletion to bypass `ApplicationCommandExecutor`.
+
+Do not delete or migrate these in this wave:
+
+- Existing command construction in canvas movement/style, construction, process-history, toolbar history, world initialization, or factories README examples.
+- `DeletionSequenceFactory` or cascade-deletion operations.
+- Command descriptors, operation registry, project persistence, Drive/auth, backend, docs/specs, package/tooling, rendering, or debug/placeholder surfaces.
+
+## Expected behavior change
+
+User-visible behavior remains equivalent to the direct proposal: empty selection no-op, cascade deletion order, selection clearing after success, cascade preview, Ctrl/Cmd+A, Delete/Backspace, Escape, undo, and redo should all remain the same.
+
+Architectural behavior changes:
+
+- The repeated application command lifecycle gets a named owner for selection/delete.
+- Selection deletion becomes the first consumer of a reusable executor, making future waves easier without prematurely touching all command paths.
+- `SelectionUseCases` is protected from both command construction and generic commit/push choreography.
+
+## No-backcompat rationale
+
+A command executor is an internal architecture boundary. Once introduced for selection/delete, the old direct selection path must be deleted. The executor should not expose a compatibility API that invites `SelectionUseCases` to pass concrete `World`, `CommandStack`, or raw command internals around.
+
+## Risks
+
+- The executor can become a new god service if it starts accepting arbitrary application concerns, persistence, autosave, UI callbacks, or operation registries. Keep it to the command lifecycle only.
+- A generic executor may tempt implementation to migrate all application command paths in one cycle. That would violate Wave 021 scope; leave those paths as future candidates with static-scan evidence.
+- If executor failure semantics differ from current `Command.addAndExecute()` rollback behavior, deletion correctness and undo/redo may regress. Focused tests must cover failure and stack state.
+- If the executor hides too much, command-boundary tests may become less precise. Expose only typed result/exception behavior, not command internals.
+- Existing dirty command files may change the executor’s compile/test surface; implementation must isolate its own diff and report unrelated state.
+
+## Validation plan
+
+Same mandatory cadence as the direct proposal, with additional focused executor tests:
+
+1. Pre-edit scoped status/diff and static scans.
+2. Focused Vitest for `ApplicationCommandExecutor`, selection deletion service, `SelectionUseCases`, app-shell runtime/boundary, and keyboard routing.
+3. Root/frontend lint.
+4. Root/frontend full Vitest.
+5. Root/frontend build.
+6. Root/frontend e2e/Playwright for keyboard delete/select-all/undo/redo behavior.
+7. Live preview refresh on `0.0.0.0:5173`, HTTP probes, and live browser smoke for create/select/delete/undo without real Drive credentials.
+
+## Stop conditions for broader redesign
+
+Stop for a reviewed plan edit or future wave if any of these become necessary:
+
+- Migrating canvas/tool, process-history, toolbar, construction, world initialization, or persistence command paths to the executor to make selection/delete compile.
+- Adding command serialization/deserialization responsibilities to the executor.
+- Changing `CommandStack` public behavior, undo/redo semantics, autosave dirty-version timing, or persistence snapshots.
+- Making `AppShellRuntime` stop owning `World`/`CommandStack` as a prerequisite.
+- Replacing `DeletionSequenceFactory` with a new deletion planner or process-tree deletion model.
+
+## When to choose this over direct
+
+Choose restructure if review concludes that the direct service would duplicate generic lifecycle code that already appears in several application use cases and would soon need to be extracted again. Reject restructure if the proposed executor becomes a wide application kernel or tries to migrate unrelated command paths in Wave 021.

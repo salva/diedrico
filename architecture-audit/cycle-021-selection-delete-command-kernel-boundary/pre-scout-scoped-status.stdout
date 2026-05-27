@@ -1,0 +1,9 @@
+ M frontend/src/commands/Command.ts
+ M frontend/src/commands/factories/DeletionSequenceFactory.ts
+ M frontend/src/commands/operations/IOperation.ts
+ M frontend/src/commands/operations/world/AddCircleCircleIntersectionPoint2DOp.ts
+ M frontend/src/commands/operations/world/AddFreePointOp.ts
+ M frontend/src/commands/operations/world/AddLineCircleIntersectionPoint2DOp.ts
+ M frontend/src/commands/operations/world/AddLineLineIntersectionPoint2DOp.ts
+ M frontend/src/commands/operations/world/AddSiblingIntersectionPoint2DOp.ts
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/

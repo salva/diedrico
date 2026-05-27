@@ -1,0 +1,112 @@
+# Proposal Direct — Extract a narrow selection-delete command service
+
+## Summary
+
+Move delete-selected command construction out of `SelectionUseCases` into a focused application command service while leaving broader runtime, persistence, canvas/tool, process-history, and command descriptor architecture unchanged. `SelectionUseCases` becomes an orchestrator over selection state and typed collaborators; the new service owns `Command`, `DeletionSequenceFactory`, `commit()`, and `CommandStack.push()` for the selection/delete slice only.
+
+This is the recommended direct path because it removes the explicit Wave 020 residual with the least architectural spread.
+
+## Files to change
+
+Production source:
+
+- `frontend/src/application/appShell/SelectionUseCases.ts`
+  - Replace constructor parameters `world` and `commandStack` for delete purposes with narrower collaborators.
+  - Keep active-plane select-all and cascade-preview reads either through a small read port or a minimally named `SelectionWorldReadPort` in the same implementation.
+  - Replace direct command construction in `deleteSelected()` with a call to `deleteSelectionCommand.execute(selectedIds)` or equivalent.
+- `frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts` (new)
+  - Owns `Command`, `CommandStack`, `DeletionSequenceFactory`, and `World` for delete-selected command execution.
+  - Provides a small result contract such as `{ status: 'deleted'; deletedIds: readonly string[] } | { status: 'empty' }` or throws on command failure if the existing app-shell error style is retained.
+  - Performs command creation, cascade factory invocation, commit, and stack push.
+- `frontend/src/application/selectionDeletion/SelectionDeletionPorts.ts` or `frontend/src/application/appShell/SelectionDeletionPorts.ts` (new, if useful)
+  - Defines `SelectionDeletionCommandPort` and `SelectionReadPort`/`CascadePreviewPort` interfaces without exposing `Command`/`CommandStack` to `SelectionUseCases`.
+- `frontend/src/application/appShell/AppShellRuntime.ts`
+  - Instantiate the new delete command service at the existing composition point using the current `world` and `commandStack`.
+  - Pass the service and any narrow read/query port into `SelectionUseCases`.
+- `frontend/src/application/appShell/AppShellPorts.ts`
+  - Only change if the selected implementation decides the narrow selection read/delete ports belong there. Prefer a dedicated module to avoid bloating app-shell ports.
+- `frontend/src/application/appShell/KeyboardShortcutRouter.ts`
+  - No behavior change expected. Touch only if type shape changes require narrowing the dependency from concrete `SelectionUseCases` to a tiny keyboard selection port.
+
+Tests:
+
+- `frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts`
+  - Update runtime fake/setup expectations for explicit delete command service wiring if needed.
+- `frontend/tests/unit/application/appShell/AppShellBoundary.test.ts`
+  - Replace the current residual assertion that expects `SelectionUseCases` to contain `DeletionSequenceFactory|new Command` with a prohibition assertion.
+  - Add an assertion that only the new service imports `DeletionSequenceFactory` for this slice.
+- `frontend/tests/unit/application/appShell/KeyboardShortcutRouter.test.ts`
+  - Preserve Delete/Backspace routing to `selection.deleteSelected()` and Ctrl/Cmd+A routing to `selectAllInActivePlane()`.
+- New focused test such as `frontend/tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts`
+  - Covers successful cascade deletion with real `World`/`CommandStack` where practical.
+  - Covers empty input/no-op if the service accepts selected ids directly.
+  - Covers failure behavior without clearing selection on failure.
+  - Covers command-stack push and undo/redo integration.
+- New or updated focused test for `SelectionUseCases`
+  - Covers no-op empty selection, successful service call followed by selection clearing, failed service call not clearing selection, cascade preview through typed query, and select-all in active plane.
+
+## Files/tests/docs/fixtures to DELETE
+
+- Delete `SelectionUseCases.ts` imports of `Command`, `CommandStack`, and `DeletionSequenceFactory`.
+- Delete `SelectionUseCases.deleteSelected()` direct `new Command(...)`, `DeletionSequenceFactory.createCascadeDeletion(...)`, `commit()`, and `commandStack.push(...)` calls.
+- Delete the `AppShellBoundary.test.ts` expectation that `SelectionUseCases` still matches `DeletionSequenceFactory|new Command`.
+- Delete any touched broad fake helpers that cast `World as any` or `CommandStack as any` solely to observe command internals from selection tests.
+- Delete any transitional compatibility wrapper or overload that preserves both old direct selection deletion and the new service path.
+
+Do not delete `DeletionSequenceFactory`, command operation descriptors, project persistence tests, canvas/tool/panel/toolbar tests, backend files, docs/specs, package metadata, or debug/README surfaces in this wave.
+
+## Expected behavior change
+
+User-visible behavior should remain equivalent:
+
+- Empty selection remains a no-op.
+- Delete and Backspace remove selected elements and dependent cascade elements in the existing dependency order.
+- Selection clears only after successful deletion.
+- Cascade highlight still shows dependent elements while selection is active.
+- Ctrl/Cmd+A still selects elements in the active plane.
+- Escape still clears selection and returns to select tool.
+- Undo/redo still restores/deletes the same elements and updates the command stack.
+
+Architectural behavior changes:
+
+- `SelectionUseCases` no longer knows how to construct or push commands.
+- The delete command kernel is explicitly named and independently testable.
+- `AppShellRuntime` remains the composition point for concrete `World` and `CommandStack`, preserving the Wave 020 runtime boundary while making command ownership visible.
+
+## No-backcompat rationale
+
+The old direct command construction path is internal implementation debt, not a compatibility contract. Keeping both old and new delete-selected paths would preserve ambiguity and make future app-shell code free to bypass the command boundary. The implementation must delete direct imports/calls from `SelectionUseCases` in the same change that introduces the service.
+
+## Risks
+
+- If the service returns success before `CommandStack.push()` notifies subscribers, autosave/dirty behavior could shift. Keep commit/push ordering identical and test stack counts.
+- If failure handling is introduced carelessly, selection may clear after a failed command. Tests should assert no clearing on thrown/failed service results.
+- The read-port extraction could become broad if it tries to model all `World` behavior. Keep it to active-plane element enumeration and cascade deletion order preview.
+- `DeletionSequenceFactory` has existing debug logging and process-tree behavior. Do not alter those semantics in this direct path.
+- Existing unrelated dirty command files may affect validation. Implementation must capture path-scoped diffs and avoid depending on unowned changes.
+
+## Validation plan
+
+Implementation logs must capture stdout/stderr under `architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/`:
+
+1. Pre-edit scoped git status/diff plus static scans for `SelectionUseCases`, `new Command`, `DeletionSequenceFactory`, `CommandStack.push`, cascade preview, and keyboard delete routing.
+2. Focused Vitest:
+   - new selection-delete command service tests;
+   - selection use-case tests;
+   - app-shell boundary/runtime tests;
+   - keyboard shortcut router tests.
+3. Root `npm run lint` and frontend lint where defined.
+4. Root and frontend full Vitest.
+5. Root and frontend `npm run build`.
+6. Root and frontend e2e/Playwright, with at least keyboard shortcut coverage for Delete/Backspace and undo/redo retained.
+7. Live preview refresh on `0.0.0.0:5173`, HTTP 200 probes, and credential-free Playwright/live smoke for create/select/delete/undo via keyboard.
+
+## Stop conditions
+
+Stop and request a reviewed delta/mini-cycle if implementation discovers any of the following is necessary:
+
+- Changing command descriptor serialization, operation replay, or persistence schema to support the delete boundary.
+- Moving all application command construction paths, including canvas/tool/process-history/toolbar, into a global kernel.
+- Rewriting `DeletionSequenceFactory` cascade semantics or process-tree deletion behavior.
+- Moving `World`/`CommandStack` creation out of `AppShellRuntime` as a prerequisite.
+- Changing package/tooling/e2e infrastructure or deleting stale docs/debug surfaces to make this wave pass.

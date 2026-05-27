@@ -1,0 +1,144 @@
+frontend/src/application/world/initializeWorld.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/world/initializeWorld.ts:19:export function initializeWorld(world: World, commandStack: CommandStack): void {
+frontend/src/application/world/initializeWorld.ts:22:  const initCmd = new Command('Initialize World', world);
+frontend/src/application/world/initializeWorld.ts:34:  commandStack.push(initCmd);
+frontend/src/application/tools/CanvasToolController.ts:1:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/tools/CanvasToolController.ts:12:  commandStack: CommandStack;
+frontend/src/application/tools/CanvasToolController.ts:24:    throw new Error('CommandStack not provided');
+frontend/src/application/tools/CanvasToolController.ts:28:    commandStack: deps.commandStack as CommandStack,
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:3:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:9:  constructor(private readonly world: World, private readonly commandStack: CommandStack) {}
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:12:    const cmd = new Command(`Move point ${request.label ?? request.pointId}`, this.world);
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:33:        this.commandStack.push(cmd);
+frontend/src/application/canvas/CanvasStyleUseCase.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/canvas/CanvasStyleUseCase.ts:8:  constructor(private readonly world: World, private readonly commandStack: CommandStack) {}
+frontend/src/application/canvas/CanvasStyleUseCase.ts:11:    const cmd = new Command(`Update style: ${request.elementId}`, this.world);
+frontend/src/application/canvas/CanvasStyleUseCase.ts:15:      this.commandStack.push(cmd);
+frontend/src/application/construction/ConstructionUseCases.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/construction/ConstructionUseCases.ts:32:  commandStack: CommandStack;
+frontend/src/application/construction/ConstructionUseCases.ts:36:  const cmd = new Command(intent.description, world);
+frontend/src/application/construction/ConstructionUseCases.ts:44:    commandStack.push(cmd);
+frontend/src/application/construction/QuickToolUseCases.ts:1:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/construction/QuickToolUseCases.ts:8:  commandStack: CommandStack;
+frontend/src/application/processHistory/ProcessHistoryUseCases.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/processHistory/ProcessHistoryUseCases.ts:23:    private readonly commandStack: CommandStack
+frontend/src/application/processHistory/ProcessHistoryUseCases.ts:73:    const command = new Command(description, this.world);
+frontend/src/application/processHistory/ProcessHistoryUseCases.ts:78:      this.commandStack.push(command);
+frontend/src/application/processHistory/ProcessHistoryController.ts:1:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/processHistory/ProcessHistoryController.ts:17:  commandStack: CommandStack;
+frontend/src/application/processHistory/ProcessHistoryController.ts:29:    throw new Error('CommandStack not provided');
+frontend/src/application/processHistory/ProcessHistoryController.ts:34:    commandStack: deps.commandStack as CommandStack
+frontend/src/application/toolbar/ToolbarHistoryUseCases.ts:1:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/toolbar/ToolbarHistoryUseCases.ts:5:  constructor(private readonly commandStack: CommandStack) {}
+frontend/src/application/toolbar/ToolbarHistoryController.ts:1:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/toolbar/ToolbarHistoryController.ts:6:  commandStack: CommandStack;
+frontend/src/application/toolbar/ToolbarHistoryController.ts:17:    throw new Error('CommandStack not provided');
+frontend/src/application/toolbar/ToolbarHistoryController.ts:20:  return new ToolbarHistoryController({ commandStack: deps.commandStack as CommandStack });
+frontend/src/application/canvasPresentation/CanvasGridSelector.ts:54:    lines.push({ key: `u-${u}`, x1: (p1.x + viewport.panX) * zoom, y1: (p1.y + viewport.panY) * zoom, x2: (p2.x + viewport.panX) * zoom, y2: (p2.y + viewport.panY) * zoom, major: isMajor });
+frontend/src/application/canvasPresentation/CanvasGridSelector.ts:62:    lines.push({ key: `v-${v}`, x1: (p1.x + viewport.panX) * zoom, y1: (p1.y + viewport.panY) * zoom, x2: (p2.x + viewport.panX) * zoom, y2: (p2.y + viewport.panY) * zoom, major: isMajor });
+frontend/src/application/canvasPresentation/CanvasGridSelector.ts:67:    if (Number.isFinite(position) && position >= -10 && position <= (edge === 'top' || edge === 'bottom' ? viewport.width + 10 : viewport.height + 10)) arr.push({ key, value, position, edge });
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:43:        renderItems.push(canvasRenderItem(primitive, 'point'));
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:44:        queryItems.push({ id: primitive.id, kind: 'point', elementId: point.id, elementType: 'point', planeId: point.planeId, selectable: true, planeGeometry: { type: 'point', position: realization.position.clone(), visualRadiusPixels: style.radius } });
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:56:          renderItems.push(canvasRenderItem(primitive, kind));
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:57:          queryItems.push({ id: primitive.id, kind, elementId: line.id, elementType: 'segment', planeId: line.planeId, selectable: true, planeGeometry: { type: 'segment', point1: realization.point1.clone(), point2: realization.point2.clone() } });
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:62:          renderItems.push(canvasRenderItem(primitive, kind));
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:63:          queryItems.push({ id: primitive.id, kind, elementId: line.id, elementType: kind === 'half-hinge-line' ? 'half-hinge-line' : kind === 'guide' || kind === 'sibling-guide' ? 'guide' : 'line', planeId: line.planeId, selectable: true, planeGeometry: { type: 'line', point: realization.point1.clone(), direction: realization.getDirection() } });
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:69:            renderItems.push(canvasRenderItem(path, 'arc'));
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:81:        renderItems.push(canvasRenderItem(primitive, 'circle'));
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:82:        queryItems.push({ id: primitive.id, kind: 'circle', elementId: circle.id, elementType: 'circle', planeId: circle.planeId, selectable: true, planeGeometry: { type: 'circle', center: realization.center.clone(), radius: realization.getRadius() } });
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:86:    if (state.showProjectedElements) renderItems.push(...this.projected3DSelector.select(readPort, planeTransforms));
+frontend/src/application/canvasPresentation/Projected3DCanvasSelector.ts:33:        items.push(canvasRenderItem(primitive, 'projected-3d-point'));
+frontend/src/application/canvasPresentation/Projected3DCanvasSelector.ts:52:        items.push(canvasRenderItem(primitive, 'projected-3d-line'));
+frontend/src/application/canvasPresentation/Projected3DCanvasSelector.ts:69:        items.push(canvasRenderItem(primitive, 'projected-3d-segment'));
+frontend/src/application/threePresentation/ProjectionPlane3DSelector.ts:12:    if (showReferenceAxes) items.push(...referenceAxes());
+frontend/src/application/threePresentation/ProjectionPlane3DSelector.ts:22:      items.push({ id: `surface-${plane.id}`, kind: 'projection-plane-surface', sourceEntityId: plane.id, planeId: plane.id, visible: true, style: THREE_STYLE.projectionPlane, renderGroup: 'projectionPlanes', geometry: { center: v(center), normal: v(normalThree), size } });
+frontend/src/application/threePresentation/ProjectionPlane3DSelector.ts:25:        items.push({ id: `grid-${plane.id}`, kind: 'projection-plane-grid', sourceEntityId: plane.id, planeId: plane.id, visible: true, style: THREE_STYLE.grid, renderGroup: 'projectionPlanes', segments: gridSegments(readPort, plane.id).map(segment => to3DSegment(segment, realization.planeTo3D)) });
+frontend/src/application/threePresentation/ProjectionPlane3DSelector.ts:29:        items.push(...auxiliaryAxes(plane.id, basis.origin, basis.uAxis, basis.vAxis));
+frontend/src/application/threePresentation/ProjectionPlane3DSelector.ts:49:    segments.push({ start: { u: -halfSize, v: t }, end: { u: halfSize, v: t } }, { start: { u: t, v: -halfSize }, end: { u: t, v: halfSize } });
+frontend/src/application/threePresentation/PlanarElement3DSelector.ts:18:        items.push({ id: `planar-point-${point.id}`, kind: 'planar-point', sourceEntityId: point.id, planeId: plane.id, visible: true, style: planarStyle(point), renderGroup: 'planarElements', position: v(lift(realization.position, planeRealization.planeTo3D)) });
+frontend/src/application/threePresentation/PlanarElement3DSelector.ts:26:          items.push({ id: `planar-segment-${line.id}`, kind: 'planar-segment', sourceEntityId: line.id, planeId: plane.id, visible: true, style, renderGroup: 'planarElements', start: v(lift(realization.point1, planeRealization.planeTo3D)), end: v(lift(realization.point2, planeRealization.planeTo3D)) });
+frontend/src/application/threePresentation/PlanarElement3DSelector.ts:31:          items.push({ id: `planar-line-${line.id}`, kind: 'planar-line', sourceEntityId: line.id, planeId: plane.id, visible: true, style, renderGroup: 'planarElements', start: v(lift(start2D, planeRealization.planeTo3D)), end: v(lift(end2D, planeRealization.planeTo3D)) });
+frontend/src/application/threePresentation/PlanarElement3DSelector.ts:45:          points.push(v(lift(p, planeRealization.planeTo3D)));
+frontend/src/application/threePresentation/PlanarElement3DSelector.ts:48:        items.push({ id: `planar-circle-${circle.id}`, kind: 'planar-circle', sourceEntityId: circle.id, planeId: plane.id, visible: true, style: planarStyle(circle), renderGroup: 'planarElements', points });
+frontend/src/application/threePresentation/ReconstructedElement3DSelector.ts:18:      items.push({ id: `reconstructed-point-${point.id}`, kind: 'reconstructed-point', sourceEntityId: point.id, visible: true, style: reconstructedStyle(point), renderGroup: 'reconstructedElements', position: v(domainToThreeJS(new Vector4(x, y, z, 1))) });
+frontend/src/application/threePresentation/ReconstructedElement3DSelector.ts:26:      items.push({ id: `reconstructed-line-${line.id}`, kind: 'reconstructed-line', sourceEntityId: line.id, visible: true, style: reconstructedStyle(line), renderGroup: 'reconstructedElements', start: v(point.clone().add(direction.clone().multiplyScalar(-THREE_STYLE.infiniteLineExtent / 2))), end: v(point.clone().add(direction.clone().multiplyScalar(THREE_STYLE.infiniteLineExtent / 2))) });
+frontend/src/application/threePresentation/ReconstructedElement3DSelector.ts:32:      items.push({ id: `reconstructed-segment-${segment.id}`, kind: 'reconstructed-segment', sourceEntityId: segment.id, visible: true, style: reconstructedStyle(segment), renderGroup: 'reconstructedElements', start: v(domainToThreeJS(realization.startPoint)), end: v(domainToThreeJS(realization.endPoint)) });
+frontend/src/application/threePresentation/ReconstructedElement3DSelector.ts:40:      items.push({ id: `reconstructed-plane-${plane.id}`, kind: 'reconstructed-plane', sourceEntityId: plane.id, visible: true, style: THREE_STYLE.reconstructedPlane, renderGroup: 'reconstructedElements', geometry: { center: v(origin), normal: v(normal), size: getPlaneMeshSize(plane.id), quaternion: { x: q.x, y: q.y, z: q.z, w: q.w } } });
+frontend/src/application/threePresentation/Hinge3DSelector.ts:16:      items.push({ id: `hinge-line-${hingeLine.id}`, kind: 'hinge-line', sourceEntityId: hingeLine.id, visible: true, style: THREE_STYLE.hinge, renderGroup: 'hinges', start: v(origin.clone().add(direction.clone().multiplyScalar(-THREE_STYLE.infiniteLineExtent / 2))), end: v(origin.clone().add(direction.clone().multiplyScalar(THREE_STYLE.infiniteLineExtent / 2))) });
+frontend/src/application/threePresentation/Guide3DSelector.ts:23:      items.push({ id: `guide-plane-${guide.id}`, kind: 'guide-perpendicular-plane', sourceEntityId: guide.id, planeId: guide.planeId, visible: true, style: THREE_STYLE.guidePlane, renderGroup: 'guides', geometry: { center: v(centerThree), normal: v(normalThree), size: getPlaneMeshSize(guide.planeId), quaternion: { x: quaternion.x, y: quaternion.y, z: quaternion.z, w: quaternion.w } } });
+frontend/src/application/threePresentation/Guide3DSelector.ts:24:      items.push(...intersections(readPort.getGuideIntersectionModels(), guidePoint3D, perpendicularNormal, guide.id));
+frontend/src/application/threePresentation/Guide3DSelector.ts:44:    if (isPointOnPlane3D(position, planePoint, normal)) items.push(marker(`${guideId}-point-${point.id}`, point.id, position));
+frontend/src/application/threePresentation/Guide3DSelector.ts:49:    if (hit) items.push(marker(`${guideId}-line-${line.id}`, line.id, hit));
+frontend/src/application/threePresentation/Guide3DSelector.ts:54:    if (hit) items.push(marker(`${guideId}-segment-${segment.id}`, segment.id, hit));
+frontend/src/application/appShell/AppShellPorts.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/appShell/AppShellPorts.ts:26:  snapshotCurrentSession(deps: { commandStack: CommandStack; world: World; projectName: string }): ProjectData;
+frontend/src/application/appShell/AppShellPorts.ts:28:  restoreSession(data: ProjectData, deps: { world: World; commandStack: CommandStack }): void;
+frontend/src/application/appShell/SelectionUseCases.ts:3:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/appShell/SelectionUseCases.ts:4:import { DeletionSequenceFactory } from '@/commands/factories/DeletionSequenceFactory';
+frontend/src/application/appShell/SelectionUseCases.ts:13:    private readonly commandStack: CommandStack,
+frontend/src/application/appShell/SelectionUseCases.ts:33:  deleteSelected(): void {
+frontend/src/application/appShell/SelectionUseCases.ts:36:    const deleteCommand = new Command('Delete elements', this.world);
+frontend/src/application/appShell/SelectionUseCases.ts:37:    DeletionSequenceFactory.createCascadeDeletion(deleteCommand, selectedIds, this.world);
+frontend/src/application/appShell/SelectionUseCases.ts:39:    this.commandStack.push(deleteCommand);
+frontend/src/application/appShell/SelectionUseCases.ts:53:    for (const point of activePlane.getAllPoints()) selectedIds.push(point.id);
+frontend/src/application/appShell/SelectionUseCases.ts:54:    for (const line of activePlane.getAllLines()) selectedIds.push(line.id);
+frontend/src/application/appShell/SelectionUseCases.ts:55:    for (const circle of activePlane.getAllCircles()) selectedIds.push(circle.id);
+frontend/src/application/appShell/AutoSaveUseCases.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/appShell/AutoSaveUseCases.ts:16:      commandStack: CommandStack;
+frontend/src/application/appShell/ProjectSessionUseCases.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/appShell/ProjectSessionUseCases.ts:14:      commandStack: CommandStack;
+frontend/src/application/appShell/KeyboardShortcutRouter.ts:1:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/appShell/KeyboardShortcutRouter.ts:18:    commandStack: CommandStack;
+frontend/src/application/appShell/KeyboardShortcutRouter.ts:54:      this.deps.selection.deleteSelected();
+frontend/src/application/appShell/AppShellRuntime.ts:2:import { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/appShell/AppShellRuntime.ts:17:  const commandStack = new CommandStack();
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:1:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:7:  snapshotCurrentSession(deps: { commandStack: CommandStack; world: World; projectName: string }): ProjectData {
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:15:  restoreSession(data: ProjectData, deps: { world: World; commandStack: CommandStack }): void {
+frontend/src/tools/ArgumentCollectorTool.ts:521:          specs.push(spec);
+frontend/src/commands/factories/README.md:14:- `DeletionSequenceFactory` - Handles cascade deletion with topological sorting
+frontend/src/commands/factories/README.md:62:const cmd = new Command('Create guide', world);
+frontend/src/commands/factories/README.md:73:commandStack.push(cmd);
+frontend/src/commands/factories/README.md:79:const cmd = new Command('Create intersection', world);
+frontend/src/commands/factories/README.md:91:commandStack.push(cmd);
+frontend/src/commands/factories/README.md:94:### DeletionSequenceFactory
+frontend/src/commands/factories/README.md:97:const cmd = new Command('Delete elements', world);
+frontend/src/commands/factories/README.md:99:DeletionSequenceFactory.createCascadeDeletion(
+frontend/src/commands/factories/README.md:106:commandStack.push(cmd);
+frontend/src/commands/factories/README.md:137:    const cmd = new Command('Test', mockWorld);
+frontend/src/commands/factories/README.md:145:    const cmd = new Command('Test', mockWorldWithHHL);
+frontend/src/commands/factories/README.md:156:Test with real World and CommandStack:
+frontend/src/commands/factories/README.md:161:  const cmd = new Command('Create guide', world);
+frontend/src/commands/factories/README.md:198:### DeletionSequenceFactory
+frontend/src/commands/factories/README.md:207:**Tests**: `DeletionSequenceFactory.spec.ts`
+frontend/src/commands/factories/DeletionSequenceFactory.ts:2: * DeletionSequenceFactory - Factory for cascade deletion sequences
+frontend/src/commands/factories/DeletionSequenceFactory.ts:35: * DeletionSequenceFactory - Factory for cascade deletion sequences
+frontend/src/commands/factories/DeletionSequenceFactory.ts:40:export class DeletionSequenceFactory {
+frontend/src/commands/factories/DeletionSequenceFactory.ts:65:    console.log('[DeletionSequenceFactory] Cascade deletion:', {
+frontend/src/commands/factories/DeletionSequenceFactory.ts:79:        console.warn(`[DeletionSequenceFactory] Element ${elementId} has no producing action - skipping`);
+frontend/src/commands/factories/DeletionSequenceFactory.ts:87:        actionsToDelete.get(action.id)!.push(elementId);
+frontend/src/commands/factories/DeletionSequenceFactory.ts:131:        console.warn(`[DeletionSequenceFactory] Element ${elementId} not found in any plane`);
+frontend/src/commands/factories/GuideSequenceFactory.ts:38:   * const cmd = new Command('Create guide', world);
+frontend/src/commands/factories/GuideSequenceFactory.ts:48:   * commandStack.push(cmd);
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:27: * const cmd = new Command('Create intersection', world);
+frontend/src/commands/factories/LineSequenceFactory.ts:21: * const cmd = new Command('Create construction', world);
+frontend/src/commands/Command.ts:27: *    const cmd = new Command("Create segment", world);
+frontend/src/commands/Command.ts:121:    const command = new Command(input.description, world);
+frontend/src/commands/Command.ts:176:      this.operations.push(operation);
+frontend/src/commands/Command.ts:195:   * undo stack. CommandStack checks this before adding commands.
+frontend/src/commands/CommandStack.ts:2: * CommandStack - Manages undo/redo history
+frontend/src/commands/CommandStack.ts:19:export class CommandStack {
+frontend/src/commands/CommandStack.ts:30:    this.listeners.push(callback);
+frontend/src/commands/CommandStack.ts:62:    this.undoStack.push(command);
+frontend/src/commands/CommandStack.ts:81:    this.redoStack.push(command);
+frontend/src/commands/CommandStack.ts:97:    this.undoStack.push(command);
+frontend/tests/unit/application/appShell/KeyboardShortcutRouter.test.ts:23:    selection: { clearSelection: vi.fn(), deleteSelected: vi.fn(), selectAllInActivePlane: vi.fn() },
+frontend/tests/unit/application/appShell/KeyboardShortcutRouter.test.ts:50:    expect(d.selection.deleteSelected).toHaveBeenCalled();
+frontend/tests/unit/application/appShell/KeyboardShortcutRouter.test.ts:65:    expect(d.selection.deleteSelected).not.toHaveBeenCalled();
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:17:    expect(appVue).not.toMatch(/DeletionSequenceFactory|ProjectService|GoogleDriveService|window as any|__autoSaveInterval|CustomEvent\('load-files'\)|Environment variables/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:59:    expect(selection).toMatch(/DeletionSequenceFactory|new Command/);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:10:import { CommandStack } from '@/commands/CommandStack';
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:82:      repository.records.set.push(project);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:405:    const commandStack = new CommandStack();
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:452:    const originalCommandStack = deps.commandStack;
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:473:    expect(deps.commandStack).toBe(originalCommandStack);

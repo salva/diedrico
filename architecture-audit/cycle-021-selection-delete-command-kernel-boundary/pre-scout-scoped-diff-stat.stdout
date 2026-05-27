@@ -1,0 +1,9 @@
+ frontend/src/commands/Command.ts                             |  6 +++---
+ frontend/src/commands/factories/DeletionSequenceFactory.ts   |  2 +-
+ frontend/src/commands/operations/IOperation.ts               |  9 ++++++---
+ .../operations/world/AddCircleCircleIntersectionPoint2DOp.ts | 12 ++++++++----
+ frontend/src/commands/operations/world/AddFreePointOp.ts     | 12 ++++++++----
+ .../operations/world/AddLineCircleIntersectionPoint2DOp.ts   | 12 ++++++++----
+ .../operations/world/AddLineLineIntersectionPoint2DOp.ts     | 12 ++++++++----
+ .../operations/world/AddSiblingIntersectionPoint2DOp.ts      | 12 ++++++++----
+ 8 files changed, 50 insertions(+), 27 deletions(-)
