@@ -1112,3 +1112,96 @@ Depends on Wave 018 because scene-host lifecycle should consume stable typed rea
 **No-backcompat rationale**
 
 The current all-in-one scene-host/runtime wiring is an internal architecture seam, not a compatibility surface. If the reviewed proposal introduces lifecycle ports or runtime composition factories, delete the old implicit wiring and tests that depend on it rather than preserving parallel construction paths. A single clear runtime/platform boundary is more valuable than compatibility wrappers around the old host shape.
+
+---
+
+## Wave 020 — App-shell project session and browser integration boundary
+
+**Status**
+
+Added by `cycle-020-wave-plan-extension` as the recommended next wave after Wave 019. Requires `cycle-020-wave-plan-extension-review` sign-off before the canonical `cycle-020-fresh-scout-proposals` stage and before any implementation.
+
+**Scope**
+
+- `frontend/src/application/appShell/AppShellRuntime.ts`
+- `frontend/src/application/appShell/AppShellPorts.ts`
+- `frontend/src/application/appShell/ProjectSessionUseCases.ts`
+- `frontend/src/application/appShell/AutoSaveUseCases.ts`
+- `frontend/src/application/appShell/SelectionUseCases.ts` only where selection/delete command ownership must be kept behind the app-shell/application boundary
+- `frontend/src/application/appShell/KeyboardShortcutRouter.ts` only where browser-event installation and shortcut routing interact with project/session lifecycle
+- a small production composition module/factory for browser-only adapters if the reviewed proposal selects one
+- `frontend/src/App.vue` only as the Vue composition shell that wires UI callbacks and provides the already-created runtime objects
+- `frontend/src/services/GoogleDriveService.ts` only at the adapter/port boundary; do not redesign Drive API behavior broadly
+- `frontend/src/services/ProjectService.ts` only where its app-shell-facing persistence port shape must be narrowed or moved behind a typed adapter
+- `frontend/src/stores/authStore.ts`, `frontend/src/stores/selectionStore.ts`, `frontend/src/stores/toolStore.ts`, and `frontend/src/stores/viewStore.ts` only as port consumers/adapters, not store redesigns
+- focused app-shell runtime/use-case/port tests, persistence/autosave tests, keyboard/session tests, and representative project-flow e2e/live checks
+
+**Scope guard**
+
+This wave owns the app-shell project/session/browser integration boundary after the domain, command, validation, presentation, realization, and 3D runtime boundaries have been stabilized. It must not reopen domain realization, canvas/three presentation selectors, Three.js scene-host lifecycle, command/undo descriptor architecture, project serialization internals, backend deletion/contract stance, package/tooling gates, docs/spec reconciliation, or broad store redesign. If implementation proves that persistence format or command serialization must be redesigned rather than merely hidden behind a stable app-shell port, stop and run a reviewed plan-edit mini-cycle before broadening scope.
+
+The wave must start with a current inventory of concrete construction and browser globals in the app shell: `World`, `CommandStack`, `GoogleDriveService`, `ProjectService`, `window.localStorage`, keyboard target installation, scheduler/timer installation, alert callbacks, auth/session storage keys, and runtime state exposed to `App.vue`. It must also inventory which app-shell use cases still directly mutate `World`/`CommandStack` and which of those are intentional application-use-case dependencies versus composition leaks.
+
+**Baseline/current grounding**
+
+The original baseline ranked `App.vue` as an app-shell god module that owned `World`, `CommandStack`, Drive/local project state, autosave, keyboard/delete/select-all behavior, active-plane state, project lifecycle, and command coordination (`architecture-audit/baseline/architecture-map.md`, “Entry points and workspace boundaries”; `architecture-audit/baseline/risk-register.md`, R2 and R5). Earlier waves have reduced the Vue shell itself: current `App.vue` delegates startup, toolbar, project-name, canvas, and lifecycle events to `runtime.actions`, creates the runtime through `createAppShellRuntime`, and only provides `runtime.world` plus `runtime.commandStack` to descendants (`frontend/src/App.vue:12`, `frontend/src/App.vue:24`, `frontend/src/App.vue:63`, `frontend/src/App.vue:107`, `frontend/src/App.vue:126`, `frontend/src/App.vue:142`, `frontend/src/App.vue:143`, `frontend/src/App.vue:171`).
+
+Current source evidence shows the remaining central problem moved into the application app-shell runtime/composition boundary, not into `App.vue` markup. `createAppShellRuntime` still constructs `World`, `CommandStack`, default `GoogleDriveService`, default `ProjectService`, browser `window.localStorage`, browser scheduler, and installs keyboard handling on `window` from the runtime (`frontend/src/application/appShell/AppShellRuntime.ts:21`, `frontend/src/application/appShell/AppShellRuntime.ts:22`, `frontend/src/application/appShell/AppShellRuntime.ts:23`, `frontend/src/application/appShell/AppShellRuntime.ts:24`, `frontend/src/application/appShell/AppShellRuntime.ts:27`, `frontend/src/application/appShell/AppShellRuntime.ts:28`, `frontend/src/application/appShell/AppShellRuntime.ts:29`, `frontend/src/application/appShell/AppShellRuntime.ts:101`). `AppShellPorts` still exposes a persistence port typed directly in terms of `CommandStack`, `World`, and `ProjectData` from `ProjectService`, so app-session orchestration is not insulated from concrete command/domain/persistence shapes (`frontend/src/application/appShell/AppShellPorts.ts:2`, `frontend/src/application/appShell/AppShellPorts.ts:3`, `frontend/src/application/appShell/AppShellPorts.ts:5`, `frontend/src/application/appShell/AppShellPorts.ts:24`, `frontend/src/application/appShell/AppShellPorts.ts:25`, `frontend/src/application/appShell/AppShellPorts.ts:27`).
+
+Project/session use cases still mix session state, Drive calls, local-storage keys, domain reset/initialization, command-stack clearing, persistence validation/deserialization, autosave start, and error UI state in one class (`frontend/src/application/appShell/ProjectSessionUseCases.ts:27`, `frontend/src/application/appShell/ProjectSessionUseCases.ts:40`, `frontend/src/application/appShell/ProjectSessionUseCases.ts:47`, `frontend/src/application/appShell/ProjectSessionUseCases.ts:96`, `frontend/src/application/appShell/ProjectSessionUseCases.ts:99`, `frontend/src/application/appShell/ProjectSessionUseCases.ts:102`, `frontend/src/application/appShell/ProjectSessionUseCases.ts:118`, `frontend/src/application/appShell/ProjectSessionUseCases.ts:121`, `frontend/src/application/appShell/ProjectSessionUseCases.ts:123`, `frontend/src/application/appShell/ProjectSessionUseCases.ts:124`, `frontend/src/application/appShell/ProjectSessionUseCases.ts:188`). `AutoSaveUseCases` owns dirty-version polling, debounce/status timers, persistence serialization, Drive update/create fallback, local-storage last-file update, auth-expiry UI behavior, and quota/file-deleted error policy (`frontend/src/application/appShell/AutoSaveUseCases.ts:30`, `frontend/src/application/appShell/AutoSaveUseCases.ts:33`, `frontend/src/application/appShell/AutoSaveUseCases.ts:42`, `frontend/src/application/appShell/AutoSaveUseCases.ts:50`, `frontend/src/application/appShell/AutoSaveUseCases.ts:54`, `frontend/src/application/appShell/AutoSaveUseCases.ts:59`, `frontend/src/application/appShell/AutoSaveUseCases.ts:92`, `frontend/src/application/appShell/AutoSaveUseCases.ts:103`, `frontend/src/application/appShell/AutoSaveUseCases.ts:112`).
+
+Recent Wave 019 closure confirms validation is green and the current plan ends at Wave 019, so a new central wave is required before implementation continues (`architecture-audit/cycle-019-three-scene-host-lifecycle-renderer-platform/implementation-log.md`, “Validation/preview closure — cycle-019-validation-and-preview-refresh”). Current scans also show lower-priority candidates are not more central right now: the backend directory is absent and root workspaces list only `frontend` (`package.json:7`, `package.json:8`, `package.json:13`, `.saivage/stages/cycle-020-wave-plan-extension/backend-contract-source-evidence.stdout`); README-only `paper/`/`toolbar/` operation placeholder directories were not found (`.saivage/stages/cycle-020-wave-plan-extension/deferred-candidates-evidence.stdout`); docs/spec drift remains real but intentionally follows structural waves.
+
+**Target outcome**
+
+The app shell has a clear composition boundary: Vue `App.vue` remains a passive composition shell; production-only browser adapters create Drive, storage, scheduler, alert, keyboard target, and optional environment-backed configuration; app-shell use cases consume typed ports and do not instantiate concrete browser services or reach for browser globals; project session/autosave state transitions are explicit and testable without `window`, real localStorage, real Google APIs, or concrete persistence static methods. Domain/command objects may remain the current in-memory runtime model provided to child construction/rendering paths, but their creation and persistence exposure are owned by one application composition contract rather than scattered through runtime/use-case classes.
+
+The persistence-facing port should express the app shell's need to save/load a current project session without forcing use-case code to know static `ProjectService` methods or serialization internals. The Drive-facing port should remain a Drive/project-file adapter contract, not a direct dependency on Google API globals. Browser state keys such as `diedrico_last_file_id` and `diedrico_last_file_name` should be centralized behind a small session-storage port or repository instead of duplicated string literals in project/session code.
+
+**Explicit DELETE list**
+
+- Delete default construction of `GoogleDriveService`, direct `ProjectService` static binding, direct `window.localStorage`, and direct `window` keyboard target installation from `createAppShellRuntime` if the reviewed proposal introduces a production composition factory/adapters.
+- Delete `ProjectPersistencePort` methods that expose concrete static `ProjectService` shape to app-session use cases if replaced by a narrower project-session persistence adapter.
+- Delete duplicated local-storage key string usage for last project file/name from `ProjectSessionUseCases` and `AutoSaveUseCases`; replace with a named session repository/port if the reviewed proposal chooses that path.
+- Delete app-shell use-case `any` error handling in touched save/session paths where a typed error classifier or narrow unknown-to-message helper is introduced.
+- Delete app-shell tests that assert concrete service construction or browser-global behavior from use cases; replace with port/adapter/composition tests.
+- Delete compatibility wrappers, dual browser/global and port-based paths, dead exports, or broad “AppShellService” facades that merely move the existing concentration without narrowing ownership.
+- Do not delete or rewrite `GoogleDriveService` internals, `ProjectService` serialization internals, command descriptors, or backend/docs/spec files in this wave unless a reviewed plan edit broadens scope.
+
+**Success criteria**
+
+- `createAppShellRuntime` can be constructed in tests and in production from explicit dependencies without directly reaching for `window.localStorage`, default `GoogleDriveService`, or static `ProjectService` as hidden globals inside the runtime core.
+- Browser-only concerns (Google API service construction, localStorage, scheduler/timers, alert, and keyboard event target) are isolated in a production composition adapter/module or explicit ports with focused tests.
+- Project session and autosave use cases consume named ports/repositories for last-project storage and persistence/Drive operations; stringly session-key duplication is removed from touched use-case code.
+- `App.vue` remains small and composition-focused, with no reintroduced direct project lifecycle/autosave/keyboard orchestration imports.
+- Selection/delete and keyboard routing behavior remains user-visible equivalent; any retained direct `World`/`CommandStack` use in app-shell use cases is documented as an intentional application-use-case dependency rather than a composition leak.
+- No domain realization, rendering/presentation, Three.js scene-host, command/undo descriptor, persistence schema, backend, docs/spec, package/tooling, or validation-platform change is introduced without a reviewed plan edit.
+- Focused app-shell tests cover runtime composition, project create/open/rename/sign-in/sign-out, autosave debounce/error policies, keyboard install/dispose/routing, and session-storage behavior with fake ports.
+- Mandatory validation cadence passes with stable logs: root/frontend lint where defined, focused app-shell and service-adapter Vitest, full root/frontend Vitest, root/frontend build, root/frontend e2e because project/session and keyboard flows are user-observable, live preview refresh on `0.0.0.0:5173`, HTTP reachability probe, and Playwright/live browser evidence for startup/new project, keyboard routing, and save/autosave-visible status where practical.
+
+**Dependencies**
+
+Depends on Waves 014–019 because it should consume green validation gates, stable command/use-case contracts, current project persistence contracts, cleaned presentation/read-port contracts, typed realization contexts, and the explicit Three scene-host lifecycle boundary. It is ordered before backend/frontend contract stance, placeholder/debug cleanup, docs/spec reconciliation, and broad validation hardening because current evidence shows the active frontend app-shell project/session boundary is the next central runtime coordinator while the backend is absent from the active workspace and docs/debug cleanup would be peripheral.
+
+**Validation requirements**
+
+1. Capture pre-edit scoped git status/diff and static scans for hidden app-shell concrete construction/browser globals, project-session storage-key duplication, app-shell persistence/Drive port shapes, keyboard target installation, and direct `World`/`CommandStack` mutation in app-shell use cases.
+2. Run focused Vitest for changed app-shell runtime/use cases/ports/adapters and any touched ProjectService/GoogleDriveService adapter tests.
+3. Run root and frontend lint where scripts exist.
+4. Run full root and frontend Vitest.
+5. Run root and frontend build.
+6. Run root/frontend Playwright e2e because startup/project/session/keyboard behavior is user-observable.
+7. Refresh the live preview on `0.0.0.0:5173`, capture HTTP 200, and run focused Playwright/live browser smoke for startup/new project, representative keyboard shortcuts, and visible save/status behavior where possible without real Drive credentials.
+
+**Risks**
+
+- Over-abstracting every browser or Drive call can create an adapter maze. Keep ports at seams required for app-shell composition, testability, and ownership; do not wrap every Google API method twice.
+- Moving persistence-facing contracts can accidentally become a persistence-schema redesign. Keep serialization internals unchanged unless a reviewed mini-cycle broadens scope.
+- Autosave timing is user-visible and easy to break; use fake scheduler tests plus e2e/live smoke rather than relying on type checks.
+- Drive/auth behavior cannot rely on real credentials in validation. Use fake-port unit coverage and credential-free browser smoke; do not read env/secret/config files.
+- Existing unrelated dirty source files may be present from prior work. Implementation must use path-scoped status/diff and avoid reverting or depending on unrelated modifications.
+
+**No-backcompat rationale**
+
+The current hidden browser/static-service construction inside app-shell runtime is internal architecture debt, not a user-facing compatibility contract. If the reviewed proposal introduces an explicit production composition adapter or narrower project-session ports, delete the old hidden construction path and update tests/callers directly rather than preserving parallel runtime creation modes. A single clear app-shell composition boundary is more valuable than compatibility wrappers around implicit globals.
+
