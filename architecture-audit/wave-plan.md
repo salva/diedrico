@@ -1806,3 +1806,131 @@ All Wave 026 validation stdout/stderr must be captured to stable files under the
 **No-backcompat rationale**
 
 `ITool.ToolContext.world` and `CanvasViewPort.invokeToolClick` raw-world injection are internal architecture seams, not compatibility contracts. Preserving both full `World` access and new tool read/realization ports would keep every tool free to bypass application/runtime boundaries and would undo the private-world ownership established by Wave 025. Delete the raw context field and update active tools/tests directly once reviewed read contexts exist; do not keep shims, overloads, broad facades, or dual raw-and-port paths.
+
+---
+
+## Wave 027 — Runtime read-model extractors and presentation DTO ports
+
+**Status**
+
+Added by `cycle-027-wave-plan-extension` after Wave 026 completed and after the urgent Cycle 026 3D-view interaction hotfix. Requires bounded review of this plan extension before the canonical `cycle-027-fresh-scout-proposals` stage and before any implementation. This entry is grounded in current post-Wave-026 source evidence, the Wave 026 validation/preview closure, the 3D hotfix implementation log, and the Cycle 027 planning evidence note.
+
+**Scope**
+
+- `frontend/src/application/appShell/RuntimeSession.ts`
+- `frontend/src/application/appShell/RuntimeViewPorts.ts`
+- focused new or existing runtime read-model modules extracted from `RuntimeSession`, such as properties-dialog, process-tree, elements-panel, active-plane, selection-read, and/or presentation adapter factories if selected by review
+- `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts`
+- `frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts`
+- `frontend/src/application/canvasPresentation/Projected3DCanvasSelector.ts`
+- `frontend/src/application/canvasPresentation/CanvasVisibilityPolicy.ts` only where directly tied to removing raw process/domain reads from presentation selectors
+- `frontend/src/application/threePresentation/ThreeWorldReadPort.ts`
+- `frontend/src/components/dialogs/PropertiesDialog.vue` only if its view-model contract must be tightened without changing UI behavior
+- `frontend/src/components/panels/ActionsPanel.vue`
+- `frontend/src/components/panels/ProcessTreeNode.vue`
+- `frontend/src/components/panels/ElementsPanel.vue` only where current elements-panel read/visibility port contracts require alignment
+- `frontend/src/components/workspace/SvgCanvas.vue` only where properties/canvas presentation port typing changes need consumption updates
+- `frontend/src/components/panels/ThreeView.vue` only where three-presentation port DTO typing changes need consumption updates
+- focused runtime read-model, properties/process/elements, canvas/three presentation DTO, overlay interaction-boundary, and architecture-boundary tests
+
+**Scope guard**
+
+This wave owns the residual read-model and presentation DTO seams left after Wave 026: `RuntimeSession` remains the concrete `World` owner, but it now directly constructs too many view/read models and still uses raw realization/classification reads for properties, process-tree infeasibility, elements-panel listing/visibility, canvas transforms, selection, and presentation-adapter construction. It also owns the related `CanvasWorldReadPort` / `ThreeWorldReadPort` presentation read-model seams where those ports still expose raw domain collections or world-shaped realization contexts.
+
+This wave must not absorb persistence schema/replay, `ProjectService` serialization/deserialization redesign, command history/producer redesign, backend/frontend contract stance, Drive/auth/browser adapters, package/tooling churn, validation-platform hardening, docs/spec reconciliation, toolbar-history typing cleanup, preview-script ergonomics, broad domain realization ownership redesign, generic application-kernel work, or UI feature work. Elements visibility may be named behind an explicit read/intent boundary, but command-backed visibility and persistence semantics are out of scope unless the scout proves the current direct mutation cannot be isolated honestly; in that case stop for a reviewed plan edit.
+
+The proposals must start with a current inventory of every `RuntimeSession` helper that reads domain data for view models, every `as any`/`any` read-model seam in `RuntimeSession`, every runtime-local `realize2D(this.world)` / `Element2D.realize2D(this.world)` call, every direct process-tree/dependency read used for panel DTOs, every elements visibility mutation path, and every raw collection/`getProcessTree()`/world-shaped realization-context method exposed by `CanvasWorldReadPort` and `ThreeWorldReadPort`. Classify each use by behavior: properties dialog view model, process description/infeasibility, elements-panel grouping/properties/visibility, canvas input transforms/screen-to-3D, selection read/cascade preview, active-plane selector, canvas presentation snapshot/projected-3D-on-2D, three-scene read model, overlay pointer ownership, persistence handles, and command mutation. Only the read-model/presentation behaviors are implementation candidates for this wave.
+
+If the inventory proves that deleting a read-model seam requires changing `Element2D.realize2D(...)`, projection-plane realization ownership, command/persistence semantics, or `ProjectService` contracts broadly, the implementation must stop for a reviewed plan-edit mini-cycle rather than hiding a deeper redesign inside Wave 027.
+
+**Current grounding**
+
+Wave 026 completed the tool interaction read-context cleanup. Its implementation log records that `RuntimeSession` now passes a bounded `ToolInteractionReadPort` into tools, `ITool.ToolContext.world` and `CollectionContext.world` were deleted, active production tool `context.world` and `realize2D(context.world)` usages are absent, and mandatory validation/live preview evidence is green (`architecture-audit/cycle-026-tool-interaction-read-context/implementation-log.md`, “Overall status”; “Delete/proof list”; “Validation closure assessment”). The same log accepts residual seams in `RuntimeSession` properties/process reads, `CanvasWorldReadPort` / `ThreeWorldReadPort` presentation read models, and runtime-private persistence handles (`architecture-audit/cycle-026-tool-interaction-read-context/implementation-log.md`, “Protected-surface checks”; “Residual risks and accepted debt”; “Next-wave candidates”).
+
+Current source confirms the next central seam is no longer tool context but runtime read-model concentration. `RuntimeSession` privately owns `World` and `CommandStack` (`frontend/src/application/appShell/RuntimeSession.ts:37`, `:38`, `:39`) and then directly constructs canvas, process-tree, elements-panel, three-presentation, active-plane, selection, command-history, selection-deletion, and persistence ports (`frontend/src/application/appShell/RuntimeSession.ts:42-80`, `:83-160`, `:163-183`, `:186-242`, `:263-281`). `canvasViewPort()` still creates `CanvasWorldReadPort` and `ToolInteractionReadPort` from the private world and computes input transforms by iterating all projection planes (`frontend/src/application/appShell/RuntimeSession.ts:42-56`). `processTreeReadPort()` reads `world.getProcessTree()` and dependency service data while constructing panel DTOs (`frontend/src/application/appShell/RuntimeSession.ts:83-107`). `elementsPanelPort()` groups domain objects with concrete `instanceof` checks and directly mutates `visualStyle` plus `world.markDirty()` for visibility (`frontend/src/application/appShell/RuntimeSession.ts:110-160`).
+
+Properties and process helpers still cross the intended read boundary. `getPropertiesDialogViewModel()` casts the found element to `any`, describes type through raw world queries, realizes point/circle coordinates by calling `realize2D(this.world)`, derives dependencies by checking concrete subclasses, and `isActionInfeasible()` realizes `Element2D` against the whole world (`frontend/src/application/appShell/RuntimeSession.ts:301-342`, `:349-381`, `:399-417`). Formatting helpers also use broad `any` for element DTOs (`frontend/src/application/appShell/RuntimeSession.ts:419-442`). These are runtime read-model seams, not tool interaction seams, so they should be extracted into owned read-model builders/ports instead of remaining hidden inside the session owner.
+
+The presentation ports remain related seams. `CanvasWorldReadPort` still returns raw `ProjectionPlane[]`, `Point3D[]`, `Line3D[]`, `Segment3D[]`, exposes `getProcessTree()`, and builds a realization context by mirroring many `World` methods (`frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:15-28`, `:31-43`, `:46-69`). `CanvasPresentationSelector` and `Projected3DCanvasSelector` consume `getAllProjectionPlanes()` from that port (`architecture-audit/cycle-027-wave-plan-extension/validation/residual-seam-scan.stdout.log`). `ThreeWorldReadPort` is DTO-oriented at its public interface, but its adapter imports `World`, creates a broad realization context, traverses projection planes and 3D elements, uses domain class predicates, and calls domain realizations inside adapter methods (`frontend/src/application/threePresentation/ThreeWorldReadPort.ts:6-12`, `:56-78`, `:81-135`). These should be narrowed where the read-model extraction makes a behavior-sized DTO port practical, without reopening a broad rendering scene-host or domain-realization redesign.
+
+The urgent 3D interaction hotfix affects validation priorities but not central source ordering. The hotfix reproduced a visible overlay whose `.three-view-overlay`, `.three-view-panel`, and `.three-canvas` had computed `pointer-events: none`, so `elementFromPoint(...)` hit the underlying SVG line; it fixed `frontend/src/App.vue` so `.three-view-overlay` now has `pointer-events: auto` and added unit/e2e regression coverage (`architecture-audit/cycle-026-hotfix-3d-view-interaction-regression/implementation-log.md`, “Reproduction evidence”; “Root cause”; “Fix”; “Tests added/updated”). Current source confirms the overlay rule remains explicit (`frontend/src/App.vue:277-289`) and `ThreeView.vue` control overlay also uses `pointer-events: auto` (`frontend/src/components/panels/ThreeView.vue:92`). Wave 027 validation must protect this user-observable boundary if touching presentation ports or overlay-adjacent components, but a CSS-only interaction wave is lower centrality than the RuntimeSession read-model seam.
+
+Lower-priority candidates remain real but are deferred. Runtime persistence handles still expose concrete `World`/`CommandStack` to the app-shell persistence adapter, but changing the persistence contract risks absorbing `ProjectService` schema/replay work. Toolbar-history unknown-provider typing, validation gate hardening, docs/spec drift, backend/frontend contract stance, preview host-forwarding ergonomics, Drive/auth, package/tooling, and placeholder/debug cleanup are leaf, enforcement, integration, or documentation concerns relative to the runtime read-model god-module. Broad domain realization redesign is conceptually central but intentionally deferred unless the Wave 027 scout proves read-model extraction cannot proceed without it.
+
+**Target outcome**
+
+`RuntimeSession` remains the sole owner/composer of concrete `World` and `CommandStack`, but it no longer owns bulky properties/process/elements/presentation read-model construction inline. Read-model logic is moved into focused application modules or behavior-sized port factories with explicit contracts:
+
+- properties-dialog view model builder/port;
+- process-tree read-model and related-action/infeasibility builder/port;
+- elements-panel read model plus named visibility intent/read behavior;
+- canvas presentation/input/screen-to-3D DTO port boundaries where directly tied to current runtime read-model extraction;
+- three-presentation read-model port boundaries where practical without rewriting scene-host or domain realization ownership.
+
+Vue components keep consuming DTOs and named intents; they do not regain access to concrete `World`. Presentation selectors should receive DTOs or behavior-sized read capabilities instead of raw domain collections where feasible in this bounded wave. Runtime/session code should become a small composition owner that wires focused builders/ports together, not a god-module containing all read-model traversal, concrete class classification, and formatting logic.
+
+Any residual raw domain realization dependency must be localized to a focused adapter with a documented owner and future-wave candidate; it must not appear as a generic world-like facade or as hidden `any` casts in `RuntimeSession`.
+
+**Explicit DELETE list**
+
+- Delete inline `RuntimeSession` properties-dialog view-model construction if replaced by a focused properties read-model builder/port.
+- Delete `RuntimeSession` broad `as any` / `any` element formatting seams in `getPropertiesDialogViewModel`, `formatElementForPanel`, `getElementProperties`, and `findVisibleElement` where typed read-model DTO builders replace them.
+- Delete runtime-local `realize2D(this.world)` / `Element2D.realize2D(this.world)` calls from `RuntimeSession` where focused read-model/realization adapters replace them.
+- Delete inline process-tree description/infeasibility construction from `RuntimeSession` where a process read-model builder/port owns it.
+- Delete inline elements-panel raw domain grouping and concrete `instanceof` classification from `RuntimeSession` where an elements read-model builder/port owns it.
+- Delete direct elements visibility mutation inside the read-port body if a named visibility intent/use-case can own the current behavior without broad command/persistence redesign.
+- Delete `CanvasWorldReadPort.getProcessTree()` exposure if visibility/process needs are moved to a named visibility/process read context.
+- Delete `CanvasWorldReadPort` raw collection methods (`getAllProjectionPlanes`, `getAll3DPoints`, `getAll3DLines`, `getAll3DSegments`) where selector DTO/read-model methods replace them in this wave.
+- Delete `ThreeWorldReadPort` world-shaped realization-context helpers or raw traversal methods where narrower scene read-model builders replace them in this wave.
+- Delete stale tests that assert read-model construction belongs directly in `RuntimeSession`; replace with focused builder/port tests and wiring tests.
+- Delete transitional broad facades, duplicate raw-and-port read paths, compatibility wrappers, dead exports, blanket casts, and new generic `WorldReadModel`/`RuntimeWorld` facades that merely rename the current seam.
+- Do not delete or rewrite command producers/history, command descriptors/serialization/replay, `CommandStack`, persistence schema/replay, `ProjectService`, backend, Drive/auth, package/tooling, docs/specs, validation-platform code, preview scripts, or broad domain realization internals without reviewed plan edit.
+
+**Success criteria**
+
+- `RuntimeSession.ts` is materially smaller and composition-focused for scoped read-model concerns; properties/process/elements/presentation model construction is owned by focused modules or behavior-sized port factories.
+- `RuntimeSession` no longer contains broad `any`/`as any` helper seams for properties/elements read models unless a residual is explicitly reviewed and documented as blocked by a deeper domain-contract wave.
+- Runtime-local properties/process read-model code no longer calls `realize2D(this.world)` / `Element2D.realize2D(this.world)` from `RuntimeSession`; equivalent behavior is owned by focused adapters/builders with typed contracts.
+- Process-tree panel behavior remains equivalent: descriptions, infeasibility indicators, related-action highlighting, subprocess stack state, rename/toggle intents, and subscriptions still work through typed read/command ports.
+- Properties dialog behavior remains equivalent for labels, type, coordinates, dependencies, and style-save payloads, but its view model is produced by a focused read-model boundary rather than inline session traversal.
+- Elements panel behavior remains equivalent for grouped 2D/3D element lists, labels/properties, visibility state display, and visibility toggling; direct raw domain mutation is either moved behind a named intent preserving current semantics or explicitly stopped for reviewed command/persistence plan edit.
+- `CanvasWorldReadPort` and `ThreeWorldReadPort` are narrowed where directly tied to this wave; raw domain collection or world-shaped realization methods that remain are documented with owner, caller map, and future-wave rationale rather than hidden behind a renamed facade.
+- The 3D overlay pointer-event contract remains protected if presentation/overlay-adjacent code is touched; e2e/live evidence must prove the overlay does not become click-through again.
+- No production Vue component regains concrete `World` injection or raw `World` props.
+- No command-production, command-history, persistence schema/replay, backend/frontend contract, Drive/auth, package/tooling, docs/spec, validation-platform, preview-tooling, broad domain-realization, or generic application-kernel changes occur without reviewed plan edit.
+- Focused tests cover properties read-model builder/port, process-tree read-model/infeasibility/related-action behavior, elements-panel read/visibility behavior, runtime wiring, canvas/three presentation read models where changed, and the 3D overlay interaction boundary where applicable.
+- Architecture/static scans prove the scoped deleted seams are absent and no dual raw-and-port read path was left behind.
+- Mandatory validation cadence passes with stable logs: root/frontend lint where defined, focused Vitest for touched runtime/read-model/presentation modules, full root/frontend Vitest, root/frontend build, root/frontend Playwright e2e because properties/process/elements/canvas/3D behavior is user-observable, live preview refresh on `0.0.0.0:5173`, HTTP reachability probe, and Playwright/live smoke for properties dialog, actions/process panel, elements visibility toggle, representative canvas render/hit/hover, 3D view refresh/interaction, and undo/redo regression checks without real credentials.
+
+**Dependencies**
+
+Depends on Wave 026 because Wave 026 deleted raw tool-context access and left the next residual seams as runtime properties/process/persistence reads plus canvas/three presentation read-model adapters. It is ordered before ProjectSessionPersistenceAdapter/ProjectService contract cleanup, backend/frontend contract stance, toolbar-history typing cleanup, validation-gate hardening, docs/spec drift, Drive/auth, package/tooling, preview tooling, placeholder/debug cleanup, and broad domain-realization redesign because those later waves should consume focused runtime read-model and presentation DTO boundaries rather than extending the current `RuntimeSession` god-module.
+
+**Validation requirements**
+
+All Wave 027 validation stdout/stderr must be captured to stable files under the reviewed Cycle 027 implementation directory's `validation/` subdirectory. Undefined commands may be skipped only with exact package-script evidence in the implementation log; defined root or workspace commands are mandatory.
+
+1. Capture pre-edit scoped git status/diff and static scans for `RuntimeSession` read-model helpers, `as any`/`any` helper seams, `realize2D(this.world)`, `Element2D.realize2D(this.world)`, process-tree/dependency reads, elements visibility mutation, `CanvasWorldReadPort.getProcessTree`, raw canvas/three collection returns, world-shaped realization contexts, and overlay `pointer-events` rules.
+2. Run focused Vitest for extracted properties/process/elements read-model modules and RuntimeSession wiring.
+3. Run focused Vitest for canvas/three presentation read ports/selectors where changed.
+4. Run focused overlay interaction regression tests if any presentation/overlay-adjacent file is touched; at minimum preserve the existing 3D overlay pointer-boundary test evidence in the validation log if untouched.
+5. Run architecture/static tests or focused boundary scans proving no production Vue component receives concrete `World`, the scoped `RuntimeSession` helper seams were deleted, and no generic world-like read facade replaced them.
+6. Run `npm run lint` at the repository root and in every workspace where a lint script is defined, including `frontend` while it remains the active workspace.
+7. Run full Vitest at the repository root and in every workspace where a test/Vitest script is defined, including `frontend` while it remains the active workspace.
+8. Run `npm run build` at the repository root and in every workspace where a build script is defined, including `frontend` while it remains the active workspace.
+9. Run Playwright/e2e at the repository root and in every workspace where an e2e script is defined because properties, process/actions panel, elements panel, canvas presentation, and 3D view behavior are user-observable.
+10. Refresh the live preview bound to `0.0.0.0:5173`, capture HTTP 200 reachability probes, and run focused Playwright/live browser smoke for properties dialog, actions/process panel, elements visibility toggle, representative canvas render/hit/hover, 3D view refresh/interaction, and undo/redo without real Drive/auth credentials.
+
+**Risks**
+
+- Extracting read-model builders can accidentally create a broad `RuntimeWorld` facade. Every new port method must be justified by the required caller inventory and should be named by behavior, not by mirrored `World` API.
+- Properties/process/elements read models currently rely on concrete domain subclasses and realization feasibility. Moving them behind typed builders can reveal missing DTO contracts; prefer precise DTOs over preserving `any` fields.
+- Elements visibility currently mutates style directly and marks the world dirty. If preserving current behavior behind a named intent is insufficient, stop for a plan edit rather than smuggling command-backed visibility or persistence semantics into this wave.
+- Canvas/three presentation adapters still depend on domain realization internals. Narrow DTO ports where bounded, but do not redesign `Element2D.realize2D(...)` or projection realization ownership without a reviewed mini-cycle.
+- The 3D hotfix proved overlay pointer ownership can regress even when architecture seams are unchanged. Validation must explicitly preserve the pointer-boundary contract for any presentation/runtime work touching overlay-adjacent code.
+- RuntimeSession also contains persistence restore/snapshot handles. Avoid mixing those into this wave unless a read-model extraction change directly touches typed handles; persistence contract cleanup is a separate central wave candidate.
+- Existing unrelated dirty source/audit state is broad. Implementation must use path-scoped status/diff, avoid reverting unrelated work, and not depend on unowned dirty files.
+
+**No-backcompat rationale**
+
+Inline runtime read-model construction and broad presentation read ports are internal architecture seams, not user or storage compatibility contracts. Keeping both inline `RuntimeSession` traversal and extracted read-model builders would preserve the god-module and invite future consumers to add more raw domain reads to the session owner. Delete the old inline helpers, broad raw-domain returns, casts, and dual paths once reviewed builders/ports exist; update active consumers/tests directly. Do not keep compatibility wrappers, generic facades, or transitional duplicate read paths.
