@@ -1,0 +1,78 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run --run tests/unit/application/canvasPresentation/canvasWorldReadPort.spec.ts tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts tests/unit/domain/realizationCache.spec.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts  (6 tests) 10ms
+ ✓ tests/unit/application/canvasPresentation/canvasWorldReadPort.spec.ts  (2 tests) 11ms
+ ✓ tests/unit/domain/realizationCache.spec.ts  (14 tests) 17ms
+stdout | tests/unit/domain/realizationCache.spec.ts > Per-Plane Realization Cache (Phase 119) > Cache invalidation (T1914) > invalidateRealization clears point cache; next call returns fresh object
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+
+stdout | tests/unit/domain/realizationCache.spec.ts > Per-Plane Realization Cache (Phase 119) > Cache invalidation (T1914) > invalidateRealization clears line cache for the same element
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+  projPlane3/point2d10 → invalidates 1 descendant(s):
+    • projPlane3/line2d12
+=== CASCADE COMPLETE (2 elements invalidated) ===
+
+
+stdout | tests/unit/domain/realizationCache.spec.ts > Per-Plane Realization Cache (Phase 119) > Cache invalidation (T1914) > invalidateRealization clears circle cache when center point invalidated
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+  projPlane3/point2d10 → invalidates 1 descendant(s):
+    • projPlane3/circle2d12
+=== CASCADE COMPLETE (2 elements invalidated) ===
+
+
+stdout | tests/unit/domain/realizationCache.spec.ts > Per-Plane Realization Cache (Phase 119) > Dependency propagation (T1915) > invalidating a point clears dependent line on same plane
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+  projPlane3/point2d10 → invalidates 1 descendant(s):
+    • projPlane3/line2d12
+=== CASCADE COMPLETE (2 elements invalidated) ===
+
+
+stdout | tests/unit/domain/realizationCache.spec.ts > Per-Plane Realization Cache (Phase 119) > Dependency propagation (T1915) > invalidating a point clears dependent circle on same plane
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+  projPlane3/point2d10 → invalidates 1 descendant(s):
+    • projPlane3/circle2d12
+=== CASCADE COMPLETE (2 elements invalidated) ===
+
+
+stdout | tests/unit/domain/realizationCache.spec.ts > Per-Plane Realization Cache (Phase 119) > Dependency propagation (T1915) > two-level cascade: point → line → intersection point
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+  projPlane3/point2d10 → invalidates 1 descendant(s):
+    • projPlane3/line2d14
+    projPlane3/line2d14 → invalidates 1 descendant(s):
+      • projPlane3/point2d16
+=== CASCADE COMPLETE (3 elements invalidated) ===
+
+
+stdout | tests/unit/domain/realizationCache.spec.ts > Per-Plane Realization Cache (Phase 119) > Cross-plane propagation (T1916) > invalidateRealization clears caches across ALL planes
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+
+stdout | tests/unit/domain/realizationCache.spec.ts > Per-Plane Realization Cache (Phase 119) > Cross-plane propagation (T1916) > invalidation on one plane does not clear unrelated caches on other plane
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+  projPlane3/point2d10 → invalidates 1 descendant(s):
+    • projPlane3/line2d14
+=== CASCADE COMPLETE (2 elements invalidated) ===
+
+
+
+ Test Files  3 passed (3)
+      Tests  22 passed (22)
+   Start at  00:29:17
+   Duration  1.44s (transform 736ms, setup 0ms, collect 1.66s, tests 38ms, environment 1.41s, prepare 267ms)
+

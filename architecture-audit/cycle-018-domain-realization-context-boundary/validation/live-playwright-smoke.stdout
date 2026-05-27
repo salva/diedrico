@@ -1,0 +1,19 @@
+{
+  "title": "Diedrico - Dihedral Learning MVP",
+  "canvasCount": 1,
+  "svgCount": 19,
+  "buttons": 45,
+  "hasDiedricoText": true,
+  "consoleSample": [
+    "console:debug:[vite] connecting...",
+    "console:debug:[vite] connected.",
+    "console:log:[ElementsPanel] Computing projection planes list, version: 0 forceUpdate: 0",
+    "console:log:[ElementsPanel] Computing 3D elements",
+    "console:log:[ElementsPanel] 3D elements: {points: 0, lines: 0, segments: 0, planes: 0}",
+    "console:log:[ElementsPanel] Mounted, initial World version: 0",
+    "console:log:World initialized",
+    "console:log:Points in world: 0",
+    "console:log:[ElementsPanel] World version changed: 0 → 27",
+    "console:log:[ElementsPanel] Computing projection planes list, version: 0 forceUpdate: 1"
+  ]
+}

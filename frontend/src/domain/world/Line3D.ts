@@ -30,7 +30,7 @@ import { createVisualStyle } from './VisualStyle';
 export abstract class Line3D extends Element3D {
   /**
    * Compute 3D geometric realization of this line
-   * @param world World instance for accessing related elements
+   * @param context Typed realization context for accessing related elements
    * @returns Line3DRealization3D with point and direction in 3D space
    */
   abstract realize3D(context: Element3DRealizationContext): Line3DRealization3D;

@@ -246,18 +246,18 @@ export abstract class ProjectionPlane extends Element {
   /**
    * Compute and cache 2D realization for a point
    * @param point Point to realize
-   * @param world World context for querying dependencies
+   * @param context Typed realization context for querying dependencies
    * @returns Point2DRealization2D if computation succeeds, undefined otherwise
    */
-  realizePoint2D(point: Point2D, world: ProjectionElementRealizationContext): Point2DRealization2D | undefined {
+  realizePoint2D(point: Point2D, context: ProjectionElementRealizationContext): Point2DRealization2D | undefined {
     // Check cache first
     const cached = this.elementStore.getPointRealization2D(point.id);
     if (cached) {
       return cached;
     }
 
-    // Compute realization - point will query world for parent element realizations
-    const realization = point.realize2D(world);
+    // Compute realization - point will query context for parent element realizations
+    const realization = point.realize2D(context);
     if (!realization) {
       return undefined;  // Cannot compute (e.g., missing dependencies)
     }
@@ -270,18 +270,18 @@ export abstract class ProjectionPlane extends Element {
   /**
    * Compute and cache 2D realization for a line
    * @param line Line to realize (includes segments, guides, hinge lines - all Line2D subtypes)
-   * @param world World context for querying dependencies
+   * @param context Typed realization context for querying dependencies
    * @returns Line2DRealization2D if computation succeeds, undefined otherwise
    */
-  realizeLine2D(line: Line2D, world: ProjectionElementRealizationContext): Line2DRealization2D | undefined {
+  realizeLine2D(line: Line2D, context: ProjectionElementRealizationContext): Line2DRealization2D | undefined {
     // Check cache first
     const cached = this.elementStore.getLineRealization2D(line.id);
     if (cached) {
       return cached;
     }
 
-    // Compute realization - line will query world for parent point realizations
-    const realization = line.realize2D(world);
+    // Compute realization - line will query context for parent point realizations
+    const realization = line.realize2D(context);
     if (!realization) {
       return undefined;  // Cannot compute (e.g., missing dependency points)
     }
@@ -294,18 +294,18 @@ export abstract class ProjectionPlane extends Element {
   /**
    * Compute and cache 2D realization for a circle
    * @param circle Circle to realize
-   * @param world World context for querying dependencies
+   * @param context Typed realization context for querying dependencies
    * @returns Circle2DRealization2D if computation succeeds, undefined otherwise
    */
-  realizeCircle2D(circle: Circle2D, world: ProjectionElementRealizationContext): Circle2DRealization2D | undefined {
+  realizeCircle2D(circle: Circle2D, context: ProjectionElementRealizationContext): Circle2DRealization2D | undefined {
     // Check cache first
     const cached = this.elementStore.getCircleRealization2D(circle.id);
     if (cached) {
       return cached;
     }
 
-    // Compute realization - circle will query world for parent element realizations
-    const realization = circle.realize2D(world);
+    // Compute realization - circle will query context for parent element realizations
+    const realization = circle.realize2D(context);
     if (!realization) {
       return undefined;  // Cannot compute (e.g., missing dependencies)
     }

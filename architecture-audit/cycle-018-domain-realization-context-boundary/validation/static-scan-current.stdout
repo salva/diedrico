@@ -1,0 +1,7 @@
+## realize3D/world-any/getPlaneEquation seams
+frontend/src/domain/world/styleService.ts:12:import type { World } from './World';
+frontend/src/application/canvasPresentation/CanvasVisibilityPolicy.ts:2:import type { World } from '@/domain/world/World';
+frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:12:import type { World } from '@/domain/world/World';
+frontend/src/application/threePresentation/ThreeWorldReadPort.ts:10:import type { World } from '@/domain/world/World';
+## read-port raw world realization calls
+## any realization contracts
