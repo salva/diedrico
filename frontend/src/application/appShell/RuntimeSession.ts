@@ -22,7 +22,7 @@ export class RuntimeSession {
     return this.world;
   }
 
-  commandStackForView(): CommandStack {
+  commandStackForDeferredCommandProducers(): CommandStack {
     return this.commandStack;
   }
 

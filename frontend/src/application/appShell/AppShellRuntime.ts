@@ -14,7 +14,7 @@ export interface AppShellRuntimeOptions {
 export function createAppShellRuntime(options: AppShellRuntimeOptions) {
   const session = new RuntimeSession();
   const world = session.worldForView();
-  const commandStack = session.commandStackForView();
+  const commandStack = session.commandStackForDeferredCommandProducers();
   const commandHistory = session.commandHistoryPort();
   const ports = options.ports;
   const drive = ports.drive;

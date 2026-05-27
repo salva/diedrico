@@ -103,6 +103,8 @@ describe('Cycle 023 runtime-session consumer ports and command-history boundary'
     expect(runtimeSession).not.toMatch(/worldForUseCases\(/);
     expect(runtimeSession).not.toMatch(/commandStackForCommandServices\(/);
     expect(runtimeSession).not.toMatch(/commandStackForShortcuts\(/);
+    expect(runtimeSession).not.toMatch(/commandStackForView\(/);
+    expect(runtimeSession).toMatch(/commandStackForDeferredCommandProducers\(/);
     expect(runtimeSession).toMatch(/activePlanePort\(/);
     expect(runtimeSession).toMatch(/selectionReadPort\(/);
     expect(runtimeSession).toMatch(/commandHistoryPort\(/);
