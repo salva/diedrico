@@ -1,121 +1,124 @@
-# Proposal Restructure — Shared presentation realization/read context for 2D and 3D selectors
+# Proposal Restructure — Test whether the real fix belongs in the domain realization-context boundary
 
 ## Summary
 
-Instead of creating a three-presentation-only read port, introduce a shared presentation realization/read context consumed by both three-presentation and the existing canvas presentation read-port boundary. This is conceptually cleaner only if implementation planning proves that canvas and three presentation would otherwise duplicate projection-plane traversal and realization capabilities in a material way.
+This proposal asks whether Wave 017 should stop before implementation and hand off to a Wave 018/domain-realization plan edit instead of further decomposing `ThreeWorldReadPort` at the presentation layer.
 
-This option is explicitly demoted behind Proposal Direct for Cycle 017. It should be chosen only if the direct read-port plan cannot avoid a second broad realization adapter without duplicating the same read/realization ownership already present in `CanvasWorldReadPort`.
+Current post-Wave-028 evidence supports the direct presentation decomposition first: selectors/components no longer receive raw `World`, canvas has behavior-sized DTO/read-port public methods, and `ThreeWorldReadPort` is now a broad but legitimate adapter boundary. However, both canvas and three adapters still assemble nearly identical realization contexts around concrete `World`, and the domain context contract itself still mixes lookup and collection capabilities. If a pre-implementation inventory proves that clean three decomposition requires changing those lower contracts, implementation must stop and route through a reviewed Wave 018/domain-realization plan-edit stage.
 
-## Files to change
+## Current evidence motivating the restructure question
 
-- new shared read-context module under `frontend/src/application/presentation/` or a reviewed equivalent location
+- `ThreeWorldReadPort.ts` locally creates `createThreeRealizationContext(world)` with lookup and collection methods (`frontend/src/application/threePresentation/ThreeWorldReadPort.ts:66-79`).
+- `CanvasWorldReadPort.ts` locally creates the same shape as `createCanvasRealizationContext(world)` (`frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:17-30`).
+- `ProjectionElementRealizationContext` includes both dependency lookups and collection methods (`frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:9-20`).
+- `Element2D.realize2D` and `Element3D.realize3D` are already typed against realization-context interfaces (`frontend/src/domain/world/Element2D.ts:101-108`, `frontend/src/domain/world/Element3D.ts:35-42`), so the lower domain vocabulary exists.
+- Wave 018 in `architecture-audit/wave-plan.md:939-985` is explicitly scoped to domain realization context boundaries and names both `CanvasWorldReadPort.ts` and `ThreeWorldReadPort.ts` as presentation adapters that pass concrete `World` into domain realization.
+
+## Decision question
+
+Before implementing Proposal Direct, ask:
+
+> Can `ThreeWorldReadPort` be decomposed into concern-owned presentation read ports while keeping domain realization APIs unchanged and without creating a shared god context?
+
+If **yes**, choose Proposal Direct. If **no**, do not broaden Wave 017. Instead, write a corrective plan-edit/review stage that moves the active work to Wave 018/domain-realization context boundary.
+
+## Files to change if this restructure path wins immediately
+
+If the restructure path is selected instead of direct implementation, the next implementation stage should **not** start by editing production source. It should first run a plan-edit/review mini-cycle. Candidate plan-edit files/artifacts:
+
+- `architecture-audit/wave-plan.md` — adjust Wave 017/Wave 018 ordering/scope if reviewer agrees the Wave 017 premise is invalidated.
+- `architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/decision.md` — record that Wave 017 implementation is deferred or narrowed.
+- New corrective stage artifacts for the reviewed plan edit.
+
+If, after a reviewed plan edit, Wave 018 implementation is authorized, likely production scope would be:
+
+- `frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts`
+- Domain realization implementors using `ProjectionElementRealizationContext`, `Element3DRealizationContext`, and `PlaneEquationRealizationContext`
 - `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts`
-- `frontend/src/application/threePresentation/ThreePresentationModel.ts`
-- `frontend/src/application/threePresentation/ThreePresentationController.ts`
-- `frontend/src/application/threePresentation/*Selector.ts`
-- `frontend/src/rendering/threeView/ThreeViewRuntime.ts`
-- `frontend/src/components/panels/ThreeView.vue`
-- focused canvas/three presentation context tests
+- `frontend/src/application/canvasPresentation/Projected3DCanvasReadPort.ts`
+- `frontend/src/application/threePresentation/ThreeWorldReadPort.ts` / new read-port modules
+- Focused realization-context, canvas, and three tests
 
-## Minimal shared surface if chosen
+That production scope is **not authorized inside Wave 017 without the reviewed plan-edit path**.
 
-The shared context must be composed from small selector-owned slices. It must not be a class or snapshot that absorbs every presentation concern.
+## Minimal allowed Wave 017 restructure if reviewer wants a tiny shared helper
 
-### Shared realization context slice
+A tiny helper can still fit Wave 017 only if it is strictly this:
 
-Allowed capabilities:
+```ts
+createWorldRealizationReadContext(world: World): ProjectionElementRealizationContext & Element3DRealizationContext
+```
 
-- provide typed projection-plane realization context needed by both 2D canvas projection output and 3D plane/planar-element selectors;
-- provide typed 2D element realization context where both canvas and three-presentation currently need the same element-on-plane realization inputs;
-- provide typed transform/matrix DTOs shared by canvas/three presentation when this directly deletes current `any` seams;
-- wrap concrete `World` once at the application presentation boundary while keeping selectors dependent on slices.
+Allowed properties:
 
-Forbidden capabilities:
+- lives in an application adapter module, not in Vue/runtime/scene code;
+- contains only typed realization-context methods already required by domain realization contracts;
+- is consumed by both `CanvasWorldReadPort` and three read-port concern adapters to delete duplicated context assembly;
+- has no public selector DTO methods and no mutation/command/persistence/store/rendering behavior.
 
-- expose raw `World`, mutable `ProjectionPlane`, mutable `Element2D`, command stack, persistence, dependency-service, or process-tree mutation APIs;
-- absorb visibility, style, hit-testing, scene-object construction, overlay pointer policy, selection state, tool state, command/use-case behavior, or app-shell lifecycle;
-- own Three.js scene-host, OrbitControls, SVG rendering, or component lifecycle logic.
+Forbidden properties:
 
-### Canvas-specific slice
+- no `RuntimeWorld`, `WorldReadModel`, `PresentationWorld`, app-kernel facade, snapshot, generic `getAllElements`, command stack, process tree mutation, dependency service mutation, persistence serialization, selection state, style/visibility ownership, scene-host/OrbitControls, Vue lifecycle, package/tooling, backend, or docs/spec behavior.
 
-Allowed capabilities:
+If the helper needs more than this, it belongs to Wave 018.
 
-- retain the current Wave 016 canvas read-port responsibilities needed for canvas presentation selectors and projected-3D-on-2D selector output;
-- delegate to the shared realization context only for duplicated realization/transform data;
-- keep canvas visibility/style/interaction policies in their existing named modules unless a tiny typed read dependency is strictly required.
+## Files/tests/docs/fixtures to DELETE if a reviewed Wave 018 path wins later
 
-Forbidden capabilities:
+Only after plan-edit/review authorization:
 
-- rewriting Wave 016 canvas selector ownership into a new global context;
-- moving overlay pointer policy, hit-query behavior, style policy, or visibility policy into the shared realization context.
+- Delete concrete `World`/broad `any` realization parameters from active domain realization contracts where typed contexts can replace them.
+- Delete duplicated canvas/three realization-context factories if replaced by a single typed context adapter.
+- Delete presentation adapters’ dependence on lower domain contracts that expose unnecessary collection capabilities.
+- Delete stale tests that call domain realization with concrete `World` where typed context builders are now required.
+- Delete any compatibility overloads that preserve old `World` realization signatures.
 
-### Three-presentation slices
-
-Allowed capabilities mirror the direct proposal but as slices over the shared context:
-
-- projection planes: enumerate/render projection planes, fixed-plane identity/orientation, grid/reference-axis inputs, typed plane realization;
-- planar elements: enumerate/render planar 2D elements, typed element realization, owning-plane placement data, typed transforms;
-- reconstructed elements: enumerate/render current reconstructed 3D objects and read their typed realization DTOs;
-- guides: enumerate/render current guide geometry and labels through typed realization data;
-- hinges: read fixed hinge/half-hinge presentation data and typed coordinate inputs.
-
-Forbidden capabilities:
-
-- raw domain map traversal, mutation, command construction, persistence serialization, new reconstruction semantics, process-tree ownership, or scene/rendering lifecycle behavior.
-
-## Non-owned concerns that must stay out
-
-The shared context must not absorb:
-
-- command/undo, command factories, construction use-cases, or tool state;
-- persistence, Drive/local project services, backend API contracts, or project schema decisions;
-- Vue component lifecycle, app-shell orchestration, keyboard routing, active-plane UI state, or selection mutations;
-- Three.js scene setup, mesh creation, OrbitControls/camera/lights/animation, SVG renderer internals, or overlay pointer policy;
-- validation platform/tooling, package scripts, docs/spec reconciliation, or broader domain-model redesign.
-
-If any of these non-owned concerns appear necessary to complete the restructure, this proposal must be rejected or sent through a new reviewed wave-plan/delta rather than implemented inside Cycle 017.
-
-## Files/tests/docs/fixtures to DELETE
-
-- Delete duplicate canvas-only and three-only realization read methods that are replaced by the shared context.
-- Delete concrete full-`World` presentation APIs in the touched selectors/controllers.
-- Delete local transform/matrix `any` helper seams if the shared context owns typed transform DTOs.
-- Delete stale tests that preserve separate concrete-`World` selector setup.
-- Delete compatibility facades that keep both old and new presentation read paths alive.
+Within the current Wave 017 proposal stage, delete nothing in production source.
 
 ## Expected behavior change
 
-No intended behavior change. The architectural outcome is one owned presentation read/realization contract rather than parallel 2D and 3D adapters.
+No intended user-visible behavior change. This restructure would change internal contracts only. Geometry feasibility, projection-plane rendering, 2D canvas projection, 3D view rendering, command behavior, persistence, and overlay pointer behavior must remain equivalent.
 
 ## No-backcompat/aggressive-deletion rationale
 
-If presentation realization is shared, preserving separate canvas/three adapters would create parallel paths. This option deletes duplication and old full-`World` selector APIs rather than wrapping them.
+If the domain realization contract is truly the blocker, preserving presentation-only wrappers would leave duplicated adapter logic and keep the actual architectural smell intact. The correct no-backcompat path would be to delete old realization signatures and duplicate factories through Wave 018 after review, not to build compatibility layers.
 
 ## Risks
 
-- Higher risk of overreach: a shared context can become a god snapshot owning traversal, style, visibility, projection, and scene concerns. The allowed/forbidden surface above is mandatory if this path is selected.
-- More files are likely touched, increasing validation burden.
-- It may accidentally reopen Wave 016’s settled selector model; if the change rewrites canvas presentation beyond tiny realization/transform sharing, reject this option for Cycle 017.
-- It may hide a deeper domain realization redesign under a presentation-context name. If the domain realization contract itself needs redesign, stop for a future wave instead.
+- High overreach risk: the restructure can easily become a broad domain/app-kernel redesign. The reviewed plan-edit gate is mandatory if it exceeds a tiny typed helper.
+- Higher validation burden because domain realization changes touch canvas, three presentation, and many domain tests.
+- If selected prematurely, it delays the simpler cleanup of the current broad `ThreeWorldReadPort` adapter.
+- Changing realization context contracts can affect geometry semantics; this needs more focused domain-realization tests than Wave 017 direct decomposition.
 
-## Validation plan
+## Validation plan if a tiny helper is included in Wave 017
 
-1. Static inventory of all canvas/three presentation realization reads and transform helpers before edits, with evidence that the shared surface removes actual duplication rather than centralizing unrelated concerns.
-2. Focused Vitest must explicitly include:
-   - `frontend/tests/unit/application/threePresentation/threePresentationSelector.spec.ts`
-   - `frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts`
-   - new shared-context tests under `frontend/tests/unit/application/presentation/` or the reviewed equivalent location
-   - current canvas-presentation read-port/selector tests affected by the context, including `frontend/tests/unit/application/canvasPresentation/canvasWorldReadPort.spec.ts` if that contract changes.
-3. Root/frontend lint.
-4. Full root/frontend Vitest.
-5. Root/frontend build.
-6. Root/frontend Playwright/e2e and live browser smoke because this option touches both canvas and 3D presentation boundaries.
-7. Preview refresh/probe at closure.
+Same as Proposal Direct, plus:
 
-## Non-goals
+1. Focused tests proving both canvas and three adapters consume the helper without changing public read-port DTO behavior.
+2. Static scan proving the helper exports only typed realization context creation and no world/read-model facade methods.
+3. Canvas focused tests if `CanvasWorldReadPort.ts` or `Projected3DCanvasReadPort.ts` is touched.
 
-Do not redesign persistence, command stack, backend, app shell, validation platform, Drive/local services, docs/specs, scene-host interaction, overlay pointer policy, style/visibility policy ownership, or broad domain realization semantics.
+## Validation plan if the work becomes Wave 018/domain-realization
 
-## Recommendation relative to direct proposal
+After reviewed plan edit only:
 
-Prefer the direct three-read-port proposal. Choose this restructure only if a concrete pre-implementation inventory proves unavoidable duplicate realization/read-context ownership between `CanvasWorldReadPort` and the planned three read port, and only if the final design remains the minimal slice-based surface above. Otherwise reject this proposal for Cycle 017 and defer any deeper shared realization-context convergence to a future reviewed wave.
+1. Caller inventory for `realize2D(...)`, `realize3D(...)`, `getPlaneEquation(...)`, projection-plane realization helpers, and context factory call sites.
+2. Focused domain realization tests for 2D elements, 3D points/lines/segments/planes, hinges, guides, intersections, and infeasible cases.
+3. Focused canvas and three presentation tests proving read-port DTOs did not drift.
+4. Static scans for deleted `World`/`any` realization signatures and absence of compatibility overloads.
+5. Root/frontend lint, full Vitest, build, Playwright/e2e, preview refresh/probe, and pointer-boundary e2e evidence.
+
+## Stop conditions / plan-edit triggers
+
+Recommend a precise corrective plan-edit/review stage instead of Wave 017 implementation if any of these are proven during review or implementation planning:
+
+- Concern read-port decomposition requires changing `ProjectionElementRealizationContext`, `Element3DRealizationContext`, `PlaneEquationRealizationContext`, or domain realization method semantics.
+- The only way to remove duplicate three/canvas context assembly is a helper that exposes broad world collections/read-models beyond the existing domain context contract.
+- Tests cannot be made explicit without constructing a lower domain realization context contract.
+- The direct split would leave a hidden broad aggregate that is architecturally equivalent to the current `ThreeWorldReadPort`.
+- Public canvas read-port seams would need to change beyond consuming a tiny realization-context helper.
+
+Recommended corrective stage name if triggered: `cycle-017-plan-edit-domain-realization-boundary-post-028` (or the Manager’s canonical equivalent), followed by a critic/reviewer review before any implementation.
+
+## Recommendation relative to Proposal Direct
+
+Prefer **Proposal Direct** for the current Wave 017 review because current source supports a bounded decomposition: the component/runtime read-port boundary already exists, and the remaining broad adapter can be split without changing domain realization contracts. Keep this restructure as the explicit stop path if direct implementation proves the real defect belongs one layer lower in Wave 018.
