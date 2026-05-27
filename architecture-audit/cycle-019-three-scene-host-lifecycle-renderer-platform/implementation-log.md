@@ -74,12 +74,22 @@ Live preview and browser evidence:
 - `live-3d-smoke.stdout` / `.stderr` — first one-off smoke failed because it was run from root where `@playwright/test` is not resolvable; rerun used frontend workspace.
 - `live-3d-smoke-rerun.stdout` / `.stderr` — green browser smoke: 3D panel visible, canvas visible, all four 3D display controls visible, toggled `Show Planes` and `Show Reference Axes`, and exercised a canvas drag. Console contained Vite connection/debug and expected WebGL performance warnings only; no page errors.
 
+## Source-control hygiene evidence
+
+Full MCP `git_status` is still too large due to unrelated workspace noise, so Cycle 019 used path-focused status/diff evidence rather than broad workspace assertions. The evidence separates the intentional Cycle 019 changes from unrelated dirty files observed by review:
+
+- `validation/pre-edit-focused-status.stdout` was captured before Cycle 019 source edits against the authorized implementation paths and showed only the Cycle 019 validation directory as untracked. It did not show pre-existing modifications in the authorized ThreeView runtime/host/registry/test paths before implementation began.
+- `validation/post-edit-focused-status.stdout` and `validation/final-focused-status-before-report.stdout` showed only the intentional Cycle 019 implementation paths: `frontend/src/rendering/threeView/ThreeObjectRegistry.ts`, `frontend/src/rendering/threeView/ThreeSceneHost.ts`, `frontend/src/rendering/threeView/ThreeViewRuntime.ts`, `frontend/tests/unit/rendering/threeView/threeObjectRegistry.spec.ts`, new `threeSceneHost.spec.ts`, new `threeViewRuntime.spec.ts`, plus this cycle's audit validation/log artifacts.
+- The source/test implementation was committed as `70c11e86a6f70ac7db9cd4f6717891e6dbff386b`; follow-up report/status commits were `dd4fdbf1a8ce396b9abd495ece87377c06e2e793` and `47003a76a13c3766ac0bc7f2038e7d70e50e0cc7`. After those commits, `validation/t3-authorized-diff-names.stdout` is empty for the authorized source/test/log paths, proving no remaining uncommitted source behavior edits are being introduced by this correction task.
+- Reviewer evidence `.saivage/stages/cycle-019-implement-three-scene-host-lifecycle-renderer-platform/reviews/t2-review-diff-names.stdout` and correction artifact `validation/t3-review-unrelated-diff-names-still-present.stdout` list unrelated dirty files under app-shell, commands, panels/toolbars, composables, domain/process stores, and e2e specs. Those paths are outside Cycle 019's decision-bound implementation scope; this task did not edit or revert them.
+- `validation/t3-current-cycle-scope-status.stdout` shows the current Cycle 019-scoped untracked files are only reviewer/report artifacts and the new correction evidence logs. No production source behavior files are modified by this source-control evidence correction.
+
 ## Protected-surface checks
 
 - `ThreeView.vue` was not modified; it remains the Vue shell that constructs the runtime, mounts/resizes/refreshes/disposes it, and owns watcher/listener/subscription wiring.
 - `ThreeWorldReadPort.ts` and domain realization contracts were not modified.
 - No backend, docs/spec, package metadata, lockfile, persistence, command/undo, app-shell, Drive/auth/config, or env/secret paths were modified or read.
-- Full MCP `git_status` is still too large due to unrelated workspace noise; path-focused status/diff were used for source-control hygiene.
+- Full MCP `git_status` is still too large due to unrelated workspace noise; path-focused status/diff were used for source-control hygiene and are indexed above.
 
 ## Residual risks and next-wave candidates
 
