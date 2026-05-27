@@ -36,18 +36,25 @@ Production source:
   - Remove default `= window` from `install` if runtime production composition now supplies target explicitly.
 - `frontend/src/App.vue`
   - Import/use the production composition factory instead of `createAppShellRuntime` directly if selected.
+  - Remain a passive shell: it may read Vite environment values into a plain `googleConfig` object and pass simple UI callbacks/refs such as startup/status alert callbacks, canvas element refs, and provide/inject values.
+  - Must not construct concrete browser/service adapters. `GoogleDriveService`, `ProjectService` adapter binding, browser storage/last-project repository, browser scheduler, and keyboard target ownership belong only in the production composition module.
   - Keep template/state/provide wiring otherwise unchanged.
 - `frontend/src/services/ProjectService.ts`
   - No internals change expected; may only be imported by the new adapter.
 - `frontend/src/services/GoogleDriveService.ts`
   - No internals change expected; may only be imported by production composition.
+- `frontend/src/application/appShell/SelectionUseCases.ts`
+  - Keep unchanged for Wave 020 with respect to delete-command construction. Direct construction of `Command` / `DeletionSequenceFactory` remains an intentional application-layer dependency and residual debt for this wave.
+  - Do not introduce a delete-selection port, command-controller abstraction, undo/redo redesign, or command descriptor redesign in this cycle. Any future change to this boundary must be proposed as a separate reviewed wave/delta.
 
 Tests:
 
 - `frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts`
   - Update runtime lifecycle tests to use explicit fake target/storage/repository/persistence adapters instead of spying on global `window` as runtime-core behavior.
-  - Add coverage for production composition defaults if the production factory is easily testable with stubbed browser dependencies.
+  - Add coverage for production composition defaults with stubbed browser dependencies where practical.
   - Add/adjust project-session and autosave tests for last-project repository and narrowed persistence port.
+  - Include a focused assertion that runtime core requires explicit dependencies and no longer creates hidden browser/service defaults.
+  - Include a focused assertion that the last-project repository/adapter is the single owner of `diedrico_last_file_id` / `diedrico_last_file_name` persistence and that use cases consume the repository instead of duplicating key literals.
 - `frontend/tests/unit/application/appShell/KeyboardShortcutRouter.test.ts`
   - Assert explicit target install/dispose remains correct and no default `window` behavior is required by unit tests.
 - `frontend/tests/unit/application/appShell/AppShellBoundary.test.ts`
@@ -65,6 +72,16 @@ Tests:
 - Delete any old runtime-creation overloads or compatibility helpers that preserve both hidden-global and explicit-composition paths.
 - Do not delete `ProjectService` command-stream internals, `GoogleDriveService` internals, dialog components, backend/docs/spec files, package scripts, or e2e specs.
 
+## Production composition ownership decision
+
+Production browser composition has one owner: the new production composition module/factory. It alone constructs concrete services/adapters and chooses browser integrations: `GoogleDriveService`, the `ProjectService` persistence adapter, browser storage and last-project repository, browser scheduler, keyboard target, and browser alert/error callbacks where those callbacks are concrete browser behavior.
+
+`App.vue` remains a passive Vue shell. It may read Vite env into simple data (`googleConfig`) and pass UI refs/callbacks, but it must not instantiate services, adapters, repositories, schedulers, storage, or keyboard targets. `AppShellRuntime.ts` remains runtime core and must receive dependencies explicitly; it must not recreate hidden production defaults.
+
+## SelectionUseCases decision
+
+Wave 020 explicitly retains `SelectionUseCases` direct delete-command construction as intentional application-use-case behavior and residual architectural debt. This proposal forbids broad command/undo redesign, command descriptor redesign, or a new command-controller layer in this cycle. The implementation may adjust imports only if mechanically required by the app-shell port changes, but it must not change selection/delete command ownership.
+
 ## Expected behavior change
 
 User-visible behavior should be equivalent: startup without Google credentials still initializes the local world and hides startup dialog; with credentials, Drive initialization/sign-in/file listing/open/create/rename/autosave flows behave as before; keyboard shortcuts and delete/select-all remain equivalent; project name/save status remain visible in the same places.
@@ -78,6 +95,7 @@ Architectural behavior changes: app-shell runtime core is testable without brows
 - Replacing the persistence port can sprawl into persistence schema redesign; stop if changes require altering `ProjectService` serialization/deserialization internals.
 - Removing `KeyboardShortcutRouter.install` default `window` requires all call sites/tests to pass an explicit target.
 - Google Drive validation cannot use real credentials; rely on fake-port unit tests plus credential-free e2e/live smoke.
+- `SelectionUseCases` direct command construction remains known residual debt after Wave 020; this is accepted to keep the wave centered on app-shell production composition and session/browser adapter ownership.
 
 ## Validation plan
 
@@ -87,6 +105,9 @@ Capture all logs under `architecture-audit/cycle-020-app-shell-project-session-b
 2. Focused Vitest:
    - `npm run test --workspace=frontend -- tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts tests/unit/application/appShell/KeyboardShortcutRouter.test.ts tests/unit/application/appShell/AppShellBoundary.test.ts`
    - Add any new adapter test files to the command.
+   - Required focused boundary coverage: prove `AppShellRuntime.ts` no longer owns hidden production browser/service defaults by constructing runtime with explicit fake dependencies and by static/boundary assertions that only the production composition module may reference `new GoogleDriveService`, the `ProjectService` adapter binding, browser storage, browser scheduler defaults, and the keyboard target.
+   - Required focused repository coverage: prove the last-project repository/adapter is the single owner of `diedrico_last_file_id` and `diedrico_last_file_name` persistence, and that `ProjectSessionUseCases` / `AutoSaveUseCases` interact only through repository methods.
+   - Required SelectionUseCases coverage decision: no new selection/delete command-port tests are required in Wave 020 because direct command construction is intentionally retained; existing keyboard/delete user-flow coverage remains the regression guard.
 3. Root/frontend lint: `npm run lint`; `npm run lint --workspace=frontend`.
 4. Root/frontend full Vitest: `npm run test`; `npm run test --workspace=frontend`.
 5. Root/frontend build: `npm run build`; `npm run build --workspace=frontend`.
@@ -104,5 +125,5 @@ Stop and request a reviewed delta/plan edit if implementation requires any of th
 - changing `ProjectService` schema, command descriptors, or operation replay behavior;
 - redesigning `GoogleDriveService` authentication/GAPI internals;
 - moving `World`/`CommandStack` creation out of app shell into a broader application kernel;
-- replacing selection/delete command construction with a new command-controller architecture larger than a tiny app-shell port;
+- replacing selection/delete command construction with any new delete-selection port, command-controller architecture, command descriptor redesign, or undo/redo redesign;
 - editing backend/docs/spec/package/tooling or rendering/domain realization layers.
