@@ -27,7 +27,7 @@ function readPort(): CanvasWorldReadPort {
     realizePoint3D: () => new Point3DRealization3D(new Vector4(2, 3, 0, 1)),
     realizeLine3D: () => { throw new Error('not used'); },
     realizeSegment3D: () => { throw new Error('not used'); },
-    getProcessTree: () => undefined as never,
+    isElementVisible: () => true,
   };
 }
 

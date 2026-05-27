@@ -12,18 +12,12 @@ import { CanvasPresentationController } from '@/application/canvasPresentation/C
 import { createCanvasWorldReadPort } from '@/application/canvasPresentation/CanvasWorldReadPort';
 import { createThreeWorldReadPort } from '@/application/threePresentation/ThreeWorldReadPort';
 import { screenTo3D } from '@/utils/coordinateTransform';
-import { FreePoint2D, Point2DLineLineIntersection, Point2DLineCircleIntersection, Point2DCircleCircleIntersection } from '@/domain/world/Point';
-import { Line2DByTwoPoints } from '@/domain/world/Line';
-import { Segment2DByPoints } from '@/domain/world/Segment';
-import { Circle2DByCenterAndPoint, Circle2DByThreePoints } from '@/domain/world/Circle';
-import { Guide2D } from '@/domain/world/Guide';
-import { HalfHingeLine2D } from '@/domain/world/HingeLine';
-import { Element2D } from '@/domain/world/Element2D';
-import { getActionDescriptionParts } from '@/domain/processTree/Action';
-import type { ProcessNode } from '@/domain/processTree/ProcessTree';
-import type { VisualStyle } from '@/domain/world/VisualStyle';
-import type { CanvasViewPort, ProcessTreeReadPort, ProcessNodeViewModel, ElementsPanelPort, ThreePresentationPort, ActivePlaneSelectorPort, ElementsPanelElementViewModel, PropertiesDialogViewModel } from './RuntimeViewPorts';
-import { mapDescriptionParts } from './RuntimeViewPorts';
+import { FreePoint2D } from '@/domain/world/Point';
+import type { CanvasViewPort, ProcessTreeReadPort, ElementsPanelPort, ThreePresentationPort, ActivePlaneSelectorPort } from './RuntimeViewPorts';
+import { buildPropertiesDialogViewModel } from './readModels/PropertiesDialogReadModel';
+import { buildProcessTreeReadModel, countProcessNodeViewModels, getRelatedActionIds } from './readModels/ProcessTreeReadModel';
+import { buildElementsPanelReadModel } from './readModels/ElementsPanelReadModel';
+import { toggleElementVisibility } from './readModels/ElementVisibilityIntent';
 
 export interface RuntimeSessionPersistenceSnapshotHandle extends RuntimeSessionSnapshotHandle {
   readonly commandStack: CommandStack;
@@ -85,25 +79,9 @@ export class RuntimeSession {
       subscribeToChanges: (listener) => this.world.subscribeToChanges(listener),
       unsubscribeFromChanges: (listener) => this.world.unsubscribeFromChanges(listener),
       subscribeToTree: (listener) => this.world.getProcessTree().subscribe(listener),
-      getTree: () => {
-        const tree = this.world.getProcessTree();
-        return {
-          root: this.createProcessNodeViewModel(tree.root),
-          version: tree.getVersion(),
-          activeSubprocessId: tree.getCurrentSubprocess().id,
-        };
-      },
-      getRelatedActionIds: (selectedIds) => {
-        const related = new Set<string>();
-        const selectedIdSet = new Set(selectedIds);
-        for (const action of this.world.getProcessTree().getAllActions()) {
-          const producesSelected = selectedIdSet.has(action.elementId);
-          const dependsOnSelected = this.world.getDependencyService().getDependencies(action.elementId).some(depId => selectedIdSet.has(depId));
-          if (producesSelected || dependsOnSelected) related.add(action.id);
-        }
-        return related;
-      },
-      countNodes: (node) => 1 + (node.children?.reduce((sum, child) => sum + this.countProcessNodeViewModels(child), 0) ?? 0),
+      getTree: () => buildProcessTreeReadModel({ world: this.world }),
+      getRelatedActionIds: (selectedIds) => getRelatedActionIds(selectedIds, { world: this.world }),
+      countNodes: (node) => countProcessNodeViewModels(node),
     };
   }
 
@@ -111,52 +89,11 @@ export class RuntimeSession {
     return {
       subscribeToChanges: (listener) => this.world.subscribeToChanges(listener),
       unsubscribeFromChanges: (listener) => this.world.unsubscribeFromChanges(listener),
-      getReadModel: () => ({
-        projectionPlanes: this.world.getAllProjectionPlanes().slice().sort((a, b) => {
-          if (a.name === 'P_H') return -1;
-          if (b.name === 'P_H') return 1;
-          if (a.name === 'P_V') return -1;
-          if (b.name === 'P_V') return 1;
-          return a.name.localeCompare(b.name);
-        }).map(plane => {
-          const points = plane.getAllPoints();
-          const allLines = plane.getAllLines();
-          const lines = allLines.filter(l => !(l instanceof HalfHingeLine2D) && !(l instanceof Segment2DByPoints) && !(l instanceof Guide2D));
-          const segments = allLines.filter(l => l instanceof Segment2DByPoints);
-          const circles = plane.getAllCircles();
-          const guides = allLines.filter(l => l instanceof Guide2D);
-          return {
-            id: plane.id,
-            name: plane.name,
-            label: plane.name === 'P_H' ? 'Horizontal' : (plane.name === 'P_V' ? 'Vertical' : 'Auxiliary'),
-            elements: {
-              points: points.map(element => this.formatElementForPanel(element, 'point')),
-              lines: lines.map(element => this.formatElementForPanel(element, 'line')),
-              segments: segments.map(element => this.formatElementForPanel(element, 'segment')),
-              circles: circles.map(element => this.formatElementForPanel(element, 'circle')),
-              guides: guides.map(element => this.formatElementForPanel(element, 'guide')),
-            },
-            hasElements: points.length + lines.length + segments.length + circles.length + guides.length > 0,
-          };
-        }),
-        threeDElements: {
-          points: this.world.getAll3DPoints().map(element => this.formatElementForPanel(element, 'point')),
-          lines: this.world.getAll3DLines().map(element => this.formatElementForPanel(element, 'line')),
-          segments: this.world.getAll3DSegments().map(element => this.formatElementForPanel(element, 'segment')),
-          planes: this.world.getAllPlanes().map(element => this.formatElementForPanel(element, 'plane')),
-          hasElements: this.world.getAll3DPoints().length + this.world.getAll3DLines().length + this.world.getAll3DSegments().length + this.world.getAllPlanes().length > 0,
-        },
+      getReadModel: () => buildElementsPanelReadModel({ world: this.world }),
+      toggleVisibility: (elementId) => toggleElementVisibility(elementId, {
+        findElement: (id) => this.findVisibleElement(id),
+        markDirty: () => this.world.markDirty(),
       }),
-      toggleVisibility: (elementId) => {
-        const element = this.findVisibleElement(elementId);
-        if (!element) return;
-        if (!element.visualStyle) {
-          element.visualStyle = { color: '#000000', lineWidth: 2, lineStyle: 'solid', opacity: 1.0, visible: false, inherited: true };
-        } else {
-          element.visualStyle.visible = !element.visualStyle.visible;
-        }
-        this.world.markDirty();
-      },
     };
   }
 
@@ -300,142 +237,14 @@ export class RuntimeSession {
     return elementId;
   }
 
-  private getPropertiesDialogViewModel(elementId: string | null): PropertiesDialogViewModel | null {
-    if (!elementId) return null;
-    const element = this.findVisibleElement(elementId) as any;
-    if (!element) return null;
-    const style = this.styleView(element.visualStyle);
-    return {
-      elementId,
-      elementLabel: element.label || elementId,
-      elementType: this.describeElementType(elementId),
-      planeId: typeof element.planeId === 'string' ? element.planeId : null,
-      coordinates: this.describeCoordinates(elementId),
-      dependencies: this.describeDependencies(elementId),
-      createdBy: 'Action in ProcessTree',
-      style,
-    };
+  private getPropertiesDialogViewModel(elementId: string | null) {
+    return buildPropertiesDialogViewModel(elementId, {
+      findElement: (id) => this.findVisibleElement(id),
+      world: this.world,
+    });
   }
 
-  private describeElementType(elementId: string): string {
-    if (this.world.getPoint2D(elementId)) return '2D Point';
-    if (this.world.getLine2D(elementId)) return '2D Line';
-    if (this.world.getSegment2D(elementId)) return '2D Segment';
-    if (this.world.getCircle2D(elementId)) return '2D Circle';
-    if (this.world.getGuide2D(elementId)) return '2D Guide';
-    if (this.world.getElement3DById(elementId)) return '3D Element';
-    if (this.world.getProjectionPlaneById(elementId)) return 'Projection Plane';
-    return 'Unknown';
-  }
-
-  private describeCoordinates(elementId: string): string | null {
-    const point = this.world.getPoint2D(elementId);
-    if (point) {
-      const realization = this.world.getProjectionPlaneById(point.planeId)?.getPoint(elementId)?.realize2D(this.world);
-      if (realization) {
-        const pos = realization.getPosition();
-        return `(${pos.x.toFixed(2)}, ${pos.y.toFixed(2)})`;
-      }
-    }
-    const circle = this.world.getCircle2D(elementId);
-    if (circle) {
-      const realization = this.world.getProjectionPlaneById(circle.planeId)?.getCircle(elementId)?.realize2D(this.world);
-      if (realization) return `Center: (${realization.center.x.toFixed(2)}, ${realization.center.y.toFixed(2)}), Radius: ${realization.getRadius().toFixed(2)}`;
-    }
-    return null;
-  }
-
-  private describeDependencies(elementId: string): readonly string[] {
-    const point = this.world.getPoint2D(elementId);
-    if (point instanceof Point2DLineLineIntersection) return [point.line1Id, point.line2Id].filter(Boolean);
-    if (point instanceof Point2DLineCircleIntersection) return [point.lineId, point.circleId].filter(Boolean);
-    if (point instanceof Point2DCircleCircleIntersection) return [point.circle1Id, point.circle2Id].filter(Boolean);
-    const line = this.world.getLine2D(elementId);
-    if (line instanceof Line2DByTwoPoints) return [line.point1Id, line.point2Id];
-    const segment = this.world.getSegment2D(elementId);
-    if (segment instanceof Segment2DByPoints) return [segment.point1Id, segment.point2Id];
-    const circle = this.world.getCircle2D(elementId);
-    if (circle instanceof Circle2DByCenterAndPoint) return [circle.centerPointId, circle.circumferencePointId];
-    if (circle instanceof Circle2DByThreePoints) return [circle.point1Id, circle.point2Id, circle.point3Id];
-    const guide = this.world.getGuide2D(elementId);
-    if (guide instanceof Guide2D) return [guide.referenceLineId, guide.throughPointId];
-    return [];
-  }
-
-  private styleView(style?: VisualStyle): PropertiesDialogViewModel['style'] {
-    return {
-      color: style?.color ?? '#000000',
-      lineWidth: style?.lineWidth ?? 1.0,
-      lineStyle: style?.lineStyle ?? 'solid',
-      visible: style?.visible !== false,
-    };
-  }
-
-  private createProcessNodeViewModel(node: ProcessNode): ProcessNodeViewModel {
-    if (node.type === 'action') {
-      const descriptionParts = mapDescriptionParts(getActionDescriptionParts(node, this.world));
-      return {
-        id: node.id,
-        type: node.type,
-        isOutput: node.isOutput,
-        elementId: node.elementId,
-        descriptionParts,
-        isInfeasible: this.isActionInfeasible(node.elementId),
-        hideBecauseElementMissing: descriptionParts.length === 0,
-      };
-    }
-    return {
-      id: node.id,
-      type: node.type,
-      name: node.type === 'subprocess' ? node.name : undefined,
-      children: node.children.filter(child => child !== null).map(child => this.createProcessNodeViewModel(child)),
-      showIntermediates: node.type === 'subprocess' ? node.showIntermediates : undefined,
-      isOutput: node.isOutput,
-      isAuxiliary: node.type === 'actionGroup' ? node.isAuxiliary : undefined,
-      descriptionParts: [],
-      isInfeasible: false,
-      hideBecauseElementMissing: false,
-    };
-  }
-
-  private isActionInfeasible(elementId: string): boolean {
-    let element;
-    try {
-      element = this.world.getElement2D(elementId);
-    } catch {
-      element = this.world.getElement3DById(elementId) || this.world.getProjectionPlaneById(elementId);
-    }
-    if (element instanceof Element2D) {
-      const realization = element.realize2D(this.world);
-      return realization ? !realization.isFeasible() : false;
-    }
-    return false;
-  }
-
-  private countProcessNodeViewModels(node: ProcessNodeViewModel): number {
-    return 1 + (node.children?.reduce((sum, child) => sum + this.countProcessNodeViewModels(child), 0) ?? 0);
-  }
-
-  private formatElementForPanel(element: any, fallbackType: string): ElementsPanelElementViewModel {
-    return {
-      id: element.id,
-      label: element.label || element.id,
-      type: fallbackType,
-      visible: element.visualStyle?.visible !== false,
-      properties: this.getElementProperties(element),
-    };
-  }
-
-  private getElementProperties(element: any): string {
-    if ('position' in element) {
-      const pos = element.position;
-      return `(${pos.x.toFixed(2)}, ${pos.y.toFixed(2)})`;
-    }
-    if ('radius' in element) return `r=${element.radius.toFixed(2)}`;
-    return '';
-  }
-
-  private findVisibleElement(elementId: string): any {
+  private findVisibleElement(elementId: string) {
     return this.world.getElement2D(elementId)
       || this.world.getElement3DById(elementId)
       || this.world.getProjectionPlaneById(elementId);

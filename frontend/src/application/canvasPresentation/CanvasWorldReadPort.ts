@@ -1,4 +1,5 @@
 import type { Circle2D, Circle2DRealization2D } from '@/domain/world/Circle';
+import type { Element } from '@/domain/world/Element';
 import type { Line2D, Line2DRealization2D } from '@/domain/world/Line';
 import type { Point2D, Point2DRealization2D } from '@/domain/world/Point';
 import type { Point3D } from '@/domain/world/Point3D';
@@ -7,10 +8,10 @@ import type { Segment3D } from '@/domain/world/Segment3D';
 import type { ProjectionPlane } from '@/domain/world/projectionPlane/ProjectionPlane';
 import type { ProjectionPlaneRealization3D } from '@/domain/world/projectionPlane/ProjectionPlaneRealization';
 import type { Point3DRealization3D, Line3DRealization3D, Segment3DRealization3D } from '@/domain/world/Element3DRealization3D';
-import type { ProcessTree } from '@/domain/processTree/ProcessTree';
 import type { ProjectionElementRealizationContext, Element3DRealizationContext } from '@/domain/world/projectionPlane/ProjectionPlaneContext';
 import type { World } from '@/domain/world/World';
 import type { CanvasPlaneTransformModel } from './CanvasPresentationModel';
+import { resolveVisibility } from '@/domain/world/styleService';
 
 export interface CanvasWorldReadPort {
   getAllProjectionPlanes(): ProjectionPlane[];
@@ -25,7 +26,7 @@ export interface CanvasWorldReadPort {
   realizePoint3D(point: Point3D): Point3DRealization3D;
   realizeLine3D(line: Line3D): Line3DRealization3D;
   realizeSegment3D(segment: Segment3D): Segment3DRealization3D;
-  getProcessTree(): ProcessTree;
+  isElementVisible(element: Element): boolean;
 }
 
 function createCanvasRealizationContext(world: World): ProjectionElementRealizationContext & Element3DRealizationContext {
@@ -66,7 +67,7 @@ export function createCanvasWorldReadPort(world: World): CanvasWorldReadPort {
     realizePoint3D: point => point.realize3D(realizationContext),
     realizeLine3D: line => line.realize3D(realizationContext),
     realizeSegment3D: segment => segment.realize3D(realizationContext),
-    getProcessTree: () => world.getProcessTree(),
+    isElementVisible: element => resolveVisibility(element, world),
   };
 }
 
