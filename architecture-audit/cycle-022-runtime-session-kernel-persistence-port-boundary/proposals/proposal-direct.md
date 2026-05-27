@@ -59,9 +59,17 @@ No docs/specs, backend files, package/tooling files, fixtures, command descripto
 
 ## Expected behavior change
 
-No intended user-visible behavior change.
+No intended user-visible behavior change for successful session flows.
 
 Startup without Drive, startup with last project, create project, open project, new project, sign-out, autosave save/update, missing-remote-file recovery, selection deletion, undo/redo, active-plane setup, and save-status transitions should remain equivalent. Internal architecture changes: app-shell project/session use cases stop passing raw `World`/`CommandStack` pairs and stop importing concrete persistence DTOs.
+
+## Open/restore failure semantics
+
+The implementation must choose **validation-before-destructive-reset / atomic restore** semantics for user-initiated open/restore through the new session boundary. The session boundary must validate the external project payload before clearing the current world or command history. If validation fails, deserialization throws, or session restore cannot complete, the currently active `World`, `CommandStack`, selected/current project metadata, dirty/version state, and autosave eligibility must remain as they were before the attempted open.
+
+Rationale: Wave 022 centralizes session restore ownership, so this is the correct narrow point to remove the current app-shell orchestration flaw where `openProject()` clears the world before validation/restore. The change is intentionally limited to failure atomicity at the new boundary; it must not redesign `ProjectService` schema/replay, command descriptors, persistence formats, or Drive/auth behavior. Successful restore behavior remains equivalent, including projection-plane fallback initialization and dirty marking after a valid project opens.
+
+If implementing atomic restore requires changing `ProjectService` replay/schema internals, operation descriptors, command-stack semantics, or adding a compatibility path, stop and request a reviewed delta instead of broadening implementation.
 
 ## No-backcompat rationale
 
@@ -76,6 +84,10 @@ Implementation must capture full stdout/stderr under `architecture-audit/cycle-0
    - `frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts`
    - `frontend/tests/unit/application/appShell/AppShellBoundary.test.ts`
    - any new runtime-session test file
+   - invalid/corrupt project payload tests proving user-initiated open validates before destructive reset and leaves the previous world, command stack, project metadata, dirty/version state, and autosave eligibility intact after validation failure.
+   - restore/deserialization failure tests proving partial replay errors do not leave a half-cleared or half-restored active session.
+   - command-stack/world state assertions after failed open: existing committed command count, undo/redo behavior, projection planes, selected/current project identity, and next element id remain equivalent to the pre-open snapshot.
+   - autosave/session exception tests proving snapshot/restore boundary exceptions propagate or surface through existing save-status/error paths without marking the session clean, disabling future autosave, or overwriting the active remote/local project with invalid data.
 3. Static/boundary scan proving:
    - `AppShellPorts.ts` no longer imports `World`, `CommandStack`, or `ProjectData`.
    - `ProjectSessionUseCases.ts` and `AutoSaveUseCases.ts` no longer pass raw pairs to persistence.
@@ -91,7 +103,8 @@ Implementation must capture full stdout/stderr under `architecture-audit/cycle-0
 - **Risk: runtime session becomes a god object.** Mitigation: restrict it to runtime state ownership, initialization, snapshot/restore, clear/reset, version observation, and narrow raw-object accessors for existing consumers. Do not move leaf command construction or UI state into it.
 - **Risk: accidental schema/replay redesign.** Mitigation: keep `ProjectService` semantics unchanged and adapter-private. Stop for plan edit if descriptor/schema/replay changes become necessary.
 - **Risk: initialization history semantics shift.** Mitigation: preserve `initializeWorld` behavior and add focused assertions for startup/new/open fallback world initialization and command-stack counts where current tests support it.
-- **Risk: autosave timing regression.** Mitigation: keep scheduler/debounce behavior unchanged and update fake-scheduler tests around session version/snapshot methods.
+- **Risk: open/restore failure atomicity introduces accidental schema/replay work.** Mitigation: implement atomicity only at the session boundary by validating before active-session reset and by restoring into an isolated/new runtime pair, if needed; stop for reviewed delta if this requires `ProjectService` schema/replay changes.
+- **Risk: autosave timing regression.** Mitigation: keep scheduler/debounce behavior unchanged and update fake-scheduler tests around session version/snapshot methods, including snapshot/restore exception paths.
 - **Risk: raw accessors undermine the boundary.** Mitigation: name them as explicit transitional adapter accessors for still-in-scope consumers and prohibit app-shell persistence/use-case ports from accepting the pair.
 
 ## Stop conditions for broader redesign
