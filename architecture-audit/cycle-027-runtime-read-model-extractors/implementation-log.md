@@ -125,3 +125,28 @@ The repository remains broadly dirty outside Cycle 027. Closure used path-scoped
 ### Next-wave recommendation / re-rank
 
 Wave 027 was the last current wave-plan entry, and its implementation leaves central residuals around concrete canvas DTO selectors, raw projection-plane/projected-3D traversal, properties/process realization contexts that still receive concrete `World`, and the larger `ThreeWorldReadPort` adapter. The recommended next canonical stage is a **wave-plan-extension / fresh scout** that re-ranks and adds the next wave before any implementation. Based on Wave 027 learnings, the highest-centrality candidate is to continue with behavior-sized presentation/domain realization seams: delete or replace the remaining raw canvas projection-plane/projected-3D collection seams with concrete selector DTOs, then evaluate `ThreeWorldReadPort` and domain realization-context ownership. This should be planned as a new reviewed wave-plan extension rather than implemented in the validation closure stage.
+
+## Reviewer-blocker preview refresh — t3
+
+The validation-stage reviewer blocker about stale/insufficient live-preview evidence was resolved by this follow-up closure task without touching production source.
+
+Fresh evidence added under `architecture-audit/cycle-027-runtime-read-model-extractors/validation/`:
+
+- `t3-pre-status.stdout.log` / `.stderr.log`: path-scoped status before the t3 amendment; only audit/report directories were untracked in the checked Cycle 027 scope, and no production source paths were dirty in that scoped check.
+- `t3-pre-diff-stat.stdout.log` / `.stderr.log`: empty diff stat for Cycle 027 source paths and this log before the t3 amendment.
+- `t3-preview-before.stdout.log` / `.stderr.log`: the prior `live-preview.pid` (`45814`) was stale and no active process was shown for that PID.
+- `t3-live-preview.stdout.log` / `.stderr.log`: fresh `frontend` Vite preview launched with `npm run dev -- --host 0.0.0.0`.
+- `t3-live-preview.pid`: shell parent PID for the refreshed preview launch; `live-preview.pid` was also updated for current preview tracking.
+- `t3-live-preview-reachability.stdout.log` / `.stderr.log`: fresh probe returned `HTTP/1.1 200 OK` from `http://127.0.0.1:5173/` and recorded an active listener on `0.0.0.0:5173`.
+
+Fresh reachability excerpt:
+
+```text
+HTTP/1.1 200 OK
+preview_pid=46925
+listener:
+LISTEN 0      511          0.0.0.0:5173      0.0.0.0:*    users:(("MainThread",pid=46940,fd=22))
+```
+
+This supersedes the stale PID concern while preserving the prior CLI Playwright e2e evidence for the 3D overlay pointer-boundary regression. The separate Playwright MCP live-smoke residual remains accepted as non-source/harness-specific because this Coder task has no separate MCP browser surface beyond the available tooling, the CLI e2e suite already passed the interaction regression, and the refreshed preview is reachable on the required `0.0.0.0:5173` binding.
+
