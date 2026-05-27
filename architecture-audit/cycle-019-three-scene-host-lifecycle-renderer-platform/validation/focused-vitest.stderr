@@ -1,0 +1,44 @@
+stderr | tests/unit/rendering/threeView/threeSceneHost.spec.ts > ThreeSceneHost > cancels animation, disposes platform resources and registry-owned objects, and removes label DOM on dispose
+THREE.Object3D.add: object not an instance of THREE.Object3D. {
+  traverse: [Function: spy] {
+    getMockName: [Function (anonymous)],
+    mockName: [Function (anonymous)],
+    mockClear: [Function (anonymous)],
+    mockReset: [Function (anonymous)],
+    mockRestore: [Function (anonymous)],
+    getMockImplementation: [Function (anonymous)],
+    mockImplementation: [Function (anonymous)],
+    mockImplementationOnce: [Function (anonymous)],
+    withImplementation: [Function: withImplementation],
+    mockReturnThis: [Function (anonymous)],
+    mockReturnValue: [Function (anonymous)],
+    mockReturnValueOnce: [Function (anonymous)],
+    mockResolvedValue: [Function (anonymous)],
+    mockResolvedValueOnce: [Function (anonymous)],
+    mockRejectedValue: [Function (anonymous)],
+    mockRejectedValueOnce: [Function (anonymous)]
+  },
+  parent: null
+}
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/rendering/threeView/threeSceneHost.spec.ts > ThreeSceneHost > owns renderer, CSS2D DOM, controls, resize, and one animation loop on mount
+AssertionError: expected "spy" to be called once, but got 2 times
+ ❯ tests/unit/rendering/threeView/threeSceneHost.spec.ts:77:29
+     75|     frameCallbacks[0](1);
+     76| 
+     77|     expect(controls.update).toHaveBeenCalledOnce();
+       |                             ^
+     78|     expect(renderer.render).toHaveBeenCalledWith(host.scene, expect.an…
+     79|     expect(labelRenderer.render).toHaveBeenCalledWith(host.scene, expe…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c vitest run tests/unit/rendering/threeView/threeViewRuntime.spec.ts tests/unit/rendering/threeView/threeSceneHost.spec.ts tests/unit/rendering/threeView/threeObjectRegistry.spec.ts tests/unit/rendering/threeView/threeSceneAdapters.spec.ts tests/unit/components/panels/threeViewShellBoundary.spec.ts

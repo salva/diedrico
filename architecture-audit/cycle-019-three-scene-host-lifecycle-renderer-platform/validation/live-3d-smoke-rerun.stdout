@@ -1,0 +1,43 @@
+{
+  "url": "http://127.0.0.1:5173/",
+  "title": "Diedrico - Dihedral Learning MVP",
+  "panelVisible": true,
+  "canvasVisible": true,
+  "controlLabels": [
+    " Show Planes ",
+    " Show 2D Elements on Planes ",
+    " Show Grid ",
+    " Show Reference Axes "
+  ],
+  "panelBox": {
+    "x": 460,
+    "y": 72,
+    "width": 800,
+    "height": 600
+  },
+  "canvasBox": {
+    "x": 460,
+    "y": 72,
+    "width": 800,
+    "height": 600
+  },
+  "consoleMessages": [
+    "debug: [vite] connecting...",
+    "debug: [vite] connected.",
+    "log: [ElementsPanel] Computing projection planes list, version: 0 forceUpdate: 0",
+    "log: [ElementsPanel] Computing 3D elements",
+    "log: [ElementsPanel] 3D elements: {points: 0, lines: 0, segments: 0, planes: 0}",
+    "log: [ElementsPanel] Mounted, initial World version: 0",
+    "log: World initialized",
+    "log: Points in world: 0",
+    "log: [ElementsPanel] World version changed: 0 → 27",
+    "log: [ElementsPanel] Computing projection planes list, version: 0 forceUpdate: 1",
+    "log: [ElementsPanel] Computing projection planes list, version: 0 forceUpdate: 1",
+    "log: [ElementsPanel] Computing 3D elements",
+    "log: [ElementsPanel] 3D elements: {points: 0, lines: 0, segments: 0, planes: 2}",
+    "warning: [.WebGL-0x5540014da00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "warning: [.WebGL-0x5540014da00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "warning: [.WebGL-0x5540014da00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "warning: [.WebGL-0x5540014da00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+  ]
+}

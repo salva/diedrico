@@ -31,4 +31,26 @@ describe('ThreeObjectRegistry', () => {
     registry.replaceGroup('labels', []);
     expect(document.body.contains(element)).toBe(false);
   });
+
+  it('disposes descendant geometry and material arrays owned by a group', () => {
+    const scene = new THREE.Scene();
+    const registry = new ThreeObjectRegistry(scene);
+    const parent = new THREE.Group();
+    const childGeometry = new THREE.BufferGeometry();
+    const firstMaterial = new THREE.MeshBasicMaterial();
+    const secondMaterial = new THREE.MeshBasicMaterial();
+    const disposeGeometry = vi.spyOn(childGeometry, 'dispose');
+    const disposeFirstMaterial = vi.spyOn(firstMaterial, 'dispose');
+    const disposeSecondMaterial = vi.spyOn(secondMaterial, 'dispose');
+    parent.add(new THREE.Mesh(childGeometry, [firstMaterial, secondMaterial]));
+
+    registry.replaceGroup('nested', [parent]);
+    registry.dispose();
+    registry.dispose();
+
+    expect(scene.children).not.toContain(parent);
+    expect(disposeGeometry).toHaveBeenCalledOnce();
+    expect(disposeFirstMaterial).toHaveBeenCalledOnce();
+    expect(disposeSecondMaterial).toHaveBeenCalledOnce();
+  });
 });

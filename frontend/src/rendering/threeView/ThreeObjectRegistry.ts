@@ -4,6 +4,11 @@ export class ThreeObjectRegistry {
   private readonly groups = new Map<string, THREE.Object3D[]>();
   constructor(private readonly scene: THREE.Scene) {}
 
+  /**
+   * Replaces a named group with adapter-created objects whose geometry, materials,
+   * descendants, and CSS2D elements are owned by this registry until replacement
+   * or disposal.
+   */
   replaceGroup(group: string, objects: THREE.Object3D[]): void {
     this.disposeGroup(group);
     for (const object of objects) this.scene.add(object);

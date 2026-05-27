@@ -1,0 +1,26 @@
+frontend/src/components/panels/ThreeView.vue:44:const runtime = new ThreeViewRuntime();
+frontend/src/rendering/threeView/ThreeObjectRegistry.ts:7:  replaceGroup(group: string, objects: THREE.Object3D[]): void {
+frontend/src/rendering/threeView/ThreeSceneHost.ts:2:import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+frontend/src/rendering/threeView/ThreeSceneHost.ts:3:import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
+frontend/src/rendering/threeView/ThreeSceneHost.ts:14:  private labelRenderer?: CSS2DRenderer;
+frontend/src/rendering/threeView/ThreeSceneHost.ts:15:  private controls?: OrbitControls;
+frontend/src/rendering/threeView/ThreeSceneHost.ts:32:    this.labelRenderer = new CSS2DRenderer();
+frontend/src/rendering/threeView/ThreeSceneHost.ts:37:    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+frontend/src/rendering/threeView/ThreeSceneHost.ts:63:    if (this.animationFrameId) cancelAnimationFrame(this.animationFrameId);
+frontend/src/rendering/threeView/ThreeSceneHost.ts:71:    this.animationFrameId = requestAnimationFrame(this.animate);
+frontend/src/rendering/threeView/AxisLabelSceneAdapter.ts:2:import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
+frontend/src/rendering/threeView/AxisLabelSceneAdapter.ts:5:export class AxisLabelSceneAdapter {
+frontend/src/rendering/threeView/ProjectionPlaneSceneAdapter.ts:3:import { AxisLabelSceneAdapter } from './AxisLabelSceneAdapter';
+frontend/src/rendering/threeView/ProjectionPlaneSceneAdapter.ts:6:  private readonly labels = new AxisLabelSceneAdapter();
+frontend/src/rendering/threeView/ThreeViewRuntime.ts:11:  private readonly host = new ThreeSceneHost();
+frontend/src/rendering/threeView/ThreeViewRuntime.ts:23:    this.host.registry.replaceGroup('projectionPlanes', this.projectionPlaneAdapter.createObjects(model.projectionPlanes));
+frontend/src/rendering/threeView/ThreeViewRuntime.ts:24:    this.host.registry.replaceGroup('planarElements', this.planarElementAdapter.createObjects(model.planarElements));
+frontend/src/rendering/threeView/ThreeViewRuntime.ts:25:    this.host.registry.replaceGroup('reconstructedElements', this.reconstructedElementAdapter.createObjects(model.reconstructedElements));
+frontend/src/rendering/threeView/ThreeViewRuntime.ts:26:    this.host.registry.replaceGroup('guides', this.guideAdapter.createObjects(model.guides));
+frontend/src/rendering/threeView/ThreeViewRuntime.ts:27:    this.host.registry.replaceGroup('hinges', this.hingeAdapter.createObjects(model.hinges));
+frontend/tests/unit/rendering/threeView/threeObjectRegistry.spec.ts:3:import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
+frontend/tests/unit/rendering/threeView/threeObjectRegistry.spec.ts:13:    registry.replaceGroup('projectionPlanes', [first]);
+frontend/tests/unit/rendering/threeView/threeObjectRegistry.spec.ts:16:    registry.replaceGroup('projectionPlanes', [second]);
+frontend/tests/unit/rendering/threeView/threeObjectRegistry.spec.ts:29:    registry.replaceGroup('labels', [label]);
+frontend/tests/unit/rendering/threeView/threeObjectRegistry.spec.ts:31:    registry.replaceGroup('labels', []);
+frontend/tests/unit/components/panels/threeViewShellBoundary.spec.ts:15:    expect(source).not.toMatch(/CSS2DObject|CSS2DRenderer|OrbitControls|WebGLRenderer|Mesh\(|Line\(|PlaneGeometry|SphereGeometry/);

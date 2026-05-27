@@ -1,0 +1,55 @@
+frontend/src/components/panels/ThreeView.vue:44:const runtime = new ThreeViewRuntime();
+frontend/src/rendering/threeView/ThreeObjectRegistry.ts:12:  replaceGroup(group: string, objects: THREE.Object3D[]): void {
+frontend/src/rendering/threeView/ThreeSceneHost.ts:2:import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+frontend/src/rendering/threeView/ThreeSceneHost.ts:3:import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
+frontend/src/rendering/threeView/ThreeSceneHost.ts:34:export interface ThreeSceneHostPlatform {
+frontend/src/rendering/threeView/ThreeSceneHost.ts:38:  requestAnimationFrame(callback: FrameRequestCallback): number;
+frontend/src/rendering/threeView/ThreeSceneHost.ts:39:  cancelAnimationFrame(id: number): void;
+frontend/src/rendering/threeView/ThreeSceneHost.ts:44:  platform?: ThreeSceneHostPlatform;
+frontend/src/rendering/threeView/ThreeSceneHost.ts:47:function createDefaultPlatform(): ThreeSceneHostPlatform {
+frontend/src/rendering/threeView/ThreeSceneHost.ts:50:    createLabelRenderer: () => new CSS2DRenderer(),
+frontend/src/rendering/threeView/ThreeSceneHost.ts:51:    createControls: (camera, domElement) => new OrbitControls(camera, domElement),
+frontend/src/rendering/threeView/ThreeSceneHost.ts:52:    requestAnimationFrame: callback => window.requestAnimationFrame(callback),
+frontend/src/rendering/threeView/ThreeSceneHost.ts:53:    cancelAnimationFrame: id => window.cancelAnimationFrame(id),
+frontend/src/rendering/threeView/ThreeSceneHost.ts:61:  private readonly platform: ThreeSceneHostPlatform;
+frontend/src/rendering/threeView/ThreeSceneHost.ts:124:      this.platform.cancelAnimationFrame(this.animationFrameId);
+frontend/src/rendering/threeView/ThreeSceneHost.ts:138:    this.animationFrameId = this.platform.requestAnimationFrame(this.animate);
+frontend/src/rendering/threeView/AxisLabelSceneAdapter.ts:2:import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
+frontend/src/rendering/threeView/AxisLabelSceneAdapter.ts:5:export class AxisLabelSceneAdapter {
+frontend/src/rendering/threeView/ProjectionPlaneSceneAdapter.ts:3:import { AxisLabelSceneAdapter } from './AxisLabelSceneAdapter';
+frontend/src/rendering/threeView/ProjectionPlaneSceneAdapter.ts:6:  private readonly labels = new AxisLabelSceneAdapter();
+frontend/src/rendering/threeView/ThreeViewRuntime.ts:20:  replaceGroup(group: ThreeViewRuntimeGroup, objects: THREE.Object3D[]): void;
+frontend/src/rendering/threeView/ThreeViewRuntime.ts:48:export interface ThreeViewRuntimeOptions {
+frontend/src/rendering/threeView/ThreeViewRuntime.ts:59:  constructor(options: ThreeViewRuntimeOptions = {}) {
+frontend/src/rendering/threeView/ThreeViewRuntime.ts:60:    this.host = options.host ?? new ThreeSceneHost();
+frontend/src/rendering/threeView/ThreeViewRuntime.ts:75:    this.replaceGroup('projectionPlanes', this.adapters.projectionPlanes.createObjects(model.projectionPlanes));
+frontend/src/rendering/threeView/ThreeViewRuntime.ts:76:    this.replaceGroup('planarElements', this.adapters.planarElements.createObjects(model.planarElements));
+frontend/src/rendering/threeView/ThreeViewRuntime.ts:77:    this.replaceGroup('reconstructedElements', this.adapters.reconstructedElements.createObjects(model.reconstructedElements));
+frontend/src/rendering/threeView/ThreeViewRuntime.ts:78:    this.replaceGroup('guides', this.adapters.guides.createObjects(model.guides));
+frontend/src/rendering/threeView/ThreeViewRuntime.ts:79:    this.replaceGroup('hinges', this.adapters.hinges.createObjects(model.hinges));
+frontend/src/rendering/threeView/ThreeViewRuntime.ts:85:  private replaceGroup(group: ThreeViewRuntimeGroup, objects: THREE.Object3D[]): void {
+frontend/src/rendering/threeView/ThreeViewRuntime.ts:86:    this.host.registry.replaceGroup(group, objects);
+frontend/tests/unit/rendering/threeView/threeObjectRegistry.spec.ts:3:import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
+frontend/tests/unit/rendering/threeView/threeObjectRegistry.spec.ts:13:    registry.replaceGroup('projectionPlanes', [first]);
+frontend/tests/unit/rendering/threeView/threeObjectRegistry.spec.ts:16:    registry.replaceGroup('projectionPlanes', [second]);
+frontend/tests/unit/rendering/threeView/threeObjectRegistry.spec.ts:29:    registry.replaceGroup('labels', [label]);
+frontend/tests/unit/rendering/threeView/threeObjectRegistry.spec.ts:31:    registry.replaceGroup('labels', []);
+frontend/tests/unit/rendering/threeView/threeObjectRegistry.spec.ts:47:    registry.replaceGroup('nested', [parent]);
+frontend/tests/unit/rendering/threeView/threeViewRuntime.spec.ts:22:      registry: { replaceGroup: vi.fn((group, objects) => replaced.push({ group, objects })) },
+frontend/tests/unit/rendering/threeView/threeViewRuntime.spec.ts:43:    new ThreeViewRuntime({ host, controller, adapters }).refresh(input);
+frontend/tests/unit/rendering/threeView/threeViewRuntime.spec.ts:63:      registry: { replaceGroup: vi.fn() },
+frontend/tests/unit/rendering/threeView/threeViewRuntime.spec.ts:68:    const runtime = new ThreeViewRuntime({ host, controller: { buildModel: vi.fn() as never } });
+frontend/tests/unit/rendering/threeView/threeSceneHost.spec.ts:3:import { ThreeSceneHost, type ThreeSceneHostPlatform } from '@/rendering/threeView/ThreeSceneHost';
+frontend/tests/unit/rendering/threeView/threeSceneHost.spec.ts:36:  const platform: ThreeSceneHostPlatform = {
+frontend/tests/unit/rendering/threeView/threeSceneHost.spec.ts:40:    requestAnimationFrame: vi.fn(callback => {
+frontend/tests/unit/rendering/threeView/threeSceneHost.spec.ts:44:    cancelAnimationFrame: vi.fn(),
+frontend/tests/unit/rendering/threeView/threeSceneHost.spec.ts:53:    const host = new ThreeSceneHost({ platform });
+frontend/tests/unit/rendering/threeView/threeSceneHost.spec.ts:73:    expect(platform.requestAnimationFrame).toHaveBeenCalledOnce();
+frontend/tests/unit/rendering/threeView/threeSceneHost.spec.ts:81:    expect(platform.requestAnimationFrame).toHaveBeenCalledTimes(2);
+frontend/tests/unit/rendering/threeView/threeSceneHost.spec.ts:86:    const host = new ThreeSceneHost({ platform });
+frontend/tests/unit/rendering/threeView/threeSceneHost.spec.ts:91:    host.registry.replaceGroup('owned', [object]);
+frontend/tests/unit/rendering/threeView/threeSceneHost.spec.ts:96:    expect(platform.cancelAnimationFrame).toHaveBeenCalledTimes(1);
+frontend/tests/unit/rendering/threeView/threeSceneHost.spec.ts:97:    expect(platform.cancelAnimationFrame).toHaveBeenCalledWith(1);
+frontend/tests/unit/rendering/threeView/threeSceneHost.spec.ts:107:    const host = new ThreeSceneHost({ platform: first.platform });
+frontend/tests/unit/rendering/threeView/threeSceneHost.spec.ts:113:    expect(first.platform.cancelAnimationFrame).toHaveBeenCalledWith(1);
+frontend/tests/unit/components/panels/threeViewShellBoundary.spec.ts:15:    expect(source).not.toMatch(/CSS2DObject|CSS2DRenderer|OrbitControls|WebGLRenderer|Mesh\(|Line\(|PlaneGeometry|SphereGeometry/);

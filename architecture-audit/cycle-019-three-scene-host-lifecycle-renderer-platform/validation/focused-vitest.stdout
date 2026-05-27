@@ -1,0 +1,20 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run tests/unit/rendering/threeView/threeViewRuntime.spec.ts tests/unit/rendering/threeView/threeSceneHost.spec.ts tests/unit/rendering/threeView/threeObjectRegistry.spec.ts tests/unit/rendering/threeView/threeSceneAdapters.spec.ts tests/unit/components/panels/threeViewShellBoundary.spec.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/components/panels/threeViewShellBoundary.spec.ts  (1 test) 5ms
+ ❯ tests/unit/rendering/threeView/threeSceneHost.spec.ts  (3 tests | 1 failed) 54ms
+   ❯ tests/unit/rendering/threeView/threeSceneHost.spec.ts > ThreeSceneHost > owns renderer, CSS2D DOM, controls, resize, and one animation loop on mount
+     → expected "spy" to be called once, but got 2 times
+ ✓ tests/unit/rendering/threeView/threeObjectRegistry.spec.ts  (3 tests) 24ms
+ ✓ tests/unit/rendering/threeView/threeViewRuntime.spec.ts  (2 tests) 9ms
+ ✓ tests/unit/rendering/threeView/threeSceneAdapters.spec.ts  (2 tests) 72ms
+
+ Test Files  1 failed | 4 passed (5)
+      Tests  1 failed | 10 passed (11)
+   Start at  01:32:10
+   Duration  1.23s (transform 367ms, setup 1ms, collect 770ms, tests 164ms, environment 2.85s, prepare 531ms)
+

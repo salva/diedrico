@@ -1,0 +1,80 @@
+frontend/src/commands/factories/HingeLineSequenceFactory.ts:5: * 1. AddHingeLineOp - Creates the 3D HingeLine object
+frontend/src/commands/factories/HingeLineSequenceFactory.ts:32: * - 3D HingeLine object connecting two planes
+frontend/src/commands/factories/HingeLineSequenceFactory.ts:48:  // Step 1: Create 3D hinge line
+frontend/src/commands/factories/InitializationSequenceFactory.ts:4:  AddPlane3DFixedOp,
+frontend/src/commands/factories/InitializationSequenceFactory.ts:10:  createInitializePlane3DAction,
+frontend/src/commands/factories/InitializationSequenceFactory.ts:22: * - Two 3D planes (P_H horizontal, P_V vertical)
+frontend/src/commands/factories/InitializationSequenceFactory.ts:40:  // Step 2-3: Create 3D planes
+frontend/src/commands/factories/InitializationSequenceFactory.ts:42:  const planeHOp = new AddPlane3DFixedOp(
+frontend/src/commands/factories/InitializationSequenceFactory.ts:52:    createInitializePlane3DAction(planeHId),
+frontend/src/commands/factories/InitializationSequenceFactory.ts:57:  const planeVOp = new AddPlane3DFixedOp(
+frontend/src/commands/factories/InitializationSequenceFactory.ts:67:    createInitializePlane3DAction(planeVId),
+frontend/src/commands/factories/InitializationSequenceFactory.ts:78:  const planeTo3D_H = new Matrix4x3().set(
+frontend/src/commands/factories/InitializationSequenceFactory.ts:84:  // Phase 94: threeDToPlane_H computed from planeTo3D_H in realization constructor
+frontend/src/commands/factories/InitializationSequenceFactory.ts:86:  const projPlaneHOp = new AddProjectionPlaneFixedOp(planeHId, planeToPaper_H, planeTo3D_H, undefined, 'P_H');
+frontend/src/commands/factories/InitializationSequenceFactory.ts:101:  const planeTo3D_V = new Matrix4x3().set(
+frontend/src/commands/factories/InitializationSequenceFactory.ts:107:  // Phase 94: threeDToPlane_V computed from planeTo3D_V in realization constructor
+frontend/src/commands/factories/InitializationSequenceFactory.ts:109:  const projPlaneVOp = new AddProjectionPlaneFixedOp(planeVId, planeToPaper_V, planeTo3D_V, undefined, 'P_V');
+frontend/src/commands/factories/ProjectionSetupFactory.ts:151:  // Step 15: Create 3D plane from T1 (L1) and T2 (L2)
+frontend/src/commands/factories/ProjectionSetupFactory.ts:152:  const { planeId: plane3DId } = PlaneSequenceFactory.create3DPlaneFromTraces(
+frontend/src/commands/factories/ProjectionSetupFactory.ts:167:    plane3DId,
+frontend/src/commands/operations/world/Add3DLineOp.ts:2: * Add3DLineOp - Operation to add a Line3D from two existing 2D line projections
+frontend/src/commands/operations/world/Add3DLineOp.ts:4: * Phase 78: 3D Element Creation Tools
+frontend/src/commands/operations/world/Add3DLineOp.ts:6: * Creates a Line3DFromProjections by:
+frontend/src/commands/operations/world/Add3DLineOp.ts:9: * 3. Reconstructing 3D line from 2D projections
+frontend/src/commands/operations/world/Add3DLineOp.ts:10: * 4. Adding to World.lines3D storage
+frontend/src/commands/operations/world/Add3DLineOp.ts:14: * @see Line3DFromProjections in Line3D.ts
+frontend/src/commands/operations/world/Add3DLineOp.ts:15: * @see World.add3DLine() for storage
+frontend/src/commands/operations/world/Add3DLineOp.ts:20:import { Line3DFromProjections } from '@/domain/world/Line3D';
+frontend/src/commands/operations/world/Add3DLineOp.ts:22:export class Add3DLineOp implements IOperation {
+frontend/src/commands/operations/world/Add3DLineOp.ts:23:  readonly type = 'Add3DLine';
+frontend/src/commands/operations/world/Add3DLineOp.ts:61:          `Cannot create 3D line: projections must be on different planes. ` +
+frontend/src/commands/operations/world/Add3DLineOp.ts:82:        throw new Error('Cannot create 3D line: one or both projections are not geometrically feasible');
+frontend/src/commands/operations/world/Add3DLineOp.ts:86:      const lineId = this.outputs.lineId || world.generate3DLineId();
+frontend/src/commands/operations/world/Add3DLineOp.ts:89:      const label = this.label || world.generateDefaultLabel(lineId, 'Line3D');
+frontend/src/commands/operations/world/Add3DLineOp.ts:93:        color: '#FF6B35',    // Orange for 3D elements
+frontend/src/commands/operations/world/Add3DLineOp.ts:98:      // Create Line3DFromProjections
+frontend/src/commands/operations/world/Add3DLineOp.ts:99:      const line = new Line3DFromProjections(
+frontend/src/commands/operations/world/Add3DLineOp.ts:110:      world.add3DLine(line);
+frontend/src/commands/operations/world/Add3DLineOp.ts:130:      world.remove3DLine(this.outputs.lineId);
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:2: * Add3DPlaneOp - Operation to add a Plane3D from two existing trace lines
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:4: * Phase 78: 3D Element Creation Tools
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:6: * Creates a Plane3DFromTraces by:
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:9: * 3. Reconstructing 3D plane equation from traces
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:10: * 4. Adding to World.planes3D storage
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:14: * @see Plane3DFromTraces in Plane.ts
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:15: * @see World.add3DPlane() for storage
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:20:import { Plane3DFromTraces } from '@/domain/world/Plane';
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:21:import { computeLineLineIntersection3D } from '@/utils/projectionPlaneUtils';
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:25:export class Add3DPlaneOp implements IOperation {
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:26:  readonly type = 'Add3DPlane';
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:62:          `Cannot create 3D plane: traces must be on different planes. ` +
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:83:        throw new Error('Cannot create 3D plane: one or both traces are not geometrically feasible');
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:86:      // CRITICAL VALIDATION: Verify that traces intersect in 3D
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:87:      // Transform traces to 3D and check intersection
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:88:      const plane1Realization = world.getProjectionPlane3DRealization(this.plane1Id);
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:89:      const plane2Realization = world.getProjectionPlane3DRealization(this.plane2Id);
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:92:        throw new Error('Cannot create 3D plane: projection plane realizations not available');
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:95:      // Transform trace1 from 2D to 3D
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:97:      const p1_4D = applyMatrix4x3(trace1Real.point1, plane1Realization.planeTo3D);
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:98:      const p1_3D = new Vector3(p1_4D.x, p1_4D.y, p1_4D.z);
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:106:      const p1d_4D = applyMatrix4x3(p1_plus_d1, plane1Realization.planeTo3D);
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:107:      const p1d_3D = new Vector3(p1d_4D.x, p1d_4D.y, p1d_4D.z);
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:108:      const d1_3D = new Vector3(
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:109:        p1d_3D.x - p1_3D.x,
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:110:        p1d_3D.y - p1_3D.y,
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:111:        p1d_3D.z - p1_3D.z
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:114:      // Transform trace2 from 2D to 3D
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:115:      const p2_4D = applyMatrix4x3(trace2Real.point1, plane2Realization.planeTo3D);
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:116:      const p2_3D = new Vector3(p2_4D.x, p2_4D.y, p2_4D.z);
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:124:      const p2d_4D = applyMatrix4x3(p2_plus_d2, plane2Realization.planeTo3D);
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:125:      const p2d_3D = new Vector3(p2d_4D.x, p2d_4D.y, p2d_4D.z);
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:126:      const d2_3D = new Vector3(
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:127:        p2d_3D.x - p2_3D.x,
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:128:        p2d_3D.y - p2_3D.y,
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:129:        p2d_3D.z - p2_3D.z
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:134:        // Convert Vector3 to homogeneous Vector4 for computeLineLineIntersection3D
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:135:        const p1_homogeneous = new Vector4(p1_3D.x, p1_3D.y, p1_3D.z, 1);  // Point (w=1)
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:136:        const d1_homogeneous = new Vector4(d1_3D.x, d1_3D.y, d1_3D.z, 0);  // Direction (w=0)
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:137:        const p2_homogeneous = new Vector4(p2_3D.x, p2_3D.y, p2_3D.z, 1);  // Point (w=1)
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:138:        const d2_homogeneous = new Vector4(d2_3D.x, d2_3D.y, d2_3D.z, 0);  // Direction (w=0)

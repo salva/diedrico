@@ -6,17 +6,72 @@ import { ThreeObjectRegistry } from './ThreeObjectRegistry';
 
 export interface ThreeSceneHostMount { container: HTMLElement; canvas: HTMLCanvasElement }
 
+interface ThreeRendererPort {
+  readonly domElement: HTMLCanvasElement;
+  setPixelRatio(ratio: number): void;
+  setSize(width: number, height: number): void;
+  render(scene: THREE.Scene, camera: THREE.Camera): void;
+  dispose(): void;
+}
+
+interface ThreeLabelRendererPort {
+  readonly domElement: HTMLElement;
+  setSize(width: number, height: number): void;
+  render(scene: THREE.Scene, camera: THREE.Camera): void;
+}
+
+interface ThreeControlsPort {
+  enableDamping: boolean;
+  dampingFactor: number;
+  screenSpacePanning: boolean;
+  minDistance: number;
+  maxDistance: number;
+  maxPolarAngle: number;
+  update(): void;
+  dispose(): void;
+}
+
+export interface ThreeSceneHostPlatform {
+  createRenderer(mount: ThreeSceneHostMount): ThreeRendererPort;
+  createLabelRenderer(): ThreeLabelRendererPort;
+  createControls(camera: THREE.PerspectiveCamera, domElement: HTMLElement): ThreeControlsPort;
+  requestAnimationFrame(callback: FrameRequestCallback): number;
+  cancelAnimationFrame(id: number): void;
+  pixelRatio(): number;
+}
+
+export interface ThreeSceneHostOptions {
+  platform?: ThreeSceneHostPlatform;
+}
+
+function createDefaultPlatform(): ThreeSceneHostPlatform {
+  return {
+    createRenderer: mount => new THREE.WebGLRenderer({ canvas: mount.canvas, antialias: true, alpha: false }),
+    createLabelRenderer: () => new CSS2DRenderer(),
+    createControls: (camera, domElement) => new OrbitControls(camera, domElement),
+    requestAnimationFrame: callback => window.requestAnimationFrame(callback),
+    cancelAnimationFrame: id => window.cancelAnimationFrame(id),
+    pixelRatio: () => window.devicePixelRatio,
+  };
+}
+
 export class ThreeSceneHost {
   readonly scene = new THREE.Scene();
   readonly registry = new ThreeObjectRegistry(this.scene);
+  private readonly platform: ThreeSceneHostPlatform;
   private camera?: THREE.PerspectiveCamera;
-  private renderer?: THREE.WebGLRenderer;
-  private labelRenderer?: CSS2DRenderer;
-  private controls?: OrbitControls;
+  private renderer?: ThreeRendererPort;
+  private labelRenderer?: ThreeLabelRendererPort;
+  private controls?: ThreeControlsPort;
   private animationFrameId?: number;
   private mounted?: ThreeSceneHostMount;
 
+  constructor(options: ThreeSceneHostOptions = {}) {
+    this.platform = options.platform ?? createDefaultPlatform();
+  }
+
   mount(mount: ThreeSceneHostMount): void {
+    if (this.mounted) this.disposePlatformResources();
     this.mounted = mount;
     this.scene.background = new THREE.Color(0xf5f5f5);
     const aspect = mount.container.clientWidth / Math.max(1, mount.container.clientHeight);
@@ -27,14 +82,14 @@ export class ThreeSceneHost {
     this.camera.up.set(up.x, up.y, up.z);
     this.camera.lookAt(0, 0, 0);
 
-    this.renderer = new THREE.WebGLRenderer({ canvas: mount.canvas, antialias: true, alpha: false });
-    this.renderer.setPixelRatio(window.devicePixelRatio);
-    this.labelRenderer = new CSS2DRenderer();
+    this.renderer = this.platform.createRenderer(mount);
+    this.renderer.setPixelRatio(this.platform.pixelRatio());
+    this.labelRenderer = this.platform.createLabelRenderer();
     this.labelRenderer.domElement.style.position = 'absolute';
     this.labelRenderer.domElement.style.top = '0px';
     this.labelRenderer.domElement.style.pointerEvents = 'none';
     mount.container.appendChild(this.labelRenderer.domElement);
-    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+    this.controls = this.platform.createControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.05;
     this.controls.screenSpacePanning = false;
@@ -60,15 +115,27 @@ export class ThreeSceneHost {
   }
 
   dispose(): void {
-    if (this.animationFrameId) cancelAnimationFrame(this.animationFrameId);
     this.registry.dispose();
+    this.disposePlatformResources();
+  }
+
+  private disposePlatformResources(): void {
+    if (this.animationFrameId !== undefined) {
+      this.platform.cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = undefined;
+    }
     this.controls?.dispose();
     this.renderer?.dispose();
     this.labelRenderer?.domElement.remove();
+    this.controls = undefined;
+    this.renderer = undefined;
+    this.labelRenderer = undefined;
+    this.camera = undefined;
+    this.mounted = undefined;
   }
 
   private animate = (): void => {
-    this.animationFrameId = requestAnimationFrame(this.animate);
+    this.animationFrameId = this.platform.requestAnimationFrame(this.animate);
     if (!this.camera || !this.renderer || !this.labelRenderer) return;
     this.controls?.update();
     this.renderer.render(this.scene, this.camera);

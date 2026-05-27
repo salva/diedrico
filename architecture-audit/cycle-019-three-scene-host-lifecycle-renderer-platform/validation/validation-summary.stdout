@@ -1,0 +1,34 @@
+===== architecture-audit/cycle-019-three-scene-host-lifecycle-renderer-platform/validation/focused-vitest-rerun.stdout
+ Test Files  5 passed (5)
+      Tests  11 passed (11)
+===== architecture-audit/cycle-019-three-scene-host-lifecycle-renderer-platform/validation/root-lint.stdout
+ Test Files  4 passed (4)
+      Tests  11 passed (11)
+===== architecture-audit/cycle-019-three-scene-host-lifecycle-renderer-platform/validation/frontend-lint.stdout
+ Test Files  4 passed (4)
+      Tests  11 passed (11)
+===== architecture-audit/cycle-019-three-scene-host-lifecycle-renderer-platform/validation/root-vitest.stdout
+stdout | tests/integration/factories/AllFactories.spec.ts > Factory Integration Tests > GuideSequenceFactory Integration > should create guide with sibling on HHL and support undo/redo
+stdout | tests/integration/guide-creation.test.ts > Guide Creation - Integration Tests > Regular Line Reference > should create guide on regular line without sibling
+stdout | tests/integration/guide-creation.test.ts > Guide Creation - Integration Tests > Error Prevention > should not throw when creating guide on non-hinge line
+ Test Files  109 passed | 1 skipped (110)
+      Tests  1237 passed | 45 skipped | 11 todo (1293)
+===== architecture-audit/cycle-019-three-scene-host-lifecycle-renderer-platform/validation/frontend-vitest.stdout
+stdout | tests/integration/factories/AllFactories.spec.ts > Factory Integration Tests > GuideSequenceFactory Integration > should create guide with sibling on HHL and support undo/redo
+stdout | tests/integration/guide-creation.test.ts > Guide Creation - Integration Tests > Regular Line Reference > should create guide on regular line without sibling
+stdout | tests/integration/guide-creation.test.ts > Guide Creation - Integration Tests > Error Prevention > should not throw when creating guide on non-hinge line
+ Test Files  109 passed | 1 skipped (110)
+      Tests  1237 passed | 45 skipped | 11 todo (1293)
+===== architecture-audit/cycle-019-three-scene-host-lifecycle-renderer-platform/validation/root-build.stdout
+✓ built in 3.60s
+===== architecture-audit/cycle-019-three-scene-host-lifecycle-renderer-platform/validation/frontend-build.stdout
+✓ built in 3.70s
+===== architecture-audit/cycle-019-three-scene-host-lifecycle-renderer-platform/validation/root-e2e.stdout
+[1A[2K  8 passed (11.8s)
+===== architecture-audit/cycle-019-three-scene-host-lifecycle-renderer-platform/validation/frontend-e2e.stdout
+[1A[2K  8 passed (11.7s)
+===== architecture-audit/cycle-019-three-scene-host-lifecycle-renderer-platform/validation/live-preview-refresh-retry.stdout
+HTTP 200 from http://127.0.0.1:5173/ after 2s
+===== architecture-audit/cycle-019-three-scene-host-lifecycle-renderer-platform/validation/live-3d-smoke-rerun.stdout
+  "panelVisible": true,
+  "canvasVisible": true,

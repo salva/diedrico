@@ -1,0 +1,8 @@
+ M frontend/src/rendering/threeView/ThreeObjectRegistry.ts
+ M frontend/src/rendering/threeView/ThreeSceneHost.ts
+ M frontend/src/rendering/threeView/ThreeViewRuntime.ts
+ M frontend/tests/unit/rendering/threeView/threeObjectRegistry.spec.ts
+?? architecture-audit/cycle-019-three-scene-host-lifecycle-renderer-platform/implementation-log.md
+?? architecture-audit/cycle-019-three-scene-host-lifecycle-renderer-platform/validation/
+?? frontend/tests/unit/rendering/threeView/threeSceneHost.spec.ts
+?? frontend/tests/unit/rendering/threeView/threeViewRuntime.spec.ts
