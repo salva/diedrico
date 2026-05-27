@@ -1,0 +1,3 @@
+1213:## Wave 021 — Selection/delete command-kernel boundary
+1276:All Wave 021 validation stdout/stderr must be captured to stable files under the reviewed Cycle 021 implementation directory's `validation/` subdirectory. Undefined commands may be skipped only with exact package-script evidence in the implementation log; defined root or workspace commands are mandatory.
+1288:- A “command kernel” can become a new god service if it absorbs canvas/tool, panel/toolbar, persistence, and project/session command concerns in one wave. Keep Wave 021 limited to selection/delete unless a reviewed proposal explicitly selects a bounded higher-layer design.

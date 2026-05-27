@@ -1,0 +1,21 @@
+## existing listeners
+State  Recv-Q Send-Q Local Address:Port Peer Address:PortProcess
+LISTEN 0      511          0.0.0.0:5173      0.0.0.0:*    users:(("MainThread",pid=548332,fd=22))
+## existing vite processes
+548319 npm run dev --host 0.0.0.0
+548331 sh -c vite --host 0.0.0.0
+548332 node /work/diedrico/frontend/node_modules/.bin/vite --host 0.0.0.0
+556868 npm run dev --host 0.0.0.0
+556882 sh -c vite --host 0.0.0.0
+556883 node /work/diedrico/frontend/node_modules/.bin/vite --host 0.0.0.0
+565020 /bin/sh -c {   echo '## existing listeners';   (ss -ltnp 'sport = :5173' || true) 2>&1;   echo '## existing vite processes';   pgrep -af 'vite|npm run dev' || true;   echo '## probe';   curl -I --max-time 10 http://127.0.0.1:5173/; }
+## probe
+HTTP/1.1 200 OK
+Vary: Origin
+Content-Type: text/html
+Cache-Control: no-cache
+Etag: W/"2b2-tNlRR9r54WvI86U6GDsvMOF57U8"
+Date: Wed, 27 May 2026 04:46:20 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+

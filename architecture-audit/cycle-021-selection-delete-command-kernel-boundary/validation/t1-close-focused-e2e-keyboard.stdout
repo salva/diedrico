@@ -1,0 +1,11 @@
+
+> diedrico-frontend@0.1.0 test:e2e
+> playwright test tests/e2e/keyboard-shortcuts.spec.ts
+
+
+Running 3 tests using 3 workers
+
+[1A[2K[1/3] [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:24:3 › Keyboard shortcuts › Escape returns to select tool after starting a point workflow
+[1A[2K[2/3] [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:32:3 › Keyboard shortcuts › Delete, undo, redo, Escape, and Ctrl+A preserve selection command behavior
+[1A[2K[3/3] [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:9:3 › Keyboard shortcuts › tool shortcut keys activate current tool buttons
+[1A[2K  3 passed (6.4s)

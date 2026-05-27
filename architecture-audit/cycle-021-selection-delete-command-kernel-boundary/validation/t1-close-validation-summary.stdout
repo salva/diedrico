@@ -1,0 +1,392 @@
+## fresh closure validation summary
+### t1-close-root-lint stdout tail
+
+> diedrico@0.1.0 lint
+> npm run lint --workspace=frontend
+
+
+> diedrico-frontend@0.1.0 lint
+> npm run test:architecture
+
+
+> diedrico-frontend@0.1.0 test:architecture
+> vitest run tests/unit/architecture
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts  (1 test) 21ms
+ ✓ tests/unit/architecture/noCommandSubclasses.spec.ts  (2 tests) 25ms
+ ✓ tests/unit/architecture/worldBoundary.spec.ts  (2 tests) 26ms
+ ✓ tests/unit/architecture/importBoundaries.spec.ts  (6 tests) 83ms
+
+ Test Files  4 passed (4)
+      Tests  11 passed (11)
+   Start at  04:43:28
+   Duration  3.22s (transform 1.69s, setup 0ms, collect 8.08s, tests 155ms, environment 2.50s, prepare 510ms)
+
+### t1-close-root-lint stderr tail
+### t1-close-frontend-lint stdout tail
+
+> diedrico-frontend@0.1.0 lint
+> npm run test:architecture
+
+
+> diedrico-frontend@0.1.0 test:architecture
+> vitest run tests/unit/architecture
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/architecture/worldBoundary.spec.ts  (2 tests) 23ms
+ ✓ tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts  (1 test) 24ms
+ ✓ tests/unit/architecture/noCommandSubclasses.spec.ts  (2 tests) 28ms
+ ✓ tests/unit/architecture/importBoundaries.spec.ts  (6 tests) 85ms
+
+ Test Files  4 passed (4)
+      Tests  11 passed (11)
+   Start at  04:43:36
+   Duration  3.44s (transform 1.82s, setup 0ms, collect 8.88s, tests 160ms, environment 2.85s, prepare 454ms)
+
+### t1-close-frontend-lint stderr tail
+### t1-close-focused-vitest stdout tail
+
+> diedrico-frontend@0.1.0 test
+> vitest run tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts tests/unit/application/appShell/AppShellBoundary.test.ts tests/unit/application/appShell/KeyboardShortcutRouter.test.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/application/appShell/AppShellBoundary.test.ts  (7 tests) 8ms
+ ✓ tests/unit/application/appShell/KeyboardShortcutRouter.test.ts  (3 tests) 12ms
+ ✓ tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts  (9 tests) 28ms
+stdout | tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts > SelectionDeletionCommandService > executes cascade deletion through a committed command and preserves undo/redo behavior
+[DeletionSequenceFactory] Cascade deletion: {
+  direct: [ 'projPlane3/point2d10' ],
+  cascaded: [ 'projPlane3/line2d12' ],
+  total: [ 'projPlane3/line2d12', 'projPlane3/point2d10' ],
+  order: 'dependents-first (proper deletion order)'
+}
+
+stdout | tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts > SelectionDeletionCommandService > clears redo history only through the same CommandStack push path after new delete
+[DeletionSequenceFactory] Cascade deletion: {
+  direct: [ 'projPlane3/point2d10' ],
+  cascaded: [ 'projPlane3/line2d12' ],
+  total: [ 'projPlane3/line2d12', 'projPlane3/point2d10' ],
+  order: 'dependents-first (proper deletion order)'
+}
+
+ ✓ tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts  (17 tests) 48ms
+
+ Test Files  4 passed (4)
+      Tests  36 passed (36)
+   Start at  04:43:44
+   Duration  2.39s (transform 1.33s, setup 0ms, collect 2.81s, tests 96ms, environment 2.88s, prepare 579ms)
+
+### t1-close-focused-vitest stderr tail
+### t1-close-root-vitest stdout tail
+ ✓ tests/unit/commands/operations/operationRegistry.spec.ts  (7 tests) 12ms
+ ✓ tests/unit/commands/viewStateOperations.spec.ts  (4 tests) 22ms
+ ✓ tests/integration/phase76-fail-fast.spec.ts  (10 tests) 65ms
+ ✓ tests/unit/commands/commandStackObserver.spec.ts  (5 tests) 18ms
+ ✓ tests/unit/autosave.spec.ts  (3 tests) 8ms
+ ✓ tests/unit/tools/GuideTool.test.ts  (8 tests) 18ms
+ ✓ tests/unit/application/canvasPresentation/canvasInteractionQuery.spec.ts  (3 tests) 8ms
+ ✓ tests/unit/application/appShell/KeyboardShortcutRouter.test.ts  (3 tests) 13ms
+ ✓ tests/unit/application/canvasPresentation/canvasWorldReadPort.spec.ts  (2 tests) 20ms
+ ✓ tests/unit/rendering/threeView/threeSceneAdapters.spec.ts  (2 tests) 72ms
+ ✓ tests/unit/rendering/threeView/threeObjectRegistry.spec.ts  (3 tests) 39ms
+ ✓ tests/unit/application/threePresentation/threePresentationSelector.spec.ts  (1 test) 7ms
+ ✓ tests/unit/application/canvasPresentation/projected3DCanvasSelector.spec.ts  (1 test) 20ms
+ ✓ tests/unit/application/canvasPresentation/canvasPresentationSelector.spec.ts  (1 test) 16ms
+ ✓ tests/unit/components/panels/threeViewShellBoundary.spec.ts  (1 test) 4ms
+ ✓ tests/unit/commands/updateFreePoint2DPositionOp.spec.ts  (2 tests) 26ms
+stdout | tests/unit/commands/updateFreePoint2DPositionOp.spec.ts > UpdateFreePoint2DPositionOp > updates a free point position and supports undo
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+
+ ✓ tests/unit/application/canvasPresentation/canvasGridSelector.spec.ts  (2 tests) 6ms
+ ✓ tests/unit/architecture/noCommandSubclasses.spec.ts  (2 tests) 34ms
+ ✓ tests/unit/architecture/worldBoundary.spec.ts  (2 tests) 36ms
+ ✓ tests/unit/architecture/importBoundaries.spec.ts  (6 tests) 120ms
+ ✓ tests/unit/services/GeometryService.spec.ts  (2 tests) 3ms
+ ✓ tests/unit/services/svgCanvasRenderer.spec.ts  (1 test) 5ms
+ ✓ tests/unit/smoke.spec.ts  (2 tests) 3ms
+ ✓ tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts  (1 test) 19ms
+
+ Test Files  110 passed | 1 skipped (111)
+      Tests  1257 passed | 45 skipped | 11 todo (1313)
+   Start at  04:43:50
+   Duration  30.31s (transform 10.53s, setup 13ms, collect 41.40s, tests 4.54s, environment 107.53s, prepare 19.64s)
+
+### t1-close-root-vitest stderr tail
+    at file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:60:26
+    at runTest (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:781:17)
+    at runSuite (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runSuite (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runSuite (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runFiles (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:958:5)
+
+stderr | tests/unit/domain/degenerateRealize2D.spec.ts > Degenerate Point Handling in realize2D > Line2DParallel > should return infeasible when through-point is infeasible
+[Point2DLineLineIntersection] Lines do not intersect (parallel or coincident)
+[Point2DLineLineIntersection] Lines do not intersect (parallel or coincident)
+
+stderr | tests/unit/domain/degenerateRealize2D.spec.ts > Degenerate Point Handling in realize2D > Circle2D > should return infeasible when center and circumference point coincide
+Circle projPlane3/circle2d12: center and circumference point are coincident
+
+stderr | tests/unit/domain/circle.spec.ts > Circle2D > Circle2DByCenterAndPoint > should return null for degenerate circle (center = circumference point)
+Circle projPlane3/circle2d15: center and circumference point are coincident
+
+stderr | tests/unit/domain/circle.spec.ts > Circle2D > Circle2DByThreePoints > should return null for collinear points
+Circle projPlane3/circle2d17: three points are collinear
+
+### t1-close-frontend-vitest stdout tail
+ ✓ tests/unit/stores/processTreeStore.spec.ts  (13 tests) 13ms
+ ✓ tests/unit/commands/viewStateOperations.spec.ts  (4 tests) 8ms
+ ✓ tests/integration/phase76-fail-fast.spec.ts  (10 tests) 36ms
+ ✓ tests/unit/autosave.spec.ts  (3 tests) 12ms
+ ✓ tests/unit/commands/commandStackObserver.spec.ts  (5 tests) 19ms
+ ✓ tests/unit/tools/GuideTool.test.ts  (8 tests) 23ms
+ ✓ tests/unit/application/canvasPresentation/canvasInteractionQuery.spec.ts  (3 tests) 8ms
+ ✓ tests/unit/application/appShell/KeyboardShortcutRouter.test.ts  (3 tests) 15ms
+ ✓ tests/unit/application/canvasPresentation/canvasWorldReadPort.spec.ts  (2 tests) 18ms
+ ✓ tests/unit/rendering/threeView/threeSceneAdapters.spec.ts  (2 tests) 200ms
+ ✓ tests/unit/rendering/threeView/threeObjectRegistry.spec.ts  (3 tests) 40ms
+ ✓ tests/unit/application/threePresentation/threePresentationSelector.spec.ts  (1 test) 51ms
+ ✓ tests/unit/application/canvasPresentation/projected3DCanvasSelector.spec.ts  (1 test) 12ms
+ ✓ tests/unit/application/canvasPresentation/canvasPresentationSelector.spec.ts  (1 test) 14ms
+ ✓ tests/unit/components/panels/threeViewShellBoundary.spec.ts  (1 test) 4ms
+stdout | tests/unit/commands/updateFreePoint2DPositionOp.spec.ts > UpdateFreePoint2DPositionOp > updates a free point position and supports undo
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+
+ ✓ tests/unit/application/canvasPresentation/canvasGridSelector.spec.ts  (2 tests) 7ms
+ ✓ tests/unit/commands/updateFreePoint2DPositionOp.spec.ts  (2 tests) 11ms
+ ✓ tests/unit/architecture/noCommandSubclasses.spec.ts  (2 tests) 35ms
+ ✓ tests/unit/architecture/importBoundaries.spec.ts  (6 tests) 95ms
+ ✓ tests/unit/architecture/worldBoundary.spec.ts  (2 tests) 33ms
+ ✓ tests/unit/services/svgCanvasRenderer.spec.ts  (1 test) 4ms
+ ✓ tests/unit/services/GeometryService.spec.ts  (2 tests) 3ms
+ ✓ tests/unit/smoke.spec.ts  (2 tests) 2ms
+ ✓ tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts  (1 test) 18ms
+
+ Test Files  110 passed | 1 skipped (111)
+      Tests  1257 passed | 45 skipped | 11 todo (1313)
+   Start at  04:44:26
+   Duration  25.12s (transform 8.75s, setup 17ms, collect 33.82s, tests 3.86s, environment 88.34s, prepare 15.62s)
+
+### t1-close-frontend-vitest stderr tail
+    at file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:60:26
+    at runTest (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:781:17)
+    at runSuite (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runSuite (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runSuite (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runFiles (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:958:5)
+
+stderr | tests/unit/domain/degenerateRealize2D.spec.ts > Degenerate Point Handling in realize2D > Line2DParallel > should return infeasible when through-point is infeasible
+[Point2DLineLineIntersection] Lines do not intersect (parallel or coincident)
+[Point2DLineLineIntersection] Lines do not intersect (parallel or coincident)
+
+stderr | tests/unit/domain/degenerateRealize2D.spec.ts > Degenerate Point Handling in realize2D > Circle2D > should return infeasible when center and circumference point coincide
+Circle projPlane3/circle2d12: center and circumference point are coincident
+
+stderr | tests/unit/domain/circle.spec.ts > Circle2D > Circle2DByCenterAndPoint > should return null for degenerate circle (center = circumference point)
+Circle projPlane3/circle2d15: center and circumference point are coincident
+
+stderr | tests/unit/domain/circle.spec.ts > Circle2D > Circle2DByThreePoints > should return null for collinear points
+Circle projPlane3/circle2d17: three points are collinear
+
+### t1-close-root-build stdout tail
+dist/assets/KaTeX_SansSerif-Regular-CS6fqUqJ.woff        12.32 kB
+dist/assets/KaTeX_Caligraphic-Regular-wX97UBjC.ttf       12.34 kB
+dist/assets/KaTeX_Caligraphic-Bold-ATXxdsX0.ttf          12.37 kB
+dist/assets/KaTeX_Fraktur-Regular-Dxdc4cR9.woff          13.21 kB
+dist/assets/KaTeX_Fraktur-Bold-BsDP51OF.woff             13.30 kB
+dist/assets/KaTeX_Typewriter-Regular-CO6r4hn1.woff2      13.57 kB
+dist/assets/KaTeX_SansSerif-Italic-DN2j7dab.woff         14.11 kB
+dist/assets/KaTeX_SansSerif-Bold-DbIhKOiC.woff           14.41 kB
+dist/assets/KaTeX_Typewriter-Regular-C0xS9mPB.woff       16.03 kB
+dist/assets/KaTeX_Math-BoldItalic-CZnvNsCZ.woff2         16.40 kB
+dist/assets/KaTeX_Math-Italic-t53AETM-.woff2             16.44 kB
+dist/assets/KaTeX_Script-Regular-C5JkGWo-.ttf            16.65 kB
+dist/assets/KaTeX_Main-BoldItalic-DxDJ3AOS.woff2         16.78 kB
+dist/assets/KaTeX_Main-Italic-NWA7e6Wa.woff2             16.99 kB
+dist/assets/KaTeX_Math-BoldItalic-iY-2wyZ7.woff          18.67 kB
+dist/assets/KaTeX_Math-Italic-DA0__PXp.woff              18.75 kB
+dist/assets/KaTeX_Main-BoldItalic-SpSLRI95.woff          19.41 kB
+dist/assets/KaTeX_SansSerif-Regular-BNo7hRIc.ttf         19.44 kB
+dist/assets/KaTeX_Fraktur-Regular-CB_wures.ttf           19.57 kB
+dist/assets/KaTeX_Fraktur-Bold-BdnERNNW.ttf              19.58 kB
+dist/assets/KaTeX_Main-Italic-BMLOBm91.woff              19.68 kB
+dist/assets/KaTeX_SansSerif-Italic-YYjJ1zSn.ttf          22.36 kB
+dist/assets/KaTeX_SansSerif-Bold-CFMepnvq.ttf            24.50 kB
+dist/assets/KaTeX_Main-Bold-Cx986IdX.woff2               25.32 kB
+dist/assets/KaTeX_Main-Regular-B22Nviop.woff2            26.27 kB
+dist/assets/KaTeX_Typewriter-Regular-D3Ib7_Hf.ttf        27.56 kB
+dist/assets/KaTeX_AMS-Regular-BQhdFMY1.woff2             28.08 kB
+dist/assets/KaTeX_Main-Bold-Jm3AIy58.woff                29.91 kB
+dist/assets/KaTeX_Main-Regular-Dr94JaBh.woff             30.77 kB
+dist/assets/KaTeX_Math-BoldItalic-B3XSjfu4.ttf           31.20 kB
+dist/assets/KaTeX_Math-Italic-flOr_0UB.ttf               31.31 kB
+dist/assets/KaTeX_Main-BoldItalic-DzxPMmG6.ttf           32.97 kB
+dist/assets/KaTeX_AMS-Regular-DMm9YOAa.woff              33.52 kB
+dist/assets/KaTeX_Main-Italic-3WenGoN9.ttf               33.58 kB
+dist/assets/KaTeX_Main-Bold-waoOVXN0.ttf                 51.34 kB
+dist/assets/KaTeX_Main-Regular-ypZvNtVU.ttf              53.58 kB
+dist/assets/KaTeX_AMS-Regular-DRggAlZN.ttf               63.63 kB
+dist/assets/index-BPTYGwfz.css                           60.76 kB │ gzip:  14.27 kB
+dist/assets/index-IWpfjmef.js                         1,196.88 kB │ gzip: 317.55 kB
+✓ built in 4.50s
+### t1-close-root-build stderr tail
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+### t1-close-frontend-build stdout tail
+dist/assets/KaTeX_SansSerif-Regular-CS6fqUqJ.woff        12.32 kB
+dist/assets/KaTeX_Caligraphic-Regular-wX97UBjC.ttf       12.34 kB
+dist/assets/KaTeX_Caligraphic-Bold-ATXxdsX0.ttf          12.37 kB
+dist/assets/KaTeX_Fraktur-Regular-Dxdc4cR9.woff          13.21 kB
+dist/assets/KaTeX_Fraktur-Bold-BsDP51OF.woff             13.30 kB
+dist/assets/KaTeX_Typewriter-Regular-CO6r4hn1.woff2      13.57 kB
+dist/assets/KaTeX_SansSerif-Italic-DN2j7dab.woff         14.11 kB
+dist/assets/KaTeX_SansSerif-Bold-DbIhKOiC.woff           14.41 kB
+dist/assets/KaTeX_Typewriter-Regular-C0xS9mPB.woff       16.03 kB
+dist/assets/KaTeX_Math-BoldItalic-CZnvNsCZ.woff2         16.40 kB
+dist/assets/KaTeX_Math-Italic-t53AETM-.woff2             16.44 kB
+dist/assets/KaTeX_Script-Regular-C5JkGWo-.ttf            16.65 kB
+dist/assets/KaTeX_Main-BoldItalic-DxDJ3AOS.woff2         16.78 kB
+dist/assets/KaTeX_Main-Italic-NWA7e6Wa.woff2             16.99 kB
+dist/assets/KaTeX_Math-BoldItalic-iY-2wyZ7.woff          18.67 kB
+dist/assets/KaTeX_Math-Italic-DA0__PXp.woff              18.75 kB
+dist/assets/KaTeX_Main-BoldItalic-SpSLRI95.woff          19.41 kB
+dist/assets/KaTeX_SansSerif-Regular-BNo7hRIc.ttf         19.44 kB
+dist/assets/KaTeX_Fraktur-Regular-CB_wures.ttf           19.57 kB
+dist/assets/KaTeX_Fraktur-Bold-BdnERNNW.ttf              19.58 kB
+dist/assets/KaTeX_Main-Italic-BMLOBm91.woff              19.68 kB
+dist/assets/KaTeX_SansSerif-Italic-YYjJ1zSn.ttf          22.36 kB
+dist/assets/KaTeX_SansSerif-Bold-CFMepnvq.ttf            24.50 kB
+dist/assets/KaTeX_Main-Bold-Cx986IdX.woff2               25.32 kB
+dist/assets/KaTeX_Main-Regular-B22Nviop.woff2            26.27 kB
+dist/assets/KaTeX_Typewriter-Regular-D3Ib7_Hf.ttf        27.56 kB
+dist/assets/KaTeX_AMS-Regular-BQhdFMY1.woff2             28.08 kB
+dist/assets/KaTeX_Main-Bold-Jm3AIy58.woff                29.91 kB
+dist/assets/KaTeX_Main-Regular-Dr94JaBh.woff             30.77 kB
+dist/assets/KaTeX_Math-BoldItalic-B3XSjfu4.ttf           31.20 kB
+dist/assets/KaTeX_Math-Italic-flOr_0UB.ttf               31.31 kB
+dist/assets/KaTeX_Main-BoldItalic-DzxPMmG6.ttf           32.97 kB
+dist/assets/KaTeX_AMS-Regular-DMm9YOAa.woff              33.52 kB
+dist/assets/KaTeX_Main-Italic-3WenGoN9.ttf               33.58 kB
+dist/assets/KaTeX_Main-Bold-waoOVXN0.ttf                 51.34 kB
+dist/assets/KaTeX_Main-Regular-ypZvNtVU.ttf              53.58 kB
+dist/assets/KaTeX_AMS-Regular-DRggAlZN.ttf               63.63 kB
+dist/assets/index-BPTYGwfz.css                           60.76 kB │ gzip:  14.27 kB
+dist/assets/index-IWpfjmef.js                         1,196.88 kB │ gzip: 317.55 kB
+✓ built in 3.64s
+### t1-close-frontend-build stderr tail
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+### t1-close-focused-e2e-keyboard stdout tail
+
+> diedrico-frontend@0.1.0 test:e2e
+> playwright test tests/e2e/keyboard-shortcuts.spec.ts
+
+
+Running 3 tests using 3 workers
+
+[1A[2K[1/3] [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:24:3 › Keyboard shortcuts › Escape returns to select tool after starting a point workflow
+[1A[2K[2/3] [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:32:3 › Keyboard shortcuts › Delete, undo, redo, Escape, and Ctrl+A preserve selection command behavior
+[1A[2K[3/3] [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:9:3 › Keyboard shortcuts › tool shortcut keys activate current tool buttons
+[1A[2K  3 passed (6.4s)
+### t1-close-focused-e2e-keyboard stderr tail
+### t1-close-root-e2e stdout tail
+
+> diedrico@0.1.0 test:e2e
+> npm run test:e2e --workspace=frontend
+
+
+> diedrico-frontend@0.1.0 test:e2e
+> playwright test
+
+
+Running 9 tests using 4 workers
+
+[1A[2K[1/9] [chromium] › tests/e2e/current-ui-contract.spec.ts:26:3 › Current Diedrico UI contract › creates a free point through stable tool and canvas test IDs
+[1A[2K[2/9] [chromium] › tests/e2e/current-ui-contract.spec.ts:57:3 › Current Diedrico UI contract › selection masks allow free-point creation and point-only line argument collection
+[1A[2K[3/9] [chromium] › tests/e2e/current-ui-contract.spec.ts:40:3 › Current Diedrico UI contract › plane selector exposes current projection planes and switches active plane
+[1A[2K[4/9] [chromium] › tests/e2e/current-ui-contract.spec.ts:12:3 › Current Diedrico UI contract › renders the current app shell, canvas, toolbar, status bar, and plane selector
+[1A[2K[5/9] [chromium] › tests/e2e/current-ui-contract.spec.ts:78:3 › Current Diedrico UI contract › updates 3D coordinate status through the current canvas mouse contract
+[1A[2K[6/9] [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:9:3 › Keyboard shortcuts › tool shortcut keys activate current tool buttons
+[1A[2K[7/9] [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:24:3 › Keyboard shortcuts › Escape returns to select tool after starting a point workflow
+[1A[2K[8/9] [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:32:3 › Keyboard shortcuts › Delete, undo, redo, Escape, and Ctrl+A preserve selection command behavior
+[1A[2K[9/9] [chromium] › tests/e2e/wave010-app-shell-project-flow.spec.ts:4:3 › Wave 010 app-shell project boundary › starts without Google credentials and opens the app-shell project chooser without backend project API calls
+[1A[2K  9 passed (14.0s)
+### t1-close-root-e2e stderr tail
+### t1-close-frontend-e2e stdout tail
+
+> diedrico-frontend@0.1.0 test:e2e
+> playwright test
+
+
+Running 9 tests using 4 workers
+
+[1A[2K[1/9] [chromium] › tests/e2e/current-ui-contract.spec.ts:12:3 › Current Diedrico UI contract › renders the current app shell, canvas, toolbar, status bar, and plane selector
+[1A[2K[2/9] [chromium] › tests/e2e/current-ui-contract.spec.ts:26:3 › Current Diedrico UI contract › creates a free point through stable tool and canvas test IDs
+[1A[2K[3/9] [chromium] › tests/e2e/current-ui-contract.spec.ts:57:3 › Current Diedrico UI contract › selection masks allow free-point creation and point-only line argument collection
+[1A[2K[4/9] [chromium] › tests/e2e/current-ui-contract.spec.ts:40:3 › Current Diedrico UI contract › plane selector exposes current projection planes and switches active plane
+[1A[2K[5/9] [chromium] › tests/e2e/current-ui-contract.spec.ts:78:3 › Current Diedrico UI contract › updates 3D coordinate status through the current canvas mouse contract
+[1A[2K[6/9] [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:9:3 › Keyboard shortcuts › tool shortcut keys activate current tool buttons
+[1A[2K[7/9] [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:24:3 › Keyboard shortcuts › Escape returns to select tool after starting a point workflow
+[1A[2K[8/9] [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:32:3 › Keyboard shortcuts › Delete, undo, redo, Escape, and Ctrl+A preserve selection command behavior
+[1A[2K[9/9] [chromium] › tests/e2e/wave010-app-shell-project-flow.spec.ts:4:3 › Wave 010 app-shell project boundary › starts without Google credentials and opens the app-shell project chooser without backend project API calls
+[1A[2K  9 passed (14.3s)
+### t1-close-frontend-e2e stderr tail
+### t1-close-live-preview-singleton stdout tail
+## before cleanup
+548319 npm run dev --host 0.0.0.0
+548331 sh -c vite --host 0.0.0.0
+548332 node /work/diedrico/frontend/node_modules/.bin/vite --host 0.0.0.0
+556868 npm run dev --host 0.0.0.0
+556882 sh -c vite --host 0.0.0.0
+556883 node /work/diedrico/frontend/node_modules/.bin/vite --host 0.0.0.0
+565025 /bin/sh -c {   echo '## before cleanup';   pgrep -af 'vite|npm run dev' || true;   # Keep the listener process group reported on 0.0.0.0:5173; terminate the duplicate later-started dev process group if still present.   for pid in 556868 556882 556883; do     if kill -0 "$pid" 2>/dev/null; then       echo "terminating duplicate preview pid=$pid";       kill "$pid" 2>/dev/null || true;     fi   done   sleep 2;   echo '## after cleanup';   (ss -ltnp 'sport = :5173' || true) 2>&1;   pgrep -af 'vite|npm run dev' || true;   echo '## probe';   curl -I --max-time 10 http://127.0.0.1:5173/; }
+terminating duplicate preview pid=556868
+terminating duplicate preview pid=556882
+terminating duplicate preview pid=556883
+## after cleanup
+State  Recv-Q Send-Q Local Address:Port Peer Address:PortProcess
+LISTEN 0      511          0.0.0.0:5173      0.0.0.0:*    users:(("MainThread",pid=548332,fd=22))
+548319 npm run dev --host 0.0.0.0
+548331 sh -c vite --host 0.0.0.0
+548332 node /work/diedrico/frontend/node_modules/.bin/vite --host 0.0.0.0
+565025 /bin/sh -c {   echo '## before cleanup';   pgrep -af 'vite|npm run dev' || true;   # Keep the listener process group reported on 0.0.0.0:5173; terminate the duplicate later-started dev process group if still present.   for pid in 556868 556882 556883; do     if kill -0 "$pid" 2>/dev/null; then       echo "terminating duplicate preview pid=$pid";       kill "$pid" 2>/dev/null || true;     fi   done   sleep 2;   echo '## after cleanup';   (ss -ltnp 'sport = :5173' || true) 2>&1;   pgrep -af 'vite|npm run dev' || true;   echo '## probe';   curl -I --max-time 10 http://127.0.0.1:5173/; }
+## probe
+HTTP/1.1 200 OK
+Vary: Origin
+Content-Type: text/html
+Cache-Control: no-cache
+Etag: W/"2b2-tNlRR9r54WvI86U6GDsvMOF57U8"
+Date: Wed, 27 May 2026 04:46:32 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+### t1-close-live-preview-singleton stderr tail
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0

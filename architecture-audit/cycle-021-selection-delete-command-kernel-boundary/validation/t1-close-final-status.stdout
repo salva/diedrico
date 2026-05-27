@@ -1,0 +1,54 @@
+## final scoped status
+ M architecture-audit/cycle-021-selection-delete-command-kernel-boundary/implementation-log.md
+ M architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/final-scoped-diff-stat.stdout
+ M architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/final-scoped-status.stdout
+ M architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/live-preview.stdout
+?? .saivage/stages/cycle-021-validation-and-preview-refresh/
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/final-implementation-commits.stderr
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/final-implementation-commits.stdout
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/final-post-correction-status.stderr
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/final-post-correction-status.stdout
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/reviewer-t3-implementation-status.stderr
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/reviewer-t3-implementation-status.stdout
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/t1-close-evidence-summary.stderr
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/t1-close-evidence-summary.stdout
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/t1-close-final-status.stderr
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/t1-close-final-status.stdout
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/t1-close-focused-e2e-keyboard.stderr
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/t1-close-focused-e2e-keyboard.stdout
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/t1-close-focused-vitest.stderr
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/t1-close-focused-vitest.stdout
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/t1-close-frontend-build.stderr
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/t1-close-frontend-build.stdout
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/t1-close-frontend-e2e.stderr
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/t1-close-frontend-e2e.stdout
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/t1-close-frontend-lint.stderr
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/t1-close-frontend-lint.stdout
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/t1-close-frontend-vitest.stderr
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/t1-close-frontend-vitest.stdout
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/t1-close-live-preview-probe.stderr
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/t1-close-live-preview-probe.stdout
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/t1-close-live-preview-singleton.stderr
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/t1-close-live-preview-singleton.stdout
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/t1-close-log-append.stderr
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/t1-close-log-append.stdout
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/t1-close-root-build.stderr
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/t1-close-root-build.stdout
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/t1-close-root-e2e.stderr
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/t1-close-root-e2e.stdout
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/t1-close-root-lint.stderr
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/t1-close-root-lint.stdout
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/t1-close-root-vitest.stderr
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/t1-close-root-vitest.stdout
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/t1-close-scoped-status.stderr
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/t1-close-scoped-status.stdout
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/t1-close-validation-summary.stderr
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/t1-close-validation-summary.stdout
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/t1-close-wave-plan-next.stderr
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/t1-close-wave-plan-next.stdout
+## final scoped diff stat
+ .../implementation-log.md                          | 66 ++++++++++++++++++++++
+ .../validation/final-scoped-diff-stat.stdout       | 13 ++---
+ .../validation/final-scoped-status.stdout          | 31 +++++++---
+ .../validation/live-preview.stdout                 |  3 +
+ 4 files changed, 97 insertions(+), 16 deletions(-)

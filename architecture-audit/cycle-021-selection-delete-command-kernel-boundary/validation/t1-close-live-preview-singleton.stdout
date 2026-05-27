@@ -1,0 +1,28 @@
+## before cleanup
+548319 npm run dev --host 0.0.0.0
+548331 sh -c vite --host 0.0.0.0
+548332 node /work/diedrico/frontend/node_modules/.bin/vite --host 0.0.0.0
+556868 npm run dev --host 0.0.0.0
+556882 sh -c vite --host 0.0.0.0
+556883 node /work/diedrico/frontend/node_modules/.bin/vite --host 0.0.0.0
+565025 /bin/sh -c {   echo '## before cleanup';   pgrep -af 'vite|npm run dev' || true;   # Keep the listener process group reported on 0.0.0.0:5173; terminate the duplicate later-started dev process group if still present.   for pid in 556868 556882 556883; do     if kill -0 "$pid" 2>/dev/null; then       echo "terminating duplicate preview pid=$pid";       kill "$pid" 2>/dev/null || true;     fi   done   sleep 2;   echo '## after cleanup';   (ss -ltnp 'sport = :5173' || true) 2>&1;   pgrep -af 'vite|npm run dev' || true;   echo '## probe';   curl -I --max-time 10 http://127.0.0.1:5173/; }
+terminating duplicate preview pid=556868
+terminating duplicate preview pid=556882
+terminating duplicate preview pid=556883
+## after cleanup
+State  Recv-Q Send-Q Local Address:Port Peer Address:PortProcess
+LISTEN 0      511          0.0.0.0:5173      0.0.0.0:*    users:(("MainThread",pid=548332,fd=22))
+548319 npm run dev --host 0.0.0.0
+548331 sh -c vite --host 0.0.0.0
+548332 node /work/diedrico/frontend/node_modules/.bin/vite --host 0.0.0.0
+565025 /bin/sh -c {   echo '## before cleanup';   pgrep -af 'vite|npm run dev' || true;   # Keep the listener process group reported on 0.0.0.0:5173; terminate the duplicate later-started dev process group if still present.   for pid in 556868 556882 556883; do     if kill -0 "$pid" 2>/dev/null; then       echo "terminating duplicate preview pid=$pid";       kill "$pid" 2>/dev/null || true;     fi   done   sleep 2;   echo '## after cleanup';   (ss -ltnp 'sport = :5173' || true) 2>&1;   pgrep -af 'vite|npm run dev' || true;   echo '## probe';   curl -I --max-time 10 http://127.0.0.1:5173/; }
+## probe
+HTTP/1.1 200 OK
+Vary: Origin
+Content-Type: text/html
+Cache-Control: no-cache
+Etag: W/"2b2-tNlRR9r54WvI86U6GDsvMOF57U8"
+Date: Wed, 27 May 2026 04:46:32 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
