@@ -4,10 +4,10 @@
 
 vite v5.4.21 building for production...
 transforming...
-✓ 306 modules transformed.
+✓ 325 modules transformed.
 rendering chunks...
 computing gzip size...
-dist/index.html                                           0.72 kB │ gzip:   0.42 kB
+dist/index.html                                           0.72 kB │ gzip:   0.41 kB
 dist/assets/KaTeX_Size3-Regular-CTq5MqoE.woff             4.42 kB
 dist/assets/KaTeX_Size4-Regular-Dl5lxZxV.woff2            4.93 kB
 dist/assets/KaTeX_Size2-Regular-Dy4dx90m.woff2            5.21 kB
@@ -67,6 +67,6 @@ dist/assets/KaTeX_Main-Italic-3WenGoN9.ttf               33.58 kB
 dist/assets/KaTeX_Main-Bold-waoOVXN0.ttf                 51.34 kB
 dist/assets/KaTeX_Main-Regular-ypZvNtVU.ttf              53.58 kB
 dist/assets/KaTeX_AMS-Regular-DRggAlZN.ttf               63.63 kB
-dist/assets/index-jhjfNuwh.css                           60.76 kB │ gzip:  14.28 kB
-dist/assets/index-CkuOU_YQ.js                         1,193.53 kB │ gzip: 316.64 kB
-✓ built in 4.27s
+dist/assets/index-DU2avWxF.css                           60.76 kB │ gzip:  14.27 kB
+dist/assets/index-DJ8JiLA-.js                         1,205.04 kB │ gzip: 319.37 kB
+✓ built in 3.81s

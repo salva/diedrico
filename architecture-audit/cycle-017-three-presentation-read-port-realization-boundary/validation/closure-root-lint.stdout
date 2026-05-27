@@ -13,13 +13,13 @@
 
  RUN  v1.6.1 /work/diedrico/frontend
 
- ✓ tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts  (1 test) 18ms
- ✓ tests/unit/architecture/noCommandSubclasses.spec.ts  (2 tests) 23ms
- ✓ tests/unit/architecture/worldBoundary.spec.ts  (2 tests) 26ms
- ✓ tests/unit/architecture/importBoundaries.spec.ts  (6 tests) 87ms
+ ✓ tests/unit/architecture/noCommandSubclasses.spec.ts  (2 tests) 25ms
+ ✓ tests/unit/architecture/worldBoundary.spec.ts  (2 tests) 25ms
+ ✓ tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts  (1 test) 24ms
+ ✓ tests/unit/architecture/importBoundaries.spec.ts  (6 tests) 86ms
 
  Test Files  4 passed (4)
       Tests  11 passed (11)
-   Start at  23:26:11
-   Duration  2.79s (transform 1.40s, setup 1ms, collect 7.05s, tests 154ms, environment 2.07s, prepare 406ms)
+   Start at  22:06:34
+   Duration  3.17s (transform 1.74s, setup 0ms, collect 8.23s, tests 160ms, environment 2.49s, prepare 479ms)
 

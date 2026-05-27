@@ -1,3 +1,4 @@
+=== remaining wave headings around current/post-017 plan ===
 30:## Wave 001 — Invert the World/application boundary
 73:## Wave 002 — Split the projection-plane domain god-module around stable domain responsibilities
 112:## Wave 003 — Establish one authoritative world state and delete dead store/workspace paths
@@ -16,3 +17,14 @@
 666:## Wave 015 — Converge frontend TypeScript contracts around owned boundaries
 789:## Wave 016 — Canvas presentation read ports and overlay interaction boundary
 861:## Wave 017 — Three presentation read ports and realization boundary
+939:## Wave 018 — Domain realization context boundary
+1035:## Wave 019 — Three scene-host lifecycle and renderer platform boundary
+1118:## Wave 020 — App-shell project session and browser integration boundary
+1213:## Wave 021 — Selection/delete command-kernel boundary
+1299:## Wave 022 — Runtime session kernel and persistence port boundary
+1391:## Wave 023 — Runtime-session consumer ports and command-history boundary
+1487:## Wave 024 — Command-producer runtime ports for canvas, construction, and process history
+1589:## Wave 025 — Runtime view/read ports for rendering and panels
+1706:## Wave 026 — Tool interaction read context and realization adapter seam
+1812:## Wave 027 — Runtime read-model extractors and presentation DTO ports
+1940:## Wave 028 — Canvas projection DTO selectors and realization-read context ownership

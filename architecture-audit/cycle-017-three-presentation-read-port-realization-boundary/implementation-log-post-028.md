@@ -176,3 +176,79 @@ Validation evidence added under `architecture-audit/cycle-017-three-presentation
 - `t3-frontend-build.*` — frontend `vue-tsc && vite build` passed; Vite chunk-size warning only.
 
 The initial `t3-focused-vitest.*` command failed because it used root-relative test paths while running from `frontend/`; it was rerun with frontend-relative paths and passed. No canvas, persistence, command, backend/docs/specs, scene-host, OrbitControls, overlay CSS/layout, package/tooling, or unrelated protected domain files were touched for this correction.
+
+---
+
+## Validation/preview closure — cycle-017-validation-and-preview-refresh-post-028
+
+**Closure status:** Wave 017 COMPLETE.
+
+This closure independently rechecked the post-Wave-028 Wave 017 implementation without production source refactor, package/tooling churn, backend/docs/specs edits, persistence/command-history redesign, scene-host/OrbitControls/CSS pointer changes, broad domain-realization redesign, or next-wave implementation.
+
+### Closure source-control and protected-surface reconciliation
+
+Fresh path-scoped status/diff evidence was captured because broad workspace status is too large/noisy in this repository:
+
+- `validation/closure-git-status-pre.stdout` / `.stderr`
+- `validation/closure-git-status-final.stdout` / `.stderr`
+- `validation/closure-static-scans.stdout` / `.stderr`
+
+Production Wave 017 source paths had no path-scoped diff at the start of closure. The closure task modified only this implementation log, validation evidence logs/screenshots, and its own task report. The protected unrelated dirty files remained out of scope and were not read for implementation logic, edited, staged as source work, or required for validation fixes:
+
+- `frontend/src/domain/calculations/Intersections.ts`
+- `frontend/src/domain/processTree/ActionGroup.ts`
+
+### Closure static/read-port evidence
+
+Fresh static scans in `validation/closure-static-scans.stdout` confirm the Wave 017 split remains intact:
+
+- no `createThreeWorldReadPort`, broad `interface ThreeWorldReadPort`, `Pick<ThreeWorldReadPort>`, or `getReadPort()` compatibility path remains in the checked application/component/three-presentation test surfaces;
+- no `RuntimeWorld`, `WorldReadModel`, or `PresentationWorld` generic facade was introduced;
+- `ThreeWorldReadPort.ts` remains only a composition/type export module for `ThreePresentationReadPorts` with explicit concern slices;
+- concern traversal/DTO ownership remains localized in `ThreeProjectionPlaneReadPort.ts`, `ThreePlanarElementReadPort.ts`, `ThreeReconstructedElementReadPort.ts`, `ThreeGuideReadPort.ts`, and `ThreeHingeReadPort.ts`;
+- `ThreeRealizationContext.ts` no longer directly owns broad `world.getAllProjectionPlanes()` / `world.getAllHingeLines()` collection traversal; it accepts collection providers from concern adapters;
+- `CanvasWorldReadPort` / projected-3D canvas public raw-world seam invariants remain protected by scan evidence;
+- `ThreeView.vue` still has no concrete `World` import and no closure change touched scene-host lifecycle, OrbitControls, overlay CSS/layout, camera, renderer, or pointer behavior.
+
+### Closure validation log index
+
+Fresh closure validation was rerun and passed with stable logs under `architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/`:
+
+- `closure-focused-three-vitest.stdout` / `.stderr` — passed 4 focused files, 14 tests: three-presentation selector, concern selectors, architecture boundary guard, and ThreeView shell boundary.
+- `closure-root-lint.stdout` / `.stderr` — root lint passed via frontend architecture tests, 11 tests.
+- `closure-frontend-lint.stdout` / `.stderr` — frontend lint passed, 11 architecture tests.
+- `closure-root-vitest-full.stdout` / `.stderr` — root full Vitest passed: 114 files passed, 1 skipped; 1283 tests passed, 45 skipped, 11 todo.
+- `closure-frontend-vitest-full.stdout` / `.stderr` — frontend full Vitest passed with the same 114/1 file and 1283/45/11 test summary.
+- `closure-vitest-summary.stdout` / `.stderr` — tail summary of the full root/frontend Vitest logs.
+- `closure-root-build.stdout` / `.stderr` — root build passed (`vue-tsc && vite build` through frontend workspace); Vite chunk-size warning only.
+- `closure-frontend-build.stdout` / `.stderr` — frontend build passed; Vite chunk-size warning only.
+- `closure-root-e2e.stdout` / `.stderr` — root Playwright e2e passed 10/10, including `current-ui-contract.spec.ts:89` for the 3D overlay pointer boundary.
+- `closure-frontend-e2e.stdout` / `.stderr` — frontend Playwright e2e passed 10/10, including the same 3D overlay pointer-boundary regression.
+
+The first closure static command used `/bin/sh` with `set -o pipefail` and failed before checks ran; it was immediately superseded by the bash rerun in `closure-static-command.*` and the green `closure-static-scans.*` evidence. A first live-smoke attempt from the repository root failed because the `playwright` module is workspace-local to `frontend/`; it was superseded by the successful frontend-workspace smoke below.
+
+### Live preview refresh and 3D interaction evidence
+
+The live preview was refreshed/confirmed on `0.0.0.0:5173`:
+
+- `closure-preview-start.stdout` / `.stderr` — started `npm run dev -- --host 0.0.0.0` from `frontend/`; first probe raced startup, second probe reached the app.
+- `closure-preview-refresh.stdout` / `.stderr` — Vite reports `Network: http://10.0.3.113:5173/` and local access on port 5173.
+- `closure-preview-probe.stdout` / `.stderr` and `closure-preview-probe.headers` — `curl http://127.0.0.1:5173/` returned HTTP 200.
+- `closure-live-3d-canvas-smoke.stdout` / `.stderr` and `closure-live-3d-canvas-smoke.png` — frontend-workspace Playwright smoke loaded the live preview, verified `.three-view-overlay` has `pointer-events: auto`, verified `document.elementFromPoint` hits inside the overlay, dragged inside the 3D overlay, and confirmed the SVG canvas `viewBox` did not change.
+
+This satisfies the user-reported 3D interaction regression check with both CLI Playwright e2e and live-browser smoke evidence. No residual 3D pointer risk is accepted for Wave 017 closure.
+
+### Stale/harness evidence disposition
+
+Older Cycle 017 logs, stale failing validation attempts, and schema-mismatch worker/reviewer envelopes remain superseded by the post-Wave-028 implementation summary, final review acceptance, and this fresh closure validation evidence. The `schema_mismatch` issues were report-envelope/harness contract problems, not source validation failures.
+
+### Residual risks after closure
+
+- `ThreeWorldReadPort.ts` remains a historical filename for a composition/type-export module. It is not a broad read-port facade, but a future naming cleanup may rename it if worth the churn.
+- Production builds still emit the pre-existing Vite chunk-size warning; builds pass and the warning is not attributable to Wave 017.
+
+### Re-ranked next-wave recommendation
+
+`architecture-audit/wave-plan.md` was reread by heading and nearby Wave 017/018 context. Because Wave 017 deliberately stopped short of a broad realization-context redesign and closure reconfirmed that `ThreeRealizationContext.ts` is now only a narrow binder supplied by concern adapters, the most central remaining follow-up is still **Wave 018 — Domain realization context boundary**. Recommended next canonical stage: `cycle-018-fresh-scout-proposals-post-017`, with scope-check/proposals focused on the current domain realization context boundary and no implementation until reviewed convergence is complete.
+
+Do not pull peripheral cleanup forward ahead of Wave 018 unless a reviewed plan-edit mini-cycle changes the ordering.

@@ -1,1 +1,15 @@
-HTTP probe complete for 0.0.0.0-bound Vite via 127.0.0.1:5173
+=== preview probe headers ===
+HTTP/1.1 200 OK
+Vary: Origin
+Content-Type: text/html
+Cache-Control: no-cache
+Etag: W/"2a2-jmzE7161kdnXI7JasQMw+v8+14s"
+Date: Wed, 27 May 2026 22:20:33 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Content-Length: 674
+
+=== preview processes ===
+  83470       1 npm run dev --host 0.0.0.0
+  83485   83470 sh -c vite --host 0.0.0.0
+  83486   83485 node /work/diedrico/frontend/node_modules/.bin/vite --host 0.0.0.0

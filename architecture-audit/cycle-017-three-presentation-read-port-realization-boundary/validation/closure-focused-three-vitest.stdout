@@ -1,16 +1,17 @@
 
 > diedrico-frontend@0.1.0 test
-> vitest run --run tests/unit/application/threePresentation/threePresentationSelector.spec.ts tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts tests/unit/components/panels/threeViewShellBoundary.spec.ts
+> vitest run tests/unit/application/threePresentation/threePresentationSelector.spec.ts tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts tests/unit/application/threePresentation/threePresentationArchitectureBoundary.spec.ts tests/unit/components/panels/threeViewShellBoundary.spec.ts
 
 
  RUN  v1.6.1 /work/diedrico/frontend
 
- ✓ tests/unit/components/panels/threeViewShellBoundary.spec.ts  (1 test) 4ms
- ✓ tests/unit/application/threePresentation/threePresentationSelector.spec.ts  (1 test) 6ms
- ✓ tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts  (6 tests) 9ms
+ ✓ tests/unit/components/panels/threeViewShellBoundary.spec.ts  (2 tests) 29ms
+ ✓ tests/unit/application/threePresentation/threePresentationArchitectureBoundary.spec.ts  (5 tests) 6ms
+ ✓ tests/unit/application/threePresentation/threePresentationSelector.spec.ts  (1 test) 5ms
+ ✓ tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts  (6 tests) 10ms
 
- Test Files  3 passed (3)
-      Tests  8 passed (8)
-   Start at  23:26:18
-   Duration  1.18s (transform 393ms, setup 0ms, collect 610ms, tests 19ms, environment 1.40s, prepare 313ms)
+ Test Files  4 passed (4)
+      Tests  14 passed (14)
+   Start at  22:06:27
+   Duration  1.57s (transform 666ms, setup 1ms, collect 1.01s, tests 50ms, environment 2.51s, prepare 477ms)
 

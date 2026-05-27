@@ -1,87 +1,56 @@
- M architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/implementation-log.md
- M architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/scope-check.md
+=== final path-scoped porcelain status ===
+ M architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-focused-three-vitest.stdout
+ M architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-frontend-build.stdout
+ M architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-frontend-e2e.stdout
+ M architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-frontend-lint.stdout
+ M architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-frontend-vitest-full.stderr
+ M architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-frontend-vitest-full.stdout
+ M architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-git-status-final.stdout
+ M architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-git-status-pre.stdout
+ M architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-live-3d-canvas-smoke.png
+ M architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-live-3d-canvas-smoke.stdout
+ M architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-preview-probe.headers
+ M architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-preview-probe.stdout
+ M architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-preview-ps-before.stdout
+ M architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-preview-refresh.pid
+ M architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-preview-refresh.stdout
+ M architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-root-build.stdout
+ M architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-root-e2e.stdout
+ M architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-root-lint.stdout
+ M architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-root-vitest-full.stderr
+ M architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-root-vitest-full.stdout
+ M architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-wave-headings.stdout
  M architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/preview-refresh-final.stdout
-?? .saivage/stages/cycle-017-validation-and-preview-refresh/
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/reviews/
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/status-before-implementation.txt
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-append-log.command.stderr
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-append-log.command.stdout
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-focused-three-vitest.command.stderr
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-focused-three-vitest.command.stdout
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-focused-three-vitest.stderr
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-focused-three-vitest.stdout
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-frontend-build.command.stderr
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-frontend-build.command.stdout
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-frontend-build.stderr
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-frontend-build.stdout
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-frontend-e2e.command.stderr
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-frontend-e2e.command.stdout
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-frontend-e2e.stderr
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-frontend-e2e.stdout
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-frontend-lint.command.stderr
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-frontend-lint.command.stdout
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-frontend-lint.stderr
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-frontend-lint.stdout
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-frontend-vitest-full.command.stderr
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-frontend-vitest-full.command.stdout
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-frontend-vitest-full.stderr
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-frontend-vitest-full.stdout
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-git-status-final.command.stderr
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-git-status-final.command.stdout
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-git-status-final.stderr
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-git-status-final.stdout
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-git-status-pre.command.stderr
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-git-status-pre.command.stdout
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-git-status-pre.stderr
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-git-status-pre.stdout
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-live-3d-canvas-smoke.command.stderr
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-live-3d-canvas-smoke.command.stdout
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-live-3d-canvas-smoke.png
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-live-3d-canvas-smoke.stderr
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-live-3d-canvas-smoke.stdout
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-preview-probe.headers
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-preview-probe.html
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-preview-probe.stderr
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-preview-probe.stdout
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-preview-ps-after.stderr
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-preview-ps-after.stdout
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-preview-ps-before.command.stderr
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-preview-ps-before.command.stdout
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-preview-ps-before.stderr
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-preview-ps-before.stdout
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-preview-refresh.pid
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-preview-refresh.stderr
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-preview-refresh.stdout
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-preview-start.command.stderr
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-preview-start.command.stdout
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-preview.command.stderr
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-preview.command.stdout
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-root-build.command.stderr
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-root-build.command.stdout
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-root-build.stderr
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-root-build.stdout
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-root-e2e.command.stderr
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-root-e2e.command.stdout
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-root-e2e.stderr
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-root-e2e.stdout
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-root-lint.command.stderr
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-root-lint.command.stdout
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-root-lint.stderr
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-root-lint.stdout
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-root-vitest-full.command.stderr
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-root-vitest-full.command.stdout
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-root-vitest-full.stderr
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-root-vitest-full.stdout
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-wave-headings.command.stderr
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-wave-headings.command.stdout
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-wave-headings.stderr
-?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-wave-headings.stdout
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-final-inspection-command.stderr
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-final-inspection-command.stdout
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-live-command.stderr
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-live-command.stdout
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-live-smoke-command.stderr
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-live-smoke-command.stdout
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-preview-command.stderr
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-preview-command.stdout
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-preview-start-command.stderr
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-preview-start-command.stdout
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-preview-start.stderr
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-preview-start.stdout
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-static-command.stderr
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-static-command.stdout
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-static-scans.stderr
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-static-scans.stdout
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-vitest-summary.stderr
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-vitest-summary.stdout
 ?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/manager-add-hygiene-addendum.stderr
 ?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/manager-add-hygiene-addendum.stdout
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/manager-after-failed-closure-coder-status.stderr
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/manager-after-failed-closure-coder-status.stdout
 ?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/manager-closure-initial-status.stderr
 ?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/manager-closure-initial-status.stdout
 ?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/manager-closure-wave-headings.stderr
 ?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/manager-closure-wave-headings.stdout
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/manager-final-closure-diff.stderr
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/manager-final-closure-diff.stdout
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/manager-final-closure-status.stderr
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/manager-final-closure-status.stdout
 ?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/manager-hygiene-after-addendum.stderr
 ?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/manager-hygiene-after-addendum.stdout
 ?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/manager-hygiene-inspection.stderr
@@ -92,6 +61,8 @@
 ?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/manager-status-before-review.stdout
 ?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/retry-report-sha-update.stderr
 ?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/retry-report-sha-update.stdout
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/reviewer-current-git-status.stderr
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/reviewer-current-git-status.stdout
 ?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/reviewer-hygiene-followup-status.stderr
 ?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/reviewer-hygiene-followup-status.stdout
 ?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/reviewer-path-status.stderr
@@ -100,3 +71,6 @@
 ?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/reviewer-retry-status.stdout
 ?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/reviewer-static-scan.stderr
 ?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/reviewer-static-scan.stdout
+=== protected unrelated dirty files status ===
+ M frontend/src/domain/calculations/Intersections.ts
+ M frontend/src/domain/processTree/ActionGroup.ts

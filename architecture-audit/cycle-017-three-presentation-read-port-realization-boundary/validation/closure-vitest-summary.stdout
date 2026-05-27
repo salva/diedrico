@@ -1,0 +1,62 @@
+=== root full vitest tail ===
+ ✓ tests/unit/rendering/threeView/threeObjectRegistry.spec.ts  (3 tests) 45ms
+ ✓ tests/unit/rendering/threeView/threeSceneAdapters.spec.ts  (2 tests) 133ms
+ ✓ tests/unit/components/panels/threeViewShellBoundary.spec.ts  (2 tests) 9ms
+stdout | tests/unit/commands/updateFreePoint2DPositionOp.spec.ts > UpdateFreePoint2DPositionOp > updates a free point position and supports undo
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+
+ ✓ tests/unit/commands/updateFreePoint2DPositionOp.spec.ts  (2 tests) 12ms
+ ✓ tests/unit/application/canvasPresentation/canvasPresentationSelector.spec.ts  (1 test) 24ms
+ ✓ tests/unit/application/canvasPresentation/projected3DCanvasSelector.spec.ts  (1 test) 10ms
+ ✓ tests/unit/architecture/worldBoundary.spec.ts  (2 tests) 39ms
+ ✓ tests/unit/architecture/noCommandSubclasses.spec.ts  (2 tests) 32ms
+ ✓ tests/unit/architecture/importBoundaries.spec.ts  (6 tests) 137ms
+ ✓ tests/unit/application/canvasPresentation/canvasGridSelector.spec.ts  (2 tests) 31ms
+ ✓ tests/unit/services/svgCanvasRenderer.spec.ts  (1 test) 5ms
+ ✓ tests/unit/services/GeometryService.spec.ts  (2 tests) 4ms
+ ✓ tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts  (1 test) 19ms
+ ✓ tests/unit/smoke.spec.ts  (2 tests) 4ms
+
+ Test Files  114 passed | 1 skipped (115)
+      Tests  1283 passed | 45 skipped | 11 todo (1339)
+   Start at  22:06:53
+   Duration  35.84s (transform 11.09s, setup 34ms, collect 47.82s, tests 4.71s, environment 123.06s, prepare 24.99s)
+
+=== frontend full vitest tail ===
+ ✓ tests/unit/rendering/threeView/threeSceneAdapters.spec.ts  (2 tests) 128ms
+ ✓ tests/unit/application/appShell/KeyboardShortcutRouter.test.ts  (3 tests) 14ms
+ ✓ tests/unit/components/panels/threeViewShellBoundary.spec.ts  (2 tests) 9ms
+ ✓ tests/unit/application/canvasPresentation/canvasPresentationSelector.spec.ts  (1 test) 15ms
+ ✓ tests/unit/application/canvasPresentation/projected3DCanvasSelector.spec.ts  (1 test) 8ms
+ ✓ tests/unit/commands/updateFreePoint2DPositionOp.spec.ts  (2 tests) 12ms
+stdout | tests/unit/commands/updateFreePoint2DPositionOp.spec.ts > UpdateFreePoint2DPositionOp > updates a free point position and supports undo
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+
+ ✓ tests/unit/architecture/noCommandSubclasses.spec.ts  (2 tests) 46ms
+ ✓ tests/unit/architecture/importBoundaries.spec.ts  (6 tests) 126ms
+ ✓ tests/unit/architecture/worldBoundary.spec.ts  (2 tests) 33ms
+ ✓ tests/unit/application/canvasPresentation/canvasGridSelector.spec.ts  (2 tests) 6ms
+ ✓ tests/unit/services/svgCanvasRenderer.spec.ts  (1 test) 3ms
+ ✓ tests/unit/services/GeometryService.spec.ts  (2 tests) 14ms
+ ✓ tests/unit/smoke.spec.ts  (2 tests) 4ms
+ ✓ tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts  (1 test) 19ms
+
+ Test Files  114 passed | 1 skipped (115)
+      Tests  1283 passed | 45 skipped | 11 todo (1339)
+   Start at  22:07:35
+   Duration  26.97s (transform 9.51s, setup 18ms, collect 37.51s, tests 3.89s, environment 92.49s, prepare 17.59s)
+

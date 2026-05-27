@@ -1,0 +1,24 @@
+=== split port static scan ===
+frontend/tests/unit/application/threePresentation/threePresentationArchitectureBoundary.spec.ts:39:      expect(source).not.toMatch(new RegExp(['RuntimeWorld', 'WorldReadModel', 'PresentationWorld', 'get' + 'World\\s*\\('].join('|')));
+frontend/tests/unit/application/threePresentation/threePresentationArchitectureBoundary.spec.ts:51:    expect(searchedSources).not.toMatch(new RegExp(['RuntimeWorld', 'WorldReadModel', 'PresentationWorld', 'get' + 'World\\s*\\('].join('|')));
+=== ThreeRealizationContext collection traversal ownership ===
+frontend/src/application/threePresentation/ThreeRealizationContext.ts:24:    getAllProjectionPlanes: collections.getProjectionPlanes,
+frontend/src/application/threePresentation/ThreeRealizationContext.ts:25:    getAllHingeLines: collections.getHingeLines,
+frontend/src/application/threePresentation/ThreeProjectionPlaneReadPort.ts:25:    getProjectionPlaneModels: () => world.getAllProjectionPlanes().map(plane => ({
+frontend/src/application/threePresentation/ThreePlanarElementReadPort.ts:27:  const getProjectionPlanes = () => world.getAllProjectionPlanes();
+frontend/src/application/threePresentation/ThreeHingeReadPort.ts:13:  const getHingeLines = () => world.getAllHingeLines();
+frontend/src/application/threePresentation/ThreeHingeReadPort.ts:15:    getProjectionPlanes: () => world.getAllProjectionPlanes(),
+=== Canvas seam invariant scan ===
+frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:17:function createCanvasRealizationContext(world: World): ProjectionElementRealizationContext & Element3DRealizationContext {
+frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:103:  const realizationContext = createCanvasRealizationContext(world);
+frontend/src/application/canvasPresentation/Projected3DCanvasReadPort.ts:5:export function createProjected3DCanvasReadPort(world: World, realizationContext: Element3DRealizationContext): Projected3DCanvasReadPort {
+frontend/src/application/threePresentation/ThreeRealizationContext.ts:11:export function createThreeRealizationContext(
+=== ThreeView World import scan ===
+3:    <canvas ref="canvasRef" class="three-canvas"></canvas>
+47:let unsubscribeWorldChanges: (() => void) | undefined;
+60:  const handleWorldChange = () => { renderTick.value++; };
+61:  threePresentationPort.subscribeToChanges(handleWorldChange);
+62:  unsubscribeWorldChanges = () => threePresentationPort.unsubscribeFromChanges(handleWorldChange);
+70:  unsubscribeWorldChanges?.();
+85:.three-canvas {
+92:  pointer-events: auto;

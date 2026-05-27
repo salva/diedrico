@@ -1,6 +1,7 @@
 {
-  "url": "http://127.0.0.1:5173/",
-  "canvasCount": 1,
-  "has3DText": true,
-  "showPlanesLabelCount": 1
+  "pointerEvents": "auto",
+  "hitOverlay": true,
+  "viewBoxBefore": "0 0 980 612.5",
+  "viewBoxAfter": "0 0 980 612.5",
+  "pass": true
 }
