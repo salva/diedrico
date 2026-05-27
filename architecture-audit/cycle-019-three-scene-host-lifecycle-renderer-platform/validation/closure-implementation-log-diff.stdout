@@ -1,0 +1,52 @@
+diff --git a/architecture-audit/cycle-019-three-scene-host-lifecycle-renderer-platform/implementation-log.md b/architecture-audit/cycle-019-three-scene-host-lifecycle-renderer-platform/implementation-log.md
+index e2a1d31..d2375ac 100644
+--- a/architecture-audit/cycle-019-three-scene-host-lifecycle-renderer-platform/implementation-log.md
++++ b/architecture-audit/cycle-019-three-scene-host-lifecycle-renderer-platform/implementation-log.md
+@@ -97,3 +97,47 @@ Full MCP `git_status` is still too large due to unrelated workspace noise, so Cy
+ - The scene host still contains camera/lights defaults and platform lifecycle in one class by design for this wave; a later wave should only split this further if a concrete architectural smell remains after additional rendering work.
+ - Existing full-suite stderr contains expected negative-path diagnostic logs from unrelated domain/auth tests; exit code was 0 and they are not attributable to this change.
+ - Vite reports the existing large-chunk warning during builds; this is package/tooling/performance scope and was intentionally not changed in Cycle 019.
++
++## Validation/preview closure — cycle-019-validation-and-preview-refresh
++
++**Wave 019 COMPLETE.** Closure independently re-read the implementation summary, this implementation log, the Cycle 019 validation directory, path-scoped git evidence, and `architecture-audit/wave-plan.md`. No production source, tests, package/tooling, secret/config, or next-wave implementation files were changed during closure.
++
++### Closure validation evidence
++
++Stable validation evidence remains green and is indexed here for final closure:
++
++- Focused ThreeView/scene-host lifecycle Vitest: `validation/focused-vitest-rerun.stdout` / `.stderr` — 5 files passed, 11 tests passed.
++- Root lint: `validation/root-lint.stdout` / `.stderr` — architecture lint passed, 4 files passed, 11 tests passed.
++- Frontend lint: `validation/frontend-lint.stdout` / `.stderr` — architecture lint passed, 4 files passed, 11 tests passed.
++- Root full Vitest: `validation/root-vitest.stdout` / `.stderr` — 109 files passed, 1 skipped; 1237 tests passed, 45 skipped, 11 todo.
++- Frontend full Vitest: `validation/frontend-vitest.stdout` / `.stderr` — 109 files passed, 1 skipped; 1237 tests passed, 45 skipped, 11 todo.
++- Root build: `validation/root-build.stdout` / `.stderr` — `vue-tsc && vite build` completed with `✓ built in 3.60s`; Vite large-chunk warning remains non-blocking and pre-existing.
++- Frontend build: `validation/frontend-build.stdout` / `.stderr` — `vue-tsc && vite build` completed with `✓ built in 3.70s`; same non-blocking Vite large-chunk warning.
++- Root e2e: `validation/root-e2e.stdout` / `.stderr` — Playwright passed, 8/8 tests.
++- Frontend e2e: `validation/frontend-e2e.stdout` / `.stderr` — Playwright passed, 8/8 tests.
++- Focused live 3D/scene-host browser smoke: `validation/live-3d-smoke-rerun.stdout` / `.stderr` — green: 3D panel visible, canvas visible, four 3D display controls visible, representative controls toggled, and canvas drag exercised; console contained Vite/debug and expected WebGL performance warnings only.
++- Closure tail verification: `validation/closure-validation-tail-check.stdout` / `.stderr` — independently re-extracted the final green summaries from the stable validation logs above.
++
++Superseded non-green attempts are explicitly non-blocking: `validation/focused-vitest.stdout` failed because a new test expected no immediate animation render, `validation/live-preview-refresh.stdout` failed because the cleanup command self-matched, and `validation/live-3d-smoke.stdout` failed because the one-off smoke was run from the root where `@playwright/test` was not resolvable. Each is superseded by the green rerun log named above and is not source-attributable.
++
++### Live preview closure evidence
++
++The persistent preview server remains bound for external access via the frontend dev server command recorded earlier (`npm run dev --workspace=frontend -- --host 0.0.0.0`). Closure probe evidence:
++
++- `validation/live-preview-refresh-retry.stdout` / `.stderr` — server restart succeeded and returned HTTP 200 from `http://127.0.0.1:5173/`; PID recorded in `validation/live-preview-server.pid`.
++- `validation/live-preview-server.stdout` / `.stderr` — persistent Vite server logs.
++- `validation/live-preview-probe.html` / `.stderr` — prior HTTP probe artifact.
++- `validation/closure-live-preview-probe.stdout` / `.stderr` — final closure probe: recorded PID `540800` was alive; both `http://127.0.0.1:5173/` and `http://0.0.0.0:5173/` returned HTTP 200.
++
++### Protected-surface and source-control closure checks
++
++- `validation/closure-scoped-status.stdout` / `.stderr` — path-scoped status for Cycle 019 artifacts, this validation stage report directory, and authorized ThreeView runtime/test paths. It shows only closure-stage untracked report/evidence artifacts, not production source changes.
++- `validation/closure-scoped-diff-names.stdout` / `.stderr` — no uncommitted tracked diffs in the scoped Cycle 019 source/test/log paths before this closure-log append.
++- Full MCP `git_status` remains too large because of unrelated workspace noise; closure therefore used path-scoped status/diff and did not edit or revert unrelated dirty files.
++- Forbidden secret/config paths were not read or copied. `.saivage/saivage.json`, auth profiles, env files, provider configs, Drive credentials, and shell history were not accessed.
++
++### Re-rank / next-wave recommendation
++
++`architecture-audit/wave-plan.md` was re-read through the current Wave 019 entry. The plan currently lists Waves 001–019 only, and Wave 019 is now complete. Wave 019 did not invalidate remaining planned premises because there are no later wave entries in the current plan. The next canonical action should therefore be a reviewed wave-plan extension / fresh scout stage (for example, `cycle-020-wave-plan-extension` or `cycle-020-fresh-scout-proposals` only after a new Wave 020 entry exists) to inspect the current post-Wave-019 codebase, identify the next most central architectural risk, and append the next ordered wave before any implementation begins.
++
++No corrective implementation stage is needed for Cycle 019.

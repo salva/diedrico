@@ -1,0 +1,214 @@
+===== root-lint.stdout
+> diedrico-frontend@0.1.0 lint
+> npm run test:architecture
+
+
+> diedrico-frontend@0.1.0 test:architecture
+> vitest run tests/unit/architecture
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts  (1 test) 16ms
+ ✓ tests/unit/architecture/worldBoundary.spec.ts  (2 tests) 21ms
+ ✓ tests/unit/architecture/noCommandSubclasses.spec.ts  (2 tests) 28ms
+ ✓ tests/unit/architecture/importBoundaries.spec.ts  (6 tests) 78ms
+
+ Test Files  4 passed (4)
+      Tests  11 passed (11)
+   Start at  01:32:56
+   Duration  2.77s (transform 1.52s, setup 1ms, collect 7.32s, tests 143ms, environment 2.10s, prepare 378ms)
+
+
+===== frontend-lint.stdout
+> diedrico-frontend@0.1.0 lint
+> npm run test:architecture
+
+
+> diedrico-frontend@0.1.0 test:architecture
+> vitest run tests/unit/architecture
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/architecture/noCommandSubclasses.spec.ts  (2 tests) 23ms
+ ✓ tests/unit/architecture/worldBoundary.spec.ts  (2 tests) 29ms
+ ✓ tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts  (1 test) 23ms
+ ✓ tests/unit/architecture/importBoundaries.spec.ts  (6 tests) 73ms
+
+ Test Files  4 passed (4)
+      Tests  11 passed (11)
+   Start at  01:33:00
+   Duration  2.75s (transform 1.49s, setup 0ms, collect 7.36s, tests 148ms, environment 1.95s, prepare 345ms)
+
+
+===== focused-vitest-rerun.stdout
+
+> diedrico-frontend@0.1.0 test
+> vitest run tests/unit/rendering/threeView/threeViewRuntime.spec.ts tests/unit/rendering/threeView/threeSceneHost.spec.ts tests/unit/rendering/threeView/threeObjectRegistry.spec.ts tests/unit/rendering/threeView/threeSceneAdapters.spec.ts tests/unit/components/panels/threeViewShellBoundary.spec.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/components/panels/threeViewShellBoundary.spec.ts  (1 test) 3ms
+ ✓ tests/unit/rendering/threeView/threeObjectRegistry.spec.ts  (3 tests) 19ms
+ ✓ tests/unit/rendering/threeView/threeSceneHost.spec.ts  (3 tests) 39ms
+ ✓ tests/unit/rendering/threeView/threeViewRuntime.spec.ts  (2 tests) 9ms
+ ✓ tests/unit/rendering/threeView/threeSceneAdapters.spec.ts  (2 tests) 46ms
+
+ Test Files  5 passed (5)
+      Tests  11 passed (11)
+   Start at  01:32:45
+   Duration  1.29s (transform 353ms, setup 0ms, collect 723ms, tests 116ms, environment 2.93s, prepare 560ms)
+
+
+===== root-vitest.stdout
+
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+
+ ✓ tests/unit/architecture/noCommandSubclasses.spec.ts  (2 tests) 32ms
+ ✓ tests/unit/application/canvasPresentation/canvasGridSelector.spec.ts  (2 tests) 6ms
+ ✓ tests/unit/architecture/importBoundaries.spec.ts  (6 tests) 105ms
+ ✓ tests/unit/architecture/worldBoundary.spec.ts  (2 tests) 35ms
+ ✓ tests/unit/services/svgCanvasRenderer.spec.ts  (1 test) 6ms
+ ✓ tests/unit/services/GeometryService.spec.ts  (2 tests) 4ms
+ ✓ tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts  (1 test) 17ms
+ ✓ tests/unit/smoke.spec.ts  (2 tests) 3ms
+
+ Test Files  109 passed | 1 skipped (110)
+      Tests  1237 passed | 45 skipped | 11 todo (1293)
+   Start at  01:33:30
+   Duration  27.81s (transform 9.00s, setup 14ms, collect 37.76s, tests 3.94s, environment 97.10s, prepare 17.48s)
+
+
+===== frontend-vitest.stdout
+Root element: projPlane3/point2d10
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+
+ ✓ tests/unit/commands/updateFreePoint2DPositionOp.spec.ts  (2 tests) 25ms
+ ✓ tests/unit/components/panels/threeViewShellBoundary.spec.ts  (1 test) 5ms
+ ✓ tests/unit/architecture/noCommandSubclasses.spec.ts  (2 tests) 28ms
+ ✓ tests/unit/application/canvasPresentation/canvasGridSelector.spec.ts  (2 tests) 10ms
+ ✓ tests/unit/architecture/importBoundaries.spec.ts  (6 tests) 119ms
+ ✓ tests/unit/architecture/worldBoundary.spec.ts  (2 tests) 48ms
+ ✓ tests/unit/services/GeometryService.spec.ts  (2 tests) 4ms
+ ✓ tests/unit/services/svgCanvasRenderer.spec.ts  (1 test) 3ms
+ ✓ tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts  (1 test) 17ms
+ ✓ tests/unit/smoke.spec.ts  (2 tests) 3ms
+
+ Test Files  109 passed | 1 skipped (110)
+      Tests  1237 passed | 45 skipped | 11 todo (1293)
+   Start at  01:33:59
+   Duration  24.95s (transform 8.64s, setup 27ms, collect 34.46s, tests 3.56s, environment 87.58s, prepare 15.63s)
+
+
+===== root-build.stdout
+dist/assets/KaTeX_Main-Italic-BMLOBm91.woff              19.68 kB
+dist/assets/KaTeX_SansSerif-Italic-YYjJ1zSn.ttf          22.36 kB
+dist/assets/KaTeX_SansSerif-Bold-CFMepnvq.ttf            24.50 kB
+dist/assets/KaTeX_Main-Bold-Cx986IdX.woff2               25.32 kB
+dist/assets/KaTeX_Main-Regular-B22Nviop.woff2            26.27 kB
+dist/assets/KaTeX_Typewriter-Regular-D3Ib7_Hf.ttf        27.56 kB
+dist/assets/KaTeX_AMS-Regular-BQhdFMY1.woff2             28.08 kB
+dist/assets/KaTeX_Main-Bold-Jm3AIy58.woff                29.91 kB
+dist/assets/KaTeX_Main-Regular-Dr94JaBh.woff             30.77 kB
+dist/assets/KaTeX_Math-BoldItalic-B3XSjfu4.ttf           31.20 kB
+dist/assets/KaTeX_Math-Italic-flOr_0UB.ttf               31.31 kB
+dist/assets/KaTeX_Main-BoldItalic-DzxPMmG6.ttf           32.97 kB
+dist/assets/KaTeX_AMS-Regular-DMm9YOAa.woff              33.52 kB
+dist/assets/KaTeX_Main-Italic-3WenGoN9.ttf               33.58 kB
+dist/assets/KaTeX_Main-Bold-waoOVXN0.ttf                 51.34 kB
+dist/assets/KaTeX_Main-Regular-ypZvNtVU.ttf              53.58 kB
+dist/assets/KaTeX_AMS-Regular-DRggAlZN.ttf               63.63 kB
+dist/assets/index-jhjfNuwh.css                           60.76 kB │ gzip:  14.28 kB
+dist/assets/index-BgbJ4eWH.js                         1,195.63 kB │ gzip: 317.07 kB
+✓ built in 3.60s
+
+===== frontend-build.stdout
+dist/assets/KaTeX_Main-Italic-BMLOBm91.woff              19.68 kB
+dist/assets/KaTeX_SansSerif-Italic-YYjJ1zSn.ttf          22.36 kB
+dist/assets/KaTeX_SansSerif-Bold-CFMepnvq.ttf            24.50 kB
+dist/assets/KaTeX_Main-Bold-Cx986IdX.woff2               25.32 kB
+dist/assets/KaTeX_Main-Regular-B22Nviop.woff2            26.27 kB
+dist/assets/KaTeX_Typewriter-Regular-D3Ib7_Hf.ttf        27.56 kB
+dist/assets/KaTeX_AMS-Regular-BQhdFMY1.woff2             28.08 kB
+dist/assets/KaTeX_Main-Bold-Jm3AIy58.woff                29.91 kB
+dist/assets/KaTeX_Main-Regular-Dr94JaBh.woff             30.77 kB
+dist/assets/KaTeX_Math-BoldItalic-B3XSjfu4.ttf           31.20 kB
+dist/assets/KaTeX_Math-Italic-flOr_0UB.ttf               31.31 kB
+dist/assets/KaTeX_Main-BoldItalic-DzxPMmG6.ttf           32.97 kB
+dist/assets/KaTeX_AMS-Regular-DMm9YOAa.woff              33.52 kB
+dist/assets/KaTeX_Main-Italic-3WenGoN9.ttf               33.58 kB
+dist/assets/KaTeX_Main-Bold-waoOVXN0.ttf                 51.34 kB
+dist/assets/KaTeX_Main-Regular-ypZvNtVU.ttf              53.58 kB
+dist/assets/KaTeX_AMS-Regular-DRggAlZN.ttf               63.63 kB
+dist/assets/index-jhjfNuwh.css                           60.76 kB │ gzip:  14.28 kB
+dist/assets/index-BgbJ4eWH.js                         1,195.63 kB │ gzip: 317.07 kB
+✓ built in 3.70s
+
+===== root-e2e.stdout
+
+> diedrico@0.1.0 test:e2e
+> npm run test:e2e --workspace=frontend
+
+
+> diedrico-frontend@0.1.0 test:e2e
+> playwright test
+
+
+Running 8 tests using 4 workers
+
+[1A[2K[1/8] [chromium] › tests/e2e/current-ui-contract.spec.ts:40:3 › Current Diedrico UI contract › plane selector exposes current projection planes and switches active plane
+[1A[2K[2/8] [chromium] › tests/e2e/current-ui-contract.spec.ts:57:3 › Current Diedrico UI contract › selection masks allow free-point creation and point-only line argument collection
+[1A[2K[3/8] [chromium] › tests/e2e/current-ui-contract.spec.ts:26:3 › Current Diedrico UI contract › creates a free point through stable tool and canvas test IDs
+[1A[2K[4/8] [chromium] › tests/e2e/current-ui-contract.spec.ts:12:3 › Current Diedrico UI contract › renders the current app shell, canvas, toolbar, status bar, and plane selector
+[1A[2K[5/8] [chromium] › tests/e2e/current-ui-contract.spec.ts:78:3 › Current Diedrico UI contract › updates 3D coordinate status through the current canvas mouse contract
+[1A[2K[6/8] [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:9:3 › Keyboard shortcuts › tool shortcut keys activate current tool buttons
+[1A[2K[7/8] [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:24:3 › Keyboard shortcuts › Escape returns to select tool after starting a point workflow
+[1A[2K[8/8] [chromium] › tests/e2e/wave010-app-shell-project-flow.spec.ts:4:3 › Wave 010 app-shell project boundary › starts without Google credentials and opens the app-shell project chooser without backend project API calls
+[1A[2K  8 passed (11.8s)
+
+===== frontend-e2e.stdout
+
+> diedrico-frontend@0.1.0 test:e2e
+> playwright test
+
+
+Running 8 tests using 4 workers
+
+[1A[2K[1/8] [chromium] › tests/e2e/current-ui-contract.spec.ts:12:3 › Current Diedrico UI contract › renders the current app shell, canvas, toolbar, status bar, and plane selector
+[1A[2K[2/8] [chromium] › tests/e2e/current-ui-contract.spec.ts:40:3 › Current Diedrico UI contract › plane selector exposes current projection planes and switches active plane
+[1A[2K[3/8] [chromium] › tests/e2e/current-ui-contract.spec.ts:57:3 › Current Diedrico UI contract › selection masks allow free-point creation and point-only line argument collection
+[1A[2K[4/8] [chromium] › tests/e2e/current-ui-contract.spec.ts:26:3 › Current Diedrico UI contract › creates a free point through stable tool and canvas test IDs
+[1A[2K[5/8] [chromium] › tests/e2e/current-ui-contract.spec.ts:78:3 › Current Diedrico UI contract › updates 3D coordinate status through the current canvas mouse contract
+[1A[2K[6/8] [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:9:3 › Keyboard shortcuts › tool shortcut keys activate current tool buttons
+[1A[2K[7/8] [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:24:3 › Keyboard shortcuts › Escape returns to select tool after starting a point workflow
+[1A[2K[8/8] [chromium] › tests/e2e/wave010-app-shell-project-flow.spec.ts:4:3 › Wave 010 app-shell project boundary › starts without Google credentials and opens the app-shell project chooser without backend project API calls
+[1A[2K  8 passed (11.7s)
+
+===== live-3d-smoke-rerun.stdout
+  "consoleMessages": [
+    "debug: [vite] connecting...",
+    "debug: [vite] connected.",
+    "log: [ElementsPanel] Computing projection planes list, version: 0 forceUpdate: 0",
+    "log: [ElementsPanel] Computing 3D elements",
+    "log: [ElementsPanel] 3D elements: {points: 0, lines: 0, segments: 0, planes: 0}",
+    "log: [ElementsPanel] Mounted, initial World version: 0",
+    "log: World initialized",
+    "log: Points in world: 0",
+    "log: [ElementsPanel] World version changed: 0 → 27",
+    "log: [ElementsPanel] Computing projection planes list, version: 0 forceUpdate: 1",
+    "log: [ElementsPanel] Computing projection planes list, version: 0 forceUpdate: 1",
+    "log: [ElementsPanel] Computing 3D elements",
+    "log: [ElementsPanel] 3D elements: {points: 0, lines: 0, segments: 0, planes: 2}",
+    "warning: [.WebGL-0x5540014da00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "warning: [.WebGL-0x5540014da00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "warning: [.WebGL-0x5540014da00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "warning: [.WebGL-0x5540014da00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+  ]
+}
+
