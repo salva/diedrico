@@ -1,0 +1,27 @@
+## fresh closure reachability probe 127.0.0.1
+HTTP/1.1 200 OK
+Vary: Origin
+Content-Type: text/html
+Cache-Control: no-cache
+Etag: W/"2b2-xQmSSgfmQzcg3b5z7X23jxNvsXo"
+Date: Wed, 27 May 2026 03:22:01 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+
+## fresh closure reachability probe 0.0.0.0
+HTTP/1.1 200 OK
+Vary: Origin
+Content-Type: text/html
+Cache-Control: no-cache
+Etag: W/"2b2-xQmSSgfmQzcg3b5z7X23jxNvsXo"
+Date: Wed, 27 May 2026 03:22:01 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+
+## running vite/dev processes
+salva     548319       1  0 03:09 ?        00:00:00 npm run dev --host 0.0.0.0
+salva     548331  548319  0 03:09 ?        00:00:00 sh -c vite --host 0.0.0.0
+salva     548332  548331  0 03:09 ?        00:00:03 node /work/diedrico/frontend/node_modules/.bin/vite --host 0.0.0.0
+salva     549365  480311  0 03:22 ?        00:00:00 /bin/sh -c bash <<'BASH' set -euo pipefail VAL='architecture-audit/cycle-020-app-shell-project-session-browser-boundary/validation' {   echo '## fresh closure reachability probe 127.0.0.1'   curl -I --max-time 10 http://127.0.0.1:5173/   echo   echo '## fresh closure reachability probe 0.0.0.0'   curl -I --max-time 10 http://0.0.0.0:5173/   echo   echo '## running vite/dev processes'   ps -ef | grep -E '[v]ite|[n]pm run dev' || true } > "$VAL/closure-t1-preview-probe.stdout" 2> "$VAL/closure-t1-preview-probe.stderr" {   echo '## remaining central waves after Wave 020 reread'   grep -n '^## Wave 0\|^## Wave 02\|^## Wave 021\|^## Wave 022\|^## Wave 023' architecture-audit/wave-plan.md | tail -n 40   echo   echo '## Wave 006a/006b context still relevant'   grep -n '^## Wave 006a\|^## Wave 006b\|^## Wave 007\|^## Wave 008\|^## Wave 009\|^## Wave 010\|^## Wave 011\|^## Wave 012\|^## Wave 013\|^## Wave 014\|^## Wave 015\|^## Wave 016\|^## Wave 017\|^## Wave 018\|^## Wave 019\|^## Wave 020\|^## Wave 021' architecture-audit/wave-plan.md || true } > "$VAL/closure-t1-wave-plan-relevant.stdout" 2> "$VAL/closure-t1-wave-plan-relevant.stderr" BASH

@@ -1,0 +1,16 @@
+## git status --short (cycle-020 relevant + audit/report paths)
+?? .saivage/stages/cycle-020-validation-and-preview-refresh/
+?? architecture-audit/cycle-020-app-shell-project-session-browser-boundary/reviews/
+?? architecture-audit/cycle-020-app-shell-project-session-browser-boundary/validation/closure-manager-status-diff.stderr
+?? architecture-audit/cycle-020-app-shell-project-session-browser-boundary/validation/closure-manager-status-diff.stdout
+?? architecture-audit/cycle-020-app-shell-project-session-browser-boundary/validation/closure-manager-validation-tail-index.stderr
+?? architecture-audit/cycle-020-app-shell-project-session-browser-boundary/validation/closure-manager-validation-tail-index.stdout
+?? architecture-audit/cycle-020-app-shell-project-session-browser-boundary/validation/closure-manager-wave-plan-relevant.stderr
+?? architecture-audit/cycle-020-app-shell-project-session-browser-boundary/validation/closure-manager-wave-plan-relevant.stdout
+?? architecture-audit/cycle-020-app-shell-project-session-browser-boundary/validation/closure-t1-status.stderr
+?? architecture-audit/cycle-020-app-shell-project-session-browser-boundary/validation/closure-t1-status.stdout
+?? architecture-audit/cycle-020-app-shell-project-session-browser-boundary/validation/manager-synthesis-static-check.stderr
+?? architecture-audit/cycle-020-app-shell-project-session-browser-boundary/validation/manager-synthesis-static-check.stdout
+
+## full status short count
+1545

@@ -88,3 +88,61 @@ All logs are under `architecture-audit/cycle-020-app-shell-project-session-brows
 - `SelectionUseCases` still directly constructs delete commands via `Command` / `DeletionSequenceFactory`; this is accepted Cycle 020 residual debt and remains a candidate for a future command/use-case boundary wave.
 - `AppShellRuntime.ts` still creates `World` and `CommandStack`, as explicitly allowed by the decision; a broader application kernel extraction would require a future reviewed wave.
 - Static scan still sees `ProjectService` type imports in app-shell port/session files because `ProjectData` is the current project-data contract crossing the narrow adapter boundary. No ProjectService internals or static method shape leaks remain in use cases/runtime.
+
+## Validation/preview closure — cycle-020-validation-and-preview-refresh
+
+Status: **Wave 020 COMPLETE**.
+
+Independent closure verification in this validation stage re-read the current implementation log, decision artifact, validation directory, package scripts, and `architecture-audit/wave-plan.md`; captured fresh scoped source-control/status evidence; verified the mandatory green validation evidence already present from implementation; and confirmed the live preview remains reachable on the required host bindings. No production source refactor, package/tooling change, e2e rewrite, secret/config read, next-wave implementation, backend/docs/spec edit, or unrelated workspace cleanup was performed in this closure stage.
+
+### Closure evidence added by t1
+
+All files below are under `architecture-audit/cycle-020-app-shell-project-session-browser-boundary/validation/`:
+
+- `closure-t1-status.stdout` / `.stderr` — scoped status capture for Cycle 020 app-shell/audit/report paths plus the total dirty-entry count. The scoped source diff for Wave 020 source/test paths is empty at closure time; untracked closure/review/report artifacts remain as audit/stage evidence. The overall workspace still contains many pre-existing dirty entries outside this closure scope and was not reconciled globally.
+- `closure-t1-diff.stdout` / `.stderr` — scoped diff-stat/name-status for Cycle 020 app-shell/audit/report paths; no additional source diff was introduced by closure verification before this log update.
+- `closure-t1-validation-tail-index.stdout` / `.stderr` — independent tail index for the mandatory validation logs listed below.
+- `closure-t1-preview-probe.stdout` / `.stderr` — fresh HTTP reachability probes returned `HTTP/1.1 200 OK` for both `http://127.0.0.1:5173/` and `http://0.0.0.0:5173/`; process evidence shows `vite --host 0.0.0.0` still running.
+- `closure-t1-wave-plan-relevant.stdout` / `.stderr` and `closure-t1-wave-plan-tail.stdout` / `.stderr` — wave-plan reread evidence used for the next-action recommendation.
+
+A first closure capture attempt failed before writing stable evidence because `/bin/sh` did not support `set -o pipefail`; a second attempt failed because shell interpolation stripped the validation path. Both were harness/shell invocation mistakes outside source behavior; the successful bash/heredoc captures above supersede them.
+
+### Mandatory validation status verified
+
+The mandatory Wave 020 validation evidence is present and green, with stale failed attempts explicitly superseded by later green logs where applicable:
+
+- Static scans: `static-scan-app-shell.stdout` contains only expected residual hits — `ProjectService` appears in the narrow adapter/type boundary, last-project keys appear only in `BrowserLastProjectRepository.ts`, and `new GoogleDriveService` / `window.localStorage` appear only in `AppShellProductionRuntime.ts`.
+- Focused app-shell Vitest: `focused-vitest.stdout` / `.stderr` passed, 3 files / 24 tests.
+- Root lint: `root-lint.stdout` / `.stderr` passed.
+- Frontend lint: `frontend-lint.stdout` / `.stderr` passed.
+- Full root Vitest: `root-test.stdout` / `.stderr` plus `root-test-tail.stdout` passed, 109 files passed / 1 skipped, 1245 tests passed / 45 skipped / 11 todo. The stderr tail contains expected exercised error logging from existing tests, not test failures.
+- Full frontend Vitest: `frontend-test.stdout` / `.stderr` plus `frontend-test-tail.stdout` passed with the same suite summary.
+- Root build: `root-build.stdout` / `.stderr` passed; only the existing Vite chunk-size warning remains.
+- Frontend build: `frontend-build.stdout` / `.stderr` passed; only the existing Vite chunk-size warning remains.
+- Final focused/build rerun: `final-fix-rerun.stdout` / `.stderr` passed after the final port-signature restoration. The earlier `final-minimize-rerun.*` failure is superseded and documented as an obsolete-signature minimization attempt, not a remaining source failure.
+- Root e2e: `root-e2e.stdout` / `.stderr` passed, 8 Playwright tests.
+- Frontend e2e: `frontend-e2e.stdout` / `.stderr` passed, 8 Playwright tests.
+- Live preview: `live-preview-refresh-2.*`, `live-preview-server.*`, `live-preview-ps-after.stdout`, `live-preview-probe-127.stdout`, `live-preview-probe-0.stdout`, and fresh `closure-t1-preview-probe.stdout` show a Vite preview/dev server running with `--host 0.0.0.0` and returning HTTP 200 on both loopback and `0.0.0.0` probes.
+- Credential-free live smoke: `live-smoke-playwright-rerun.stdout` / `.stderr` passed after the selector-only failure in `live-smoke-playwright.*`; it verified app visibility, SVG canvas visibility, keyboard `p` then `Escape` returning footer tool status to `Select`, and visible footer/status text without real Drive credentials.
+
+No mandatory command was skipped. Root scripts delegate to the active `frontend` workspace as shown in `package.json`; the backend is not an active workspace in the current root package configuration.
+
+### Protected surfaces / source-control reconciliation at closure
+
+Closure verification did not newly modify production source, tests, package/tooling, backend, docs/specs, Drive internals, ProjectService internals, rendering/domain layers, command/undo descriptors, process tree, or secret/config/env/provider files. The only closure-stage content changes are audit validation evidence, this implementation-log completion section, and the task report.
+
+The scoped closure captures distinguish Cycle 020 artifacts from unrelated workspace dirt: Cycle 020 source/test paths have no additional uncommitted diff in `closure-t1-diff.stdout`, while `closure-t1-status.stdout` shows untracked audit/stage evidence and a large global dirty-entry count outside this closure scope. Pre-existing adjacent dirty source/test work noted earlier remains out of scope and was neither reverted nor incorporated.
+
+### Residual risks accepted after closure
+
+- Real Google Drive behavior remains unvalidated with credentials by secret-safety rules; fake-port coverage, e2e without credentials, and credential-free live smoke are the accepted validation boundary.
+- `SelectionUseCases` still directly constructs delete commands through `Command` / `DeletionSequenceFactory`; this remains the intentionally accepted Wave 020 residual rather than an accidental leftover.
+- `AppShellRuntime.ts` still owns in-memory `World` and `CommandStack` creation, as explicitly allowed by the Cycle 020 decision; broader kernel extraction requires a future reviewed wave.
+- The app-shell persistence adapter still imports `ProjectService`/`ProjectData` at the adapter/type boundary because the persistence contract itself was intentionally not redesigned in this wave.
+- The live smoke covers startup/keyboard/status without credentials; it does not prove credential-backed Drive save/open behavior.
+
+### Next bounded wave action recommendation
+
+After rereading `architecture-audit/wave-plan.md`, the current plan ends at Wave 020. Wave 020 resolved the app-shell production composition/browser-default boundary but intentionally left central application-use-case command ownership debt (`SelectionUseCases` direct delete-command construction) and the broader `World`/`CommandStack` application-kernel ownership question. The next action should therefore be a **reviewed wave-plan-extension stage**, not implementation: scout the current source tree and add the next central wave entry that addresses the most important remaining application boundary (likely selection/delete command-use-case ownership or application-kernel/runtime object ownership), with scope, delete list, success criteria, validation requirements, and bounded review before any new cycle starts.
+
+Do not begin that next wave from this closure stage; no next-wave implementation was performed.

@@ -1,0 +1,40 @@
+## remaining central waves after Wave 020 reread
+30:## Wave 001 — Invert the World/application boundary
+73:## Wave 002 — Split the projection-plane domain god-module around stable domain responsibilities
+112:## Wave 003 — Establish one authoritative world state and delete dead store/workspace paths
+153:## Wave 004 — Define the command/undo and persistence contract, then delete migration/private-cast paths
+192:## Wave 005 — Clean process-tree/dependency ownership and remove deprecated process APIs
+230:## Wave 006a — Canvas/tool command controllers
+278:## Wave 006b — Panel/toolbar command-intent cleanup
+324:## Wave 007 — Extract 2D rendering selectors and renderer adapters
+363:## Wave 008 — Extract 3D rendering scene adapters from `ThreeView.vue`
+399:## Wave 009 — Extract application shell services from `App.vue`
+437:## Wave 010 — Resolve backend/frontend project-contract architecture
+476:## Wave 011 — Tighten architecture tests and root validation gates
+513:## Wave 012 — Remove vacant placeholders, noisy debug surfaces, and obsolete operation docs
+551:## Wave 013 — Reconcile docs/specs with the cleaned architecture
+588:## Wave 014 — Establish validation contract ownership and delete invalid gates
+666:## Wave 015 — Converge frontend TypeScript contracts around owned boundaries
+789:## Wave 016 — Canvas presentation read ports and overlay interaction boundary
+861:## Wave 017 — Three presentation read ports and realization boundary
+939:## Wave 018 — Domain realization context boundary
+1035:## Wave 019 — Three scene-host lifecycle and renderer platform boundary
+1118:## Wave 020 — App-shell project session and browser integration boundary
+
+## Wave 006a/006b context still relevant
+230:## Wave 006a — Canvas/tool command controllers
+278:## Wave 006b — Panel/toolbar command-intent cleanup
+324:## Wave 007 — Extract 2D rendering selectors and renderer adapters
+363:## Wave 008 — Extract 3D rendering scene adapters from `ThreeView.vue`
+399:## Wave 009 — Extract application shell services from `App.vue`
+437:## Wave 010 — Resolve backend/frontend project-contract architecture
+476:## Wave 011 — Tighten architecture tests and root validation gates
+513:## Wave 012 — Remove vacant placeholders, noisy debug surfaces, and obsolete operation docs
+551:## Wave 013 — Reconcile docs/specs with the cleaned architecture
+588:## Wave 014 — Establish validation contract ownership and delete invalid gates
+666:## Wave 015 — Converge frontend TypeScript contracts around owned boundaries
+789:## Wave 016 — Canvas presentation read ports and overlay interaction boundary
+861:## Wave 017 — Three presentation read ports and realization boundary
+939:## Wave 018 — Domain realization context boundary
+1035:## Wave 019 — Three scene-host lifecycle and renderer platform boundary
+1118:## Wave 020 — App-shell project session and browser integration boundary
