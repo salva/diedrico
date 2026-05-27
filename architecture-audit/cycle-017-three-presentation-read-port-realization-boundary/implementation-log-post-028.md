@@ -1,0 +1,155 @@
+# Cycle 017 Implementation Log — Three presentation read ports and realization boundary (post-Wave-028)
+
+## Implementation summary
+
+Implemented the decision-selected Proposal Direct path from `decision-post-028.md`.
+
+Three presentation no longer exposes selector dependencies through the former broad `ThreeWorldReadPort` god-interface. The runtime boundary now creates `ThreePresentationReadPorts`, an explicit composition of concern-owned read ports:
+
+- `projectionPlanes` via `ThreeProjectionPlaneReadPort.ts`
+- `planarElements` via `ThreePlanarElementReadPort.ts`
+- `reconstructedElements` via `ThreeReconstructedElementReadPort.ts`
+- `guides` via `ThreeGuideReadPort.ts`
+- `hinges` via `ThreeHingeReadPort.ts`
+
+`ThreeWorldReadPort.ts` remains only as the composition/factory export for `createThreePresentationReadPorts` and re-exported public types. It no longer owns DTO traversal/classification bodies or a monolithic public interface.
+
+## Source files changed
+
+Production:
+
+- `frontend/src/application/threePresentation/ThreeWorldReadPort.ts`
+- `frontend/src/application/threePresentation/ThreePresentationReadModel.ts`
+- `frontend/src/application/threePresentation/ThreeRealizationContext.ts`
+- `frontend/src/application/threePresentation/ThreeProjectionPlaneReadPort.ts`
+- `frontend/src/application/threePresentation/ThreePlanarElementReadPort.ts`
+- `frontend/src/application/threePresentation/ThreeReconstructedElementReadPort.ts`
+- `frontend/src/application/threePresentation/ThreeGuideReadPort.ts`
+- `frontend/src/application/threePresentation/ThreeHingeReadPort.ts`
+- `frontend/src/application/threePresentation/ThreePresentationModel.ts`
+- `frontend/src/application/threePresentation/ThreePresentationSelector.ts`
+- `frontend/src/application/threePresentation/ProjectionPlane3DSelector.ts`
+- `frontend/src/application/threePresentation/PlanarElement3DSelector.ts`
+- `frontend/src/application/threePresentation/ReconstructedElement3DSelector.ts`
+- `frontend/src/application/threePresentation/Guide3DSelector.ts`
+- `frontend/src/application/threePresentation/Hinge3DSelector.ts`
+- `frontend/src/application/appShell/RuntimeSession.ts`
+- `frontend/src/application/appShell/RuntimeViewPorts.ts`
+- `frontend/src/components/panels/ThreeView.vue`
+
+Tests:
+
+- `frontend/tests/unit/application/threePresentation/threePresentationSelector.spec.ts`
+- `frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts`
+- `frontend/tests/unit/application/threePresentation/threePresentationArchitectureBoundary.spec.ts`
+- `frontend/tests/unit/components/panels/threeViewShellBoundary.spec.ts`
+
+No backend, docs, specs, package/tooling, persistence, command history/producer, scene-host, OrbitControls, or overlay CSS/layout files were changed.
+
+## Legacy surfaces deleted / proven gone
+
+Deleted from production source:
+
+- `createThreeWorldReadPort` broad factory.
+- `ThreeWorldReadPort` broad public interface with seven method families.
+- selector `Pick<ThreeWorldReadPort, ...>` dependencies.
+- `ProjectionPlane3DSelector.select(readPort: ThreeWorldReadPort, ...)`.
+- monolithic `ThreeWorldReadPort.ts` traversal/classification bodies.
+
+Localized residuals:
+
+- `ThreeWorldReadPort.ts` is retained as a composition/type export only because existing boundary imports already point at that module. It contains no per-concern traversal bodies and exposes named slices under `ThreePresentationReadPorts`.
+- `ThreePresentationPort.getReadPorts()` is a named slice-composition accessor used by `ThreeView.vue`; it replaces the old singular `getReadPort()` and does not expose `World` or a generic facade.
+
+Test seam cleanup:
+
+- Touched selector tests now use explicit read-port slice fixtures instead of one broad `as any` read port fixture.
+- Remaining `as never` casts in the concern adapter test are narrow synthetic domain-world fixture adapters needed to satisfy concrete `World` structural typing without introducing a broad mock port.
+
+## Realization-context ownership
+
+Added `ThreeRealizationContext.ts` as a tiny three-local typed `World` to `ProjectionElementRealizationContext & Element3DRealizationContext` factory. It contains no selector DTO behavior, style/visibility policy, persistence, command/undo, rendering lifecycle, mutation, app-kernel facade, or generic read-model methods beyond the existing realization context contract.
+
+No shared canvas helper was introduced. `CanvasWorldReadPort.ts` and `Projected3DCanvasReadPort.ts` were not touched.
+
+## ThreeView / pointer boundary
+
+`ThreeView.vue` was changed only mechanically from `getReadPort()`/`readPort` to `getReadPorts()`/`readPorts`. No scene-host lifecycle, OrbitControls, camera, renderer, CSS, overlay layout, or pointer-event behavior changed.
+
+Pointer-boundary evidence:
+
+- `frontend/tests/unit/components/panels/threeViewShellBoundary.spec.ts` passes.
+- Root and frontend Playwright e2e pass, including `current-ui-contract.spec.ts:89` — `3D overlay owns pointer interaction and does not pass drag gestures through to the 2D canvas`.
+
+## Protected source-control reconciliation
+
+Path-scoped pre-implementation diff for authorized Wave 017 files was empty.
+
+The protected unrelated dirty files named in the decision were not read for implementation logic, not edited, not staged, and not depended on:
+
+- `frontend/src/domain/calculations/Intersections.ts`
+- `frontend/src/domain/processTree/ActionGroup.ts`
+
+Broad MCP `git_status` overflowed before implementation, consistent with the decision context. Work therefore used path-scoped diff/status evidence and staged only the files listed in this log plus this implementation log/report.
+
+## Static scan evidence
+
+Logs under `architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/`:
+
+- `static-scan-three-port-refs-pretest.*` — pre-test scan after initial split.
+- `static-scans-final-rerun.*` — final protected-surface scan.
+- `static-scan-entity-split.*` — final scan after moving `ThreeEntityPresentationData` into `ThreePresentationReadModel.ts`.
+
+Findings:
+
+- Production Vue component scan shows no `World` import/injection in `ThreeView.vue`.
+- No `RuntimeWorld`, `WorldReadModel`, or `PresentationWorld` production facade was introduced.
+- `CanvasWorldReadPort.ts` has no public raw `getWorld`, `getProcessTree`, or realization-context seam reintroduced.
+- Concern selectors no longer import or type against `ThreeWorldReadPort`; the only `ThreeWorldReadPort.ts` references are composition-module imports/types and test guard strings.
+- `getReadPort()` was replaced by `getReadPorts()`; no dual singular/broad compatibility path remains.
+
+## Validation log index
+
+Initial expected failure while discovering script shape:
+
+- `focused-vitest-three-presentation.*` — failed because frontend package has no `test:unit` script; reran with `npm run test -- ...`.
+
+Focused tests:
+
+- `focused-vitest-three-presentation-green2.*` — passed 13 focused tests.
+- `focused-vitest-after-entity-split.*` — passed 13 focused tests after final DTO-base split.
+
+Lint / architecture:
+
+- `root-lint-rerun.*` — passed 11 architecture tests.
+- `frontend-lint-rerun.*` — passed 11 architecture tests.
+
+Full Vitest:
+
+- `root-full-vitest-rerun.*` — passed, exit code 0.
+- `frontend-full-vitest-rerun.*` — passed, exit code 0.
+
+Build:
+
+- `root-build.*` — passed `vue-tsc && vite build` through root workspace; Vite chunk-size warning only.
+- `frontend-build.*` — passed `vue-tsc && vite build`; Vite chunk-size warning only.
+- `frontend-build-after-entity-split.*` — passed after final DTO-base split; Vite chunk-size warning only.
+
+E2E / Playwright:
+
+- `root-e2e.*` — passed 10/10 tests, including the 3D overlay pointer-boundary test.
+- `frontend-e2e.*` — passed 10/10 tests, including the 3D overlay pointer-boundary test.
+
+Live preview:
+
+- `live-preview-reachability.*` — `curl -I http://127.0.0.1:5173/` returned HTTP 200. Existing preview server was reachable on the required port; no secret/config files were read.
+
+## Residual risks
+
+- `ThreeWorldReadPort.ts` remains as a historical filename for the composition factory/type exports. It is not a god-interface, but a future cleanup wave may rename it to remove stale naming entirely if that can be done without broad churn.
+- Vite continues to emit the pre-existing chunk-size warning during production builds; not attributable to this wave.
+
+## Next-wave candidates
+
+- Consider a narrow follow-up naming cleanup to rename the composition module from `ThreeWorldReadPort.ts` to a neutral `ThreePresentationReadPorts.ts` once no adjacent wave is using the historical filename.
+- Wave 018/domain realization work may still centralize or improve realization context contracts, but this implementation did not require domain realization API/semantic changes.

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Vector3, Vector4 } from 'three';
 import { Guide2D } from '@/domain/world/Guide';
 import { mat4x3 } from '@/utils/threeUtils';
-import { createThreeWorldReadPort } from '@/application/threePresentation/ThreeWorldReadPort';
+import { createThreePresentationReadPorts } from '@/application/threePresentation/ThreeWorldReadPort';
 import { ProjectionPlane3DSelector } from '@/application/threePresentation/ProjectionPlane3DSelector';
 import { PlanarElement3DSelector } from '@/application/threePresentation/PlanarElement3DSelector';
 import { ReconstructedElement3DSelector } from '@/application/threePresentation/ReconstructedElement3DSelector';
@@ -20,7 +20,7 @@ describe('threePresentation concern selectors', () => {
     const readPort = {
       getProjectionPlaneModels: () => [{ id: 'PH', kind: 'fixed', plane3DId: 'PH', realization: feasiblePlaneRealization }],
       getProjectionPlaneGridSource: () => ({ plane3DRealization: undefined, projectionRealization: feasiblePlaneRealization }),
-    } as any;
+    };
 
     const dtos = new ProjectionPlane3DSelector().select(readPort, true, true, true);
 
@@ -35,7 +35,7 @@ describe('threePresentation concern selectors', () => {
     const point = { id: 'p1', visualStyle: { color: 0x123456 }, realization: feasible({ position: new Vector3(2, 3, 1) }) };
     const readPort = {
       getPlanarPlaneModels: () => [{ id: 'PH', realization: feasiblePlaneRealization, points: [point], lines: [], circles: [] }],
-    } as any;
+    };
 
     expect(new PlanarElement3DSelector().select(readPort, false)).toEqual([]);
     const dtos = new PlanarElement3DSelector().select(readPort, true);
@@ -52,7 +52,7 @@ describe('threePresentation concern selectors', () => {
         segments: [{ id: 's3', visualStyle: { color: 0x0000aa }, realization: feasible({ startPoint: new Vector4(0, 0, 0, 1), endPoint: new Vector4(1, 0, 0, 1) }) }],
         planes: [{ id: 'plane3', realization: { feasible: true, originPoint: new Vector4(0, 0, 0, 1), normal: new Vector3(0, 0, 1) } }],
       }),
-    } as any;
+    };
 
     const kinds = new ReconstructedElement3DSelector().select(readPort, true).map(dto => dto.kind);
 
@@ -68,7 +68,7 @@ describe('threePresentation concern selectors', () => {
         lines: [],
         segments: [],
       }),
-    } as any;
+    };
 
     const selected = new Guide3DSelector().select(readPort, ['PH/guide-1']);
     const unselected = new Guide3DSelector().select(readPort, ['unrelated']);
@@ -79,7 +79,7 @@ describe('threePresentation concern selectors', () => {
   });
 
   it('builds hinge DTOs only from feasible hinge-line realizations when planes are visible', () => {
-    const readPort = { getHingeModels: () => [{ id: 'h1', realization: feasible({ point: new Vector4(0, 0, 0, 1), direction: new Vector3(0, 1, 0) }) }] } as any;
+    const readPort = { getHingeModels: () => [{ id: 'h1', realization: feasible({ point: new Vector4(0, 0, 0, 1), direction: new Vector3(0, 1, 0) }) }] } as never;
 
     const dtos = new Hinge3DSelector().select(readPort, true);
 
@@ -90,7 +90,7 @@ describe('threePresentation concern selectors', () => {
 
   it('adapts injected World to the narrow three-presentation read port at the boundary', () => {
     const guide = new Guide2D('PH/guide-1', 'PH/ref', 'PH/through', 'PH');
-    guide.realize2D = () => feasible({ point1: new Vector3(0, 0, 1), point2: new Vector3(1, 0, 1), getDirection: () => new Vector3(1, 0, 0) }) as any;
+    guide.realize2D = () => feasible({ point1: new Vector3(0, 0, 1), point2: new Vector3(1, 0, 1), getDirection: () => new Vector3(1, 0, 0) }) as never;
     const point = { id: 'p1', visualStyle: { color: 0x123456 }, realize2D: () => feasible({ position: new Vector3(2, 3, 1) }) };
     const world = {
       getAllProjectionPlanes: () => [{ ...plane, getAllPoints: () => [point] }],
@@ -103,12 +103,12 @@ describe('threePresentation concern selectors', () => {
       getAllPlanes: () => [],
       getLine2D: (id: string) => id === 'PH/guide-1' ? guide : undefined,
       getAllHingeLines: () => [],
-    } as any;
+    };
 
-    const readPort = createThreeWorldReadPort(world);
+    const readPorts = createThreePresentationReadPorts(world as never);
 
-    expect(readPort.getProjectionPlaneModels()).toHaveLength(1);
-    expect(readPort.getPlanarPlaneModels()[0].points[0]).toMatchObject({ id: 'p1' });
-    expect(readPort.getSelectedGuideModels(['PH/guide-1'])[0]).toMatchObject({ id: 'PH/guide-1', planeId: 'PH' });
+    expect(readPorts.projectionPlanes.getProjectionPlaneModels()).toHaveLength(1);
+    expect(readPorts.planarElements.getPlanarPlaneModels()[0].points[0]).toMatchObject({ id: 'p1' });
+    expect(readPorts.guides.getSelectedGuideModels(['PH/guide-1'])[0]).toMatchObject({ id: 'PH/guide-1', planeId: 'PH' });
   });
 });

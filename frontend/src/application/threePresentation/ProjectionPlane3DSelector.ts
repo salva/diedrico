@@ -3,11 +3,11 @@ import { applyMatrix4x3, domainDirectionToThreeJS, domainToThreeJS, type Matrix4
 import { convertPlaneRectangleTo2D, generateClippedGrid, type Segment2D } from '@/utils/rectangleGrid';
 import { getPlaneMeshSize, PLANE_RENDERING_CONFIG } from '@/config/rendering3D';
 import type { AxisDto, LabelDto, ProjectionPlanePresentationDto, SegmentGeometryDto, Vec3 } from './ThreePresentationModel';
-import type { ThreeProjectionPlaneReadModel, ThreeWorldReadPort } from './ThreeWorldReadPort';
+import type { ThreeProjectionPlaneReadModel, ThreeProjectionPlaneReadPort } from './ThreeProjectionPlaneReadPort';
 import { THREE_STYLE } from './ThreeStylePolicy';
 
 export class ProjectionPlane3DSelector {
-  select(readPort: ThreeWorldReadPort, showPlanes: boolean, showGrid: boolean, showReferenceAxes: boolean): ProjectionPlanePresentationDto[] {
+  select(readPort: ThreeProjectionPlaneReadPort, showPlanes: boolean, showGrid: boolean, showReferenceAxes: boolean): ProjectionPlanePresentationDto[] {
     const items: ProjectionPlanePresentationDto[] = [];
     if (showReferenceAxes) items.push(...referenceAxes());
     if (!showPlanes) return items;
@@ -33,7 +33,7 @@ export class ProjectionPlane3DSelector {
   }
 }
 
-function gridSegments(readPort: Pick<ThreeWorldReadPort, 'getProjectionPlaneGridSource'>, planeId: ThreeProjectionPlaneReadModel['id']): Segment2D[] {
+function gridSegments(readPort: ThreeProjectionPlaneReadPort, planeId: ThreeProjectionPlaneReadModel['id']): Segment2D[] {
   const { plane3DRealization, projectionRealization } = readPort.getProjectionPlaneGridSource(planeId);
   if (!plane3DRealization?.feasible || !projectionRealization) return fallbackGrid();
   const corners = plane3DRealization.getRectangleCorners(PLANE_RENDERING_CONFIG.MESH_SIZE / 2) as [Vector4, Vector4, Vector4, Vector4];

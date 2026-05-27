@@ -15,13 +15,13 @@ export class ThreePresentationSelector {
   ) {}
 
   select(input: ThreePresentationInput): ThreePresentationModel {
-    const { readPort, displayOptions, selectedIds } = input;
+    const { readPorts, displayOptions, selectedIds } = input;
     return {
-      projectionPlanes: this.projectionPlanes.select(readPort, displayOptions.showPlanes, displayOptions.showGrid, displayOptions.showReferenceAxes),
-      planarElements: this.planarElements.select(readPort, displayOptions.show2DElementsOnPlanes),
-      reconstructedElements: this.reconstructedElements.select(readPort, displayOptions.showPlanes),
-      guides: this.guides.select(readPort, selectedIds),
-      hinges: this.hinges.select(readPort, displayOptions.showPlanes),
+      projectionPlanes: this.projectionPlanes.select(readPorts.projectionPlanes, displayOptions.showPlanes, displayOptions.showGrid, displayOptions.showReferenceAxes),
+      planarElements: this.planarElements.select(readPorts.planarElements, displayOptions.show2DElementsOnPlanes),
+      reconstructedElements: this.reconstructedElements.select(readPorts.reconstructedElements, displayOptions.showPlanes),
+      guides: this.guides.select(readPorts.guides, selectedIds),
+      hinges: this.hinges.select(readPorts.hinges, displayOptions.showPlanes),
     };
   }
 }

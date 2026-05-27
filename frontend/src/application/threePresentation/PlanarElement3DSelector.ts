@@ -1,11 +1,11 @@
 import { CatmullRomCurve3, Vector3 } from 'three';
 import { applyMatrix4x3, domainToThreeJS, type Matrix4x3 } from '@/utils/threeUtils';
 import type { PlanarElementPresentationDto, Vec3 } from './ThreePresentationModel';
-import type { ThreeWorldReadPort } from './ThreeWorldReadPort';
+import type { ThreePlanarElementReadPort } from './ThreePlanarElementReadPort';
 import { isVisible2D, planarStyle, THREE_STYLE } from './ThreeStylePolicy';
 
 export class PlanarElement3DSelector {
-  select(readPort: Pick<ThreeWorldReadPort, 'getPlanarPlaneModels'>, show2DElementsOnPlanes: boolean): PlanarElementPresentationDto[] {
+  select(readPort: ThreePlanarElementReadPort, show2DElementsOnPlanes: boolean): PlanarElementPresentationDto[] {
     if (!show2DElementsOnPlanes) return [];
     const items: PlanarElementPresentationDto[] = [];
     for (const plane of readPort.getPlanarPlaneModels()) {

@@ -2,7 +2,7 @@ import type { Matrix3, Vector3 } from 'three';
 import type { ViewportTransform } from '@/services/SVGRenderer';
 import type { CanvasInteractionQuery } from '@/application/canvasPresentation/CanvasInteractionQuery';
 import type { CanvasPresentationModel } from '@/application/canvasPresentation/CanvasPresentationModel';
-import type { ThreeWorldReadPort } from '@/application/threePresentation/ThreeWorldReadPort';
+import type { ThreePresentationReadPorts } from '@/application/threePresentation/ThreeWorldReadPort';
 import type { ITool, ToolResult } from '@/tools/ITool';
 import type { useToolStore } from '@/stores/toolStore';
 import type { FreePointMoveSession, ToolCommandSink } from '@/application/tools/ToolCommandIntents';
@@ -131,7 +131,7 @@ export interface ElementsPanelPort extends RuntimeChangeSubscriptionPort {
 }
 
 export interface ThreePresentationPort extends RuntimeChangeSubscriptionPort {
-  getReadPort(): ThreeWorldReadPort;
+  getReadPorts(): ThreePresentationReadPorts;
 }
 
 export interface ActivePlaneSelectorPort extends RuntimeChangeSubscriptionPort {

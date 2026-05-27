@@ -42,12 +42,12 @@ const threePresentationPort = inject(ThreePresentationInjectionKey);
 if (!threePresentationPort) {
   throw new Error('Three presentation port not provided');
 }
-const readPort = threePresentationPort.getReadPort();
+const readPorts = threePresentationPort.getReadPorts();
 const runtime = new ThreeViewRuntime();
 let unsubscribeWorldChanges: (() => void) | undefined;
 
 function selectedIds(): string[] { return [...selectionStore.selectedIdsArray]; }
-function refreshThreeView(): void { runtime.refresh({ readPort, displayOptions: displayOptions.value, selectedIds: selectedIds() }); }
+function refreshThreeView(): void { runtime.refresh({ readPorts, displayOptions: displayOptions.value, selectedIds: selectedIds() }); }
 function handleDisplayChange(): void { refreshThreeView(); }
 function handleResize(): void { runtime.resize(); }
 

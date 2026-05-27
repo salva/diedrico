@@ -10,7 +10,7 @@ import { ProcessHistoryController } from '@/application/processHistory/ProcessHi
 import type { ActivePlanePort, CommandHistoryPort, OpenedProjectSession, ProjectSessionPersistencePort, RuntimeSessionRestoreHandle, RuntimeSessionSnapshotHandle, SelectionReadPort } from './AppShellPorts';
 import { CanvasPresentationController } from '@/application/canvasPresentation/CanvasPresentationController';
 import { createCanvasWorldReadPort } from '@/application/canvasPresentation/CanvasWorldReadPort';
-import { createThreeWorldReadPort } from '@/application/threePresentation/ThreeWorldReadPort';
+import { createThreePresentationReadPorts } from '@/application/threePresentation/ThreeWorldReadPort';
 import { screenTo3D } from '@/utils/coordinateTransform';
 import { FreePoint2D } from '@/domain/world/Point';
 import type { CanvasViewPort, ProcessTreeReadPort, ElementsPanelPort, ThreePresentationPort, ActivePlaneSelectorPort } from './RuntimeViewPorts';
@@ -91,11 +91,11 @@ export class RuntimeSession {
   }
 
   threePresentationPort(): ThreePresentationPort {
-    const readPort = createThreeWorldReadPort(this.world);
+    const readPorts = createThreePresentationReadPorts(this.world);
     return {
       subscribeToChanges: (listener) => this.world.subscribeToChanges(listener),
       unsubscribeFromChanges: (listener) => this.world.unsubscribeFromChanges(listener),
-      getReadPort: () => readPort,
+      getReadPorts: () => readPorts,
     };
   }
 

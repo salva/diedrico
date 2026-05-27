@@ -2,11 +2,11 @@ import { Quaternion, Vector3, Vector4 } from 'three';
 import { domainDirectionToThreeJS, domainToThreeJS } from '@/utils/threeUtils';
 import { getPlaneMeshSize } from '@/config/rendering3D';
 import type { ReconstructedElementPresentationDto, Vec3 } from './ThreePresentationModel';
-import type { ThreeWorldReadPort } from './ThreeWorldReadPort';
+import type { ThreeReconstructedElementReadPort } from './ThreeReconstructedElementReadPort';
 import { isVisible3D, reconstructedStyle, THREE_STYLE } from './ThreeStylePolicy';
 
 export class ReconstructedElement3DSelector {
-  select(readPort: Pick<ThreeWorldReadPort, 'getReconstructedModels'>, showPlanes: boolean): ReconstructedElementPresentationDto[] {
+  select(readPort: ThreeReconstructedElementReadPort, showPlanes: boolean): ReconstructedElementPresentationDto[] {
     if (!showPlanes) return [];
     const items: ReconstructedElementPresentationDto[] = [];
     const models = readPort.getReconstructedModels();

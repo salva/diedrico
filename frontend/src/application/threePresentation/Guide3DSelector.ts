@@ -2,11 +2,11 @@ import { Quaternion, Vector3, Vector4 } from 'three';
 import { applyMatrix4x3, domainDirectionToThreeJS, domainToThreeJS, intersectLinePlane3D, intersectSegmentPlane3D, isPointOnPlane3D } from '@/utils/threeUtils';
 import { getPlaneMeshSize } from '@/config/rendering3D';
 import type { GuidePresentationDto, Vec3 } from './ThreePresentationModel';
-import type { ThreeGuideIntersectionReadModel, ThreeWorldReadPort } from './ThreeWorldReadPort';
+import type { ThreeGuideIntersectionReadModel, ThreeGuideReadPort } from './ThreeGuideReadPort';
 import { isVisible3D, THREE_STYLE } from './ThreeStylePolicy';
 
 export class Guide3DSelector {
-  select(readPort: Pick<ThreeWorldReadPort, 'getSelectedGuideModels' | 'getGuideIntersectionModels'>, selectedIds: readonly string[]): GuidePresentationDto[] {
+  select(readPort: ThreeGuideReadPort, selectedIds: readonly string[]): GuidePresentationDto[] {
     const items: GuidePresentationDto[] = [];
     for (const guide of readPort.getSelectedGuideModels(selectedIds)) {
       const planeReal = guide.planeRealization;

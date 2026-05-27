@@ -1,11 +1,11 @@
 import { Vector3 } from 'three';
 import { domainDirectionToThreeJS, domainToThreeJS } from '@/utils/threeUtils';
 import type { HingePresentationDto, Vec3 } from './ThreePresentationModel';
-import type { ThreeWorldReadPort } from './ThreeWorldReadPort';
+import type { ThreeHingeReadPort } from './ThreeHingeReadPort';
 import { THREE_STYLE } from './ThreeStylePolicy';
 
 export class Hinge3DSelector {
-  select(readPort: Pick<ThreeWorldReadPort, 'getHingeModels'>, showPlanes: boolean): HingePresentationDto[] {
+  select(readPort: ThreeHingeReadPort, showPlanes: boolean): HingePresentationDto[] {
     if (!showPlanes) return [];
     const items: HingePresentationDto[] = [];
     for (const hingeLine of readPort.getHingeModels()) {
