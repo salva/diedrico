@@ -32,6 +32,10 @@ Tests:
 
 - New `frontend/tests/unit/application/commandKernel/ApplicationCommandExecutor.test.ts`
   - Covers committed command push, rollback/failure propagation, empty command handling, non-undoable command behavior if currently needed, and stack notification/count behavior.
+  - Proves the executor preserves the current command lifecycle contract: build operations into an open command, commit before push, push only committed commands, preserve non-undoable command handling if encountered, notify subscribers on the same boundary as `CommandStack.push()`, and leave undo/redo stack counts observable as before.
+  - Proves redo invalidation after a newly pushed delete command and verifies undo/redo counts and element state across push, undo, redo, and new-command-after-undo sequences.
+  - Proves failures during executor command creation, operation building, commit, or push propagate/return failure without letting selection deletion clear selection or treating a partial command as accepted.
+  - Proves empty/no-op selection deletion does not call the executor in a way that creates, commits, or pushes a command.
 - New or updated selection deletion tests as in the direct proposal.
 - Updated app-shell boundary/runtime tests to enforce that `SelectionUseCases` no longer imports command primitives and that the executor is wired at runtime.
 - Existing keyboard shortcut router tests remain focused on routing.
@@ -85,6 +89,14 @@ The executor path must prove that extracting the `new Command` → build operati
 
 ## Validation plan
 
+Same mandatory cadence as the direct proposal, with additional focused executor tests. Validation must explicitly prove semantic preservation of the command lifecycle being moved behind the executor:
+
+- Selection clears only after successful command creation, operation build, commit, and stack push through the selection/delete service and executor.
+- Failures during command creation, operation building, commit, or push leave selection unchanged and do not accept a partial delete.
+- Undo/redo stack counts, redo invalidation, committed-only push behavior, non-undoable command treatment where relevant, and `CommandStack.push()` notification timing remain consistent with the current stack contract.
+- Empty/no-op selection deletion does not create, commit, or push any command and does not change undo/redo counts.
+- The executor scope is deliberately tiny: command lifecycle choreography only. It must not own persistence/autosave/UI behavior, command descriptor serialization/replay, schema migration, operation registry redesign, backend/docs/debug/package-tooling, non-selection command migration, or application-kernel/runtime ownership redesign.
+
 Same mandatory cadence as the direct proposal, with additional focused executor tests:
 
 1. Pre-edit scoped status/diff and static scans.
@@ -96,6 +108,8 @@ Same mandatory cadence as the direct proposal, with additional focused executor 
 7. Live preview refresh on `0.0.0.0:5173`, HTTP probes, and live browser smoke for create/select/delete/undo without real Drive credentials.
 
 ## Stop conditions for broader redesign
+
+The executor stops at a reusable command lifecycle primitive for the selection/delete slice. It is not a new application kernel, persistence coordinator, command replay system, UI/event bus, autosave owner, or migration vehicle for every direct command producer found by static scan. The implementation must stop and request a reviewed delta before widening beyond the selected deletion boundary.
 
 Stop for a reviewed plan edit or future wave if any of these become necessary:
 

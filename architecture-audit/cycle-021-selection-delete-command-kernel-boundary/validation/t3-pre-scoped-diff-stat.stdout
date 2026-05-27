@@ -1,0 +1,7 @@
+ .../corrections-round-01.md                        | 61 ++++++++++------------
+ .../proposals/proposal-direct.md                   | 16 ++++--
+ .../proposals/proposal-restructure.md              | 14 +++++
+ .../validation/final-scoped-diff-stat.stdout       | 13 ++---
+ .../validation/final-scoped-status.stdout          | 31 ++++++++---
+ .../validation/live-preview.stdout                 |  3 ++
+ 6 files changed, 86 insertions(+), 52 deletions(-)

@@ -1,0 +1,13 @@
+ .../corrections-round-01.md                        | 61 ++++++++++------------
+ .../proposals/proposal-direct.md                   | 16 ++++--
+ .../proposals/proposal-restructure.md              | 14 +++++
+ frontend/src/commands/Command.ts                   |  6 +--
+ .../commands/factories/DeletionSequenceFactory.ts  |  2 +-
+ .../src/commands/factories/PointSequenceFactory.ts |  3 ++
+ frontend/src/commands/operations/IOperation.ts     |  9 ++--
+ .../world/AddCircleCircleIntersectionPoint2DOp.ts  | 12 +++--
+ .../commands/operations/world/AddFreePointOp.ts    | 12 +++--
+ .../world/AddLineCircleIntersectionPoint2DOp.ts    | 12 +++--
+ .../world/AddLineLineIntersectionPoint2DOp.ts      | 12 +++--
+ .../world/AddSiblingIntersectionPoint2DOp.ts       | 12 +++--
+ 12 files changed, 108 insertions(+), 63 deletions(-)

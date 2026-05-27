@@ -39,9 +39,11 @@ Tests:
   - Preserve Delete/Backspace routing to `selection.deleteSelected()` and Ctrl/Cmd+A routing to `selectAllInActivePlane()`.
 - New focused test such as `frontend/tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts`
   - Covers successful cascade deletion with real `World`/`CommandStack` where practical.
-  - Covers empty input/no-op if the service accepts selected ids directly.
-  - Covers failure behavior without clearing selection on failure.
-  - Covers command-stack push and undo/redo integration.
+  - Proves empty input/no-op behavior returns without constructing, committing, or pushing a command.
+  - Proves command construction, cascade factory invocation, `commit()`, and `CommandStack.push()` all complete before the caller is allowed to clear selection.
+  - Covers failures during command creation, cascade operation building, commit, and stack push; each failure path must propagate/return failure and must not clear selection.
+  - Covers `CommandStack.push()` invariants that are semantically relevant to this boundary: committed-only push behavior, preservation of non-undoable command handling if encountered, subscriber notification timing, undo/redo stack counts, and redo invalidation after a new delete command.
+  - Covers undo/redo integration by asserting stack counts and restored/deleted element state before push, after push, after undo, after redo, and after a new command clears redo history.
 - New or updated focused test for `SelectionUseCases`
   - Covers no-op empty selection, successful service call followed by selection clearing, failed service call not clearing selection, cascade preview through typed query, and select-all in active plane.
 
@@ -97,6 +99,14 @@ The implementation must prove the extracted selection/delete command boundary pr
 - The service boundary remains limited to selection/delete command construction and execution; it must not absorb persistence, autosave, UI notification, replay/serialization, backend/API, package/tooling, docs/specs, or other application command-producer responsibilities.
 
 ## Validation plan
+
+The implementation validation must explicitly prove semantic preservation of the extracted selection/delete command boundary, not merely exercise a happy path. Required assertions are:
+
+- Selection is cleared only after successful selected-id read, command creation, cascade operation build, `commit()`, and `CommandStack.push()`.
+- Failures thrown or reported during command construction, cascade building, commit, or push leave the selection unchanged and do not silently create a partially accepted delete.
+- Undo/redo stack counts, redo invalidation after a new delete, and `CommandStack.push()` notification behavior match the current stack contract.
+- Empty selection or empty service input is a no-op that does not instantiate, commit, or push a command and does not perturb undo/redo counts.
+- The new service remains the executor boundary for selection/delete only: it owns `Command`, `DeletionSequenceFactory`, `commit()`, and `CommandStack.push()` for this slice, but it does not absorb persistence/autosave/UI callbacks, command serialization/replay, schema migration, backend/docs/debug/package-tooling, or non-selection command producers.
 
 Implementation logs must capture stdout/stderr under `architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/`:
 

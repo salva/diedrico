@@ -1,9 +1,6 @@
- .../corrections-round-01.md                        | 61 +++++++++----------
- .../proposals/proposal-direct.md                   | 16 ++++-
+ .../corrections-round-01.md                        | 61 ++++++++++------------
+ .../proposals/proposal-direct.md                   | 16 ++++--
  .../proposals/proposal-restructure.md              | 14 +++++
- .../src/application/appShell/AppShellRuntime.ts    |  6 +-
- .../src/application/appShell/SelectionUseCases.ts  | 11 +---
- frontend/tests/e2e/keyboard-shortcuts.spec.ts      | 34 +++++++++++
- .../application/appShell/AppShellBoundary.test.ts  | 10 +++-
- .../appShell/AppShellRuntimeUseCases.test.ts       | 69 +++++++++++++++++++++-
- 8 files changed, 171 insertions(+), 50 deletions(-)
+ .../validation/final-scoped-diff-stat.stdout       |  9 ----
+ .../validation/final-scoped-status.stdout          | 31 ++++++++---
+ 5 files changed, 78 insertions(+), 53 deletions(-)

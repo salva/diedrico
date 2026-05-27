@@ -1,0 +1,18 @@
+architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/t1b-focused-vitest.stdout:29: Test Files  4 passed (4)
+architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/t1b-focused-vitest.stdout:30:      Tests  36 passed (36)
+architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/root-lint.stdout:21: Test Files  4 passed (4)
+architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/root-lint.stdout:22:      Tests  11 passed (11)
+architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/frontend-lint.stdout:17: Test Files  4 passed (4)
+architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/frontend-lint.stdout:18:      Tests  11 passed (11)
+architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/root-vitest.stdout:587:stdout | tests/integration/factories/AllFactories.spec.ts > Factory Integration Tests > GuideSequenceFactory Integration > should create guide with sibling on HHL and support undo/redo
+architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/root-vitest.stdout:904:stdout | tests/integration/guide-creation.test.ts > Guide Creation - Integration Tests > Regular Line Reference > should create guide on regular line without sibling
+architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/root-vitest.stdout:910:stdout | tests/integration/guide-creation.test.ts > Guide Creation - Integration Tests > Error Prevention > should not throw when creating guide on non-hinge line
+architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/root-vitest.stdout:953: Test Files  110 passed | 1 skipped (111)
+architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/root-vitest.stdout:954:      Tests  1257 passed | 45 skipped | 11 todo (1313)
+architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/frontend-vitest.stdout:565:stdout | tests/integration/factories/AllFactories.spec.ts > Factory Integration Tests > GuideSequenceFactory Integration > should create guide with sibling on HHL and support undo/redo
+architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/frontend-vitest.stdout:899:stdout | tests/integration/guide-creation.test.ts > Guide Creation - Integration Tests > Regular Line Reference > should create guide on regular line without sibling
+architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/frontend-vitest.stdout:905:stdout | tests/integration/guide-creation.test.ts > Guide Creation - Integration Tests > Error Prevention > should not throw when creating guide on non-hinge line
+architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/frontend-vitest.stdout:949: Test Files  110 passed | 1 skipped (111)
+architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/frontend-vitest.stdout:950:      Tests  1257 passed | 45 skipped | 11 todo (1313)
+architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/root-e2e.stdout:21:[1A[2K  9 passed (13.6s)
+architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/frontend-e2e.stdout:17:[1A[2K  9 passed (13.5s)

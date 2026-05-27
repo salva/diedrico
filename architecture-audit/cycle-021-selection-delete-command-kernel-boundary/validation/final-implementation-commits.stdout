@@ -1,0 +1,8 @@
+4b18667 [t1b-finish-selection-delete-boundary] Finish Cycle 021 validation evidence
+1a71997 [tsk-t1-implement-selection-delete-boundary] [t1-implement-selection-delete-boundary] Extract selection delete command service
+435395d [t1-implement-direct-boundary] Extract app shell production boundary
+57dd701 [tsk-t2-correct-e2e-validation-contracts] [t2-correct-e2e-validation-contracts] correct stale e2e validation selectors
+1b1f37c [tsk-t1-implement-validation-contract-ownership] [t1-implement-validation-contract-ownership] repair validation contract ownership surfaces
+241f9d6 [tsk-t1-implement-wave-011-restructure] [t1-implement-wave-011-restructure] tighten architecture validation gates
+47e99eb [tsk-t1-implement-wave-010-deletion-contract] [t1-implement-wave-010-deletion-contract] delete stale backend project contract
+4bae102 [tsk-t2-correct-review-blockers] [t2-correct-review-blockers] add app-shell lifecycle coverage

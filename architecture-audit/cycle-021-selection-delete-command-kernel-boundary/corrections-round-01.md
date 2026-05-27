@@ -1,48 +1,43 @@
-# Cycle 021 Corrections Round 01
+# Cycle 021 Corrections Round 01 — Proposal blocker response
 
-## Inputs inspected
+## Source reviewed
 
-- `reviews/round-01-review.md`
-- `proposals/proposal-direct.md`
-- `proposals/proposal-restructure.md`
-- Scoped pre-correction status/diff logs: `corrections-round-01-pre-status.stdout`, `corrections-round-01-pre-diff.stdout`
+- `reviews/round-01-review.md` reported one blocking issue: both proposals needed explicit semantic-preservation validation for the command lifecycle boundary being extracted.
+- `proposals/proposal-direct.md` and `proposals/proposal-restructure.md` were edited in place.
+- This correction remains planning-only: no production source, tests, packages, backend, specs, debug files, config, secrets, or stale audit-history artifacts were changed.
 
 ## Blocker-to-edit map
 
-### Blocker: semantic-preservation checks were too implicit
+### Blocker: selection clears only after successful command lifecycle
 
-Round 01 required both proposals to explicitly prove command lifecycle preservation at the extracted selection/delete boundary. Edits made:
+- `proposal-direct.md`: the selection-deletion service test requirements now state that command creation, cascade factory invocation, `commit()`, and `CommandStack.push()` must complete before the caller may clear selection; the validation plan repeats this as a required semantic-preservation assertion.
+- `proposal-restructure.md`: executor and validation requirements now state that selection clears only after successful command creation, operation build, commit, and stack push through the service/executor.
 
-- `proposals/proposal-direct.md` now contains a dedicated **Semantic-preservation validation requirements** section requiring tests for:
-  - selection clearing only after successful command creation, cascade operation construction, `commit()`, and `CommandStack.push()`;
-  - build/factory/commit/push failures not clearing selection;
-  - undo stack counts, redo stack counts, redo invalidation, and stack notification timing matching the current `CommandStack.push()` contract;
-  - empty/no-op behavior not creating, committing, or pushing commands;
-  - non-undoable command behavior remaining governed by `CommandStack`;
-  - the service boundary not absorbing persistence, autosave, UI, replay/serialization, backend/API, package/tooling, docs/specs, or unrelated command producers.
-- `proposals/proposal-direct.md` validation plan now requires focused service and use-case tests to assert those semantics directly rather than relying on generic integration coverage.
+### Blocker: failures during build/commit/push must not clear selection
 
-- `proposals/proposal-restructure.md` now contains an equivalent **Semantic-preservation validation requirements** section requiring tests for:
-  - selection clearing only after successful selected-id command creation, cascade operation construction, executor commit, and `CommandStack.push()`;
-  - selection deletion service, builder, factory, executor commit, and stack push failures not clearing selection;
-  - undo/redo counts, redo invalidation, and notification timing matching current stack behavior;
-  - empty/no-op paths not allocating, committing, pushing, or changing stack counts;
-  - non-undoable command behavior staying at the stack contract boundary;
-  - executor scope limited to selection/delete command lifecycle choreography.
-- `proposals/proposal-restructure.md` validation plan now calls out these semantic assertions directly in the focused executor/selection/app-shell tests.
+- `proposal-direct.md`: focused service tests now require failure coverage for command creation, cascade operation building, commit, and stack push, with selection unchanged on every failure path.
+- `proposal-restructure.md`: executor tests and validation now require failure propagation/return without accepting partial deletes or allowing selection deletion to clear selection.
 
-### Blocker: executor scope limits needed to be explicit
+### Blocker: undo/redo counts and redo invalidation must preserve `CommandStack.push()` behavior
 
-Round 01 warned that the restructure option could expand into a general application kernel. Edits made:
+- `proposal-direct.md`: focused tests now require stack-count assertions before push, after push, after undo, after redo, and after a new command clears redo history. The validation plan requires undo/redo counts, redo invalidation, and stack notification behavior to match the current contract.
+- `proposal-restructure.md`: executor tests now require undo/redo count and element-state checks across push/undo/redo/new-command-after-undo sequences, including redo invalidation.
 
-- `proposals/proposal-restructure.md` semantic-preservation requirements now state that the executor must not absorb persistence/autosave, UI concerns, replay/serialization, operation registry redesign, backend/API behavior, package/tooling, docs/specs, or migration of canvas/tool/process-history/toolbar/world-initialization command producers.
-- `proposals/proposal-restructure.md` risk text now expands the god-service warning to include replay/serialization, backend/API behavior, package/tooling, docs/specs, and non-selection command producers.
-- Existing stop conditions remain in place and continue to require a reviewed plan edit or future wave if non-selection command migration, persistence/replay, `CommandStack` public behavior changes, or `AppShellRuntime` ownership changes become necessary.
+### Blocker: committed-only and non-undoable push behavior must remain explicit
 
-## Scope boundary confirmation
+- `proposal-direct.md`: service tests and validation now call out `CommandStack.push()` invariants, including committed-only push behavior and preservation of non-undoable command handling where applicable.
+- `proposal-restructure.md`: executor tests and validation now require committed-only push behavior and non-undoable command treatment to remain consistent with the current stack contract.
 
-This corrections round edited only Cycle 021 audit artifacts and the task report. It did not implement production source/test/package/backend/docs/spec/config changes, did not read protected secret/config files, and did not start implementation. The corrected artifacts preserve the Cycle 021 stop condition: remove direct `Command`/`DeletionSequenceFactory` construction from `SelectionUseCases` for selection/delete without broad persistence schema/replay work, non-selection command migration, backend/docs/debug/package-tooling cleanup, or application-kernel redesign.
+### Blocker: empty/no-op path must not create or push a command
 
-## Recommended next stage
+- `proposal-direct.md`: empty input coverage now explicitly requires returning without constructing, committing, or pushing a command and without perturbing undo/redo counts.
+- `proposal-restructure.md`: executor and validation requirements now state empty/no-op selection deletion must not create, commit, or push any command and must not change undo/redo counts.
 
-Proceed to `cycle-021-review-round-02` so the reviewer can confirm the blockers were materially addressed before decision or implementation.
+### Blocker: executor abstraction must not broaden the wave
+
+- `proposal-direct.md`: validation now defines the selection/delete service as the executor boundary for this slice only and excludes persistence/autosave/UI callbacks, serialization/replay, schema migration, backend/docs/debug/package-tooling, and non-selection command producers.
+- `proposal-restructure.md`: validation and stop-condition sections now clarify that the executor is only command lifecycle choreography and is not a new application kernel, persistence coordinator, replay system, UI/event bus, autosave owner, or migration vehicle for all direct command producers.
+
+## Recommendation
+
+Proceed to `cycle-021-review-round-02` so the reviewer can verify these material proposal edits against the round-01 blockers before any decision or implementation stage.

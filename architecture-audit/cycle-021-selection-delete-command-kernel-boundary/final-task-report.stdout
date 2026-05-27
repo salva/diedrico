@@ -1,0 +1,112 @@
+{
+  "task_id": "t1-write-cycle-021-decision",
+  "stage_id": "cycle-021-decision",
+  "status": "completed",
+  "commit_sha": "679beece434cfcb5689f8e79e2d07227947d4628",
+  "summary": "Wrote the Cycle 021 planning-only decision at architecture-audit/cycle-021-selection-delete-command-kernel-boundary/decision.md. The decision records review convergence, cites round-02 NO BLOCKING ISSUES, summarizes the round-01 blocker and corrections-round-01 semantic-preservation edits, selects proposal-direct.md, rejects proposal-restructure.md as overbroad/fallback-only, and binds the exact implementation scope, deletion list, protected out-of-scope surfaces, validation/log requirements, source-control hygiene, stop conditions, and residual risks. No production source, tests, packages, backend, docs/specs, config, or tooling implementation changes were made. Scoped source-control/log evidence was captured under the Cycle 021 audit directory.",
+  "checklist_results": [
+    {
+      "item": "Inspect current git diff/status and reviewed Cycle 021 artifacts first; no source implementation occurs.",
+      "required": true,
+      "passed": true,
+      "notes": "Inspected scoped git status/diff using decision-scoped-status and decision-scoped-diff-stat logs. Read scope-check.md, proposal-direct.md, proposal-restructure.md, round-01 review, corrections-round-01, round-02 review, and the wave plan. No source/test/package implementation files were edited."
+    },
+    {
+      "item": "Write architecture-audit/cycle-021-selection-delete-command-kernel-boundary/decision.md.",
+      "required": true,
+      "passed": true,
+      "notes": "Created decision.md with a complete Cycle 021 planning decision."
+    },
+    {
+      "item": "Decision declares review convergence status, cites round-02 NO BLOCKING ISSUES, and records correction history from round 01 to round 02.",
+      "required": true,
+      "passed": true,
+      "notes": "Decision status section records convergence complete and round-02 NO BLOCKING ISSUES. Correction/review history section summarizes the round-01 blocker and the corrections-round-01 edits verified by round 02."
+    },
+    {
+      "item": "Decision selects proposal-direct.md or justifies an alternative; rejects proposal-restructure.md without broadening scope if direct is selected.",
+      "required": true,
+      "passed": true,
+      "notes": "Selected proposal-direct.md. Rejected proposal-restructure.md as broader than necessary and fallback-only for future reviewed work."
+    },
+    {
+      "item": "Decision binds exact implementation scope, files/surfaces to change or delete, executor boundary rules, semantic-preservation validation requirements, forbidden repairs, validation/log locations, preview/live Playwright requirements, stop conditions, residual risks, and protected out-of-scope surfaces.",
+      "required": true,
+      "passed": true,
+      "notes": "Decision includes bound implementation scope, allowed production/test files, required delete list, executor boundary rules, semantic-preservation requirements, validation/log requirements under validation/, live preview/Playwright requirements, source-control hygiene, stop conditions, residual risks, and protected out-of-scope surfaces."
+    },
+    {
+      "item": "Decision includes source-control hygiene instructions for adjacent dirty files and forbids reverting or incorporating them unless directly authorized.",
+      "required": true,
+      "passed": true,
+      "notes": "Source-control hygiene section instructs the next stage to capture scoped status/diff, avoid reverting/incorporating adjacent dirty files unless directly required, stay on develop, commit only intentional changes, and avoid secret/config reads."
+    },
+    {
+      "item": "Decision recommends the next implementation stage only if review convergence has no blockers; otherwise recommends corrections/review.",
+      "required": true,
+      "passed": true,
+      "notes": "Because round-02 review has no blocking issues, decision recommends cycle-021-implement-selection-delete-command-kernel-boundary."
+    },
+    {
+      "item": "No source/test/package implementation, package/tooling churn, broad test rewrite, stale audit-history mining, or secret/config reads occur.",
+      "required": true,
+      "passed": true,
+      "notes": "Only planning artifact/log/report files were written. No source/test/package/backend/docs/spec/tooling implementation changes were made. No secret/config files were read."
+    }
+  ],
+  "issues_found": [],
+  "files_modified": [
+    "architecture-audit/cycle-021-selection-delete-command-kernel-boundary/decision.md",
+    "architecture-audit/cycle-021-selection-delete-command-kernel-boundary/decision-scoped-status.stdout",
+    "architecture-audit/cycle-021-selection-delete-command-kernel-boundary/decision-scoped-status.stderr",
+    "architecture-audit/cycle-021-selection-delete-command-kernel-boundary/decision-scoped-diff-stat.stdout",
+    "architecture-audit/cycle-021-selection-delete-command-kernel-boundary/decision-scoped-diff-stat.stderr",
+    "architecture-audit/cycle-021-selection-delete-command-kernel-boundary/existing-decision-check.stdout",
+    "architecture-audit/cycle-021-selection-delete-command-kernel-boundary/existing-decision-check.stderr",
+    "architecture-audit/cycle-021-selection-delete-command-kernel-boundary/decision-final-status.stdout",
+    "architecture-audit/cycle-021-selection-delete-command-kernel-boundary/decision-final-status.stderr",
+    ".saivage/stages/cycle-021-decision/reports/t1-write-cycle-021-decision.json"
+  ],
+  "commands_run": [
+    {
+      "command": "git status --short -- architecture-audit/cycle-021-selection-delete-command-kernel-boundary .saivage/stages/cycle-021-decision/reports frontend/src/application/appShell frontend/src/application/selectionDeletion frontend/tests/unit/application",
+      "cwd": "/work/diedrico",
+      "stdout_log": "architecture-audit/cycle-021-selection-delete-command-kernel-boundary/decision-scoped-status.stdout",
+      "stderr_log": "architecture-audit/cycle-021-selection-delete-command-kernel-boundary/decision-scoped-status.stderr",
+      "exit_code": 0
+    },
+    {
+      "command": "git diff --stat -- architecture-audit/cycle-021-selection-delete-command-kernel-boundary frontend/src/application/appShell frontend/src/application/selectionDeletion frontend/tests/unit/application",
+      "cwd": "/work/diedrico",
+      "stdout_log": "architecture-audit/cycle-021-selection-delete-command-kernel-boundary/decision-scoped-diff-stat.stdout",
+      "stderr_log": "architecture-audit/cycle-021-selection-delete-command-kernel-boundary/decision-scoped-diff-stat.stderr",
+      "exit_code": 0
+    },
+    {
+      "command": "test -f architecture-audit/cycle-021-selection-delete-command-kernel-boundary/decision.md && sed -n '1,240p' architecture-audit/cycle-021-selection-delete-command-kernel-boundary/decision.md || true",
+      "cwd": "/work/diedrico",
+      "stdout_log": "architecture-audit/cycle-021-selection-delete-command-kernel-boundary/existing-decision-check.stdout",
+      "stderr_log": "architecture-audit/cycle-021-selection-delete-command-kernel-boundary/existing-decision-check.stderr",
+      "exit_code": 0
+    },
+    {
+      "command": "git status --short -- architecture-audit/cycle-021-selection-delete-command-kernel-boundary/decision.md .saivage/stages/cycle-021-decision/reports/t1-write-cycle-021-decision.json",
+      "cwd": "/work/diedrico",
+      "stdout_log": "architecture-audit/cycle-021-selection-delete-command-kernel-boundary/decision-final-status.stdout",
+      "stderr_log": "architecture-audit/cycle-021-selection-delete-command-kernel-boundary/decision-final-status.stderr",
+      "exit_code": 0
+    },
+    {
+      "command": "python - <<'PY' ... PY && git status --short -- .saivage/stages/cycle-021-decision/reports/t1-write-cycle-021-decision.json ...",
+      "cwd": "/work/diedrico",
+      "stdout_log": "architecture-audit/cycle-021-selection-delete-command-kernel-boundary/report-commit-sha-update-status.stdout",
+      "stderr_log": "architecture-audit/cycle-021-selection-delete-command-kernel-boundary/report-commit-sha-update-status.stderr",
+      "exit_code": 0,
+      "notes": "Python was unavailable, so the JSON update was retried with Node. The shell command exited 0 because git status still ran after the failed python invocation."
+    }
+  ],
+  "validation": {
+    "performed": true,
+    "notes": "Planning-only artifact validation consisted of reading reviewed inputs, scoped status/diff inspection, and reading back decision.md. Source build/test/e2e validation was intentionally not run because this task explicitly forbids implementation changes and only records the decision."
+  }
+}
