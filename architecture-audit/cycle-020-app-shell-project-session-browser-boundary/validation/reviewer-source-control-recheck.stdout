@@ -1,0 +1,40 @@
+0c4c5ca [tsk-cycle-020-validation-and-preview-refresh] [stg-cycle-020-validation-and-preview-refresh] reconcile closure review artifacts
+ .../reports/t2-review-closure.json                 |   85 +
+ .../tasks.json                                     |   39 +
+ .../closure-manager-after-coder-status.stderr      |    0
+ .../closure-manager-after-coder-status.stdout      |   12 +
+ .../closure-manager-after-review-status.stderr     |    0
+ .../closure-manager-after-review-status.stdout     |   17 +
+ .../validation/closure-manager-status-diff.stderr  |    0
+ .../validation/closure-manager-status-diff.stdout  | 1644 ++++++++++++++++++++
+ .../closure-manager-validation-tail-index.stderr   |    0
+ .../closure-manager-validation-tail-index.stdout   |  338 ++++
+ .../closure-manager-wave-plan-relevant.stderr      |    0
+ .../closure-manager-wave-plan-relevant.stdout      |  126 ++
+ .../manager-synthesis-static-check.stderr          |    0
+ .../manager-synthesis-static-check.stdout          |   17 +
+ .../validation/reviewer-log-summaries.stderr       |    1 +
+ .../validation/reviewer-log-summaries.stdout       |    0
+ 16 files changed, 2279 insertions(+)
+---
+dcaca29 [tsk-cycle-020-validation-and-preview-refresh] [stg-cycle-020-validation-and-preview-refresh] capture post-correction status evidence
+ .../validation/closure-manager-post-correction-status.stderr     | 0
+ .../validation/closure-manager-post-correction-status.stdout     | 9 +++++++++
+ 2 files changed, 9 insertions(+)
+---
+?? .saivage/stages/cycle-020-implement-app-shell-project-session-browser-boundary/post-coder-git-evidence.stderr
+?? .saivage/stages/cycle-020-implement-app-shell-project-session-browser-boundary/post-coder-git-evidence.stdout
+?? .saivage/stages/cycle-020-implement-app-shell-project-session-browser-boundary/post-failed-coder-status.stderr
+?? .saivage/stages/cycle-020-implement-app-shell-project-session-browser-boundary/post-failed-coder-status.stdout
+?? .saivage/stages/cycle-020-implement-app-shell-project-session-browser-boundary/post-review-failure-status.stderr
+?? .saivage/stages/cycle-020-implement-app-shell-project-session-browser-boundary/post-review-failure-status.stdout
+?? .saivage/stages/cycle-020-implement-app-shell-project-session-browser-boundary/pre-manager-status-capture.stderr
+?? .saivage/stages/cycle-020-implement-app-shell-project-session-browser-boundary/pre-manager-status-capture.stdout
+?? .saivage/stages/cycle-020-implement-app-shell-project-session-browser-boundary/reports/t2-review-stage-retry-01.json
+?? .saivage/stages/cycle-020-implement-app-shell-project-session-browser-boundary/reports/t2-review-stage.json
+?? .saivage/stages/cycle-020-implement-app-shell-project-session-browser-boundary/reviews/
+?? .saivage/stages/cycle-020-implement-app-shell-project-session-browser-boundary/summary.json
+?? .saivage/stages/cycle-020-implement-app-shell-project-session-browser-boundary/tasks.json
+?? architecture-audit/cycle-020-app-shell-project-session-browser-boundary/reviews/
+?? architecture-audit/cycle-020-app-shell-project-session-browser-boundary/validation/reviewer-source-control-recheck.stderr
+?? architecture-audit/cycle-020-app-shell-project-session-browser-boundary/validation/reviewer-source-control-recheck.stdout

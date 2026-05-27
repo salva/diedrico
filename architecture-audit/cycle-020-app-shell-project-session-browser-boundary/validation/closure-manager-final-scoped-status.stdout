@@ -1,0 +1,10 @@
+?? .saivage/stages/cycle-020-validation-and-preview-refresh/reports/t3-review-source-control-correction.json
+?? architecture-audit/cycle-020-app-shell-project-session-browser-boundary/validation/closure-manager-final-scoped-status.stderr
+?? architecture-audit/cycle-020-app-shell-project-session-browser-boundary/validation/closure-manager-final-scoped-status.stdout
+?? architecture-audit/cycle-020-app-shell-project-session-browser-boundary/validation/reviewer-source-control-recheck.stderr
+?? architecture-audit/cycle-020-app-shell-project-session-browser-boundary/validation/reviewer-source-control-recheck.stdout
+dcaca29 [tsk-cycle-020-validation-and-preview-refresh] [stg-cycle-020-validation-and-preview-refresh] capture post-correction status evidence
+0c4c5ca [tsk-cycle-020-validation-and-preview-refresh] [stg-cycle-020-validation-and-preview-refresh] reconcile closure review artifacts
+3b8b88b [tsk-t1-verify-validation-preview-close-wave] [t1-verify-validation-preview-close-wave] record closure commit sha
+4364942 [tsk-t1-verify-validation-preview-close-wave] [t1-verify-validation-preview-close-wave] close wave 020 validation preview
+efd7093 [t1-implement-direct-boundary] Record task report commit sha
