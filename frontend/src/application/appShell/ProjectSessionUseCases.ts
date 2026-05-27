@@ -5,6 +5,7 @@ import { initializeWorld } from '@/application/world/initializeWorld';
 import type { ProjectData } from '@/services/ProjectService';
 import type { AutoSaveUseCases } from './AutoSaveUseCases';
 import type { AppShellRuntimePorts, SaveStatus, StartupDialogState } from './AppShellPorts';
+import { describeUnknownError } from './AppShellErrorClassifier';
 
 export class ProjectSessionUseCases {
   constructor(
@@ -25,7 +26,7 @@ export class ProjectSessionUseCases {
   ) {}
 
   async initialize(): Promise<void> {
-    const { drive, storage, authStore } = this.deps.ports;
+    const { drive, authStore, lastProjectRepository } = this.deps.ports;
     if (!this.deps.hasGoogleCredentials || !drive) {
       initializeWorld(this.deps.world, this.deps.commandStack);
       this.deps.showStartupDialog.value = false;
@@ -37,15 +38,13 @@ export class ProjectSessionUseCases {
       if (this.deps.isSignedIn.value && authStore.restoreSession()) {
         try { authStore.setUser(await drive.fetchUserProfile()); } catch { /* profile refresh is non-blocking */ }
       }
-      const lastFileId = storage.getItem('diedrico_last_file_id');
-      const lastFileName = storage.getItem('diedrico_last_file_name');
-      if (this.deps.isSignedIn.value && lastFileId && lastFileName) {
+      const lastProject = lastProjectRepository.getLastProject();
+      if (this.deps.isSignedIn.value && lastProject) {
         try {
-          await this.openProject(lastFileId);
+          await this.openProject(lastProject.id);
           return;
         } catch {
-          storage.removeItem('diedrico_last_file_id');
-          storage.removeItem('diedrico_last_file_name');
+          lastProjectRepository.clearLastProject();
           this.deps.currentProjectName.value = null;
           this.deps.currentFileId.value = null;
           initializeWorld(this.deps.world, this.deps.commandStack);
@@ -69,8 +68,8 @@ export class ProjectSessionUseCases {
         this.deps.ports.authStore.setAuthenticated(profile, '', undefined);
       } catch { /* allow Drive use without profile */ }
       await this.requestFiles();
-    } catch (error) {
-      this.deps.startupDialog.error.value = `Sign-in failed: ${error}`;
+    } catch (error: unknown) {
+      this.deps.startupDialog.error.value = `Sign-in failed: ${describeUnknownError(error)}`;
     } finally {
       this.deps.startupDialog.loading.value = false;
     }
@@ -99,18 +98,18 @@ export class ProjectSessionUseCases {
       this.deps.world.clear();
       this.deps.commandStack.clear();
       initializeWorld(this.deps.world, this.deps.commandStack);
-      const projectData = this.deps.ports.persistence.serializeCommands(
-        this.deps.commandStack,
-        this.deps.world.peekNextId(),
+      const projectData = this.deps.ports.persistence.snapshotCurrentSession({
+        commandStack: this.deps.commandStack,
+        world: this.deps.world,
         projectName,
-      );
+      });
       const fileId = await drive.createFile(projectName, projectData);
       this.setCurrentProject(projectName, fileId);
       this.deps.showStartupDialog.value = false;
       this.deps.autoSave.start();
       this.deps.saveStatus.value = 'saved';
-    } catch (error) {
-      this.deps.startupDialog.error.value = `Failed to create project: ${error}`;
+    } catch (error: unknown) {
+      this.deps.startupDialog.error.value = `Failed to create project: ${describeUnknownError(error)}`;
       this.deps.startupDialog.loading.value = false;
     }
   }
@@ -118,18 +117,21 @@ export class ProjectSessionUseCases {
   async openProject(fileId: string): Promise<void> {
     const drive = this.requireDrive();
     try {
-      const projectData = drive ? await drive.loadFile(fileId) as ProjectData : null;
+      const projectData = await drive.loadFile(fileId) as ProjectData;
       this.deps.world.clear();
-      this.deps.ports.persistence.validateProjectData(projectData);
-      this.deps.ports.persistence.deserializeCommands(projectData, this.deps.world, this.deps.commandStack);
+      this.deps.ports.persistence.assertProjectData(projectData);
+      this.deps.ports.persistence.restoreSession(projectData, {
+        world: this.deps.world,
+        commandStack: this.deps.commandStack,
+      });
       if (this.deps.world.getAllProjectionPlanes().length === 0) initializeWorld(this.deps.world, this.deps.commandStack);
       this.deps.world.markDirty();
       this.setCurrentProject(projectData.name, fileId);
       this.deps.showStartupDialog.value = false;
       this.deps.autoSave.start();
       this.deps.saveStatus.value = 'saved';
-    } catch (error) {
-      this.deps.startupDialog.error.value = `Failed to open project: ${error}`;
+    } catch (error: unknown) {
+      this.deps.startupDialog.error.value = `Failed to open project: ${describeUnknownError(error)}`;
       this.deps.startupDialog.loading.value = false;
       throw error;
     }
@@ -158,7 +160,7 @@ export class ProjectSessionUseCases {
     try {
       await drive.renameFile(this.deps.currentFileId.value, newName);
       this.deps.currentProjectName.value = newName;
-      this.deps.ports.storage.setItem('diedrico_last_file_name', newName);
+      this.deps.ports.lastProjectRepository.setLastProject({ id: this.deps.currentFileId.value, name: newName });
       this.deps.autoSave.schedule();
     } finally {
       this.deps.isRenamingProject.value = false;
@@ -171,8 +173,8 @@ export class ProjectSessionUseCases {
     this.deps.startupDialog.error.value = null;
     try {
       this.deps.startupDialog.files.value = await drive.listFiles();
-    } catch (error) {
-      this.deps.startupDialog.error.value = `Failed to load files: ${error}`;
+    } catch (error: unknown) {
+      this.deps.startupDialog.error.value = `Failed to load files: ${describeUnknownError(error)}`;
     } finally {
       this.deps.startupDialog.loadingFiles.value = false;
     }
@@ -188,8 +190,7 @@ export class ProjectSessionUseCases {
   private setCurrentProject(projectName: string, fileId: string): void {
     this.deps.currentProjectName.value = projectName;
     this.deps.currentFileId.value = fileId;
-    this.deps.ports.storage.setItem('diedrico_last_file_id', fileId);
-    this.deps.ports.storage.setItem('diedrico_last_file_name', projectName);
+    this.deps.ports.lastProjectRepository.setLastProject({ id: fileId, name: projectName });
   }
 
   private requireDrive() {

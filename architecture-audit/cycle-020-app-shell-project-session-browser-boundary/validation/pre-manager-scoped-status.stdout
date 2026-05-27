@@ -1,0 +1,5 @@
+ M frontend/src/application/appShell/AppShellPorts.ts
+ D frontend/tests/e2e/active-plane-shortcuts.spec.ts
+ D frontend/tests/e2e/selection-mask.spec.ts
+?? architecture-audit/cycle-020-app-shell-project-session-browser-boundary/reviews/
+?? architecture-audit/cycle-020-app-shell-project-session-browser-boundary/validation/

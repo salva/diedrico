@@ -1,0 +1,26 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts tests/unit/application/appShell/KeyboardShortcutRouter.test.ts tests/unit/application/appShell/AppShellBoundary.test.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/application/appShell/AppShellBoundary.test.ts  (7 tests) 5ms
+ ✓ tests/unit/application/appShell/KeyboardShortcutRouter.test.ts  (3 tests) 8ms
+ ✓ tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts  (14 tests) 27ms
+
+ Test Files  3 passed (3)
+      Tests  24 passed (24)
+   Start at  03:11:51
+   Duration  1.67s (transform 929ms, setup 0ms, collect 1.42s, tests 40ms, environment 1.43s, prepare 242ms)
+
+
+> diedrico-frontend@0.1.0 build
+> vue-tsc && vite build
+
+src/App.vue(130,5): error TS2322: Type '{ isAuthenticated: ComputedRef<boolean>; user: ComputedRef<{ name: string; email: string; picture?: string | undefined; sub: string; } | null>; accessToken: ComputedRef<string | null>; ... 5 more ...; isTokenExpired: () => boolean; }' is not assignable to type 'AuthStorePort'.
+  Types of property 'setAuthenticated' are incompatible.
+    Type '(profile: GoogleUserProfile, token: string, expiry?: Date | undefined) => void' is not assignable to type '(profile: GoogleUserProfile, accessToken: string, refreshToken?: string | undefined) => void'.
+      Types of parameters 'expiry' and 'refreshToken' are incompatible.
+        Type 'string | undefined' is not assignable to type 'Date | undefined'.
+          Type 'string' is not assignable to type 'Date'.

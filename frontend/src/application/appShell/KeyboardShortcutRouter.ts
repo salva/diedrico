@@ -25,7 +25,7 @@ export class KeyboardShortcutRouter {
     startRename: () => void;
   }) {}
 
-  install(target: KeyboardShortcutRouterTarget = window): void {
+  install(target: KeyboardShortcutRouterTarget): void {
     if (this.target === target) return;
     this.dispose();
     this.target = target;

@@ -1,0 +1,16 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts tests/unit/application/appShell/KeyboardShortcutRouter.test.ts tests/unit/application/appShell/AppShellBoundary.test.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/application/appShell/AppShellBoundary.test.ts  (7 tests) 4ms
+ ✓ tests/unit/application/appShell/KeyboardShortcutRouter.test.ts  (3 tests) 8ms
+ ✓ tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts  (14 tests) 29ms
+
+ Test Files  3 passed (3)
+      Tests  24 passed (24)
+   Start at  03:06:54
+   Duration  1.72s (transform 882ms, setup 0ms, collect 1.38s, tests 41ms, environment 1.53s, prepare 241ms)
+

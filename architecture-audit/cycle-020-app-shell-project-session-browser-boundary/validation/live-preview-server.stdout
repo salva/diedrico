@@ -1,0 +1,11 @@
+
+> diedrico-frontend@0.1.0 dev
+> vite --host 0.0.0.0
+
+
+  VITE v5.4.21  ready in 271 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: http://10.0.3.113:5173/
+3:11:50 AM [vite] page reload src/application/appShell/AppShellPorts.ts
+3:12:13 AM [vite] page reload src/application/appShell/AppShellPorts.ts

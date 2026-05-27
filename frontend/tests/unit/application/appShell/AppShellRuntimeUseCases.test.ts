@@ -1,14 +1,15 @@
 import { describe, expect, it, vi } from 'vitest';
-import { computed, nextTick, reactive, ref } from 'vue';
-import { Vector3 } from 'three';
+import { nextTick, reactive, ref } from 'vue';
 import { createAppShellRuntime } from '@/application/appShell/AppShellRuntime';
+import { createProductionAppShellRuntime } from '@/application/appShell/AppShellProductionRuntime';
 import { ActivePlaneUseCases } from '@/application/appShell/ActivePlaneUseCases';
 import { AutoSaveUseCases } from '@/application/appShell/AutoSaveUseCases';
+import { BrowserLastProjectRepository } from '@/application/appShell/BrowserLastProjectRepository';
 import { ProjectSessionUseCases } from '@/application/appShell/ProjectSessionUseCases';
 import { SelectionUseCases } from '@/application/appShell/SelectionUseCases';
 import { CommandStack } from '@/commands/CommandStack';
 import { World } from '@/domain/world/World';
-import type { AppShellRuntimePorts, DrivePort, ProjectPersistencePort, SchedulerPort } from '@/application/appShell/AppShellPorts';
+import type { AppShellRuntimePorts, DrivePort, LastProjectRepositoryPort, ProjectSessionPersistencePort, SchedulerPort } from '@/application/appShell/AppShellPorts';
 
 function scheduler() {
   let nextHandle = 1;
@@ -47,7 +48,7 @@ function drive(overrides: Partial<DrivePort> = {}): DrivePort {
     fetchUserProfile: vi.fn().mockResolvedValue({ email: 'user@example.test', name: 'User' }),
     listFiles: vi.fn().mockResolvedValue([{ id: 'file-1', name: 'Project 1', modifiedTime: 'now' }]),
     createFile: vi.fn().mockResolvedValue('file-created'),
-    loadFile: vi.fn().mockResolvedValue({ name: 'Loaded project' }),
+    loadFile: vi.fn().mockResolvedValue({ id: 'project-id', schemaVersion: '6.0.0', name: 'Loaded project', created: 'now', modified: 'now', nextElementId: 1, commands: [] }),
     updateFile: vi.fn().mockResolvedValue(undefined),
     renameFile: vi.fn().mockResolvedValue(undefined),
     generateDefaultProjectName: vi.fn().mockResolvedValue('Untitled project'),
@@ -55,34 +56,47 @@ function drive(overrides: Partial<DrivePort> = {}): DrivePort {
   } as DrivePort;
 }
 
-function persistence(): ProjectPersistencePort {
+function persistence(): ProjectSessionPersistencePort {
   return {
-    serializeCommands: vi.fn((_commandStack, nextElementId, projectName) => ({
-      version: '4.0.0',
+    snapshotCurrentSession: vi.fn(({ world, projectName }) => ({
+      id: 'project-id',
+      schemaVersion: '6.0.0',
       name: projectName,
-      nextElementId,
+      created: 'now',
+      modified: 'now',
+      nextElementId: world.peekNextId(),
       commands: [],
     } as any)),
-    validateProjectData: vi.fn(),
-    deserializeCommands: vi.fn(),
+    assertProjectData: vi.fn(),
+    restoreSession: vi.fn(),
   };
 }
 
-function storage() {
-  const values = new Map<string, string>();
-  return {
-    getItem: vi.fn((key: string) => values.get(key) ?? null),
-    setItem: vi.fn((key: string, value: string) => { values.set(key, value); }),
-    removeItem: vi.fn((key: string) => { values.delete(key); }),
+function lastProjectRepository(): LastProjectRepositoryPort & { records: { set: unknown[]; cleared: number } } {
+  let current: { id: string; name: string } | null = null;
+  const repository = {
+    records: { set: [] as unknown[], cleared: 0 },
+    getLastProject: vi.fn(() => current),
+    setLastProject: vi.fn((project: { id: string; name: string }) => {
+      current = project;
+      repository.records.set.push(project);
+    }),
+    clearLastProject: vi.fn(() => {
+      current = null;
+      repository.records.cleared += 1;
+    }),
   };
+  return repository;
 }
 
 function runtimePorts(overrides: Partial<AppShellRuntimePorts> = {}) {
+  const keyboardTarget = { addEventListener: vi.fn(), removeEventListener: vi.fn() };
   return {
     drive: drive(),
     persistence: persistence(),
-    storage: storage(),
+    lastProjectRepository: lastProjectRepository(),
     scheduler: scheduler().port,
+    keyboardTarget,
     authStore: {
       restoreSession: vi.fn(() => false),
       setUser: vi.fn(),
@@ -104,16 +118,9 @@ function runtimePorts(overrides: Partial<AppShellRuntimePorts> = {}) {
 }
 
 describe('AppShellRuntime lifecycle ownership', () => {
-  it('keeps world and command stack identity stable while start/dispose owns global listeners and subscriptions', async () => {
-    const addEventListener = vi.spyOn(window, 'addEventListener');
-    const removeEventListener = vi.spyOn(window, 'removeEventListener');
+  it('keeps world and command stack identity stable while start/dispose owns explicit listeners and subscriptions', async () => {
     const ports = runtimePorts();
-    const runtime = createAppShellRuntime({
-      googleConfig: {} as any,
-      hasGoogleCredentials: true,
-      ports,
-      callbacks: ports.callbacks,
-    });
+    const runtime = createAppShellRuntime({ ports });
     const world = runtime.world;
     const commandStack = runtime.commandStack;
     const subscribe = vi.spyOn(world, 'subscribeToChanges');
@@ -125,7 +132,7 @@ describe('AppShellRuntime lifecycle ownership', () => {
 
     expect(runtime.world).toBe(world);
     expect(runtime.commandStack).toBe(commandStack);
-    expect(addEventListener.mock.calls.filter(([event]) => event === 'keydown')).toHaveLength(1);
+    expect(ports.keyboardTarget.addEventListener).toHaveBeenCalledTimes(1);
     expect(subscribe).toHaveBeenCalledTimes(1);
 
     runtime.actions.dispose();
@@ -133,21 +140,40 @@ describe('AppShellRuntime lifecycle ownership', () => {
 
     expect(runtime.world).toBe(world);
     expect(runtime.commandStack).toBe(commandStack);
-    expect(removeEventListener.mock.calls.filter(([event]) => event === 'keydown')).toHaveLength(1);
+    expect(ports.keyboardTarget.removeEventListener).toHaveBeenCalledTimes(1);
     expect(unsubscribe).toHaveBeenCalledTimes(1);
+  });
 
-    addEventListener.mockRestore();
-    removeEventListener.mockRestore();
+  it('constructs runtime core only from explicit fake ports', async () => {
+    const ports = runtimePorts({ drive: null });
+    const runtime = createAppShellRuntime({ ports });
+
+    runtime.actions.start();
+    await Promise.resolve();
+
+    expect(runtime.state.showStartupDialog.value).toBe(false);
+    expect(ports.keyboardTarget.addEventListener).toHaveBeenCalledWith('keydown', expect.any(Function));
+  });
+
+  it('production composition is the only owner of browser defaults', () => {
+    const runtime = createProductionAppShellRuntime({
+      googleConfig: { clientId: '', apiKey: '', appId: '' },
+      hasGoogleCredentials: false,
+      stores: {
+        authStore: runtimePorts().authStore,
+        selectionStore: runtimePorts().selectionStore,
+        toolStore: runtimePorts().toolStore,
+        viewStore: runtimePorts().viewStore,
+      },
+      callbacks: runtimePorts().callbacks,
+    });
+
+    expect(runtime.world).toBeInstanceOf(World);
   });
 
   it('sign-out clears project state without replacing runtime-owned world or command stack', async () => {
     const ports = runtimePorts();
-    const runtime = createAppShellRuntime({
-      googleConfig: {} as any,
-      hasGoogleCredentials: true,
-      ports,
-      callbacks: ports.callbacks,
-    });
+    const runtime = createAppShellRuntime({ ports });
     const world = runtime.world;
     const commandStack = runtime.commandStack;
     runtime.state.currentProjectName.value = 'Current';
@@ -176,7 +202,7 @@ describe('AutoSaveUseCases', () => {
       commandStack: {} as any,
       drive: drive(),
       persistence: persistence(),
-      storage: storage(),
+      lastProjectRepository: lastProjectRepository(),
       scheduler: fakeScheduler.port,
       currentFileId,
       currentProjectName,
@@ -214,7 +240,7 @@ describe('AutoSaveUseCases', () => {
       commandStack: {} as any,
       drive: drive({ updateFile: vi.fn().mockRejectedValue(new Error('401 authentication expired')) }),
       persistence: persistence(),
-      storage: storage(),
+      lastProjectRepository: lastProjectRepository(),
       scheduler: fakeScheduler.port,
       currentFileId: ref('file-1'),
       currentProjectName: ref('Project'),
@@ -231,6 +257,55 @@ describe('AutoSaveUseCases', () => {
     expect(isSignedIn.value).toBe(false);
     expect(saveStatus.value).toBe('idle');
     expect(fakeScheduler.port.clearInterval).toHaveBeenCalledWith(1);
+  });
+
+  it('recreates deleted remote files through the last-project repository', async () => {
+    const fakeScheduler = scheduler();
+    const repository = lastProjectRepository();
+    const currentFileId = ref('missing-file');
+    const currentProjectName = ref('Project');
+    const autoSave = new AutoSaveUseCases({
+      world: { getVersion: () => 1, peekNextId: () => 10 } as any,
+      commandStack: {} as any,
+      drive: drive({
+        updateFile: vi.fn().mockRejectedValue(new Error('File not found')),
+        createFile: vi.fn().mockResolvedValue('replacement-file'),
+      }),
+      persistence: persistence(),
+      lastProjectRepository: repository,
+      scheduler: fakeScheduler.port,
+      currentFileId,
+      currentProjectName,
+      saveStatus: ref('idle'),
+      showStartupDialog: ref(false),
+      isSignedIn: ref(true),
+      alert: vi.fn(),
+    }, 50);
+
+    await autoSave.perform();
+
+    expect(currentFileId.value).toBe('replacement-file');
+    expect(repository.setLastProject).toHaveBeenCalledWith({ id: 'replacement-file', name: 'Project' });
+  });
+});
+
+describe('BrowserLastProjectRepository', () => {
+  it('is the single owner of last-project localStorage keys', () => {
+    const storage = {
+      values: new Map<string, string>(),
+      getItem: vi.fn((key: string) => storage.values.get(key) ?? null),
+      setItem: vi.fn((key: string, value: string) => { storage.values.set(key, value); }),
+      removeItem: vi.fn((key: string) => { storage.values.delete(key); }),
+    };
+    const repository = new BrowserLastProjectRepository(storage);
+
+    repository.setLastProject({ id: 'file-1', name: 'Project' });
+    expect(repository.getLastProject()).toEqual({ id: 'file-1', name: 'Project' });
+    repository.clearLastProject();
+    expect(repository.getLastProject()).toBeNull();
+
+    expect(storage.setItem).toHaveBeenCalledWith('diedrico_last_file_id', 'file-1');
+    expect(storage.setItem).toHaveBeenCalledWith('diedrico_last_file_name', 'Project');
   });
 });
 
@@ -325,7 +400,7 @@ describe('SelectionUseCases', () => {
 });
 
 describe('ProjectSessionUseCases startup and project flows', () => {
-  function projectSessionDeps(overrides: Partial<Parameters<typeof ProjectSessionUseCases>[0]> = {}) {
+  function projectSessionDeps(overrides: Partial<ConstructorParameters<typeof ProjectSessionUseCases>[0]> = {}) {
     const world = new World();
     const commandStack = new CommandStack();
     const ports = runtimePorts();
@@ -381,13 +456,16 @@ describe('ProjectSessionUseCases startup and project flows', () => {
     expect(deps.currentProjectName.value).toBe('Created');
     expect(deps.currentFileId.value).toBe('file-created');
     expect(deps.autoSave.start).toHaveBeenCalled();
+    expect(deps.ports.lastProjectRepository.setLastProject).toHaveBeenCalledWith({ id: 'file-created', name: 'Created' });
 
     await useCases.openProject('file-opened');
     expect(deps.currentProjectName.value).toBe('Loaded project');
     expect(deps.currentFileId.value).toBe('file-opened');
+    expect(deps.ports.persistence.restoreSession).toHaveBeenCalled();
 
     await useCases.renameProject('Renamed');
     expect(deps.currentProjectName.value).toBe('Renamed');
+    expect(deps.ports.lastProjectRepository.setLastProject).toHaveBeenCalledWith({ id: 'file-opened', name: 'Renamed' });
     expect(deps.autoSave.schedule).toHaveBeenCalled();
 
     await useCases.signOut();

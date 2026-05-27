@@ -1,0 +1,8 @@
+locator.waitFor: Error: strict mode violation: locator('#app') resolved to 2 elements:
+    1) <div id="app" data-v-app="">…</div> aka locator('#app').first()
+    2) <div id="app" data-v-cc5b825b="" class="app-container">…</div> aka getByText('Untitled Project PH▼▼▼▼▼▼▼▼Sign inElements▼2D Elements▼PH▼Points (1)👁OH(0.00,')
+
+Call log:
+  - waiting for locator('#app') to be visible
+
+    at /tmp/cycle020-live-smoke.js:6:30

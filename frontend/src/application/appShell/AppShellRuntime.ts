@@ -1,38 +1,22 @@
 import { computed, ref } from 'vue';
 import { CommandStack } from '@/commands/CommandStack';
 import { World } from '@/domain/world/World';
-import { GoogleDriveService, type GoogleDriveConfig } from '@/services/GoogleDriveService';
-import { ProjectService } from '@/services/ProjectService';
 import { ActivePlaneUseCases } from './ActivePlaneUseCases';
 import { AutoSaveUseCases } from './AutoSaveUseCases';
 import { KeyboardShortcutRouter } from './KeyboardShortcutRouter';
-import type { AppShellCallbacks, AppShellRuntimePorts, SaveStatus } from './AppShellPorts';
-import { createBrowserScheduler } from './AppShellPorts';
+import type { AppShellRuntimePorts, SaveStatus } from './AppShellPorts';
 import { ProjectSessionUseCases } from './ProjectSessionUseCases';
 import { SelectionUseCases } from './SelectionUseCases';
 
 export interface AppShellRuntimeOptions {
-  googleConfig: GoogleDriveConfig;
-  hasGoogleCredentials: boolean;
-  ports: Omit<AppShellRuntimePorts, 'drive' | 'persistence' | 'storage' | 'scheduler' | 'callbacks'> & Partial<Pick<AppShellRuntimePorts, 'drive' | 'persistence' | 'storage' | 'scheduler'>>;
-  callbacks: AppShellCallbacks;
+  ports: AppShellRuntimePorts;
 }
 
 export function createAppShellRuntime(options: AppShellRuntimeOptions) {
   const world = new World();
   const commandStack = new CommandStack();
-  const drive = options.ports.drive ?? (options.hasGoogleCredentials ? new GoogleDriveService(options.googleConfig) : null);
-  const ports: AppShellRuntimePorts = {
-    drive,
-    persistence: options.ports.persistence ?? ProjectService,
-    storage: options.ports.storage ?? window.localStorage,
-    scheduler: options.ports.scheduler ?? createBrowserScheduler(),
-    authStore: options.ports.authStore,
-    selectionStore: options.ports.selectionStore,
-    toolStore: options.ports.toolStore,
-    viewStore: options.ports.viewStore,
-    callbacks: options.callbacks,
-  };
+  const ports = options.ports;
+  const drive = ports.drive;
 
   const activePlaneId = ref<string | undefined>(world.getActivePlaneId());
   const activePlaneName = ref('');
@@ -58,7 +42,7 @@ export function createAppShellRuntime(options: AppShellRuntimeOptions) {
     commandStack,
     drive,
     persistence: ports.persistence,
-    storage: ports.storage,
+    lastProjectRepository: ports.lastProjectRepository,
     scheduler: ports.scheduler,
     currentFileId,
     currentProjectName,
@@ -70,7 +54,7 @@ export function createAppShellRuntime(options: AppShellRuntimeOptions) {
   const projectSession = new ProjectSessionUseCases({
     world,
     commandStack,
-    hasGoogleCredentials: options.hasGoogleCredentials,
+    hasGoogleCredentials: drive !== null,
     showStartupDialog,
     isSignedIn,
     currentProjectName,
@@ -98,7 +82,7 @@ export function createAppShellRuntime(options: AppShellRuntimeOptions) {
     started = true;
     activePlane.start();
     selection.start();
-    keyboard.install(window);
+    keyboard.install(ports.keyboardTarget);
     void projectSession.initialize();
   }
 

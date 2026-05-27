@@ -1,0 +1,9 @@
+ frontend/src/App.vue                               |   6 +-
+ frontend/src/application/appShell/AppShellPorts.ts |  29 ++--
+ .../src/application/appShell/AppShellRuntime.ts    |  30 +---
+ .../src/application/appShell/AutoSaveUseCases.ts   |  40 +++---
+ .../application/appShell/KeyboardShortcutRouter.ts |   2 +-
+ .../application/appShell/ProjectSessionUseCases.ts |  51 +++----
+ .../application/appShell/AppShellBoundary.test.ts  |  32 +++++
+ .../appShell/AppShellRuntimeUseCases.test.ts       | 156 +++++++++++++++------
+ 8 files changed, 224 insertions(+), 122 deletions(-)

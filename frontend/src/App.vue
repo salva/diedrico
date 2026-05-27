@@ -104,7 +104,7 @@ import { useSelectionStore } from './stores/selectionStore';
 import { useSettingsStore } from './stores/settingsStore';
 import { useAuthStore } from './stores/authStore';
 import { useViewStore } from './stores/viewStore';
-import { createAppShellRuntime } from './application/appShell/AppShellRuntime';
+import { createProductionAppShellRuntime } from './application/appShell/AppShellProductionRuntime';
 
 const GOOGLE_CONFIG = {
   clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID || '',
@@ -123,10 +123,10 @@ const viewStore = useViewStore();
 const svgCanvasRef = ref<InstanceType<typeof SvgCanvas> | null>(null);
 const projectNameDisplayRef = ref<InstanceType<typeof ProjectNameDisplay> | null>(null);
 
-const runtime = createAppShellRuntime({
+const runtime = createProductionAppShellRuntime({
   googleConfig: GOOGLE_CONFIG,
   hasGoogleCredentials,
-  ports: {
+  stores: {
     authStore,
     selectionStore,
     toolStore,

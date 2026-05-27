@@ -1,0 +1,3 @@
+ M frontend/src/application/appShell/AppShellPorts.ts
+ D frontend/tests/e2e/active-plane-shortcuts.spec.ts
+ D frontend/tests/e2e/selection-mask.spec.ts

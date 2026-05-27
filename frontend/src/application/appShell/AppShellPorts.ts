@@ -4,6 +4,7 @@ import type { World } from '@/domain/world/World';
 import type { GoogleDriveFile, GoogleUserProfile } from '@/services/GoogleDriveService';
 import type { ProjectData } from '@/services/ProjectService';
 import type { ToolType } from '@/stores/toolStore';
+import type { KeyboardShortcutRouterTarget } from './KeyboardShortcutRouter';
 
 export type SaveStatus = 'idle' | 'saving' | 'saved';
 
@@ -21,16 +22,21 @@ export interface DrivePort {
   generateDefaultProjectName(): Promise<string>;
 }
 
-export interface ProjectPersistencePort {
-  serializeCommands(commandStack: CommandStack, nextElementId: number, projectName: string): ProjectData;
-  validateProjectData(data: unknown): asserts data is ProjectData;
-  deserializeCommands(data: ProjectData, world: World, commandStack: CommandStack): void;
+export interface ProjectSessionPersistencePort {
+  snapshotCurrentSession(deps: { commandStack: CommandStack; world: World; projectName: string }): ProjectData;
+  assertProjectData(data: unknown): asserts data is ProjectData;
+  restoreSession(data: ProjectData, deps: { world: World; commandStack: CommandStack }): void;
 }
 
-export interface BrowserStoragePort {
-  getItem(key: string): string | null;
-  setItem(key: string, value: string): void;
-  removeItem(key: string): void;
+export interface LastProjectRecord {
+  id: string;
+  name: string;
+}
+
+export interface LastProjectRepositoryPort {
+  getLastProject(): LastProjectRecord | null;
+  setLastProject(project: LastProjectRecord): void;
+  clearLastProject(): void;
 }
 
 export type TimeoutHandle = number;
@@ -46,7 +52,7 @@ export interface SchedulerPort {
 export interface AuthStorePort {
   restoreSession(): boolean;
   setUser(profile: GoogleUserProfile): void;
-  setAuthenticated(profile: GoogleUserProfile, accessToken: string, refreshToken?: string): void;
+  setAuthenticated(profile: GoogleUserProfile, accessToken: string, expiry?: Date): void;
   clearAuth(): void;
 }
 
@@ -82,9 +88,10 @@ export interface StartupDialogState {
 
 export interface AppShellRuntimePorts {
   drive: DrivePort | null;
-  persistence: ProjectPersistencePort;
-  storage: BrowserStoragePort;
+  persistence: ProjectSessionPersistencePort;
+  lastProjectRepository: LastProjectRepositoryPort;
   scheduler: SchedulerPort;
+  keyboardTarget: KeyboardShortcutRouterTarget;
   authStore: AuthStorePort;
   selectionStore: SelectionStorePort;
   toolStore: ToolStorePort;

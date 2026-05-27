@@ -1,0 +1,76 @@
+diff --git a/frontend/src/application/appShell/AppShellPorts.ts b/frontend/src/application/appShell/AppShellPorts.ts
+index b5ffd7c..73c5f22 100644
+--- a/frontend/src/application/appShell/AppShellPorts.ts
++++ b/frontend/src/application/appShell/AppShellPorts.ts
+@@ -46,7 +46,7 @@ export interface SchedulerPort {
+ export interface AuthStorePort {
+   restoreSession(): boolean;
+   setUser(profile: GoogleUserProfile): void;
+-  setAuthenticated(profile: GoogleUserProfile, accessToken: string, refreshToken?: string): void;
++  setAuthenticated(profile: GoogleUserProfile, accessToken: string, expiry?: Date): void;
+   clearAuth(): void;
+ }
+ 
+diff --git a/frontend/tests/e2e/active-plane-shortcuts.spec.ts b/frontend/tests/e2e/active-plane-shortcuts.spec.ts
+deleted file mode 100644
+index c7bb795..0000000
+--- a/frontend/tests/e2e/active-plane-shortcuts.spec.ts
++++ /dev/null
+@@ -1,26 +0,0 @@
+-import { test, expect } from '@playwright/test';
+-
+-test.describe('Active Plane Shortcuts (Phase 89)', () => {
+-  test.beforeEach(async ({ page }) => {
+-    await page.goto('/');
+-    await page.waitForSelector('svg.diedrico-canvas');
+-  });
+-
+-  test('should cycle active plane with Tab and Shift+Tab', async ({ page }) => {
+-    const activePlane = page.getByTestId('active-plane-status');
+-
+-    const initialValue = (await activePlane.textContent())?.trim();
+-    expect(initialValue).toBeTruthy();
+-
+-    await page.keyboard.press('Tab');
+-    await expect(activePlane).not.toHaveText(initialValue ?? '');
+-    const secondValue = (await activePlane.textContent())?.trim();
+-    expect(secondValue).toBeTruthy();
+-
+-    await page.keyboard.press('Shift+Tab');
+-    await expect(activePlane).toHaveText(initialValue ?? '');
+-
+-    await page.keyboard.press('Shift+Tab');
+-    await expect(activePlane).toHaveText(secondValue ?? '');
+-  });
+-});
+diff --git a/frontend/tests/e2e/selection-mask.spec.ts b/frontend/tests/e2e/selection-mask.spec.ts
+deleted file mode 100644
+index 2fd9e9b..0000000
+--- a/frontend/tests/e2e/selection-mask.spec.ts
++++ /dev/null
+@@ -1,25 +0,0 @@
+-import { test, expect } from '@playwright/test';
+-
+-test.describe('Selection mask system', () => {
+-  test.beforeEach(async ({ page }) => {
+-    await page.goto('/');
+-    await expect(page.locator('svg.diedrico-canvas')).toBeVisible();
+-  });
+-
+-  test('line tool exposes point-only target flow after point creation', async ({ page }) => {
+-    const canvas = page.locator('svg.diedrico-canvas');
+-    await page.getByTestId('tool-point').click();
+-    await canvas.click({ position: { x: 60, y: 100 } });
+-    await canvas.click({ position: { x: 120, y: 100 } });
+-
+-    await page.getByTestId('tool-line').click();
+-    await expect(page.getByTestId('tool-line')).toHaveClass(/active|selected/);
+-    expect(await page.locator('svg.diedrico-canvas circle[data-primitive-id^="point-"]').count()).toBeGreaterThanOrEqual(2);
+-  });
+-
+-  test('intersection tool can be selected for line-selection masks', async ({ page }) => {
+-    await page.keyboard.press('i');
+-    const intersectionTool = page.getByTestId('tool-intersection');
+-    await expect(intersectionTool).toHaveClass(/active|selected/);
+-  });
+-});

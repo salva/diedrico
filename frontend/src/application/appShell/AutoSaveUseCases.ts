@@ -1,7 +1,8 @@
 import type { Ref } from 'vue';
 import type { CommandStack } from '@/commands/CommandStack';
 import type { World } from '@/domain/world/World';
-import type { BrowserStoragePort, DrivePort, IntervalHandle, ProjectPersistencePort, SaveStatus, SchedulerPort, TimeoutHandle } from './AppShellPorts';
+import type { DrivePort, IntervalHandle, LastProjectRepositoryPort, ProjectSessionPersistencePort, SaveStatus, SchedulerPort, TimeoutHandle } from './AppShellPorts';
+import { isAuthenticationError, isMissingRemoteFileError, isQuotaError } from './AppShellErrorClassifier';
 
 export class AutoSaveUseCases {
   private pollInterval: IntervalHandle | null = null;
@@ -14,8 +15,8 @@ export class AutoSaveUseCases {
       world: World;
       commandStack: CommandStack;
       drive: DrivePort | null;
-      persistence: ProjectPersistencePort;
-      storage: BrowserStoragePort;
+      persistence: ProjectSessionPersistencePort;
+      lastProjectRepository: LastProjectRepositoryPort;
       scheduler: SchedulerPort;
       currentFileId: Ref<string | null>;
       currentProjectName: Ref<string | null>;
@@ -51,14 +52,14 @@ export class AutoSaveUseCases {
     const { drive, currentFileId, currentProjectName } = this.deps;
     if (!drive || !currentFileId.value || !currentProjectName.value) return;
     try {
-      const projectData = this.deps.persistence.serializeCommands(
-        this.deps.commandStack,
-        this.deps.world.peekNextId(),
-        currentProjectName.value,
-      );
+      const projectData = this.deps.persistence.snapshotCurrentSession({
+        commandStack: this.deps.commandStack,
+        world: this.deps.world,
+        projectName: currentProjectName.value,
+      });
       await drive.updateFile(currentFileId.value, projectData);
       this.markSavedThenIdle();
-    } catch (error: any) {
+    } catch (error: unknown) {
       await this.handleSaveError(error);
     }
   }
@@ -89,31 +90,30 @@ export class AutoSaveUseCases {
     }, 2000);
   }
 
-  private async handleSaveError(error: any): Promise<void> {
+  private async handleSaveError(error: unknown): Promise<void> {
     this.deps.saveStatus.value = 'idle';
-    const message = String(error?.message || error);
-    if (message.includes('File not found') || message.includes('deleted')) {
+    if (isMissingRemoteFileError(error)) {
       try {
         if (!this.deps.drive || !this.deps.currentProjectName.value) throw new Error('No project name');
-        const projectData = this.deps.persistence.serializeCommands(
-          this.deps.commandStack,
-          this.deps.world.peekNextId(),
-          this.deps.currentProjectName.value,
-        );
+        const projectData = this.deps.persistence.snapshotCurrentSession({
+          commandStack: this.deps.commandStack,
+          world: this.deps.world,
+          projectName: this.deps.currentProjectName.value,
+        });
         const newFileId = await this.deps.drive.createFile(this.deps.currentProjectName.value, projectData);
         this.deps.currentFileId.value = newFileId;
-        this.deps.storage.setItem('diedrico_last_file_id', newFileId);
+        this.deps.lastProjectRepository.setLastProject({ id: newFileId, name: this.deps.currentProjectName.value });
         this.markSavedThenIdle();
         return;
       } catch {
         this.deps.alert('Remote file was deleted and could not be re-saved. Please try to export your work or refresh if connection is lost.');
       }
     }
-    if (message.includes('authentication') || message.includes('401')) {
+    if (isAuthenticationError(error)) {
       this.deps.showStartupDialog.value = true;
       this.deps.isSignedIn.value = false;
       this.stop();
-    } else if (message.includes('quota') || message.includes('403')) {
+    } else if (isQuotaError(error)) {
       this.deps.alert('Google Drive storage quota exceeded. Please free up space or upgrade your account.');
     }
   }
