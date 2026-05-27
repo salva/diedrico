@@ -1,0 +1,18 @@
+Forbidden active tool context/world matches:
+frontend/src/application/appShell/RuntimeSession.ts:33:  readonly world: World;
+frontend/src/application/tools/ToolInteractionReadPort.ts:22:export function createToolInteractionReadPort(world: World): ToolInteractionReadPort {
+
+RuntimeSession tool invocation lines:
+frontend/src/application/appShell/RuntimeSession.ts:7:import { createToolInteractionReadPort } from '@/application/tools/ToolInteractionReadPort';
+frontend/src/application/appShell/RuntimeSession.ts:33:  readonly world: World;
+frontend/src/application/appShell/RuntimeSession.ts:44:    const toolReadPort = createToolInteractionReadPort(this.world);
+frontend/src/application/appShell/RuntimeSession.ts:77:      invokeToolClick: (tool, context) => tool.handleClick({ ...context, readPort: toolReadPort }),
+frontend/src/application/appShell/RuntimeSession.ts:164:    const readPort = createThreeWorldReadPort(this.world);
+frontend/src/application/appShell/RuntimeSession.ts:168:      getReadPort: () => readPort,
+frontend/src/application/appShell/RuntimeSession.ts:188:      world: this.world,
+frontend/src/application/appShell/RuntimeSession.ts:196:      world: this.world,
+frontend/src/application/appShell/RuntimeSession.ts:274:    persistence.restoreSession(openedSession.payload, { world: candidateWorld, commandStack: candidateCommandStack });
+frontend/src/application/appShell/RuntimeSession.ts:453:      world: this.world,
+frontend/src/application/tools/ToolInteractionReadPort.ts:22:export function createToolInteractionReadPort(world: World): ToolInteractionReadPort {
+
+Generic facade forbidden terms in tool port/application tool path:

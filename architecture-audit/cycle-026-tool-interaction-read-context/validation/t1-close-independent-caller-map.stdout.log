@@ -1,0 +1,64 @@
+== getProjectionPlaneById ==
+  frontend/src/application/tools/ToolInteractionReadPort.ts:10:  getProjectionPlaneById(id: string): ProjectionPlane | undefined;
+  frontend/src/application/tools/ToolInteractionReadPort.ts:24:    getProjectionPlaneById: (id) => world.getProjectionPlaneById(id),
+  frontend/src/application/tools/ToolInteractionReadPort.ts:33:      const firstPlane = world.getProjectionPlaneById(firstPlaneId);
+  frontend/src/application/tools/ToolInteractionReadPort.ts:34:      const secondPlane = world.getProjectionPlaneById(secondPlaneId);
+  frontend/src/tools/ArgumentCollectorTool.ts:165:    const plane = readPort.getProjectionPlaneById(planeId)!;
+  frontend/src/tools/Create3DLineTool.ts:43:          if (!context.readPort.getProjectionPlaneById(proj1.element!.planeId) || !context.readPort.getProjectionPlaneById(proj2.element!.planeId)) {
+  frontend/src/tools/Create3DPlaneTool.ts:43:          if (!context.readPort.getProjectionPlaneById(trace1.element!.planeId) || !context.readPort.getProjectionPlaneById(trace2.element!.planeId)) {
+  frontend/src/tools/Create3DPointTool.ts:58:          if (!context.readPort.getProjectionPlaneById(proj1.element!.planeId) || !context.readPort.getProjectionPlaneById(proj2.element!.planeId)) {
+  frontend/src/tools/Create3DSegmentTool.ts:43:          if (!context.readPort.getProjectionPlaneById(proj1.element!.planeId) || !context.readPort.getProjectionPlaneById(proj2.element!.planeId)) {
+  frontend/src/tools/CreateProjectionPlaneTool.ts:152:          const t1Plane = context.readPort.getProjectionPlaneById(t1.element!.planeId);
+  frontend/src/tools/CreateProjectionPlaneTool.ts:153:          const t2Plane = context.readPort.getProjectionPlaneById(t2.element!.planeId);
+== getElement2D ==
+  frontend/src/application/tools/ToolInteractionReadPort.ts:11:  getElement2D(id: string): Element2D | undefined;
+  frontend/src/application/tools/ToolInteractionReadPort.ts:25:    getElement2D: (id) => world.getElement2D(id),
+  frontend/src/tools/ArgumentCollectorTool.ts:200:      const element = readPort.getElement2D(hit.elementId);
+== getPoint2D ==
+  frontend/src/application/tools/ToolInteractionReadPort.ts:12:  getPoint2D(id: string): Point2D | undefined;
+  frontend/src/application/tools/ToolInteractionReadPort.ts:26:    getPoint2D: (id) => safeLookup(() => world.getPoint2D(id)),
+  frontend/src/tools/TangentLineToCircleThroughPointTool.ts:61:            const point = context.readPort.getPoint2D(pointEl.id);
+  frontend/src/tools/TangentLineToCircleThroughPointTool.ts:102:    const throughPoint = context.readPort.getPoint2D(pointId);
+== getLine2D ==
+  frontend/src/application/tools/ToolInteractionReadPort.ts:13:  getLine2D(id: string): Line2D | undefined;
+  frontend/src/application/tools/ToolInteractionReadPort.ts:27:    getLine2D: (id) => safeLookup(() => world.getLine2D(id)),
+  frontend/src/tools/CreateProjectionPlaneTool.ts:112:                const t2PrimeLineModel = context.readPort.getLine2D(t2PrimeLineId);
+  frontend/src/tools/TangentLineToCircleParallelToLineTool.ts:95:    const referenceLine = context.readPort.getLine2D(referenceLineId);
+== getCircle2D ==
+  frontend/src/application/tools/ToolInteractionReadPort.ts:14:  getCircle2D(id: string): Circle2D | undefined;
+  frontend/src/application/tools/ToolInteractionReadPort.ts:28:    getCircle2D: (id) => safeLookup(() => world.getCircle2D(id)),
+  frontend/src/tools/TangentLineToCircleParallelToLineTool.ts:94:    const circle = context.readPort.getCircle2D(circleId);
+  frontend/src/tools/TangentLineToCircleThroughPointTool.ts:60:            const circle = context.readPort.getCircle2D(circleEl.id);
+  frontend/src/tools/TangentLineToCircleThroughPointTool.ts:101:    const circle = context.readPort.getCircle2D(circleId);
+== realizePoint2D ==
+  frontend/src/application/tools/ToolInteractionReadPort.ts:15:  realizePoint2D(point: Point2D): Point2DRealization2D | undefined;
+  frontend/src/application/tools/ToolInteractionReadPort.ts:29:    realizePoint2D: (point) => point.realize2D(world),
+  frontend/src/tools/CircleTool.ts:55:          const centerRealization = context.readPort.realizePoint2D(center);
+  frontend/src/tools/CircleTool.ts:56:          const circumferenceRealization = context.readPort.realizePoint2D(circumferencePoint);
+  frontend/src/tools/TangentLineToCircleThroughPointTool.ts:63:            const pointRealization = point ? context.readPort.realizePoint2D(point) : undefined;
+  frontend/src/tools/TangentLineToCircleThroughPointTool.ts:104:    const pointRealization = throughPoint ? context.readPort.realizePoint2D(throughPoint) : undefined;
+== realizeLine2D ==
+  frontend/src/application/tools/ToolInteractionReadPort.ts:16:  realizeLine2D(line: Line2D): Line2DRealization2D | undefined;
+  frontend/src/application/tools/ToolInteractionReadPort.ts:30:    realizeLine2D: (line) => line.realize2D(world),
+  frontend/src/tools/CreateProjectionPlaneTool.ts:117:                const t2PrimeRealization = context.readPort.realizeLine2D(t2PrimeLineModel);
+  frontend/src/tools/ParallelLineTool.ts:54:            const realization = context.readPort.realizeLine2D(refLine);
+  frontend/src/tools/PerpendicularLineTool.ts:54:            const realization = context.readPort.realizeLine2D(refLine);
+  frontend/src/tools/TangentLineToCircleParallelToLineTool.ts:61:            const realization = context.readPort.realizeLine2D(refLine);
+  frontend/src/tools/TangentLineToCircleParallelToLineTool.ts:97:    const lineRealization = referenceLine ? context.readPort.realizeLine2D(referenceLine) : undefined;
+== realizeCircle2D ==
+  frontend/src/application/tools/ToolInteractionReadPort.ts:17:  realizeCircle2D(circle: Circle2D): Circle2DRealization2D | undefined;
+  frontend/src/application/tools/ToolInteractionReadPort.ts:31:    realizeCircle2D: (circle) => circle.realize2D(world) ?? undefined,
+  frontend/src/tools/TangentLineToCircleParallelToLineTool.ts:96:    const circleRealization = circle ? context.readPort.realizeCircle2D(circle) : undefined;
+  frontend/src/tools/TangentLineToCircleThroughPointTool.ts:62:            const circleRealization = circle ? context.readPort.realizeCircle2D(circle) : undefined;
+  frontend/src/tools/TangentLineToCircleThroughPointTool.ts:103:    const circleRealization = circle ? context.readPort.realizeCircle2D(circle) : undefined;
+== areProjectionPlanesDistinct ==
+  frontend/src/application/tools/ToolInteractionReadPort.ts:18:  areProjectionPlanesDistinct(firstPlaneId: string, secondPlaneId: string): boolean;
+  frontend/src/application/tools/ToolInteractionReadPort.ts:32:    areProjectionPlanesDistinct: (firstPlaneId, secondPlaneId) => {
+  frontend/src/tools/Create3DLineTool.ts:47:          if (!context.readPort.areProjectionPlanesDistinct(proj1.element!.planeId, proj2.element!.planeId)) {
+  frontend/src/tools/Create3DPlaneTool.ts:47:          if (!context.readPort.areProjectionPlanesDistinct(trace1.element!.planeId, trace2.element!.planeId)) {
+  frontend/src/tools/Create3DPointTool.ts:62:          if (!context.readPort.areProjectionPlanesDistinct(proj1.element!.planeId, proj2.element!.planeId)) {
+  frontend/src/tools/Create3DSegmentTool.ts:47:          if (!context.readPort.areProjectionPlanesDistinct(proj1.element!.planeId, proj2.element!.planeId)) {
+== getExpectedT2PrimeLineRealization ==
+  frontend/src/application/tools/ToolInteractionReadPort.ts:19:  getExpectedT2PrimeLineRealization(t1HingeTraceId: string, t2OtherTraceId: string): Line2DRealization2D | null;
+  frontend/src/application/tools/ToolInteractionReadPort.ts:37:    getExpectedT2PrimeLineRealization: (t1HingeTraceId, t2OtherTraceId) => computeExpectedT2Prime(
+  frontend/src/tools/CreateProjectionPlaneTool.ts:101:                const expected = context.readPort.getExpectedT2PrimeLineRealization(

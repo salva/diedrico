@@ -1,0 +1,13 @@
+HTTP probe:
+HTTP/1.1 200 OK
+Vary: Origin
+Content-Type: text/html
+Cache-Control: no-cache
+Etag: W/"2a2-jmzE7161kdnXI7JasQMw+v8+14s"
+Date: Wed, 27 May 2026 17:33:19 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+
+Listener probe:
+LISTEN 0      511          0.0.0.0:5173      0.0.0.0:*    users:(("MainThread",pid=32896,fd=25))
