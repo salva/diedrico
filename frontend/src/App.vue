@@ -106,10 +106,14 @@ import { useAuthStore } from './stores/authStore';
 import { useViewStore } from './stores/viewStore';
 import { createProductionAppShellRuntime } from './application/appShell/AppShellProductionRuntime';
 import {
+  ActivePlaneSelectorInjectionKey,
   CanvasCommandProducerInjectionKey,
+  CanvasViewInjectionKey,
   CommandHistoryInjectionKey,
+  ElementsPanelInjectionKey,
   ProcessHistoryCommandInjectionKey,
-  WorldInjectionKey,
+  ProcessTreeReadInjectionKey,
+  ThreePresentationInjectionKey,
 } from './application/appShell/RuntimeInjectionKeys';
 
 const GOOGLE_CONFIG = {
@@ -145,7 +149,11 @@ const runtime = createProductionAppShellRuntime({
   },
 });
 
-provide(WorldInjectionKey, runtime.world);
+provide(CanvasViewInjectionKey, runtime.canvasViewPort);
+provide(ProcessTreeReadInjectionKey, runtime.processTreeReadPort);
+provide(ElementsPanelInjectionKey, runtime.elementsPanelPort);
+provide(ThreePresentationInjectionKey, runtime.threePresentationPort);
+provide(ActivePlaneSelectorInjectionKey, runtime.activePlaneSelectorPort);
 provide(CanvasCommandProducerInjectionKey, runtime.canvasCommandProducerPort);
 provide(ProcessHistoryCommandInjectionKey, runtime.processHistoryCommandPort);
 provide(CommandHistoryInjectionKey, runtime.commandHistory);

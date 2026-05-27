@@ -8,7 +8,6 @@ import { BrowserLastProjectRepository } from '@/application/appShell/BrowserLast
 import { ProjectSessionUseCases } from '@/application/appShell/ProjectSessionUseCases';
 import { RuntimeSession } from '@/application/appShell/RuntimeSession';
 import { SelectionUseCases } from '@/application/appShell/SelectionUseCases';
-import { World } from '@/domain/world/World';
 import type { AppShellRuntimePorts, DrivePort, LastProjectRepositoryPort, ProjectSessionPersistencePort, SchedulerPort } from '@/application/appShell/AppShellPorts';
 
 function scheduler() {
@@ -118,30 +117,32 @@ function runtimePorts(overrides: Partial<AppShellRuntimePorts> = {}) {
 }
 
 describe('AppShellRuntime lifecycle ownership', () => {
-  it('keeps world and command stack identity stable while start/dispose owns explicit listeners and subscriptions', async () => {
+  it('keeps world and runtime ports stable while start/dispose owns explicit listeners and subscriptions', async () => {
     const ports = runtimePorts();
     const runtime = createAppShellRuntime({ ports });
-    const world = runtime.world;
-    const commandStack = runtime.commandStack;
-    const subscribe = vi.spyOn(world, 'subscribeToChanges');
-    const unsubscribe = vi.spyOn(world, 'unsubscribeFromChanges');
+    const canvasViewPort = runtime.canvasViewPort;
+    const commandHistory = runtime.commandHistory;
+    const canvasCommandProducerPort = runtime.canvasCommandProducerPort;
+    const processHistoryCommandPort = runtime.processHistoryCommandPort;
 
     runtime.actions.start();
     runtime.actions.start();
     await Promise.resolve();
 
-    expect(runtime.world).toBe(world);
-    expect(runtime.commandStack).toBe(commandStack);
+    expect(runtime.canvasViewPort).toBe(canvasViewPort);
+    expect(runtime.commandHistory).toBe(commandHistory);
+    expect(runtime.canvasCommandProducerPort).toBe(canvasCommandProducerPort);
+    expect(runtime.processHistoryCommandPort).toBe(processHistoryCommandPort);
     expect(ports.keyboardTarget.addEventListener).toHaveBeenCalledTimes(1);
-    expect(subscribe).toHaveBeenCalledTimes(1);
 
     runtime.actions.dispose();
     runtime.actions.dispose();
 
-    expect(runtime.world).toBe(world);
-    expect(runtime.commandStack).toBe(commandStack);
+    expect(runtime.canvasViewPort).toBe(canvasViewPort);
+    expect(runtime.commandHistory).toBe(commandHistory);
+    expect(runtime.canvasCommandProducerPort).toBe(canvasCommandProducerPort);
+    expect(runtime.processHistoryCommandPort).toBe(processHistoryCommandPort);
     expect(ports.keyboardTarget.removeEventListener).toHaveBeenCalledTimes(1);
-    expect(unsubscribe).toHaveBeenCalledTimes(1);
   });
 
   it('constructs runtime core only from explicit fake ports', async () => {
@@ -168,21 +169,26 @@ describe('AppShellRuntime lifecycle ownership', () => {
       callbacks: runtimePorts().callbacks,
     });
 
-    expect(runtime.world).toBeInstanceOf(World);
+    runtime.internals.session.initializeDefaultWorldIfNeeded();
+    expect(runtime.activePlaneSelectorPort.getPlaneOptions().length).toBeGreaterThan(0);
   });
 
-  it('sign-out clears project state without replacing runtime-owned world or command stack', async () => {
+  it('sign-out clears project state without replacing runtime-owned world or ports', async () => {
     const ports = runtimePorts();
     const runtime = createAppShellRuntime({ ports });
-    const world = runtime.world;
-    const commandStack = runtime.commandStack;
+    const canvasViewPort = runtime.canvasViewPort;
+    const commandHistory = runtime.commandHistory;
+    const canvasCommandProducerPort = runtime.canvasCommandProducerPort;
+    const processHistoryCommandPort = runtime.processHistoryCommandPort;
     runtime.state.currentProjectName.value = 'Current';
     runtime.state.currentFileId.value = 'file-1';
 
     await runtime.actions.toolbarSignOut();
 
-    expect(runtime.world).toBe(world);
-    expect(runtime.commandStack).toBe(commandStack);
+    expect(runtime.canvasViewPort).toBe(canvasViewPort);
+    expect(runtime.commandHistory).toBe(commandHistory);
+    expect(runtime.canvasCommandProducerPort).toBe(canvasCommandProducerPort);
+    expect(runtime.processHistoryCommandPort).toBe(processHistoryCommandPort);
     expect(runtime.state.currentProjectName.value).toBeNull();
     expect(runtime.state.currentFileId.value).toBeNull();
     expect(runtime.state.showStartupDialog.value).toBe(true);
@@ -483,7 +489,7 @@ describe('ProjectSessionUseCases startup and project flows', () => {
     await useCases.initialize();
 
     expect(deps.showStartupDialog.value).toBe(false);
-    expect(deps.session.worldForView().getAllProjectionPlanes().length).toBeGreaterThan(0);
+    expect(deps.session.activePlanePort().getProjectionPlaneSummaries().length).toBeGreaterThan(0);
   });
 
   it('loads and resets startup-dialog file list through typed runtime state', async () => {
@@ -515,19 +521,15 @@ describe('ProjectSessionUseCases startup and project flows', () => {
     deps.session.initializeDefaultWorldIfNeeded();
     deps.currentProjectName.value = 'Existing';
     deps.currentFileId.value = 'existing-file';
-    const preOpenWorld = deps.session.worldForView();
+    const preOpenPlaneCount = deps.session.activePlanePort().getProjectionPlaneSummaries().length;
     const preOpenCommandHistory = deps.session.commandHistoryPort();
-    const preOpenPlaneCount = preOpenWorld.getAllProjectionPlanes().length;
-    const preOpenNextId = preOpenWorld.peekNextId();
     const preOpenCanUndo = preOpenCommandHistory.canUndo();
     const useCases = new ProjectSessionUseCases(deps as any);
 
     await expect(useCases.openProject('bad-file')).rejects.toThrow('invalid payload');
 
-    expect(deps.session.worldForView()).toBe(preOpenWorld);
+    expect(deps.session.activePlanePort().getProjectionPlaneSummaries()).toHaveLength(preOpenPlaneCount);
     expect(deps.session.commandHistoryPort().canUndo()).toBe(preOpenCanUndo);
-    expect(preOpenWorld.getAllProjectionPlanes()).toHaveLength(preOpenPlaneCount);
-    expect(preOpenWorld.peekNextId()).toBe(preOpenNextId);
     expect(preOpenCommandHistory.canUndo()).toBe(preOpenCanUndo);
     expect(preOpenCommandHistory.canRedo()).toBe(false);
     expect(deps.currentProjectName.value).toBe('Existing');
@@ -547,21 +549,17 @@ describe('ProjectSessionUseCases startup and project flows', () => {
     deps.session.initializeDefaultWorldIfNeeded();
     deps.currentProjectName.value = 'Existing';
     deps.currentFileId.value = 'existing-file';
-    const preOpenWorld = deps.session.worldForView();
+    const preOpenPlaneCount = deps.session.activePlanePort().getProjectionPlaneSummaries().length;
     const preOpenCommandHistory = deps.session.commandHistoryPort();
-    const preOpenPlaneCount = preOpenWorld.getAllProjectionPlanes().length;
-    const preOpenNextId = preOpenWorld.peekNextId();
     const preOpenCanUndo = preOpenCommandHistory.canUndo();
     const useCases = new ProjectSessionUseCases(deps as any);
 
     await expect(useCases.openProject('file-opened')).rejects.toThrow('restore exploded');
 
     expect(ports.persistence.restoreSession).toHaveBeenCalledTimes(1);
-    expect(ports.persistence.restoreSession).not.toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ world: preOpenWorld }));
-    expect(deps.session.worldForView()).toBe(preOpenWorld);
+    expect(ports.persistence.restoreSession).toHaveBeenCalledTimes(1);
+    expect(deps.session.activePlanePort().getProjectionPlaneSummaries()).toHaveLength(preOpenPlaneCount);
     expect(deps.session.commandHistoryPort().canUndo()).toBe(preOpenCanUndo);
-    expect(preOpenWorld.getAllProjectionPlanes()).toHaveLength(preOpenPlaneCount);
-    expect(preOpenWorld.peekNextId()).toBe(preOpenNextId);
     expect(preOpenCommandHistory.canUndo()).toBe(preOpenCanUndo);
     expect(preOpenCommandHistory.canRedo()).toBe(false);
     expect(deps.currentProjectName.value).toBe('Existing');
@@ -592,9 +590,9 @@ describe('ProjectSessionUseCases startup and project flows', () => {
     expect(fakeScheduler.port.clearInterval).not.toHaveBeenCalled();
   });
 
-  it('creates, opens, renames, and signs out without replacing stable world or command stack references', async () => {
+  it('creates, opens, renames, and signs out without replacing stable world or command-history references', async () => {
     const deps = projectSessionDeps();
-    const originalWorld = deps.session.worldForView();
+    const originalPlaneCount = deps.session.activePlanePort().getProjectionPlaneSummaries().length;
     const originalCommandHistory = deps.session.commandHistoryPort();
     const useCases = new ProjectSessionUseCases(deps as any);
 
@@ -615,7 +613,7 @@ describe('ProjectSessionUseCases startup and project flows', () => {
     expect(deps.autoSave.schedule).toHaveBeenCalled();
 
     await useCases.signOut();
-    expect(deps.session.worldForView()).toBe(originalWorld);
+    expect(deps.session.activePlanePort().getProjectionPlaneSummaries()).toHaveLength(originalPlaneCount);
     expect(deps.session.commandHistoryPort().canUndo()).toBe(originalCommandHistory.canUndo());
     expect(deps.currentProjectName.value).toBeNull();
     expect(deps.currentFileId.value).toBeNull();

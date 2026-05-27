@@ -26,11 +26,10 @@
 
 <script setup lang="ts">
 import { inject, onMounted, onUnmounted, ref, watch } from 'vue';
-import { WorldInjectionKey } from '@/application/appShell/RuntimeInjectionKeys';
+import { ThreePresentationInjectionKey } from '@/application/appShell/RuntimeInjectionKeys';
 import { useSelectionStore } from '@/stores/selectionStore';
 import { useViewStore } from '@/stores/viewStore';
 import { ThreeViewRuntime } from '@/rendering/threeView/ThreeViewRuntime';
-import { createThreeWorldReadPort } from '@/application/threePresentation/ThreeWorldReadPort';
 
 const containerRef = ref<HTMLDivElement>();
 const canvasRef = ref<HTMLCanvasElement>();
@@ -39,8 +38,11 @@ const renderTick = ref(0);
 const viewStore = useViewStore();
 const displayOptions = viewStore.threeViewOptions;
 const selectionStore = useSelectionStore();
-const world = inject(WorldInjectionKey)!;
-const readPort = createThreeWorldReadPort(world);
+const threePresentationPort = inject(ThreePresentationInjectionKey);
+if (!threePresentationPort) {
+  throw new Error('Three presentation port not provided');
+}
+const readPort = threePresentationPort.getReadPort();
 const runtime = new ThreeViewRuntime();
 let unsubscribeWorldChanges: (() => void) | undefined;
 
@@ -56,8 +58,8 @@ onMounted(() => {
   window.addEventListener('resize', handleResize);
 
   const handleWorldChange = () => { renderTick.value++; };
-  world.subscribeToChanges(handleWorldChange);
-  unsubscribeWorldChanges = () => world.unsubscribeFromChanges(handleWorldChange);
+  threePresentationPort.subscribeToChanges(handleWorldChange);
+  unsubscribeWorldChanges = () => threePresentationPort.unsubscribeFromChanges(handleWorldChange);
 
   watch(renderTick, refreshThreeView);
   watch(() => selectionStore.selectedIdsArray, refreshThreeView);

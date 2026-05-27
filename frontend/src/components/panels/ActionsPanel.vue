@@ -31,7 +31,6 @@
       <ProcessTreeNode
         v-if="processTree"
         :node="processTree.root"
-        :world="world"
         :data-version="treeVersion"
         :selected-node-id="selectedNodeId"
         :active-subprocess-id="activeSubprocessId"
@@ -49,8 +48,7 @@
 
 <script setup lang="ts">
 import { ref, computed, inject, onMounted, onUnmounted, watch, nextTick } from 'vue';
-import type { ProcessNode as ProcessTreeNodeType } from '@/domain/processTree/ProcessTree';
-import { ProcessHistoryCommandInjectionKey, WorldInjectionKey } from '@/application/appShell/RuntimeInjectionKeys';
+import { ProcessHistoryCommandInjectionKey, ProcessTreeReadInjectionKey } from '@/application/appShell/RuntimeInjectionKeys';
 import ProcessTreeNode from './ProcessTreeNode.vue';
 import { useSelectionStore } from '@/stores/selectionStore';
 import { useProcessTreeStore } from '@/stores/processTreeStore';
@@ -62,12 +60,12 @@ const emit = defineEmits<{
 }>();
 
 // Injected dependencies
-const world = inject(WorldInjectionKey);
-if (!world) {
-  throw new Error('World not provided');
+const processTreeReadPort = inject(ProcessTreeReadInjectionKey);
+if (!processTreeReadPort) {
+  throw new Error('Process tree read port not provided');
 }
-const worldForProcessHistory = world;
-const injectedProcessHistoryController = inject(ProcessHistoryCommandInjectionKey);
+
+const processTreeReadPortRequired = processTreeReadPort;const injectedProcessHistoryController = inject(ProcessHistoryCommandInjectionKey);
 if (!injectedProcessHistoryController) {
   throw new Error('Process history command port not provided');
 }
@@ -85,7 +83,7 @@ const stackVersion = ref(0); // Track stack changes
 const lastNodeCount = ref(0); // Track number of nodes for auto-scroll
 
 // Get current ProcessTree - use reactive ref that we update when World changes
-const processTree = ref(worldForProcessHistory.getProcessTree());
+const processTree = ref(processTreeReadPortRequired.getTree());
 
 // Stack management computed properties
 const canPop = computed(() => {
@@ -101,7 +99,7 @@ const activeSubprocessId = computed(() => {
 const treeVersion = computed(() => {
   // Depend on stackVersion to trigger updates when push/pop occurs
   stackVersion.value;
-  return processTree.value.getVersion();
+  return processTree.value.version;
 });
 
 // Keyboard shortcuts for stack management
@@ -128,14 +126,14 @@ function scrollToBottom() {
 }
 
 function refreshAfterTreeChange(ensureExpandedForActiveSubprocess: boolean) {
-  const currentCount = countNodes(processTree.value.root);
+  const currentCount = processTreeReadPortRequired.countNodes(processTree.value.root);
   const shouldScroll = currentCount > lastNodeCount.value;
   lastNodeCount.value = currentCount;
 
   stackVersion.value++;
 
   if (shouldScroll && ensureExpandedForActiveSubprocess) {
-    processTreeStore.ensureExpanded(processTree.value.getCurrentSubprocess().id);
+    processTreeStore.ensureExpanded(processTree.value.activeSubprocessId);
   }
 
   if (shouldScroll) {
@@ -146,7 +144,7 @@ function refreshAfterTreeChange(ensureExpandedForActiveSubprocess: boolean) {
 }
 
 function subscribeToCurrentProcessTree(ensureExpandedForActiveSubprocess: boolean) {
-  unsubscribeTree = processTree.value.subscribe(() => {
+  unsubscribeTree = processTreeReadPortRequired.subscribeToTree(() => {
     refreshAfterTreeChange(ensureExpandedForActiveSubprocess);
   });
 }
@@ -156,8 +154,8 @@ function handleWorldChange() {
     unsubscribeTree();
   }
 
-  processTree.value = worldForProcessHistory.getProcessTree();
-  lastNodeCount.value = countNodes(processTree.value.root);
+  processTree.value = processTreeReadPortRequired.getTree();
+  lastNodeCount.value = processTreeReadPortRequired.countNodes(processTree.value.root);
   subscribeToCurrentProcessTree(false);
   stackVersion.value++;
 }
@@ -167,14 +165,14 @@ onMounted(() => {
   window.addEventListener('keydown', handleKeyDown);
 
   // Initialize node count
-  lastNodeCount.value = countNodes(processTree.value.root);
+  lastNodeCount.value = processTreeReadPortRequired.countNodes(processTree.value.root);
 
   // Subscribe to ProcessTree changes
   subscribeToCurrentProcessTree(true);
 
   // Subscribe to World changes to detect when clear() creates new ProcessTree
-  worldForProcessHistory.subscribeToChanges(handleWorldChange);
-  unsubscribeWorld = () => worldForProcessHistory.unsubscribeFromChanges(handleWorldChange);
+  processTreeReadPortRequired.subscribeToChanges(handleWorldChange);
+  unsubscribeWorld = () => processTreeReadPortRequired.unsubscribeFromChanges(handleWorldChange);
 });
 
 onUnmounted(() => {
@@ -202,51 +200,8 @@ watch(
   { immediate: true }
 );
 
-/**
- * Find actions that have any of the selected element IDs in their inputs or outputs
- */
 function findRelatedActions(selectedIds: string[]): void {
-  const related = new Set<string>();
-  const selectedIdSet = new Set(selectedIds);
-
-  // Get all actions from process tree
-  const allActions = processTree.value.getAllActions();
-
-  // Check each action's elementId and dependencies (Phase 92)
-  for (const action of allActions) {
-    // Check if action produces any selected element
-    const producesSelected = selectedIdSet.has(action.elementId);
-
-    // Check if action depends on any selected element
-    // Dependencies are now in DependencyService, accessible via element
-    const dependsOnSelected = worldForProcessHistory
-      .getDependencyService()
-      .getDependencies(action.elementId)
-      .some(depId => selectedIdSet.has(depId));
-
-    if (producesSelected || dependsOnSelected) {
-      related.add(action.id);
-    }
-  }
-
-  relatedActionIds.value = related;
-}
-
-/**
- * Recursively count total nodes in the tree
- */
-function countNodes(node: ProcessTreeNodeType): number {
-  let count = 1;
-  if (node.type === 'action') {
-    return count;
-  }
-
-  for (const child of node.children) {
-    if (child) {
-      count += countNodes(child);
-    }
-  }
-  return count;
+  relatedActionIds.value = processTreeReadPortRequired.getRelatedActionIds(selectedIds);
 }
 
 function refreshAfterIntent() {

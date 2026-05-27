@@ -243,7 +243,7 @@ describe('Wave 006a canvas/tool command controllers', () => {
 
     expect(source).toContain('CanvasCommandProducerInjectionKey');
     expect(source).not.toContain("inject('commandStack')");
-    expect(source).toContain('.startFreePointMove(');
+    expect(source).toContain('getMovableFreePointMoveSession');
     expect(source).toContain('.updateElementStyle(');
     expect(source).not.toContain("from '@/commands/Command'");
     expect(source).not.toContain('UpdateFreePoint2DPositionOp');

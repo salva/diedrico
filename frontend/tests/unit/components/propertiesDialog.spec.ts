@@ -12,22 +12,32 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import PropertiesDialog from '@/components/dialogs/PropertiesDialog.vue';
-import type { World } from '@/domain/world/World';
-import { Vector3 } from 'three';
-import { createTestWorld } from '../../helpers/worldHelpers';
+import type { PropertiesDialogViewModel } from '@/application/appShell/RuntimeViewPorts';
 
 describe('PropertiesDialog', () => {
-  let world: World;
-  let testPointId: string; // Helper for tests that need a valid element ID
+  let testPointId: string;
+  let pointViewModel: PropertiesDialogViewModel;
+  let lineViewModel: PropertiesDialogViewModel;
   
   beforeEach(() => {
-    const { world: w } = createTestWorld();
-    world = w;
-    
-    // Create a test point for tests that need a valid element ID
-    const planeH = world.getProjectionPlaneByLabel('P_H');
-    const point = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
-    testPointId = point.id;
+    testPointId = 'proj_plane_H/point2d_1';
+    pointViewModel = {
+      elementId: testPointId,
+      elementLabel: testPointId,
+      elementType: '2D Point',
+      planeId: 'proj_plane_H',
+      coordinates: '(0.00, 0.00)',
+      dependencies: [],
+      createdBy: 'Action in ProcessTree',
+      style: { color: '#000000', lineWidth: 1, lineStyle: 'solid', visible: true },
+    };
+    lineViewModel = {
+      ...pointViewModel,
+      elementId: 'proj_plane_H/line2d_1',
+      elementLabel: 'proj_plane_H/line2d_1',
+      elementType: '2D Line',
+      dependencies: ['proj_plane_H/point2d_1', 'proj_plane_H/point2d_2'],
+    };
   });
 
   describe('Dialog visibility', () => {
@@ -35,8 +45,7 @@ describe('PropertiesDialog', () => {
       const wrapper = mount(PropertiesDialog, {
         props: {
           isOpen: false,
-          elementId: null,
-          world: null
+          viewModel: null
         }
       });
       
@@ -47,8 +56,7 @@ describe('PropertiesDialog', () => {
       const wrapper = mount(PropertiesDialog, {
         props: {
           isOpen: true,
-          elementId: testPointId,
-          world
+          viewModel: pointViewModel
         }
       });
       
@@ -61,8 +69,7 @@ describe('PropertiesDialog', () => {
       const wrapper = mount(PropertiesDialog, {
         props: {
           isOpen: true,
-          elementId: testPointId,
-          world,
+          viewModel: pointViewModel,
           onClose
         }
       });
@@ -76,8 +83,7 @@ describe('PropertiesDialog', () => {
       const wrapper = mount(PropertiesDialog, {
         props: {
           isOpen: true,
-          elementId: testPointId,
-          world,
+          viewModel: pointViewModel,
           onClose
         }
       });
@@ -91,8 +97,7 @@ describe('PropertiesDialog', () => {
       const wrapper = mount(PropertiesDialog, {
         props: {
           isOpen: true,
-          elementId: testPointId,
-          world,
+          viewModel: pointViewModel,
           onClose
         }
       });
@@ -105,16 +110,12 @@ describe('PropertiesDialog', () => {
   describe('Element type detection', () => {
     it('should display "2D Point" for point elements', () => {
       // Add a point to world
-      const planeH = world.getProjectionPlaneByLabel('P_H');
-      const position = new Vector3(0, 0, 1);
-      const point = planeH.addFreePoint2D(position, world);
-      const pointId = point.id;
+      const pointId = testPointId;
       
       const wrapper = mount(PropertiesDialog, {
         props: {
           isOpen: true,
-          elementId: pointId,
-          world
+          viewModel: pointViewModel
         }
       });
       
@@ -122,20 +123,16 @@ describe('PropertiesDialog', () => {
     });
 
     it('should display plane ID for 2D elements', () => {
-      const planeH = world.getProjectionPlaneByLabel('P_H');
-      const position = new Vector3(0, 0, 1);
-      const point = planeH.addFreePoint2D(position, world);
-      const pointId = point.id;
+      const pointId = testPointId;
       
       const wrapper = mount(PropertiesDialog, {
         props: {
           isOpen: true,
-          elementId: pointId,
-          world
+          viewModel: pointViewModel
         }
       });
       
-      expect(wrapper.text()).toContain(planeH.id);
+      expect(wrapper.text()).toContain('proj_plane_H');
     });
   });
 
@@ -144,8 +141,7 @@ describe('PropertiesDialog', () => {
       const wrapper = mount(PropertiesDialog, {
         props: {
           isOpen: true,
-          elementId: testPointId,
-          world
+          viewModel: pointViewModel
         }
       });
       
@@ -166,8 +162,7 @@ describe('PropertiesDialog', () => {
       const wrapper = mount(PropertiesDialog, {
         props: {
           isOpen: true,
-          elementId: testPointId,
-          world
+          viewModel: pointViewModel
         }
       });
       
@@ -186,19 +181,11 @@ describe('PropertiesDialog', () => {
 
     it('should validate line width range', async () => {
       // Add a line element
-      const planeH = world.getProjectionPlaneByLabel('P_H');
-      const pos1 = new Vector3(0, 0, 1);
-      const pos2 = new Vector3(10, 10, 1);
-      const point1 = planeH.addFreePoint2D(pos1, world);
-      const point2 = planeH.addFreePoint2D(pos2, world);
-      const line = planeH.addLine2DBetweenTwoPoints(point1.id, point2.id, world);
-      const lineId = line.id;
       
       const wrapper = mount(PropertiesDialog, {
         props: {
           isOpen: true,
-          elementId: lineId,
-          world
+          viewModel: lineViewModel
         }
       });
       
@@ -217,19 +204,11 @@ describe('PropertiesDialog', () => {
     });
 
     it('should validate line style options', async () => {
-      const planeH = world.getProjectionPlaneByLabel('P_H');
-      const pos1 = new Vector3(0, 0, 1);
-      const pos2 = new Vector3(10, 10, 1);
-      const point1 = planeH.addFreePoint2D(pos1, world);
-      const point2 = planeH.addFreePoint2D(pos2, world);
-      const line = planeH.addLine2DBetweenTwoPoints(point1.id, point2.id, world);
-      const lineId = line.id;
       
       const wrapper = mount(PropertiesDialog, {
         props: {
           isOpen: true,
-          elementId: lineId,
-          world
+          viewModel: lineViewModel
         }
       });
       
@@ -250,8 +229,7 @@ describe('PropertiesDialog', () => {
       const wrapper = mount(PropertiesDialog, {
         props: {
           isOpen: true,
-          elementId: testPointId,
-          world
+          viewModel: pointViewModel
         }
       });
       
@@ -272,17 +250,13 @@ describe('PropertiesDialog', () => {
     });
 
     it('should emit save event with valid changes', async () => {
-      const planeH = world.getProjectionPlaneByLabel('P_H');
-      const position = new Vector3(0, 0, 1);
-      const point = planeH.addFreePoint2D(position, world);
-      const pointId = point.id;
+      const pointId = testPointId;
       
       const onSave = vi.fn();
       const wrapper = mount(PropertiesDialog, {
         props: {
           isOpen: true,
-          elementId: pointId,
-          world,
+          viewModel: pointViewModel,
           onSave
         }
       });
@@ -307,17 +281,13 @@ describe('PropertiesDialog', () => {
     });
 
     it('should only include overridden properties in save event', async () => {
-      const planeH = world.getProjectionPlaneByLabel('P_H');
-      const position = new Vector3(0, 0, 1);
-      const point = planeH.addFreePoint2D(position, world);
-      const pointId = point.id;
+      const pointId = testPointId;
       
       const onSave = vi.fn();
       const wrapper = mount(PropertiesDialog, {
         props: {
           isOpen: true,
-          elementId: pointId,
-          world,
+          viewModel: pointViewModel,
           onSave
         }
       });
@@ -348,8 +318,7 @@ describe('PropertiesDialog', () => {
       const wrapper = mount(PropertiesDialog, {
         props: {
           isOpen: true,
-          elementId: testPointId,
-          world
+          viewModel: pointViewModel
         }
       });
       
@@ -361,8 +330,7 @@ describe('PropertiesDialog', () => {
       const wrapper = mount(PropertiesDialog, {
         props: {
           isOpen: true,
-          elementId: testPointId,
-          world
+          viewModel: pointViewModel
         }
       });
       
@@ -380,8 +348,7 @@ describe('PropertiesDialog', () => {
       const wrapper = mount(PropertiesDialog, {
         props: {
           isOpen: true,
-          elementId: testPointId,
-          world
+          viewModel: pointViewModel
         }
       });
       
@@ -408,8 +375,7 @@ describe('PropertiesDialog', () => {
       const wrapper = mount(PropertiesDialog, {
         props: {
           isOpen: true,
-          elementId: testPointId,
-          world
+          viewModel: pointViewModel
         }
       });
       

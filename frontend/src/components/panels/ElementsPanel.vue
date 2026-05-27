@@ -125,15 +125,9 @@
 
 <script setup lang="ts">
 import { ref, computed, inject, onMounted, onUnmounted } from 'vue';
-import { WorldInjectionKey } from '@/application/appShell/RuntimeInjectionKeys';
+import { ElementsPanelInjectionKey } from '@/application/appShell/RuntimeInjectionKeys';
 import { useSelectionStore } from '@/stores/selectionStore';
 import ElementTypeGroup from './ElementTypeGroup.vue';
-import { Point2D } from '@/domain/world/Point';
-import { Line2D } from '@/domain/world/Line';
-import { Segment2DByPoints } from '@/domain/world/Segment';
-import { Circle2D } from '@/domain/world/Circle';
-import { Guide2D } from '@/domain/world/Guide';
-import { HalfHingeLine2D } from '@/domain/world/HingeLine';
 import { formatElementLabel } from '@/utils/formatUtils';
 
 // Emits
@@ -143,8 +137,12 @@ const emit = defineEmits<{
 }>();
 
 // Injected dependencies
-const world = inject(WorldInjectionKey)!;
+const elementsPanelPort = inject(ElementsPanelInjectionKey);
+if (!elementsPanelPort) {
+  throw new Error('Elements panel port not provided');
+}
 
+const elementsPanelPortRequired = elementsPanelPort;
 // Selection store for bidirectional sync
 const selectionStore = useSelectionStore();
 
@@ -153,163 +151,40 @@ const is2DSectionCollapsed = ref(false);
 const is3DSectionCollapsed = ref(false);
 const planeCollapsedStates = ref(new Map<string, boolean>());
 
-// Track World version for reactivity
-const worldVersion = computed(() => world.getVersion());
-
-// Force re-render by polling world version changes
+// Runtime read model refresh trigger
 const forceUpdate = ref(0);
-let intervalId: number | null = null;
-let lastVersion = world.getVersion();
+
+function handleRuntimeChange(): void {
+  forceUpdate.value++;
+}
 
 onMounted(() => {
-  console.log('[ElementsPanel] Mounted, initial World version:', world.getVersion());
-  intervalId = window.setInterval(() => {
-    const currentVersion = world.getVersion();
-    if (currentVersion !== lastVersion) {
-      console.log('[ElementsPanel] World version changed:', lastVersion, '→', currentVersion);
-      lastVersion = currentVersion;
-      forceUpdate.value++;
-    }
-  }, 100);
+  elementsPanelPortRequired.subscribeToChanges(handleRuntimeChange);
 });
 
 onUnmounted(() => {
-  if (intervalId !== null) {
-    clearInterval(intervalId);
-  }
+  elementsPanelPortRequired.unsubscribeFromChanges(handleRuntimeChange);
 });
 
-// Get elements from World
-const projectionPlanesList = computed(() => {
-  const version = worldVersion.value; // Create dependency
-  const update = forceUpdate.value; // Create dependency
-  
-  // Phase 90: Dynamic projection planes list
-  console.log('[ElementsPanel] Computing projection planes list, version:', version, 'forceUpdate:', update);
-  
-  const allPlanes = world.getAllProjectionPlanes();
-  
-  // Sort planes: P_H, P_V first, then others
-  const sortedPlanes = [...allPlanes].sort((a, b) => {
-    // P_H always first
-    if (a.name === 'P_H') return -1;
-    if (b.name === 'P_H') return 1;
-    // P_V second
-    if (a.name === 'P_V') return -1;
-    if (b.name === 'P_V') return 1;
-    // Others by name/creation order
-    return a.name.localeCompare(b.name);
-  });
-  
-  return sortedPlanes.map(plane => {
-    const points = plane.getAllPoints();
-    const allLines = plane.getAllLines();
-    const lines = allLines.filter(l => !(l instanceof HalfHingeLine2D) && !(l instanceof Segment2DByPoints) && !(l instanceof Guide2D));
-    const segments = allLines.filter(l => l instanceof Segment2DByPoints);
-    const circles = plane.getAllCircles();
-    const guides = allLines.filter(l => l instanceof Guide2D);
-    
-    // Check collapse state (default expanded for P_H/P_V, maybe collapsed for others? Let's default all expanded or based on map)
-    // Initialize if not present
-    if (!planeCollapsedStates.value.has(plane.id!)) {
-        // Default to OPEN (false)
-        planeCollapsedStates.value.set(plane.id!, false);
-    }
-    const isCollapsed = planeCollapsedStates.value.get(plane.id!) || false;
-
-    return {
-      id: plane.id!,
-      name: plane.name,
-      label: plane.name === 'P_H' ? 'Horizontal' : (plane.name === 'P_V' ? 'Vertical' : 'Auxiliary'),
-      isCollapsed,
-      elements: {
-        points: points.map(formatElement),
-        lines: lines.map(formatElement),
-        segments: segments.map(formatElement),
-        circles: circles.map(formatElement),
-        guides: guides.map(formatElement)
-      },
-      hasElements: points.length + lines.length + segments.length + circles.length + guides.length > 0
-    };
-  });
+const readModel = computed(() => {
+  forceUpdate.value;
+  return elementsPanelPortRequired.getReadModel();
 });
 
-const threeDElements = computed(() => {
-  worldVersion.value; // Create dependency
-  forceUpdate.value; // Create dependency
-  
-  console.log('[ElementsPanel] Computing 3D elements');
-  
-  // Fetch 3D elements from World (Phase 78)
-  const points = world.getAll3DPoints();
-  const lines = world.getAll3DLines();
-  const segments = world.getAll3DSegments();
-  const planes = world.getAllPlanes();
-  
-  console.log('[ElementsPanel] 3D elements:', {
-    points: points.length,
-    lines: lines.length,
-    segments: segments.length,
-    planes: planes.length
-  });
-  
+const projectionPlanesList = computed(() => readModel.value.projectionPlanes.map(plane => {
+  if (!planeCollapsedStates.value.has(plane.id)) planeCollapsedStates.value.set(plane.id, false);
   return {
-    points: points.map(formatElement),
-    lines: lines.map(formatElement),
-    segments: segments.map(formatElement),
-    planes: planes.map(formatElement),
-    hasElements: points.length + lines.length + segments.length + planes.length > 0
+    ...plane,
+    isCollapsed: planeCollapsedStates.value.get(plane.id) || false,
   };
-});
+}));
+
+const threeDElements = computed(() => readModel.value.threeDElements);
 
 const hasAnyElements = computed(() => {
   return projectionPlanesList.value.some(p => p.hasElements) ||
          threeDElements.value.hasElements;
 });
-
-// Helper functions
-function formatElement(element: any): any {
-  // Determine type using instanceof checks
-  let type = 'unknown';
-  if (element instanceof Guide2D) {
-    type = 'guide';
-  } else if (element instanceof Segment2DByPoints) {
-    type = 'segment';
-  } else if (element instanceof Line2D) {
-    type = 'line';
-  } else if (element instanceof Circle2D) {
-    type = 'circle';
-  } else if (element instanceof Point2D) {
-    type = 'point';
-  }
-  
-  return {
-    id: element.id,
-    label: formatLabel(element),
-    type: type,
-    visible: element.visualStyle?.visible !== false,
-    properties: getElementProperties(element)
-  };
-}
-
-function formatLabel(element: any): string {
-  // Use element label if available, otherwise use unaltered hierarchical ID
-  // Hierarchical IDs (e.g., "proj_plane_H/point2d_1") are self-documenting
-  // and show which plane the element belongs to
-  return element.label || element.id;
-}
-
-function getElementProperties(element: any): string {
-  // Format key properties for display
-  if ('position' in element) {
-    const pos = element.position;
-    return `(${pos.x.toFixed(2)}, ${pos.y.toFixed(2)})`;
-  }
-  if ('radius' in element) {
-    return `r=${element.radius.toFixed(2)}`;
-  }
-  return '';
-}
 
 // Event handlers
 function toggle2DSection() {
@@ -342,19 +217,7 @@ function handleElementSelect(elementId: string) {
 function handleVisibilityToggle(elementId: string) {
   // Architecture: Get element polymorphically and check type with instanceof
   // Try 2D elements first, then 3D elements, then projection planes
-  const element = world.getElement2D(elementId) 
-    || world.getElement3DById(elementId) 
-    || world.getProjectionPlaneById(elementId);
-  
-  if (element) {
-    if (!element.visualStyle) {
-      element.visualStyle = { color: '#000000', lineWidth: 2, lineStyle: 'solid', opacity: 1.0, visible: false, inherited: true };
-    } else {
-      element.visualStyle.visible = !element.visualStyle.visible;
-    }
-    // Notify world of change for reactivity
-    world.markDirty();
-  }
+  elementsPanelPortRequired.toggleVisibility(elementId);
 }
 </script>
 

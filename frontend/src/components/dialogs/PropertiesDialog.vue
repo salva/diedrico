@@ -159,17 +159,11 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import type { World } from '@/domain/world/World';
-import { Point2DLineLineIntersection, Point2DLineCircleIntersection, Point2DCircleCircleIntersection } from '@/domain/world/Point';
-import { Line2DByTwoPoints } from '@/domain/world/Line';
-import { Segment2DByPoints } from '@/domain/world/Segment';
-import { Circle2DByCenterAndPoint, Circle2DByThreePoints } from '@/domain/world/Circle';
-import { Guide2D } from '@/domain/world/Guide';
+import type { PropertiesDialogViewModel } from '@/application/appShell/RuntimeViewPorts';
 
 interface Props {
   isOpen: boolean;
-  elementId: string | null;
-  world: World | null;
+  viewModel: PropertiesDialogViewModel | null;
 }
 
 interface StyleChanges {
@@ -204,132 +198,12 @@ const lineWidthError = ref<string>('');
 const lineStyleError = ref<string>('');
 
 // Computed properties for display
-const elementLabel = computed(() => {
-  if (!props.elementId || !props.world) return 'Unknown';
-  
-  // Get element label/ID
-  return props.elementId;
-});
-
-const elementType = computed(() => {
-  if (!props.elementId || !props.world) return 'Unknown';
-  
-  // Determine element type by checking which collection contains it
-  const point = props.world.getPoint2D(props.elementId);
-  if (point) return '2D Point';
-  
-  const line = props.world.getLine2D(props.elementId);
-  if (line) return '2D Line';
-  
-  const segment = props.world.getSegment2D(props.elementId);
-  if (segment) return '2D Segment';
-  
-  const circle = props.world.getCircle2D(props.elementId);
-  if (circle) return '2D Circle';
-  
-  const guide = props.world.getGuide2D(props.elementId);
-  if (guide) return '2D Guide';
-  
-  return 'Unknown';
-});
-
-const planeId = computed(() => {
-  if (!props.elementId || !props.world) return null;
-  
-  // Get plane ID from element
-  const point = props.world.getPoint2D(props.elementId);
-  if (point) return point.planeId;
-  
-  const line = props.world.getLine2D(props.elementId);
-  if (line) return line.planeId;
-  
-  const segment = props.world.getSegment2D(props.elementId);
-  if (segment) return segment.planeId;
-  
-  const circle = props.world.getCircle2D(props.elementId);
-  if (circle) return circle.planeId;
-  
-  const guide = props.world.getGuide2D(props.elementId);
-  if (guide) return guide.planeId;
-  
-  return null;
-});
-
-const coordinates = computed(() => {
-  if (!props.elementId || !props.world) return null;
-  
-  // Get coordinates from realization
-  const point = props.world.getPoint2D(props.elementId);
-  if (point) {
-    const plane = props.world.getProjectionPlaneById(point.planeId);
-    const realization = plane?.getPoint(props.elementId)?.realize2D(props.world);
-    if (realization) {
-      const pos = realization.getPosition();
-      return `(${pos.x.toFixed(2)}, ${pos.y.toFixed(2)})`;
-    }
-  }
-  
-  const circle = props.world.getCircle2D(props.elementId);
-  if (circle) {
-    const plane = props.world.getProjectionPlaneById(circle.planeId);
-    const realization = plane?.getCircle(props.elementId)?.realize2D(props.world);
-    if (realization) {
-      const center = realization.center;
-      return `Center: (${center.x.toFixed(2)}, ${center.y.toFixed(2)}), Radius: ${realization.getRadius().toFixed(2)}`;
-    }
-  }
-  
-  // Lines, segments, and guides don't show coordinates directly
-  return null;
-});
-
-const dependencies = computed(() => {
-  if (!props.elementId || !props.world) return [];
-  
-  // Get dependencies from element
-  const point = props.world.getPoint2D(props.elementId);
-  if (point instanceof Point2DLineLineIntersection) {
-    return [point.line1Id, point.line2Id].filter(Boolean);
-  }
-  if (point instanceof Point2DLineCircleIntersection) {
-    return [point.lineId, point.circleId].filter(Boolean);
-  }
-  if (point instanceof Point2DCircleCircleIntersection) {
-    return [point.circle1Id, point.circle2Id].filter(Boolean);
-  }
-  
-  const line = props.world.getLine2D(props.elementId);
-  if (line instanceof Line2DByTwoPoints) {
-    return [line.point1Id, line.point2Id];
-  }
-  
-  const segment = props.world.getSegment2D(props.elementId);
-  if (segment instanceof Segment2DByPoints) {
-    return [segment.point1Id, segment.point2Id];
-  }
-  
-  const circle = props.world.getCircle2D(props.elementId);
-  if (circle instanceof Circle2DByCenterAndPoint) {
-    return [circle.centerPointId, circle.circumferencePointId];
-  }
-  if (circle instanceof Circle2DByThreePoints) {
-    return [circle.point1Id, circle.point2Id, circle.point3Id];
-  }
-  
-  const guide = props.world.getGuide2D(props.elementId);
-  if (guide instanceof Guide2D) {
-    return [guide.referenceLineId, guide.throughPointId];
-  }
-  
-  return [];
-});
-
-const createdBy = computed(() => {
-  if (!props.elementId || !props.world) return null;
-  // TODO: Get creation action from ProcessTree
-  // For now, just show placeholder
-  return 'Action in ProcessTree';
-});
+const elementLabel = computed(() => props.viewModel?.elementLabel ?? 'Unknown');
+const elementType = computed(() => props.viewModel?.elementType ?? 'Unknown');
+const planeId = computed(() => props.viewModel?.planeId ?? null);
+const coordinates = computed(() => props.viewModel?.coordinates ?? null);
+const dependencies = computed(() => props.viewModel?.dependencies ?? []);
+const createdBy = computed(() => props.viewModel?.createdBy ?? null);
 
 const hasLineStyle = computed(() => {
   const type = elementType.value;
@@ -338,24 +212,23 @@ const hasLineStyle = computed(() => {
 
 // Watch for dialog open/close and element changes
 watch(() => props.isOpen, (isOpen) => {
-  if (isOpen && props.elementId && props.world) {
+  if (isOpen && props.viewModel) {
     loadElementProperties();
   }
 });
 
-watch(() => props.elementId, () => {
-  if (props.isOpen && props.elementId && props.world) {
+watch(() => props.viewModel, () => {
+  if (props.isOpen && props.viewModel) {
     loadElementProperties();
   }
 });
 
 function loadElementProperties() {
-  // TODO: Load current element properties from world
-  // For now, use defaults
-  editableColor.value = '#000000';
-  editableLineWidth.value = 1.0;
-  editableLineStyle.value = 'solid';
-  editableVisible.value = true;
+  const style = props.viewModel?.style;
+  editableColor.value = style?.color ?? '#000000';
+  editableLineWidth.value = style?.lineWidth ?? 1.0;
+  editableLineStyle.value = style?.lineStyle ?? 'solid';
+  editableVisible.value = style?.visible ?? true;
   
   // Reset override flags
   colorOverride.value = false;
@@ -412,7 +285,7 @@ function handleCancel() {
 }
 
 function handleSave() {
-  if (!props.elementId) return;
+  if (!props.viewModel) return;
   
   // Validate all overridden properties
   let isValid = true;
@@ -434,7 +307,7 @@ function handleSave() {
   }
   
   const changes: StyleChanges = {
-    elementId: props.elementId,
+    elementId: props.viewModel.elementId,
   };
   
   // Only include overridden properties

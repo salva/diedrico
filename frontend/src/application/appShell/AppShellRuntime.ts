@@ -13,14 +13,18 @@ export interface AppShellRuntimeOptions {
 
 export function createAppShellRuntime(options: AppShellRuntimeOptions) {
   const session = new RuntimeSession();
-  const world = session.worldForView();
   const commandHistory = session.commandHistoryPort();
   const canvasCommandProducerPort = session.canvasCommandProducerPort(options.ports.toolStore);
   const processHistoryCommandPort = session.processHistoryCommandPort();
+  const canvasViewPort = session.canvasViewPort();
+  const processTreeReadPort = session.processTreeReadPort();
+  const elementsPanelPort = session.elementsPanelPort();
+  const threePresentationPort = session.threePresentationPort();
+  const activePlaneSelectorPort = session.activePlaneSelectorPort();
   const ports = options.ports;
   const drive = ports.drive;
 
-  const activePlaneId = ref<string | undefined>(world.getActivePlaneId());
+  const activePlaneId = ref<string | undefined>(session.activePlanePort().getActivePlaneId());
   const activePlaneName = ref('');
   const coordinates3D = ref<{ x: number; y: number; z: number } | null>(null);
   const show3DView = ref(true);
@@ -98,7 +102,11 @@ export function createAppShellRuntime(options: AppShellRuntimeOptions) {
   }
 
   return {
-    world,
+    canvasViewPort,
+    processTreeReadPort,
+    elementsPanelPort,
+    threePresentationPort,
+    activePlaneSelectorPort,
     canvasCommandProducerPort,
     processHistoryCommandPort,
     commandHistory,

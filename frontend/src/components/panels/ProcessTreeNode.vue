@@ -65,7 +65,6 @@
           v-for="child in allChildren"
           :key="child.id"
           :node="child"
-          :world="world"
           :data-version="dataVersion"
           :selected-node-id="selectedNodeId"
           :active-subprocess-id="activeSubprocessId"
@@ -109,7 +108,6 @@
           v-for="child in allChildren"
           :key="child.id"
           :node="child"
-          :world="world"
           :data-version="dataVersion"
           :selected-node-id="selectedNodeId"
           :active-subprocess-id="activeSubprocessId"
@@ -182,18 +180,14 @@
 
 <script setup lang="ts">
 import { ref, computed, nextTick } from 'vue';
-import type { ProcessNode } from '@/domain/processTree/ProcessTree';
-import type { World } from '@/domain/world/World';
+import type { ProcessNodeViewModel } from '@/application/appShell/RuntimeViewPorts';
 import { formatElementLabel } from '@/utils/formatUtils';
-import { getActionDescriptionParts } from '@/domain/processTree/Action';
 import { useSelectionStore } from '@/stores/selectionStore';
 import { useProcessTreeStore } from '@/stores/processTreeStore';
-import { Element2D } from '@/domain/world/Element2D';
 
 // Props
 const props = withDefaults(defineProps<{
-  node: ProcessNode;
-  world: World;
+  node: ProcessNodeViewModel;
   selectedNodeId: string | null;
   activeSubprocessId?: string;
   relatedActionIds?: Set<string>;
@@ -239,40 +233,12 @@ const isRelated = computed(() => {
   return props.relatedActionIds.has(props.node.id);
 });
 
-const isInfeasible = computed(() => {
-  if (props.node.type !== 'action') return false;
-  if (!props.node.elementId) return false;
-  
-  // Get element polymorphically - try different element types
-  let element;
-  try {
-    // Try 2D element first (will throw if ID format is wrong)
-    element = props.world.getElement2D(props.node.elementId);
-  } catch {
-    // Not a 2D element, try 3D or projection plane
-    element = props.world.getElement3DById(props.node.elementId)
-      || props.world.getProjectionPlaneById(props.node.elementId);
-  }
-  
-  if (!element) return false;
-  
-  // Only 2D elements have feasibility checking via realize2D
-  if (element instanceof Element2D) {
-    const realization = element.realize2D(props.world);
-    return realization ? !realization.isFeasible() : false;
-  }
-  
-  // 3D elements and projection planes don't have infeasibility yet
-  return false;
-});
+const isInfeasible = computed(() => props.node.type === 'action' && props.node.isInfeasible);
 
 // Description parts for action nodes
 const descriptionParts = computed(() => {
-  if (props.node.type !== 'action') return [];
-  const parts = getActionDescriptionParts(props.node, props.world);
-  // Hide deleted elements by returning empty array
-  if (parts.length === 0) return [];
-  return parts;
+  if (props.node.type !== 'action' || props.node.hideBecauseElementMissing) return [];
+  return props.node.descriptionParts;
 });
 
 // Expandable description state
@@ -303,19 +269,19 @@ const isFaded = computed(() => {
 });
 
 // Helper to check for visible descendants recursively (structural check)
-function hasVisibleDescendant(node: ProcessNode): boolean {
+function hasVisibleDescendant(node: ProcessNodeViewModel): boolean {
   if (node.type === 'action') {
     return false; // Leaf node cannot have descendants
   }
   
   if (node.type === 'actionGroup') {
     // ActionGroup has ActionNode | null children
-    return node.children.some(child => child !== null && child.isOutput);
+    return node.children?.some(child => child.isOutput) ?? false;
   }
   
   if (node.type === 'subprocess') {
     // Subprocess has Subprocess | ActionGroup children
-    return node.children.some(child => child.isOutput || hasVisibleDescendant(child));
+    return node.children?.some(child => child.isOutput || hasVisibleDescendant(child)) ?? false;
   }
   
   return false;
@@ -340,8 +306,7 @@ const isEffectivelyEncapsulated = computed(() => {
 const allChildren = computed(() => {
   // Use dataVersion/node to ensure reactivity when structure changes
   props.dataVersion; 
-  if (!('children' in props.node)) return [];
-  return props.node.children.filter(child => child !== null);
+  return props.node.children ?? [];
 });
 
 // Selection store
@@ -373,9 +338,9 @@ function handleActionClick() {
   
   // Phase 93: Actions only have elementId (single output element)
   // For inputs, we'd need to query DependencyService (future enhancement)
-  const elementIds = [props.node.elementId];
-  if (elementIds.length > 0) {
-    emit('highlightElements', elementIds, false);
+  const elementId = props.node.elementId;
+  if (elementId) {
+    emit('highlightElements', [elementId], false);
   }
 }
 
@@ -384,9 +349,9 @@ function handleActionHover(isHovering: boolean) {
   
   if (isHovering && !isSelected.value) {
     // Phase 93: Actions only have elementId (single output element)
-    const elementIds = [props.node.elementId];
-    if (elementIds.length > 0) {
-      emit('highlightElements', elementIds, true);
+    const elementId = props.node.elementId;
+    if (elementId) {
+      emit('highlightElements', [elementId], true);
     }
   } else if (!isHovering && !isSelected.value) {
     emit('clearHighlight');
@@ -395,7 +360,7 @@ function handleActionHover(isHovering: boolean) {
 
 async function startEditing() {
   if (props.node.type !== 'subprocess') return;
-  editName.value = props.node.name;
+  editName.value = props.node.name ?? '';
   isEditing.value = true;
   await nextTick();
   nameInput.value?.focus();
@@ -414,7 +379,7 @@ function submitName() {
 
 function cancelEditing() {
   isEditing.value = false;
-  editName.value = props.node.type === 'subprocess' ? props.node.name : '';
+  editName.value = props.node.type === 'subprocess' ? (props.node.name ?? '') : '';
 }
 </script>
 

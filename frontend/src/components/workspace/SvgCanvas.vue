@@ -149,7 +149,7 @@
     <PropertiesDialog
       :is-open="showPropertiesDialog"
       :element-id="propertiesElementId"
-      :world="world"
+      :view-model="canvasViewPortRequired.getPropertiesDialogViewModel(propertiesElementId)"
       @close="showPropertiesDialog = false"
       @save="handleSaveProperties"
     />
@@ -196,20 +196,16 @@ import { Create3DLineTool } from '@/tools/Create3DLineTool';
 import { Create3DSegmentTool } from '@/tools/Create3DSegmentTool';
 import { Create3DPlaneTool } from '@/tools/Create3DPlaneTool';
 import { CreateProjectionPlaneTool } from '@/tools/CreateProjectionPlaneTool';
-import { FreePoint2D } from '@/domain/world/Point';
 import { useToolStore } from '@/stores/toolStore';
 import { useViewStore } from '@/stores/viewStore';
 import { useSelectionStore } from '@/stores/selectionStore';
 import { useViewport } from '@/composables/useViewport';
 import { useGlobalHoverHighlight } from '@/composables/useHoverHighlight';
-import { screenTo3D } from '@/utils/coordinateTransform';
 import PropertiesDialog from '@/components/dialogs/PropertiesDialog.vue';
 import type { ITool } from '@/tools/ITool';
 import type { FreePointMoveSession, ToolCommandSink } from '@/application/tools/ToolCommandIntents';
-import { CanvasCommandProducerInjectionKey, WorldInjectionKey } from '@/application/appShell/RuntimeInjectionKeys';
-import { CanvasPresentationController } from '@/application/canvasPresentation/CanvasPresentationController';
+import { CanvasCommandProducerInjectionKey, CanvasViewInjectionKey } from '@/application/appShell/RuntimeInjectionKeys';
 import { CanvasInteractionQuery } from '@/application/canvasPresentation/CanvasInteractionQuery';
-import { createCanvasWorldReadPort } from '@/application/canvasPresentation/CanvasWorldReadPort';
 
 // Define emits
 const emit = defineEmits<{
@@ -219,16 +215,10 @@ const emit = defineEmits<{
 
 const svgElement = ref<SVGSVGElement | null>(null);
 
-// Track World version changes (World is not reactive by itself)
-const worldVersion = ref(0);
-let versionPollId: number | null = null;
-let lastWorldVersion = 0;
-
-// Active plane - derived from World (managed by App.vue)
+// Active plane - derived from runtime view port.
 const activePlane = computed(() => {
-  // Depend on worldVersion so plane switching triggers recomputation
-  worldVersion.value;
-  return worldForCanvas.getActivePlaneId();
+  renderTick.value;
+  return canvasViewPortRequired.getActivePlaneId();
 });
 
 // Dynamic canvas dimensions - updated based on container size
@@ -250,7 +240,6 @@ const viewport = computed<ViewportTransform>(() => {
 const viewportComposable = useViewport({ element: svgElement });
 
 // Services
-const canvasPresentationController = new CanvasPresentationController();
 const svgRenderer = new SVGRenderer();
 const inputService = new InputService();
 const toolStore = useToolStore();
@@ -298,10 +287,6 @@ const viewportPan = ref<{
 });
 
 let ignoreNextClick = false;
-
-function isMovableFreePoint(point: unknown): point is FreePoint2D {
-  return point instanceof FreePoint2D && !point.locked;
-}
 
 function hasStatusMessage(tool: ITool): tool is ITool & { getStatusMessage: () => string } {
   return 'getStatusMessage' in tool && typeof tool.getStatusMessage === 'function';
@@ -355,65 +340,12 @@ function handleGlobalKeyDown(event: KeyboardEvent) {
   }
 }
 
-/**
- * Get display label for an element
- * @param elementId - ID of the element
- * @param elementType - Type of the element (point, line, segment, etc.)
- * @param planeId - ID of the plane containing the element (optional, will search all planes if not provided)
- */
-function getElementLabel(elementId: string, elementType: string, planeId?: string): string {
-  let element: any;
-  
-  // If planeId is provided, only search that plane
-  if (planeId) {
-    const plane = worldForCanvas.getProjectionPlaneById(planeId);
-    if (plane) {
-      switch (elementType) {
-        case 'point':
-          element = plane.getPoint(elementId);
-          break;
-        case 'line':
-        case 'half-hinge-line':
-        case 'segment':  // Segments are Line2D objects, use getLine
-        case 'guide':  // Guides are Line2D objects, use getLine
-          element = plane.getLine(elementId);
-          break;
-        case 'circle':
-          element = plane.getCircle(elementId);
-          break;
-      }
-    }
-  } else {
-    // Search all planes if no planeId provided
-    for (const plane of worldForCanvas.getAllProjectionPlanes()) {
-      switch (elementType) {
-        case 'point':
-          element = plane.getPoint(elementId);
-          break;
-        case 'line':
-        case 'half-hinge-line':
-        case 'segment':  // Segments are Line2D objects, use getLine
-        case 'guide':  // Guides are Line2D objects, use getLine
-          element = plane.getLine(elementId);
-          break;
-        case 'circle':
-          element = plane.getCircle(elementId);
-          break;
-      }
-      if (element) break; // Found it
-    }
-  }
-  
-  return element ? element.label || elementId : elementId;
+const canvasViewPort = inject(CanvasViewInjectionKey);
+if (!canvasViewPort) {
+  throw new Error('Canvas view port not provided');
 }
 
-// World instance - injected from App.vue
-const world = inject(WorldInjectionKey);
-if (!world) {
-  throw new Error('World not provided');
-}
-const worldForCanvas = world;
-
+const canvasViewPortRequired = canvasViewPort;
 const injectedCanvasToolController = inject(CanvasCommandProducerInjectionKey) as ToolCommandSink | undefined;
 if (!injectedCanvasToolController) {
   throw new Error('Canvas command producer port not provided');
@@ -476,30 +408,14 @@ onMounted(() => {
   // Update dimensions on window resize
   window.addEventListener('resize', resizeHandler);
 
-  // Poll World version so UI reacts to domain changes (e.g. active plane switching)
-  lastWorldVersion = worldForCanvas.getVersion();
-  worldVersion.value = lastWorldVersion;
-  versionPollId = window.setInterval(() => {
-    const current = worldForCanvas.getVersion();
-    if (current !== lastWorldVersion) {
-      lastWorldVersion = current;
-      worldVersion.value = current;
-      renderTick.value++;
-    }
-  }, 100);
-
-  console.log('World initialized');
-  const allPlanes = worldForCanvas.getAllProjectionPlanes();
-  const totalPoints = allPlanes.reduce((sum, plane) => sum + plane.getAllPoints().length, 0);
-  console.log('Points in world:', totalPoints);
+  canvasViewPortRequired.subscribeToChanges(handleRuntimeViewChange);
+  console.log('Runtime canvas view port initialized');
 });
 
 onUnmounted(() => {
   window.removeEventListener('resize', resizeHandler);
   window.removeEventListener('keydown', handleGlobalKeyDown);
-  if (versionPollId !== null) {
-    clearInterval(versionPollId);
-  }
+  canvasViewPortRequired.unsubscribeFromChanges(handleRuntimeViewChange);
 });
 
 // Global key handling (Esc cancels point-drag)
@@ -529,17 +445,11 @@ watch(() => toolStore.currentTool.value, (newTool) => {
 
 // Get plane transforms for INPUT (canvas click → plane coordinates)
 function getPlaneTransformsForInput(): Map<string, Matrix3> {
-  const transforms = new Map<string, Matrix3>();
-  
-  // Get all projection planes dynamically
-  for (const plane of worldForCanvas.getAllProjectionPlanes()) {
-    const realization = worldForCanvas.getProjectionPlane2DRealization(plane.id);
-    if (realization) {
-      transforms.set(plane.id, realization.paperToPlane2D);
-    }
-  }
-  
-  return transforms;
+  return canvasViewPortRequired.getPlaneTransformsForInput();
+}
+
+function handleRuntimeViewChange(): void {
+  renderTick.value++;
 }
 
 // Canvas presentation read model derived from one world/view snapshot.
@@ -548,13 +458,12 @@ const canvasPresentation = computed(() => {
   const hoveredId = hoveredElementId.value;
   const selectedIds = selectionStore.selectedIdsArray;
   const cascadeHighlightIds = selectionStore.cascadeHighlightIdsArray;
-  return canvasPresentationController.buildModel(
-    createCanvasWorldReadPort(worldForCanvas),
+  return canvasViewPortRequired.buildPresentationModel(
     { ...viewport.value, width: canvasWidth.value, height: canvasHeight.value },
     {
-      hoveredIds: hoveredId ? new Set([hoveredId]) : undefined,
-      selectedIds: selectedIds.length > 0 ? new Set(selectedIds) : undefined,
-      cascadeHighlightIds: cascadeHighlightIds.length > 0 ? new Set(cascadeHighlightIds) : undefined,
+      hoveredElementId: hoveredId,
+      selectedIds,
+      cascadeHighlightIds,
       activePlaneId: activePlane.value,
       showProjectedElements: viewStore.showProjectedElements.value,
       gridVisible: viewStore.gridVisible.value
@@ -740,12 +649,12 @@ function handleCanvasClick(event: MouseEvent) {
   }
   
   // Delegate to tool with context including both canvas and plane coordinates
-  const result = activeTool.handleClick({
+  const result = canvasViewPortRequired.invokeToolClick(activeTool, {
     planeId: activePlaneId,
     planeCoords: planePos,
     canvasCoords: { x: canvasPoint.x, y: canvasPoint.y },
     commandSink: canvasToolController,
-    world: worldForCanvas,
+
     interactionQuery: interactionQuery.value,
     paperToPlaneTransform: paperToPlane,
     viewport: viewport.value,
@@ -846,11 +755,8 @@ function handleMouseDown(event: MouseEvent) {
   
   // Check if we hit a movable point
   if (hit && hit.elementType === 'point') {
-    const plane = worldForCanvas.getProjectionPlaneById(activePlaneId);
-    if (!plane) throw new Error(`Active plane not found: ${activePlaneId}`);
-    const point = plane.getPoint(hit.elementId);
-    
-    if (point && isMovableFreePoint(point)) {
+    const moveSession = canvasViewPortRequired.getMovableFreePointMoveSession({ planeId: activePlaneId, pointId: hit.elementId, commandSink: canvasToolController });
+    if (moveSession) {
       // Start point drag (T954)
       selectionStore.selectSingle(hit.elementId);
 
@@ -858,7 +764,7 @@ function handleMouseDown(event: MouseEvent) {
         active: true,
         planeId: activePlaneId,
         pointId: hit.elementId,
-        moveSession: canvasToolController.startFreePointMove({ planeId: activePlaneId, pointId: hit.elementId, label: point.label ?? hit.elementId }),
+        moveSession,
         startClientX: event.clientX,
         startClientY: event.clientY,
         moved: false
@@ -1066,7 +972,7 @@ function handleMouseMove(event: MouseEvent) {
     
     // Update global hover state for UI feedback
     if (newHovered && hit) {
-      const label = getElementLabel(newHovered, hit.elementType, activePlaneId);
+      const label = canvasViewPortRequired.getElementLabel(newHovered, hit.elementType, activePlaneId);
       hoverHighlight.setHoveredElement(
         newHovered,
         hit.elementType,
@@ -1102,14 +1008,13 @@ function handleMouseMove(event: MouseEvent) {
   );
   
   // Compute 3D coordinates through full transformation pipeline
-  const result = screenTo3D(
-    event.clientX,
-    event.clientY,
+  const result = canvasViewPortRequired.screenTo3D({
+    clientX: event.clientX,
+    clientY: event.clientY,
     svg,
     viewportMatrix,
-    activePlaneId,
-    worldForCanvas
-  );
+    activePlaneId
+  });
   
   if (result.success && result.coordinates) {
     emit('update-3d-coordinates', result.coordinates);

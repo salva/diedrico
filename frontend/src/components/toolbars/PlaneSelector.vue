@@ -50,32 +50,26 @@
 
 <script setup lang="ts">
 import { computed, inject, onMounted, onUnmounted, ref } from 'vue';
-import type { World } from '@/domain/world/World';
-import { WorldInjectionKey } from '@/application/appShell/RuntimeInjectionKeys';
+import { ActivePlaneSelectorInjectionKey } from '@/application/appShell/RuntimeInjectionKeys';
 import { formatElementLabel } from '@/utils/formatUtils';
 
-const injectedWorld = inject(WorldInjectionKey);
-if (!injectedWorld) {
-  throw new Error('[PlaneSelector] World not provided');
+const activePlaneSelectorPort = inject(ActivePlaneSelectorInjectionKey);
+if (!activePlaneSelectorPort) {
+  throw new Error('[PlaneSelector] active plane selector port not provided');
 }
-const world: World = injectedWorld;
 
+const activePlaneSelectorPortRequired = activePlaneSelectorPort;
 const forceUpdate = ref(0);
 const isOpen = ref(false);
 const focusedIndex = ref(-1);
 const dropdownRef = ref<HTMLElement | null>(null);
 
-let intervalId: number | null = null;
-let lastVersion = world.getVersion();
+function handleRuntimeChange(): void {
+  forceUpdate.value++;
+}
 
 onMounted(() => {
-  intervalId = window.setInterval(() => {
-    const currentVersion = world.getVersion();
-    if (currentVersion !== lastVersion) {
-      lastVersion = currentVersion;
-      forceUpdate.value++;
-    }
-  }, 100);
+  activePlaneSelectorPortRequired.subscribeToChanges(handleRuntimeChange);
 
   // Click outside handler
   document.addEventListener('click', handleClickOutside);
@@ -83,34 +77,27 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  if (intervalId !== null) {
-    clearInterval(intervalId);
-  }
+  activePlaneSelectorPortRequired.unsubscribeFromChanges(handleRuntimeChange);
   document.removeEventListener('click', handleClickOutside);
   document.removeEventListener('keydown', handleKeyDown);
 });
 
 type PlaneOption = { id: string; label: string };
 
-const planes = computed<PlaneOption[]>(() => {
+const planes = computed<readonly PlaneOption[]>(() => {
   forceUpdate.value;
 
-  return world
-    .getAllProjectionPlanes()
-    .filter((p) => typeof p.id === 'string' && p.id.length > 0)
-    .map((p) => ({ id: p.id as string, label: p.name || (p.id as string) }));
+  return activePlaneSelectorPortRequired.getPlaneOptions();
 });
 
 const activePlaneId = computed(() => {
   forceUpdate.value;
-  return world.getActivePlaneId();
+  return activePlaneSelectorPortRequired.getActivePlaneId();
 });
 
 const activePlaneLabel = computed(() => {
   forceUpdate.value;
-  const planeId = world.getActivePlaneId();
-  const plane = planes.value.find(p => p.id === planeId);
-  return plane?.label || planeId;
+  return activePlaneSelectorPortRequired.getActivePlaneLabel() || activePlaneSelectorPortRequired.getActivePlaneId();
 });
 
 const focusedOptionId = computed(() => {
@@ -141,7 +128,7 @@ function closeDropdown() {
 }
 
 function selectPlane(planeId: string) {
-  world.setActivePlaneId(planeId);
+  activePlaneSelectorPortRequired.setActivePlaneId(planeId);
   closeDropdown();
 }
 

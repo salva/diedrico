@@ -9,12 +9,12 @@ import { ProcessHistoryUseCases } from '@/application/processHistory/ProcessHist
 import { useToolStore } from '@/stores/toolStore';
 import { useViewStore } from '@/stores/viewStore';
 import { createTestWorld } from '../../helpers/worldHelpers';
-import { CommandHistoryInjectionKey, ProcessHistoryCommandInjectionKey, WorldInjectionKey } from '@/application/appShell/RuntimeInjectionKeys';
+import { CommandHistoryInjectionKey, ProcessHistoryCommandInjectionKey, ProcessTreeReadInjectionKey } from '@/application/appShell/RuntimeInjectionKeys';
 
 vi.mock('@/components/panels/ProcessTreeNode.vue', () => ({
   default: {
     name: 'ProcessTreeNode',
-    props: ['node', 'world', 'dataVersion', 'selectedNodeId', 'activeSubprocessId', 'relatedActionIds'],
+    props: ['node', 'dataVersion', 'selectedNodeId', 'activeSubprocessId', 'relatedActionIds'],
     emits: ['toggle-encapsulate', 'toggle-output', 'rename-node', 'select-node', 'highlight-elements', 'clear-highlight'],
     template: `
       <div class="process-tree-node-stub">
@@ -41,6 +41,23 @@ vi.mock('@/components/icons/toolbar/ZoomFitIcon.vue', () => ({ default: { templa
 const iconStub = {
   template: '<span class="icon-stub" />'
 };
+
+
+function createProcessTreeReadPort(world: any) {
+  const node = (raw: any): any => raw.type === 'action'
+    ? { id: raw.id, type: raw.type, isOutput: raw.isOutput, elementId: raw.elementId, descriptionParts: [], isInfeasible: false, hideBecauseElementMissing: false }
+    : { id: raw.id, type: raw.type, name: raw.name, children: raw.children.filter((child: any) => child !== null).map(node), showIntermediates: raw.showIntermediates, isOutput: raw.isOutput, isAuxiliary: raw.isAuxiliary, descriptionParts: [], isInfeasible: false, hideBecauseElementMissing: false };
+  const read = () => ({ root: node(world.getProcessTree().root), version: world.getProcessTree().getVersion(), activeSubprocessId: world.getProcessTree().getCurrentSubprocess().id });
+  const count = (n: any): number => 1 + (n.children?.reduce((sum: number, child: any) => sum + count(child), 0) ?? 0);
+  return {
+    subscribeToChanges: (listener: () => void) => world.subscribeToChanges(listener),
+    unsubscribeFromChanges: (listener: () => void) => world.unsubscribeFromChanges(listener),
+    subscribeToTree: (listener: () => void) => world.getProcessTree().subscribe(listener),
+    getTree: read,
+    getRelatedActionIds: () => new Set<string>(),
+    countNodes: count,
+  };
+}
 
 function toolbarStubs() {
   return {
@@ -72,11 +89,11 @@ describe('Wave 006b ActionsPanel component behavior', () => {
 
     const wrapper = mount(ActionsPanel, {
       global: {
-        provide: { [WorldInjectionKey as symbol]: world, [ProcessHistoryCommandInjectionKey as symbol]: new ProcessHistoryController({ world, commandStack }) },
+        provide: { [ProcessTreeReadInjectionKey as symbol]: createProcessTreeReadPort(world), [ProcessHistoryCommandInjectionKey as symbol]: new ProcessHistoryController({ world, commandStack }) },
         stubs: {
           ProcessTreeNode: {
             template: '<div class="process-tree-node-stub" />',
-            props: ['node', 'world', 'dataVersion', 'selectedNodeId', 'activeSubprocessId', 'relatedActionIds']
+            props: ['node', 'dataVersion', 'selectedNodeId', 'activeSubprocessId', 'relatedActionIds']
           }
         }
       }
@@ -112,7 +129,7 @@ describe('Wave 006b ActionsPanel component behavior', () => {
 
     const wrapper = mount(ActionsPanel, {
       global: {
-        provide: { [WorldInjectionKey as symbol]: world, [ProcessHistoryCommandInjectionKey as symbol]: new ProcessHistoryController({ world, commandStack }) },
+        provide: { [ProcessTreeReadInjectionKey as symbol]: createProcessTreeReadPort(world), [ProcessHistoryCommandInjectionKey as symbol]: new ProcessHistoryController({ world, commandStack }) },
         stubs: {
           ProcessTreeNode: {
             name: 'ProcessTreeNode',
@@ -123,7 +140,7 @@ describe('Wave 006b ActionsPanel component behavior', () => {
                 <button class="stub-rename" @click="$emit('rename-node', activeSubprocessId, 'Renamed from component')">rename</button>
               </div>
             `,
-            props: ['node', 'world', 'dataVersion', 'selectedNodeId', 'activeSubprocessId', 'relatedActionIds'],
+            props: ['node', 'dataVersion', 'selectedNodeId', 'activeSubprocessId', 'relatedActionIds'],
             emits: ['toggle-encapsulate', 'toggle-output', 'rename-node']
           }
         }
