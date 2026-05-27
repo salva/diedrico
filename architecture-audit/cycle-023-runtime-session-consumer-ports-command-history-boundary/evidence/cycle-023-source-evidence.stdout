@@ -1,0 +1,900 @@
+     1	import { CommandStack } from '@/commands/CommandStack';
+     2	import { World } from '@/domain/world/World';
+     3	import { initializeWorld } from '@/application/world/initializeWorld';
+     4	import type { OpenedProjectSession, ProjectSessionPersistencePort, RuntimeSessionRestoreHandle, RuntimeSessionSnapshotHandle } from './AppShellPorts';
+     5	
+     6	export interface RuntimeSessionReader extends RuntimeSessionSnapshotHandle {
+     7	  readonly world: World;
+     8	  readonly commandStack: CommandStack;
+     9	}
+    10	
+    11	export interface RuntimeSessionRestoreTarget extends RuntimeSessionRestoreHandle {
+    12	  readonly world: World;
+    13	  readonly commandStack: CommandStack;
+    14	}
+    15	
+    16	export class RuntimeSession {
+    17	  private readonly world = new World();
+    18	  private readonly commandStack = new CommandStack();
+    19	
+    20	  worldForView(): World {
+    21	    return this.world;
+    22	  }
+    23	
+    24	  commandStackForShortcuts(): CommandStack {
+    25	    return this.commandStack;
+    26	  }
+    27	
+    28	  worldForUseCases(): World {
+    29	    return this.world;
+    30	  }
+    31	
+    32	  commandStackForCommandServices(): CommandStack {
+    33	    return this.commandStack;
+    34	  }
+    35	
+    36	  initializeDefaultWorldIfNeeded(): void {
+    37	    initializeWorld(this.world, this.commandStack);
+    38	  }
+    39	
+    40	  resetToEmptyInitializedWorld(): void {
+    41	    this.world.clear();
+    42	    this.commandStack.clear();
+    43	    this.initializeDefaultWorldIfNeeded();
+    44	  }
+    45	
+    46	  clear(): void {
+    47	    this.world.clear();
+    48	    this.commandStack.clear();
+    49	  }
+    50	
+    51	  getVersion(): number {
+    52	    return this.world.getVersion();
+    53	  }
+    54	
+    55	  snapshot(projectName: string, persistence: ProjectSessionPersistencePort): object {
+    56	    return persistence.snapshotCurrentSession(this.reader(), projectName);
+    57	  }
+    58	
+    59	  validateProjectData(data: unknown, persistence: ProjectSessionPersistencePort): OpenedProjectSession {
+    60	    return persistence.validateProjectData(data);
+    61	  }
+    62	
+    63	  restoreValidatedProject(openedSession: OpenedProjectSession, persistence: ProjectSessionPersistencePort): void {
+    64	    const candidateWorld = new World();
+    65	    const candidateCommandStack = new CommandStack();
+    66	    persistence.restoreSession(openedSession.payload, { world: candidateWorld, commandStack: candidateCommandStack });
+    67	    if (candidateWorld.getAllProjectionPlanes().length === 0) initializeWorld(candidateWorld, candidateCommandStack);
+    68	    candidateWorld.markDirty();
+    69	
+    70	    this.world.clear();
+    71	    this.commandStack.clear();
+    72	    persistence.restoreSession(openedSession.payload, this.restoreTarget());
+    73	    if (this.world.getAllProjectionPlanes().length === 0) this.initializeDefaultWorldIfNeeded();
+    74	    this.world.markDirty();
+    75	  }
+    76	
+    77	  private reader(): RuntimeSessionReader {
+    78	    return {
+    79	      world: this.world,
+    80	      commandStack: this.commandStack,
+    81	      nextElementId: this.world.peekNextId(),
+    82	    };
+    83	  }
+    84	
+    85	  private restoreTarget(): RuntimeSessionRestoreTarget {
+    86	    return {
+    87	      world: this.world,
+    88	      commandStack: this.commandStack,
+    89	    };
+    90	  }
+    91	}
+    92	import { computed, ref } from 'vue';
+    93	import { SelectionDeletionCommandService } from '@/application/selectionDeletion/SelectionDeletionCommandService';
+    94	import { ActivePlaneUseCases } from './ActivePlaneUseCases';
+    95	import { AutoSaveUseCases } from './AutoSaveUseCases';
+    96	import { KeyboardShortcutRouter } from './KeyboardShortcutRouter';
+    97	import type { AppShellRuntimePorts, SaveStatus } from './AppShellPorts';
+    98	import { ProjectSessionUseCases } from './ProjectSessionUseCases';
+    99	import { RuntimeSession } from './RuntimeSession';
+   100	import { SelectionUseCases } from './SelectionUseCases';
+   101	
+   102	export interface AppShellRuntimeOptions {
+   103	  ports: AppShellRuntimePorts;
+   104	}
+   105	
+   106	export function createAppShellRuntime(options: AppShellRuntimeOptions) {
+   107	  const session = new RuntimeSession();
+   108	  const world = session.worldForView();
+   109	  const commandStack = session.commandStackForShortcuts();
+   110	  const ports = options.ports;
+   111	  const drive = ports.drive;
+   112	
+   113	  const activePlaneId = ref<string | undefined>(world.getActivePlaneId());
+   114	  const activePlaneName = ref('');
+   115	  const coordinates3D = ref<{ x: number; y: number; z: number } | null>(null);
+   116	  const show3DView = ref(true);
+   117	  const showStartupDialog = ref(false);
+   118	  const isSignedIn = ref(false);
+   119	  const currentProjectName = ref<string | null>(null);
+   120	  const currentFileId = ref<string | null>(null);
+   121	  const isRenamingProject = ref(false);
+   122	  const saveStatus = ref<SaveStatus>('idle');
+   123	  const startupDialog = {
+   124	    files: ref([]),
+   125	    loading: ref(false),
+   126	    loadingFiles: ref(false),
+   127	    error: ref<string | null>(null),
+   128	  };
+   129	
+   130	  const activePlane = new ActivePlaneUseCases(session.worldForUseCases(), { activePlaneId, activePlaneName });
+   131	  const selectionDeletion = new SelectionDeletionCommandService(session.worldForUseCases(), session.commandStackForCommandServices());
+   132	  const selection = new SelectionUseCases(session.worldForUseCases(), selectionDeletion, ports.selectionStore, () => activePlaneId.value);
+   133	  const autoSave = new AutoSaveUseCases({
+   134	    session,
+   135	    drive,
+   136	    persistence: ports.persistence,
+   137	    lastProjectRepository: ports.lastProjectRepository,
+   138	    scheduler: ports.scheduler,
+   139	    currentFileId,
+   140	    currentProjectName,
+   141	    saveStatus,
+   142	    showStartupDialog,
+   143	    isSignedIn,
+   144	    alert: ports.callbacks.alert,
+   145	  });
+   146	  const projectSession = new ProjectSessionUseCases({
+   147	    session,
+   148	    hasGoogleCredentials: drive !== null,
+   149	    showStartupDialog,
+   150	    isSignedIn,
+   151	    currentProjectName,
+   152	    currentFileId,
+   153	    isRenamingProject,
+   154	    saveStatus,
+   155	    startupDialog,
+   156	    autoSave,
+   157	    ports,
+   158	  });
+   159	  const keyboard = new KeyboardShortcutRouter({
+   160	    commandStack,
+   161	    toolStore: ports.toolStore,
+   162	    viewStore: ports.viewStore,
+   163	    projectSession,
+   164	    selection,
+   165	    activePlane,
+   166	    fitToView: ports.callbacks.fitToView,
+   167	    startRename: ports.callbacks.startRename,
+   168	  });
+   169	
+   170	  let started = false;
+   171	  function start(): void {
+   172	    if (started) return;
+   173	    started = true;
+   174	    activePlane.start();
+   175	    selection.start();
+   176	    keyboard.install(ports.keyboardTarget);
+   177	    void projectSession.initialize();
+   178	  }
+   179	
+   180	  function dispose(): void {
+   181	    if (!started) return;
+   182	    started = false;
+   183	    keyboard.dispose();
+   184	    autoSave.dispose();
+   185	    activePlane.dispose();
+   186	    selection.dispose();
+   187	    projectSession.dispose();
+   188	  }
+   189	
+   190	  return {
+   191	    world,
+   192	    commandStack,
+   193	    state: {
+   194	      activePlaneId,
+   195	      activePlaneName,
+   196	      coordinates3D,
+   197	      show3DView,
+   198	      showStartupDialog,
+   199	      isSignedIn,
+   200	      currentProjectName,
+   201	      currentFileId,
+   202	      isRenamingProject,
+   203	      saveStatus,
+   204	      startupFiles: computed(() => startupDialog.files.value),
+   205	      startupLoading: computed(() => startupDialog.loading.value),
+   206	      startupLoadingFiles: computed(() => startupDialog.loadingFiles.value),
+   207	      startupError: computed(() => startupDialog.error.value),
+   208	    },
+   209	    actions: {
+   210	      start,
+   211	      dispose,
+   212	      signIn: () => projectSession.signIn(),
+   213	      toolbarSignIn: () => projectSession.toolbarSignIn(),
+   214	      toolbarSignOut: () => projectSession.signOut(),
+   215	      createProject: (name: string) => projectSession.createProject(name),
+   216	      openProject: (fileId: string) => projectSession.openProject(fileId),
+   217	      newProject: () => projectSession.newProject(),
+   218	      showProjectChooser: () => projectSession.showStartupProjectChooser(),
+   219	      renameProject: (name: string) => projectSession.renameProject(name),
+   220	      requestFiles: () => projectSession.requestFiles(),
+   221	      updateCoordinates: (coords: { x: number; y: number; z: number } | null) => { coordinates3D.value = coords; },
+   222	      updateActivePlane: (planeInfo: { id: string; name: string }) => activePlane.updateActivePlane(planeInfo),
+   223	    },
+   224	    internals: { session, keyboard, activePlane, autoSave, selection, selectionDeletion, projectSession },
+   225	  };
+   226	}
+   227	
+   228	export type AppShellRuntime = ReturnType<typeof createAppShellRuntime>;
+   229	import type { Ref } from 'vue';
+   230	import type { World } from '@/domain/world/World';
+   231	
+   232	export interface ActivePlaneState {
+   233	  activePlaneId: Ref<string | undefined>;
+   234	  activePlaneName: Ref<string>;
+   235	}
+   236	
+   237	export class ActivePlaneUseCases {
+   238	  private updateHandler: (() => void) | null = null;
+   239	
+   240	  constructor(private readonly world: World, private readonly state: ActivePlaneState) {}
+   241	
+   242	  start(): void {
+   243	    if (this.updateHandler) return;
+   244	    this.updateHandler = () => this.updateFromWorld();
+   245	    this.world.subscribeToChanges(this.updateHandler);
+   246	    this.updateFromWorld();
+   247	  }
+   248	
+   249	  dispose(): void {
+   250	    if (!this.updateHandler) return;
+   251	    this.world.unsubscribeFromChanges(this.updateHandler);
+   252	    this.updateHandler = null;
+   253	  }
+   254	
+   255	  updateActivePlane(planeInfo: { id: string; name: string }): void {
+   256	    if (this.world.getActivePlaneId() !== planeInfo.id) {
+   257	      this.world.setActivePlaneId(planeInfo.id);
+   258	    }
+   259	  }
+   260	
+   261	  cycle(direction: number): void {
+   262	    const planes = this.world.getAllProjectionPlanes();
+   263	    if (planes.length < 2) return;
+   264	    const currentId = this.world.getActivePlaneId();
+   265	    if (!currentId) return;
+   266	    const currentIndex = planes.findIndex((plane) => plane.id === currentId);
+   267	    if (currentIndex === -1) return;
+   268	    let newIndex = (currentIndex + direction) % planes.length;
+   269	    if (newIndex < 0) newIndex += planes.length;
+   270	    this.world.setActivePlaneId(planes[newIndex].id);
+   271	  }
+   272	
+   273	  private updateFromWorld(): void {
+   274	    const newPlaneId = this.world.getActivePlaneId();
+   275	    if (newPlaneId !== this.state.activePlaneId.value) {
+   276	      this.state.activePlaneId.value = newPlaneId;
+   277	    }
+   278	    if (!newPlaneId) {
+   279	      this.state.activePlaneName.value = '';
+   280	      return;
+   281	    }
+   282	    const plane = this.world.getProjectionPlaneById(newPlaneId);
+   283	    this.state.activePlaneName.value = plane?.name || newPlaneId;
+   284	  }
+   285	}
+   286	import type { CommandStack } from '@/commands/CommandStack';
+   287	import { TOOL_FAMILIES } from '@/config/toolFamilies';
+   288	import type { ActivePlaneUseCases } from './ActivePlaneUseCases';
+   289	import type { ProjectSessionUseCases } from './ProjectSessionUseCases';
+   290	import type { SelectionUseCases } from './SelectionUseCases';
+   291	import type { ToolStorePort, ViewStorePort } from './AppShellPorts';
+   292	
+   293	export interface KeyboardShortcutRouterTarget {
+   294	  addEventListener(type: 'keydown', listener: (event: KeyboardEvent) => void): void;
+   295	  removeEventListener(type: 'keydown', listener: (event: KeyboardEvent) => void): void;
+   296	}
+   297	
+   298	export class KeyboardShortcutRouter {
+   299	  private target: KeyboardShortcutRouterTarget | null = null;
+   300	  private readonly boundHandler = (event: KeyboardEvent) => this.handle(event);
+   301	
+   302	  constructor(private readonly deps: {
+   303	    commandStack: CommandStack;
+   304	    toolStore: ToolStorePort;
+   305	    viewStore: ViewStorePort;
+   306	    projectSession: ProjectSessionUseCases;
+   307	    selection: SelectionUseCases;
+   308	    activePlane: ActivePlaneUseCases;
+   309	    fitToView: () => void;
+   310	    startRename: () => void;
+   311	  }) {}
+   312	
+   313	  install(target: KeyboardShortcutRouterTarget): void {
+   314	    if (this.target === target) return;
+   315	    this.dispose();
+   316	    this.target = target;
+   317	    this.target.addEventListener('keydown', this.boundHandler);
+   318	  }
+   319	
+   320	  dispose(): void {
+   321	    if (!this.target) return;
+   322	    this.target.removeEventListener('keydown', this.boundHandler);
+   323	    this.target = null;
+   324	  }
+   325	
+   326	  handle(event: Pick<KeyboardEvent, 'key' | 'ctrlKey' | 'metaKey' | 'shiftKey' | 'altKey' | 'target' | 'preventDefault'>): void {
+   327	    const target = event.target as HTMLElement | null;
+   328	    const isTextInput = target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA' || target?.isContentEditable;
+   329	    const isModifier = event.ctrlKey || event.metaKey;
+   330	
+   331	    if (event.key === 'Escape') {
+   332	      event.preventDefault();
+   333	      this.deps.toolStore.setTool('select');
+   334	      this.deps.selection.clearSelection();
+   335	      return;
+   336	    }
+   337	    if ((event.key === 'Delete' || event.key === 'Backspace') && !isTextInput) {
+   338	      event.preventDefault();
+   339	      this.deps.selection.deleteSelected();
+   340	      return;
+   341	    }
+   342	    if (event.key === 'F2') {
+   343	      event.preventDefault();
+   344	      this.deps.startRename();
+   345	      return;
+   346	    }
+   347	    if (event.key === 'Tab' && !isTextInput) {
+   348	      event.preventDefault();
+   349	      this.deps.activePlane.cycle(event.shiftKey ? -1 : 1);
+   350	      return;
+   351	    }
+   352	    if (!isModifier && !event.shiftKey && !event.altKey && !isTextInput) {
+   353	      const key = event.key.toUpperCase();
+   354	      if (key === 'D') {
+   355	        event.preventDefault();
+   356	        this.deps.viewStore.toggleProjectedElements();
+   357	        return;
+   358	      }
+   359	      for (const family of TOOL_FAMILIES) {
+   360	        for (const tool of family.tools) {
+   361	          if (tool.shortcut === key) {
+   362	            event.preventDefault();
+   363	            this.deps.toolStore.selectSubTool(family.id, tool.id);
+   364	            return;
+   365	          }
+   366	        }
+   367	      }
+   368	      switch (event.key.toLowerCase()) {
+   369	        case 'p': this.deps.toolStore.setTool('point'); event.preventDefault(); return;
+   370	        case 'l': this.deps.toolStore.setTool('line'); event.preventDefault(); return;
+   371	        case 's': this.deps.toolStore.setTool('segment'); event.preventDefault(); return;
+   372	        case 'c': this.deps.toolStore.setTool('circle'); event.preventDefault(); return;
+   373	        case 'g': this.deps.toolStore.setTool('guide'); event.preventDefault(); return;
+   374	      }
+   375	    }
+   376	    if (!isModifier) return;
+   377	    const key = event.key.toLowerCase();
+   378	    if (key === 'n') { event.preventDefault(); void this.deps.projectSession.newProject(); return; }
+   379	    if (key === 'o') { event.preventDefault(); this.deps.projectSession.showStartupProjectChooser(); return; }
+   380	    if (key === 'a') { event.preventDefault(); this.deps.selection.selectAllInActivePlane(); return; }
+   381	    if (event.key === '0') { event.preventDefault(); this.deps.fitToView(); return; }
+   382	    if (key === 'z' && !event.shiftKey && this.deps.commandStack.canUndo()) { event.preventDefault(); this.deps.commandStack.undo(); return; }
+   383	    if ((key === 'y' || (key === 'z' && event.shiftKey)) && this.deps.commandStack.canRedo()) {
+   384	      event.preventDefault();
+   385	      this.deps.commandStack.redo();
+   386	    }
+   387	  }
+   388	}
+   389	import { watch, type WatchStopHandle } from 'vue';
+   390	import type { World } from '@/domain/world/World';
+   391	import type { SelectionDeletionCommandPort } from '@/application/selectionDeletion/SelectionDeletionPorts';
+   392	import type { SelectionStorePort } from './AppShellPorts';
+   393	
+   394	export class SelectionUseCases {
+   395	  private stopSelectionWatch: WatchStopHandle | null = null;
+   396	
+   397	  constructor(
+   398	    private readonly world: World,
+   399	    private readonly deleteSelectionCommand: SelectionDeletionCommandPort,
+   400	    private readonly selectionStore: SelectionStorePort,
+   401	    private readonly getActivePlaneId: () => string | undefined,
+   402	  ) {}
+   403	
+   404	  start(): void {
+   405	    if (this.stopSelectionWatch) return;
+   406	    this.stopSelectionWatch = watch(
+   407	      () => this.selectionStore.selectedIdsArray,
+   408	      (selectedIds) => this.updateCascadePreview(selectedIds),
+   409	      { immediate: true },
+   410	    );
+   411	  }
+   412	
+   413	  dispose(): void {
+   414	    this.stopSelectionWatch?.();
+   415	    this.stopSelectionWatch = null;
+   416	    this.selectionStore.clearCascadeHighlight();
+   417	  }
+   418	
+   419	  deleteSelected(): void {
+   420	    const selectedIds = this.selectionStore.selectedIdsArray;
+   421	    if (selectedIds.length === 0) return;
+   422	    this.deleteSelectionCommand.execute(selectedIds);
+   423	    this.selectionStore.clearSelection();
+   424	  }
+   425	
+   426	  clearSelection(): void {
+   427	    this.selectionStore.clearSelection();
+   428	  }
+   429	
+   430	  selectAllInActivePlane(): void {
+   431	    const activePlaneId = this.getActivePlaneId();
+   432	    if (!activePlaneId) return;
+   433	    const activePlane = this.world.getProjectionPlaneById(activePlaneId);
+   434	    if (!activePlane) return;
+   435	    const selectedIds: string[] = [];
+   436	    for (const point of activePlane.getAllPoints()) selectedIds.push(point.id);
+   437	    for (const line of activePlane.getAllLines()) selectedIds.push(line.id);
+   438	    for (const circle of activePlane.getAllCircles()) selectedIds.push(circle.id);
+   439	    if (selectedIds.length > 0) this.selectionStore.selectMultiple(selectedIds);
+   440	  }
+   441	
+   442	  private updateCascadePreview(selectedIds: string[]): void {
+   443	    if (selectedIds.length === 0) {
+   444	      this.selectionStore.clearCascadeHighlight();
+   445	      return;
+   446	    }
+   447	    const allElementsToDelete = this.world.getDependencyService().getElementsInDeletionOrder(selectedIds);
+   448	    this.selectionStore.setCascadeHighlight(allElementsToDelete.filter((id) => !selectedIds.includes(id)));
+   449	  }
+   450	}
+   451	import { Command } from '@/commands/Command';
+   452	import type { CommandStack } from '@/commands/CommandStack';
+   453	import { DeletionSequenceFactory } from '@/commands/factories/DeletionSequenceFactory';
+   454	import type { World } from '@/domain/world/World';
+   455	import type { SelectionDeletionCommandPort } from './SelectionDeletionPorts';
+   456	
+   457	interface SelectionDeletionCommandServiceInternals {
+   458	  createCommand(description: string, world: World): Command;
+   459	  createCascadeDeletion(command: Command, selectedIds: string[], world: World): void;
+   460	}
+   461	
+   462	const defaultInternals: SelectionDeletionCommandServiceInternals = {
+   463	  createCommand: (description, world) => new Command(description, world),
+   464	  createCascadeDeletion: (command, selectedIds, world) => {
+   465	    DeletionSequenceFactory.createCascadeDeletion(command, selectedIds, world);
+   466	  },
+   467	};
+   468	
+   469	export class SelectionDeletionCommandService implements SelectionDeletionCommandPort {
+   470	  private readonly internals: SelectionDeletionCommandServiceInternals;
+   471	
+   472	  constructor(
+   473	    private readonly world: World,
+   474	    private readonly commandStack: CommandStack,
+   475	    internals: Partial<SelectionDeletionCommandServiceInternals> = {},
+   476	  ) {
+   477	    this.internals = { ...defaultInternals, ...internals };
+   478	  }
+   479	
+   480	  execute(selectedIds: readonly string[]): void {
+   481	    if (selectedIds.length === 0) return;
+   482	
+   483	    const deleteCommand = this.internals.createCommand('Delete elements', this.world);
+   484	    this.internals.createCascadeDeletion(deleteCommand, [...selectedIds], this.world);
+   485	    deleteCommand.commit();
+   486	    this.commandStack.push(deleteCommand);
+   487	  }
+   488	}
+   489	import { ProjectService, type ProjectData } from '@/services/ProjectService';
+   490	import type { OpenedProjectSession, PersistedProjectSession, ProjectSessionPersistencePort, RuntimeSessionRestoreHandle, RuntimeSessionSnapshotHandle } from './AppShellPorts';
+   491	import type { CommandStack } from '@/commands/CommandStack';
+   492	import type { World } from '@/domain/world/World';
+   493	
+   494	export class ProjectSessionPersistenceAdapter implements ProjectSessionPersistencePort {
+   495	  snapshotCurrentSession(session: RuntimeSessionSnapshotHandle, projectName: string): object {
+   496	    const runtime = session as RuntimeSessionSnapshotHandle & { commandStack: CommandStack };
+   497	    return ProjectService.serializeCommands(runtime.commandStack, runtime.nextElementId, projectName);
+   498	  }
+   499	
+   500	  validateProjectData(data: unknown): OpenedProjectSession {
+   501	    ProjectService.validateProjectData(data);
+   502	    const projectData = data as ProjectData;
+   503	    return {
+   504	      projectName: projectData.name,
+   505	      payload: projectData as unknown as PersistedProjectSession,
+   506	    };
+   507	  }
+   508	
+   509	  restoreSession(data: PersistedProjectSession, target: RuntimeSessionRestoreHandle): void {
+   510	    const runtime = target as { world: World; commandStack: CommandStack };
+   511	    ProjectService.deserializeCommands(data as unknown as ProjectData, runtime.world, runtime.commandStack);
+   512	  }
+   513	}
+   514	<template>
+   515	  <div class="svg-canvas-container">
+   516	    <svg
+   517	      ref="svgElement"
+   518	      class="svg-canvas diedrico-canvas"
+   519	      data-testid="svg-canvas"
+   520	      xmlns="http://www.w3.org/2000/svg"
+   521	      :viewBox="`0 0 ${canvasWidth} ${canvasHeight}`"
+   522	      preserveAspectRatio="xMidYMid meet"
+   523	      @mousedown="handleMouseDown"
+   524	      @click="handleCanvasClick"
+   525	      @dblclick="handleDoubleClick"
+   526	      @mousemove="handleMouseMove"
+   527	      @wheel.prevent="handleWheel"
+   528	    >
+   529	      <!-- Background grid (T275) - Zoom-adaptive grid display -->
+   530	      <g v-if="viewStore.gridVisible.value" class="background-grid">
+   531	        <line
+   532	          v-for="line in gridLines"
+   533	          :key="line.key"
+   534	          :x1="line.x1"
+   535	          :y1="line.y1"
+   536	          :x2="line.x2"
+   537	          :y2="line.y2"
+   538	          :stroke="line.major ? '#C0C0C0' : '#E0E0E0'"
+   539	          :stroke-width="line.major ? 1 : 0.5"
+   540	        />
+   541	      </g>
+   542	      
+   543	      <!-- Render all lines through canvas presentation model (including HL_HV projections) -->
+   544	      <line
+   545	        v-for="{ primitive, attrs } in renderedLines"
+   546	        :key="primitive.id"
+   547	        v-bind="attrs"
+   548	      />
+   549	      
+   550	      <!-- Render all segments through canvas presentation model -->
+   551	      <line
+   552	        v-for="{ primitive, attrs } in renderedSegments"
+   553	        :key="primitive.id"
+   554	        v-bind="attrs"
+   555	      />
+   556	      
+   557	      <!-- Render all guides through canvas presentation model -->
+   558	      <line
+   559	        v-for="{ primitive, attrs } in renderedGuides"
+   560	        :key="primitive.id"
+   561	        v-bind="attrs"
+   562	      />
+   563	      
+   564	      <!-- Render all circles through canvas presentation model -->
+   565	      <circle
+   566	        v-for="{ primitive, attrs } in renderedCircles"
+   567	        :key="primitive.id"
+   568	        v-bind="attrs"
+   569	      />
+   570	      
+   571	      <!-- Render all arcs through canvas presentation model -->
+   572	      <path
+   573	        v-for="{ primitive, attrs } in renderedArcs"
+   574	        :key="primitive.id"
+   575	        v-bind="attrs"
+   576	      />
+   577	      
+   578	      <!-- Render all points through canvas presentation model -->
+   579	      <circle
+   580	        v-for="{ primitive, attrs } in renderedPoints"
+   581	        :key="primitive.id"
+   582	        v-bind="attrs"
+   583	      />
+   584	      
+   585	      <!-- Snap preview indicator - orange glow around snap target point -->
+   586	      <circle
+   587	        v-if="snapTarget.pointId && snapTarget.position"
+   588	        :cx="snapTarget.position.x"
+   589	        :cy="snapTarget.position.y"
+   590	        :r="8"
+   591	        fill="none"
+   592	        stroke="#FF6B35"
+   593	        stroke-width="2"
+   594	        opacity="0.8"
+   595	        class="snap-indicator"
+   596	      />
+   597	      
+   598	      <!-- Grid coordinate labels (Phase 78) - Display u,v values at viewport borders -->
+   599	      <g v-if="viewStore.gridVisible.value" class="grid-labels">
+   600	        <!-- Top edge labels (U-coordinates) -->
+   601	        <text
+   602	          v-for="label in gridLabels.top"
+   603	          :key="label.key"
+   604	          :x="label.position"
+   605	          :y="12"
+   606	          class="grid-label"
+   607	          text-anchor="middle"
+   608	        >
+   609	          {{ label.value }}
+   610	        </text>
+   611	        
+   612	        <!-- Bottom edge labels (U-coordinates) -->
+   613	        <text
+   614	          v-for="label in gridLabels.bottom"
+   615	          :key="label.key"
+   616	          :x="label.position"
+   617	          :y="canvasHeight - 4"
+   618	          class="grid-label"
+   619	          text-anchor="middle"
+   620	        >
+   621	          {{ label.value }}
+   622	        </text>
+   623	        
+   624	        <!-- Left edge labels (V-coordinates) -->
+   625	        <text
+   626	          v-for="label in gridLabels.left"
+   627	          :key="label.key"
+   628	          :x="4"
+   629	          :y="label.position"
+   630	          class="grid-label"
+   631	          text-anchor="start"
+   632	          dominant-baseline="middle"
+   633	        >
+   634	          {{ label.value }}
+   635	        </text>
+   636	        
+   637	        <!-- Right edge labels (V-coordinates) -->
+   638	        <text
+   639	          v-for="label in gridLabels.right"
+   640	          :key="label.key"
+   641	          :x="canvasWidth - 4"
+   642	          :y="label.position"
+   643	          class="grid-label"
+   644	          text-anchor="end"
+   645	          dominant-baseline="middle"
+   646	        >
+   647	          {{ label.value }}
+   648	        </text>
+   649	      </g>
+   650	    </svg>
+   651	    
+   652	    <!-- Hover tooltip -->
+   653	    <div 
+   654	      v-if="hoverHighlight.isHovering.value && hoverHighlight.hoveredElementLabel.value && !hoverHighlight.hoverState.value.temporary"
+   655	      class="hover-tooltip"
+   656	      :style="{ left: tooltipPosition.x + 'px', top: tooltipPosition.y + 'px' }"
+   657	    >
+   658	      {{ hoverHighlight.hoveredElementLabel.value }}
+   659	    </div>
+   660	    
+   661	    <!-- Properties Dialog -->
+   662	    <PropertiesDialog
+   663	      :is-open="showPropertiesDialog"
+   664	      :element-id="propertiesElementId"
+   665	      :world="world"
+   666	      @close="showPropertiesDialog = false"
+   667	      @save="handleSaveProperties"
+   668	    />
+   669	  </div>
+   670	</template>
+   671	
+   672	<script setup lang="ts">
+   673	/**
+   674	 * SvgCanvas.vue - Main 2D drawing canvas component
+   675	 * 
+   676	 * This is the primary workspace where all 2D geometric elements are rendered.
+   677	 * Uses SVG for crisp, scalable vector graphics per Constitution Principle IV.
+   678	 * 
+   679	 * Rendering Pipeline:
+   680	 * 1. World (domain objects + realizations) 
+   681	 * 2. → CanvasPresentationSelector (generates read-model primitives in paper coordinates)
+   682	 * 3. → SVGRenderer (applies viewport transform, generates SVG attributes)
+   683	 * 4. → SVG elements
+   684	 * 
+   685	 * Key requirements:
+   686	 * - SVG element, not HTML Canvas
+   687	 * - Rendering consumes the canvas presentation read model
+   688	 * - Generic rendering algorithms, with fixed elements represented by selectors
+   689	 * - Pan/zoom viewport transformations remain view state
+   690	 * - Element drawing policy comes from presentation selectors and SVGRenderer
+   691	 */
+   692	
+   693	import { ref, computed, watch, onMounted, onUnmounted, inject } from 'vue';
+   694	import { Matrix3, Vector3 } from 'three';
+   695	import { World } from '@/domain/world/World';
+   696	import { SVGRenderer, type ViewportTransform } from '@/services/SVGRenderer';
+   697	import { InputService } from '@/services/InputService';
+   698	import { PointTool } from '@/tools/PointTool';
+   699	import { LineTool } from '@/tools/LineTool';
+   700	import { SegmentTool } from '@/tools/SegmentTool';
+   701	import { CircleTool } from '@/tools/CircleTool';
+   702	import { GuideTool } from '@/tools/GuideTool';
+   703	import { IntersectionTool } from '@/tools/IntersectionTool';
+   704	import { ParallelLineTool } from '@/tools/ParallelLineTool';
+   705	import { PerpendicularLineTool } from '@/tools/PerpendicularLineTool';
+   706	import { TangentLineToCircleThroughPointTool } from '@/tools/TangentLineToCircleThroughPointTool';
+   707	import { TangentLineToCircleParallelToLineTool } from '@/tools/TangentLineToCircleParallelToLineTool';
+   708	import { Create3DPointTool } from '@/tools/Create3DPointTool';
+   709	import { Create3DLineTool } from '@/tools/Create3DLineTool';
+   710	import { Create3DSegmentTool } from '@/tools/Create3DSegmentTool';
+   711	import { Create3DPlaneTool } from '@/tools/Create3DPlaneTool';
+   712	import { CreateProjectionPlaneTool } from '@/tools/CreateProjectionPlaneTool';
+   713	import { FreePoint2D } from '@/domain/world/Point';
+   714	import { useToolStore } from '@/stores/toolStore';
+   715	import { useViewStore } from '@/stores/viewStore';
+   716	import { useSelectionStore } from '@/stores/selectionStore';
+   717	import { useViewport } from '@/composables/useViewport';
+   718	import { useGlobalHoverHighlight } from '@/composables/useHoverHighlight';
+   719	import { screenTo3D } from '@/utils/coordinateTransform';
+   720	import PropertiesDialog from '@/components/dialogs/PropertiesDialog.vue';
+   721	import type { ITool } from '@/tools/ITool';
+   722	import { createCanvasToolController } from '@/application/tools/CanvasToolController';
+   723	import type { FreePointMoveSession } from '@/application/tools/ToolCommandIntents';
+   724	import { CanvasPresentationController } from '@/application/canvasPresentation/CanvasPresentationController';
+   725	import { CanvasInteractionQuery } from '@/application/canvasPresentation/CanvasInteractionQuery';
+   726	import { createCanvasWorldReadPort } from '@/application/canvasPresentation/CanvasWorldReadPort';
+   727	
+   728	// Define emits
+   729	const emit = defineEmits<{
+   730	  'update-3d-coordinates': [coords: { x: number; y: number; z: number } | null];
+   731	  'update-active-plane': [planeInfo: { id: string; name: string }];
+   732	}>();
+   733	
+   734	const svgElement = ref<SVGSVGElement | null>(null);
+   735	
+   736	// Track World version changes (World is not reactive by itself)
+   737	const worldVersion = ref(0);
+   738	let versionPollId: number | null = null;
+   739	let lastWorldVersion = 0;
+   740	
+   741	// Active plane - derived from World (managed by App.vue)
+   742	const activePlane = computed(() => {
+   743	  // Depend on worldVersion so plane switching triggers recomputation
+   744	  worldVersion.value;
+   745	  return world.getActivePlaneId();
+   746	});
+   747	
+   748	// Dynamic canvas dimensions - updated based on container size
+   749	const canvasWidth = ref(1600);
+   750	const canvasHeight = ref(1000);
+   751	
+   752	// Properties dialog state
+   753	const showPropertiesDialog = ref(false);
+   754	const propertiesElementId = ref<string | null>(null);
+   755	
+   756	// Viewport transformation (pan/zoom)
+   757	const viewStore = useViewStore();
+   758	const viewport = computed<ViewportTransform>(() => {
+   759	  const vp = viewStore.viewportState.value;
+   760	  return vp;
+   761	});
+   762	
+   763	// Setup viewport interactions (pan/zoom)
+   764	const viewportComposable = useViewport({ element: svgElement });
+   765	
+   766	// Services
+   767	const canvasPresentationController = new CanvasPresentationController();
+   768	const svgRenderer = new SVGRenderer();
+   769	const inputService = new InputService();
+   770	const toolStore = useToolStore();
+   771	const selectionStore = useSelectionStore();
+   772	const hoverHighlight = useGlobalHoverHighlight();
+   773	const hoveredElementId = ref<string | undefined>(undefined);
+   774	
+   775	// Tooltip position (offset from cursor)
+   776	const tooltipPosition = ref({ x: 0, y: 0 });
+   777	
+   778	// Snap target tracking - shows visual indicator when hovering near a point
+   779	const snapTarget = ref<{ pointId: string | null; position: { x: number; y: number } | null }>({
+   780	  pointId: null,
+   781	  position: null
+   782	});
+   783	
+   784	// Drag-to-move (Select mode)
+   785	const pointDrag = ref<{
+   786	  active: boolean;
+   787	  planeId: string | null;
+   788	  pointId: string | null;
+   789	  moveSession: FreePointMoveSession | null;
+   790	  startClientX: number;
+   791	  startClientY: number;
+   792	  moved: boolean;
+   793	}>({
+   794	  active: false,
+   795	  planeId: null,
+   796	  pointId: null,
+   797	  moveSession: null,
+   798	  startClientX: 0,
+   799	  startClientY: 0,
+   800	  moved: false
+   801	});
+   802	
+   803	// Viewport pan in select mode (T965: drag empty space pans)
+   804	const viewportPan = ref<{
+   805	  active: boolean;
+   806	  startX: number;
+   807	  startY: number;
+   808	}>({
+   809	  active: false,
+   810	  startX: 0,
+   811	  startY: 0
+   812	});
+   813	
+   814	let ignoreNextClick = false;
+   815	
+   816	function isMovableFreePoint(point: unknown): point is FreePoint2D {
+   817	  return point instanceof FreePoint2D && !point.locked;
+   818	}
+   819	
+   820	function hasStatusMessage(tool: ITool): tool is ITool & { getStatusMessage: () => string } {
+   821	  return 'getStatusMessage' in tool && typeof tool.getStatusMessage === 'function';
+   822	}
+   823	
+   824	function endPointDrag(commit: boolean): void {
+   825	  if (!pointDrag.value.active) return;
+   826	
+   827	  const moveSession = pointDrag.value.moveSession;
+   828	
+   829	  try {
+   830	    if (moveSession) {
+   831	      if (commit) {
+   832	        const result = moveSession.commit();
+   833	        if (!result.success) console.error('[SvgCanvas] Point move commit failed:', result.message);
+   834	      } else {
+   835	        moveSession.cancel();
+   836	      }
+   837	    }
+   838	  } finally {
+   839	    pointDrag.value = {
+   840	      active: false,
+   841	      planeId: null,
+   842	      pointId: null,
+   843	      moveSession: null,
+   844	      startClientX: 0,
+   845	      startClientY: 0,
+   846	      moved: false
+   847	    };
+   848	    renderTick.value++;
+   849	  }
+   850	}
+   851	
+   852	function handleGlobalKeyDown(event: KeyboardEvent) {
+   853	  if (event.key === 'Escape') {
+   854	    // T956: Cancel viewport pan on Esc
+   855	    if (viewportPan.value.active) {
+   856	      viewportPan.value = {
+   857	        active: false,
+   858	        startX: 0,
+   859	        startY: 0
+   860	      };
+   861	      return;
+   862	    }
+   863	    
+   864	    // T956: Cancel point drag on Esc
+   865	    if (pointDrag.value.active) {
+   866	      ignoreNextClick = true;
+   867	      endPointDrag(false);
+   868	    }
+   869	  }
+   870	}
+   871	
+   872	/**
+   873	 * Get display label for an element
+   874	 * @param elementId - ID of the element
+   875	 * @param elementType - Type of the element (point, line, segment, etc.)
+   876	 * @param planeId - ID of the plane containing the element (optional, will search all planes if not provided)
+   877	 */
+   878	function getElementLabel(elementId: string, elementType: string, planeId?: string): string {
+   879	  let element: any;
+   880	  
+   881	  // If planeId is provided, only search that plane
+   882	  if (planeId) {
+   883	    const plane = world.getProjectionPlaneById(planeId);
+   884	    if (plane) {
+   885	      switch (elementType) {
+   886	        case 'point':
+   887	          element = plane.getPoint(elementId);
+   888	          break;
+   889	        case 'line':
+   890	        case 'half-hinge-line':
+   891	        case 'segment':  // Segments are Line2D objects, use getLine
+   892	        case 'guide':  // Guides are Line2D objects, use getLine
+   893	          element = plane.getLine(elementId);
+   894	          break;
+   895	        case 'circle':
+   896	          element = plane.getCircle(elementId);
+   897	          break;
+   898	      }
+   899	    }
+   900	  } else {

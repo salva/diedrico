@@ -1,0 +1,158 @@
+frontend/src/application/world/initializeWorld.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/world/initializeWorld.ts:3:import { buildWorldInitialization } from '@/commands/factories/InitializationSequenceFactory';
+frontend/src/application/world/initializeWorld.ts:7:import type { World } from '@/domain/world/World';
+frontend/src/application/world/initializeWorld.ts:16: * The domain World owns geometric state only; command construction and history
+frontend/src/application/world/initializeWorld.ts:19:export function initializeWorld(world: World, commandStack: CommandStack): void {
+frontend/src/application/world/initializeWorld.ts:22:  const initCmd = new Command('Initialize World', world);
+frontend/src/application/world/initializeWorld.ts:24:  initCmd.addAndExecute(new PushSubprocessOp('World Initialization'));
+frontend/src/application/world/initializeWorld.ts:30:  buildWorldInitialization(world, initCmd, groupId);
+frontend/src/application/tools/CanvasToolController.ts:1:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/tools/CanvasToolController.ts:2:import type { World } from '@/domain/world/World';
+frontend/src/application/tools/CanvasToolController.ts:11:  world: World;
+frontend/src/application/tools/CanvasToolController.ts:12:  commandStack: CommandStack;
+frontend/src/application/tools/CanvasToolController.ts:17:  world: World;
+frontend/src/application/tools/CanvasToolController.ts:24:    throw new Error('CommandStack not provided');
+frontend/src/application/tools/CanvasToolController.ts:28:    commandStack: deps.commandStack as CommandStack,
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:3:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:4:import type { World } from '@/domain/world/World';
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:9:  constructor(private readonly world: World, private readonly commandStack: CommandStack) {}
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:12:    const cmd = new Command(`Move point ${request.label ?? request.pointId}`, this.world);
+frontend/src/application/canvas/CanvasStyleUseCase.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/canvas/CanvasStyleUseCase.ts:3:import type { World } from '@/domain/world/World';
+frontend/src/application/canvas/CanvasStyleUseCase.ts:8:  constructor(private readonly world: World, private readonly commandStack: CommandStack) {}
+frontend/src/application/canvas/CanvasStyleUseCase.ts:11:    const cmd = new Command(`Update style: ${request.elementId}`, this.world);
+frontend/src/application/construction/ConstructionUseCases.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/construction/ConstructionUseCases.ts:3:import type { World } from '@/domain/world/World';
+frontend/src/application/construction/ConstructionUseCases.ts:31:  world: World;
+frontend/src/application/construction/ConstructionUseCases.ts:32:  commandStack: CommandStack;
+frontend/src/application/construction/ConstructionUseCases.ts:36:  const cmd = new Command(intent.description, world);
+frontend/src/application/construction/ConstructionUseCases.ts:52:function executeConstructionOperations(cmd: Command, intent: ToolConstructionIntent, world: World, groupId: string): void {
+frontend/src/application/construction/ConstructionUseCases.ts:166:function createIntersection(cmd: Command, intent: Extract<ToolConstructionIntent, { type: 'intersection' }>, world: World, groupId: string): void {
+frontend/src/application/construction/ConstructionUseCases.ts:193:function lineCircleIndex(lineId: string, circleId: string, mousePos: THREE.Vector3, world: World): number | null {
+frontend/src/application/construction/ConstructionUseCases.ts:206:function circleCircleIndex(circle1Id: string, circle2Id: string, mousePos: THREE.Vector3, world: World): number | null {
+frontend/src/application/construction/ConstructionUseCases.ts:225:function checkCreatedElementsFeasibility(cmd: Command, world: World): void {
+frontend/src/application/construction/QuickToolUseCases.ts:1:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/construction/QuickToolUseCases.ts:2:import type { World } from '@/domain/world/World';
+frontend/src/application/construction/QuickToolUseCases.ts:7:  world: World;
+frontend/src/application/construction/QuickToolUseCases.ts:8:  commandStack: CommandStack;
+frontend/src/application/processHistory/ProcessHistoryUseCases.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/processHistory/ProcessHistoryUseCases.ts:9:import type { World } from '@/domain/world/World';
+frontend/src/application/processHistory/ProcessHistoryUseCases.ts:22:    private readonly world: World,
+frontend/src/application/processHistory/ProcessHistoryUseCases.ts:23:    private readonly commandStack: CommandStack
+frontend/src/application/processHistory/ProcessHistoryUseCases.ts:73:    const command = new Command(description, this.world);
+frontend/src/application/processHistory/ProcessHistoryController.ts:1:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/processHistory/ProcessHistoryController.ts:2:import type { World } from '@/domain/world/World';
+frontend/src/application/processHistory/ProcessHistoryController.ts:16:  world: World;
+frontend/src/application/processHistory/ProcessHistoryController.ts:17:  commandStack: CommandStack;
+frontend/src/application/processHistory/ProcessHistoryController.ts:21:  world: World;
+frontend/src/application/processHistory/ProcessHistoryController.ts:29:    throw new Error('CommandStack not provided');
+frontend/src/application/processHistory/ProcessHistoryController.ts:34:    commandStack: deps.commandStack as CommandStack
+frontend/src/application/toolbar/ToolbarHistoryUseCases.ts:1:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/toolbar/ToolbarHistoryUseCases.ts:5:  constructor(private readonly commandStack: CommandStack) {}
+frontend/src/application/toolbar/ToolbarHistoryController.ts:1:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/toolbar/ToolbarHistoryController.ts:6:  commandStack: CommandStack;
+frontend/src/application/toolbar/ToolbarHistoryController.ts:17:    throw new Error('CommandStack not provided');
+frontend/src/application/toolbar/ToolbarHistoryController.ts:20:  return new ToolbarHistoryController({ commandStack: deps.commandStack as CommandStack });
+frontend/src/application/canvasPresentation/CanvasVisibilityPolicy.ts:2:import type { World } from '@/domain/world/World';
+frontend/src/application/canvasPresentation/CanvasVisibilityPolicy.ts:5:type CanvasVisibilityWorld = Pick<World, 'getProcessTree'>;
+frontend/src/application/canvasPresentation/CanvasVisibilityPolicy.ts:7:export function isCanvasElementVisible(element: Element, world: CanvasVisibilityWorld): boolean {
+frontend/src/application/canvasPresentation/CanvasVisibilityPolicy.ts:8:  return resolveVisibility(element, world as World);
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:10:import type { CanvasPlaneTransformMap, CanvasWorldReadPort } from './CanvasWorldReadPort';
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:22:  select(readPort: CanvasWorldReadPort, viewport: CanvasViewportModel, state: CanvasPresentationState): CanvasPresentationModel {
+frontend/src/application/canvasPresentation/CanvasPresentationController.ts:3:import type { CanvasWorldReadPort } from './CanvasWorldReadPort';
+frontend/src/application/canvasPresentation/CanvasPresentationController.ts:7:  buildModel(readPort: CanvasWorldReadPort, viewport: CanvasViewportModel, state: CanvasPresentationState): CanvasPresentationModel {
+frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:12:import type { World } from '@/domain/world/World';
+frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:15:export interface CanvasWorldReadPort {
+frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:31:function createCanvasRealizationContext(world: World): ProjectionElementRealizationContext & Element3DRealizationContext {
+frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:46:export function createCanvasWorldReadPort(world: World): CanvasWorldReadPort {
+frontend/src/application/canvasPresentation/Projected3DCanvasSelector.ts:6:import type { CanvasWorldReadPort } from './CanvasWorldReadPort';
+frontend/src/application/canvasPresentation/Projected3DCanvasSelector.ts:10:  select(readPort: CanvasWorldReadPort, planeTransforms: Map<string, { planeToPaper: Matrix3 }>): CanvasRenderItem[] {
+frontend/src/application/threePresentation/ThreePresentationModel.ts:1:import type { ThreeWorldReadPort } from './ThreeWorldReadPort';
+frontend/src/application/threePresentation/ThreePresentationModel.ts:10:export interface ThreePresentationInput { readPort: ThreeWorldReadPort; displayOptions: ThreeViewDisplayOptions; selectedIds: readonly string[] }
+frontend/src/application/threePresentation/ProjectionPlane3DSelector.ts:6:import type { ThreeProjectionPlaneReadModel, ThreeWorldReadPort } from './ThreeWorldReadPort';
+frontend/src/application/threePresentation/ProjectionPlane3DSelector.ts:10:  select(readPort: ThreeWorldReadPort, showPlanes: boolean, showGrid: boolean, showReferenceAxes: boolean): ProjectionPlanePresentationDto[] {
+frontend/src/application/threePresentation/ProjectionPlane3DSelector.ts:36:function gridSegments(readPort: Pick<ThreeWorldReadPort, 'getProjectionPlaneGridSource'>, planeId: ThreeProjectionPlaneReadModel['id']): Segment2D[] {
+frontend/src/application/threePresentation/PlanarElement3DSelector.ts:4:import type { ThreeWorldReadPort } from './ThreeWorldReadPort';
+frontend/src/application/threePresentation/PlanarElement3DSelector.ts:8:  select(readPort: Pick<ThreeWorldReadPort, 'getPlanarPlaneModels'>, show2DElementsOnPlanes: boolean): PlanarElementPresentationDto[] {
+frontend/src/application/threePresentation/ReconstructedElement3DSelector.ts:5:import type { ThreeWorldReadPort } from './ThreeWorldReadPort';
+frontend/src/application/threePresentation/ReconstructedElement3DSelector.ts:9:  select(readPort: Pick<ThreeWorldReadPort, 'getReconstructedModels'>, showPlanes: boolean): ReconstructedElementPresentationDto[] {
+frontend/src/application/threePresentation/Hinge3DSelector.ts:4:import type { ThreeWorldReadPort } from './ThreeWorldReadPort';
+frontend/src/application/threePresentation/Hinge3DSelector.ts:8:  select(readPort: Pick<ThreeWorldReadPort, 'getHingeModels'>, showPlanes: boolean): HingePresentationDto[] {
+frontend/src/application/threePresentation/Guide3DSelector.ts:5:import type { ThreeGuideIntersectionReadModel, ThreeWorldReadPort } from './ThreeWorldReadPort';
+frontend/src/application/threePresentation/Guide3DSelector.ts:9:  select(readPort: Pick<ThreeWorldReadPort, 'getSelectedGuideModels' | 'getGuideIntersectionModels'>, selectedIds: readonly string[]): GuidePresentationDto[] {
+frontend/src/application/threePresentation/ThreeWorldReadPort.ts:10:import type { World } from '@/domain/world/World';
+frontend/src/application/threePresentation/ThreeWorldReadPort.ts:56:export interface ThreeWorldReadPort {
+frontend/src/application/threePresentation/ThreeWorldReadPort.ts:66:function createThreeRealizationContext(world: World): ProjectionElementRealizationContext & Element3DRealizationContext {
+frontend/src/application/threePresentation/ThreeWorldReadPort.ts:81:export function createThreeWorldReadPort(world: World): ThreeWorldReadPort {
+frontend/src/application/appShell/ActivePlaneUseCases.ts:2:import type { World } from '@/domain/world/World';
+frontend/src/application/appShell/ActivePlaneUseCases.ts:12:  constructor(private readonly world: World, private readonly state: ActivePlaneState) {}
+frontend/src/application/appShell/ActivePlaneUseCases.ts:16:    this.updateHandler = () => this.updateFromWorld();
+frontend/src/application/appShell/ActivePlaneUseCases.ts:18:    this.updateFromWorld();
+frontend/src/application/appShell/ActivePlaneUseCases.ts:45:  private updateFromWorld(): void {
+frontend/src/application/appShell/SelectionUseCases.ts:2:import type { World } from '@/domain/world/World';
+frontend/src/application/appShell/SelectionUseCases.ts:10:    private readonly world: World,
+frontend/src/application/appShell/ProjectSessionUseCases.ts:27:      this.deps.session.initializeDefaultWorldIfNeeded();
+frontend/src/application/appShell/ProjectSessionUseCases.ts:46:          this.deps.session.initializeDefaultWorldIfNeeded();
+frontend/src/application/appShell/ProjectSessionUseCases.ts:93:      this.deps.session.resetToEmptyInitializedWorld();
+frontend/src/application/appShell/KeyboardShortcutRouter.ts:1:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/appShell/KeyboardShortcutRouter.ts:18:    commandStack: CommandStack;
+frontend/src/application/appShell/AppShellRuntime.ts:17:  const world = session.worldForView();
+frontend/src/application/appShell/AppShellRuntime.ts:18:  const commandStack = session.commandStackForShortcuts();
+frontend/src/application/appShell/AppShellRuntime.ts:39:  const activePlane = new ActivePlaneUseCases(session.worldForUseCases(), { activePlaneId, activePlaneName });
+frontend/src/application/appShell/AppShellRuntime.ts:40:  const selectionDeletion = new SelectionDeletionCommandService(session.worldForUseCases(), session.commandStackForCommandServices());
+frontend/src/application/appShell/AppShellRuntime.ts:41:  const selection = new SelectionUseCases(session.worldForUseCases(), selectionDeletion, ports.selectionStore, () => activePlaneId.value);
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:3:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:4:import type { World } from '@/domain/world/World';
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:8:    const runtime = session as RuntimeSessionSnapshotHandle & { commandStack: CommandStack };
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:22:    const runtime = target as { world: World; commandStack: CommandStack };
+frontend/src/application/appShell/RuntimeSession.ts:1:import { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/appShell/RuntimeSession.ts:2:import { World } from '@/domain/world/World';
+frontend/src/application/appShell/RuntimeSession.ts:3:import { initializeWorld } from '@/application/world/initializeWorld';
+frontend/src/application/appShell/RuntimeSession.ts:7:  readonly world: World;
+frontend/src/application/appShell/RuntimeSession.ts:8:  readonly commandStack: CommandStack;
+frontend/src/application/appShell/RuntimeSession.ts:12:  readonly world: World;
+frontend/src/application/appShell/RuntimeSession.ts:13:  readonly commandStack: CommandStack;
+frontend/src/application/appShell/RuntimeSession.ts:17:  private readonly world = new World();
+frontend/src/application/appShell/RuntimeSession.ts:18:  private readonly commandStack = new CommandStack();
+frontend/src/application/appShell/RuntimeSession.ts:20:  worldForView(): World {
+frontend/src/application/appShell/RuntimeSession.ts:24:  commandStackForShortcuts(): CommandStack {
+frontend/src/application/appShell/RuntimeSession.ts:28:  worldForUseCases(): World {
+frontend/src/application/appShell/RuntimeSession.ts:32:  commandStackForCommandServices(): CommandStack {
+frontend/src/application/appShell/RuntimeSession.ts:36:  initializeDefaultWorldIfNeeded(): void {
+frontend/src/application/appShell/RuntimeSession.ts:37:    initializeWorld(this.world, this.commandStack);
+frontend/src/application/appShell/RuntimeSession.ts:40:  resetToEmptyInitializedWorld(): void {
+frontend/src/application/appShell/RuntimeSession.ts:43:    this.initializeDefaultWorldIfNeeded();
+frontend/src/application/appShell/RuntimeSession.ts:64:    const candidateWorld = new World();
+frontend/src/application/appShell/RuntimeSession.ts:65:    const candidateCommandStack = new CommandStack();
+frontend/src/application/appShell/RuntimeSession.ts:66:    persistence.restoreSession(openedSession.payload, { world: candidateWorld, commandStack: candidateCommandStack });
+frontend/src/application/appShell/RuntimeSession.ts:67:    if (candidateWorld.getAllProjectionPlanes().length === 0) initializeWorld(candidateWorld, candidateCommandStack);
+frontend/src/application/appShell/RuntimeSession.ts:68:    candidateWorld.markDirty();
+frontend/src/application/appShell/RuntimeSession.ts:73:    if (this.world.getAllProjectionPlanes().length === 0) this.initializeDefaultWorldIfNeeded();
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:4:import type { World } from '@/domain/world/World';
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:8:  createCommand(description: string, world: World): Command;
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:9:  createCascadeDeletion(command: Command, selectedIds: string[], world: World): void;
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:13:  createCommand: (description, world) => new Command(description, world),
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:23:    private readonly world: World,
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:24:    private readonly commandStack: CommandStack,
+frontend/src/components/workspace/SvgCanvas.vue:167: * 1. World (domain objects + realizations) 
+frontend/src/components/workspace/SvgCanvas.vue:182:import { World } from '@/domain/world/World';
+frontend/src/components/workspace/SvgCanvas.vue:213:import { createCanvasWorldReadPort } from '@/application/canvasPresentation/CanvasWorldReadPort';
+frontend/src/components/workspace/SvgCanvas.vue:223:// Track World version changes (World is not reactive by itself)
+frontend/src/components/workspace/SvgCanvas.vue:226:let lastWorldVersion = 0;
+frontend/src/components/workspace/SvgCanvas.vue:228:// Active plane - derived from World (managed by App.vue)
+frontend/src/components/workspace/SvgCanvas.vue:411:// World instance - injected from App.vue
+frontend/src/components/workspace/SvgCanvas.vue:412:const world = inject<World>('world')!;
+frontend/src/components/workspace/SvgCanvas.vue:414:  throw new Error('World not provided');
+frontend/src/components/workspace/SvgCanvas.vue:469:  // World is already initialized by initialization factory in constructor
+frontend/src/components/workspace/SvgCanvas.vue:479:  // Poll World version so UI reacts to domain changes (e.g. active plane switching)
+frontend/src/components/workspace/SvgCanvas.vue:480:  lastWorldVersion = world.getVersion();
+frontend/src/components/workspace/SvgCanvas.vue:481:  worldVersion.value = lastWorldVersion;
+frontend/src/components/workspace/SvgCanvas.vue:484:    if (current !== lastWorldVersion) {
+frontend/src/components/workspace/SvgCanvas.vue:485:      lastWorldVersion = current;
+frontend/src/components/workspace/SvgCanvas.vue:491:  console.log('World initialized');
+frontend/src/components/workspace/SvgCanvas.vue:552:    createCanvasWorldReadPort(world),
+frontend/src/components/workspace/SvgCanvas.vue:733:  // Phase 6.5: Delegate to active tool instead of direct World mutation
+frontend/src/tools/ArgumentCollectorTool.ts:140:      throw new Error(result.message || `Failed to ${this.getCommandDescription().toLowerCase()}`);
+frontend/src/tools/ITool.ts:10:import type { World } from '@/domain/world/World';
+frontend/src/tools/ITool.ts:24:  world: World;
