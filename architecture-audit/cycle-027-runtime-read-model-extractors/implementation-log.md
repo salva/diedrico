@@ -91,3 +91,37 @@ Root and frontend test/build scripts are equivalent workspace invocations in thi
 - Properties/process builders still receive concrete `World` because domain descriptor and realization APIs currently require full realization context. This is improved ownership relative to inline `RuntimeSession`, but a future central domain-realization wave could narrow these contexts further.
 - `ThreeWorldReadPort` remains a larger adapter; deeper 3D scene/domain realization extraction remains a candidate future wave.
 - Worktree remains broadly dirty outside this implementation, including unrelated e2e test deletions observed before edits.
+
+## Wave 027 closure verification — validation-and-preview stage
+
+**Status: WAVE 027 COMPLETE.** The validation-and-preview closure stage independently rechecked the implementation evidence and found no source-attributable blocker. No production source, package/tooling, backend/docs/specs, persistence, command history/producer, broad domain-realization, Drive/auth, or secret/config files were touched during closure.
+
+### Closure evidence added
+
+Additional closure logs are under `architecture-audit/cycle-027-runtime-read-model-extractors/validation/`:
+
+- `closure-scoped-status.stdout.log` / `.stderr.log`: path-scoped source-control check for Cycle 027 artifacts and protected touched source paths. It shows only audit/report directories as untracked in the checked scope; no production source diff was present.
+- `closure-scoped-diff-stat.stdout.log` / `.stderr.log`: empty scoped diff stat for Cycle 027 source paths.
+- `closure-validation-log-review.stdout.log` / `.stderr.log`: independent tail review of required validation logs confirming focused Vitest, root/frontend lint, root/frontend full Vitest, root/frontend build, root Playwright e2e, and preview reachability are green.
+- `closure-forbidden-canvas-component-scan.stdout.log` / `.stderr.log`: PASS for no forbidden canvas/component `World`/process-tree/generic-facade seams; it also records retained raw canvas residual getters and their named callers.
+- `closure-live-preview-reachability.stdout.log` / `.stderr.log`: confirms a listener on `0.0.0.0:5173` and `HTTP/1.1 200 OK` from `http://127.0.0.1:5173/`.
+- `closure-3d-hotfix-evidence.stdout.log` / `.stderr.log`: confirms the e2e regression test `3D overlay owns pointer interaction and does not pass drag gestures through to the 2D canvas` exists and passed in Wave 027 e2e logs.
+- `closure-read-model-ownership-evidence.stdout.log` / `.stderr.log`: confirms `RuntimeSession` composes focused read-model/intent modules, `ElementsPanelReadModel` and `ElementVisibilityIntent` remain separate, and `ProcessTreeNode.vue` consumes `ProcessNodeViewModel` DTOs.
+- `closure-wave-plan-headings.stdout.log` and `closure-wave027-entry-tail.stdout.log`: record the current wave-plan ordering and Wave 027 entry used for next-wave recommendation.
+
+### Closure assessment
+
+- Static/source ownership checks confirm the Wave 027 extraction remains intact: `RuntimeSession` wires `buildProcessTreeReadModel`, `buildElementsPanelReadModel`, `toggleElementVisibility`, and properties/process/elements helpers live in focused modules under `frontend/src/application/appShell/readModels/`.
+- `ElementsPanelReadModel` remains display DTO-only; visibility mutation is isolated in adjacent `ElementVisibilityIntent` and not exposed as read-model state.
+- The deleted canvas process-tree seam remains deleted from canvas/component presentation surfaces. `CanvasWorldReadPort.getAllProjectionPlanes()` and raw projected-3D getters remain documented residuals with named callers in `CanvasPresentationSelector` and `Projected3DCanvasSelector`, matching the accepted decision.
+- No generic `RuntimeWorld` / `WorldReadModel` facade, Vue concrete `World` injection, raw tool-world seam, command-backed visibility redesign, persistence/undo/history redesign, package/tooling churn, backend/docs/spec edits, or broad domain-realization rewrite was introduced by closure.
+- Mandatory validation evidence remains green: focused runtime read-model Vitest, focused canvas seam Vitest, root/frontend lint, root/frontend full Vitest, root/frontend build, root Playwright e2e, Vite preview restart, and HTTP reachability all passed in stable logs.
+- The Cycle 026 3D hotfix contract remains protected by passing e2e evidence for the overlay pointer-boundary regression. The closure toolset did not provide a separate Playwright MCP browser surface; this is accepted as a non-source residual because CLI Playwright e2e exercised the browser interaction and live preview answered HTTP 200 on `0.0.0.0:5173`.
+
+### Source-control reconciliation
+
+The repository remains broadly dirty outside Cycle 027. Closure used path-scoped status/diff checks to avoid incorporating unrelated work. The only intentional closure changes are this implementation-log update, added closure validation logs, and the validation-stage task report.
+
+### Next-wave recommendation / re-rank
+
+Wave 027 was the last current wave-plan entry, and its implementation leaves central residuals around concrete canvas DTO selectors, raw projection-plane/projected-3D traversal, properties/process realization contexts that still receive concrete `World`, and the larger `ThreeWorldReadPort` adapter. The recommended next canonical stage is a **wave-plan-extension / fresh scout** that re-ranks and adds the next wave before any implementation. Based on Wave 027 learnings, the highest-centrality candidate is to continue with behavior-sized presentation/domain realization seams: delete or replace the remaining raw canvas projection-plane/projected-3D collection seams with concrete selector DTOs, then evaluate `ThreeWorldReadPort` and domain realization-context ownership. This should be planned as a new reviewed wave-plan extension rather than implemented in the validation closure stage.
