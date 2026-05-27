@@ -1,94 +1,166 @@
-# Proposal Direct — Typed realization contexts at the existing domain boundary
+# Proposal Direct — Narrow the existing realization context family
 
 ## Summary
 
-Implement Wave 018 by evolving the existing `ProjectionElementRealizationContext` vocabulary into a minimal realization-context family and updating active 3D/plane/read-port realization contracts to consume those contexts instead of concrete `World` or `any`. Keep the existing ownership shape: domain elements still own realization algorithms, projection planes still own their caches/helpers, and canvas/three read-port adapters remain the boundary that wraps the runtime `World`. This is the smallest architectural fix that deletes the current full-`World`/`any` seams without reopening rendering, commands, tools, persistence, or app-shell work.
+Implement Wave 018 by tightening the realization context contracts that already exist in `ProjectionPlaneContext.ts`. Current source has already deleted the oldest `Element3D.realize3D(world: any)` / `Plane.realize3D(world: any)` signatures, so the direct path should not redo that work. The current architectural smell is subtler: `ProjectionElementRealizationContext` is a broad structural context that gives every realization algorithm lookup, realization, and collection traversal capability, while canvas and three adapters maintain duplicated `World`-to-context binders.
+
+The direct path keeps the existing architecture shape: domain elements own realization algorithms, projection planes own mutation/cache helpers, and canvas/three read-port adapters remain the only runtime boundary that wraps a concrete `World`. It narrows capabilities, deletes duplicate/parallel context shapes, and preserves Wave 017/028 presentation boundaries.
 
 ## Files to change
 
-Primary contract/domain files:
+Primary domain contract files:
 
-- `frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts` — define or refine named contexts such as `ProjectionElementRealizationContext`, `ProjectionPlaneRealizationContext`, `Element3DRealizationContext`, and `PlaneEquationRealizationContext` with only lookup/realization capabilities proven by the caller inventory.
-- `frontend/src/domain/world/Element3D.ts` — replace `realize3D(world: any): any` with a typed result/context contract.
-- `frontend/src/domain/world/Point3D.ts`
-- `frontend/src/domain/world/Line3D.ts`
-- `frontend/src/domain/world/Segment3D.ts`
-- `frontend/src/domain/world/Plane.ts`
-- `frontend/src/domain/world/HingeLine.ts` only if type alignment is needed.
-- `frontend/src/domain/world/BrokenHingeLine.ts`
-- 2D realization files only for parameter naming/type alignment where the current context already suffices: `Point.ts`, `Line.ts`, `Segment.ts`, `Circle.ts`, `Guide.ts`, `elements/BrokenHalfHingeLine2D.ts`.
-- `frontend/src/domain/world/projectionPlane/ProjectionPlane.ts`, `FixedProjectionPlane.ts`, `AuxiliaryProjectionPlane.ts` only where helper signatures must consume the refined context while preserving plane-owned cache mutation.
+- `frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts`
+  - Split broad context capabilities into named read-only interfaces.
+  - Keep mutation/dependency/ID generation in `ProjectionPlaneMutationContext`; do not move them into read-only realization contexts.
+- `frontend/src/domain/world/Element2D.ts`
+  - Type-only alignment if the base 2D context name changes.
+- `frontend/src/domain/world/Element3D.ts`
+  - Preserve typed `Element3DRealizationContext` result contract; update imports if context names are narrowed.
+- 2D/3D realization classes only where signatures must consume narrower contexts:
+  - `frontend/src/domain/world/Point.ts`
+  - `frontend/src/domain/world/Line.ts`
+  - `frontend/src/domain/world/Segment.ts`
+  - `frontend/src/domain/world/Circle.ts`
+  - `frontend/src/domain/world/Guide.ts`
+  - `frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts`
+  - `frontend/src/domain/world/Point3D.ts`
+  - `frontend/src/domain/world/Line3D.ts`
+  - `frontend/src/domain/world/Segment3D.ts`
+  - `frontend/src/domain/world/Plane.ts`
+  - `frontend/src/domain/world/HingeLine.ts`
+  - `frontend/src/domain/world/BrokenHingeLine.ts`
+- Projection-plane helpers only for context-type alignment, not mutation redesign:
+  - `frontend/src/domain/world/projectionPlane/ProjectionPlane.ts`
+  - `frontend/src/domain/world/projectionPlane/FixedProjectionPlane.ts`
+  - `frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts`
 
-Presentation adapters:
+Presentation adapter/context-binder files:
 
-- `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts` — create/use a typed context wrapper around `World`, then pass that context to plane/2D/3D realization APIs instead of passing raw `World` as the realization dependency.
-- `frontend/src/application/threePresentation/ThreeWorldReadPort.ts` — same context wrapper use for read-model construction.
+- `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts`
+  - Replace the duplicated canvas-local broad context binder with the selected narrow binder or context family.
+  - Keep public canvas read-port methods unchanged.
+- `frontend/src/application/canvasPresentation/Projected3DCanvasReadPort.ts`
+  - Update `Element3DRealizationContext` import/parameter if narrowed.
+  - Keep projected-3D traversal ownership localized here.
+- `frontend/src/application/threePresentation/ThreeRealizationContext.ts`
+  - Either delete in favor of a tiny shared binder or reduce to a three-local wrapper over the narrowed context.
+  - Must not own broad collection traversal directly.
+- `frontend/src/application/threePresentation/ThreePlanarElementReadPort.ts`
+- `frontend/src/application/threePresentation/ThreeGuideReadPort.ts`
+- `frontend/src/application/threePresentation/ThreeHingeReadPort.ts`
+  - Update concern adapters to pass the narrowest context needed and keep collection traversal owned by the concern adapter.
 
-Focused tests:
+Optional tiny shared helper:
 
-- `frontend/tests/unit/domain/realizationCache.spec.ts`
-- representative existing domain tests for point/line/circle/guide/3D/plane realization, e.g. `Point3DReconstruction.test.ts`, `Line3DReconstruction.test.ts`, `segment3DRealization.spec.ts`, `Plane3DFromTraces.test.ts`, `projectionPlaneRealization.spec.ts`.
+- New `frontend/src/application/presentation/WorldRealizationContext.ts` (name illustrative) is allowed only if it exports a small factory that binds concrete `World` to the selected domain realization-context interfaces. It must not expose selector DTOs, app-shell state, command state, persistence, style/visibility policy, renderer lifecycle, or a generic `getWorld()`.
+
+Focused tests/guards:
+
 - `frontend/tests/unit/application/canvasPresentation/canvasWorldReadPort.spec.ts`
-- `frontend/tests/unit/application/canvasPresentation/canvasPresentationSelector.spec.ts` if adapter expectations change.
+- `frontend/tests/unit/application/canvasPresentation/projected3DCanvasSelector.spec.ts`
+- `frontend/tests/unit/application/appShell/Cycle027Architecture.test.ts`
+- `frontend/tests/unit/application/threePresentation/threePresentationArchitectureBoundary.spec.ts`
 - `frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts`
-- `frontend/tests/unit/application/threePresentation/threePresentationSelector.spec.ts` if orchestration expectations change.
+- Representative domain realization tests only where signatures change, such as `Point3DReconstruction.test.ts`, `Line3DReconstruction.test.ts`, `segment3DRealization.spec.ts`, `Plane3DFromTraces.test.ts`, `projectionPlaneRealization.spec.ts`, and `realizationCache.spec.ts`.
 
-## Files/tests/docs/fixtures to DELETE
+## Required DELETE list
 
-- Delete `Element3D.realize3D(world: any): any` from `Element3D.ts`.
-- Delete `Plane.getPlaneEquation(world: any)` and `Plane.realize3D(world: any)` broad signatures in favor of typed context/result contracts.
-- Delete concrete `World` realization signatures/imports in active `Point3D`, `Line3D`, `Segment3D`, and `BrokenHingeLine` realization paths where the typed context provides needed lookups.
-- Delete direct raw-`World` adapter realization calls in `CanvasWorldReadPort.ts` and `ThreeWorldReadPort.ts` once the context wrapper exists.
-- Delete transitional overloads or aliases that keep both old full-`World` and new context signatures.
-- Delete touched test helper `as any` mocks or whole-World test doubles that only exist because the old contracts were weak; replace with typed realization-context builders.
-- Do not delete unrelated docs/specs, backend files, command/tool files, or rendering-platform files in this wave.
+Delete, not wrap:
+
+- `getAllProjectionPlanes()` and `getAllHingeLines()` from the default realization context if implementation confirms they are not normal realization dependencies. If some paths need collection traversal, move them into a separately named collection/diagnostic context consumed only by those paths.
+- Context aliases that merely extend the full broad context without narrowing (`ProjectionPlaneRealizationContext`, `Element3DRealizationContext`, `PlaneEquationRealizationContext`) if replaced by explicit capability interfaces.
+- One of the duplicate context binder bodies (`createCanvasRealizationContext` or `createThreeRealizationContext`) if a shared tiny binder is introduced.
+- Full-collection diagnostic payloads in normal realization code if they are the only reason collection methods remain on the base context, especially `HingeLine.realize3D` structural-error diagnostics.
+- Touched test helper `as any`/whole-World mocks used only to satisfy weak context typing.
+- Transitional overloads, compatibility aliases, dead exports, or dual old/new context APIs.
+
+Already-deleted surfaces that must stay gone:
+
+- `Element3D.realize3D(world: any): any`.
+- `Plane.getPlaneEquation(world: any)` / `Plane.realize3D(world: any)`.
+- Concrete `World` imports/signatures in active 3D realization classes.
+- Broad public `ThreeWorldReadPort` selector dependency/god-interface role.
+- Public canvas raw collection/realization seams deleted by Wave 028.
+
+Do not delete docs/specs/backend/package/tooling files in this wave.
 
 ## Expected behavior change
 
-No intentional user-visible behavior change. The behavior target is equivalence: existing 2D canvas primitives, projected 3D-on-2D overlays, 3D reconstructed point/line/segment/plane/hinge rendering, guides, intersections, and realization caches continue to work. The architectural behavior changes are compile-time enforced:
+No intentional user-visible behavior change. The implementation should be a compile-time architecture improvement:
 
-- Domain realization algorithms can ask only for typed lookup capabilities, not an arbitrary mutable `World`.
-- `Element3D` and `Plane` no longer erase realization contracts to `any`.
-- Presentation read ports remain runtime adapters, but their domain calls consume explicit realization contexts.
+- Normal domain realization algorithms receive only lookup/realization capabilities they need.
+- Collection traversal is not part of the default context and stays owned by adapter/concern modules or explicitly named special contexts.
+- Canvas and three presentation consumers keep their Wave 017/028 read-port DTO boundaries.
+- 2D canvas primitives, projected 3D-on-2D items, selected guides, hinges, reconstructed 3D elements, and projection-plane/grid behavior render as before.
 
 ## Implementation sequence
 
-1. Capture a full pre-edit caller inventory in `implementation-log.md` and validation logs, using the current `caller-inventory-scan.stdout` categories as the starting point.
-2. Define the minimal context types in `ProjectionPlaneContext.ts`. Prefer extending the current interface rather than duplicating lookup responsibilities under new names.
-3. Update `Element3D`, 3D elements, `Plane`, and hinge variants to typed contexts/results.
-4. Update projection-plane helper signatures only as needed. Preserve cache ownership and dirty/dependency semantics inside `ProjectionPlane`; do not turn this into mutation-ownership redesign.
-5. Create a small context adapter/factory in or near the read-port adapter modules if needed, so `World` is wrapped once at the application/presentation boundary.
-6. Update mechanical call sites and focused tests to the typed contracts. If command/tool/UI call sites only pass a `World` value that structurally satisfies the context, keep changes mechanical and do not refactor those layers.
-7. Delete old overloads/imports/helpers and run static scans proving the targeted full-`World`/`any` seams are gone.
+1. Capture implementation-stage caller inventory and scans before source edits. Classify each active call site as changed, mechanically updated, deferred, or out of scope.
+2. In `ProjectionPlaneContext.ts`, define a capability-sized context family. A likely shape:
+   - `ProjectionElementLookupContext` for `getProjectionPlaneById`, `getPoint2D`, `getLine2D`, `getCircle2D`, `getHingeLineById`.
+   - `ProjectionRealizationLookupContext` for `getProjectionPlane2DRealization`, `getProjectionPlane3DRealization`, `get3DPlaneRealization`.
+   - `ProjectionElementRealizationContext` as the normal read-only composition of lookup + realization lookup.
+   - `ProjectionCollectionContext` or `ProjectionRealizationDiagnosticContext` only if collection traversal is truly needed by realization paths.
+   - `ProjectionPlaneMutationContext` remains the mutation/caching context and may extend read-only context plus mutation-only capabilities.
+3. Update domain signatures to consume the narrowest context. Avoid broadening via structural aliases that recreate the old full context.
+4. Decide whether a tiny shared application binder replaces duplicated canvas/three binders. If yes, keep it purely as `World` → domain context adapter. If not, at least make both binders implement the same narrowed interfaces without duplicate broad collection methods.
+5. Update `CanvasWorldReadPort` and three concern adapters mechanically to pass the narrowed context and preserve their current traversal ownership.
+6. Update focused tests and architecture guards to assert:
+   - no `any`/concrete-`World` realization signatures return;
+   - base context has no broad collection methods unless explicitly retained by reviewed rationale;
+   - `ThreeRealizationContext.ts` still does not call `world.getAllProjectionPlanes()` / `world.getAllHingeLines()` directly;
+   - `CanvasWorldReadPort` public raw seams remain deleted;
+   - no generic `RuntimeWorld`, `WorldReadModel`, `PresentationWorld`, `getWorld()`, or app-kernel facade was added.
+7. Run validation and update `implementation-log.md` with the caller inventory, changed/deleted/deferred classifications, command logs, residual risks, and preview evidence.
 
 ## Validation plan
 
-- Static scans under `validation/` for `realize3D(world: any)`, `getPlaneEquation(world: any)`, concrete `World` imports in active realization classes, `.realize2D(world)` / `.realize3D(world)` adapter calls, and duplicate context aliases.
-- Focused Vitest for changed domain realization and read-port modules:
-  - `npm run test --workspace=frontend -- --run frontend/tests/unit/domain/realizationCache.spec.ts frontend/tests/unit/domain/Point3DReconstruction.test.ts frontend/tests/unit/domain/Line3DReconstruction.test.ts frontend/tests/unit/domain/segment3DRealization.spec.ts frontend/tests/unit/domain/Plane3DFromTraces.test.ts frontend/tests/unit/application/canvasPresentation/canvasWorldReadPort.spec.ts frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts`
-  - Adjust exact paths to existing scripts if needed; capture stdout/stderr.
-- Root and frontend lint.
-- Full root and frontend Vitest.
-- Root and frontend build.
-- Root/frontend Playwright e2e.
-- Refresh preview with `npm run -w frontend dev -- --host 0.0.0.0`, capture PID/logs, probe HTTP 200 via `127.0.0.1:5173`, and run live smoke for representative 2D canvas and 3D view rendering.
+Capture full stdout/stderr under `architecture-audit/cycle-018-domain-realization-context-boundary/validation/`:
+
+- Static scans for:
+  - `realize3D(world: any)`, `getPlaneEquation(world: any)`, concrete `World` imports in realization classes;
+  - `getAllProjectionPlanes` / `getAllHingeLines` on default context definitions;
+  - duplicate context binders and forbidden generic facades;
+  - public canvas raw seams and broad three read-port selector dependencies.
+- Focused Vitest for changed context/domain/read-port surfaces. Suggested set:
+  - `frontend/tests/unit/application/canvasPresentation/canvasWorldReadPort.spec.ts`
+  - `frontend/tests/unit/application/canvasPresentation/projected3DCanvasSelector.spec.ts`
+  - `frontend/tests/unit/application/appShell/Cycle027Architecture.test.ts`
+  - `frontend/tests/unit/application/threePresentation/threePresentationArchitectureBoundary.spec.ts`
+  - `frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts`
+  - representative domain tests for any touched realization classes.
+- Root and frontend `npm run lint` where defined.
+- Root and frontend full Vitest.
+- Root and frontend `npm run build`.
+- Root and frontend Playwright e2e, explicitly including `frontend/tests/e2e/current-ui-contract.spec.ts` overlay pointer-boundary test.
+- Live preview refresh on `0.0.0.0:5173`, HTTP 200 probe, and live/browser smoke for representative 2D canvas primitives plus 3D view rendering.
 
 ## No-backcompat rationale
 
-The old signatures are not compatibility surfaces; they are the architectural smell. Keeping overloads like `realize3D(world: World)` alongside `realize3D(context: Element3DRealizationContext)` would preserve the bypass and let future adapters keep using full mutable `World`. The implementation should delete the old contracts and update active callers directly.
+The old broad context shape is architectural debt, not a compatibility surface. Keeping full-context aliases or overloads would let future realization algorithms and adapters continue depending on a structural `World` surrogate. Delete old aliases/methods where the narrower contract replaces them and update active callers/tests directly.
 
 ## Risks
 
-- A single context can become a renamed `World` if it exposes too many methods. Mitigation: build the interface from actual realization caller needs only.
-- Projection-plane helper methods mix realization and cache mutation. Mitigation: keep mutation/caching plane-owned and narrow only the parameter capability; stop for plan edit if this requires deeper redesign.
-- Mechanical changes may touch many tests/call sites. Mitigation: scope changes to signature alignment and do not redesign command/tool/UI layers.
-- 3D plane/hinge realization may expose missing capabilities late. Mitigation: caller inventory first; stop conditions below.
+- Over-narrowing could miss a legitimate recursive realization need. Mitigate with caller inventory and focused domain tests before full validation.
+- A shared binder could become an app-kernel facade. Mitigate by allowing only a tiny `World` → realization-context adapter and banning selector/read-model/app-shell methods.
+- Collection methods may be needed for a small hinge/diagnostic path. Mitigate by isolating them in a named special context rather than the default context.
+- Projection-plane helper methods combine realization and cache/mutation. Mitigate by preserving `ProjectionPlaneMutationContext` and stopping if dependency registration/cache ownership must be redesigned.
 
-## Stop conditions for broader redesign
+## Stop conditions
 
-Stop and request a reviewed mini-cycle if:
+Stop and request a reviewed delta/plan edit if:
 
-- The minimal context needs command execution, process-tree mutation, persistence/project-service access, stores, Vue state, or renderer objects.
-- Projection-plane cache/dependency mutation cannot be separated from realization capability by typing alone.
-- Fixing `Plane` or hinge contracts requires changing geometric result semantics rather than only context/result typing.
-- The change requires reopening Wave 016/017 selector architecture, Wave 019 scene-host lifecycle, or app-shell/tool/persistence ownership.
+- The context needs command execution, process-tree mutation, persistence/project-service access, stores, Vue state, renderer lifecycle, scene-host state, or style/visibility policy.
+- Projection-plane cache/dependency mutation cannot stay separate from read-only realization context.
+- Narrowing contexts requires changing geometric result semantics, infeasibility semantics, or construction behavior rather than only context capability typing.
+- Public canvas read-port DTO contracts, three selector/read-port decomposition, scene-host/OrbitControls/CSS/pointer behavior, command/undo, persistence, package/tooling, backend/docs/specs, or app-shell ownership changes become necessary.
+- The unrelated dirty `Intersections.ts` / `ActionGroup.ts` files become necessary for compile/test success.
+
+## Protected Wave 017/028 surfaces
+
+- `ThreeView.vue` remains a composition shell; no concrete `World` injection/imports, no scene-host/OrbitControls/camera/renderer/CSS/layout changes.
+- `ThreeWorldReadPort.ts` remains only a composition/type export unless a narrow rename is separately reviewed; do not recreate a broad read-port facade.
+- `CanvasWorldReadPort` keeps behavior-sized public methods only and does not expose `getWorld`, raw collection getters, or public realization methods.
+- `Projected3DCanvasReadPort.ts` remains the localized projected-3D raw traversal adapter.
+- `.three-view-overlay` pointer behavior is unchanged and validated by e2e/live smoke.
