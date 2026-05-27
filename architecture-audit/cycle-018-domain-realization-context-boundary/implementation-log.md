@@ -189,11 +189,12 @@ Protected surfaces remained untouched in this closure stage and in the verified 
 
 ### Wave-plan reread and next-wave recommendation
 
-`architecture-audit/wave-plan.md` was reread at closure. Based on Wave 018 learnings, the realization-context boundary is now complete and should not be reopened immediately through a broader realization query-service wave. The most central remaining plan work is still the command/UI controller boundary before rendering cleanup:
+`architecture-audit/wave-plan.md` was reread at closure. Based on Wave 018 learnings, the realization-context boundary is now complete and should not be reopened immediately through a broader realization query-service wave. The authoritative current plan entry after Wave 018 is **Wave 019 — Three scene-host lifecycle and renderer platform boundary**, added by the reviewed Wave 018 plan extension as the recommended next ordered wave after Wave 018.
 
-1. Proceed with the next canonical fresh-scout/proposals stage for **Wave 006a — Canvas/tool command controllers**, unless the Manager determines a reviewed plan-extension/rerank stage is required because of the non-linear post-017/post-028 ordering.
-2. Keep **Wave 006b — Panel/toolbar command-intent cleanup** behind 006a.
-3. Keep **Wave 007/008 rendering selector and 3D scene extraction** behind the command/controller cleanup so rendering work does not preserve stale UI command leaks.
-4. Treat **Wave 019 — Three scene-host lifecycle and renderer platform boundary** as a later rendering/platform candidate after the command/controller and selector prerequisites are rechecked.
+Recommended next stage: proceed with the canonical fresh-scout/proposals stage for **Wave 019 — Three scene-host lifecycle and renderer platform boundary**. The scope check must re-read Wave 019 against current source and the completed Wave 018 context, confirming that typed realization/read-context outputs are stable and that no full-`World` or `any` realization seam remains that would invalidate the scene-host lifecycle premise.
+
+Wave 019 should stay inside its explicit scope: `ThreeView.vue` as a composition shell, `ThreeViewRuntime`, `ThreeSceneHost`, `ThreeObjectRegistry`, and active scene adapters under `frontend/src/rendering/threeView/`. It must not reopen domain realization contracts, canvas presentation selectors, app-shell project lifecycle, command/undo, persistence, backend, package/tooling, validation-platform, docs/spec, or broad UI redesign without a reviewed plan edit.
+
+Residual older entries such as Wave 006a/006b remain historical/previously planned work, but this closure log defers to the current authoritative Wave 019 ordering in `wave-plan.md` rather than re-ranking those earlier command/controller entries ahead of the active plan extension.
 
 No next-wave implementation was performed.
