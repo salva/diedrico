@@ -1,5 +1,7 @@
 # Cycle 026 Implementation Log — Tool interaction read context
 
+**Overall status:** Wave 026 COMPLETE after validation-and-preview closure.
+
 ## Source-control hygiene
 
 - Implementation decision followed: `architecture-audit/cycle-026-tool-interaction-read-context/decision.md`, selecting corrected `proposals/proposal-direct.md`.
@@ -177,3 +179,55 @@ Live preview and smoke:
 - Extract or narrow RuntimeSession properties/process/read-port residual world reads in a future centrality-appropriate wave.
 - Address presentation read-model seams in `CanvasWorldReadPort`/`ThreeWorldReadPort` only through a reviewed wave that targets canvas/three presentation boundaries explicitly.
 - Consider a small tooling wave for preview-script host forwarding if live-preview refresh continues to require workspace-specific commands.
+
+## Validation-and-preview closure — t1 independent verification
+
+**Wave 026 status: COMPLETE.** This closure task independently verified the implementation, validation logs, static source evidence, live preview reachability, and remaining wave-plan ordering without modifying production source.
+
+### Independent evidence added by validation-and-preview closure
+
+Additional closure logs are under `architecture-audit/cycle-026-tool-interaction-read-context/validation/`:
+
+- `t1-close-scoped-status-before.*.log` — path-scoped status for Cycle 026 source/audit/report paths; only untracked stage/report and review artifacts were visible in scope.
+- `t1-close-scoped-diff-before.*.log` — no scoped source diff before closure log/report edits.
+- `t1-close-wave-plan-grep.*.log`, `t1-close-wave026-entry.*.log`, and `t1-close-wave-index.*.log` — reread Wave 026 and confirmed no later wave entry is currently present after Wave 026.
+- `t1-close-independent-boundary-scan.*.log` — active tool/type paths have no `ToolContext.world`, `CollectionContext.world`, `context.world`, or `realize2D(context.world)` matches. The only `world: World` / `world` matches are accepted runtime-owned/private adapter construction sites in `RuntimeSession` and `ToolInteractionReadPort`, not tool-context compatibility paths.
+- `t1-close-independent-caller-map.*.log` — every `ToolInteractionReadPort` method has current concrete tool/argument-collector callers; no generic `WorldView`/`ToolWorld`/`RuntimeWorld`/`WorldQuery`/`query`/`traverse`/tool-port `getAll...` facade was found.
+- `t1-close-validation-summary.*.log` — summarized the green mandatory validation evidence from the implementation validation run.
+- `t1-close-preview-probe.*.log` — confirmed the refreshed live preview still returns HTTP 200 from `http://127.0.0.1:5173/` and is listening on `0.0.0.0:5173`.
+
+### Validation closure assessment
+
+The mandatory Wave 026 validation evidence is accepted as green:
+
+- Root lint and frontend lint passed through architecture tests (`t2-root-lint.*.log`, `t2-frontend-lint.*.log`).
+- Focused Vitest passed 50/50 tests for tool read ports, representative concrete tools, tool validation, point tool, and canvas tool controllers (`t2-focused-vitest.*.log`).
+- Full root and frontend Vitest passed 111 files with 1270 passing tests, expected existing skipped/todo tests only (`t2-root-vitest.*.log`, `t2-frontend-vitest.*.log`).
+- Root and frontend builds passed (`t2-root-build.*.log`, `t2-frontend-build.*.log`); the only noted build caveat is the existing Vite chunk-size warning.
+- Root and frontend Playwright e2e passed 9/9 tests (`t2-root-e2e.*.log`, `t2-frontend-e2e.*.log`).
+- Live preview was refreshed from the frontend workspace after the root forwarding attempt failed to bind as requested; the current accepted evidence is `0.0.0.0:5173` with HTTP 200 (`t2-preview-http-probe.*.log`, independently rechecked by `t1-close-preview-probe.*.log`).
+- Credential-free live smoke passed for app shell, toolbar, point/line/circle construction, hover/3D status, 3D overlay refresh, undo/redo, and status-bar responsiveness (`t2-live-smoke-retry.*.log`).
+
+Stale or failed attempts are superseded by the green source validation/report artifacts above: the failed first preview refresh was a root-script argument-forwarding issue, and the failed first live-smoke attempt was a `/tmp` module-resolution issue. Neither failure is attributed to Cycle 026 production source.
+
+### Tool read-port closure assessment
+
+Cycle 026 achieved its selected target outcome:
+
+- `RuntimeSession` remains the private owner of `World` and now invokes tools with `readPort` rather than raw `world`.
+- `ITool.ToolContext.world`, `CollectionContext.world`, active tool `context.world`, and `realize2D(context.world)` usages are absent from active production tool paths.
+- `ToolInteractionReadPort` methods remain behavior-sized and caller-map justified: projection-plane lookup/distinctness, hit-result element lookup, point/line/circle lookup, point/line/circle realization, and expected `T2'` realization.
+- No transitional dual raw-world/read-port path, compatibility wrapper, or generic world-like facade was introduced.
+- Command mutation still flows through the existing command sink/controller path; the read port is read/realization only.
+
+Protected residual seams remain preserved and intentionally out of scope: presentation read-model adapters, `RuntimeSession` properties/process/persistence handles, `CanvasToolController` mutation ownership, command history/producers, persistence schema/replay, backend/docs/specs/package/auth, elements visibility command semantics, and broad domain realization ownership.
+
+### Wave-plan re-rank / next-wave recommendation
+
+`architecture-audit/wave-plan.md` was reread for Wave 026 and the wave index. Wave 026 is the last currently enumerated wave-plan entry, so the next canonical action should be a **wave-plan-extension / fresh-scout stage**, not implementation. Based on Wave 026 learnings, the highest-centrality candidates for that extension are:
+
+1. A runtime/presentation read-model seam wave for the remaining `RuntimeSession` properties/process/persistence handles and `CanvasWorldReadPort`/`ThreeWorldReadPort` residual domain realization/read-model seams, if current source evidence shows those are still the most central raw-domain leaks.
+2. A narrower domain-realization context wave only if scouting proves the presentation/tool adapter seams cannot be cleaned without changing `Element2D.realize2D(world)` / projection realization ownership directly.
+3. A small validation/tooling follow-up for stable advanced-tool e2e helpers and/or root preview host forwarding only after the central source seam ordering is confirmed, because those are validation ergonomics rather than core architecture.
+
+No next-wave implementation was started in this closure task.
