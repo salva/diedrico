@@ -17,7 +17,7 @@
 import { Vector4 } from 'three';
 import { Element3D } from './Element3D';
 import { Point3DRealization3D } from './Element3DRealization3D';
-import type { World } from './World';
+import type { Element3DRealizationContext, ProjectionElementRealizationContext } from './projectionPlane/ProjectionPlaneContext';
 import type { VisualStyle } from './VisualStyle';
 import { createVisualStyle } from './VisualStyle';
 import { reconstruct3DPointFromProjections } from '@/utils/threeUtils';
@@ -48,7 +48,7 @@ export class Point3DByCoordinates extends Element3D {
     this.projectionV = projectionV;
   }
 
-  realize3D(_world: World): Point3DRealization3D {
+  realize3D(_context: Element3DRealizationContext): Point3DRealization3D {
     // Return fixed coordinates as realization
     return new Point3DRealization3D(this.coordinates.clone());
   }
@@ -103,11 +103,11 @@ export class Point3DFromProjections extends Element3D {
     this.plane2Id = plane2Id;
   }
 
-  realize3D(world: World): Point3DRealization3D {
+  realize3D(context: Element3DRealizationContext): Point3DRealization3D {
     try {
       // 1. Get 2D projections and their planes
-      const plane1 = world.getProjectionPlaneById(this.plane1Id);
-      const plane2 = world.getProjectionPlaneById(this.plane2Id);
+      const plane1 = context.getProjectionPlaneById(this.plane1Id);
+      const plane2 = context.getProjectionPlaneById(this.plane2Id);
       
       if (!plane1 || !plane2) {
         return new Point3DRealization3D(new Vector4(0, 0, 0, 1), false);
@@ -121,16 +121,16 @@ export class Point3DFromProjections extends Element3D {
       }
 
       // 2. Realize 2D projections to get coordinates
-      const proj1Realization = proj1Element.realize2D(world);
-      const proj2Realization = proj2Element.realize2D(world);
+      const proj1Realization = proj1Element.realize2D(context);
+      const proj2Realization = proj2Element.realize2D(context);
 
       if (!proj1Realization.isFeasible() || !proj2Realization.isFeasible()) {
         return new Point3DRealization3D(new Vector4(0, 0, 0, 1), false);
       }
 
       // 3. Get plane realizations for projection matrices
-      const plane1Real = world.getProjectionPlane3DRealization(this.plane1Id);
-      const plane2Real = world.getProjectionPlane3DRealization(this.plane2Id);
+      const plane1Real = context.getProjectionPlane3DRealization(this.plane1Id);
+      const plane2Real = context.getProjectionPlane3DRealization(this.plane2Id);
 
       if (!plane1Real || !plane2Real) {
         return new Point3DRealization3D(new Vector4(0, 0, 0, 1), false);
@@ -184,7 +184,7 @@ export class Point3DFromProjections extends Element3D {
    * (perpendicular to hinge line requirement)
    * TODO: Implement proper validation in GeometryValidator
    */
-  validateProjectionCompatibility(_world: World): boolean {
+  validateProjectionCompatibility(_context: ProjectionElementRealizationContext): boolean {
     // Placeholder - will be implemented with GeometryValidator
     return true;
   }

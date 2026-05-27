@@ -21,20 +21,21 @@ import { Element3D } from './Element3D';
 import { Plane3DRealization3D } from './Element3DRealization3D';
 import { applyMatrix4x3, crossVector3Homogeneous } from '@/utils/threeUtils';
 import { computeLineLineIntersection3D } from '@/utils/projectionPlaneUtils';
+import type { PlaneEquationRealizationContext } from './projectionPlane/ProjectionPlaneContext';
 
 export abstract class Plane3D extends Element3D {
   /**
    * Get plane equation [a, b, c, d] where ax + by + cz + d = 0
    * Each concrete class computes this based on its representation
    */
-  abstract getPlaneEquation(world: any): Vector4 | null;
+  abstract getPlaneEquation(context: PlaneEquationRealizationContext): Vector4 | null;
 
   /**
    * Compute 3D realization (plane equation + rendering geometry)
    * Uses getPlaneEquation() from concrete class
    */
-  realize3D(world: any): Plane3DRealization3D {
-    const equation = this.getPlaneEquation(world);
+  realize3D(context: PlaneEquationRealizationContext): Plane3DRealization3D {
+    const equation = this.getPlaneEquation(context);
     
     if (!equation) {
       return Plane3DRealization3D.infeasible();
@@ -156,7 +157,7 @@ export class Plane3DFixed extends Plane3D {
     return new Vector4(vec3.x, vec3.y, vec3.z, v.w);
   }
 
-  getPlaneEquation(_world: any): Vector4 {
+  getPlaneEquation(_context: PlaneEquationRealizationContext): Vector4 {
     // Return plane equation: ax + by + cz + d = 0
     // d = -normal · point
     const d = -(this.normal.x * this.point.x + this.normal.y * this.point.y + this.normal.z * this.point.z);
@@ -266,35 +267,39 @@ export class Plane3DFromTraces extends Plane3D {
     this.plane2Id = plane2Id;
   }
 
-  getPlaneEquation(world: any): Vector4 | null {
+  getPlaneEquation(context: PlaneEquationRealizationContext): Vector4 | null {
     // Reconstruct plane equation from two trace lines on different projection planes
     
     console.log('[Plane3DFromTraces] getPlaneEquation called for plane:', this.id, 'trace1:', this.trace1, 'trace2:', this.trace2);
     
     // Get all realizations (let it fail hard if structure is wrong)
-    const t1Line = world.getLine2D(this.trace1);
-    const t2Line = world.getLine2D(this.trace2);
-    const t1InP1 = t1Line.realize2D(world);
-    const t2InP2 = t2Line.realize2D(world);
+    const t1Line = context.getLine2D(this.trace1);
+    const t2Line = context.getLine2D(this.trace2);
+    if (!t1Line || !t2Line) {
+      console.warn('[Plane3DFromTraces] Missing trace line', { t1Line, t2Line });
+      return null;
+    }
+    const t1InP1 = t1Line.realize2D(context);
+    const t2InP2 = t2Line.realize2D(context);
     
-    const plane1 = world.getProjectionPlaneById(t1Line.planeId);
-    const plane2 = world.getProjectionPlaneById(t2Line.planeId);
+    const plane1 = context.getProjectionPlaneById(t1Line.planeId);
+    const plane2 = context.getProjectionPlaneById(t2Line.planeId);
     
     if (!plane1 || !plane2) {
       console.warn('[Plane3DFromTraces] Missing projection plane', { plane1, plane2 });
       return null;
     }
     
-    const p1 = world.getProjectionPlane3DRealization(plane1.id);
-    const p2 = world.getProjectionPlane3DRealization(plane2.id);
+    const p1 = context.getProjectionPlane3DRealization(plane1.id);
+    const p2 = context.getProjectionPlane3DRealization(plane2.id);
     
     // Check feasibility of all realizations
-    if (!t1InP1.feasible || !t2InP2.feasible || !p1.feasible || !p2.feasible) {
+    if (!p1 || !p2 || !t1InP1.feasible || !t2InP2.feasible || !p1.feasible || !p2.feasible) {
       console.warn('[Plane3DFromTraces] Infeasible realizations', { 
         t1Feasible: t1InP1.feasible, 
         t2Feasible: t2InP2.feasible,
-        p1Feasible: p1.feasible,
-        p2Feasible: p2.feasible
+        p1Feasible: p1?.feasible,
+        p2Feasible: p2?.feasible
       });
       return null;
     }

@@ -1,0 +1,6 @@
+
+> diedrico-frontend@0.1.0 build
+> vue-tsc && vite build
+
+src/domain/world/Plane.ts(301,21): error TS18048: 'p1' is possibly 'undefined'.
+src/domain/world/Plane.ts(302,21): error TS18048: 'p2' is possibly 'undefined'.

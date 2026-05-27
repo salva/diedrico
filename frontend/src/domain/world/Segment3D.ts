@@ -16,7 +16,7 @@
 import { Vector4 } from 'three';
 import { Element3D } from './Element3D';
 import { Segment3DRealization3D } from './Element3DRealization3D';
-import type { World } from './World';
+import type { Element3DRealizationContext } from './projectionPlane/ProjectionPlaneContext';
 import type { VisualStyle } from './VisualStyle';
 import { createVisualStyle } from './VisualStyle';
 import { reconstruct3DPointFromProjections } from '@/utils/threeUtils';
@@ -55,11 +55,11 @@ export class Segment3DFromProjections extends Element3D {
     this.plane2Id = plane2Id;
   }
 
-  realize3D(world: World): Segment3DRealization3D {
+  realize3D(context: Element3DRealizationContext): Segment3DRealization3D {
     try {
       // 1. Get 2D projections and their planes
-      const plane1 = world.getProjectionPlaneById(this.plane1Id);
-      const plane2 = world.getProjectionPlaneById(this.plane2Id);
+      const plane1 = context.getProjectionPlaneById(this.plane1Id);
+      const plane2 = context.getProjectionPlaneById(this.plane2Id);
       
       if (!plane1 || !plane2) {
         return new Segment3DRealization3D(
@@ -81,8 +81,8 @@ export class Segment3DFromProjections extends Element3D {
       }
 
       // 2. Realize 2D projections to get endpoint coordinates
-      const seg1Real = seg1Element.realize2D(world);
-      const seg2Real = seg2Element.realize2D(world);
+      const seg1Real = seg1Element.realize2D(context);
+      const seg2Real = seg2Element.realize2D(context);
 
       if (!seg1Real || !seg2Real || !seg1Real.isFeasible() || !seg2Real.isFeasible()) {
         return new Segment3DRealization3D(
@@ -93,8 +93,8 @@ export class Segment3DFromProjections extends Element3D {
       }
 
       // 3. Get plane 3D realizations for projection matrices
-      const plane1Real = world.getProjectionPlane3DRealization(this.plane1Id);
-      const plane2Real = world.getProjectionPlane3DRealization(this.plane2Id);
+      const plane1Real = context.getProjectionPlane3DRealization(this.plane1Id);
+      const plane2Real = context.getProjectionPlane3DRealization(this.plane2Id);
 
       if (!plane1Real || !plane2Real) {
         return new Segment3DRealization3D(

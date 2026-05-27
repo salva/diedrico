@@ -1,0 +1,260 @@
+diff --git a/frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts b/frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts
+index 1823d34..715b145 100644
+--- a/frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts
++++ b/frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts
+@@ -8,6 +8,7 @@ import type { ProjectionPlane } from '@/domain/world/projectionPlane/ProjectionP
+ import type { ProjectionPlaneRealization3D } from '@/domain/world/projectionPlane/ProjectionPlaneRealization';
+ import type { Point3DRealization3D, Line3DRealization3D, Segment3DRealization3D } from '@/domain/world/Element3DRealization3D';
+ import type { ProcessTree } from '@/domain/processTree/ProcessTree';
++import type { ProjectionElementRealizationContext, Element3DRealizationContext } from '@/domain/world/projectionPlane/ProjectionPlaneContext';
+ import type { World } from '@/domain/world/World';
+ import type { CanvasPlaneTransformModel } from './CanvasPresentationModel';
+ 
+@@ -28,6 +29,7 @@ export interface CanvasWorldReadPort {
+ }
+ 
+ export function createCanvasWorldReadPort(world: World): CanvasWorldReadPort {
++  const realizationContext: ProjectionElementRealizationContext & Element3DRealizationContext = world;
+   return {
+     getAllProjectionPlanes: () => world.getAllProjectionPlanes(),
+     getProjectionPlane2DTransform: (planeId: string) => {
+@@ -43,12 +45,12 @@ export function createCanvasWorldReadPort(world: World): CanvasWorldReadPort {
+     getAll3DPoints: () => world.getAll3DPoints(),
+     getAll3DLines: () => world.getAll3DLines(),
+     getAll3DSegments: () => world.getAll3DSegments(),
+-    realizePoint2D: (plane, point) => plane.realizePoint2D(point, world),
+-    realizeLine2D: (plane, line) => plane.realizeLine2D(line, world),
+-    realizeCircle2D: (plane, circle) => plane.realizeCircle2D(circle, world),
+-    realizePoint3D: point => point.realize3D(world),
+-    realizeLine3D: line => line.realize3D(world),
+-    realizeSegment3D: segment => segment.realize3D(world),
++    realizePoint2D: (plane, point) => plane.realizePoint2D(point, realizationContext),
++    realizeLine2D: (plane, line) => plane.realizeLine2D(line, realizationContext),
++    realizeCircle2D: (plane, circle) => plane.realizeCircle2D(circle, realizationContext),
++    realizePoint3D: point => point.realize3D(realizationContext),
++    realizeLine3D: line => line.realize3D(realizationContext),
++    realizeSegment3D: segment => segment.realize3D(realizationContext),
+     getProcessTree: () => world.getProcessTree(),
+   };
+ }
+diff --git a/frontend/src/application/threePresentation/ThreeWorldReadPort.ts b/frontend/src/application/threePresentation/ThreeWorldReadPort.ts
+index e1171ff..31ecf32 100644
+--- a/frontend/src/application/threePresentation/ThreeWorldReadPort.ts
++++ b/frontend/src/application/threePresentation/ThreeWorldReadPort.ts
+@@ -6,6 +6,7 @@ import type { Point3DRealization3D, Line3DRealization3D, Segment3DRealization3D,
+ import { AuxiliaryProjectionPlane } from '@/domain/world/projectionPlane/AuxiliaryProjectionPlane';
+ import type { ProjectionPlaneRealization3D } from '@/domain/world/projectionPlane/ProjectionPlaneRealization';
+ import type { VisualStyle } from '@/domain/world/VisualStyle';
++import type { ProjectionElementRealizationContext, Element3DRealizationContext } from '@/domain/world/projectionPlane/ProjectionPlaneContext';
+ import type { World } from '@/domain/world/World';
+ import { isGuide2D, isSiblingGuide2D } from '@/domain/world/Guide';
+ import { Segment2DByPoints } from '@/domain/world/Segment';
+@@ -63,6 +64,7 @@ export interface ThreeWorldReadPort {
+ }
+ 
+ export function createThreeWorldReadPort(world: World): ThreeWorldReadPort {
++  const realizationContext: ProjectionElementRealizationContext & Element3DRealizationContext = world;
+   return {
+     getProjectionPlaneModels: () => world.getAllProjectionPlanes().map(plane => ({
+       id: plane.id,
+@@ -81,9 +83,9 @@ export function createThreeWorldReadPort(world: World): ThreeWorldReadPort {
+     getPlanarPlaneModels: () => world.getAllProjectionPlanes().map(plane => ({
+       id: plane.id,
+       realization: world.getProjectionPlane3DRealization(plane.id),
+-      points: plane.getAllPoints().map(point => ({ id: point.id, visualStyle: point.visualStyle, realization: point.realize2D(world) })),
+-      lines: plane.getAllLines().map(line => ({ id: line.id, visualStyle: line.visualStyle, realization: line.realize2D(world), isSegment: line instanceof Segment2DByPoints })),
+-      circles: plane.getAllCircles().map(circle => ({ id: circle.id, visualStyle: circle.visualStyle, realization: circle.realize2D(world) })),
++      points: plane.getAllPoints().map(point => ({ id: point.id, visualStyle: point.visualStyle, realization: point.realize2D(realizationContext) })),
++      lines: plane.getAllLines().map(line => ({ id: line.id, visualStyle: line.visualStyle, realization: line.realize2D(realizationContext), isSegment: line instanceof Segment2DByPoints })),
++      circles: plane.getAllCircles().map(circle => ({ id: circle.id, visualStyle: circle.visualStyle, realization: circle.realize2D(realizationContext) })),
+     })),
+     getReconstructedModels: () => ({
+       points: world.getAll3DPoints().map(point => ({ id: point.id!, visualStyle: point.visualStyle, realization: world.get3DPointRealization(point.id!) })),
+@@ -95,7 +97,7 @@ export function createThreeWorldReadPort(world: World): ThreeWorldReadPort {
+       try {
+         const line = world.getLine2D(selectedId);
+         if (!line || (!isGuide2D(line) && !isSiblingGuide2D(line))) return [];
+-        return [{ id: line.id, visualStyle: line.visualStyle, planeId: line.planeId, planeRealization: world.getProjectionPlane3DRealization(line.planeId), realization: line.realize2D(world) }];
++        return [{ id: line.id, visualStyle: line.visualStyle, planeId: line.planeId, planeRealization: world.getProjectionPlane3DRealization(line.planeId), realization: line.realize2D(realizationContext) }];
+       } catch {
+         return [];
+       }
+@@ -114,6 +116,6 @@ export function createThreeWorldReadPort(world: World): ThreeWorldReadPort {
+         return { id: segment.id!, visualStyle: segment.visualStyle, startPoint: realization?.isFeasible() ? realization.startPoint : undefined, endPoint: realization?.isFeasible() ? realization.endPoint : undefined };
+       }),
+     }),
+-    getHingeModels: () => world.getAllHingeLines().map(hingeLine => ({ id: hingeLine.id, visualStyle: hingeLine.visualStyle, realization: hingeLine.realize3D(world) })),
++    getHingeModels: () => world.getAllHingeLines().map(hingeLine => ({ id: hingeLine.id, visualStyle: hingeLine.visualStyle, realization: hingeLine.realize3D(realizationContext) })),
+   };
+ }
+diff --git a/frontend/src/domain/world/BrokenHingeLine.ts b/frontend/src/domain/world/BrokenHingeLine.ts
+index 59c8486..faa2de7 100644
+--- a/frontend/src/domain/world/BrokenHingeLine.ts
++++ b/frontend/src/domain/world/BrokenHingeLine.ts
+@@ -18,7 +18,8 @@
+ 
+ import { HingeLine } from './HingeLine';
+ import { Line3DRealization3D } from './Element3DRealization3D';
+-import type { World } from './World';
++import { AuxiliaryProjectionPlane } from './projectionPlane/AuxiliaryProjectionPlane';
++import type { Element3DRealizationContext } from './projectionPlane/ProjectionPlaneContext';
+ import { applyMatrix4x3 } from '@/utils/threeUtils';
+ 
+ /**
+@@ -66,10 +67,10 @@ export class BrokenHingeLine extends HingeLine {
+    * 4. Transform T2/T2' 2D geometry to 3D using the matrix
+    * 5. Return 3D line at T2/T2' position
+    */
+-  realize3D(world: World, context?: { planeId?: string }): Line3DRealization3D {
++  realize3D(realizationContext: Element3DRealizationContext, options?: { planeId?: string }): Line3DRealization3D {
+     // Get auxiliary plane to derive T2 trace ID
+-    const auxPlane = world.getProjectionPlaneById(this.auxiliaryPlaneId);
+-    if (!auxPlane || auxPlane.type !== 'auxiliary') {
++    const auxPlane = realizationContext.getProjectionPlaneById(this.auxiliaryPlaneId);
++    if (!(auxPlane instanceof AuxiliaryProjectionPlane)) {
+       console.error(`[BrokenHingeLine] Auxiliary plane not found or wrong type: ${this.auxiliaryPlaneId}`);
+       return Line3DRealization3D.createInfeasible();
+     }
+@@ -77,10 +78,10 @@ export class BrokenHingeLine extends HingeLine {
+     // Determine which T2 trace to use based on which BHHL is being realized
+     // - If realizing for plane1 (auxiliary plane): use T2' from hinge plane
+     // - If realizing for plane2 (other plane): use T2 from other plane
+-    const isAuxiliaryPlane = context?.planeId === this.plane1Id;
++    const isAuxiliaryPlane = options?.planeId === this.plane1Id;
+     const t2TraceId = isAuxiliaryPlane 
+-      ? (auxPlane as any).t2PrimeLineId   // T2' on hinge plane (e.g., projPlane3)
+-      : (auxPlane as any).t2OtherTraceId; // T2 on other plane (e.g., projPlane4)
++      ? auxPlane.t2PrimeLineId   // T2' on hinge plane (e.g., projPlane3)
++      : auxPlane.t2OtherTraceId; // T2 on other plane (e.g., projPlane4)
+     
+     const traceName = isAuxiliaryPlane ? 'T2\'' : 'T2';
+     
+@@ -90,20 +91,20 @@ export class BrokenHingeLine extends HingeLine {
+     }
+ 
+     // Get T2/T2' line and realize it in 2D
+-    const t2Line = world.getLine2D(t2TraceId);
++    const t2Line = realizationContext.getLine2D(t2TraceId);
+     if (!t2Line) {
+       console.error(`[BrokenHingeLine] ${traceName} line not found: ${t2TraceId}`);
+       return Line3DRealization3D.createInfeasible();
+     }
+ 
+-    const t2Real2D = t2Line.realize2D(world);
++    const t2Real2D = t2Line.realize2D(realizationContext);
+     if (!t2Real2D.feasible) {
+       return Line3DRealization3D.createInfeasible();
+     }
+ 
+     // Get source plane's 3D realization to transform from 2D to 3D
+     // Use the plane where the T2/T2' trace actually exists
+-    const sourcePlaneReal3D = world.getProjectionPlane3DRealization(t2Line.planeId);
++    const sourcePlaneReal3D = realizationContext.getProjectionPlane3DRealization(t2Line.planeId);
+     if (!sourcePlaneReal3D || !sourcePlaneReal3D.feasible) {
+       return Line3DRealization3D.createInfeasible();
+     }
+diff --git a/frontend/src/domain/world/Element3D.ts b/frontend/src/domain/world/Element3D.ts
+index 227957c..e8fc6ae 100644
+--- a/frontend/src/domain/world/Element3D.ts
++++ b/frontend/src/domain/world/Element3D.ts
+@@ -29,15 +29,17 @@
+  * 
+  */
+ import { Element } from './Element';
++import type { Element3DRealization3D } from './Element3DRealization3D';
++import type { Element3DRealizationContext } from './projectionPlane/ProjectionPlaneContext';
+ 
+ export abstract class Element3D extends Element {
+   /**
+    * Compute 3D geometric realization from defining data
+    * 
+-   * @param world - World context for resolving dependencies (2D projections, planes)
++   * @param context - Narrow realization context for resolving dependencies (2D projections, planes)
+    * @returns Element3DRealization3D with numeric coordinates, or infeasible if computation fails
+    */
+-  abstract realize3D(world: any): any;  // Using any to avoid circular dependencies
++  abstract realize3D(context: Element3DRealizationContext): Element3DRealization3D;
+ 
+   /**
+    * Get dependencies - IDs of elements this 3D element depends on
+diff --git a/frontend/src/domain/world/Line3D.ts b/frontend/src/domain/world/Line3D.ts
+index 4b754ce..d5ccc61 100644
+--- a/frontend/src/domain/world/Line3D.ts
++++ b/frontend/src/domain/world/Line3D.ts
+@@ -17,7 +17,7 @@
+ import { Vector4 } from 'three';
+ import { Element3D } from './Element3D';
+ import { Line3DRealization3D } from './Element3DRealization3D';
+-import type { World } from './World';
++import type { Element3DRealizationContext } from './projectionPlane/ProjectionPlaneContext';
+ import type { VisualStyle } from './VisualStyle';
+ import { createVisualStyle } from './VisualStyle';
+ 
+@@ -33,7 +33,7 @@ export abstract class Line3D extends Element3D {
+    * @param world World instance for accessing related elements
+    * @returns Line3DRealization3D with point and direction in 3D space
+    */
+-  abstract realize3D(world: World): Line3DRealization3D;
++  abstract realize3D(context: Element3DRealizationContext): Line3DRealization3D;
+ }
+ 
+ /**
+@@ -70,11 +70,11 @@ export class Line3DFromProjections extends Line3D {
+     this.plane2Id = plane2Id;
+   }
+ 
+-  realize3D(world: World): Line3DRealization3D {
++  realize3D(context: Element3DRealizationContext): Line3DRealization3D {
+     try {
+       // 1. Get 2D projections and their planes
+-      const plane1 = world.getProjectionPlaneById(this.plane1Id);
+-      const plane2 = world.getProjectionPlaneById(this.plane2Id);
++      const plane1 = context.getProjectionPlaneById(this.plane1Id);
++      const plane2 = context.getProjectionPlaneById(this.plane2Id);
+       
+       if (!plane1 || !plane2) {
+         return new Line3DRealization3D(
+@@ -96,8 +96,8 @@ export class Line3DFromProjections extends Line3D {
+       }
+ 
+       // 2. Realize 2D projections to get coordinates
+-      const line1Real = line1Element.realize2D(world);
+-      const line2Real = line2Element.realize2D(world);
++      const line1Real = line1Element.realize2D(context);
++      const line2Real = line2Element.realize2D(context);
+ 
+       if (!line1Real || !line2Real || !line1Real.isFeasible() || !line2Real.isFeasible()) {
+         return new Line3DRealization3D(
+@@ -119,8 +119,8 @@ export class Line3DFromProjections extends Line3D {
+       });
+ 
+       // Get plane realizations for transformations
+-      const plane1Real = plane1.realize3D(world);
+-      const plane2Real = plane2.realize3D(world);
++      const plane1Real = plane1.realize3D(context);
++      const plane2Real = plane2.realize3D(context);
+       
+       if (!plane1Real || !plane2Real) {
+         console.error('[Line3DFromProjections] Could not realize projection planes');
+diff --git a/frontend/src/domain/world/Plane.ts b/frontend/src/domain/world/Plane.ts
+index 840d2aa..5de6ac3 100644
+--- a/frontend/src/domain/world/Plane.ts
++++ b/frontend/src/domain/world/Plane.ts
+@@ -21,20 +21,21 @@ import { Element3D } from './Element3D';
+ import { Plane3DRealization3D } from './Element3DRealization3D';
+ import { applyMatrix4x3, crossVector3Homogeneous } from '@/utils/threeUtils';
+ import { computeLineLineIntersection3D } from '@/utils/projectionPlaneUtils';
++import type { PlaneEquationRealizationContext } from './projectionPlane/ProjectionPlaneContext';
+ 
+ export abstract class Plane3D extends Element3D {
+   /**
+    * Get plane equation [a, b, c, d] where ax + by + cz + d = 0
+    * Each concrete class computes this based on its representation
+    */
+-  abstract getPlaneEquation(world: any): Vector4 | null;
++  abstract getPlaneEquation(context: PlaneEquationRealizationContext): Vector4 | null;
+ 
+   /**
+    * Compute 3D realization (plane equation + rendering geometry)
+    * Uses getPlaneEquation() from concrete class
+    */

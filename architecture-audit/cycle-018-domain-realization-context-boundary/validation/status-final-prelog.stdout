@@ -1,0 +1,11 @@
+ M frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts
+ M frontend/src/application/threePresentation/ThreeWorldReadPort.ts
+ M frontend/src/domain/world/BrokenHingeLine.ts
+ M frontend/src/domain/world/Element3D.ts
+ M frontend/src/domain/world/Line3D.ts
+ M frontend/src/domain/world/Plane.ts
+ M frontend/src/domain/world/Point3D.ts
+ M frontend/src/domain/world/Segment3D.ts
+ M frontend/src/domain/world/projectionPlane/ProjectionPlane.ts
+ M frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/

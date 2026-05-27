@@ -17,7 +17,7 @@
 import { Vector4 } from 'three';
 import { Element3D } from './Element3D';
 import { Line3DRealization3D } from './Element3DRealization3D';
-import type { World } from './World';
+import type { Element3DRealizationContext } from './projectionPlane/ProjectionPlaneContext';
 import type { VisualStyle } from './VisualStyle';
 import { createVisualStyle } from './VisualStyle';
 
@@ -33,7 +33,7 @@ export abstract class Line3D extends Element3D {
    * @param world World instance for accessing related elements
    * @returns Line3DRealization3D with point and direction in 3D space
    */
-  abstract realize3D(world: World): Line3DRealization3D;
+  abstract realize3D(context: Element3DRealizationContext): Line3DRealization3D;
 }
 
 /**
@@ -70,11 +70,11 @@ export class Line3DFromProjections extends Line3D {
     this.plane2Id = plane2Id;
   }
 
-  realize3D(world: World): Line3DRealization3D {
+  realize3D(context: Element3DRealizationContext): Line3DRealization3D {
     try {
       // 1. Get 2D projections and their planes
-      const plane1 = world.getProjectionPlaneById(this.plane1Id);
-      const plane2 = world.getProjectionPlaneById(this.plane2Id);
+      const plane1 = context.getProjectionPlaneById(this.plane1Id);
+      const plane2 = context.getProjectionPlaneById(this.plane2Id);
       
       if (!plane1 || !plane2) {
         return new Line3DRealization3D(
@@ -96,8 +96,8 @@ export class Line3DFromProjections extends Line3D {
       }
 
       // 2. Realize 2D projections to get coordinates
-      const line1Real = line1Element.realize2D(world);
-      const line2Real = line2Element.realize2D(world);
+      const line1Real = line1Element.realize2D(context);
+      const line2Real = line2Element.realize2D(context);
 
       if (!line1Real || !line2Real || !line1Real.isFeasible() || !line2Real.isFeasible()) {
         return new Line3DRealization3D(
@@ -119,8 +119,8 @@ export class Line3DFromProjections extends Line3D {
       });
 
       // Get plane realizations for transformations
-      const plane1Real = plane1.realize3D(world);
-      const plane2Real = plane2.realize3D(world);
+      const plane1Real = plane1.realize3D(context);
+      const plane2Real = plane2.realize3D(context);
       
       if (!plane1Real || !plane2Real) {
         console.error('[Line3DFromProjections] Could not realize projection planes');

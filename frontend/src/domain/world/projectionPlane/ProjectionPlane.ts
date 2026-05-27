@@ -12,7 +12,7 @@ import { Segment2DByPoints } from '../Segment';
 import { Guide2D, SiblingGuide2D } from '../Guide';
 import { HalfHingeLine2D } from '../HingeLine';
 import { ProjectionPlaneElementStore } from './ProjectionPlaneElementStore';
-import type { ProjectionPlaneMutationContext, ProjectionPlaneRealizationContext } from './ProjectionPlaneContext';
+import type { ProjectionElementRealizationContext, ProjectionPlaneMutationContext, ProjectionPlaneRealizationContext } from './ProjectionPlaneContext';
 import { ProjectionPlaneRealization2D, ProjectionPlaneRealization3D } from './ProjectionPlaneRealization';
 
 export const PROJECTION_PLANE_TYPE = {
@@ -249,7 +249,7 @@ export abstract class ProjectionPlane extends Element {
    * @param world World context for querying dependencies
    * @returns Point2DRealization2D if computation succeeds, undefined otherwise
    */
-  realizePoint2D(point: Point2D, world: ProjectionPlaneMutationContext): Point2DRealization2D | undefined {
+  realizePoint2D(point: Point2D, world: ProjectionElementRealizationContext): Point2DRealization2D | undefined {
     // Check cache first
     const cached = this.elementStore.getPointRealization2D(point.id);
     if (cached) {
@@ -273,7 +273,7 @@ export abstract class ProjectionPlane extends Element {
    * @param world World context for querying dependencies
    * @returns Line2DRealization2D if computation succeeds, undefined otherwise
    */
-  realizeLine2D(line: Line2D, world: ProjectionPlaneMutationContext): Line2DRealization2D | undefined {
+  realizeLine2D(line: Line2D, world: ProjectionElementRealizationContext): Line2DRealization2D | undefined {
     // Check cache first
     const cached = this.elementStore.getLineRealization2D(line.id);
     if (cached) {
@@ -297,7 +297,7 @@ export abstract class ProjectionPlane extends Element {
    * @param world World context for querying dependencies
    * @returns Circle2DRealization2D if computation succeeds, undefined otherwise
    */
-  realizeCircle2D(circle: Circle2D, world: ProjectionPlaneMutationContext): Circle2DRealization2D | undefined {
+  realizeCircle2D(circle: Circle2D, world: ProjectionElementRealizationContext): Circle2DRealization2D | undefined {
     // Check cache first
     const cached = this.elementStore.getCircleRealization2D(circle.id);
     if (cached) {

@@ -18,7 +18,8 @@
 
 import { HingeLine } from './HingeLine';
 import { Line3DRealization3D } from './Element3DRealization3D';
-import type { World } from './World';
+import { AuxiliaryProjectionPlane } from './projectionPlane/AuxiliaryProjectionPlane';
+import type { Element3DRealizationContext } from './projectionPlane/ProjectionPlaneContext';
 import { applyMatrix4x3 } from '@/utils/threeUtils';
 
 /**
@@ -66,10 +67,10 @@ export class BrokenHingeLine extends HingeLine {
    * 4. Transform T2/T2' 2D geometry to 3D using the matrix
    * 5. Return 3D line at T2/T2' position
    */
-  realize3D(world: World, context?: { planeId?: string }): Line3DRealization3D {
+  realize3D(realizationContext: Element3DRealizationContext, options?: { planeId?: string }): Line3DRealization3D {
     // Get auxiliary plane to derive T2 trace ID
-    const auxPlane = world.getProjectionPlaneById(this.auxiliaryPlaneId);
-    if (!auxPlane || auxPlane.type !== 'auxiliary') {
+    const auxPlane = realizationContext.getProjectionPlaneById(this.auxiliaryPlaneId);
+    if (!(auxPlane instanceof AuxiliaryProjectionPlane)) {
       console.error(`[BrokenHingeLine] Auxiliary plane not found or wrong type: ${this.auxiliaryPlaneId}`);
       return Line3DRealization3D.createInfeasible();
     }
@@ -77,10 +78,10 @@ export class BrokenHingeLine extends HingeLine {
     // Determine which T2 trace to use based on which BHHL is being realized
     // - If realizing for plane1 (auxiliary plane): use T2' from hinge plane
     // - If realizing for plane2 (other plane): use T2 from other plane
-    const isAuxiliaryPlane = context?.planeId === this.plane1Id;
+    const isAuxiliaryPlane = options?.planeId === this.plane1Id;
     const t2TraceId = isAuxiliaryPlane 
-      ? (auxPlane as any).t2PrimeLineId   // T2' on hinge plane (e.g., projPlane3)
-      : (auxPlane as any).t2OtherTraceId; // T2 on other plane (e.g., projPlane4)
+      ? auxPlane.t2PrimeLineId   // T2' on hinge plane (e.g., projPlane3)
+      : auxPlane.t2OtherTraceId; // T2 on other plane (e.g., projPlane4)
     
     const traceName = isAuxiliaryPlane ? 'T2\'' : 'T2';
     
@@ -90,20 +91,20 @@ export class BrokenHingeLine extends HingeLine {
     }
 
     // Get T2/T2' line and realize it in 2D
-    const t2Line = world.getLine2D(t2TraceId);
+    const t2Line = realizationContext.getLine2D(t2TraceId);
     if (!t2Line) {
       console.error(`[BrokenHingeLine] ${traceName} line not found: ${t2TraceId}`);
       return Line3DRealization3D.createInfeasible();
     }
 
-    const t2Real2D = t2Line.realize2D(world);
+    const t2Real2D = t2Line.realize2D(realizationContext);
     if (!t2Real2D.feasible) {
       return Line3DRealization3D.createInfeasible();
     }
 
     // Get source plane's 3D realization to transform from 2D to 3D
     // Use the plane where the T2/T2' trace actually exists
-    const sourcePlaneReal3D = world.getProjectionPlane3DRealization(t2Line.planeId);
+    const sourcePlaneReal3D = realizationContext.getProjectionPlane3DRealization(t2Line.planeId);
     if (!sourcePlaneReal3D || !sourcePlaneReal3D.feasible) {
       return Line3DRealization3D.createInfeasible();
     }

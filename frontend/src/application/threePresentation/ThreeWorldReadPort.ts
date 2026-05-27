@@ -6,6 +6,7 @@ import type { Point3DRealization3D, Line3DRealization3D, Segment3DRealization3D,
 import { AuxiliaryProjectionPlane } from '@/domain/world/projectionPlane/AuxiliaryProjectionPlane';
 import type { ProjectionPlaneRealization3D } from '@/domain/world/projectionPlane/ProjectionPlaneRealization';
 import type { VisualStyle } from '@/domain/world/VisualStyle';
+import type { ProjectionElementRealizationContext, Element3DRealizationContext } from '@/domain/world/projectionPlane/ProjectionPlaneContext';
 import type { World } from '@/domain/world/World';
 import { isGuide2D, isSiblingGuide2D } from '@/domain/world/Guide';
 import { Segment2DByPoints } from '@/domain/world/Segment';
@@ -63,6 +64,7 @@ export interface ThreeWorldReadPort {
 }
 
 export function createThreeWorldReadPort(world: World): ThreeWorldReadPort {
+  const realizationContext: ProjectionElementRealizationContext & Element3DRealizationContext = world;
   return {
     getProjectionPlaneModels: () => world.getAllProjectionPlanes().map(plane => ({
       id: plane.id,
@@ -81,9 +83,9 @@ export function createThreeWorldReadPort(world: World): ThreeWorldReadPort {
     getPlanarPlaneModels: () => world.getAllProjectionPlanes().map(plane => ({
       id: plane.id,
       realization: world.getProjectionPlane3DRealization(plane.id),
-      points: plane.getAllPoints().map(point => ({ id: point.id, visualStyle: point.visualStyle, realization: point.realize2D(world) })),
-      lines: plane.getAllLines().map(line => ({ id: line.id, visualStyle: line.visualStyle, realization: line.realize2D(world), isSegment: line instanceof Segment2DByPoints })),
-      circles: plane.getAllCircles().map(circle => ({ id: circle.id, visualStyle: circle.visualStyle, realization: circle.realize2D(world) })),
+      points: plane.getAllPoints().map(point => ({ id: point.id, visualStyle: point.visualStyle, realization: point.realize2D(realizationContext) })),
+      lines: plane.getAllLines().map(line => ({ id: line.id, visualStyle: line.visualStyle, realization: line.realize2D(realizationContext), isSegment: line instanceof Segment2DByPoints })),
+      circles: plane.getAllCircles().map(circle => ({ id: circle.id, visualStyle: circle.visualStyle, realization: circle.realize2D(realizationContext) })),
     })),
     getReconstructedModels: () => ({
       points: world.getAll3DPoints().map(point => ({ id: point.id!, visualStyle: point.visualStyle, realization: world.get3DPointRealization(point.id!) })),
@@ -95,7 +97,7 @@ export function createThreeWorldReadPort(world: World): ThreeWorldReadPort {
       try {
         const line = world.getLine2D(selectedId);
         if (!line || (!isGuide2D(line) && !isSiblingGuide2D(line))) return [];
-        return [{ id: line.id, visualStyle: line.visualStyle, planeId: line.planeId, planeRealization: world.getProjectionPlane3DRealization(line.planeId), realization: line.realize2D(world) }];
+        return [{ id: line.id, visualStyle: line.visualStyle, planeId: line.planeId, planeRealization: world.getProjectionPlane3DRealization(line.planeId), realization: line.realize2D(realizationContext) }];
       } catch {
         return [];
       }
@@ -114,6 +116,6 @@ export function createThreeWorldReadPort(world: World): ThreeWorldReadPort {
         return { id: segment.id!, visualStyle: segment.visualStyle, startPoint: realization?.isFeasible() ? realization.startPoint : undefined, endPoint: realization?.isFeasible() ? realization.endPoint : undefined };
       }),
     }),
-    getHingeModels: () => world.getAllHingeLines().map(hingeLine => ({ id: hingeLine.id, visualStyle: hingeLine.visualStyle, realization: hingeLine.realize3D(world) })),
+    getHingeModels: () => world.getAllHingeLines().map(hingeLine => ({ id: hingeLine.id, visualStyle: hingeLine.visualStyle, realization: hingeLine.realize3D(realizationContext) })),
   };
 }

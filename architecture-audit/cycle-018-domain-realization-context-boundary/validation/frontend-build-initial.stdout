@@ -1,0 +1,22 @@
+
+> diedrico-frontend@0.1.0 build
+> vue-tsc && vite build
+
+src/application/canvasPresentation/CanvasWorldReadPort.ts(48,67): error TS2345: Argument of type 'ProjectionElementRealizationContext & Element3DRealizationContext' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Type 'ProjectionElementRealizationContext & Element3DRealizationContext' is missing the following properties from type 'ProjectionPlaneMutationContext': getNextId, generateDefaultLabel, getDependencyService, markDirty, getPlaneForElement
+src/application/canvasPresentation/CanvasWorldReadPort.ts(49,63): error TS2345: Argument of type 'ProjectionElementRealizationContext & Element3DRealizationContext' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Type 'ProjectionElementRealizationContext & Element3DRealizationContext' is missing the following properties from type 'ProjectionPlaneMutationContext': getNextId, generateDefaultLabel, getDependencyService, markDirty, getPlaneForElement
+src/application/canvasPresentation/CanvasWorldReadPort.ts(50,71): error TS2345: Argument of type 'ProjectionElementRealizationContext & Element3DRealizationContext' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Type 'ProjectionElementRealizationContext & Element3DRealizationContext' is missing the following properties from type 'ProjectionPlaneMutationContext': getNextId, generateDefaultLabel, getDependencyService, markDirty, getPlaneForElement
+src/domain/world/Plane.ts(278,20): error TS18048: 't1Line' is possibly 'undefined'.
+src/domain/world/Plane.ts(279,20): error TS18048: 't2Line' is possibly 'undefined'.
+src/domain/world/Plane.ts(281,51): error TS18048: 't1Line' is possibly 'undefined'.
+src/domain/world/Plane.ts(282,51): error TS18048: 't2Line' is possibly 'undefined'.
+src/domain/world/Plane.ts(293,50): error TS18048: 'p1' is possibly 'undefined'.
+src/domain/world/Plane.ts(293,66): error TS18048: 'p2' is possibly 'undefined'.
+src/domain/world/Plane.ts(297,21): error TS18048: 'p1' is possibly 'undefined'.
+src/domain/world/Plane.ts(298,21): error TS18048: 'p2' is possibly 'undefined'.
+src/domain/world/Plane.ts(306,55): error TS18048: 'p1' is possibly 'undefined'.
+src/domain/world/Plane.ts(307,53): error TS18048: 'p1' is possibly 'undefined'.
+src/domain/world/Plane.ts(312,55): error TS18048: 'p2' is possibly 'undefined'.
+src/domain/world/Plane.ts(313,53): error TS18048: 'p2' is possibly 'undefined'.

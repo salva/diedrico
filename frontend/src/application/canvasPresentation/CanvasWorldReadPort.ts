@@ -8,6 +8,7 @@ import type { ProjectionPlane } from '@/domain/world/projectionPlane/ProjectionP
 import type { ProjectionPlaneRealization3D } from '@/domain/world/projectionPlane/ProjectionPlaneRealization';
 import type { Point3DRealization3D, Line3DRealization3D, Segment3DRealization3D } from '@/domain/world/Element3DRealization3D';
 import type { ProcessTree } from '@/domain/processTree/ProcessTree';
+import type { ProjectionElementRealizationContext, Element3DRealizationContext } from '@/domain/world/projectionPlane/ProjectionPlaneContext';
 import type { World } from '@/domain/world/World';
 import type { CanvasPlaneTransformModel } from './CanvasPresentationModel';
 
@@ -28,6 +29,7 @@ export interface CanvasWorldReadPort {
 }
 
 export function createCanvasWorldReadPort(world: World): CanvasWorldReadPort {
+  const realizationContext: ProjectionElementRealizationContext & Element3DRealizationContext = world;
   return {
     getAllProjectionPlanes: () => world.getAllProjectionPlanes(),
     getProjectionPlane2DTransform: (planeId: string) => {
@@ -43,12 +45,12 @@ export function createCanvasWorldReadPort(world: World): CanvasWorldReadPort {
     getAll3DPoints: () => world.getAll3DPoints(),
     getAll3DLines: () => world.getAll3DLines(),
     getAll3DSegments: () => world.getAll3DSegments(),
-    realizePoint2D: (plane, point) => plane.realizePoint2D(point, world),
-    realizeLine2D: (plane, line) => plane.realizeLine2D(line, world),
-    realizeCircle2D: (plane, circle) => plane.realizeCircle2D(circle, world),
-    realizePoint3D: point => point.realize3D(world),
-    realizeLine3D: line => line.realize3D(world),
-    realizeSegment3D: segment => segment.realize3D(world),
+    realizePoint2D: (plane, point) => plane.realizePoint2D(point, realizationContext),
+    realizeLine2D: (plane, line) => plane.realizeLine2D(line, realizationContext),
+    realizeCircle2D: (plane, circle) => plane.realizeCircle2D(circle, realizationContext),
+    realizePoint3D: point => point.realize3D(realizationContext),
+    realizeLine3D: line => line.realize3D(realizationContext),
+    realizeSegment3D: segment => segment.realize3D(realizationContext),
     getProcessTree: () => world.getProcessTree(),
   };
 }

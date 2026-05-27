@@ -21,6 +21,10 @@ export interface ProjectionElementRealizationContext {
 
 export interface ProjectionPlaneRealizationContext extends ProjectionElementRealizationContext {}
 
+export interface Element3DRealizationContext extends ProjectionElementRealizationContext {}
+
+export interface PlaneEquationRealizationContext extends ProjectionElementRealizationContext {}
+
 export interface ProjectionOwnerPlaneQuery {
   getPlaneForElement(id: string): ProjectionPlane | undefined;
 }
