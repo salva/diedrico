@@ -1,6 +1,7 @@
 import { computed, ref } from 'vue';
 import { CommandStack } from '@/commands/CommandStack';
 import { World } from '@/domain/world/World';
+import { SelectionDeletionCommandService } from '@/application/selectionDeletion/SelectionDeletionCommandService';
 import { ActivePlaneUseCases } from './ActivePlaneUseCases';
 import { AutoSaveUseCases } from './AutoSaveUseCases';
 import { KeyboardShortcutRouter } from './KeyboardShortcutRouter';
@@ -36,7 +37,8 @@ export function createAppShellRuntime(options: AppShellRuntimeOptions) {
   };
 
   const activePlane = new ActivePlaneUseCases(world, { activePlaneId, activePlaneName });
-  const selection = new SelectionUseCases(world, commandStack, ports.selectionStore, () => activePlaneId.value);
+  const selectionDeletion = new SelectionDeletionCommandService(world, commandStack);
+  const selection = new SelectionUseCases(world, selectionDeletion, ports.selectionStore, () => activePlaneId.value);
   const autoSave = new AutoSaveUseCases({
     world,
     commandStack,
@@ -130,7 +132,7 @@ export function createAppShellRuntime(options: AppShellRuntimeOptions) {
       updateCoordinates: (coords: { x: number; y: number; z: number } | null) => { coordinates3D.value = coords; },
       updateActivePlane: (planeInfo: { id: string; name: string }) => activePlane.updateActivePlane(planeInfo),
     },
-    internals: { keyboard, activePlane, autoSave, selection, projectSession },
+    internals: { keyboard, activePlane, autoSave, selection, selectionDeletion, projectSession },
   };
 }
 

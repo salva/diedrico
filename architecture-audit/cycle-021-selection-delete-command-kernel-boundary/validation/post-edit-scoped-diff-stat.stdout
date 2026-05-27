@@ -1,0 +1,8 @@
+ .../corrections-round-01.md                        | 61 +++++++++----------
+ .../proposals/proposal-direct.md                   | 16 ++++-
+ .../proposals/proposal-restructure.md              | 14 +++++
+ .../src/application/appShell/AppShellRuntime.ts    |  6 +-
+ .../src/application/appShell/SelectionUseCases.ts  | 11 +---
+ .../application/appShell/AppShellBoundary.test.ts  | 10 +++-
+ .../appShell/AppShellRuntimeUseCases.test.ts       | 69 +++++++++++++++++++++-
+ 7 files changed, 137 insertions(+), 50 deletions(-)

@@ -1,0 +1,33 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts tests/unit/application/appShell/AppShellBoundary.test.ts tests/unit/application/appShell/KeyboardShortcutRouter.test.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/application/appShell/AppShellBoundary.test.ts  (7 tests) 5ms
+ ✓ tests/unit/application/appShell/KeyboardShortcutRouter.test.ts  (3 tests) 9ms
+stdout | tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts > SelectionDeletionCommandService > executes cascade deletion through a committed command and preserves undo/redo behavior
+[DeletionSequenceFactory] Cascade deletion: {
+  direct: [ 'projPlane3/point2d10' ],
+  cascaded: [ 'projPlane3/line2d12' ],
+  total: [ 'projPlane3/line2d12', 'projPlane3/point2d10' ],
+  order: 'dependents-first (proper deletion order)'
+}
+
+stdout | tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts > SelectionDeletionCommandService > clears redo history only through the same CommandStack push path after new delete
+[DeletionSequenceFactory] Cascade deletion: {
+  direct: [ 'projPlane3/point2d10' ],
+  cascaded: [ 'projPlane3/line2d12' ],
+  total: [ 'projPlane3/line2d12', 'projPlane3/point2d10' ],
+  order: 'dependents-first (proper deletion order)'
+}
+
+ ✓ tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts  (9 tests) 22ms
+ ✓ tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts  (17 tests) 32ms
+
+ Test Files  4 passed (4)
+      Tests  36 passed (36)
+   Start at  04:23:59
+   Duration  1.75s (transform 1.03s, setup 0ms, collect 2.05s, tests 68ms, environment 2.13s, prepare 411ms)
+

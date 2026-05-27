@@ -28,4 +28,38 @@ test.describe('Keyboard shortcuts', () => {
     await page.keyboard.press('Escape');
     await expect(page.getByTestId('tool-select')).toHaveClass(/active|selected/);
   });
+
+  test('Delete, undo, redo, Escape, and Ctrl+A preserve selection command behavior', async ({ page }) => {
+    const canvas = page.getByTestId('svg-canvas');
+    const constructionPoints = canvas.locator('circle:not(.snap-indicator)');
+    const initialPointCount = await constructionPoints.count();
+
+    await page.keyboard.press('p');
+    await canvas.click({ position: { x: 100, y: 100 } });
+    await expect.poll(async () => constructionPoints.count()).toBeGreaterThan(initialPointCount);
+
+    const createdPoint = constructionPoints.last();
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId('tool-select')).toHaveClass(/active|selected/);
+    await createdPoint.click();
+    await expect(createdPoint).toHaveAttribute('stroke', '#0066CC');
+
+    await page.keyboard.press('Control+A');
+    await expect(createdPoint).toHaveAttribute('stroke', '#0066CC');
+    await page.keyboard.press('Escape');
+    await expect(createdPoint).not.toHaveAttribute('stroke', '#0066CC');
+    await createdPoint.click();
+    await expect(createdPoint).toHaveAttribute('stroke', '#0066CC');
+
+    await page.keyboard.press('Delete');
+    await expect.poll(async () => constructionPoints.count()).toBe(initialPointCount);
+    await expect(page.getByTestId('toolbar-undo')).toBeEnabled();
+
+    await page.keyboard.press('Control+Z');
+    await expect.poll(async () => constructionPoints.count()).toBeGreaterThan(initialPointCount);
+    await expect(page.getByTestId('toolbar-redo')).toBeEnabled();
+
+    await page.keyboard.press('Control+Y');
+    await expect.poll(async () => constructionPoints.count()).toBe(initialPointCount);
+  });
 });

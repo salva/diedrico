@@ -1,8 +1,6 @@
 import { watch, type WatchStopHandle } from 'vue';
-import { Command } from '@/commands/Command';
-import type { CommandStack } from '@/commands/CommandStack';
-import { DeletionSequenceFactory } from '@/commands/factories/DeletionSequenceFactory';
 import type { World } from '@/domain/world/World';
+import type { SelectionDeletionCommandPort } from '@/application/selectionDeletion/SelectionDeletionPorts';
 import type { SelectionStorePort } from './AppShellPorts';
 
 export class SelectionUseCases {
@@ -10,7 +8,7 @@ export class SelectionUseCases {
 
   constructor(
     private readonly world: World,
-    private readonly commandStack: CommandStack,
+    private readonly deleteSelectionCommand: SelectionDeletionCommandPort,
     private readonly selectionStore: SelectionStorePort,
     private readonly getActivePlaneId: () => string | undefined,
   ) {}
@@ -33,10 +31,7 @@ export class SelectionUseCases {
   deleteSelected(): void {
     const selectedIds = this.selectionStore.selectedIdsArray;
     if (selectedIds.length === 0) return;
-    const deleteCommand = new Command('Delete elements', this.world);
-    DeletionSequenceFactory.createCascadeDeletion(deleteCommand, selectedIds, this.world);
-    deleteCommand.commit();
-    this.commandStack.push(deleteCommand);
+    this.deleteSelectionCommand.execute(selectedIds);
     this.selectionStore.clearSelection();
   }
 

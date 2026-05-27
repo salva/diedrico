@@ -1,0 +1,38 @@
+frontend/src/application/appShell/SelectionUseCases.ts:31:  deleteSelected(): void {
+frontend/src/application/appShell/KeyboardShortcutRouter.ts:54:      this.deps.selection.deleteSelected();
+frontend/src/application/appShell/AppShellRuntime.ts:18:  const commandStack = new CommandStack();
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:3:import { DeletionSequenceFactory } from '@/commands/factories/DeletionSequenceFactory';
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:9:  createCascadeDeletion(command: Command, selectedIds: string[], world: World): void;
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:13:  createCommand: (description, world) => new Command(description, world),
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:14:  createCascadeDeletion: (command, selectedIds, world) => {
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:15:    DeletionSequenceFactory.createCascadeDeletion(command, selectedIds, world);
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:34:    this.internals.createCascadeDeletion(deleteCommand, [...selectedIds], this.world);
+frontend/tests/unit/application/appShell/KeyboardShortcutRouter.test.ts:23:    selection: { clearSelection: vi.fn(), deleteSelected: vi.fn(), selectAllInActivePlane: vi.fn() },
+frontend/tests/unit/application/appShell/KeyboardShortcutRouter.test.ts:50:    expect(d.selection.deleteSelected).toHaveBeenCalled();
+frontend/tests/unit/application/appShell/KeyboardShortcutRouter.test.ts:65:    expect(d.selection.deleteSelected).not.toHaveBeenCalled();
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:18:    expect(appVue).not.toMatch(/DeletionSequenceFactory|ProjectService|GoogleDriveService|window as any|__autoSaveInterval|CustomEvent\('load-files'\)|Environment variables/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:60:    expect(selection).not.toMatch(/DeletionSequenceFactory|new Command|CommandStack|commandStack\.push|\.commit\(/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:61:    expect(selectionDeletionService).toMatch(/DeletionSequenceFactory/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:62:    expect(selectionDeletionService).toMatch(/new Command/);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:417:    useCases.deleteSelected();
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:439:    expect(() => useCases.deleteSelected()).toThrow('delete failed');
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:459:    useCases.deleteSelected();
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:470:    const commandStack = new CommandStack();
+frontend/tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts:29:  const command = new Command(description, world);
+frontend/tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts:52:  const setupCmd = new Command('Setup line', world);
+frontend/tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts:102:    const createCommand = vi.fn((description: string, targetWorld: World) => new Command(description, targetWorld));
+frontend/tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts:103:    const createCascadeDeletion = vi.fn();
+frontend/tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts:106:    new SelectionDeletionCommandService(world, commandStack, { createCommand, createCascadeDeletion }).execute([]);
+frontend/tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts:109:    expect(createCascadeDeletion).not.toHaveBeenCalled();
+frontend/tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts:123:    const command = new Command('Delete elements', world);
+frontend/tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts:128:      createCascadeDeletion: () => {
+frontend/tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts:159:    const command = new Command('Delete elements', world);
+frontend/tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts:164:      createCascadeDeletion: () => { throw new Error('cascade failed'); },
+frontend/tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts:174:    const command = new Command('Delete elements', world);
+frontend/tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts:180:      createCascadeDeletion: vi.fn(),
+frontend/tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts:189:    const command = new Command('Delete elements', world);
+frontend/tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts:194:      createCascadeDeletion: vi.fn(),
+frontend/tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts:205:    const nonUndoable = new Command('Delete elements', world);
+frontend/tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts:210:      createCascadeDeletion: vi.fn(),
+frontend/tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts:217:    const uncommitted = new Command('Delete elements', world);
+frontend/tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts:222:      createCascadeDeletion: vi.fn(),

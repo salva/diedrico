@@ -1,0 +1,19 @@
+ M architecture-audit/cycle-021-selection-delete-command-kernel-boundary/corrections-round-01.md
+ M architecture-audit/cycle-021-selection-delete-command-kernel-boundary/proposals/proposal-direct.md
+ M architecture-audit/cycle-021-selection-delete-command-kernel-boundary/proposals/proposal-restructure.md
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/final-scoped-diff-stat.stderr
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/final-scoped-diff-stat.stdout
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/final-scoped-status.stderr
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/final-scoped-status.stdout
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/final-task-report.stderr
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/final-task-report.stdout
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/implementation-scoped-diff-stat.stderr
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/implementation-scoped-diff-stat.stdout
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/implementation-scoped-status.stderr
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/implementation-scoped-status.stdout
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/post-t1-scoped-status.stderr
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/post-t1-scoped-status.stdout
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/report-commit-sha-update-status.stderr
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/report-commit-sha-update-status.stdout
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/reviews/
+?? architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/

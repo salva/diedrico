@@ -1,0 +1,12 @@
+frontend/src/application/appShell/SelectionUseCases.ts:4:import { DeletionSequenceFactory } from '@/commands/factories/DeletionSequenceFactory';
+frontend/src/application/appShell/SelectionUseCases.ts:33:  deleteSelected(): void {
+frontend/src/application/appShell/SelectionUseCases.ts:36:    const deleteCommand = new Command('Delete elements', this.world);
+frontend/src/application/appShell/SelectionUseCases.ts:37:    DeletionSequenceFactory.createCascadeDeletion(deleteCommand, selectedIds, this.world);
+frontend/src/application/appShell/KeyboardShortcutRouter.ts:54:      this.deps.selection.deleteSelected();
+frontend/src/application/appShell/AppShellRuntime.ts:17:  const commandStack = new CommandStack();
+frontend/tests/unit/application/appShell/KeyboardShortcutRouter.test.ts:23:    selection: { clearSelection: vi.fn(), deleteSelected: vi.fn(), selectAllInActivePlane: vi.fn() },
+frontend/tests/unit/application/appShell/KeyboardShortcutRouter.test.ts:50:    expect(d.selection.deleteSelected).toHaveBeenCalled();
+frontend/tests/unit/application/appShell/KeyboardShortcutRouter.test.ts:65:    expect(d.selection.deleteSelected).not.toHaveBeenCalled();
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:17:    expect(appVue).not.toMatch(/DeletionSequenceFactory|ProjectService|GoogleDriveService|window as any|__autoSaveInterval|CustomEvent\('load-files'\)|Environment variables/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:59:    expect(selection).toMatch(/DeletionSequenceFactory|new Command/);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:405:    const commandStack = new CommandStack();

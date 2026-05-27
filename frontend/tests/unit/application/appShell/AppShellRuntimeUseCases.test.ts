@@ -354,7 +354,7 @@ describe('SelectionUseCases', () => {
     });
     const useCases = new SelectionUseCases(
       { getDependencyService: () => ({ getElementsInDeletionOrder: vi.fn(() => ['selected', 'dependent']) }) } as any,
-      { push: vi.fn() } as any,
+      { execute: vi.fn() },
       selectionStore as any,
       () => 'plane-a',
     );
@@ -388,7 +388,7 @@ describe('SelectionUseCases', () => {
     };
     const useCases = new SelectionUseCases(
       { getProjectionPlaneById: vi.fn(() => activePlane) } as any,
-      { push: vi.fn() } as any,
+      { execute: vi.fn() },
       selectionStore,
       () => 'plane-a',
     );
@@ -397,6 +397,71 @@ describe('SelectionUseCases', () => {
 
     expect(selectionStore.selectMultiple).toHaveBeenCalledWith(['p1', 'p2', 'l1', 'c1']);
   });
+
+  it('clears selection only after the delete command boundary succeeds', () => {
+    const selectionStore = {
+      selectedIdsArray: ['p1'],
+      clearSelection: vi.fn(),
+      selectMultiple: vi.fn(),
+      setCascadeHighlight: vi.fn(),
+      clearCascadeHighlight: vi.fn(),
+    };
+    const deleteSelectionCommand = { execute: vi.fn() };
+    const useCases = new SelectionUseCases(
+      {} as any,
+      deleteSelectionCommand,
+      selectionStore,
+      () => 'plane-a',
+    );
+
+    useCases.deleteSelected();
+
+    expect(deleteSelectionCommand.execute).toHaveBeenCalledWith(['p1']);
+    expect(selectionStore.clearSelection).toHaveBeenCalledTimes(1);
+  });
+
+  it('preserves selection when delete command boundary fails', () => {
+    const selectionStore = {
+      selectedIdsArray: ['p1'],
+      clearSelection: vi.fn(),
+      selectMultiple: vi.fn(),
+      setCascadeHighlight: vi.fn(),
+      clearCascadeHighlight: vi.fn(),
+    };
+    const deleteSelectionCommand = { execute: vi.fn(() => { throw new Error('delete failed'); }) };
+    const useCases = new SelectionUseCases(
+      {} as any,
+      deleteSelectionCommand,
+      selectionStore,
+      () => 'plane-a',
+    );
+
+    expect(() => useCases.deleteSelected()).toThrow('delete failed');
+    expect(selectionStore.clearSelection).not.toHaveBeenCalled();
+  });
+
+  it('keeps empty selection as a no-op without invoking the delete command boundary', () => {
+    const selectionStore = {
+      selectedIdsArray: [],
+      clearSelection: vi.fn(),
+      selectMultiple: vi.fn(),
+      setCascadeHighlight: vi.fn(),
+      clearCascadeHighlight: vi.fn(),
+    };
+    const deleteSelectionCommand = { execute: vi.fn() };
+    const useCases = new SelectionUseCases(
+      {} as any,
+      deleteSelectionCommand,
+      selectionStore,
+      () => 'plane-a',
+    );
+
+    useCases.deleteSelected();
+
+    expect(deleteSelectionCommand.execute).not.toHaveBeenCalled();
+    expect(selectionStore.clearSelection).not.toHaveBeenCalled();
+  });
+
 });
 
 describe('ProjectSessionUseCases startup and project flows', () => {

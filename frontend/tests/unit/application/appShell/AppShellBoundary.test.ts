@@ -11,6 +11,7 @@ import autoSave from '@/application/appShell/AutoSaveUseCases.ts?raw';
 import keyboard from '@/application/appShell/KeyboardShortcutRouter.ts?raw';
 import projectSession from '@/application/appShell/ProjectSessionUseCases.ts?raw';
 import selection from '@/application/appShell/SelectionUseCases.ts?raw';
+import selectionDeletionService from '@/application/selectionDeletion/SelectionDeletionCommandService.ts?raw';
 
 describe('Wave 009 app-shell boundaries', () => {
   it('keeps App.vue free of moved shell orchestration imports and browser bridges', () => {
@@ -55,7 +56,12 @@ describe('Cycle 020 app-shell production boundary', () => {
     expect(browserLastProjectRepository).toMatch(/diedrico_last_file_name/);
   });
 
-  it('keeps SelectionUseCases direct delete-command construction as accepted residual debt', () => {
-    expect(selection).toMatch(/DeletionSequenceFactory|new Command/);
+  it('moves selection delete command construction behind the dedicated service boundary', () => {
+    expect(selection).not.toMatch(/DeletionSequenceFactory|new Command|CommandStack|commandStack\.push|\.commit\(/);
+    expect(selectionDeletionService).toMatch(/DeletionSequenceFactory/);
+    expect(selectionDeletionService).toMatch(/new Command/);
+    expect(selectionDeletionService).toMatch(/commandStack\.push/);
+    expect(selectionDeletionService).toMatch(/\.commit\(/);
+    expect(appShellRuntime).toMatch(/new SelectionDeletionCommandService\(world, commandStack\)/);
   });
 });
