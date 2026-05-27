@@ -40,7 +40,8 @@ Implement Wave 027 as a direct extraction from `RuntimeSession`: move properties
 ### Vue consumers and tests
 
 - `frontend/src/components/dialogs/PropertiesDialog.vue` only if the view-model contract becomes more precise with no UI behavior change.
-- `frontend/src/components/panels/ActionsPanel.vue`, `frontend/src/components/panels/ProcessTreeNode.vue`, `frontend/src/components/panels/ElementsPanel.vue` only for type/port-name alignment.
+- Process-tree consumers: `frontend/src/components/panels/ActionsPanel.vue` and `frontend/src/components/panels/ProcessTreeNode.vue` are both in scope for type/port-name alignment with the extracted `ProcessTreeReadModel`; `ProcessTreeNode.vue` must be checked because it renders the recursive node DTO shape and infeasibility/related-action flags supplied by the process read model. No UI behavior or recursive component redesign is intended.
+- Elements consumer: `frontend/src/components/panels/ElementsPanel.vue` only for type/port-name alignment with the extracted elements read model/visibility intent.
 - `frontend/src/components/workspace/SvgCanvas.vue` and `frontend/src/components/panels/ThreeView.vue` only for presentation port typing alignment.
 - Focused tests under current frontend test locations for the new read-model modules, RuntimeSession wiring, canvas read-port narrowing, three read-port adapter behavior if changed, and overlay pointer-boundary preservation if presentation-adjacent files are touched.
 
