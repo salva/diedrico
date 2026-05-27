@@ -4,8 +4,13 @@ import type { ToolType } from '@/stores/toolStore';
 import type { KeyboardShortcutRouterTarget } from './KeyboardShortcutRouter';
 
 export type SaveStatus = 'idle' | 'saving' | 'saved';
-export interface SerializedProjectSession {
-  name: string;
+export interface PersistedProjectSession {
+  readonly __persistedProjectSession: unique symbol;
+}
+
+export interface OpenedProjectSession {
+  readonly projectName: string;
+  readonly payload: PersistedProjectSession;
 }
 
 export interface DrivePort {
@@ -29,9 +34,9 @@ export interface RuntimeSessionSnapshotHandle {
 export interface RuntimeSessionRestoreHandle {}
 
 export interface ProjectSessionPersistencePort {
-  snapshotCurrentSession(session: RuntimeSessionSnapshotHandle, projectName: string): SerializedProjectSession;
-  assertProjectData(data: unknown): asserts data is SerializedProjectSession;
-  restoreSession(data: SerializedProjectSession, target: RuntimeSessionRestoreHandle): void;
+  snapshotCurrentSession(session: RuntimeSessionSnapshotHandle, projectName: string): object;
+  validateProjectData(data: unknown): OpenedProjectSession;
+  restoreSession(session: PersistedProjectSession, target: RuntimeSessionRestoreHandle): void;
 }
 
 export interface LastProjectRecord {

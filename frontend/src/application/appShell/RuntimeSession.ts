@@ -1,7 +1,7 @@
 import { CommandStack } from '@/commands/CommandStack';
 import { World } from '@/domain/world/World';
 import { initializeWorld } from '@/application/world/initializeWorld';
-import type { ProjectSessionPersistencePort, RuntimeSessionRestoreHandle, RuntimeSessionSnapshotHandle, SerializedProjectSession } from './AppShellPorts';
+import type { OpenedProjectSession, ProjectSessionPersistencePort, RuntimeSessionRestoreHandle, RuntimeSessionSnapshotHandle } from './AppShellPorts';
 
 export interface RuntimeSessionReader extends RuntimeSessionSnapshotHandle {
   readonly world: World;
@@ -52,25 +52,24 @@ export class RuntimeSession {
     return this.world.getVersion();
   }
 
-  snapshot(projectName: string, persistence: ProjectSessionPersistencePort): SerializedProjectSession {
+  snapshot(projectName: string, persistence: ProjectSessionPersistencePort): object {
     return persistence.snapshotCurrentSession(this.reader(), projectName);
   }
 
-  validateProjectData(data: unknown, persistence: ProjectSessionPersistencePort): SerializedProjectSession {
-    persistence.assertProjectData(data);
-    return data;
+  validateProjectData(data: unknown, persistence: ProjectSessionPersistencePort): OpenedProjectSession {
+    return persistence.validateProjectData(data);
   }
 
-  restoreValidatedProject(data: SerializedProjectSession, persistence: ProjectSessionPersistencePort): void {
+  restoreValidatedProject(openedSession: OpenedProjectSession, persistence: ProjectSessionPersistencePort): void {
     const candidateWorld = new World();
     const candidateCommandStack = new CommandStack();
-    persistence.restoreSession(data, { world: candidateWorld, commandStack: candidateCommandStack });
+    persistence.restoreSession(openedSession.payload, { world: candidateWorld, commandStack: candidateCommandStack });
     if (candidateWorld.getAllProjectionPlanes().length === 0) initializeWorld(candidateWorld, candidateCommandStack);
     candidateWorld.markDirty();
 
     this.world.clear();
     this.commandStack.clear();
-    persistence.restoreSession(data, this.restoreTarget());
+    persistence.restoreSession(openedSession.payload, this.restoreTarget());
     if (this.world.getAllProjectionPlanes().length === 0) this.initializeDefaultWorldIfNeeded();
     this.world.markDirty();
   }

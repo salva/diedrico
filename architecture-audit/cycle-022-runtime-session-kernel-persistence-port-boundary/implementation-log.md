@@ -118,3 +118,30 @@ No secret/config/env/provider file contents were read, logged, copied, or includ
 - `RuntimeSession` now contains narrow raw-object accessors for existing consumers. This is intentional for Cycle 022, but a future wave should continue shrinking direct `World`/`CommandStack` dependencies for active-plane, keyboard/history, selection, and rendering-facing consumers.
 - `ProjectSessionPersistenceAdapter` uses private casts from opaque session handles to concrete runtime objects. This preserves the public app-shell contract, but future persistence-port work could replace the private cast with a package-private adapter interface if TypeScript module boundaries become stricter.
 - Successful active restore still clears and replays the active session after candidate validation. This keeps `World`/`CommandStack` object identity stable for current consumers; a later deeper session replacement design may be cleaner but would require reviewed migration of all raw-object consumers.
+
+## Correction round — t3 review blockers
+
+Reviewer blocker corrections were applied without broadening Cycle 022 scope.
+
+### Serialized DTO leakage correction
+
+Changed the app-shell persistence boundary so use cases no longer consume the serialized project DTO shape:
+
+- `AppShellPorts.ts` no longer exposes `SerializedProjectSession` or DTO fields such as schema/version/commands/timestamps. It now exposes an opaque `PersistedProjectSession` payload and an `OpenedProjectSession` result containing only app-shell metadata (`projectName`) plus the opaque payload.
+- `ProjectSessionUseCases.openProject()` no longer reads `projectData.name`; it consumes `openedSession.projectName` returned by the session/persistence boundary.
+- `RuntimeSession` restores only the opaque validated payload, preserving validation-before-destructive-reset and isolated candidate restore semantics.
+- `ProjectSessionPersistenceAdapter` remains the only app-shell bridge that reads `ProjectData.name` and casts the opaque payload back to `ProjectData` for `ProjectService.deserializeCommands()`.
+- `AppShellBoundary.test.ts` now asserts that `AppShellPorts.ts` does not expose `SerializedProjectSession` or serialized DTO fields, and that `ProjectSessionUseCases.ts` does not read serialized project shape directly.
+
+### Additional validation evidence
+
+New correction-round logs under `validation/`:
+
+- `t3-prepatch-symbol-scan.stdout`, `t3-prepatch-symbol-scan.stderr` — pre-correction symbol scan for obsolete DTO-boundary names.
+- `t3-obsolete-symbol-scan-01.stdout`, `t3-obsolete-symbol-scan-01.stderr` — intermediate scan after first patch.
+- `t3-root-workspace-frontend-lint.stdout`, `t3-root-workspace-frontend-lint.stderr` — pass; missing mandatory root workspace frontend lint evidence (`npm run lint --workspace=frontend`) captured from repository root.
+- `t3-focused-appshell-vitest.stdout`, `t3-focused-appshell-vitest.stderr` — failed once because the new boundary assertion also rejected the legitimate `nextElementId` snapshot handle; assertion was corrected.
+- `t3-focused-vitest-and-frontend-build.stdout`, `t3-focused-vitest-and-frontend-build.stderr` — pass; focused app-shell Vitest 30/30 and frontend build pass with the existing Vite large-chunk warning.
+- `t3-final-boundary-scan.stdout`, `t3-final-boundary-scan.stderr` — confirms obsolete `SerializedProjectSession`, `assertProjectData`, and use-case `projectData.name` usage are gone from app-shell production files; remaining DTO field mentions are adapter-private or test fixtures/boundary assertions.
+
+No protected out-of-scope surfaces were modified during this correction.

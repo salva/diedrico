@@ -1,0 +1,26 @@
+
+--- frontend/src/application/appShell/AppShellPorts.ts
+SerializedProjectSession
+assertProjectData
+
+--- frontend/src/application/appShell/RuntimeSession.ts
+SerializedProjectSession
+assertProjectData
+validateProjectData
+restoreValidatedProject
+
+--- frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts
+SerializedProjectSession
+assertProjectData
+validateProjectData
+
+--- frontend/src/application/appShell/ProjectSessionUseCases.ts
+validateProjectData
+restoreValidatedProject
+projectData.name
+
+--- frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts
+assertProjectData
+
+--- frontend/tests/unit/application/appShell/AppShellBoundary.test.ts
+SerializedProjectSession

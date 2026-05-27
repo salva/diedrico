@@ -72,7 +72,9 @@ describe('Cycle 020 app-shell production boundary', () => {
 describe('Cycle 022 runtime session persistence boundary', () => {
   it('keeps app-shell ports free of concrete runtime and ProjectService DTO imports', () => {
     expect(appShellPorts).not.toMatch(/@\/commands\/CommandStack|@\/domain\/world\/World|@\/services\/ProjectService/);
-    expect(appShellPorts).toMatch(/SerializedProjectSession/);
+    expect(appShellPorts).not.toMatch(/SerializedProjectSession|schemaVersion|commands:|created:|modified:/);
+    expect(appShellPorts).toMatch(/OpenedProjectSession/);
+    expect(appShellPorts).toMatch(/PersistedProjectSession/);
     expect(appShellPorts).toMatch(/RuntimeSessionSnapshotHandle/);
     expect(appShellPorts).toMatch(/RuntimeSessionRestoreHandle/);
   });
@@ -80,6 +82,8 @@ describe('Cycle 022 runtime session persistence boundary', () => {
   it('removes raw runtime-pair persistence calls from project-session and autosave use cases', () => {
     expect(projectSession).not.toMatch(/@\/commands\/CommandStack|@\/domain\/world\/World|@\/services\/ProjectService|initializeWorld/);
     expect(autoSave).not.toMatch(/@\/commands\/CommandStack|@\/domain\/world\/World/);
+    expect(projectSession).not.toMatch(/\.name\)|projectData\.name|schemaVersion|commands/);
+    expect(projectSession).toMatch(/openedSession\.projectName/);
     expect(projectSession).not.toMatch(/snapshotCurrentSession\(\{[\s\S]*commandStack[\s\S]*world/);
     expect(autoSave).not.toMatch(/snapshotCurrentSession\(\{[\s\S]*commandStack[\s\S]*world/);
   });

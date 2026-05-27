@@ -1,0 +1,10 @@
+frontend/src/application/appShell/AppShellPorts.ts:38:  validateProjectData(data: unknown): OpenedProjectSession;
+frontend/src/application/appShell/ProjectSessionUseCases.ts:110:      const openedSession = this.deps.session.validateProjectData(loadedProject, this.deps.ports.persistence);
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:12:  validateProjectData(data: unknown): OpenedProjectSession {
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:13:    ProjectService.validateProjectData(data);
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:16:      projectName: projectData.name,
+frontend/src/application/appShell/RuntimeSession.ts:59:  validateProjectData(data: unknown, persistence: ProjectSessionPersistencePort): OpenedProjectSession {
+frontend/src/application/appShell/RuntimeSession.ts:60:    return persistence.validateProjectData(data);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:75:    expect(appShellPorts).toMatch(/SerializedProjectSession/);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:70:    assertProjectData: vi.fn(),
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:516:        assertProjectData: vi.fn(() => { throw new Error('invalid payload'); }),

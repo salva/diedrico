@@ -1,0 +1,17 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run AppShellRuntimeUseCases AppShellBoundary
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ❯ tests/unit/application/appShell/AppShellBoundary.test.ts  (10 tests | 1 failed) 23ms
+   ❯ tests/unit/application/appShell/AppShellBoundary.test.ts > Cycle 022 runtime session persistence boundary > keeps app-shell ports free of concrete runtime and ProjectService DTO imports
+     → expected 'import type { Ref } from \'vue\';\nim…' not to match /SerializedProjectSession|schemaVersio…/
+ ✓ tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts  (20 tests) 77ms
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 29 passed (30)
+   Start at  06:07:03
+   Duration  2.80s (transform 1.14s, setup 0ms, collect 1.63s, tests 100ms, environment 1.43s, prepare 286ms)
+

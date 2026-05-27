@@ -67,7 +67,7 @@ function persistence(): ProjectSessionPersistencePort {
       nextElementId: session.nextElementId,
       commands: [],
     })),
-    assertProjectData: vi.fn(),
+    validateProjectData: vi.fn((data: any) => ({ projectName: String(data.name), payload: data as never })),
     restoreSession: vi.fn(),
   };
 }
@@ -513,7 +513,7 @@ describe('ProjectSessionUseCases startup and project flows', () => {
       drive: drive({ loadFile: vi.fn().mockResolvedValue({ bad: 'payload' }) }),
       persistence: {
         ...persistence(),
-        assertProjectData: vi.fn(() => { throw new Error('invalid payload'); }),
+        validateProjectData: vi.fn(() => { throw new Error('invalid payload'); }),
       },
     });
     const deps = projectSessionDeps({ ports });

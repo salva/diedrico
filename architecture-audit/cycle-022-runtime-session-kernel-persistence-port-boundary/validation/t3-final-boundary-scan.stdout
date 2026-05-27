@@ -1,0 +1,6 @@
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:16:      projectName: projectData.name,
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:75:    expect(appShellPorts).not.toMatch(/SerializedProjectSession|schemaVersion|commands:|created:|modified:/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:85:    expect(projectSession).not.toMatch(/\.name\)|projectData\.name|schemaVersion|commands/);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:51:    loadFile: vi.fn().mockResolvedValue({ id: 'project-id', schemaVersion: '6.0.0', name: 'Loaded project', created: 'now', modified: 'now', nextElementId: 1, commands: [] }),
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:63:      schemaVersion: '6.0.0',
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:68:      commands: [],

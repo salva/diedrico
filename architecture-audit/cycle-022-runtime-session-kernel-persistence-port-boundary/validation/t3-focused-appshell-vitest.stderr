@@ -1,0 +1,148 @@
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/application/appShell/AppShellBoundary.test.ts > Cycle 022 runtime session persistence boundary > keeps app-shell ports free of concrete runtime and ProjectService DTO imports
+AssertionError: expected 'import type { Ref } from \'vue\';\nim…' not to match /SerializedProjectSession|schemaVersio…/
+
+- Expected: 
+/SerializedProjectSession|schemaVersion|commands:|nextElementId:|created:|modified:/
+
++ Received: 
+"import type { Ref } from 'vue';
+import type { GoogleDriveFile, GoogleUserProfile } from '@/services/GoogleDriveService';
+import type { ToolType } from '@/stores/toolStore';
+import type { KeyboardShortcutRouterTarget } from './KeyboardShortcutRouter';
+
+export type SaveStatus = 'idle' | 'saving' | 'saved';
+export interface PersistedProjectSession {
+  readonly __persistedProjectSession: unique symbol;
+}
+
+export interface OpenedProjectSession {
+  readonly projectName: string;
+  readonly payload: PersistedProjectSession;
+}
+
+export interface DrivePort {
+  initialize(): Promise<void>;
+  isSignedIn(): boolean;
+  signIn(): Promise<void>;
+  signOut(): Promise<void>;
+  fetchUserProfile(): Promise<GoogleUserProfile>;
+  listFiles(): Promise<GoogleDriveFile[]>;
+  createFile(fileName: string, data: object): Promise<string>;
+  loadFile(fileId: string): Promise<object>;
+  updateFile(fileId: string, data: object): Promise<void>;
+  renameFile(fileId: string, newName: string): Promise<void>;
+  generateDefaultProjectName(): Promise<string>;
+}
+
+export interface RuntimeSessionSnapshotHandle {
+  readonly nextElementId: number;
+}
+
+export interface RuntimeSessionRestoreHandle {}
+
+export interface ProjectSessionPersistencePort {
+  snapshotCurrentSession(session: RuntimeSessionSnapshotHandle, projectName: string): object;
+  validateProjectData(data: unknown): OpenedProjectSession;
+  restoreSession(session: PersistedProjectSession, target: RuntimeSessionRestoreHandle): void;
+}
+
+export interface LastProjectRecord {
+  id: string;
+  name: string;
+}
+
+export interface LastProjectRepositoryPort {
+  getLastProject(): LastProjectRecord | null;
+  setLastProject(project: LastProjectRecord): void;
+  clearLastProject(): void;
+}
+
+export type TimeoutHandle = number;
+export type IntervalHandle = number;
+
+export interface SchedulerPort {
+  setTimeout(handler: () => void, ms: number): TimeoutHandle;
+  clearTimeout(handle: TimeoutHandle): void;
+  setInterval(handler: () => void, ms: number): IntervalHandle;
+  clearInterval(handle: IntervalHandle): void;
+}
+
+export interface AuthStorePort {
+  restoreSession(): boolean;
+  setUser(profile: GoogleUserProfile): void;
+  setAuthenticated(profile: GoogleUserProfile, accessToken: string, expiry?: Date): void;
+  clearAuth(): void;
+}
+
+export interface SelectionStorePort {
+  selectedIdsArray: string[];
+  clearSelection(): void;
+  selectMultiple(ids: string[]): void;
+  setCascadeHighlight(ids: string[]): void;
+  clearCascadeHighlight(): void;
+}
+
+export interface ToolStorePort {
+  setTool(tool: ToolType): void;
+  selectSubTool(familyId: string, toolId: string): void;
+}
+
+export interface ViewStorePort {
+  toggleProjectedElements(): void;
+}
+
+export interface AppShellCallbacks {
+  fitToView(): void;
+  startRename(): void;
+  alert(message: string): void;
+}
+
+export interface StartupDialogState {
+  files: Ref<GoogleDriveFile[]>;
+  loading: Ref<boolean>;
+  loadingFiles: Ref<boolean>;
+  error: Ref<string | null>;
+}
+
+export interface AppShellRuntimePorts {
+  drive: DrivePort | null;
+  persistence: ProjectSessionPersistencePort;
+  lastProjectRepository: LastProjectRepositoryPort;
+  scheduler: SchedulerPort;
+  keyboardTarget: KeyboardShortcutRouterTarget;
+  authStore: AuthStorePort;
+  selectionStore: SelectionStorePort;
+  toolStore: ToolStorePort;
+  viewStore: ViewStorePort;
+  callbacks: AppShellCallbacks;
+}
+
+export function createBrowserScheduler(): SchedulerPort {
+  return {
+    setTimeout: (handler, ms) => window.setTimeout(handler, ms),
+    clearTimeout: (handle) => window.clearTimeout(handle),
+    setInterval: (handler, ms) => window.setInterval(handler, ms),
+    clearInterval: (handle) => window.clearInterval(handle),
+  };
+}
+"
+
+ ❯ tests/unit/application/appShell/AppShellBoundary.test.ts:75:31
+     73|   it('keeps app-shell ports free of concrete runtime and ProjectServic…
+     74|     expect(appShellPorts).not.toMatch(/@\/commands\/CommandStack|@\/do…
+     75|     expect(appShellPorts).not.toMatch(/SerializedProjectSession|schema…
+       |                               ^
+     76|     expect(appShellPorts).toMatch(/OpenedProjectSession/);
+     77|     expect(appShellPorts).toMatch(/PersistedProjectSession/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c vitest run AppShellRuntimeUseCases AppShellBoundary

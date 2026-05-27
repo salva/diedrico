@@ -107,9 +107,9 @@ export class ProjectSessionUseCases {
     const drive = this.requireDrive();
     try {
       const loadedProject = await drive.loadFile(fileId);
-      const projectData = this.deps.session.validateProjectData(loadedProject, this.deps.ports.persistence);
-      this.deps.session.restoreValidatedProject(projectData, this.deps.ports.persistence);
-      this.setCurrentProject(String(projectData.name), fileId);
+      const openedSession = this.deps.session.validateProjectData(loadedProject, this.deps.ports.persistence);
+      this.deps.session.restoreValidatedProject(openedSession, this.deps.ports.persistence);
+      this.setCurrentProject(openedSession.projectName, fileId);
       this.deps.showStartupDialog.value = false;
       this.deps.autoSave.start();
       this.deps.saveStatus.value = 'saved';
