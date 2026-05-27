@@ -1,118 +1,126 @@
-# Proposal Direct — Explicit Three runtime/host lifecycle seams
+# Proposal Direct — Accept and harden the existing explicit runtime/host lifecycle seams
 
 ## Summary
 
-Implement Wave 019 directly by making the existing 3D runtime/platform boundary explicit and testable without redesigning the app shell or presentation selectors. Keep `ThreeView.vue` as a thin Vue shell, keep the existing presentation-controller/read-port architecture, and introduce narrow lifecycle/composition seams around `ThreeViewRuntime`, `ThreeSceneHost`, and `ThreeObjectRegistry`.
+Implement Wave 019 directly by converging on the current source shape rather than inventing a broader renderer redesign. The current code already has the essential direct seams: `ThreeViewRuntime` accepts injected host/controller/adapters, `ThreeSceneHost` accepts a platform port for renderer/label renderer/controls/animation/pixel ratio, `ThreeObjectRegistry` owns adapter-created object disposal, and focused host/runtime/registry tests already exist.
 
-The central change is to delete implicit hard-wiring and implicit host lifecycle ownership where it blocks focused tests, not to abstract every Three.js primitive. Runtime orchestration should be constructible with test doubles for the host, controller, and adapters. Scene-host platform resources should expose a small lifecycle contract that can be exercised in jsdom/unit tests with controlled requestAnimationFrame/cancelAnimationFrame and lightweight renderer/controls factories where needed.
+The direct implementation should therefore be small and deletion-oriented: preserve the current class boundaries, remove remaining weak test/contract ambiguity, and add only narrowly necessary code/test refinements that make the lifecycle and ownership contract explicit. Do not add a new platform module unless review selects the restructure proposal.
 
-## Evidence grounding
+## Current evidence
 
-- `ThreeView.vue` constructs `new ThreeViewRuntime()` and owns mount/resize/world-change/watch/dispose wiring (`frontend/src/components/panels/ThreeView.vue:44`, `:54`, `:56`, `:59-64`, `:70`).
-- `ThreeViewRuntime` directly instantiates host, controller, and five adapters (`frontend/src/rendering/threeView/ThreeViewRuntime.ts:11-17`) and hard-codes group replacement (`frontend/src/rendering/threeView/ThreeViewRuntime.ts:23-27`).
-- `ThreeSceneHost` owns scene/registry plus camera, WebGL renderer, CSS2D renderer, OrbitControls, lights, resize, animation loop, and disposal (`frontend/src/rendering/threeView/ThreeSceneHost.ts:10-17`, `:20-52`, `:55-67`, `:70-75`).
-- `ThreeObjectRegistry` already centralizes group replacement and disposal of geometry/material/CSS2D DOM (`frontend/src/rendering/threeView/ThreeObjectRegistry.ts:7-24`, `:28-36`).
-- `AxisLabelSceneAdapter.ts` is active via `ProjectionPlaneSceneAdapter.ts`, so it is not a delete candidate in the direct path.
-- Wave 018 completed the typed realization-context boundary in `ThreeWorldReadPort`, so no Wave 019 plan edit is required.
+- `ThreeView.vue` remains a shell that injects the Three presentation port, constructs a runtime, mounts/resizes/refreshes/disposes it, subscribes to world changes, and watches selection/display options (`frontend/src/components/panels/ThreeView.vue:32`, `:41-46`, `:49-72`).
+- `ThreeViewRuntime` already defines host/registry/controller/adapter/group/options interfaces and constructor injection while retaining default production collaborators (`frontend/src/rendering/threeView/ThreeViewRuntime.ts:19-68`).
+- `ThreeViewRuntime.refresh()` builds the presentation model and replaces the five named registry groups (`frontend/src/rendering/threeView/ThreeViewRuntime.ts:73-80`).
+- `ThreeSceneHost` already has `ThreeSceneHostPlatform` for renderer, CSS2D label renderer, controls, request/cancel animation frame, and pixel ratio (`frontend/src/rendering/threeView/ThreeSceneHost.ts:34-55`).
+- `ThreeSceneHost` owns camera, renderer, CSS2D DOM, controls, lights, resize, animation, registry disposal, renderer disposal, and label DOM removal (`frontend/src/rendering/threeView/ThreeSceneHost.ts:58-143`).
+- `ThreeObjectRegistry` already owns grouped replacement and disposal of geometry/material/material arrays/CSS2D DOM (`frontend/src/rendering/threeView/ThreeObjectRegistry.ts:7-42`).
+- Active adapters create owned Three objects from DTOs; `AxisLabelSceneAdapter` is active through `ProjectionPlaneSceneAdapter` and must not be deleted as dead code (`frontend/src/rendering/threeView/ProjectionPlaneSceneAdapter.ts:3-6`, `:25-30`; `frontend/src/rendering/threeView/AxisLabelSceneAdapter.ts:5-31`).
+- Existing focused tests already cover runtime orchestration, host lifecycle, registry disposal, adapters, and shell boundary. `threeSceneAdapters.spec.ts` still uses broad `as any` fixtures, which is the clearest residual weak contract.
 
 ## Files to change
 
-Production source:
+Production source — only if needed by the narrow hardening work:
 
 - `frontend/src/rendering/threeView/ThreeViewRuntime.ts`
-  - Add narrow interfaces/types for the host surface used by the runtime, presentation controller surface, adapter surface, and render group names.
-  - Add constructor or factory options so tests can inject host/controller/adapters while production still uses one default composition path.
-  - Keep `refresh()` responsibility as presentation-model build plus named group replacement.
+  - Keep the current injected host/controller/adapter contract.
+  - Do not add a second production construction path.
+  - If implementation inventory finds ambiguity around default composition, add a small exported type/comment or helper local to this file; do not move composition to a new platform module in the direct path.
 - `frontend/src/rendering/threeView/ThreeSceneHost.ts`
-  - Make mount/dispose idempotence and lifecycle ownership explicit.
-  - Introduce only the minimum factory seam needed to test renderer/label renderer/controls/animation behavior without real WebGL where jsdom cannot support it.
-  - Keep camera, lights, controls, renderer, label renderer, resize, and animation as host-owned platform concerns.
-  - Avoid extracting a generic scene manager or primitive factory maze.
+  - Keep `ThreeSceneHostPlatform` as the only platform resource seam.
+  - Clarify idempotent mount/dispose semantics if tests reveal ambiguity.
+  - Do not change OrbitControls configuration, CSS2D label pointer behavior, camera defaults, renderer defaults, or animation timing unless a focused lifecycle test proves a bug.
 - `frontend/src/rendering/threeView/ThreeObjectRegistry.ts`
-  - Add/clarify public contract comments or small types for registry-owned objects if useful.
-  - Add any missing disposal safeguards discovered by focused tests, such as safe repeated disposal, without changing group semantics.
+  - Preserve registry-owned disposal semantics.
+  - Add/clarify ownership comments only if needed; avoid cosmetic churn.
 - `frontend/src/rendering/threeView/*SceneAdapter.ts`
-  - Add small shared adapter interface/type if needed by runtime injection.
-  - Clarify that adapter-created Three.js objects transfer ownership to the registry for disposal.
-  - Do not reorganize geometry construction unless needed to satisfy the ownership contract.
+  - Keep adapters as DTO-to-Three-object converters.
+  - Do not reorganize geometry/material construction unless required to remove weak test contracts or clarify ownership.
 - `frontend/src/components/panels/ThreeView.vue`
-  - Update only if runtime construction moves to an explicit `createThreeViewRuntime()` factory or if watcher cleanup must become explicit. Keep the component as a shell.
+  - Prefer no production change. Touch only if a small shell-boundary cleanup is necessary and remains limited to mount/unmount/watch/listener/runtime wiring.
 
 Tests:
 
-- `frontend/tests/unit/rendering/threeView/threeViewRuntime.spec.ts` (new)
-  - Verify `refresh()` calls controller once, calls each adapter, and replaces the expected registry groups with adapter outputs using test doubles.
-- `frontend/tests/unit/rendering/threeView/threeSceneHost.spec.ts` (new or extended)
-  - Verify mount attaches CSS2D label DOM, configures resize, starts one animation loop, and dispose cancels animation, disposes controls/renderer/registry, and removes label DOM.
-  - Verify repeated dispose/mount behavior only to the extent it is part of the selected lifecycle contract.
-- `frontend/tests/unit/rendering/threeView/threeObjectRegistry.spec.ts`
-  - Extend if needed for nested object/material-array/CSS2D disposal ownership expectations.
 - `frontend/tests/unit/rendering/threeView/threeSceneAdapters.spec.ts`
-  - Update if adapter interfaces/types change; keep behavior coverage for object creation/userData.
+  - Replace broad `as any` DTO fixtures with typed fixture builders or `satisfies`-checked DTO objects for projection-plane, planar, reconstructed, guide, and hinge DTOs.
+  - Keep representative adapter behavior coverage; do not rewrite the suite into exhaustive visual testing.
+- `frontend/tests/unit/rendering/threeView/threeViewRuntime.spec.ts`
+  - Preserve current injected collaborator tests. Add a default-composition guard only if implementation changes default construction comments/API.
+- `frontend/tests/unit/rendering/threeView/threeSceneHost.spec.ts`
+  - Preserve current lifecycle assertions. Add focused assertions only for clarified lifecycle semantics.
+- `frontend/tests/unit/rendering/threeView/threeObjectRegistry.spec.ts`
+  - Preserve current disposal/idempotence coverage; extend only if a real gap is found.
 - `frontend/tests/unit/components/panels/threeViewShellBoundary.spec.ts`
-  - Update only if shell import/factory text changes; keep it as a shell-boundary architecture test.
+  - Preserve shell and overlay pointer-boundary assertions; update only if source text changes.
 
 ## Files/tests/docs/fixtures to DELETE
 
-- Delete implicit hard-wiring in `ThreeViewRuntime` that forces concrete `ThreeSceneHost`, `ThreePresentationController`, and adapter construction inside private fields with no injection seam.
-- Delete any stale test helper that mounts `ThreeView.vue` merely to observe low-level host/registry behavior once runtime/host tests exist.
-- Delete renderer/label DOM disposal ambiguity by replacing informal lifecycle assumptions with explicit tested host behavior.
-- Delete compatibility wrappers or overloads that preserve both old and new runtime construction paths. Production should have one default composition path plus test injection/factory support, not parallel APIs.
-- Delete any dead scene adapter export discovered by static scan during implementation. Current scout proves `AxisLabelSceneAdapter.ts` is active, so it should not be deleted under this proposal unless usage changes.
-- No docs/spec/backend/package/source fixtures are proposed for deletion in this wave.
+Delete, not wrap:
+
+- Broad `as any` scene-adapter DTO fixtures when typed DTO fixtures can express the contract.
+- Any duplicate/parallel production construction helper introduced during implementation by accident.
+- Any stale Vue-mount test helper that inspects host/registry internals now covered by `threeViewRuntime`, `threeSceneHost`, and `threeObjectRegistry` tests.
+- Any dead scene-host lifecycle helper or adapter export found by static scan.
+
+Do not delete `AxisLabelSceneAdapter.ts` under current evidence. Do not delete docs/spec/backend/package/tooling files.
 
 ## Expected behavior change
 
-No intended user-visible behavior change. The 3D panel should still render projection planes, grids, axes/labels, 2D elements on planes, reconstructed 3D elements, guides, hinges, and controls with the same visible options. Orbit controls should remain available and CSS2D labels should remain non-interactive as currently styled by the host.
+No intended user-visible behavior change. The 3D view should keep the same display options, projection planes, grids, axes/labels, planar elements, reconstructed elements, guides, hinges, resize behavior, OrbitControls behavior, CSS2D labels, and overlay pointer ownership.
 
-Internal behavior changes are architectural:
+Internal effect:
 
-- Runtime composition becomes explicit and testable.
-- Host lifecycle ownership becomes explicit and covered.
-- Registry/object disposal contract becomes a named responsibility instead of an informal convention.
+- The existing runtime/host/registry seam becomes the accepted direct Wave 019 architecture.
+- Adapter tests stop relying on broad `as any` DTO shims where typed fixture contracts are practical.
+- Lifecycle/disposal ownership remains explicit and validated without broad redesign.
 
 ## No-backcompat rationale
 
-The old runtime/host construction shape is an internal implementation detail. If constructor/factory seams are added, delete the old implicit hard-wired construction rather than preserving a compatibility wrapper. A single clear runtime/platform boundary is preferable to keeping parallel construction paths for tests or legacy callers.
+This wave is internal architecture. If a weak test shim, duplicate helper, or stale private construction path conflicts with the accepted direct seam, delete it rather than preserving compatibility. The current injected runtime/host platform seam is the single direct path; do not keep parallel old/new construction wrappers.
 
 ## Validation plan
 
-Capture all logs under `architecture-audit/cycle-019-three-scene-host-lifecycle-renderer-platform/validation/` during implementation:
+Capture logs under `architecture-audit/cycle-019-three-scene-host-lifecycle-renderer-platform/validation/`:
 
-1. Pre-edit static scans for lifecycle/watch/listener, hard-wiring, host resources, adapter usage, and registry disposal.
+1. Static scans before and after implementation for:
+   - `new ThreeViewRuntime`, `ThreeViewRuntimeOptions`, `ThreeSceneHostPlatform`, `requestAnimationFrame`, `cancelAnimationFrame`, `CSS2DRenderer`, `OrbitControls`, `ThreeObjectRegistry`, `AxisLabelSceneAdapter`, and `as any` in `frontend/tests/unit/rendering/threeView/`.
+   - `three-view-overlay` pointer assertions in unit/e2e tests.
 2. Focused Vitest:
    - `npm run test --workspace=frontend -- tests/unit/rendering/threeView/threeViewRuntime.spec.ts tests/unit/rendering/threeView/threeSceneHost.spec.ts tests/unit/rendering/threeView/threeObjectRegistry.spec.ts tests/unit/rendering/threeView/threeSceneAdapters.spec.ts tests/unit/components/panels/threeViewShellBoundary.spec.ts`
-3. Root and frontend lint:
+3. Root/frontend lint where defined:
    - `npm run lint`
    - `npm run lint --workspace=frontend`
-4. Full Vitest:
+4. Full root/frontend Vitest:
    - `npm run test`
    - `npm run test --workspace=frontend`
-5. Build:
+5. Root/frontend build:
    - `npm run build`
    - `npm run build --workspace=frontend`
-6. E2e because 3D rendering is user-observable:
+6. Root/frontend Playwright e2e:
    - `npm run test:e2e`
    - `npm run test:e2e --workspace=frontend`
-7. Live preview refresh and smoke:
+   - Must include the current overlay pointer-boundary test in `frontend/tests/e2e/current-ui-contract.spec.ts:89-117`.
+7. Live preview refresh:
    - Start/refresh `npm run dev --workspace=frontend -- --host 0.0.0.0`.
-   - Capture HTTP 200 probe.
-   - Run Playwright/live browser smoke verifying the 3D panel renders, controls are visible, option toggles remain interactive, and no obvious overlay/canvas regression occurs.
+   - Capture HTTP 200 from `http://127.0.0.1:5173/`.
+   - Run browser smoke proving the app shell, SVG canvas, 3D overlay/panel, controls, and representative 3D content render; verify overlay still owns pointer hit-testing.
 
 ## Risks
 
-- Too much injection could create an abstract factory maze. Keep seams at host/controller/adapter/lifecycle boundaries only.
-- Mocking WebGL/CSS2D/OrbitControls incorrectly could test implementation details rather than ownership. Tests should assert lifecycle effects and collaborator calls, not duplicate Three.js internals.
-- Animation-loop changes can leak requestAnimationFrame callbacks or double-start loops if mount/dispose idempotence is not specified and tested.
-- Registry disposal changes can dispose shared objects too early if adapter ownership is mischaracterized. The proposal assumes adapter outputs are registry-owned and not shared elsewhere.
-- User-visible OrbitControls behavior can regress if controls configuration changes; live/e2e smoke must include representative controls visibility/interaction.
+- The direct path may be too small if reviewers want production composition separated from constructor defaults. If so, select the restructure proposal instead.
+- Over-editing already-good lifecycle code can introduce animation leaks or OrbitControls regressions. Keep changes minimal and validation broad.
+- Typed adapter fixtures can become verbose; use focused builders rather than large snapshot-like DTO dumps.
+- Static/source-control noise in the workspace can hide unrelated changes. Use path-scoped status/diff and stage only selected Wave 019 files.
 
 ## Stop conditions
 
-Stop for a reviewed mini-cycle/plan edit if implementation requires any of the following:
+Stop and request a reviewed mini-cycle/plan edit if implementation requires:
 
-- Domain realization/read-port contract changes.
-- App-shell project lifecycle or store ownership changes beyond the current `ThreeView.vue` shell wiring.
-- Canvas presentation or overlay interaction redesign.
-- Persistence, command/undo, backend, package/tooling, validation-platform, docs/spec, or broad UI changes.
-- User-visible 3D interaction changes not covered by the selected lifecycle contract and validation plan.
+- Domain realization/read-context changes or raw `World`/`any` realization seams.
+- App-shell project/session lifecycle redesign, canvas presentation redesign, command/undo, persistence, backend, Drive/auth, package/tooling, validation-platform, docs/spec, or UI-feature work.
+- User-visible OrbitControls, overlay CSS/pointer, option semantics, or rendering behavior changes.
+- A new broad renderer service/facade or general rendering platform shared with SVG/canvas.
+- Touching unrelated dirty `Intersections.ts` or `ActionGroup.ts` for compile/test success.
+
+## Recommendation
+
+Prefer this direct proposal if review agrees that the current source already contains the intended Wave 019 seam and only needs contract hardening plus full validation. If review wants production composition to be named outside `ThreeViewRuntime` constructor defaults, choose the restructure proposal.

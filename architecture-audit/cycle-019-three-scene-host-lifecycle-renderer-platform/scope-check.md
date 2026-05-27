@@ -2,169 +2,189 @@
 
 ## Stage and wave
 
-- Stage: `cycle-019-fresh-scout-proposals`
+- Stage: `cycle-019-fresh-scout-proposals-post-018`
 - Wave: 019 — Three scene-host lifecycle and renderer platform boundary
-- Nature of this stage: planning/scout only. No production source, tests, package metadata, backend, docs/spec, app-shell, command/undo, persistence, or tooling implementation is performed here.
+- Stage nature: design/scout only. No production source, test, package, tooling, backend, docs/spec, persistence, command, canvas presentation, app-shell project lifecycle, or UI-feature implementation is performed here.
 
-## Workspace/status hygiene
+## Source-control reconciliation
 
-- Full MCP `git_status` overflowed because the workspace contains substantial unrelated dirty/untracked work; this matches the Wave 018 closure warning about broad status volume.
-- A task-scoped status was captured in `.saivage/stages/cycle-019-fresh-scout-proposals/status-focused-pre-artifacts.stdout`. Before these Cycle 019 artifacts were written, the focused paths showed only the current stage directory as untracked and no production-source diff for the Wave 019 source paths.
-- Forbidden secret/config paths were not read. `.saivage/saivage.json`, auth profiles, env files, provider configs, OAuth/Drive credentials, and shell history were not accessed.
+Broad MCP `git_status` overflowed in this workspace, so this scout used path-scoped status/diff evidence captured under `.saivage/stages/cycle-019-fresh-scout-proposals-post-018/design-notes/`:
 
-## Evidence inspected first
+- `scoped-status.stdout`
+- `scoped-diff.stdout`
+- `scoped-diff-name-status.stdout`
 
-- Wave 019 plan entry was extracted to `.saivage/stages/cycle-019-fresh-scout-proposals/wave-019-entry.stdout` from `architecture-audit/wave-plan.md`.
-- Wave 018 completion was read from `architecture-audit/cycle-018-domain-realization-context-boundary/implementation-log.md`. It marks Wave 018 complete and states that `CanvasWorldReadPort` and `ThreeWorldReadPort` now use explicit typed realization-context adapters rather than passing full `World` as the realization context.
-- Wave 018 validation summary was read from `.saivage/stages/cycle-018-validation-and-preview-refresh/summary.json`. It recommends Cycle 019 as the next ordered wave and records green closure gates.
-- The Cycle 018 plan-extension note was read from `architecture-audit/cycle-018-wave-plan-extension/plan-extension-note.md`. It explains why Wave 019 follows Wave 018: the 3D scene platform should consume stable typed realization/read outputs before later app-shell/backend/docs cleanup.
-- Current source evidence and static scans were captured in `.saivage/stages/cycle-019-fresh-scout-proposals/source-three-scene-lifecycle-current.stdout` and `services-three-inventory.stdout`.
+Current scoped findings:
 
-## Current source inventory for selected scope
+- The active Three rendering source paths inspected for this wave have no current path-scoped diff in this scout: `frontend/src/rendering/threeView/`, `frontend/src/components/panels/ThreeView.vue`, and `frontend/tests/e2e/current-ui-contract.spec.ts`.
+- Pre-existing Cycle 019 audit/validation noise is present and out of scope for this design task: `architecture-audit/cycle-019-three-scene-host-lifecycle-renderer-platform/implementation-log.md`, `validation/live-preview-server.stdout`, and several untracked validation status/diff logs.
+- The known unrelated dirty production files remain out of scope and were not staged, reverted, incorporated, or relied on for proposed implementation:
+  - `frontend/src/domain/calculations/Intersections.ts` — comment/reference cleanup only in scoped diff.
+  - `frontend/src/domain/processTree/ActionGroup.ts` — ActionGroup contract alias/factory change in scoped diff.
+- Secret/config paths were not read: no `.saivage/auth-profiles.json`, `.saivage/saivage.json`, env files, provider configs, tokens, Drive credentials, shell history, or keychain material.
 
-### Vue shell responsibilities remain lifecycle/subscription oriented
+## Wave-plan entry reread
 
-`frontend/src/components/panels/ThreeView.vue` is no longer the old monolithic Three.js renderer, but it still owns component-to-runtime lifecycle and reactive subscriptions:
+`architecture-audit/wave-plan.md:1035-1114` defines Wave 019 as the Three runtime/platform boundary after Wave 018, scoped to:
 
-- It constructs the runtime directly: `const runtime = new ThreeViewRuntime();` (`frontend/src/components/panels/ThreeView.vue:44`).
-- It delegates refresh to the runtime with read port, display options, and selected IDs (`frontend/src/components/panels/ThreeView.vue:48`).
-- It delegates resize and mount (`frontend/src/components/panels/ThreeView.vue:50`, `frontend/src/components/panels/ThreeView.vue:54`).
-- It owns the global resize listener (`frontend/src/components/panels/ThreeView.vue:56`).
-- It subscribes to world changes and defines the unsubscribe closure (`frontend/src/components/panels/ThreeView.vue:59-60`).
-- It creates watchers inside `onMounted` for render tick, selection, and display options (`frontend/src/components/panels/ThreeView.vue:62-64`).
-- It removes the listener and disposes runtime on unmount (`frontend/src/components/panels/ThreeView.vue:69-70`).
+- `ThreeViewRuntime.ts`, `ThreeSceneHost.ts`, `ThreeObjectRegistry.ts`, active `frontend/src/rendering/threeView/*SceneAdapter.ts`, `ThreeView.vue` only as a composition shell, and focused runtime/host/registry tests (`architecture-audit/wave-plan.md:1043-1054`).
+- A guard against reopening domain realization, canvas presentation, app-shell project lifecycle, command/undo, persistence, backend, package/tooling, validation-platform, docs/spec, or broad UI redesign (`architecture-audit/wave-plan.md:1056-1060`).
+- A target where Vue owns only component wiring; runtime owns presentation-model refresh to named renderer groups; scene host owns low-level renderer/camera/controls/animation resources behind testable ports; and registry/adapters have explicit object ownership/disposal contracts (`architecture-audit/wave-plan.md:1068-1070`).
+- A delete discipline for implicit runtime hard-wiring, duplicate scene-host helpers/dead adapters, CSS2D/renderer/animation ownership ambiguity, stale Vue-mount tests for host details, compatibility wrappers, and broad scene-manager facades (`architecture-audit/wave-plan.md:1072-1079`).
+- Mandatory validation with focused host/runtime/registry/adapter tests, full lint/test/build/e2e, live preview refresh, and browser evidence for representative 3D rendering/controls and overlay/canvas regression protection (`architecture-audit/wave-plan.md:1094-1102`).
 
-This supports the Wave 019 premise: the shell should remain thin, but mount/unmount/watch/listener ownership is still an explicit boundary to document and test. The proposal should not move broad app-shell ownership into this wave.
+Wave-plan edit status: **no reviewed plan edit is required before proposals**. Wave 018 closure states its realization/read-context boundary is complete and recommends Wave 019 as the next ordered wave; current source has typed Three presentation/read-context outputs and no evidence that renderer lifecycle must depend on full `World`/`any` realization seams. The current source does show that part of Wave 019's intended seam already exists; the proposals below therefore focus on whether to accept and harden the current direct shape or move one layer higher into a named platform composition module.
 
-### Runtime orchestration is hard-wired and not injectable/test-seamed
+## Wave 018 and 3D interaction evidence
 
-`frontend/src/rendering/threeView/ThreeViewRuntime.ts` currently owns a fixed composition of concrete collaborators:
+Wave 018 closure evidence from `architecture-audit/cycle-018-domain-realization-context-boundary/implementation-log.md` establishes that:
 
-- It instantiates `ThreeSceneHost` directly (`frontend/src/rendering/threeView/ThreeViewRuntime.ts:11`).
-- It instantiates `ThreePresentationController` directly (`frontend/src/rendering/threeView/ThreeViewRuntime.ts:12`).
-- It instantiates all active adapters directly: projection planes, planar elements, reconstructed elements, guides, and hinges (`frontend/src/rendering/threeView/ThreeViewRuntime.ts:13-17`).
-- `refresh()` builds the presentation model and pushes adapter outputs into hard-coded registry group names (`frontend/src/rendering/threeView/ThreeViewRuntime.ts:21-27`).
-- `dispose()` simply delegates to the host (`frontend/src/rendering/threeView/ThreeViewRuntime.ts:31`).
+- `ProjectionElementRealizationContext` is narrowed to lookup/realization lookup and no longer carries broad collection traversal by default.
+- `WorldRealizationContext.ts` is a tiny binder and does not expose a raw `getWorld()`/generic app-kernel/read-model facade.
+- `ThreeRealizationContext` still receives collection providers from concern read ports instead of directly owning world traversal.
+- No scene-host/OrbitControls/CSS/pointer behavior was changed during Wave 018.
+- Root/frontend e2e closure passed including the 3D overlay pointer-boundary contract, and the refreshed live preview answered HTTP 200.
 
-This is the central runtime seam for Cycle 019. Focused tests cannot replace the scene host/controller/adapters without real production collaborators, so the direct proposal should delete this implicit hard-wiring in favor of a small explicit composition boundary or constructor options.
+The Cycle 026 hotfix evidence in `architecture-audit/cycle-026-hotfix-3d-view-interaction-regression/implementation-log.md` remains a protected validation requirement. The root cause was app-shell overlay CSS `pointer-events: none`; the fix changed `.three-view-overlay` to `pointer-events: auto` and added e2e coverage proving overlay hit-testing and drag gestures do not pass through to the SVG canvas. Wave 019 must preserve this behavior and must not change scene-host/OrbitControls/CSS pointer behavior during this design-only stage.
 
-### Scene host owns multiple platform resources in one class
+## Current source inventory
 
-`frontend/src/rendering/threeView/ThreeSceneHost.ts` concentrates low-level platform resources:
+Line-numbered current evidence for this scout is captured in `.saivage/stages/cycle-019-fresh-scout-proposals-post-018/design-notes/current-three-source-lines.stdout`.
 
-- Imports and owns Three.js, `OrbitControls`, `CSS2DRenderer`, and a registry (`frontend/src/rendering/threeView/ThreeSceneHost.ts:1-5`).
-- Creates the scene and registry as public readonly fields (`frontend/src/rendering/threeView/ThreeSceneHost.ts:10-11`).
-- Holds camera, WebGL renderer, CSS2D label renderer, controls, animation-frame id, and mount state (`frontend/src/rendering/threeView/ThreeSceneHost.ts:12-17`).
-- On mount, configures scene background, camera aspect/defaults, camera up/lookAt, renderer, pixel ratio, CSS2D renderer styles, label DOM attachment, controls, lights, resize, and animation (`frontend/src/rendering/threeView/ThreeSceneHost.ts:20-52`).
-- `resize()` updates camera aspect/projection and both WebGL/CSS2D renderer sizes (`frontend/src/rendering/threeView/ThreeSceneHost.ts:55-60`).
-- `dispose()` cancels the animation frame if present, disposes the registry, controls, renderer, and removes the label renderer DOM element (`frontend/src/rendering/threeView/ThreeSceneHost.ts:62-67`).
-- The animation loop is self-scheduling via `requestAnimationFrame`, updates controls, renders WebGL, and renders CSS2D labels (`frontend/src/rendering/threeView/ThreeSceneHost.ts:70-75`).
+### `ThreeView.vue` shell responsibilities
 
-This confirms Wave 019 should focus on scene-host lifecycle/platform seams: animation ownership, renderer/CSS2D DOM ownership, controls lifecycle, lights/camera defaults, resize, and disposal.
+`frontend/src/components/panels/ThreeView.vue` is already a thin shell, but it still owns Vue/browser wiring:
 
-### Registry disposal is active and already partially tested
+- Imports `ThreeViewRuntime` and constructs a runtime (`frontend/src/components/panels/ThreeView.vue:32`, `:46`).
+- Injects the Three presentation port and gets read ports (`frontend/src/components/panels/ThreeView.vue:41-45`).
+- Builds runtime refresh input from read ports, display options, and selection (`frontend/src/components/panels/ThreeView.vue:49-52`).
+- Mounts runtime and adds a global resize listener (`frontend/src/components/panels/ThreeView.vue:54-58`).
+- Subscribes/unsubscribes world changes and creates watchers for render tick, selection, and display options (`frontend/src/components/panels/ThreeView.vue:60-66`, `:69-72`).
+- Keeps controls/panel CSS local; `.three-controls` explicitly uses `pointer-events: auto` (`frontend/src/components/panels/ThreeView.vue:91-99`).
 
-`frontend/src/rendering/threeView/ThreeObjectRegistry.ts` owns scene group replacement and disposal:
+Scope decision: Vue shell wiring may be clarified or routed through a factory/composable only if it remains a shell. Do not move app-shell project lifecycle, stores, command/persistence, or canvas presentation into this wave.
 
-- `replaceGroup()` disposes the old group, adds new objects to the scene, and stores the group (`frontend/src/rendering/threeView/ThreeObjectRegistry.ts:7-11`).
-- `dispose()` disposes every group and clears the map (`frontend/src/rendering/threeView/ThreeObjectRegistry.ts:13-16`).
-- `disposeGroup()` removes objects from the scene and calls `disposeObject()` (`frontend/src/rendering/threeView/ThreeObjectRegistry.ts:18-24`).
-- `disposeObject()` traverses each object and disposes geometry/materials, including material arrays, and removes CSS2D object elements if present (`frontend/src/rendering/threeView/ThreeObjectRegistry.ts:28-36`).
-- Existing focused coverage in `frontend/tests/unit/rendering/threeView/threeObjectRegistry.spec.ts` verifies grouped replacement, geometry/material disposal, and CSS2D label removal.
+### `ThreeViewRuntime` orchestration and current seams
 
-The registry is already a useful contract, but Cycle 019 should clarify whether adapter-created geometry/material/DOM ownership is exclusively transferred to this registry, then add any missing host/runtime coverage rather than replacing the registry wholesale.
+`frontend/src/rendering/threeView/ThreeViewRuntime.ts` already has more explicit seams than the Wave 019 plan's older grounding text described:
 
-### Scene adapters create owned Three.js objects from DTOs
+- Runtime host, registry, controller, adapter, group, adapter collection, and options interfaces are present (`frontend/src/rendering/threeView/ThreeViewRuntime.ts:19-52`).
+- The constructor accepts optional injected host/controller/adapters while defaulting to concrete production collaborators (`frontend/src/rendering/threeView/ThreeViewRuntime.ts:59-68`).
+- `refresh()` builds a presentation model and replaces five named registry groups (`frontend/src/rendering/threeView/ThreeViewRuntime.ts:73-80`).
+- `mount`, `resize`, and `dispose` delegate to the host (`frontend/src/rendering/threeView/ThreeViewRuntime.ts:71-83`).
 
-Active scene adapters under `frontend/src/rendering/threeView/` create Three.js objects and assign `userData` from presentation DTOs:
+Scope decision: the direct proposal should not pretend there is no injection seam. Remaining decisions are whether the default production composition should stay as constructor defaults or move to a single factory, whether group/adapters should remain explicit fields or be a typed registry, and whether tests/ownership comments are sufficient.
 
-- `ProjectionPlaneSceneAdapter.ts` creates line segments, plane surfaces, and delegates axes/labels to `AxisLabelSceneAdapter` (`frontend/src/rendering/threeView/ProjectionPlaneSceneAdapter.ts:5-28`).
-- `PlanarElementSceneAdapter.ts` creates point spheres, circle tubes, and line/segment tubes with local material helper (`frontend/src/rendering/threeView/PlanarElementSceneAdapter.ts:5-27`).
-- `ReconstructedElementSceneAdapter.ts` creates reconstructed points, planes, lines, and segment endpoint markers (`frontend/src/rendering/threeView/ReconstructedElementSceneAdapter.ts:5-35`).
-- `GuideSceneAdapter.ts` creates guide planes and marker spheres (`frontend/src/rendering/threeView/GuideSceneAdapter.ts:5-23`).
-- `HingeSceneAdapter.ts` creates dashed hinge lines and computes line distances (`frontend/src/rendering/threeView/HingeSceneAdapter.ts:5-13`).
-- `AxisLabelSceneAdapter.ts` creates `ArrowHelper` axes and CSS2D labels, including DOM element creation (`frontend/src/rendering/threeView/AxisLabelSceneAdapter.ts:5-31`).
+### `ThreeSceneHost` renderer/platform lifecycle
 
-Static usage scan found `AxisLabelSceneAdapter` is active through `ProjectionPlaneSceneAdapter`, not dead. Therefore deletion of `AxisLabelSceneAdapter.ts` is not justified in this scout; it should be included in the adapter ownership contract unless implementation later proves a replacement makes it obsolete.
+`frontend/src/rendering/threeView/ThreeSceneHost.ts` already has a testable platform port:
 
-### Current read-port/domain-realization dependency no longer blocks Wave 019
+- Renderer, label renderer, controls, animation-frame, and pixel-ratio factories are represented by `ThreeSceneHostPlatform` (`frontend/src/rendering/threeView/ThreeSceneHost.ts:34-41`).
+- Default platform creates WebGLRenderer, CSS2DRenderer, OrbitControls, and delegates to `window.requestAnimationFrame`, `window.cancelAnimationFrame`, and `window.devicePixelRatio` (`frontend/src/rendering/threeView/ThreeSceneHost.ts:47-55`).
+- Host owns scene and registry (`frontend/src/rendering/threeView/ThreeSceneHost.ts:58-61`).
+- `mount()` resets prior platform resources if mounted, configures scene background, camera, renderer, CSS2D label DOM, controls, lights, resize, and animation (`frontend/src/rendering/threeView/ThreeSceneHost.ts:73-104`).
+- `resize()` owns camera aspect/projection and WebGL/CSS2D renderer sizing (`frontend/src/rendering/threeView/ThreeSceneHost.ts:107-114`).
+- `dispose()` disposes registry and platform resources (`frontend/src/rendering/threeView/ThreeSceneHost.ts:117-134`).
+- Animation is self-scheduling, updates controls, renders WebGL, and renders labels (`frontend/src/rendering/threeView/ThreeSceneHost.ts:137-143`).
 
-`frontend/src/application/threePresentation/ThreeWorldReadPort.ts` now defines `createThreeRealizationContext(world)` (`frontend/src/application/threePresentation/ThreeWorldReadPort.ts:66`) and uses that typed context for 2D/3D realization calls (`frontend/src/application/threePresentation/ThreeWorldReadPort.ts:82`, `frontend/src/application/threePresentation/ThreeWorldReadPort.ts:101-103`, `frontend/src/application/threePresentation/ThreeWorldReadPort.ts:115`, `frontend/src/application/threePresentation/ThreeWorldReadPort.ts:134`). This aligns with Wave 018 completion and means Wave 019 does not need a wave-plan edit for residual full-`World`/`any` realization seams.
+Scope decision: implementation should not redesign OrbitControls behavior or CSS pointer handling. The host seam is sufficient for focused tests; residual work should be contract hardening or a small composition-module decision, not a renderer rewrite.
 
-### Legacy service paths from the starting list are absent/out of scope
+### `ThreeObjectRegistry` disposal behavior
 
-The starting points included `frontend/src/services/three/` and `frontend/src/services/`. Current inventory in `.saivage/stages/cycle-019-fresh-scout-proposals/services-three-inventory.stdout` shows `frontend/src/services/three` does not exist. Active services are `GeometryService.ts`, `GoogleDriveService.ts`, `InputService.ts`, `ProjectService.ts`, `SVGRenderer.ts`, and `services/factories/`. These are not part of the selected Wave 019 scene-host/runtime boundary and should remain out of scope.
+`frontend/src/rendering/threeView/ThreeObjectRegistry.ts` is already the object lifetime owner:
 
-## Selected bounded scope for Cycle 019 proposals
+- `replaceGroup()` disposes the previous group, adds new objects to the scene, and stores the replacement group (`frontend/src/rendering/threeView/ThreeObjectRegistry.ts:7-16`).
+- `dispose()` disposes all known groups and clears the map (`frontend/src/rendering/threeView/ThreeObjectRegistry.ts:18-20`).
+- `disposeGroup()` removes each object from the scene and calls `disposeObject()` (`frontend/src/rendering/threeView/ThreeObjectRegistry.ts:23-30`).
+- `disposeObject()` traverses descendants, disposes geometry/material/material arrays, and removes CSS2D element DOM (`frontend/src/rendering/threeView/ThreeObjectRegistry.ts:33-42`).
 
-In scope for implementation proposals:
+Scope decision: preserve registry ownership. If tests reveal gaps, harden disposal idempotence and ownership comments; do not introduce parallel registries.
+
+### Active scene adapters and material/geometry ownership
+
+Active adapters create new Three.js objects from presentation DTOs and transfer them to the runtime/registry:
+
+- `ProjectionPlaneSceneAdapter` creates grid `LineSegments`, plane surfaces, and delegates axes/labels to `AxisLabelSceneAdapter` (`frontend/src/rendering/threeView/ProjectionPlaneSceneAdapter.ts:5-35`).
+- `PlanarElementSceneAdapter` creates planar point spheres, circle tubes, and line/segment tubes (`frontend/src/rendering/threeView/PlanarElementSceneAdapter.ts:4-27`).
+- `ReconstructedElementSceneAdapter` creates reconstructed points, planes, lines, and segment endpoint markers (`frontend/src/rendering/threeView/ReconstructedElementSceneAdapter.ts:4-37`).
+- `GuideSceneAdapter` creates guide planes and markers (`frontend/src/rendering/threeView/GuideSceneAdapter.ts:4-21`).
+- `HingeSceneAdapter` creates dashed hinge lines and computes line distances (`frontend/src/rendering/threeView/HingeSceneAdapter.ts:4-14`).
+- `AxisLabelSceneAdapter` creates `ArrowHelper` axes and CSS2D label objects with owned DOM elements (`frontend/src/rendering/threeView/AxisLabelSceneAdapter.ts:5-31`).
+
+Static use: `AxisLabelSceneAdapter` is active through `ProjectionPlaneSceneAdapter` (`frontend/src/rendering/threeView/ProjectionPlaneSceneAdapter.ts:3`, `:6`, `:25-30`), so it is **not** currently a delete candidate.
+
+### Current tests and coverage implications
+
+Current test inventory already includes focused Wave 019-shaped tests:
+
+- `frontend/tests/unit/rendering/threeView/threeViewRuntime.spec.ts` verifies injected host/controller/adapters, group replacement order, and mount/resize/dispose delegation.
+- `frontend/tests/unit/rendering/threeView/threeSceneHost.spec.ts` verifies renderer/CSS2D DOM/controls/resize/animation lifecycle, disposal, and remount cleanup.
+- `frontend/tests/unit/rendering/threeView/threeObjectRegistry.spec.ts` verifies grouped replacement, geometry/material disposal, CSS2D label removal, descendants, material arrays, and idempotent disposal.
+- `frontend/tests/unit/rendering/threeView/threeSceneAdapters.spec.ts` verifies representative adapter object creation, but still uses broad `as any` DTO fixtures.
+- `frontend/tests/unit/components/panels/threeViewShellBoundary.spec.ts` verifies `ThreeView.vue` stays a shell and app overlay pointer events stay `auto`.
+- `frontend/tests/e2e/current-ui-contract.spec.ts:89-117` protects the 3D overlay pointer-boundary regression: overlay visible, `pointer-events: auto`, `elementFromPoint` resolves under the overlay, and dragging the 3D overlay does not change the SVG `viewBox`.
+
+Scope decision: current source may already satisfy much of Wave 019. Proposals should therefore be careful not to manufacture broad churn. Residual candidates are small: typed adapter fixtures, explicit production composition/factory ownership, and/or accepting current direct seams with validation.
+
+## Selected bounded scope for proposals
+
+In scope for reviewed Wave 019 implementation proposals:
 
 - `frontend/src/rendering/threeView/ThreeViewRuntime.ts`
 - `frontend/src/rendering/threeView/ThreeSceneHost.ts`
 - `frontend/src/rendering/threeView/ThreeObjectRegistry.ts`
-- Active scene adapters under `frontend/src/rendering/threeView/` where their object ownership/disposal contract with the registry/host must be made explicit:
+- Active scene adapters under `frontend/src/rendering/threeView/` only for ownership contract and typed test alignment:
   - `ProjectionPlaneSceneAdapter.ts`
   - `PlanarElementSceneAdapter.ts`
   - `ReconstructedElementSceneAdapter.ts`
   - `GuideSceneAdapter.ts`
   - `HingeSceneAdapter.ts`
   - `AxisLabelSceneAdapter.ts`
-- `frontend/src/components/panels/ThreeView.vue` only for thin shell mount/unmount/watch/listener composition if needed.
+- `frontend/src/components/panels/ThreeView.vue` only if production runtime construction moves to an explicit factory/composition boundary or watcher cleanup remains shell-local.
 - Focused tests under `frontend/tests/unit/rendering/threeView/` and `frontend/tests/unit/components/panels/threeViewShellBoundary.spec.ts`.
-- Representative e2e/live 3D rendering checks during the later implementation/validation stage.
+- `frontend/tests/e2e/current-ui-contract.spec.ts` only as protected validation evidence; no e2e rewrite in this design stage.
 
 Out of scope:
 
-- Domain realization contracts and read-port context design beyond verifying they do not block this wave.
-- Canvas presentation selectors, overlay interaction redesign, 2D rendering selectors, command/undo, persistence, app-shell project lifecycle, backend stance, docs/spec reconciliation, validation-platform work, package/tooling churn, and broad UI redesign.
-- `frontend/src/services/` cleanup; no active `frontend/src/services/three/` path exists.
-- Any implementation source change during this scout/proposal stage.
+- Domain realization/read-context contracts, Wave 018 context narrowing, canvas presentation selectors, SVG canvas presentation, app-shell project/session lifecycle, command/undo, persistence/project schema/replay, backend, Drive/auth, package/tooling, validation-platform, docs/spec, broad UI feature work, overlay CSS/OrbitControls behavior change, and unrelated dirty `Intersections.ts`/`ActionGroup.ts` work.
 
-## Premises and invalidated assumptions
+## Premise status
 
-Valid premises:
+- **Valid:** Wave 019 remains the right next architectural topic if the project is replaying the plan from post-Wave-018 state: Three scene-host lifecycle is central and user-observable, and it depends on stable realization/read outputs from Wave 018.
+- **Updated:** Current source already contains runtime injection, a scene-host platform port, registry disposal tests, and host/runtime focused tests. The proposal set must account for this and avoid duplicating work.
+- **Not invalidated:** No evidence shows domain realization/read-context assumptions still force renderer decisions. No wave-plan edit is required merely to proceed to review of the proposals.
+- **Potential manager decision point:** If the Manager determines that the current source and existing tests are already the result of an unclosed Wave 019 implementation, the next corrective stage should reconcile/validate/close the existing Cycle 019 work rather than dispatching new implementation. This design task does not edit production source to resolve that orchestration mismatch.
 
-- Wave 018 completed, so Three presentation now consumes typed realization-context adapters instead of a raw full-`World` realization seam.
-- `ThreeView.vue` is a thin shell compared with the baseline god component, so Cycle 019 should not recreate the old broad `ThreeView.vue` extraction objective. The center is the runtime/platform lifecycle boundary.
-- The scene host still owns enough platform lifecycle concerns to justify a focused wave before later app-shell/backend/docs cleanup.
-- `AxisLabelSceneAdapter.ts` is active through `ProjectionPlaneSceneAdapter`, so it is not an immediate delete candidate.
+## DELETE candidates
 
-Invalidated/updated assumptions:
+Delete during implementation only if the selected reviewed proposal requires it:
 
-- Any premise that there is still a `frontend/src/services/three/` implementation to fold into this wave is invalid; the directory is absent.
-- Any broad baseline premise that `ThreeView.vue` still owns low-level mesh/geometry creation is outdated. Mesh/geometry construction now lives in rendering adapters and scene host/platform modules.
+- Default runtime composition hidden in `ThreeViewRuntime` if replaced by a single explicit production factory/composition module.
+- Any compatibility wrapper that preserves both old implicit composition and new explicit composition as parallel production APIs.
+- Broad `as any` adapter test fixtures where typed DTO fixtures can express the active adapter contract.
+- Stale tests that mount `ThreeView.vue` to inspect host/registry internals now covered by runtime/host/registry unit tests.
+- Duplicate/dead scene-host lifecycle helpers or dead adapter exports found by implementation static scan.
 
-Wave-plan edit required: none for this stage. The Wave 019 entry already states the correct current framing: runtime/platform lifecycle after Wave 018. The proposals align with it.
+Do **not** delete `AxisLabelSceneAdapter.ts` in the current evidence state; it is active. Do not delete docs/spec/backend/package/tooling files in this wave.
 
-## DELETE list candidates for implementation proposals
+## Validation requirements for later implementation/closure
 
-- Delete implicit construction inside `ThreeViewRuntime` that prevents replacing the scene host, presentation controller, or adapters with focused test doubles.
-- Delete any stale tests that mount `ThreeView.vue` only to assert low-level host/registry behavior, replacing them with runtime/host/registry tests. Current `threeViewShellBoundary.spec.ts` is shell-boundary coverage and should likely be updated rather than deleted.
-- Delete renderer/label DOM ownership ambiguity by making CSS2D DOM attachment/removal and animation cancellation explicit and test-covered.
-- Delete any duplicate or dead scene-host lifecycle helper discovered during implementation static scan. None is proven in this scout.
-- Do not delete `AxisLabelSceneAdapter.ts` unless a future implementation replacement makes the active usage obsolete and tests prove no active import remains.
-- Delete compatibility wrappers or broad "scene manager" facades if a proposal introduces them only to preserve the old all-in-one host shape.
+All validation logs must be captured under `architecture-audit/cycle-019-three-scene-host-lifecycle-renderer-platform/validation/`:
 
-## Validation requirements for the later implementation wave
-
-Minimum validation cadence for implementation, with logs under `architecture-audit/cycle-019-three-scene-host-lifecycle-renderer-platform/validation/`:
-
-1. Pre-edit static scans for `ThreeView.vue` lifecycle/watch/listener responsibilities, `ThreeViewRuntime` hard-wired dependencies, `ThreeSceneHost` renderer/camera/controls/animation/disposal responsibilities, scene-adapter usage, and registry disposal behavior.
-2. Focused Vitest for changed modules, expected command examples:
-   - `npm run test --workspace=frontend -- tests/unit/rendering/threeView/threeObjectRegistry.spec.ts tests/unit/rendering/threeView/threeSceneAdapters.spec.ts`
-   - Add/run new host/runtime lifecycle tests once introduced.
-   - Run/update `tests/unit/components/panels/threeViewShellBoundary.spec.ts` if shell wiring changes.
-3. Root and frontend lint: `npm run lint`; `npm run lint --workspace=frontend`.
-4. Full root/frontend Vitest: `npm run test`; `npm run test --workspace=frontend`.
-5. Root/frontend build: `npm run build`; `npm run build --workspace=frontend`.
-6. Root/frontend Playwright e2e: `npm run test:e2e`; `npm run test:e2e --workspace=frontend` because 3D rendering/controls are user-observable.
-7. Refresh live preview with `npm run dev --workspace=frontend -- --host 0.0.0.0`, capture HTTP 200 probe, and run focused live browser smoke for representative 3D view rendering and controls visibility/interaction.
+1. Pre/post static scans for Vue lifecycle/watch/listener responsibilities, runtime composition/default wiring, host platform resources, registry disposal, active scene-adapter usage, test `as any` fixtures, and protected overlay pointer-boundary tests.
+2. Focused Vitest for `threeViewRuntime`, `threeSceneHost`, `threeObjectRegistry`, `threeSceneAdapters`, and `threeViewShellBoundary`.
+3. Root/frontend lint where defined.
+4. Full root/frontend Vitest.
+5. Root/frontend build.
+6. Root/frontend Playwright e2e because 3D rendering/controls are user-observable, including `current-ui-contract.spec.ts` overlay pointer-boundary coverage.
+7. Live preview refresh bound to `0.0.0.0:5173`, HTTP 200 reachability probe, and browser smoke proving representative 3D rendering/controls remain visible and the overlay still owns pointer interaction.
 
 ## Stop conditions
 
-Stop and request a reviewed plan edit or mini-cycle if any of the following becomes true during implementation:
+Stop and request a reviewed plan edit or mini-cycle if implementation requires:
 
-- A residual domain realization/read-port `World`/`any` seam materially forces scene-host decisions.
-- The fix requires broad app-shell ownership changes, command/undo changes, persistence/project lifecycle changes, package/tooling changes, backend work, docs/spec cleanup, or canvas presentation redesign.
-- User-facing 3D interaction semantics must change beyond encoding the existing lifecycle/ownership contract.
-- Registry disposal changes would require a deeper renderer-object lifetime redesign that cannot be safely bounded to the scene-host/runtime/adapter contract.
+- Reopening Wave 018 domain realization/read-context contracts or introducing raw `World`/`any` realization seams.
+- Moving app-shell project lifecycle, stores, command/undo, persistence/project-service, backend, Drive/auth, package/tooling, validation-platform, docs/spec, or canvas presentation into the wave.
+- Changing user-visible OrbitControls behavior, overlay CSS/pointer semantics, 3D option semantics, or canvas interaction behavior rather than preserving current behavior.
+- Replacing the registry ownership model with parallel object lifetime paths.
+- Touching the unrelated dirty `frontend/src/domain/calculations/Intersections.ts` or `frontend/src/domain/processTree/ActionGroup.ts` for compile/test success.
