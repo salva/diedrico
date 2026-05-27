@@ -1,0 +1,21 @@
+frontend/tests/unit/application/appShell/KeyboardShortcutRouter.test.ts:23:    selection: { clearSelection: vi.fn(), deleteSelected: vi.fn(), selectAllInActivePlane: vi.fn() },
+frontend/tests/unit/application/appShell/KeyboardShortcutRouter.test.ts:50:    expect(d.selection.deleteSelected).toHaveBeenCalled();
+frontend/tests/unit/application/appShell/KeyboardShortcutRouter.test.ts:65:    expect(d.selection.deleteSelected).not.toHaveBeenCalled();
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:13:import selection from '@/application/appShell/SelectionUseCases.ts?raw';
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:9:import { SelectionUseCases } from '@/application/appShell/SelectionUseCases';
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:345:describe('SelectionUseCases', () => {
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:355:    const useCases = new SelectionUseCases(
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:389:    const useCases = new SelectionUseCases(
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:410:    const useCases = new SelectionUseCases(
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:417:    useCases.deleteSelected();
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:432:    const useCases = new SelectionUseCases(
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:439:    expect(() => useCases.deleteSelected()).toThrow('delete failed');
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:452:    const useCases = new SelectionUseCases(
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:459:    useCases.deleteSelected();
+frontend/src/application/appShell/SelectionUseCases.ts:6:export class SelectionUseCases {
+frontend/src/application/appShell/SelectionUseCases.ts:31:  deleteSelected(): void {
+frontend/src/application/appShell/KeyboardShortcutRouter.ts:5:import type { SelectionUseCases } from './SelectionUseCases';
+frontend/src/application/appShell/KeyboardShortcutRouter.ts:22:    selection: SelectionUseCases;
+frontend/src/application/appShell/KeyboardShortcutRouter.ts:54:      this.deps.selection.deleteSelected();
+frontend/src/application/appShell/AppShellRuntime.ts:10:import { SelectionUseCases } from './SelectionUseCases';
+frontend/src/application/appShell/AppShellRuntime.ts:41:  const selection = new SelectionUseCases(world, selectionDeletion, ports.selectionStore, () => activePlaneId.value);

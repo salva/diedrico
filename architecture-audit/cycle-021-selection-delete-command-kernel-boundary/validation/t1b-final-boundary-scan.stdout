@@ -1,0 +1,13 @@
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:3:import { DeletionSequenceFactory } from '@/commands/factories/DeletionSequenceFactory';
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:13:  createCommand: (description, world) => new Command(description, world),
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:15:    DeletionSequenceFactory.createCascadeDeletion(command, selectedIds, world);
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:24:    private readonly commandStack: CommandStack,
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:35:    deleteCommand.commit();
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:36:    this.commandStack.push(deleteCommand);
+frontend/src/application/appShell/AppShellRuntime.ts:2:import { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/appShell/AppShellRuntime.ts:18:  const commandStack = new CommandStack();
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:18:    expect(appVue).not.toMatch(/DeletionSequenceFactory|ProjectService|GoogleDriveService|window as any|__autoSaveInterval|CustomEvent\('load-files'\)|Environment variables/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:60:    expect(selection).not.toMatch(/DeletionSequenceFactory|new Command|CommandStack|commandStack\.push|\.commit\(/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:61:    expect(selectionDeletionService).toMatch(/DeletionSequenceFactory/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:62:    expect(selectionDeletionService).toMatch(/new Command/);

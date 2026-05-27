@@ -105,3 +105,19 @@ Pre-edit scoped evidence was captured because full `git_status` exceeded MCP out
 ## Next-wave candidates observed
 
 - Consider a future reviewed wave for other command-producing use cases if repeated command lifecycle choreography remains a central architectural leak.
+
+## t1b finish verification
+
+The follow-up finish task re-read the Cycle 021 decision, selected direct proposal, round-02 review, implementation sources, tests, existing implementation log, prior task report, and validation artifacts without reading protected secret/config files. It did not broaden the implementation beyond the reviewed direct selection/delete service path.
+
+Additional finish-task evidence captured under `architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/`:
+
+- `t1b-pre-status.stdout` / `.stderr` — scoped status for Cycle 021 implementation/audit/report paths at task start.
+- `t1b-static-selection-scan.stdout` / `.stderr` — selection/delete call-site scan confirming current app-shell/service references.
+- `t1b-pre-diff.stdout` / `.stderr` — scoped diff check for implementation paths at finish-task start.
+- `t1b-focused-vitest.stdout` / `.stderr` — reran focused service/app-shell/boundary/keyboard unit tests: 4 files passed, 36 tests passed.
+- `t1b-final-boundary-scan.stdout` / `.stderr` — confirms `SelectionUseCases.ts` has no `DeletionSequenceFactory`, `new Command`, `CommandStack`, `commandStack.push`, or `.commit(` references; command-kernel ownership remains in `SelectionDeletionCommandService` and runtime composition remains in `AppShellRuntime`.
+- `t1b-existing-validation-summary.stdout` / `.stderr` — summarized previously captured mandatory gates showing root/frontend lint, root/frontend Vitest, root/frontend build, focused e2e, and root/frontend e2e all passed.
+- `t1b-live-preview-probe.stdout` / `.stderr` — HTTP probe confirmed the existing live preview still answers `HTTP/1.1 200 OK` at `http://127.0.0.1:5173/`.
+
+No additional production or test source changes were required during t1b. The new files from t1b are validation/report/log artifacts only.
