@@ -1,0 +1,8 @@
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:1:import { ProjectService, type ProjectData } from '@/services/ProjectService';
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:8:    const runtime = session as RuntimeSessionSnapshotHandle & { commandStack: CommandStack };
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:9:    return ProjectService.serializeCommands(runtime.commandStack, runtime.nextElementId, projectName);
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:13:    ProjectService.validateProjectData(data);
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:22:    const runtime = target as { world: World; commandStack: CommandStack };
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:23:    ProjectService.deserializeCommands(data as unknown as ProjectData, runtime.world, runtime.commandStack);
+frontend/src/services/ProjectService.ts:2: * ProjectService - current-schema command-stream persistence orchestration.
+frontend/src/services/ProjectService.ts:24:export class ProjectService {

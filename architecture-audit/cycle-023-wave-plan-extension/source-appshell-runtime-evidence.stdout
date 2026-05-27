@@ -1,0 +1,438 @@
+     1	import { CommandStack } from '@/commands/CommandStack';
+     2	import { World } from '@/domain/world/World';
+     3	import { initializeWorld } from '@/application/world/initializeWorld';
+     4	import type { OpenedProjectSession, ProjectSessionPersistencePort, RuntimeSessionRestoreHandle, RuntimeSessionSnapshotHandle } from './AppShellPorts';
+     5	
+     6	export interface RuntimeSessionReader extends RuntimeSessionSnapshotHandle {
+     7	  readonly world: World;
+     8	  readonly commandStack: CommandStack;
+     9	}
+    10	
+    11	export interface RuntimeSessionRestoreTarget extends RuntimeSessionRestoreHandle {
+    12	  readonly world: World;
+    13	  readonly commandStack: CommandStack;
+    14	}
+    15	
+    16	export class RuntimeSession {
+    17	  private readonly world = new World();
+    18	  private readonly commandStack = new CommandStack();
+    19	
+    20	  worldForView(): World {
+    21	    return this.world;
+    22	  }
+    23	
+    24	  commandStackForShortcuts(): CommandStack {
+    25	    return this.commandStack;
+    26	  }
+    27	
+    28	  worldForUseCases(): World {
+    29	    return this.world;
+    30	  }
+    31	
+    32	  commandStackForCommandServices(): CommandStack {
+    33	    return this.commandStack;
+    34	  }
+    35	
+    36	  initializeDefaultWorldIfNeeded(): void {
+    37	    initializeWorld(this.world, this.commandStack);
+    38	  }
+    39	
+    40	  resetToEmptyInitializedWorld(): void {
+    41	    this.world.clear();
+    42	    this.commandStack.clear();
+    43	    this.initializeDefaultWorldIfNeeded();
+    44	  }
+    45	
+    46	  clear(): void {
+    47	    this.world.clear();
+    48	    this.commandStack.clear();
+    49	  }
+    50	
+    51	  getVersion(): number {
+    52	    return this.world.getVersion();
+    53	  }
+    54	
+    55	  snapshot(projectName: string, persistence: ProjectSessionPersistencePort): object {
+    56	    return persistence.snapshotCurrentSession(this.reader(), projectName);
+    57	  }
+    58	
+    59	  validateProjectData(data: unknown, persistence: ProjectSessionPersistencePort): OpenedProjectSession {
+    60	    return persistence.validateProjectData(data);
+    61	  }
+    62	
+    63	  restoreValidatedProject(openedSession: OpenedProjectSession, persistence: ProjectSessionPersistencePort): void {
+    64	    const candidateWorld = new World();
+    65	    const candidateCommandStack = new CommandStack();
+    66	    persistence.restoreSession(openedSession.payload, { world: candidateWorld, commandStack: candidateCommandStack });
+    67	    if (candidateWorld.getAllProjectionPlanes().length === 0) initializeWorld(candidateWorld, candidateCommandStack);
+    68	    candidateWorld.markDirty();
+    69	
+    70	    this.world.clear();
+    71	    this.commandStack.clear();
+    72	    persistence.restoreSession(openedSession.payload, this.restoreTarget());
+    73	    if (this.world.getAllProjectionPlanes().length === 0) this.initializeDefaultWorldIfNeeded();
+    74	    this.world.markDirty();
+    75	  }
+    76	
+    77	  private reader(): RuntimeSessionReader {
+    78	    return {
+    79	      world: this.world,
+    80	      commandStack: this.commandStack,
+    81	      nextElementId: this.world.peekNextId(),
+    82	    };
+    83	  }
+    84	
+    85	  private restoreTarget(): RuntimeSessionRestoreTarget {
+    86	    return {
+    87	      world: this.world,
+    88	      commandStack: this.commandStack,
+    89	    };
+    90	  }
+    91	}
+
+--- AppShellRuntime ---
+     1	import { computed, ref } from 'vue';
+     2	import { SelectionDeletionCommandService } from '@/application/selectionDeletion/SelectionDeletionCommandService';
+     3	import { ActivePlaneUseCases } from './ActivePlaneUseCases';
+     4	import { AutoSaveUseCases } from './AutoSaveUseCases';
+     5	import { KeyboardShortcutRouter } from './KeyboardShortcutRouter';
+     6	import type { AppShellRuntimePorts, SaveStatus } from './AppShellPorts';
+     7	import { ProjectSessionUseCases } from './ProjectSessionUseCases';
+     8	import { RuntimeSession } from './RuntimeSession';
+     9	import { SelectionUseCases } from './SelectionUseCases';
+    10	
+    11	export interface AppShellRuntimeOptions {
+    12	  ports: AppShellRuntimePorts;
+    13	}
+    14	
+    15	export function createAppShellRuntime(options: AppShellRuntimeOptions) {
+    16	  const session = new RuntimeSession();
+    17	  const world = session.worldForView();
+    18	  const commandStack = session.commandStackForShortcuts();
+    19	  const ports = options.ports;
+    20	  const drive = ports.drive;
+    21	
+    22	  const activePlaneId = ref<string | undefined>(world.getActivePlaneId());
+    23	  const activePlaneName = ref('');
+    24	  const coordinates3D = ref<{ x: number; y: number; z: number } | null>(null);
+    25	  const show3DView = ref(true);
+    26	  const showStartupDialog = ref(false);
+    27	  const isSignedIn = ref(false);
+    28	  const currentProjectName = ref<string | null>(null);
+    29	  const currentFileId = ref<string | null>(null);
+    30	  const isRenamingProject = ref(false);
+    31	  const saveStatus = ref<SaveStatus>('idle');
+    32	  const startupDialog = {
+    33	    files: ref([]),
+    34	    loading: ref(false),
+    35	    loadingFiles: ref(false),
+    36	    error: ref<string | null>(null),
+    37	  };
+    38	
+    39	  const activePlane = new ActivePlaneUseCases(session.worldForUseCases(), { activePlaneId, activePlaneName });
+    40	  const selectionDeletion = new SelectionDeletionCommandService(session.worldForUseCases(), session.commandStackForCommandServices());
+    41	  const selection = new SelectionUseCases(session.worldForUseCases(), selectionDeletion, ports.selectionStore, () => activePlaneId.value);
+    42	  const autoSave = new AutoSaveUseCases({
+    43	    session,
+    44	    drive,
+    45	    persistence: ports.persistence,
+    46	    lastProjectRepository: ports.lastProjectRepository,
+    47	    scheduler: ports.scheduler,
+    48	    currentFileId,
+    49	    currentProjectName,
+    50	    saveStatus,
+    51	    showStartupDialog,
+    52	    isSignedIn,
+    53	    alert: ports.callbacks.alert,
+    54	  });
+    55	  const projectSession = new ProjectSessionUseCases({
+    56	    session,
+    57	    hasGoogleCredentials: drive !== null,
+    58	    showStartupDialog,
+    59	    isSignedIn,
+    60	    currentProjectName,
+    61	    currentFileId,
+    62	    isRenamingProject,
+    63	    saveStatus,
+    64	    startupDialog,
+    65	    autoSave,
+    66	    ports,
+    67	  });
+    68	  const keyboard = new KeyboardShortcutRouter({
+    69	    commandStack,
+    70	    toolStore: ports.toolStore,
+    71	    viewStore: ports.viewStore,
+    72	    projectSession,
+    73	    selection,
+    74	    activePlane,
+    75	    fitToView: ports.callbacks.fitToView,
+    76	    startRename: ports.callbacks.startRename,
+    77	  });
+    78	
+    79	  let started = false;
+    80	  function start(): void {
+    81	    if (started) return;
+    82	    started = true;
+    83	    activePlane.start();
+    84	    selection.start();
+    85	    keyboard.install(ports.keyboardTarget);
+    86	    void projectSession.initialize();
+    87	  }
+    88	
+    89	  function dispose(): void {
+    90	    if (!started) return;
+
+--- KeyboardShortcutRouter ---
+     1	import type { CommandStack } from '@/commands/CommandStack';
+     2	import { TOOL_FAMILIES } from '@/config/toolFamilies';
+     3	import type { ActivePlaneUseCases } from './ActivePlaneUseCases';
+     4	import type { ProjectSessionUseCases } from './ProjectSessionUseCases';
+     5	import type { SelectionUseCases } from './SelectionUseCases';
+     6	import type { ToolStorePort, ViewStorePort } from './AppShellPorts';
+     7	
+     8	export interface KeyboardShortcutRouterTarget {
+     9	  addEventListener(type: 'keydown', listener: (event: KeyboardEvent) => void): void;
+    10	  removeEventListener(type: 'keydown', listener: (event: KeyboardEvent) => void): void;
+    11	}
+    12	
+    13	export class KeyboardShortcutRouter {
+    14	  private target: KeyboardShortcutRouterTarget | null = null;
+    15	  private readonly boundHandler = (event: KeyboardEvent) => this.handle(event);
+    16	
+    17	  constructor(private readonly deps: {
+    18	    commandStack: CommandStack;
+    19	    toolStore: ToolStorePort;
+    20	    viewStore: ViewStorePort;
+    21	    projectSession: ProjectSessionUseCases;
+    22	    selection: SelectionUseCases;
+    23	    activePlane: ActivePlaneUseCases;
+    24	    fitToView: () => void;
+    25	    startRename: () => void;
+    26	  }) {}
+    27	
+    28	  install(target: KeyboardShortcutRouterTarget): void {
+    29	    if (this.target === target) return;
+    30	    this.dispose();
+    31	    this.target = target;
+    32	    this.target.addEventListener('keydown', this.boundHandler);
+    33	  }
+    34	
+    35	  dispose(): void {
+    36	    if (!this.target) return;
+    37	    this.target.removeEventListener('keydown', this.boundHandler);
+    38	    this.target = null;
+    39	  }
+    40	
+    41	  handle(event: Pick<KeyboardEvent, 'key' | 'ctrlKey' | 'metaKey' | 'shiftKey' | 'altKey' | 'target' | 'preventDefault'>): void {
+    42	    const target = event.target as HTMLElement | null;
+    43	    const isTextInput = target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA' || target?.isContentEditable;
+    44	    const isModifier = event.ctrlKey || event.metaKey;
+    45	
+    46	    if (event.key === 'Escape') {
+    47	      event.preventDefault();
+    48	      this.deps.toolStore.setTool('select');
+    49	      this.deps.selection.clearSelection();
+    50	      return;
+    51	    }
+    52	    if ((event.key === 'Delete' || event.key === 'Backspace') && !isTextInput) {
+    53	      event.preventDefault();
+    54	      this.deps.selection.deleteSelected();
+    55	      return;
+    56	    }
+    57	    if (event.key === 'F2') {
+    58	      event.preventDefault();
+    59	      this.deps.startRename();
+    60	      return;
+    61	    }
+    62	    if (event.key === 'Tab' && !isTextInput) {
+    63	      event.preventDefault();
+    64	      this.deps.activePlane.cycle(event.shiftKey ? -1 : 1);
+    65	      return;
+    66	    }
+    67	    if (!isModifier && !event.shiftKey && !event.altKey && !isTextInput) {
+    68	      const key = event.key.toUpperCase();
+    69	      if (key === 'D') {
+    70	        event.preventDefault();
+    71	        this.deps.viewStore.toggleProjectedElements();
+    72	        return;
+    73	      }
+    74	      for (const family of TOOL_FAMILIES) {
+    75	        for (const tool of family.tools) {
+    76	          if (tool.shortcut === key) {
+    77	            event.preventDefault();
+    78	            this.deps.toolStore.selectSubTool(family.id, tool.id);
+    79	            return;
+    80	          }
+    81	        }
+    82	      }
+    83	      switch (event.key.toLowerCase()) {
+    84	        case 'p': this.deps.toolStore.setTool('point'); event.preventDefault(); return;
+    85	        case 'l': this.deps.toolStore.setTool('line'); event.preventDefault(); return;
+    86	        case 's': this.deps.toolStore.setTool('segment'); event.preventDefault(); return;
+    87	        case 'c': this.deps.toolStore.setTool('circle'); event.preventDefault(); return;
+    88	        case 'g': this.deps.toolStore.setTool('guide'); event.preventDefault(); return;
+    89	      }
+    90	    }
+    91	    if (!isModifier) return;
+    92	    const key = event.key.toLowerCase();
+    93	    if (key === 'n') { event.preventDefault(); void this.deps.projectSession.newProject(); return; }
+    94	    if (key === 'o') { event.preventDefault(); this.deps.projectSession.showStartupProjectChooser(); return; }
+    95	    if (key === 'a') { event.preventDefault(); this.deps.selection.selectAllInActivePlane(); return; }
+    96	    if (event.key === '0') { event.preventDefault(); this.deps.fitToView(); return; }
+    97	    if (key === 'z' && !event.shiftKey && this.deps.commandStack.canUndo()) { event.preventDefault(); this.deps.commandStack.undo(); return; }
+    98	    if ((key === 'y' || (key === 'z' && event.shiftKey)) && this.deps.commandStack.canRedo()) {
+    99	      event.preventDefault();
+   100	      this.deps.commandStack.redo();
+   101	    }
+   102	  }
+   103	}
+
+--- ActivePlaneUseCases ---
+     1	import type { Ref } from 'vue';
+     2	import type { World } from '@/domain/world/World';
+     3	
+     4	export interface ActivePlaneState {
+     5	  activePlaneId: Ref<string | undefined>;
+     6	  activePlaneName: Ref<string>;
+     7	}
+     8	
+     9	export class ActivePlaneUseCases {
+    10	  private updateHandler: (() => void) | null = null;
+    11	
+    12	  constructor(private readonly world: World, private readonly state: ActivePlaneState) {}
+    13	
+    14	  start(): void {
+    15	    if (this.updateHandler) return;
+    16	    this.updateHandler = () => this.updateFromWorld();
+    17	    this.world.subscribeToChanges(this.updateHandler);
+    18	    this.updateFromWorld();
+    19	  }
+    20	
+    21	  dispose(): void {
+    22	    if (!this.updateHandler) return;
+    23	    this.world.unsubscribeFromChanges(this.updateHandler);
+    24	    this.updateHandler = null;
+    25	  }
+    26	
+    27	  updateActivePlane(planeInfo: { id: string; name: string }): void {
+    28	    if (this.world.getActivePlaneId() !== planeInfo.id) {
+    29	      this.world.setActivePlaneId(planeInfo.id);
+    30	    }
+    31	  }
+    32	
+    33	  cycle(direction: number): void {
+    34	    const planes = this.world.getAllProjectionPlanes();
+    35	    if (planes.length < 2) return;
+    36	    const currentId = this.world.getActivePlaneId();
+    37	    if (!currentId) return;
+    38	    const currentIndex = planes.findIndex((plane) => plane.id === currentId);
+    39	    if (currentIndex === -1) return;
+    40	    let newIndex = (currentIndex + direction) % planes.length;
+    41	    if (newIndex < 0) newIndex += planes.length;
+    42	    this.world.setActivePlaneId(planes[newIndex].id);
+    43	  }
+    44	
+    45	  private updateFromWorld(): void {
+    46	    const newPlaneId = this.world.getActivePlaneId();
+    47	    if (newPlaneId !== this.state.activePlaneId.value) {
+    48	      this.state.activePlaneId.value = newPlaneId;
+    49	    }
+    50	    if (!newPlaneId) {
+    51	      this.state.activePlaneName.value = '';
+    52	      return;
+    53	    }
+    54	    const plane = this.world.getProjectionPlaneById(newPlaneId);
+    55	    this.state.activePlaneName.value = plane?.name || newPlaneId;
+    56	  }
+    57	}
+
+--- SelectionUseCases ---
+     1	import { watch, type WatchStopHandle } from 'vue';
+     2	import type { World } from '@/domain/world/World';
+     3	import type { SelectionDeletionCommandPort } from '@/application/selectionDeletion/SelectionDeletionPorts';
+     4	import type { SelectionStorePort } from './AppShellPorts';
+     5	
+     6	export class SelectionUseCases {
+     7	  private stopSelectionWatch: WatchStopHandle | null = null;
+     8	
+     9	  constructor(
+    10	    private readonly world: World,
+    11	    private readonly deleteSelectionCommand: SelectionDeletionCommandPort,
+    12	    private readonly selectionStore: SelectionStorePort,
+    13	    private readonly getActivePlaneId: () => string | undefined,
+    14	  ) {}
+    15	
+    16	  start(): void {
+    17	    if (this.stopSelectionWatch) return;
+    18	    this.stopSelectionWatch = watch(
+    19	      () => this.selectionStore.selectedIdsArray,
+    20	      (selectedIds) => this.updateCascadePreview(selectedIds),
+    21	      { immediate: true },
+    22	    );
+    23	  }
+    24	
+    25	  dispose(): void {
+    26	    this.stopSelectionWatch?.();
+    27	    this.stopSelectionWatch = null;
+    28	    this.selectionStore.clearCascadeHighlight();
+    29	  }
+    30	
+    31	  deleteSelected(): void {
+    32	    const selectedIds = this.selectionStore.selectedIdsArray;
+    33	    if (selectedIds.length === 0) return;
+    34	    this.deleteSelectionCommand.execute(selectedIds);
+    35	    this.selectionStore.clearSelection();
+    36	  }
+    37	
+    38	  clearSelection(): void {
+    39	    this.selectionStore.clearSelection();
+    40	  }
+    41	
+    42	  selectAllInActivePlane(): void {
+    43	    const activePlaneId = this.getActivePlaneId();
+    44	    if (!activePlaneId) return;
+    45	    const activePlane = this.world.getProjectionPlaneById(activePlaneId);
+    46	    if (!activePlane) return;
+    47	    const selectedIds: string[] = [];
+    48	    for (const point of activePlane.getAllPoints()) selectedIds.push(point.id);
+    49	    for (const line of activePlane.getAllLines()) selectedIds.push(line.id);
+    50	    for (const circle of activePlane.getAllCircles()) selectedIds.push(circle.id);
+    51	    if (selectedIds.length > 0) this.selectionStore.selectMultiple(selectedIds);
+    52	  }
+    53	
+    54	  private updateCascadePreview(selectedIds: string[]): void {
+    55	    if (selectedIds.length === 0) {
+    56	      this.selectionStore.clearCascadeHighlight();
+    57	      return;
+    58	    }
+    59	    const allElementsToDelete = this.world.getDependencyService().getElementsInDeletionOrder(selectedIds);
+    60	    this.selectionStore.setCascadeHighlight(allElementsToDelete.filter((id) => !selectedIds.includes(id)));
+    61	  }
+    62	}
+
+--- ProjectSessionPersistenceAdapter ---
+     1	import { ProjectService, type ProjectData } from '@/services/ProjectService';
+     2	import type { OpenedProjectSession, PersistedProjectSession, ProjectSessionPersistencePort, RuntimeSessionRestoreHandle, RuntimeSessionSnapshotHandle } from './AppShellPorts';
+     3	import type { CommandStack } from '@/commands/CommandStack';
+     4	import type { World } from '@/domain/world/World';
+     5	
+     6	export class ProjectSessionPersistenceAdapter implements ProjectSessionPersistencePort {
+     7	  snapshotCurrentSession(session: RuntimeSessionSnapshotHandle, projectName: string): object {
+     8	    const runtime = session as RuntimeSessionSnapshotHandle & { commandStack: CommandStack };
+     9	    return ProjectService.serializeCommands(runtime.commandStack, runtime.nextElementId, projectName);
+    10	  }
+    11	
+    12	  validateProjectData(data: unknown): OpenedProjectSession {
+    13	    ProjectService.validateProjectData(data);
+    14	    const projectData = data as ProjectData;
+    15	    return {
+    16	      projectName: projectData.name,
+    17	      payload: projectData as unknown as PersistedProjectSession,
+    18	    };
+    19	  }
+    20	
+    21	  restoreSession(data: PersistedProjectSession, target: RuntimeSessionRestoreHandle): void {
+    22	    const runtime = target as { world: World; commandStack: CommandStack };
+    23	    ProjectService.deserializeCommands(data as unknown as ProjectData, runtime.world, runtime.commandStack);
+    24	  }
+    25	}

@@ -1,0 +1,314 @@
+     1	import type { Vector3 } from 'three';
+     2	import { Command } from '@/commands/Command';
+     3	import type { CommandStack } from '@/commands/CommandStack';
+     4	import type { World } from '@/domain/world/World';
+     5	import { UpdateFreePoint2DPositionOp } from '@/commands/operations/world/UpdateFreePoint2DPositionOp';
+     6	import type { MoveFreePointRequest, FreePointMoveSession, ToolCommandResult } from '@/application/tools/ToolCommandIntents';
+     7	
+     8	export class CanvasPointMovementUseCase {
+     9	  constructor(private readonly world: World, private readonly commandStack: CommandStack) {}
+    10	
+    11	  start(request: MoveFreePointRequest): FreePointMoveSession {
+    12	    const cmd = new Command(`Move point ${request.label ?? request.pointId}`, this.world);
+    13	    let hasPreview = false;
+    14	
+    15	    return {
+    16	      preview: (position: Vector3): ToolCommandResult => {
+    17	        try {
+    18	          cmd.rollback();
+    19	          cmd.addAndExecute(new UpdateFreePoint2DPositionOp(request.planeId, request.pointId, position));
+    20	          hasPreview = true;
+    21	          return { success: true };
+    22	        } catch (error) {
+    23	          cmd.rollback();
+    24	          return { success: false, message: error instanceof Error ? error.message : String(error) };
+    25	        }
+    26	      },
+    27	      commit: (): ToolCommandResult => {
+    28	        if (!hasPreview) {
+    29	          cmd.rollback();
+    30	          return { success: true };
+    31	        }
+    32	        cmd.commit();
+    33	        this.commandStack.push(cmd);
+    34	        return { success: true };
+    35	      },
+    36	      cancel: (): void => {
+    37	        cmd.rollback();
+    38	      }
+    39	    };
+    40	  }
+    41	}
+
+--- CanvasStyleUseCase ---
+     1	import { Command } from '@/commands/Command';
+     2	import type { CommandStack } from '@/commands/CommandStack';
+     3	import type { World } from '@/domain/world/World';
+     4	import { UpdateElementStyleOp } from '@/commands/operations/world/UpdateElementStyleOp';
+     5	import type { StyleUpdateRequest, ToolCommandResult } from '@/application/tools/ToolCommandIntents';
+     6	
+     7	export class CanvasStyleUseCase {
+     8	  constructor(private readonly world: World, private readonly commandStack: CommandStack) {}
+     9	
+    10	  update(request: StyleUpdateRequest): ToolCommandResult {
+    11	    const cmd = new Command(`Update style: ${request.elementId}`, this.world);
+    12	    try {
+    13	      cmd.addAndExecute(new UpdateElementStyleOp(request.elementId, request.planeId, request.style) as any);
+    14	      cmd.commit();
+    15	      this.commandStack.push(cmd);
+    16	      return { success: true };
+    17	    } catch (error) {
+    18	      cmd.rollback();
+    19	      return { success: false, message: error instanceof Error ? error.message : String(error) };
+    20	    }
+    21	  }
+    22	}
+
+--- ConstructionUseCases ---
+     1	import { Command } from '@/commands/Command';
+     2	import type { CommandStack } from '@/commands/CommandStack';
+     3	import type { World } from '@/domain/world/World';
+     4	import type { ToolConstructionIntent, ToolCommandResult } from '@/application/tools/ToolCommandIntents';
+     5	import type { Point2D } from '@/domain/world/Point';
+     6	import { Line2D } from '@/domain/world/Line';
+     7	import { Circle2D } from '@/domain/world/Circle';
+     8	import { PointSequenceFactory } from '@/commands/factories/PointSequenceFactory';
+     9	import { LineSequenceFactory } from '@/commands/factories/LineSequenceFactory';
+    10	import { CircleSequenceFactory } from '@/commands/factories/CircleSequenceFactory';
+    11	import { GuideSequenceFactory } from '@/commands/factories/GuideSequenceFactory';
+    12	import { IntersectionSequenceFactory } from '@/commands/factories/IntersectionSequenceFactory';
+    13	import { PlaneSequenceFactory } from '@/services/factories/PlaneSequenceFactory';
+    14	import { AddSegment2DByPointsOp } from '@/commands/operations/world/AddSegmentOp';
+    15	import { Add3DPointOp } from '@/commands/operations/world/Add3DPointOp';
+    16	import { Add3DLineOp } from '@/commands/operations/world/Add3DLineOp';
+    17	import { Add3DSegmentOp } from '@/commands/operations/world/Add3DSegmentOp';
+    18	import { AddLine2DTangentToCircleThroughPointOp, AddLine2DTangentToCircleParallelToLineOp } from '@/commands/operations/world/AddLineOp';
+    19	import { createActionGroup } from '@/domain/processTree/ActionGroup';
+    20	import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+    21	import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+    22	import { createSegmentAction } from '@/domain/processTree/actions/CreateSegmentAction';
+    23	import { createGuideAction } from '@/domain/processTree/actions/CreateGuideAction';
+    24	import { createSiblingGuideAction } from '@/domain/processTree/actions/CreateSiblingGuideAction';
+    25	import { createAdd3DPointAction, createAdd3DLineAction, createAdd3DSegmentAction } from '@/domain/processTree/actions/Element3DActions';
+    26	import { createTangentLineToCircleThroughPointAction, createTangentLineToCircleParallelToLineAction } from '@/domain/processTree/actions/CreateTangentLineAction';
+    27	import { areLinesParallel, intersectLineCircle, intersectCircleCircle } from '@/domain/calculations/Intersections';
+    28	
+    29	export interface ExecuteConstructionParams {
+    30	  intent: ToolConstructionIntent;
+    31	  world: World;
+    32	  commandStack: CommandStack;
+    33	}
+    34	
+    35	export function executeConstructionIntent({ intent, world, commandStack }: ExecuteConstructionParams): ToolCommandResult {
+    36	  const cmd = new Command(intent.description, world);
+    37	  try {
+    38	    const groupId = `group_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+    39	    const group = createActionGroup(groupId);
+    40	    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+    41	    executeConstructionOperations(cmd, intent, world, groupId);
+    42	    checkCreatedElementsFeasibility(cmd, world);
+    43	    cmd.commit();
+    44	    commandStack.push(cmd);
+    45	    return { success: true, message: `${intent.description} completed successfully` };
+    46	  } catch (error) {
+    47	    cmd.rollback();
+    48	    return { success: false, message: error instanceof Error ? error.message : String(error) };
+    49	  }
+    50	}
+    51	
+    52	function executeConstructionOperations(cmd: Command, intent: ToolConstructionIntent, world: World, groupId: string): void {
+    53	  const args = intent.args;
+    54	  const planeId = intent.planeId;
+    55	
+    56	  switch (intent.type) {
+    57	    case 'point': {
+    58	      const planeCoords = args.get('position')!.planeCoords;
+    59	      validateCoordinates(planeCoords);
+    60	      if (!world.getProjectionPlaneById(planeId)) throw new Error(`Plane not found: ${planeId}`);
+    61	      PointSequenceFactory.createFreePoint(cmd, planeId, planeCoords, groupId);
+    62	      return;
+    63	    }
+    64	    case 'line': {
+    65	      const p1 = args.get('point1')!.element as Point2D;
+    66	      const p2 = args.get('point2')!.element as Point2D;
+    67	      LineSequenceFactory.createLineByTwoPoints(cmd, planeId, p1.id, p2.id, groupId);
+    68	      return;
+    69	    }
+    70	    case 'segment': {
+    71	      const p1 = args.get('point1')!.element as Point2D;
+    72	      const p2 = args.get('point2')!.element as Point2D;
+    73	      const result = cmd.addAndExecute(new AddSegment2DByPointsOp(planeId, p1.id, p2.id));
+    74	      cmd.addAndExecute(new AddProcessTreeActionOp(createSegmentAction(result.outputs.segmentId as string), groupId));
+    75	      return;
+    76	    }
+    77	    case 'circle': {
+    78	      const center = args.get('center')!.element as Point2D;
+    79	      const circumferencePoint = args.get('circumferencePoint')!.element as Point2D;
+    80	      CircleSequenceFactory.createCircleByCenterAndPoint(cmd, planeId, center.id, circumferencePoint.id, groupId);
+    81	      return;
+    82	    }
+    83	    case 'guide': {
+    84	      const referenceLineId = args.get('referenceLine')!.element!.id;
+    85	      const throughPointId = args.get('throughPoint')!.element!.id;
+    86	      const result = GuideSequenceFactory.createGuideWithSibling(cmd, planeId, referenceLineId, throughPointId, world);
+    87	      cmd.addAndExecute(new AddProcessTreeActionOp(createGuideAction(result.guideId), groupId));
+    88	      if (result.siblingGuideId) cmd.addAndExecute(new AddProcessTreeActionOp(createSiblingGuideAction(result.siblingGuideId), groupId));
+    89	      return;
+    90	    }
+    91	    case 'parallel-line': {
+    92	      const line = args.get('referenceLine')!.element as Line2D;
+    93	      const point = args.get('throughPoint')!.element as Point2D;
+    94	      LineSequenceFactory.createParallelLine(cmd, planeId, line.id, point.id, groupId);
+    95	      return;
+    96	    }
+    97	    case 'perpendicular-line': {
+    98	      const line = args.get('referenceLine')!.element as Line2D;
+    99	      const point = args.get('throughPoint')!.element as Point2D;
+   100	      LineSequenceFactory.createPerpendicularLine(cmd, planeId, line.id, point.id, groupId);
+
+--- ProcessHistoryUseCases ---
+     1	import { Command } from '@/commands/Command';
+     2	import type { CommandStack } from '@/commands/CommandStack';
+     3	import { PopSubprocessOp } from '@/commands/operations/processTree/PopSubprocessOp';
+     4	import { PushSubprocessOp } from '@/commands/operations/processTree/PushSubprocessOp';
+     5	import { RenameSubprocessOp } from '@/commands/operations/processTree/RenameSubprocessOp';
+     6	import { ToggleEncapsulationOp } from '@/commands/operations/processTree/ToggleEncapsulationOp';
+     7	import { ToggleOutputOp } from '@/commands/operations/processTree/ToggleOutputOp';
+     8	import type { IOperation } from '@/commands/operations/IOperation';
+     9	import type { World } from '@/domain/world/World';
+    10	import type {
+    11	  PopSubprocessRequest,
+    12	  ProcessHistoryResult,
+    13	  ProcessHistoryState,
+    14	  PushSubprocessRequest,
+    15	  RenameSubprocessRequest,
+    16	  ToggleEncapsulationRequest,
+    17	  ToggleOutputRequest
+    18	} from './ProcessHistoryIntents';
+    19	
+    20	export class ProcessHistoryUseCases {
+    21	  constructor(
+    22	    private readonly world: World,
+    23	    private readonly commandStack: CommandStack
+    24	  ) {}
+    25	
+    26	  getState(): ProcessHistoryState {
+    27	    const processTree = this.world.getProcessTree();
+    28	    return {
+    29	      canPop: processTree.getStackDepth() > 1,
+    30	      activeSubprocessId: processTree.getCurrentSubprocess().id,
+    31	      stackDepth: processTree.getStackDepth()
+    32	    };
+    33	  }
+    34	
+    35	  pushSubprocess(request: PushSubprocessRequest = {}): ProcessHistoryResult {
+    36	    const name = request.name ?? `Subprocess ${Date.now()}`;
+    37	    return this.executeProcessCommand('Push subprocess', new PushSubprocessOp(name));
+    38	  }
+    39	
+    40	  popSubprocess(_request: PopSubprocessRequest = {}): ProcessHistoryResult {
+    41	    if (!this.getState().canPop) {
+    42	      return {
+    43	        success: false,
+    44	        state: this.getState(),
+    45	        error: 'Cannot pop root subprocess'
+    46	      };
+    47	    }
+    48	    return this.executeProcessCommand('Pop subprocess', new PopSubprocessOp());
+    49	  }
+    50	
+    51	  toggleEncapsulation(request: ToggleEncapsulationRequest): ProcessHistoryResult {
+    52	    return this.executeProcessCommand(
+    53	      'Toggle subprocess encapsulation',
+    54	      new ToggleEncapsulationOp(request.nodeId)
+    55	    );
+    56	  }
+    57	
+    58	  toggleOutput(request: ToggleOutputRequest): ProcessHistoryResult {
+    59	    return this.executeProcessCommand(
+    60	      'Toggle output status',
+    61	      new ToggleOutputOp(request.nodeId)
+    62	    );
+    63	  }
+    64	
+    65	  renameSubprocess(request: RenameSubprocessRequest): ProcessHistoryResult {
+    66	    return this.executeProcessCommand(
+    67	      'Rename subprocess',
+    68	      new RenameSubprocessOp(request.nodeId, request.newName)
+    69	    );
+    70	  }
+    71	
+    72	  private executeProcessCommand(description: string, operation: IOperation): ProcessHistoryResult {
+    73	    const command = new Command(description, this.world);
+    74	
+    75	    try {
+    76	      command.addAndExecute(operation);
+    77	      command.commit();
+    78	      this.commandStack.push(command);
+    79	      return {
+    80	        success: true,
+    81	        state: this.getState()
+    82	      };
+    83	    } catch (error) {
+    84	      command.rollback();
+    85	      return {
+    86	        success: false,
+    87	        state: this.getState(),
+    88	        error: error instanceof Error ? error.message : String(error)
+    89	      };
+    90	    }
+    91	  }
+    92	}
+
+--- SvgCanvas command commit area ---
+   285	  startClientX: 0,
+   286	  startClientY: 0,
+   287	  moved: false
+   288	});
+   289	
+   290	// Viewport pan in select mode (T965: drag empty space pans)
+   291	const viewportPan = ref<{
+   292	  active: boolean;
+   293	  startX: number;
+   294	  startY: number;
+   295	}>({
+   296	  active: false,
+   297	  startX: 0,
+   298	  startY: 0
+   299	});
+   300	
+   301	let ignoreNextClick = false;
+   302	
+   303	function isMovableFreePoint(point: unknown): point is FreePoint2D {
+   304	  return point instanceof FreePoint2D && !point.locked;
+   305	}
+   306	
+   307	function hasStatusMessage(tool: ITool): tool is ITool & { getStatusMessage: () => string } {
+   308	  return 'getStatusMessage' in tool && typeof tool.getStatusMessage === 'function';
+   309	}
+   310	
+   311	function endPointDrag(commit: boolean): void {
+   312	  if (!pointDrag.value.active) return;
+   313	
+   314	  const moveSession = pointDrag.value.moveSession;
+   315	
+   316	  try {
+   317	    if (moveSession) {
+   318	      if (commit) {
+   319	        const result = moveSession.commit();
+   320	        if (!result.success) console.error('[SvgCanvas] Point move commit failed:', result.message);
+   321	      } else {
+   322	        moveSession.cancel();
+   323	      }
+   324	    }
+   325	  } finally {
+   326	    pointDrag.value = {
+   327	      active: false,
+   328	      planeId: null,
+   329	      pointId: null,
+   330	      moveSession: null,
+   331	      startClientX: 0,
+   332	      startClientY: 0,
+   333	      moved: false
+   334	    };
+   335	    renderTick.value++;

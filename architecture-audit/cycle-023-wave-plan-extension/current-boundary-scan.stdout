@@ -1,0 +1,30 @@
+frontend/src/application/world/initializeWorld.ts:22:  const initCmd = new Command('Initialize World', world);
+frontend/src/application/world/initializeWorld.ts:33:  initCmd.commit();
+frontend/src/application/world/initializeWorld.ts:34:  commandStack.push(initCmd);
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:12:    const cmd = new Command(`Move point ${request.label ?? request.pointId}`, this.world);
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:32:        cmd.commit();
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:33:        this.commandStack.push(cmd);
+frontend/src/application/canvas/CanvasStyleUseCase.ts:11:    const cmd = new Command(`Update style: ${request.elementId}`, this.world);
+frontend/src/application/canvas/CanvasStyleUseCase.ts:14:      cmd.commit();
+frontend/src/application/canvas/CanvasStyleUseCase.ts:15:      this.commandStack.push(cmd);
+frontend/src/application/construction/ConstructionUseCases.ts:36:  const cmd = new Command(intent.description, world);
+frontend/src/application/construction/ConstructionUseCases.ts:43:    cmd.commit();
+frontend/src/application/construction/ConstructionUseCases.ts:44:    commandStack.push(cmd);
+frontend/src/application/processHistory/ProcessHistoryUseCases.ts:73:    const command = new Command(description, this.world);
+frontend/src/application/processHistory/ProcessHistoryUseCases.ts:77:      command.commit();
+frontend/src/application/processHistory/ProcessHistoryUseCases.ts:78:      this.commandStack.push(command);
+frontend/src/application/appShell/AppShellRuntime.ts:17:  const world = session.worldForView();
+frontend/src/application/appShell/AppShellRuntime.ts:18:  const commandStack = session.commandStackForShortcuts();
+frontend/src/application/appShell/AppShellRuntime.ts:39:  const activePlane = new ActivePlaneUseCases(session.worldForUseCases(), { activePlaneId, activePlaneName });
+frontend/src/application/appShell/AppShellRuntime.ts:40:  const selectionDeletion = new SelectionDeletionCommandService(session.worldForUseCases(), session.commandStackForCommandServices());
+frontend/src/application/appShell/AppShellRuntime.ts:41:  const selection = new SelectionUseCases(session.worldForUseCases(), selectionDeletion, ports.selectionStore, () => activePlaneId.value);
+frontend/src/application/appShell/RuntimeSession.ts:18:  private readonly commandStack = new CommandStack();
+frontend/src/application/appShell/RuntimeSession.ts:20:  worldForView(): World {
+frontend/src/application/appShell/RuntimeSession.ts:24:  commandStackForShortcuts(): CommandStack {
+frontend/src/application/appShell/RuntimeSession.ts:28:  worldForUseCases(): World {
+frontend/src/application/appShell/RuntimeSession.ts:32:  commandStackForCommandServices(): CommandStack {
+frontend/src/application/appShell/RuntimeSession.ts:65:    const candidateCommandStack = new CommandStack();
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:13:  createCommand: (description, world) => new Command(description, world),
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:35:    deleteCommand.commit();
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:36:    this.commandStack.push(deleteCommand);
+frontend/src/components/workspace/SvgCanvas.vue:319:        const result = moveSession.commit();
