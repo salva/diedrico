@@ -1,0 +1,131 @@
+--- ## Wave 019 85320
+le widely through geometry construction and rendering. Use typed context builders and focused tests before full validation.
+- Projection-plane mutation methods use realization while also registering dependencies and marking dirty; do not mix mutation/dependency ownership into this realization-context wave unless a reviewed plan edit broadens scope.
+- Some domain comments still reference old phase-era `World` examples. Do not convert this into a docs/comment cleanup wave; update only comments adjacent to changed contracts if needed for correctness.
+- If the source tree has unrelated dirty build-contract work in progress, implementation must inspect path-focused diffs first and avoid reverting or masking those changes.
+
+**No-backcompat rationale**
+
+The old full-`World`/`any` realization signatures are architectural debt, not a compatibility surface worth preserving. Keeping overloads or aliases would leave the core domain contract ambiguous and would let future presentation adapters continue bypassing narrow read contexts. Under the project priorities, delete the old signatures and update active callers/tests directly once the reviewed proposal chooses the exact context shape.
+
+---
+
+## Wave 019 — Three scene-host lifecycle and renderer platform boundary
+
+**Status**
+
+Added by `cycle-018-wave-plan-extension` correction as the recommended next ordered wave after Wave 018. Requires the Cycle 018 wave-plan-extension review to sign off the ordering before any Wave 019 scout/proposal or implementation. Wave 019 must be re-read after Wave 018 completes; if Wave 018 changes realization/read-context assumptions materially, update this entry through a reviewed plan-edit mini-cycle before implementation.
+
+**Scope**
+
+- `frontend/src/rendering/threeView/ThreeViewRuntime.ts`
+- `frontend/src/rendering/threeView/ThreeSceneHost.ts`
+- `frontend/src/rendering/threeView/ThreeObjectRegistry.ts`
+- 3D scene adapters under `frontend/src/rendering/threeView/` only where their lifecycle/material/disposal contract with the host must be clarified:
+  - `ProjectionPlaneSceneAdapter.ts`
+  - `PlanarElementSceneAdapter.ts`
+  - `ReconstructedElementSceneAdapter.ts`
+  - `GuideSceneAdapter.ts`
+  - `HingeSceneAdapter.ts`
+  - `AxisLabelSceneAdapter.ts` if static use proves it is active or obsolete
+- `frontend/src/components/panels/ThreeView.vue` only as a composition shell for mount/resize/dispose/watch wiring
+- focused three-scene-host/runtime/registry tests and representative live/e2e 3D rendering checks
+
+**Scope guard**
+
+This wave owns the Three.js runtime/platform boundary after the presentation and domain-realization read contracts are stable. It must not reopen domain realization contracts, canvas presentation selectors, app-shell project lifecycle, command/undo, persistence, backend, package/tooling, validation-platform, docs/spec, or broad UI redesign. It must begin with a current inventory of scene-host responsibilities, animation-frame ownership, resize/event ownership, renderer/label-renderer DOM ownership, OrbitControls ownership, registry disposal, and active scene-adapter material/geometry creation.
+
+If Wave 018 leaves full-`World` or `any` realization seams that still force renderer decisions to depend on domain internals, stop and run a reviewed plan edit before starting this wave. If implementation discovers user-facing 3D interaction behavior must change beyond encoding the existing lifecycle/ownership contract, cover it with focused e2e/live evidence or stop for a mini-cycle.
+
+**Baseline/current grounding**
+
+The baseline identified 3D rendering concentration as a major residual rendering risk: `ThreeView.vue` originally combined scene setup, projection-plane rendering, 2D-on-3D rendering, 3D elements, guide geometry, hinge lines, animation, resize, cleanup, domain realization access, and store access (`architecture-audit/baseline/quality-report.md`, Q5; `architecture-audit/baseline/architecture-map.md`, “God-modules”; `architecture-audit/baseline/risk-register.md`, R8). Waves 016 and 017 narrowed the canvas/three presentation read-model boundary first, and Wave 018 is ordered ahead of this entry so the scene platform consumes typed realization/read outputs rather than preserving full-`World` realization seams.
+
+Current source evidence shows the scene work is now a separate platform lifecycle boundary rather than a selector-boundary issue. `ThreeView.vue` is a smaller composition shell, but it still owns Vue watchers, a global resize listener, world-change subscription, runtime creation, and runtime disposal (`frontend/src/components/panels/ThreeView.vue:42`, `frontend/src/components/panels/ThreeView.vue:44`, `frontend/src/components/panels/ThreeView.vue:56`, `frontend/src/components/panels/ThreeView.vue:59`, `frontend/src/components/panels/ThreeView.vue:62`, `frontend/src/components/panels/ThreeView.vue:67`). `ThreeViewRuntime` still hard-wires the host, presentation controller, and five scene adapters in one constructor-less class and replaces registry groups directly (`frontend/src/rendering/threeView/ThreeViewRuntime.ts:10`, `frontend/src/rendering/threeView/ThreeViewRuntime.ts:11`, `frontend/src/rendering/threeView/Three
+--- Wave 019 85323
+widely through geometry construction and rendering. Use typed context builders and focused tests before full validation.
+- Projection-plane mutation methods use realization while also registering dependencies and marking dirty; do not mix mutation/dependency ownership into this realization-context wave unless a reviewed plan edit broadens scope.
+- Some domain comments still reference old phase-era `World` examples. Do not convert this into a docs/comment cleanup wave; update only comments adjacent to changed contracts if needed for correctness.
+- If the source tree has unrelated dirty build-contract work in progress, implementation must inspect path-focused diffs first and avoid reverting or masking those changes.
+
+**No-backcompat rationale**
+
+The old full-`World`/`any` realization signatures are architectural debt, not a compatibility surface worth preserving. Keeping overloads or aliases would leave the core domain contract ambiguous and would let future presentation adapters continue bypassing narrow read contexts. Under the project priorities, delete the old signatures and update active callers/tests directly once the reviewed proposal chooses the exact context shape.
+
+---
+
+## Wave 019 — Three scene-host lifecycle and renderer platform boundary
+
+**Status**
+
+Added by `cycle-018-wave-plan-extension` correction as the recommended next ordered wave after Wave 018. Requires the Cycle 018 wave-plan-extension review to sign off the ordering before any Wave 019 scout/proposal or implementation. Wave 019 must be re-read after Wave 018 completes; if Wave 018 changes realization/read-context assumptions materially, update this entry through a reviewed plan-edit mini-cycle before implementation.
+
+**Scope**
+
+- `frontend/src/rendering/threeView/ThreeViewRuntime.ts`
+- `frontend/src/rendering/threeView/ThreeSceneHost.ts`
+- `frontend/src/rendering/threeView/ThreeObjectRegistry.ts`
+- 3D scene adapters under `frontend/src/rendering/threeView/` only where their lifecycle/material/disposal contract with the host must be clarified:
+  - `ProjectionPlaneSceneAdapter.ts`
+  - `PlanarElementSceneAdapter.ts`
+  - `ReconstructedElementSceneAdapter.ts`
+  - `GuideSceneAdapter.ts`
+  - `HingeSceneAdapter.ts`
+  - `AxisLabelSceneAdapter.ts` if static use proves it is active or obsolete
+- `frontend/src/components/panels/ThreeView.vue` only as a composition shell for mount/resize/dispose/watch wiring
+- focused three-scene-host/runtime/registry tests and representative live/e2e 3D rendering checks
+
+**Scope guard**
+
+This wave owns the Three.js runtime/platform boundary after the presentation and domain-realization read contracts are stable. It must not reopen domain realization contracts, canvas presentation selectors, app-shell project lifecycle, command/undo, persistence, backend, package/tooling, validation-platform, docs/spec, or broad UI redesign. It must begin with a current inventory of scene-host responsibilities, animation-frame ownership, resize/event ownership, renderer/label-renderer DOM ownership, OrbitControls ownership, registry disposal, and active scene-adapter material/geometry creation.
+
+If Wave 018 leaves full-`World` or `any` realization seams that still force renderer decisions to depend on domain internals, stop and run a reviewed plan edit before starting this wave. If implementation discovers user-facing 3D interaction behavior must change beyond encoding the existing lifecycle/ownership contract, cover it with focused e2e/live evidence or stop for a mini-cycle.
+
+**Baseline/current grounding**
+
+The baseline identified 3D rendering concentration as a major residual rendering risk: `ThreeView.vue` originally combined scene setup, projection-plane rendering, 2D-on-3D rendering, 3D elements, guide geometry, hinge lines, animation, resize, cleanup, domain realization access, and store access (`architecture-audit/baseline/quality-report.md`, Q5; `architecture-audit/baseline/architecture-map.md`, “God-modules”; `architecture-audit/baseline/risk-register.md`, R8). Waves 016 and 017 narrowed the canvas/three presentation read-model boundary first, and Wave 018 is ordered ahead of this entry so the scene platform consumes typed realization/read outputs rather than preserving full-`World` realization seams.
+
+Current source evidence shows the scene work is now a separate platform lifecycle boundary rather than a selector-boundary issue. `ThreeView.vue` is a smaller composition shell, but it still owns Vue watchers, a global resize listener, world-change subscription, runtime creation, and runtime disposal (`frontend/src/components/panels/ThreeView.vue:42`, `frontend/src/components/panels/ThreeView.vue:44`, `frontend/src/components/panels/ThreeView.vue:56`, `frontend/src/components/panels/ThreeView.vue:59`, `frontend/src/components/panels/ThreeView.vue:62`, `frontend/src/components/panels/ThreeView.vue:67`). `ThreeViewRuntime` still hard-wires the host, presentation controller, and five scene adapters in one constructor-less class and replaces registry groups directly (`frontend/src/rendering/threeView/ThreeViewRuntime.ts:10`, `frontend/src/rendering/threeView/ThreeViewRuntime.ts:11`, `frontend/src/rendering/threeView/ThreeVie
+--- recommended next ordered wave after Wave 018 85464
+utation methods use realization while also registering dependencies and marking dirty; do not mix mutation/dependency ownership into this realization-context wave unless a reviewed plan edit broadens scope.
+- Some domain comments still reference old phase-era `World` examples. Do not convert this into a docs/comment cleanup wave; update only comments adjacent to changed contracts if needed for correctness.
+- If the source tree has unrelated dirty build-contract work in progress, implementation must inspect path-focused diffs first and avoid reverting or masking those changes.
+
+**No-backcompat rationale**
+
+The old full-`World`/`any` realization signatures are architectural debt, not a compatibility surface worth preserving. Keeping overloads or aliases would leave the core domain contract ambiguous and would let future presentation adapters continue bypassing narrow read contexts. Under the project priorities, delete the old signatures and update active callers/tests directly once the reviewed proposal chooses the exact context shape.
+
+---
+
+## Wave 019 — Three scene-host lifecycle and renderer platform boundary
+
+**Status**
+
+Added by `cycle-018-wave-plan-extension` correction as the recommended next ordered wave after Wave 018. Requires the Cycle 018 wave-plan-extension review to sign off the ordering before any Wave 019 scout/proposal or implementation. Wave 019 must be re-read after Wave 018 completes; if Wave 018 changes realization/read-context assumptions materially, update this entry through a reviewed plan-edit mini-cycle before implementation.
+
+**Scope**
+
+- `frontend/src/rendering/threeView/ThreeViewRuntime.ts`
+- `frontend/src/rendering/threeView/ThreeSceneHost.ts`
+- `frontend/src/rendering/threeView/ThreeObjectRegistry.ts`
+- 3D scene adapters under `frontend/src/rendering/threeView/` only where their lifecycle/material/disposal contract with the host must be clarified:
+  - `ProjectionPlaneSceneAdapter.ts`
+  - `PlanarElementSceneAdapter.ts`
+  - `ReconstructedElementSceneAdapter.ts`
+  - `GuideSceneAdapter.ts`
+  - `HingeSceneAdapter.ts`
+  - `AxisLabelSceneAdapter.ts` if static use proves it is active or obsolete
+- `frontend/src/components/panels/ThreeView.vue` only as a composition shell for mount/resize/dispose/watch wiring
+- focused three-scene-host/runtime/registry tests and representative live/e2e 3D rendering checks
+
+**Scope guard**
+
+This wave owns the Three.js runtime/platform boundary after the presentation and domain-realization read contracts are stable. It must not reopen domain realization contracts, canvas presentation selectors, app-shell project lifecycle, command/undo, persistence, backend, package/tooling, validation-platform, docs/spec, or broad UI redesign. It must begin with a current inventory of scene-host responsibilities, animation-frame ownership, resize/event ownership, renderer/label-renderer DOM ownership, OrbitControls ownership, registry disposal, and active scene-adapter material/geometry creation.
+
+If Wave 018 leaves full-`World` or `any` realization seams that still force renderer decisions to depend on domain internals, stop and run a reviewed plan edit before starting this wave. If implementation discovers user-facing 3D interaction behavior must change beyond encoding the existing lifecycle/ownership contract, cover it with focused e2e/live evidence or stop for a mini-cycle.
+
+**Baseline/current grounding**
+
+The baseline identified 3D rendering concentration as a major residual rendering risk: `ThreeView.vue` originally combined scene setup, projection-plane rendering, 2D-on-3D rendering, 3D elements, guide geometry, hinge lines, animation, resize, cleanup, domain realization access, and store access (`architecture-audit/baseline/quality-report.md`, Q5; `architecture-audit/baseline/architecture-map.md`, “God-modules”; `architecture-audit/baseline/risk-register.md`, R8). Waves 016 and 017 narrowed the canvas/three presentation read-model boundary first, and Wave 018 is ordered ahead of this entry so the scene platform consumes typed realization/read outputs rather than preserving full-`World` realization seams.
+
+Current source evidence shows the scene work is now a separate platform lifecycle boundary rather than a selector-boundary issue. `ThreeView.vue` is a smaller composition shell, but it still owns Vue watchers, a global resize listener, world-change subscription, runtime creation, and runtime disposal (`frontend/src/components/panels/ThreeView.vue:42`, `frontend/src/components/panels/ThreeView.vue:44`, `frontend/src/components/panels/ThreeView.vue:56`, `frontend/src/components/panels/ThreeView.vue:59`, `frontend/src/components/panels/ThreeView.vue:62`, `frontend/src/components/panels/ThreeView.vue:67`). `ThreeViewRuntime` still hard-wires the host, presentation controller, and five scene adapters in one constructor-less class and replaces registry groups directly (`frontend/src/rendering/threeView/ThreeViewRuntime.ts:10`, `frontend/src/rendering/threeView/ThreeViewRuntime.ts:11`, `frontend/src/rendering/threeView/ThreeViewRuntime.ts:12`, `frontend/src/rendering/threeView/ThreeViewRuntime.ts:13`, `frontend/src/rendering/threeView/ThreeViewRuntime.ts:21`, `front
