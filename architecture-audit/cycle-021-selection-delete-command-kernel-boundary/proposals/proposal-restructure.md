@@ -66,18 +66,29 @@ A command executor is an internal architecture boundary. Once introduced for sel
 
 ## Risks
 
-- The executor can become a new god service if it starts accepting arbitrary application concerns, persistence, autosave, UI callbacks, or operation registries. Keep it to the command lifecycle only.
+- The executor can become a new god service if it starts accepting arbitrary application concerns, persistence, autosave, UI callbacks, operation registries, replay/serialization, backend/API behavior, package/tooling, docs/specs, or non-selection command producers. Keep it to the command lifecycle needed by selection/delete only.
 - A generic executor may tempt implementation to migrate all application command paths in one cycle. That would violate Wave 021 scope; leave those paths as future candidates with static-scan evidence.
 - If executor failure semantics differ from current `Command.addAndExecute()` rollback behavior, deletion correctness and undo/redo may regress. Focused tests must cover failure and stack state.
 - If the executor hides too much, command-boundary tests may become less precise. Expose only typed result/exception behavior, not command internals.
 - Existing dirty command files may change the executor’s compile/test surface; implementation must isolate its own diff and report unrelated state.
+
+## Semantic-preservation validation requirements
+
+The executor path must prove that extracting the `new Command` → build operations → `commit()` → `CommandStack.push()` choreography preserves current selection/delete semantics and does not silently broaden into an application kernel. Focused tests and validation notes must explicitly assert all of the following:
+
+- Selection clearing happens only after successful selected-id command creation, cascade operation construction, executor commit, and `CommandStack.push()`.
+- Failures from the selection deletion service, command operation builder, `DeletionSequenceFactory.createCascadeDeletion(...)`, executor commit path, or stack push path propagate/return failure using the chosen project style and do not clear selection.
+- Undo stack count, redo stack count, redo invalidation after a new selection-delete command, and stack notification timing remain consistent with the current `CommandStack.push()` contract.
+- Empty selection and empty/no-op deletion paths do not allocate/commit/push a command and do not change undo/redo stack counts.
+- Existing non-undoable command behavior remains at the `CommandStack` contract boundary; the executor must not add a broad policy layer that changes which commands are accepted, rejected, or counted.
+- Executor scope is limited to command lifecycle choreography needed by selection/delete in this wave. It must not absorb persistence/autosave, UI concerns, replay/serialization, operation registry redesign, backend/API behavior, package/tooling, docs/specs, or migration of canvas/tool/process-history/toolbar/world-initialization command producers.
 
 ## Validation plan
 
 Same mandatory cadence as the direct proposal, with additional focused executor tests:
 
 1. Pre-edit scoped status/diff and static scans.
-2. Focused Vitest for `ApplicationCommandExecutor`, selection deletion service, `SelectionUseCases`, app-shell runtime/boundary, and keyboard routing.
+2. Focused Vitest for `ApplicationCommandExecutor`, selection deletion service, `SelectionUseCases`, app-shell runtime/boundary, and keyboard routing, including explicit semantic-preservation assertions for success ordering, build/commit/push failures, selection clearing, undo/redo counts, redo invalidation, notification timing, non-undoable command behavior, empty/no-op behavior, and executor scope limits.
 3. Root/frontend lint.
 4. Root/frontend full Vitest.
 5. Root/frontend build.

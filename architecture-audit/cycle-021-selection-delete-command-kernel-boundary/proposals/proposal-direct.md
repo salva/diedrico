@@ -85,15 +85,26 @@ The old direct command construction path is internal implementation debt, not a 
 - `DeletionSequenceFactory` has existing debug logging and process-tree behavior. Do not alter those semantics in this direct path.
 - Existing unrelated dirty command files may affect validation. Implementation must capture path-scoped diffs and avoid depending on unowned changes.
 
+## Semantic-preservation validation requirements
+
+The implementation must prove the extracted selection/delete command boundary preserves the current command lifecycle semantics, not merely that deletion succeeds on the happy path. Focused tests and validation notes must explicitly assert all of the following:
+
+- Selection clearing happens only after successful command creation, cascade operation construction, `commit()`, and `CommandStack.push()`.
+- Failures during selected-id command building, `DeletionSequenceFactory.createCascadeDeletion(...)`, `commit()`, or `CommandStack.push(...)` propagate or return failure using the chosen project style and do not clear selection.
+- Undo stack count, redo stack count, redo invalidation after a new delete command, and stack notification timing remain consistent with the current `CommandStack.push()` contract.
+- Empty selection and empty/no-op deletion results do not create, commit, or push a command, and do not change undo/redo stack counts.
+- Existing non-undoable command behavior is preserved at the command-stack boundary; the service must not introduce a side path that pushes commands the stack would currently reject or ignore.
+- The service boundary remains limited to selection/delete command construction and execution; it must not absorb persistence, autosave, UI notification, replay/serialization, backend/API, package/tooling, docs/specs, or other application command-producer responsibilities.
+
 ## Validation plan
 
 Implementation logs must capture stdout/stderr under `architecture-audit/cycle-021-selection-delete-command-kernel-boundary/validation/`:
 
 1. Pre-edit scoped git status/diff plus static scans for `SelectionUseCases`, `new Command`, `DeletionSequenceFactory`, `CommandStack.push`, cascade preview, and keyboard delete routing.
 2. Focused Vitest:
-   - new selection-delete command service tests;
-   - selection use-case tests;
-   - app-shell boundary/runtime tests;
+   - new selection-delete command service tests, including the semantic-preservation assertions above for success ordering, build/commit/push failure, undo/redo counts, redo invalidation, notification timing, non-undoable command behavior, and empty/no-op behavior;
+   - selection use-case tests proving selection clears only after a successful service result and remains unchanged for failures and empty/no-op paths;
+   - app-shell boundary/runtime tests proving `SelectionUseCases` no longer imports or constructs `Command`, `CommandStack`, or `DeletionSequenceFactory`, and that the new service is wired only at the existing runtime composition point;
    - keyboard shortcut router tests.
 3. Root `npm run lint` and frontend lint where defined.
 4. Root and frontend full Vitest.
