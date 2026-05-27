@@ -148,3 +148,45 @@ Correction validation logs:
 - DTO-native canvas style policy extraction so selectors do not need any casted domain-shaped style inputs.
 - Narrow `ThreeWorldReadPort` scene DTO generation behind smaller behavior-specific selectors once canvas presentation seams are stable.
 - Consider a tiny typed realization-context factory only if both canvas and 3D boundaries converge on duplicated context assembly in a future reviewed wave.
+
+## Validation/preview closure — Wave 028 COMPLETE
+
+**Status: Wave 028 COMPLETE.** Closure verification was performed in `cycle-028-validation-and-preview-refresh` without production source refactoring, package/tooling edits, backend/docs/specs changes, persistence/command-history changes, broad realization redesign, or next-wave implementation.
+
+### Closure validation evidence
+
+Fresh closure logs are under `architecture-audit/cycle-028-canvas-projection-dto-selectors/validation/`:
+
+- `t3-closure-static-seam-scan-rerun.stdout.log` / `.stderr.log` — PASS. `CanvasWorldReadPort.ts` contains no `world.getAll3DPoints()`, `world.getAll3DLines()`, or `world.getAll3DSegments()` calls; projected-3D raw traversal is localized in `Projected3DCanvasReadPort.ts`; `CanvasPresentationSelector.ts` and `Projected3DCanvasSelector.ts` contain no raw plane/world getter loops. Hits for public seam names are deletion assertions in tests and internal adapter-owned 2D/3D traversal, not public selector seams.
+- `t3-closure-protected-invariant-scan-rerun.stdout.log` / `.stderr.log` — PASS with expected legitimate `CanvasWorldReadPort` references only. No generic `RuntimeWorld`, `WorldReadModel`, `WorldInjectionKey`, app-kernel facade, raw tool-world seam, or process-tree-shaped canvas visibility regression was introduced. Protected unrelated files were checked by metadata only.
+- `t3-closure-focused-vitest.stdout.log` / `.stderr.log` — PASS, 3 files / 7 tests: `projected3DCanvasSelector.spec.ts`, `canvasWorldReadPort.spec.ts`, and `Cycle027Architecture.test.ts`.
+- `t3-closure-root-lint.stdout.log` / `.stderr.log` — PASS, root `npm run lint`.
+- `t3-closure-frontend-lint.stdout.log` / `.stderr.log` — PASS, frontend `npm run lint`.
+- `t3-closure-root-vitest.stdout.log` / `.stderr.log` — PASS, root `npm run test`: 113 files passed, 1 skipped; 1278 tests passed, 45 skipped, 11 todo. Existing diagnostic stderr from infeasible geometry/auth/error-path tests remains non-failing.
+- `t3-closure-frontend-vitest.stdout.log` / `.stderr.log` — PASS, frontend `npm run test`: same passing suite counts as root workspace run.
+- `t3-closure-root-build.stdout.log` / `.stderr.log` — PASS, root `npm run build`; only existing Vite chunk-size warning.
+- `t3-closure-frontend-build.stdout.log` / `.stderr.log` — PASS, frontend `npm run build`; only existing Vite chunk-size warning.
+- `t3-closure-root-e2e.stdout.log` / `.stderr.log` — PASS, root `npm run test:e2e`: 10/10 Playwright tests passed, including `3D overlay owns pointer interaction and does not pass drag gestures through to the 2D canvas`.
+- `t3-closure-frontend-e2e.stdout.log` / `.stderr.log` — PASS, frontend `npm run test:e2e`: 10/10 Playwright tests passed with the same overlay pointer-boundary coverage.
+- `t3-closure-live-preview-confirm.stdout.log` / `.stderr.log` and `t3-closure-live-preview-probe.stdout.log` — PASS. A dev server was listening on `0.0.0.0:5173` (`ss` reported `LISTEN 0.0.0.0:5173`) and `curl -I http://127.0.0.1:5173/` returned `HTTP/1.1 200 OK`.
+
+Two early closure scan/preview attempts are retained as harness/shell-command provenance and superseded by green reruns: `t3-closure-static-seam-scan.*` and `t3-closure-protected-invariant-scan.*` failed because `/bin/sh` did not support `set -o pipefail`; `t3-closure-live-preview-refresh.*` exited early due to process matching. The green `*-rerun` scans and `t3-closure-live-preview-confirm.*` are the authoritative closure evidence.
+
+### 3D interaction regression evidence
+
+The user-reported 3D view interaction regression remains fixed by CLI Playwright evidence. Both root and frontend e2e runs passed `frontend/tests/e2e/current-ui-contract.spec.ts`, including the overlay pointer-boundary test that drags/clicks the 3D overlay and verifies the gesture does not pass through to move paper/canvas state. MCP/browser manual tooling was not available in this coder toolset, so the accepted residual is that verification is CLI Playwright rather than MCP live interaction; the live preview was separately confirmed reachable on `0.0.0.0:5173`.
+
+### Protected-surface/source-control reconciliation
+
+- No source files were modified during validation closure.
+- `frontend/src/domain/calculations/Intersections.ts` and `frontend/src/domain/processTree/ActionGroup.ts` remain unrelated dirty files from outside Cycle 028; closure checked only metadata/status and did not read, revert, stage, or incorporate their contents.
+- Persistence schema/replay, backend/docs/specs/package/auth/provider/env files, command history/producer redesign, broad realization redesign, UI feature work, app-kernel facade work, and `ThreeWorldReadPort.ts` source were not touched.
+- Broad `git status` remains unsuitable in this workspace because it can overflow; scoped status/diff evidence is captured in `t3-closure-scoped-status.stdout.log` and `t3-closure-scoped-diffstat.stdout.log`.
+
+### Final residual risks and next-wave recommendation
+
+Wave 028 leaves no blocking validation or preview issue. Remaining architecture candidates should be handled only through the next reviewed wave/design process, not in this closure stage:
+
+1. Highest centrality remains the ordered plan’s next unclosed central wave work; reread `architecture-audit/wave-plan.md` and the separate next-wave recommendation artifact before opening the next cycle.
+2. Cycle 028-specific residuals are candidates for a future presentation wave: DTO-native canvas style policy extraction, narrower `ThreeWorldReadPort` scene DTO/read-port ownership, and a tiny typed realization-context factory only if future evidence shows duplicated context assembly across canvas/3D boundaries.
+3. The unrelated dirty `Intersections.ts` and `ActionGroup.ts` files should stay protected unless a future reviewed wave explicitly scopes them.
