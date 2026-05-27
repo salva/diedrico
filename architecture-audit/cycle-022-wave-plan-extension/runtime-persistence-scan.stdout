@@ -1,0 +1,69 @@
+frontend/src/application/appShell/AppShellPorts.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/appShell/AppShellPorts.ts:3:import type { World } from '@/domain/world/World';
+frontend/src/application/appShell/AppShellPorts.ts:5:import type { ProjectData } from '@/services/ProjectService';
+frontend/src/application/appShell/AppShellPorts.ts:26:  snapshotCurrentSession(deps: { commandStack: CommandStack; world: World; projectName: string }): ProjectData;
+frontend/src/application/appShell/AppShellPorts.ts:28:  restoreSession(data: ProjectData, deps: { world: World; commandStack: CommandStack }): void;
+frontend/src/application/appShell/ActivePlaneUseCases.ts:2:import type { World } from '@/domain/world/World';
+frontend/src/application/appShell/ActivePlaneUseCases.ts:12:  constructor(private readonly world: World, private readonly state: ActivePlaneState) {}
+frontend/src/application/appShell/ActivePlaneUseCases.ts:16:    this.updateHandler = () => this.updateFromWorld();
+frontend/src/application/appShell/ActivePlaneUseCases.ts:18:    this.updateFromWorld();
+frontend/src/application/appShell/ActivePlaneUseCases.ts:45:  private updateFromWorld(): void {
+frontend/src/application/appShell/SelectionUseCases.ts:2:import type { World } from '@/domain/world/World';
+frontend/src/application/appShell/SelectionUseCases.ts:10:    private readonly world: World,
+frontend/src/application/appShell/AutoSaveUseCases.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/appShell/AutoSaveUseCases.ts:3:import type { World } from '@/domain/world/World';
+frontend/src/application/appShell/AutoSaveUseCases.ts:15:      world: World;
+frontend/src/application/appShell/AutoSaveUseCases.ts:16:      commandStack: CommandStack;
+frontend/src/application/appShell/ProjectSessionUseCases.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/appShell/ProjectSessionUseCases.ts:3:import type { World } from '@/domain/world/World';
+frontend/src/application/appShell/ProjectSessionUseCases.ts:4:import { initializeWorld } from '@/application/world/initializeWorld';
+frontend/src/application/appShell/ProjectSessionUseCases.ts:5:import type { ProjectData } from '@/services/ProjectService';
+frontend/src/application/appShell/ProjectSessionUseCases.ts:13:      world: World;
+frontend/src/application/appShell/ProjectSessionUseCases.ts:14:      commandStack: CommandStack;
+frontend/src/application/appShell/ProjectSessionUseCases.ts:31:      initializeWorld(this.deps.world, this.deps.commandStack);
+frontend/src/application/appShell/ProjectSessionUseCases.ts:50:          initializeWorld(this.deps.world, this.deps.commandStack);
+frontend/src/application/appShell/ProjectSessionUseCases.ts:100:      initializeWorld(this.deps.world, this.deps.commandStack);
+frontend/src/application/appShell/ProjectSessionUseCases.ts:127:      if (this.deps.world.getAllProjectionPlanes().length === 0) initializeWorld(this.deps.world, this.deps.commandStack);
+frontend/src/application/appShell/KeyboardShortcutRouter.ts:1:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/appShell/KeyboardShortcutRouter.ts:18:    commandStack: CommandStack;
+frontend/src/application/appShell/AppShellRuntime.ts:2:import { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/appShell/AppShellRuntime.ts:3:import { World } from '@/domain/world/World';
+frontend/src/application/appShell/AppShellRuntime.ts:17:  const world = new World();
+frontend/src/application/appShell/AppShellRuntime.ts:18:  const commandStack = new CommandStack();
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:1:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:2:import type { World } from '@/domain/world/World';
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:3:import { ProjectService, type ProjectData } from '@/services/ProjectService';
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:6:export class ProjectSessionPersistenceAdapter implements ProjectSessionPersistencePort {
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:7:  snapshotCurrentSession(deps: { commandStack: CommandStack; world: World; projectName: string }): ProjectData {
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:8:    return ProjectService.serializeCommands(deps.commandStack, deps.world.peekNextId(), deps.projectName);
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:12:    ProjectService.validateProjectData(data);
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:15:  restoreSession(data: ProjectData, deps: { world: World; commandStack: CommandStack }): void {
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:16:    ProjectService.deserializeCommands(data, deps.world, deps.commandStack);
+frontend/src/application/appShell/AppShellProductionRuntime.ts:6:import { ProjectSessionPersistenceAdapter } from './ProjectSessionPersistenceAdapter';
+frontend/src/application/appShell/AppShellProductionRuntime.ts:24:      persistence: new ProjectSessionPersistenceAdapter(),
+frontend/src/services/ProjectService.ts:2: * ProjectService - current-schema command-stream persistence orchestration.
+frontend/src/services/ProjectService.ts:5:import { World } from '@/domain/world/World';
+frontend/src/services/ProjectService.ts:6:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/services/ProjectService.ts:24:export class ProjectService {
+frontend/src/services/ProjectService.ts:27:  static serializeCommands(commandStack: CommandStack, nextElementId: number, projectName: string): ProjectData {
+frontend/src/services/ProjectService.ts:45:  static deserializeCommands(data: ProjectData, world: World, commandStack: CommandStack): void {
+frontend/src/components/workspace/SvgCanvas.vue:167: * 1. World (domain objects + realizations) 
+frontend/src/components/workspace/SvgCanvas.vue:182:import { World } from '@/domain/world/World';
+frontend/src/components/workspace/SvgCanvas.vue:213:import { createCanvasWorldReadPort } from '@/application/canvasPresentation/CanvasWorldReadPort';
+frontend/src/components/workspace/SvgCanvas.vue:223:// Track World version changes (World is not reactive by itself)
+frontend/src/components/workspace/SvgCanvas.vue:226:let lastWorldVersion = 0;
+frontend/src/components/workspace/SvgCanvas.vue:228:// Active plane - derived from World (managed by App.vue)
+frontend/src/components/workspace/SvgCanvas.vue:411:// World instance - injected from App.vue
+frontend/src/components/workspace/SvgCanvas.vue:412:const world = inject<World>('world')!;
+frontend/src/components/workspace/SvgCanvas.vue:414:  throw new Error('World not provided');
+frontend/src/components/workspace/SvgCanvas.vue:469:  // World is already initialized by initialization factory in constructor
+frontend/src/components/workspace/SvgCanvas.vue:479:  // Poll World version so UI reacts to domain changes (e.g. active plane switching)
+frontend/src/components/workspace/SvgCanvas.vue:480:  lastWorldVersion = world.getVersion();
+frontend/src/components/workspace/SvgCanvas.vue:481:  worldVersion.value = lastWorldVersion;
+frontend/src/components/workspace/SvgCanvas.vue:484:    if (current !== lastWorldVersion) {
+frontend/src/components/workspace/SvgCanvas.vue:485:      lastWorldVersion = current;
+frontend/src/components/workspace/SvgCanvas.vue:491:  console.log('World initialized');
+frontend/src/components/workspace/SvgCanvas.vue:552:    createCanvasWorldReadPort(world),
+frontend/src/components/workspace/SvgCanvas.vue:733:  // Phase 6.5: Delegate to active tool instead of direct World mutation
+frontend/src/tools/ITool.ts:10:import type { World } from '@/domain/world/World';
+frontend/src/tools/ITool.ts:24:  world: World;

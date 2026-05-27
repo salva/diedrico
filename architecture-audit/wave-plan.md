@@ -1294,3 +1294,94 @@ All Wave 021 validation stdout/stderr must be captured to stable files under the
 **No-backcompat rationale**
 
 Direct command construction inside `SelectionUseCases` is internal architecture debt, not a compatibility surface. Preserving old and new delete-selected paths would keep the application/use-case boundary ambiguous and would let future app-shell behavior keep reaching into command internals. Delete the old direct command imports/calls once the reviewed boundary is in place, and update active callers/tests directly.
+---
+
+## Wave 022 — Runtime session kernel and persistence port boundary
+
+**Status**
+
+Added by `cycle-022-wave-plan-extension` after Wave 021 completed. Requires review of this plan extension before the canonical `cycle-022-fresh-scout-proposals` stage and before any implementation. This entry is grounded in current post-Wave-021 source evidence and the Wave 020/021 implementation logs, which show selection/delete command construction was narrowed but the broader runtime object and project-session persistence contract still exposes concrete `World`/`CommandStack` ownership.
+
+**Scope**
+
+- `frontend/src/application/appShell/AppShellRuntime.ts`
+- `frontend/src/application/appShell/AppShellPorts.ts`
+- `frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts`
+- `frontend/src/application/appShell/ProjectSessionUseCases.ts`
+- `frontend/src/application/appShell/AutoSaveUseCases.ts` only where it consumes the project-session persistence contract
+- `frontend/src/application/world/initializeWorld.ts` only where initialization command ownership must be represented by the runtime/session boundary
+- `frontend/src/services/ProjectService.ts` only as the concrete adapter target; do not redesign command descriptors, operation registry, schema, Drive, or migration behavior in this wave unless a reviewed plan edit explicitly broadens scope
+- `frontend/src/application/selectionDeletion/` only as an already-extracted command-boundary consumer that must remain wired through the runtime without broadening its public API
+- focused app-shell runtime/session/persistence adapter tests and architecture-boundary tests for the chosen runtime-session contract
+
+**Scope guard**
+
+This wave owns the boundary between app-shell use cases, runtime-owned `World`/`CommandStack`, and project-session persistence. It is not a generic command-kernel migration wave. Do not migrate canvas movement/style/construction use cases, process-history panel commands, toolbar history commands, tool controllers, rendering selectors, backend stance, docs/specs, placeholder/debug cleanup, package/tooling, or validation platform work into this cycle.
+
+Implementation must begin with an inventory of every current app-shell/session/persistence method that accepts or exposes concrete `World`, `CommandStack`, or `ProjectData`, plus the runtime wiring points that create those objects. If that inventory proves the persistence contract itself must be redesigned deeper than a runtime/session port boundary, stop and run a reviewed plan edit; do not hide schema/descriptor redesign under this wave.
+
+**Current grounding**
+
+Wave 021 completed the narrow selection/delete extraction: `SelectionUseCases` no longer owns delete command construction, while `SelectionDeletionCommandService` now owns `new Command`, `DeletionSequenceFactory`, `commit()`, and `commandStack.push()` for that slice (`architecture-audit/cycle-021-selection-delete-command-kernel-boundary/implementation-log.md`, “Selected path followed”; “DELETE/proof list”; “Residual risks”). The same log accepts that other direct command producers and broader app-shell/runtime command-kernel ownership remain future candidates.
+
+Current source evidence shows the most central residual after that extraction is not another leaf producer first, but the runtime/session contract that still leaks concrete kernel state into persistence and session use cases. `createAppShellRuntime` imports and instantiates concrete `World` and `CommandStack` directly (`frontend/src/application/appShell/AppShellRuntime.ts:2`, `frontend/src/application/appShell/AppShellRuntime.ts:3`, `frontend/src/application/appShell/AppShellRuntime.ts:17`, `frontend/src/application/appShell/AppShellRuntime.ts:18`) and wires those concrete objects into `SelectionDeletionCommandService` (`frontend/src/application/appShell/AppShellRuntime.ts:40`). `AppShellPorts` defines the project-session persistence port in terms of concrete `CommandStack`, `World`, and `ProjectData` (`frontend/src/application/appShell/AppShellPorts.ts:2`, `frontend/src/application/appShell/AppShellPorts.ts:3`, `frontend/src/application/appShell/AppShellPorts.ts:5`, `frontend/src/application/appShell/AppShellPorts.ts:26`, `frontend/src/application/appShell/AppShellPorts.ts:28`). The adapter then passes those objects straight to static `ProjectService` methods (`frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:1`, `frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:2`, `frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:3`, `frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:7`, `frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:8`, `frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:15`, `frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:16`). `ProjectService` itself is explicitly command-stream persistence orchestration and consumes `CommandStack`/`World` (`frontend/src/services/ProjectService.ts:2`, `frontend/src/services/ProjectService.ts:5`, `frontend/src/services/ProjectService.ts:6`, `frontend/src/services/ProjectService.ts:27`, `frontend/src/services/ProjectService.ts:45`).
+
+The runtime/session seam is central because initialization and save/load are lifecycle-defining use cases. `initializeWorld` still creates and pushes an initialization `Command` directly from an application world initializer (`frontend/src/application/world/initializeWorld.ts:19`, `frontend/src/application/world/initializeWorld.ts:22`, `frontend/src/application/world/initializeWorld.ts:33`, `frontend/src/application/world/initializeWorld.ts:34`), while project-session use cases call initialization during create/open/new flows. This makes the runtime session own an implicit bundle of world, command history, initialization, snapshot, restore, and autosave semantics without a named contract.
+
+Other residual command producers remain real but are lower priority for Wave 022 because they are leaf use-case seams that should consume a cleaner runtime/session kernel once it exists: point movement (`frontend/src/application/canvas/CanvasPointMovementUseCase.ts:9`, `frontend/src/application/canvas/CanvasPointMovementUseCase.ts:12`, `frontend/src/application/canvas/CanvasPointMovementUseCase.ts:32`, `frontend/src/application/canvas/CanvasPointMovementUseCase.ts:33`), style updates (`frontend/src/application/canvas/CanvasStyleUseCase.ts:8`, `frontend/src/application/canvas/CanvasStyleUseCase.ts:11`, `frontend/src/application/canvas/CanvasStyleUseCase.ts:14`, `frontend/src/application/canvas/CanvasStyleUseCase.ts:15`), construction (`frontend/src/application/construction/ConstructionUseCases.ts:35`, `frontend/src/application/construction/ConstructionUseCases.ts:36`, `frontend/src/application/construction/ConstructionUseCases.ts:43`, `frontend/src/application/construction/ConstructionUseCases.ts:44`), and process-history edits (`frontend/src/application/processHistory/ProcessHistoryUseCases.ts:20`, `frontend/src/application/processHistory/ProcessHistoryUseCases.ts:22`, `frontend/src/application/processHistory/ProcessHistoryUseCases.ts:23`, `frontend/src/application/processHistory/ProcessHistoryUseCases.ts:73`, `frontend/src/application/processHistory/ProcessHistoryUseCases.ts:77`, `frontend/src/application/processHistory/ProcessHistoryUseCases.ts:78`). Canvas rendering still injects the concrete `World` and polls it for versions (`frontend/src/components/workspace/SvgCanvas.vue:412`, `frontend/src/components/workspace/SvgCanvas.vue:479`, `frontend/src/components/workspace/SvgCanvas.vue:480`), but rendering/domain-contract cleanup is less central than defining the session object those views observe.
+
+**Target outcome**
+
+The app shell has an explicit runtime session boundary that owns the current in-memory `World`, `CommandStack`, initialization lifecycle, snapshot request, restore request, dirty/version implications, and command-history exposure needed by app-shell use cases. App-shell use cases and persistence ports should consume a named session/kernel interface rather than passing raw `{ world, commandStack }` pairs and `ProjectData` through broad ports.
+
+The production persistence adapter remains the only bridge to the current `ProjectService` command-stream implementation. `ProjectService` may still serialize and replay command streams internally in this wave, but that concrete static service shape no longer leaks into app-shell port definitions or use-case call sites. The selected proposal may either introduce a small `ProjectSessionKernel`/`RuntimeSession` object or narrower snapshot/restore DTO ports, but it must choose one authoritative contract and delete the parallel raw pair exposure.
+
+**Explicit DELETE list**
+
+- Delete `ProjectSessionPersistencePort` method signatures that expose raw `{ commandStack: CommandStack; world: World; projectName: string }` and `{ world: World; commandStack: CommandStack }` pairs to app-shell use cases once the reviewed session boundary replaces them.
+- Delete app-shell port imports of `CommandStack`, `World`, and `ProjectData` where they are only present to express persistence/session contracts after the boundary is introduced.
+- Delete duplicated direct snapshot/restore plumbing in `ProjectSessionUseCases` and `AutoSaveUseCases` that manually passes `world` plus `commandStack` to persistence.
+- Delete tests that assert app-shell persistence use cases call static-shaped `ProjectService` contracts or pass raw concrete kernel objects; replace with tests for the new session/persistence boundary.
+- Delete transitional compatibility overloads, adapter shims, or dual paths that allow both raw `World`/`CommandStack` persistence calls and the new runtime-session boundary to remain active.
+- Do not delete or rewrite command descriptor serialization, `OperationRegistry`, `CommandStack` behavior, project schema/version constants, Drive/auth internals, canvas/tool/process-history producers, rendering services, backend/docs/specs, package/tooling, or debug placeholders unless a reviewed plan edit broadens scope.
+
+**Success criteria**
+
+- App-shell persistence/session port definitions no longer expose concrete `World`, `CommandStack`, or `ProjectData` to use-case code except inside the dedicated production adapter or reviewed runtime-session owner.
+- `ProjectSessionUseCases` and `AutoSaveUseCases` request snapshot/restore/save/open behavior through the selected session/persistence boundary rather than manually passing raw world/command-stack pairs.
+- `AppShellRuntime` has one explicit ownership point for runtime session creation and wires selection deletion, keyboard, active-plane, autosave, and project-session use cases through typed boundaries without hidden browser/global defaults reintroduced from before Wave 020.
+- `initializeWorld` command/history behavior remains user-visible equivalent for startup, new project, open project fallback, undo/redo counts, and active-plane setup; if initialization remains command-backed, its command ownership is part of the named runtime/session boundary rather than an implicit helper contract.
+- `ProjectSessionPersistenceAdapter` is the only app-shell module that directly imports `ProjectService`, and any remaining `CommandStack`/`World` use there is adapter-private and covered by focused tests.
+- No canvas/tool, process-history, toolbar, rendering, Three, backend, docs/spec, package/tooling, Drive/auth, command descriptor, or operation-registry behavior changes occur without reviewed plan edit.
+- Focused tests cover runtime-session creation, create/open/new project initialization, snapshot/restore delegation, autosave save calls, selection-delete service wiring through the runtime, and failure propagation without requiring real browser APIs or Drive credentials.
+- Mandatory validation cadence passes with stable logs: root/frontend lint where defined, focused Vitest for app-shell runtime/session/persistence tests, full root/frontend Vitest, root/frontend build, root/frontend Playwright e2e because startup/open/new/save/autosave and keyboard-visible flows are user-observable, live preview refresh on `0.0.0.0:5173`, HTTP reachability probe, and Playwright/live smoke for startup/new project plus representative save/status and delete/undo behavior.
+
+**Dependencies**
+
+Depends on Wave 021 because selection/delete command-kernel extraction gives the runtime one concrete command-boundary service to wire and removes the most immediate app-shell leaf command leak. It is ordered before leaf canvas/style/construction/process-history command-producer cleanup, persistence-schema or backend/frontend contract stance, validation-gate hardening, placeholder/debug cleanup, docs/spec drift, and remaining rendering/domain-contract seams because those later waves should consume an explicit runtime-session/persistence boundary rather than the current raw `World`/`CommandStack` pair contract.
+
+**Validation requirements**
+
+All Wave 022 validation stdout/stderr must be captured to stable files under the reviewed Cycle 022 implementation directory's `validation/` subdirectory. Undefined commands may be skipped only with exact package-script evidence in the implementation log; defined root or workspace commands are mandatory.
+
+1. Capture pre-edit scoped git status/diff and static scans for app-shell imports of `World`, `CommandStack`, `ProjectData`, `ProjectService`, raw `snapshotCurrentSession`/`restoreSession` signatures, initialization command creation, and direct command producers intentionally left out of scope.
+2. Run focused Vitest for changed app-shell runtime/session/persistence adapter modules, including create/open/new project initialization, snapshot/restore, autosave, failure handling, and runtime wiring of the existing selection-delete service.
+3. Run architecture/static tests or focused source-boundary checks proving app-shell use-case ports no longer expose raw `World`/`CommandStack` persistence signatures and `ProjectService` imports remain adapter-private.
+4. Run `npm run lint` at the repository root and in every workspace where a lint script is defined, including `frontend` while it remains the active workspace.
+5. Run full Vitest at the repository root and in every workspace where a test/Vitest script is defined, including `frontend` while it remains the active workspace.
+6. Run `npm run build` at the repository root and in every workspace where a build script is defined, including `frontend` while it remains the active workspace.
+7. Run Playwright/e2e at the repository root and in every workspace where an e2e script is defined because project/session/startup/save and keyboard behavior are user-observable.
+8. Refresh the live preview bound to `0.0.0.0:5173`, capture HTTP 200 reachability probes for loopback and in-container host binding where meaningful, and run focused Playwright/live browser smoke for startup/new project plus representative save/status and delete/undo behavior without real Drive credentials.
+
+**Risks**
+
+- A runtime-session boundary can become an application god object if it absorbs every use case. Keep it to ownership of current runtime state, initialization, snapshot/restore, and explicitly required command-history exposure; leaf construction/process-history producers remain deferred.
+- Moving snapshot/restore contracts can accidentally become a project-schema redesign. Keep `ProjectService` command-stream internals intact unless a reviewed plan edit deliberately reopens persistence architecture.
+- Initialization is command-backed and affects undo/redo/history semantics. Focused tests must prove new/open startup behavior and command-stack counts remain equivalent.
+- Autosave and save-status timing are user-visible. Use fake scheduler/adapter tests and e2e/live smoke rather than assuming the port refactor is behavior-neutral.
+- Existing unrelated dirty files and generated audit artifacts may be present. Implementation must use path-scoped status/diff, avoid reverting unrelated work, and not depend on unowned dirty state.
+
+**No-backcompat rationale**
+
+Raw `World`/`CommandStack` pairs in app-shell persistence ports are internal architecture debt, not a public compatibility contract. Preserving both the old pair-based persistence calls and a named runtime-session boundary would keep the ownership model ambiguous and make later command-producer and persistence waves harder. Delete the old port shape and update active callers/tests directly once the reviewed boundary is selected.
+

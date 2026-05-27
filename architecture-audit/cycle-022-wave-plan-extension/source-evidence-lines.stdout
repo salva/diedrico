@@ -1,0 +1,116 @@
+--- frontend/src/application/appShell/AppShellRuntime.ts
+2: import { CommandStack } from '@/commands/CommandStack';
+3: import { World } from '@/domain/world/World';
+4: import { SelectionDeletionCommandService } from '@/application/selectionDeletion/SelectionDeletionCommandService';
+16: export function createAppShellRuntime(options: AppShellRuntimeOptions) {
+17:   const world = new World();
+18:   const commandStack = new CommandStack();
+40:   const selectionDeletion = new SelectionDeletionCommandService(world, commandStack);
+139: export type AppShellRuntime = ReturnType<typeof createAppShellRuntime>;
+--- frontend/src/application/appShell/AppShellPorts.ts
+2: import type { CommandStack } from '@/commands/CommandStack';
+3: import type { World } from '@/domain/world/World';
+5: import type { ProjectData } from '@/services/ProjectService';
+26:   snapshotCurrentSession(deps: { commandStack: CommandStack; world: World; projectName: string }): ProjectData;
+28:   restoreSession(data: ProjectData, deps: { world: World; commandStack: CommandStack }): void;
+53:   restoreSession(): boolean;
+--- frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts
+1: import type { CommandStack } from '@/commands/CommandStack';
+2: import type { World } from '@/domain/world/World';
+3: import { ProjectService, type ProjectData } from '@/services/ProjectService';
+7:   snapshotCurrentSession(deps: { commandStack: CommandStack; world: World; projectName: string }): ProjectData {
+8:     return ProjectService.serializeCommands(deps.commandStack, deps.world.peekNextId(), deps.projectName);
+12:     ProjectService.validateProjectData(data);
+15:   restoreSession(data: ProjectData, deps: { world: World; commandStack: CommandStack }): void {
+16:     ProjectService.deserializeCommands(data, deps.world, deps.commandStack);
+--- frontend/src/services/ProjectService.ts
+2:  * ProjectService - current-schema command-stream persistence orchestration.
+5: import { World } from '@/domain/world/World';
+6: import type { CommandStack } from '@/commands/CommandStack';
+24: export class ProjectService {
+27:   static serializeCommands(commandStack: CommandStack, nextElementId: number, projectName: string): ProjectData {
+45:   static deserializeCommands(data: ProjectData, world: World, commandStack: CommandStack): void {
+--- frontend/src/application/world/initializeWorld.ts
+2: import type { CommandStack } from '@/commands/CommandStack';
+3: import { buildWorldInitialization } from '@/commands/factories/InitializationSequenceFactory';
+7: import type { World } from '@/domain/world/World';
+16:  * The domain World owns geometric state only; command construction and history
+19: export function initializeWorld(world: World, commandStack: CommandStack): void {
+22:   const initCmd = new Command('Initialize World', world);
+24:   initCmd.addAndExecute(new PushSubprocessOp('World Initialization'));
+30:   buildWorldInitialization(world, initCmd, groupId);
+33:   initCmd.commit();
+34:   commandStack.push(initCmd);
+--- frontend/src/application/canvas/CanvasPointMovementUseCase.ts
+3: import type { CommandStack } from '@/commands/CommandStack';
+4: import type { World } from '@/domain/world/World';
+8: export class CanvasPointMovementUseCase {
+9:   constructor(private readonly world: World, private readonly commandStack: CommandStack) {}
+12:     const cmd = new Command(`Move point ${request.label ?? request.pointId}`, this.world);
+32:         cmd.commit();
+33:         this.commandStack.push(cmd);
+--- frontend/src/application/canvas/CanvasStyleUseCase.ts
+2: import type { CommandStack } from '@/commands/CommandStack';
+3: import type { World } from '@/domain/world/World';
+8:   constructor(private readonly world: World, private readonly commandStack: CommandStack) {}
+11:     const cmd = new Command(`Update style: ${request.elementId}`, this.world);
+14:       cmd.commit();
+15:       this.commandStack.push(cmd);
+--- frontend/src/application/construction/ConstructionUseCases.ts
+2: import type { CommandStack } from '@/commands/CommandStack';
+3: import type { World } from '@/domain/world/World';
+31:   world: World;
+32:   commandStack: CommandStack;
+35: export function executeConstructionIntent({ intent, world, commandStack }: ExecuteConstructionParams): ToolCommandResult {
+36:   const cmd = new Command(intent.description, world);
+43:     cmd.commit();
+44:     commandStack.push(cmd);
+52: function executeConstructionOperations(cmd: Command, intent: ToolConstructionIntent, world: World, groupId: string): void {
+166: function createIntersection(cmd: Command, intent: Extract<ToolConstructionIntent, { type: 'intersection' }>, world: World, groupId: string): void {
+193: function lineCircleIndex(lineId: string, circleId: string, mousePos: THREE.Vector3, world: World): number | null {
+206: function circleCircleIndex(circle1Id: string, circle2Id: string, mousePos: THREE.Vector3, world: World): number | null {
+225: function checkCreatedElementsFeasibility(cmd: Command, world: World): void {
+--- frontend/src/application/processHistory/ProcessHistoryUseCases.ts
+2: import type { CommandStack } from '@/commands/CommandStack';
+9: import type { World } from '@/domain/world/World';
+20: export class ProcessHistoryUseCases {
+22:     private readonly world: World,
+23:     private readonly commandStack: CommandStack
+73:     const command = new Command(description, this.world);
+77:       command.commit();
+78:       this.commandStack.push(command);
+--- frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts
+2: import type { CommandStack } from '@/commands/CommandStack';
+4: import type { World } from '@/domain/world/World';
+7: interface SelectionDeletionCommandServiceInternals {
+8:   createCommand(description: string, world: World): Command;
+9:   createCascadeDeletion(command: Command, selectedIds: string[], world: World): void;
+12: const defaultInternals: SelectionDeletionCommandServiceInternals = {
+13:   createCommand: (description, world) => new Command(description, world),
+19: export class SelectionDeletionCommandService implements SelectionDeletionCommandPort {
+20:   private readonly internals: SelectionDeletionCommandServiceInternals;
+23:     private readonly world: World,
+24:     private readonly commandStack: CommandStack,
+25:     internals: Partial<SelectionDeletionCommandServiceInternals> = {},
+35:     deleteCommand.commit();
+36:     this.commandStack.push(deleteCommand);
+--- frontend/src/components/workspace/SvgCanvas.vue
+167:  * 1. World (domain objects + realizations) 
+182: import { World } from '@/domain/world/World';
+213: import { createCanvasWorldReadPort } from '@/application/canvasPresentation/CanvasWorldReadPort';
+223: // Track World version changes (World is not reactive by itself)
+226: let lastWorldVersion = 0;
+228: // Active plane - derived from World (managed by App.vue)
+319:         const result = moveSession.commit();
+411: // World instance - injected from App.vue
+412: const world = inject<World>('world')!;
+414:   throw new Error('World not provided');
+469:   // World is already initialized by initialization factory in constructor
+479:   // Poll World version so UI reacts to domain changes (e.g. active plane switching)
+480:   lastWorldVersion = world.getVersion();
+481:   worldVersion.value = lastWorldVersion;
+484:     if (current !== lastWorldVersion) {
+485:       lastWorldVersion = current;
+491:   console.log('World initialized');
+552:     createCanvasWorldReadPort(world),
+733:   // Phase 6.5: Delegate to active tool instead of direct World mutation
