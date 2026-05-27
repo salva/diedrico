@@ -1934,3 +1934,127 @@ All Wave 027 validation stdout/stderr must be captured to stable files under the
 **No-backcompat rationale**
 
 Inline runtime read-model construction and broad presentation read ports are internal architecture seams, not user or storage compatibility contracts. Keeping both inline `RuntimeSession` traversal and extracted read-model builders would preserve the god-module and invite future consumers to add more raw domain reads to the session owner. Delete the old inline helpers, broad raw-domain returns, casts, and dual paths once reviewed builders/ports exist; update active consumers/tests directly. Do not keep compatibility wrappers, generic facades, or transitional duplicate read paths.
+
+---
+
+## Wave 028 — Canvas projection DTO selectors and realization-read context ownership
+
+**Status**
+
+Added by `cycle-028-wave-plan-extension` after Wave 027 completed. Requires critic approval and bounded review of this plan extension before the canonical `cycle-028-fresh-scout-proposals` stage and before any implementation. This entry is grounded in current post-Wave-027 source evidence, Wave 027 closure evidence, and the Cycle 026 3D interaction regression lesson.
+
+**Scope**
+
+- `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts`
+- `frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts`
+- `frontend/src/application/canvasPresentation/Projected3DCanvasSelector.ts`
+- `frontend/src/application/canvasPresentation/CanvasPresentationModel.ts` only where DTO contracts for plane-owned 2D canvas items or projected-3D canvas items need explicit types
+- `frontend/src/application/canvasPresentation/CanvasVisibilityPolicy.ts` only where visibility must be consumed by the new canvas DTO selector contracts without reintroducing a process-tree/world leak
+- a new behavior-sized canvas selector/read-port module if selected by review, such as `CanvasPlaneItemsSelector`, `Projected3DCanvasItemsSelector`, or `CanvasProjectionReadPort`, but not a generic `WorldReadModel`/`RuntimeWorld` facade
+- `frontend/src/application/appShell/RuntimeSession.ts` only for wiring the changed canvas presentation/read-port contract and preserving input transform/screen-to-3D behavior
+- `frontend/src/application/appShell/RuntimeViewPorts.ts` only if canvas DTO/read-port typing must be tightened for consumers
+- `frontend/src/application/threePresentation/ThreeWorldReadPort.ts` only for an inventory and for small alignment with shared realization-read context ownership if the selected proposal proves a direct duplicate with the new canvas context; do not redesign the 3D scene adapter in this wave
+- focused canvas-presentation, projected-3D selector, runtime wiring, realization/read-context, architecture-boundary, and overlay pointer-boundary tests
+
+**Scope guard**
+
+This wave owns the highest-centrality residual left by Wave 027: canvas presentation still traverses raw projection planes and raw 3D domain collections through `CanvasWorldReadPort`, and selectors still own domain-class traversal plus realization/projection loops instead of consuming behavior-sized canvas DTOs. It must not absorb persistence schema/replay, `ProjectService` contract cleanup, command history/producer redesign, backend/frontend contract stance, Drive/auth/browser adapters, package/tooling churn, validation-platform hardening, docs/spec reconciliation, toolbar-history typing cleanup, preview-script ergonomics, broad app-kernel work, UI feature work, command-backed visibility, or an unbounded domain model rewrite.
+
+The proposals must begin with a fresh current-source caller inventory for every active canvas presentation seam: `CanvasWorldReadPort.getAllProjectionPlanes()`, `getAll3DPoints()`, `getAll3DLines()`, `getAll3DSegments()`, `getProjectionPlane2DTransform(...)`, `getProjectionPlane3DRealization(...)`, `realizePoint2D(...)`, `realizeLine2D(...)`, `realizeCircle2D(...)`, `realizePoint3D(...)`, `realizeLine3D(...)`, `realizeSegment3D(...)`, `isElementVisible(...)`, `CanvasPresentationSelector` raw `plane.getAll*()` loops, `Projected3DCanvasSelector` projected-3D loops, `RuntimeSession.getPlaneTransformsForInput()`, `RuntimeSession.screenTo3D(...)`, and any 3D overlay/pointer-adjacent consumer touched by the selected design.
+
+Classify each use by behavior: 2D canvas render/query item production, projected-3D-on-2D render item production, plane transform lookup for rendering, plane transform lookup for input/hit/move behavior, element visibility policy, active-plane/grid behavior, screen-to-3D coordinate support, runtime wiring, and 3D scene read-model residuals. The selected design must delete raw collection seams only when a concrete behavior-sized DTO selector replaces all named callers. Partial deletion of the `getAll3DPoints()` / `getAll3DLines()` / `getAll3DSegments()` group is forbidden.
+
+If the inventory proves that deleting the canvas raw traversal seams requires redesigning domain realization APIs, projection-plane mutation ownership, command/persistence semantics, or the 3D scene adapter broadly, stop and run a reviewed plan-edit mini-cycle rather than hiding a deeper redesign inside Wave 028.
+
+**Current grounding**
+
+Wave 027 completed the runtime read-model extraction and explicitly accepted the remaining canvas residuals. Its implementation log states that `CanvasWorldReadPort.getProcessTree()` was deleted, while `getAllProjectionPlanes()` and the raw projected-3D getters remained because `CanvasPresentationSelector` still needed plane-owned 2D traversal and `Projected3DCanvasSelector` still owned projected-3D iteration. It also records `ThreeWorldReadPort` and properties/process builders as residual candidates, but not as completed Wave 027 scope (`architecture-audit/cycle-027-runtime-read-model-extractors/implementation-log.md`, “CanvasWorldReadPort caller-map/residual evidence”; “Residual risks and next-wave candidates”).
+
+Current source confirms the next central seam is canvas DTO selector ownership, not another runtime read-model extraction. `RuntimeSession.canvasViewPort()` still constructs `CanvasWorldReadPort`, computes input transforms by iterating `this.world.getAllProjectionPlanes()`, delegates canvas presentation to `CanvasPresentationController`, and calls `screenTo3D(..., this.world)` for coordinate support (`frontend/src/application/appShell/RuntimeSession.ts:38-73`). These runtime uses are adjacent wiring/input support and should be inventoried, but they do not justify reopening command producers, persistence handles, or panels.
+
+`CanvasWorldReadPort` exposes raw domain collections and realization functions as its public contract: `getAllProjectionPlanes()`, raw 3D point/line/segment collections, per-entity 2D/3D realization calls, `getProjectionPlane3DRealization(...)`, and `isElementVisible(...)` (`frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:16-29`). Its adapter still wraps concrete `World` and creates a broad realization context with projection-plane, element, plane-realization, hinge-line, all-projection-plane, and all-hinge-line lookup methods (`frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:32-70`). This is no longer a process-tree leak after Wave 027, but it remains a raw traversal/realization-read boundary.
+
+`CanvasPresentationSelector` consumes those raw seams directly. It iterates all projection planes twice, calls `plane.getAllPoints()`, `plane.getAllLines()`, and `plane.getAllCircles()`, classifies lines with domain `instanceof` checks, computes style/render/query primitives, and passes the same read port into `Projected3DCanvasSelector` (`frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:22-90`). `Projected3DCanvasSelector` then iterates every projection plane and every raw 3D point/line/segment for each plane, realizes each 3D element, projects it through the plane realization, and emits canvas render items (`frontend/src/application/canvasPresentation/Projected3DCanvasSelector.ts:9-74`). These are behavior-sized enough for a bounded canvas DTO selector wave: the expected replacement can be concrete 2D canvas item and projected-3D canvas item selector/read-port methods rather than a generic world-shaped facade.
+
+The domain realization context itself is less urgent than the canvas traversal owner for Wave 028. Current source already has typed realization context interfaces (`frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:9-26`), and `Element3D.realize3D(context: Element3DRealizationContext)` plus `Plane3D.getPlaneEquation(context: PlaneEquationRealizationContext)` are typed in the current tree (`frontend/src/domain/world/Element3D.ts:31-42`; `frontend/src/domain/world/Plane.ts:24-38`). The residual problem is that canvas/three adapters still own broad context assembly and raw traversal. A domain-realization cleanup may still be a future wave, but Wave 028 should first delete the active canvas raw traversal seams that Wave 027 deliberately left behind.
+
+`ThreeWorldReadPort` remains broader than ideal: it builds a world-backed realization context and traverses projection planes, reconstructed elements, guide intersections, and hinge lines (`frontend/src/application/threePresentation/ThreeWorldReadPort.ts:66-135`). However, current `ThreeWorldReadPort` already presents named 3D read-model methods, while canvas still exposes raw domain collections to active selectors. Therefore this wave may inventory and align duplicate realization-read context assembly, but should defer a broad 3D scene/read-port redesign unless the canvas selector proposal proves direct shared code must be extracted.
+
+The Cycle 026 3D interaction regression is a validation constraint, not the architectural target. The hotfix proved that overlay pointer ownership can regress when presentation-adjacent work is touched, and Wave 027 validation preserved its e2e test. Wave 028 validation must keep that contract if `SvgCanvas.vue`, `ThreeView.vue`, app-shell overlay CSS, or presentation-adjacent wiring changes, but the wave must not broaden into a CSS-only interaction or scene-host wave.
+
+Lower-priority candidates remain real but are deferred by centrality: runtime persistence handles and `ProjectService` DTO/schema cleanup, command history/producer cleanup, command-backed visibility, toolbar-history typing, backend/docs/spec drift, validation/live-preview tooling, Drive/auth, package scripts, and docs/debug cleanup are integration, command, enforcement, or documentation concerns relative to the active raw canvas traversal/read-port boundary.
+
+**Target outcome**
+
+Canvas presentation consumes behavior-sized canvas DTO/read capabilities instead of raw projection-plane and raw 3D domain collections. The active 2D canvas path has explicit ownership for:
+
+- plane-owned 2D canvas render/query item source data;
+- projected-3D-on-2D render item source data;
+- plane transform lookup for rendering and input;
+- visibility decisions for canvas elements;
+- realization-read context assembly localized to a focused adapter rather than leaked as raw domain traversal methods.
+
+`CanvasPresentationSelector` should become a composer of canvas DTO selectors and style/render/query mapping, or the selected proposal may move primitive construction into named selectors if that creates the sharper boundary. `Projected3DCanvasSelector` should no longer require raw `getAllProjectionPlanes()` plus raw 3D collection getters if a concrete projected-3D canvas DTO/read method can own that traversal. Any residual raw domain access must have a named owner, caller map, and future-wave rationale; it must not be hidden behind a generic `RuntimeWorld`, `WorldReadModel`, or broad presentation snapshot.
+
+User-visible rendering, hit/query behavior, grid/active-plane behavior, projected-3D display, pointer ownership, selection/hover/cascade highlighting, and screen-to-3D coordinate support should remain equivalent unless a reviewed proposal explicitly documents a behavior change.
+
+**Explicit DELETE list**
+
+- Delete `CanvasWorldReadPort.getAllProjectionPlanes()` as a public selector dependency if all current canvas presentation and projected-3D callers are replaced by behavior-sized plane/item DTO methods in this wave.
+- Delete `CanvasWorldReadPort.getAll3DPoints()`, `getAll3DLines()`, and `getAll3DSegments()` together if a projected-3D canvas DTO/read method replaces all three current projected-3D callers. Do not delete only one or two of the trio.
+- Delete `CanvasWorldReadPort.realizePoint2D(...)`, `realizeLine2D(...)`, `realizeCircle2D(...)`, `realizePoint3D(...)`, `realizeLine3D(...)`, and `realizeSegment3D(...)` from the public canvas selector contract where the selected DTO selectors own realization internally.
+- Delete `CanvasPresentationSelector` raw `plane.getAllPoints()`, `plane.getAllLines()`, `plane.getAllCircles()` loops where replaced by explicit plane-item DTOs.
+- Delete `Projected3DCanvasSelector` raw nested loops over all planes and all 3D points/lines/segments where replaced by an explicit projected-3D canvas item selector/read method.
+- Delete canvas selector domain `instanceof` classification seams where DTOs provide explicit canvas element kinds; retain only localized classification inside the focused adapter if no lower domain discriminator exists.
+- Delete any reintroduced `CanvasWorldReadPort.getProcessTree()`, `Pick<World, 'getProcessTree'>`, process-tree-shaped visibility seam, or cast back to concrete `World` for canvas visibility.
+- Delete transitional dual paths, compatibility wrappers, broad `CanvasWorld`, `RuntimeWorld`, `WorldReadModel`, or all-purpose presentation snapshot facades created during implementation.
+- Delete stale tests that assert raw projection-plane/raw-3D getter access from canvas selectors; replace them with focused DTO selector/read-port and runtime wiring tests.
+- Do not delete or rewrite persistence schema/replay, `ProjectService`, backend, Drive/auth, command history/producer, command descriptors/serialization/replay, `CommandStack`, docs/specs, package/tooling, validation-platform code, preview scripts, broad domain realization internals, or 3D scene-host code without a reviewed plan edit.
+
+**Success criteria**
+
+- The reviewed implementation either deletes `CanvasWorldReadPort.getAllProjectionPlanes()` from active canvas selector dependencies or documents a precise, bounded residual with a caller map proving why a concrete DTO selector cannot yet replace it.
+- The raw projected-3D getter trio (`getAll3DPoints()`, `getAll3DLines()`, `getAll3DSegments()`) is deleted together from the active canvas selector contract, or retained together with a reviewed all-or-nothing residual rationale. Partial deletion is not acceptable.
+- `CanvasPresentationSelector` no longer owns broad raw projection-plane traversal if a DTO selector can own it; remaining responsibilities are explicit and behavior-sized.
+- `Projected3DCanvasSelector` no longer combines raw plane iteration, raw 3D collection iteration, realization, projection, and primitive emission unless the implementation log records reviewed evidence that the combined owner is still the least-bad bounded seam.
+- `CanvasWorldReadPort.getProcessTree()` and process-tree-shaped visibility access remain absent; visibility is consumed through the named element-visibility capability established in Wave 027 or an equivalently narrow policy.
+- RuntimeSession remains the private concrete `World`/`CommandStack` owner and may wire focused adapters, but it does not regain bulky canvas DTO traversal, broad read-model helper logic, or new generic world facade responsibilities.
+- No production Vue component regains concrete `World` injection or raw `World` props.
+- `ThreeWorldReadPort` is not broadened; any touched shared realization-read context reduces duplication without creating a global presentation god-module.
+- Rendering/hit/query behavior remains equivalent for 2D points, lines, segments, guides, hinge lines, circles, projected 3D points/lines/segments, grid, active-plane display, hover/selection/cascade highlighting, and screen-to-3D coordinate support.
+- The 3D overlay pointer-boundary regression remains covered if any presentation/overlay-adjacent file is touched; the app must not become click-through again.
+- No persistence, command-history/producer, backend/frontend contract, Drive/auth, docs/spec, package/tooling, validation-platform, preview-tooling, broad app-kernel, command-backed visibility, or unbounded domain-realization redesign occurs without reviewed plan edit.
+- Focused tests cover new canvas DTO selector/read-port contracts, projected-3D canvas item generation, visibility policy consumption, runtime wiring, transform/input behavior, and residual caller maps. Architecture/static scans prove deleted raw seams are absent and no dual raw-and-DTO path remains.
+
+**Dependencies / ordering**
+
+Depends on Wave 027 because Wave 027 extracted runtime read-model builders, deleted the canvas process-tree visibility leak, and deliberately left the raw canvas projection-plane/projected-3D traversal seams as named residuals. It is ordered before persistence/session contracts, command-history/producer cleanup, backend/docs/spec drift, Drive/auth, validation tooling, package/tooling, and UI/docs cleanup because those later waves should consume a cleaner canvas presentation read boundary. It is also ordered before a broad 3D scene adapter or domain-realization ownership wave because current canvas selectors still expose raw traversal more directly than `ThreeWorldReadPort`, and the current domain realization context is already typed enough for a bounded canvas DTO extraction attempt.
+
+**Validation requirements**
+
+All Wave 028 validation stdout/stderr must be captured to stable files under the reviewed Cycle 028 implementation directory's `validation/` subdirectory. Undefined commands may be skipped only with exact package-script evidence in the implementation log; defined root or workspace commands are mandatory.
+
+1. Capture pre-edit scoped git status/diff and static scans for `CanvasWorldReadPort.getAllProjectionPlanes`, raw projected-3D getter trio, canvas realization methods, `CanvasPresentationSelector` `plane.getAll*` loops, `Projected3DCanvasSelector` raw loops, `CanvasWorldReadPort.getProcessTree`, process-tree-shaped visibility access, generic world-like facade names, production Vue concrete `World` access, `RuntimeSession` canvas wiring, `ThreeWorldReadPort` duplicate realization context assembly, and overlay `pointer-events` rules.
+2. Run focused Vitest for new or changed canvas DTO selector/read-port modules, `CanvasPresentationSelector`, `Projected3DCanvasSelector`, `CanvasWorldReadPort`, `CanvasVisibilityPolicy` if touched, and `RuntimeSession` canvas wiring.
+3. Run focused transform/input tests for `getPlaneTransformsForInput`, canvas hit/query behavior, active-plane/grid behavior, and `screenTo3D` if those contracts are touched or their read-port dependencies change.
+4. Run focused 3D overlay pointer-boundary tests if any presentation/overlay-adjacent file is touched; at minimum preserve and cite existing e2e evidence if untouched.
+5. Run architecture/static tests or focused scans proving deleted raw seams are absent, retained residuals have the documented caller map, no `CanvasWorldReadPort.getProcessTree()` regression exists, no production Vue component receives concrete `World`, and no generic `RuntimeWorld`/`WorldReadModel`/broad facade was added.
+6. Run `npm run lint` at the repository root and in every workspace where a lint script is defined, including `frontend` while it remains the active workspace.
+7. Run full Vitest at the repository root and in every workspace where a test/Vitest script is defined, including `frontend` while it remains the active workspace.
+8. Run `npm run build` at the repository root and in every workspace where a build script is defined, including `frontend` while it remains the active workspace.
+9. Run Playwright/e2e at the repository root and in every workspace where an e2e script is defined because canvas rendering, projected-3D display, hit testing, pointer ownership, and screen-to-3D behavior are user-observable.
+10. Refresh the live preview bound to `0.0.0.0:5173`, capture HTTP 200 reachability probes, and run focused Playwright/live browser smoke for representative canvas render/hit/hover, projected-3D display toggling if available, active-plane/grid behavior, screen-to-3D coordinate behavior if available, 3D view interaction, elements visibility display, and undo/redo regression checks without real Drive/auth credentials.
+
+**Risks**
+
+- A canvas DTO selector can become a renamed `World` facade if it mirrors raw domain collections. Keep methods named by canvas behavior and prove every method from the required caller inventory.
+- Moving traversal/realization ownership can subtly change render order, query item geometry, projected-3D feasibility filtering, or element IDs. Focused tests must compare representative primitives and query items, not only counts.
+- Plane transforms serve both rendering and input. Deleting raw plane access without preserving transform semantics can break dragging, hit testing, grid placement, or screen-to-3D coordinate display.
+- Visibility was narrowed in Wave 027; do not reintroduce process-tree reads or command-backed visibility redesign while cleaning canvas DTOs.
+- `ThreeWorldReadPort` has real residual breadth, but broadening this wave into 3D scene/read-port redesign risks missing the sharper canvas raw traversal target. Touch three only for directly proven shared realization-read context alignment.
+- The 3D overlay hotfix showed that presentation-adjacent changes can create click-through regressions. Treat pointer-boundary validation as mandatory whenever touched, even if the architectural change is nominally data-only.
+- Existing unrelated dirty source state is present in the worktree. Implementation must use path-scoped status/diff, avoid reverting unrelated work, and not depend on unowned dirty files.
+
+**No-backcompat rationale**
+
+Raw canvas traversal getters and selector-owned domain loops are internal architecture seams, not compatibility contracts. Keeping both raw projection-plane/3D collection access and new DTO selectors would preserve the same bypass path under a new name and invite future canvas behavior to depend on mutable domain objects. Delete replaced getters, loops, casts, transitional wrappers, stale tests, and dual raw-and-DTO paths once reviewed behavior-sized DTO selectors exist. Do not preserve broad facades or compatibility overloads for internal selectors.
