@@ -1,32 +1,16 @@
-import type { Circle2D, Circle2DRealization2D } from '@/domain/world/Circle';
-import type { Element } from '@/domain/world/Element';
-import type { Line2D, Line2DRealization2D } from '@/domain/world/Line';
-import type { Point2D, Point2DRealization2D } from '@/domain/world/Point';
-import type { Point3D } from '@/domain/world/Point3D';
-import type { Line3D } from '@/domain/world/Line3D';
-import type { Segment3D } from '@/domain/world/Segment3D';
-import type { ProjectionPlane } from '@/domain/world/projectionPlane/ProjectionPlane';
-import type { ProjectionPlaneRealization3D } from '@/domain/world/projectionPlane/ProjectionPlaneRealization';
-import type { Point3DRealization3D, Line3DRealization3D, Segment3DRealization3D } from '@/domain/world/Element3DRealization3D';
+import { Guide2D, SiblingGuide2D } from '@/domain/world/Guide';
+import { HalfHingeLine2D } from '@/domain/world/HingeLine';
+import { Segment2DByPoints } from '@/domain/world/Segment';
 import type { ProjectionElementRealizationContext, Element3DRealizationContext } from '@/domain/world/projectionPlane/ProjectionPlaneContext';
 import type { World } from '@/domain/world/World';
-import type { CanvasPlaneTransformModel } from './CanvasPresentationModel';
+import type { CanvasPlaneCanvasItems, CanvasPlaneItem, CanvasPlaneLineItem, CanvasPlaneTransformModel, CanvasRenderItem } from './CanvasPresentationModel';
 import { resolveVisibility } from '@/domain/world/styleService';
+import { Projected3DCanvasSelector } from './Projected3DCanvasSelector';
 
 export interface CanvasWorldReadPort {
-  getAllProjectionPlanes(): ProjectionPlane[];
-  getProjectionPlane2DTransform(planeId: string): CanvasPlaneTransformModel | undefined;
-  getProjectionPlane3DRealization(planeId: string): ProjectionPlaneRealization3D | undefined;
-  getAll3DPoints(): Point3D[];
-  getAll3DLines(): Line3D[];
-  getAll3DSegments(): Segment3D[];
-  realizePoint2D(plane: ProjectionPlane, point: Point2D): Point2DRealization2D | undefined;
-  realizeLine2D(plane: ProjectionPlane, line: Line2D): Line2DRealization2D | undefined;
-  realizeCircle2D(plane: ProjectionPlane, circle: Circle2D): Circle2DRealization2D | undefined | null;
-  realizePoint3D(point: Point3D): Point3DRealization3D;
-  realizeLine3D(line: Line3D): Line3DRealization3D;
-  realizeSegment3D(segment: Segment3D): Segment3DRealization3D;
-  isElementVisible(element: Element): boolean;
+  getCanvasPlaneTransforms(): CanvasPlaneTransformModel[];
+  getPlaneCanvasItems(): CanvasPlaneCanvasItems[];
+  getProjected3DCanvasItems(planeTransforms: Map<string, CanvasPlaneTransformModel>): CanvasRenderItem[];
 }
 
 function createCanvasRealizationContext(world: World): ProjectionElementRealizationContext & Element3DRealizationContext {
@@ -44,31 +28,94 @@ function createCanvasRealizationContext(world: World): ProjectionElementRealizat
   };
 }
 
+function getCanvasPlaneTransforms(world: World): CanvasPlaneTransformModel[] {
+  return world.getAllProjectionPlanes().flatMap((plane) => {
+    const realization = world.getProjectionPlane2DRealization(plane.id);
+    if (!realization) return [];
+    return [{ planeId: plane.id, planeToPaper: realization.planeToPaper2D, paperToPlane: realization.paperToPlane2D }];
+  });
+}
+
+function getPlaneCanvasItems(world: World, context: ProjectionElementRealizationContext): CanvasPlaneCanvasItems[] {
+  return world.getAllProjectionPlanes().flatMap((plane) => {
+    const transform = getCanvasPlaneTransforms(world).find(item => item.planeId === plane.id);
+    if (!transform) return [];
+    const items: CanvasPlaneItem[] = [];
+
+    for (const point of plane.getAllPoints()) {
+      if (!resolveVisibility(point, world)) continue;
+      const realization = plane.realizePoint2D(point, context);
+      if (!realization) continue;
+      items.push({
+        kind: 'point',
+        elementId: point.id,
+        planeId: point.planeId,
+        position: realization.position.clone(),
+        pointRole: point.constructor.name === 'FreePoint2D' ? 'free' : 'dependent',
+      });
+    }
+
+    for (const line of plane.getAllLines()) {
+      if (!resolveVisibility(line, world)) continue;
+      const realization = plane.realizeLine2D(line, context);
+      if (!realization) continue;
+      const kind: CanvasPlaneLineItem['kind'] = line instanceof HalfHingeLine2D
+        ? 'half-hinge-line'
+        : line instanceof Segment2DByPoints
+          ? 'finite-segment'
+          : line instanceof SiblingGuide2D
+            ? 'sibling-guide'
+            : line instanceof Guide2D
+              ? 'guide'
+              : 'infinite-line';
+      items.push({
+        kind,
+        elementId: line.id,
+        planeId: line.planeId,
+        point: realization.point1.clone(),
+        direction: realization.getDirection(),
+        point1: kind === 'finite-segment' ? realization.point1.clone() : undefined,
+        point2: kind === 'finite-segment' ? realization.point2.clone() : undefined,
+        arcGeometry: optionalArcGeometry(line),
+      });
+    }
+
+    for (const circle of plane.getAllCircles()) {
+      if (!resolveVisibility(circle, world)) continue;
+      const realization = plane.realizeCircle2D(circle, context);
+      if (!realization) continue;
+      items.push({
+        kind: 'circle',
+        elementId: circle.id,
+        planeId: circle.planeId,
+        center: realization.center.clone(),
+        radius: realization.getRadius(),
+        radiusVector: realization.radiusVector.clone(),
+      });
+    }
+
+    return [{ planeId: plane.id, transform, items }];
+  });
+}
+
 export function createCanvasWorldReadPort(world: World): CanvasWorldReadPort {
   const realizationContext = createCanvasRealizationContext(world);
+  const projected3DSelector = new Projected3DCanvasSelector();
   return {
-    getAllProjectionPlanes: () => world.getAllProjectionPlanes(),
-    getProjectionPlane2DTransform: (planeId: string) => {
-      const realization = world.getProjectionPlane2DRealization(planeId);
-      if (!realization) return undefined;
-      return {
-        planeId,
-        planeToPaper: realization.planeToPaper2D,
-        paperToPlane: realization.paperToPlane2D,
-      };
-    },
-    getProjectionPlane3DRealization: (planeId: string) => world.getProjectionPlane3DRealization(planeId),
-    getAll3DPoints: () => world.getAll3DPoints(),
-    getAll3DLines: () => world.getAll3DLines(),
-    getAll3DSegments: () => world.getAll3DSegments(),
-    realizePoint2D: (plane, point) => plane.realizePoint2D(point, realizationContext),
-    realizeLine2D: (plane, line) => plane.realizeLine2D(line, realizationContext),
-    realizeCircle2D: (plane, circle) => plane.realizeCircle2D(circle, realizationContext),
-    realizePoint3D: point => point.realize3D(realizationContext),
-    realizeLine3D: line => line.realize3D(realizationContext),
-    realizeSegment3D: segment => segment.realize3D(realizationContext),
-    isElementVisible: element => resolveVisibility(element, world),
+    getCanvasPlaneTransforms: () => getCanvasPlaneTransforms(world),
+    getPlaneCanvasItems: () => getPlaneCanvasItems(world, realizationContext),
+    getProjected3DCanvasItems: planeTransforms => projected3DSelector.selectWorldProjection({
+      getProjectionPlanes: () => world.getAllProjectionPlanes().map(plane => ({ id: plane.id })),
+      getProjectionPlane3DRealization: planeId => world.getProjectionPlane3DRealization(planeId),
+      get3DPoints: () => world.getAll3DPoints().map(point => ({ id: point.id, realization: point.realize3D(realizationContext) })),
+      get3DLines: () => world.getAll3DLines().map(line => ({ id: line.id, realization: line.realize3D(realizationContext) })),
+      get3DSegments: () => world.getAll3DSegments().map(segment => ({ id: segment.id, realization: segment.realize3D(realizationContext) })),
+    }, planeTransforms),
   };
 }
 
 export type CanvasPlaneTransformMap = Map<string, CanvasPlaneTransformModel>;
+
+function optionalArcGeometry(line: object): CanvasPlaneLineItem['arcGeometry'] | undefined {
+  return 'arcGeometry' in line ? line.arcGeometry as CanvasPlaneLineItem['arcGeometry'] | undefined : undefined;
+}

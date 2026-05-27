@@ -41,14 +41,7 @@ export class RuntimeSession {
       subscribeToChanges: (listener) => this.world.subscribeToChanges(listener),
       unsubscribeFromChanges: (listener) => this.world.unsubscribeFromChanges(listener),
       getActivePlaneId: () => this.world.getActivePlaneId(),
-      getPlaneTransformsForInput: () => {
-        const transforms = new Map();
-        for (const plane of this.world.getAllProjectionPlanes()) {
-          const realization = this.world.getProjectionPlane2DRealization(plane.id);
-          if (realization) transforms.set(plane.id, realization.paperToPlane2D);
-        }
-        return transforms;
-      },
+      getPlaneTransformsForInput: () => new Map(canvasReadPort.getCanvasPlaneTransforms().map(transform => [transform.planeId, transform.paperToPlane])),
       buildPresentationModel: (viewport, options) => canvasPresentationController.buildModel(
         canvasReadPort,
         viewport,

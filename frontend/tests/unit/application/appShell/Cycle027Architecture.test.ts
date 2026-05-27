@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import runtimeSession from '@/application/appShell/RuntimeSession.ts?raw';
 import canvasWorldReadPort from '@/application/canvasPresentation/CanvasWorldReadPort.ts?raw';
+import canvasPresentationSelector from '@/application/canvasPresentation/CanvasPresentationSelector.ts?raw';
+import projected3DCanvasSelector from '@/application/canvasPresentation/Projected3DCanvasSelector.ts?raw';
 import canvasVisibilityPolicy from '@/application/canvasPresentation/CanvasVisibilityPolicy.ts?raw';
 import elementsPanelReadModel from '@/application/appShell/readModels/ElementsPanelReadModel.ts?raw';
 import elementVisibilityIntent from '@/application/appShell/readModels/ElementVisibilityIntent.ts?raw';
@@ -22,13 +24,16 @@ describe('Cycle 027 runtime read-model ownership boundaries', () => {
     expect(elementVisibilityIntent).toMatch(/markDirty\(\)/);
   });
 
-  it('deletes canvas process-tree visibility seam while documenting retained raw residuals in code', () => {
+  it('keeps canvas visibility process-tree seam deleted and Cycle 028 raw collection seams out of the public canvas port', () => {
     expect(canvasWorldReadPort).not.toMatch(/getProcessTree\(\):|getProcessTree: \(\)/);
     expect(canvasVisibilityPolicy).not.toMatch(/Pick<World, 'getProcessTree'>|as World/);
     expect(canvasVisibilityPolicy).toMatch(/CanvasElementVisibilityPort/);
-    expect(canvasWorldReadPort).toMatch(/getAllProjectionPlanes\(\): ProjectionPlane\[\]/);
-    expect(canvasWorldReadPort).toMatch(/getAll3DPoints\(\): Point3D\[\]/);
-    expect(canvasWorldReadPort).toMatch(/getAll3DLines\(\): Line3D\[\]/);
-    expect(canvasWorldReadPort).toMatch(/getAll3DSegments\(\): Segment3D\[\]/);
+    expect(canvasWorldReadPort).toMatch(/getCanvasPlaneTransforms\(\): CanvasPlaneTransformModel\[\]/);
+    expect(canvasWorldReadPort).toMatch(/getPlaneCanvasItems\(\): CanvasPlaneCanvasItems\[\]/);
+    expect(canvasWorldReadPort).toMatch(/getProjected3DCanvasItems\(planeTransforms: Map<string, CanvasPlaneTransformModel>\): CanvasRenderItem\[\]/);
+    expect(canvasWorldReadPort).not.toMatch(/getAllProjectionPlanes\(\): ProjectionPlane\[\]|getAll3DPoints\(\): Point3D\[\]|getAll3DLines\(\): Line3D\[\]|getAll3DSegments\(\): Segment3D\[\]/);
+    expect(canvasWorldReadPort).not.toMatch(/realizePoint2D\([^)]*\):|realizeLine2D\([^)]*\):|realizeCircle2D\([^)]*\):|realizePoint3D\([^)]*\):|realizeLine3D\([^)]*\):|realizeSegment3D\([^)]*\):/);
+    expect(canvasPresentationSelector).not.toMatch(/getAllProjectionPlanes\(|plane\.getAllPoints\(|plane\.getAllLines\(|plane\.getAllCircles\(|instanceof/);
+    expect(projected3DCanvasSelector).not.toMatch(/getAllProjectionPlanes\(|getAll3DPoints\(|getAll3DLines\(|getAll3DSegments\(/);
   });
 });

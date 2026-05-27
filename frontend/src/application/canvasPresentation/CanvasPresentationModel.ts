@@ -55,6 +55,47 @@ export interface CanvasPlaneTransformModel {
   paperToPlane: Matrix3;
 }
 
+export interface CanvasPlanePointItem {
+  kind: 'point';
+  elementId: string;
+  planeId: string;
+  position: Vector3;
+  pointRole: 'free' | 'dependent';
+}
+
+export interface CanvasPlaneLineItem {
+  kind: 'finite-segment' | 'guide' | 'sibling-guide' | 'half-hinge-line' | 'infinite-line';
+  elementId: string;
+  planeId: string;
+  point: Vector3;
+  direction: Vector3;
+  point1?: Vector3;
+  point2?: Vector3;
+  arcGeometry?: {
+    startPoint?: { x: number; y: number };
+    endPoint?: { x: number; y: number };
+    controlPoints?: Array<{ x: number; y: number }>;
+    style?: { color: string; width: number; dashArray?: readonly number[]; opacity: number };
+  };
+}
+
+export interface CanvasPlaneCircleItem {
+  kind: 'circle';
+  elementId: string;
+  planeId: string;
+  center: Vector3;
+  radius: number;
+  radiusVector: Vector3;
+}
+
+export type CanvasPlaneItem = CanvasPlanePointItem | CanvasPlaneLineItem | CanvasPlaneCircleItem;
+
+export interface CanvasPlaneCanvasItems {
+  planeId: string;
+  transform: CanvasPlaneTransformModel;
+  items: CanvasPlaneItem[];
+}
+
 export interface CanvasGridLine {
   key: string;
   x1: number;

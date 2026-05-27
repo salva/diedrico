@@ -39,4 +39,24 @@ describe('CanvasWorldReadPort boundary', () => {
     expect(selectorStillWorld).toBe(false);
     expect(controllerStillWorld).toBe(false);
   });
+
+  it('exposes behavior-sized canvas DTO methods instead of raw collection and realization seams', () => {
+    const { world } = createTestWorld();
+    const readPort = createCanvasWorldReadPort(world) as unknown as Record<string, unknown>;
+
+    expect(readPort.getCanvasPlaneTransforms).toBeTypeOf('function');
+    expect(readPort.getPlaneCanvasItems).toBeTypeOf('function');
+    expect(readPort.getProjected3DCanvasItems).toBeTypeOf('function');
+    expect(readPort.getAllProjectionPlanes).toBeUndefined();
+    expect(readPort.getAll3DPoints).toBeUndefined();
+    expect(readPort.getAll3DLines).toBeUndefined();
+    expect(readPort.getAll3DSegments).toBeUndefined();
+    expect(readPort.realizePoint2D).toBeUndefined();
+    expect(readPort.realizeLine2D).toBeUndefined();
+    expect(readPort.realizeCircle2D).toBeUndefined();
+    expect(readPort.realizePoint3D).toBeUndefined();
+    expect(readPort.realizeLine3D).toBeUndefined();
+    expect(readPort.realizeSegment3D).toBeUndefined();
+  });
+
 });
