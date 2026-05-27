@@ -148,7 +148,6 @@
     <!-- Properties Dialog -->
     <PropertiesDialog
       :is-open="showPropertiesDialog"
-      :element-id="propertiesElementId"
       :view-model="canvasViewPortRequired.getPropertiesDialogViewModel(propertiesElementId)"
       @close="showPropertiesDialog = false"
       @save="handleSaveProperties"

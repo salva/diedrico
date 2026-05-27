@@ -60,3 +60,16 @@ The worktree was broadly dirty before implementation; path-scoped status/diff ev
 - Canvas and three presentation ports still intentionally wrap existing domain-heavy adapters inside runtime/session; deeper realization-context cleanup remains a future wave candidate.
 - Tool click context still includes raw `World` internally via `CanvasViewPort.invokeToolClick` because current tool interfaces require it. This does not expose `World` through Vue injection/props, but a later tool-context wave should eliminate the raw `World` from `ITool` if architecture priorities continue inward.
 - Elements visibility remains a named view intent preserving current behavior, not a command-backed redesign; command-backed visibility may be a future centrality candidate.
+
+## T3 correction — PropertiesDialog stale parent prop
+
+Reviewer follow-up flagged a stale parent prop on the dialog invocation after `PropertiesDialog.vue` moved to the prepared `PropertiesDialogViewModel` contract. `frontend/src/components/workspace/SvgCanvas.vue` now removes the obsolete `:element-id="propertiesElementId"` binding and passes only `isOpen`, `viewModel`, and dialog events.
+
+Refreshed focused evidence under `validation/`:
+
+- `t3-static-properties-dialog-scan.*` — passed; proves the stale `:element-id="propertiesElementId"` binding is absent and the scoped dialog/canvas files do not reintroduce the raw-world dialog seam.
+- `t3-focused-properties-dialog-vitest.*` — passed; 18 focused dialog tests passed.
+- `t3-frontend-build.*` — passed; `vue-tsc && vite build` accepts the corrected parent/child props. Vite reported only the pre-existing large chunk warning.
+- `t3-patch.*` / `t3-patch-retry.*` / `t3-properties-dialog-stale-prop-fix.*` — patch provenance; the first `python` command failed because `python` is unavailable, then the same source edit succeeded with `python3`.
+
+No protected out-of-scope surfaces were modified for this correction.
