@@ -14,6 +14,7 @@ import type { ToolContext } from '@/tools/ITool';
 import type { ToolCommandSink, ToolConstructionIntent } from '@/application/tools/ToolCommandIntents';
 import type { ArgumentValue } from '@/types/ToolArgumentCollector';
 import { createTestWorld, getHorizontalPlane, getHorizontalPlaneId } from '../../helpers/worldHelpers';
+import { createToolInteractionReadPort } from '@/application/tools/ToolInteractionReadPort';
 
 function userPoints(world: any, planeId: string) {
   return world.getProjectionPlaneById(planeId).getAllPoints().filter((point: any) => !point.locked);
@@ -25,7 +26,7 @@ function makeToolContext(overrides: Partial<ToolContext>): ToolContext {
     planeCoords: overrides.planeCoords ?? new Vector3(0, 0, 1),
     canvasCoords: overrides.canvasCoords ?? { x: 0, y: 0 },
     commandSink: overrides.commandSink!,
-    world: overrides.world!,
+    readPort: overrides.readPort!,
     interactionQuery: overrides.interactionQuery ?? new CanvasInteractionQuery([]),
     paperToPlaneTransform: overrides.paperToPlaneTransform,
     viewport: overrides.viewport ?? { zoom: 1, panX: 0, panY: 0 },
@@ -208,7 +209,7 @@ describe('Wave 006a canvas/tool command controllers', () => {
       .mockReturnValueOnce({ elementId: refLine.id } as any)
       .mockReturnValueOnce({ elementId: circle.id } as any);
 
-    const base = { planeId: plane.id, world, interactionQuery,
+    const base = { planeId: plane.id, readPort: createToolInteractionReadPort(world), interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 }, commandSink: sink };
     const throughTool = new TangentLineToCircleThroughPointTool();
     throughTool.handleClick(makeToolContext({ ...base, planeCoords: new Vector3(0, 0, 1) }));
@@ -259,7 +260,7 @@ describe('Wave 006a canvas/tool command controllers', () => {
     const result = pointTool.handleClick(makeToolContext({
       planeId,
       planeCoords: new Vector3(21, 22, 1),
-      world,
+      readPort: createToolInteractionReadPort(world),
       interactionQuery: new CanvasInteractionQuery([]) as any,
       commandSink: controller
     }));

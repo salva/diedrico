@@ -124,7 +124,7 @@ export abstract class ArgumentCollectorTool extends BaseTool implements ITool {
    * 
    * @param setIndex - Index of the completed argument set in getArgumentSets()
    * @param args - Map of collected arguments (name → {element, planeCoords})
-   * @param context - Tool execution context (world, command sink, etc.)
+   * @param context - Tool execution context (bounded read port, command sink, etc.)
    * @throws Error if operation fails (will be caught by handleClick)
    */
   protected execute(
@@ -160,9 +160,9 @@ export abstract class ArgumentCollectorTool extends BaseTool implements ITool {
    * @returns Tool result with status message
    */
   handleClick(context: ToolContext): ToolResult {
-    const { planeId, canvasCoords, world, interactionQuery, paperToPlaneTransform, viewport } = context;
+    const { planeId, canvasCoords, readPort, interactionQuery, paperToPlaneTransform, viewport } = context;
     
-    const plane = world.getProjectionPlaneById(planeId)!;
+    const plane = readPort.getProjectionPlaneById(planeId)!;
     
     // Initialize viable sets on first click
     if (this.viableSets.length === 0) {
@@ -197,7 +197,7 @@ export abstract class ArgumentCollectorTool extends BaseTool implements ITool {
       };
     } else {
       // Element hit - get element and create ArgumentValue
-      const element = world.getElement2D(hit.elementId);
+      const element = readPort.getElement2D(hit.elementId);
       if (!element) {
         return { success: false, message: `Element not found: ${hit.elementId}` };
       }
@@ -210,7 +210,7 @@ export abstract class ArgumentCollectorTool extends BaseTool implements ITool {
     
     // Try to add argument
     const collectionContext: CollectionContext = {
-      world,
+      readPort,
       plane,
       collected: this.collected
     };

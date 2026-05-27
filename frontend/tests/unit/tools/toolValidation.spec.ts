@@ -30,6 +30,7 @@ import { CanvasToolController } from '@/application/tools/CanvasToolController';
 import { Vector3, Matrix3 } from 'three';
 import { CanvasPresentationSelector } from '@/application/canvasPresentation/CanvasPresentationSelector';
 import { createCanvasWorldReadPort } from '@/application/canvasPresentation/CanvasWorldReadPort';
+import { createToolInteractionReadPort } from '@/application/tools/ToolInteractionReadPort';
 
 function liveInteractionQuery(worldRef: () => any, planeIdRef: () => string): CanvasInteractionQuery {
   return {
@@ -55,7 +56,7 @@ describe('Tool Argument Validation', () => {
       planeCoords: coords.clone(),
       canvasCoords: coords.clone(),
       commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
-      world,
+      readPort: createToolInteractionReadPort(world),
       interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 },
       paperToPlaneTransform: new Matrix3().identity(),

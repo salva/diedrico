@@ -4,6 +4,7 @@ import { initializeWorld } from '@/application/world/initializeWorld';
 import { SelectionDeletionCommandService } from '@/application/selectionDeletion/SelectionDeletionCommandService';
 import type { SelectionDeletionCommandPort } from '@/application/selectionDeletion/SelectionDeletionPorts';
 import { CanvasToolController } from '@/application/tools/CanvasToolController';
+import { createToolInteractionReadPort } from '@/application/tools/ToolInteractionReadPort';
 import type { CanvasToolControllerToolStore } from '@/application/tools/CanvasToolController';
 import { ProcessHistoryController } from '@/application/processHistory/ProcessHistoryController';
 import type { ActivePlanePort, CommandHistoryPort, OpenedProjectSession, ProjectSessionPersistencePort, RuntimeSessionRestoreHandle, RuntimeSessionSnapshotHandle, SelectionReadPort } from './AppShellPorts';
@@ -40,6 +41,7 @@ export class RuntimeSession {
 
   canvasViewPort(): CanvasViewPort {
     const canvasReadPort = createCanvasWorldReadPort(this.world);
+    const toolReadPort = createToolInteractionReadPort(this.world);
     const canvasPresentationController = new CanvasPresentationController();
     return {
       subscribeToChanges: (listener) => this.world.subscribeToChanges(listener),
@@ -72,7 +74,7 @@ export class RuntimeSession {
         if (!(point instanceof FreePoint2D) || point.locked) return null;
         return commandSink.startFreePointMove({ planeId, pointId, label: point.label ?? pointId });
       },
-      invokeToolClick: (tool, context) => tool.handleClick({ ...context, world: this.world }),
+      invokeToolClick: (tool, context) => tool.handleClick({ ...context, readPort: toolReadPort }),
       screenTo3D: ({ clientX, clientY, svg, viewportMatrix, activePlaneId }) => screenTo3D(clientX, clientY, svg, viewportMatrix, activePlaneId, this.world),
       getPropertiesDialogViewModel: (elementId) => this.getPropertiesDialogViewModel(elementId),
     };

@@ -22,7 +22,7 @@
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
 import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/ToolArgumentCollector';
 import { SelectionMask } from '@/types/SelectionMask';
-import { computeExpectedT2Prime, computeLineDistance } from '@/utils/projectionPlaneUtils';
+import { computeLineDistance } from '@/utils/projectionPlaneUtils';
 import type { Element2D } from '@/domain/world/Element2D';
 
 /**
@@ -98,10 +98,9 @@ export class CreateProjectionPlaneTool extends ArgumentCollectorTool {
               const t2PrimeLineId = element.id;
               
               try {
-                const expected = computeExpectedT2Prime(
+                const expected = context.readPort.getExpectedT2PrimeLineRealization(
                   t1LineId,
-                  t2LineId,
-                  context.world
+                  t2LineId
                 );
                 
                 if (!expected) {
@@ -110,12 +109,12 @@ export class CreateProjectionPlaneTool extends ArgumentCollectorTool {
                 }
                 
                 // Get realized T2' line to compute distance
-                const t2PrimeLineModel = context.world.getLine2D(t2PrimeLineId);
+                const t2PrimeLineModel = context.readPort.getLine2D(t2PrimeLineId);
                 if (!t2PrimeLineModel) {
                   return { valid: true, warning: 'Could not validate T2\' position' };
                 }
                 
-                const t2PrimeRealization = t2PrimeLineModel.realize2D(context.world);
+                const t2PrimeRealization = context.readPort.realizeLine2D(t2PrimeLineModel);
                 if (!t2PrimeRealization) {
                   return { valid: true, warning: 'Could not validate T2\' position' };
                 }
@@ -150,8 +149,8 @@ export class CreateProjectionPlaneTool extends ArgumentCollectorTool {
           }
           
           // Verify planes exist
-          const t1Plane = context.world.getProjectionPlaneById(t1.element!.planeId);
-          const t2Plane = context.world.getProjectionPlaneById(t2.element!.planeId);
+          const t1Plane = context.readPort.getProjectionPlaneById(t1.element!.planeId);
+          const t2Plane = context.readPort.getProjectionPlaneById(t2.element!.planeId);
           
           if (!t1Plane || !t2Plane) {
             return { valid: false, error: 'One or more projection planes not found' };

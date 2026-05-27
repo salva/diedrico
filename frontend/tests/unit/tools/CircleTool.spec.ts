@@ -24,6 +24,8 @@ import { CanvasToolController } from '@/application/tools/CanvasToolController';
 import { Vector3, Matrix3 } from 'three';
 import { CanvasPresentationSelector } from '@/application/canvasPresentation/CanvasPresentationSelector';
 import { createCanvasWorldReadPort } from '@/application/canvasPresentation/CanvasWorldReadPort';
+import { createToolInteractionReadPort } from '@/application/tools/ToolInteractionReadPort';
+import type { ToolInteractionReadPort } from '@/application/tools/ToolInteractionReadPort';
 
 function liveInteractionQuery(worldRef: () => any, planeIdRef: () => string): CanvasInteractionQuery {
   return {
@@ -43,6 +45,7 @@ describe('CircleTool', () => {
   let commandStack: CommandStack;
   let horizontalPlaneId: string;
   let interactionQuery: CanvasInteractionQuery;
+  let readPort: ToolInteractionReadPort;
 
   beforeEach(() => {
     tool = new CircleTool();
@@ -50,6 +53,7 @@ describe('CircleTool', () => {
     world = w;
     commandStack = cs;
     interactionQuery = liveInteractionQuery(() => world, () => horizontalPlaneId);
+    readPort = createToolInteractionReadPort(world);
     
     // Get actual plane ID from initialized world
     horizontalPlaneId = world.getProjectionPlaneByLabel('P_H').id!;
@@ -82,7 +86,7 @@ describe('CircleTool', () => {
         planeCoords: new Vector3(100, 100, 1),
         canvasCoords: new Vector3(100, 100, 1),
         commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
-        world,
+        readPort,
         interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 },
         paperToPlaneTransform: new Matrix3().identity(),
@@ -99,7 +103,7 @@ describe('CircleTool', () => {
         planeCoords: new Vector3(200, 100, 1),
         canvasCoords: new Vector3(200, 100, 1),
         commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
-        world,
+        readPort,
         interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 },
         paperToPlaneTransform: new Matrix3().identity(),
@@ -144,7 +148,7 @@ describe('CircleTool', () => {
         planeCoords: new Vector3(100, 100, 1),
         canvasCoords: new Vector3(100, 100, 1),
         commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
-        world,
+        readPort,
         interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 },
         paperToPlaneTransform: new Matrix3().identity(),
@@ -161,7 +165,7 @@ describe('CircleTool', () => {
         planeCoords: new Vector3(200, 100, 1),
         canvasCoords: new Vector3(200, 100, 1),
         commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
-        world,
+        readPort,
         interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 },
         paperToPlaneTransform: new Matrix3().identity(),
@@ -200,7 +204,7 @@ describe('CircleTool', () => {
         planeCoords: new Vector3(100, 100, 1),
         canvasCoords: new Vector3(100, 100, 1),
         commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
-        world,
+        readPort,
         interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 },
         paperToPlaneTransform: new Matrix3().identity(),
@@ -216,7 +220,7 @@ describe('CircleTool', () => {
         planeCoords: new Vector3(300, 300, 1),
         canvasCoords: new Vector3(400, 400, 1), // Far from any existing point
         commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
-        world,
+        readPort,
         interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 },
         paperToPlaneTransform: new Matrix3().identity(),
@@ -258,7 +262,7 @@ describe('CircleTool', () => {
         planeCoords: new Vector3(100, 100, 1),
         canvasCoords: new Vector3(100, 100, 1),
         commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
-        world,
+        readPort,
         interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 },
         paperToPlaneTransform: new Matrix3().identity(),
@@ -274,7 +278,7 @@ describe('CircleTool', () => {
         planeCoords: new Vector3(100.002, 100, 1),
         canvasCoords: new Vector3(100.002, 100, 1),
         commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
-        world,
+        readPort,
         interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 },
         paperToPlaneTransform: new Matrix3().identity(),
@@ -299,7 +303,7 @@ describe('CircleTool', () => {
         planeCoords: new Vector3(100, 100, 1),
         canvasCoords: new Vector3(100, 100, 1),
         commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
-        world,
+        readPort,
         interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 },
         paperToPlaneTransform: new Matrix3().identity(),
@@ -317,7 +321,7 @@ describe('CircleTool', () => {
         planeCoords: new Vector3(100, 100, 0), // Invalid homogeneous coordinate (w = 0)
         canvasCoords: new Vector3(100, 100, 1),
         commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
-        world,
+        readPort,
         interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 },
         paperToPlaneTransform: new Matrix3().identity(),
@@ -347,7 +351,7 @@ describe('CircleTool', () => {
         planeCoords: new Vector3(100, 100, 1),
         canvasCoords: new Vector3(100, 100, 1),
         commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
-        world,
+        readPort,
         interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 },
         paperToPlaneTransform: new Matrix3().identity(),
@@ -361,7 +365,7 @@ describe('CircleTool', () => {
         planeCoords: new Vector3(200, 100, 1),
         canvasCoords: new Vector3(200, 100, 1),
         commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
-        world,
+        readPort,
         interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 },
         paperToPlaneTransform: new Matrix3().identity(),
@@ -376,7 +380,7 @@ describe('CircleTool', () => {
         planeCoords: new Vector3(100, 100, 1),
         canvasCoords: new Vector3(100, 100, 1),
         commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
-        world,
+        readPort,
         interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 },
         paperToPlaneTransform: new Matrix3().identity(),
@@ -412,7 +416,7 @@ describe('CircleTool', () => {
         planeCoords: new Vector3(100, 100, 1),
         canvasCoords: new Vector3(100, 100, 1),
         commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
-        world,
+        readPort,
         interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 },
         paperToPlaneTransform: new Matrix3().identity(),
@@ -426,7 +430,7 @@ describe('CircleTool', () => {
         planeCoords: new Vector3(150, 100, 1),
         canvasCoords: new Vector3(150, 100, 1),
         commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
-        world,
+        readPort,
         interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 },
         paperToPlaneTransform: new Matrix3().identity(),
@@ -491,7 +495,7 @@ describe('CircleTool', () => {
         planeCoords: new Vector3(100, 100, 1),
         canvasCoords: new Vector3(100, 100, 1),
         commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
-        world,
+        readPort,
         interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 },
         paperToPlaneTransform: new Matrix3().identity(),
@@ -504,7 +508,7 @@ describe('CircleTool', () => {
         planeCoords: new Vector3(150, 100, 1),
         canvasCoords: new Vector3(150, 100, 1),
         commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
-        world,
+        readPort,
         interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 },
         paperToPlaneTransform: new Matrix3().identity(),

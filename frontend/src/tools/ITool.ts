@@ -6,12 +6,12 @@
  * commit/rollback, and command-stack execution.
  */
 
-import type { Vector3 } from 'three';
-import type { World } from '@/domain/world/World';
+import type { Matrix3, Vector3 } from 'three';
 import type { CanvasInteractionQuery } from '@/application/canvasPresentation/CanvasInteractionQuery';
 import type { SelectionMask } from '@/types/SelectionMask';
 import type { useToolStore } from '@/stores/toolStore';
 import type { ToolCommandSink } from '@/application/tools/ToolCommandIntents';
+import type { ToolInteractionReadPort } from '@/application/tools/ToolInteractionReadPort';
 
 /**
  * Context provided to tools when handling user input.
@@ -21,9 +21,9 @@ export interface ToolContext {
   planeCoords: Vector3;
   canvasCoords: { x: number; y: number };
   commandSink: ToolCommandSink;
-  world: World;
+  readPort: ToolInteractionReadPort;
   interactionQuery: CanvasInteractionQuery;
-  paperToPlaneTransform: any;
+  paperToPlaneTransform: Matrix3 | undefined;
   viewport: { zoom: number; panX: number; panY: number };
   toolStore: ReturnType<typeof useToolStore>;
 }

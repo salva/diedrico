@@ -4,6 +4,7 @@ import type { CanvasInteractionQuery } from '@/application/canvasPresentation/Ca
 import type { CanvasPresentationModel } from '@/application/canvasPresentation/CanvasPresentationModel';
 import type { ThreeWorldReadPort } from '@/application/threePresentation/ThreeWorldReadPort';
 import type { ITool, ToolResult } from '@/tools/ITool';
+import type { useToolStore } from '@/stores/toolStore';
 import type { FreePointMoveSession, ToolCommandSink } from '@/application/tools/ToolCommandIntents';
 import type { DescriptionPart } from '@/domain/world/descriptors/DescriptionPart';
 import type { ProcessNodeType } from '@/domain/processTree/ProcessTree';
@@ -30,7 +31,7 @@ export interface CanvasToolInvocationContext {
   readonly interactionQuery: CanvasInteractionQuery;
   readonly paperToPlaneTransform: Matrix3 | undefined;
   readonly viewport: { zoom: number; panX: number; panY: number };
-  readonly toolStore: any;
+  readonly toolStore: ReturnType<typeof useToolStore>;
 }
 
 export interface PropertiesDialogViewModel {

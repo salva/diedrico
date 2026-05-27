@@ -57,8 +57,10 @@ export class TangentLineToCircleThroughPointTool extends ArgumentCollectorTool {
           const circleEl = args.get('circle')?.element;
           const pointEl = args.get('throughPoint')?.element;
           if (circleEl && pointEl) {
-            const circleRealization = context.world.getCircle2D(circleEl.id)?.realize2D(context.world);
-            const pointRealization = context.world.getPoint2D(pointEl.id)?.realize2D(context.world);
+            const circle = context.readPort.getCircle2D(circleEl.id);
+            const point = context.readPort.getPoint2D(pointEl.id);
+            const circleRealization = circle ? context.readPort.realizeCircle2D(circle) : undefined;
+            const pointRealization = point ? context.readPort.realizePoint2D(point) : undefined;
             if (circleRealization && circleRealization.feasible && pointRealization && pointRealization.feasible) {
               const dist = pointRealization.position.distanceTo(circleRealization.center);
               const radius = circleRealization.getRadius();
@@ -96,10 +98,10 @@ export class TangentLineToCircleThroughPointTool extends ArgumentCollectorTool {
     const pointId = args.get('throughPoint')?.element?.id;
     if (!circleId || !pointId) return 0;
 
-    const circle = context.world.getCircle2D(circleId);
-    const throughPoint = context.world.getPoint2D(pointId);
-    const circleRealization = circle?.realize2D(context.world);
-    const pointRealization = throughPoint?.realize2D(context.world);
+    const circle = context.readPort.getCircle2D(circleId);
+    const throughPoint = context.readPort.getPoint2D(pointId);
+    const circleRealization = circle ? context.readPort.realizeCircle2D(circle) : undefined;
+    const pointRealization = throughPoint ? context.readPort.realizePoint2D(throughPoint) : undefined;
     if (!circleRealization?.feasible || !pointRealization?.feasible) return 0;
 
     const center = circleRealization.center;

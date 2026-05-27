@@ -40,14 +40,11 @@ export class Create3DLineTool extends ArgumentCollectorTool {
           const proj1 = args.get('projection1')!;
           const proj2 = args.get('projection2')!;
           
-          const plane1 = context.world.getProjectionPlaneById(proj1.element!.planeId);
-          const plane2 = context.world.getProjectionPlaneById(proj2.element!.planeId);
-          
-          if (!plane1 || !plane2) {
+          if (!context.readPort.getProjectionPlaneById(proj1.element!.planeId) || !context.readPort.getProjectionPlaneById(proj2.element!.planeId)) {
             return { valid: false, error: 'One or both projection planes not found' };
           }
           
-          if (plane1.id === plane2.id) {
+          if (!context.readPort.areProjectionPlanesDistinct(proj1.element!.planeId, proj2.element!.planeId)) {
             return { 
               valid: false, 
               error: 'Cannot create 3D line: both projections must be on DIFFERENT planes' 

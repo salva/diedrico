@@ -58,7 +58,7 @@ export class TangentLineToCircleParallelToLineTool extends ArgumentCollectorTool
         setValidator: (args, context: CollectionContext) => {
           const refLine = args.get('referenceLine')?.element as Line2D | undefined;
           if (refLine) {
-            const realization = refLine.realize2D(context.world);
+            const realization = context.readPort.realizeLine2D(refLine);
             if (realization && !realization.feasible) {
               return { valid: false, error: 'Cannot create tangent: reference line is infeasible' };
             }
@@ -91,10 +91,10 @@ export class TangentLineToCircleParallelToLineTool extends ArgumentCollectorTool
   private chooseTangentIndex(selectionPoint: Vector3, circleId: string | undefined, args: Map<string, ArgumentValue>, context: ToolContext): 0 | 1 {
     const referenceLineId = args.get('referenceLine')?.element?.id;
     if (!circleId || !referenceLineId) return 0;
-    const circle = context.world.getCircle2D(circleId);
-    const referenceLine = context.world.getLine2D(referenceLineId);
-    const circleRealization = circle?.realize2D(context.world);
-    const lineRealization = referenceLine?.realize2D(context.world);
+    const circle = context.readPort.getCircle2D(circleId);
+    const referenceLine = context.readPort.getLine2D(referenceLineId);
+    const circleRealization = circle ? context.readPort.realizeCircle2D(circle) : undefined;
+    const lineRealization = referenceLine ? context.readPort.realizeLine2D(referenceLine) : undefined;
     if (!circleRealization?.feasible || !lineRealization?.feasible) return 0;
 
     const center = circleRealization.center;

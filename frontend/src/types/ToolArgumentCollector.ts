@@ -15,9 +15,9 @@
 
 import type { SelectionMask } from './SelectionMask';
 import type { Element2D } from '@/domain/world/Element2D';
-import type { World } from '@/domain/world/World';
 import type { ProjectionPlane } from '@/domain/world/projectionPlane/ProjectionPlane';
 import type { Vector3 } from 'three';
+import type { ToolInteractionReadPort } from '@/application/tools/ToolInteractionReadPort';
 
 /**
  * Value of a collected argument: element + position where user clicked
@@ -42,18 +42,6 @@ export interface ArgumentValue {
 
 /**
  * Declarative specification for a single argument in a tool's argument set
- * 
- * Example:
- * ```typescript
- * { 
- *   name: 'center', 
- *   mask: SelectionMask.point(),
- *   validator: (element, context) => {
- *     // Optional: Check if element is suitable
- *     return { valid: true };
- *   }
- * }
- * ```
  */
 export interface ToolArgumentSpec {
   /**
@@ -69,30 +57,15 @@ export interface ToolArgumentSpec {
   mask: SelectionMask;
   
   /**
-   * Optional argument-level validator
-   * Called after type checking (SelectionMask) but before set-level validation
-   * 
-   * Use cases:
-   * - Check geometric constraints (e.g., "point must be outside circle")
-   * - Validate element properties (e.g., "line must not be vertical")
-   * - Cross-reference with already-collected arguments
-   * 
-   * @param element - The element being validated
-   * @param context - Current collection context (world, plane, collected arguments)
-   * @returns Validation result with optional error message
+   * Optional argument-level validator.
+   * Called after type checking (SelectionMask) but before set-level validation.
+   * Validators can use the bounded readPort for geometric reads and realizations.
    */
   validator?: (element: Element2D, context: CollectionContext) => ValidationResult;
 }
 
 /**
  * Declarative specification for a complete argument set (one construction method)
- * 
- * Tools with multiple construction methods define multiple ToolArgumentSets.
- * Example: TangentLineTool might have two sets:
- * - Set 1: [{ name: 'circle', mask: circle() }, { name: 'throughPoint', mask: point() }]
- * - Set 2: [{ name: 'circle', mask: circle() }, { name: 'referenceLine', mask: anyLine() }]
- * 
- * Framework tracks which sets are still viable as arguments are collected.
  */
 export interface ToolArgumentSet {
   /**
@@ -109,55 +82,27 @@ export interface ToolArgumentSet {
   label?: string;
   
   /**
-   * Optional set-level validator
-   * Called when all arguments in set are collected, before execution
-   * 
-   * Use cases:
-   * - Cross-argument validation (e.g., "point must be outside circle")
-   * - Geometric feasibility (e.g., "circle and line must not intersect")
-   * 
-   * @param args - Map of collected arguments (name → {element, planeCoords})
-   * @param context - Current collection context (world, plane, collected arguments)
-   * @returns Validation result with optional error message
+   * Optional set-level validator.
+   * Called when all arguments in set are collected, before execution.
+   * Validators can use the bounded readPort for geometric reads and realizations.
    */
-  setValidator?: (args: Map<string, import('../tools/ArgumentCollectorTool').ArgumentValue>, context: CollectionContext) => ValidationResult;  
+  setValidator?: (args: Map<string, import('../tools/ArgumentCollectorTool').ArgumentValue>, context: CollectionContext) => ValidationResult;
+  
   /**
    * Optional execution callback for this specific argument set
-   * 
-   * If provided, this callback is invoked when this set is completed.
-   * If not provided, falls back to tool's execute() method (which receives setIndex).
-   * 
-   * Use cases:
-   * - Multi-method tools: Each construction method has its own execution logic
-   * - Cleaner code: Avoids if/switch on setIndex in tool's execute() method
-   * 
-   * Example:
-   * ```typescript
-   * {
-   *   arguments: [{ name: 'circle', mask: circle() }, { name: 'point', mask: point() }],
-   *   execute: (args, context) => {
-   *     const circle = args.get('circle')!.element as Circle2D;
-   *     const point = args.get('point')!.element as Point2D;
-   *     // Create tangent through point...
-   *   }
-   * }
-   * ```
-   * 
-   * @param args - Map of collected arguments (name → {element, planeCoords})
-   * @param context - Tool execution context (world, commandStack, planeId, etc.)
-   * @returns Tool result (success/failure message)
    */
-  execute?: (args: Map<string, ArgumentValue>, context: import('../tools/ITool').ToolContext) => import('../tools/ITool').ToolResult;}
+  execute?: (args: Map<string, ArgumentValue>, context: import('../tools/ITool').ToolContext) => import('../tools/ITool').ToolResult;
+}
 
 /**
- * Context provided to validators during argument collection
- * Gives validators access to world state and already-collected arguments
+ * Context provided to validators during argument collection.
+ * Exposes the current plane, collected arguments, and bounded tool read capabilities.
  */
 export interface CollectionContext {
   /**
-   * World instance for accessing geometric data
+   * Behavior-sized read and realization capabilities for active tool validation.
    */
-  world: World;
+  readPort: ToolInteractionReadPort;
   
   /**
    * Current projection plane where tool is operating
@@ -187,4 +132,7 @@ export interface ValidationResult {
    * Displayed to user in tool status message
    */
   error?: string;
+
+  /** Optional non-blocking warning for validators that can report soft geometry concerns. */
+  warning?: string;
 }

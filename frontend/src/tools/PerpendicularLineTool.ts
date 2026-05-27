@@ -51,7 +51,7 @@ export class PerpendicularLineTool extends ArgumentCollectorTool {
         setValidator: (args, context: CollectionContext) => {
           const refLine = args.get('referenceLine')?.element as Line2D | undefined;
           if (refLine) {
-            const realization = refLine.realize2D(context.world);
+            const realization = context.readPort.realizeLine2D(refLine);
             if (realization && !realization.feasible) {
               return { valid: false, error: 'Cannot create perpendicular line: reference line is infeasible' };
             }

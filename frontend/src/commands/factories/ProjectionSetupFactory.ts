@@ -11,7 +11,7 @@
  */
 
 import type { Command } from '@/commands/Command';
-import type { ToolContext } from '@/tools/ITool';
+import type { World } from '@/domain/world/World';
 import { HalfHingeLine2D } from '@/domain/world/HingeLine';
 import { IntersectionSequenceFactory } from './IntersectionSequenceFactory';
 import { LineSequenceFactory } from './LineSequenceFactory';
@@ -24,21 +24,19 @@ import { PlaneSequenceFactory } from '@/services/factories/PlaneSequenceFactory'
  * Creates T1, T2, and T2' with proper geometric unfolding computation.
  * 
  * @param cmd - Command to add operations to
- * @param context - Tool execution context
+ * @param world - Command-factory world dependency for projection setup construction
  * @param a1Id - Point A1 on P_H
  * @param a2Id - Point A2 on P_H
  * @param b1Id - Point B1 on P_V
  */
 export function constructProjectionPlaneSetup(
   cmd: Command,
-  context: ToolContext,
+  world: World,
   a1Id: string,
   a2Id: string,
   b1Id: string,
   groupId: string
 ): void {
-  const { world } = context;
-  
   const P_H = world.getAllProjectionPlanes().find(p => p.name === 'P_H');
   const P_V = world.getAllProjectionPlanes().find(p => p.name === 'P_V');
   

@@ -52,8 +52,8 @@ export class CircleTool extends ArgumentCollectorTool {
           const center = args.get('center')!.element as Point2D;
           const circumferencePoint = args.get('circumferencePoint')!.element as Point2D;
           
-          const centerRealization = center.realize2D(context.world);
-          const circumferenceRealization = circumferencePoint.realize2D(context.world);
+          const centerRealization = context.readPort.realizePoint2D(center);
+          const circumferenceRealization = context.readPort.realizePoint2D(circumferencePoint);
           
           if (centerRealization && circumferenceRealization) {
             const radius = centerRealization.position.distanceTo(circumferenceRealization.position);
