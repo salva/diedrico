@@ -136,3 +136,64 @@ Live preview / browser smoke:
 
 - Domain debug logging remains noisy in several realization algorithms (`Plane3DFromTraces`, `Line3DFromProjections`, `BrokenHalfHingeLine2D`). A future wave could separate domain diagnostics from console side effects.
 - Structural interface compatibility could be further hardened with architecture guard tests that parse `ProjectionPlaneContext.ts` and forbid collection methods on default contexts.
+
+## Closure verification — cycle-018-validation-and-preview-refresh-post-017
+
+Status: **Wave 018 COMPLETE**.
+
+This closure stage made no production source changes. It independently inspected the reviewed decision (`decision-post-017.md`), round-01 review evidence (`reviews/round-01-review-post-017.md`), the implementation summary, current source seams, validation logs, live preview evidence, Wave 017/026/028 preservation context, and `architecture-audit/wave-plan.md` before marking the wave complete.
+
+### Independent source/static verification
+
+Additional closure evidence is captured under `validation/`:
+
+- `closure-independent-static-seam-check.stdout` / `.stderr` — first independent static command failed because of an audit-script `awk` regular-expression error before completing; this is harness/script noise and not source-attributable.
+- `closure-independent-static-seam-check-rerun.stdout` / `.stderr` — successful rerun of the independent seam checks.
+
+The successful rerun confirms:
+
+- `ProjectionElementRealizationContext` remains narrowed to `ProjectionElementLookupContext` plus `ProjectionRealizationLookupContext`; its declaration has no `getAllProjectionPlanes()` or `getAllHingeLines()` members.
+- Collection traversal is isolated to `ProjectionRealizationCollectionContext`, diagnostic/hinge contexts, explicit presentation concern adapters/read ports, the two known diagnostic/domain traversal paths, and projection-plane layout counting.
+- `ProjectionPlaneRealizationContext`, `Element3DRealizationContext`, and `PlaneEquationRealizationContext` are explicit narrow lookup compositions rather than aliases for a broad collection-capable default context.
+- `WorldRealizationContext.ts` remains a tiny pure `World` → lookup/realization-context binder and does not expose `getWorld()`, selector DTOs, command state, persistence, renderer lifecycle, style policy, or a generic app-kernel/read-model facade.
+- A scan of active application/domain/component/composable/store source found no forbidden generic facade tokens: `RuntimeWorld`, `WorldReadModel`, `PresentationWorld`, `WorldInjectionKey`, `worldForView`, or `getWorld(...)`.
+- `CanvasWorldReadPort` public API remains limited to `getCanvasPlaneTransforms`, `getPlaneCanvasItems`, and `getProjected3DCanvasItems`; canvas-local raw collection traversal is private to the adapter and not exposed as a public seam.
+- `ThreeRealizationContext` still receives collection providers from concern read ports instead of directly owning world traversal.
+- `current-ui-contract.spec.ts` contains the explicit 3D overlay pointer-boundary test asserting `.three-view-overlay` receives pointer events, is the element under the pointer, and drag gestures do not alter the SVG canvas `viewBox`.
+
+### Validation evidence verified at closure
+
+The closure stage verified current green evidence in these stable logs:
+
+- `closure-root-lint.stdout` / `.stderr` — root `npm run lint`; passed via frontend architecture tests (4 files, 11 tests).
+- `closure-frontend-lint.stdout` / `.stderr` and `closure-frontend-lint-rerun.stdout` / `.stderr` — frontend lint/architecture tests; passed.
+- `closure-focused-vitest.stdout` / `.stderr` — focused realization/read-port/domain cache suite; passed (3 files, 22 tests).
+- `closure-root-vitest.stdout` / `.stderr` — root Vitest via frontend workspace; passed.
+- `closure-frontend-vitest.stdout` / `.stderr` — frontend full Vitest; passed.
+- `closure-root-build.stdout` / `.stderr` — root build via frontend workspace; passed.
+- `closure-frontend-build.stdout` / `.stderr` — frontend `vue-tsc && vite build`; passed.
+- `closure-root-e2e.stdout` / `.stderr` — root Playwright e2e; passed (8/8).
+- `closure-frontend-e2e.stdout` / `.stderr` — frontend Playwright e2e; passed (8/8).
+- `closure-live-preview-probe.stdout` / `.stderr` — live preview reachable at `http://127.0.0.1:5173/` with HTTP 200 after refresh/confirmation.
+- `closure-live-playwright-smoke-final.stdout` / `.stderr` — credential-free live browser smoke passed: Diedrico shell loaded with SVG/canvas content and visible UI. The CLI e2e overlay pointer-boundary test is the substitute interaction evidence for the user-reported 3D regression; no MCP-specific browser tool was available in this coder toolset.
+
+Earlier stale failed validation attempts in the same directory are superseded by the green closure logs above. The failed `closure-independent-static-seam-check` attempt is explicitly superseded by `closure-independent-static-seam-check-rerun` and was caused by the audit command, not by source.
+
+### 3D interaction regression status
+
+The user-reported 3D interaction regression remains fixed by available evidence. The current e2e contract includes `3D overlay owns pointer interaction and does not pass drag gestures through to the 2D canvas`, and both root and frontend e2e closure runs passed. The live smoke confirmed the current app shell loads from the refreshed preview. Residual risk: this coder could not invoke a separate Playwright MCP server from the available toolset, so the accepted substitute evidence is CLI Playwright plus HTTP/live smoke.
+
+### Protected-surface reconciliation
+
+Protected surfaces remained untouched in this closure stage and in the verified Wave 018 implementation scope: no backend/docs/specs/package/tooling changes, no persistence schema/replay changes, no command history/producer redesign, no broad domain realization redesign beyond the approved direct proposal, no UI feature work, no scene-host/OrbitControls/CSS pointer implementation change, no broad app-kernel facade, and no secret/config reads or edits. The unrelated dirty production files `frontend/src/domain/calculations/Intersections.ts` and `frontend/src/domain/processTree/ActionGroup.ts` remained out of scope and were not staged, reverted, or depended on.
+
+### Wave-plan reread and next-wave recommendation
+
+`architecture-audit/wave-plan.md` was reread at closure. Based on Wave 018 learnings, the realization-context boundary is now complete and should not be reopened immediately through a broader realization query-service wave. The most central remaining plan work is still the command/UI controller boundary before rendering cleanup:
+
+1. Proceed with the next canonical fresh-scout/proposals stage for **Wave 006a — Canvas/tool command controllers**, unless the Manager determines a reviewed plan-extension/rerank stage is required because of the non-linear post-017/post-028 ordering.
+2. Keep **Wave 006b — Panel/toolbar command-intent cleanup** behind 006a.
+3. Keep **Wave 007/008 rendering selector and 3D scene extraction** behind the command/controller cleanup so rendering work does not preserve stale UI command leaks.
+4. Treat **Wave 019 — Three scene-host lifecycle and renderer platform boundary** as a later rendering/platform candidate after the command/controller and selector prerequisites are rechecked.
+
+No next-wave implementation was performed.

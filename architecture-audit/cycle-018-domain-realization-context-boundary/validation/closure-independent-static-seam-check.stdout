@@ -1,0 +1,9 @@
+--- ProjectionPlaneContext realization context definitions ---
+23:export interface ProjectionElementRealizationContext extends ProjectionElementLookupContext, ProjectionRealizationLookupContext {}
+25:export interface ProjectionRealizationCollectionContext {
+30:export interface ProjectionElementDiagnosticRealizationContext extends ProjectionElementRealizationContext, ProjectionRealizationCollectionContext {}
+42:export interface ProjectionPlaneRealizationContext extends ProjectionElementLookupContext, ProjectionRealizationLookupContext {}
+44:export interface Element3DRealizationContext extends ProjectionElementLookupContext, ProjectionRealizationLookupContext {}
+46:export interface HingeLineRealizationContext extends Element3DRealizationContext, ProjectionRealizationCollectionContext {}
+48:export interface PlaneEquationRealizationContext extends ProjectionElementLookupContext, ProjectionRealizationLookupContext {}
+--- default context body should not expose getAll collections ---

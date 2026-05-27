@@ -1,0 +1,44 @@
+--- ProjectionPlaneContext realization context definitions ---
+23:export interface ProjectionElementRealizationContext extends ProjectionElementLookupContext, ProjectionRealizationLookupContext {}
+25:export interface ProjectionRealizationCollectionContext {
+30:export interface ProjectionElementDiagnosticRealizationContext extends ProjectionElementRealizationContext, ProjectionRealizationCollectionContext {}
+42:export interface ProjectionPlaneRealizationContext extends ProjectionElementLookupContext, ProjectionRealizationLookupContext {}
+44:export interface Element3DRealizationContext extends ProjectionElementLookupContext, ProjectionRealizationLookupContext {}
+46:export interface HingeLineRealizationContext extends Element3DRealizationContext, ProjectionRealizationCollectionContext {}
+48:export interface PlaneEquationRealizationContext extends ProjectionElementLookupContext, ProjectionRealizationLookupContext {}
+--- default context line should not expose getAll collections ---
+23:export interface ProjectionElementRealizationContext extends ProjectionElementLookupContext, ProjectionRealizationLookupContext {}
+PASS: ProjectionElementRealizationContext line has no collection traversal members
+--- collection methods are isolated ---
+frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:26:  getAllProjectionPlanes(): ProjectionPlane[];
+frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:27:  getAllHingeLines(): HingeLine[];
+frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:37:  if (!('getAllProjectionPlanes' in context) || !('getAllHingeLines' in context)) {
+frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:19:  return world.getAllProjectionPlanes().flatMap((plane) => {
+frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:27:  return world.getAllProjectionPlanes().flatMap((plane) => {
+frontend/src/application/threePresentation/ThreeRealizationContext.ts:18:    getAllProjectionPlanes: collections.getProjectionPlanes,
+frontend/src/application/threePresentation/ThreeRealizationContext.ts:19:    getAllHingeLines: collections.getHingeLines,
+frontend/src/application/threePresentation/ThreePlanarElementReadPort.ts:27:  const getProjectionPlanes = () => world.getAllProjectionPlanes();
+frontend/src/application/threePresentation/ThreeHingeReadPort.ts:13:  const getHingeLines = () => world.getAllHingeLines();
+frontend/src/application/threePresentation/ThreeHingeReadPort.ts:15:    getProjectionPlanes: () => world.getAllProjectionPlanes(),
+frontend/src/domain/world/HingeLine.ts:252:        allProjectionPlanes: world.getAllProjectionPlanes().map(p => ({ id: p.id })),
+frontend/src/domain/world/HingeLine.ts:253:        allHingeLines: world.getAllHingeLines().map(hl => ({ 
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:169:    const allHingeLines = world.getAllHingeLines();
+frontend/src/utils/projectionPlaneUtils.ts:561:  const allPlanes = world.getAllProjectionPlanes();
+--- forbidden generic facades scan (source hits mean failure) ---
+PASS: no forbidden generic facade tokens in active source scan set
+--- overlay pointer-boundary e2e test evidence ---
+89:  test('3D overlay owns pointer interaction and does not pass drag gestures through to the 2D canvas', async ({ page }) => {
+92:    const overlay = page.getByTestId('three-view-overlay');
+103:    await expect.poll(async () => overlay.evaluate(el => getComputedStyle(el).pointerEvents)).toBe('auto');
+106:      return Boolean(el?.closest('[data-testid="three-view-overlay"]'));
+110:    const viewBoxBefore = await svg.getAttribute('viewBox');
+116:    await expect.poll(async () => svg.getAttribute('viewBox')).toBe(viewBoxBefore);
+--- next central pending waves after Wave 018 ---
+230:## Wave 006a — Canvas/tool command controllers
+278:## Wave 006b — Panel/toolbar command-intent cleanup
+324:## Wave 007 — Extract 2D rendering selectors and renderer adapters
+363:## Wave 008 — Extract 3D rendering scene adapters from `ThreeView.vue`
+399:## Wave 009 — Extract application shell services from `App.vue`
+939:## Wave 018 — Domain realization context boundary
+1035:## Wave 019 — Three scene-host lifecycle and renderer platform boundary
+1118:## Wave 020 — App-shell project session and browser integration boundary
