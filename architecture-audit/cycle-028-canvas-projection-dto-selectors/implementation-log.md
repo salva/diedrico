@@ -115,6 +115,22 @@ Earlier exploratory failed logs retained for provenance:
 - `live-preview-probe-rerun.stdout.log` / `.stderr.log` — HTTP reachability probe returned `HTTP/1.1 200 OK` from `http://127.0.0.1:5173/`.
 - A preview refresh command using the required `0.0.0.0:5173` host/port was attempted. The first combined command exited early because the shell `pkill` pattern matched the wrapping command; the follow-up start command's PID redirection path was malformed, but the reachability probe confirms a Diedrico Vite preview/dev server was already answering on port 5173. No preview tooling or package scripts were changed.
 
+
+## Reviewer-blocker correction — projected-3D adapter boundary
+
+A follow-up correction moved the projected-3D raw `World` traversal out of `CanvasWorldReadPort.ts` into a dedicated behavior-named adapter module:
+
+- Added `frontend/src/application/canvasPresentation/Projected3DCanvasReadPort.ts` with `createProjected3DCanvasReadPort(world, realizationContext)`. This module is now the only canvas-presentation boundary that performs the projected-3D all-plane/all-3D traversal and converts raw world state into the `Projected3DCanvasReadPort` DTO source contract.
+- Updated `CanvasWorldReadPort.ts` so `getProjected3DCanvasItems()` delegates to `Projected3DCanvasSelector.selectWorldProjection(createProjected3DCanvasReadPort(...), planeTransforms)` instead of constructing raw 3D source DTOs inline. `CanvasWorldReadPort` remains the canvas-facing composition boundary, but no longer owns projected-3D raw getter traversal.
+- Strengthened `frontend/tests/unit/application/appShell/Cycle027Architecture.test.ts` to assert `CanvasWorldReadPort.ts` has no `world.getAll3DPoints()`, `world.getAll3DLines()`, or `world.getAll3DSegments()` calls and that the raw projected-3D traversal is localized in `Projected3DCanvasReadPort.ts`.
+
+Correction validation logs:
+
+- `validation/t3-projected3d-boundary-scan.stdout.log` / `.stderr.log` — confirms the 3D raw getter traversal is absent from `CanvasWorldReadPort.ts` and present only in the new projected-3D adapter boundary; remaining `CanvasWorldReadPort` projection-plane traversal is the already documented 2D plane-item/transform adapter residual.
+- `validation/t3-focused-vitest.stdout.log` / `.stderr.log` — `npm run test -- --run tests/unit/application/canvasPresentation/projected3DCanvasSelector.spec.ts tests/unit/application/canvasPresentation/canvasWorldReadPort.spec.ts tests/unit/application/appShell/Cycle027Architecture.test.ts` from `frontend/`: PASS, 3 files / 7 tests.
+- `validation/t3-frontend-build.stdout.log` / `.stderr.log` — `npm run build` from `frontend/`: PASS; only existing Vite chunk-size warning.
+- `validation/t3-live-preview-refresh.stdout.log` / `.stderr.log` plus `t3-live-preview-server.*` — refreshed Vite dev server with `--host 0.0.0.0 --port 5173`; reachability probe to `http://127.0.0.1:5173/` returned `HTTP/1.1 200 OK`.
+
 ## Behavior verification
 
 - Focused canvas tests verify render/query DTO generation and plane transform availability through `createCanvasWorldReadPort`.

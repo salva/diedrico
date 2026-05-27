@@ -3,6 +3,7 @@ import runtimeSession from '@/application/appShell/RuntimeSession.ts?raw';
 import canvasWorldReadPort from '@/application/canvasPresentation/CanvasWorldReadPort.ts?raw';
 import canvasPresentationSelector from '@/application/canvasPresentation/CanvasPresentationSelector.ts?raw';
 import projected3DCanvasSelector from '@/application/canvasPresentation/Projected3DCanvasSelector.ts?raw';
+import projected3DCanvasReadPort from '@/application/canvasPresentation/Projected3DCanvasReadPort.ts?raw';
 import canvasVisibilityPolicy from '@/application/canvasPresentation/CanvasVisibilityPolicy.ts?raw';
 import elementsPanelReadModel from '@/application/appShell/readModels/ElementsPanelReadModel.ts?raw';
 import elementVisibilityIntent from '@/application/appShell/readModels/ElementVisibilityIntent.ts?raw';
@@ -35,5 +36,8 @@ describe('Cycle 027 runtime read-model ownership boundaries', () => {
     expect(canvasWorldReadPort).not.toMatch(/realizePoint2D\([^)]*\):|realizeLine2D\([^)]*\):|realizeCircle2D\([^)]*\):|realizePoint3D\([^)]*\):|realizeLine3D\([^)]*\):|realizeSegment3D\([^)]*\):/);
     expect(canvasPresentationSelector).not.toMatch(/getAllProjectionPlanes\(|plane\.getAllPoints\(|plane\.getAllLines\(|plane\.getAllCircles\(|instanceof/);
     expect(projected3DCanvasSelector).not.toMatch(/getAllProjectionPlanes\(|getAll3DPoints\(|getAll3DLines\(|getAll3DSegments\(/);
+    expect(canvasWorldReadPort).not.toMatch(/world\.getAll3DPoints\(|world\.getAll3DLines\(|world\.getAll3DSegments\(/);
+    expect(projected3DCanvasReadPort).toMatch(/createProjected3DCanvasReadPort/);
+    expect(projected3DCanvasReadPort).toMatch(/world\.getAll3DPoints\(\)|world\.getAll3DLines\(\)|world\.getAll3DSegments\(\)/);
   });
 });

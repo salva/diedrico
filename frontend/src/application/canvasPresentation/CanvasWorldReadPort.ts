@@ -6,6 +6,7 @@ import type { World } from '@/domain/world/World';
 import type { CanvasPlaneCanvasItems, CanvasPlaneItem, CanvasPlaneLineItem, CanvasPlaneTransformModel, CanvasRenderItem } from './CanvasPresentationModel';
 import { resolveVisibility } from '@/domain/world/styleService';
 import { Projected3DCanvasSelector } from './Projected3DCanvasSelector';
+import { createProjected3DCanvasReadPort } from './Projected3DCanvasReadPort';
 
 export interface CanvasWorldReadPort {
   getCanvasPlaneTransforms(): CanvasPlaneTransformModel[];
@@ -104,13 +105,7 @@ export function createCanvasWorldReadPort(world: World): CanvasWorldReadPort {
   return {
     getCanvasPlaneTransforms: () => getCanvasPlaneTransforms(world),
     getPlaneCanvasItems: () => getPlaneCanvasItems(world, realizationContext),
-    getProjected3DCanvasItems: planeTransforms => projected3DSelector.selectWorldProjection({
-      getProjectionPlanes: () => world.getAllProjectionPlanes().map(plane => ({ id: plane.id })),
-      getProjectionPlane3DRealization: planeId => world.getProjectionPlane3DRealization(planeId),
-      get3DPoints: () => world.getAll3DPoints().map(point => ({ id: point.id, realization: point.realize3D(realizationContext) })),
-      get3DLines: () => world.getAll3DLines().map(line => ({ id: line.id, realization: line.realize3D(realizationContext) })),
-      get3DSegments: () => world.getAll3DSegments().map(segment => ({ id: segment.id, realization: segment.realize3D(realizationContext) })),
-    }, planeTransforms),
+    getProjected3DCanvasItems: planeTransforms => projected3DSelector.selectWorldProjection(createProjected3DCanvasReadPort(world, realizationContext), planeTransforms),
   };
 }
 
