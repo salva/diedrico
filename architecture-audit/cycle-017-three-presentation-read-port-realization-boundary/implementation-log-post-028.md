@@ -252,3 +252,43 @@ Older Cycle 017 logs, stale failing validation attempts, and schema-mismatch wor
 `architecture-audit/wave-plan.md` was reread by heading and nearby Wave 017/018 context. Because Wave 017 deliberately stopped short of a broad realization-context redesign and closure reconfirmed that `ThreeRealizationContext.ts` is now only a narrow binder supplied by concern adapters, the most central remaining follow-up is still **Wave 018 — Domain realization context boundary**. Recommended next canonical stage: `cycle-018-fresh-scout-proposals-post-017`, with scope-check/proposals focused on the current domain realization context boundary and no implementation until reviewed convergence is complete.
 
 Do not pull peripheral cleanup forward ahead of Wave 018 unless a reviewed plan-edit mini-cycle changes the ordering.
+
+
+### Final source-control ownership reconciliation — t3 reviewer-blocker closure
+
+This addendum resolves the reviewer source-control ownership blocker by separating **closure-owned Wave 017 artifacts** from **pre-existing unrelated dirty source files/noise**. It does not change, revert, or depend on protected source files.
+
+#### Closure-owned artifacts
+
+The following dirty/untracked paths are accepted as owned by the Wave 017 validation-and-preview closure stage because they are documentation, validation evidence, live-preview evidence, or worker/reviewer/manager evidence for this stage:
+
+- `architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/implementation-log-post-028.md`
+- `architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-*.stdout`
+- `architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-*.stderr`
+- `architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-preview-probe.headers`
+- `architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-preview-probe.html`
+- `architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-preview-refresh.pid`
+- `architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/closure-live-3d-canvas-smoke.png`
+- `architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/manager-*.stdout`
+- `architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/manager-*.stderr`
+- `architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/reviewer-*.stdout`
+- `architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/reviewer-*.stderr`
+- `architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/retry-report-sha-update.*`
+- `.saivage/stages/cycle-017-validation-and-preview-refresh-post-028/reports/t1-verify-validation-preview-and-finalize-log.json`
+- `.saivage/stages/cycle-017-validation-and-preview-refresh-post-028/reports/t2-stage-review.json`
+- `.saivage/stages/cycle-017-validation-and-preview-refresh-post-028/reports/t3-reconcile-closure-source-control-ownership.json`
+
+These files are audit/report evidence for the current closure stage. They are not production source refactors and do not broaden Wave 017 implementation scope.
+
+#### Explicitly not closure-owned / not staged as Wave 017 work
+
+The following production source files remain unrelated dirty worktree state outside Wave 017 closure ownership:
+
+- `frontend/src/domain/calculations/Intersections.ts`
+- `frontend/src/domain/processTree/ActionGroup.ts`
+
+Current path-scoped diff evidence shows these files contain non-Wave-017 domain/comment/contract edits unrelated to the three-presentation read-port split, validation evidence, preview refresh, or 3D pointer-boundary verification. They were not modified or reverted by this t3 reconciliation task and must remain excluded from any Wave 017 closure commit/stage ownership decision unless the Manager separately assigns an ownership/isolation task.
+
+#### Acceptance basis after reconciliation
+
+Wave 017 closure is accepted on the basis of the closure-owned audit/report/validation artifacts listed above plus the green validation evidence already indexed in this log. The unrelated dirty `Intersections.ts` and `ActionGroup.ts` files are documented as external pre-existing worktree noise, not as Wave 017 source changes, and are intentionally left untouched to preserve source-control hygiene.
