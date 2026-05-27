@@ -1,17 +1,13 @@
 import type { Ref } from 'vue';
-import type { CommandStack } from '@/commands/CommandStack';
-import type { World } from '@/domain/world/World';
-import { initializeWorld } from '@/application/world/initializeWorld';
-import type { ProjectData } from '@/services/ProjectService';
 import type { AutoSaveUseCases } from './AutoSaveUseCases';
 import type { AppShellRuntimePorts, SaveStatus, StartupDialogState } from './AppShellPorts';
 import { describeUnknownError } from './AppShellErrorClassifier';
+import type { RuntimeSession } from './RuntimeSession';
 
 export class ProjectSessionUseCases {
   constructor(
     private readonly deps: {
-      world: World;
-      commandStack: CommandStack;
+      session: RuntimeSession;
       hasGoogleCredentials: boolean;
       showStartupDialog: Ref<boolean>;
       isSignedIn: Ref<boolean>;
@@ -28,7 +24,7 @@ export class ProjectSessionUseCases {
   async initialize(): Promise<void> {
     const { drive, authStore, lastProjectRepository } = this.deps.ports;
     if (!this.deps.hasGoogleCredentials || !drive) {
-      initializeWorld(this.deps.world, this.deps.commandStack);
+      this.deps.session.initializeDefaultWorldIfNeeded();
       this.deps.showStartupDialog.value = false;
       return;
     }
@@ -47,7 +43,7 @@ export class ProjectSessionUseCases {
           lastProjectRepository.clearLastProject();
           this.deps.currentProjectName.value = null;
           this.deps.currentFileId.value = null;
-          initializeWorld(this.deps.world, this.deps.commandStack);
+          this.deps.session.initializeDefaultWorldIfNeeded();
         }
       }
       this.deps.showStartupDialog.value = true;
@@ -87,22 +83,15 @@ export class ProjectSessionUseCases {
     this.deps.currentProjectName.value = null;
     this.deps.currentFileId.value = null;
     this.deps.autoSave.stop();
-    this.deps.world.clear();
-    this.deps.commandStack.clear();
+    this.deps.session.clear();
     this.deps.showStartupDialog.value = true;
   }
 
   async createProject(projectName: string): Promise<void> {
     const drive = this.requireDrive();
     try {
-      this.deps.world.clear();
-      this.deps.commandStack.clear();
-      initializeWorld(this.deps.world, this.deps.commandStack);
-      const projectData = this.deps.ports.persistence.snapshotCurrentSession({
-        commandStack: this.deps.commandStack,
-        world: this.deps.world,
-        projectName,
-      });
+      this.deps.session.resetToEmptyInitializedWorld();
+      const projectData = this.deps.session.snapshot(projectName, this.deps.ports.persistence);
       const fileId = await drive.createFile(projectName, projectData);
       this.setCurrentProject(projectName, fileId);
       this.deps.showStartupDialog.value = false;
@@ -117,16 +106,10 @@ export class ProjectSessionUseCases {
   async openProject(fileId: string): Promise<void> {
     const drive = this.requireDrive();
     try {
-      const projectData = await drive.loadFile(fileId) as ProjectData;
-      this.deps.world.clear();
-      this.deps.ports.persistence.assertProjectData(projectData);
-      this.deps.ports.persistence.restoreSession(projectData, {
-        world: this.deps.world,
-        commandStack: this.deps.commandStack,
-      });
-      if (this.deps.world.getAllProjectionPlanes().length === 0) initializeWorld(this.deps.world, this.deps.commandStack);
-      this.deps.world.markDirty();
-      this.setCurrentProject(projectData.name, fileId);
+      const loadedProject = await drive.loadFile(fileId);
+      const projectData = this.deps.session.validateProjectData(loadedProject, this.deps.ports.persistence);
+      this.deps.session.restoreValidatedProject(projectData, this.deps.ports.persistence);
+      this.setCurrentProject(String(projectData.name), fileId);
       this.deps.showStartupDialog.value = false;
       this.deps.autoSave.start();
       this.deps.saveStatus.value = 'saved';
@@ -141,8 +124,6 @@ export class ProjectSessionUseCases {
     const drive = this.requireDrive();
     try {
       const projectName = await drive.generateDefaultProjectName();
-      this.deps.world.clear();
-      this.deps.commandStack.clear();
       await this.createProject(projectName);
     } catch {
       this.deps.showStartupDialog.value = true;

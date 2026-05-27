@@ -1,0 +1,108 @@
+frontend/src/application/appShell/AppShellPorts.ts:28:  snapshotCurrentSession(session: RuntimeSessionReader, projectName: string): SerializedProjectSession;
+frontend/src/application/appShell/AppShellPorts.ts:29:  assertProjectData(data: unknown): asserts data is SerializedProjectSession;
+frontend/src/application/appShell/AppShellPorts.ts:30:  restoreSession(data: SerializedProjectSession, target: RuntimeSessionRestoreTarget): void;
+frontend/src/application/appShell/AppShellPorts.ts:55:  restoreSession(): boolean;
+frontend/src/application/appShell/ActivePlaneUseCases.ts:2:import type { World } from '@/domain/world/World';
+frontend/src/application/appShell/ActivePlaneUseCases.ts:12:  constructor(private readonly world: World, private readonly state: ActivePlaneState) {}
+frontend/src/application/appShell/ActivePlaneUseCases.ts:16:    this.updateHandler = () => this.updateFromWorld();
+frontend/src/application/appShell/ActivePlaneUseCases.ts:18:    this.updateFromWorld();
+frontend/src/application/appShell/ActivePlaneUseCases.ts:45:  private updateFromWorld(): void {
+frontend/src/application/appShell/SelectionUseCases.ts:2:import type { World } from '@/domain/world/World';
+frontend/src/application/appShell/SelectionUseCases.ts:10:    private readonly world: World,
+frontend/src/application/appShell/ProjectSessionUseCases.ts:27:      this.deps.session.initializeDefaultWorldIfNeeded();
+frontend/src/application/appShell/ProjectSessionUseCases.ts:34:      if (this.deps.isSignedIn.value && authStore.restoreSession()) {
+frontend/src/application/appShell/ProjectSessionUseCases.ts:46:          this.deps.session.initializeDefaultWorldIfNeeded();
+frontend/src/application/appShell/ProjectSessionUseCases.ts:93:      this.deps.session.resetToEmptyInitializedWorld();
+frontend/src/application/appShell/ProjectSessionUseCases.ts:110:      const projectData = this.deps.session.validateProjectData(loadedProject, this.deps.ports.persistence);
+frontend/src/application/appShell/KeyboardShortcutRouter.ts:1:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/appShell/KeyboardShortcutRouter.ts:18:    commandStack: CommandStack;
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:1:import { ProjectService, type ProjectData } from '@/services/ProjectService';
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:6:  snapshotCurrentSession(session: RuntimeSessionReader, projectName: string): SerializedProjectSession {
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:7:    return ProjectService.serializeCommands(session.commandStack, session.nextElementId, projectName);
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:10:  assertProjectData(data: unknown): asserts data is SerializedProjectSession {
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:11:    ProjectService.validateProjectData(data);
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:14:  restoreSession(data: SerializedProjectSession, target: RuntimeSessionRestoreTarget): void {
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:15:    ProjectService.deserializeCommands(data as ProjectData, target.world, target.commandStack);
+frontend/src/application/appShell/RuntimeSession.ts:1:import { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/appShell/RuntimeSession.ts:2:import { World } from '@/domain/world/World';
+frontend/src/application/appShell/RuntimeSession.ts:3:import { initializeWorld } from '@/application/world/initializeWorld';
+frontend/src/application/appShell/RuntimeSession.ts:7:  readonly world: World;
+frontend/src/application/appShell/RuntimeSession.ts:8:  readonly commandStack: CommandStack;
+frontend/src/application/appShell/RuntimeSession.ts:13:  readonly world: World;
+frontend/src/application/appShell/RuntimeSession.ts:14:  readonly commandStack: CommandStack;
+frontend/src/application/appShell/RuntimeSession.ts:18:  private readonly world = new World();
+frontend/src/application/appShell/RuntimeSession.ts:19:  private readonly commandStack = new CommandStack();
+frontend/src/application/appShell/RuntimeSession.ts:21:  worldForView(): World {
+frontend/src/application/appShell/RuntimeSession.ts:25:  commandStackForShortcuts(): CommandStack {
+frontend/src/application/appShell/RuntimeSession.ts:29:  worldForUseCases(): World {
+frontend/src/application/appShell/RuntimeSession.ts:33:  commandStackForCommandServices(): CommandStack {
+frontend/src/application/appShell/RuntimeSession.ts:37:  initializeDefaultWorldIfNeeded(): void {
+frontend/src/application/appShell/RuntimeSession.ts:38:    initializeWorld(this.world, this.commandStack);
+frontend/src/application/appShell/RuntimeSession.ts:41:  resetToEmptyInitializedWorld(): void {
+frontend/src/application/appShell/RuntimeSession.ts:44:    this.initializeDefaultWorldIfNeeded();
+frontend/src/application/appShell/RuntimeSession.ts:57:    return persistence.snapshotCurrentSession(this.reader(), projectName);
+frontend/src/application/appShell/RuntimeSession.ts:60:  validateProjectData(data: unknown, persistence: ProjectSessionPersistencePort): SerializedProjectSession {
+frontend/src/application/appShell/RuntimeSession.ts:61:    persistence.assertProjectData(data);
+frontend/src/application/appShell/RuntimeSession.ts:66:    const candidateWorld = new World();
+frontend/src/application/appShell/RuntimeSession.ts:67:    const candidateCommandStack = new CommandStack();
+frontend/src/application/appShell/RuntimeSession.ts:68:    persistence.restoreSession(data, { world: candidateWorld, commandStack: candidateCommandStack });
+frontend/src/application/appShell/RuntimeSession.ts:69:    if (candidateWorld.getAllProjectionPlanes().length === 0) initializeWorld(candidateWorld, candidateCommandStack);
+frontend/src/application/appShell/RuntimeSession.ts:70:    candidateWorld.markDirty();
+frontend/src/application/appShell/RuntimeSession.ts:74:    persistence.restoreSession(data, this.restoreTarget());
+frontend/src/application/appShell/RuntimeSession.ts:75:    if (this.world.getAllProjectionPlanes().length === 0) this.initializeDefaultWorldIfNeeded();
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:20:    expect(appVue).not.toMatch(/DeletionSequenceFactory|ProjectService|GoogleDriveService|window as any|__autoSaveInterval|CustomEvent\('load-files'\)|Environment variables/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:38:    expect(appShellRuntime).not.toMatch(/new GoogleDriveService|ProjectService|window\.localStorage|createBrowserScheduler|keyboard\.install\(window\)/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:62:    expect(selection).not.toMatch(/DeletionSequenceFactory|new Command|CommandStack|commandStack\.push|\.commit\(/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:73:  it('keeps app-shell ports free of concrete runtime and ProjectService DTO imports', () => {
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:74:    expect(appShellPorts).not.toMatch(/@\/commands\/CommandStack|@\/domain\/world\/World|@\/services\/ProjectService/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:81:    expect(projectSession).not.toMatch(/@\/commands\/CommandStack|@\/domain\/world\/World|@\/services\/ProjectService|initializeWorld/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:82:    expect(autoSave).not.toMatch(/@\/commands\/CommandStack|@\/domain\/world\/World/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:83:    expect(projectSession).not.toMatch(/snapshotCurrentSession\(\{[\s\S]*commandStack[\s\S]*world/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:84:    expect(autoSave).not.toMatch(/snapshotCurrentSession\(\{[\s\S]*commandStack[\s\S]*world/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:87:  it('keeps ProjectService awareness inside the app-shell persistence adapter', () => {
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:90:      expect(content).not.toMatch(/@\/services\/ProjectService/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:92:    expect(projectSessionPersistenceAdapter).toMatch(/@\/services\/ProjectService/);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:11:import { World } from '@/domain/world/World';
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:61:    snapshotCurrentSession: vi.fn((session, projectName) => ({
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:70:    assertProjectData: vi.fn(),
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:71:    restoreSession: vi.fn(),
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:101:      restoreSession: vi.fn(() => false),
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:171:    expect(runtime.world).toBeInstanceOf(World);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:201:      session: { getVersion: () => version, snapshot: (_projectName: string, p: ProjectSessionPersistencePort) => p.snapshotCurrentSession({ world: {} as any, commandStack: {} as any, nextElementId: 10 }, _projectName) } as any,
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:238:      session: { getVersion: () => 1, snapshot: (_projectName: string, p: ProjectSessionPersistencePort) => p.snapshotCurrentSession({ world: {} as any, commandStack: {} as any, nextElementId: 10 }, _projectName) } as any,
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:266:      session: { getVersion: () => 1, snapshot: (_projectName: string, p: ProjectSessionPersistencePort) => p.snapshotCurrentSession({ world: {} as any, commandStack: {} as any, nextElementId: 10 }, _projectName) } as any,
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:516:        assertProjectData: vi.fn(() => { throw new Error('invalid payload'); }),
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:520:    deps.session.initializeDefaultWorldIfNeeded();
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:523:    const preOpenWorld = deps.session.worldForView();
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:524:    const preOpenCommandStack = deps.session.commandStackForShortcuts();
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:525:    const preOpenPlaneCount = preOpenWorld.getAllProjectionPlanes().length;
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:526:    const preOpenNextId = preOpenWorld.peekNextId();
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:527:    const preOpenUndoCount = preOpenCommandStack.getUndoCount();
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:532:    expect(deps.session.worldForView()).toBe(preOpenWorld);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:533:    expect(deps.session.commandStackForShortcuts()).toBe(preOpenCommandStack);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:534:    expect(preOpenWorld.getAllProjectionPlanes()).toHaveLength(preOpenPlaneCount);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:535:    expect(preOpenWorld.peekNextId()).toBe(preOpenNextId);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:536:    expect(preOpenCommandStack.getUndoCount()).toBe(preOpenUndoCount);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:537:    expect(preOpenCommandStack.canUndo()).toBe(preOpenUndoCount > 0);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:538:    expect(preOpenCommandStack.canRedo()).toBe(false);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:549:        restoreSession: vi.fn(() => { throw restoreError; }),
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:553:    deps.session.initializeDefaultWorldIfNeeded();
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:556:    const preOpenWorld = deps.session.worldForView();
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:557:    const preOpenCommandStack = deps.session.commandStackForShortcuts();
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:558:    const preOpenPlaneCount = preOpenWorld.getAllProjectionPlanes().length;
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:559:    const preOpenNextId = preOpenWorld.peekNextId();
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:560:    const preOpenUndoCount = preOpenCommandStack.getUndoCount();
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:565:    expect(ports.persistence.restoreSession).toHaveBeenCalledTimes(1);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:566:    expect(ports.persistence.restoreSession).not.toHaveBeenCalledWith(expect.anything(), { world: preOpenWorld, commandStack: preOpenCommandStack });
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:567:    expect(deps.session.worldForView()).toBe(preOpenWorld);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:568:    expect(deps.session.commandStackForShortcuts()).toBe(preOpenCommandStack);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:569:    expect(preOpenWorld.getAllProjectionPlanes()).toHaveLength(preOpenPlaneCount);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:570:    expect(preOpenWorld.peekNextId()).toBe(preOpenNextId);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:571:    expect(preOpenCommandStack.getUndoCount()).toBe(preOpenUndoCount);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:572:    expect(preOpenCommandStack.canUndo()).toBe(preOpenUndoCount > 0);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:573:    expect(preOpenCommandStack.canRedo()).toBe(false);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:604:    const originalWorld = deps.session.worldForView();
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:605:    const originalCommandStack = deps.session.commandStackForShortcuts();
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:617:    expect(deps.ports.persistence.restoreSession).toHaveBeenCalled();
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:625:    expect(deps.session.worldForView()).toBe(originalWorld);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:626:    expect(deps.session.commandStackForShortcuts()).toBe(originalCommandStack);

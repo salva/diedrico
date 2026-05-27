@@ -6,8 +6,8 @@ import { ActivePlaneUseCases } from '@/application/appShell/ActivePlaneUseCases'
 import { AutoSaveUseCases } from '@/application/appShell/AutoSaveUseCases';
 import { BrowserLastProjectRepository } from '@/application/appShell/BrowserLastProjectRepository';
 import { ProjectSessionUseCases } from '@/application/appShell/ProjectSessionUseCases';
+import { RuntimeSession } from '@/application/appShell/RuntimeSession';
 import { SelectionUseCases } from '@/application/appShell/SelectionUseCases';
-import { CommandStack } from '@/commands/CommandStack';
 import { World } from '@/domain/world/World';
 import type { AppShellRuntimePorts, DrivePort, LastProjectRepositoryPort, ProjectSessionPersistencePort, SchedulerPort } from '@/application/appShell/AppShellPorts';
 
@@ -58,15 +58,15 @@ function drive(overrides: Partial<DrivePort> = {}): DrivePort {
 
 function persistence(): ProjectSessionPersistencePort {
   return {
-    snapshotCurrentSession: vi.fn(({ world, projectName }) => ({
+    snapshotCurrentSession: vi.fn((session, projectName) => ({
       id: 'project-id',
       schemaVersion: '6.0.0',
       name: projectName,
       created: 'now',
       modified: 'now',
-      nextElementId: world.peekNextId(),
+      nextElementId: session.nextElementId,
       commands: [],
-    } as any)),
+    })),
     assertProjectData: vi.fn(),
     restoreSession: vi.fn(),
   };
@@ -198,8 +198,7 @@ describe('AutoSaveUseCases', () => {
     const currentFileId = ref('file-1');
     const currentProjectName = ref('Project');
     const autoSave = new AutoSaveUseCases({
-      world: { getVersion: () => version, peekNextId: () => 10 } as any,
-      commandStack: {} as any,
+      session: { getVersion: () => version, snapshot: (_projectName: string, p: ProjectSessionPersistencePort) => p.snapshotCurrentSession({ world: {} as any, commandStack: {} as any, nextElementId: 10 }, _projectName) } as any,
       drive: drive(),
       persistence: persistence(),
       lastProjectRepository: lastProjectRepository(),
@@ -236,8 +235,7 @@ describe('AutoSaveUseCases', () => {
     const isSignedIn = ref(true);
     const saveStatus = ref<'idle' | 'saving' | 'saved'>('idle');
     const autoSave = new AutoSaveUseCases({
-      world: { getVersion: () => 1, peekNextId: () => 10 } as any,
-      commandStack: {} as any,
+      session: { getVersion: () => 1, snapshot: (_projectName: string, p: ProjectSessionPersistencePort) => p.snapshotCurrentSession({ world: {} as any, commandStack: {} as any, nextElementId: 10 }, _projectName) } as any,
       drive: drive({ updateFile: vi.fn().mockRejectedValue(new Error('401 authentication expired')) }),
       persistence: persistence(),
       lastProjectRepository: lastProjectRepository(),
@@ -265,8 +263,7 @@ describe('AutoSaveUseCases', () => {
     const currentFileId = ref('missing-file');
     const currentProjectName = ref('Project');
     const autoSave = new AutoSaveUseCases({
-      world: { getVersion: () => 1, peekNextId: () => 10 } as any,
-      commandStack: {} as any,
+      session: { getVersion: () => 1, snapshot: (_projectName: string, p: ProjectSessionPersistencePort) => p.snapshotCurrentSession({ world: {} as any, commandStack: {} as any, nextElementId: 10 }, _projectName) } as any,
       drive: drive({
         updateFile: vi.fn().mockRejectedValue(new Error('File not found')),
         createFile: vi.fn().mockResolvedValue('replacement-file'),
@@ -466,12 +463,10 @@ describe('SelectionUseCases', () => {
 
 describe('ProjectSessionUseCases startup and project flows', () => {
   function projectSessionDeps(overrides: Partial<ConstructorParameters<typeof ProjectSessionUseCases>[0]> = {}) {
-    const world = new World();
-    const commandStack = new CommandStack();
+    const session = new RuntimeSession();
     const ports = runtimePorts();
     return {
-      world,
-      commandStack,
+      session,
       hasGoogleCredentials: true,
       showStartupDialog: ref(false),
       isSignedIn: ref(false),
@@ -493,7 +488,7 @@ describe('ProjectSessionUseCases startup and project flows', () => {
     await useCases.initialize();
 
     expect(deps.showStartupDialog.value).toBe(false);
-    expect(deps.world.getAllProjectionPlanes().length).toBeGreaterThan(0);
+    expect(deps.session.worldForView().getAllProjectionPlanes().length).toBeGreaterThan(0);
   });
 
   it('loads and resets startup-dialog file list through typed runtime state', async () => {
@@ -511,10 +506,103 @@ describe('ProjectSessionUseCases startup and project flows', () => {
     expect(deps.startupDialog.error.value).toBeNull();
   });
 
+
+
+  it('keeps the active session intact when openProject rejects invalid project data', async () => {
+    const ports = runtimePorts({
+      drive: drive({ loadFile: vi.fn().mockResolvedValue({ bad: 'payload' }) }),
+      persistence: {
+        ...persistence(),
+        assertProjectData: vi.fn(() => { throw new Error('invalid payload'); }),
+      },
+    });
+    const deps = projectSessionDeps({ ports });
+    deps.session.initializeDefaultWorldIfNeeded();
+    deps.currentProjectName.value = 'Existing';
+    deps.currentFileId.value = 'existing-file';
+    const preOpenWorld = deps.session.worldForView();
+    const preOpenCommandStack = deps.session.commandStackForShortcuts();
+    const preOpenPlaneCount = preOpenWorld.getAllProjectionPlanes().length;
+    const preOpenNextId = preOpenWorld.peekNextId();
+    const preOpenUndoCount = preOpenCommandStack.getUndoCount();
+    const useCases = new ProjectSessionUseCases(deps as any);
+
+    await expect(useCases.openProject('bad-file')).rejects.toThrow('invalid payload');
+
+    expect(deps.session.worldForView()).toBe(preOpenWorld);
+    expect(deps.session.commandStackForShortcuts()).toBe(preOpenCommandStack);
+    expect(preOpenWorld.getAllProjectionPlanes()).toHaveLength(preOpenPlaneCount);
+    expect(preOpenWorld.peekNextId()).toBe(preOpenNextId);
+    expect(preOpenCommandStack.getUndoCount()).toBe(preOpenUndoCount);
+    expect(preOpenCommandStack.canUndo()).toBe(preOpenUndoCount > 0);
+    expect(preOpenCommandStack.canRedo()).toBe(false);
+    expect(deps.currentProjectName.value).toBe('Existing');
+    expect(deps.currentFileId.value).toBe('existing-file');
+    expect(deps.autoSave.start).not.toHaveBeenCalled();
+  });
+
+  it('restores into isolation before clearing active state when deserialization fails', async () => {
+    const restoreError = new Error('restore exploded');
+    const ports = runtimePorts({
+      persistence: {
+        ...persistence(),
+        restoreSession: vi.fn(() => { throw restoreError; }),
+      },
+    });
+    const deps = projectSessionDeps({ ports });
+    deps.session.initializeDefaultWorldIfNeeded();
+    deps.currentProjectName.value = 'Existing';
+    deps.currentFileId.value = 'existing-file';
+    const preOpenWorld = deps.session.worldForView();
+    const preOpenCommandStack = deps.session.commandStackForShortcuts();
+    const preOpenPlaneCount = preOpenWorld.getAllProjectionPlanes().length;
+    const preOpenNextId = preOpenWorld.peekNextId();
+    const preOpenUndoCount = preOpenCommandStack.getUndoCount();
+    const useCases = new ProjectSessionUseCases(deps as any);
+
+    await expect(useCases.openProject('file-opened')).rejects.toThrow('restore exploded');
+
+    expect(ports.persistence.restoreSession).toHaveBeenCalledTimes(1);
+    expect(ports.persistence.restoreSession).not.toHaveBeenCalledWith(expect.anything(), { world: preOpenWorld, commandStack: preOpenCommandStack });
+    expect(deps.session.worldForView()).toBe(preOpenWorld);
+    expect(deps.session.commandStackForShortcuts()).toBe(preOpenCommandStack);
+    expect(preOpenWorld.getAllProjectionPlanes()).toHaveLength(preOpenPlaneCount);
+    expect(preOpenWorld.peekNextId()).toBe(preOpenNextId);
+    expect(preOpenCommandStack.getUndoCount()).toBe(preOpenUndoCount);
+    expect(preOpenCommandStack.canUndo()).toBe(preOpenUndoCount > 0);
+    expect(preOpenCommandStack.canRedo()).toBe(false);
+    expect(deps.currentProjectName.value).toBe('Existing');
+    expect(deps.currentFileId.value).toBe('existing-file');
+    expect(deps.autoSave.start).not.toHaveBeenCalled();
+  });
+
+  it('keeps save status retryable when session snapshot fails during autosave', async () => {
+    const fakeScheduler = scheduler();
+    const saveStatus = ref<'idle' | 'saving' | 'saved'>('saving');
+    const autoSave = new AutoSaveUseCases({
+      session: { getVersion: () => 1, snapshot: () => { throw new Error('snapshot failed'); } } as any,
+      drive: drive(),
+      persistence: persistence(),
+      lastProjectRepository: lastProjectRepository(),
+      scheduler: fakeScheduler.port,
+      currentFileId: ref('file-1'),
+      currentProjectName: ref('Project'),
+      saveStatus,
+      showStartupDialog: ref(false),
+      isSignedIn: ref(true),
+      alert: vi.fn(),
+    }, 50);
+
+    await autoSave.perform();
+
+    expect(saveStatus.value).toBe('idle');
+    expect(fakeScheduler.port.clearInterval).not.toHaveBeenCalled();
+  });
+
   it('creates, opens, renames, and signs out without replacing stable world or command stack references', async () => {
     const deps = projectSessionDeps();
-    const originalWorld = deps.world;
-    const originalCommandStack = deps.commandStack;
+    const originalWorld = deps.session.worldForView();
+    const originalCommandStack = deps.session.commandStackForShortcuts();
     const useCases = new ProjectSessionUseCases(deps as any);
 
     await useCases.createProject('Created');
@@ -534,8 +622,8 @@ describe('ProjectSessionUseCases startup and project flows', () => {
     expect(deps.autoSave.schedule).toHaveBeenCalled();
 
     await useCases.signOut();
-    expect(deps.world).toBe(originalWorld);
-    expect(deps.commandStack).toBe(originalCommandStack);
+    expect(deps.session.worldForView()).toBe(originalWorld);
+    expect(deps.session.commandStackForShortcuts()).toBe(originalCommandStack);
     expect(deps.currentProjectName.value).toBeNull();
     expect(deps.currentFileId.value).toBeNull();
     expect(deps.showStartupDialog.value).toBe(true);

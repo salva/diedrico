@@ -1,12 +1,12 @@
 import type { Ref } from 'vue';
-import type { CommandStack } from '@/commands/CommandStack';
-import type { World } from '@/domain/world/World';
 import type { GoogleDriveFile, GoogleUserProfile } from '@/services/GoogleDriveService';
-import type { ProjectData } from '@/services/ProjectService';
 import type { ToolType } from '@/stores/toolStore';
 import type { KeyboardShortcutRouterTarget } from './KeyboardShortcutRouter';
 
 export type SaveStatus = 'idle' | 'saving' | 'saved';
+export interface SerializedProjectSession {
+  name: string;
+}
 
 export interface DrivePort {
   initialize(): Promise<void>;
@@ -22,10 +22,16 @@ export interface DrivePort {
   generateDefaultProjectName(): Promise<string>;
 }
 
+export interface RuntimeSessionSnapshotHandle {
+  readonly nextElementId: number;
+}
+
+export interface RuntimeSessionRestoreHandle {}
+
 export interface ProjectSessionPersistencePort {
-  snapshotCurrentSession(deps: { commandStack: CommandStack; world: World; projectName: string }): ProjectData;
-  assertProjectData(data: unknown): asserts data is ProjectData;
-  restoreSession(data: ProjectData, deps: { world: World; commandStack: CommandStack }): void;
+  snapshotCurrentSession(session: RuntimeSessionSnapshotHandle, projectName: string): SerializedProjectSession;
+  assertProjectData(data: unknown): asserts data is SerializedProjectSession;
+  restoreSession(data: SerializedProjectSession, target: RuntimeSessionRestoreHandle): void;
 }
 
 export interface LastProjectRecord {

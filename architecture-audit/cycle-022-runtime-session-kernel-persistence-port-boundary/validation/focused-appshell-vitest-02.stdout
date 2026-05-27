@@ -1,0 +1,19 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run --run tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts tests/unit/application/appShell/AppShellBoundary.test.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/application/appShell/AppShellBoundary.test.ts  (10 tests) 6ms
+ ❯ tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts  (20 tests | 2 failed) 47ms
+   ❯ tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts > ProjectSessionUseCases startup and project flows > keeps the active session intact when openProject rejects invalid project data
+     → expected true to be false // Object.is equality
+   ❯ tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts > ProjectSessionUseCases startup and project flows > restores into isolation before clearing active state when deserialization fails
+     → expected 1 to be +0 // Object.is equality
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  2 failed | 28 passed (30)
+   Start at  05:54:52
+   Duration  1.97s (transform 870ms, setup 0ms, collect 1.18s, tests 53ms, environment 1.06s, prepare 207ms)
+

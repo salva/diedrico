@@ -1,8 +1,7 @@
 import type { Ref } from 'vue';
-import type { CommandStack } from '@/commands/CommandStack';
-import type { World } from '@/domain/world/World';
 import type { DrivePort, IntervalHandle, LastProjectRepositoryPort, ProjectSessionPersistencePort, SaveStatus, SchedulerPort, TimeoutHandle } from './AppShellPorts';
 import { isAuthenticationError, isMissingRemoteFileError, isQuotaError } from './AppShellErrorClassifier';
+import type { RuntimeSession } from './RuntimeSession';
 
 export class AutoSaveUseCases {
   private pollInterval: IntervalHandle | null = null;
@@ -12,8 +11,7 @@ export class AutoSaveUseCases {
 
   constructor(
     private readonly deps: {
-      world: World;
-      commandStack: CommandStack;
+      session: RuntimeSession;
       drive: DrivePort | null;
       persistence: ProjectSessionPersistencePort;
       lastProjectRepository: LastProjectRepositoryPort;
@@ -30,9 +28,9 @@ export class AutoSaveUseCases {
 
   start(): void {
     this.stopPolling();
-    this.lastVersion = this.deps.world.getVersion();
+    this.lastVersion = this.deps.session.getVersion();
     this.pollInterval = this.deps.scheduler.setInterval(() => {
-      const currentVersion = this.deps.world.getVersion();
+      const currentVersion = this.deps.session.getVersion();
       if (currentVersion !== this.lastVersion) {
         this.lastVersion = currentVersion;
         this.schedule();
@@ -52,11 +50,7 @@ export class AutoSaveUseCases {
     const { drive, currentFileId, currentProjectName } = this.deps;
     if (!drive || !currentFileId.value || !currentProjectName.value) return;
     try {
-      const projectData = this.deps.persistence.snapshotCurrentSession({
-        commandStack: this.deps.commandStack,
-        world: this.deps.world,
-        projectName: currentProjectName.value,
-      });
+      const projectData = this.deps.session.snapshot(currentProjectName.value, this.deps.persistence);
       await drive.updateFile(currentFileId.value, projectData);
       this.markSavedThenIdle();
     } catch (error: unknown) {
@@ -95,11 +89,7 @@ export class AutoSaveUseCases {
     if (isMissingRemoteFileError(error)) {
       try {
         if (!this.deps.drive || !this.deps.currentProjectName.value) throw new Error('No project name');
-        const projectData = this.deps.persistence.snapshotCurrentSession({
-          commandStack: this.deps.commandStack,
-          world: this.deps.world,
-          projectName: this.deps.currentProjectName.value,
-        });
+        const projectData = this.deps.session.snapshot(this.deps.currentProjectName.value, this.deps.persistence);
         const newFileId = await this.deps.drive.createFile(this.deps.currentProjectName.value, projectData);
         this.deps.currentFileId.value = newFileId;
         this.deps.lastProjectRepository.setLastProject({ id: newFileId, name: this.deps.currentProjectName.value });

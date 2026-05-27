@@ -1,0 +1,13 @@
+frontend/src/application/appShell/AppShellPorts.ts:33:  assertProjectData(data: unknown): asserts data is SerializedProjectSession;
+frontend/src/application/appShell/ProjectSessionUseCases.ts:110:      const projectData = this.deps.session.validateProjectData(loadedProject, this.deps.ports.persistence);
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:1:import { ProjectService, type ProjectData } from '@/services/ProjectService';
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:3:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:4:import type { World } from '@/domain/world/World';
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:12:  assertProjectData(data: unknown): asserts data is SerializedProjectSession {
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:13:    ProjectService.validateProjectData(data);
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:18:    ProjectService.deserializeCommands(data as unknown as ProjectData, runtime.world, runtime.commandStack);
+frontend/src/application/appShell/RuntimeSession.ts:1:import { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/appShell/RuntimeSession.ts:2:import { World } from '@/domain/world/World';
+frontend/src/application/appShell/RuntimeSession.ts:59:  validateProjectData(data: unknown, persistence: ProjectSessionPersistencePort): SerializedProjectSession {
+frontend/src/application/appShell/RuntimeSession.ts:60:    persistence.assertProjectData(data);
+frontend/src/application/appShell/RuntimeSession.ts:67:    persistence.restoreSession(data, { world: candidateWorld, commandStack: candidateCommandStack });

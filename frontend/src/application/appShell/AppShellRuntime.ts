@@ -1,12 +1,11 @@
 import { computed, ref } from 'vue';
-import { CommandStack } from '@/commands/CommandStack';
-import { World } from '@/domain/world/World';
 import { SelectionDeletionCommandService } from '@/application/selectionDeletion/SelectionDeletionCommandService';
 import { ActivePlaneUseCases } from './ActivePlaneUseCases';
 import { AutoSaveUseCases } from './AutoSaveUseCases';
 import { KeyboardShortcutRouter } from './KeyboardShortcutRouter';
 import type { AppShellRuntimePorts, SaveStatus } from './AppShellPorts';
 import { ProjectSessionUseCases } from './ProjectSessionUseCases';
+import { RuntimeSession } from './RuntimeSession';
 import { SelectionUseCases } from './SelectionUseCases';
 
 export interface AppShellRuntimeOptions {
@@ -14,8 +13,9 @@ export interface AppShellRuntimeOptions {
 }
 
 export function createAppShellRuntime(options: AppShellRuntimeOptions) {
-  const world = new World();
-  const commandStack = new CommandStack();
+  const session = new RuntimeSession();
+  const world = session.worldForView();
+  const commandStack = session.commandStackForShortcuts();
   const ports = options.ports;
   const drive = ports.drive;
 
@@ -36,12 +36,11 @@ export function createAppShellRuntime(options: AppShellRuntimeOptions) {
     error: ref<string | null>(null),
   };
 
-  const activePlane = new ActivePlaneUseCases(world, { activePlaneId, activePlaneName });
-  const selectionDeletion = new SelectionDeletionCommandService(world, commandStack);
-  const selection = new SelectionUseCases(world, selectionDeletion, ports.selectionStore, () => activePlaneId.value);
+  const activePlane = new ActivePlaneUseCases(session.worldForUseCases(), { activePlaneId, activePlaneName });
+  const selectionDeletion = new SelectionDeletionCommandService(session.worldForUseCases(), session.commandStackForCommandServices());
+  const selection = new SelectionUseCases(session.worldForUseCases(), selectionDeletion, ports.selectionStore, () => activePlaneId.value);
   const autoSave = new AutoSaveUseCases({
-    world,
-    commandStack,
+    session,
     drive,
     persistence: ports.persistence,
     lastProjectRepository: ports.lastProjectRepository,
@@ -54,8 +53,7 @@ export function createAppShellRuntime(options: AppShellRuntimeOptions) {
     alert: ports.callbacks.alert,
   });
   const projectSession = new ProjectSessionUseCases({
-    world,
-    commandStack,
+    session,
     hasGoogleCredentials: drive !== null,
     showStartupDialog,
     isSignedIn,
@@ -132,7 +130,7 @@ export function createAppShellRuntime(options: AppShellRuntimeOptions) {
       updateCoordinates: (coords: { x: number; y: number; z: number } | null) => { coordinates3D.value = coords; },
       updateActivePlane: (planeInfo: { id: string; name: string }) => activePlane.updateActivePlane(planeInfo),
     },
-    internals: { keyboard, activePlane, autoSave, selection, selectionDeletion, projectSession },
+    internals: { session, keyboard, activePlane, autoSave, selection, selectionDeletion, projectSession },
   };
 }
 

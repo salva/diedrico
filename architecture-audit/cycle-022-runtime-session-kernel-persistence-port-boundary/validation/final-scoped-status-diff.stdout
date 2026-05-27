@@ -1,0 +1,32 @@
+ M architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/decision.md
+ M frontend/src/application/appShell/AppShellPorts.ts
+ M frontend/src/application/appShell/AppShellRuntime.ts
+ M frontend/src/application/appShell/AutoSaveUseCases.ts
+ M frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts
+ M frontend/src/application/appShell/ProjectSessionUseCases.ts
+ M frontend/tests/unit/application/appShell/AppShellBoundary.test.ts
+ M frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/corrections-round-01-scoped-status.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/corrections-round-01-scoped-status.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/final-manager-scoped-status.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/final-manager-scoped-status.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/post-t1-schema-fail-status.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/post-t1-schema-fail-status.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/retry-review-check.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/retry-review-check.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/review-scoped-diffstat.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/review-scoped-diffstat.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/review-scoped-status.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/review-scoped-status.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/reviews/
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/
+?? frontend/src/application/appShell/RuntimeSession.ts
+ .../decision.md                                    |  12 +-
+ frontend/src/application/appShell/AppShellPorts.ts |  18 ++-
+ .../src/application/appShell/AppShellRuntime.ts    |  22 ++--
+ .../src/application/appShell/AutoSaveUseCases.ts   |  22 +---
+ .../appShell/ProjectSessionPersistenceAdapter.ts   |  16 +--
+ .../application/appShell/ProjectSessionUseCases.ts |  41 ++-----
+ .../application/appShell/AppShellBoundary.test.ts  |  29 ++++-
+ .../appShell/AppShellRuntimeUseCases.test.ts       | 126 +++++++++++++++++----
+ 8 files changed, 187 insertions(+), 99 deletions(-)

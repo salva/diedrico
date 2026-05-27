@@ -1,0 +1,47 @@
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts > ProjectSessionUseCases startup and project flows > keeps the active session intact when openProject rejects invalid project data
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:537:43
+    535|     expect(preOpenWorld.peekNextId()).toBe(preOpenNextId);
+    536|     expect(preOpenCommandStack.getUndoCount()).toBe(preOpenUndoCount);
+    537|     expect(preOpenCommandStack.canUndo()).toBe(false);
+       |                                           ^
+    538|     expect(preOpenCommandStack.canRedo()).toBe(false);
+    539|     expect(deps.currentProjectName.value).toBe('Existing');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts > ProjectSessionUseCases startup and project flows > restores into isolation before clearing active state when deserialization fails
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:570:48
+    568|     expect(preOpenWorld.getAllProjectionPlanes()).toHaveLength(preOpen…
+    569|     expect(preOpenWorld.peekNextId()).toBe(preOpenNextId);
+    570|     expect(preOpenCommandStack.getUndoCount()).toBe(0);
+       |                                                ^
+    571|     expect(preOpenCommandStack.canUndo()).toBe(false);
+    572|     expect(preOpenCommandStack.canRedo()).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c vitest run --run tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts tests/unit/application/appShell/AppShellBoundary.test.ts

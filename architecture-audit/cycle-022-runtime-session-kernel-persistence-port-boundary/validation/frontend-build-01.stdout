@@ -1,0 +1,8 @@
+
+> diedrico-frontend@0.1.0 build
+> vue-tsc && vite build
+
+src/application/appShell/ProjectSessionPersistenceAdapter.ts(7,5): error TS2322: Type 'ProjectData' is not assignable to type 'SerializedProjectSession'.
+  Index signature for type 'string' is missing in type 'ProjectData'.
+src/application/appShell/ProjectSessionPersistenceAdapter.ts(15,40): error TS2352: Conversion of type 'SerializedProjectSession' to type 'ProjectData' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type 'SerializedProjectSession' is missing the following properties from type 'ProjectData': id, schemaVersion, created, modified, and 2 more.

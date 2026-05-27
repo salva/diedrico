@@ -12,6 +12,8 @@ import keyboard from '@/application/appShell/KeyboardShortcutRouter.ts?raw';
 import projectSession from '@/application/appShell/ProjectSessionUseCases.ts?raw';
 import selection from '@/application/appShell/SelectionUseCases.ts?raw';
 import selectionDeletionService from '@/application/selectionDeletion/SelectionDeletionCommandService.ts?raw';
+import runtimeSession from '@/application/appShell/RuntimeSession.ts?raw';
+import projectSessionPersistenceAdapter from '@/application/appShell/ProjectSessionPersistenceAdapter.ts?raw';
 
 describe('Wave 009 app-shell boundaries', () => {
   it('keeps App.vue free of moved shell orchestration imports and browser bridges', () => {
@@ -62,6 +64,31 @@ describe('Cycle 020 app-shell production boundary', () => {
     expect(selectionDeletionService).toMatch(/new Command/);
     expect(selectionDeletionService).toMatch(/commandStack\.push/);
     expect(selectionDeletionService).toMatch(/\.commit\(/);
-    expect(appShellRuntime).toMatch(/new SelectionDeletionCommandService\(world, commandStack\)/);
+    expect(appShellRuntime).toMatch(/new SelectionDeletionCommandService\(session\.worldForUseCases\(\), session\.commandStackForCommandServices\(\)\)/);
+  });
+});
+
+
+describe('Cycle 022 runtime session persistence boundary', () => {
+  it('keeps app-shell ports free of concrete runtime and ProjectService DTO imports', () => {
+    expect(appShellPorts).not.toMatch(/@\/commands\/CommandStack|@\/domain\/world\/World|@\/services\/ProjectService/);
+    expect(appShellPorts).toMatch(/SerializedProjectSession/);
+    expect(appShellPorts).toMatch(/RuntimeSessionSnapshotHandle/);
+    expect(appShellPorts).toMatch(/RuntimeSessionRestoreHandle/);
+  });
+
+  it('removes raw runtime-pair persistence calls from project-session and autosave use cases', () => {
+    expect(projectSession).not.toMatch(/@\/commands\/CommandStack|@\/domain\/world\/World|@\/services\/ProjectService|initializeWorld/);
+    expect(autoSave).not.toMatch(/@\/commands\/CommandStack|@\/domain\/world\/World/);
+    expect(projectSession).not.toMatch(/snapshotCurrentSession\(\{[\s\S]*commandStack[\s\S]*world/);
+    expect(autoSave).not.toMatch(/snapshotCurrentSession\(\{[\s\S]*commandStack[\s\S]*world/);
+  });
+
+  it('keeps ProjectService awareness inside the app-shell persistence adapter', () => {
+    const appShellSources = [appShellRuntime, appShellPorts, activePlane, autoSave, keyboard, projectSession, selection, runtimeSession];
+    for (const content of appShellSources) {
+      expect(content).not.toMatch(/@\/services\/ProjectService/);
+    }
+    expect(projectSessionPersistenceAdapter).toMatch(/@\/services\/ProjectService/);
   });
 });
