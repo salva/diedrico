@@ -1481,3 +1481,105 @@ All Wave 023 validation stdout/stderr must be captured to stable files under the
 **No-backcompat rationale**
 
 The raw `RuntimeSession` accessors and app-shell consumer dependencies on concrete `World`/`CommandStack` are internal architecture debt, not compatibility surfaces. Preserving both raw-object and port-based paths would keep the runtime ownership model ambiguous and encourage future consumers to bypass the session boundary. Delete the raw use-case/history exposures once reviewed ports exist, update callers/tests directly, and keep any deferred raw view exposure explicit rather than hidden behind compatibility wrappers.
+
+---
+
+## Wave 024 — Command-producer runtime ports for canvas, construction, and process history
+
+**Status**
+
+Added by `cycle-024-wave-plan-extension` after Wave 023 completed. Requires review of this plan extension before the canonical `cycle-024-fresh-scout-proposals` stage and before any implementation. This entry is grounded in current post-Wave-023 source evidence and the Wave 023 implementation/closure log, which explicitly marks Wave 023 complete while leaving `RuntimeSession.commandStackForDeferredCommandProducers()` as the residual raw command-stack handoff for canvas/tool/process-history command producers.
+
+**Scope**
+
+- `frontend/src/application/appShell/RuntimeSession.ts`
+- `frontend/src/application/appShell/AppShellRuntime.ts`
+- `frontend/src/application/appShell/AppShellPorts.ts` only where command-producer/session ports belong
+- `frontend/src/application/canvas/CanvasPointMovementUseCase.ts`
+- `frontend/src/application/canvas/CanvasStyleUseCase.ts`
+- `frontend/src/application/construction/ConstructionUseCases.ts`
+- `frontend/src/application/construction/QuickToolUseCases.ts` if it still carries command-stack dependencies for quick construction
+- `frontend/src/application/processHistory/ProcessHistoryUseCases.ts`
+- `frontend/src/application/processHistory/ProcessHistoryController.ts`
+- `frontend/src/application/tools/CanvasToolController.ts` and `frontend/src/application/tools/ToolCommandIntents.ts` only where they wire the selected command-producer ports
+- `frontend/src/components/workspace/SvgCanvas.vue` only for provide/inject and controller wiring needed to stop consuming raw command-stack/runtime producer handles
+- `frontend/src/tools/ITool.ts`, `frontend/src/tools/ArgumentCollectorTool.ts`, and concrete tools only where they currently receive broad `World` context for command-production concerns rather than interaction/query concerns
+- focused command-producer/runtime-boundary, canvas movement/style, construction, process-history, tool-controller, undo/redo, and architecture-boundary tests
+
+**Scope guard**
+
+This wave owns the residual command-producer/runtime seam left by Wave 023: `RuntimeSession.commandStackForDeferredCommandProducers()` and the active canvas movement/style, construction, and process-history producers that still construct `Command` objects, instantiate concrete operations, commit/rollback, and push directly to `CommandStack`. It must not redesign command descriptor serialization, `CommandStack` internals, persistence schema/replay, `ProjectService`, backend/frontend contract stance, rendering selectors, Three scene-hosts, Drive/auth/browser adapters, package/tooling, validation-platform hardening, docs/spec reconciliation, or debug/placeholder cleanup.
+
+The proposals must start with a current inventory of every active consumer of `commandStackForDeferredCommandProducers()` and every direct command producer in the scoped application/canvas/construction/process-history/tool path. The selected design should introduce behavior-sized command-production ports/services that own command lifecycle and stack push semantics without becoming a broad mutable `World`/`CommandStack` facade. If source inventory proves a producer cannot be narrowed without changing command serialization/replay semantics or operation descriptors, stop and run a reviewed plan-edit mini-cycle rather than hiding command-kernel redesign in this wave.
+
+**Current grounding**
+
+Wave 023 completed the runtime-session consumer-port and command-history cleanup: active-plane, selection, keyboard undo/redo, toolbar history, selection deletion, and adapter-local persistence handles now use narrow ports, while raw accessors `worldForUseCases()`, `commandStackForCommandServices()`, `commandStackForShortcuts()`, and reviewer-rejected `commandStackForView()` are absent (`architecture-audit/cycle-023-runtime-session-consumer-ports-command-history-boundary/implementation-log.md`, “Deleted / removed legacy surfaces”; “Consumer-port / command-history closure assessment”). The same implementation log names the remaining central seam: `commandStackForDeferredCommandProducers()` is retained only for deferred canvas/tool/process-history producers, and `worldForView()` remains the separate rendering/view seam (`architecture-audit/cycle-023-runtime-session-consumer-ports-command-history-boundary/implementation-log.md`, “Residual risks and deferred seams”; “Next-wave candidates”).
+
+Current source confirms the residual command-producer seam is active. `RuntimeSession` still owns a concrete `CommandStack` and exposes `commandStackForDeferredCommandProducers()` (`frontend/src/application/appShell/RuntimeSession.ts:19`, `frontend/src/application/appShell/RuntimeSession.ts:25`, `frontend/src/application/appShell/RuntimeSession.ts:26`). `AppShellRuntime` immediately unwraps that command stack and returns it in the runtime object for downstream producers (`frontend/src/application/appShell/AppShellRuntime.ts:16`, `frontend/src/application/appShell/AppShellRuntime.ts:17`, `frontend/src/application/appShell/AppShellRuntime.ts:101`). `SvgCanvas.vue` still injects the raw `commandStack` (`frontend/src/components/workspace/SvgCanvas.vue:419` in `architecture-audit/cycle-024-wave-plan-extension/seam-scan-commandstack.stdout.log`).
+
+The scoped producers are command-lifecycle owners today, not just passive consumers. `CanvasPointMovementUseCase` imports `Command`, `CommandStack`, `World`, and `UpdateFreePoint2DPositionOp`; it creates a command, previews by rollback/add-and-execute, commits, and pushes to the stack (`frontend/src/application/canvas/CanvasPointMovementUseCase.ts:2`, `:3`, `:4`, `:5`, `:9`, `:12`, `:18`, `:19`, `:32`, `:33`). `CanvasStyleUseCase` imports the same broad command/runtime types, uses an `as any` operation cast, commits, and pushes (`frontend/src/application/canvas/CanvasStyleUseCase.ts:1`, `:2`, `:3`, `:4`, `:8`, `:11`, `:13`, `:14`, `:15`). `ConstructionUseCases` accepts raw `World` and `CommandStack`, imports many sequence factories and concrete operations, builds a command, adds a process action group, executes construction operations, checks feasibility, commits, and pushes (`frontend/src/application/construction/ConstructionUseCases.ts:1`, `:2`, `:3`, `:8-21`, `:29-44`). `ProcessHistoryUseCases` imports `Command`, `CommandStack`, concrete process-tree operations, `IOperation`, and `World`; it creates/commits/pushes commands for process-history actions (`frontend/src/application/processHistory/ProcessHistoryUseCases.ts:1-9`, `:20-24`, `:72-78`). `ProcessHistoryController` still receives `world` plus unknown `commandStack`, casts the stack, and passes both raw objects into the use cases (`frontend/src/application/processHistory/ProcessHistoryController.ts:1-2`, `:15-18`, `:20-35`, `:41-42`).
+
+Tool/controller seams show that Wave 024 should be command-producer focused rather than a broad tool rewrite. `ITool.ToolContext` already carries a `commandSink` but also still carries the full `World` for interaction/query needs (`frontend/src/tools/ITool.ts:19-29`). `ArgumentCollectorTool` builds typed construction intents and delegates command execution to `context.commandSink.executeConstructionIntent(...)`, but it also reads `world` for active-plane element lookup and collection context (`frontend/src/tools/ArgumentCollectorTool.ts:91-104`, `:130-143`, `:162-176`, `:200-216`). This supports a bounded wave that moves command-production/runtime stack access behind ports while deferring a separate rendering/interaction read-port redesign if broad `World` reads remain necessary for hit testing or realization.
+
+Lower-priority candidates remain real but are less central than this seam after Wave 023. `worldForView()` is still a raw rendering/view handoff, and `SvgCanvas.vue`/rendering services continue to consume domain view data; however, rendering extraction should consume a command-producer boundary that no longer requires raw command-stack injection into canvas. `ProjectSessionPersistenceAdapter` still has DTO/cast residue around `ProjectService`, but Wave 023 intentionally bounded persistence schema/replay out of the consumer-port cleanup. Backend/frontend contract stance, validation gate hardening, placeholder/debug surfaces, docs/spec drift, and remaining rendering/domain-contract seams do not block the central runtime command-production ownership question.
+
+**Target outcome**
+
+`RuntimeSession` no longer exposes a raw `CommandStack` accessor for deferred command producers. Canvas point movement, canvas style updates, construction intents, quick-tool construction, and process-history actions consume explicit command-production/session ports or use-case services that express the behavior they need: preview/commit/cancel point movement, style update, construction command execution, process-history command execution, and state reads. Vue components and tools continue to emit typed intents and render/collect interaction state; command lifecycle, concrete operation execution, commit/rollback, feasibility checks, and stack push semantics are owned behind application command-producer ports rather than passed through raw `World`/`CommandStack` pairs.
+
+Any remaining full `World` exposure is classified: interaction/read/rendering access is deferred to view/rendering/read-port waves, while command-production access is deleted from the public app-shell/runtime surface. The result should make future rendering/view and persistence waves consume stable application command boundaries rather than relying on raw runtime object handoffs.
+
+**Explicit DELETE list**
+
+- Delete `RuntimeSession.commandStackForDeferredCommandProducers()` once scoped producers consume reviewed command-production ports/services.
+- Delete raw `commandStack` return/provide/inject paths from `AppShellRuntime` and `SvgCanvas.vue` for canvas/style/construction/process-history command execution.
+- Delete constructors/params in `CanvasPointMovementUseCase`, `CanvasStyleUseCase`, `ConstructionUseCases`, `QuickToolUseCases`, `ProcessHistoryUseCases`, and `ProcessHistoryController` that accept raw `CommandStack` when replaced by behavior ports.
+- Delete direct stack `push(...)` calls from the scoped producers once command lifecycle is centralized behind the selected ports/services.
+- Delete direct `Command` construction and concrete operation imports from scoped modules where the reviewed design moves those operations into application-owned command producer services; keep operation imports only in the selected command-production owner, not in Vue/tool/controller shells.
+- Delete the `CanvasStyleUseCase` `as any` operation cast if the style command producer can use a typed operation/command boundary within this wave.
+- Delete process-history controller casts from `unknown` to `CommandStack` and any tests that assert raw stack injection.
+- Delete transitional overloads, duplicate raw-and-port execution paths, compatibility wrappers, dead exports, and broad `RuntimeSession`/command facades introduced during the migration.
+- Do not delete or rewrite `worldForView()`, rendering selector/service internals, command serialization descriptors, `OperationRegistry`, persistence schema/replay, backend, docs/specs, package/tooling, validation/debug surfaces, or Drive/auth code without a reviewed plan edit.
+
+**Success criteria**
+
+- No production source calls `RuntimeSession.commandStackForDeferredCommandProducers()`; the accessor is deleted.
+- `AppShellRuntime` no longer returns/provides a raw `commandStack` for canvas/style/construction/process-history command production.
+- `SvgCanvas.vue` and active tool/controller wiring no longer inject raw `commandStack` for command execution.
+- `CanvasPointMovementUseCase`, `CanvasStyleUseCase`, `ConstructionUseCases`, `QuickToolUseCases` where applicable, `ProcessHistoryUseCases`, and `ProcessHistoryController` no longer depend on raw `CommandStack` for stack push behavior; command-production lifecycle is behind reviewed application ports/services.
+- User-visible canvas point drag preview/commit/cancel, style editing, construction flows, guide/sibling-guide creation, intersections, dynamic projection-plane setup, retained quick/3D tool flows, process-history push/pop/rename/toggle actions, and undo/redo remain equivalent.
+- Any retained `World` dependency in tools/canvas is explicitly justified as interaction/read/rendering access, not command-production stack access, and is recorded as a candidate for later view/read-port waves if still broad.
+- No persistence schema/replay, command descriptor registry, backend/frontend contract, rendering selector, Three scene, package/tooling, docs/spec, validation-platform, debug, or Drive/auth changes occur without reviewed plan edit.
+- Focused tests cover the selected command-production ports/services for point movement preview/commit/cancel, style update, construction intent execution including process action groups, process-history command execution, RuntimeSession/AppShellRuntime wiring, and undo/redo behavior after the port migration.
+- Mandatory validation cadence passes with stable logs: root/frontend lint where defined, focused Vitest for touched command-producer/runtime modules, full root/frontend Vitest, root/frontend build, root/frontend Playwright e2e because canvas/process-history/tool behavior is user-observable, live preview refresh on `0.0.0.0:5173`, HTTP reachability probe, and Playwright/live smoke for point movement, style update, representative construction, process-history action, and undo/redo flows.
+
+**Dependencies**
+
+Depends on Wave 023 because that wave established the `RuntimeSession` consumer ports and shared command-history boundary while deliberately retaining `commandStackForDeferredCommandProducers()` only for deferred leaf producers. It is ordered before the raw `worldForView()` rendering/view seam, ProjectSessionPersistenceAdapter/ProjectService DTO-cast cleanup, backend/frontend contract stance, validation gate hardening, placeholder/debug cleanup, docs/spec drift, and remaining rendering/domain-contract seams because those later waves should consume a stable command-production boundary instead of requiring raw command-stack injection.
+
+**Validation requirements**
+
+All Wave 024 validation stdout/stderr must be captured to stable files under the reviewed Cycle 024 implementation directory's `validation/` subdirectory. Undefined commands may be skipped only with exact package-script evidence in the implementation log; defined root or workspace commands are mandatory.
+
+1. Capture pre-edit scoped git status/diff and static scans for `commandStackForDeferredCommandProducers`, raw `commandStack` provide/inject, `CommandStack` imports in scoped producers/controllers, direct `Command` construction, stack `push(...)` calls, concrete operation imports in Vue/tool/controller shells, and intentionally deferred `worldForView()`/rendering seams.
+2. Run focused Vitest for RuntimeSession/AppShellRuntime command-producer wiring, CanvasPointMovementUseCase, CanvasStyleUseCase, ConstructionUseCases or selected command-production replacement, ProcessHistoryUseCases/Controller, and active tool-controller command-sink behavior.
+3. Run architecture/static tests or focused boundary scans proving no dual raw-stack/port path remains for scoped producers and the deleted accessor stays absent.
+4. Run `npm run lint` at the repository root and in every workspace where a lint script is defined, including `frontend` while it remains the active workspace.
+5. Run full Vitest at the repository root and in every workspace where a test/Vitest script is defined, including `frontend` while it remains the active workspace.
+6. Run `npm run build` at the repository root and in every workspace where a build script is defined, including `frontend` while it remains the active workspace.
+7. Run Playwright/e2e at the repository root and in every workspace where an e2e script is defined because canvas construction, style, process-history, and undo/redo behavior are user-observable.
+8. Refresh the live preview bound to `0.0.0.0:5173`, capture HTTP 200 reachability probes, and run focused Playwright/live browser smoke for representative point movement, style update, construction, process-history action, and undo/redo flows without real Drive credentials.
+
+**Risks**
+
+- A command-production port can become a renamed `CommandStack` facade if it exposes generic push/command methods. Keep ports behavior-sized and backed by the inventory.
+- Moving preview/commit/cancel for point movement can alter rollback semantics; focused tests must prove preview rollback, cancel, and final undo/redo behavior.
+- Construction use cases currently coordinate process action groups, feasibility checks, sequence factories, 3D/dynamic-plane flows, and intersection selection. The wave must not flatten these into an untyped generic executor or skip e2e coverage.
+- Process-history command execution reads state before and after operations; port migration can change disabled/root-pop behavior if not tested.
+- Some `World` access in tools/canvas is still legitimate interaction/read/rendering access. Do not overreach into rendering/read-port redesign; classify and defer it explicitly.
+- The workspace may contain unrelated dirty command-operation files from adjacent work. Implementation must use path-scoped status/diff, avoid reverting unrelated changes, and not depend on unowned dirty state.
+
+**No-backcompat rationale**
+
+`commandStackForDeferredCommandProducers()` and raw command-stack injection are internal architecture debt, not compatibility surfaces. Preserving both raw stack access and new command-production ports would keep runtime ownership ambiguous and encourage future UI/tool code to bypass application use cases. Delete the raw accessor and update active producers/tests directly once the reviewed command-production boundary is selected; do not keep shims, overloads, or dual execution paths.
