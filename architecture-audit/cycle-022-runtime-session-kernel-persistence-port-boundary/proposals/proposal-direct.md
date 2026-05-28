@@ -1,122 +1,188 @@
-# Proposal Direct — Named app-shell runtime session with narrow persistence port
+# Proposal Direct — Extract a bounded project-session kernel and adapter-facing persistence targets
 
-## Summary
+## Recommendation
 
-Implement Wave 022 by introducing a small app-shell runtime-session boundary that owns the current `World` and `CommandStack` pair plus lifecycle operations that currently leak through app-shell use cases: initialize default world, clear session, snapshot current session, restore loaded project data, mark dirty after restore, observe version for autosave, and expose only the raw objects needed by already-reviewed consumers such as active-plane, keyboard undo/redo, canvas integration, and `SelectionDeletionCommandService` wiring.
+Proceed with a bounded Wave 022 implementation. Current source does not require another plan correction: app-shell ports are already partly abstract, but `RuntimeSession` and `ProjectSessionPersistenceAdapter` still share concrete persistence handles and `ProjectSessionUseCases` depends on the concrete `RuntimeSession` class. The direct fix is to name the runtime/session/persistence contract, move adapter-facing handles out of `RuntimeSession.ts`, and delete the concrete cross-import seam.
 
-The direct path keeps the current `ProjectService` command-stream persistence implementation intact and moves its `ProjectData`/`World`/`CommandStack` knowledge behind adapter-private methods. It does not redesign command descriptors, schema/replay, Drive/auth, backend, rendering, or leaf command producers.
+This proposal intentionally leaves `ProjectService` command-stream persistence, operation descriptors, schema versioning, Drive/auth, rendering, canvas/tool command producers, process-history producers, and UI behavior unchanged.
+
+## Target outcome
+
+After implementation:
+
+- App-shell use cases depend on a narrow project-session kernel interface, not on the concrete `RuntimeSession` class.
+- `ProjectSessionPersistenceAdapter` no longer imports `RuntimeSession.ts`.
+- Concrete `World`/`CommandStack` handles are scoped to a small adapter-facing contract module and the runtime/session implementation, not the public app-shell port file or use-case code.
+- `ProjectService` remains the only concrete command-stream serializer/deserializer, reached through `ProjectSessionPersistenceAdapter`.
+- `RuntimeSession` remains the single owner of runtime `World`, `CommandStack`, initialization, restore isolation, selection-delete wiring, view ports, and command-history port creation.
+
+## Implementation design
+
+### 1. Introduce a small project-session kernel contract
+
+Add a new file such as:
+
+- `frontend/src/application/appShell/ProjectSessionKernel.ts`
+
+Define only the project/session methods currently needed by project-session and autosave flows:
+
+- `initializeDefaultWorldIfNeeded(): void`
+- `resetToEmptyInitializedWorld(): void`
+- `clear(): void`
+- `getVersion(): number`
+- `snapshot(projectName: string, persistence: ProjectSessionPersistencePort): object`
+- `validateProjectData(data: unknown, persistence: ProjectSessionPersistencePort): OpenedProjectSession`
+- `restoreValidatedProject(openedSession: OpenedProjectSession, persistence: ProjectSessionPersistencePort): void`
+
+If desired, split into `SnapshotCapableProjectSessionKernel` for autosave and full `ProjectSessionKernel` for project-session use cases. Do not add view ports, command-history, selection, or command-producer methods to this kernel.
+
+### 2. Move adapter-facing persistence target types out of RuntimeSession
+
+Create a small module such as:
+
+- `frontend/src/application/appShell/ProjectSessionPersistenceTargets.ts`
+
+It should own the adapter-facing concrete handles, for example:
+
+- `ProjectSessionSnapshotSource extends RuntimeSessionSnapshotHandle` with `readonly commandStack: CommandStack`
+- `ProjectSessionRestoreTarget extends RuntimeSessionRestoreHandle` with `readonly world: World; readonly commandStack: CommandStack`
+
+This is the only app-shell contract module allowed to import concrete `World`/`CommandStack` for persistence target typing. It is deliberately adapter-facing and not imported by `ProjectSessionUseCases` or `AutoSaveUseCases`.
+
+Then:
+
+- Update `RuntimeSession.snapshotHandle()` / `restoreTarget()` to return these target/source types.
+- Delete `RuntimeSessionPersistenceSnapshotHandle` and `RuntimeSessionPersistenceRestoreHandle` exports from `RuntimeSession.ts`.
+- Update `ProjectSessionPersistenceAdapter` to import the new target/source types instead of importing from `./RuntimeSession`.
+
+### 3. Narrow ProjectSessionUseCases dependency
+
+Update `ProjectSessionUseCases.ts`:
+
+- Replace `import type { RuntimeSession } from './RuntimeSession'` with `import type { ProjectSessionKernel } from './ProjectSessionKernel'`.
+- Change constructor dependency `session: RuntimeSession` to `session: ProjectSessionKernel`.
+- Leave startup/create/open/new/sign-out behavior unchanged.
+
+### 4. Align AutoSaveUseCases without broadening it
+
+Option A (preferred if simple): update `AutoSaveRuntimeSessionPort` to be an alias or subset of the snapshot-capable kernel contract, so autosave still sees only `getVersion()` and `snapshot(...)`.
+
+Option B: leave `AutoSaveRuntimeSessionPort` in place if merging contracts causes churn. The direct wave does not require eliminating every local interface; it requires deleting raw persistence/kernel exposure and concrete runtime dependencies in use cases.
+
+Do not make autosave know restore, initialization, Drive, browser storage, or command history.
+
+### 5. Preserve RuntimeSession behavior
+
+Keep these behaviors equivalent:
+
+- Runtime owns `new World()` and `new CommandStack()` (`RuntimeSession.ts`).
+- `initializeDefaultWorldIfNeeded()` still calls `initializeWorld(world, commandStack)`.
+- `resetToEmptyInitializedWorld()` clears world/stack and reinitializes.
+- `restoreValidatedProject()` still restores into an isolated candidate world/stack first before clearing active state, then restores into active state and initializes empty projects when needed.
+- `selectionDeletionCommandPort()` still returns `new SelectionDeletionCommandService(world, commandStack)`.
+- `commandHistoryPort()` still delegates undo/redo to the same stack.
 
 ## Files to change
 
-Production:
+Production source:
 
-- `frontend/src/application/appShell/AppShellRuntime.ts`
-  - Create one runtime session at the existing composition point.
-  - Wire `SelectionDeletionCommandService`, `ActivePlaneUseCases`, `KeyboardShortcutRouter`, and UI-facing returned `world`/`commandStack` from the session's adapter accessors where still required by current consumers.
-  - Pass the session boundary, not raw `world`/`commandStack`, into `ProjectSessionUseCases` and `AutoSaveUseCases`.
-- `frontend/src/application/appShell/AppShellPorts.ts`
-  - Replace `ProjectSessionPersistencePort` raw-pair signatures with session-oriented methods that do not import `World`, `CommandStack`, or `ProjectData` in this port module.
-  - Introduce small DTO/opaque aliases if needed, such as `SerializedProjectSession` as `object`/`unknown` at the Drive boundary, without leaking `ProjectService.ProjectData` into use cases.
-- New focused module, likely `frontend/src/application/appShell/RuntimeSession.ts` or `frontend/src/application/appShell/ProjectSessionKernel.ts`
-  - Own `world: World` and `commandStack: CommandStack` privately or semi-privately.
-  - Provide explicit methods: `initializeDefaultWorldIfNeeded()`, `resetToEmptyInitializedWorld()`, `clear()`, `restoreProject(data)`, `snapshot(projectName)`, `getVersion()`, `markDirtyAfterRestore()` if needed, and narrow accessors for existing consumers that still legitimately need concrete objects in this wave.
-  - Delegate initialization to `initializeWorld(world, commandStack)` rather than changing initialization command semantics.
-- `frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts`
-  - Become adapter-private bridge from the session snapshot/restore request to `ProjectService.serializeCommands`, `ProjectService.validateProjectData`, and `ProjectService.deserializeCommands`.
-  - Continue importing `World`, `CommandStack`, and `ProjectData` only here or in the runtime-session owner if implementation chooses session-owned persistence delegation.
-- `frontend/src/application/appShell/ProjectSessionUseCases.ts`
-  - Remove constructor dependencies on raw `World`, `CommandStack`, `initializeWorld`, and `ProjectData`.
-  - Use runtime-session methods for no-Drive initialization, sign-out clear, create/new reset, snapshot-before-create, open restore, fallback initialization, and dirty marking.
-- `frontend/src/application/appShell/AutoSaveUseCases.ts`
-  - Remove constructor dependencies on raw `World` and `CommandStack`.
-  - Poll session version and request session snapshot through the session/persistence boundary.
-- `frontend/src/application/world/initializeWorld.ts`
-  - No semantic rewrite expected. At most adjust export/import location only if the new session module becomes the sole application caller. Preserve command-backed behavior.
-- `frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts`
-  - No public API change expected. Only construction site may receive `session.worldForCommandServices()` / `session.commandStackForCommandServices()` if the direct design hides raw objects behind named accessors.
+- Add `frontend/src/application/appShell/ProjectSessionKernel.ts`.
+- Add `frontend/src/application/appShell/ProjectSessionPersistenceTargets.ts` or equivalent small adapter-facing module.
+- Modify `frontend/src/application/appShell/RuntimeSession.ts` to implement/import the new contracts and delete exported persistence handle interfaces.
+- Modify `frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts` to import adapter target/source types from the new module instead of `RuntimeSession.ts`.
+- Modify `frontend/src/application/appShell/ProjectSessionUseCases.ts` to depend on `ProjectSessionKernel`.
+- Modify `frontend/src/application/appShell/AutoSaveUseCases.ts` only if sharing the snapshot-capable kernel contract is a net simplification.
+- Modify `frontend/src/application/appShell/AppShellRuntime.ts` only for type alignment if needed; no production browser or composition behavior changes.
 
 Tests:
 
-- `frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts`
-  - Update app-shell use-case tests to assert session methods and persistence boundaries rather than raw pair passing.
-  - Cover startup/no-Drive initialization, create/open/new, sign-out, autosave, missing-remote-file recovery, and failure paths.
-- `frontend/tests/unit/application/appShell/AppShellBoundary.test.ts`
-  - Add/replace static assertions: `AppShellPorts.ts` must not import `CommandStack`, `World`, or `ProjectData`; `ProjectSessionUseCases.ts` and `AutoSaveUseCases.ts` must not import `CommandStack`, `World`, `ProjectData`, or `initializeWorld`; `ProjectSessionPersistenceAdapter.ts` remains the allowed `ProjectService` import.
-  - Keep the existing selection-delete service ownership assertion, updated for the new runtime-session wiring if necessary.
-- Add a focused unit file if useful, e.g. `frontend/tests/unit/application/appShell/RuntimeSession.test.ts`, for the session boundary itself.
+- Update `frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts` fixtures to type against the new kernel contract where they currently construct `RuntimeSession` directly for use-case tests.
+- Update `frontend/tests/unit/application/appShell/AppShellBoundary.test.ts` static assertions:
+  - `ProjectSessionUseCases.ts` must not import `RuntimeSession`.
+  - `ProjectSessionPersistenceAdapter.ts` must not import `RuntimeSession`.
+  - `AppShellPorts.ts` remains free of `World`, `CommandStack`, and `ProjectData` imports.
+  - `ProjectService` remains adapter-private in app-shell.
+  - selection-delete boundary remains unchanged.
 
 ## Files/tests/docs/fixtures to DELETE
 
-- Delete `ProjectSessionPersistencePort.snapshotCurrentSession(deps: { commandStack: CommandStack; world: World; projectName: string }): ProjectData`.
-- Delete `ProjectSessionPersistencePort.restoreSession(data: ProjectData, deps: { world: World; commandStack: CommandStack }): void`.
-- Delete app-shell port imports of `CommandStack`, `World`, and `ProjectData` once the new port shape is in place.
-- Delete direct `ProjectSessionUseCases` imports/dependencies on `CommandStack`, `World`, `ProjectData`, and `initializeWorld` where replaced by session methods.
-- Delete direct `AutoSaveUseCases` imports/dependencies on `CommandStack` and `World` where replaced by session methods.
-- Delete tests/fakes that assert persistence receives raw concrete kernel objects or that app-shell ports expose `ProjectData`.
-- Delete any transitional overloads or compatibility wrappers that allow old raw-pair persistence calls to coexist with the new session boundary.
+Delete source surfaces:
 
-No docs/specs, backend files, package/tooling files, fixtures, command descriptor tests, operation registry tests, rendering tests, canvas/tool/process-history tests, or Drive/auth tests should be deleted in this wave unless a reviewed plan edit broadens scope.
+- `RuntimeSessionPersistenceSnapshotHandle` export from `RuntimeSession.ts`.
+- `RuntimeSessionPersistenceRestoreHandle` export from `RuntimeSession.ts`.
+- `ProjectSessionPersistenceAdapter.ts` import from `./RuntimeSession`.
+- `ProjectSessionUseCases.ts` import from `./RuntimeSession`.
+- Any test fixture that requires a fake full `RuntimeSession` when it only needs project-session kernel methods.
+
+Do not delete:
+
+- `ProjectData`, `ProjectService.serializeCommands`, `ProjectService.deserializeCommands`, current schema validation, or command snapshots.
+- `createAppShellRuntime().internals` solely for cleanup.
+- Selection-delete service/port.
+- Canvas/tool/process-history command producers.
+- Any e2e spec, package metadata, backend/docs/specs, or 3D/CSS/rendering file.
 
 ## Expected behavior change
 
-No intended user-visible behavior change for successful session flows.
+None intended. This is an architecture/typing boundary refactor only.
 
-Startup without Drive, startup with last project, create project, open project, new project, sign-out, autosave save/update, missing-remote-file recovery, selection deletion, undo/redo, active-plane setup, and save-status transitions should remain equivalent. Internal architecture changes: app-shell project/session use cases stop passing raw `World`/`CommandStack` pairs and stop importing concrete persistence DTOs.
+Preserved user-visible behavior:
 
-## Open/restore failure semantics
-
-The implementation must choose **validation-before-destructive-reset / atomic restore** semantics for user-initiated open/restore through the new session boundary. The session boundary must validate the external project payload before clearing the current world or command history. If validation fails, deserialization throws, or session restore cannot complete, the currently active `World`, `CommandStack`, selected/current project metadata, dirty/version state, and autosave eligibility must remain as they were before the attempted open.
-
-Rationale: Wave 022 centralizes session restore ownership, so this is the correct narrow point to remove the current app-shell orchestration flaw where `openProject()` clears the world before validation/restore. The change is intentionally limited to failure atomicity at the new boundary; it must not redesign `ProjectService` schema/replay, command descriptors, persistence formats, or Drive/auth behavior. Successful restore behavior remains equivalent, including projection-plane fallback initialization and dirty marking after a valid project opens.
-
-If implementing atomic restore requires changing `ProjectService` replay/schema internals, operation descriptors, command-stack semantics, or adding a compatibility path, stop and request a reviewed delta instead of broadening implementation.
-
-## No-backcompat rationale
-
-The raw `{ world, commandStack }` persistence port is an internal architecture leak, not a public compatibility contract. Keeping both the old raw-pair API and a named session boundary would preserve ambiguous runtime ownership and force later waves to choose between parallel paths. Delete the old signatures and update active callers/tests directly.
-
-## Validation plan
-
-Implementation must capture full stdout/stderr under `architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/` or the final implementation-cycle validation directory selected by Manager.
-
-1. Pre-edit scoped `git status`/`git diff --stat` for touched paths and static scans for `World`, `CommandStack`, `ProjectData`, `ProjectService`, `snapshotCurrentSession`, `restoreSession`, and `initializeWorld` in app-shell files.
-2. Focused Vitest:
-   - `frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts`
-   - `frontend/tests/unit/application/appShell/AppShellBoundary.test.ts`
-   - any new runtime-session test file
-   - invalid/corrupt project payload tests proving user-initiated open validates before destructive reset and leaves the previous world, command stack, project metadata, dirty/version state, and autosave eligibility intact after validation failure.
-   - restore/deserialization failure tests proving partial replay errors do not leave a half-cleared or half-restored active session.
-   - command-stack/world state assertions after failed open: existing committed command count, undo/redo behavior, projection planes, selected/current project identity, and next element id remain equivalent to the pre-open snapshot.
-   - autosave/session exception tests proving snapshot/restore boundary exceptions propagate or surface through existing save-status/error paths without marking the session clean, disabling future autosave, or overwriting the active remote/local project with invalid data.
-3. Static/boundary scan proving:
-   - `AppShellPorts.ts` no longer imports `World`, `CommandStack`, or `ProjectData`.
-   - `ProjectSessionUseCases.ts` and `AutoSaveUseCases.ts` no longer pass raw pairs to persistence.
-   - `ProjectSessionPersistenceAdapter.ts` remains the only app-shell `ProjectService` import.
-4. `npm run lint` at root and `npm run lint --workspace=frontend` or from `frontend/` where defined.
-5. Root and frontend full Vitest.
-6. Root and frontend build.
-7. Root and frontend Playwright/e2e because project/session/startup/save/autosave and keyboard/delete behavior are user-observable.
-8. Refresh live preview bound to `0.0.0.0:5173`, capture HTTP 200 probe, and run Playwright/live smoke for startup/new project plus representative save-status and delete/undo behavior without real Drive credentials.
+- Local startup initializes default planes and status as before.
+- Drive-enabled create/open/new/rename/sign-out flows behave as before with fake/no-credential validation.
+- Autosave polling/debounce/save-status behavior is unchanged.
+- Undo/redo and command-history semantics are unchanged, including initialization being command-backed.
+- Selection Delete/Backspace and undo remain unchanged.
+- 3D overlay pointer ownership remains unchanged.
 
 ## Risks and mitigations
 
-- **Risk: runtime session becomes a god object.** Mitigation: restrict it to runtime state ownership, initialization, snapshot/restore, clear/reset, version observation, and narrow raw-object accessors for existing consumers. Do not move leaf command construction or UI state into it.
-- **Risk: accidental schema/replay redesign.** Mitigation: keep `ProjectService` semantics unchanged and adapter-private. Stop for plan edit if descriptor/schema/replay changes become necessary.
-- **Risk: initialization history semantics shift.** Mitigation: preserve `initializeWorld` behavior and add focused assertions for startup/new/open fallback world initialization and command-stack counts where current tests support it.
-- **Risk: open/restore failure atomicity introduces accidental schema/replay work.** Mitigation: implement atomicity only at the session boundary by validating before active-session reset and by restoring into an isolated/new runtime pair, if needed; stop for reviewed delta if this requires `ProjectService` schema/replay changes.
-- **Risk: autosave timing regression.** Mitigation: keep scheduler/debounce behavior unchanged and update fake-scheduler tests around session version/snapshot methods, including snapshot/restore exception paths.
-- **Risk: raw accessors undermine the boundary.** Mitigation: name them as explicit transitional adapter accessors for still-in-scope consumers and prohibit app-shell persistence/use-case ports from accepting the pair.
+- **Risk: kernel becomes a god object.** Mitigation: kernel contains only project-session lifecycle/snapshot/restore/version methods; no view ports, command producers, selection, rendering, browser, or Drive methods.
+- **Risk: adapter target module looks like a compatibility shim.** Mitigation: it is a replacement boundary, not a dual path. Delete old RuntimeSession-exported handle types and old imports in the same change.
+- **Risk: hidden schema/replay change.** Mitigation: do not edit `ProjectService` behavior beyond import/type fallout; run ProjectService round-trip tests if touched.
+- **Risk: restore isolation regression.** Mitigation: keep and focus-test the existing candidate restore behavior before clearing active state.
+- **Risk: autosave status regression.** Mitigation: run existing autosave timer/error tests and avoid changing scheduler/Drive handling.
+- **Risk: unrelated dirty files pollute implementation.** Mitigation: use path-scoped diffs and stage only Wave 022 files.
 
-## Stop conditions for broader redesign
+## No-backcompat / aggressive-deletion rationale
 
-Stop and request a reviewed plan edit if implementation requires:
+The old adapter-to-runtime import and concrete use-case dependency are internal architecture debt, not public compatibility contracts. Keeping both the old `RuntimeSession` handle exports and the new kernel would preserve two ownership models. Delete the old cross-imports and update current tests directly.
 
-- Modifying `ProjectService` schema version, command snapshots, operation descriptors, replay algorithm, or `OperationRegistry`.
-- Introducing a generic `ApplicationCommandExecutor` or migrating canvas/style/construction/process-history/toolbar command producers.
-- Changing Drive/auth API behavior or using real credentials in tests.
-- Reworking rendering selectors, Three view, backend, docs/specs, package/tooling, or validation architecture.
-- Adding a broad application kernel/event bus/service locator rather than a narrow session boundary.
+## Validation plan
 
-## Review recommendation
+Implementation must capture logs under `architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/`:
 
-Recommend this direct proposal for implementation if review agrees that the central defect is app-shell raw runtime/persistence leakage and that a narrow named session boundary is sufficient without reopening persistence schema/replay.
+1. Pre-edit path-scoped status/diff and static source scans for Wave 022 paths plus protected dirty files.
+2. Focused static boundary scan proving:
+   - no `RuntimeSession` import in `ProjectSessionPersistenceAdapter.ts`;
+   - no `RuntimeSession` import in `ProjectSessionUseCases.ts`;
+   - no concrete `World`, `CommandStack`, or `ProjectData` imports in `AppShellPorts.ts`;
+   - app-shell `ProjectService` import exists only in `ProjectSessionPersistenceAdapter.ts`;
+   - selection-delete boundary remains unchanged.
+3. Focused Vitest:
+   - `frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts`
+   - `frontend/tests/unit/application/appShell/AppShellBoundary.test.ts`
+   - `frontend/tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts` if boundary assertions or runtime wiring are touched
+   - relevant `frontend/tests/unit/services/ProjectService.*.spec.ts` if adapter type changes require behavior confirmation.
+4. Root and frontend lint.
+5. Root and frontend full Vitest.
+6. Root and frontend build.
+7. Root and frontend Playwright/e2e.
+8. Live preview refresh on `0.0.0.0:5173`, HTTP probe, and credential-free browser smoke for startup/new project, Delete/Backspace + undo, and 3D overlay no-click-through.
+
+## Stop conditions
+
+Stop for reviewed plan edit if implementation requires:
+
+- changing project schema, operation descriptors, `OperationRegistry`, migration/replay policy, or command snapshots;
+- changing Drive/auth internals or browser production composition;
+- migrating canvas/tool/construction/process-history command producers;
+- editing rendering, Three, SVG, overlay CSS, or UI features;
+- keeping compatibility overloads for both old runtime-handle exports and new kernel contracts;
+- touching unrelated dirty files to make tests pass.
+
+## Boundary preservation checklist
+
+- Wave 020 app-shell composition: preserved; no browser/global default reintroduced.
+- Corrected Wave 021 selection-delete boundary: preserved; runtime still wires existing port/service.
+- Cycle 026 3D overlay pointer boundary: preserved; no rendering/CSS change and validation protects it.
