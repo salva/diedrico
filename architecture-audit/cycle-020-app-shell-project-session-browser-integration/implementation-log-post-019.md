@@ -124,3 +124,71 @@ Credential-free live browser smoke:
 
 - Decide in a future reviewed wave whether runtime test introspection should move away from `createAppShellRuntime().internals` entirely.
 - Consider a future command-kernel/session-port wave if `RuntimeSession` ownership becomes the next central architecture bottleneck.
+
+---
+
+## Validation-and-preview closure — cycle-020-validation-and-preview-refresh-post-019
+
+**Wave 020 COMPLETE after independent closure verification.** The validation/preview/3D evidence from the implementation stage was re-read and superseded where appropriate by fresh lightweight closure probes captured in the same validation directory.
+
+### Independent evidence inspected
+
+- `decision-post-019.md` — selected the direct app-shell/browser composition hardening path and authorized only bounded implementation.
+- `reviews/implementation-stage-review-post-019.md` — synthesized under reviewer failure tolerance, found no blocking implementation issues.
+- `.saivage/stages/cycle-020-implement-app-shell-project-session-browser-integration-post-019/summary.json` — records implementation commit `fb5ea6e217a16e6f7b876f842481893f6826e34b` and green mandatory validation evidence.
+- Cycle 026 3D hotfix log — confirms the user-reported 3D interaction regression was the overlay pointer boundary and that the required fixed contract is `pointer-events: auto` plus overlay hit-testing/no click-through.
+- `architecture-audit/wave-plan.md` — re-read for remaining ordered waves and post-Wave-020 re-rank.
+
+### Fresh closure probe log index
+
+Additional closure logs written under `architecture-audit/cycle-020-app-shell-project-session-browser-integration/validation/`:
+
+- `closure-existing-validation-audit.stdout.log` / `.stderr.log` — PASS. Re-indexed existing validation artifacts and confirmed green summaries for focused app-shell Vitest, static boundary scan, root/frontend lint, root/frontend full Vitest, root/frontend build, root/frontend e2e, live preview refresh, and prior live browser smoke. The first wrapper attempt used `/bin/sh` and failed on `set -o pipefail`; the stable log was immediately overwritten by the valid bash rerun and exits 0.
+- `closure-static-boundary-probe.stdout.log` / `.stderr.log` — PASS. Reconfirmed no `window`, `localStorage`, `sessionStorage`, `GoogleDriveService`, or `ProjectService` tokens in `AppShellRuntime.ts`, `ProjectSessionUseCases.ts`, or `AutoSaveUseCases.ts`; `ProjectService` remains isolated to `ProjectSessionPersistenceAdapter.ts`; production last-project keys remain isolated to `BrowserLastProjectRepository.ts`; no broad `AppShellService` / facade was introduced; keyboard target installation remains explicit; `RuntimeSession` remains the current `World` / `CommandStack` owner; and the 3D overlay/e2e pointer contract remains present.
+- `closure-live-preview-probe.stdout.log` / `.stderr.log` and `closure-live-preview-probe.html` — PASS. Confirmed a listener on `0.0.0.0:5173` and HTTP 200 from `http://127.0.0.1:5173/`.
+- `closure-live-browser-smoke.stdout.log` / `.stderr.log` — PASS. Chromium loaded the live app, observed startup canvas/status, verified keyboard `p` selects Point and Escape returns to Select, verified `.three-view-overlay` computed `pointer-events: auto`, verified `document.elementFromPoint(...)` resolves inside `[data-testid="three-view-overlay"]`, and verified a drag inside the 3D overlay leaves the SVG `viewBox` unchanged. The smoke recorded `saveStatusVisible: false`; this is accepted because no credentialed/remote save path was exercised and the mandatory project/session save behavior is already covered by the green focused tests and e2e logs.
+
+### Closure validation status
+
+- Static/source boundary checks: **PASS**.
+- ProjectService adapter isolation: **PASS**.
+- Last-project key ownership: **PASS**.
+- No broad app-shell facade: **PASS**.
+- Wave 019 / Cycle 026 Three/overlay preservation: **PASS**.
+- Focused app-shell tests: **PASS**, 38/38 in existing stable logs.
+- Root/frontend lint: **PASS**, architecture tests 11/11 in both logs.
+- Root/frontend full Vitest: **PASS**, 1283 passed, 45 skipped, 11 todo in both logs.
+- Root/frontend build: **PASS**; only the accepted pre-existing Vite chunk-size warning remains.
+- Root/frontend e2e: **PASS**, 10/10 in both logs, including the 3D overlay no-click-through assertion.
+- Live preview reachability on `0.0.0.0:5173`: **PASS**.
+- Live keyboard/startup/3D browser smoke: **PASS**.
+
+### Source-control reconciliation at closure
+
+MCP full `git_status` still overflows because this workspace has broad unrelated noise. Closure used MCP path-scoped `git_diff` for Wave 020/protected paths before log finalization.
+
+Observed unrelated protected dirty files remain excluded and were not modified, staged, normalized, or depended on by this closure task:
+
+- `frontend/src/domain/calculations/Intersections.ts`
+- `frontend/src/domain/processTree/ActionGroup.ts`
+- `frontend/src/stores/viewStore.ts`
+
+Closure touched only this implementation log and new validation evidence logs/HTML under the Wave 020 audit directory. No production source, package/tooling, backend/docs/specs, persistence schema/replay, command descriptors, rendering/Three/canvas code, Drive/auth internals, broad app-kernel facade, UI feature work, or next-wave implementation was changed.
+
+### Stale/noisy evidence disposition
+
+- Malformed Coder/Reviewer TaskReport envelopes from the implementation stage are treated as harness/reporting noise and superseded by commit `fb5ea6e217a16e6f7b876f842481893f6826e34b`, green validation logs, and the synthesized implementation-stage review.
+- The `/bin/sh` closure audit attempt that failed on `pipefail` is superseded by the stable bash rerun in `closure-existing-validation-audit.*`.
+- Existing Vite large-chunk warnings remain non-blocking and outside Wave 020 scope.
+
+### Residual risks accepted after closure
+
+- `createAppShellRuntime().internals` remains a typed test/introspection surface. It is bounded, unused by production UI, and remains a candidate for a future reviewed cleanup wave.
+- `RuntimeSession` continues to own broader runtime/session object lifecycle. That ownership is intentional for Wave 020 and should be addressed only by a reviewed future wave.
+- Credential-free live smoke cannot prove real Google Drive behavior; fake-port unit tests and no-credential browser/e2e coverage are the accepted validation strategy for this wave.
+
+### Next-wave recommendation / re-rank
+
+The remaining plan was re-read after Wave 020. The most central next step is the reviewed Wave 021 entry: **Selection/delete command-kernel boundary**. Wave 020 intentionally hardened app-shell browser/project-session composition while leaving selection/delete command construction and broader runtime-session command ownership as residual debt. Selection/delete is on the active keyboard/delete path and is more central than placeholder/debug cleanup, docs/spec reconciliation, backend stance, validation-platform hardening, or peripheral UI cleanup.
+
+Recommended next canonical stage: `cycle-021-fresh-scout-proposals` for Wave 021, after confirming the current Wave 021 plan entry/review state is authoritative. Do not implement Wave 021 in this closure stage.
