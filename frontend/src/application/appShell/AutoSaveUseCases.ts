@@ -1,11 +1,9 @@
 import type { Ref } from 'vue';
 import type { DrivePort, IntervalHandle, LastProjectRepositoryPort, ProjectSessionPersistencePort, SaveStatus, SchedulerPort, TimeoutHandle } from './AppShellPorts';
+import type { SnapshotCapableProjectSessionKernel } from './ProjectSessionKernel';
 import { isAuthenticationError, isMissingRemoteFileError, isQuotaError } from './AppShellErrorClassifier';
 
-export interface AutoSaveRuntimeSessionPort {
-  getVersion(): number;
-  snapshot(projectName: string, persistence: ProjectSessionPersistencePort): object;
-}
+export type AutoSaveRuntimeSessionPort = SnapshotCapableProjectSessionKernel;
 
 export class AutoSaveUseCases {
   private pollInterval: IntervalHandle | null = null;

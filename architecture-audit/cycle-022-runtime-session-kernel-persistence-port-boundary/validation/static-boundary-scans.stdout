@@ -1,0 +1,14 @@
+ProjectSessionPersistenceAdapter RuntimeSession import: PASS
+ProjectSessionUseCases concrete RuntimeSession import: PASS
+AppShellPorts concrete imports: PASS
+ProjectService app-shell import isolation:
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:import { ProjectService, type ProjectData } from '@/services/ProjectService';
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:import { ProjectService, type ProjectData } from '@/services/ProjectService';
+SelectionUseCases command construction absence: PASS
+SelectionDeletionCommandService command construction presence:
+import { DeletionSequenceFactory } from '@/commands/factories/DeletionSequenceFactory';
+  createCommand: (description, world) => new Command(description, world),
+    DeletionSequenceFactory.createCascadeDeletion(command, selectedIds, world);
+    deleteCommand.commit();
+    this.commandStack.push(deleteCommand);
+RuntimeSession old persistence exports: PASS

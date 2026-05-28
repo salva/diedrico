@@ -1,0 +1,7 @@
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/closure-update-report-sha.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/closure-update-report-sha.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/manager-initial-status-diff.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/manager-initial-status-diff.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/pre-edit-path-scoped-status-diff.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/pre-edit-path-scoped-status-diff.stdout
+--- diff ---

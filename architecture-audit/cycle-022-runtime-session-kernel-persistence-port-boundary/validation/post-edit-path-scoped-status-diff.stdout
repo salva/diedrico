@@ -1,0 +1,186 @@
+ M architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/frontend-lint.stdout
+ M architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/root-build.stdout
+ M architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/root-e2e.stdout
+ M frontend/src/application/appShell/AutoSaveUseCases.ts
+ M frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts
+ M frontend/src/application/appShell/ProjectSessionUseCases.ts
+ M frontend/src/application/appShell/RuntimeSession.ts
+ M frontend/tests/unit/application/appShell/AppShellBoundary.test.ts
+ M frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/closure-update-report-sha.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/closure-update-report-sha.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/focused-appshell-selection-vitest.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/focused-appshell-selection-vitest.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/frontend-build.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/frontend-build.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/frontend-e2e.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/frontend-e2e.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/frontend-vitest.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/frontend-vitest.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/live-browser-smoke.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/live-browser-smoke.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/live-preview-refresh-and-probe.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/live-preview-refresh-and-probe.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/live-preview-server.pid
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/live-preview-server.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/live-preview-server.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/manager-initial-status-diff.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/manager-initial-status-diff.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/post-edit-path-scoped-status-diff.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/post-edit-path-scoped-status-diff.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/pre-edit-path-scoped-status-diff.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/pre-edit-path-scoped-status-diff.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/root-lint.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/root-lint.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/root-vitest.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/root-vitest.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/static-boundary-scans.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/static-boundary-scans.stdout
+?? frontend/src/application/appShell/ProjectSessionKernel.ts
+?? frontend/src/application/appShell/ProjectSessionPersistenceTargets.ts
+--- diff ---
+diff --git a/frontend/src/application/appShell/AutoSaveUseCases.ts b/frontend/src/application/appShell/AutoSaveUseCases.ts
+index a1eb90e..970b9c5 100644
+--- a/frontend/src/application/appShell/AutoSaveUseCases.ts
++++ b/frontend/src/application/appShell/AutoSaveUseCases.ts
+@@ -1,11 +1,9 @@
+ import type { Ref } from 'vue';
+ import type { DrivePort, IntervalHandle, LastProjectRepositoryPort, ProjectSessionPersistencePort, SaveStatus, SchedulerPort, TimeoutHandle } from './AppShellPorts';
++import type { SnapshotCapableProjectSessionKernel } from './ProjectSessionKernel';
+ import { isAuthenticationError, isMissingRemoteFileError, isQuotaError } from './AppShellErrorClassifier';
+ 
+-export interface AutoSaveRuntimeSessionPort {
+-  getVersion(): number;
+-  snapshot(projectName: string, persistence: ProjectSessionPersistencePort): object;
+-}
++export type AutoSaveRuntimeSessionPort = SnapshotCapableProjectSessionKernel;
+ 
+ export class AutoSaveUseCases {
+   private pollInterval: IntervalHandle | null = null;
+diff --git a/frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts b/frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts
+index 8b5b166..ca30127 100644
+--- a/frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts
++++ b/frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts
+@@ -1,6 +1,6 @@
+ import { ProjectService, type ProjectData } from '@/services/ProjectService';
+ import type { OpenedProjectSession, PersistedProjectSession, ProjectSessionPersistencePort } from './AppShellPorts';
+-import type { RuntimeSessionPersistenceRestoreHandle, RuntimeSessionPersistenceSnapshotHandle } from './RuntimeSession';
++import type { RuntimeSessionPersistenceRestoreHandle, RuntimeSessionPersistenceSnapshotHandle } from './ProjectSessionPersistenceTargets';
+ 
+ export class ProjectSessionPersistenceAdapter implements ProjectSessionPersistencePort {
+   snapshotCurrentSession(session: RuntimeSessionPersistenceSnapshotHandle, projectName: string): object {
+diff --git a/frontend/src/application/appShell/ProjectSessionUseCases.ts b/frontend/src/application/appShell/ProjectSessionUseCases.ts
+index e77e36c..f442ec0 100644
+--- a/frontend/src/application/appShell/ProjectSessionUseCases.ts
++++ b/frontend/src/application/appShell/ProjectSessionUseCases.ts
+@@ -2,12 +2,12 @@ import type { Ref } from 'vue';
+ import type { AutoSaveUseCases } from './AutoSaveUseCases';
+ import type { AuthStorePort, DrivePort, LastProjectRepositoryPort, ProjectSessionPersistencePort, SaveStatus, StartupDialogState } from './AppShellPorts';
+ import { describeUnknownError } from './AppShellErrorClassifier';
+-import type { RuntimeSession } from './RuntimeSession';
++import type { ProjectSessionKernel } from './ProjectSessionKernel';
+ 
+ export class ProjectSessionUseCases {
+   constructor(
+     private readonly deps: {
+-      session: RuntimeSession;
++      session: ProjectSessionKernel;
+       hasGoogleCredentials: boolean;
+       showStartupDialog: Ref<boolean>;
+       isSignedIn: Ref<boolean>;
+diff --git a/frontend/src/application/appShell/RuntimeSession.ts b/frontend/src/application/appShell/RuntimeSession.ts
+index 843c664..35a2009 100644
+--- a/frontend/src/application/appShell/RuntimeSession.ts
++++ b/frontend/src/application/appShell/RuntimeSession.ts
+@@ -7,7 +7,9 @@ import { CanvasToolController } from '@/application/tools/CanvasToolController';
+ import { createToolInteractionReadPort } from '@/application/tools/ToolInteractionReadPort';
+ import type { CanvasToolControllerToolStore } from '@/application/tools/CanvasToolController';
+ import { ProcessHistoryController } from '@/application/processHistory/ProcessHistoryController';
+-import type { ActivePlanePort, CommandHistoryPort, OpenedProjectSession, ProjectSessionPersistencePort, RuntimeSessionRestoreHandle, RuntimeSessionSnapshotHandle, SelectionReadPort } from './AppShellPorts';
++import type { ActivePlanePort, CommandHistoryPort, OpenedProjectSession, ProjectSessionPersistencePort, SelectionReadPort } from './AppShellPorts';
++import type { ProjectSessionKernel } from './ProjectSessionKernel';
++import type { RuntimeSessionPersistenceRestoreHandle, RuntimeSessionPersistenceSnapshotHandle } from './ProjectSessionPersistenceTargets';
+ import { CanvasPresentationController } from '@/application/canvasPresentation/CanvasPresentationController';
+ import { createCanvasWorldReadPort } from '@/application/canvasPresentation/CanvasWorldReadPort';
+ import { createThreePresentationReadPorts } from '@/application/threePresentation/ThreeWorldReadPort';
+@@ -19,16 +21,7 @@ import { buildProcessTreeReadModel, countProcessNodeViewModels, getRelatedAction
+ import { buildElementsPanelReadModel } from './readModels/ElementsPanelReadModel';
+ import { toggleElementVisibility } from './readModels/ElementVisibilityIntent';
+ 
+-export interface RuntimeSessionPersistenceSnapshotHandle extends RuntimeSessionSnapshotHandle {
+-  readonly commandStack: CommandStack;
+-}
+-
+-export interface RuntimeSessionPersistenceRestoreHandle extends RuntimeSessionRestoreHandle {
+-  readonly world: World;
+-  readonly commandStack: CommandStack;
+-}
+-
+-export class RuntimeSession {
++export class RuntimeSession implements ProjectSessionKernel {
+   private readonly world = new World();
+   private readonly commandStack = new CommandStack();
+ 
+diff --git a/frontend/tests/unit/application/appShell/AppShellBoundary.test.ts b/frontend/tests/unit/application/appShell/AppShellBoundary.test.ts
+index 436d46f..e3cca6b 100644
+--- a/frontend/tests/unit/application/appShell/AppShellBoundary.test.ts
++++ b/frontend/tests/unit/application/appShell/AppShellBoundary.test.ts
+@@ -15,6 +15,8 @@ import selection from '@/application/appShell/SelectionUseCases.ts?raw';
+ import selectionDeletionService from '@/application/selectionDeletion/SelectionDeletionCommandService.ts?raw';
+ import runtimeSession from '@/application/appShell/RuntimeSession.ts?raw';
+ import projectSessionPersistenceAdapter from '@/application/appShell/ProjectSessionPersistenceAdapter.ts?raw';
++import projectSessionKernel from '@/application/appShell/ProjectSessionKernel.ts?raw';
++import projectSessionPersistenceTargets from '@/application/appShell/ProjectSessionPersistenceTargets.ts?raw';
+ 
+ describe('Wave 009 app-shell boundaries', () => {
+   it('keeps App.vue free of moved shell orchestration imports and browser bridges', () => {
+@@ -78,10 +80,13 @@ describe('Cycle 022 runtime session persistence boundary', () => {
+     expect(appShellPorts).toMatch(/PersistedProjectSession/);
+     expect(appShellPorts).toMatch(/RuntimeSessionSnapshotHandle/);
+     expect(appShellPorts).toMatch(/RuntimeSessionRestoreHandle/);
++    expect(projectSessionKernel).toMatch(/ProjectSessionKernel/);
++    expect(projectSessionKernel).not.toMatch(/@\/commands\/CommandStack|@\/domain\/world\/World|@\/services\/ProjectService/);
+   });
+ 
+   it('removes raw runtime-pair persistence calls from project-session and autosave use cases', () => {
+-    expect(projectSession).not.toMatch(/@\/commands\/CommandStack|@\/domain\/world\/World|@\/services\/ProjectService|initializeWorld/);
++    expect(projectSession).not.toMatch(/@\/commands\/CommandStack|@\/domain\/world\/World|@\/services\/ProjectService|initializeWorld|from '\.\/RuntimeSession'/);
++    expect(projectSession).toMatch(/ProjectSessionKernel/);
+     expect(autoSave).not.toMatch(/@\/commands\/CommandStack|@\/domain\/world\/World/);
+     expect(projectSession).not.toMatch(/\.name\)|projectData\.name|schemaVersion|commands/);
+     expect(projectSession).toMatch(/openedSession\.projectName/);
+@@ -142,8 +147,13 @@ describe('Cycle 023 runtime-session consumer ports and command-history boundary'
+ 
+   it('keeps persistence concrete handles adapter-local instead of general app-shell ports', () => {
+     expect(appShellPorts).not.toMatch(/RuntimeSessionPersistenceSnapshotHandle|RuntimeSessionPersistenceRestoreHandle/);
++    expect(runtimeSession).not.toMatch(/export interface RuntimeSessionPersistenceSnapshotHandle|export interface RuntimeSessionPersistenceRestoreHandle/);
++    expect(projectSessionPersistenceAdapter).not.toMatch(/from '\.\/RuntimeSession'/);
++    expect(projectSessionPersistenceAdapter).toMatch(/from '\.\/ProjectSessionPersistenceTargets'/);
+     expect(projectSessionPersistenceAdapter).toMatch(/RuntimeSessionPersistenceSnapshotHandle/);
+     expect(projectSessionPersistenceAdapter).toMatch(/RuntimeSessionPersistenceRestoreHandle/);
+     expect(projectSessionPersistenceAdapter).not.toMatch(/ as RuntimeSessionPersistence/);
++    expect(projectSessionPersistenceTargets).toMatch(/@\/commands\/CommandStack/);
++    expect(projectSessionPersistenceTargets).toMatch(/@\/domain\/world\/World/);
+   });
+ });
+diff --git a/frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts b/frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts
+index 98286ae..842cc8b 100644
+--- a/frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts
++++ b/frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts
+@@ -7,6 +7,7 @@ import { AutoSaveUseCases, type AutoSaveRuntimeSessionPort } from '@/application
+ import { BrowserLastProjectRepository } from '@/application/appShell/BrowserLastProjectRepository';
+ import { ProjectSessionUseCases } from '@/application/appShell/ProjectSessionUseCases';
+ import { RuntimeSession } from '@/application/appShell/RuntimeSession';
++import type { ProjectSessionKernel } from '@/application/appShell/ProjectSessionKernel';
+ import { SelectionUseCases } from '@/application/appShell/SelectionUseCases';
+ import type { AppShellRuntimePorts, DrivePort, LastProjectRepositoryPort, ProjectSessionPersistencePort, SchedulerPort, SelectionStorePort } from '@/application/appShell/AppShellPorts';
+ 
+@@ -481,7 +482,7 @@ describe('SelectionUseCases', () => {
+ 
+ describe('ProjectSessionUseCases startup and project flows', () => {
+   function projectSessionDeps(overrides: Partial<ConstructorParameters<typeof ProjectSessionUseCases>[0]> & { ports?: AppShellRuntimePorts } = {}) {
+-    const session = new RuntimeSession();
++    const session: RuntimeSession & ProjectSessionKernel = new RuntimeSession();
+     const { ports: overridePorts, ...depsOverrides } = overrides;
+     const ports = overridePorts ?? runtimePorts();
+     return {

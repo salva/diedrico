@@ -7,6 +7,7 @@ import { AutoSaveUseCases, type AutoSaveRuntimeSessionPort } from '@/application
 import { BrowserLastProjectRepository } from '@/application/appShell/BrowserLastProjectRepository';
 import { ProjectSessionUseCases } from '@/application/appShell/ProjectSessionUseCases';
 import { RuntimeSession } from '@/application/appShell/RuntimeSession';
+import type { ProjectSessionKernel } from '@/application/appShell/ProjectSessionKernel';
 import { SelectionUseCases } from '@/application/appShell/SelectionUseCases';
 import type { AppShellRuntimePorts, DrivePort, LastProjectRepositoryPort, ProjectSessionPersistencePort, SchedulerPort, SelectionStorePort } from '@/application/appShell/AppShellPorts';
 
@@ -481,7 +482,7 @@ describe('SelectionUseCases', () => {
 
 describe('ProjectSessionUseCases startup and project flows', () => {
   function projectSessionDeps(overrides: Partial<ConstructorParameters<typeof ProjectSessionUseCases>[0]> & { ports?: AppShellRuntimePorts } = {}) {
-    const session = new RuntimeSession();
+    const session: RuntimeSession & ProjectSessionKernel = new RuntimeSession();
     const { ports: overridePorts, ...depsOverrides } = overrides;
     const ports = overridePorts ?? runtimePorts();
     return {

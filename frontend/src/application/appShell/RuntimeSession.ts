@@ -7,7 +7,9 @@ import { CanvasToolController } from '@/application/tools/CanvasToolController';
 import { createToolInteractionReadPort } from '@/application/tools/ToolInteractionReadPort';
 import type { CanvasToolControllerToolStore } from '@/application/tools/CanvasToolController';
 import { ProcessHistoryController } from '@/application/processHistory/ProcessHistoryController';
-import type { ActivePlanePort, CommandHistoryPort, OpenedProjectSession, ProjectSessionPersistencePort, RuntimeSessionRestoreHandle, RuntimeSessionSnapshotHandle, SelectionReadPort } from './AppShellPorts';
+import type { ActivePlanePort, CommandHistoryPort, OpenedProjectSession, ProjectSessionPersistencePort, SelectionReadPort } from './AppShellPorts';
+import type { ProjectSessionKernel } from './ProjectSessionKernel';
+import type { RuntimeSessionPersistenceRestoreHandle, RuntimeSessionPersistenceSnapshotHandle } from './ProjectSessionPersistenceTargets';
 import { CanvasPresentationController } from '@/application/canvasPresentation/CanvasPresentationController';
 import { createCanvasWorldReadPort } from '@/application/canvasPresentation/CanvasWorldReadPort';
 import { createThreePresentationReadPorts } from '@/application/threePresentation/ThreeWorldReadPort';
@@ -19,16 +21,7 @@ import { buildProcessTreeReadModel, countProcessNodeViewModels, getRelatedAction
 import { buildElementsPanelReadModel } from './readModels/ElementsPanelReadModel';
 import { toggleElementVisibility } from './readModels/ElementVisibilityIntent';
 
-export interface RuntimeSessionPersistenceSnapshotHandle extends RuntimeSessionSnapshotHandle {
-  readonly commandStack: CommandStack;
-}
-
-export interface RuntimeSessionPersistenceRestoreHandle extends RuntimeSessionRestoreHandle {
-  readonly world: World;
-  readonly commandStack: CommandStack;
-}
-
-export class RuntimeSession {
+export class RuntimeSession implements ProjectSessionKernel {
   private readonly world = new World();
   private readonly commandStack = new CommandStack();
 

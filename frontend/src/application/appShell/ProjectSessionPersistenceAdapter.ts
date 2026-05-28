@@ -1,6 +1,6 @@
 import { ProjectService, type ProjectData } from '@/services/ProjectService';
 import type { OpenedProjectSession, PersistedProjectSession, ProjectSessionPersistencePort } from './AppShellPorts';
-import type { RuntimeSessionPersistenceRestoreHandle, RuntimeSessionPersistenceSnapshotHandle } from './RuntimeSession';
+import type { RuntimeSessionPersistenceRestoreHandle, RuntimeSessionPersistenceSnapshotHandle } from './ProjectSessionPersistenceTargets';
 
 export class ProjectSessionPersistenceAdapter implements ProjectSessionPersistencePort {
   snapshotCurrentSession(session: RuntimeSessionPersistenceSnapshotHandle, projectName: string): object {

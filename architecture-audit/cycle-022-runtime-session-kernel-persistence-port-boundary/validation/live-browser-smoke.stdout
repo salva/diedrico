@@ -1,0 +1,24 @@
+{
+  "reached": true,
+  "hasToolbar": true,
+  "hasCanvas": true,
+  "hasStatusBar": true,
+  "pointCreated": true,
+  "deleteUndoKeyboardSmokeCompleted": true,
+  "has3DOverlay": true,
+  "overlayOwnsPointer": true,
+  "overlayDragDidNotPanSvg": true,
+  "bodyMentionsProjectOrToolStatus": true,
+  "events": [
+    "console:debug:[vite] connecting...",
+    "console:debug:[vite] connected.",
+    "console:log:Runtime canvas view port initialized",
+    "console:warning:[.WebGL-0x2fbc00151000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "console:warning:[.WebGL-0x2fbc00151000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "console:warning:[.WebGL-0x2fbc00151000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+    "console:warning:[.WebGL-0x2fbc00151000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)",
+    "console:log:[SvgCanvas] Created new tool instance: point",
+    "console:log:[SvgCanvas] Tool operation succeeded: Create free point completed successfully",
+    "console:log:[DeletionSequenceFactory] Cascade deletion: {direct: Array(3), cascaded: Array(0), total: Array(3), order: dependents-first (proper deletion order)}"
+  ]
+}

@@ -15,6 +15,8 @@ import selection from '@/application/appShell/SelectionUseCases.ts?raw';
 import selectionDeletionService from '@/application/selectionDeletion/SelectionDeletionCommandService.ts?raw';
 import runtimeSession from '@/application/appShell/RuntimeSession.ts?raw';
 import projectSessionPersistenceAdapter from '@/application/appShell/ProjectSessionPersistenceAdapter.ts?raw';
+import projectSessionKernel from '@/application/appShell/ProjectSessionKernel.ts?raw';
+import projectSessionPersistenceTargets from '@/application/appShell/ProjectSessionPersistenceTargets.ts?raw';
 
 describe('Wave 009 app-shell boundaries', () => {
   it('keeps App.vue free of moved shell orchestration imports and browser bridges', () => {
@@ -78,10 +80,13 @@ describe('Cycle 022 runtime session persistence boundary', () => {
     expect(appShellPorts).toMatch(/PersistedProjectSession/);
     expect(appShellPorts).toMatch(/RuntimeSessionSnapshotHandle/);
     expect(appShellPorts).toMatch(/RuntimeSessionRestoreHandle/);
+    expect(projectSessionKernel).toMatch(/ProjectSessionKernel/);
+    expect(projectSessionKernel).not.toMatch(/@\/commands\/CommandStack|@\/domain\/world\/World|@\/services\/ProjectService/);
   });
 
   it('removes raw runtime-pair persistence calls from project-session and autosave use cases', () => {
-    expect(projectSession).not.toMatch(/@\/commands\/CommandStack|@\/domain\/world\/World|@\/services\/ProjectService|initializeWorld/);
+    expect(projectSession).not.toMatch(/@\/commands\/CommandStack|@\/domain\/world\/World|@\/services\/ProjectService|initializeWorld|from '\.\/RuntimeSession'/);
+    expect(projectSession).toMatch(/ProjectSessionKernel/);
     expect(autoSave).not.toMatch(/@\/commands\/CommandStack|@\/domain\/world\/World/);
     expect(projectSession).not.toMatch(/\.name\)|projectData\.name|schemaVersion|commands/);
     expect(projectSession).toMatch(/openedSession\.projectName/);
@@ -142,8 +147,13 @@ describe('Cycle 023 runtime-session consumer ports and command-history boundary'
 
   it('keeps persistence concrete handles adapter-local instead of general app-shell ports', () => {
     expect(appShellPorts).not.toMatch(/RuntimeSessionPersistenceSnapshotHandle|RuntimeSessionPersistenceRestoreHandle/);
+    expect(runtimeSession).not.toMatch(/export interface RuntimeSessionPersistenceSnapshotHandle|export interface RuntimeSessionPersistenceRestoreHandle/);
+    expect(projectSessionPersistenceAdapter).not.toMatch(/from '\.\/RuntimeSession'/);
+    expect(projectSessionPersistenceAdapter).toMatch(/from '\.\/ProjectSessionPersistenceTargets'/);
     expect(projectSessionPersistenceAdapter).toMatch(/RuntimeSessionPersistenceSnapshotHandle/);
     expect(projectSessionPersistenceAdapter).toMatch(/RuntimeSessionPersistenceRestoreHandle/);
     expect(projectSessionPersistenceAdapter).not.toMatch(/ as RuntimeSessionPersistence/);
+    expect(projectSessionPersistenceTargets).toMatch(/@\/commands\/CommandStack/);
+    expect(projectSessionPersistenceTargets).toMatch(/@\/domain\/world\/World/);
   });
 });

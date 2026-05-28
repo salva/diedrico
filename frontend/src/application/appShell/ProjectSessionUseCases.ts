@@ -2,12 +2,12 @@ import type { Ref } from 'vue';
 import type { AutoSaveUseCases } from './AutoSaveUseCases';
 import type { AuthStorePort, DrivePort, LastProjectRepositoryPort, ProjectSessionPersistencePort, SaveStatus, StartupDialogState } from './AppShellPorts';
 import { describeUnknownError } from './AppShellErrorClassifier';
-import type { RuntimeSession } from './RuntimeSession';
+import type { ProjectSessionKernel } from './ProjectSessionKernel';
 
 export class ProjectSessionUseCases {
   constructor(
     private readonly deps: {
-      session: RuntimeSession;
+      session: ProjectSessionKernel;
       hasGoogleCredentials: boolean;
       showStartupDialog: Ref<boolean>;
       isSignedIn: Ref<boolean>;
