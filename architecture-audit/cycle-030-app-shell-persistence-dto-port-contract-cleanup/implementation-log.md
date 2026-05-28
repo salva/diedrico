@@ -1,135 +1,97 @@
 # Cycle 030 Implementation Log — App-shell persistence DTO port contract cleanup
 
-## Summary
+## Scope and source-control hygiene
 
-Implemented the decision-selected direct path from `decision.md` / `proposal-direct.md`.
+- Decision followed: `architecture-audit/cycle-030-app-shell-persistence-dto-port-contract-cleanup/decision.md` selected the direct proposal.
+- Pre-edit scoped evidence: `validation/pre-edit-status-diffstat.log` showed no scoped source/test diff before this retry began.
+- Current retry found the selected DTO contract already present in the in-scope source files and did not broaden implementation beyond the decision-selected seam.
+- No protected config/secret files were read. No backend, docs, specs, package/tooling, Drive/auth internals, command descriptor/replay/schema, rendering/CSS/canvas/3D presentation, or unrelated dirty files were edited.
+- Post-edit scoped evidence: `validation/post-edit-status-diffstat.log` shows no scoped production/test diff; only Cycle 030 validation evidence was newly written during this retry.
 
-The app-shell persistence seam now names the trusted current ProjectService DTO as `ProjectSessionPersistencePayload` and passes it through snapshot, validated open, restore, create, update, and autosave paths without the old `PersistedProjectSession` nominal marker or adapter double casts. Remote load remains untrusted (`Promise<unknown>`) until `ProjectSessionPersistenceAdapter.validateProjectData(...)` delegates to `ProjectService.validateProjectData(...)`.
+## Source files changed by the selected implementation
 
-No ProjectService schema, replay, validation, command descriptor, Drive/auth internals, rendering/canvas/3D, package/tooling, backend, docs, or specs behavior was changed.
-
-## Source files changed
+The direct Cycle 030 source/test implementation is present in the current tree with no additional source diff in this retry:
 
 - `frontend/src/application/appShell/AppShellPorts.ts`
-  - Deleted `PersistedProjectSession`.
-  - Added `export type ProjectSessionPersistencePayload = ProjectData` as a type-only current DTO contract.
-  - Retyped `OpenedProjectSession.payload`, `ProjectSessionPersistencePort.snapshotCurrentSession(...)`, `ProjectSessionPersistencePort.restoreSession(...)`.
-  - Retyped `DrivePort.createFile(...)` / `updateFile(...)` to accept `ProjectSessionPersistencePayload` and `loadFile(...)` to return `Promise<unknown>`.
+  - Defines `ProjectSessionPersistencePayload` as a type-only alias to `ProjectData`.
+  - `OpenedProjectSession.payload`, `ProjectSessionPersistencePort.snapshotCurrentSession(...)`, `ProjectSessionPersistencePort.restoreSession(...)`, `DrivePort.createFile(...)`, and `DrivePort.updateFile(...)` use the typed payload.
+  - `DrivePort.loadFile(...)` returns `Promise<unknown>`.
 - `frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts`
-  - Returns `ProjectService.serializeCommands(...)` directly as `ProjectSessionPersistencePayload`.
-  - Keeps `ProjectService.validateProjectData(data)` as the only unknown-input validation gate.
-  - Returns `{ projectName: data.name, payload: data }` after assertion narrowing.
-  - Passes the typed payload directly into `ProjectService.deserializeCommands(...)`.
-- `frontend/src/application/appShell/ProjectSessionKernel.ts`
-  - Retyped snapshot return to `ProjectSessionPersistencePayload`.
-- `frontend/src/application/appShell/RuntimeSession.ts`
-  - Retyped snapshot return to `ProjectSessionPersistencePayload`.
-  - Candidate restore safety was left unchanged: restore into candidate world/stack first; live session is cleared/restored only after candidate restore succeeds.
+  - `snapshotCurrentSession(...)` returns `ProjectService.serializeCommands(...)` directly.
+  - `validateProjectData(data: unknown)` delegates to `ProjectService.validateProjectData(data)` before returning the typed opened payload.
+  - `restoreSession(...)` passes the typed payload directly to `ProjectService.deserializeCommands(...)`.
+- `frontend/src/application/appShell/ProjectSessionKernel.ts` and `frontend/src/application/appShell/RuntimeSession.ts`
+  - Runtime snapshot methods return `ProjectSessionPersistencePayload`.
+  - `RuntimeSession.restoreValidatedProject(...)` preserves candidate-restore safety before live-session restore.
+- `frontend/src/application/appShell/ProjectSessionUseCases.ts` and `frontend/src/application/appShell/AutoSaveUseCases.ts`
+  - Trusted create/update/autosave paths propagate session snapshots into the typed DrivePort save/update calls.
+  - Open path treats `drive.loadFile(...)` output as unknown and validates before restore.
 - `frontend/tests/unit/application/appShell/AppShellBoundary.test.ts`
-  - Replaced stale `PersistedProjectSession` expectations with explicit Cycle 030 DTO/DrivePort boundary assertions.
-  - Added seam-removal guard for marker names, double casts, and object snapshot signatures.
-  - Preserved concrete `World`/`CommandStack` boundary assertions and adapter-local target checks.
+  - Guards the DTO type alias, DrivePort create/update/load boundary rule, deletion of cast-only markers, deletion of object snapshot signatures, and localization of ProjectService usage.
 - `frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts`
-  - Replaced `data: any` / `payload: data as never` persistence mock shims with a typed `ProjectSessionPersistencePayload` builder.
-  - Added assertions that create, autosave update, missing-file recreate, validation, and restore paths pass the typed payload through the app-shell seam.
+  - Uses typed `ProjectSessionPersistencePayload` builders and exercises create/open/autosave/missing-file behavior without generic-object/cast-shim mocks.
 
-## Authorized delete list / proof
+No `frontend/src/services/ProjectService.ts` behavior or type export change was required.
 
-- `PersistedProjectSession` alias: deleted from production app-shell ports.
-- `object` snapshot/restore payload signatures in the app-shell persistence path: deleted from `ProjectSessionPersistencePort`, `ProjectSessionKernel`, and `RuntimeSession` snapshot/restore signatures.
-- `projectData as unknown as PersistedProjectSession`: deleted from `ProjectSessionPersistenceAdapter.ts`.
-- `data as unknown as ProjectData`: deleted from `ProjectSessionPersistenceAdapter.ts`.
-- Stale tests asserting marker behavior: replaced in `AppShellBoundary.test.ts`.
-- Stale app-shell persistence mocks using `data: any` / `payload: data as never`: replaced in `AppShellRuntimeUseCases.test.ts`.
-- Transitional compatibility wrappers / dual raw-object typed paths: none added; static seam scans show no production app-shell remnants.
+## Authorized delete list / proofs
 
-Proof log: `validation/static-scans.log` has empty sections for production app-shell seam remnants and stale app-shell mock shims.
+- `PersistedProjectSession` alias: deleted from app-shell source. Remaining grep hits are only negative test assertions in `AppShellBoundary.test.ts`; see `validation/post-static-scans.log`.
+- `object` snapshot/restore payload signatures: no app-shell persistence-path matches for `snapshot(...): object` or `snapshotCurrentSession(...): object`; see `validation/post-static-scans.log`.
+- Double casts through `unknown` / object at adapter boundary: no source matches for `as unknown as PersistedProjectSession` or `as unknown as ProjectData`; see `validation/post-static-scans.log`.
+- Stale tests asserting object marker behavior: replaced by Cycle 030 boundary assertions for `ProjectSessionPersistencePayload` and DrivePort save/load rules.
+- Transitional compatibility wrappers / dual raw-object and typed paths: none found in app-shell persistence source; create/update use `ProjectSessionPersistencePayload`, load remains `unknown`.
+- Stale app-shell persistence mocks using `data: any` or `payload: data as never`: no focused app-shell test matches; see `validation/post-static-scans.log`.
 
 ## Persistence DTO ownership evidence
 
-- The only explicit app-shell DTO name is `ProjectSessionPersistencePayload` in `AppShellPorts.ts`.
-- It is a type-only alias to `ProjectData`; no duplicate schema interface, runtime wrapper, migration facade, or parallel schema owner was introduced.
-- `ProjectSessionPersistenceAdapter.ts` remains the only app-shell module that invokes `ProjectService` runtime methods.
-- `AppShellPorts.ts` imports only the `ProjectData` type; it does not instantiate or call `ProjectService`.
+- `AppShellPorts.ts` contains only a type-only import of `ProjectData` and the alias `ProjectSessionPersistencePayload = ProjectData`.
+- Runtime orchestration modules do not import `ProjectService`; `ProjectSessionPersistenceAdapter.ts` remains the only app-shell production module invoking `ProjectService` behavior.
+- Validation/restoration of unknown loaded data remains owned by `ProjectService.validateProjectData(...)` through `ProjectSessionPersistenceAdapter.validateProjectData(...)`.
 
 ## DrivePort boundary evidence
 
 - `DrivePort.createFile(fileName, data)` accepts `ProjectSessionPersistencePayload`.
 - `DrivePort.updateFile(fileId, data)` accepts `ProjectSessionPersistencePayload`.
-- `DrivePort.loadFile(fileId)` returns `Promise<unknown>`.
-- `ProjectSessionUseCases.openProject(...)` still validates the loaded unknown via `session.validateProjectData(..., persistence)` before restore.
-- No Drive/auth internals, credential logic, OAuth behavior, Google API behavior, or protected config/secret file was inspected or changed.
+- `DrivePort.loadFile(fileId)` returns `Promise<unknown>` until app-shell session validation succeeds.
+- The implementation did not inspect or modify Drive/auth internals, credential handling, Google API behavior, or protected config.
 
 ## Validation log index
 
-All validation artifacts are under `architecture-audit/cycle-030-app-shell-persistence-dto-port-contract-cleanup/validation/`.
+All validation evidence was captured under `architecture-audit/cycle-030-app-shell-persistence-dto-port-contract-cleanup/validation/`.
 
-### Source-control / static evidence
+| Check | Command / evidence | Result |
+| --- | --- | --- |
+| Pre-edit scoped status/diffstat | `pre-edit-status-diffstat.log` | Pass: no scoped source/test diff at retry start. |
+| Static scans | `static-scans.log`, `post-static-scans.log` | Pass: no source seam remnants; remaining `PersistedProjectSession` / double-cast text is negative test assertion only. |
+| Focused app-shell Vitest | `npm run test --workspace=frontend -- tests/unit/application/appShell/AppShellBoundary.test.ts tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts` | Pass: 2 files, 39 tests. Logs: `focused-appshell-vitest.stdout.log`, `.stderr.log`. |
+| Root lint | `npm run lint` | Pass: architecture tests 11/11. Logs: `root-lint.stdout.log`, `.stderr.log`. |
+| Frontend lint | `npm run lint --workspace=frontend` | Pass: architecture tests 11/11. Logs: `frontend-lint.stdout.log`, `.stderr.log`. |
+| Root full Vitest | `npm run test` | Pass: 115 files passed, 1 skipped; 1292 tests passed, 45 skipped, 11 todo. Logs: `root-vitest.stdout.log`, `.stderr.log`. |
+| Frontend full Vitest | `npm run test --workspace=frontend` | Pass: 115 files passed, 1 skipped; 1292 tests passed, 45 skipped, 11 todo. Logs: `frontend-vitest.stdout.log`, `.stderr.log`. |
+| Root build | `npm run build` | Pass. Existing Vite chunk-size warning only. Logs: `root-build.stdout.log`, `.stderr.log`. |
+| Frontend build | `npm run build --workspace=frontend` | Pass. Existing Vite chunk-size warning only. Logs: `frontend-build.stdout.log`, `.stderr.log`. |
+| Root Playwright/e2e first attempt | `npm run test:e2e` | Initial failure: existing duplicate preview occupied/confused `localhost:5173`; Playwright webServer started on 5174 and timed out. Logs: `root-e2e.stdout.log`, `.stderr.log`, `e2e-port-conflict-probe.log`. Not source-attributable. |
+| Preview duplicate cleanup | Process/listener/reachability evidence | Pass: removed duplicate non-canonical preview, left one `0.0.0.0:5173` server reachable. Log: `preview-duplicate-cleanup.log`. |
+| Root Playwright/e2e rerun | `npm run test:e2e` | Pass: 10/10 Playwright tests. Logs: `root-e2e-rerun.stdout.log`, `.stderr.log`. |
+| Frontend Playwright/e2e | `npm run test:e2e --workspace=frontend` | Pass: 10/10 Playwright tests. Logs: `frontend-e2e.stdout.log`, `.stderr.log`. |
+| Live preview refresh/reachability | ensured one `npm run dev -- --host 0.0.0.0` preview and probed HTTP | Pass: `0.0.0.0:5173` listening; `127.0.0.1:5173` and `localhost:5173` returned HTTP 200. Logs: `live-preview-refresh.log`, `live-preview-server.stdout.log`, `.stderr.log`, `live-preview.pid`. |
+| Post-edit scoped status/diffstat | `post-edit-status-diffstat.log` | Pass: no scoped production/test source diff; validation PID/logs are the only scoped untracked evidence before commit. |
 
-- Initial scoped MCP diff before edits: empty for in-scope implementation paths (captured in worker trace; broad MCP status overflowed due known noisy worktree).
-- `post-path-status.log`: only the six intended source/test files were modified among scoped implementation paths at the time captured.
-- `post-path-diffstat.log`: six intended source/test files changed.
-- `static-scans.log`: no production app-shell seam remnants and no stale app-shell mock shims; unrelated pre-existing dirty frontend files are listed under protected/out-of-scope source scan and were not touched, staged, normalized, or incorporated.
-- `driveport-usage-scan.stdout.log`: records app-shell `DrivePort` signatures and existing GoogleDriveService method shapes; no Drive/auth implementation changes were needed.
+## Credential-free smoke / 3D overlay preservation
 
-Note: the broader worktree is noisy. The unrelated files listed in `static-scans.log` are outside this wave’s changed-file set and were not modified by this implementation.
+- Playwright `current-ui-contract.spec.ts` passed in both root rerun and frontend e2e runs.
+- Coverage includes current app shell rendering, representative free-point creation, active-plane selector exposure/switching, 3D coordinate status, and 3D overlay pointer ownership not passing drag gestures through to the 2D canvas.
+- Keyboard e2e covered Delete, undo, redo, Escape, and Ctrl+A selection-command behavior.
+- Save/open/autosave live smoke is limited to credential-free unit/use-case coverage because the current production Drive-backed save/open UI path requires Google credentials; no protected credentials/config were read.
 
-### Focused tests
+## Residual risks and notes
 
-- `focused-appshell-tests.stdout.log` / `.stderr.log`: `npm run test --workspace=frontend -- AppShellBoundary AppShellRuntimeUseCases` — pass, 39 tests.
-- `focused-appshell-tests-rerun.stdout.log` / `.stderr.log`: same focused command after final test cleanup — pass, 39 tests.
-
-### Lint / architecture guards
-
-- `root-lint.stdout.log` / `.stderr.log`: `npm run lint` — pass.
-- `frontend-lint.stdout.log` / `.stderr.log`: `npm run lint --workspace=frontend` — pass.
-
-### Full unit tests
-
-- `root-vitest.stdout.log` / `.stderr.log`: `npm run test` — pass.
-- `frontend-vitest.stdout.log` / `.stderr.log`: `npm run test --workspace=frontend` — pass.
-
-### Builds
-
-- `root-build.stdout.log` / `.stderr.log`: `npm run build` — pass. Existing Vite chunk-size warning only.
-- `frontend-build.stdout.log` / `.stderr.log`: `npm run build --workspace=frontend` — pass. Existing Vite chunk-size warning only.
-
-### E2E / Playwright
-
-- `root-e2e.stdout.log` / `.stderr.log`: `npm run test:e2e` — pass, 10 tests.
-- `frontend-e2e.stdout.log` / `.stderr.log`: `npm run test:e2e --workspace=frontend` — pass, 10 tests.
-
-These e2e runs cover the current app shell, representative drawing, active-plane switch, undo/redo keyboard behavior, and current 3D overlay pointer ownership.
-
-### Live preview refresh / credential-free smoke
-
-- Refreshed live preview by terminating any prior process on `5173/tcp` and starting `npm run dev -- --host 0.0.0.0` from the project root.
-- New preview PID recorded in `live-preview-server.pid`.
-- Server stdout/stderr recorded in `live-preview-server.stdout.log` / `.stderr.log`.
-- Reachability probe recorded in `live-preview-reachability.html` and `preview-refresh.stdout.log`; HTTP 200 returned from `http://127.0.0.1:5173/`.
-- `live-smoke.stdout.log` / `.stderr.log`: credential-free Playwright smoke against the live preview passed for app shell, canvas/status/overlay visibility, representative drawing, active-plane interaction, undo/redo keyboard commands, and 3D overlay pointer ownership with stable 2D canvas viewBox.
-- Credential-free save/open/autosave live smoke was skipped because the current app shell exposes those flows only through Google Drive credentials; protected credential/config files were not inspected.
-
-## Protected surfaces / scope compliance
-
-- No changes to `frontend/src/services/ProjectService.ts` schema, validation assertions, replay semantics, schema version, command descriptors, migration/backcompat, or operation registry.
-- No changes to Drive/auth internals or credential handling.
-- No changes to rendering, CSS, canvas, 3D presentation/style policy, selector orchestration, UI feature behavior, backend, docs, specs, package scripts, dependencies, or validation-platform tooling.
-- No broad source refactor or app-shell production composition redesign.
-
-## Source-control reconciliation
-
-- Intended changed source/test files: six files listed in `post-path-diffstat.log`.
-- Intended audit artifacts: this `implementation-log.md` and validation logs under the Cycle 030 validation directory.
-- Unrelated dirty files in the broader worktree remain untouched; they are visible only in `static-scans.log` as existing out-of-scope diffs and are not part of this implementation.
-
-## Residual risks
-
-- `AppShellPorts.ts` now has a type-only dependency on `ProjectData`, as explicitly accepted by `decision.md`. Future architecture tests should preserve the distinction between type-only DTO naming and runtime service orchestration.
-- `GoogleDriveService` still accepts broad `object` in its concrete methods. This is acceptable for this wave because the reviewed rule applies to the app-shell `DrivePort` boundary, production composition remains structurally compatible, and no Drive/auth internals redesign was authorized.
-- Command descriptor / operation serialization residuals remain future-wave concerns; no changes were needed for this DTO port cleanup.
+- The selected implementation intentionally permits a type-only `ProjectData` import in `AppShellPorts.ts`; runtime ProjectService behavior remains adapter-private.
+- Initial root e2e failure was caused by stale duplicate preview processes/localhost binding conflict, not by source behavior. After cleanup and canonical preview refresh, root and frontend e2e passed.
+- Existing Vite chunk-size warnings remain unrelated to Cycle 030 and were not addressed.
+- Full-worktree static scan showed pre-existing unrelated dirty audit artifacts outside Cycle 030 validation; they were not read for conclusions, normalized, staged, or reverted.
 
 ## Next-wave candidates
 
-- A future central wave can address command descriptor / operation serialization typing if still architecturally central after Cycle 030.
-- A lower-centrality future wave can revisit presentation-private 3D style-policy and thin selector orchestration cleanup.
+- Command descriptor / operation serialization cleanup remains a future centrality candidate, but was not needed for this DTO port cleanup.
+- Preview lifecycle/process hygiene could be tightened in a future validation-platform wave to avoid duplicate 5173 servers and localhost/IPv6 conflicts.
