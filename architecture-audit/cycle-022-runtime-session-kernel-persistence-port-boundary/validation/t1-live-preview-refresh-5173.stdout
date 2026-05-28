@@ -1,0 +1,24 @@
+## before
+LISTEN 0      511          0.0.0.0:5177      0.0.0.0:*    users:(("MainThread",pid=123112,fd=22))
+LISTEN 0      511          0.0.0.0:5176      0.0.0.0:*    users:(("MainThread",pid=104570,fd=22))
+LISTEN 0      511          0.0.0.0:5175      0.0.0.0:*    users:(("MainThread",pid=97628,fd=22)) 
+LISTEN 0      511          0.0.0.0:5174      0.0.0.0:*    users:(("MainThread",pid=90608,fd=22)) 
+LISTEN 0      511          0.0.0.0:5173      0.0.0.0:*    users:(("MainThread",pid=116693,fd=25))
+## after-kill
+LISTEN 0      511          0.0.0.0:5177      0.0.0.0:*    users:(("MainThread",pid=123112,fd=22))
+LISTEN 0      511          0.0.0.0:5176      0.0.0.0:*    users:(("MainThread",pid=104570,fd=22))
+LISTEN 0      511          0.0.0.0:5175      0.0.0.0:*    users:(("MainThread",pid=97628,fd=22)) 
+LISTEN 0      511          0.0.0.0:5174      0.0.0.0:*    users:(("MainThread",pid=90608,fd=22)) 
+LISTEN 0      511          0.0.0.0:5173      0.0.0.0:*    users:(("MainThread",pid=116693,fd=25))
+## probe
+HTTP/1.1 200 OK
+Vary: Origin
+Content-Type: text/html
+Cache-Control: no-cache
+Etag: W/"2a2-jmzE7161kdnXI7JasQMw+v8+14s"
+Date: Thu, 28 May 2026 02:56:37 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+## listener
+LISTEN 0      511          0.0.0.0:5173      0.0.0.0:*    users:(("MainThread",pid=116693,fd=25))

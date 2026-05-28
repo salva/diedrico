@@ -1,0 +1,44 @@
+## final scoped git status
+ M architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/implementation-log.md
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/t1-closure-scoped-status-diff.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/t1-closure-scoped-status-diff.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/t1-focused-appshell-selection-vitest.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/t1-focused-appshell-selection-vitest.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/t1-frontend-build.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/t1-frontend-build.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/t1-frontend-e2e.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/t1-frontend-e2e.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/t1-frontend-full-vitest.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/t1-frontend-full-vitest.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/t1-frontend-lint.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/t1-frontend-lint.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/t1-live-browser-smoke.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/t1-live-browser-smoke.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/t1-live-preview-5173-probe.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/t1-live-preview-5173-probe.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/t1-live-preview-5173.pid
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/t1-live-preview-5173.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/t1-live-preview-5173.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/t1-live-preview-probe.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/t1-live-preview-probe.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/t1-live-preview-refresh-5173.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/t1-live-preview-refresh-5173.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/t1-live-preview.pid
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/t1-live-preview.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/t1-live-preview.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/t1-root-build.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/t1-root-build.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/t1-root-e2e.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/t1-root-e2e.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/t1-root-full-vitest.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/t1-root-full-vitest.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/t1-root-lint.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/t1-root-lint.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/t1-static-boundary-scan.sh
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/t1-static-boundary-scan.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/t1-static-boundary-scan.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/t1-wave-plan-index.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/t1-wave-plan-index.stdout
+## final scoped git diff --stat
+ .../implementation-log.md                          | 69 ++++++++++++++++++++++
+ 1 file changed, 69 insertions(+)

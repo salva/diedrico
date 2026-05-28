@@ -1,0 +1,29 @@
+## ProjectSessionPersistenceAdapter RuntimeSession imports
+PASS_no_RuntimeSession_import_in_adapter
+## ProjectSessionUseCases RuntimeSession imports
+PASS_no_RuntimeSession_import_in_project_session_use_cases
+## AppShellPorts concrete imports
+PASS_no_concrete_World_CommandStack_ProjectData_imports_in_AppShellPorts
+## appShell ProjectService imports
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:1:import { ProjectService, type ProjectData } from '@/services/ProjectService';
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:7:    return ProjectService.serializeCommands(session.commandStack, session.nextElementId, projectName);
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:11:    ProjectService.validateProjectData(data);
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:20:    ProjectService.deserializeCommands(data as unknown as ProjectData, target.world, target.commandStack);
+PASS_ProjectService_adapter_private
+## obsolete RuntimeSession persistence exports
+PASS_old_RuntimeSession_persistence_exports_absent
+## selection delete construction location
+PASS_selection_use_cases_do_not_construct_delete_commands
+5:import type { SelectionDeletionCommandPort } from './SelectionDeletionPorts';
+7:interface SelectionDeletionCommandServiceInternals {
+12:const defaultInternals: SelectionDeletionCommandServiceInternals = {
+19:export class SelectionDeletionCommandService implements SelectionDeletionCommandPort {
+20:  private readonly internals: SelectionDeletionCommandServiceInternals;
+25:    internals: Partial<SelectionDeletionCommandServiceInternals> = {},
+33:    const deleteCommand = this.internals.createCommand('Delete elements', this.world);
+34:    this.internals.createCascadeDeletion(deleteCommand, [...selectedIds], this.world);
+35:    deleteCommand.commit();
+36:    this.commandStack.push(deleteCommand);
+PASS_selection_delete_service_retains_command_construction_boundary
+## kernel and target modules exist
+PASS_kernel_and_persistence_target_modules_present

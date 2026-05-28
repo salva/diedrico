@@ -1,0 +1,30 @@
+## scoped git status
+ M architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/decision-post-021-plan-correction.md
+ M architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/decision.md
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/corrections-round-01-scoped-status.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/corrections-round-01-scoped-status.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/critique/
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/final-manager-scoped-status.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/final-manager-scoped-status.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/post-t1-schema-fail-status.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/post-t1-schema-fail-status.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/retry-review-check.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/retry-review-check.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/review-scoped-diffstat.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/review-scoped-diffstat.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/review-scoped-status.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/review-scoped-status.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/reviews/
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/closure-update-report-sha.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/closure-update-report-sha.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/manager-initial-status-diff.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/manager-initial-status-diff.stdout
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/t1-closure-scoped-status-diff.stderr
+?? architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/t1-closure-scoped-status-diff.stdout
+## scoped git diff --stat
+ .../decision-post-021-plan-correction.md                     |  4 ++--
+ .../decision.md                                              | 12 ++++--------
+ 2 files changed, 6 insertions(+), 10 deletions(-)
+## scoped git diff names
+M	architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/decision-post-021-plan-correction.md
+M	architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/decision.md

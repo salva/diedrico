@@ -1,0 +1,13 @@
+
+> diedrico-frontend@0.1.0 dev
+> vite --host 0.0.0.0
+
+Port 5173 is in use, trying another one...
+Port 5174 is in use, trying another one...
+Port 5175 is in use, trying another one...
+Port 5176 is in use, trying another one...
+
+  VITE v5.4.21  ready in 266 ms
+
+  ➜  Local:   http://localhost:5177/
+  ➜  Network: http://10.0.3.113:5177/

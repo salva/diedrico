@@ -190,3 +190,72 @@ After rereading `architecture-audit/wave-plan.md`, Wave 022 is the last currentl
 3. then resume leaf command-producer cleanup for canvas/style/construction/process-history only after the runtime-session boundary is stable.
 
 Do not implement any of these next-wave candidates in the validation closure stage.
+
+## Validation-and-preview closure — t1 post-021 plan correction verification (fresh rerun)
+
+**Wave 022 remains COMPLETE after independent closure verification.** This task rechecked the decision-selected direct implementation against `decision-post-021-plan-correction.md` and `proposals/proposal-direct.md`, reran the mandatory validation/preview evidence, and did not change production source, test source, package/tooling, backend, docs/spec source, persistence schema/replay, command descriptors, Drive/auth, rendering/Three/canvas/CSS, or protected config/env/provider files.
+
+### Source-control reconciliation
+
+Fresh scoped evidence:
+
+- `validation/t1-closure-scoped-status-diff.stdout`, `.stderr` — captured path-scoped status/diff for the Cycle 022 audit directory and the Wave 022 app-shell source/test files. The selected production/test source files were not modified during closure. Existing adjacent audit/decision/review/validation noise remains attributed to prior stages and was not reverted, normalized, or incorporated.
+- A first status-capture wrapper using `/bin/sh` failed on `set -o pipefail`; it produced only `.saivage` command logs and was rerun under bash. This was harness-command noise, not source validation evidence.
+
+### Protected boundary verification
+
+Fresh static scan:
+
+- `validation/t1-static-boundary-scan.sh`
+- `validation/t1-static-boundary-scan.stdout`, `.stderr` — pass after tightening two scan predicates to avoid false positives on the abstract `validateProjectData` method name and on new target-module type imports.
+
+The final scan confirms:
+
+- `ProjectSessionPersistenceAdapter.ts` no longer imports `./RuntimeSession`.
+- `ProjectSessionUseCases.ts` no longer imports the concrete `RuntimeSession` class.
+- `AppShellPorts.ts` has no concrete `World`, `CommandStack`, or `ProjectData` imports.
+- `ProjectService` imports remain isolated to `ProjectSessionPersistenceAdapter.ts` among app-shell modules.
+- `RuntimeSession.ts` no longer exports the old runtime persistence handle interfaces.
+- `SelectionUseCases.ts` does not construct delete commands; command construction remains in `SelectionDeletionCommandService.ts`.
+- `ProjectSessionKernel.ts` and `ProjectSessionPersistenceTargets.ts` exist as the reviewed kernel/adapter-facing target modules.
+
+This matches the selected direct proposal: RuntimeSession/session-kernel ownership, app-shell persistence/session port narrowing, adapter-private ProjectService boundary, ProjectSessionUseCases/AutoSaveUseCases dependency narrowing, initializeWorld ownership preservation, and corrected Wave 021 selection-delete wiring preservation are all still intact.
+
+### Fresh mandatory validation evidence
+
+All defined commands were rerun and passed, with full stdout/stderr captured under `architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/`:
+
+- Root lint: `t1-root-lint.stdout`, `.stderr` — PASS.
+- Frontend lint: `t1-frontend-lint.stdout`, `.stderr` — PASS.
+- Focused app-shell/selection Vitest: `t1-focused-appshell-selection-vitest.stdout`, `.stderr` — PASS, 3 files / 44 tests.
+- Root full Vitest: `t1-root-full-vitest.stdout`, `.stderr` — PASS.
+- Frontend full Vitest: `t1-frontend-full-vitest.stdout`, `.stderr` — PASS.
+- Root build: `t1-root-build.stdout`, `.stderr` — PASS, with only the existing Vite large-chunk warning where emitted.
+- Frontend build: `t1-frontend-build.stdout`, `.stderr` — PASS, with only the existing Vite large-chunk warning where emitted.
+- Root e2e/Playwright: `t1-root-e2e.stdout`, `.stderr` — PASS, 10 Chromium tests.
+- Frontend e2e/Playwright: `t1-frontend-e2e.stdout`, `.stderr` — PASS.
+
+### Live preview refresh and credential-free smoke
+
+Preview evidence:
+
+- Existing reachability was first confirmed with HTTP 200 on `http://127.0.0.1:5173/`.
+- `validation/t1-live-preview.stdout`, `.stderr`, `.pid`, and `t1-live-preview-probe.stdout`, `.stderr` record an attempted refresh that fell back to port 5177 because stale preview listeners were already occupying 5173–5176; the 5173 probe still returned HTTP 200 from the existing listener.
+- `validation/t1-live-preview-refresh-5173.stdout`, `.stderr`, `t1-live-preview-5173.stdout`, `.stderr`, `.pid`, and `t1-live-preview-5173-probe.stdout`, `.stderr` record the follow-up reconciliation: listeners were inspected, `0.0.0.0:5173` was confirmed reachable, and `curl -I http://127.0.0.1:5173/` returned HTTP 200. The captured listener line shows `0.0.0.0:5173`.
+- `validation/t1-live-browser-smoke.stdout`, `.stderr` — PASS; credential-free Playwright smoke exercised startup/status, point creation, Delete/Ctrl+Z behavior, and 3D overlay pointer ownership/no SVG pan against `127.0.0.1:5173`.
+
+No Google/Drive credentials or protected config/env/provider contents were read or used.
+
+### Out-of-scope/protected surfaces
+
+Closure verified but did not modify ProjectService schema/replay, command descriptors, OperationRegistry, Drive/auth internals, rendering/Three/canvas/CSS, backend, docs/specs, package/tooling, broad app-kernel facades, app-shell production composition redesign, or unrelated dirty files. The remaining scoped status noise is audit/stage artifact noise and pre-existing decision/review context; it is intentionally not normalized here.
+
+### Residual risks and next canonical stage
+
+Residual Wave 022 risks remain the same as implementation: `RuntimeSession` is still a large runtime owner by design, and deeper cleanup of runtime consumers plus adapter-private persistence casts is deferred to future reviewed waves.
+
+The current wave plan includes subsequent central waves. `validation/t1-wave-plan-index.stdout` shows Wave 023 is **Runtime-session consumer ports and command-history boundary**, followed by Wave 024 command-producer runtime ports and later rendering/read-model waves. Therefore the next canonical stage should be:
+
+`cycle-023-fresh-scout-proposals-runtime-session-consumer-ports-command-history-boundary`
+
+That stage should re-read the Wave 023 entry against current source and produce scope-check/proposals before any implementation.
