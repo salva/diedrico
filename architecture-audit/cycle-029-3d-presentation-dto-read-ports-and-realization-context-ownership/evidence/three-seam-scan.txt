@@ -1,0 +1,300 @@
+frontend/src/application/threePresentation/ThreeStylePolicy.ts:4:export interface ThreeStyleSource { visualStyle?: VisualStyle }
+frontend/src/application/threePresentation/ThreeStylePolicy.ts:23:  return { ...THREE_STYLE.planarElement, color: element.visualStyle?.color ?? THREE_STYLE.planarElement.color };
+frontend/src/application/threePresentation/ThreeStylePolicy.ts:27:  return { ...THREE_STYLE.reconstructedElement, color: element.visualStyle?.color ?? THREE_STYLE.reconstructedElement.color };
+frontend/src/application/threePresentation/ThreeStylePolicy.ts:30:export function isVisible2D(element: ThreeStyleSource): boolean { return element.visualStyle?.visible !== false; }
+frontend/src/application/threePresentation/ThreeStylePolicy.ts:31:export function isVisible3D(element: ThreeStyleSource): boolean { return element.visualStyle?.visible !== false; }
+frontend/src/application/threePresentation/ProjectionPlane3DSelector.ts:16:      const realization = plane.realization;
+frontend/src/application/threePresentation/ProjectionPlane3DSelector.ts:17:      if (!realization?.feasible) continue;
+frontend/src/application/threePresentation/ProjectionPlane3DSelector.ts:18:      const basis = planeBasis(realization.planeTo3D.elements);
+frontend/src/application/threePresentation/ProjectionPlane3DSelector.ts:25:        items.push({ id: `grid-${plane.id}`, kind: 'projection-plane-grid', sourceEntityId: plane.id, planeId: plane.id, visible: true, style: THREE_STYLE.grid, renderGroup: 'projectionPlanes', segments: gridSegments(readPort, plane.id).map(segment => to3DSegment(segment, realization.planeTo3D)) });
+frontend/src/application/threePresentation/PlanarElement3DSelector.ts:12:      const planeRealization = plane.realization;
+frontend/src/application/threePresentation/PlanarElement3DSelector.ts:16:        const realization = point.realization;
+frontend/src/application/threePresentation/PlanarElement3DSelector.ts:17:        if (!realization?.feasible) continue;
+frontend/src/application/threePresentation/PlanarElement3DSelector.ts:18:        items.push({ id: `planar-point-${point.id}`, kind: 'planar-point', sourceEntityId: point.id, planeId: plane.id, visible: true, style: planarStyle(point), renderGroup: 'planarElements', position: v(lift(realization.position, planeRealization.planeTo3D)) });
+frontend/src/application/threePresentation/PlanarElement3DSelector.ts:22:        const realization = line.realization;
+frontend/src/application/threePresentation/PlanarElement3DSelector.ts:23:        if (!realization?.feasible) continue;
+frontend/src/application/threePresentation/PlanarElement3DSelector.ts:25:        if (line.isSegment || realization.isBounded()) {
+frontend/src/application/threePresentation/PlanarElement3DSelector.ts:26:          items.push({ id: `planar-segment-${line.id}`, kind: 'planar-segment', sourceEntityId: line.id, planeId: plane.id, visible: true, style, renderGroup: 'planarElements', start: v(lift(realization.point1, planeRealization.planeTo3D)), end: v(lift(realization.point2, planeRealization.planeTo3D)) });
+frontend/src/application/threePresentation/PlanarElement3DSelector.ts:28:          const direction = realization.getDirection().clone().normalize();
+frontend/src/application/threePresentation/PlanarElement3DSelector.ts:29:          const start2D = realization.point1.clone().add(direction.clone().multiplyScalar(-THREE_STYLE.planarLineExtent / 2));
+frontend/src/application/threePresentation/PlanarElement3DSelector.ts:30:          const end2D = realization.point1.clone().add(direction.clone().multiplyScalar(THREE_STYLE.planarLineExtent / 2));
+frontend/src/application/threePresentation/PlanarElement3DSelector.ts:36:        const realization = circle.realization;
+frontend/src/application/threePresentation/PlanarElement3DSelector.ts:37:        if (!realization?.feasible) continue;
+frontend/src/application/threePresentation/PlanarElement3DSelector.ts:38:        const radius = realization.getRadius();
+frontend/src/application/threePresentation/PlanarElement3DSelector.ts:42:          const p = realization.center.clone();
+frontend/src/application/threePresentation/ReconstructedElement3DSelector.ts:15:      const realization = point.realization;
+frontend/src/application/threePresentation/ReconstructedElement3DSelector.ts:16:      if (!realization?.isFeasible()) continue;
+frontend/src/application/threePresentation/ReconstructedElement3DSelector.ts:17:      const [x, y, z] = realization.getCartesian();
+frontend/src/application/threePresentation/ReconstructedElement3DSelector.ts:22:      const realization = line.realization;
+frontend/src/application/threePresentation/ReconstructedElement3DSelector.ts:23:      if (!realization?.isFeasible()) continue;
+frontend/src/application/threePresentation/ReconstructedElement3DSelector.ts:24:      const point = domainToThreeJS(realization.point);
+frontend/src/application/threePresentation/ReconstructedElement3DSelector.ts:25:      const direction = domainDirectionToThreeJS(new Vector3(realization.getDirection().x, realization.getDirection().y, realization.getDirection().z)).normalize();
+frontend/src/application/threePresentation/ReconstructedElement3DSelector.ts:30:      const realization = segment.realization;
+frontend/src/application/threePresentation/ReconstructedElement3DSelector.ts:31:      if (!realization?.isFeasible()) continue;
+frontend/src/application/threePresentation/ReconstructedElement3DSelector.ts:32:      items.push({ id: `reconstructed-segment-${segment.id}`, kind: 'reconstructed-segment', sourceEntityId: segment.id, visible: true, style: reconstructedStyle(segment), renderGroup: 'reconstructedElements', start: v(domainToThreeJS(realization.startPoint)), end: v(domainToThreeJS(realization.endPoint)) });
+frontend/src/application/threePresentation/ReconstructedElement3DSelector.ts:35:      const realization = plane.realization;
+frontend/src/application/threePresentation/ReconstructedElement3DSelector.ts:36:      if (!realization?.feasible || !realization.originPoint || !realization.normal) continue;
+frontend/src/application/threePresentation/ReconstructedElement3DSelector.ts:37:      const origin = domainToThreeJS(realization.originPoint);
+frontend/src/application/threePresentation/ReconstructedElement3DSelector.ts:38:      const normal = domainDirectionToThreeJS(new Vector3(realization.normal.x, realization.normal.y, realization.normal.z)).normalize();
+frontend/src/application/threePresentation/Hinge3DSelector.ts:12:      const realization = hingeLine.realization;
+frontend/src/application/threePresentation/Hinge3DSelector.ts:13:      if (!realization?.isFeasible() || !realization.point || !realization.direction) continue;
+frontend/src/application/threePresentation/Hinge3DSelector.ts:14:      const origin = domainToThreeJS(realization.point);
+frontend/src/application/threePresentation/Hinge3DSelector.ts:15:      const direction = domainDirectionToThreeJS(new Vector3(realization.direction.x, realization.direction.y, realization.direction.z)).normalize();
+frontend/src/application/threePresentation/Guide3DSelector.ts:13:      const guideReal = guide.realization;
+frontend/src/application/threePresentation/ThreeRealizationContext.ts:18:    getAllProjectionPlanes: collections.getProjectionPlanes,
+frontend/src/application/threePresentation/ThreeRealizationContext.ts:19:    getAllHingeLines: collections.getHingeLines,
+frontend/src/application/threePresentation/ThreeProjectionPlaneReadPort.ts:10:  realization: ProjectionPlaneRealization3D | undefined;
+frontend/src/application/threePresentation/ThreeProjectionPlaneReadPort.ts:25:    getProjectionPlaneModels: () => world.getAllProjectionPlanes().map(plane => ({
+frontend/src/application/threePresentation/ThreeProjectionPlaneReadPort.ts:27:      kind: plane instanceof AuxiliaryProjectionPlane ? 'auxiliary' : 'fixed',
+frontend/src/application/threePresentation/ThreeProjectionPlaneReadPort.ts:28:      plane3DId: plane instanceof AuxiliaryProjectionPlane ? plane.plane3DId : plane.id,
+frontend/src/application/threePresentation/ThreeProjectionPlaneReadPort.ts:29:      realization: world.getProjectionPlane3DRealization(plane.id),
+frontend/src/application/threePresentation/ThreeProjectionPlaneReadPort.ts:33:      const plane3DId = plane instanceof AuxiliaryProjectionPlane ? plane.plane3DId : plane?.id;
+frontend/src/application/threePresentation/ThreePlanarElementReadPort.ts:10:export interface ThreePlanarPointReadModel extends ThreeEntityPresentationData { realization: Point2DRealization2D | undefined }
+frontend/src/application/threePresentation/ThreePlanarElementReadPort.ts:11:export interface ThreePlanarLineReadModel extends ThreeEntityPresentationData { realization: Line2DRealization2D | undefined; isSegment: boolean }
+frontend/src/application/threePresentation/ThreePlanarElementReadPort.ts:12:export interface ThreePlanarCircleReadModel extends ThreeEntityPresentationData { realization: Circle2DRealization2D | undefined | null }
+frontend/src/application/threePresentation/ThreePlanarElementReadPort.ts:16:  realization: ProjectionPlaneRealization3D | undefined;
+frontend/src/application/threePresentation/ThreePlanarElementReadPort.ts:27:  const getProjectionPlanes = () => world.getAllProjectionPlanes();
+frontend/src/application/threePresentation/ThreePlanarElementReadPort.ts:28:  const realizationContext = createThreeRealizationContext(world, {
+frontend/src/application/threePresentation/ThreePlanarElementReadPort.ts:35:      realization: world.getProjectionPlane3DRealization(plane.id),
+frontend/src/application/threePresentation/ThreePlanarElementReadPort.ts:36:      points: plane.getAllPoints().map(point => ({ id: point.id, visualStyle: point.visualStyle, realization: point.realize2D(realizationContext) })),
+frontend/src/application/threePresentation/ThreePlanarElementReadPort.ts:37:      lines: plane.getAllLines().map(line => ({ id: line.id, visualStyle: line.visualStyle, realization: line.realize2D(realizationContext), isSegment: line instanceof Segment2DByPoints })),
+frontend/src/application/threePresentation/ThreePlanarElementReadPort.ts:38:      circles: plane.getAllCircles().map(circle => ({ id: circle.id, visualStyle: circle.visualStyle, realization: circle.realize2D(realizationContext) })),
+frontend/src/application/threePresentation/ThreeReconstructedElementReadPort.ts:6:  points: Array<ThreeEntityPresentationData & { realization: Point3DRealization3D | undefined }>;
+frontend/src/application/threePresentation/ThreeReconstructedElementReadPort.ts:7:  lines: Array<ThreeEntityPresentationData & { realization: Line3DRealization3D | undefined }>;
+frontend/src/application/threePresentation/ThreeReconstructedElementReadPort.ts:8:  segments: Array<ThreeEntityPresentationData & { realization: Segment3DRealization3D | undefined }>;
+frontend/src/application/threePresentation/ThreeReconstructedElementReadPort.ts:9:  planes: Array<ThreeEntityPresentationData & { realization: Plane3DRealization3D | undefined }>;
+frontend/src/application/threePresentation/ThreeReconstructedElementReadPort.ts:19:      points: world.getAll3DPoints().map(point => ({ id: point.id!, visualStyle: point.visualStyle, realization: world.get3DPointRealization(point.id!) })),
+frontend/src/application/threePresentation/ThreeReconstructedElementReadPort.ts:20:      lines: world.getAll3DLines().map(line => ({ id: line.id!, visualStyle: line.visualStyle, realization: world.get3DLineRealization(line.id!) })),
+frontend/src/application/threePresentation/ThreeReconstructedElementReadPort.ts:21:      segments: world.getAll3DSegments().map(segment => ({ id: segment.id!, visualStyle: segment.visualStyle, realization: world.get3DSegmentRealization(segment.id!) })),
+frontend/src/application/threePresentation/ThreeReconstructedElementReadPort.ts:22:      planes: world.getAllPlanes().map(plane => ({ id: plane.id!, visualStyle: plane.visualStyle, realization: world.get3DPlaneRealization(plane.id!) })),
+frontend/src/application/threePresentation/ThreeGuideReadPort.ts:12:  realization: Line2DRealization2D | undefined;
+frontend/src/application/threePresentation/ThreeGuideReadPort.ts:27:  const realizationContext = createThreeRealizationContext(world, {
+frontend/src/application/threePresentation/ThreeGuideReadPort.ts:36:        return [{ id: line.id, visualStyle: line.visualStyle, planeId: line.planeId, planeRealization: world.getProjectionPlane3DRealization(line.planeId), realization: line.realize2D(realizationContext) }];
+frontend/src/application/threePresentation/ThreeGuideReadPort.ts:42:      points: world.getAll3DPoints().map(point => {
+frontend/src/application/threePresentation/ThreeGuideReadPort.ts:43:        const realization = world.get3DPointRealization(point.id!);
+frontend/src/application/threePresentation/ThreeGuideReadPort.ts:44:        return { id: point.id!, visualStyle: point.visualStyle, cartesian: realization?.isFeasible() ? realization.getCartesian() : undefined };
+frontend/src/application/threePresentation/ThreeGuideReadPort.ts:46:      lines: world.getAll3DLines().map(line => {
+frontend/src/application/threePresentation/ThreeGuideReadPort.ts:47:        const realization = world.get3DLineRealization(line.id!);
+frontend/src/application/threePresentation/ThreeGuideReadPort.ts:48:        return { id: line.id!, visualStyle: line.visualStyle, point: realization?.isFeasible() ? realization.point : undefined, direction: realization?.isFeasible() ? realization.getDirection() : undefined };
+frontend/src/application/threePresentation/ThreeGuideReadPort.ts:50:      segments: world.getAll3DSegments().map(segment => {
+frontend/src/application/threePresentation/ThreeGuideReadPort.ts:51:        const realization = world.get3DSegmentRealization(segment.id!);
+frontend/src/application/threePresentation/ThreeGuideReadPort.ts:52:        return { id: segment.id!, visualStyle: segment.visualStyle, startPoint: realization?.isFeasible() ? realization.startPoint : undefined, endPoint: realization?.isFeasible() ? realization.endPoint : undefined };
+frontend/src/application/threePresentation/ThreeHingeReadPort.ts:6:export interface ThreeHingeReadModel extends ThreeEntityPresentationData { realization: Line3DRealization3D | undefined }
+frontend/src/application/threePresentation/ThreeHingeReadPort.ts:13:  const getHingeLines = () => world.getAllHingeLines();
+frontend/src/application/threePresentation/ThreeHingeReadPort.ts:14:  const realizationContext = createThreeRealizationContext(world, {
+frontend/src/application/threePresentation/ThreeHingeReadPort.ts:15:    getProjectionPlanes: () => world.getAllProjectionPlanes(),
+frontend/src/application/threePresentation/ThreeHingeReadPort.ts:19:    getHingeModels: () => getHingeLines().map(hingeLine => ({ id: hingeLine.id, visualStyle: hingeLine.visualStyle, realization: hingeLine.realize3D(realizationContext) })),
+frontend/src/application/threePresentation/ThreePresentationReadModel.ts:3:export interface ThreeEntityPresentationData { id: string; visualStyle?: VisualStyle }
+frontend/tests/unit/commands/createFreePoint.spec.ts:121:      // TODO Phase 83: Re-enable when visualStyle is fully implemented
+frontend/tests/unit/commands/createFreePoint.spec.ts:132:      expect(point?.visualStyle?.visible).toBe(true);
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:50:      const projPlanes = world.getAllProjectionPlanes();
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:88:      const halfHingeH = linesH.find(l => l instanceof HalfHingeLine2D);
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:89:      const halfHingeV = linesV.find(l => l instanceof HalfHingeLine2D);
+frontend/tests/unit/domain/element2dRealization.spec.ts:4: * Tests that all three realization types (Point2D, Line2D, Circle2D) properly extend
+frontend/tests/unit/domain/element2dRealization.spec.ts:18:      const realization = new Point2DRealization2D(new Vector3(1, 2, 1), true);
+frontend/tests/unit/domain/element2dRealization.spec.ts:19:      expect(realization).toBeInstanceOf(Element2DRealization2D);
+frontend/tests/unit/domain/element2dRealization.spec.ts:23:      const realization = new Point2DRealization2D(new Vector3(1, 2, 1), true);
+frontend/tests/unit/domain/element2dRealization.spec.ts:24:      expect(realization.isFeasible()).toBe(true);
+frontend/tests/unit/domain/element2dRealization.spec.ts:25:      expect(realization.feasible).toBe(true);
+frontend/tests/unit/domain/element2dRealization.spec.ts:29:      const realization = new Point2DRealization2D(new Vector3(0, 0, 1), false);
+frontend/tests/unit/domain/element2dRealization.spec.ts:30:      expect(realization.isFeasible()).toBe(false);
+frontend/tests/unit/domain/element2dRealization.spec.ts:31:      expect(realization.feasible).toBe(false);
+frontend/tests/unit/domain/element2dRealization.spec.ts:35:      const realization = new Point2DRealization2D(new Vector3(1, 2, 1));
+frontend/tests/unit/domain/element2dRealization.spec.ts:36:      expect(realization.isFeasible()).toBe(true);
+frontend/tests/unit/domain/element2dRealization.spec.ts:37:      expect(realization.feasible).toBe(true);
+frontend/tests/unit/domain/element2dRealization.spec.ts:45:      const realization = new Line2DRealization2D(p1, p2, true);
+frontend/tests/unit/domain/element2dRealization.spec.ts:46:      expect(realization).toBeInstanceOf(Element2DRealization2D);
+frontend/tests/unit/domain/element2dRealization.spec.ts:52:      const realization = new Line2DRealization2D(p1, p2, true);
+frontend/tests/unit/domain/element2dRealization.spec.ts:53:      expect(realization.isFeasible()).toBe(true);
+frontend/tests/unit/domain/element2dRealization.spec.ts:54:      expect(realization.feasible).toBe(true);
+frontend/tests/unit/domain/element2dRealization.spec.ts:60:      const realization = new Line2DRealization2D(p1, p2, false);
+frontend/tests/unit/domain/element2dRealization.spec.ts:61:      expect(realization.isFeasible()).toBe(false);
+frontend/tests/unit/domain/element2dRealization.spec.ts:62:      expect(realization.feasible).toBe(false);
+frontend/tests/unit/domain/element2dRealization.spec.ts:68:      const realization = new Line2DRealization2D(p1, p2);
+frontend/tests/unit/domain/element2dRealization.spec.ts:69:      expect(realization.isFeasible()).toBe(true);
+frontend/tests/unit/domain/element2dRealization.spec.ts:70:      expect(realization.feasible).toBe(true);
+frontend/tests/unit/domain/element2dRealization.spec.ts:78:      const realization = new Circle2DRealization2D(center, radiusVector, true);
+frontend/tests/unit/domain/element2dRealization.spec.ts:79:      expect(realization).toBeInstanceOf(Element2DRealization2D);
+frontend/tests/unit/domain/element2dRealization.spec.ts:85:      const realization = new Circle2DRealization2D(center, radiusVector, true);
+frontend/tests/unit/domain/element2dRealization.spec.ts:86:      expect(realization.isFeasible()).toBe(true);
+frontend/tests/unit/domain/element2dRealization.spec.ts:87:      expect(realization.feasible).toBe(true);
+frontend/tests/unit/domain/element2dRealization.spec.ts:93:      const realization = new Circle2DRealization2D(center, radiusVector, false);
+frontend/tests/unit/domain/element2dRealization.spec.ts:94:      expect(realization.isFeasible()).toBe(false);
+frontend/tests/unit/domain/element2dRealization.spec.ts:95:      expect(realization.feasible).toBe(false);
+frontend/tests/unit/domain/element2dRealization.spec.ts:101:      const realization = new Circle2DRealization2D(center, radiusVector);
+frontend/tests/unit/domain/element2dRealization.spec.ts:102:      expect(realization.isFeasible()).toBe(true);
+frontend/tests/unit/domain/element2dRealization.spec.ts:103:      expect(realization.feasible).toBe(true);
+frontend/tests/unit/domain/element2dRealization.spec.ts:108:    it('should allow generic code to check feasibility on any realization type', () => {
+frontend/tests/unit/domain/element2dRealization.spec.ts:109:      const realizations: Element2DRealization2D[] = [
+frontend/tests/unit/domain/element2dRealization.spec.ts:116:      realizations.forEach(realization => {
+frontend/tests/unit/domain/element2dRealization.spec.ts:117:        expect(realization.isFeasible()).toBe(true);
+frontend/tests/unit/domain/element2dRealization.spec.ts:121:    it('should filter feasible realizations using generic code', () => {
+frontend/tests/unit/domain/element2dRealization.spec.ts:122:      const realizations: Element2DRealization2D[] = [
+frontend/tests/unit/domain/element2dRealization.spec.ts:131:      const feasible = realizations.filter(r => r.isFeasible());
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:5: * Uses operations to properly build World state, then checks 3D realizations.
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:120:    // Get realization
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:121:    const realization = world.get3DLine(line3D)?.realize3D(world);
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:122:    expect(realization).toBeDefined();
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:123:    expect(realization!.isFeasible()).toBe(true);
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:125:    const { point, direction } = realization!;
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:150:    const realization = world.get3DLine(line3D)?.realize3D(world);
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:151:    expect(realization).toBeDefined();
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:152:    expect(realization!.isFeasible()).toBe(true);
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:154:    const { point, direction } = realization!;
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:179:    const realization = world.get3DLine(line3D)?.realize3D(world);
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:180:    expect(realization).toBeDefined();
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:181:    expect(realization!.isFeasible()).toBe(true);
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:183:    const { point, direction } = realization!;
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:208:    const realization = world.get3DLine(line3D)?.realize3D(world);
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:209:    expect(realization).toBeDefined();
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:210:    expect(realization!.isFeasible()).toBe(true);
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:212:    const { point, direction } = realization!;
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:235:    const realization = world.get3DLine(line3D)?.realize3D(world);
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:236:    expect(realization).toBeDefined();
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:237:    expect(realization!.isFeasible()).toBe(true);
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:239:    const { point, direction } = realization!;
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:262:    const realization = world.get3DLine(line3D)?.realize3D(world);
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:263:    expect(realization).toBeDefined();
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:264:    expect(realization!.isFeasible()).toBe(true);
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:266:    const { point, direction } = realization!;
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:319:    const realization = world.get3DLine(line3D)?.realize3D(world);
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:322:    expect(realization).toBeDefined();
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:323:    expect(realization!.isFeasible()).toBe(true);
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:325:    const { direction } = realization!;
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:350:    const realization = world.get3DLine(line3D)?.realize3D(world);
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:353:    expect(realization).toBeDefined();
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:354:    expect(realization!.isFeasible()).toBe(true);
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:356:    const { point, direction } = realization!;
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:391:    const realization = world.get3DLine(line3D)?.realize3D(world);
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:393:    // Should return infeasible realization
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:394:    expect(realization).toBeDefined();
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:395:    expect(realization!.isFeasible()).toBe(false);
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:51:      line instanceof HalfHingeLine2D && line.hingeLineId === 'hingeLine7'
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:136:    const realization = planeP.realize3D(world);
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:149:    expect(realization.feasible).toBe(true);
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:226:    const realization = plane3D.realize3D(world);
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:243:    expect(realization.feasible).toBe(true);
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:74:    const realization = point3D.realize3D(world);
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:77:    expect(realization.isFeasible()).toBe(true);
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:80:    const [x, y, z] = realization.getCartesian();
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:128:    const realization = point3D.realize3D(world);
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:129:    expect(realization.isFeasible()).toBe(true);
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:131:    const [x, y, z] = realization.getCartesian();
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:163:    const realization = point3D.realize3D(world);
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:164:    expect(realization.isFeasible()).toBe(true);
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:166:    const [x, y, z] = realization.getCartesian();
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:196:    const realization = point3D.realize3D(world);
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:197:    expect(realization.isFeasible()).toBe(true);
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:199:    const [x, y, z] = realization.getCartesian();
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:232:    const realization = point3D.realize3D(world);
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:235:    expect(realization.isFeasible()).toBe(false);
+frontend/tests/unit/domain/circle.spec.ts:70:      const realization = plane.realizeCircle2D(world.getCircle2D(circle.id)!, world);
+frontend/tests/unit/domain/circle.spec.ts:72:      expect(realization).toBeDefined();
+frontend/tests/unit/domain/circle.spec.ts:73:      expect(realization!.center.x).toBe(0);
+frontend/tests/unit/domain/circle.spec.ts:74:      expect(realization!.center.y).toBe(0);
+frontend/tests/unit/domain/circle.spec.ts:76:      expect(realization!.getRadius()).toBe(50);
+frontend/tests/unit/domain/circle.spec.ts:78:      expect(realization!.radiusVector.x).toBe(50);
+frontend/tests/unit/domain/circle.spec.ts:79:      expect(realization!.radiusVector.y).toBe(0);
+frontend/tests/unit/domain/circle.spec.ts:80:      expect(realization!.radiusVector.z).toBe(0);  // Vectors have z=0
+frontend/tests/unit/domain/circle.spec.ts:91:      const realization = plane.realizeCircle2D(world.getCircle2D(circle.id)!, world);
+frontend/tests/unit/domain/circle.spec.ts:93:      // Should return infeasible realization for degenerate circle
+frontend/tests/unit/domain/circle.spec.ts:94:      expect(realization).toBeDefined();
+frontend/tests/unit/domain/circle.spec.ts:95:      expect(realization!.feasible).toBe(false);
+frontend/tests/unit/domain/circle.spec.ts:116:      const realization = plane.realizeCircle2D(world.getCircle2D(circle.id)!, world);
+frontend/tests/unit/domain/circle.spec.ts:118:      expect(realization).toBeDefined();
+frontend/tests/unit/domain/circle.spec.ts:121:      expect(realization!.center.x).toBeCloseTo(0, 1);
+frontend/tests/unit/domain/circle.spec.ts:122:      expect(realization!.center.y).toBeCloseTo(0, 1);
+frontend/tests/unit/domain/circle.spec.ts:123:      expect(realization!.getRadius()).toBeCloseTo(50, 1);
+frontend/tests/unit/domain/circle.spec.ts:138:      const realization = plane.realizeCircle2D(world.getCircle2D(circle.id)!, world);
+frontend/tests/unit/domain/circle.spec.ts:140:      // Should return infeasible realization for collinear points (no unique circle)
+frontend/tests/unit/domain/circle.spec.ts:141:      expect(realization).toBeDefined();
+frontend/tests/unit/domain/circle.spec.ts:142:      expect(realization!.feasible).toBe(false);
+frontend/tests/unit/domain/circle.spec.ts:150:      const realization = new Circle2DRealization2D(center, new Vector3(15, 0, 0));
+frontend/tests/unit/domain/circle.spec.ts:152:      expect(realization.center.x).toBe(25);
+frontend/tests/unit/domain/circle.spec.ts:153:      expect(realization.center.y).toBe(30);
+frontend/tests/unit/domain/circle.spec.ts:154:      expect(realization.getRadius()).toBe(15);
+frontend/tests/unit/domain/circle.spec.ts:158:      const realization = new Circle2DRealization2D(new Vector3(0, 0, 1), new Vector3(42, 0, 0));
+frontend/tests/unit/domain/circle.spec.ts:160:      expect(realization.getRadius()).toBe(42);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:3: * Phase 111: Verify that coincident/degenerate parent points produce infeasible realizations
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:34:      const realization = line.realize2D(world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:36:      expect(realization).not.toBeNull();
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:37:      expect(realization!.feasible).toBe(false);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:47:      const realization = line.realize2D(world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:49:      expect(realization).not.toBeNull();
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:50:      expect(realization!.feasible).toBe(true);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:72:      const realization = parallelLine.realize2D(world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:74:      expect(realization).not.toBeNull();
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:75:      expect(realization!.feasible).toBe(false);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:88:      const realization = parallelLine.realize2D(world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:90:      expect(realization).not.toBeNull();
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:91:      expect(realization!.feasible).toBe(true);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:93:      expect(realization!.point2.y).toBeCloseTo(0, 5);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:94:      expect(Math.abs(realization!.point2.x)).toBeGreaterThan(0.1);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:118:      const realization = parallelLine.realize2D(world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:120:      expect(realization).not.toBeNull();
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:121:      expect(realization!.feasible).toBe(false);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:133:      const realization = segment.realize2D(world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:135:      expect(realization).not.toBeNull();
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:136:      expect(realization!.feasible).toBe(false);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:146:      const realization = segment.realize2D(world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:148:      expect(realization).not.toBeNull();
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:149:      expect(realization!.feasible).toBe(true);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:161:      const realization = circle.realize2D(world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:163:      expect(realization).not.toBeNull();
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:164:      expect(realization!.feasible).toBe(false);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:174:      const realization = circle.realize2D(world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:176:      expect(realization).not.toBeNull();
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:177:      expect(realization!.feasible).toBe(true);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:178:      expect(realization!.getRadius()).toBeCloseTo(5, 5);
+frontend/tests/unit/domain/element2d.spec.ts:73:  describe('instanceof Element2D works for all element types', () => {
+frontend/tests/unit/domain/element2d.spec.ts:74:    it('FreePoint2D instanceof Element2D', () => {
+frontend/tests/unit/domain/element2d.spec.ts:81:    it('Line2DByTwoPoints instanceof Element2D', () => {
+frontend/tests/unit/domain/element2d.spec.ts:90:    it('Circle2DByCenterAndPoint instanceof Element2D', () => {
+frontend/tests/unit/domain/element2d.spec.ts:105:      expect(point.visualStyle?.visible !== false).toBe(true);
+frontend/tests/unit/domain/element2d.spec.ts:107:      point.visualStyle = { ...point.visualStyle, visible: false } as any;
+frontend/tests/unit/domain/element2d.spec.ts:108:      expect(point.visualStyle?.visible).toBe(false);
+frontend/tests/unit/domain/element2d.spec.ts:117:      expect(line.visualStyle?.visible !== false).toBe(true);
+frontend/tests/unit/domain/element2d.spec.ts:119:      line.visualStyle = { ...line.visualStyle, visible: false } as any;
+frontend/tests/unit/domain/element2d.spec.ts:120:      expect(line.visualStyle?.visible).toBe(false);
+frontend/tests/unit/domain/element2d.spec.ts:129:      expect(circle.visualStyle?.visible !== false).toBe(true);
+frontend/tests/unit/domain/element2d.spec.ts:131:      circle.visualStyle = { ...circle.visualStyle, visible: false } as any;
+frontend/tests/unit/domain/element2d.spec.ts:132:      expect(circle.visualStyle?.visible).toBe(false);
+frontend/tests/unit/domain/element2d.spec.ts:181:  describe('realize2D() returns correct realization type', () => {
+frontend/tests/unit/domain/element2d.spec.ts:186:      const realization = point.realize2D(world);
+frontend/tests/unit/domain/element2d.spec.ts:188:      expect(realization).toBeDefined();
+frontend/tests/unit/domain/element2d.spec.ts:189:      expect(realization.position).toBeDefined();
+frontend/tests/unit/domain/element2d.spec.ts:190:      expect(realization.position.x).toBe(1);
+frontend/tests/unit/domain/element2d.spec.ts:191:      expect(realization.position.y).toBe(2);
+frontend/tests/unit/domain/element2d.spec.ts:200:      const realization = line.realize2D(world);
+frontend/tests/unit/domain/element2d.spec.ts:202:      expect(realization).toBeDefined();
+frontend/tests/unit/domain/element2d.spec.ts:203:      expect(realization?.point1).toBeDefined();
+frontend/tests/unit/domain/element2d.spec.ts:204:      expect(realization?.point2).toBeDefined();
+frontend/tests/unit/domain/element2d.spec.ts:213:      const realization = circle.realize2D(world);
+frontend/tests/unit/domain/element2d.spec.ts:215:      expect(realization).toBeDefined();
+frontend/tests/unit/domain/element2d.spec.ts:216:      expect(realization?.center).toBeDefined();
+frontend/tests/unit/domain/element2d.spec.ts:217:      expect(realization?.radiusVector).toBeDefined();
+frontend/tests/unit/domain/element2d.spec.ts:306:      elements.forEach(el => expect(el.visualStyle?.visible !== false).toBe(true));
+frontend/tests/unit/domain/element2d.spec.ts:309:      elements.forEach(el => el.visualStyle = { ...el.visualStyle, visible: false } as any);
+frontend/tests/unit/domain/element2d.spec.ts:312:      elements.forEach(el => expect(el.visualStyle?.visible).toBe(false));
+frontend/tests/unit/domain/element2d.spec.ts:331:      elements[1].visualStyle = { ...elements[1].visualStyle, visible: false } as any;  // Hide the line
+frontend/tests/unit/domain/element2d.spec.ts:333:      const visible = elements.filter(el => el.visualStyle?.visible !== false);
+frontend/tests/unit/domain/guide.spec.ts:90:      const realization = guide.realize2D(world);
+frontend/tests/unit/domain/guide.spec.ts:92:      expect(realization).toBeDefined();
+frontend/tests/unit/domain/guide.spec.ts:95:      expect(realization!.point1.x).toBeCloseTo(50, 5);
+frontend/tests/unit/domain/guide.spec.ts:96:      expect(realization!.point1.y).toBeCloseTo(30, 5);
+frontend/tests/unit/domain/guide.spec.ts:101:      expect(realization!.point2.x).toBeCloseTo(0, 5);
+frontend/tests/unit/domain/guide.spec.ts:102:      expect(realization!.point2.y).toBeCloseTo(100, 5);
+frontend/tests/unit/domain/guide.spec.ts:103:      expect(realization!.point2.z).toBeCloseTo(0, 5);
+frontend/tests/unit/domain/guide.spec.ts:121:      const realization = guide.realize2D(world);
+frontend/tests/unit/domain/guide.spec.ts:123:      expect(realization).toBeDefined();
+frontend/tests/unit/domain/guide.spec.ts:126:      expect(realization!.point1.x).toBeCloseTo(30, 5);
+frontend/tests/unit/domain/guide.spec.ts:127:      expect(realization!.point1.y).toBeCloseTo(50, 5);
+frontend/tests/unit/domain/guide.spec.ts:133:      expect(realization!.point2.x).toBeCloseTo(-100, 5);
+frontend/tests/unit/domain/guide.spec.ts:134:      expect(realization!.point2.y).toBeCloseTo(0, 5);
+frontend/tests/unit/domain/guide.spec.ts:135:      expect(realization!.point2.z).toBeCloseTo(0, 5);
+frontend/tests/unit/domain/guide.spec.ts:152:      const realization = guide.realize2D(world);
+frontend/tests/unit/domain/guide.spec.ts:154:      expect(realization).toBeDefined();
+frontend/tests/unit/domain/guide.spec.ts:158:      expect(realization!.point2.x).toBeCloseTo(-100, 5);
+frontend/tests/unit/domain/guide.spec.ts:159:      expect(realization!.point2.y).toBeCloseTo(100, 5);
+frontend/tests/unit/domain/guide.spec.ts:160:      expect(realization!.point2.z).toBeCloseTo(0, 5);
+frontend/tests/unit/domain/guide.spec.ts:187:      const realization = guide.realize2D(world);

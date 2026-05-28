@@ -1,0 +1,658 @@
+--- frontend/src/application/threePresentation/Guide3DSelector.ts
+     1	import { Quaternion, Vector3, Vector4 } from 'three';
+     2	import { applyMatrix4x3, domainDirectionToThreeJS, domainToThreeJS, intersectLinePlane3D, intersectSegmentPlane3D, isPointOnPlane3D } from '@/utils/threeUtils';
+     3	import { getPlaneMeshSize } from '@/config/rendering3D';
+     4	import type { GuidePresentationDto, Vec3 } from './ThreePresentationModel';
+     5	import type { ThreeGuideIntersectionReadModel, ThreeGuideReadPort } from './ThreeGuideReadPort';
+     6	import { isVisible3D, THREE_STYLE } from './ThreeStylePolicy';
+     7	
+     8	export class Guide3DSelector {
+     9	  select(readPort: ThreeGuideReadPort, selectedIds: readonly string[]): GuidePresentationDto[] {
+    10	    const items: GuidePresentationDto[] = [];
+    11	    for (const guide of readPort.getSelectedGuideModels(selectedIds)) {
+    12	      const planeReal = guide.planeRealization;
+    13	      const guideReal = guide.realization;
+    14	      if (!planeReal?.feasible || !guideReal?.feasible) continue;
+    15	      const guidePoint3D = applyMatrix4x3(guideReal.point1, planeReal.planeTo3D);
+    16	      const guideDirection3D = directionFromPlane(guideReal.getDirection(), planeReal.planeTo3D.elements);
+    17	      const projectionNormal = projectionPlaneNormal(planeReal.planeTo3D.elements);
+    18	      const perpendicularNormal = new Vector3().crossVectors(guideDirection3D, projectionNormal).normalize();
+    19	      if (perpendicularNormal.length() < 1e-10) continue;
+    20	      const normalThree = domainDirectionToThreeJS(perpendicularNormal).normalize();
+    21	      const centerThree = domainToThreeJS(guidePoint3D);
+    22	      const quaternion = new Quaternion().setFromUnitVectors(new Vector3(0, 0, 1), normalThree);
+    23	      items.push({ id: `guide-plane-${guide.id}`, kind: 'guide-perpendicular-plane', sourceEntityId: guide.id, planeId: guide.planeId, visible: true, style: THREE_STYLE.guidePlane, renderGroup: 'guides', geometry: { center: v(centerThree), normal: v(normalThree), size: getPlaneMeshSize(guide.planeId), quaternion: { x: quaternion.x, y: quaternion.y, z: quaternion.z, w: quaternion.w } } });
+    24	      items.push(...intersections(readPort.getGuideIntersectionModels(), guidePoint3D, perpendicularNormal, guide.id));
+    25	    }
+    26	    return items;
+    27	  }
+    28	}
+    29	
+    30	function directionFromPlane(direction2D: Vector3, matrix: number[]): Vector3 {
+    31	  const x = matrix[0] * direction2D.x + matrix[1] * direction2D.y;
+    32	  const y = matrix[3] * direction2D.x + matrix[4] * direction2D.y;
+    33	  const z = matrix[6] * direction2D.x + matrix[7] * direction2D.y;
+    34	  return new Vector3(x, y, z).normalize();
+    35	}
+    36	function projectionPlaneNormal(e: number[]): Vector3 { return new Vector3().crossVectors(new Vector3(e[0], e[3], e[6]), new Vector3(e[1], e[4], e[7])).normalize(); }
+    37	function intersections(models: ThreeGuideIntersectionReadModel, planePoint: Vector4, planeNormal: Vector3, guideId: string): GuidePresentationDto[] {
+    38	  const items: GuidePresentationDto[] = [];
+    39	  const normal = { x: planeNormal.x, y: planeNormal.y, z: planeNormal.z };
+    40	  for (const point of models.points) {
+    41	    if (!isVisible3D(point) || !point.cartesian) continue;
+    42	    const [x, y, z] = point.cartesian;
+    43	    const position = new Vector4(x, y, z, 1);
+    44	    if (isPointOnPlane3D(position, planePoint, normal)) items.push(marker(`${guideId}-point-${point.id}`, point.id, position));
+    45	  }
+    46	  for (const line of models.lines) {
+    47	    if (!isVisible3D(line) || !line.point || !line.direction) continue;
+    48	    const hit = intersectLinePlane3D(line.point, line.direction, planePoint, normal);
+    49	    if (hit) items.push(marker(`${guideId}-line-${line.id}`, line.id, hit));
+    50	  }
+    51	  for (const segment of models.segments) {
+    52	    if (!isVisible3D(segment) || !segment.startPoint || !segment.endPoint) continue;
+    53	    const hit = intersectSegmentPlane3D(segment.startPoint, segment.endPoint, planePoint, normal);
+    54	    if (hit) items.push(marker(`${guideId}-segment-${segment.id}`, segment.id, hit));
+    55	  }
+    56	  return items;
+    57	}
+    58	function marker(id: string, sourceEntityId: string, position: Vector4): GuidePresentationDto { return { id: `guide-intersection-${id}`, kind: 'guide-intersection-marker', sourceEntityId, visible: true, style: THREE_STYLE.guideMarker, renderGroup: 'guides', position: v(domainToThreeJS(position)) }; }
+    59	function v(vector: { x: number; y: number; z: number }): Vec3 { return { x: vector.x, y: vector.y, z: vector.z }; }
+--- frontend/src/application/threePresentation/Hinge3DSelector.ts
+     1	import { Vector3 } from 'three';
+     2	import { domainDirectionToThreeJS, domainToThreeJS } from '@/utils/threeUtils';
+     3	import type { HingePresentationDto, Vec3 } from './ThreePresentationModel';
+     4	import type { ThreeHingeReadPort } from './ThreeHingeReadPort';
+     5	import { THREE_STYLE } from './ThreeStylePolicy';
+     6	
+     7	export class Hinge3DSelector {
+     8	  select(readPort: ThreeHingeReadPort, showPlanes: boolean): HingePresentationDto[] {
+     9	    if (!showPlanes) return [];
+    10	    const items: HingePresentationDto[] = [];
+    11	    for (const hingeLine of readPort.getHingeModels()) {
+    12	      const realization = hingeLine.realization;
+    13	      if (!realization?.isFeasible() || !realization.point || !realization.direction) continue;
+    14	      const origin = domainToThreeJS(realization.point);
+    15	      const direction = domainDirectionToThreeJS(new Vector3(realization.direction.x, realization.direction.y, realization.direction.z)).normalize();
+    16	      items.push({ id: `hinge-line-${hingeLine.id}`, kind: 'hinge-line', sourceEntityId: hingeLine.id, visible: true, style: THREE_STYLE.hinge, renderGroup: 'hinges', start: v(origin.clone().add(direction.clone().multiplyScalar(-THREE_STYLE.infiniteLineExtent / 2))), end: v(origin.clone().add(direction.clone().multiplyScalar(THREE_STYLE.infiniteLineExtent / 2))) });
+    17	    }
+    18	    return items;
+    19	  }
+    20	}
+    21	function v(vector: { x: number; y: number; z: number }): Vec3 { return { x: vector.x, y: vector.y, z: vector.z }; }
+--- frontend/src/application/threePresentation/PlanarElement3DSelector.ts
+     1	import { CatmullRomCurve3, Vector3 } from 'three';
+     2	import { applyMatrix4x3, domainToThreeJS, type Matrix4x3 } from '@/utils/threeUtils';
+     3	import type { PlanarElementPresentationDto, Vec3 } from './ThreePresentationModel';
+     4	import type { ThreePlanarElementReadPort } from './ThreePlanarElementReadPort';
+     5	import { isVisible2D, planarStyle, THREE_STYLE } from './ThreeStylePolicy';
+     6	
+     7	export class PlanarElement3DSelector {
+     8	  select(readPort: ThreePlanarElementReadPort, show2DElementsOnPlanes: boolean): PlanarElementPresentationDto[] {
+     9	    if (!show2DElementsOnPlanes) return [];
+    10	    const items: PlanarElementPresentationDto[] = [];
+    11	    for (const plane of readPort.getPlanarPlaneModels()) {
+    12	      const planeRealization = plane.realization;
+    13	      if (!planeRealization?.feasible) continue;
+    14	      for (const point of plane.points) {
+    15	        if (!isVisible2D(point)) continue;
+    16	        const realization = point.realization;
+    17	        if (!realization?.feasible) continue;
+    18	        items.push({ id: `planar-point-${point.id}`, kind: 'planar-point', sourceEntityId: point.id, planeId: plane.id, visible: true, style: planarStyle(point), renderGroup: 'planarElements', position: v(lift(realization.position, planeRealization.planeTo3D)) });
+    19	      }
+    20	      for (const line of plane.lines) {
+    21	        if (!isVisible2D(line)) continue;
+    22	        const realization = line.realization;
+    23	        if (!realization?.feasible) continue;
+    24	        const style = planarStyle(line);
+    25	        if (line.isSegment || realization.isBounded()) {
+    26	          items.push({ id: `planar-segment-${line.id}`, kind: 'planar-segment', sourceEntityId: line.id, planeId: plane.id, visible: true, style, renderGroup: 'planarElements', start: v(lift(realization.point1, planeRealization.planeTo3D)), end: v(lift(realization.point2, planeRealization.planeTo3D)) });
+    27	        } else {
+    28	          const direction = realization.getDirection().clone().normalize();
+    29	          const start2D = realization.point1.clone().add(direction.clone().multiplyScalar(-THREE_STYLE.planarLineExtent / 2));
+    30	          const end2D = realization.point1.clone().add(direction.clone().multiplyScalar(THREE_STYLE.planarLineExtent / 2));
+    31	          items.push({ id: `planar-line-${line.id}`, kind: 'planar-line', sourceEntityId: line.id, planeId: plane.id, visible: true, style, renderGroup: 'planarElements', start: v(lift(start2D, planeRealization.planeTo3D)), end: v(lift(end2D, planeRealization.planeTo3D)) });
+    32	        }
+    33	      }
+    34	      for (const circle of plane.circles) {
+    35	        if (!isVisible2D(circle)) continue;
+    36	        const realization = circle.realization;
+    37	        if (!realization?.feasible) continue;
+    38	        const radius = realization.getRadius();
+    39	        const points: Vec3[] = [];
+    40	        for (let i = 0; i < 64; i++) {
+    41	          const angle = (i / 64) * Math.PI * 2;
+    42	          const p = realization.center.clone();
+    43	          p.x += Math.cos(angle) * radius;
+    44	          p.y += Math.sin(angle) * radius;
+    45	          points.push(v(lift(p, planeRealization.planeTo3D)));
+    46	        }
+    47	        void CatmullRomCurve3;
+    48	        items.push({ id: `planar-circle-${circle.id}`, kind: 'planar-circle', sourceEntityId: circle.id, planeId: plane.id, visible: true, style: planarStyle(circle), renderGroup: 'planarElements', points });
+    49	      }
+    50	    }
+    51	    return items;
+    52	  }
+    53	}
+    54	
+    55	function lift(point2D: Vector3, matrix: Matrix4x3): Vector3 {
+    56	  const domain = applyMatrix4x3(point2D, matrix);
+    57	  const e = matrix.elements;
+    58	  const normal = new Vector3().crossVectors(new Vector3(e[0], e[3], e[6]), new Vector3(e[1], e[4], e[7])).normalize();
+    59	  domain.x += normal.x * THREE_STYLE.zOffset;
+    60	  domain.y += normal.y * THREE_STYLE.zOffset;
+    61	  domain.z += normal.z * THREE_STYLE.zOffset;
+    62	  return domainToThreeJS(domain);
+    63	}
+    64	function v(vector: { x: number; y: number; z: number }): Vec3 { return { x: vector.x, y: vector.y, z: vector.z }; }
+--- frontend/src/application/threePresentation/ProjectionPlane3DSelector.ts
+     1	import { Vector3, Vector4 } from 'three';
+     2	import { applyMatrix4x3, domainDirectionToThreeJS, domainToThreeJS, type Matrix4x3 } from '@/utils/threeUtils';
+     3	import { convertPlaneRectangleTo2D, generateClippedGrid, type Segment2D } from '@/utils/rectangleGrid';
+     4	import { getPlaneMeshSize, PLANE_RENDERING_CONFIG } from '@/config/rendering3D';
+     5	import type { AxisDto, LabelDto, ProjectionPlanePresentationDto, SegmentGeometryDto, Vec3 } from './ThreePresentationModel';
+     6	import type { ThreeProjectionPlaneReadModel, ThreeProjectionPlaneReadPort } from './ThreeProjectionPlaneReadPort';
+     7	import { THREE_STYLE } from './ThreeStylePolicy';
+     8	
+     9	export class ProjectionPlane3DSelector {
+    10	  select(readPort: ThreeProjectionPlaneReadPort, showPlanes: boolean, showGrid: boolean, showReferenceAxes: boolean): ProjectionPlanePresentationDto[] {
+    11	    const items: ProjectionPlanePresentationDto[] = [];
+    12	    if (showReferenceAxes) items.push(...referenceAxes());
+    13	    if (!showPlanes) return items;
+    14	
+    15	    for (const plane of readPort.getProjectionPlaneModels()) {
+    16	      const realization = plane.realization;
+    17	      if (!realization?.feasible) continue;
+    18	      const basis = planeBasis(realization.planeTo3D.elements);
+    19	      const size = getPlaneMeshSize(plane.id);
+    20	      const center = domainToThreeJS(new Vector4(basis.origin.x, basis.origin.y, basis.origin.z, 1));
+    21	      const normalThree = domainDirectionToThreeJS(basis.normal.clone().normalize());
+    22	      items.push({ id: `surface-${plane.id}`, kind: 'projection-plane-surface', sourceEntityId: plane.id, planeId: plane.id, visible: true, style: THREE_STYLE.projectionPlane, renderGroup: 'projectionPlanes', geometry: { center: v(center), normal: v(normalThree), size } });
+    23	
+    24	      if (showGrid) {
+    25	        items.push({ id: `grid-${plane.id}`, kind: 'projection-plane-grid', sourceEntityId: plane.id, planeId: plane.id, visible: true, style: THREE_STYLE.grid, renderGroup: 'projectionPlanes', segments: gridSegments(readPort, plane.id).map(segment => to3DSegment(segment, realization.planeTo3D)) });
+    26	      }
+    27	
+    28	      if (plane.kind === 'auxiliary' && showReferenceAxes) {
+    29	        items.push(...auxiliaryAxes(plane.id, basis.origin, basis.uAxis, basis.vAxis));
+    30	      }
+    31	    }
+    32	    return items;
+    33	  }
+    34	}
+    35	
+    36	function gridSegments(readPort: ThreeProjectionPlaneReadPort, planeId: ThreeProjectionPlaneReadModel['id']): Segment2D[] {
+    37	  const { plane3DRealization, projectionRealization } = readPort.getProjectionPlaneGridSource(planeId);
+    38	  if (!plane3DRealization?.feasible || !projectionRealization) return fallbackGrid();
+    39	  const corners = plane3DRealization.getRectangleCorners(PLANE_RENDERING_CONFIG.MESH_SIZE / 2) as [Vector4, Vector4, Vector4, Vector4];
+    40	  return generateClippedGrid(convertPlaneRectangleTo2D(corners, projectionRealization.threeDToPlane), PLANE_RENDERING_CONFIG.FALLBACK_GRID.DIVISIONS);
+    41	}
+    42	
+    43	function fallbackGrid(): Segment2D[] {
+    44	  const segments: Segment2D[] = [];
+    45	  const halfSize = PLANE_RENDERING_CONFIG.FALLBACK_GRID.HALF_SIZE;
+    46	  const step = (halfSize * 2) / PLANE_RENDERING_CONFIG.FALLBACK_GRID.DIVISIONS;
+    47	  for (let i = 0; i <= PLANE_RENDERING_CONFIG.FALLBACK_GRID.DIVISIONS; i++) {
+    48	    const t = -halfSize + i * step;
+    49	    segments.push({ start: { u: -halfSize, v: t }, end: { u: halfSize, v: t } }, { start: { u: t, v: -halfSize }, end: { u: t, v: halfSize } });
+    50	  }
+    51	  return segments;
+    52	}
+    53	
+    54	function to3DSegment(segment: Segment2D, matrix: Matrix4x3): SegmentGeometryDto {
+    55	  const start = domainToThreeJS(applyMatrix4x3(new Vector3(segment.start.u, segment.start.v, 1), matrix));
+    56	  const end = domainToThreeJS(applyMatrix4x3(new Vector3(segment.end.u, segment.end.v, 1), matrix));
+    57	  return { start: v(start), end: v(end) };
+    58	}
+    59	
+    60	function planeBasis(e: number[]) {
+    61	  const origin = new Vector3(e[2] / e[11], e[5] / e[11], e[8] / e[11]);
+    62	  const uAxis = new Vector3(e[0], e[3], e[6]);
+    63	  const vAxis = new Vector3(e[1], e[4], e[7]);
+    64	  const normal = new Vector3().crossVectors(uAxis, vAxis).normalize();
+    65	  return { origin, uAxis, vAxis, normal };
+    66	}
+    67	
+    68	function referenceAxes(): (AxisDto | LabelDto)[] {
+    69	  const axes = [ ['x', 'X', 0xff0000, new Vector3(1, 0, 0)], ['y', 'Y', 0x00ff00, new Vector3(0, 1, 0)], ['z', 'Z', 0x0000ff, new Vector3(0, 0, 1)] ] as const;
+    70	  return axes.flatMap(([axis, label, color, domainDir]) => axisDto(`reference-axis-${axis}`, 'reference-axis', axis, label, color, new Vector3(), domainDirectionToThreeJS(domainDir), THREE_STYLE.referenceAxisLength));
+    71	}
+    72	
+    73	function auxiliaryAxes(planeId: string, originDomain: Vector3, uDomain: Vector3, vDomain: Vector3): (AxisDto | LabelDto)[] {
+    74	  const origin = domainToThreeJS(new Vector4(originDomain.x, originDomain.y, originDomain.z, 1));
+    75	  return [
+    76	    ...axisDto(`auxiliary-axis-u-${planeId}`, 'auxiliary-axis', 'u', 'U', 0x8b008b, origin, domainDirectionToThreeJS(uDomain.clone().normalize()), THREE_STYLE.auxiliaryAxisLength, planeId),
+    77	    ...axisDto(`auxiliary-axis-v-${planeId}`, 'auxiliary-axis', 'v', 'V', 0x8b008b, origin, domainDirectionToThreeJS(vDomain.clone().normalize()), THREE_STYLE.auxiliaryAxisLength, planeId),
+    78	  ];
+    79	}
+    80	
+    81	function axisDto(id: string, kind: AxisDto['kind'], axis: string, label: string, color: number, origin: Vector3, direction: Vector3, length: number, planeId?: string): (AxisDto | LabelDto)[] {
+    82	  const normalized = direction.clone().normalize();
+    83	  const position = origin.clone().add(normalized.clone().multiplyScalar(length + 1));
+    84	  return [
+    85	    { id, kind, axis, label, sourceEntityId: planeId, planeId, visible: true, style: { color }, renderGroup: 'axes', origin: v(origin), direction: v(normalized), length },
+    86	    { id: `${id}-label`, kind: 'axis-label', text: label, sourceEntityId: planeId, planeId, visible: true, style: { color: 0x333333 }, renderGroup: 'labels', position: v(position), className: 'axis-label' },
+    87	  ];
+    88	}
+    89	
+    90	function v(vector: { x: number; y: number; z: number }): Vec3 { return { x: vector.x, y: vector.y, z: vector.z }; }
+--- frontend/src/application/threePresentation/ReconstructedElement3DSelector.ts
+     1	import { Quaternion, Vector3, Vector4 } from 'three';
+     2	import { domainDirectionToThreeJS, domainToThreeJS } from '@/utils/threeUtils';
+     3	import { getPlaneMeshSize } from '@/config/rendering3D';
+     4	import type { ReconstructedElementPresentationDto, Vec3 } from './ThreePresentationModel';
+     5	import type { ThreeReconstructedElementReadPort } from './ThreeReconstructedElementReadPort';
+     6	import { isVisible3D, reconstructedStyle, THREE_STYLE } from './ThreeStylePolicy';
+     7	
+     8	export class ReconstructedElement3DSelector {
+     9	  select(readPort: ThreeReconstructedElementReadPort, showPlanes: boolean): ReconstructedElementPresentationDto[] {
+    10	    if (!showPlanes) return [];
+    11	    const items: ReconstructedElementPresentationDto[] = [];
+    12	    const models = readPort.getReconstructedModels();
+    13	    for (const point of models.points) {
+    14	      if (!isVisible3D(point)) continue;
+    15	      const realization = point.realization;
+    16	      if (!realization?.isFeasible()) continue;
+    17	      const [x, y, z] = realization.getCartesian();
+    18	      items.push({ id: `reconstructed-point-${point.id}`, kind: 'reconstructed-point', sourceEntityId: point.id, visible: true, style: reconstructedStyle(point), renderGroup: 'reconstructedElements', position: v(domainToThreeJS(new Vector4(x, y, z, 1))) });
+    19	    }
+    20	    for (const line of models.lines) {
+    21	      if (!isVisible3D(line)) continue;
+    22	      const realization = line.realization;
+    23	      if (!realization?.isFeasible()) continue;
+    24	      const point = domainToThreeJS(realization.point);
+    25	      const direction = domainDirectionToThreeJS(new Vector3(realization.getDirection().x, realization.getDirection().y, realization.getDirection().z)).normalize();
+    26	      items.push({ id: `reconstructed-line-${line.id}`, kind: 'reconstructed-line', sourceEntityId: line.id, visible: true, style: reconstructedStyle(line), renderGroup: 'reconstructedElements', start: v(point.clone().add(direction.clone().multiplyScalar(-THREE_STYLE.infiniteLineExtent / 2))), end: v(point.clone().add(direction.clone().multiplyScalar(THREE_STYLE.infiniteLineExtent / 2))) });
+    27	    }
+    28	    for (const segment of models.segments) {
+    29	      if (!isVisible3D(segment)) continue;
+    30	      const realization = segment.realization;
+    31	      if (!realization?.isFeasible()) continue;
+    32	      items.push({ id: `reconstructed-segment-${segment.id}`, kind: 'reconstructed-segment', sourceEntityId: segment.id, visible: true, style: reconstructedStyle(segment), renderGroup: 'reconstructedElements', start: v(domainToThreeJS(realization.startPoint)), end: v(domainToThreeJS(realization.endPoint)) });
+    33	    }
+    34	    for (const plane of models.planes) {
+    35	      const realization = plane.realization;
+    36	      if (!realization?.feasible || !realization.originPoint || !realization.normal) continue;
+    37	      const origin = domainToThreeJS(realization.originPoint);
+    38	      const normal = domainDirectionToThreeJS(new Vector3(realization.normal.x, realization.normal.y, realization.normal.z)).normalize();
+    39	      const q = new Quaternion().setFromUnitVectors(new Vector3(0, 0, 1), normal);
+    40	      items.push({ id: `reconstructed-plane-${plane.id}`, kind: 'reconstructed-plane', sourceEntityId: plane.id, visible: true, style: THREE_STYLE.reconstructedPlane, renderGroup: 'reconstructedElements', geometry: { center: v(origin), normal: v(normal), size: getPlaneMeshSize(plane.id), quaternion: { x: q.x, y: q.y, z: q.z, w: q.w } } });
+    41	    }
+    42	    return items;
+    43	  }
+    44	}
+    45	function v(vector: { x: number; y: number; z: number }): Vec3 { return { x: vector.x, y: vector.y, z: vector.z }; }
+--- frontend/src/application/threePresentation/ThreeGuideReadPort.ts
+     1	import type { Vector4 } from 'three';
+     2	import type { Line2DRealization2D } from '@/domain/world/Line';
+     3	import type { ProjectionPlaneRealization3D } from '@/domain/world/projectionPlane/ProjectionPlaneRealization';
+     4	import type { World } from '@/domain/world/World';
+     5	import { isGuide2D, isSiblingGuide2D } from '@/domain/world/Guide';
+     6	import type { ThreeEntityPresentationData } from './ThreePresentationReadModel';
+     7	import { createThreeRealizationContext } from './ThreeRealizationContext';
+     8	
+     9	export interface ThreeGuideReadModel extends ThreeEntityPresentationData {
+    10	  planeId: string;
+    11	  planeRealization: ProjectionPlaneRealization3D | undefined;
+    12	  realization: Line2DRealization2D | undefined;
+    13	}
+    14	
+    15	export interface ThreeGuideIntersectionReadModel {
+    16	  points: Array<ThreeEntityPresentationData & { cartesian: [number, number, number] | undefined }>;
+    17	  lines: Array<ThreeEntityPresentationData & { point: Vector4 | undefined; direction: Vector4 | undefined }>;
+    18	  segments: Array<ThreeEntityPresentationData & { startPoint: Vector4 | undefined; endPoint: Vector4 | undefined }>;
+    19	}
+    20	
+    21	export interface ThreeGuideReadPort {
+    22	  getSelectedGuideModels(selectedIds: readonly string[]): ThreeGuideReadModel[];
+    23	  getGuideIntersectionModels(): ThreeGuideIntersectionReadModel;
+    24	}
+    25	
+    26	export function createThreeGuideReadPort(world: World): ThreeGuideReadPort {
+    27	  const realizationContext = createThreeRealizationContext(world, {
+    28	    getProjectionPlanes: () => [],
+    29	    getHingeLines: () => [],
+    30	  });
+    31	  return {
+    32	    getSelectedGuideModels: (selectedIds: readonly string[]) => selectedIds.flatMap(selectedId => {
+    33	      try {
+    34	        const line = world.getLine2D(selectedId);
+    35	        if (!line || (!isGuide2D(line) && !isSiblingGuide2D(line))) return [];
+    36	        return [{ id: line.id, visualStyle: line.visualStyle, planeId: line.planeId, planeRealization: world.getProjectionPlane3DRealization(line.planeId), realization: line.realize2D(realizationContext) }];
+    37	      } catch {
+    38	        return [];
+    39	      }
+    40	    }),
+    41	    getGuideIntersectionModels: () => ({
+    42	      points: world.getAll3DPoints().map(point => {
+    43	        const realization = world.get3DPointRealization(point.id!);
+    44	        return { id: point.id!, visualStyle: point.visualStyle, cartesian: realization?.isFeasible() ? realization.getCartesian() : undefined };
+    45	      }),
+    46	      lines: world.getAll3DLines().map(line => {
+    47	        const realization = world.get3DLineRealization(line.id!);
+    48	        return { id: line.id!, visualStyle: line.visualStyle, point: realization?.isFeasible() ? realization.point : undefined, direction: realization?.isFeasible() ? realization.getDirection() : undefined };
+    49	      }),
+    50	      segments: world.getAll3DSegments().map(segment => {
+    51	        const realization = world.get3DSegmentRealization(segment.id!);
+    52	        return { id: segment.id!, visualStyle: segment.visualStyle, startPoint: realization?.isFeasible() ? realization.startPoint : undefined, endPoint: realization?.isFeasible() ? realization.endPoint : undefined };
+    53	      }),
+    54	    }),
+    55	  };
+    56	}
+--- frontend/src/application/threePresentation/ThreeHingeReadPort.ts
+     1	import type { Line3DRealization3D } from '@/domain/world/Element3DRealization3D';
+     2	import type { World } from '@/domain/world/World';
+     3	import type { ThreeEntityPresentationData } from './ThreePresentationReadModel';
+     4	import { createThreeRealizationContext } from './ThreeRealizationContext';
+     5	
+     6	export interface ThreeHingeReadModel extends ThreeEntityPresentationData { realization: Line3DRealization3D | undefined }
+     7	
+     8	export interface ThreeHingeReadPort {
+     9	  getHingeModels(): ThreeHingeReadModel[];
+    10	}
+    11	
+    12	export function createThreeHingeReadPort(world: World): ThreeHingeReadPort {
+    13	  const getHingeLines = () => world.getAllHingeLines();
+    14	  const realizationContext = createThreeRealizationContext(world, {
+    15	    getProjectionPlanes: () => world.getAllProjectionPlanes(),
+    16	    getHingeLines,
+    17	  });
+    18	  return {
+    19	    getHingeModels: () => getHingeLines().map(hingeLine => ({ id: hingeLine.id, visualStyle: hingeLine.visualStyle, realization: hingeLine.realize3D(realizationContext) })),
+    20	  };
+    21	}
+--- frontend/src/application/threePresentation/ThreePlanarElementReadPort.ts
+     1	import type { Circle2DRealization2D } from '@/domain/world/Circle';
+     2	import type { Line2DRealization2D } from '@/domain/world/Line';
+     3	import type { Point2DRealization2D } from '@/domain/world/Point';
+     4	import type { ProjectionPlaneRealization3D } from '@/domain/world/projectionPlane/ProjectionPlaneRealization';
+     5	import { Segment2DByPoints } from '@/domain/world/Segment';
+     6	import type { World } from '@/domain/world/World';
+     7	import type { ThreeEntityPresentationData } from './ThreePresentationReadModel';
+     8	import { createThreeRealizationContext } from './ThreeRealizationContext';
+     9	
+    10	export interface ThreePlanarPointReadModel extends ThreeEntityPresentationData { realization: Point2DRealization2D | undefined }
+    11	export interface ThreePlanarLineReadModel extends ThreeEntityPresentationData { realization: Line2DRealization2D | undefined; isSegment: boolean }
+    12	export interface ThreePlanarCircleReadModel extends ThreeEntityPresentationData { realization: Circle2DRealization2D | undefined | null }
+    13	
+    14	export interface ThreePlanarPlaneReadModel {
+    15	  id: string;
+    16	  realization: ProjectionPlaneRealization3D | undefined;
+    17	  points: ThreePlanarPointReadModel[];
+    18	  lines: ThreePlanarLineReadModel[];
+    19	  circles: ThreePlanarCircleReadModel[];
+    20	}
+    21	
+    22	export interface ThreePlanarElementReadPort {
+    23	  getPlanarPlaneModels(): ThreePlanarPlaneReadModel[];
+    24	}
+    25	
+    26	export function createThreePlanarElementReadPort(world: World): ThreePlanarElementReadPort {
+    27	  const getProjectionPlanes = () => world.getAllProjectionPlanes();
+    28	  const realizationContext = createThreeRealizationContext(world, {
+    29	    getProjectionPlanes,
+    30	    getHingeLines: () => [],
+    31	  });
+    32	  return {
+    33	    getPlanarPlaneModels: () => getProjectionPlanes().map(plane => ({
+    34	      id: plane.id,
+    35	      realization: world.getProjectionPlane3DRealization(plane.id),
+    36	      points: plane.getAllPoints().map(point => ({ id: point.id, visualStyle: point.visualStyle, realization: point.realize2D(realizationContext) })),
+    37	      lines: plane.getAllLines().map(line => ({ id: line.id, visualStyle: line.visualStyle, realization: line.realize2D(realizationContext), isSegment: line instanceof Segment2DByPoints })),
+    38	      circles: plane.getAllCircles().map(circle => ({ id: circle.id, visualStyle: circle.visualStyle, realization: circle.realize2D(realizationContext) })),
+    39	    })),
+    40	  };
+    41	}
+--- frontend/src/application/threePresentation/ThreePresentationController.ts
+     1	import type { ThreePresentationInput, ThreePresentationModel } from './ThreePresentationModel';
+     2	import { ThreePresentationSelector } from './ThreePresentationSelector';
+     3	
+     4	export class ThreePresentationController {
+     5	  constructor(private readonly selector = new ThreePresentationSelector()) {}
+     6	  buildModel(input: ThreePresentationInput): ThreePresentationModel { return this.selector.select(input); }
+     7	}
+--- frontend/src/application/threePresentation/ThreePresentationModel.ts
+     1	import type { ThreePresentationReadPorts } from './ThreeWorldReadPort';
+     2	import type { ThreeViewDisplayOptions } from '@/types/ThreeViewDisplayOptions';
+     3	
+     4	export type Vec3 = { x: number; y: number; z: number };
+     5	export type QuaternionDto = { x: number; y: number; z: number; w: number };
+     6	export type ThreeRenderGroup = 'projectionPlanes' | 'planarElements' | 'reconstructedElements' | 'guides' | 'hinges' | 'axes' | 'labels';
+     7	
+     8	export interface ThreeStyleDto { color: number | string; opacity?: number; lineWidth?: number; radius?: number; transparent?: boolean; dashSize?: number; gapSize?: number }
+     9	
+    10	export interface ThreePresentationInput { readPorts: ThreePresentationReadPorts; displayOptions: ThreeViewDisplayOptions; selectedIds: readonly string[] }
+    11	
+    12	interface BaseDto { id: string; sourceEntityId?: string; planeId?: string; visible: boolean; style: ThreeStyleDto; renderGroup: ThreeRenderGroup }
+    13	export interface SegmentGeometryDto { start: Vec3; end: Vec3 }
+    14	export interface PlaneGeometryDto { center: Vec3; normal: Vec3; size: number; quaternion?: QuaternionDto }
+    15	
+    16	export interface ProjectionPlaneGridDto extends BaseDto { kind: 'projection-plane-grid'; segments: SegmentGeometryDto[] }
+    17	export interface ProjectionPlaneSurfaceDto extends BaseDto { kind: 'projection-plane-surface'; geometry: PlaneGeometryDto }
+    18	export interface AxisDto extends BaseDto { kind: 'reference-axis' | 'auxiliary-axis'; axis: string; origin: Vec3; direction: Vec3; length: number; label: string }
+    19	export interface LabelDto extends BaseDto { kind: 'axis-label' | 'projection-plane-label'; text: string; position: Vec3; className: string }
+    20	
+    21	export interface PlanarPointDto extends BaseDto { kind: 'planar-point'; position: Vec3 }
+    22	export interface PlanarLineDto extends BaseDto { kind: 'planar-line' | 'planar-segment'; start: Vec3; end: Vec3 }
+    23	export interface PlanarCircleDto extends BaseDto { kind: 'planar-circle'; points: Vec3[] }
+    24	
+    25	export interface ReconstructedPointDto extends BaseDto { kind: 'reconstructed-point'; position: Vec3 }
+    26	export interface ReconstructedLineDto extends BaseDto { kind: 'reconstructed-line' | 'reconstructed-segment'; start: Vec3; end: Vec3 }
+    27	export interface ReconstructedPlaneDto extends BaseDto { kind: 'reconstructed-plane'; geometry: PlaneGeometryDto }
+    28	
+    29	export interface HingeLineDto extends BaseDto { kind: 'hinge-line'; start: Vec3; end: Vec3 }
+    30	export interface GuidePerpendicularPlaneDto extends BaseDto { kind: 'guide-perpendicular-plane'; geometry: PlaneGeometryDto }
+    31	export interface GuideIntersectionMarkerDto extends BaseDto { kind: 'guide-intersection-marker'; position: Vec3 }
+    32	
+    33	export type ProjectionPlanePresentationDto = ProjectionPlaneGridDto | ProjectionPlaneSurfaceDto | AxisDto | LabelDto;
+    34	export type PlanarElementPresentationDto = PlanarPointDto | PlanarLineDto | PlanarCircleDto;
+    35	export type ReconstructedElementPresentationDto = ReconstructedPointDto | ReconstructedLineDto | ReconstructedPlaneDto;
+    36	export type GuidePresentationDto = GuidePerpendicularPlaneDto | GuideIntersectionMarkerDto;
+    37	export type HingePresentationDto = HingeLineDto;
+    38	
+    39	export interface ThreePresentationModel {
+    40	  projectionPlanes: ProjectionPlanePresentationDto[];
+    41	  planarElements: PlanarElementPresentationDto[];
+    42	  reconstructedElements: ReconstructedElementPresentationDto[];
+    43	  guides: GuidePresentationDto[];
+    44	  hinges: HingePresentationDto[];
+    45	}
+--- frontend/src/application/threePresentation/ThreePresentationReadModel.ts
+     1	import type { VisualStyle } from '@/domain/world/VisualStyle';
+     2	
+     3	export interface ThreeEntityPresentationData { id: string; visualStyle?: VisualStyle }
+--- frontend/src/application/threePresentation/ThreePresentationSelector.ts
+     1	import type { ThreePresentationInput, ThreePresentationModel } from './ThreePresentationModel';
+     2	import { ProjectionPlane3DSelector } from './ProjectionPlane3DSelector';
+     3	import { PlanarElement3DSelector } from './PlanarElement3DSelector';
+     4	import { ReconstructedElement3DSelector } from './ReconstructedElement3DSelector';
+     5	import { Guide3DSelector } from './Guide3DSelector';
+     6	import { Hinge3DSelector } from './Hinge3DSelector';
+     7	
+     8	export class ThreePresentationSelector {
+     9	  constructor(
+    10	    private readonly projectionPlanes = new ProjectionPlane3DSelector(),
+    11	    private readonly planarElements = new PlanarElement3DSelector(),
+    12	    private readonly reconstructedElements = new ReconstructedElement3DSelector(),
+    13	    private readonly guides = new Guide3DSelector(),
+    14	    private readonly hinges = new Hinge3DSelector(),
+    15	  ) {}
+    16	
+    17	  select(input: ThreePresentationInput): ThreePresentationModel {
+    18	    const { readPorts, displayOptions, selectedIds } = input;
+    19	    return {
+    20	      projectionPlanes: this.projectionPlanes.select(readPorts.projectionPlanes, displayOptions.showPlanes, displayOptions.showGrid, displayOptions.showReferenceAxes),
+    21	      planarElements: this.planarElements.select(readPorts.planarElements, displayOptions.show2DElementsOnPlanes),
+    22	      reconstructedElements: this.reconstructedElements.select(readPorts.reconstructedElements, displayOptions.showPlanes),
+    23	      guides: this.guides.select(readPorts.guides, selectedIds),
+    24	      hinges: this.hinges.select(readPorts.hinges, displayOptions.showPlanes),
+    25	    };
+    26	  }
+    27	}
+--- frontend/src/application/threePresentation/ThreeProjectionPlaneReadPort.ts
+     1	import { AuxiliaryProjectionPlane } from '@/domain/world/projectionPlane/AuxiliaryProjectionPlane';
+     2	import type { ProjectionPlaneRealization3D } from '@/domain/world/projectionPlane/ProjectionPlaneRealization';
+     3	import type { Plane3DRealization3D } from '@/domain/world/Element3DRealization3D';
+     4	import type { World } from '@/domain/world/World';
+     5	
+     6	export interface ThreeProjectionPlaneReadModel {
+     7	  id: string;
+     8	  kind: 'fixed' | 'auxiliary';
+     9	  plane3DId: string | undefined;
+    10	  realization: ProjectionPlaneRealization3D | undefined;
+    11	}
+    12	
+    13	export interface ThreeProjectionPlaneGridSource {
+    14	  plane3DRealization: Plane3DRealization3D | undefined;
+    15	  projectionRealization: ProjectionPlaneRealization3D | undefined;
+    16	}
+    17	
+    18	export interface ThreeProjectionPlaneReadPort {
+    19	  getProjectionPlaneModels(): ThreeProjectionPlaneReadModel[];
+    20	  getProjectionPlaneGridSource(planeId: string): ThreeProjectionPlaneGridSource;
+    21	}
+    22	
+    23	export function createThreeProjectionPlaneReadPort(world: World): ThreeProjectionPlaneReadPort {
+    24	  return {
+    25	    getProjectionPlaneModels: () => world.getAllProjectionPlanes().map(plane => ({
+    26	      id: plane.id,
+    27	      kind: plane instanceof AuxiliaryProjectionPlane ? 'auxiliary' : 'fixed',
+    28	      plane3DId: plane instanceof AuxiliaryProjectionPlane ? plane.plane3DId : plane.id,
+    29	      realization: world.getProjectionPlane3DRealization(plane.id),
+    30	    })),
+    31	    getProjectionPlaneGridSource: (planeId: string) => {
+    32	      const plane = world.getProjectionPlaneById(planeId);
+    33	      const plane3DId = plane instanceof AuxiliaryProjectionPlane ? plane.plane3DId : plane?.id;
+    34	      return {
+    35	        plane3DRealization: plane3DId ? world.get3DPlaneRealization(plane3DId) : undefined,
+    36	        projectionRealization: world.getProjectionPlane3DRealization(planeId),
+    37	      };
+    38	    },
+    39	  };
+    40	}
+--- frontend/src/application/threePresentation/ThreeRealizationContext.ts
+     1	import type { HingeLineRealizationContext, ProjectionElementDiagnosticRealizationContext } from '@/domain/world/projectionPlane/ProjectionPlaneContext';
+     2	import { createWorldRealizationContext } from '@/application/presentation/WorldRealizationContext';
+     3	import type { ProjectionPlane } from '@/domain/world/projectionPlane/ProjectionPlane';
+     4	import type { HingeLine } from '@/domain/world/HingeLine';
+     5	import type { World } from '@/domain/world/World';
+     6	
+     7	interface ThreeRealizationContextCollections {
+     8	  getProjectionPlanes: () => ProjectionPlane[];
+     9	  getHingeLines: () => HingeLine[];
+    10	}
+    11	
+    12	export function createThreeRealizationContext(
+    13	  world: World,
+    14	  collections: ThreeRealizationContextCollections,
+    15	): ProjectionElementDiagnosticRealizationContext & HingeLineRealizationContext {
+    16	  return {
+    17	    ...createWorldRealizationContext(world),
+    18	    getAllProjectionPlanes: collections.getProjectionPlanes,
+    19	    getAllHingeLines: collections.getHingeLines,
+    20	  };
+    21	}
+--- frontend/src/application/threePresentation/ThreeReconstructedElementReadPort.ts
+     1	import type { Line3DRealization3D, Plane3DRealization3D, Point3DRealization3D, Segment3DRealization3D } from '@/domain/world/Element3DRealization3D';
+     2	import type { World } from '@/domain/world/World';
+     3	import type { ThreeEntityPresentationData } from './ThreePresentationReadModel';
+     4	
+     5	export interface ThreeReconstructedReadModel {
+     6	  points: Array<ThreeEntityPresentationData & { realization: Point3DRealization3D | undefined }>;
+     7	  lines: Array<ThreeEntityPresentationData & { realization: Line3DRealization3D | undefined }>;
+     8	  segments: Array<ThreeEntityPresentationData & { realization: Segment3DRealization3D | undefined }>;
+     9	  planes: Array<ThreeEntityPresentationData & { realization: Plane3DRealization3D | undefined }>;
+    10	}
+    11	
+    12	export interface ThreeReconstructedElementReadPort {
+    13	  getReconstructedModels(): ThreeReconstructedReadModel;
+    14	}
+    15	
+    16	export function createThreeReconstructedElementReadPort(world: World): ThreeReconstructedElementReadPort {
+    17	  return {
+    18	    getReconstructedModels: () => ({
+    19	      points: world.getAll3DPoints().map(point => ({ id: point.id!, visualStyle: point.visualStyle, realization: world.get3DPointRealization(point.id!) })),
+    20	      lines: world.getAll3DLines().map(line => ({ id: line.id!, visualStyle: line.visualStyle, realization: world.get3DLineRealization(line.id!) })),
+    21	      segments: world.getAll3DSegments().map(segment => ({ id: segment.id!, visualStyle: segment.visualStyle, realization: world.get3DSegmentRealization(segment.id!) })),
+    22	      planes: world.getAllPlanes().map(plane => ({ id: plane.id!, visualStyle: plane.visualStyle, realization: world.get3DPlaneRealization(plane.id!) })),
+    23	    }),
+    24	  };
+    25	}
+--- frontend/src/application/threePresentation/ThreeStylePolicy.ts
+     1	import type { VisualStyle } from '@/domain/world/VisualStyle';
+     2	import type { ThreeStyleDto } from './ThreePresentationModel';
+     3	
+     4	export interface ThreeStyleSource { visualStyle?: VisualStyle }
+     5	
+     6	export const THREE_STYLE = {
+     7	  grid: { color: 0x888888, opacity: 0.7, transparent: true },
+     8	  projectionPlane: { color: 0xdddddd, opacity: 0.18, transparent: true },
+     9	  planarElement: { color: 0x2196f3, opacity: 0.7, transparent: true, radius: 0.15 },
+    10	  reconstructedElement: { color: 0xff6b35, opacity: 1, radius: 0.15 },
+    11	  reconstructedPlane: { color: 0xbdbdbd, opacity: 0.4, transparent: true },
+    12	  guidePlane: { color: 0x00bcd4, opacity: 0.25, transparent: true },
+    13	  guideMarker: { color: 0xffd700, radius: 0.25 },
+    14	  hinge: { color: 0x333333, dashSize: 0.5, gapSize: 0.3, lineWidth: 2 },
+    15	  referenceAxisLength: 15,
+    16	  auxiliaryAxisLength: 10,
+    17	  infiniteLineExtent: 2000,
+    18	  planarLineExtent: 2000,
+    19	  zOffset: 0.01,
+    20	} as const;
+    21	
+    22	export function planarStyle(element: ThreeStyleSource): ThreeStyleDto {
+    23	  return { ...THREE_STYLE.planarElement, color: element.visualStyle?.color ?? THREE_STYLE.planarElement.color };
+    24	}
+    25	
+    26	export function reconstructedStyle(element: ThreeStyleSource): ThreeStyleDto {
+    27	  return { ...THREE_STYLE.reconstructedElement, color: element.visualStyle?.color ?? THREE_STYLE.reconstructedElement.color };
+    28	}
+    29	
+    30	export function isVisible2D(element: ThreeStyleSource): boolean { return element.visualStyle?.visible !== false; }
+    31	export function isVisible3D(element: ThreeStyleSource): boolean { return element.visualStyle?.visible !== false; }
+--- frontend/src/application/threePresentation/ThreeWorldReadPort.ts
+     1	import type { ThreeEntityPresentationData } from './ThreePresentationReadModel';
+     2	import type { World } from '@/domain/world/World';
+     3	import { createThreeGuideReadPort, type ThreeGuideIntersectionReadModel, type ThreeGuideReadModel, type ThreeGuideReadPort } from './ThreeGuideReadPort';
+     4	import { createThreeHingeReadPort, type ThreeHingeReadModel, type ThreeHingeReadPort } from './ThreeHingeReadPort';
+     5	import { createThreePlanarElementReadPort, type ThreePlanarCircleReadModel, type ThreePlanarElementReadPort, type ThreePlanarLineReadModel, type ThreePlanarPlaneReadModel, type ThreePlanarPointReadModel } from './ThreePlanarElementReadPort';
+     6	import { createThreeProjectionPlaneReadPort, type ThreeProjectionPlaneGridSource, type ThreeProjectionPlaneReadModel, type ThreeProjectionPlaneReadPort } from './ThreeProjectionPlaneReadPort';
+     7	import { createThreeReconstructedElementReadPort, type ThreeReconstructedElementReadPort, type ThreeReconstructedReadModel } from './ThreeReconstructedElementReadPort';
+     8	
+     9	export type { ThreeEntityPresentationData };
+    10	
+    11	export type {
+    12	  ThreeGuideIntersectionReadModel,
+    13	  ThreeGuideReadModel,
+    14	  ThreeGuideReadPort,
+    15	  ThreeHingeReadModel,
+    16	  ThreeHingeReadPort,
+    17	  ThreePlanarCircleReadModel,
+    18	  ThreePlanarElementReadPort,
+    19	  ThreePlanarLineReadModel,
+    20	  ThreePlanarPlaneReadModel,
+    21	  ThreePlanarPointReadModel,
+    22	  ThreeProjectionPlaneGridSource,
+    23	  ThreeProjectionPlaneReadModel,
+    24	  ThreeProjectionPlaneReadPort,
+    25	  ThreeReconstructedElementReadPort,
+    26	  ThreeReconstructedReadModel,
+    27	};
+    28	
+    29	export interface ThreePresentationReadPorts {
+    30	  readonly projectionPlanes: ThreeProjectionPlaneReadPort;
+    31	  readonly planarElements: ThreePlanarElementReadPort;
+    32	  readonly reconstructedElements: ThreeReconstructedElementReadPort;
+    33	  readonly guides: ThreeGuideReadPort;
+    34	  readonly hinges: ThreeHingeReadPort;
+    35	}
+    36	
+    37	export function createThreePresentationReadPorts(world: World): ThreePresentationReadPorts {
+    38	  return {
+    39	    projectionPlanes: createThreeProjectionPlaneReadPort(world),
+    40	    planarElements: createThreePlanarElementReadPort(world),
+    41	    reconstructedElements: createThreeReconstructedElementReadPort(world),
+    42	    guides: createThreeGuideReadPort(world),
+    43	    hinges: createThreeHingeReadPort(world),
+    44	  };
+    45	}

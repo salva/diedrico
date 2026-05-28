@@ -1,0 +1,58 @@
+frontend/src/application/canvasPresentation/CanvasPresentationController.ts:7:  buildModel(readPort: CanvasWorldReadPort, viewport: CanvasViewportModel, state: CanvasPresentationState): CanvasPresentationModel {
+frontend/src/application/threePresentation/ThreePresentationModel.ts:1:import type { ThreePresentationReadPorts } from './ThreeWorldReadPort';
+frontend/src/application/threePresentation/ThreePresentationModel.ts:10:export interface ThreePresentationInput { readPorts: ThreePresentationReadPorts; displayOptions: ThreeViewDisplayOptions; selectedIds: readonly string[] }
+frontend/src/application/threePresentation/ProjectionPlane3DSelector.ts:15:    for (const plane of readPort.getProjectionPlaneModels()) {
+frontend/src/application/threePresentation/PlanarElement3DSelector.ts:11:    for (const plane of readPort.getPlanarPlaneModels()) {
+frontend/src/application/threePresentation/ReconstructedElement3DSelector.ts:12:    const models = readPort.getReconstructedModels();
+frontend/src/application/threePresentation/Hinge3DSelector.ts:11:    for (const hingeLine of readPort.getHingeModels()) {
+frontend/src/application/threePresentation/Guide3DSelector.ts:11:    for (const guide of readPort.getSelectedGuideModels(selectedIds)) {
+frontend/src/application/threePresentation/Guide3DSelector.ts:24:      items.push(...intersections(readPort.getGuideIntersectionModels(), guidePoint3D, perpendicularNormal, guide.id));
+frontend/src/application/threePresentation/ThreePresentationController.ts:4:export class ThreePresentationController {
+frontend/src/application/threePresentation/ThreePresentationController.ts:6:  buildModel(input: ThreePresentationInput): ThreePresentationModel { return this.selector.select(input); }
+frontend/src/application/threePresentation/ThreeWorldReadPort.ts:29:export interface ThreePresentationReadPorts {
+frontend/src/application/threePresentation/ThreeWorldReadPort.ts:37:export function createThreePresentationReadPorts(world: World): ThreePresentationReadPorts {
+frontend/src/application/threePresentation/ThreeProjectionPlaneReadPort.ts:19:  getProjectionPlaneModels(): ThreeProjectionPlaneReadModel[];
+frontend/src/application/threePresentation/ThreeProjectionPlaneReadPort.ts:25:    getProjectionPlaneModels: () => world.getAllProjectionPlanes().map(plane => ({
+frontend/src/application/threePresentation/ThreePlanarElementReadPort.ts:23:  getPlanarPlaneModels(): ThreePlanarPlaneReadModel[];
+frontend/src/application/threePresentation/ThreePlanarElementReadPort.ts:33:    getPlanarPlaneModels: () => getProjectionPlanes().map(plane => ({
+frontend/src/application/threePresentation/ThreeReconstructedElementReadPort.ts:13:  getReconstructedModels(): ThreeReconstructedReadModel;
+frontend/src/application/threePresentation/ThreeReconstructedElementReadPort.ts:18:    getReconstructedModels: () => ({
+frontend/src/application/threePresentation/ThreeGuideReadPort.ts:22:  getSelectedGuideModels(selectedIds: readonly string[]): ThreeGuideReadModel[];
+frontend/src/application/threePresentation/ThreeGuideReadPort.ts:23:  getGuideIntersectionModels(): ThreeGuideIntersectionReadModel;
+frontend/src/application/threePresentation/ThreeGuideReadPort.ts:32:    getSelectedGuideModels: (selectedIds: readonly string[]) => selectedIds.flatMap(selectedId => {
+frontend/src/application/threePresentation/ThreeGuideReadPort.ts:41:    getGuideIntersectionModels: () => ({
+frontend/src/application/threePresentation/ThreeHingeReadPort.ts:9:  getHingeModels(): ThreeHingeReadModel[];
+frontend/src/application/threePresentation/ThreeHingeReadPort.ts:19:    getHingeModels: () => getHingeLines().map(hingeLine => ({ id: hingeLine.id, visualStyle: hingeLine.visualStyle, realization: hingeLine.realize3D(realizationContext) })),
+frontend/src/application/appShell/RuntimeSession.ts:16:import { createThreePresentationReadPorts } from '@/application/threePresentation/ThreeWorldReadPort';
+frontend/src/application/appShell/RuntimeSession.ts:40:      buildPresentationModel: (viewport, options) => canvasPresentationController.buildModel(
+frontend/src/application/appShell/RuntimeSession.ts:89:    const readPorts = createThreePresentationReadPorts(this.world);
+frontend/src/application/appShell/RuntimeViewPorts.ts:5:import type { ThreePresentationReadPorts } from '@/application/threePresentation/ThreeWorldReadPort';
+frontend/src/application/appShell/RuntimeViewPorts.ts:134:  getReadPorts(): ThreePresentationReadPorts;
+frontend/src/rendering/threeView/ThreeViewRuntime.ts:11:import { ThreePresentationController } from '@/application/threePresentation/ThreePresentationController';
+frontend/src/rendering/threeView/ThreeViewRuntime.ts:31:  buildModel(input: ThreePresentationInput): ThreePresentationModel;
+frontend/src/rendering/threeView/ThreeViewRuntime.ts:61:    this.controller = options.controller ?? new ThreePresentationController();
+frontend/src/rendering/threeView/ThreeViewRuntime.ts:74:    const model = this.controller.buildModel(input);
+frontend/tests/unit/application/canvasPresentation/canvasWorldReadPort.spec.ts:18:    const model = new CanvasPresentationController().buildModel(readPort, { zoom: 1, panX: 0, panY: 0, width: 400, height: 300 }, { activePlaneId: plane.id, selectedIds: new Set([segment.id]), gridVisible: true });
+frontend/tests/unit/application/canvasPresentation/canvasWorldReadPort.spec.ts:27:    const controllerBuild: (typeof CanvasPresentationController.prototype)['buildModel'] = CanvasPresentationController.prototype.buildModel;
+frontend/tests/unit/application/threePresentation/threePresentationSelector.spec.ts:3:import type { ThreePresentationReadPorts } from '@/application/threePresentation/ThreeWorldReadPort';
+frontend/tests/unit/application/threePresentation/threePresentationSelector.spec.ts:44:    const readPorts: ThreePresentationReadPorts = {
+frontend/tests/unit/application/threePresentation/threePresentationSelector.spec.ts:45:      projectionPlanes: { getProjectionPlaneModels: () => [], getProjectionPlaneGridSource: () => ({ plane3DRealization: undefined, projectionRealization: undefined }) },
+frontend/tests/unit/application/threePresentation/threePresentationSelector.spec.ts:46:      planarElements: { getPlanarPlaneModels: () => [] },
+frontend/tests/unit/application/threePresentation/threePresentationSelector.spec.ts:47:      reconstructedElements: { getReconstructedModels: () => ({ points: [], lines: [], segments: [], planes: [] }) },
+frontend/tests/unit/application/threePresentation/threePresentationSelector.spec.ts:48:      guides: { getSelectedGuideModels: () => [], getGuideIntersectionModels: () => ({ points: [], lines: [], segments: [] }) },
+frontend/tests/unit/application/threePresentation/threePresentationSelector.spec.ts:49:      hinges: { getHingeModels: () => [] },
+frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:5:import { createThreePresentationReadPorts } from '@/application/threePresentation/ThreeWorldReadPort';
+frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:21:      getProjectionPlaneModels: () => [{ id: 'PH', kind: 'fixed', plane3DId: 'PH', realization: feasiblePlaneRealization }],
+frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:37:      getPlanarPlaneModels: () => [{ id: 'PH', realization: feasiblePlaneRealization, points: [point], lines: [], circles: [] }],
+frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:49:      getReconstructedModels: () => ({
+frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:65:      getSelectedGuideModels: (selectedIds: readonly string[]) => selectedIds.includes('PH/guide-1') ? [{ id: 'PH/guide-1', planeId: 'PH', planeRealization: feasiblePlaneRealization, realization: feasible({ point1: new Vector3(0, 0, 1), point2: new Vector3(1, 0, 1), getDirection: () => new Vector3(1, 0, 0) }) }] : [],
+frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:66:      getGuideIntersectionModels: () => ({
+frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:82:    const readPort = { getHingeModels: () => [{ id: 'h1', realization: feasible({ point: new Vector4(0, 0, 0, 1), direction: new Vector3(0, 1, 0) }) }] } as never;
+frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:108:    const readPorts = createThreePresentationReadPorts(world as never);
+frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:110:    expect(readPorts.projectionPlanes.getProjectionPlaneModels()).toHaveLength(1);
+frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:111:    expect(readPorts.planarElements.getPlanarPlaneModels()[0].points[0]).toMatchObject({ id: 'p1' });
+frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:112:    expect(readPorts.guides.getSelectedGuideModels(['PH/guide-1'])[0]).toMatchObject({ id: 'PH/guide-1', planeId: 'PH' });
+frontend/tests/unit/rendering/threeView/threeViewRuntime.spec.ts:19:    const controller = { buildModel: vi.fn(() => model) };
+frontend/tests/unit/rendering/threeView/threeViewRuntime.spec.ts:45:    expect(controller.buildModel).toHaveBeenCalledOnce();
+frontend/tests/unit/rendering/threeView/threeViewRuntime.spec.ts:46:    expect(controller.buildModel).toHaveBeenCalledWith(input);
+frontend/tests/unit/rendering/threeView/threeViewRuntime.spec.ts:68:    const runtime = new ThreeViewRuntime({ host, controller: { buildModel: vi.fn() as never } });
