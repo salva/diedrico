@@ -8,7 +8,7 @@ import { CanvasToolController } from '@/application/tools/CanvasToolController';
 import { createToolInteractionReadPort } from '@/application/tools/ToolInteractionReadPort';
 import type { CanvasToolControllerToolStore } from '@/application/tools/CanvasToolController';
 import { ProcessHistoryController } from '@/application/processHistory/ProcessHistoryController';
-import type { ActivePlanePort, CommandHistoryPort, OpenedProjectSession, ProjectSessionPersistencePort, SelectionReadPort } from './AppShellPorts';
+import type { ActivePlanePort, CommandHistoryPort, OpenedProjectSession, ProjectSessionPersistencePayload, ProjectSessionPersistencePort, SelectionReadPort } from './AppShellPorts';
 import type { ProjectSessionKernel } from './ProjectSessionKernel';
 import type { RuntimeSessionPersistenceRestoreHandle, RuntimeSessionPersistenceSnapshotHandle } from './ProjectSessionPersistenceTargets';
 import { CanvasPresentationController } from '@/application/canvasPresentation/CanvasPresentationController';
@@ -185,7 +185,7 @@ export class RuntimeSession implements ProjectSessionKernel {
     return this.world.getVersion();
   }
 
-  snapshot(projectName: string, persistence: ProjectSessionPersistencePort): object {
+  snapshot(projectName: string, persistence: ProjectSessionPersistencePort): ProjectSessionPersistencePayload {
     return persistence.snapshotCurrentSession(this.snapshotHandle(), projectName);
   }
 

@@ -1,8 +1,8 @@
-import type { OpenedProjectSession, ProjectSessionPersistencePort } from './AppShellPorts';
+import type { OpenedProjectSession, ProjectSessionPersistencePayload, ProjectSessionPersistencePort } from './AppShellPorts';
 
 export interface SnapshotCapableProjectSessionKernel {
   getVersion(): number;
-  snapshot(projectName: string, persistence: ProjectSessionPersistencePort): object;
+  snapshot(projectName: string, persistence: ProjectSessionPersistencePort): ProjectSessionPersistencePayload;
 }
 
 export interface ProjectSessionKernel extends SnapshotCapableProjectSessionKernel {

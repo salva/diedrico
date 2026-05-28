@@ -1,16 +1,15 @@
 import type { Ref } from 'vue';
 import type { GoogleDriveFile, GoogleUserProfile } from '@/services/GoogleDriveService';
+import type { ProjectData } from '@/services/ProjectService';
 import type { ToolType } from '@/stores/toolStore';
 import type { KeyboardShortcutRouterTarget } from './KeyboardShortcutRouter';
 
 export type SaveStatus = 'idle' | 'saving' | 'saved';
-export interface PersistedProjectSession {
-  readonly __persistedProjectSession: unique symbol;
-}
+export type ProjectSessionPersistencePayload = ProjectData;
 
 export interface OpenedProjectSession {
   readonly projectName: string;
-  readonly payload: PersistedProjectSession;
+  readonly payload: ProjectSessionPersistencePayload;
 }
 
 export interface DrivePort {
@@ -20,9 +19,9 @@ export interface DrivePort {
   signOut(): Promise<void>;
   fetchUserProfile(): Promise<GoogleUserProfile>;
   listFiles(): Promise<GoogleDriveFile[]>;
-  createFile(fileName: string, data: object): Promise<string>;
-  loadFile(fileId: string): Promise<object>;
-  updateFile(fileId: string, data: object): Promise<void>;
+  createFile(fileName: string, data: ProjectSessionPersistencePayload): Promise<string>;
+  loadFile(fileId: string): Promise<unknown>;
+  updateFile(fileId: string, data: ProjectSessionPersistencePayload): Promise<void>;
   renameFile(fileId: string, newName: string): Promise<void>;
   generateDefaultProjectName(): Promise<string>;
 }
@@ -62,9 +61,9 @@ export interface RuntimeSessionSnapshotHandle {
 export interface RuntimeSessionRestoreHandle {}
 
 export interface ProjectSessionPersistencePort {
-  snapshotCurrentSession(session: RuntimeSessionSnapshotHandle, projectName: string): object;
+  snapshotCurrentSession(session: RuntimeSessionSnapshotHandle, projectName: string): ProjectSessionPersistencePayload;
   validateProjectData(data: unknown): OpenedProjectSession;
-  restoreSession(session: PersistedProjectSession, target: RuntimeSessionRestoreHandle): void;
+  restoreSession(session: ProjectSessionPersistencePayload, target: RuntimeSessionRestoreHandle): void;
 }
 
 export interface LastProjectRecord {

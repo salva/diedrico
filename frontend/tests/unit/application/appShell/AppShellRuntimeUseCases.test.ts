@@ -9,7 +9,7 @@ import { ProjectSessionUseCases } from '@/application/appShell/ProjectSessionUse
 import { RuntimeSession } from '@/application/appShell/RuntimeSession';
 import type { ProjectSessionKernel } from '@/application/appShell/ProjectSessionKernel';
 import { SelectionUseCases } from '@/application/appShell/SelectionUseCases';
-import type { AppShellRuntimePorts, DrivePort, LastProjectRepositoryPort, ProjectSessionPersistencePort, SchedulerPort, SelectionStorePort } from '@/application/appShell/AppShellPorts';
+import type { AppShellRuntimePorts, DrivePort, LastProjectRepositoryPort, ProjectSessionPersistencePayload, ProjectSessionPersistencePort, SchedulerPort, SelectionStorePort } from '@/application/appShell/AppShellPorts';
 
 function scheduler() {
   let nextHandle = 1;
@@ -39,6 +39,19 @@ function scheduler() {
   };
 }
 
+
+function projectPayload(name = 'Project', nextElementId = 1): ProjectSessionPersistencePayload {
+  return {
+    id: 'project-id',
+    schemaVersion: '6.0.0',
+    name,
+    created: 'now',
+    modified: 'now',
+    nextElementId,
+    commands: [],
+  };
+}
+
 function drive(overrides: Partial<DrivePort> = {}): DrivePort {
   return {
     initialize: vi.fn().mockResolvedValue(undefined),
@@ -48,7 +61,7 @@ function drive(overrides: Partial<DrivePort> = {}): DrivePort {
     fetchUserProfile: vi.fn().mockResolvedValue({ email: 'user@example.test', name: 'User' }),
     listFiles: vi.fn().mockResolvedValue([{ id: 'file-1', name: 'Project 1', modifiedTime: 'now' }]),
     createFile: vi.fn().mockResolvedValue('file-created'),
-    loadFile: vi.fn().mockResolvedValue({ id: 'project-id', schemaVersion: '6.0.0', name: 'Loaded project', created: 'now', modified: 'now', nextElementId: 1, commands: [] }),
+    loadFile: vi.fn().mockResolvedValue(projectPayload('Loaded project')),
     updateFile: vi.fn().mockResolvedValue(undefined),
     renameFile: vi.fn().mockResolvedValue(undefined),
     generateDefaultProjectName: vi.fn().mockResolvedValue('Untitled project'),
@@ -58,16 +71,11 @@ function drive(overrides: Partial<DrivePort> = {}): DrivePort {
 
 function persistence(): ProjectSessionPersistencePort {
   return {
-    snapshotCurrentSession: vi.fn((session, projectName) => ({
-      id: 'project-id',
-      schemaVersion: '6.0.0',
-      name: projectName,
-      created: 'now',
-      modified: 'now',
-      nextElementId: session.nextElementId,
-      commands: [],
-    })),
-    validateProjectData: vi.fn((data: any) => ({ projectName: String(data.name), payload: data as never })),
+    snapshotCurrentSession: vi.fn((session, projectName) => projectPayload(projectName, session.nextElementId)),
+    validateProjectData: vi.fn((data: unknown) => {
+      const payload = data as ProjectSessionPersistencePayload;
+      return { projectName: payload.name, payload };
+    }),
     restoreSession: vi.fn(),
   };
 }
@@ -221,9 +229,10 @@ describe('AutoSaveUseCases', () => {
     const saveStatus = ref<'idle' | 'saving' | 'saved'>('idle');
     const currentFileId = ref('file-1');
     const currentProjectName = ref('Project');
+    const fakeDrive = drive();
     const autoSave = new AutoSaveUseCases({
       session: autoSaveSession(() => version),
-      drive: drive(),
+      drive: fakeDrive,
       persistence: persistence(),
       lastProjectRepository: lastProjectRepository(),
       scheduler: fakeScheduler.port,
@@ -243,6 +252,7 @@ describe('AutoSaveUseCases', () => {
     expect(fakeScheduler.port.setTimeout).toHaveBeenCalledTimes(1);
 
     await autoSave.perform();
+    expect(fakeDrive.updateFile).toHaveBeenCalledWith('file-1', expect.objectContaining({ name: 'Project', schemaVersion: '6.0.0', commands: [] }));
     expect(saveStatus.value).toBe('saved');
     expect(fakeScheduler.port.setTimeout).toHaveBeenCalledTimes(2);
 
@@ -286,12 +296,13 @@ describe('AutoSaveUseCases', () => {
     const repository = lastProjectRepository();
     const currentFileId = ref('missing-file');
     const currentProjectName = ref('Project');
+    const fakeDrive = drive({
+      updateFile: vi.fn().mockRejectedValue(new Error('File not found')),
+      createFile: vi.fn().mockResolvedValue('replacement-file'),
+    });
     const autoSave = new AutoSaveUseCases({
       session: autoSaveSession(),
-      drive: drive({
-        updateFile: vi.fn().mockRejectedValue(new Error('File not found')),
-        createFile: vi.fn().mockResolvedValue('replacement-file'),
-      }),
+      drive: fakeDrive,
       persistence: persistence(),
       lastProjectRepository: repository,
       scheduler: fakeScheduler.port,
@@ -306,6 +317,7 @@ describe('AutoSaveUseCases', () => {
     await autoSave.perform();
 
     expect(currentFileId.value).toBe('replacement-file');
+    expect(fakeDrive.createFile).toHaveBeenCalledWith('Project', expect.objectContaining({ name: 'Project', schemaVersion: '6.0.0', commands: [] }));
     expect(repository.setLastProject).toHaveBeenCalledWith({ id: 'replacement-file', name: 'Project' });
   });
 });
@@ -623,11 +635,13 @@ describe('ProjectSessionUseCases startup and project flows', () => {
     expect(deps.currentFileId.value).toBe('file-created');
     expect(deps.autoSave.start).toHaveBeenCalled();
     expect(deps.lastProjectRepository.setLastProject).toHaveBeenCalledWith({ id: 'file-created', name: 'Created' });
+    expect(deps.drive?.createFile).toHaveBeenCalledWith('Created', expect.objectContaining({ name: 'Created', schemaVersion: '6.0.0', commands: [] }));
 
     await useCases.openProject('file-opened');
     expect(deps.currentProjectName.value).toBe('Loaded project');
     expect(deps.currentFileId.value).toBe('file-opened');
-    expect(deps.persistence.restoreSession).toHaveBeenCalled();
+    expect(deps.persistence.validateProjectData).toHaveBeenCalledWith(projectPayload('Loaded project'));
+    expect(deps.persistence.restoreSession).toHaveBeenCalledWith(projectPayload('Loaded project'), expect.any(Object));
 
     await useCases.renameProject('Renamed');
     expect(deps.currentProjectName.value).toBe('Renamed');
