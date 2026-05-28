@@ -1,3 +1,11 @@
+# Supersession notice — Cycle 023 decision/closure reconciliation
+
+This file is retained as historical/background artifact evidence only. As of `cycle-023-decision-closure-reconciliation-runtime-session-consumer-ports-command-history-boundary`, the authoritative Cycle 023 outcome is recorded in `decision.md`: Wave 023 is already satisfied/closed by current source, no new Cycle 023 implementation is authorized, and any implementation-forward claims in this log or older decision text are superseded.
+
+No production source changes are made by the reconciliation stage. Current-source evidence and residual seams are cited in `decision.md`.
+
+---
+
 # Cycle 023 Implementation Log — Runtime-session consumer ports and command-history boundary
 
 ## Selected path followed
