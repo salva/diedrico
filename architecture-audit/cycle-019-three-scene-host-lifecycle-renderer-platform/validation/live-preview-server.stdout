@@ -2,8 +2,11 @@
 > diedrico-frontend@0.1.0 dev
 > vite --host 0.0.0.0
 
+Port 5173 is in use, trying another one...
+Port 5174 is in use, trying another one...
 
-  VITE v5.4.21  ready in 260 ms
+  VITE v5.4.21  ready in 287 ms
 
-  ➜  Local:   http://localhost:5173/
-  ➜  Network: http://10.0.3.113:5173/
+  ➜  Local:   http://localhost:5175/
+  ➜  Network: http://10.0.3.113:5175/
+12:08:52 AM [vite] page reload playwright-report/index.html

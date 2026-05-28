@@ -1,0 +1,6 @@
+
+Running 2 tests using 2 workers
+
+[1A[2K[1/2] [chromium] › tests/e2e/current-ui-contract.spec.ts:12:3 › Current Diedrico UI contract › renders the current app shell, canvas, toolbar, status bar, and plane selector
+[1A[2K[2/2] [chromium] › tests/e2e/current-ui-contract.spec.ts:89:3 › Current Diedrico UI contract › 3D overlay owns pointer interaction and does not pass drag gestures through to the 2D canvas
+[1A[2K  2 passed (4.5s)
