@@ -2040,3 +2040,123 @@ All Wave 028 validation stdout/stderr must be captured to stable files under the
 **No-backcompat rationale**
 
 Raw canvas traversal getters and selector-owned domain loops are internal architecture seams, not compatibility contracts. Keeping both raw projection-plane/3D collection access and new DTO selectors would preserve the same bypass path under a new name and invite future canvas behavior to depend on mutable domain objects. Delete replaced getters, loops, casts, transitional wrappers, stale tests, and dual raw-and-DTO paths once reviewed behavior-sized DTO selectors exist. Do not preserve broad facades or compatibility overloads for internal selectors.
+
+---
+
+## Wave 029 — 3D presentation DTO read ports and realization-context ownership
+
+**Status**
+
+Added by `cycle-029-wave-plan-extension-post-028` after Wave 028 closure. Requires Critic approval and bounded Reviewer validation of this plan extension before the canonical `cycle-029-fresh-scout-proposals-3d-presentation-dto-read-ports-and-realization-context-ownership` stage and before any source implementation.
+
+**Scope**
+
+- `frontend/src/application/threePresentation/ThreeWorldReadPort.ts`
+- `frontend/src/application/threePresentation/ThreeProjectionPlaneReadPort.ts`
+- `frontend/src/application/threePresentation/ThreePlanarElementReadPort.ts`
+- `frontend/src/application/threePresentation/ThreeReconstructedElementReadPort.ts`
+- `frontend/src/application/threePresentation/ThreeGuideReadPort.ts`
+- `frontend/src/application/threePresentation/ThreeHingeReadPort.ts`
+- `frontend/src/application/threePresentation/ThreeRealizationContext.ts`
+- `frontend/src/application/threePresentation/ThreePresentationReadModel.ts` and adjacent 3D DTO/read-model modules only where DTO contracts are tightened
+- `frontend/src/application/presentation/WorldRealizationContext.ts` only for a tiny typed realization-context factory split if it directly deletes 3D presentation duplication without creating a broad read facade
+- `frontend/src/rendering/threeView/**` and `frontend/src/components/panels/ThreeView.vue` only where consumers must adapt to the narrowed 3D DTO/read-port contract
+- `frontend/src/application/appShell/RuntimeSession.ts` only for wiring the changed 3D presentation read-port factory and preserving `ThreePresentationPort`
+- focused 3D presentation/read-port/renderer tests, architecture-boundary tests, and current UI/overlay e2e coverage
+
+**Scope guard**
+
+This wave owns the post-Wave-028 3D presentation read boundary. It must not reopen the canvas projection DTO selector implementation except for shared, behavior-sized realization-context helpers that both sides already consume. It must not absorb persistence schema/replay, `ProjectService` contract cleanup, command history/producer redesign, process-tree/action cleanup, backend/frontend contract stance, Drive/auth/browser adapters, package/tooling churn, validation-platform hardening, docs/spec reconciliation, preview-script ergonomics, broad app-kernel work, UI feature work, command-backed visibility, broad domain realization semantic redesign, or a CSS-only overlay interaction wave.
+
+The fresh-scout stage must begin with a current caller/model inventory for every 3D presentation read-port method and every consumer of `ThreePresentationReadPorts`. Classify each read by behavior: projection-plane mesh/grid source, planar 2D-on-3D elements, reconstructed 3D entities, selected guide display, guide-intersection display, hinge-line display, visual style source, feasibility filtering, and realization-context assembly. The selected proposal must narrow read models to presentation DTOs only when all named consumers have a concrete replacement. If a required fix proves to be domain realization semantics, persistence replay, command construction, or a full 3D scene renderer rewrite, stop and run a reviewed plan-edit mini-cycle instead of hiding that redesign in Wave 029.
+
+Known unrelated dirty files `frontend/src/domain/calculations/Intersections.ts` and `frontend/src/domain/processTree/ActionGroup.ts` are protected. Do not read, revert, stage, normalize, or depend on their modifications unless a reviewed plan edit explicitly scopes them.
+
+**Current grounding**
+
+Wave 028 completed the canvas projection DTO selector extraction and moved projected-3D raw traversal into a dedicated canvas adapter, while explicitly leaving `ThreeWorldReadPort` as a residual boundary and naming narrower 3D scene/read-port ownership as a next-wave candidate (`architecture-audit/cycle-028-canvas-projection-dto-selectors/implementation-log.md`, “Retained residuals and rationale”; “Final residual risks and next-wave recommendation”).
+
+Current canvas presentation is no longer the highest central read leak. `CanvasPresentationSelector` now consumes `getCanvasPlaneTransforms()`, `getPlaneCanvasItems()`, and `getProjected3DCanvasItems(...)` instead of raw projection-plane/world getters, though it still contains DTO-to-style/primitive mapping and casts domain-shaped style arguments (`frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:8-29`, `frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:32-76`). `CanvasWorldReadPort` has behavior-sized public methods while its raw traversal is private adapter implementation (`frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:12-16`, `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:18-95`). `Projected3DCanvasReadPort` localizes the canvas projected-3D raw traversal (`frontend/src/application/canvasPresentation/Projected3DCanvasReadPort.ts:5-12`), and the architecture guard asserts that localization (`frontend/tests/unit/application/appShell/Cycle027Architecture.test.ts:28-42`).
+
+The remaining central rendering/read boundary is now 3D presentation. `createThreePresentationReadPorts(world)` returns five read ports that all close over the concrete `World` (`frontend/src/application/threePresentation/ThreeWorldReadPort.ts:29-45`). The projection-plane port still classifies auxiliary planes with domain `instanceof`, reads projection and plane realizations directly from `World`, and exposes those realization objects in the read model (`frontend/src/application/threePresentation/ThreeProjectionPlaneReadPort.ts:18-39`). The planar-element port traverses all projection planes and their points/lines/circles, uses domain `visualStyle`, exposes domain realization objects, and classifies segments with `instanceof` (`frontend/src/application/threePresentation/ThreePlanarElementReadPort.ts:10-39`). The reconstructed-element and guide ports traverse raw 3D collections and return domain realization/style objects (`frontend/src/application/threePresentation/ThreeReconstructedElementReadPort.ts:12-24`, `frontend/src/application/threePresentation/ThreeGuideReadPort.ts:21-55`). The hinge port similarly assembles a realization context and exposes hinge realizations (`frontend/src/application/threePresentation/ThreeHingeReadPort.ts:8-20`).
+
+Realization-context ownership is concrete but should stay bounded. A shared `createWorldRealizationContext(world)` already maps domain realization queries from `World` (`frontend/src/application/presentation/WorldRealizationContext.ts:4-14`), while `createThreeRealizationContext(...)` wraps it and adds raw collection callbacks for projection planes and hinge lines (`frontend/src/application/threePresentation/ThreeRealizationContext.ts:12-20`). Wave 029 may split or type this context ownership only as needed to make 3D read ports behavior-sized; it must not introduce a generic `RuntimeWorld`, `WorldReadModel`, scene-kernel, app-kernel, or mutable world façade.
+
+Runtime composition confirms the active seam: `RuntimeSession.threePresentationPort()` creates the 3D read-port bundle from the concrete `World` and exposes it through `getReadPorts()` (`frontend/src/application/appShell/RuntimeSession.ts:88-94`). Any implementation must preserve this runtime-private world ownership while changing the 3D presentation contract consumed by the renderer.
+
+Persistence DTO casts are a real but lower-central residual. `ProjectSessionPersistenceAdapter` casts validated project data through `unknown` into `PersistedProjectSession`, then casts it back to `ProjectData` for restore (`frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:10-20`). However, current `ProjectService` already has a typed current schema, validates command descriptors, deserializes through `OperationRegistry`, and restores committed commands without the older private-cast/migration architecture (`frontend/src/services/ProjectService.ts:24-78`, `frontend/src/services/ProjectService.ts:80-129`). This app-shell/persistence DTO alignment should follow the still-active 3D rendering/read boundary unless a future scout proves it blocks 3D work.
+
+The 3D overlay pointer-boundary regression remains a validation constraint for this wave because 3D presentation/renderer changes are user-observable. Current e2e coverage asserts the overlay owns pointer interaction and does not pass drag gestures through to the 2D canvas (`frontend/tests/e2e/current-ui-contract.spec.ts:89-116`).
+
+**Target outcome**
+
+The 3D presentation surface exposes behavior-sized, renderer-oriented DTO read ports rather than leaking mutable domain objects, domain `visualStyle` objects, raw realization objects, or repeated raw `World` traversal decisions through each sub-port. Ownership after the wave should be explicit for:
+
+- projection-plane mesh/grid DTOs;
+- planar 2D-on-3D element DTOs;
+- reconstructed 3D entity DTOs;
+- selected-guide and guide-intersection DTOs;
+- hinge-line DTOs;
+- DTO-native visual/style information needed by the 3D renderer;
+- feasibility filtering and absent-realization representation;
+- typed realization-context assembly localized to a focused adapter/factory.
+
+`RuntimeSession` remains the private concrete `World`/`CommandStack` owner and only wires focused 3D presentation adapters. `ThreeView.vue` and `rendering/threeView` consumers should receive DTOs/read ports that match rendering behavior and should not need concrete `World`, raw projection planes, domain element classes, command state, persistence payloads, Vue stores, or broad app-kernel objects.
+
+User-visible 3D behavior must remain equivalent for projection planes, grid/labels where present, hinge lines, planar elements, reconstructed 3D elements, guides/intersections, visibility/style states, selected/hovered/cascade emphasis where applicable, and overlay pointer ownership unless a reviewed proposal explicitly declares a behavior change.
+
+**Explicit DELETE list**
+
+- Delete 3D presentation read-model fields that expose domain realization objects directly where renderer DTO geometry can replace them.
+- Delete 3D presentation read-model fields that expose domain `visualStyle` objects directly where DTO-native style/status fields can replace them.
+- Delete repeated raw `world.getAllProjectionPlanes()`, `world.getAll3DPoints()`, `world.getAll3DLines()`, `world.getAll3DSegments()`, `world.getAllPlanes()`, and `world.getAllHingeLines()` traversal from individual 3D sub-ports where a single behavior-sized adapter/selector can own the traversal.
+- Delete 3D read-port domain `instanceof` classification seams where DTO kinds can carry explicit presentation classification; if a domain predicate is required, localize it inside the adapter and document the residual.
+- Delete duplicate three-specific realization-context assembly that can be replaced by a typed focused factory without broadening into a generic read-model façade.
+- Delete any transitional dual raw-and-DTO 3D read-port paths, compatibility wrappers, broad `ThreeWorld`, `RuntimeWorld`, `WorldReadModel`, `SceneKernel`, app-kernel, or all-purpose presentation snapshot facades created during implementation.
+- Delete stale tests/mocks that assert domain realization/style object leakage through 3D read ports; replace them with focused DTO contract tests and renderer behavior tests.
+- Do not delete or rewrite canvas projection DTO selectors, persistence schema/replay, `ProjectService`, command history/producer, command descriptors/serialization/replay, `CommandStack`, backend, Drive/auth, docs/specs, package/tooling, validation-platform code, preview scripts, broad domain realization internals, or CSS-only overlay behavior without a reviewed plan edit.
+
+**Success criteria**
+
+- `ThreePresentationReadPorts` and sub-port methods are named by 3D presentation behavior and return DTO/read models suitable for the 3D renderer without requiring consumers to know mutable domain classes.
+- 3D read models no longer expose domain realization or `visualStyle` objects where DTO geometry/style fields can serve the renderer; any retained domain-shaped field has a precise caller map and reviewed residual rationale.
+- Raw world collection traversal in 3D presentation is localized to a named adapter/selector boundary instead of being repeated across sub-ports, unless the implementation log records reviewed evidence that a repeated traversal is the smallest correct owner for that behavior.
+- Realization-context assembly is typed and localized; no generic world/read-model/app-kernel façade is introduced.
+- `RuntimeSession` continues to own concrete `World` privately and only wires the narrowed 3D presentation boundary.
+- `ThreeView.vue` and `rendering/threeView` consumers do not import concrete `World`, command classes, persistence payload types, Vue stores, or domain element classes as a result of this wave.
+- The existing canvas projection DTO boundary from Wave 028 remains intact: no reintroduced raw canvas public getters, process-tree canvas visibility seam, or broad canvas world façade.
+- User-visible 3D rendering and overlay pointer behavior remain equivalent, including projection planes, planar elements, reconstructed elements, guides/intersections, hinges, visibility/style states, and the no-click-through overlay contract.
+- Focused tests cover the new 3D DTO/read-port contracts, realization-context factory behavior, renderer consumer mapping where touched, architecture/static boundary rules, and residual caller maps.
+- No source changes occur outside reviewed Wave 029 implementation scope; unrelated dirty files remain untouched unless separately scoped by reviewed plan edit.
+
+**Dependencies / ordering**
+
+Depends on Wave 028 because Wave 028 cleaned the canvas projection DTO selectors and localized projected-3D canvas traversal, making the 3D scene/read-port ownership seam the next highest-centrality rendering/read boundary. It should precede DTO-native canvas style-policy polish, persistence adapter DTO-cast cleanup, backend/docs/spec drift, Drive/auth, package/tooling, preview ergonomics, and UI/docs cleanup because those are narrower integration or cleanup concerns relative to the active 3D presentation read boundary.
+
+**Validation requirements**
+
+All Wave 029 implementation validation stdout/stderr must be captured under `architecture-audit/cycle-029-3d-presentation-dto-read-ports-and-realization-context-ownership/validation/`. Undefined commands may be skipped only with exact package-script evidence in the implementation log; defined root or workspace commands are mandatory.
+
+1. Capture pre-edit path-scoped git status/diff and static scans for 3D read-port methods, raw world collection traversal, domain realization/style exposure in 3D read models, domain `instanceof` classification, realization-context factories, runtime 3D port wiring, `ThreeView.vue`/`rendering/threeView` consumers, Wave 028 canvas boundary invariants, and overlay pointer rules.
+2. Run focused Vitest for changed 3D presentation read-port modules, realization-context factory modules, renderer consumer mapping modules where touched, and architecture boundary tests.
+3. Add/update static architecture tests proving forbidden broad facades are absent, concrete `World` remains runtime-private, 3D renderer consumers do not import domain/command/persistence/store internals, and Wave 028 canvas raw-seam deletions remain guarded.
+4. Run focused 3D rendering/presentation behavior tests for projection planes, planar elements, reconstructed elements, guides/intersections, hinges, style/visibility state, and feasibility/null-realization behavior where touched.
+5. Run the current overlay pointer-boundary e2e test whenever `ThreeView.vue`, `rendering/threeView`, layout/overlay files, or 3D presentation wiring changes; at minimum preserve and cite `current-ui-contract.spec.ts` evidence.
+6. Run `npm run lint` at the repository root and in every workspace where a lint script is defined, including `frontend` while it remains active.
+7. Run full Vitest at the repository root and in every workspace where a test/Vitest script is defined, including `frontend` while it remains active.
+8. Run `npm run build` at the repository root and in every workspace where a build script is defined, including `frontend` while it remains active.
+9. Run Playwright/e2e at the repository root and in every workspace where an e2e script is defined because 3D rendering/read-port changes are user-observable.
+10. Refresh the live preview bound to `0.0.0.0:5173`, capture HTTP 200 reachability probes, and run focused Playwright/live browser smoke for representative 3D view rendering, overlay pointer ownership, canvas/3D coexistence, projection-plane display, selected guide/intersection display if available, visibility/style display, and undo/redo regression checks without real Drive/auth credentials.
+
+**Risks**
+
+- 3D DTO extraction can become a renamed world façade if methods mirror raw domain collections. Keep public methods named by 3D rendering behavior and prove caller intent in the scope-check inventory.
+- Replacing domain realization objects with DTO geometry can subtly change feasibility filtering, labels, mesh geometry, guide/intersection display, render order, or style/visibility. Focused tests must compare representative DTO content and rendered behavior, not just counts.
+- Realization-context cleanup can overreach into domain semantics. Limit it to typed context assembly and stop for a reviewed plan edit if realization contracts themselves need redesign.
+- `ThreeView.vue`/renderer consumers may rely on existing domain-shaped objects. Delete stale consumer assumptions rather than preserving dual raw-and-DTO paths, but do not hide a broad scene renderer rewrite inside this wave.
+- Presentation-adjacent changes can regress the 3D overlay pointer boundary. Treat the current no-click-through e2e contract as mandatory validation when touched.
+- Existing unrelated dirty files are present. Use path-scoped status/diff and do not depend on unowned modifications.
+
+**No-backcompat rationale**
+
+3D presentation read ports are internal architecture contracts. Keeping domain realization/style leakage plus new DTO contracts would preserve a bypass path and invite renderer code to keep depending on mutable domain objects. Once reviewed DTO/read-port replacements exist, delete replaced raw fields, raw traversal seams, duplicate context assembly, transitional wrappers, stale mocks, and dual raw-and-DTO paths. Backward compatibility for internal 3D read-port shapes has zero priority compared with a clean rendering/read boundary.
