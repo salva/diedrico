@@ -4,7 +4,7 @@
 
 Implement a bounded command-producer cleanup that keeps the current intent-based canvas/tool surface and moves raw `World`/`CommandStack` pairs out of controller/use-case constructors. `RuntimeSession` will still privately own `World` and `CommandStack`, but it will compose behavior-sized command-production services and expose only existing intent ports (`ToolCommandSink` and `ProcessHistoryIntentSink`) to production wiring.
 
-This proposal corrects the stale Wave 024 plan wording: there is no current `commandStackForDeferredCommandProducers()` accessor and no raw `commandStack` provide/inject in `SvgCanvas.vue`. The active seam is the runtime constructor handoff from `RuntimeSession` to `CanvasToolController` and `ProcessHistoryController`, then raw-stack use inside canvas movement/style/construction/process-history producers.
+This proposal corrects the stale Wave 024 plan wording: there is no current `commandStackForDeferredCommandProducers()` accessor and no raw `commandStack` provide/inject in `SvgCanvas.vue`. The active seam is the runtime constructor handoff from `RuntimeSession` to `CanvasToolController` and `ProcessHistoryController`, then raw-stack use inside canvas movement/style/construction/process-history producers. The Cycle 024 review/decision must cite this corrected proposal set as superseding those stale plan details for implementation scope; implementation must not rely on the stale accessor/provide-inject claims.
 
 ## Target outcome
 
@@ -131,7 +131,7 @@ Implementation must capture stable logs under the Cycle 024 validation directory
 5. root and frontend full Vitest;
 6. root and frontend build;
 7. root/frontend Playwright e2e;
-8. live preview refresh on `0.0.0.0:5173`, HTTP 200 probe, and Playwright/live smoke for representative construction, point movement, style, process-history, undo/redo, and 3D overlay pointer contract.
+8. live preview refresh on `0.0.0.0:5173`, HTTP 200 probe, and Playwright/live smoke for representative construction, point movement, style, process-history, undo/redo, and 3D overlay pointer contract. Preview refresh/probe is required only in the future implementation/validation stage; this scout/proposal correction stage performs no preview refresh and does not change preview-server behavior.
 
 ## Risks and mitigations
 

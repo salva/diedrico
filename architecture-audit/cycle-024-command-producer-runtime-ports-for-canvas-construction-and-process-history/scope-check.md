@@ -118,9 +118,15 @@ Wave 024 implementation proposals must not change:
 - Drive/auth/browser credential internals, protected config/env/provider files, backend APIs, docs/specs, package/tooling, validation-platform work, or UI feature additions;
 - broad app-shell production composition beyond replacing command-producer wiring.
 
-## 3D overlay / preview implications
+## 3D overlay implications
 
 Cycle 024 touches user-observable canvas and tool command behavior, so implementation validation must preserve the current overlay pointer contract. Current e2e explicitly asserts the 3D overlay is visible, has `pointer-events: auto`, is the element under the tested point, and drag gestures over it do not mutate the SVG canvas viewBox (`frontend/tests/e2e/current-ui-contract.spec.ts:89-117`). The implementation must not change Three overlay CSS, `ThreeView.vue`, canvas CSS pointer rules, or event routing except through a reviewed plan edit.
+
+## Preview implications and boundary
+
+This scout/proposal stage performs no implementation and therefore performs **no live-preview refresh, no preview-server restart, no reachability probe, and no Playwright/live browser exercise**. Preview-server behavior is otherwise out of scope for this stage: do not change dev-server scripts, host/port settings, Vite configuration, Playwright configuration, or preview lifecycle files as part of Cycle 024 scouting/proposal correction.
+
+A future Cycle 024 implementation/validation stage must refresh the live application preview after successful validation, bind it to `0.0.0.0:5173`, and capture stable HTTP reachability evidence under that cycle's `validation/` directory. Because Wave 024 can affect user-observable canvas/tool/process-history behavior, the implementation log must also record the preview refresh command, PID/log/probe evidence, and the live/Playwright smoke coverage used to verify representative command-producer flows.
 
 ## DELETE candidates for Wave 024 implementation
 
@@ -149,8 +155,8 @@ No validation is run in this design stage. A future Wave 024 implementation must
 7. root/frontend Playwright e2e because canvas/process-history/tool behavior is user-observable;
 8. live preview refresh on `0.0.0.0:5173`, HTTP 200 probe, and live/Playwright smoke for point creation, representative construction, point drag commit/cancel, style update, process-history action, undo/redo, and the 3D overlay pointer contract.
 
-## Premise decision and next-stage recommendation
+## Premise decision, stale-plan reconciliation, and next-stage recommendation
 
-Proceed with Cycle 024 proposals/review. No wave-plan correction is required before review because the central premise remains valid, but implementation proposals must explicitly correct the stale accessor/provide-inject language and target the active raw `world`/`commandStack` constructor/use-case seams instead.
+Proceed with Cycle 024 proposals/review. A wave-plan edit is not required before review because the central Wave 024 ordering and target remain valid, but the stale accessor/provide-inject claims in `architecture-audit/wave-plan.md:1473-1503` must not be used as implementation authority. For this cycle, the reviewed Cycle 024 proposal set (`scope-check.md`, `proposals/proposal-direct.md`, `proposals/proposal-restructure.md`) and the eventual Cycle 024 review/decision artifact must explicitly supersede those stale Wave 024 wording details and cite the current-source scope basis: `RuntimeSession.canvasCommandProducerPort(...)` and `RuntimeSession.processHistoryCommandPort()` pass private `world`/`commandStack` into command-producing controllers, while `commandStackForDeferredCommandProducers()` and raw `commandStack` provide/inject are already absent.
 
-Recommended next canonical stage after critic approval of these artifacts: `cycle-024-review-round-01` for review of `scope-check.md`, `proposals/proposal-direct.md`, and `proposals/proposal-restructure.md`. If critic/reviewer treats the stale Wave 024 wording as blocking, the precise correction is an artifact/plan-edit mini-cycle that replaces `commandStackForDeferredCommandProducers()`/raw provide-inject references with current `RuntimeSession.canvasCommandProducerPort` and `processHistoryCommandPort` constructor handoff evidence; it should not authorize source implementation before review convergence.
+Recommended next canonical stage after critic approval of these corrected artifacts: `cycle-024-review-round-01` for review of `scope-check.md`, `proposals/proposal-direct.md`, and `proposals/proposal-restructure.md`. The review and subsequent `decision.md` must record that the proposal set supersedes stale Wave 024 accessor/provide-inject wording for this cycle before any implementation stage is authorized. If the reviewer/decision owner is unwilling to let the reviewed proposal set supersede stale plan wording, then the fallback is a reviewed wave-plan/decision correction mini-cycle before implementation; direct implementation must not proceed while relying on the stale `commandStackForDeferredCommandProducers()` or raw provide/inject claims.

@@ -15,7 +15,7 @@ The direct seam is real:
 - `ConstructionUseCases.ts` owns a large command-production switch spanning 2D, guide, intersection, tangent, 3D, and projection-plane creation (`frontend/src/application/construction/ConstructionUseCases.ts:35-238`).
 - `ProcessHistoryUseCases` repeats the command lifecycle pattern for process-tree operations (`frontend/src/application/processHistory/ProcessHistoryUseCases.ts:72-90`).
 
-The stale Wave 024 plan language is also important: `commandStackForDeferredCommandProducers()` is already absent and boundary tests assert it remains absent. Therefore any restructure must target current producer ownership, not revive a raw accessor cleanup that no longer exists.
+The stale Wave 024 plan language is also important: `commandStackForDeferredCommandProducers()` is already absent and boundary tests assert it remains absent. Therefore any restructure must target current producer ownership, not revive a raw accessor cleanup that no longer exists. Any review/decision selecting this restructure path must explicitly state that the corrected Cycle 024 proposal set supersedes stale Wave 024 accessor/provide-inject wording for implementation scope, or else require a reviewed wave-plan/decision correction before implementation.
 
 ## Restructure option A: small application command-producer kernel
 
@@ -108,7 +108,7 @@ If option A is chosen, validation must cover the same full Wave 024 set as direc
 - preview session repeats rollback/reapply, commit pushes once, cancel rolls back;
 - undo/redo works through existing `CommandHistoryPort` after kernel-produced commands.
 
-If option B split is chosen, run a reviewed plan-edit mini-cycle first. Each sub-wave must then have its own validation logs and explicit residual list.
+If option B split is chosen, run a reviewed plan-edit mini-cycle first. Each sub-wave must then have its own validation logs and explicit residual list. In all implementation paths, live preview refresh/probe is deferred to the implementation/validation stage and must bind to `0.0.0.0:5173` with HTTP reachability evidence; this proposal correction stage performs no preview work and does not change preview-server behavior.
 
 ## Recommendation
 
