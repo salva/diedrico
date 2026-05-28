@@ -1,0 +1,31 @@
+--- forbidden accessor ---
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:113:    expect(runtimeSession).not.toMatch(/commandStackForDeferredCommandProducers\(/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:136:    expect(appShellRuntime).not.toMatch(/commandStackForDeferredCommandProducers|commandStack,/);
+--- raw provide/inject ---
+frontend/tests/unit/application/panelToolbarIntentControllers.spec.ts:36:    expect(actionsPanelSource).not.toContain("inject<unknown>('commandStack')");
+frontend/tests/unit/application/canvasToolControllers.spec.ts:247:    expect(source).not.toContain("inject('commandStack')");
+--- scoped CommandStack imports ---
+--- scoped commandStack.push ---
+--- raw stack params identifiers ---
+--- new Command in scoped modules ---
+--- expected owner ---
+frontend/src/application/appShell/RuntimeSession.ts:1:import { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/appShell/RuntimeSession.ts:27:  private readonly commandStack = new CommandStack();
+frontend/src/application/appShell/RuntimeSession.ts:198:    const candidateCommandStack = new CommandStack();
+frontend/src/application/appShell/RuntimeSession.ts:199:    persistence.restoreSession(openedSession.payload, { world: candidateWorld, commandStack: candidateCommandStack });
+frontend/src/application/appShell/RuntimeSession.ts:200:    if (candidateWorld.getAllProjectionPlanes().length === 0) initializeWorld(candidateWorld, candidateCommandStack);
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:13:  createCommand: (description, world) => new Command(description, world),
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:24:    private readonly commandStack: CommandStack,
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:36:    this.commandStack.push(deleteCommand);
+frontend/src/application/appShell/ProjectSessionPersistenceTargets.ts:1:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/appShell/ProjectSessionPersistenceTargets.ts:6:  readonly commandStack: CommandStack;
+frontend/src/application/appShell/ProjectSessionPersistenceTargets.ts:11:  readonly commandStack: CommandStack;
+frontend/src/application/commandProduction/RuntimeCommandProducer.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/commandProduction/RuntimeCommandProducer.ts:18:    private readonly commandStack: CommandStack
+frontend/src/application/commandProduction/RuntimeCommandProducer.ts:22:    const command = new Command(description, this.world);
+frontend/src/application/commandProduction/RuntimeCommandProducer.ts:27:      this.commandStack.push(command);
+frontend/src/application/commandProduction/RuntimeCommandProducer.ts:36:    const command = new Command(description, this.world);
+frontend/src/application/commandProduction/RuntimeCommandProducer.ts:58:          this.commandStack.push(command);
+frontend/src/application/commandProduction/RuntimeCommandProducer.ts:76:    const command = new Command(description, this.world);
+frontend/src/application/commandProduction/RuntimeCommandProducer.ts:81:      this.commandStack.push(command);
