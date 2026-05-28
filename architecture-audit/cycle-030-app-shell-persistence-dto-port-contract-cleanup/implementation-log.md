@@ -95,3 +95,69 @@ All validation evidence was captured under `architecture-audit/cycle-030-app-she
 
 - Command descriptor / operation serialization cleanup remains a future centrality candidate, but was not needed for this DTO port cleanup.
 - Preview lifecycle/process hygiene could be tightened in a future validation-platform wave to avoid duplicate 5173 servers and localhost/IPv6 conflicts.
+
+## Final closure evidence — validation-and-preview-refresh stage
+
+Status: **Cycle 030 complete**.
+
+Closure was performed without production implementation changes, package/tooling churn, backend/docs/spec edits, Drive/auth internals work, persistence schema/replay semantic changes, command descriptor redesign, OperationRegistry changes, rendering/CSS/canvas/3D behavior changes, protected config/secret reads, or unrelated dirty-file normalization.
+
+### Decision/proposal conformance
+
+- Re-read `decision.md` and `proposals/proposal-direct.md`; the current implementation matches the selected direct proposal.
+- `frontend/src/application/appShell/AppShellPorts.ts` defines `ProjectSessionPersistencePayload = ProjectData` as a type-only current DTO alias.
+- `OpenedProjectSession.payload`, `ProjectSessionPersistencePort.snapshotCurrentSession(...)`, `ProjectSessionPersistencePort.restoreSession(...)`, `DrivePort.createFile(...)`, and `DrivePort.updateFile(...)` use `ProjectSessionPersistencePayload`.
+- `DrivePort.loadFile(...)` remains `Promise<unknown>` so remote data is validated before restore.
+- `ProjectSessionPersistenceAdapter.ts` remains the behavior boundary to `ProjectService`: it serializes, validates, and deserializes through `ProjectService` directly with no wrapper or double-cast shim.
+- Runtime session candidate-restore safety remains preserved by the already-implemented `RuntimeSession.restoreValidatedProject(...)` path; this closure made no runtime source edits.
+- `ProjectService` schema, validation assertions, command replay/deserialization semantics, command descriptors, operation registry, and migration/backcompat behavior were not changed by closure.
+
+### Protected-surface and delete/proof checks
+
+New closure evidence was captured under `architecture-audit/cycle-030-app-shell-persistence-dto-port-contract-cleanup/validation/`:
+
+- `closure-scoped-status-diff.stdout.log` / `.stderr.log`: scoped status and diff check. Result: no scoped source/test diff in Cycle 030 implementation files; only pre-existing/untracked Cycle 030 review/critique/validation evidence appears in scoped status.
+- `closure-static-scans.stdout.log` / `.stderr.log`: DTO/DrivePort scan and forbidden-seam scan. Result: `ProjectSessionPersistencePayload` and DrivePort create/update/load rules are present; no forbidden production/focused-test seam remnants were found outside negative boundary assertions.
+- `closure-validation-log-index.stdout.log` / `.stderr.log`: index and tail evidence for the recorded validation logs. Result: focused app-shell Vitest, root/frontend lint, root/frontend full Vitest, root/frontend build, root/frontend e2e/Playwright, and credential-free live smoke all show pass evidence in existing logs.
+- `closure-live-preview-reachability.stdout.log` / `.stderr.log` plus `closure-live-preview.html`: live preview probe. Result: one listener on `0.0.0.0:5173`; HTTP probe to `127.0.0.1:5173/` returned `http_code=200`.
+
+Static boundary conclusions:
+
+- No raw object / `PersistedProjectSession` app-shell persistence marker path remains in production app-shell source.
+- No adapter double-cast shim (`as unknown as PersistedProjectSession` or `as unknown as ProjectData`) remains in the scoped implementation path.
+- No dual compatibility path preserving both generic object and typed payload public save/update contracts was found.
+- `ProjectService` behavior imports remain localized to `ProjectSessionPersistenceAdapter.ts`; `AppShellPorts.ts` has only the reviewed type-only DTO import.
+- No Drive/auth internals, protected credentials/config files, rendering/CSS/canvas/3D files, backend, docs, specs, package/tooling, command descriptors, or OperationRegistry files were read for secrets or modified during closure.
+
+### Validation and live-preview closure
+
+Mandatory validation evidence is green based on the existing recorded logs and the closure re-checks:
+
+- Focused app-shell Vitest: `focused-appshell-vitest.stdout.log` — 2 files, 39 tests passed.
+- Root lint: `root-lint.stdout.log` — architecture tests 11/11 passed.
+- Frontend lint: `frontend-lint.stdout.log` — architecture tests 11/11 passed.
+- Root full Vitest: `root-vitest.stdout.log` — 115 files passed, 1 skipped; 1292 tests passed, 45 skipped, 11 todo.
+- Frontend full Vitest: `frontend-vitest.stdout.log` — 115 files passed, 1 skipped; 1292 tests passed, 45 skipped, 11 todo.
+- Root build: `root-build.stdout.log` — passed with existing Vite chunk-size warning only.
+- Frontend build: `frontend-build.stdout.log` — passed with existing Vite chunk-size warning only.
+- Root e2e/Playwright: first `root-e2e` attempt failed for a non-source-attributable duplicate preview/port conflict; after cleanup, `root-e2e-rerun.stdout.log` shows 10/10 tests passed.
+- Frontend e2e/Playwright: `frontend-e2e.stdout.log` — 10/10 tests passed.
+- Credential-free live smoke: `live-smoke.stdout.log` — canvas/status bar/3D overlay/plane selector visible, representative drawing present, active-plane and undo/redo evidence recorded, 3D overlay owns pointer interaction. Save/open/autosave live smoke remains explicitly skipped because the current production path requires Google credentials and no credential-free local project path is exposed.
+- Live preview: closure probe confirms `0.0.0.0:5173` listener and HTTP 200 reachability.
+
+### Source-control reconciliation
+
+- Closure did not alter production or test implementation files.
+- Path-scoped diff for Cycle 030 implementation files was empty before the closure log/report edits.
+- Unrelated broader worktree noise was not normalized, staged, reverted, or incorporated.
+- The only closure-authored changes are this final closure section, closure validation evidence logs/HTML, and the required task report.
+
+### Residual risks and next-wave recommendation
+
+Residual risks accepted for Cycle 030:
+
+- Existing Vite chunk-size warnings remain unrelated to Cycle 030.
+- Preview process hygiene remains a validation-platform concern because a stale duplicate preview caused the first root e2e attempt to select/conflict with the wrong server; the canonical preview is now reachable on `0.0.0.0:5173`.
+- Credential-backed save/open behavior was not live-smoked because protected credentials/config are out of scope; app-shell persistence behavior is covered by focused use-case/unit validation and credential-free e2e smoke.
+
+Next-wave recommendation after re-reading `wave-plan.md` and Cycle 030 residuals: continue with the most central remaining command/persistence architecture work rather than peripheral preview tooling. The precise next stage should be a fresh scout/scope-check for the current wave-plan entry that owns command descriptor / operation serialization cleanup and deletion of private-cast/migration compatibility paths (the plan’s command/undo and persistence contract wave), while carrying preview lifecycle/process hygiene only as a lower-centrality future validation-platform candidate.
