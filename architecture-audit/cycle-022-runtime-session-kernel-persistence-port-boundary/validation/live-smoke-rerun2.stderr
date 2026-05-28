@@ -1,0 +1,7 @@
+locator.waitFor: Timeout 15000ms exceeded.
+Call log:
+  - waiting for getByTestId('app-shell') to be visible
+
+    at /work/diedrico/architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/validation/live-smoke.cjs:6:39 {
+  name: 'TimeoutError'
+}

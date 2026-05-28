@@ -92,3 +92,18 @@ A transient first live smoke attempt failed because the ad hoc script used stale
 
 - Continue with the planned centrality order: split additional `RuntimeSession` consumer/view/command producer responsibilities only through a reviewed future wave.
 - Consider a future persistence-port cleanup that renames the remaining abstract `RuntimeSessionSnapshotHandle`/`RuntimeSessionRestoreHandle` in `AppShellPorts.ts` if the wave plan selects persistence contract language refinement.
+
+## Retry-1 validation reconciliation
+
+This retry found the Wave 022 implementation source already committed in `4269eb39d2bf89ccfd753ec7785a051059622b01`; path-scoped source diff for the decision-selected source/test files was empty. The retry therefore re-validated the committed implementation and added retry-specific validation evidence without changing production or test source.
+
+Additional retry evidence:
+
+- `validation/static-boundary-scan.stdout`, `.stderr` — PASS; adapter no longer imports `RuntimeSession`, project-session use cases no longer import concrete `RuntimeSession`, `AppShellPorts.ts` has no concrete `World`/`CommandStack`/`ProjectService` imports, `ProjectService` remains adapter-private, and selection-delete command construction remains in `SelectionDeletionCommandService`.
+- `validation/focused-app-shell-vitest-rerun.stdout`, `.stderr` — PASS for app-shell runtime/use-case boundary tests and selection-deletion service tests. The first focused command log (`focused-app-shell-vitest.stdout`, `.stderr`) records a non-source invocation mistake from running a workspace command inside the workspace; the root rerun passed.
+- `validation/root-lint.stdout`, `frontend-lint.stdout`, `root-full-vitest.stdout`, `frontend-full-vitest.stdout`, `root-build.stdout`, `frontend-build.stdout` — PASS.
+- `validation/frontend-e2e.stdout`, `.stderr` — PASS, 10 tests. Initial `root-e2e.stdout`, `.stderr` recorded a preview-port collision with stale listeners; after refreshing the live preview on `0.0.0.0:5173`, `validation/root-e2e-rerun.stdout`, `.stderr` passed.
+- `validation/live-preview-refresh-probe.stdout`, `.stderr` — PASS; stale `5173` listeners were replaced and the refreshed Vite preview answered `HTTP/1.1 200 OK` on `127.0.0.1:5173` while bound to `0.0.0.0:5173`.
+- `validation/live-smoke-rerun3.stdout`, `.stderr` — PASS after correcting the validation-only smoke helper to use the current `svg-canvas` selector; exercised startup/status, point creation, Delete/Ctrl+Z keyboard behavior, and 3D overlay hit-testing/no SVG pan.
+
+No additional production source, test source, package/tooling, backend/docs/specs, rendering/Three/canvas/CSS, Drive/auth, ProjectService schema/replay, command descriptor, or OperationRegistry changes were made by this retry.

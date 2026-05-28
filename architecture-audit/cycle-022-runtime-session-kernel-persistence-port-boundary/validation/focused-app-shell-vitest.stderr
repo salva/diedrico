@@ -1,0 +1,3 @@
+npm error No workspaces found:
+npm error   --workspace=frontend
+npm error A complete log of this run can be found in: /home/salva/.npm/_logs/2026-05-28T02_34_31_767Z-debug-0.log

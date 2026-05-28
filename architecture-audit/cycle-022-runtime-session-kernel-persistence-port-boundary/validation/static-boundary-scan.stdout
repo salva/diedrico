@@ -1,0 +1,24 @@
+PASS adapter does not import RuntimeSession
+from '@/services/ProjectService'
+from './AppShellPorts'
+from './ProjectSessionPersistenceTargets'
+
+PASS ProjectSessionUseCases does not import RuntimeSession
+from 'vue'
+from './AutoSaveUseCases'
+from './AppShellPorts'
+from './AppShellErrorClassifier'
+from './ProjectSessionKernel'
+
+PASS AppShellPorts has no concrete World/CommandStack/ProjectService imports
+import type { Ref } from 'vue';
+import type { GoogleDriveFile, GoogleUserProfile } from '@/services/GoogleDriveService';
+import type { ToolType } from '@/stores/toolStore';
+import type { KeyboardShortcutRouterTarget } from './KeyboardShortcutRouter';
+
+PASS ProjectService import is adapter-private in app-shell
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts
+
+PASS selection command construction remains in SelectionDeletionCommandService
+selection clean=true
+

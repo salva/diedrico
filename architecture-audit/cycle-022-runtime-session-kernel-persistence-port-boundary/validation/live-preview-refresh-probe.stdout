@@ -1,0 +1,39 @@
+## existing listeners before refresh
+LISTEN 0      511          0.0.0.0:5173      0.0.0.0:*    users:(("MainThread",pid=83486,fd=22)) 
+LISTEN 0      511            [::1]:5173         [::]:*    users:(("MainThread",pid=112020,fd=23))
+## existing vite/npm processes before refresh
+  83470       1 npm run dev --host 0.0.0.0
+  83485   83470 sh -c vite --host 0.0.0.0
+  83486   83485 node /work/diedrico/frontend/node_modules/.bin/vite --host 0.0.0.0
+  90593       1 npm run dev --host 0.0.0.0
+  90607   90593 sh -c vite --host 0.0.0.0
+  90608   90607 node /work/diedrico/frontend/node_modules/.bin/vite --host 0.0.0.0
+  97613       1 npm run dev --host 0.0.0.0
+  97627   97613 sh -c vite --host 0.0.0.0
+  97628   97627 node /work/diedrico/frontend/node_modules/.bin/vite --host 0.0.0.0
+ 104554       1 npm run dev --host 0.0.0.0
+ 104569  104554 sh -c vite --host 0.0.0.0
+ 104570  104569 node /work/diedrico/frontend/node_modules/.bin/vite --host 0.0.0.0
+ 111981       1 npm run dev --host 0.0.0.0
+ 111995  111981 sh -c npm run dev:frontend --host 0.0.0.0
+ 111996  111995 npm run dev:frontend 0.0.0.0
+ 112007  111996 sh -c npm run dev --workspace=frontend 0.0.0.0
+ 112008  112007 npm run dev 0.0.0.0
+ 112019  112008 sh -c vite 0.0.0.0
+ 112020  112019 node /work/diedrico/frontend/node_modules/.bin/vite 0.0.0.0
+## terminate existing 5173 listeners if any
+112020
+83486
+## start preview on 0.0.0.0:5173
+## listeners after refresh
+LISTEN 0      511          0.0.0.0:5173      0.0.0.0:*    users:(("MainThread",pid=116693,fd=25))
+## curl probe
+HTTP/1.1 200 OK
+Vary: Origin
+Content-Type: text/html
+Cache-Control: no-cache
+Etag: W/"2a2-jmzE7161kdnXI7JasQMw+v8+14s"
+Date: Thu, 28 May 2026 02:39:22 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+

@@ -1,0 +1,742 @@
+--- frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts ---
+import { ProjectService, type ProjectData } from '@/services/ProjectService';
+import type { OpenedProjectSession, PersistedProjectSession, ProjectSessionPersistencePort } from './AppShellPorts';
+import type { RuntimeSessionPersistenceRestoreHandle, RuntimeSessionPersistenceSnapshotHandle } from './ProjectSessionPersistenceTargets';
+
+export class ProjectSessionPersistenceAdapter implements ProjectSessionPersistencePort {
+  snapshotCurrentSession(session: RuntimeSessionPersistenceSnapshotHandle, projectName: string): object {
+    return ProjectService.serializeCommands(session.commandStack, session.nextElementId, projectName);
+  }
+
+  validateProjectData(data: unknown): OpenedProjectSession {
+    ProjectService.validateProjectData(data);
+    const projectData = data as ProjectData;
+    return {
+      projectName: projectData.name,
+      payload: projectData as unknown as PersistedProjectSession,
+    };
+  }
+
+  restoreSession(data: PersistedProjectSession, target: RuntimeSessionPersistenceRestoreHandle): void {
+    ProjectService.deserializeCommands(data as unknown as ProjectData, target.world, target.commandStack);
+  }
+}
+
+--- frontend/src/application/appShell/ProjectSessionUseCases.ts ---
+import type { Ref } from 'vue';
+import type { AutoSaveUseCases } from './AutoSaveUseCases';
+import type { AuthStorePort, DrivePort, LastProjectRepositoryPort, ProjectSessionPersistencePort, SaveStatus, StartupDialogState } from './AppShellPorts';
+import { describeUnknownError } from './AppShellErrorClassifier';
+import type { ProjectSessionKernel } from './ProjectSessionKernel';
+
+export class ProjectSessionUseCases {
+  constructor(
+    private readonly deps: {
+      session: ProjectSessionKernel;
+      hasGoogleCredentials: boolean;
+      showStartupDialog: Ref<boolean>;
+      isSignedIn: Ref<boolean>;
+      currentProjectName: Ref<string | null>;
+      currentFileId: Ref<string | null>;
+      isRenamingProject: Ref<boolean>;
+      saveStatus: Ref<SaveStatus>;
+      startupDialog: StartupDialogState;
+      autoSave: AutoSaveUseCases;
+      drive: DrivePort | null;
+      authStore: AuthStorePort;
+      lastProjectRepository: LastProjectRepositoryPort;
+      persistence: ProjectSessionPersistencePort;
+    },
+  ) {}
+
+  async initialize(): Promise<void> {
+    const { drive, authStore, lastProjectRepository } = this.deps;
+    if (!this.deps.hasGoogleCredentials || !drive) {
+      this.deps.session.initializeDefaultWorldIfNeeded();
+      this.deps.showStartupDialog.value = false;
+      return;
+    }
+    try {
+      await drive.initialize();
+      this.deps.isSignedIn.value = drive.isSignedIn();
+      if (this.deps.isSignedIn.value && authStore.restoreSession()) {
+        try { authStore.setUser(await drive.fetchUserProfile()); } catch { /* profile refresh is non-blocking */ }
+      }
+      const lastProject = lastProjectRepository.getLastProject();
+      if (this.deps.isSignedIn.value && lastProject) {
+        try {
+          await this.openProject(lastProject.id);
+          return;
+        } catch {
+          lastProjectRepository.clearLastProject();
+          this.deps.currentProjectName.value = null;
+          this.deps.currentFileId.value = null;
+          this.deps.session.initializeDefaultWorldIfNeeded();
+        }
+      }
+      this.deps.showStartupDialog.value = true;
+    } catch {
+      this.deps.showStartupDialog.value = false;
+    }
+  }
+
+  async signIn(): Promise<void> {
+    const drive = this.requireDrive();
+    this.deps.startupDialog.loading.value = true;
+    this.deps.startupDialog.error.value = null;
+    try {
+      await drive.signIn();
+      this.deps.isSignedIn.value = drive.isSignedIn();
+      try {
+        const profile = await drive.fetchUserProfile();
+        this.deps.authStore.setAuthenticated(profile, '', undefined);
+      } catch { /* allow Drive use without profile */ }
+      await this.requestFiles();
+    } catch (error: unknown) {
+      this.deps.startupDialog.error.value = `Sign-in failed: ${describeUnknownError(error)}`;
+    } finally {
+      this.deps.startupDialog.loading.value = false;
+    }
+  }
+
+  async toolbarSignIn(): Promise<void> {
+    await this.signIn();
+  }
+
+  async signOut(): Promise<void> {
+    const drive = this.requireDrive();
+    await drive.signOut();
+    this.deps.authStore.clearAuth();
+    this.deps.isSignedIn.value = false;
+    this.deps.currentProjectName.value = null;
+    this.deps.currentFileId.value = null;
+    this.deps.autoSave.stop();
+    this.deps.session.clear();
+    this.deps.showStartupDialog.value = true;
+  }
+
+  async createProject(projectName: string): Promise<void> {
+    const drive = this.requireDrive();
+    try {
+      this.deps.session.resetToEmptyInitializedWorld();
+      const projectData = this.deps.session.snapshot(projectName, this.deps.persistence);
+      const fileId = await drive.createFile(projectName, projectData);
+      this.setCurrentProject(projectName, fileId);
+      this.deps.showStartupDialog.value = false;
+      this.deps.autoSave.start();
+      this.deps.saveStatus.value = 'saved';
+    } catch (error: unknown) {
+      this.deps.startupDialog.error.value = `Failed to create project: ${describeUnknownError(error)}`;
+      this.deps.startupDialog.loading.value = false;
+    }
+  }
+
+  async openProject(fileId: string): Promise<void> {
+    const drive = this.requireDrive();
+    try {
+      const loadedProject = await drive.loadFile(fileId);
+      const openedSession = this.deps.session.validateProjectData(loadedProject, this.deps.persistence);
+      this.deps.session.restoreValidatedProject(openedSession, this.deps.persistence);
+      this.setCurrentProject(openedSession.projectName, fileId);
+      this.deps.showStartupDialog.value = false;
+      this.deps.autoSave.start();
+      this.deps.saveStatus.value = 'saved';
+    } catch (error: unknown) {
+      this.deps.startupDialog.error.value = `Failed to open project: ${describeUnknownError(error)}`;
+      this.deps.startupDialog.loading.value = false;
+      throw error;
+    }
+  }
+
+  async newProject(): Promise<void> {
+    const drive = this.requireDrive();
+    try {
+      const projectName = await drive.generateDefaultProjectName();
+      await this.createProject(projectName);
+    } catch {
+      this.deps.showStartupDialog.value = true;
+    }
+  }
+
+  showStartupProjectChooser(): void {
+    this.deps.showStartupDialog.value = true;
+  }
+
+  async renameProject(newName: string): Promise<void> {
+    const drive = this.requireDrive();
+    if (!this.deps.currentFileId.value) return;
+    this.deps.isRenamingProject.value = true;
+    try {
+      await drive.renameFile(this.deps.currentFileId.value, newName);
+      this.deps.currentProjectName.value = newName;
+      this.deps.lastProjectRepository.setLastProject({ id: this.deps.currentFileId.value, name: newName });
+      this.deps.autoSave.schedule();
+    } finally {
+      this.deps.isRenamingProject.value = false;
+    }
+  }
+
+  async requestFiles(): Promise<void> {
+    const drive = this.requireDrive();
+    this.deps.startupDialog.loadingFiles.value = true;
+    this.deps.startupDialog.error.value = null;
+    try {
+      this.deps.startupDialog.files.value = await drive.listFiles();
+    } catch (error: unknown) {
+      this.deps.startupDialog.error.value = `Failed to load files: ${describeUnknownError(error)}`;
+    } finally {
+      this.deps.startupDialog.loadingFiles.value = false;
+    }
+  }
+
+  dispose(): void {
+    this.deps.startupDialog.files.value = [];
+    this.deps.startupDialog.loading.value = false;
+    this.deps.startupDialog.loadingFiles.value = false;
+    this.deps.startupDialog.error.value = null;
+  }
+
+  private setCurrentProject(projectName: string, fileId: string): void {
+    this.deps.currentProjectName.value = projectName;
+    this.deps.currentFileId.value = fileId;
+    this.deps.lastProjectRepository.setLastProject({ id: fileId, name: projectName });
+  }
+
+  private requireDrive() {
+    if (!this.deps.drive) throw new Error('Google Drive service not available');
+    return this.deps.drive;
+  }
+}
+
+--- frontend/src/application/appShell/AppShellPorts.ts ---
+import type { Ref } from 'vue';
+import type { GoogleDriveFile, GoogleUserProfile } from '@/services/GoogleDriveService';
+import type { ToolType } from '@/stores/toolStore';
+import type { KeyboardShortcutRouterTarget } from './KeyboardShortcutRouter';
+
+export type SaveStatus = 'idle' | 'saving' | 'saved';
+export interface PersistedProjectSession {
+  readonly __persistedProjectSession: unique symbol;
+}
+
+export interface OpenedProjectSession {
+  readonly projectName: string;
+  readonly payload: PersistedProjectSession;
+}
+
+export interface DrivePort {
+  initialize(): Promise<void>;
+  isSignedIn(): boolean;
+  signIn(): Promise<void>;
+  signOut(): Promise<void>;
+  fetchUserProfile(): Promise<GoogleUserProfile>;
+  listFiles(): Promise<GoogleDriveFile[]>;
+  createFile(fileName: string, data: object): Promise<string>;
+  loadFile(fileId: string): Promise<object>;
+  updateFile(fileId: string, data: object): Promise<void>;
+  renameFile(fileId: string, newName: string): Promise<void>;
+  generateDefaultProjectName(): Promise<string>;
+}
+
+
+export interface ActivePlaneSummary {
+  readonly id: string;
+  readonly name: string;
+}
+
+export interface ActivePlanePort {
+  subscribeToChanges(listener: () => void): void;
+  unsubscribeFromChanges(listener: () => void): void;
+  getActivePlaneId(): string | undefined;
+  setActivePlaneId(id: string): void;
+  getProjectionPlaneSummaries(): readonly ActivePlaneSummary[];
+  getProjectionPlaneName(id: string): string | undefined;
+}
+
+export interface SelectionReadPort {
+  getSelectableIdsInPlane(planeId: string): readonly string[];
+  getCascadePreviewIds(selectedIds: readonly string[]): readonly string[];
+}
+
+export interface CommandHistoryPort {
+  canUndo(): boolean;
+  undo(): void;
+  canRedo(): boolean;
+  redo(): void;
+  subscribe(listener: () => void): () => void;
+}
+
+export interface RuntimeSessionSnapshotHandle {
+  readonly nextElementId: number;
+}
+
+export interface RuntimeSessionRestoreHandle {}
+
+export interface ProjectSessionPersistencePort {
+  snapshotCurrentSession(session: RuntimeSessionSnapshotHandle, projectName: string): object;
+  validateProjectData(data: unknown): OpenedProjectSession;
+  restoreSession(session: PersistedProjectSession, target: RuntimeSessionRestoreHandle): void;
+}
+
+export interface LastProjectRecord {
+  id: string;
+  name: string;
+}
+
+export interface LastProjectRepositoryPort {
+  getLastProject(): LastProjectRecord | null;
+  setLastProject(project: LastProjectRecord): void;
+  clearLastProject(): void;
+}
+
+export type TimeoutHandle = number;
+export type IntervalHandle = number;
+
+export interface SchedulerPort {
+  setTimeout(handler: () => void, ms: number): TimeoutHandle;
+  clearTimeout(handle: TimeoutHandle): void;
+  setInterval(handler: () => void, ms: number): IntervalHandle;
+  clearInterval(handle: IntervalHandle): void;
+}
+
+export interface AuthStorePort {
+  restoreSession(): boolean;
+  setUser(profile: GoogleUserProfile): void;
+  setAuthenticated(profile: GoogleUserProfile, accessToken: string, expiry?: Date): void;
+  clearAuth(): void;
+}
+
+export interface SelectionStorePort {
+  selectedIdsArray: string[];
+  clearSelection(): void;
+  selectMultiple(ids: string[]): void;
+  setCascadeHighlight(ids: string[]): void;
+  clearCascadeHighlight(): void;
+}
+
+export interface ToolStorePort {
+  setTool(tool: ToolType): void;
+  selectSubTool(familyId: string, toolId: string): void;
+}
+
+export interface ViewStorePort {
+  toggleProjectedElements(): void;
+}
+
+export interface AppShellCallbacks {
+  fitToView(): void;
+  startRename(): void;
+  alert(message: string): void;
+}
+
+export interface StartupDialogState {
+  files: Ref<GoogleDriveFile[]>;
+  loading: Ref<boolean>;
+  loadingFiles: Ref<boolean>;
+  error: Ref<string | null>;
+}
+
+export interface AppShellRuntimePorts {
+  drive: DrivePort | null;
+  persistence: ProjectSessionPersistencePort;
+  lastProjectRepository: LastProjectRepositoryPort;
+  scheduler: SchedulerPort;
+  keyboardTarget: KeyboardShortcutRouterTarget;
+  authStore: AuthStorePort;
+  selectionStore: SelectionStorePort;
+  toolStore: ToolStorePort;
+  viewStore: ViewStorePort;
+  callbacks: AppShellCallbacks;
+}
+
+export function createBrowserScheduler(): SchedulerPort {
+  return {
+    setTimeout: (handler, ms) => window.setTimeout(handler, ms),
+    clearTimeout: (handle) => window.clearTimeout(handle),
+    setInterval: (handler, ms) => window.setInterval(handler, ms),
+    clearInterval: (handle) => window.clearInterval(handle),
+  };
+}
+
+--- frontend/src/application/appShell/RuntimeSession.ts ---
+import { CommandStack } from '@/commands/CommandStack';
+import { World } from '@/domain/world/World';
+import { initializeWorld } from '@/application/world/initializeWorld';
+import { SelectionDeletionCommandService } from '@/application/selectionDeletion/SelectionDeletionCommandService';
+import type { SelectionDeletionCommandPort } from '@/application/selectionDeletion/SelectionDeletionPorts';
+import { CanvasToolController } from '@/application/tools/CanvasToolController';
+import { createToolInteractionReadPort } from '@/application/tools/ToolInteractionReadPort';
+import type { CanvasToolControllerToolStore } from '@/application/tools/CanvasToolController';
+import { ProcessHistoryController } from '@/application/processHistory/ProcessHistoryController';
+import type { ActivePlanePort, CommandHistoryPort, OpenedProjectSession, ProjectSessionPersistencePort, SelectionReadPort } from './AppShellPorts';
+import type { ProjectSessionKernel } from './ProjectSessionKernel';
+import type { RuntimeSessionPersistenceRestoreHandle, RuntimeSessionPersistenceSnapshotHandle } from './ProjectSessionPersistenceTargets';
+import { CanvasPresentationController } from '@/application/canvasPresentation/CanvasPresentationController';
+import { createCanvasWorldReadPort } from '@/application/canvasPresentation/CanvasWorldReadPort';
+import { createThreePresentationReadPorts } from '@/application/threePresentation/ThreeWorldReadPort';
+import { screenTo3D } from '@/utils/coordinateTransform';
+import { FreePoint2D } from '@/domain/world/Point';
+import type { CanvasViewPort, ProcessTreeReadPort, ElementsPanelPort, ThreePresentationPort, ActivePlaneSelectorPort } from './RuntimeViewPorts';
+import { buildPropertiesDialogViewModel } from './readModels/PropertiesDialogReadModel';
+import { buildProcessTreeReadModel, countProcessNodeViewModels, getRelatedActionIds } from './readModels/ProcessTreeReadModel';
+import { buildElementsPanelReadModel } from './readModels/ElementsPanelReadModel';
+import { toggleElementVisibility } from './readModels/ElementVisibilityIntent';
+
+export class RuntimeSession implements ProjectSessionKernel {
+  private readonly world = new World();
+  private readonly commandStack = new CommandStack();
+
+
+  canvasViewPort(): CanvasViewPort {
+    const canvasReadPort = createCanvasWorldReadPort(this.world);
+    const toolReadPort = createToolInteractionReadPort(this.world);
+    const canvasPresentationController = new CanvasPresentationController();
+    return {
+      subscribeToChanges: (listener) => this.world.subscribeToChanges(listener),
+      unsubscribeFromChanges: (listener) => this.world.unsubscribeFromChanges(listener),
+      getActivePlaneId: () => this.world.getActivePlaneId(),
+      getPlaneTransformsForInput: () => new Map(canvasReadPort.getCanvasPlaneTransforms().map(transform => [transform.planeId, transform.paperToPlane])),
+      buildPresentationModel: (viewport, options) => canvasPresentationController.buildModel(
+        canvasReadPort,
+        viewport,
+        {
+          hoveredIds: options.hoveredElementId ? new Set([options.hoveredElementId]) : undefined,
+          selectedIds: options.selectedIds.length > 0 ? new Set(options.selectedIds) : undefined,
+          cascadeHighlightIds: options.cascadeHighlightIds.length > 0 ? new Set(options.cascadeHighlightIds) : undefined,
+          activePlaneId: options.activePlaneId,
+          showProjectedElements: options.showProjectedElements,
+          gridVisible: options.gridVisible,
+        }
+      ),
+      getElementLabel: (elementId, elementType, planeId) => this.getElementLabel(elementId, elementType, planeId),
+      getMovableFreePointMoveSession: ({ planeId, pointId, commandSink }) => {
+        const plane = this.world.getProjectionPlaneById(planeId);
+        const point = plane?.getPoint(pointId);
+        if (!(point instanceof FreePoint2D) || point.locked) return null;
+        return commandSink.startFreePointMove({ planeId, pointId, label: point.label ?? pointId });
+      },
+      invokeToolClick: (tool, context) => tool.handleClick({ ...context, readPort: toolReadPort }),
+      screenTo3D: ({ clientX, clientY, svg, viewportMatrix, activePlaneId }) => screenTo3D(clientX, clientY, svg, viewportMatrix, activePlaneId, this.world),
+      getPropertiesDialogViewModel: (elementId) => this.getPropertiesDialogViewModel(elementId),
+    };
+  }
+
+  processTreeReadPort(): ProcessTreeReadPort {
+    return {
+      subscribeToChanges: (listener) => this.world.subscribeToChanges(listener),
+      unsubscribeFromChanges: (listener) => this.world.unsubscribeFromChanges(listener),
+      subscribeToTree: (listener) => this.world.getProcessTree().subscribe(listener),
+      getTree: () => buildProcessTreeReadModel({ world: this.world }),
+      getRelatedActionIds: (selectedIds) => getRelatedActionIds(selectedIds, { world: this.world }),
+      countNodes: (node) => countProcessNodeViewModels(node),
+    };
+  }
+
+  elementsPanelPort(): ElementsPanelPort {
+    return {
+      subscribeToChanges: (listener) => this.world.subscribeToChanges(listener),
+      unsubscribeFromChanges: (listener) => this.world.unsubscribeFromChanges(listener),
+      getReadModel: () => buildElementsPanelReadModel({ world: this.world }),
+      toggleVisibility: (elementId) => toggleElementVisibility(elementId, {
+        findElement: (id) => this.findVisibleElement(id),
+        markDirty: () => this.world.markDirty(),
+      }),
+    };
+  }
+
+  threePresentationPort(): ThreePresentationPort {
+    const readPorts = createThreePresentationReadPorts(this.world);
+    return {
+      subscribeToChanges: (listener) => this.world.subscribeToChanges(listener),
+      unsubscribeFromChanges: (listener) => this.world.unsubscribeFromChanges(listener),
+      getReadPorts: () => readPorts,
+    };
+  }
+
+  activePlaneSelectorPort(): ActivePlaneSelectorPort {
+    return {
+      subscribeToChanges: (listener) => this.world.subscribeToChanges(listener),
+      unsubscribeFromChanges: (listener) => this.world.unsubscribeFromChanges(listener),
+      getPlaneOptions: () => this.world.getAllProjectionPlanes().filter(p => typeof p.id === 'string' && p.id.length > 0).map(p => ({ id: p.id, label: p.name || p.id })),
+      getActivePlaneId: () => this.world.getActivePlaneId(),
+      getActivePlaneLabel: () => {
+        const planeId = this.world.getActivePlaneId();
+        return planeId ? (this.world.getProjectionPlaneById(planeId)?.name || planeId) : undefined;
+      },
+      setActivePlaneId: (id) => this.world.setActivePlaneId(id),
+    };
+  }
+
+  canvasCommandProducerPort(toolStore: CanvasToolControllerToolStore): CanvasToolController {
+    return new CanvasToolController({
+      world: this.world,
+      commandStack: this.commandStack,
+      toolStore,
+    });
+  }
+
+  processHistoryCommandPort(): ProcessHistoryController {
+    return new ProcessHistoryController({
+      world: this.world,
+      commandStack: this.commandStack,
+    });
+  }
+
+  activePlanePort(): ActivePlanePort {
+    return {
+      subscribeToChanges: (listener) => this.world.subscribeToChanges(listener),
+      unsubscribeFromChanges: (listener) => this.world.unsubscribeFromChanges(listener),
+      getActivePlaneId: () => this.world.getActivePlaneId(),
+      setActivePlaneId: (id) => this.world.setActivePlaneId(id),
+      getProjectionPlaneSummaries: () => this.world.getAllProjectionPlanes().map((plane) => ({ id: plane.id, name: plane.name })),
+      getProjectionPlaneName: (id) => this.world.getProjectionPlaneById(id)?.name,
+    };
+  }
+
+  selectionReadPort(): SelectionReadPort {
+    return {
+      getSelectableIdsInPlane: (planeId) => {
+        const plane = this.world.getProjectionPlaneById(planeId);
+        if (!plane) return [];
+        return [
+          ...plane.getAllPoints().map((point) => point.id),
+          ...plane.getAllLines().map((line) => line.id),
+          ...plane.getAllCircles().map((circle) => circle.id),
+        ];
+      },
+      getCascadePreviewIds: (selectedIds) => {
+        const deletionOrder = this.world.getDependencyService().getElementsInDeletionOrder([...selectedIds]);
+        return deletionOrder.filter((id) => !selectedIds.includes(id));
+      },
+    };
+  }
+
+  commandHistoryPort(): CommandHistoryPort {
+    return {
+      canUndo: () => this.commandStack.canUndo(),
+      undo: () => this.commandStack.undo(),
+      canRedo: () => this.commandStack.canRedo(),
+      redo: () => this.commandStack.redo(),
+      subscribe: (listener) => this.commandStack.subscribe(listener),
+    };
+  }
+
+  selectionDeletionCommandPort(): SelectionDeletionCommandPort {
+    return new SelectionDeletionCommandService(this.world, this.commandStack);
+  }
+
+  initializeDefaultWorldIfNeeded(): void {
+    initializeWorld(this.world, this.commandStack);
+  }
+
+  resetToEmptyInitializedWorld(): void {
+    this.world.clear();
+    this.commandStack.clear();
+    this.initializeDefaultWorldIfNeeded();
+  }
+
+  clear(): void {
+    this.world.clear();
+    this.commandStack.clear();
+  }
+
+  getVersion(): number {
+    return this.world.getVersion();
+  }
+
+  snapshot(projectName: string, persistence: ProjectSessionPersistencePort): object {
+    return persistence.snapshotCurrentSession(this.snapshotHandle(), projectName);
+  }
+
+  validateProjectData(data: unknown, persistence: ProjectSessionPersistencePort): OpenedProjectSession {
+    return persistence.validateProjectData(data);
+  }
+
+  restoreValidatedProject(openedSession: OpenedProjectSession, persistence: ProjectSessionPersistencePort): void {
+    const candidateWorld = new World();
+    const candidateCommandStack = new CommandStack();
+    persistence.restoreSession(openedSession.payload, { world: candidateWorld, commandStack: candidateCommandStack });
+    if (candidateWorld.getAllProjectionPlanes().length === 0) initializeWorld(candidateWorld, candidateCommandStack);
+    candidateWorld.markDirty();
+
+    this.world.clear();
+    this.commandStack.clear();
+    persistence.restoreSession(openedSession.payload, this.restoreTarget());
+    if (this.world.getAllProjectionPlanes().length === 0) this.initializeDefaultWorldIfNeeded();
+    this.world.markDirty();
+  }
+
+
+  private getElementLabel(elementId: string, elementType: string, planeId?: string): string {
+    const planes = planeId ? [this.world.getProjectionPlaneById(planeId)].filter(Boolean) : this.world.getAllProjectionPlanes();
+    for (const plane of planes) {
+      let element: { label?: string } | undefined;
+      switch (elementType) {
+        case 'point': element = plane?.getPoint(elementId); break;
+        case 'line':
+        case 'half-hinge-line':
+        case 'segment':
+        case 'guide': element = plane?.getLine(elementId); break;
+        case 'circle': element = plane?.getCircle(elementId); break;
+      }
+      if (element) return element.label || elementId;
+    }
+    return elementId;
+  }
+
+  private getPropertiesDialogViewModel(elementId: string | null) {
+    return buildPropertiesDialogViewModel(elementId, {
+      findElement: (id) => this.findVisibleElement(id),
+      world: this.world,
+    });
+  }
+
+  private findVisibleElement(elementId: string) {
+    return this.world.getElement2D(elementId)
+      || this.world.getElement3DById(elementId)
+      || this.world.getProjectionPlaneById(elementId);
+  }
+
+  private snapshotHandle(): RuntimeSessionPersistenceSnapshotHandle {
+    return {
+      commandStack: this.commandStack,
+      nextElementId: this.world.peekNextId(),
+    };
+  }
+
+  private restoreTarget(): RuntimeSessionPersistenceRestoreHandle {
+    return {
+      world: this.world,
+      commandStack: this.commandStack,
+    };
+  }
+}
+
+--- frontend/src/application/appShell/ProjectSessionKernel.ts ---
+import type { OpenedProjectSession, ProjectSessionPersistencePort } from './AppShellPorts';
+
+export interface SnapshotCapableProjectSessionKernel {
+  getVersion(): number;
+  snapshot(projectName: string, persistence: ProjectSessionPersistencePort): object;
+}
+
+export interface ProjectSessionKernel extends SnapshotCapableProjectSessionKernel {
+  initializeDefaultWorldIfNeeded(): void;
+  resetToEmptyInitializedWorld(): void;
+  clear(): void;
+  validateProjectData(data: unknown, persistence: ProjectSessionPersistencePort): OpenedProjectSession;
+  restoreValidatedProject(openedSession: OpenedProjectSession, persistence: ProjectSessionPersistencePort): void;
+}
+
+--- frontend/src/application/appShell/ProjectSessionPersistenceTargets.ts ---
+import type { CommandStack } from '@/commands/CommandStack';
+import type { World } from '@/domain/world/World';
+import type { RuntimeSessionRestoreHandle, RuntimeSessionSnapshotHandle } from './AppShellPorts';
+
+export interface RuntimeSessionPersistenceSnapshotHandle extends RuntimeSessionSnapshotHandle {
+  readonly commandStack: CommandStack;
+}
+
+export interface RuntimeSessionPersistenceRestoreHandle extends RuntimeSessionRestoreHandle {
+  readonly world: World;
+  readonly commandStack: CommandStack;
+}
+
+--- frontend/src/application/appShell/SelectionUseCases.ts ---
+import { watch, type WatchStopHandle } from 'vue';
+import type { SelectionDeletionCommandPort } from '@/application/selectionDeletion/SelectionDeletionPorts';
+import type { SelectionReadPort, SelectionStorePort } from './AppShellPorts';
+
+export class SelectionUseCases {
+  private stopSelectionWatch: WatchStopHandle | null = null;
+
+  constructor(
+    private readonly selectionRead: SelectionReadPort,
+    private readonly deleteSelectionCommand: SelectionDeletionCommandPort,
+    private readonly selectionStore: SelectionStorePort,
+    private readonly getActivePlaneId: () => string | undefined,
+  ) {}
+
+  start(): void {
+    if (this.stopSelectionWatch) return;
+    this.stopSelectionWatch = watch(
+      () => this.selectionStore.selectedIdsArray,
+      (selectedIds) => this.updateCascadePreview(selectedIds),
+      { immediate: true },
+    );
+  }
+
+  dispose(): void {
+    this.stopSelectionWatch?.();
+    this.stopSelectionWatch = null;
+    this.selectionStore.clearCascadeHighlight();
+  }
+
+  deleteSelected(): void {
+    const selectedIds = this.selectionStore.selectedIdsArray;
+    if (selectedIds.length === 0) return;
+    this.deleteSelectionCommand.execute(selectedIds);
+    this.selectionStore.clearSelection();
+  }
+
+  clearSelection(): void {
+    this.selectionStore.clearSelection();
+  }
+
+  selectAllInActivePlane(): void {
+    const activePlaneId = this.getActivePlaneId();
+    if (!activePlaneId) return;
+    const selectedIds = this.selectionRead.getSelectableIdsInPlane(activePlaneId);
+    if (selectedIds.length > 0) this.selectionStore.selectMultiple([...selectedIds]);
+  }
+
+  private updateCascadePreview(selectedIds: string[]): void {
+    if (selectedIds.length === 0) {
+      this.selectionStore.clearCascadeHighlight();
+      return;
+    }
+    const cascadePreviewIds = this.selectionRead.getCascadePreviewIds(selectedIds);
+    this.selectionStore.setCascadeHighlight([...cascadePreviewIds]);
+  }
+}
+
+--- frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts ---
+import { Command } from '@/commands/Command';
+import type { CommandStack } from '@/commands/CommandStack';
+import { DeletionSequenceFactory } from '@/commands/factories/DeletionSequenceFactory';
+import type { World } from '@/domain/world/World';
+import type { SelectionDeletionCommandPort } from './SelectionDeletionPorts';
+
+interface SelectionDeletionCommandServiceInternals {
+  createCommand(description: string, world: World): Command;
+  createCascadeDeletion(command: Command, selectedIds: string[], world: World): void;
+}
+
+const defaultInternals: SelectionDeletionCommandServiceInternals = {
+  createCommand: (description, world) => new Command(description, world),
+  createCascadeDeletion: (command, selectedIds, world) => {
+    DeletionSequenceFactory.createCascadeDeletion(command, selectedIds, world);
+  },
+};
+
+export class SelectionDeletionCommandService implements SelectionDeletionCommandPort {
+  private readonly internals: SelectionDeletionCommandServiceInternals;
+
+  constructor(
+    private readonly world: World,
+    private readonly commandStack: CommandStack,
+    internals: Partial<SelectionDeletionCommandServiceInternals> = {},
+  ) {
+    this.internals = { ...defaultInternals, ...internals };
+  }
+
+  execute(selectedIds: readonly string[]): void {
+    if (selectedIds.length === 0) return;
+
+    const deleteCommand = this.internals.createCommand('Delete elements', this.world);
+    this.internals.createCascadeDeletion(deleteCommand, [...selectedIds], this.world);
+    deleteCommand.commit();
+    this.commandStack.push(deleteCommand);
+  }
+}
+
