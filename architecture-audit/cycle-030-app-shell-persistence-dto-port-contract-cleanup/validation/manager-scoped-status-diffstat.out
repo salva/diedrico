@@ -1,0 +1,7 @@
+--- scoped status ---
+?? .saivage/stages/cycle-030-implement-app-shell-persistence-dto-port-contract-cleanup/tasks.json
+?? architecture-audit/cycle-030-app-shell-persistence-dto-port-contract-cleanup/critique/
+?? architecture-audit/cycle-030-app-shell-persistence-dto-port-contract-cleanup/reviews/
+?? architecture-audit/cycle-030-app-shell-persistence-dto-port-contract-cleanup/validation/manager-scoped-status-diffstat.err
+?? architecture-audit/cycle-030-app-shell-persistence-dto-port-contract-cleanup/validation/manager-scoped-status-diffstat.out
+--- scoped diffstat ---

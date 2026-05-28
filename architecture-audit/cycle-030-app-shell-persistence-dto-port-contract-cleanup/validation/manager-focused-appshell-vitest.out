@@ -1,0 +1,15 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run AppShellBoundary AppShellRuntimeUseCases
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/application/appShell/AppShellBoundary.test.ts  (19 tests) 13ms
+ ✓ tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts  (20 tests) 86ms
+
+ Test Files  2 passed (2)
+      Tests  39 passed (39)
+   Start at  07:23:47
+   Duration  3.00s (transform 1.46s, setup 0ms, collect 2.11s, tests 99ms, environment 1.33s, prepare 234ms)
+

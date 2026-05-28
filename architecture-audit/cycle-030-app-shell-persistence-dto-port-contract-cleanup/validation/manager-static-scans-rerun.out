@@ -1,0 +1,39 @@
+--- forbidden seam scan ---
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:82:    expect(appShellPorts).not.toMatch(/PersistedProjectSession/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:118:      expect(content).not.toMatch(/PersistedProjectSession/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:119:      expect(content).not.toMatch(/as unknown as PersistedProjectSession/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:120:      expect(content).not.toMatch(/as unknown as ProjectData/);
+--- DTO boundary scan ---
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:79:    expect(appShellPorts).toMatch(/export type ProjectSessionPersistencePayload = ProjectData/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:85:    expect(appShellPorts).toMatch(/createFile\(fileName: string, data: ProjectSessionPersistencePayload\)/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:86:    expect(appShellPorts).toMatch(/updateFile\(fileId: string, data: ProjectSessionPersistencePayload\)/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:90:    expect(projectSessionKernel).toMatch(/snapshot\(projectName: string, persistence: ProjectSessionPersistencePort\): ProjectSessionPersistencePayload/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:125:    expect(appShellPorts).toMatch(/ProjectSessionPersistencePayload/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:126:    expect(projectSessionPersistenceAdapter).toMatch(/snapshotCurrentSession\([^)]*\): ProjectSessionPersistencePayload/);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:12:import type { AppShellRuntimePorts, DrivePort, LastProjectRepositoryPort, ProjectSessionPersistencePayload, ProjectSessionPersistencePort, SchedulerPort, SelectionStorePort } from '@/application/appShell/AppShellPorts';
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:43:function projectPayload(name = 'Project', nextElementId = 1): ProjectSessionPersistencePayload {
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:76:      const payload = data as ProjectSessionPersistencePayload;
+frontend/src/application/appShell/ProjectSessionKernel.ts:1:import type { OpenedProjectSession, ProjectSessionPersistencePayload, ProjectSessionPersistencePort } from './AppShellPorts';
+frontend/src/application/appShell/ProjectSessionKernel.ts:5:  snapshot(projectName: string, persistence: ProjectSessionPersistencePort): ProjectSessionPersistencePayload;
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:2:import type { OpenedProjectSession, ProjectSessionPersistencePayload, ProjectSessionPersistencePort } from './AppShellPorts';
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:6:  snapshotCurrentSession(session: RuntimeSessionPersistenceSnapshotHandle, projectName: string): ProjectSessionPersistencePayload {
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:18:  restoreSession(data: ProjectSessionPersistencePayload, target: RuntimeSessionPersistenceRestoreHandle): void {
+frontend/src/application/appShell/ProjectSessionUseCases.ts:98:      const fileId = await drive.createFile(projectName, projectData);
+frontend/src/application/appShell/ProjectSessionUseCases.ts:112:      const loadedProject = await drive.loadFile(fileId);
+frontend/src/application/appShell/AutoSaveUseCases.ts:56:      await drive.updateFile(currentFileId.value, projectData);
+frontend/src/application/appShell/AutoSaveUseCases.ts:95:        const newFileId = await this.deps.drive.createFile(this.deps.currentProjectName.value, projectData);
+frontend/src/application/appShell/RuntimeSession.ts:11:import type { ActivePlanePort, CommandHistoryPort, OpenedProjectSession, ProjectSessionPersistencePayload, ProjectSessionPersistencePort, SelectionReadPort } from './AppShellPorts';
+frontend/src/application/appShell/RuntimeSession.ts:188:  snapshot(projectName: string, persistence: ProjectSessionPersistencePort): ProjectSessionPersistencePayload {
+frontend/src/application/appShell/AppShellPorts.ts:8:export type ProjectSessionPersistencePayload = ProjectData;
+frontend/src/application/appShell/AppShellPorts.ts:12:  readonly payload: ProjectSessionPersistencePayload;
+frontend/src/application/appShell/AppShellPorts.ts:22:  createFile(fileName: string, data: ProjectSessionPersistencePayload): Promise<string>;
+frontend/src/application/appShell/AppShellPorts.ts:23:  loadFile(fileId: string): Promise<unknown>;
+frontend/src/application/appShell/AppShellPorts.ts:24:  updateFile(fileId: string, data: ProjectSessionPersistencePayload): Promise<void>;
+frontend/src/application/appShell/AppShellPorts.ts:64:  snapshotCurrentSession(session: RuntimeSessionSnapshotHandle, projectName: string): ProjectSessionPersistencePayload;
+frontend/src/application/appShell/AppShellPorts.ts:66:  restoreSession(session: ProjectSessionPersistencePayload, target: RuntimeSessionRestoreHandle): void;
+--- ProjectService import scan ---
+frontend/src/application/appShell/AppShellPorts.ts:3:import type { ProjectData } from '@/services/ProjectService';
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:1:import { ProjectService } from '@/services/ProjectService';
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:7:    return ProjectService.serializeCommands(session.commandStack, session.nextElementId, projectName);
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:11:    ProjectService.validateProjectData(data);
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:19:    ProjectService.deserializeCommands(data, target.world, target.commandStack);

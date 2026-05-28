@@ -1,0 +1,25 @@
+
+> diedrico@0.1.0 lint
+> npm run lint --workspace=frontend
+
+
+> diedrico-frontend@0.1.0 lint
+> npm run test:architecture
+
+
+> diedrico-frontend@0.1.0 test:architecture
+> vitest run tests/unit/architecture
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts  (1 test) 26ms
+ ✓ tests/unit/architecture/worldBoundary.spec.ts  (2 tests) 57ms
+ ✓ tests/unit/architecture/noCommandSubclasses.spec.ts  (2 tests) 61ms
+ ✓ tests/unit/architecture/importBoundaries.spec.ts  (6 tests) 152ms
+
+ Test Files  4 passed (4)
+      Tests  11 passed (11)
+   Start at  07:24:03
+   Duration  7.46s (transform 3.95s, setup 0ms, collect 19.37s, tests 296ms, environment 5.47s, prepare 1.53s)
+
