@@ -35,7 +35,7 @@ describe('ProjectService Subprocess Operations Serialization', () => {
     
     expect(result).toBeInstanceOf(PushSubprocessOp);
     expect(result.type).toBe('PushSubprocess');
-    expect(result.parameters.subprocessName).toBe('New Subprocess');
+    expect(result.serialize()).toMatchObject({ opType: 'PushSubprocess', subprocessName: 'New Subprocess' });
   });
 
   it('PopSubprocessOp survives round-trip', () => {
@@ -54,8 +54,7 @@ describe('ProjectService Subprocess Operations Serialization', () => {
     
     expect(result).toBeInstanceOf(RenameSubprocessOp);
     expect(result.type).toBe('RenameSubprocess');
-    expect(result.parameters.subprocessId).toBe('sub-123');
-    expect(result.parameters.newName).toBe('My New Name');
+    expect(result.serialize()).toEqual({ opType: 'RenameSubprocess', subprocessId: 'sub-123', newName: 'My New Name' });
   });
 
   it('ToggleEncapsulationOp survives round-trip', () => {
@@ -65,7 +64,7 @@ describe('ProjectService Subprocess Operations Serialization', () => {
     
     expect(result).toBeInstanceOf(ToggleEncapsulationOp);
     expect(result.type).toBe('ToggleEncapsulation');
-    expect(result.parameters.subprocessId).toBe('sub-123');
+    expect(result.serialize()).toEqual({ opType: 'ToggleEncapsulation', subprocessId: 'sub-123' });
   });
 
   it('ToggleOutputOp survives round-trip', () => {
@@ -75,7 +74,7 @@ describe('ProjectService Subprocess Operations Serialization', () => {
     
     expect(result).toBeInstanceOf(ToggleOutputOp);
     expect(result.type).toBe('ToggleOutput');
-    expect(result.parameters.nodeId).toBe('node-123');
+    expect(result.serialize()).toEqual({ opType: 'ToggleOutput', nodeId: 'node-123' });
   });
 });
 
@@ -83,6 +82,7 @@ describe('ProjectService Subprocess Operations Serialization', () => {
  * Helper: Round-trip an operation through serialization
  */
 function roundTripOperation(op: any, world: World, commandStack: CommandStack): any {
+  const expectedDescriptor = op.serialize();
   // 1. Create command with operation
   const cmd = Command.restore({
     id: 'cmd-test',
@@ -100,6 +100,8 @@ function roundTripOperation(op: any, world: World, commandStack: CommandStack): 
   const lastCommandIdx = projectData.commands.length - 1;
   const serializedOp = projectData.commands[lastCommandIdx].operations[0];
   const reconstructed = deserializeOperation(serializedOp);
+  expect(serializedOp).toEqual(expectedDescriptor);
+  expect(reconstructed.serialize()).toEqual(expectedDescriptor);
   
   return reconstructed;
 }

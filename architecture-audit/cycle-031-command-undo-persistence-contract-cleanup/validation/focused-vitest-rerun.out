@@ -1,0 +1,22 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run tests/unit/commands/operations/operationRegistry.spec.ts tests/unit/services/ProjectService.roundTrip.spec.ts tests/integration/projectService.determinism.spec.ts tests/unit/services/ProjectService.subprocess.spec.ts tests/unit/commands/command.spec.ts tests/unit/commandStack.spec.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/commands/operations/operationRegistry.spec.ts  (7 tests) 15ms
+ ✓ tests/unit/commandStack.spec.ts  (15 tests) 16ms
+ ✓ tests/unit/services/ProjectService.subprocess.spec.ts  (5 tests) 26ms
+ ✓ tests/integration/projectService.determinism.spec.ts  (2 tests) 38ms
+ ✓ tests/unit/commands/command.spec.ts  (35 tests) 40ms
+ ❯ tests/unit/services/ProjectService.roundTrip.spec.ts  (18 tests | 1 failed) 44ms
+   ❯ tests/unit/services/ProjectService.roundTrip.spec.ts > Round-Trip Serialization Tests > AddSegment2DByPoints survives round-trip
+     → expected { Object (opType, planeId, ...) } to match object { Object (opType, planeId, ...) }
+(1 matching property omitted from actual)
+
+ Test Files  1 failed | 5 passed (6)
+      Tests  1 failed | 81 passed (82)
+   Start at  08:35:35
+   Duration  2.04s (transform 1.13s, setup 0ms, collect 4.19s, tests 179ms, environment 5.00s, prepare 844ms)
+

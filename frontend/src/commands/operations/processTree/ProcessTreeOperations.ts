@@ -8,7 +8,7 @@
  * 
  */
 
-import type { IOperation, OperationResult } from '../IOperation';
+import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 import type { ActionNode } from '@/domain/processTree/ProcessTree';
 
@@ -22,8 +22,7 @@ import type { ActionNode } from '@/domain/processTree/ProcessTree';
  */
 export class RemoveActionFromProcessTreeOp implements IOperation {
   readonly type = 'RemoveActionFromProcessTree';
-  readonly parameters: Record<string, any>;
-  outputs: Record<string, any> = {};
+  outputs: OperationOutputBag = {};
   
   // Stored for undo
   private removedAction?: ActionNode;
@@ -33,7 +32,6 @@ export class RemoveActionFromProcessTreeOp implements IOperation {
   constructor(
     private actionId: string
   ) {
-    this.parameters = { actionId };
   }
 
   apply(world: World): OperationResult {
@@ -98,8 +96,7 @@ export class RemoveActionFromProcessTreeOp implements IOperation {
  */
 export class RemoveActionGroupFromProcessTreeOp implements IOperation {
   readonly type = 'RemoveActionGroupFromProcessTree';
-  readonly parameters: Record<string, any>;
-  outputs: Record<string, any> = {};
+  outputs: OperationOutputBag = {};
   
   // TODO: Implement when needed
   // Similar pattern: store group data, parent ID, index
@@ -107,7 +104,6 @@ export class RemoveActionGroupFromProcessTreeOp implements IOperation {
   constructor(
     private groupId: string
   ) {
-    this.parameters = { groupId };
   }
 
   apply(_world: World): OperationResult {
@@ -138,8 +134,7 @@ export class RemoveActionGroupFromProcessTreeOp implements IOperation {
  */
 export class RemoveSubprocessFromProcessTreeOp implements IOperation {
   readonly type = 'RemoveSubprocessFromProcessTree';
-  readonly parameters: Record<string, any>;
-  outputs: Record<string, any> = {};
+  outputs: OperationOutputBag = {};
   
   // TODO: Implement when needed
   // Must store entire subtree for restoration
@@ -147,7 +142,6 @@ export class RemoveSubprocessFromProcessTreeOp implements IOperation {
   constructor(
     private subprocessId: string
   ) {
-    this.parameters = { subprocessId };
   }
 
   apply(_world: World): OperationResult {

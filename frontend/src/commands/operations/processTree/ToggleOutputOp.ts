@@ -2,16 +2,14 @@
  * ToggleOutputOp - Toggle "isOutput" status of a node
  */
 
-import type { IOperation, OperationResult } from '../IOperation';
+import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 
 export class ToggleOutputOp implements IOperation {
   readonly type = 'ToggleOutput';
-  parameters: Record<string, any>;
-  outputs: Record<string, any> = {};
+  outputs: OperationOutputBag = {};
 
   constructor(private readonly nodeId: string) {
-    this.parameters = { nodeId };
   }
 
   apply(world: World): OperationResult {
@@ -35,6 +33,6 @@ export class ToggleOutputOp implements IOperation {
   }
 
   serialize() {
-    return { opType: this.type, nodeId: this.parameters.nodeId };
+    return { opType: this.type, nodeId: this.nodeId };
   }
 }

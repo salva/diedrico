@@ -7,20 +7,18 @@
  * by the domain logic, not by this operation.
  */
 
-import type { IOperation, OperationResult } from '../IOperation';
+import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 
 export class AddIntersectionPoint2DOp implements IOperation {
   readonly type = 'AddIntersectionPoint2D';
-  readonly parameters: Record<string, any>;
-  outputs: Record<string, any> = {};
+  outputs: OperationOutputBag = {};
 
   constructor(
     private planeId: string,
     private line1Id: string,
     private line2Id: string
   ) {
-    this.parameters = { planeId, line1Id, line2Id };
   }
 
   apply(world: World): OperationResult {
@@ -69,9 +67,9 @@ export class AddIntersectionPoint2DOp implements IOperation {
   serialize() {
     return {
       opType: this.type,
-      planeId: this.parameters.planeId,
-      line1Id: this.parameters.line1Id,
-      line2Id: this.parameters.line2Id,
+      planeId: this.planeId,
+      line1Id: this.line1Id,
+      line2Id: this.line2Id,
       pointId: this.outputs.pointId
     };
   }

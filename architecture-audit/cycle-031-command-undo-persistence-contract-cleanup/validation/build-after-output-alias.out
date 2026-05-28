@@ -1,0 +1,42 @@
+
+> diedrico-frontend@0.1.0 build
+> vue-tsc && vite build
+
+src/commands/operations/processTree/AddProcessTreeActionOp.ts(18,15): error TS6133: 'action' is declared but its value is never read.
+src/commands/operations/processTree/AddProcessTreeActionOp.ts(24,25): error TS2339: Property 'action' does not exist on type 'AddProcessTreeActionOp'.
+src/commands/operations/processTree/AddProcessTreeActionOp.ts(64,20): error TS2339: Property 'action' does not exist on type 'AddProcessTreeActionOp'.
+src/commands/operations/world/Add3DLineOp.ts(128,27): error TS2339: Property 'parameters' does not exist on type 'Add3DLineOp'.
+src/commands/operations/world/Add3DLineOp.ts(129,27): error TS2339: Property 'parameters' does not exist on type 'Add3DLineOp'.
+src/commands/operations/world/Add3DLineOp.ts(130,22): error TS2339: Property 'parameters' does not exist on type 'Add3DLineOp'.
+src/commands/operations/world/Add3DLineOp.ts(131,22): error TS2339: Property 'parameters' does not exist on type 'Add3DLineOp'.
+src/commands/operations/world/Add3DLineOp.ts(132,19): error TS2339: Property 'parameters' does not exist on type 'Add3DLineOp'.
+src/commands/operations/world/Add3DLineOp.ts(133,25): error TS2339: Property 'parameters' does not exist on type 'Add3DLineOp'.
+src/commands/operations/world/Add3DPointOp.ts(135,27): error TS2339: Property 'parameters' does not exist on type 'Add3DPointOp'.
+src/commands/operations/world/Add3DPointOp.ts(136,27): error TS2339: Property 'parameters' does not exist on type 'Add3DPointOp'.
+src/commands/operations/world/Add3DPointOp.ts(137,22): error TS2339: Property 'parameters' does not exist on type 'Add3DPointOp'.
+src/commands/operations/world/Add3DPointOp.ts(138,22): error TS2339: Property 'parameters' does not exist on type 'Add3DPointOp'.
+src/commands/operations/world/Add3DPointOp.ts(139,19): error TS2339: Property 'parameters' does not exist on type 'Add3DPointOp'.
+src/commands/operations/world/Add3DPointOp.ts(140,25): error TS2339: Property 'parameters' does not exist on type 'Add3DPointOp'.
+src/commands/operations/world/Add3DSegmentOp.ts(166,27): error TS2339: Property 'parameters' does not exist on type 'Add3DSegmentOp'.
+src/commands/operations/world/Add3DSegmentOp.ts(167,27): error TS2339: Property 'parameters' does not exist on type 'Add3DSegmentOp'.
+src/commands/operations/world/Add3DSegmentOp.ts(168,22): error TS2339: Property 'parameters' does not exist on type 'Add3DSegmentOp'.
+src/commands/operations/world/Add3DSegmentOp.ts(169,22): error TS2339: Property 'parameters' does not exist on type 'Add3DSegmentOp'.
+src/commands/operations/world/Add3DSegmentOp.ts(170,19): error TS2339: Property 'parameters' does not exist on type 'Add3DSegmentOp'.
+src/commands/operations/world/Add3DSegmentOp.ts(171,25): error TS2339: Property 'parameters' does not exist on type 'Add3DSegmentOp'.
+src/commands/operations/world/AddBrokenHingeLineOp.ts(136,12): error TS2339: Property 'parameters' does not exist on type 'AddBrokenHingeLineOp'.
+src/commands/operations/world/AddBrokenHingeLineOp.ts(137,12): error TS2339: Property 'parameters' does not exist on type 'AddBrokenHingeLineOp'.
+src/commands/operations/world/AddBrokenHingeLineOp.ts(138,12): error TS2339: Property 'parameters' does not exist on type 'AddBrokenHingeLineOp'.
+src/commands/operations/world/AddBrokenHingeLineOp.ts(180,65): error TS2339: Property 'parameters' does not exist on type 'AddBrokenHingeLineOp'.
+src/commands/operations/world/AddBrokenHingeLineOp.ts(181,45): error TS2339: Property 'parameters' does not exist on type 'AddBrokenHingeLineOp'.
+src/commands/operations/world/AddBrokenHingeLineOp.ts(182,45): error TS2339: Property 'parameters' does not exist on type 'AddBrokenHingeLineOp'.
+src/commands/operations/world/AddIntersectionPointOp.ts(71,21): error TS2339: Property 'parameters' does not exist on type 'AddIntersectionPoint2DOp'.
+src/commands/operations/world/AddIntersectionPointOp.ts(72,21): error TS2339: Property 'parameters' does not exist on type 'AddIntersectionPoint2DOp'.
+src/commands/operations/world/InitializationOps.ts(56,12): error TS2540: Cannot assign to 'planeId' because it is a read-only property.
+src/commands/operations/world/InitializationOps.ts(125,12): error TS2339: Property 'parameters' does not exist on type 'AddProjectionPlaneFixedOp'.
+src/commands/operations/world/InitializationOps.ts(155,53): error TS2339: Property 'parameters' does not exist on type 'AddProjectionPlaneFixedOp'.
+src/commands/operations/world/InitializationOps.ts(202,12): error TS2540: Cannot assign to 'pointId' because it is a read-only property.
+src/commands/operations/world/InitializationOps.ts(273,12): error TS2339: Property 'parameters' does not exist on type 'AddHingeLineOp'.
+src/commands/operations/world/InitializationOps.ts(300,53): error TS2339: Property 'parameters' does not exist on type 'AddHingeLineOp'.
+src/commands/operations/world/InitializationOps.ts(344,12): error TS2540: Cannot assign to 'lineId' because it is a read-only property.
+src/commands/operations/world/InitializationOps.ts(430,55): error TS2339: Property 'subprocessId' does not exist on type 'CreateInitializationSubprocessOp'.
+src/commands/operations/world/UpdateFreePoint2DPositionOp.ts(33,11): error TS6133: 'pos' is declared but its value is never read.

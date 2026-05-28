@@ -7,13 +7,12 @@
  * Phase 85: ProcessTree Subprocess Stack Architecture
  */
 
-import type { IOperation, OperationResult } from '../IOperation';
+import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 
 export class PopSubprocessOp implements IOperation {
   readonly type = 'PopSubprocess';
-  parameters: Record<string, any> = {};
-  outputs: Record<string, any> = {};
+  outputs: OperationOutputBag = {};
   
   private poppedSubprocessId: string | undefined;
 

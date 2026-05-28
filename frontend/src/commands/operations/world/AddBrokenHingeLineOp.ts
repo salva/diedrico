@@ -18,15 +18,14 @@
  * @see BrokenHalfHingeLine2D in BrokenHalfHingeLine2D.ts
  */
 
-import type { IOperation, OperationResult } from '../IOperation';
+import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 import { BrokenHingeLine } from '@/domain/world/BrokenHingeLine';
 import { BrokenHalfHingeLine2D } from '@/domain/world/elements/BrokenHalfHingeLine2D';
 
 export class AddBrokenHingeLineOp implements IOperation {
   readonly type = 'AddBrokenHingeLine';
-  readonly parameters: Record<string, any>;
-  outputs: Record<string, any> = {};
+  outputs: OperationOutputBag = {};
 
   constructor(
     private mainHingeId: string,           // ID of main hinge line (T1)
@@ -37,15 +36,6 @@ export class AddBrokenHingeLineOp implements IOperation {
     private bhhl1Id?: string,              // Optional BHHL ID on plane1 (for redo)
     private bhhl2Id?: string               // Optional BHHL ID on plane2 (for redo)
   ) {
-    this.parameters = {
-      mainHingeId,
-      auxiliaryPlaneId,
-      plane1Id,
-      plane2Id,
-      brokenHingeLineId,
-      bhhl1Id,
-      bhhl2Id
-    };
   }
 
   apply(world: World): OperationResult {
@@ -143,9 +133,9 @@ export class AddBrokenHingeLineOp implements IOperation {
       };
 
       // Back-fill generated IDs into parameters for persistence
-      this.parameters.brokenHingeLineId = bhlId;
-      this.parameters.bhhl1Id = bhhl1Id;
-      this.parameters.bhhl2Id = bhhl2Id;
+      this.brokenHingeLineId = bhlId;
+      this.bhhl1Id = bhhl1Id;
+      this.bhhl2Id = bhhl2Id;
 
       return {
         success: true,
@@ -187,9 +177,9 @@ export class AddBrokenHingeLineOp implements IOperation {
       auxiliaryPlaneId: this.auxiliaryPlaneId,
       plane1Id: this.plane1Id,
       plane2Id: this.plane2Id,
-      brokenHingeLineId: this.outputs.brokenHingeLineId || this.parameters.brokenHingeLineId,
-      bhhl1Id: this.outputs.bhhl1Id || this.parameters.bhhl1Id,
-      bhhl2Id: this.outputs.bhhl2Id || this.parameters.bhhl2Id
+      brokenHingeLineId: this.outputs.brokenHingeLineId || this.brokenHingeLineId,
+      bhhl1Id: this.outputs.bhhl1Id || this.bhhl1Id,
+      bhhl2Id: this.outputs.bhhl2Id || this.bhhl2Id
     };
   }
 }

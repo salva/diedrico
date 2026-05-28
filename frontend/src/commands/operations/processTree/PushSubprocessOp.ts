@@ -7,16 +7,14 @@
  * Phase 85: ProcessTree Subprocess Stack Architecture
  */
 
-import type { IOperation, OperationResult } from '../IOperation';
+import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 
 export class PushSubprocessOp implements IOperation {
   readonly type = 'PushSubprocess';
-  parameters: Record<string, any>;
-  outputs: Record<string, any> = {};
+  outputs: OperationOutputBag = {};
 
   constructor(private readonly subprocessName: string, subprocessId?: string) {
-    this.parameters = { subprocessName };
     // If subprocessId provided (during deserialization), store it in outputs
     if (subprocessId) {
       this.outputs = { subprocessId };
@@ -38,6 +36,6 @@ export class PushSubprocessOp implements IOperation {
   }
 
   serialize() {
-    return { opType: this.type, subprocessName: this.parameters.subprocessName, subprocessId: this.outputs.subprocessId, outputs: this.outputs };
+    return { opType: this.type, subprocessName: this.subprocessName, subprocessId: this.outputs.subprocessId, outputs: this.outputs };
   }
 }

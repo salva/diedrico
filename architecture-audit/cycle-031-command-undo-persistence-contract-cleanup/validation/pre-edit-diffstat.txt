@@ -1,0 +1,13 @@
+ .../decision.md                                    |  8 +++----
+ frontend/src/commands/Command.ts                   |  6 ++---
+ .../commands/factories/DeletionSequenceFactory.ts  |  2 +-
+ .../src/commands/factories/PointSequenceFactory.ts |  3 +++
+ frontend/src/commands/operations/IOperation.ts     |  9 +++++---
+ .../world/AddCircleCircleIntersectionPoint2DOp.ts  | 12 ++++++----
+ .../commands/operations/world/AddFreePointOp.ts    | 12 ++++++----
+ .../world/AddLineCircleIntersectionPoint2DOp.ts    | 12 ++++++----
+ .../world/AddLineLineIntersectionPoint2DOp.ts      | 12 ++++++----
+ .../world/AddSiblingIntersectionPoint2DOp.ts       | 12 ++++++----
+ frontend/tests/e2e/active-plane-shortcuts.spec.ts  | 26 ----------------------
+ frontend/tests/e2e/selection-mask.spec.ts          | 25 ---------------------
+ 12 files changed, 57 insertions(+), 82 deletions(-)

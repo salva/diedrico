@@ -1,0 +1,249 @@
+⎯⎯⎯⎯⎯⎯ Failed Tests 20 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/services/ProjectService.roundTrip.spec.ts > Round-Trip Serialization Tests > AddFreePoint2DOp survives round-trip
+TypeError: Cannot read properties of undefined (reading 'planeId')
+ ❯ tests/unit/services/ProjectService.roundTrip.spec.ts:53:30
+     51|     
+     52|     expect(result.type).toBe('AddFreePoint2D');
+     53|     expect(result.parameters.planeId).toBe('projPlaneH');
+       |                              ^
+     54|     expect(result.parameters.position).toEqual({ x: 5, y: 10, z: 1 });
+     55|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/20]⎯
+
+ FAIL  tests/unit/services/ProjectService.roundTrip.spec.ts > Round-Trip Serialization Tests > AddLine2DByTwoPoints survives round-trip
+TypeError: Cannot read properties of undefined (reading 'planeId')
+ ❯ tests/unit/services/ProjectService.roundTrip.spec.ts:63:30
+     61|     
+     62|     expect(result.type).toBe('AddLine2DByTwoPoints');
+     63|     expect(result.parameters.planeId).toBe('projPlaneH');
+       |                              ^
+     64|     expect(result.parameters.point1Id).toBe('point1');
+     65|     expect(result.parameters.point2Id).toBe('point2');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/20]⎯
+
+ FAIL  tests/unit/services/ProjectService.roundTrip.spec.ts > Round-Trip Serialization Tests > AddSegment2DByPoints survives round-trip
+TypeError: Cannot read properties of undefined (reading 'planeId')
+ ❯ tests/unit/services/ProjectService.roundTrip.spec.ts:74:30
+     72|     
+     73|     expect(result.type).toBe('AddSegment2DByPoints');
+     74|     expect(result.parameters.planeId).toBe('projPlaneH');
+       |                              ^
+     75|     expect(result.parameters.point1Id).toBe('point1');
+     76|     expect(result.parameters.point2Id).toBe('point2');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/20]⎯
+
+ FAIL  tests/unit/services/ProjectService.roundTrip.spec.ts > Round-Trip Serialization Tests > AddCircle2DByCenterAndPoint survives round-trip
+TypeError: Cannot read properties of undefined (reading 'planeId')
+ ❯ tests/unit/services/ProjectService.roundTrip.spec.ts:85:30
+     83|     
+     84|     expect(result.type).toBe('AddCircle2DByCenterAndPoint');
+     85|     expect(result.parameters.planeId).toBe('projPlaneH');
+       |                              ^
+     86|     expect(result.parameters.centerPointId).toBe('center');
+     87|     expect(result.parameters.circumferencePointId).toBe('radiusPoint');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/20]⎯
+
+ FAIL  tests/unit/services/ProjectService.roundTrip.spec.ts > Round-Trip Serialization Tests > AddLineLineIntersectionPoint2D survives round-trip
+TypeError: Cannot read properties of undefined (reading 'planeId')
+ ❯ tests/unit/services/ProjectService.roundTrip.spec.ts:126:30
+    124|     
+    125|     expect(result.type).toBe('AddLineLineIntersectionPoint2D');
+    126|     expect(result.parameters.planeId).toBe('projPlaneH');
+       |                              ^
+    127|     expect(result.parameters.line1Id).toBe('line1');
+    128|     expect(result.parameters.line2Id).toBe('line2');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/20]⎯
+
+ FAIL  tests/unit/services/ProjectService.roundTrip.spec.ts > Round-Trip Serialization Tests > AddLineCircleIntersectionPoint2D survives round-trip
+TypeError: Cannot read properties of undefined (reading 'planeId')
+ ❯ tests/unit/services/ProjectService.roundTrip.spec.ts:137:30
+    135|     
+    136|     expect(result.type).toBe('AddLineCircleIntersectionPoint2D');
+    137|     expect(result.parameters.planeId).toBe('projPlaneH');
+       |                              ^
+    138|     expect(result.parameters.lineId).toBe('line');
+    139|     expect(result.parameters.circleId).toBe('circle');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/20]⎯
+
+ FAIL  tests/unit/services/ProjectService.roundTrip.spec.ts > Round-Trip Serialization Tests > AddCircleCircleIntersectionPoint2D survives round-trip
+TypeError: Cannot read properties of undefined (reading 'planeId')
+ ❯ tests/unit/services/ProjectService.roundTrip.spec.ts:149:30
+    147|     
+    148|     expect(result.type).toBe('AddCircleCircleIntersectionPoint2D');
+    149|     expect(result.parameters.planeId).toBe('projPlaneH');
+       |                              ^
+    150|     expect(result.parameters.circle1Id).toBe('circle1');
+    151|     expect(result.parameters.circle2Id).toBe('circle2');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/20]⎯
+
+ FAIL  tests/unit/services/ProjectService.roundTrip.spec.ts > Round-Trip Serialization Tests > RemovePoint2D survives round-trip
+TypeError: Cannot read properties of undefined (reading 'planeId')
+ ❯ tests/unit/services/ProjectService.roundTrip.spec.ts:161:30
+    159|     
+    160|     expect(result.type).toBe('RemovePoint2D');
+    161|     expect(result.parameters.planeId).toBe('projPlaneH');
+       |                              ^
+    162|     expect(result.parameters.pointId).toBe('point1');
+    163|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/20]⎯
+
+ FAIL  tests/unit/services/ProjectService.roundTrip.spec.ts > Round-Trip Serialization Tests > RemoveLine2D survives round-trip
+TypeError: Cannot read properties of undefined (reading 'planeId')
+ ❯ tests/unit/services/ProjectService.roundTrip.spec.ts:171:30
+    169|     
+    170|     expect(result.type).toBe('RemoveLine2D');
+    171|     expect(result.parameters.planeId).toBe('projPlaneH');
+       |                              ^
+    172|     expect(result.parameters.lineId).toBe('line1');
+    173|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/20]⎯
+
+ FAIL  tests/unit/services/ProjectService.roundTrip.spec.ts > Round-Trip Serialization Tests > RemoveSegment2D survives round-trip
+TypeError: Cannot read properties of undefined (reading 'planeId')
+ ❯ tests/unit/services/ProjectService.roundTrip.spec.ts:181:30
+    179|     
+    180|     expect(result.type).toBe('RemoveSegment2D');
+    181|     expect(result.parameters.planeId).toBe('projPlaneH');
+       |                              ^
+    182|     expect(result.parameters.segmentId).toBe('segment1');
+    183|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/20]⎯
+
+ FAIL  tests/unit/services/ProjectService.roundTrip.spec.ts > Round-Trip Serialization Tests > RemoveCircle2D survives round-trip
+TypeError: Cannot read properties of undefined (reading 'planeId')
+ ❯ tests/unit/services/ProjectService.roundTrip.spec.ts:191:30
+    189|     
+    190|     expect(result.type).toBe('RemoveCircle2D');
+    191|     expect(result.parameters.planeId).toBe('projPlaneH');
+       |                              ^
+    192|     expect(result.parameters.circleId).toBe('circle1');
+    193|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/20]⎯
+
+ FAIL  tests/unit/services/ProjectService.roundTrip.spec.ts > Round-Trip Serialization Tests > RemoveGuide2D survives round-trip
+TypeError: Cannot read properties of undefined (reading 'planeId')
+ ❯ tests/unit/services/ProjectService.roundTrip.spec.ts:201:30
+    199|     
+    200|     expect(result.type).toBe('RemoveGuide2D');
+    201|     expect(result.parameters.planeId).toBe('projPlaneH');
+       |                              ^
+    202|     expect(result.parameters.guideId).toBe('guide1');
+    203|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/20]⎯
+
+ FAIL  tests/unit/services/ProjectService.roundTrip.spec.ts > Round-Trip Serialization Tests > UpdateElementStyle survives round-trip
+TypeError: Cannot read properties of undefined (reading 'elementId')
+ ❯ tests/unit/services/ProjectService.roundTrip.spec.ts:211:30
+    209|     
+    210|     expect(result.type).toBe('UpdateElementStyle');
+    211|     expect(result.parameters.elementId).toBe('point1');
+       |                              ^
+    212|     expect(result.parameters.planeId).toBe('projPlaneH');
+    213|     expect(result.parameters.newStyle).toEqual({ color: '#FF0000', lin…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/20]⎯
+
+ FAIL  tests/unit/services/ProjectService.roundTrip.spec.ts > Round-Trip Serialization Tests > RemoveActionFromProcessTree survives round-trip
+TypeError: Cannot read properties of undefined (reading 'actionId')
+ ❯ tests/unit/services/ProjectService.roundTrip.spec.ts:222:30
+    220|     
+    221|     expect(result.type).toBe('RemoveActionFromProcessTree');
+    222|     expect(result.parameters.actionId).toBe('action_123');
+       |                              ^
+    223|   });
+    224| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/20]⎯
+
+ FAIL  tests/unit/services/ProjectService.roundTrip.spec.ts > Round-Trip Serialization Tests > RemoveActionGroupFromProcessTree survives round-trip
+TypeError: Cannot read properties of undefined (reading 'groupId')
+ ❯ tests/unit/services/ProjectService.roundTrip.spec.ts:231:30
+    229|     
+    230|     expect(result.type).toBe('RemoveActionGroupFromProcessTree');
+    231|     expect(result.parameters.groupId).toBe('group_456');
+       |                              ^
+    232|   });
+    233| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/20]⎯
+
+ FAIL  tests/unit/services/ProjectService.roundTrip.spec.ts > Round-Trip Serialization Tests > RemoveSubprocessFromProcessTree survives round-trip
+TypeError: Cannot read properties of undefined (reading 'subprocessId')
+ ❯ tests/unit/services/ProjectService.roundTrip.spec.ts:240:30
+    238|     
+    239|     expect(result.type).toBe('RemoveSubprocessFromProcessTree');
+    240|     expect(result.parameters.subprocessId).toBe('subprocess_789');
+       |                              ^
+    241|   });
+    242| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/20]⎯
+
+ FAIL  tests/unit/services/ProjectService.subprocess.spec.ts > ProjectService Subprocess Operations Serialization > PushSubprocessOp survives round-trip
+TypeError: Cannot read properties of undefined (reading 'subprocessName')
+ ❯ tests/unit/services/ProjectService.subprocess.spec.ts:38:30
+     36|     expect(result).toBeInstanceOf(PushSubprocessOp);
+     37|     expect(result.type).toBe('PushSubprocess');
+     38|     expect(result.parameters.subprocessName).toBe('New Subprocess');
+       |                              ^
+     39|   });
+     40| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/20]⎯
+
+ FAIL  tests/unit/services/ProjectService.subprocess.spec.ts > ProjectService Subprocess Operations Serialization > RenameSubprocessOp survives round-trip
+TypeError: Cannot read properties of undefined (reading 'subprocessId')
+ ❯ tests/unit/services/ProjectService.subprocess.spec.ts:57:30
+     55|     expect(result).toBeInstanceOf(RenameSubprocessOp);
+     56|     expect(result.type).toBe('RenameSubprocess');
+     57|     expect(result.parameters.subprocessId).toBe('sub-123');
+       |                              ^
+     58|     expect(result.parameters.newName).toBe('My New Name');
+     59|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/20]⎯
+
+ FAIL  tests/unit/services/ProjectService.subprocess.spec.ts > ProjectService Subprocess Operations Serialization > ToggleEncapsulationOp survives round-trip
+TypeError: Cannot read properties of undefined (reading 'subprocessId')
+ ❯ tests/unit/services/ProjectService.subprocess.spec.ts:68:30
+     66|     expect(result).toBeInstanceOf(ToggleEncapsulationOp);
+     67|     expect(result.type).toBe('ToggleEncapsulation');
+     68|     expect(result.parameters.subprocessId).toBe('sub-123');
+       |                              ^
+     69|   });
+     70| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/20]⎯
+
+ FAIL  tests/unit/services/ProjectService.subprocess.spec.ts > ProjectService Subprocess Operations Serialization > ToggleOutputOp survives round-trip
+TypeError: Cannot read properties of undefined (reading 'nodeId')
+ ❯ tests/unit/services/ProjectService.subprocess.spec.ts:78:30
+     76|     expect(result).toBeInstanceOf(ToggleOutputOp);
+     77|     expect(result.type).toBe('ToggleOutput');
+     78|     expect(result.parameters.nodeId).toBe('node-123');
+       |                              ^
+     79|   });
+     80| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/20]⎯
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c vitest run tests/unit/commands/operations/operationRegistry.spec.ts tests/unit/services/ProjectService.roundTrip.spec.ts tests/integration/projectService.determinism.spec.ts tests/unit/services/ProjectService.subprocess.spec.ts tests/unit/commands/command.spec.ts tests/unit/commandStack.spec.ts

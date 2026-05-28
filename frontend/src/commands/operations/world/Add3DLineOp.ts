@@ -15,14 +15,13 @@
  * @see World.add3DLine() for storage
  */
 
-import type { IOperation, OperationResult } from '../IOperation';
+import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 import { Line3DFromProjections } from '@/domain/world/Line3D';
 
 export class Add3DLineOp implements IOperation {
   readonly type = 'Add3DLine';
-  readonly parameters: Record<string, any>;
-  outputs: Record<string, any> = {};
+  outputs: OperationOutputBag = {};
 
   constructor(
     private projection1Id: string,     // ID of first Line2D projection
@@ -32,14 +31,6 @@ export class Add3DLineOp implements IOperation {
     private label?: string,            // Optional label for the line
     private visualStyle?: any          // Optional visual style
   ) {
-    this.parameters = { 
-      projection1Id, 
-      projection2Id, 
-      plane1Id, 
-      plane2Id,
-      label,
-      visualStyle
-    };
   }
 
   apply(world: World): OperationResult {
@@ -134,12 +125,12 @@ export class Add3DLineOp implements IOperation {
   serialize() {
     return {
       opType: this.type,
-      projection1Id: this.parameters.projection1Id,
-      projection2Id: this.parameters.projection2Id,
-      plane1Id: this.parameters.plane1Id,
-      plane2Id: this.parameters.plane2Id,
-      label: this.parameters.label,
-      visualStyle: this.parameters.visualStyle,
+      projection1Id: this.projection1Id,
+      projection2Id: this.projection2Id,
+      plane1Id: this.plane1Id,
+      plane2Id: this.plane2Id,
+      label: this.label,
+      visualStyle: this.visualStyle,
       lineId: this.outputs.lineId
     };
   }

@@ -6,7 +6,7 @@ import { World } from '@/domain/world/World';
 import type { CommandStack } from '@/commands/CommandStack';
 import { Command, type CommandSnapshot } from '@/commands/Command';
 import type { OperationDescriptor } from '@/commands/operations/IOperation';
-import { deserializeOperation } from '@/commands/operations/OperationRegistry';
+import { assertOperationDescriptor, assertRestorableOperationDescriptor, deserializeOperation } from '@/commands/operations/OperationRegistry';
 
 export interface ProjectData {
   id: string;
@@ -122,8 +122,12 @@ export class ProjectService {
       throw new Error(`Invalid project file - command ${record.id} must contain operations`);
     }
     for (const operation of record.operations) {
-      if (!operation || typeof operation !== 'object' || Array.isArray(operation) || typeof (operation as { opType?: unknown }).opType !== 'string') {
-        throw new Error(`Invalid project file - command ${record.id} has invalid operation descriptor`);
+      try {
+        assertOperationDescriptor(operation);
+        assertRestorableOperationDescriptor(operation);
+      } catch (error) {
+        const detail = error instanceof Error ? error.message : String(error);
+        throw new Error(`Invalid project file - command ${record.id} has invalid operation descriptor: ${detail}`);
       }
     }
   }

@@ -4,20 +4,18 @@
  * Wraps ProjectionPlane.addSegment2DBetweenPoints() in the Operation interface.
  */
 
-import type { IOperation, OperationResult } from '../IOperation';
+import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 
 export class AddSegment2DByPointsOp implements IOperation {
   readonly type = 'AddSegment2DByPoints';
-  readonly parameters: Record<string, any>;
-  outputs: Record<string, any> = {};
+  outputs: OperationOutputBag = {};
 
   constructor(
     private planeId: string,
     private point1Id: string,
     private point2Id: string
   ) {
-    this.parameters = { planeId, point1Id, point2Id };
   }
 
   apply(world: World): OperationResult {

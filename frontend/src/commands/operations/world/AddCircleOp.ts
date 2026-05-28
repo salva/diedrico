@@ -5,20 +5,18 @@
  * Wraps ProjectionPlane.addCircle2DByCenterAndPoint() in the Operation interface.
  */
 
-import type { IOperation, OperationResult } from '../IOperation';
+import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 
 export class AddCircle2DByCenterAndPointOp implements IOperation {
   readonly type = 'AddCircle2DByCenterAndPoint';
-  readonly parameters: Record<string, any>;
-  outputs: Record<string, any> = {};
+  outputs: OperationOutputBag = {};
 
   constructor(
     private planeId: string,
     private centerPointId: string,
     private circumferencePointId: string
   ) {
-    this.parameters = { planeId, centerPointId, circumferencePointId };
   }
 
   apply(world: World): OperationResult {

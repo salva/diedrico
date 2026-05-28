@@ -1,0 +1,34 @@
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/services/ProjectService.roundTrip.spec.ts > Round-Trip Serialization Tests > AddSegment2DByPoints survives round-trip
+AssertionError: expected { Object (opType, planeId, ...) } to match object { Object (opType, planeId, ...) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  Object {
+-   "opType": "AddLine2DByTwoPoints",
++   "opType": "AddSegment2DByPoints",
+    "planeId": "projPlaneH",
+    "point1Id": "point1",
+    "point2Id": "point2",
+  }
+
+ ❯ tests/unit/services/ProjectService.roundTrip.spec.ts:71:32
+     69|     
+     70|     expect(result.type).toBe('AddSegment2DByPoints');
+     71|     expect(result.serialize()).toMatchObject({ opType: 'AddLine2DByTwo…
+       |                                ^
+     72|   });
+     73| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c vitest run tests/unit/commands/operations/operationRegistry.spec.ts tests/unit/services/ProjectService.roundTrip.spec.ts tests/integration/projectService.determinism.spec.ts tests/unit/services/ProjectService.subprocess.spec.ts tests/unit/commands/command.spec.ts tests/unit/commandStack.spec.ts

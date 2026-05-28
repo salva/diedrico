@@ -8,7 +8,7 @@
  * 
  */
 
-import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
+import type { IOperation, JsonObject, OperationDescriptor, OperationOutputBag, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 import type { VisualStyle } from '@/domain/world/VisualStyle';
 import type { Element } from '@/domain/world/Element';
@@ -86,8 +86,7 @@ export function parseStyleProperties(payload: JsonObject): StyleProperties {
  */
 export class UpdateElementStyleOp implements IOperation<OperationDescriptor<'UpdateElementStyle', UpdateElementStylePayload>> {
   readonly type = 'UpdateElementStyle';
-  readonly parameters: Record<string, any>;
-  outputs: Record<string, any> = {};
+  outputs: OperationOutputBag = {};
   
   private previousStyle: VisualStyle | undefined = undefined;
 
@@ -96,7 +95,6 @@ export class UpdateElementStyleOp implements IOperation<OperationDescriptor<'Upd
     private planeId: string,
     private newStyle: StyleProperties
   ) {
-    this.parameters = { elementId, planeId, newStyle };
   }
 
   apply(world: World): OperationResult {

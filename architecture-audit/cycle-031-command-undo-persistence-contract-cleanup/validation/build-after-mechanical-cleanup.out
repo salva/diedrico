@@ -1,0 +1,1141 @@
+
+> diedrico-frontend@0.1.0 build
+> vue-tsc && vite build
+
+src/application/canvas/CanvasPointMovementUseCase.ts(14,31): error TS2345: Argument of type 'UpdateFreePoint2DPositionOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/application/canvas/CanvasStyleUseCase.ts(10,29): error TS2345: Argument of type 'UpdateElementStyleOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/application/construction/ConstructionUseCases.ts(38,23): error TS2345: Argument of type 'AddProcessTreeActionGroupOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; groupId: string; isOutput: boolean; isAuxiliary: boolean; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/application/construction/ConstructionUseCases.ts(69,40): error TS2345: Argument of type 'AddSegment2DByPointsOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; planeId: string; point1Id: string; point2Id: string; segmentId: unknown; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'segmentId' is incompatible with index signature.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/application/construction/ConstructionUseCases.ts(70,25): error TS2345: Argument of type 'AddProcessTreeActionOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; action: any; groupId: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/application/construction/ConstructionUseCases.ts(83,25): error TS2345: Argument of type 'AddProcessTreeActionOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; action: any; groupId: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/application/construction/ConstructionUseCases.ts(84,52): error TS2345: Argument of type 'AddProcessTreeActionOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; action: any; groupId: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/application/construction/ConstructionUseCases.ts(107,40): error TS2345: Argument of type 'AddLine2DTangentToCircleThroughPointOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; planeId: string; circleId: string; throughPointId: string; index: 0 | 1; lineId: unknown; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'lineId' is incompatible with index signature.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/application/construction/ConstructionUseCases.ts(108,25): error TS2345: Argument of type 'AddProcessTreeActionOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; action: any; groupId: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/application/construction/ConstructionUseCases.ts(115,40): error TS2345: Argument of type 'AddLine2DTangentToCircleParallelToLineOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; planeId: string; circleId: string; referenceLineId: string; index: 0 | 1; lineId: unknown; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'lineId' is incompatible with index signature.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/application/construction/ConstructionUseCases.ts(116,25): error TS2345: Argument of type 'AddProcessTreeActionOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; action: any; groupId: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/application/construction/ConstructionUseCases.ts(122,40): error TS2345: Argument of type 'Add3DPointOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; projection1Id: any; projection2Id: any; plane1Id: any; plane2Id: any; label: any; visualStyle: any; pointId: unknown; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'pointId' is incompatible with index signature.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/application/construction/ConstructionUseCases.ts(123,25): error TS2345: Argument of type 'AddProcessTreeActionOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; action: any; groupId: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/application/construction/ConstructionUseCases.ts(129,40): error TS2345: Argument of type 'Add3DLineOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; projection1Id: any; projection2Id: any; plane1Id: any; plane2Id: any; label: any; visualStyle: any; lineId: unknown; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'lineId' is incompatible with index signature.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/application/construction/ConstructionUseCases.ts(130,25): error TS2345: Argument of type 'AddProcessTreeActionOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; action: any; groupId: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/application/construction/ConstructionUseCases.ts(136,40): error TS2345: Argument of type 'Add3DSegmentOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; projection1Id: any; projection2Id: any; plane1Id: any; plane2Id: any; label: any; visualStyle: any; segmentId: unknown; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'segmentId' is incompatible with index signature.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/application/construction/ConstructionUseCases.ts(137,25): error TS2345: Argument of type 'AddProcessTreeActionOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; action: any; groupId: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/application/processHistory/ProcessHistoryUseCases.ts(36,58): error TS2345: Argument of type 'PushSubprocessOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; subprocessName: string; subprocessId: unknown; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'subprocessId' is incompatible with index signature.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/application/processHistory/ProcessHistoryUseCases.ts(47,57): error TS2345: Argument of type 'PopSubprocessOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/application/processHistory/ProcessHistoryUseCases.ts(53,7): error TS2345: Argument of type 'ToggleEncapsulationOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/application/processHistory/ProcessHistoryUseCases.ts(60,7): error TS2345: Argument of type 'ToggleOutputOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/application/processHistory/ProcessHistoryUseCases.ts(67,7): error TS2345: Argument of type 'RenameSubprocessOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/application/world/initializeWorld.ts(24,25): error TS2345: Argument of type 'PushSubprocessOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; subprocessName: string; subprocessId: unknown; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'subprocessId' is incompatible with index signature.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/application/world/initializeWorld.ts(28,25): error TS2345: Argument of type 'AddProcessTreeActionGroupOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; groupId: string; isOutput: boolean; isAuxiliary: boolean; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/application/world/initializeWorld.ts(32,25): error TS2345: Argument of type 'PopSubprocessOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/commands/factories/CircleSequenceFactory.ts(50,38): error TS2345: Argument of type 'AddCircle2DByCenterAndPointOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; planeId: string; centerPointId: string; circumferencePointId: string; circleId: unknown; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'circleId' is incompatible with index signature.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/factories/CircleSequenceFactory.ts(61,23): error TS2345: Argument of type 'AddProcessTreeActionOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; action: any; groupId: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/commands/factories/DeletionSequenceFactory.ts(101,29): error TS2345: Argument of type 'RemovePoint2DOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/factories/DeletionSequenceFactory.ts(111,31): error TS2345: Argument of type 'RemoveSegment2DOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/factories/DeletionSequenceFactory.ts(113,31): error TS2345: Argument of type 'RemoveGuide2DOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/factories/DeletionSequenceFactory.ts(115,31): error TS2345: Argument of type 'RemoveLine2DOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/factories/DeletionSequenceFactory.ts(124,29): error TS2345: Argument of type 'RemoveCircle2DOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/factories/DeletionSequenceFactory.ts(137,25): error TS2345: Argument of type 'RemoveActionFromProcessTreeOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; actionId: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/commands/factories/HingeLineSequenceFactory.ts(51,21): error TS2345: Argument of type 'AddHingeLineOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/factories/HingeLineSequenceFactory.ts(54,21): error TS2345: Argument of type 'AddProcessTreeActionOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; action: any; groupId: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/commands/factories/HingeLineSequenceFactory.ts(62,21): error TS2345: Argument of type 'AddHalfHingeLine2DOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; projPlaneId: string; hingeLineId: string; lineId: {} | undefined; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'lineId' is incompatible with index signature.
+        Type '{} | undefined' is not assignable to type 'JsonValue | undefined'.
+          Type '{}' is not assignable to type 'JsonValue | undefined'.
+src/commands/factories/HingeLineSequenceFactory.ts(63,21): error TS2345: Argument of type 'AddProcessTreeActionOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; action: any; groupId: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/commands/factories/HingeLineSequenceFactory.ts(64,43): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string'.
+src/commands/factories/HingeLineSequenceFactory.ts(70,21): error TS2345: Argument of type 'AddHalfHingeLine2DOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; projPlaneId: string; hingeLineId: string; lineId: {} | undefined; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'lineId' is incompatible with index signature.
+        Type '{} | undefined' is not assignable to type 'JsonValue | undefined'.
+          Type '{}' is not assignable to type 'JsonValue | undefined'.
+src/commands/factories/HingeLineSequenceFactory.ts(71,21): error TS2345: Argument of type 'AddProcessTreeActionOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; action: any; groupId: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/commands/factories/HingeLineSequenceFactory.ts(72,43): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string'.
+src/commands/factories/InitializationSequenceFactory.ts(48,21): error TS2345: Argument of type 'AddPlane3DFixedOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; point: number[]; normal: number[]; planeId: {} | undefined; label: string | undefined; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'planeId' is incompatible with index signature.
+        Type '{} | undefined' is not assignable to type 'JsonValue | undefined'.
+          Type '{}' is not assignable to type 'JsonValue | undefined'.
+src/commands/factories/InitializationSequenceFactory.ts(51,21): error TS2345: Argument of type 'AddProcessTreeActionOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; action: any; groupId: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/commands/factories/InitializationSequenceFactory.ts(63,21): error TS2345: Argument of type 'AddPlane3DFixedOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; point: number[]; normal: number[]; planeId: {} | undefined; label: string | undefined; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'planeId' is incompatible with index signature.
+        Type '{} | undefined' is not assignable to type 'JsonValue | undefined'.
+          Type '{}' is not assignable to type 'JsonValue | undefined'.
+src/commands/factories/InitializationSequenceFactory.ts(66,21): error TS2345: Argument of type 'AddProcessTreeActionOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; action: any; groupId: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/commands/factories/InitializationSequenceFactory.ts(87,21): error TS2345: Argument of type 'AddProjectionPlaneFixedOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/factories/InitializationSequenceFactory.ts(90,21): error TS2345: Argument of type 'AddProcessTreeActionOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; action: any; groupId: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/commands/factories/InitializationSequenceFactory.ts(110,21): error TS2345: Argument of type 'AddProjectionPlaneFixedOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/factories/InitializationSequenceFactory.ts(113,21): error TS2345: Argument of type 'AddProcessTreeActionOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; action: any; groupId: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/commands/factories/InitializationSequenceFactory.ts(122,21): error TS2345: Argument of type 'AddOriginPoint2DOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; projPlaneId: string; position: number[]; pointId: {} | undefined; label: string | undefined; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'pointId' is incompatible with index signature.
+        Type '{} | undefined' is not assignable to type 'JsonValue | undefined'.
+          Type '{}' is not assignable to type 'JsonValue | undefined'.
+src/commands/factories/InitializationSequenceFactory.ts(124,21): error TS2345: Argument of type 'AddProcessTreeActionOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; action: any; groupId: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/commands/factories/InitializationSequenceFactory.ts(125,41): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string'.
+src/commands/factories/InitializationSequenceFactory.ts(130,21): error TS2345: Argument of type 'AddOriginPoint2DOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; projPlaneId: string; position: number[]; pointId: {} | undefined; label: string | undefined; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'pointId' is incompatible with index signature.
+        Type '{} | undefined' is not assignable to type 'JsonValue | undefined'.
+          Type '{}' is not assignable to type 'JsonValue | undefined'.
+src/commands/factories/InitializationSequenceFactory.ts(131,21): error TS2345: Argument of type 'AddProcessTreeActionOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; action: any; groupId: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/commands/factories/InitializationSequenceFactory.ts(132,41): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string'.
+src/commands/factories/IntersectionSequenceFactory.ts(95,23): error TS2345: Argument of type 'AddProcessTreeActionOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; action: any; groupId: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/commands/factories/IntersectionSequenceFactory.ts(104,29): error TS2345: Argument of type 'AddProcessTreeActionOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; action: any; groupId: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/commands/factories/IntersectionSequenceFactory.ts(141,23): error TS2345: Argument of type 'AddProcessTreeActionOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; action: any; groupId: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/commands/factories/IntersectionSequenceFactory.ts(150,29): error TS2345: Argument of type 'AddProcessTreeActionOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; action: any; groupId: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/commands/factories/IntersectionSequenceFactory.ts(187,23): error TS2345: Argument of type 'AddProcessTreeActionOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; action: any; groupId: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/commands/factories/LineSequenceFactory.ts(77,38): error TS2345: Argument of type 'AddLine2DByTwoPointsOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; planeId: string; point1Id: string; point2Id: string; lineId: unknown; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'lineId' is incompatible with index signature.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/factories/LineSequenceFactory.ts(88,23): error TS2345: Argument of type 'AddProcessTreeActionOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; action: any; groupId: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/commands/factories/LineSequenceFactory.ts(111,38): error TS2345: Argument of type 'AddLine2DParallelToLineOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; planeId: string; referenceLineId: string; throughPointId: string; lineId: unknown; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'lineId' is incompatible with index signature.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/factories/LineSequenceFactory.ts(122,23): error TS2345: Argument of type 'AddProcessTreeActionOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; action: any; groupId: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/commands/factories/LineSequenceFactory.ts(145,38): error TS2345: Argument of type 'AddLine2DPerpendicularToLineOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; planeId: string; referenceLineId: string; throughPointId: string; lineId: unknown; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'lineId' is incompatible with index signature.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/factories/LineSequenceFactory.ts(156,23): error TS2345: Argument of type 'AddProcessTreeActionOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; action: any; groupId: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/commands/factories/LineSequenceFactory.ts(180,38): error TS2345: Argument of type 'AddLine2DTangentToCircleThroughPointOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; planeId: string; circleId: string; throughPointId: string; index: 0 | 1; lineId: unknown; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'lineId' is incompatible with index signature.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/factories/LineSequenceFactory.ts(208,38): error TS2345: Argument of type 'AddLine2DTangentToCircleParallelToLineOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; planeId: string; circleId: string; referenceLineId: string; index: 0 | 1; lineId: unknown; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'lineId' is incompatible with index signature.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/factories/PointSequenceFactory.ts(51,23): error TS2345: Argument of type 'AddProcessTreeActionOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; action: any; groupId: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/commands/operations/processTree/AddProcessTreeActionGroupOp.ts(14,3): error TS2416: Property 'outputs' in type 'AddProcessTreeActionGroupOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+    'string' index signatures are incompatible.
+      Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/processTree/AddProcessTreeActionGroupOp.ts(29,29): error TS2322: Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+  'string' index signatures are incompatible.
+    Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/processTree/AddProcessTreeActionGroupOp.ts(37,3): error TS2416: Property 'serialize' in type 'AddProcessTreeActionGroupOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type '() => { opType: string; groupId: string; isOutput: boolean; isAuxiliary: boolean; outputs: Record<string, unknown>; }' is not assignable to type '() => OperationDescriptor<string, JsonObject>'.
+    Type '{ opType: string; groupId: string; isOutput: boolean; isAuxiliary: boolean; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/commands/operations/processTree/AddProcessTreeActionOp.ts(16,3): error TS2416: Property 'outputs' in type 'AddProcessTreeActionOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+    'string' index signatures are incompatible.
+      Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/processTree/AddProcessTreeActionOp.ts(18,15): error TS6133: 'action' is declared but its value is never read.
+src/commands/operations/processTree/AddProcessTreeActionOp.ts(24,25): error TS2339: Property 'action' does not exist on type 'AddProcessTreeActionOp'.
+src/commands/operations/processTree/AddProcessTreeActionOp.ts(38,7): error TS2322: Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+  'string' index signatures are incompatible.
+    Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/processTree/AddProcessTreeActionOp.ts(49,71): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/commands/operations/processTree/AddProcessTreeActionOp.ts(52,54): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/commands/operations/processTree/AddProcessTreeActionOp.ts(61,3): error TS2416: Property 'serialize' in type 'AddProcessTreeActionOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type '() => { opType: string; action: any; groupId: string; outputs: Record<string, unknown>; }' is not assignable to type '() => OperationDescriptor<string, JsonObject>'.
+    Type '{ opType: string; action: any; groupId: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/commands/operations/processTree/AddProcessTreeActionOp.ts(64,20): error TS2339: Property 'action' does not exist on type 'AddProcessTreeActionOp'.
+src/commands/operations/processTree/PopSubprocessOp.ts(15,3): error TS2416: Property 'outputs' in type 'PopSubprocessOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+    'string' index signatures are incompatible.
+      Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/processTree/PopSubprocessOp.ts(37,3): error TS2416: Property 'serialize' in type 'PopSubprocessOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type '() => { opType: string; outputs: Record<string, unknown>; }' is not assignable to type '() => OperationDescriptor<string, JsonObject>'.
+    Type '{ opType: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/commands/operations/processTree/ProcessTreeOperations.ts(25,3): error TS2416: Property 'outputs' in type 'RemoveActionFromProcessTreeOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+    'string' index signatures are incompatible.
+      Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/processTree/ProcessTreeOperations.ts(63,9): error TS2322: Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+  'string' index signatures are incompatible.
+    Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/processTree/ProcessTreeOperations.ts(83,3): error TS2416: Property 'serialize' in type 'RemoveActionFromProcessTreeOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type '() => { opType: string; actionId: string; outputs: Record<string, unknown>; }' is not assignable to type '() => OperationDescriptor<string, JsonObject>'.
+    Type '{ opType: string; actionId: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/commands/operations/processTree/ProcessTreeOperations.ts(99,3): error TS2416: Property 'outputs' in type 'RemoveActionGroupFromProcessTreeOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+    'string' index signatures are incompatible.
+      Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/processTree/ProcessTreeOperations.ts(121,3): error TS2416: Property 'serialize' in type 'RemoveActionGroupFromProcessTreeOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type '() => { opType: string; groupId: string; outputs: Record<string, unknown>; }' is not assignable to type '() => OperationDescriptor<string, JsonObject>'.
+    Type '{ opType: string; groupId: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/commands/operations/processTree/ProcessTreeOperations.ts(137,3): error TS2416: Property 'outputs' in type 'RemoveSubprocessFromProcessTreeOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+    'string' index signatures are incompatible.
+      Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/processTree/ProcessTreeOperations.ts(159,3): error TS2416: Property 'serialize' in type 'RemoveSubprocessFromProcessTreeOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type '() => { opType: string; subprocessId: string; outputs: Record<string, unknown>; }' is not assignable to type '() => OperationDescriptor<string, JsonObject>'.
+    Type '{ opType: string; subprocessId: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/commands/operations/processTree/PushSubprocessOp.ts(15,3): error TS2416: Property 'outputs' in type 'PushSubprocessOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+    'string' index signatures are incompatible.
+      Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/processTree/PushSubprocessOp.ts(28,83): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string | undefined'.
+src/commands/operations/processTree/PushSubprocessOp.ts(30,29): error TS2322: Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+  'string' index signatures are incompatible.
+    Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/processTree/PushSubprocessOp.ts(38,3): error TS2416: Property 'serialize' in type 'PushSubprocessOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type '() => { opType: string; subprocessName: string; subprocessId: unknown; outputs: Record<string, unknown>; }' is not assignable to type '() => OperationDescriptor<string, JsonObject>'.
+    Type '{ opType: string; subprocessName: string; subprocessId: unknown; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'subprocessId' is incompatible with index signature.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/processTree/RenameSubprocessOp.ts(10,3): error TS2416: Property 'outputs' in type 'RenameSubprocessOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+    'string' index signatures are incompatible.
+      Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/processTree/RenameSubprocessOp.ts(29,29): error TS2322: Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+  'string' index signatures are incompatible.
+    Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/processTree/ToggleEncapsulationOp.ts(10,3): error TS2416: Property 'outputs' in type 'ToggleEncapsulationOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+    'string' index signatures are incompatible.
+      Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/processTree/ToggleEncapsulationOp.ts(19,31): error TS2322: Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+  'string' index signatures are incompatible.
+    Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/processTree/ToggleOutputOp.ts(10,3): error TS2416: Property 'outputs' in type 'ToggleOutputOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+    'string' index signatures are incompatible.
+      Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/processTree/ToggleOutputOp.ts(19,31): error TS2322: Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+  'string' index signatures are incompatible.
+    Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/processTree/registerProcessTreeOperationDescriptors.ts(29,52): error TS2739: Type '{ outputs: JsonObject; }' is missing the following properties from type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>': type, apply, undo
+src/commands/operations/processTree/registerProcessTreeOperationDescriptors.ts(29,66): error TS2345: Argument of type 'AddProcessTreeActionOp' is not assignable to parameter of type '{ outputs: JsonObject; }'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/processTree/registerProcessTreeOperationDescriptors.ts(30,50): error TS2345: Argument of type '(d: OperationDescriptor<string, JsonObject>) => { outputs: JsonObject; }' is not assignable to parameter of type 'OperationRestorer<OperationDescriptor<string, JsonObject>>'.
+  Type '{ outputs: JsonObject; }' is missing the following properties from type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>': type, apply, undo
+src/commands/operations/processTree/registerProcessTreeOperationDescriptors.ts(34,26): error TS2345: Argument of type 'AddProcessTreeActionGroupOp' is not assignable to parameter of type '{ outputs: JsonObject; }'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/processTree/registerProcessTreeOperationDescriptors.ts(36,44): error TS2739: Type '{ outputs: JsonObject; }' is missing the following properties from type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>': type, apply, undo
+src/commands/operations/processTree/registerProcessTreeOperationDescriptors.ts(36,58): error TS2345: Argument of type 'PushSubprocessOp' is not assignable to parameter of type '{ outputs: JsonObject; }'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/processTree/registerProcessTreeOperationDescriptors.ts(37,44): error TS2322: Type 'PopSubprocessOp' is not assignable to type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/commands/operations/processTree/registerProcessTreeOperationDescriptors.ts(38,46): error TS2322: Type 'RenameSubprocessOp' is not assignable to type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/processTree/registerProcessTreeOperationDescriptors.ts(39,49): error TS2322: Type 'ToggleEncapsulationOp' is not assignable to type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/processTree/registerProcessTreeOperationDescriptors.ts(40,42): error TS2322: Type 'ToggleOutputOp' is not assignable to type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/processTree/registerProcessTreeOperationDescriptors.ts(41,57): error TS2322: Type 'RemoveActionFromProcessTreeOp' is not assignable to type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; actionId: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/commands/operations/processTree/registerProcessTreeOperationDescriptors.ts(42,62): error TS2322: Type 'RemoveActionGroupFromProcessTreeOp' is not assignable to type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; groupId: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/commands/operations/processTree/registerProcessTreeOperationDescriptors.ts(43,61): error TS2322: Type 'RemoveSubprocessFromProcessTreeOp' is not assignable to type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; subprocessId: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/commands/operations/world/Add3DLineOp.ts(24,3): error TS2416: Property 'outputs' in type 'Add3DLineOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+    'string' index signatures are incompatible.
+      Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/Add3DLineOp.ts(80,62): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/commands/operations/world/Add3DLineOp.ts(91,9): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/commands/operations/world/Add3DLineOp.ts(108,9): error TS2322: Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+  'string' index signatures are incompatible.
+    Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/Add3DLineOp.ts(121,26): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/commands/operations/world/Add3DLineOp.ts(125,3): error TS2416: Property 'serialize' in type 'Add3DLineOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type '() => { opType: string; projection1Id: any; projection2Id: any; plane1Id: any; plane2Id: any; label: any; visualStyle: any; lineId: unknown; }' is not assignable to type '() => OperationDescriptor<string, JsonObject>'.
+    Type '{ opType: string; projection1Id: any; projection2Id: any; plane1Id: any; plane2Id: any; label: any; visualStyle: any; lineId: unknown; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'lineId' is incompatible with index signature.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/Add3DLineOp.ts(128,27): error TS2339: Property 'parameters' does not exist on type 'Add3DLineOp'.
+src/commands/operations/world/Add3DLineOp.ts(129,27): error TS2339: Property 'parameters' does not exist on type 'Add3DLineOp'.
+src/commands/operations/world/Add3DLineOp.ts(130,22): error TS2339: Property 'parameters' does not exist on type 'Add3DLineOp'.
+src/commands/operations/world/Add3DLineOp.ts(131,22): error TS2339: Property 'parameters' does not exist on type 'Add3DLineOp'.
+src/commands/operations/world/Add3DLineOp.ts(132,19): error TS2339: Property 'parameters' does not exist on type 'Add3DLineOp'.
+src/commands/operations/world/Add3DLineOp.ts(133,25): error TS2339: Property 'parameters' does not exist on type 'Add3DLineOp'.
+src/commands/operations/world/Add3DPlaneOp.ts(27,3): error TS2416: Property 'outputs' in type 'Add3DPlaneOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+    'string' index signatures are incompatible.
+      Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/Add3DPlaneOp.ts(148,62): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/commands/operations/world/Add3DPlaneOp.ts(152,9): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/commands/operations/world/Add3DPlaneOp.ts(168,9): error TS2322: Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+  'string' index signatures are incompatible.
+    Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/Add3DPlaneOp.ts(181,27): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/commands/operations/world/Add3DPlaneOp.ts(185,3): error TS2416: Property 'serialize' in type 'Add3DPlaneOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type '() => { opType: string; trace1Id: string; trace2Id: string; plane1Id: string; plane2Id: string; label: string | undefined; planeId: unknown; }' is not assignable to type '() => OperationDescriptor<string, JsonObject>'.
+    Type '{ opType: string; trace1Id: string; trace2Id: string; plane1Id: string; plane2Id: string; label: string | undefined; planeId: unknown; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'planeId' is incompatible with index signature.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/Add3DPointOp.ts(30,3): error TS2416: Property 'outputs' in type 'Add3DPointOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+    'string' index signatures are incompatible.
+      Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/Add3DPointOp.ts(87,62): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/commands/operations/world/Add3DPointOp.ts(98,9): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/commands/operations/world/Add3DPointOp.ts(115,9): error TS2322: Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+  'string' index signatures are incompatible.
+    Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/Add3DPointOp.ts(128,27): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/commands/operations/world/Add3DPointOp.ts(132,3): error TS2416: Property 'serialize' in type 'Add3DPointOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type '() => { opType: string; projection1Id: any; projection2Id: any; plane1Id: any; plane2Id: any; label: any; visualStyle: any; pointId: unknown; }' is not assignable to type '() => OperationDescriptor<string, JsonObject>'.
+    Type '{ opType: string; projection1Id: any; projection2Id: any; plane1Id: any; plane2Id: any; label: any; visualStyle: any; pointId: unknown; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'pointId' is incompatible with index signature.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/Add3DPointOp.ts(135,27): error TS2339: Property 'parameters' does not exist on type 'Add3DPointOp'.
+src/commands/operations/world/Add3DPointOp.ts(136,27): error TS2339: Property 'parameters' does not exist on type 'Add3DPointOp'.
+src/commands/operations/world/Add3DPointOp.ts(137,22): error TS2339: Property 'parameters' does not exist on type 'Add3DPointOp'.
+src/commands/operations/world/Add3DPointOp.ts(138,22): error TS2339: Property 'parameters' does not exist on type 'Add3DPointOp'.
+src/commands/operations/world/Add3DPointOp.ts(139,19): error TS2339: Property 'parameters' does not exist on type 'Add3DPointOp'.
+src/commands/operations/world/Add3DPointOp.ts(140,25): error TS2339: Property 'parameters' does not exist on type 'Add3DPointOp'.
+src/commands/operations/world/Add3DSegmentOp.ts(25,3): error TS2416: Property 'outputs' in type 'Add3DSegmentOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+    'string' index signatures are incompatible.
+      Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/Add3DSegmentOp.ts(118,62): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/commands/operations/world/Add3DSegmentOp.ts(129,9): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/commands/operations/world/Add3DSegmentOp.ts(146,9): error TS2322: Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+  'string' index signatures are incompatible.
+    Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/Add3DSegmentOp.ts(159,29): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/commands/operations/world/Add3DSegmentOp.ts(163,3): error TS2416: Property 'serialize' in type 'Add3DSegmentOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type '() => { opType: string; projection1Id: any; projection2Id: any; plane1Id: any; plane2Id: any; label: any; visualStyle: any; segmentId: unknown; }' is not assignable to type '() => OperationDescriptor<string, JsonObject>'.
+    Type '{ opType: string; projection1Id: any; projection2Id: any; plane1Id: any; plane2Id: any; label: any; visualStyle: any; segmentId: unknown; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'segmentId' is incompatible with index signature.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/Add3DSegmentOp.ts(166,27): error TS2339: Property 'parameters' does not exist on type 'Add3DSegmentOp'.
+src/commands/operations/world/Add3DSegmentOp.ts(167,27): error TS2339: Property 'parameters' does not exist on type 'Add3DSegmentOp'.
+src/commands/operations/world/Add3DSegmentOp.ts(168,22): error TS2339: Property 'parameters' does not exist on type 'Add3DSegmentOp'.
+src/commands/operations/world/Add3DSegmentOp.ts(169,22): error TS2339: Property 'parameters' does not exist on type 'Add3DSegmentOp'.
+src/commands/operations/world/Add3DSegmentOp.ts(170,19): error TS2339: Property 'parameters' does not exist on type 'Add3DSegmentOp'.
+src/commands/operations/world/Add3DSegmentOp.ts(171,25): error TS2339: Property 'parameters' does not exist on type 'Add3DSegmentOp'.
+src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts(27,3): error TS2416: Property 'outputs' in type 'AddAuxiliaryProjectionPlaneOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+    'string' index signatures are incompatible.
+      Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts(85,65): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts(91,9): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts(103,34): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts(107,49): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts(117,9): error TS2322: Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+  'string' index signatures are incompatible.
+    Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts(131,51): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts(133,37): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts(138,3): error TS2416: Property 'serialize' in type 'AddAuxiliaryProjectionPlaneOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type '() => { opType: string; plane3DId: string; t1HingeTraceId: string; t2OtherTraceId: string; t2PrimeLineId: string; name: string | undefined; projPlaneId: unknown; }' is not assignable to type '() => OperationDescriptor<string, JsonObject>'.
+    Type '{ opType: string; plane3DId: string; t1HingeTraceId: string; t2OtherTraceId: string; t2PrimeLineId: string; name: string | undefined; projPlaneId: unknown; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'projPlaneId' is incompatible with index signature.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/AddBrokenHingeLineOp.ts(28,3): error TS2416: Property 'outputs' in type 'AddBrokenHingeLineOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+    'string' index signatures are incompatible.
+      Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/AddBrokenHingeLineOp.ts(66,31): error TS2339: Property 'startsWith' does not exist on type '{}'.
+src/commands/operations/world/AddBrokenHingeLineOp.ts(72,31): error TS2339: Property 'startsWith' does not exist on type '{}'.
+src/commands/operations/world/AddBrokenHingeLineOp.ts(80,51): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/commands/operations/world/AddBrokenHingeLineOp.ts(84,9): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/commands/operations/world/AddBrokenHingeLineOp.ts(95,9): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/commands/operations/world/AddBrokenHingeLineOp.ts(105,9): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/commands/operations/world/AddBrokenHingeLineOp.ts(119,49): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/commands/operations/world/AddBrokenHingeLineOp.ts(120,49): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/commands/operations/world/AddBrokenHingeLineOp.ts(121,49): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/commands/operations/world/AddBrokenHingeLineOp.ts(136,12): error TS2339: Property 'parameters' does not exist on type 'AddBrokenHingeLineOp'.
+src/commands/operations/world/AddBrokenHingeLineOp.ts(137,12): error TS2339: Property 'parameters' does not exist on type 'AddBrokenHingeLineOp'.
+src/commands/operations/world/AddBrokenHingeLineOp.ts(138,12): error TS2339: Property 'parameters' does not exist on type 'AddBrokenHingeLineOp'.
+src/commands/operations/world/AddBrokenHingeLineOp.ts(142,9): error TS2322: Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+  'string' index signatures are incompatible.
+    Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/AddBrokenHingeLineOp.ts(156,51): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/commands/operations/world/AddBrokenHingeLineOp.ts(157,51): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/commands/operations/world/AddBrokenHingeLineOp.ts(158,51): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/commands/operations/world/AddBrokenHingeLineOp.ts(161,29): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/commands/operations/world/AddBrokenHingeLineOp.ts(164,51): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string'.
+src/commands/operations/world/AddBrokenHingeLineOp.ts(165,51): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string'.
+src/commands/operations/world/AddBrokenHingeLineOp.ts(166,37): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/commands/operations/world/AddBrokenHingeLineOp.ts(167,37): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/commands/operations/world/AddBrokenHingeLineOp.ts(180,65): error TS2339: Property 'parameters' does not exist on type 'AddBrokenHingeLineOp'.
+src/commands/operations/world/AddBrokenHingeLineOp.ts(181,45): error TS2339: Property 'parameters' does not exist on type 'AddBrokenHingeLineOp'.
+src/commands/operations/world/AddBrokenHingeLineOp.ts(182,45): error TS2339: Property 'parameters' does not exist on type 'AddBrokenHingeLineOp'.
+src/commands/operations/world/AddCircleOp.ts(13,3): error TS2416: Property 'outputs' in type 'AddCircle2DByCenterAndPointOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+    'string' index signatures are incompatible.
+      Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/AddCircleOp.ts(34,9): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string | undefined'.
+src/commands/operations/world/AddCircleOp.ts(39,9): error TS2322: Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+  'string' index signatures are incompatible.
+    Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/AddCircleOp.ts(54,28): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/commands/operations/world/AddCircleOp.ts(59,3): error TS2416: Property 'serialize' in type 'AddCircle2DByCenterAndPointOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type '() => { opType: string; planeId: string; centerPointId: string; circumferencePointId: string; circleId: unknown; }' is not assignable to type '() => OperationDescriptor<string, JsonObject>'.
+    Type '{ opType: string; planeId: string; centerPointId: string; circumferencePointId: string; circleId: unknown; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'circleId' is incompatible with index signature.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/AddIntersectionPointOp.ts(15,3): error TS2416: Property 'outputs' in type 'AddIntersectionPoint2DOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+    'string' index signatures are incompatible.
+      Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/AddIntersectionPointOp.ts(36,9): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string | undefined'.
+src/commands/operations/world/AddIntersectionPointOp.ts(43,9): error TS2322: Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+  'string' index signatures are incompatible.
+    Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/AddIntersectionPointOp.ts(59,27): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/commands/operations/world/AddIntersectionPointOp.ts(67,3): error TS2416: Property 'serialize' in type 'AddIntersectionPoint2DOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type '() => { opType: string; planeId: string; line1Id: any; line2Id: any; pointId: unknown; }' is not assignable to type '() => OperationDescriptor<string, JsonObject>'.
+    Type '{ opType: string; planeId: string; line1Id: any; line2Id: any; pointId: unknown; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'pointId' is incompatible with index signature.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/AddIntersectionPointOp.ts(71,21): error TS2339: Property 'parameters' does not exist on type 'AddIntersectionPoint2DOp'.
+src/commands/operations/world/AddIntersectionPointOp.ts(72,21): error TS2339: Property 'parameters' does not exist on type 'AddIntersectionPoint2DOp'.
+src/commands/operations/world/AddLineOp.ts(12,3): error TS2416: Property 'outputs' in type 'AddLine2DByTwoPointsOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+    'string' index signatures are incompatible.
+      Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/AddLineOp.ts(33,9): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string | undefined'.
+src/commands/operations/world/AddLineOp.ts(38,9): error TS2322: Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+  'string' index signatures are incompatible.
+    Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/AddLineOp.ts(53,26): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/commands/operations/world/AddLineOp.ts(58,3): error TS2416: Property 'serialize' in type 'AddLine2DByTwoPointsOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type '() => { opType: string; planeId: string; point1Id: string; point2Id: string; lineId: unknown; }' is not assignable to type '() => OperationDescriptor<string, JsonObject>'.
+    Type '{ opType: string; planeId: string; point1Id: string; point2Id: string; lineId: unknown; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'lineId' is incompatible with index signature.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/AddLineOp.ts(76,3): error TS2416: Property 'outputs' in type 'AddLine2DParallelToLineOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+    'string' index signatures are incompatible.
+      Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/AddLineOp.ts(97,9): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string | undefined'.
+src/commands/operations/world/AddLineOp.ts(102,9): error TS2322: Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+  'string' index signatures are incompatible.
+    Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/AddLineOp.ts(117,26): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/commands/operations/world/AddLineOp.ts(122,3): error TS2416: Property 'serialize' in type 'AddLine2DParallelToLineOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type '() => { opType: string; planeId: string; referenceLineId: string; throughPointId: string; lineId: unknown; }' is not assignable to type '() => OperationDescriptor<string, JsonObject>'.
+    Type '{ opType: string; planeId: string; referenceLineId: string; throughPointId: string; lineId: unknown; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'lineId' is incompatible with index signature.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/AddLineOp.ts(140,3): error TS2416: Property 'outputs' in type 'AddLine2DPerpendicularToLineOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+    'string' index signatures are incompatible.
+      Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/AddLineOp.ts(161,9): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string | undefined'.
+src/commands/operations/world/AddLineOp.ts(166,9): error TS2322: Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+  'string' index signatures are incompatible.
+    Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/AddLineOp.ts(181,26): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/commands/operations/world/AddLineOp.ts(186,3): error TS2416: Property 'serialize' in type 'AddLine2DPerpendicularToLineOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type '() => { opType: string; planeId: string; referenceLineId: string; throughPointId: string; lineId: unknown; }' is not assignable to type '() => OperationDescriptor<string, JsonObject>'.
+    Type '{ opType: string; planeId: string; referenceLineId: string; throughPointId: string; lineId: unknown; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'lineId' is incompatible with index signature.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/AddLineOp.ts(204,3): error TS2416: Property 'outputs' in type 'AddLine2DTangentToCircleThroughPointOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+    'string' index signatures are incompatible.
+      Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/AddLineOp.ts(227,9): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string | undefined'.
+src/commands/operations/world/AddLineOp.ts(232,9): error TS2322: Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+  'string' index signatures are incompatible.
+    Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/AddLineOp.ts(247,26): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/commands/operations/world/AddLineOp.ts(251,3): error TS2416: Property 'serialize' in type 'AddLine2DTangentToCircleThroughPointOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type '() => { opType: string; planeId: string; circleId: string; throughPointId: string; index: 0 | 1; lineId: unknown; }' is not assignable to type '() => OperationDescriptor<string, JsonObject>'.
+    Type '{ opType: string; planeId: string; circleId: string; throughPointId: string; index: 0 | 1; lineId: unknown; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'lineId' is incompatible with index signature.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/AddLineOp.ts(271,3): error TS2416: Property 'outputs' in type 'AddLine2DTangentToCircleParallelToLineOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+    'string' index signatures are incompatible.
+      Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/AddLineOp.ts(294,9): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string | undefined'.
+src/commands/operations/world/AddLineOp.ts(299,9): error TS2322: Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+  'string' index signatures are incompatible.
+    Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/AddLineOp.ts(314,26): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/commands/operations/world/AddLineOp.ts(319,3): error TS2416: Property 'serialize' in type 'AddLine2DTangentToCircleParallelToLineOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type '() => { opType: string; planeId: string; circleId: string; referenceLineId: string; index: 0 | 1; lineId: unknown; }' is not assignable to type '() => OperationDescriptor<string, JsonObject>'.
+    Type '{ opType: string; planeId: string; circleId: string; referenceLineId: string; index: 0 | 1; lineId: unknown; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'lineId' is incompatible with index signature.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/AddSegmentOp.ts(12,3): error TS2416: Property 'outputs' in type 'AddSegment2DByPointsOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+    'string' index signatures are incompatible.
+      Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/AddSegmentOp.ts(33,9): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string | undefined'.
+src/commands/operations/world/AddSegmentOp.ts(38,9): error TS2322: Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+  'string' index signatures are incompatible.
+    Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/AddSegmentOp.ts(54,26): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/commands/operations/world/AddSegmentOp.ts(59,3): error TS2416: Property 'serialize' in type 'AddSegment2DByPointsOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type '() => { opType: string; planeId: string; point1Id: string; point2Id: string; segmentId: unknown; }' is not assignable to type '() => OperationDescriptor<string, JsonObject>'.
+    Type '{ opType: string; planeId: string; point1Id: string; point2Id: string; segmentId: unknown; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'segmentId' is incompatible with index signature.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/InitializationOps.ts(33,3): error TS2416: Property 'outputs' in type 'AddPlane3DFixedOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+    'string' index signatures are incompatible.
+      Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/InitializationOps.ts(49,9): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string | undefined'.
+src/commands/operations/world/InitializationOps.ts(56,12): error TS2540: Cannot assign to 'planeId' because it is a read-only property.
+src/commands/operations/world/InitializationOps.ts(60,9): error TS2322: Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+  'string' index signatures are incompatible.
+    Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/InitializationOps.ts(75,51): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/commands/operations/world/InitializationOps.ts(79,3): error TS2416: Property 'serialize' in type 'AddPlane3DFixedOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type '() => { opType: string; point: number[]; normal: number[]; planeId: {} | undefined; label: string | undefined; }' is not assignable to type '() => OperationDescriptor<string, JsonObject>'.
+    Type '{ opType: string; point: number[]; normal: number[]; planeId: {} | undefined; label: string | undefined; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'planeId' is incompatible with index signature.
+        Type '{} | undefined' is not assignable to type 'JsonValue | undefined'.
+          Type '{}' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/InitializationOps.ts(98,3): error TS2416: Property 'outputs' in type 'AddProjectionPlaneFixedOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+    'string' index signatures are incompatible.
+      Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/InitializationOps.ts(118,9): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string | undefined'.
+src/commands/operations/world/InitializationOps.ts(125,12): error TS2339: Property 'parameters' does not exist on type 'AddProjectionPlaneFixedOp'.
+src/commands/operations/world/InitializationOps.ts(129,9): error TS2322: Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+  'string' index signatures are incompatible.
+    Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/InitializationOps.ts(143,51): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/commands/operations/world/InitializationOps.ts(155,53): error TS2339: Property 'parameters' does not exist on type 'AddProjectionPlaneFixedOp'.
+src/commands/operations/world/InitializationOps.ts(169,3): error TS2416: Property 'outputs' in type 'AddOriginPoint2DOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+    'string' index signatures are incompatible.
+      Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/InitializationOps.ts(195,9): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string | undefined'.
+src/commands/operations/world/InitializationOps.ts(202,12): error TS2540: Cannot assign to 'pointId' because it is a read-only property.
+src/commands/operations/world/InitializationOps.ts(208,9): error TS2322: Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+  'string' index signatures are incompatible.
+    Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/InitializationOps.ts(233,3): error TS2416: Property 'serialize' in type 'AddOriginPoint2DOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type '() => { opType: string; projPlaneId: string; position: number[]; pointId: {} | undefined; label: string | undefined; }' is not assignable to type '() => OperationDescriptor<string, JsonObject>'.
+    Type '{ opType: string; projPlaneId: string; position: number[]; pointId: {} | undefined; label: string | undefined; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'pointId' is incompatible with index signature.
+        Type '{} | undefined' is not assignable to type 'JsonValue | undefined'.
+          Type '{}' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/InitializationOps.ts(252,3): error TS2416: Property 'outputs' in type 'AddHingeLineOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+    'string' index signatures are incompatible.
+      Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/InitializationOps.ts(267,9): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string | undefined'.
+src/commands/operations/world/InitializationOps.ts(273,12): error TS2339: Property 'parameters' does not exist on type 'AddHingeLineOp'.
+src/commands/operations/world/InitializationOps.ts(277,9): error TS2322: Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+  'string' index signatures are incompatible.
+    Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/InitializationOps.ts(300,53): error TS2339: Property 'parameters' does not exist on type 'AddHingeLineOp'.
+src/commands/operations/world/InitializationOps.ts(313,3): error TS2416: Property 'outputs' in type 'AddHalfHingeLine2DOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+    'string' index signatures are incompatible.
+      Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/InitializationOps.ts(338,9): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string | undefined'.
+src/commands/operations/world/InitializationOps.ts(344,12): error TS2540: Cannot assign to 'lineId' because it is a read-only property.
+src/commands/operations/world/InitializationOps.ts(348,9): error TS2322: Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+  'string' index signatures are incompatible.
+    Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/InitializationOps.ts(370,3): error TS2416: Property 'serialize' in type 'AddHalfHingeLine2DOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type '() => { opType: string; projPlaneId: string; hingeLineId: string; lineId: {} | undefined; }' is not assignable to type '() => OperationDescriptor<string, JsonObject>'.
+    Type '{ opType: string; projPlaneId: string; hingeLineId: string; lineId: {} | undefined; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'lineId' is incompatible with index signature.
+        Type '{} | undefined' is not assignable to type 'JsonValue | undefined'.
+          Type '{}' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/InitializationOps.ts(389,3): error TS2416: Property 'outputs' in type 'CreateInitializationSubprocessOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+    'string' index signatures are incompatible.
+      Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/InitializationOps.ts(409,9): error TS2322: Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+  'string' index signatures are incompatible.
+    Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/InitializationOps.ts(430,55): error TS2339: Property 'subprocessId' does not exist on type 'CreateInitializationSubprocessOp'.
+src/commands/operations/world/RemoveElementOps.ts(25,3): error TS2416: Property 'outputs' in type 'RemovePoint2DOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+    'string' index signatures are incompatible.
+      Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/RemoveElementOps.ts(70,9): error TS2322: Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+  'string' index signatures are incompatible.
+    Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/RemoveElementOps.ts(110,3): error TS2416: Property 'outputs' in type 'RemoveLine2DOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+    'string' index signatures are incompatible.
+      Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/RemoveElementOps.ts(154,9): error TS2322: Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+  'string' index signatures are incompatible.
+    Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/RemoveElementOps.ts(192,3): error TS2416: Property 'outputs' in type 'RemoveSegment2DOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+    'string' index signatures are incompatible.
+      Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/RemoveElementOps.ts(237,9): error TS2322: Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+  'string' index signatures are incompatible.
+    Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/RemoveElementOps.ts(275,3): error TS2416: Property 'outputs' in type 'RemoveCircle2DOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+    'string' index signatures are incompatible.
+      Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/RemoveElementOps.ts(319,9): error TS2322: Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+  'string' index signatures are incompatible.
+    Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/RemoveElementOps.ts(364,3): error TS2416: Property 'outputs' in type 'RemoveGuide2DOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+    'string' index signatures are incompatible.
+      Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/RemoveElementOps.ts(461,9): error TS2322: Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+  'string' index signatures are incompatible.
+    Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/UpdateElementStyleOp.ts(89,3): error TS2416: Property 'outputs' in type 'UpdateElementStyleOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<"UpdateElementStyle", UpdateElementStylePayload>, JsonObject>'.
+  Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+    'string' index signatures are incompatible.
+      Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/UpdateFreePoint2DPositionOp.ts(22,3): error TS2416: Property 'outputs' in type 'UpdateFreePoint2DPositionOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+    'string' index signatures are incompatible.
+      Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/UpdateFreePoint2DPositionOp.ts(33,11): error TS6133: 'pos' is declared but its value is never read.
+src/commands/operations/world/UpdateFreePoint2DPositionOp.ts(73,31): error TS2322: Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+  'string' index signatures are incompatible.
+    Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/registerWorldOperationDescriptors.ts(48,50): error TS2739: Type '{ outputs: JsonObject; }' is missing the following properties from type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>': type, apply, undo
+src/commands/operations/world/registerWorldOperationDescriptors.ts(48,64): error TS2345: Argument of type 'AddLine2DByTwoPointsOp' is not assignable to parameter of type '{ outputs: JsonObject; }'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/registerWorldOperationDescriptors.ts(49,53): error TS2739: Type '{ outputs: JsonObject; }' is missing the following properties from type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>': type, apply, undo
+src/commands/operations/world/registerWorldOperationDescriptors.ts(49,67): error TS2345: Argument of type 'AddLine2DParallelToLineOp' is not assignable to parameter of type '{ outputs: JsonObject; }'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/registerWorldOperationDescriptors.ts(50,58): error TS2739: Type '{ outputs: JsonObject; }' is missing the following properties from type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>': type, apply, undo
+src/commands/operations/world/registerWorldOperationDescriptors.ts(50,72): error TS2345: Argument of type 'AddLine2DPerpendicularToLineOp' is not assignable to parameter of type '{ outputs: JsonObject; }'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/registerWorldOperationDescriptors.ts(51,66): error TS2739: Type '{ outputs: JsonObject; }' is missing the following properties from type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>': type, apply, undo
+src/commands/operations/world/registerWorldOperationDescriptors.ts(51,80): error TS2345: Argument of type 'AddLine2DTangentToCircleThroughPointOp' is not assignable to parameter of type '{ outputs: JsonObject; }'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/registerWorldOperationDescriptors.ts(52,68): error TS2739: Type '{ outputs: JsonObject; }' is missing the following properties from type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>': type, apply, undo
+src/commands/operations/world/registerWorldOperationDescriptors.ts(52,82): error TS2345: Argument of type 'AddLine2DTangentToCircleParallelToLineOp' is not assignable to parameter of type '{ outputs: JsonObject; }'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/registerWorldOperationDescriptors.ts(53,50): error TS2739: Type '{ outputs: JsonObject; }' is missing the following properties from type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>': type, apply, undo
+src/commands/operations/world/registerWorldOperationDescriptors.ts(53,64): error TS2345: Argument of type 'AddSegment2DByPointsOp' is not assignable to parameter of type '{ outputs: JsonObject; }'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/registerWorldOperationDescriptors.ts(54,57): error TS2739: Type '{ outputs: JsonObject; }' is missing the following properties from type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>': type, apply, undo
+src/commands/operations/world/registerWorldOperationDescriptors.ts(54,71): error TS2345: Argument of type 'AddCircle2DByCenterAndPointOp' is not assignable to parameter of type '{ outputs: JsonObject; }'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/registerWorldOperationDescriptors.ts(61,52): error TS2739: Type '{ outputs: JsonObject; }' is missing the following properties from type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>': type, apply, undo
+src/commands/operations/world/registerWorldOperationDescriptors.ts(61,66): error TS2345: Argument of type 'AddIntersectionPoint2DOp' is not assignable to parameter of type '{ outputs: JsonObject; }'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/registerWorldOperationDescriptors.ts(62,43): error TS2322: Type 'RemovePoint2DOp' is not assignable to type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/registerWorldOperationDescriptors.ts(63,42): error TS2322: Type 'RemoveLine2DOp' is not assignable to type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/registerWorldOperationDescriptors.ts(64,45): error TS2322: Type 'RemoveSegment2DOp' is not assignable to type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/registerWorldOperationDescriptors.ts(65,44): error TS2322: Type 'RemoveCircle2DOp' is not assignable to type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/registerWorldOperationDescriptors.ts(66,43): error TS2322: Type 'RemoveGuide2DOp' is not assignable to type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/registerWorldOperationDescriptors.ts(67,43): error TS2345: Argument of type '(d: OperationDescriptor<string, JsonObject>) => UpdateElementStyleOp' is not assignable to parameter of type 'OperationRestorer<OperationDescriptor<string, JsonObject>>'.
+  Call signature return types 'UpdateElementStyleOp' and 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>' are incompatible.
+    The types of 'outputs' are incompatible between these types.
+      Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+        'string' index signatures are incompatible.
+          Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/registerWorldOperationDescriptors.ts(68,55): error TS2322: Type 'UpdateFreePoint2DPositionOp' is not assignable to type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/registerWorldOperationDescriptors.ts(69,60): error TS2322: Type 'CreateInitializationSubprocessOp' is not assignable to type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/registerWorldOperationDescriptors.ts(70,45): error TS2739: Type '{ outputs: JsonObject; }' is missing the following properties from type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>': type, apply, undo
+src/commands/operations/world/registerWorldOperationDescriptors.ts(70,59): error TS2345: Argument of type 'AddPlane3DFixedOp' is not assignable to parameter of type '{ outputs: JsonObject; }'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/registerWorldOperationDescriptors.ts(71,53): error TS2739: Type '{ outputs: JsonObject; }' is missing the following properties from type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>': type, apply, undo
+src/commands/operations/world/registerWorldOperationDescriptors.ts(71,67): error TS2345: Argument of type 'AddProjectionPlaneFixedOp' is not assignable to parameter of type '{ outputs: JsonObject; }'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/registerWorldOperationDescriptors.ts(72,46): error TS2739: Type '{ outputs: JsonObject; }' is missing the following properties from type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>': type, apply, undo
+src/commands/operations/world/registerWorldOperationDescriptors.ts(72,60): error TS2345: Argument of type 'AddOriginPoint2DOp' is not assignable to parameter of type '{ outputs: JsonObject; }'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/registerWorldOperationDescriptors.ts(73,42): error TS2739: Type '{ outputs: JsonObject; }' is missing the following properties from type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>': type, apply, undo
+src/commands/operations/world/registerWorldOperationDescriptors.ts(73,56): error TS2345: Argument of type 'AddHingeLineOp' is not assignable to parameter of type '{ outputs: JsonObject; }'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/registerWorldOperationDescriptors.ts(74,48): error TS2739: Type '{ outputs: JsonObject; }' is missing the following properties from type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>': type, apply, undo
+src/commands/operations/world/registerWorldOperationDescriptors.ts(74,62): error TS2345: Argument of type 'AddHalfHingeLine2DOp' is not assignable to parameter of type '{ outputs: JsonObject; }'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/registerWorldOperationDescriptors.ts(75,48): error TS2739: Type '{ outputs: JsonObject; }' is missing the following properties from type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>': type, apply, undo
+src/commands/operations/world/registerWorldOperationDescriptors.ts(75,62): error TS2345: Argument of type 'AddBrokenHingeLineOp' is not assignable to parameter of type '{ outputs: JsonObject; }'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/registerWorldOperationDescriptors.ts(76,40): error TS2739: Type '{ outputs: JsonObject; }' is missing the following properties from type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>': type, apply, undo
+src/commands/operations/world/registerWorldOperationDescriptors.ts(76,54): error TS2345: Argument of type 'Add3DPlaneOp' is not assignable to parameter of type '{ outputs: JsonObject; }'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/registerWorldOperationDescriptors.ts(77,40): error TS2739: Type '{ outputs: JsonObject; }' is missing the following properties from type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>': type, apply, undo
+src/commands/operations/world/registerWorldOperationDescriptors.ts(77,54): error TS2345: Argument of type 'Add3DPointOp' is not assignable to parameter of type '{ outputs: JsonObject; }'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/registerWorldOperationDescriptors.ts(78,39): error TS2739: Type '{ outputs: JsonObject; }' is missing the following properties from type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>': type, apply, undo
+src/commands/operations/world/registerWorldOperationDescriptors.ts(78,53): error TS2345: Argument of type 'Add3DLineOp' is not assignable to parameter of type '{ outputs: JsonObject; }'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/registerWorldOperationDescriptors.ts(79,42): error TS2739: Type '{ outputs: JsonObject; }' is missing the following properties from type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>': type, apply, undo
+src/commands/operations/world/registerWorldOperationDescriptors.ts(79,56): error TS2345: Argument of type 'Add3DSegmentOp' is not assignable to parameter of type '{ outputs: JsonObject; }'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/commands/operations/world/registerWorldOperationDescriptors.ts(80,57): error TS2739: Type '{ outputs: JsonObject; }' is missing the following properties from type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>': type, apply, undo
+src/commands/operations/world/registerWorldOperationDescriptors.ts(80,71): error TS2345: Argument of type 'AddAuxiliaryProjectionPlaneOp' is not assignable to parameter of type '{ outputs: JsonObject; }'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/services/factories/PlaneSequenceFactory.ts(70,38): error TS2345: Argument of type 'Add3DPlaneOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; trace1Id: string; trace2Id: string; plane1Id: string; plane2Id: string; label: string | undefined; planeId: unknown; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'planeId' is incompatible with index signature.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/services/factories/PlaneSequenceFactory.ts(84,25): error TS2345: Argument of type 'AddProcessTreeActionOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; action: any; groupId: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/services/factories/PlaneSequenceFactory.ts(127,38): error TS2345: Argument of type 'AddAuxiliaryProjectionPlaneOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; plane3DId: string; t1HingeTraceId: string; t2OtherTraceId: string; t2PrimeLineId: string; name: string | undefined; projPlaneId: unknown; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'projPlaneId' is incompatible with index signature.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/services/factories/PlaneSequenceFactory.ts(141,23): error TS2345: Argument of type 'AddProcessTreeActionOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; action: any; groupId: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/services/factories/PlaneSequenceFactory.ts(146,47): error TS2345: Argument of type 'AddHingeLineOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/services/factories/PlaneSequenceFactory.ts(153,23): error TS2345: Argument of type 'AddProcessTreeActionOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; action: any; groupId: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/services/factories/PlaneSequenceFactory.ts(161,23): error TS2345: Argument of type 'AddHalfHingeLine2DOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; projPlaneId: string; hingeLineId: string; lineId: {} | undefined; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'lineId' is incompatible with index signature.
+        Type '{} | undefined' is not assignable to type 'JsonValue | undefined'.
+          Type '{}' is not assignable to type 'JsonValue | undefined'.
+src/services/factories/PlaneSequenceFactory.ts(163,23): error TS2345: Argument of type 'AddProcessTreeActionOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; action: any; groupId: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/services/factories/PlaneSequenceFactory.ts(164,45): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string'.
+src/services/factories/PlaneSequenceFactory.ts(170,23): error TS2345: Argument of type 'AddHalfHingeLine2DOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; projPlaneId: string; hingeLineId: string; lineId: {} | undefined; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'lineId' is incompatible with index signature.
+        Type '{} | undefined' is not assignable to type 'JsonValue | undefined'.
+          Type '{}' is not assignable to type 'JsonValue | undefined'.
+src/services/factories/PlaneSequenceFactory.ts(172,23): error TS2345: Argument of type 'AddProcessTreeActionOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; action: any; groupId: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/services/factories/PlaneSequenceFactory.ts(173,45): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string'.
+src/services/factories/PlaneSequenceFactory.ts(184,27): error TS2345: Argument of type 'UpdateElementStyleOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/services/factories/PlaneSequenceFactory.ts(225,38): error TS2345: Argument of type 'AddBrokenHingeLineOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  Types of property 'outputs' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'JsonObject'.
+      'string' index signatures are incompatible.
+        Type 'unknown' is not assignable to type 'JsonValue | undefined'.
+src/services/factories/PlaneSequenceFactory.ts(239,23): error TS2345: Argument of type 'AddProcessTreeActionOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; action: any; groupId: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/services/factories/PlaneSequenceFactory.ts(246,23): error TS2345: Argument of type 'AddProcessTreeActionOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; action: any; groupId: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.
+src/services/factories/PlaneSequenceFactory.ts(254,23): error TS2345: Argument of type 'AddProcessTreeActionOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>, JsonObject>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; action: any; groupId: string; outputs: Record<string, unknown>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'outputs' is incompatible with index signature.
+        Type 'Record<string, unknown>' is not assignable to type 'JsonValue | undefined'.
+          Type 'Record<string, unknown>' is missing the following properties from type 'JsonValue[]': length, pop, push, concat, and 28 more.

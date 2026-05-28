@@ -4,20 +4,18 @@
  * Wraps ProjectionPlane.addLine2DBetweenTwoPoints() in the Operation interface.
  */
 
-import type { IOperation, OperationResult } from '../IOperation';
+import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 
 export class AddLine2DByTwoPointsOp implements IOperation {
   readonly type = 'AddLine2DByTwoPoints';
-  readonly parameters: Record<string, any>;
-  outputs: Record<string, any> = {};
+  outputs: OperationOutputBag = {};
 
   constructor(
     private planeId: string,
     private point1Id: string,
     private point2Id: string
   ) {
-    this.parameters = { planeId, point1Id, point2Id };
   }
 
   apply(world: World): OperationResult {
@@ -75,15 +73,13 @@ export class AddLine2DByTwoPointsOp implements IOperation {
  */
 export class AddLine2DParallelToLineOp implements IOperation {
   readonly type = 'AddLine2DParallelToLine';
-  readonly parameters: Record<string, any>;
-  outputs: Record<string, any> = {};
+  outputs: OperationOutputBag = {};
 
   constructor(
     private planeId: string,
     private referenceLineId: string,
     private throughPointId: string
   ) {
-    this.parameters = { planeId, referenceLineId, throughPointId };
   }
 
   apply(world: World): OperationResult {
@@ -141,15 +137,13 @@ export class AddLine2DParallelToLineOp implements IOperation {
  */
 export class AddLine2DPerpendicularToLineOp implements IOperation {
   readonly type = 'AddLine2DPerpendicularToLine';
-  readonly parameters: Record<string, any>;
-  outputs: Record<string, any> = {};
+  outputs: OperationOutputBag = {};
 
   constructor(
     private planeId: string,
     private referenceLineId: string,
     private throughPointId: string
   ) {
-    this.parameters = { planeId, referenceLineId, throughPointId };
   }
 
   apply(world: World): OperationResult {
@@ -207,8 +201,7 @@ export class AddLine2DPerpendicularToLineOp implements IOperation {
  */
 export class AddLine2DTangentToCircleThroughPointOp implements IOperation {
   readonly type = 'AddLine2DTangentToCircleThroughPoint';
-  readonly parameters: Record<string, any>;
-  outputs: Record<string, any> = {};
+  outputs: OperationOutputBag = {};
 
   constructor(
     private planeId: string,
@@ -216,7 +209,6 @@ export class AddLine2DTangentToCircleThroughPointOp implements IOperation {
     private throughPointId: string,
     private tangentIndex: 0 | 1
   ) {
-    this.parameters = { planeId, circleId, throughPointId, tangentIndex };
   }
 
   apply(world: World): OperationResult {
@@ -276,8 +268,7 @@ export class AddLine2DTangentToCircleThroughPointOp implements IOperation {
  */
 export class AddLine2DTangentToCircleParallelToLineOp implements IOperation {
   readonly type = 'AddLine2DTangentToCircleParallelToLine';
-  readonly parameters: Record<string, any>;
-  outputs: Record<string, any> = {};
+  outputs: OperationOutputBag = {};
 
   constructor(
     private planeId: string,
@@ -285,7 +276,6 @@ export class AddLine2DTangentToCircleParallelToLineOp implements IOperation {
     private referenceLineId: string,
     private tangentIndex: 0 | 1
   ) {
-    this.parameters = { planeId, circleId, referenceLineId, tangentIndex };
   }
 
   apply(world: World): OperationResult {

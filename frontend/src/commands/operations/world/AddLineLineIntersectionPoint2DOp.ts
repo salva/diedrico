@@ -7,23 +7,25 @@
  * by the domain logic, not by this operation.
  */
 
-import type { IOperation, OperationResult } from '../IOperation';
+import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 
-export class AddLineLineIntersectionPoint2DOp implements IOperation {
+interface LineLineIntersectionOutput extends JsonObject {
+  pointId?: string;
+}
+
+export class AddLineLineIntersectionPoint2DOp implements IOperation<OperationDescriptor, LineLineIntersectionOutput> {
   readonly type = 'AddLineLineIntersectionPoint2D';
-  readonly parameters: Record<string, any>;
-  outputs: Record<string, any> = {};
+  outputs: LineLineIntersectionOutput = {};
 
   constructor(
     private planeId: string,
     private line1Id: string,
     private line2Id: string
   ) {
-    this.parameters = { planeId, line1Id, line2Id };
   }
 
-  apply(world: World): OperationResult {
+  apply(world: World): OperationResult<LineLineIntersectionOutput> {
     try {
       const plane = world.getProjectionPlaneById(this.planeId);
       if (!plane) {

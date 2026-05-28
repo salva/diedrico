@@ -2,16 +2,14 @@
  * ToggleEncapsulationOp - Toggle encapsulation (black-box) mode of a subprocess
  */
 
-import type { IOperation, OperationResult } from '../IOperation';
+import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 
 export class ToggleEncapsulationOp implements IOperation {
   readonly type = 'ToggleEncapsulation';
-  parameters: Record<string, any>;
-  outputs: Record<string, any> = {};
+  outputs: OperationOutputBag = {};
 
   constructor(private readonly subprocessId: string) {
-    this.parameters = { subprocessId };
   }
 
   apply(world: World): OperationResult {
@@ -35,6 +33,6 @@ export class ToggleEncapsulationOp implements IOperation {
   }
 
   serialize() {
-    return { opType: this.type, subprocessId: this.parameters.subprocessId };
+    return { opType: this.type, subprocessId: this.subprocessId };
   }
 }

@@ -17,7 +17,7 @@
  */
 
 import { Vector3, Vector4, Matrix3 } from 'three';
-import type { IOperation, OperationResult } from '../IOperation';
+import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 import { Matrix4x3 } from '@/utils/threeUtils';
 
@@ -30,21 +30,14 @@ import { Matrix4x3 } from '@/utils/threeUtils';
  */
 export class AddPlane3DFixedOp implements IOperation {
   readonly type = 'AddPlane3DFixed';
-  readonly parameters: Record<string, any>;
-  outputs: Record<string, any> = {};
+  outputs: OperationOutputBag = {};
   
   constructor(
     private readonly point: Vector4,
     private readonly normal: Vector4,
-    private readonly planeId?: string,
+    private planeId?: string,
     private readonly label?: string
   ) {
-    this.parameters = { 
-      point: { x: point.x, y: point.y, z: point.z, w: point.w },
-      normal: { x: normal.x, y: normal.y, z: normal.z, w: normal.w },
-      planeId,
-      label
-    };
   }
 
   apply(world: World): OperationResult {
@@ -60,7 +53,7 @@ export class AddPlane3DFixedOp implements IOperation {
       // Store ID in outputs for redo support
       this.outputs = { planeId: plane.id };
       // Phase 95: Back-fill generated ID into parameters for persistence
-      this.parameters.planeId = plane.id;
+      this.planeId = plane.id;
 
       return {
         success: true,
@@ -88,7 +81,7 @@ export class AddPlane3DFixedOp implements IOperation {
       opType: this.type,
       point: [this.point.x, this.point.y, this.point.z, this.point.w],
       normal: [this.normal.x, this.normal.y, this.normal.z, this.normal.w],
-      planeId: this.outputs.planeId || this.parameters.planeId,
+      planeId: this.outputs.planeId || this.planeId,
       label: this.label
     };
   }
@@ -102,24 +95,16 @@ export class AddPlane3DFixedOp implements IOperation {
  */
 export class AddProjectionPlaneFixedOp implements IOperation {
   readonly type = 'AddProjectionPlaneFixed';
-  readonly parameters: Record<string, any>;
-  outputs: Record<string, any> = {};
+  outputs: OperationOutputBag = {};
   
   constructor(
     private readonly plane3DId: string,
     private readonly planeToPaper2D: Matrix3,
     private readonly planeTo3D: Matrix4x3,
-    private readonly projPlaneId?: string,
+    private projPlaneId?: string,
     private readonly name?: string
   ) {
     // Phase 94: threeDToPlane computed from planeTo3D in realization constructor
-    this.parameters = { 
-      plane3DId, 
-      planeToPaper2D: planeToPaper2D.toArray(), 
-      planeTo3D: planeTo3D.toArray(),
-      projPlaneId,
-      name
-    };
   }
 
   apply(world: World): OperationResult {
@@ -137,7 +122,7 @@ export class AddProjectionPlaneFixedOp implements IOperation {
       // Store ID in outputs for redo support
       this.outputs = { projPlaneId: projPlane.id };
       // Phase 95: Back-fill generated ID into parameters for persistence
-      this.parameters.projPlaneId = projPlane.id;
+      this.projPlaneId = projPlane.id;
       
       return {
         success: true,
@@ -167,7 +152,7 @@ export class AddProjectionPlaneFixedOp implements IOperation {
       plane3DId: this.plane3DId,
       planeToPaper2D: this.planeToPaper2D.toArray(),
       planeTo3D: this.planeTo3D.toArray(),
-      projPlaneId: this.outputs.projPlaneId || this.parameters.projPlaneId,
+      projPlaneId: this.outputs.projPlaneId || this.projPlaneId,
       name: this.name
     };
   }
@@ -181,21 +166,14 @@ export class AddProjectionPlaneFixedOp implements IOperation {
  */
 export class AddOriginPoint2DOp implements IOperation {
   readonly type = 'AddOriginPoint2D';
-  readonly parameters: Record<string, any>;
-  outputs: Record<string, any> = {};
+  outputs: OperationOutputBag = {};
   
   constructor(
     private readonly projPlaneId: string,
     private readonly position: Vector3 = new Vector3(0, 0, 1),
     private readonly label?: string,
-    private readonly pointId?: string
+    private pointId?: string
   ) {
-    this.parameters = {
-      projPlaneId,
-      position: { x: position.x, y: position.y, z: position.z },
-      label,
-      pointId
-    };
   }
 
   apply(world: World): OperationResult {
@@ -221,7 +199,7 @@ export class AddOriginPoint2DOp implements IOperation {
       // Store ID in outputs for redo support
       this.outputs = { pointId: originPoint.id, projPlaneId: this.projPlaneId };
       // Phase 95: Back-fill generated ID into parameters for persistence
-      this.parameters.pointId = originPoint.id;
+      this.pointId = originPoint.id;
       
       // Phase 53: No longer storing origin IDs in World - use label-based access instead
 
@@ -258,7 +236,7 @@ export class AddOriginPoint2DOp implements IOperation {
       projPlaneId: this.projPlaneId,
       position: [this.position.x, this.position.y, this.position.z],
       // Ensure pointId is included from outputs if available
-      pointId: this.outputs.pointId || this.parameters.pointId,
+      pointId: this.outputs.pointId || this.pointId,
       label: this.label
     };
   }
@@ -271,15 +249,13 @@ export class AddOriginPoint2DOp implements IOperation {
  */
 export class AddHingeLineOp implements IOperation {
   readonly type = 'AddHingeLine';
-  readonly parameters: Record<string, any>;
-  outputs: Record<string, any> = {};
+  outputs: OperationOutputBag = {};
   
   constructor(
     private readonly horizontalPlaneId: string,
     private readonly verticalPlaneId: string,
-    private readonly hingeLineId?: string
+    private hingeLineId?: string
   ) {
-    this.parameters = { horizontalPlaneId, verticalPlaneId, hingeLineId };
   }
 
   apply(world: World): OperationResult {
@@ -294,7 +270,7 @@ export class AddHingeLineOp implements IOperation {
       // Store ID in outputs for redo support
       this.outputs = { hingeLineId: hingeLine.id };
       // Phase 95: Back-fill generated ID into parameters for persistence
-      this.parameters.hingeLineId = hingeLine.id;
+      this.hingeLineId = hingeLine.id;
       
       return {
         success: true,
@@ -321,7 +297,7 @@ export class AddHingeLineOp implements IOperation {
       opType: this.type,
       horizontalPlaneId: this.horizontalPlaneId,
       verticalPlaneId: this.verticalPlaneId,
-      hingeLineId: this.outputs.hingeLineId || this.parameters.hingeLineId
+      hingeLineId: this.outputs.hingeLineId || this.hingeLineId
     };
   }
 }
@@ -334,19 +310,13 @@ export class AddHingeLineOp implements IOperation {
  */
 export class AddHalfHingeLine2DOp implements IOperation {
   readonly type = 'AddHalfHingeLine2D';
-  readonly parameters: Record<string, any>;
-  outputs: Record<string, any> = {};
+  outputs: OperationOutputBag = {};
   
   constructor(
     private readonly projPlaneId: string,
     private readonly hingeLineId: string,
-    private readonly lineId?: string
+    private lineId?: string
   ) {
-    this.parameters = {
-      projPlaneId,
-      hingeLineId,
-      lineId
-    };
   }
 
   apply(world: World): OperationResult {
@@ -371,7 +341,7 @@ export class AddHalfHingeLine2DOp implements IOperation {
       // Store ID in outputs for redo support
       this.outputs = { lineId: halfHingeLine.id, projPlaneId: this.projPlaneId };
       // Phase 95: Back-fill generated ID into parameters for persistence
-      this.parameters.lineId = halfHingeLine.id;
+      this.lineId = halfHingeLine.id;
 
       return {
         success: true,
@@ -402,7 +372,7 @@ export class AddHalfHingeLine2DOp implements IOperation {
       opType: this.type,
       projPlaneId: this.projPlaneId,
       hingeLineId: this.hingeLineId,
-      lineId: this.outputs.lineId || this.parameters.lineId
+      lineId: this.outputs.lineId || this.lineId
     };
   }
 }
@@ -416,13 +386,11 @@ export class AddHalfHingeLine2DOp implements IOperation {
  */
 export class CreateInitializationSubprocessOp implements IOperation {
   readonly type = 'CreateInitializationSubprocess';
-  readonly parameters: Record<string, any>;
-  outputs: Record<string, any> = {};
+  outputs: OperationOutputBag = {};
   
   constructor(
     private readonly subprocessName: string = 'World Initialization'
   ) {
-    this.parameters = { subprocessName };
   }
 
   apply(world: World): OperationResult {
@@ -459,7 +427,7 @@ export class CreateInitializationSubprocessOp implements IOperation {
     return {
       opType: this.type,
       subprocessName: this.subprocessName,
-      subprocessId: this.outputs.subprocessId || this.parameters.subprocessId
+      subprocessId: this.outputs.subprocessId
     };
   }
 }

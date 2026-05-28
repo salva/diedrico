@@ -2,17 +2,15 @@
  * RenameSubprocessOp - Rename a subprocess in the ProcessTree
  */
 
-import type { IOperation, OperationResult } from '../IOperation';
+import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 
 export class RenameSubprocessOp implements IOperation {
   readonly type = 'RenameSubprocess';
-  parameters: Record<string, any>;
-  outputs: Record<string, any> = {};
+  outputs: OperationOutputBag = {};
   private oldName: string | null = null;
 
   constructor(private readonly subprocessId: string, private readonly newName: string) {
-    this.parameters = { subprocessId, newName };
   }
 
   apply(world: World): OperationResult {
@@ -44,6 +42,6 @@ export class RenameSubprocessOp implements IOperation {
   }
 
   serialize() {
-    return { opType: this.type, subprocessId: this.parameters.subprocessId, newName: this.parameters.newName };
+    return { opType: this.type, subprocessId: this.subprocessId, newName: this.newName };
   }
 }

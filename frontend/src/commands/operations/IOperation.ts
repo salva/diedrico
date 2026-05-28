@@ -14,6 +14,8 @@ export interface JsonObject {
   [key: string]: JsonValue | undefined;
 }
 
+export type OperationOutputBag = JsonObject & Record<string, any>;
+
 export interface OperationResult<TOutputs extends JsonObject = JsonObject> {
   success: boolean;
   outputs: TOutputs;
@@ -27,10 +29,13 @@ export interface OperationDescriptor<TType extends string = string, TPayload ext
 
 export type SerializedOperation = OperationDescriptor;
 
-export interface IOperation<TDescriptor extends OperationDescriptor = OperationDescriptor> {
+export interface IOperation<
+  TDescriptor extends OperationDescriptor = OperationDescriptor,
+  TOutputs extends JsonObject = JsonObject
+> {
   type: TDescriptor['opType'];
-  apply(world: World): OperationResult;
+  apply(world: World): OperationResult<TOutputs>;
   undo(world: World): void;
   serialize?(): TDescriptor;
-  outputs: JsonObject;
+  outputs: TOutputs;
 }

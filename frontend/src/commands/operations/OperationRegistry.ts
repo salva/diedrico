@@ -21,6 +21,10 @@ export class OperationRegistry {
     return restore(descriptor);
   }
 
+  assertRestorable(descriptor: OperationDescriptor): void {
+    this.deserialize(descriptor);
+  }
+
   serialize(operation: IOperation): OperationDescriptor {
     if (!operation.serialize) {
       throw new Error(`Operation type cannot be persisted without a descriptor serializer: ${operation.type}`);
@@ -69,6 +73,10 @@ export function serializeOperation(operation: IOperation): OperationDescriptor {
 
 export function deserializeOperation(descriptor: OperationDescriptor): IOperation {
   return registerAllOperations().deserialize(descriptor);
+}
+
+export function assertRestorableOperationDescriptor(descriptor: OperationDescriptor): void {
+  registerAllOperations().assertRestorable(descriptor);
 }
 
 export function getRegisteredOperationTypes(): readonly string[] {

@@ -1,0 +1,14 @@
+ M architecture-audit/cycle-031-command-undo-persistence-contract-cleanup/decision.md
+ M frontend/src/commands/Command.ts
+ M frontend/src/commands/factories/DeletionSequenceFactory.ts
+ M frontend/src/commands/factories/PointSequenceFactory.ts
+ M frontend/src/commands/operations/IOperation.ts
+ M frontend/src/commands/operations/world/AddCircleCircleIntersectionPoint2DOp.ts
+ M frontend/src/commands/operations/world/AddFreePointOp.ts
+ M frontend/src/commands/operations/world/AddLineCircleIntersectionPoint2DOp.ts
+ M frontend/src/commands/operations/world/AddLineLineIntersectionPoint2DOp.ts
+ M frontend/src/commands/operations/world/AddSiblingIntersectionPoint2DOp.ts
+ D frontend/tests/e2e/active-plane-shortcuts.spec.ts
+ D frontend/tests/e2e/selection-mask.spec.ts
+?? architecture-audit/cycle-031-command-undo-persistence-contract-cleanup/reviews/
+?? architecture-audit/cycle-031-command-undo-persistence-contract-cleanup/validation/

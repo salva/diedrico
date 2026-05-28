@@ -7,26 +7,20 @@
  * 
  */
 
-import type { IOperation, OperationResult } from '../IOperation';
+import type { IOperation, JsonObject, OperationOutputBag, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 import type { Action } from '@/domain/processTree/Action';
 
 export class AddProcessTreeActionOp implements IOperation {
   readonly type = 'AddProcessTreeActionOp';
-  parameters: Record<string, any>;
-  outputs: Record<string, any> = {};
+  outputs: OperationOutputBag = {};
 
-  constructor(action: Action, private groupId: string) {
-    // Store action in parameters for serializability
-    this.parameters = {
-      action: action,
-      groupId: groupId
-    };
+  constructor(private readonly action: Action, private readonly groupId: string) {
   }
 
   apply(world: World): OperationResult {
     // Add action to ProcessTree
-    const action = this.parameters.action as Action;
+    const action = this.action;
     
     // Add to existing group (Strict Mode: groupId is required)
     const index = world.getProcessTree().addActionToGroup(action, this.groupId);
@@ -64,9 +58,14 @@ export class AddProcessTreeActionOp implements IOperation {
   }
 
   serialize() {
+    const action: JsonObject = {
+      elementId: this.action.elementId,
+      description: this.action.description,
+      isOutput: this.action.isOutput
+    };
     return {
       opType: this.type,
-      action: this.parameters.action,
+      action,
       groupId: this.groupId,
       outputs: this.outputs
     };

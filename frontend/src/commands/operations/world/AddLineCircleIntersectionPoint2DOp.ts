@@ -7,13 +7,16 @@
  * by the domain logic, not by this operation.
  */
 
-import type { IOperation, OperationResult } from '../IOperation';
+import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 
-export class AddLineCircleIntersectionPoint2DOp implements IOperation {
+interface LineCircleIntersectionOutput extends JsonObject {
+  pointId?: string;
+}
+
+export class AddLineCircleIntersectionPoint2DOp implements IOperation<OperationDescriptor, LineCircleIntersectionOutput> {
   readonly type = 'AddLineCircleIntersectionPoint2D';
-  readonly parameters: Record<string, any>;
-  outputs: Record<string, any> = {};
+  outputs: LineCircleIntersectionOutput = {};
 
   constructor(
     private planeId: string,
@@ -21,10 +24,9 @@ export class AddLineCircleIntersectionPoint2DOp implements IOperation {
     private circleId: string,
     private index: number
   ) {
-    this.parameters = { planeId, lineId, circleId, index };
   }
 
-  apply(world: World): OperationResult {
+  apply(world: World): OperationResult<LineCircleIntersectionOutput> {
     try {
       const plane = world.getProjectionPlaneById(this.planeId);
       if (!plane) {

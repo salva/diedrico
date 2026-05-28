@@ -6,7 +6,7 @@
  * 
  */
 
-import type { IOperation, OperationResult } from '../IOperation';
+import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 import type { Point2D } from '@/domain/world/Point';
 import type { Line2D } from '@/domain/world/Line';
@@ -22,8 +22,7 @@ import { isGuide2D, isSiblingGuide2D, type Guide2D, type SiblingGuide2D } from '
  */
 export class RemovePoint2DOp implements IOperation {
   readonly type = 'RemovePoint2D';
-  readonly parameters: Record<string, any>;
-  outputs: Record<string, any> = {};
+  outputs: OperationOutputBag = {};
   
   // Stored element data for undo
   private removedPoint?: Point2D;
@@ -32,7 +31,6 @@ export class RemovePoint2DOp implements IOperation {
     private planeId: string,
     private pointId: string
   ) {
-    this.parameters = { planeId, pointId };
   }
 
   apply(world: World): OperationResult {
@@ -109,8 +107,7 @@ export class RemovePoint2DOp implements IOperation {
  */
 export class RemoveLine2DOp implements IOperation {
   readonly type = 'RemoveLine2D';
-  readonly parameters: Record<string, any>;
-  outputs: Record<string, any> = {};
+  outputs: OperationOutputBag = {};
   
   private removedLine?: Line2D;
 
@@ -118,7 +115,6 @@ export class RemoveLine2DOp implements IOperation {
     private planeId: string,
     private lineId: string
   ) {
-    this.parameters = { planeId, lineId };
   }
 
   apply(world: World): OperationResult {
@@ -193,8 +189,7 @@ export class RemoveLine2DOp implements IOperation {
  */
 export class RemoveSegment2DOp implements IOperation {
   readonly type = 'RemoveSegment2D';
-  readonly parameters: Record<string, any>;
-  outputs: Record<string, any> = {};
+  outputs: OperationOutputBag = {};
   
   private removedSegment?: Segment2D;
 
@@ -202,7 +197,6 @@ export class RemoveSegment2DOp implements IOperation {
     private planeId: string,
     private segmentId: string
   ) {
-    this.parameters = { planeId, segmentId };
   }
 
   apply(world: World): OperationResult {
@@ -278,8 +272,7 @@ export class RemoveSegment2DOp implements IOperation {
  */
 export class RemoveCircle2DOp implements IOperation {
   readonly type = 'RemoveCircle2D';
-  readonly parameters: Record<string, any>;
-  outputs: Record<string, any> = {};
+  outputs: OperationOutputBag = {};
   
   private removedCircle?: Circle2D;
 
@@ -287,7 +280,6 @@ export class RemoveCircle2DOp implements IOperation {
     private planeId: string,
     private circleId: string
   ) {
-    this.parameters = { planeId, circleId };
   }
 
   apply(world: World): OperationResult {
@@ -369,8 +361,7 @@ export class RemoveCircle2DOp implements IOperation {
  */
 export class RemoveGuide2DOp implements IOperation {
   readonly type = 'RemoveGuide2D';
-  readonly parameters: Record<string, any>;
-  outputs: Record<string, any> = {};
+  outputs: OperationOutputBag = {};
   
   private removedGuide?: Guide2D;
   private removedSibling?: SiblingGuide2D;
@@ -380,7 +371,6 @@ export class RemoveGuide2DOp implements IOperation {
     private planeId: string,
     private guideId: string
   ) {
-    this.parameters = { planeId, guideId };
   }
 
   apply(world: World): OperationResult {

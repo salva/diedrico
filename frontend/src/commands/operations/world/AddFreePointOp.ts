@@ -5,22 +5,24 @@
  */
 
 import type { Vector3 } from 'three';
-import type { IOperation, OperationResult } from '../IOperation';
+import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 
-export class AddFreePoint2DOp implements IOperation {
+interface AddFreePoint2DOutput extends JsonObject {
+  pointId?: string;
+}
+
+export class AddFreePoint2DOp implements IOperation<OperationDescriptor, AddFreePoint2DOutput> {
   readonly type = 'AddFreePoint2D';
-  readonly parameters: Record<string, any>;
-  outputs: Record<string, any> = {};
+  outputs: AddFreePoint2DOutput = {};
 
   constructor(
     private planeId: string,
     private position: Vector3
   ) {
-    this.parameters = { planeId, position };
   }
 
-  apply(world: World): OperationResult {
+  apply(world: World): OperationResult<AddFreePoint2DOutput> {
     try {
       // Get the projection plane
       const plane = world.getProjectionPlaneById(this.planeId);

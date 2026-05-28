@@ -6,7 +6,7 @@
  */
 
 import { Vector3 } from 'three';
-import type { IOperation, OperationResult } from '../IOperation';
+import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 import { FreePoint2D } from '@/domain/world/Point';
 
@@ -19,8 +19,7 @@ function toVector3(value: Vector3 | SerializableVector3): Vector3 {
 
 export class UpdateFreePoint2DPositionOp implements IOperation {
   readonly type = 'UpdateFreePoint2DPosition';
-  readonly parameters: Record<string, any>;
-  outputs: Record<string, any> = {};
+  outputs: OperationOutputBag = {};
 
   private previousPosition?: Vector3;
   private previousLabel?: string;
@@ -31,12 +30,6 @@ export class UpdateFreePoint2DPositionOp implements IOperation {
     private pointId: string,
     private newPosition: Vector3 | SerializableVector3
   ) {
-    const pos = this.newPosition as any;
-    this.parameters = {
-      planeId,
-      pointId,
-      newPosition: { x: pos.x, y: pos.y, z: pos.z }
-    };
   }
 
   apply(world: World): OperationResult {

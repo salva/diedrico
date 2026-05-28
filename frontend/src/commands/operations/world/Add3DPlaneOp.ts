@@ -15,7 +15,7 @@
  * @see World.add3DPlane() for storage
  */
 
-import type { IOperation, OperationResult } from '../IOperation';
+import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 import { Plane3DFromTraces } from '@/domain/world/Plane';
 import { computeLineLineIntersection3D } from '@/utils/projectionPlaneUtils';
@@ -24,8 +24,7 @@ import { applyMatrix4x3 } from '@/utils/threeUtils';
 
 export class Add3DPlaneOp implements IOperation {
   readonly type = 'Add3DPlane';
-  readonly parameters: Record<string, any>;
-  outputs: Record<string, any> = {};
+  outputs: OperationOutputBag = {};
 
   constructor(
     private trace1Id: string,          // ID of first trace Line2D
@@ -34,13 +33,6 @@ export class Add3DPlaneOp implements IOperation {
     private plane2Id: string,          // ID of second projection plane
     private label?: string             // Optional label for the plane
   ) {
-    this.parameters = { 
-      trace1Id, 
-      trace2Id, 
-      plane1Id, 
-      plane2Id,
-      label
-    };
   }
 
   apply(world: World): OperationResult {

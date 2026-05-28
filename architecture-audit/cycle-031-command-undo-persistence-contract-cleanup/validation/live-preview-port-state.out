@@ -1,0 +1,4 @@
+LISTEN 0      511          0.0.0.0:5173      0.0.0.0:*    users:(("MainThread",pid=181145,fd=22))
+salva     181130       1  0 08:50 ?        00:00:00 npm run dev --host 0.0.0.0
+salva     181144  181130  0 08:50 ?        00:00:00 sh -c vite --host 0.0.0.0
+salva     181145  181144  0 08:50 ?        00:00:02 node /work/diedrico/frontend/node_modules/.bin/vite --host 0.0.0.0

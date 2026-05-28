@@ -1,4 +1,4 @@
-import type { IOperation, OperationResult } from '../IOperation';
+import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 
 /**
@@ -17,19 +17,21 @@ import type { World } from '@/domain/world/World';
  * @see SiblingIntersectionPoint2D for the domain class
  * @see data-model.md §HalfHingeLine2D Intersection Sibling Behavior for architecture details
  */
-export class AddSiblingIntersectionPoint2DOp implements IOperation {
+interface SiblingIntersectionOutput extends JsonObject {
+  pointId?: string;
+}
+
+export class AddSiblingIntersectionPoint2DOp implements IOperation<OperationDescriptor, SiblingIntersectionOutput> {
   readonly type = 'AddSiblingIntersectionPoint2D';
-  readonly parameters: Record<string, any>;
-  outputs: Record<string, any> = {};
+  outputs: SiblingIntersectionOutput = {};
 
   constructor(
     private planeId: string,
     private primaryIntersectionId: string
   ) {
-    this.parameters = { planeId, primaryIntersectionId };
   }
 
-  apply(world: World): OperationResult {
+  apply(world: World): OperationResult<SiblingIntersectionOutput> {
     try {
       const plane = world.getProjectionPlaneById(this.planeId);
       if (!plane) {

@@ -18,14 +18,13 @@
  * @see computeProjectionPlaneMatrices in projectionPlaneUtils.ts
  */
 
-import type { IOperation, OperationResult } from '../IOperation';
+import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 import { AuxiliaryProjectionPlane } from '@/domain/world/projectionPlane/AuxiliaryProjectionPlane';
 
 export class AddAuxiliaryProjectionPlaneOp implements IOperation {
   readonly type = 'AddAuxiliaryProjectionPlane';
-  readonly parameters: Record<string, any>;
-  outputs: Record<string, any> = {};
+  outputs: OperationOutputBag = {};
 
   constructor(
     private plane3DId: string,              // ID of associated Plane3D
@@ -34,13 +33,6 @@ export class AddAuxiliaryProjectionPlaneOp implements IOperation {
     private t2PrimeLineId: string,          // ID of position/orientation line (T2')
     private name?: string                   // Optional name for the plane
   ) {
-    this.parameters = { 
-      plane3DId,
-      t1HingeTraceId,
-      t2OtherTraceId,
-      t2PrimeLineId,
-      name
-    };
   }
 
   apply(world: World): OperationResult {

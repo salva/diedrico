@@ -1,0 +1,10 @@
+--- forbidden persistence seams ---
+frontend/tests/unit/commands/command.spec.ts:28:  outputs: Record<string, any> = {};
+frontend/tests/unit/commands/command.spec.ts:69:  parameters: Record<string, any>;
+frontend/tests/unit/commands/command.spec.ts:70:  outputs: Record<string, any> = {};
+frontend/tests/unit/commandStack.spec.ts:12:  parameters: Record<string, any> = {};
+frontend/tests/unit/commandStack.spec.ts:13:  outputs: Record<string, any> = {};
+frontend/tests/unit/commands.spec.ts:11:  parameters: Record<string, any>;
+frontend/tests/unit/commands.spec.ts:12:  outputs: Record<string, any> = {};
+--- ProjectService concrete operation imports ---
+--- ProjectService migration/switch terms ---
