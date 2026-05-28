@@ -1,22 +1,13 @@
-import { Command } from '@/commands/Command';
-import type { CommandStack } from '@/commands/CommandStack';
-import type { World } from '@/domain/world/World';
 import { UpdateElementStyleOp } from '@/commands/operations/world/UpdateElementStyleOp';
+import type { ToolCommandExecutionPort } from '@/application/commandProduction/CommandProductionPorts';
 import type { StyleUpdateRequest, ToolCommandResult } from '@/application/tools/ToolCommandIntents';
 
 export class CanvasStyleUseCase {
-  constructor(private readonly world: World, private readonly commandStack: CommandStack) {}
+  constructor(private readonly commands: ToolCommandExecutionPort) {}
 
   update(request: StyleUpdateRequest): ToolCommandResult {
-    const cmd = new Command(`Update style: ${request.elementId}`, this.world);
-    try {
-      cmd.addAndExecute(new UpdateElementStyleOp(request.elementId, request.planeId, request.style) as any);
-      cmd.commit();
-      this.commandStack.push(cmd);
-      return { success: true };
-    } catch (error) {
-      cmd.rollback();
-      return { success: false, message: error instanceof Error ? error.message : String(error) };
-    }
+    return this.commands.executeToolCommand(`Update style: ${request.elementId}`, (command) => {
+      command.addAndExecute(new UpdateElementStyleOp(request.elementId, request.planeId, request.style));
+    });
   }
 }

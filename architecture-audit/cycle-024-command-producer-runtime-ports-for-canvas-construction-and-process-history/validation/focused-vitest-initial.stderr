@@ -1,0 +1,47 @@
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/application/commandProduction/RuntimeCommandProducer.test.ts > RuntimeCommandProducer > rolls back failed tool commands without pushing history
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/unit/application/commandProduction/RuntimeCommandProducer.test.ts:45:29
+     43|     expect(result.success).toBe(false);
+     44|     expect(pointCountAfterFailure).toBe(existingPointCount);
+     45|     expect(stack.canUndo()).toBe(false);
+       |                             ^
+     46|   });
+     47| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/unit/application/commandProduction/RuntimeCommandProducer.test.ts > RuntimeCommandProducer > preserves preview, commit, cancel, and undo semantics for movement sessions
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/application/commandProduction/RuntimeCommandProducer.test.ts:58:147
+     56| 
+     57|     const session = commands.startPreviewCommand('Move point');
+     58|     expect(session.preview((command) => command.addAndExecute(new Upda…
+       |                                                                                                                                                   ^
+     59|     expect(world.getProjectionPlaneById(planeId)!.getPoint(point.id)!.…
+     60|     expect(session.preview((command) => command.addAndExecute(new Upda…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c vitest run tests/unit/application/commandProduction/RuntimeCommandProducer.test.ts tests/unit/application/appShell/AppShellBoundary.test.ts

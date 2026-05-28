@@ -1,0 +1,6 @@
+ frontend/src/commands/Command.ts                   |  6 ++--
+ frontend/src/components/panels/ActionGroupItem.vue | 15 ++++++----
+ frontend/src/components/panels/ActionItem.vue      | 32 ++--------------------
+ .../src/components/panels/ElementTypeGroup.vue     |  2 +-
+ frontend/src/components/toolbars/MainToolbar.vue   | 27 ++++++++----------
+ 5 files changed, 27 insertions(+), 55 deletions(-)

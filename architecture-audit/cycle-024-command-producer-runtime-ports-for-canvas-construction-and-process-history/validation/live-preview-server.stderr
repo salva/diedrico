@@ -1,0 +1,5 @@
+npm warn "0.0.0.0" is being parsed as a normal command line argument.
+npm warn Unknown cli config "--host". This will stop working in the next major version of npm.
+npm warn Unknown env config "host". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+(!) Could not auto-determine entry point from rollupOptions or html files and there are no explicit optimizeDeps.include patterns. Skipping dependency pre-bundling.
+Terminated

@@ -1,0 +1,46 @@
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/application/commandProduction/RuntimeCommandProducer.test.ts > RuntimeCommandProducer > owns command creation, commit, push, and undo for tool commands
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/application/commandProduction/RuntimeCommandProducer.test.ts:36:28
+     34|     });
+     35| 
+     36|     expect(result.success).toBe(true);
+       |                            ^
+     37|     expect(stack.canUndo()).toBe(true);
+     38|     expect(world.getProjectionPlaneById(planeId)?.getAllPoints().some(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/unit/application/commandProduction/RuntimeCommandProducer.test.ts > RuntimeCommandProducer > preserves preview, commit, cancel, and undo semantics for movement sessions
+Error: Invalid element ID format: "move-test-point". Expected format: "{containerId}/{localId}"
+ ❯ parseElementId src/domain/world/ElementId.ts:34:11
+     32|   
+     33|   if (parts.length !== 2) {
+     34|     throw new Error(
+       |           ^
+     35|       `Invalid element ID format: "${id}". Expected format: "{containe…
+     36|     );
+ ❯ getContainerIdFromElementId src/domain/world/ElementId.ts:61:25
+ ❯ Module.validateElementId src/domain/world/ElementId.ts:114:23
+ ❯ new Element2D src/domain/world/Element2D.ts:90:5
+ ❯ new Point2D src/domain/world/Point.ts:95:5
+ ❯ new FreePoint2D src/domain/world/Point.ts:126:5
+ ❯ tests/unit/application/commandProduction/RuntimeCommandProducer.test.ts:69:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c vitest run tests/unit/application/commandProduction/RuntimeCommandProducer.test.ts tests/unit/application/appShell/AppShellBoundary.test.ts

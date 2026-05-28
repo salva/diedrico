@@ -1,0 +1,51 @@
+ ✓ tests/unit/rendering/threeView/threeObjectRegistry.spec.ts  (3 tests) 23ms
+ ✓ tests/unit/application/appShell/KeyboardShortcutRouter.test.ts  (3 tests) 15ms
+ ✓ tests/unit/components/panels/threeViewShellBoundary.spec.ts  (2 tests) 7ms
+ ✓ tests/unit/application/canvasPresentation/projected3DCanvasSelector.spec.ts  (1 test) 7ms
+ ✓ tests/unit/application/canvasPresentation/canvasPresentationSelector.spec.ts  (1 test) 18ms
+ ✓ tests/unit/commands/updateFreePoint2DPositionOp.spec.ts  (2 tests) 16ms
+stdout | tests/unit/commands/updateFreePoint2DPositionOp.spec.ts > UpdateFreePoint2DPositionOp > updates a free point position and supports undo
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+
+ ✓ tests/unit/application/canvasPresentation/canvasGridSelector.spec.ts  (2 tests) 12ms
+ ✓ tests/unit/architecture/noCommandSubclasses.spec.ts  (2 tests) 28ms
+ ✓ tests/unit/architecture/worldBoundary.spec.ts  (2 tests) 36ms
+ ✓ tests/unit/architecture/importBoundaries.spec.ts  (6 tests) 108ms
+ ✓ tests/unit/services/svgCanvasRenderer.spec.ts  (1 test) 4ms
+ ✓ tests/unit/services/GeometryService.spec.ts  (2 tests) 3ms
+ ✓ tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts  (1 test) 22ms
+ ✓ tests/unit/smoke.spec.ts  (2 tests) 3ms
+
+ Test Files  115 passed | 1 skipped (116)
+      Tests  1289 passed | 45 skipped | 11 todo (1345)
+   Start at  04:16:54
+   Duration  27.41s (transform 9.41s, setup 18ms, collect 39.03s, tests 4.03s, environment 90.80s, prepare 17.67s)
+
+--- STDERR ---
+    at file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:60:26
+    at runTest (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:781:17)
+    at runSuite (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runSuite (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runSuite (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runFiles (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:958:5)
+
+stderr | tests/unit/domain/degenerateRealize2D.spec.ts > Degenerate Point Handling in realize2D > Line2DParallel > should return infeasible when through-point is infeasible
+[Point2DLineLineIntersection] Lines do not intersect (parallel or coincident)
+[Point2DLineLineIntersection] Lines do not intersect (parallel or coincident)
+
+stderr | tests/unit/domain/degenerateRealize2D.spec.ts > Degenerate Point Handling in realize2D > Circle2D > should return infeasible when center and circumference point coincide
+Circle projPlane3/circle2d12: center and circumference point are coincident
+
+stderr | tests/unit/domain/circle.spec.ts > Circle2D > Circle2DByCenterAndPoint > should return null for degenerate circle (center = circumference point)
+Circle projPlane3/circle2d15: center and circumference point are coincident
+
+stderr | tests/unit/domain/circle.spec.ts > Circle2D > Circle2DByThreePoints > should return null for collinear points
+Circle projPlane3/circle2d17: three points are collinear
+

@@ -1,0 +1,18 @@
+
+> diedrico-frontend@0.1.0 test:e2e
+> playwright test
+
+
+Running 10 tests using 4 workers
+
+[1A[2K[1/10] [chromium] › tests/e2e/current-ui-contract.spec.ts:57:3 › Current Diedrico UI contract › selection masks allow free-point creation and point-only line argument collection
+[1A[2K[2/10] [chromium] › tests/e2e/current-ui-contract.spec.ts:40:3 › Current Diedrico UI contract › plane selector exposes current projection planes and switches active plane
+[1A[2K[3/10] [chromium] › tests/e2e/current-ui-contract.spec.ts:12:3 › Current Diedrico UI contract › renders the current app shell, canvas, toolbar, status bar, and plane selector
+[1A[2K[4/10] [chromium] › tests/e2e/current-ui-contract.spec.ts:26:3 › Current Diedrico UI contract › creates a free point through stable tool and canvas test IDs
+[1A[2K[5/10] [chromium] › tests/e2e/current-ui-contract.spec.ts:78:3 › Current Diedrico UI contract › updates 3D coordinate status through the current canvas mouse contract
+[1A[2K[6/10] [chromium] › tests/e2e/current-ui-contract.spec.ts:89:3 › Current Diedrico UI contract › 3D overlay owns pointer interaction and does not pass drag gestures through to the 2D canvas
+[1A[2K[7/10] [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:9:3 › Keyboard shortcuts › tool shortcut keys activate current tool buttons
+[1A[2K[8/10] [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:24:3 › Keyboard shortcuts › Escape returns to select tool after starting a point workflow
+[1A[2K[9/10] [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:32:3 › Keyboard shortcuts › Delete, undo, redo, Escape, and Ctrl+A preserve selection command behavior
+[1A[2K[10/10] [chromium] › tests/e2e/wave010-app-shell-project-flow.spec.ts:4:3 › Wave 010 app-shell project boundary › starts without Google credentials and opens the app-shell project chooser without backend project API calls
+[1A[2K  10 passed (16.5s)

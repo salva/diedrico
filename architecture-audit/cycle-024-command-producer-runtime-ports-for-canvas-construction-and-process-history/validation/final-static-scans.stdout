@@ -1,0 +1,38 @@
+--- final scoped status ---
+ M frontend/src/application/appShell/RuntimeSession.ts
+ M frontend/src/application/canvas/CanvasPointMovementUseCase.ts
+ M frontend/src/application/canvas/CanvasStyleUseCase.ts
+ M frontend/src/application/construction/ConstructionUseCases.ts
+ M frontend/src/application/construction/QuickToolUseCases.ts
+ M frontend/src/application/processHistory/ProcessHistoryController.ts
+ M frontend/src/application/processHistory/ProcessHistoryUseCases.ts
+ M frontend/src/application/tools/CanvasToolController.ts
+ M frontend/tests/integration/pointCreation.spec.ts
+ M frontend/tests/unit/application/appShell/AppShellBoundary.test.ts
+ M frontend/tests/unit/application/canvasToolControllers.spec.ts
+ M frontend/tests/unit/application/panelToolbarIntentControllers.spec.ts
+ M frontend/tests/unit/components/panelToolbarBehavior.spec.ts
+ M frontend/tests/unit/tools/CircleTool.spec.ts
+ M frontend/tests/unit/tools/pointTool.spec.ts
+ M frontend/tests/unit/tools/toolValidation.spec.ts
+?? frontend/src/application/commandProduction/
+?? frontend/tests/unit/application/commandProduction/RuntimeCommandProducer.test.ts
+--- final diff stat ---
+ .../src/application/appShell/RuntimeSession.ts     |  6 ++-
+ .../canvas/CanvasPointMovementUseCase.ts           | 35 ++++------------
+ .../src/application/canvas/CanvasStyleUseCase.ts   | 19 +++------
+ .../construction/ConstructionUseCases.ts           | 28 ++++++-------
+ .../application/construction/QuickToolUseCases.ts  |  4 --
+ .../processHistory/ProcessHistoryController.ts     |  6 +--
+ .../processHistory/ProcessHistoryUseCases.ts       | 24 ++---------
+ .../src/application/tools/CanvasToolController.ts  | 19 ++++-----
+ frontend/tests/integration/pointCreation.spec.ts   | 29 ++++++-------
+ .../application/appShell/AppShellBoundary.test.ts  | 49 ++++++++++++++++++++++
+ .../unit/application/canvasToolControllers.spec.ts | 15 +++----
+ .../panelToolbarIntentControllers.spec.ts          |  7 ++--
+ .../unit/components/panelToolbarBehavior.spec.ts   |  7 ++--
+ frontend/tests/unit/tools/CircleTool.spec.ts       | 35 ++++++++--------
+ frontend/tests/unit/tools/pointTool.spec.ts        |  3 +-
+ frontend/tests/unit/tools/toolValidation.spec.ts   |  3 +-
+ 16 files changed, 144 insertions(+), 145 deletions(-)
+--- scoped forbidden scans ---

@@ -1,0 +1,224 @@
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Line-Line Intersection > should return infeasible for parallel lines
+[Point2DLineLineIntersection] Lines do not intersect (parallel or coincident)
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Line-Segment Intersection > should return infeasible when intersection is outside segment bounds
+[Point2DLineLineIntersection] Intersection falls outside segment bounds (line2)
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Segment-Segment Intersection > should return infeasible when intersection is outside one segment
+[Point2DLineLineIntersection] Intersection falls outside segment bounds (line1)
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Segment-Segment Intersection > should return infeasible when intersection is outside both segments
+[Point2DLineLineIntersection] Intersection falls outside segment bounds (line1)
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Line-Circle Intersection > should return infeasible when line does not intersect circle
+[Point2DLineCircleIntersection] Line and circle do not intersect
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Segment-Circle Intersection > should return infeasible when intersection is outside segment bounds
+[Point2DLineCircleIntersection] Intersection falls outside segment bounds
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Segment-Circle Intersection > should handle segment partially intersecting circle
+[Point2DLineCircleIntersection] Intersection falls outside segment bounds
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Circle-Circle Intersection > should return infeasible when circles do not intersect
+[Point2DCircleCircleIntersection] Circles do not intersect
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Parent Infeasibility Propagation > should propagate infeasible line to line-line intersection
+[Point2DLineLineIntersection] Parent element is infeasible, marking this as infeasible
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Parent Infeasibility Propagation > should propagate infeasible circle to line-circle intersection
+Circle projPlane3/circle2d15: center and circumference point are coincident
+Circle projPlane3/circle2d15: center and circumference point are coincident
+[Point2DLineCircleIntersection] Parent element is infeasible, marking this as infeasible
+
+stderr | tests/unit/domain/world.spec.ts > ProjectionPlane Factory Methods > Factory Methods > addLineLineIntersection > should throw error for parallel lines
+[Point2DLineLineIntersection] Lines do not intersect (parallel or coincident)
+
+stderr | tests/unit/services/googleDriveService.spec.ts > GoogleDriveService > initialize > should throw error if initialization fails
+[GoogleDrive] Initialization failed: Error: Init failed
+    at /work/diedrico/frontend/tests/unit/services/googleDriveService.spec.ts:123:46
+    at file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:135:14
+    at file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:60:26
+    at runTest (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:781:17)
+    at runSuite (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runSuite (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runSuite (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runFiles (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:958:5)
+    at startTests (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:967:3)
+    at file:///work/diedrico/frontend/node_modules/vitest/dist/chunks/runtime-runBaseTests.oAvMKtQC.js:116:7
+[GoogleDrive] Error details: {}
+
+stderr | tests/unit/domain/Line3DReconstruction.test.ts > Line3D Reconstruction from Projections > should detect infeasible 3D line when lifted planes are parallel
+[Line3DFromProjections] Planes are parallel - no intersection
+
+stderr | tests/unit/commands/factories/DeletionSequenceFactory.spec.ts > DeletionSequenceFactory > createCascadeDeletion > should handle element without process tree action
+[DeletionSequenceFactory] Element projPlane3/point2d10 has no producing action - skipping
+
+stderr | tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Save behavior > should not save with validation errors
+[PropertiesDialog] Validation failed
+
+stderr | tests/unit/components/panelToolbarBehavior.spec.ts > Wave 006b ActionsPanel component behavior > delegates stack button and keyboard subprocess intents through the application controller
+TypeError: Cannot read properties of undefined (reading 'executeProcessCommand')
+    at ProcessHistoryUseCases.executeProcessCommand (/work/diedrico/frontend/src/application/processHistory/ProcessHistoryUseCases.ts:72:26)
+    at ProcessHistoryUseCases.pushSubprocess (/work/diedrico/frontend/src/application/processHistory/ProcessHistoryUseCases.ts:36:17)
+    at ProcessHistoryController.pushSubprocess (/work/diedrico/frontend/src/application/processHistory/ProcessHistoryController.ts:32:26)
+    at pushSubprocess (/work/diedrico/frontend/src/components/panels/ActionsPanel.vue:213:28)
+    at callWithErrorHandling (/work/diedrico/frontend/node_modules/@vue/runtime-core/dist/runtime-core.cjs.prod.js:86:19)
+    at Object.callWithAsyncErrorHandling (/work/diedrico/frontend/node_modules/@vue/runtime-core/dist/runtime-core.cjs.prod.js:93:17)
+    at HTMLButtonElement.invoker (/work/diedrico/frontend/node_modules/@vue/runtime-dom/dist/runtime-dom.cjs.prod.js:662:17)
+    at HTMLButtonElement.callTheUserObjectsOperation (/work/diedrico/frontend/node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+    at innerInvokeEventListeners (/work/diedrico/frontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:360:16)
+    at invokeEventListeners (/work/diedrico/frontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:296:3)
+
+stderr | tests/unit/components/panelToolbarBehavior.spec.ts > Wave 006b ActionsPanel component behavior > delegates process-tree child toggle and rename events without direct command assembly in the component
+TypeError: Cannot read properties of undefined (reading 'executeProcessCommand')
+    at ProcessHistoryUseCases.executeProcessCommand (/work/diedrico/frontend/src/application/processHistory/ProcessHistoryUseCases.ts:72:26)
+    at ProcessHistoryUseCases.pushSubprocess (/work/diedrico/frontend/src/application/processHistory/ProcessHistoryUseCases.ts:36:17)
+    at ProcessHistoryController.pushSubprocess (/work/diedrico/frontend/src/application/processHistory/ProcessHistoryController.ts:32:26)
+    at pushSubprocess (/work/diedrico/frontend/src/components/panels/ActionsPanel.vue:213:28)
+    at callWithErrorHandling (/work/diedrico/frontend/node_modules/@vue/runtime-core/dist/runtime-core.cjs.prod.js:86:19)
+    at Object.callWithAsyncErrorHandling (/work/diedrico/frontend/node_modules/@vue/runtime-core/dist/runtime-core.cjs.prod.js:93:17)
+    at HTMLButtonElement.invoker (/work/diedrico/frontend/node_modules/@vue/runtime-dom/dist/runtime-dom.cjs.prod.js:662:17)
+    at HTMLButtonElement.callTheUserObjectsOperation (/work/diedrico/frontend/node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+    at innerInvokeEventListeners (/work/diedrico/frontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:360:16)
+    at invokeEventListeners (/work/diedrico/frontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:296:3)
+TypeError: Cannot read properties of undefined (reading 'executeProcessCommand')
+    at ProcessHistoryUseCases.executeProcessCommand (/work/diedrico/frontend/src/application/processHistory/ProcessHistoryUseCases.ts:72:26)
+    at ProcessHistoryUseCases.toggleEncapsulation (/work/diedrico/frontend/src/application/processHistory/ProcessHistoryUseCases.ts:51:17)
+    at ProcessHistoryController.toggleEncapsulation (/work/diedrico/frontend/src/application/processHistory/ProcessHistoryController.ts:40:26)
+    at handleToggleEncapsulate (/work/diedrico/frontend/src/components/panels/ActionsPanel.vue:231:28)
+    at callWithErrorHandling (/work/diedrico/frontend/node_modules/@vue/runtime-core/dist/runtime-core.cjs.prod.js:86:19)
+    at callWithAsyncErrorHandling (/work/diedrico/frontend/node_modules/@vue/runtime-core/dist/runtime-core.cjs.prod.js:93:17)
+    at emit (/work/diedrico/frontend/node_modules/@vue/runtime-core/dist/runtime-core.cjs.prod.js:3360:5)
+    at onClick (eval at compileToFunction (/work/diedrico/frontend/node_modules/vue/dist/vue.cjs.prod.js:57:18), <anonymous>:18:29)
+    at callWithErrorHandling (/work/diedrico/frontend/node_modules/@vue/runtime-core/dist/runtime-core.cjs.prod.js:86:19)
+    at Object.callWithAsyncErrorHandling (/work/diedrico/frontend/node_modules/@vue/runtime-core/dist/runtime-core.cjs.prod.js:93:17)
+
+stderr | tests/unit/stores/authStore.spec.ts > authStore > restoreSession > should handle corrupted profile data
+[AuthStore] Failed to parse stored profile: SyntaxError: Unexpected token 'i', "invalid-json{" is not valid JSON
+    at JSON.parse (<anonymous>)
+    at Object.restoreSession (/work/diedrico/frontend/src/stores/authStore.ts:96:28)
+    at /work/diedrico/frontend/tests/unit/stores/authStore.spec.ts:166:34
+    at file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:135:14
+    at file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:60:26
+    at runTest (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:781:17)
+    at runSuite (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runSuite (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runSuite (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runFiles (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:958:5)
+
+stderr | tests/unit/domain/degenerateRealize2D.spec.ts > Degenerate Point Handling in realize2D > Line2DParallel > should return infeasible when through-point is infeasible
+[Point2DLineLineIntersection] Lines do not intersect (parallel or coincident)
+[Point2DLineLineIntersection] Lines do not intersect (parallel or coincident)
+
+stderr | tests/unit/domain/degenerateRealize2D.spec.ts > Degenerate Point Handling in realize2D > Circle2D > should return infeasible when center and circumference point coincide
+Circle projPlane3/circle2d12: center and circumference point are coincident
+
+stderr | tests/unit/domain/circle.spec.ts > Circle2D > Circle2DByCenterAndPoint > should return null for degenerate circle (center = circumference point)
+Circle projPlane3/circle2d15: center and circumference point are coincident
+
+stderr | tests/unit/domain/circle.spec.ts > Circle2D > Circle2DByThreePoints > should return null for collinear points
+Circle projPlane3/circle2d17: three points are collinear
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/application/panelToolbarIntentControllers.spec.ts > Wave 006b panel/toolbar intent controllers > executes process-history mutations through use cases with undo/redo stack effects
+TypeError: this.commands.executeProcessCommand is not a function
+ ❯ ProcessHistoryUseCases.executeProcessCommand src/application/processHistory/ProcessHistoryUseCases.ts:72:26
+     70| 
+     71|   private executeProcessCommand(description: string, operation: IOpera…
+     72|     return this.commands.executeProcessCommand(description, operation,…
+       |                          ^
+     73|   }
+     74| }
+ ❯ ProcessHistoryUseCases.pushSubprocess src/application/processHistory/ProcessHistoryUseCases.ts:36:17
+ ❯ tests/unit/application/panelToolbarIntentControllers.spec.ts:52:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  tests/unit/application/panelToolbarIntentControllers.spec.ts > Wave 006b panel/toolbar intent controllers > does not pollute the command stack when process-history operations fail
+TypeError: this.commands.executeProcessCommand is not a function
+ ❯ ProcessHistoryUseCases.executeProcessCommand src/application/processHistory/ProcessHistoryUseCases.ts:72:26
+     70| 
+     71|   private executeProcessCommand(description: string, operation: IOpera…
+     72|     return this.commands.executeProcessCommand(description, operation,…
+       |                          ^
+     73|   }
+     74| }
+ ❯ ProcessHistoryUseCases.renameSubprocess src/application/processHistory/ProcessHistoryUseCases.ts:65:17
+ ❯ tests/unit/application/panelToolbarIntentControllers.spec.ts:87:36
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  tests/unit/application/panelToolbarIntentControllers.spec.ts > Wave 006b panel/toolbar intent controllers > routes toolbar history state and undo/redo execution through use cases
+TypeError: this.commands.executeProcessCommand is not a function
+ ❯ ProcessHistoryUseCases.executeProcessCommand src/application/processHistory/ProcessHistoryUseCases.ts:72:26
+     70| 
+     71|   private executeProcessCommand(description: string, operation: IOpera…
+     72|     return this.commands.executeProcessCommand(description, operation,…
+       |                          ^
+     73|   }
+     74| }
+ ❯ ProcessHistoryUseCases.pushSubprocess src/application/processHistory/ProcessHistoryUseCases.ts:36:17
+ ❯ tests/unit/application/panelToolbarIntentControllers.spec.ts:103:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  tests/unit/components/panelToolbarBehavior.spec.ts > Wave 006b ActionsPanel component behavior > delegates stack button and keyboard subprocess intents through the application controller
+AssertionError: expected 1 to be 2 // Object.is equality
+
+- Expected
++ Received
+
+- 2
++ 1
+
+ ❯ tests/unit/components/panelToolbarBehavior.spec.ts:108:52
+    106|     await pushButton.trigger('click');
+    107|     await nextTick();
+    108|     expect(world.getProcessTree().getStackDepth()).toBe(2);
+       |                                                    ^
+    109|     expect(commandStack.getUndoCount()).toBe(1);
+    110|     expect(wrapper.get('button.stack-pop-btn').attributes('disabled'))…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  tests/unit/components/panelToolbarBehavior.spec.ts > Wave 006b ActionsPanel component behavior > delegates process-tree child toggle and rename events without direct command assembly in the component
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/unit/components/panelToolbarBehavior.spec.ts:158:88
+    156|     await wrapper.get('button.stub-toggle-encapsulate').trigger('click…
+    157|     await nextTick();
+    158|     expect(world.getProcessTree().findSubprocessById(subprocessId)?.sh…
+       |                                                                                        ^
+    159| 
+    160|     await wrapper.get('button.stub-toggle-output').trigger('click');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  tests/unit/components/panelToolbarBehavior.spec.ts > Wave 006b Toolbar component behavior > delegates undo/redo through the toolbar history controller and refreshes enabled state
+TypeError: this.commands.executeProcessCommand is not a function
+ ❯ ProcessHistoryUseCases.executeProcessCommand src/application/processHistory/ProcessHistoryUseCases.ts:72:26
+     70| 
+     71|   private executeProcessCommand(description: string, operation: IOpera…
+     72|     return this.commands.executeProcessCommand(description, operation,…
+       |                          ^
+     73|   }
+     74| }
+ ❯ ProcessHistoryUseCases.pushSubprocess src/application/processHistory/ProcessHistoryUseCases.ts:36:17
+ ❯ tests/unit/components/panelToolbarBehavior.spec.ts:184:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c vitest run

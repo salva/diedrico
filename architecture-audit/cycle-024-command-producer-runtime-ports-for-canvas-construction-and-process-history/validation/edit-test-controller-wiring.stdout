@@ -1,0 +1,4 @@
+frontend/tests/integration/pointCreation.spec.ts
+frontend/tests/unit/tools/CircleTool.spec.ts
+frontend/tests/unit/tools/pointTool.spec.ts
+frontend/tests/unit/application/canvasToolControllers.spec.ts

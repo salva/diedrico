@@ -1,4 +1,4 @@
-import type { CommandStack } from '@/commands/CommandStack';
+import type { CanvasCommandProductionPort } from '@/application/commandProduction/CommandProductionPorts';
 import type { World } from '@/domain/world/World';
 import type { ToolCommandSink, ToolConstructionIntent, QuickToolIntent, MoveFreePointRequest, FreePointMoveSession, StyleUpdateRequest, ToolCommandResult } from './ToolCommandIntents';
 import { executeConstructionIntent } from '@/application/construction/ConstructionUseCases';
@@ -12,7 +12,7 @@ export interface CanvasToolControllerToolStore {
 
 export interface CanvasToolControllerDependencies {
   world: World;
-  commandStack: CommandStack;
+  commands: CanvasCommandProductionPort;
   toolStore: CanvasToolControllerToolStore;
 }
 
@@ -21,25 +21,20 @@ export class CanvasToolController implements ToolCommandSink {
   private readonly style: CanvasStyleUseCase;
 
   constructor(private readonly deps: CanvasToolControllerDependencies) {
-    this.movement = new CanvasPointMovementUseCase(deps.world, deps.commandStack);
-    this.style = new CanvasStyleUseCase(deps.world, deps.commandStack);
+    this.movement = new CanvasPointMovementUseCase(deps.commands);
+    this.style = new CanvasStyleUseCase(deps.commands);
   }
 
   executeConstructionIntent(intent: ToolConstructionIntent): ToolCommandResult {
-    const result = executeConstructionIntent({
+    return executeConstructionIntent({
       intent,
       world: this.deps.world,
-      commandStack: this.deps.commandStack
+      commands: this.deps.commands
     });
-    return result;
   }
 
   executeQuickIntent(intent: QuickToolIntent): ToolCommandResult {
-    const result = executeQuickToolIntent({
-      intent,
-      world: this.deps.world,
-      commandStack: this.deps.commandStack
-    });
+    const result = executeQuickToolIntent({ intent });
     this.deps.toolStore.setTool('select');
     return result;
   }

@@ -1,0 +1,23 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run tests/unit/components/panelToolbarBehavior.spec.ts tests/unit/application/panelToolbarIntentControllers.spec.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+stdout | tests/unit/application/panelToolbarIntentControllers.spec.ts > Wave 006b panel/toolbar intent controllers > executes process-history mutations through use cases with undo/redo stack effects
+[ProcessTree.toggleSubprocessEncapsulation] subprocessId: node1779941773624q4t606w5z, true → false
+[ProcessTree.toggleOutput] subprocess node1779941773624q4t606w5z, true → false
+
+ ✓ tests/unit/application/panelToolbarIntentControllers.spec.ts  (5 tests) 11ms
+stdout | tests/unit/components/panelToolbarBehavior.spec.ts > Wave 006b ActionsPanel component behavior > delegates process-tree child toggle and rename events without direct command assembly in the component
+[ProcessTree.toggleSubprocessEncapsulation] subprocessId: node1779941773680rreddigdg, true → false
+[ProcessTree.toggleOutput] subprocess node1779941773680rreddigdg, true → false
+
+ ✓ tests/unit/components/panelToolbarBehavior.spec.ts  (4 tests) 102ms
+
+ Test Files  2 passed (2)
+      Tests  9 passed (9)
+   Start at  04:16:11
+   Duration  1.73s (transform 915ms, setup 0ms, collect 1.55s, tests 113ms, environment 968ms, prepare 159ms)
+

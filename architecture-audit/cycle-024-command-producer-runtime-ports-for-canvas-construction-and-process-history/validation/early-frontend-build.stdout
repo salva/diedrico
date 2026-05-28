@@ -1,0 +1,30 @@
+
+> diedrico-frontend@0.1.0 build
+> vue-tsc && vite build
+
+src/application/construction/ConstructionUseCases.ts(57,44): error TS2345: Argument of type 'CommandOperationBuilder' is not assignable to parameter of type 'Command'.
+  Type 'CommandOperationBuilder' is missing the following properties from type 'Command': id, timestamp, description, operations, and 10 more.
+src/application/construction/ConstructionUseCases.ts(63,49): error TS2345: Argument of type 'CommandOperationBuilder' is not assignable to parameter of type 'Command'.
+  Type 'CommandOperationBuilder' is missing the following properties from type 'Command': id, timestamp, description, operations, and 10 more.
+src/application/construction/ConstructionUseCases.ts(76,58): error TS2345: Argument of type 'CommandOperationBuilder' is not assignable to parameter of type 'Command'.
+  Type 'CommandOperationBuilder' is missing the following properties from type 'Command': id, timestamp, description, operations, and 10 more.
+src/application/construction/ConstructionUseCases.ts(82,66): error TS2345: Argument of type 'CommandOperationBuilder' is not assignable to parameter of type 'Command'.
+  Type 'CommandOperationBuilder' is missing the following properties from type 'Command': id, timestamp, description, operations, and 10 more.
+src/application/construction/ConstructionUseCases.ts(90,46): error TS2345: Argument of type 'CommandOperationBuilder' is not assignable to parameter of type 'Command'.
+  Type 'CommandOperationBuilder' is missing the following properties from type 'Command': id, timestamp, description, operations, and 10 more.
+src/application/construction/ConstructionUseCases.ts(96,51): error TS2345: Argument of type 'CommandOperationBuilder' is not assignable to parameter of type 'Command'.
+  Type 'CommandOperationBuilder' is missing the following properties from type 'Command': id, timestamp, description, operations, and 10 more.
+src/application/construction/ConstructionUseCases.ts(143,52): error TS2345: Argument of type 'CommandOperationBuilder' is not assignable to parameter of type 'Command'.
+  Type 'CommandOperationBuilder' is missing the following properties from type 'Command': id, timestamp, description, operations, and 10 more.
+src/application/construction/ConstructionUseCases.ts(150,83): error TS2345: Argument of type 'CommandOperationBuilder' is not assignable to parameter of type 'Command'.
+  Type 'CommandOperationBuilder' is missing the following properties from type 'Command': id, timestamp, description, operations, and 10 more.
+src/application/construction/ConstructionUseCases.ts(151,59): error TS2345: Argument of type 'CommandOperationBuilder' is not assignable to parameter of type 'Command'.
+  Type 'CommandOperationBuilder' is missing the following properties from type 'Command': id, timestamp, description, operations, and 10 more.
+src/application/construction/ConstructionUseCases.ts(171,60): error TS2345: Argument of type 'CommandOperationBuilder' is not assignable to parameter of type 'Command'.
+  Type 'CommandOperationBuilder' is missing the following properties from type 'Command': id, timestamp, description, operations, and 10 more.
+src/application/construction/ConstructionUseCases.ts(175,62): error TS2345: Argument of type 'CommandOperationBuilder' is not assignable to parameter of type 'Command'.
+  Type 'CommandOperationBuilder' is missing the following properties from type 'Command': id, timestamp, description, operations, and 10 more.
+src/application/construction/ConstructionUseCases.ts(179,62): error TS2345: Argument of type 'CommandOperationBuilder' is not assignable to parameter of type 'Command'.
+  Type 'CommandOperationBuilder' is missing the following properties from type 'Command': id, timestamp, description, operations, and 10 more.
+src/application/construction/ConstructionUseCases.ts(183,64): error TS2345: Argument of type 'CommandOperationBuilder' is not assignable to parameter of type 'Command'.
+  Type 'CommandOperationBuilder' is missing the following properties from type 'Command': id, timestamp, description, operations, and 10 more.

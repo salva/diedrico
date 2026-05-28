@@ -157,3 +157,52 @@ describe('Cycle 023 runtime-session consumer ports and command-history boundary'
     expect(projectSessionPersistenceTargets).toMatch(/@\/domain\/world\/World/);
   });
 });
+
+import canvasToolController from '@/application/tools/CanvasToolController.ts?raw';
+import canvasPointMovementUseCase from '@/application/canvas/CanvasPointMovementUseCase.ts?raw';
+import canvasStyleUseCase from '@/application/canvas/CanvasStyleUseCase.ts?raw';
+import constructionUseCases from '@/application/construction/ConstructionUseCases.ts?raw';
+import quickToolUseCases from '@/application/construction/QuickToolUseCases.ts?raw';
+import processHistoryController from '@/application/processHistory/ProcessHistoryController.ts?raw';
+import processHistoryUseCases from '@/application/processHistory/ProcessHistoryUseCases.ts?raw';
+import runtimeCommandProducer from '@/application/commandProduction/RuntimeCommandProducer.ts?raw';
+
+describe('Cycle 024 command-producer runtime ports', () => {
+  it('keeps raw command-stack ownership inside the runtime command producer', () => {
+    const scopedProducerSources = [
+      canvasToolController,
+      canvasPointMovementUseCase,
+      canvasStyleUseCase,
+      constructionUseCases,
+      quickToolUseCases,
+      processHistoryController,
+      processHistoryUseCases,
+    ];
+
+    for (const content of scopedProducerSources) {
+      expect(content).not.toMatch(/@\/commands\/CommandStack/);
+      expect(content).not.toMatch(/commandStack\.push/);
+      expect(content).not.toMatch(/commandStack:/);
+      expect(content).not.toMatch(/commandStack,/);
+      expect(content).not.toMatch(/new Command\(/);
+    }
+
+    expect(runtimeCommandProducer).toMatch(/@\/commands\/CommandStack/);
+    expect(runtimeCommandProducer).toMatch(/new Command\(/);
+    expect(runtimeCommandProducer).toMatch(/commandStack\.push/);
+  });
+
+  it('wires canvas and process-history controllers with runtime-owned command producers', () => {
+    expect(runtimeSession).toMatch(/new RuntimeCommandProducer\(this\.world, this\.commandStack\)/);
+    expect(runtimeSession).toMatch(/commands: this\.commandProducer/);
+    expect(canvasToolController).toMatch(/CanvasCommandProductionPort/);
+    expect(processHistoryController).toMatch(/ProcessCommandExecutionPort/);
+    expect(canvasToolController).not.toMatch(/CommandStack/);
+    expect(processHistoryController).not.toMatch(/CommandStack/);
+  });
+
+  it('deletes stale quick-tool world and command-stack params', () => {
+    expect(quickToolUseCases).not.toMatch(/world:/);
+    expect(quickToolUseCases).not.toMatch(/commandStack:/);
+  });
+});

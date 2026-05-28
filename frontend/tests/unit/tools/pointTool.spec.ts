@@ -16,6 +16,7 @@ import type { World } from '@/domain/world/World';
 import type { CommandStack } from '@/commands/CommandStack';
 import type { ToolContext } from '@/tools/ITool';
 import { CanvasToolController } from '@/application/tools/CanvasToolController';
+import { RuntimeCommandProducer } from '@/application/commandProduction/RuntimeCommandProducer';
 import { Vector3 } from 'three';
 import { CanvasPresentationSelector } from '@/application/canvasPresentation/CanvasPresentationSelector';
 import { createCanvasWorldReadPort } from '@/application/canvasPresentation/CanvasWorldReadPort';
@@ -48,7 +49,7 @@ describe('PointTool', () => {
     planeId,
     planeCoords,
     canvasCoords,
-    commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+    commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, commandStack), toolStore: {} as any }),
     readPort: createToolInteractionReadPort(world),
     interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 },

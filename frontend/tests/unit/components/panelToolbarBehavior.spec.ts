@@ -5,6 +5,7 @@ import { nextTick } from 'vue';
 import ActionsPanel from '@/components/panels/ActionsPanel.vue';
 import Toolbar from '@/components/toolbars/Toolbar.vue';
 import { ProcessHistoryController } from '@/application/processHistory/ProcessHistoryController';
+import { RuntimeCommandProducer } from '@/application/commandProduction/RuntimeCommandProducer';
 import { ProcessHistoryUseCases } from '@/application/processHistory/ProcessHistoryUseCases';
 import { useToolStore } from '@/stores/toolStore';
 import { useViewStore } from '@/stores/viewStore';
@@ -89,7 +90,7 @@ describe('Wave 006b ActionsPanel component behavior', () => {
 
     const wrapper = mount(ActionsPanel, {
       global: {
-        provide: { [ProcessTreeReadInjectionKey as symbol]: createProcessTreeReadPort(world), [ProcessHistoryCommandInjectionKey as symbol]: new ProcessHistoryController({ world, commandStack }) },
+        provide: { [ProcessTreeReadInjectionKey as symbol]: createProcessTreeReadPort(world), [ProcessHistoryCommandInjectionKey as symbol]: new ProcessHistoryController({ world, commands: new RuntimeCommandProducer(world, commandStack) }) },
         stubs: {
           ProcessTreeNode: {
             template: '<div class="process-tree-node-stub" />',
@@ -129,7 +130,7 @@ describe('Wave 006b ActionsPanel component behavior', () => {
 
     const wrapper = mount(ActionsPanel, {
       global: {
-        provide: { [ProcessTreeReadInjectionKey as symbol]: createProcessTreeReadPort(world), [ProcessHistoryCommandInjectionKey as symbol]: new ProcessHistoryController({ world, commandStack }) },
+        provide: { [ProcessTreeReadInjectionKey as symbol]: createProcessTreeReadPort(world), [ProcessHistoryCommandInjectionKey as symbol]: new ProcessHistoryController({ world, commands: new RuntimeCommandProducer(world, commandStack) }) },
         stubs: {
           ProcessTreeNode: {
             name: 'ProcessTreeNode',
@@ -180,7 +181,7 @@ describe('Wave 006b Toolbar component behavior', () => {
   it('delegates undo/redo through the toolbar history controller and refreshes enabled state', async () => {
     const { world, commandStack } = createTestWorld();
     commandStack.clear();
-    const processHistory = new ProcessHistoryUseCases(world, commandStack);
+    const processHistory = new ProcessHistoryUseCases(world, new RuntimeCommandProducer(world, commandStack));
     processHistory.pushSubprocess({ name: 'Undoable from toolbar test' });
 
     const wrapper = mount(Toolbar, {

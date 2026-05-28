@@ -1,0 +1,40 @@
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts > Architecture: deleted legacy world-state paths > active source and tests do not reference deleted store/workspace geometry surfaces
+AssertionError: expected [ …(4) ] to deeply equal []
+
+- Expected
++ Received
+
+- Array []
++ Array [
++   "tests/unit/application/commandProduction/RuntimeCommandProducer.test.ts: getWorld",
++   "tests/unit/application/commandProduction/RuntimeCommandProducer.test.ts: getWorld",
++   "tests/unit/application/commandProduction/RuntimeCommandProducer.test.ts: getWorld",
++   "tests/unit/application/commandProduction/RuntimeCommandProducer.test.ts: getWorld",
++ ]
+
+ ❯ tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts:26:85
+     24|     const pattern = new RegExp(deletedPathTerms.join('|'));
+     25| 
+     26|     expect(findContentMatches(files, pattern, { exclude: isThisArchite…
+       |                                                                                     ^
+     27|   });
+     28| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+npm error Lifecycle script `test:architecture` failed with error:
+npm error code 1
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c vitest run tests/unit/architecture
+npm error Lifecycle script `lint` failed with error:
+npm error code 1
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c npm run test:architecture

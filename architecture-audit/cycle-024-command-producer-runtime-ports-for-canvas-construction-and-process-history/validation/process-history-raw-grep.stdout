@@ -1,0 +1,48 @@
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:65:    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Deletion Test');
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:111:    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Multiple Deletions');
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:148:    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Undo/Redo Test');
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:196:    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Create-Delete-Create Test');
+frontend/tests/integration/projectService.determinism.spec.ts:91:    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Determinism Test Project');
+frontend/tests/integration/projectService.determinism.spec.ts:148:    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'ID Test');
+frontend/tests/unit/components/panelToolbarBehavior.spec.ts:92:        provide: { [ProcessTreeReadInjectionKey as symbol]: createProcessTreeReadPort(world), [ProcessHistoryCommandInjectionKey as symbol]: new ProcessHistoryController({ world, commandStack }) },
+frontend/tests/unit/components/panelToolbarBehavior.spec.ts:132:        provide: { [ProcessTreeReadInjectionKey as symbol]: createProcessTreeReadPort(world), [ProcessHistoryCommandInjectionKey as symbol]: new ProcessHistoryController({ world, commandStack }) },
+frontend/tests/unit/components/panelToolbarBehavior.spec.ts:183:    const processHistory = new ProcessHistoryUseCases(world, commandStack);
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:259:  const projectData = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'test-project');
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:73:    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Test Project');
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:103:    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Test Project');
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:124:    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Test Project');
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:143:    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Test Project');
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:171:    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Test Project');
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:193:    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Test Project');
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:216:    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Test Project');
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:259:    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Test Project');
+frontend/tests/unit/services/ProjectService.subprocess.spec.ts:96:  const projectData = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'test-project');
+frontend/tests/unit/tools/pointTool.spec.ts:271:      const pushSpy = vi.spyOn(commandStack, 'push').mockImplementation(() => {
+frontend/tests/unit/application/panelToolbarIntentControllers.spec.ts:49:    const useCases = new ProcessHistoryUseCases(world, commandStack);
+frontend/tests/unit/application/panelToolbarIntentControllers.spec.ts:80:    const useCases = new ProcessHistoryUseCases(world, commandStack);
+frontend/tests/unit/application/panelToolbarIntentControllers.spec.ts:94:    const processHistory = new ProcessHistoryUseCases(world, commandStack);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:136:    expect(appShellRuntime).not.toMatch(/commandStackForDeferredCommandProducers|commandStack,/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:186:      expect(content).not.toMatch(/commandStack,/);
+frontend/tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts:62:  return { world, commandStack, planeId, selectedPointId: p1, retainedPointId: p2, lineId };
+frontend/tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts:67:    const { world, commandStack, planeId, selectedPointId, retainedPointId, lineId } = createDependentLineFixture();
+frontend/tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts:104:    const push = vi.spyOn(commandStack, 'push');
+frontend/tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts:106:    new SelectionDeletionCommandService(world, commandStack, { createCommand, createCascadeDeletion }).execute([]);
+frontend/tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts:125:    const push = vi.spyOn(commandStack, 'push').mockImplementation(() => { order.push('push'); });
+frontend/tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts:126:    const service = new SelectionDeletionCommandService(world, commandStack, {
+frontend/tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts:146:    const push = vi.spyOn(commandStack, 'push');
+frontend/tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts:147:    const service = new SelectionDeletionCommandService(world, commandStack, {
+frontend/tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts:161:    const push = vi.spyOn(commandStack, 'push');
+frontend/tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts:162:    const service = new SelectionDeletionCommandService(world, commandStack, {
+frontend/tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts:177:    const push = vi.spyOn(commandStack, 'push');
+frontend/tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts:178:    const service = new SelectionDeletionCommandService(world, commandStack, {
+frontend/tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts:191:    const push = vi.spyOn(commandStack, 'push').mockImplementation(() => { throw new Error('push failed'); });
+frontend/tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts:192:    const service = new SelectionDeletionCommandService(world, commandStack, {
+frontend/tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts:208:    const service = new SelectionDeletionCommandService(world, commandStack, {
+frontend/tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts:220:    const uncommittedService = new SelectionDeletionCommandService(world, commandStack, {
+frontend/tests/unit/application/selectionDeletion/SelectionDeletionCommandService.test.ts:229:    const { world, commandStack, selectedPointId } = createDependentLineFixture();
+frontend/tests/helpers/worldHelpers.ts:53: * @returns Object with world, commandStack, and plane IDs
+frontend/tests/helpers/worldHelpers.ts:64:    commandStack,
+frontend/src/application/processHistory/ProcessHistoryController.ts:24:    this.useCases = new ProcessHistoryUseCases(deps.world, deps.commands);
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:7:    return ProjectService.serializeCommands(session.commandStack, session.nextElementId, projectName);
+frontend/src/application/appShell/RuntimeSession.ts:243:      commandStack: this.commandStack,
+frontend/src/application/appShell/RuntimeSession.ts:251:      commandStack: this.commandStack,

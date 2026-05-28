@@ -1,11 +1,7 @@
-import type { CommandStack } from '@/commands/CommandStack';
-import type { World } from '@/domain/world/World';
 import type { QuickToolIntent, ToolCommandResult } from '@/application/tools/ToolCommandIntents';
 
 export interface ExecuteQuickToolParams {
   intent: QuickToolIntent;
-  world: World;
-  commandStack: CommandStack;
 }
 
 export function executeQuickToolIntent({ intent }: ExecuteQuickToolParams): ToolCommandResult {

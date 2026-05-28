@@ -1,11 +1,10 @@
-import { Command } from '@/commands/Command';
-import type { CommandStack } from '@/commands/CommandStack';
 import { PopSubprocessOp } from '@/commands/operations/processTree/PopSubprocessOp';
 import { PushSubprocessOp } from '@/commands/operations/processTree/PushSubprocessOp';
 import { RenameSubprocessOp } from '@/commands/operations/processTree/RenameSubprocessOp';
 import { ToggleEncapsulationOp } from '@/commands/operations/processTree/ToggleEncapsulationOp';
 import { ToggleOutputOp } from '@/commands/operations/processTree/ToggleOutputOp';
 import type { IOperation } from '@/commands/operations/IOperation';
+import type { ProcessCommandExecutionPort } from '@/application/commandProduction/CommandProductionPorts';
 import type { World } from '@/domain/world/World';
 import type {
   PopSubprocessRequest,
@@ -20,7 +19,7 @@ import type {
 export class ProcessHistoryUseCases {
   constructor(
     private readonly world: World,
-    private readonly commandStack: CommandStack
+    private readonly commands: ProcessCommandExecutionPort
   ) {}
 
   getState(): ProcessHistoryState {
@@ -70,23 +69,6 @@ export class ProcessHistoryUseCases {
   }
 
   private executeProcessCommand(description: string, operation: IOperation): ProcessHistoryResult {
-    const command = new Command(description, this.world);
-
-    try {
-      command.addAndExecute(operation);
-      command.commit();
-      this.commandStack.push(command);
-      return {
-        success: true,
-        state: this.getState()
-      };
-    } catch (error) {
-      command.rollback();
-      return {
-        success: false,
-        state: this.getState(),
-        error: error instanceof Error ? error.message : String(error)
-      };
-    }
+    return this.commands.executeProcessCommand(description, operation, () => this.getState());
   }
 }

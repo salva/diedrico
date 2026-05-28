@@ -1,6 +1,7 @@
 import { CommandStack } from '@/commands/CommandStack';
 import { World } from '@/domain/world/World';
 import { initializeWorld } from '@/application/world/initializeWorld';
+import { RuntimeCommandProducer } from '@/application/commandProduction/RuntimeCommandProducer';
 import { SelectionDeletionCommandService } from '@/application/selectionDeletion/SelectionDeletionCommandService';
 import type { SelectionDeletionCommandPort } from '@/application/selectionDeletion/SelectionDeletionPorts';
 import { CanvasToolController } from '@/application/tools/CanvasToolController';
@@ -24,6 +25,7 @@ import { toggleElementVisibility } from './readModels/ElementVisibilityIntent';
 export class RuntimeSession implements ProjectSessionKernel {
   private readonly world = new World();
   private readonly commandStack = new CommandStack();
+  private readonly commandProducer = new RuntimeCommandProducer(this.world, this.commandStack);
 
 
   canvasViewPort(): CanvasViewPort {
@@ -109,7 +111,7 @@ export class RuntimeSession implements ProjectSessionKernel {
   canvasCommandProducerPort(toolStore: CanvasToolControllerToolStore): CanvasToolController {
     return new CanvasToolController({
       world: this.world,
-      commandStack: this.commandStack,
+      commands: this.commandProducer,
       toolStore,
     });
   }
@@ -117,7 +119,7 @@ export class RuntimeSession implements ProjectSessionKernel {
   processHistoryCommandPort(): ProcessHistoryController {
     return new ProcessHistoryController({
       world: this.world,
-      commandStack: this.commandStack,
+      commands: this.commandProducer,
     });
   }
 

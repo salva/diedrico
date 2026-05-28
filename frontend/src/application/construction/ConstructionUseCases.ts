@@ -1,5 +1,4 @@
-import { Command } from '@/commands/Command';
-import type { CommandStack } from '@/commands/CommandStack';
+import type { CommandOperationBuilder, ToolCommandExecutionPort } from '@/application/commandProduction/CommandProductionPorts';
 import type { World } from '@/domain/world/World';
 import type { ToolConstructionIntent, ToolCommandResult } from '@/application/tools/ToolCommandIntents';
 import type { Point2D } from '@/domain/world/Point';
@@ -29,27 +28,24 @@ import { areLinesParallel, intersectLineCircle, intersectCircleCircle } from '@/
 export interface ExecuteConstructionParams {
   intent: ToolConstructionIntent;
   world: World;
-  commandStack: CommandStack;
+  commands: ToolCommandExecutionPort;
 }
 
-export function executeConstructionIntent({ intent, world, commandStack }: ExecuteConstructionParams): ToolCommandResult {
-  const cmd = new Command(intent.description, world);
-  try {
+export function executeConstructionIntent({ intent, world, commands }: ExecuteConstructionParams): ToolCommandResult {
+  const result = commands.executeToolCommand(intent.description, (cmd) => {
     const groupId = `group_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
     const group = createActionGroup(groupId);
     cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
     executeConstructionOperations(cmd, intent, world, groupId);
     checkCreatedElementsFeasibility(cmd, world);
-    cmd.commit();
-    commandStack.push(cmd);
-    return { success: true, message: `${intent.description} completed successfully` };
-  } catch (error) {
-    cmd.rollback();
-    return { success: false, message: error instanceof Error ? error.message : String(error) };
-  }
+  });
+
+  return result.success
+    ? { success: true, message: `${intent.description} completed successfully` }
+    : result;
 }
 
-function executeConstructionOperations(cmd: Command, intent: ToolConstructionIntent, world: World, groupId: string): void {
+function executeConstructionOperations(cmd: CommandOperationBuilder, intent: ToolConstructionIntent, world: World, groupId: string): void {
   const args = intent.args;
   const planeId = intent.planeId;
 
@@ -163,7 +159,7 @@ function executeConstructionOperations(cmd: Command, intent: ToolConstructionInt
   }
 }
 
-function createIntersection(cmd: Command, intent: Extract<ToolConstructionIntent, { type: 'intersection' }>, world: World, groupId: string): void {
+function createIntersection(cmd: CommandOperationBuilder, intent: Extract<ToolConstructionIntent, { type: 'intersection' }>, world: World, groupId: string): void {
   const element1 = intent.args.get('element1')!.element!;
   const element2 = intent.args.get('element2')!.element!;
   const selectionPoint = intent.metadata.selectionPoint;
@@ -222,7 +218,7 @@ function validateCoordinates(coords: any): void {
   }
 }
 
-function checkCreatedElementsFeasibility(cmd: Command, world: World): void {
+function checkCreatedElementsFeasibility(cmd: CommandOperationBuilder, world: World): void {
   for (const op of cmd.getOperations()) {
     for (const [key, value] of Object.entries(op.outputs)) {
       if (typeof value !== 'string' || !key.endsWith('Id') || key === 'groupId' || key === 'actionId') continue;

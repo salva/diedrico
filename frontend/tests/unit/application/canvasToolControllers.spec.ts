@@ -5,6 +5,7 @@ import { executeConstructionIntent } from '@/application/construction/Constructi
 import { CanvasPointMovementUseCase } from '@/application/canvas/CanvasPointMovementUseCase';
 import { CanvasStyleUseCase } from '@/application/canvas/CanvasStyleUseCase';
 import { CanvasToolController } from '@/application/tools/CanvasToolController';
+import { RuntimeCommandProducer } from '@/application/commandProduction/RuntimeCommandProducer';
 import { PointTool } from '@/tools/PointTool';
 import { IntersectionTool } from '@/tools/IntersectionTool';
 import { TangentLineToCircleThroughPointTool } from '@/tools/TangentLineToCircleThroughPointTool';
@@ -46,7 +47,7 @@ describe('Wave 006a canvas/tool command controllers', () => {
 
     const success = executeConstructionIntent({
       world,
-      commandStack,
+      commands: new RuntimeCommandProducer(world, commandStack),
       intent: {
         type: 'point',
         description: 'Create free point',
@@ -61,7 +62,7 @@ describe('Wave 006a canvas/tool command controllers', () => {
 
     const failure = executeConstructionIntent({
       world,
-      commandStack,
+      commands: new RuntimeCommandProducer(world, commandStack),
       intent: {
         type: 'point',
         description: 'Create invalid point',
@@ -88,7 +89,7 @@ describe('Wave 006a canvas/tool command controllers', () => {
 
     const result = executeConstructionIntent({
       world,
-      commandStack,
+      commands: new RuntimeCommandProducer(world, commandStack),
       intent: {
         type: 'intersection',
         description: 'Create intersection point',
@@ -119,7 +120,7 @@ describe('Wave 006a canvas/tool command controllers', () => {
 
     const result = executeConstructionIntent({
       world,
-      commandStack,
+      commands: new RuntimeCommandProducer(world, commandStack),
       intent: {
         type: 'tangent-line-to-circle-through-point',
         description: 'Create tangent line to circle through point',
@@ -141,7 +142,7 @@ describe('Wave 006a canvas/tool command controllers', () => {
     const { world, commandStack } = createTestWorld();
     const plane = getHorizontalPlane(world);
     const point = plane.addFreePoint2D(new Vector3(1, 2, 1), world);
-    const useCase = new CanvasPointMovementUseCase(world, commandStack);
+    const useCase = new CanvasPointMovementUseCase(new RuntimeCommandProducer(world, commandStack));
 
     const cancelled = useCase.start({ planeId: plane.id, pointId: point.id, label: point.label });
     expect(cancelled.preview(new Vector3(3, 4, 1)).success).toBe(true);
@@ -163,7 +164,7 @@ describe('Wave 006a canvas/tool command controllers', () => {
     const { world, commandStack } = createTestWorld();
     const plane = getHorizontalPlane(world);
     const point = plane.addFreePoint2D(new Vector3(1, 2, 1), world);
-    const useCase = new CanvasStyleUseCase(world, commandStack);
+    const useCase = new CanvasStyleUseCase(new RuntimeCommandProducer(world, commandStack));
     const beforeUndoCount = commandStack.getUndoCount();
 
     const result = useCase.update({
@@ -255,7 +256,7 @@ describe('Wave 006a canvas/tool command controllers', () => {
   it('delegates through CanvasToolController rather than exposing command construction to tools', () => {
     const { world, commandStack } = createTestWorld();
     const planeId = getHorizontalPlaneId(world);
-    const controller = new CanvasToolController({ world, commandStack, toolStore: { setTool: vi.fn() } as any });
+    const controller = new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, commandStack), toolStore: { setTool: vi.fn() } as any });
     const pointTool = new PointTool();
     const result = pointTool.handleClick(makeToolContext({
       planeId,

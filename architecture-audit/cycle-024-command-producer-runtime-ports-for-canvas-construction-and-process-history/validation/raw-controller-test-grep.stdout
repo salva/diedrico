@@ -1,0 +1,50 @@
+frontend/tests/integration/pointCreation.spec.ts:47:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/integration/pointCreation.spec.ts:79:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/integration/pointCreation.spec.ts:104:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/integration/pointCreation.spec.ts:128:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/integration/pointCreation.spec.ts:150:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/integration/pointCreation.spec.ts:177:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/integration/pointCreation.spec.ts:209:          commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/integration/pointCreation.spec.ts:251:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/integration/pointCreation.spec.ts:280:          commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/integration/pointCreation.spec.ts:313:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/integration/pointCreation.spec.ts:335:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/integration/pointCreation.spec.ts:356:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/integration/pointCreation.spec.ts:378:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/integration/pointCreation.spec.ts:407:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:65:    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Deletion Test');
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:111:    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Multiple Deletions');
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:148:    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Undo/Redo Test');
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:196:    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Create-Delete-Create Test');
+frontend/tests/integration/projectService.determinism.spec.ts:91:    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Determinism Test Project');
+frontend/tests/integration/projectService.determinism.spec.ts:148:    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'ID Test');
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:259:  const projectData = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'test-project');
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:73:    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Test Project');
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:103:    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Test Project');
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:124:    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Test Project');
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:143:    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Test Project');
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:171:    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Test Project');
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:193:    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Test Project');
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:216:    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Test Project');
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:259:    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Test Project');
+frontend/tests/unit/services/ProjectService.subprocess.spec.ts:96:  const projectData = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'test-project');
+frontend/tests/unit/tools/CircleTool.spec.ts:88:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:105:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:150:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:167:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:206:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:222:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:264:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:280:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:305:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:323:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:353:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:367:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:382:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:418:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:432:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:497:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:510:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/pointTool.spec.ts:51:    commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/pointTool.spec.ts:270:      const pushSpy = vi.spyOn(commandStack, 'push').mockImplementation(() => {
+frontend/tests/unit/application/canvasToolControllers.spec.ts:49:      commandStack,

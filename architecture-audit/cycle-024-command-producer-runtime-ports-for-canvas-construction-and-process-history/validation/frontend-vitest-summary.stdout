@@ -1,0 +1,161 @@
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/move-test-point
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/move-test-point
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/move-test-point
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/move-test-point
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+
+ ✓ tests/unit/commands/createLine.spec.ts  (4 tests) 17ms
+ ✓ tests/unit/rectangleGrid.test.ts  (6 tests) 18ms
+ ✓ tests/unit/commands/createSegment.spec.ts  (4 tests) 15ms
+ ✓ tests/unit/application/appShell/Cycle027Architecture.test.ts  (3 tests) 6ms
+ ✓ tests/unit/stores/processTreeStore.spec.ts  (13 tests) 12ms
+ ✓ tests/unit/commands/viewStateOperations.spec.ts  (4 tests) 9ms
+ ✓ tests/unit/commands/operations/operationRegistry.spec.ts  (7 tests) 12ms
+ ✓ tests/unit/rendering/threeView/threeSceneAdapters.spec.ts  (2 tests) 67ms
+stdout | tests/integration/guide-creation.test.ts > Guide Creation - Integration Tests > Regular Line Reference > should create guide on regular line without sibling
+[GuideSequenceFactory] createGuideWithSibling called: plane=projPlane3, refLine=projPlane3/line2d12, point=projPlane3/point2d13
+[GuideSequenceFactory] Primary guide created: projPlane3/guide2d14
+[GuideSequenceFactory] Getting sibling plane info...
+[GuideSequenceFactory] No sibling info - reference line is not a HalfHingeLine or BrokenHalfHingeLine2D
+
+ ✓ tests/integration/guide-creation.test.ts  (2 tests) 18ms
+stdout | tests/integration/guide-creation.test.ts > Guide Creation - Integration Tests > Error Prevention > should not throw when creating guide on non-hinge line
+[GuideSequenceFactory] createGuideWithSibling called: plane=projPlane3, refLine=projPlane3/line2d12, point=projPlane3/point2d13
+[GuideSequenceFactory] Primary guide created: projPlane3/guide2d14
+[GuideSequenceFactory] Getting sibling plane info...
+[GuideSequenceFactory] No sibling info - reference line is not a HalfHingeLine or BrokenHalfHingeLine2D
+
+ ✓ tests/unit/services/ProjectService.subprocess.spec.ts  (5 tests) 17ms
+ ✓ tests/integration/phase76-fail-fast.spec.ts  (10 tests) 22ms
+ ✓ tests/unit/application/threePresentation/threePresentationSelector.spec.ts  (1 test) 7ms
+ ✓ tests/unit/commands/commandStackObserver.spec.ts  (5 tests) 29ms
+ ✓ tests/unit/application/canvasPresentation/canvasWorldReadPort.spec.ts  (3 tests) 33ms
+ ✓ tests/unit/tools/GuideTool.test.ts  (8 tests) 20ms
+ ✓ tests/unit/application/tools/ToolInteractionReadPort.test.ts  (2 tests) 18ms
+ ✓ tests/unit/autosave.spec.ts  (3 tests) 32ms
+ ✓ tests/unit/application/appShell/RuntimeReadModels.test.ts  (3 tests) 12ms
+ ✓ tests/unit/rendering/threeView/threeObjectRegistry.spec.ts  (3 tests) 26ms
+ ✓ tests/unit/application/canvasPresentation/canvasInteractionQuery.spec.ts  (3 tests) 9ms
+ ✓ tests/unit/application/appShell/KeyboardShortcutRouter.test.ts  (3 tests) 14ms
+ ✓ tests/unit/components/panels/threeViewShellBoundary.spec.ts  (2 tests) 8ms
+ ✓ tests/unit/application/canvasPresentation/projected3DCanvasSelector.spec.ts  (1 test) 9ms
+ ✓ tests/unit/application/canvasPresentation/canvasPresentationSelector.spec.ts  (1 test) 23ms
+stdout | tests/unit/commands/updateFreePoint2DPositionOp.spec.ts > UpdateFreePoint2DPositionOp > updates a free point position and supports undo
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+
+ ✓ tests/unit/commands/updateFreePoint2DPositionOp.spec.ts  (2 tests) 18ms
+ ✓ tests/unit/application/canvasPresentation/canvasGridSelector.spec.ts  (2 tests) 8ms
+ ✓ tests/unit/architecture/worldBoundary.spec.ts  (2 tests) 61ms
+ ✓ tests/unit/architecture/noCommandSubclasses.spec.ts  (2 tests) 63ms
+ ✓ tests/unit/architecture/importBoundaries.spec.ts  (6 tests) 147ms
+ ✓ tests/unit/services/GeometryService.spec.ts  (2 tests) 5ms
+ ✓ tests/unit/services/svgCanvasRenderer.spec.ts  (1 test) 3ms
+ ✓ tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts  (1 test) 17ms
+ ✓ tests/unit/smoke.spec.ts  (2 tests) 3ms
+
+ Test Files  6 failed | 109 passed | 1 skipped (116)
+      Tests  40 failed | 1249 passed | 45 skipped | 11 todo (1345)
+   Start at  04:09:06
+   Duration  28.58s (transform 10.02s, setup 11ms, collect 40.25s, tests 4.06s, environment 94.09s, prepare 19.01s)
+
+--- STDERR ---
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/tools/toolValidation.spec.ts:140:26
+    138| 
+    139|       const r2 = tool.handleClick(makeContext(new Vector3(200, 200, 1)…
+    140|       expect(r2.success).toBe(true);
+       |                          ^
+    141|       expect(r2.message).toContain('completed successfully');
+    142|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/40]⎯
+
+ FAIL  tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > CircleTool > should accept valid center and circumference point
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/tools/toolValidation.spec.ts:168:26
+    166| 
+    167|       const r2 = tool.handleClick(makeContext(new Vector3(200, 100, 1)…
+    168|       expect(r2.success).toBe(true);
+       |                          ^
+    169|       expect(r2.message).toContain('completed successfully');
+    170|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/40]⎯
+
+ FAIL  tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > ParallelLineTool > should accept valid reference line and create parallel
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/tools/toolValidation.spec.ts:191:26
+    189| 
+    190|       const r2 = tool.handleClick(makeContext(new Vector3(150, 200, 1)…
+    191|       expect(r2.success).toBe(true);
+       |                          ^
+    192|       expect(r2.message).toContain('completed successfully');
+    193|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/40]⎯
+
+ FAIL  tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > PerpendicularLineTool > should accept valid reference line and create perpendicular
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/tools/toolValidation.spec.ts:211:26
+    209| 
+    210|       const r2 = tool.handleClick(makeContext(new Vector3(150, 200, 1)…
+    211|       expect(r2.success).toBe(true);
+       |                          ^
+    212|       expect(r2.message).toContain('completed successfully');
+    213|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/40]⎯
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c vitest run

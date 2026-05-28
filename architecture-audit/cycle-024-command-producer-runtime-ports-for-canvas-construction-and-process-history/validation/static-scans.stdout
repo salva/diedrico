@@ -1,0 +1,32 @@
+--- git status scoped ---
+ M frontend/src/application/appShell/RuntimeSession.ts
+ M frontend/src/application/canvas/CanvasPointMovementUseCase.ts
+ M frontend/src/application/canvas/CanvasStyleUseCase.ts
+ M frontend/src/application/construction/ConstructionUseCases.ts
+ M frontend/src/application/construction/QuickToolUseCases.ts
+ M frontend/src/application/processHistory/ProcessHistoryController.ts
+ M frontend/src/application/processHistory/ProcessHistoryUseCases.ts
+ M frontend/src/application/tools/CanvasToolController.ts
+ M frontend/tests/unit/application/appShell/AppShellBoundary.test.ts
+?? frontend/src/application/commandProduction/
+?? frontend/tests/unit/application/commandProduction/RuntimeCommandProducer.test.ts
+--- diff stat scoped ---
+ .../src/application/appShell/RuntimeSession.ts     |  6 ++-
+ .../canvas/CanvasPointMovementUseCase.ts           | 35 ++++------------
+ .../src/application/canvas/CanvasStyleUseCase.ts   | 19 +++------
+ .../construction/ConstructionUseCases.ts           | 28 ++++++-------
+ .../application/construction/QuickToolUseCases.ts  |  4 --
+ .../processHistory/ProcessHistoryController.ts     |  6 +--
+ .../processHistory/ProcessHistoryUseCases.ts       | 24 ++---------
+ .../src/application/tools/CanvasToolController.ts  | 19 ++++-----
+ .../application/appShell/AppShellBoundary.test.ts  | 49 ++++++++++++++++++++++
+ 9 files changed, 91 insertions(+), 99 deletions(-)
+--- forbidden commandStackForDeferredCommandProducers ---
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:113:    expect(runtimeSession).not.toMatch(/commandStackForDeferredCommandProducers\(/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:136:    expect(appShellRuntime).not.toMatch(/commandStackForDeferredCommandProducers|commandStack,/);
+--- raw commandStack provide/inject ---
+frontend/tests/unit/application/panelToolbarIntentControllers.spec.ts:35:    expect(actionsPanelSource).not.toContain("inject<unknown>('commandStack')");
+--- scoped CommandStack imports ---
+--- scoped commandStack.push ---
+--- scoped new Command ---
+--- quick stale params ---

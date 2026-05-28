@@ -1,0 +1,838 @@
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Line-Line Intersection > should return infeasible for parallel lines
+[Point2DLineLineIntersection] Lines do not intersect (parallel or coincident)
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Line-Segment Intersection > should return infeasible when intersection is outside segment bounds
+[Point2DLineLineIntersection] Intersection falls outside segment bounds (line2)
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Segment-Segment Intersection > should return infeasible when intersection is outside one segment
+[Point2DLineLineIntersection] Intersection falls outside segment bounds (line1)
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Segment-Segment Intersection > should return infeasible when intersection is outside both segments
+[Point2DLineLineIntersection] Intersection falls outside segment bounds (line1)
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Line-Circle Intersection > should return infeasible when line does not intersect circle
+[Point2DLineCircleIntersection] Line and circle do not intersect
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Segment-Circle Intersection > should return infeasible when intersection is outside segment bounds
+[Point2DLineCircleIntersection] Intersection falls outside segment bounds
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Segment-Circle Intersection > should handle segment partially intersecting circle
+[Point2DLineCircleIntersection] Intersection falls outside segment bounds
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Circle-Circle Intersection > should return infeasible when circles do not intersect
+[Point2DCircleCircleIntersection] Circles do not intersect
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Parent Infeasibility Propagation > should propagate infeasible line to line-line intersection
+[Point2DLineLineIntersection] Parent element is infeasible, marking this as infeasible
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Parent Infeasibility Propagation > should propagate infeasible circle to line-circle intersection
+Circle projPlane3/circle2d15: center and circumference point are coincident
+Circle projPlane3/circle2d15: center and circumference point are coincident
+[Point2DLineCircleIntersection] Parent element is infeasible, marking this as infeasible
+
+stderr | tests/unit/domain/world.spec.ts > ProjectionPlane Factory Methods > Factory Methods > addLineLineIntersection > should throw error for parallel lines
+[Point2DLineLineIntersection] Lines do not intersect (parallel or coincident)
+
+stderr | tests/unit/services/googleDriveService.spec.ts > GoogleDriveService > initialize > should throw error if initialization fails
+[GoogleDrive] Initialization failed: Error: Init failed
+    at /work/diedrico/frontend/tests/unit/services/googleDriveService.spec.ts:123:46
+    at file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:135:14
+    at file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:60:26
+    at runTest (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:781:17)
+    at runSuite (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runSuite (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runSuite (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runFiles (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:958:5)
+    at startTests (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:967:3)
+    at file:///work/diedrico/frontend/node_modules/vitest/dist/chunks/runtime-runBaseTests.oAvMKtQC.js:116:7
+[GoogleDrive] Error details: {}
+
+stderr | tests/unit/domain/Line3DReconstruction.test.ts > Line3D Reconstruction from Projections > should detect infeasible 3D line when lifted planes are parallel
+[Line3DFromProjections] Planes are parallel - no intersection
+
+stderr | tests/unit/commands/factories/DeletionSequenceFactory.spec.ts > DeletionSequenceFactory > createCascadeDeletion > should handle element without process tree action
+[DeletionSequenceFactory] Element projPlane3/point2d10 has no producing action - skipping
+
+stderr | tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Save behavior > should not save with validation errors
+[PropertiesDialog] Validation failed
+
+stderr | tests/unit/components/panelToolbarBehavior.spec.ts > Wave 006b ActionsPanel component behavior > delegates stack button and keyboard subprocess intents through the application controller
+TypeError: Cannot read properties of undefined (reading 'executeProcessCommand')
+    at ProcessHistoryUseCases.executeProcessCommand (/work/diedrico/frontend/src/application/processHistory/ProcessHistoryUseCases.ts:72:26)
+    at ProcessHistoryUseCases.pushSubprocess (/work/diedrico/frontend/src/application/processHistory/ProcessHistoryUseCases.ts:36:17)
+    at ProcessHistoryController.pushSubprocess (/work/diedrico/frontend/src/application/processHistory/ProcessHistoryController.ts:32:26)
+    at pushSubprocess (/work/diedrico/frontend/src/components/panels/ActionsPanel.vue:213:28)
+    at callWithErrorHandling (/work/diedrico/frontend/node_modules/@vue/runtime-core/dist/runtime-core.cjs.prod.js:86:19)
+    at Object.callWithAsyncErrorHandling (/work/diedrico/frontend/node_modules/@vue/runtime-core/dist/runtime-core.cjs.prod.js:93:17)
+    at HTMLButtonElement.invoker (/work/diedrico/frontend/node_modules/@vue/runtime-dom/dist/runtime-dom.cjs.prod.js:662:17)
+    at HTMLButtonElement.callTheUserObjectsOperation (/work/diedrico/frontend/node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+    at innerInvokeEventListeners (/work/diedrico/frontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:360:16)
+    at invokeEventListeners (/work/diedrico/frontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:296:3)
+
+stderr | tests/unit/components/panelToolbarBehavior.spec.ts > Wave 006b ActionsPanel component behavior > delegates process-tree child toggle and rename events without direct command assembly in the component
+TypeError: Cannot read properties of undefined (reading 'executeProcessCommand')
+    at ProcessHistoryUseCases.executeProcessCommand (/work/diedrico/frontend/src/application/processHistory/ProcessHistoryUseCases.ts:72:26)
+    at ProcessHistoryUseCases.pushSubprocess (/work/diedrico/frontend/src/application/processHistory/ProcessHistoryUseCases.ts:36:17)
+    at ProcessHistoryController.pushSubprocess (/work/diedrico/frontend/src/application/processHistory/ProcessHistoryController.ts:32:26)
+    at pushSubprocess (/work/diedrico/frontend/src/components/panels/ActionsPanel.vue:213:28)
+    at callWithErrorHandling (/work/diedrico/frontend/node_modules/@vue/runtime-core/dist/runtime-core.cjs.prod.js:86:19)
+    at Object.callWithAsyncErrorHandling (/work/diedrico/frontend/node_modules/@vue/runtime-core/dist/runtime-core.cjs.prod.js:93:17)
+    at HTMLButtonElement.invoker (/work/diedrico/frontend/node_modules/@vue/runtime-dom/dist/runtime-dom.cjs.prod.js:662:17)
+    at HTMLButtonElement.callTheUserObjectsOperation (/work/diedrico/frontend/node_modules/jsdom/lib/jsdom/living/generated/EventListener.js:26:30)
+    at innerInvokeEventListeners (/work/diedrico/frontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:360:16)
+    at invokeEventListeners (/work/diedrico/frontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:296:3)
+TypeError: Cannot read properties of undefined (reading 'executeProcessCommand')
+    at ProcessHistoryUseCases.executeProcessCommand (/work/diedrico/frontend/src/application/processHistory/ProcessHistoryUseCases.ts:72:26)
+    at ProcessHistoryUseCases.toggleEncapsulation (/work/diedrico/frontend/src/application/processHistory/ProcessHistoryUseCases.ts:51:17)
+    at ProcessHistoryController.toggleEncapsulation (/work/diedrico/frontend/src/application/processHistory/ProcessHistoryController.ts:40:26)
+    at handleToggleEncapsulate (/work/diedrico/frontend/src/components/panels/ActionsPanel.vue:231:28)
+    at callWithErrorHandling (/work/diedrico/frontend/node_modules/@vue/runtime-core/dist/runtime-core.cjs.prod.js:86:19)
+    at callWithAsyncErrorHandling (/work/diedrico/frontend/node_modules/@vue/runtime-core/dist/runtime-core.cjs.prod.js:93:17)
+    at emit (/work/diedrico/frontend/node_modules/@vue/runtime-core/dist/runtime-core.cjs.prod.js:3360:5)
+    at onClick (eval at compileToFunction (/work/diedrico/frontend/node_modules/vue/dist/vue.cjs.prod.js:57:18), <anonymous>:18:29)
+    at callWithErrorHandling (/work/diedrico/frontend/node_modules/@vue/runtime-core/dist/runtime-core.cjs.prod.js:86:19)
+    at Object.callWithAsyncErrorHandling (/work/diedrico/frontend/node_modules/@vue/runtime-core/dist/runtime-core.cjs.prod.js:93:17)
+
+stderr | tests/unit/stores/authStore.spec.ts > authStore > restoreSession > should handle corrupted profile data
+[AuthStore] Failed to parse stored profile: SyntaxError: Unexpected token 'i', "invalid-json{" is not valid JSON
+    at JSON.parse (<anonymous>)
+    at Object.restoreSession (/work/diedrico/frontend/src/stores/authStore.ts:96:28)
+    at /work/diedrico/frontend/tests/unit/stores/authStore.spec.ts:166:34
+    at file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:135:14
+    at file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:60:26
+    at runTest (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:781:17)
+    at runSuite (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runSuite (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runSuite (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runFiles (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:958:5)
+
+stderr | tests/unit/domain/degenerateRealize2D.spec.ts > Degenerate Point Handling in realize2D > Line2DParallel > should return infeasible when through-point is infeasible
+[Point2DLineLineIntersection] Lines do not intersect (parallel or coincident)
+[Point2DLineLineIntersection] Lines do not intersect (parallel or coincident)
+
+stderr | tests/unit/domain/degenerateRealize2D.spec.ts > Degenerate Point Handling in realize2D > Circle2D > should return infeasible when center and circumference point coincide
+Circle projPlane3/circle2d12: center and circumference point are coincident
+
+stderr | tests/unit/domain/circle.spec.ts > Circle2D > Circle2DByCenterAndPoint > should return null for degenerate circle (center = circumference point)
+Circle projPlane3/circle2d15: center and circumference point are coincident
+
+stderr | tests/unit/domain/circle.spec.ts > Circle2D > Circle2DByThreePoints > should return null for collinear points
+Circle projPlane3/circle2d17: three points are collinear
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 41 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/application/canvasToolControllers.spec.ts > Wave 006a canvas/tool command controllers > executes construction intents and rolls failed construction back without stack pollution
+TypeError: Cannot read properties of undefined (reading 'executeToolCommand')
+ ❯ Module.executeConstructionIntent src/application/construction/ConstructionUseCases.ts:35:27
+     33| 
+     34| export function executeConstructionIntent({ intent, world, commands }:…
+     35|   const result = commands.executeToolCommand(intent.description, (cmd)…
+       |                           ^
+     36|     const groupId = `group_${Date.now()}_${Math.random().toString(36).…
+     37|     const group = createActionGroup(groupId);
+ ❯ tests/unit/application/canvasToolControllers.spec.ts:47:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/41]⎯
+
+ FAIL  tests/unit/application/canvasToolControllers.spec.ts > Wave 006a canvas/tool command controllers > uses typed intersection metadata to choose the intended line-circle intersection
+TypeError: Cannot read properties of undefined (reading 'executeToolCommand')
+ ❯ Module.executeConstructionIntent src/application/construction/ConstructionUseCases.ts:35:27
+     33| 
+     34| export function executeConstructionIntent({ intent, world, commands }:…
+     35|   const result = commands.executeToolCommand(intent.description, (cmd)…
+       |                           ^
+     36|     const groupId = `group_${Date.now()}_${Math.random().toString(36).…
+     37|     const group = createActionGroup(groupId);
+ ❯ tests/unit/application/canvasToolControllers.spec.ts:89:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/41]⎯
+
+ FAIL  tests/unit/application/canvasToolControllers.spec.ts > Wave 006a canvas/tool command controllers > uses typed tangent metadata instead of defaulting tangent choices to index zero
+TypeError: Cannot read properties of undefined (reading 'executeToolCommand')
+ ❯ Module.executeConstructionIntent src/application/construction/ConstructionUseCases.ts:35:27
+     33| 
+     34| export function executeConstructionIntent({ intent, world, commands }:…
+     35|   const result = commands.executeToolCommand(intent.description, (cmd)…
+       |                           ^
+     36|     const groupId = `group_${Date.now()}_${Math.random().toString(36).…
+     37|     const group = createActionGroup(groupId);
+ ❯ tests/unit/application/canvasToolControllers.spec.ts:120:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/41]⎯
+
+ FAIL  tests/unit/application/canvasToolControllers.spec.ts > Wave 006a canvas/tool command controllers > previews, cancels, commits, and undoes free-point moves through the movement use case
+TypeError: this.commandSessions.startPreviewCommand is not a function
+ ❯ CanvasPointMovementUseCase.start src/application/canvas/CanvasPointMovementUseCase.ts:10:42
+      8| 
+      9|   start(request: MoveFreePointRequest): FreePointMoveSession {
+     10|     const session = this.commandSessions.startPreviewCommand(`Move poi…
+       |                                          ^
+     11| 
+     12|     return {
+ ❯ tests/unit/application/canvasToolControllers.spec.ts:146:31
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/41]⎯
+
+ FAIL  tests/unit/application/canvasToolControllers.spec.ts > Wave 006a canvas/tool command controllers > updates element styles through the style use case with undo support
+TypeError: this.commands.executeToolCommand is not a function
+ ❯ CanvasStyleUseCase.update src/application/canvas/CanvasStyleUseCase.ts:9:26
+      7| 
+      8|   update(request: StyleUpdateRequest): ToolCommandResult {
+      9|     return this.commands.executeToolCommand(`Update style: ${request.e…
+       |                          ^
+     10|       command.addAndExecute(new UpdateElementStyleOp(request.elementId…
+     11|     });
+ ❯ tests/unit/application/canvasToolControllers.spec.ts:169:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/41]⎯
+
+ FAIL  tests/unit/application/canvasToolControllers.spec.ts > Wave 006a canvas/tool command controllers > delegates through CanvasToolController rather than exposing command construction to tools
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/application/canvasToolControllers.spec.ts:268:28
+    266|     }));
+    267| 
+    268|     expect(result.success).toBe(true);
+       |                            ^
+    269|     expect(userPoints(world, planeId)).toHaveLength(1);
+    270|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/41]⎯
+
+ FAIL  tests/unit/application/panelToolbarIntentControllers.spec.ts > Wave 006b panel/toolbar intent controllers > executes process-history mutations through use cases with undo/redo stack effects
+TypeError: this.commands.executeProcessCommand is not a function
+ ❯ ProcessHistoryUseCases.executeProcessCommand src/application/processHistory/ProcessHistoryUseCases.ts:72:26
+     70| 
+     71|   private executeProcessCommand(description: string, operation: IOpera…
+     72|     return this.commands.executeProcessCommand(description, operation,…
+       |                          ^
+     73|   }
+     74| }
+ ❯ ProcessHistoryUseCases.pushSubprocess src/application/processHistory/ProcessHistoryUseCases.ts:36:17
+ ❯ tests/unit/application/panelToolbarIntentControllers.spec.ts:52:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/41]⎯
+
+ FAIL  tests/unit/application/panelToolbarIntentControllers.spec.ts > Wave 006b panel/toolbar intent controllers > does not pollute the command stack when process-history operations fail
+TypeError: this.commands.executeProcessCommand is not a function
+ ❯ ProcessHistoryUseCases.executeProcessCommand src/application/processHistory/ProcessHistoryUseCases.ts:72:26
+     70| 
+     71|   private executeProcessCommand(description: string, operation: IOpera…
+     72|     return this.commands.executeProcessCommand(description, operation,…
+       |                          ^
+     73|   }
+     74| }
+ ❯ ProcessHistoryUseCases.renameSubprocess src/application/processHistory/ProcessHistoryUseCases.ts:65:17
+ ❯ tests/unit/application/panelToolbarIntentControllers.spec.ts:87:36
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/41]⎯
+
+ FAIL  tests/unit/application/panelToolbarIntentControllers.spec.ts > Wave 006b panel/toolbar intent controllers > routes toolbar history state and undo/redo execution through use cases
+TypeError: this.commands.executeProcessCommand is not a function
+ ❯ ProcessHistoryUseCases.executeProcessCommand src/application/processHistory/ProcessHistoryUseCases.ts:72:26
+     70| 
+     71|   private executeProcessCommand(description: string, operation: IOpera…
+     72|     return this.commands.executeProcessCommand(description, operation,…
+       |                          ^
+     73|   }
+     74| }
+ ❯ ProcessHistoryUseCases.pushSubprocess src/application/processHistory/ProcessHistoryUseCases.ts:36:17
+ ❯ tests/unit/application/panelToolbarIntentControllers.spec.ts:103:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/41]⎯
+
+ FAIL  tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts > Architecture: deleted legacy world-state paths > active source and tests do not reference deleted store/workspace geometry surfaces
+AssertionError: expected [ …(4) ] to deeply equal []
+
+- Expected
++ Received
+
+- Array []
++ Array [
++   "tests/unit/application/commandProduction/RuntimeCommandProducer.test.ts: getWorld",
++   "tests/unit/application/commandProduction/RuntimeCommandProducer.test.ts: getWorld",
++   "tests/unit/application/commandProduction/RuntimeCommandProducer.test.ts: getWorld",
++   "tests/unit/application/commandProduction/RuntimeCommandProducer.test.ts: getWorld",
++ ]
+
+ ❯ tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts:26:85
+     24|     const pattern = new RegExp(deletedPathTerms.join('|'));
+     25| 
+     26|     expect(findContentMatches(files, pattern, { exclude: isThisArchite…
+       |                                                                                     ^
+     27|   });
+     28| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/41]⎯
+
+ FAIL  tests/unit/components/panelToolbarBehavior.spec.ts > Wave 006b ActionsPanel component behavior > delegates stack button and keyboard subprocess intents through the application controller
+AssertionError: expected 1 to be 2 // Object.is equality
+
+- Expected
++ Received
+
+- 2
++ 1
+
+ ❯ tests/unit/components/panelToolbarBehavior.spec.ts:108:52
+    106|     await pushButton.trigger('click');
+    107|     await nextTick();
+    108|     expect(world.getProcessTree().getStackDepth()).toBe(2);
+       |                                                    ^
+    109|     expect(commandStack.getUndoCount()).toBe(1);
+    110|     expect(wrapper.get('button.stack-pop-btn').attributes('disabled'))…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/41]⎯
+
+ FAIL  tests/unit/components/panelToolbarBehavior.spec.ts > Wave 006b ActionsPanel component behavior > delegates process-tree child toggle and rename events without direct command assembly in the component
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/unit/components/panelToolbarBehavior.spec.ts:158:88
+    156|     await wrapper.get('button.stub-toggle-encapsulate').trigger('click…
+    157|     await nextTick();
+    158|     expect(world.getProcessTree().findSubprocessById(subprocessId)?.sh…
+       |                                                                                        ^
+    159| 
+    160|     await wrapper.get('button.stub-toggle-output').trigger('click');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/41]⎯
+
+ FAIL  tests/unit/components/panelToolbarBehavior.spec.ts > Wave 006b Toolbar component behavior > delegates undo/redo through the toolbar history controller and refreshes enabled state
+TypeError: this.commands.executeProcessCommand is not a function
+ ❯ ProcessHistoryUseCases.executeProcessCommand src/application/processHistory/ProcessHistoryUseCases.ts:72:26
+     70| 
+     71|   private executeProcessCommand(description: string, operation: IOpera…
+     72|     return this.commands.executeProcessCommand(description, operation,…
+       |                          ^
+     73|   }
+     74| }
+ ❯ ProcessHistoryUseCases.pushSubprocess src/application/processHistory/ProcessHistoryUseCases.ts:36:17
+ ❯ tests/unit/components/panelToolbarBehavior.spec.ts:184:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/41]⎯
+
+ FAIL  tests/unit/tools/CircleTool.spec.ts > CircleTool > Two-Click Workflow > should require two clicks to create circle
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/tools/CircleTool.spec.ts:114:36
+    112| 
+    113|       const secondResult = tool.handleClick(secondClickContext);
+    114|       expect(secondResult.success).toBe(true);
+       |                                    ^
+    115|       expect(secondResult.message).toContain('completed successfully');
+    116| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/41]⎯
+
+ FAIL  tests/unit/tools/CircleTool.spec.ts > CircleTool > T983: Both Points Snap (No Duplicates) > should snap to existing points for both center and circumference
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/tools/CircleTool.spec.ts:176:36
+    174| 
+    175|       const secondResult = tool.handleClick(secondClickContext);
+    176|       expect(secondResult.success).toBe(true);
+       |                                    ^
+    177|       expect(secondResult.message).toContain('completed successfully');
+    178| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/41]⎯
+
+ FAIL  tests/unit/tools/CircleTool.spec.ts > CircleTool > T985: Minimum Radius Validation with Snapped Points > should accept circle when snapped points meet minimum radius
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/tools/CircleTool.spec.ts:289:36
+    287| 
+    288|       const secondResult = tool.handleClick(secondClickContext);
+    289|       expect(secondResult.success).toBe(true);
+       |                                    ^
+    290|       expect(secondResult.message).toContain('completed successfully')…
+    291| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/41]⎯
+
+ FAIL  tests/unit/tools/CircleTool.spec.ts > CircleTool > Tool State Reset > should reset state after successful circle creation
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/tools/CircleTool.spec.ts:375:30
+    373|       };
+    374|       const result = tool.handleClick(secondClickContext);
+    375|       expect(result.success).toBe(true);
+       |                              ^
+    376| 
+    377|       // Third click should start new circle (state reset)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/41]⎯
+
+ FAIL  tests/unit/tools/CircleTool.spec.ts > CircleTool > T989: Parametric Updates - Circumference Point Movement > should update circle when circumference point moves
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/tools/CircleTool.spec.ts:440:30
+    438|       };
+    439|       const result = tool.handleClick(circumferenceClickContext);
+    440|       expect(result.success).toBe(true);
+       |                              ^
+    441| 
+    442|       // Get the created circle
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/41]⎯
+
+ FAIL  tests/unit/tools/CircleTool.spec.ts > CircleTool > T992: Regression - Center Point Movement > should still update circle when center point moves
+TypeError: Cannot read properties of undefined (reading 'realize2D')
+ ❯ tests/unit/tools/CircleTool.spec.ts:536:41
+    534| 
+    535|       // Verify circle center updated, radius unchanged
+    536|       const updatedRealization = circle.realize2D(world);
+       |                                         ^
+    537|       expect(updatedRealization).not.toBeNull();
+    538|       expect(updatedRealization!.center.x).toBeCloseTo(200, 2);  // Ce…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/41]⎯
+
+ FAIL  tests/unit/tools/pointTool.spec.ts > PointTool > Click Handling > should create free point on valid click
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/tools/pointTool.spec.ts:98:30
+     96|       const result = tool.handleClick(context);
+     97| 
+     98|       expect(result.success).toBe(true);
+       |                              ^
+     99|       expect(result.message).toContain('completed successfully');
+    100|       
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/41]⎯
+
+ FAIL  tests/unit/tools/pointTool.spec.ts > PointTool > Click Handling > should create point with correct coordinates
+AssertionError: expected undefined to be an instance of FreePoint2D
+ ❯ tests/unit/tools/pointTool.spec.ts:138:28
+    136|       const createdPoint = userPoints[0];
+    137|       
+    138|       expect(createdPoint).toBeInstanceOf(FreePoint2D);
+       |                            ^
+    139|       const position = (createdPoint as any).position;
+    140|       expect(position.x).toBe(150);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/41]⎯
+
+ FAIL  tests/unit/tools/pointTool.spec.ts > PointTool > Click Handling > should create point on correct plane
+TypeError: Cannot read properties of undefined (reading 'planeId')
+ ❯ tests/unit/tools/pointTool.spec.ts:159:28
+    157|       // Phase 63: Hierarchical IDs
+    158|       const userPoints = allPoints.filter(p => p.id?.includes('/point2…
+    159|       expect(userPoints[0].planeId).toBe(verticalPlaneId);
+       |                            ^
+    160|     });
+    161|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/41]⎯
+
+ FAIL  tests/unit/tools/pointTool.spec.ts > PointTool > Coordinate Validation > should accept valid Vector3 homogeneous coordinates
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/tools/pointTool.spec.ts:172:30
+    170|       const result = tool.handleClick(context);
+    171| 
+    172|       expect(result.success).toBe(true);
+       |                              ^
+    173|     });
+    174| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/41]⎯
+
+ FAIL  tests/unit/tools/pointTool.spec.ts > PointTool > Coordinate Validation > should reject NaN coordinates
+AssertionError: expected 'Failed to create free point: Cannot r…' to contain 'Invalid coordinates'
+
+- Expected
++ Received
+
+- Invalid coordinates
++ Failed to create free point: Cannot read properties of undefined (reading 'executeToolCommand')
+
+ ❯ tests/unit/tools/pointTool.spec.ts:184:30
+    182| 
+    183|       expect(result.success).toBe(false);
+    184|       expect(result.message).toContain('Invalid coordinates');
+       |                              ^
+    185|     });
+    186| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/41]⎯
+
+ FAIL  tests/unit/tools/pointTool.spec.ts > PointTool > Coordinate Validation > should reject Infinity coordinates
+AssertionError: expected 'Failed to create free point: Cannot r…' to contain 'Invalid coordinates'
+
+- Expected
++ Received
+
+- Invalid coordinates
++ Failed to create free point: Cannot read properties of undefined (reading 'executeToolCommand')
+
+ ❯ tests/unit/tools/pointTool.spec.ts:196:30
+    194| 
+    195|       expect(result.success).toBe(false);
+    196|       expect(result.message).toContain('Invalid coordinates');
+       |                              ^
+    197|     });
+    198|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/41]⎯
+
+ FAIL  tests/unit/tools/pointTool.spec.ts > PointTool > Plane Validation > should accept valid plane_H
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/tools/pointTool.spec.ts:209:30
+    207|       const result = tool.handleClick(context);
+    208| 
+    209|       expect(result.success).toBe(true);
+       |                              ^
+    210|     });
+    211| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/41]⎯
+
+ FAIL  tests/unit/tools/pointTool.spec.ts > PointTool > Plane Validation > should accept valid plane_V
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/tools/pointTool.spec.ts:220:30
+    218|       const result = tool.handleClick(context);
+    219| 
+    220|       expect(result.success).toBe(true);
+       |                              ^
+    221|     });
+    222| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/41]⎯
+
+ FAIL  tests/unit/tools/pointTool.spec.ts > PointTool > Plane Validation > should reject invalid plane ID
+AssertionError: expected 'Failed to create free point: Cannot r…' to contain 'Plane not found'
+
+- Expected
++ Received
+
+- Plane not found
++ Failed to create free point: Cannot read properties of undefined (reading 'executeToolCommand')
+
+ ❯ tests/unit/tools/pointTool.spec.ts:232:30
+    230| 
+    231|       expect(result.success).toBe(false);
+    232|       expect(result.message).toContain('Plane not found');
+       |                              ^
+    233|       expect(result.message).toContain('invalid_plane');
+    234|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/41]⎯
+
+ FAIL  tests/unit/tools/pointTool.spec.ts > PointTool > Error Handling > should handle command execution errors
+AssertionError: expected 'Failed to create free point: Cannot r…' to contain 'Mock execution error'
+
+- Expected
++ Received
+
+- Mock execution error
++ Failed to create free point: Cannot read properties of undefined (reading 'executeToolCommand')
+
+ ❯ tests/unit/tools/pointTool.spec.ts:283:30
+    281|       expect(result.success).toBe(false);
+    282|       expect(result.message).toContain('Failed to create free point');
+    283|       expect(result.message).toContain('Mock execution error');
+       |                              ^
+    284| 
+    285|       pushSpy.mockRestore();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/41]⎯
+
+ FAIL  tests/unit/tools/pointTool.spec.ts > PointTool > Multiple Operations > should create multiple points in sequence
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/tools/pointTool.spec.ts:323:32
+    321|         const context = createToolContext(horizontalPlaneId, pos);
+    322|         const result = tool.handleClick(context);
+    323|         expect(result.success).toBe(true);
+       |                                ^
+    324|       });
+    325| 
+ ❯ tests/unit/tools/pointTool.spec.ts:320:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/41]⎯
+
+ FAIL  tests/unit/tools/pointTool.spec.ts > PointTool > Multiple Operations > should maintain command stack for multiple operations
+Error: Nothing to undo
+ ❯ CommandStack.undo src/commands/CommandStack.ts:76:13
+     74|   undo(): void {
+     75|     if (this.undoStack.length === 0) {
+     76|       throw new Error('Nothing to undo');
+       |             ^
+     77|     }
+     78|     
+ ❯ tests/unit/tools/pointTool.spec.ts:348:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/41]⎯
+
+ FAIL  tests/unit/tools/pointTool.spec.ts > PointTool > Success/Failure Messages > should return descriptive success message
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/tools/pointTool.spec.ts:378:30
+    376|       const result = tool.handleClick(context);
+    377| 
+    378|       expect(result.success).toBe(true);
+       |                              ^
+    379|       expect(result.message).toContain('completed successfully');
+    380|       // Message format changed in ArgumentCollectorTool migration
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/41]⎯
+
+ FAIL  tests/unit/tools/pointTool.spec.ts > PointTool > Success/Failure Messages > should return descriptive failure message for invalid coordinates
+AssertionError: expected 'Failed to create free point: Cannot r…' to contain 'Invalid coordinates'
+
+- Expected
++ Received
+
+- Invalid coordinates
++ Failed to create free point: Cannot read properties of undefined (reading 'executeToolCommand')
+
+ ❯ tests/unit/tools/pointTool.spec.ts:392:30
+    390| 
+    391|       expect(result.success).toBe(false);
+    392|       expect(result.message).toContain('Invalid coordinates');
+       |                              ^
+    393|     });
+    394| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/41]⎯
+
+ FAIL  tests/unit/tools/pointTool.spec.ts > PointTool > Success/Failure Messages > should return descriptive failure message for invalid plane
+AssertionError: expected 'Failed to create free point: Cannot r…' to contain 'Plane not found'
+
+- Expected
++ Received
+
+- Plane not found
++ Failed to create free point: Cannot read properties of undefined (reading 'executeToolCommand')
+
+ ❯ tests/unit/tools/pointTool.spec.ts:404:30
+    402| 
+    403|       expect(result.success).toBe(false);
+    404|       expect(result.message).toContain('Plane not found');
+       |                              ^
+    405|       expect(result.message).toContain('nonexistent_plane');
+    406|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/41]⎯
+
+ FAIL  tests/unit/tools/pointTool.spec.ts > PointTool > Integration with Command Pattern > should allow undo after point creation
+AssertionError: expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/unit/tools/pointTool.spec.ts:425:33
+    423|       // Phase 63: Hierarchical IDs
+    424|       let userPoints = allPoints.filter(p => p.id?.includes('/point2d'…
+    425|       expect(userPoints.length).toBe(1);
+       |                                 ^
+    426| 
+    427|       // Undo
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/41]⎯
+
+ FAIL  tests/unit/tools/pointTool.spec.ts > PointTool > Integration with Command Pattern > should allow redo after undo
+AssertionError: expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/unit/tools/pointTool.spec.ts:458:33
+    456|       // Phase 63: Hierarchical IDs
+    457|       const userPoints = allPoints.filter(p => p.id?.includes('/point2…
+    458|       expect(userPoints.length).toBe(1);
+       |                                 ^
+    459|     });
+    460|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/41]⎯
+
+ FAIL  tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > LineTool > should accept two different points
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/tools/toolValidation.spec.ts:110:26
+    108| 
+    109|       const r2 = tool.handleClick(makeContext(new Vector3(200, 100, 1)…
+    110|       expect(r2.success).toBe(true);
+       |                          ^
+    111|       expect(r2.message).toContain('completed successfully');
+    112|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/41]⎯
+
+ FAIL  tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > SegmentTool > should accept two different points
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/tools/toolValidation.spec.ts:140:26
+    138| 
+    139|       const r2 = tool.handleClick(makeContext(new Vector3(200, 200, 1)…
+    140|       expect(r2.success).toBe(true);
+       |                          ^
+    141|       expect(r2.message).toContain('completed successfully');
+    142|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/41]⎯
+
+ FAIL  tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > CircleTool > should accept valid center and circumference point
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/tools/toolValidation.spec.ts:168:26
+    166| 
+    167|       const r2 = tool.handleClick(makeContext(new Vector3(200, 100, 1)…
+    168|       expect(r2.success).toBe(true);
+       |                          ^
+    169|       expect(r2.message).toContain('completed successfully');
+    170|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/41]⎯
+
+ FAIL  tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > ParallelLineTool > should accept valid reference line and create parallel
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/tools/toolValidation.spec.ts:191:26
+    189| 
+    190|       const r2 = tool.handleClick(makeContext(new Vector3(150, 200, 1)…
+    191|       expect(r2.success).toBe(true);
+       |                          ^
+    192|       expect(r2.message).toContain('completed successfully');
+    193|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/41]⎯
+
+ FAIL  tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > PerpendicularLineTool > should accept valid reference line and create perpendicular
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/tools/toolValidation.spec.ts:211:26
+    209| 
+    210|       const r2 = tool.handleClick(makeContext(new Vector3(150, 200, 1)…
+    211|       expect(r2.success).toBe(true);
+       |                          ^
+    212|       expect(r2.message).toContain('completed successfully');
+    213|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[41/41]⎯
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c vitest run

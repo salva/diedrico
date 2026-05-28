@@ -1,0 +1,19 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run tests/unit/application/commandProduction/RuntimeCommandProducer.test.ts tests/unit/application/appShell/AppShellBoundary.test.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/application/appShell/AppShellBoundary.test.ts  (18 tests) 8ms
+ ❯ tests/unit/application/commandProduction/RuntimeCommandProducer.test.ts  (3 tests | 2 failed) 23ms
+   ❯ tests/unit/application/commandProduction/RuntimeCommandProducer.test.ts > RuntimeCommandProducer > rolls back failed tool commands without pushing history
+     → expected true to be false // Object.is equality
+   ❯ tests/unit/application/commandProduction/RuntimeCommandProducer.test.ts > RuntimeCommandProducer > preserves preview, commit, cancel, and undo semantics for movement sessions
+     → expected false to be true // Object.is equality
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  2 failed | 19 passed (21)
+   Start at  04:05:34
+   Duration  1.50s (transform 624ms, setup 0ms, collect 861ms, tests 31ms, environment 967ms, prepare 204ms)
+

@@ -1,0 +1,6 @@
+frontend/tests/unit/tools/pointTool.spec.ts:271:      const pushSpy = vi.spyOn(commandStack, 'push').mockImplementation(() => {
+frontend/tests/unit/application/canvasToolControllers.spec.ts:50:      commandStack,
+frontend/tests/unit/application/canvasToolControllers.spec.ts:65:      commandStack,
+frontend/tests/unit/application/canvasToolControllers.spec.ts:92:      commandStack,
+frontend/tests/unit/application/canvasToolControllers.spec.ts:123:      commandStack,
+frontend/tests/unit/application/canvasToolControllers.spec.ts:259:    const controller = new CanvasToolController({ world, commandStack, toolStore: { setTool: vi.fn() } as any });

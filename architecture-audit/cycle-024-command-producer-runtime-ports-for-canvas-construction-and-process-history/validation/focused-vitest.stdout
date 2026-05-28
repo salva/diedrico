@@ -1,0 +1,19 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run tests/unit/application/commandProduction/RuntimeCommandProducer.test.ts tests/unit/application/appShell/AppShellBoundary.test.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/application/appShell/AppShellBoundary.test.ts  (18 tests) 11ms
+ ❯ tests/unit/application/commandProduction/RuntimeCommandProducer.test.ts  (3 tests | 2 failed) 15ms
+   ❯ tests/unit/application/commandProduction/RuntimeCommandProducer.test.ts > RuntimeCommandProducer > owns command creation, commit, push, and undo for tool commands
+     → expected false to be true // Object.is equality
+   ❯ tests/unit/application/commandProduction/RuntimeCommandProducer.test.ts > RuntimeCommandProducer > preserves preview, commit, cancel, and undo semantics for movement sessions
+     → Invalid element ID format: "move-test-point". Expected format: "{containerId}/{localId}"
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  2 failed | 19 passed (21)
+   Start at  04:06:05
+   Duration  1.46s (transform 645ms, setup 0ms, collect 903ms, tests 26ms, environment 901ms, prepare 155ms)
+

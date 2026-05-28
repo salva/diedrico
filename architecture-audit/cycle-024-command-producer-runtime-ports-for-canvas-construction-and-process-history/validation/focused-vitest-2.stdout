@@ -1,0 +1,41 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run tests/unit/application/commandProduction/RuntimeCommandProducer.test.ts tests/unit/application/appShell/AppShellBoundary.test.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/application/appShell/AppShellBoundary.test.ts  (18 tests) 9ms
+ ✓ tests/unit/application/commandProduction/RuntimeCommandProducer.test.ts  (3 tests) 10ms
+stdout | tests/unit/application/commandProduction/RuntimeCommandProducer.test.ts > RuntimeCommandProducer > preserves preview, commit, cancel, and undo semantics for movement sessions
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/move-test-point
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/move-test-point
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/move-test-point
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/move-test-point
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/move-test-point
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/move-test-point
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+
+
+ Test Files  2 passed (2)
+      Tests  21 passed (21)
+   Start at  04:06:26
+   Duration  1.63s (transform 615ms, setup 0ms, collect 840ms, tests 19ms, environment 959ms, prepare 262ms)
+

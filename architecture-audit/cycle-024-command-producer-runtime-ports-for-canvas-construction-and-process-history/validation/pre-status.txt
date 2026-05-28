@@ -1,0 +1,5 @@
+ M frontend/src/commands/Command.ts
+ M frontend/src/components/panels/ActionGroupItem.vue
+ M frontend/src/components/panels/ActionItem.vue
+ M frontend/src/components/panels/ElementTypeGroup.vue
+ M frontend/src/components/toolbars/MainToolbar.vue
