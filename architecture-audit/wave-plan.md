@@ -1340,7 +1340,7 @@ The production persistence adapter remains the only bridge to the current `Proje
 
 **Dependencies**
 
-Depends on Wave 021 because selection/delete command-kernel extraction gives the runtime one concrete command-boundary service to wire and removes the most immediate app-shell leaf command leak. It is ordered before leaf canvas/style/construction/process-history command-producer cleanup, persistence-schema or backend/frontend contract stance, validation-gate hardening, placeholder/debug cleanup, docs/spec drift, and remaining rendering/domain-contract seams because those later waves should consume an explicit runtime-session/persistence boundary rather than the current raw `World`/`CommandStack` pair contract.
+Depends on acceptance of the corrected Wave 021 plan entry because current source already gives the runtime one concrete selection/delete command-boundary service to wire (`SelectionDeletionCommandPort` / `SelectionDeletionCommandService`) and the stale selection-use-case command-construction premise is closed. It is ordered before leaf canvas/style/construction/process-history command-producer cleanup, persistence-schema or backend/frontend contract stance, validation-gate hardening, placeholder/debug cleanup, docs/spec drift, and remaining rendering/domain-contract seams because those later waves should consume a freshly verified runtime-session/persistence boundary rather than preserve broad raw `World`/`CommandStack` pair contracts.
 
 **Validation requirements**
 
