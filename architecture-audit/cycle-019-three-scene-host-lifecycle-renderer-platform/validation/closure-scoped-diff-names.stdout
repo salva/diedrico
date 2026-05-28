@@ -1,0 +1,2 @@
+== scoped source diff names ==
+MCP git_diff for protected Wave 019 source/test paths returned empty before closure edits.

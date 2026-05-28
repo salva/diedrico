@@ -1,48 +1,46 @@
-===== root-lint.stdout
-> diedrico-frontend@0.1.0 lint
-> npm run test:architecture
-
-
-> diedrico-frontend@0.1.0 test:architecture
-> vitest run tests/unit/architecture
-
-
- RUN  v1.6.1 /work/diedrico/frontend
-
- ✓ tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts  (1 test) 16ms
- ✓ tests/unit/architecture/worldBoundary.spec.ts  (2 tests) 21ms
- ✓ tests/unit/architecture/noCommandSubclasses.spec.ts  (2 tests) 28ms
- ✓ tests/unit/architecture/importBoundaries.spec.ts  (6 tests) 78ms
-
- Test Files  4 passed (4)
-      Tests  11 passed (11)
-   Start at  01:32:56
-   Duration  2.77s (transform 1.52s, setup 1ms, collect 7.32s, tests 143ms, environment 2.10s, prepare 378ms)
-
-
-===== frontend-lint.stdout
-> diedrico-frontend@0.1.0 lint
-> npm run test:architecture
-
-
-> diedrico-frontend@0.1.0 test:architecture
-> vitest run tests/unit/architecture
-
-
- RUN  v1.6.1 /work/diedrico/frontend
-
- ✓ tests/unit/architecture/noCommandSubclasses.spec.ts  (2 tests) 23ms
- ✓ tests/unit/architecture/worldBoundary.spec.ts  (2 tests) 29ms
- ✓ tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts  (1 test) 23ms
- ✓ tests/unit/architecture/importBoundaries.spec.ts  (6 tests) 73ms
-
- Test Files  4 passed (4)
-      Tests  11 passed (11)
-   Start at  01:33:00
-   Duration  2.75s (transform 1.49s, setup 0ms, collect 7.36s, tests 148ms, environment 1.95s, prepare 345ms)
-
-
-===== focused-vitest-rerun.stdout
+== validation file pass markers ==
+--- static-scans-post.stdout ---
+frontend/src/rendering/threeView/AxisLabelSceneAdapter.ts:6:  createAxis(dto: AxisDto): THREE.Object3D {
+frontend/src/rendering/threeView/AxisLabelSceneAdapter.ts:12:  createLabel(dto: LabelDto): THREE.Object3D {
+frontend/src/rendering/threeView/ProjectionPlaneSceneAdapter.ts:3:import { AxisLabelSceneAdapter } from './AxisLabelSceneAdapter';
+frontend/src/rendering/threeView/ProjectionPlaneSceneAdapter.ts:6:  private readonly labels = new AxisLabelSceneAdapter();
+frontend/src/rendering/threeView/ProjectionPlaneSceneAdapter.ts:7:  createObjects(dtos: ProjectionPlanePresentationDto[]): THREE.Object3D[] {
+frontend/src/rendering/threeView/ProjectionPlaneSceneAdapter.ts:27:          return this.labels.createAxis(dto);
+frontend/src/rendering/threeView/ProjectionPlaneSceneAdapter.ts:30:          return this.labels.createLabel(dto);
+frontend/src/rendering/threeView/PlanarElementSceneAdapter.ts:5:  createObjects(dtos: PlanarElementPresentationDto[]): THREE.Object3D[] {
+frontend/src/rendering/threeView/ReconstructedElementSceneAdapter.ts:5:  createObjects(dtos: ReconstructedElementPresentationDto[]): THREE.Object3D[] {
+frontend/src/rendering/threeView/HingeSceneAdapter.ts:5:  createObjects(dtos: HingePresentationDto[]): THREE.Object3D[] {
+frontend/src/rendering/threeView/GuideSceneAdapter.ts:5:  createObjects(dtos: GuidePresentationDto[]): THREE.Object3D[] {
+frontend/src/rendering/threeView/ThreeViewRuntime.ts:35:  createObjects(dtos: TDto[]): THREE.Object3D[];
+frontend/src/rendering/threeView/ThreeViewRuntime.ts:75:    this.replaceGroup('projectionPlanes', this.adapters.projectionPlanes.createObjects(model.projectionPlanes));
+frontend/src/rendering/threeView/ThreeViewRuntime.ts:76:    this.replaceGroup('planarElements', this.adapters.planarElements.createObjects(model.planarElements));
+frontend/src/rendering/threeView/ThreeViewRuntime.ts:77:    this.replaceGroup('reconstructedElements', this.adapters.reconstructedElements.createObjects(model.reconstructedElements));
+frontend/src/rendering/threeView/ThreeViewRuntime.ts:78:    this.replaceGroup('guides', this.adapters.guides.createObjects(model.guides));
+frontend/src/rendering/threeView/ThreeViewRuntime.ts:79:    this.replaceGroup('hinges', this.adapters.hinges.createObjects(model.hinges));
+frontend/tests/unit/rendering/threeView/threeSceneAdapters.spec.ts:51:    const objects = new ProjectionPlaneSceneAdapter().createObjects(projectionPlaneDtos);
+frontend/tests/unit/rendering/threeView/threeSceneAdapters.spec.ts:102:    expect(new PlanarElementSceneAdapter().createObjects(planarDtos)[0]).toBeInstanceOf(THREE.Mesh);
+frontend/tests/unit/rendering/threeView/threeSceneAdapters.spec.ts:103:    expect(new ReconstructedElementSceneAdapter().createObjects(reconstructedDtos)[0]).toBeInstanceOf(THREE.Line);
+frontend/tests/unit/rendering/threeView/threeSceneAdapters.spec.ts:104:    expect(new GuideSceneAdapter().createObjects(guideDtos)[0]).toBeInstanceOf(THREE.Mesh);
+frontend/tests/unit/rendering/threeView/threeSceneAdapters.spec.ts:105:    expect(new HingeSceneAdapter().createObjects(hingeDtos)[0]).toBeInstanceOf(THREE.Line);
+## as any in focused threeView tests
+## Overlay pointer boundary assertions
+frontend/tests/unit/components/panels/threeViewShellBoundary.spec.ts:23:    expect(appSource).toContain('class="three-view-overlay"');
+frontend/tests/unit/components/panels/threeViewShellBoundary.spec.ts:24:    expect(appSource).toMatch(/\.three-view-overlay\s*\{[\s\S]*pointer-events:\s*auto;/);
+frontend/tests/unit/components/panels/threeViewShellBoundary.spec.ts:25:    expect(appSource).not.toMatch(/\.three-view-overlay\s*\{[\s\S]*pointer-events:\s*none;/);
+frontend/tests/e2e/current-ui-contract.spec.ts:89:  test('3D overlay owns pointer interaction and does not pass drag gestures through to the 2D canvas', async ({ page }) => {
+frontend/tests/e2e/current-ui-contract.spec.ts:92:    const overlay = page.getByTestId('three-view-overlay');
+frontend/tests/e2e/current-ui-contract.spec.ts:105:      const el = document.elementFromPoint(x, y);
+frontend/tests/e2e/current-ui-contract.spec.ts:106:      return Boolean(el?.closest('[data-testid="three-view-overlay"]'));
+frontend/src/App.vue:70:        <div class="three-view-overlay" data-testid="three-view-overlay" v-if="show3DView">
+frontend/src/App.vue:277:.three-view-overlay {
+frontend/src/App.vue:278:  pointer-events: auto;
+## Protected broad facade scan
+frontend/src/application/threePresentation/ThreePresentationReadModel.ts
+frontend/src/application/appShell/readModels/PropertiesDialogReadModel.ts
+frontend/src/application/appShell/readModels/ProcessTreeReadModel.ts
+frontend/src/application/appShell/readModels/ElementsPanelReadModel.ts
+## Wave 018 realization boundary scan in threeView
+--- focused-vitest.stdout ---
 
 > diedrico-frontend@0.1.0 test
 > vitest run tests/unit/rendering/threeView/threeViewRuntime.spec.ts tests/unit/rendering/threeView/threeSceneHost.spec.ts tests/unit/rendering/threeView/threeObjectRegistry.spec.ts tests/unit/rendering/threeView/threeSceneAdapters.spec.ts tests/unit/components/panels/threeViewShellBoundary.spec.ts
@@ -50,63 +48,168 @@
 
  RUN  v1.6.1 /work/diedrico/frontend
 
- ✓ tests/unit/components/panels/threeViewShellBoundary.spec.ts  (1 test) 3ms
- ✓ tests/unit/rendering/threeView/threeObjectRegistry.spec.ts  (3 tests) 19ms
- ✓ tests/unit/rendering/threeView/threeSceneHost.spec.ts  (3 tests) 39ms
- ✓ tests/unit/rendering/threeView/threeViewRuntime.spec.ts  (2 tests) 9ms
- ✓ tests/unit/rendering/threeView/threeSceneAdapters.spec.ts  (2 tests) 46ms
+ ✓ tests/unit/components/panels/threeViewShellBoundary.spec.ts  (2 tests) 12ms
+ ✓ tests/unit/rendering/threeView/threeObjectRegistry.spec.ts  (3 tests) 20ms
+ ✓ tests/unit/rendering/threeView/threeSceneHost.spec.ts  (3 tests) 37ms
+ ✓ tests/unit/rendering/threeView/threeViewRuntime.spec.ts  (2 tests) 10ms
+ ✓ tests/unit/rendering/threeView/threeSceneAdapters.spec.ts  (2 tests) 77ms
 
  Test Files  5 passed (5)
+      Tests  12 passed (12)
+   Start at  00:04:54
+   Duration  1.26s (transform 317ms, setup 1ms, collect 759ms, tests 156ms, environment 3.17s, prepare 509ms)
+
+--- root-lint.stdout ---
+
+> diedrico@0.1.0 lint
+> npm run lint --workspace=frontend
+
+
+> diedrico-frontend@0.1.0 lint
+> npm run test:architecture
+
+
+> diedrico-frontend@0.1.0 test:architecture
+> vitest run tests/unit/architecture
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts  (1 test) 19ms
+ ✓ tests/unit/architecture/worldBoundary.spec.ts  (2 tests) 20ms
+ ✓ tests/unit/architecture/noCommandSubclasses.spec.ts  (2 tests) 22ms
+ ✓ tests/unit/architecture/importBoundaries.spec.ts  (6 tests) 80ms
+
+ Test Files  4 passed (4)
       Tests  11 passed (11)
-   Start at  01:32:45
-   Duration  1.29s (transform 353ms, setup 0ms, collect 723ms, tests 116ms, environment 2.93s, prepare 560ms)
+   Start at  00:05:28
+   Duration  2.90s (transform 1.56s, setup 0ms, collect 7.83s, tests 141ms, environment 2.02s, prepare 440ms)
+
+--- frontend-lint.stdout ---
+
+> diedrico-frontend@0.1.0 lint
+> npm run test:architecture
 
 
-===== root-vitest.stdout
+> diedrico-frontend@0.1.0 test:architecture
+> vitest run tests/unit/architecture
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/architecture/noCommandSubclasses.spec.ts  (2 tests) 21ms
+ ✓ tests/unit/architecture/worldBoundary.spec.ts  (2 tests) 22ms
+ ✓ tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts  (1 test) 18ms
+ ✓ tests/unit/architecture/importBoundaries.spec.ts  (6 tests) 75ms
+
+ Test Files  4 passed (4)
+      Tests  11 passed (11)
+   Start at  00:05:35
+   Duration  2.86s (transform 1.58s, setup 0ms, collect 7.72s, tests 136ms, environment 2.04s, prepare 381ms)
+
+--- root-vitest.stdout ---
+ ✓ tests/unit/rendering/threeView/threeSceneAdapters.spec.ts  (2 tests) 119ms
+ ✓ tests/integration/phase76-fail-fast.spec.ts  (10 tests) 19ms
+ ✓ tests/unit/application/threePresentation/threePresentationSelector.spec.ts  (1 test) 8ms
+ ✓ tests/unit/application/canvasPresentation/canvasWorldReadPort.spec.ts  (3 tests) 24ms
+ ✓ tests/unit/application/tools/ToolInteractionReadPort.test.ts  (2 tests) 30ms
+ ✓ tests/unit/commands/commandStackObserver.spec.ts  (5 tests) 17ms
+ ✓ tests/unit/tools/GuideTool.test.ts  (8 tests) 33ms
+ ✓ tests/unit/autosave.spec.ts  (3 tests) 9ms
+ ✓ tests/unit/application/appShell/RuntimeReadModels.test.ts  (3 tests) 8ms
+ ✓ tests/unit/application/canvasPresentation/canvasInteractionQuery.spec.ts  (3 tests) 7ms
+ ✓ tests/unit/rendering/threeView/threeObjectRegistry.spec.ts  (3 tests) 39ms
+ ✓ tests/unit/application/appShell/KeyboardShortcutRouter.test.ts  (3 tests) 9ms
+ ✓ tests/unit/components/panels/threeViewShellBoundary.spec.ts  (2 tests) 9ms
+ ✓ tests/unit/application/canvasPresentation/canvasPresentationSelector.spec.ts  (1 test) 15ms
+ ✓ tests/unit/application/canvasPresentation/projected3DCanvasSelector.spec.ts  (1 test) 6ms
+ ✓ tests/unit/application/canvasPresentation/canvasGridSelector.spec.ts  (2 tests) 17ms
+ ✓ tests/unit/commands/updateFreePoint2DPositionOp.spec.ts  (2 tests) 16ms
+stdout | tests/unit/commands/updateFreePoint2DPositionOp.spec.ts > UpdateFreePoint2DPositionOp > updates a free point position and supports undo
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+=== CASCADE COMPLETE (1 elements invalidated) ===
 
 === CASCADE INVALIDATION START ===
 Root element: projPlane3/point2d10
 === CASCADE COMPLETE (1 elements invalidated) ===
 
 
- ✓ tests/unit/architecture/noCommandSubclasses.spec.ts  (2 tests) 32ms
- ✓ tests/unit/application/canvasPresentation/canvasGridSelector.spec.ts  (2 tests) 6ms
- ✓ tests/unit/architecture/importBoundaries.spec.ts  (6 tests) 105ms
- ✓ tests/unit/architecture/worldBoundary.spec.ts  (2 tests) 35ms
- ✓ tests/unit/services/svgCanvasRenderer.spec.ts  (1 test) 6ms
- ✓ tests/unit/services/GeometryService.spec.ts  (2 tests) 4ms
- ✓ tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts  (1 test) 17ms
+ ✓ tests/unit/architecture/noCommandSubclasses.spec.ts  (2 tests) 27ms
+ ✓ tests/unit/architecture/worldBoundary.spec.ts  (2 tests) 29ms
+ ✓ tests/unit/architecture/importBoundaries.spec.ts  (6 tests) 107ms
  ✓ tests/unit/smoke.spec.ts  (2 tests) 3ms
+ ✓ tests/unit/services/GeometryService.spec.ts  (2 tests) 3ms
+ ✓ tests/unit/services/svgCanvasRenderer.spec.ts  (1 test) 4ms
+ ✓ tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts  (1 test) 16ms
 
- Test Files  109 passed | 1 skipped (110)
-      Tests  1237 passed | 45 skipped | 11 todo (1293)
-   Start at  01:33:30
-   Duration  27.81s (transform 9.00s, setup 14ms, collect 37.76s, tests 3.94s, environment 97.10s, prepare 17.48s)
+ Test Files  114 passed | 1 skipped (115)
+      Tests  1283 passed | 45 skipped | 11 todo (1339)
+   Start at  00:05:42
+   Duration  25.37s (transform 8.61s, setup 25ms, collect 35.29s, tests 3.79s, environment 89.17s, prepare 15.89s)
 
+--- frontend-vitest.stdout ---
+ ✓ tests/unit/rendering/threeView/threeSceneAdapters.spec.ts  (2 tests) 130ms
+ ✓ tests/integration/phase76-fail-fast.spec.ts  (10 tests) 39ms
+ ✓ tests/unit/application/threePresentation/threePresentationSelector.spec.ts  (1 test) 9ms
+ ✓ tests/unit/application/canvasPresentation/canvasWorldReadPort.spec.ts  (3 tests) 26ms
+ ✓ tests/unit/application/tools/ToolInteractionReadPort.test.ts  (2 tests) 37ms
+ ✓ tests/unit/commands/commandStackObserver.spec.ts  (5 tests) 42ms
+ ✓ tests/unit/autosave.spec.ts  (3 tests) 11ms
+ ✓ tests/unit/tools/GuideTool.test.ts  (8 tests) 21ms
+ ✓ tests/unit/application/canvasPresentation/canvasInteractionQuery.spec.ts  (3 tests) 8ms
+ ✓ tests/unit/application/appShell/RuntimeReadModels.test.ts  (3 tests) 11ms
+ ✓ tests/unit/application/appShell/KeyboardShortcutRouter.test.ts  (3 tests) 12ms
+ ✓ tests/unit/rendering/threeView/threeObjectRegistry.spec.ts  (3 tests) 32ms
+ ✓ tests/unit/components/panels/threeViewShellBoundary.spec.ts  (2 tests) 11ms
+ ✓ tests/unit/application/canvasPresentation/projected3DCanvasSelector.spec.ts  (1 test) 8ms
+ ✓ tests/unit/commands/updateFreePoint2DPositionOp.spec.ts  (2 tests) 16ms
+stdout | tests/unit/commands/updateFreePoint2DPositionOp.spec.ts > UpdateFreePoint2DPositionOp > updates a free point position and supports undo
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+=== CASCADE COMPLETE (1 elements invalidated) ===
 
-===== frontend-vitest.stdout
+=== CASCADE INVALIDATION START ===
 Root element: projPlane3/point2d10
 === CASCADE COMPLETE (1 elements invalidated) ===
 
 
- ✓ tests/unit/commands/updateFreePoint2DPositionOp.spec.ts  (2 tests) 25ms
- ✓ tests/unit/components/panels/threeViewShellBoundary.spec.ts  (1 test) 5ms
- ✓ tests/unit/architecture/noCommandSubclasses.spec.ts  (2 tests) 28ms
- ✓ tests/unit/application/canvasPresentation/canvasGridSelector.spec.ts  (2 tests) 10ms
- ✓ tests/unit/architecture/importBoundaries.spec.ts  (6 tests) 119ms
- ✓ tests/unit/architecture/worldBoundary.spec.ts  (2 tests) 48ms
+ ✓ tests/unit/application/canvasPresentation/canvasPresentationSelector.spec.ts  (1 test) 19ms
+ ✓ tests/unit/application/canvasPresentation/canvasGridSelector.spec.ts  (2 tests) 11ms
+ ✓ tests/unit/architecture/noCommandSubclasses.spec.ts  (2 tests) 42ms
+ ✓ tests/unit/architecture/worldBoundary.spec.ts  (2 tests) 28ms
+ ✓ tests/unit/architecture/importBoundaries.spec.ts  (6 tests) 120ms
  ✓ tests/unit/services/GeometryService.spec.ts  (2 tests) 4ms
  ✓ tests/unit/services/svgCanvasRenderer.spec.ts  (1 test) 3ms
- ✓ tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts  (1 test) 17ms
  ✓ tests/unit/smoke.spec.ts  (2 tests) 3ms
+ ✓ tests/unit/architecture/deletedLegacyWorldStatePaths.spec.ts  (1 test) 23ms
 
- Test Files  109 passed | 1 skipped (110)
-      Tests  1237 passed | 45 skipped | 11 todo (1293)
-   Start at  01:33:59
-   Duration  24.95s (transform 8.64s, setup 27ms, collect 34.46s, tests 3.56s, environment 87.58s, prepare 15.63s)
+ Test Files  114 passed | 1 skipped (115)
+      Tests  1283 passed | 45 skipped | 11 todo (1339)
+   Start at  00:06:22
+   Duration  26.50s (transform 9.09s, setup 16ms, collect 36.92s, tests 3.73s, environment 92.88s, prepare 16.94s)
 
-
-===== root-build.stdout
+--- root-build.stdout ---
+dist/assets/KaTeX_SansSerif-Regular-CS6fqUqJ.woff        12.32 kB
+dist/assets/KaTeX_Caligraphic-Regular-wX97UBjC.ttf       12.34 kB
+dist/assets/KaTeX_Caligraphic-Bold-ATXxdsX0.ttf          12.37 kB
+dist/assets/KaTeX_Fraktur-Regular-Dxdc4cR9.woff          13.21 kB
+dist/assets/KaTeX_Fraktur-Bold-BsDP51OF.woff             13.30 kB
+dist/assets/KaTeX_Typewriter-Regular-CO6r4hn1.woff2      13.57 kB
+dist/assets/KaTeX_SansSerif-Italic-DN2j7dab.woff         14.11 kB
+dist/assets/KaTeX_SansSerif-Bold-DbIhKOiC.woff           14.41 kB
+dist/assets/KaTeX_Typewriter-Regular-C0xS9mPB.woff       16.03 kB
+dist/assets/KaTeX_Math-BoldItalic-CZnvNsCZ.woff2         16.40 kB
+dist/assets/KaTeX_Math-Italic-t53AETM-.woff2             16.44 kB
+dist/assets/KaTeX_Script-Regular-C5JkGWo-.ttf            16.65 kB
+dist/assets/KaTeX_Main-BoldItalic-DxDJ3AOS.woff2         16.78 kB
+dist/assets/KaTeX_Main-Italic-NWA7e6Wa.woff2             16.99 kB
+dist/assets/KaTeX_Math-BoldItalic-iY-2wyZ7.woff          18.67 kB
+dist/assets/KaTeX_Math-Italic-DA0__PXp.woff              18.75 kB
+dist/assets/KaTeX_Main-BoldItalic-SpSLRI95.woff          19.41 kB
+dist/assets/KaTeX_SansSerif-Regular-BNo7hRIc.ttf         19.44 kB
+dist/assets/KaTeX_Fraktur-Regular-CB_wures.ttf           19.57 kB
+dist/assets/KaTeX_Fraktur-Bold-BdnERNNW.ttf              19.58 kB
 dist/assets/KaTeX_Main-Italic-BMLOBm91.woff              19.68 kB
 dist/assets/KaTeX_SansSerif-Italic-YYjJ1zSn.ttf          22.36 kB
 dist/assets/KaTeX_SansSerif-Bold-CFMepnvq.ttf            24.50 kB
@@ -124,11 +227,30 @@ dist/assets/KaTeX_Main-Italic-3WenGoN9.ttf               33.58 kB
 dist/assets/KaTeX_Main-Bold-waoOVXN0.ttf                 51.34 kB
 dist/assets/KaTeX_Main-Regular-ypZvNtVU.ttf              53.58 kB
 dist/assets/KaTeX_AMS-Regular-DRggAlZN.ttf               63.63 kB
-dist/assets/index-jhjfNuwh.css                           60.76 kB │ gzip:  14.28 kB
-dist/assets/index-BgbJ4eWH.js                         1,195.63 kB │ gzip: 317.07 kB
-✓ built in 3.60s
-
-===== frontend-build.stdout
+dist/assets/index-DU2avWxF.css                           60.76 kB │ gzip:  14.27 kB
+dist/assets/index-C75Vxo7v.js                         1,204.78 kB │ gzip: 319.39 kB
+✓ built in 3.76s
+--- frontend-build.stdout ---
+dist/assets/KaTeX_SansSerif-Regular-CS6fqUqJ.woff        12.32 kB
+dist/assets/KaTeX_Caligraphic-Regular-wX97UBjC.ttf       12.34 kB
+dist/assets/KaTeX_Caligraphic-Bold-ATXxdsX0.ttf          12.37 kB
+dist/assets/KaTeX_Fraktur-Regular-Dxdc4cR9.woff          13.21 kB
+dist/assets/KaTeX_Fraktur-Bold-BsDP51OF.woff             13.30 kB
+dist/assets/KaTeX_Typewriter-Regular-CO6r4hn1.woff2      13.57 kB
+dist/assets/KaTeX_SansSerif-Italic-DN2j7dab.woff         14.11 kB
+dist/assets/KaTeX_SansSerif-Bold-DbIhKOiC.woff           14.41 kB
+dist/assets/KaTeX_Typewriter-Regular-C0xS9mPB.woff       16.03 kB
+dist/assets/KaTeX_Math-BoldItalic-CZnvNsCZ.woff2         16.40 kB
+dist/assets/KaTeX_Math-Italic-t53AETM-.woff2             16.44 kB
+dist/assets/KaTeX_Script-Regular-C5JkGWo-.ttf            16.65 kB
+dist/assets/KaTeX_Main-BoldItalic-DxDJ3AOS.woff2         16.78 kB
+dist/assets/KaTeX_Main-Italic-NWA7e6Wa.woff2             16.99 kB
+dist/assets/KaTeX_Math-BoldItalic-iY-2wyZ7.woff          18.67 kB
+dist/assets/KaTeX_Math-Italic-DA0__PXp.woff              18.75 kB
+dist/assets/KaTeX_Main-BoldItalic-SpSLRI95.woff          19.41 kB
+dist/assets/KaTeX_SansSerif-Regular-BNo7hRIc.ttf         19.44 kB
+dist/assets/KaTeX_Fraktur-Regular-CB_wures.ttf           19.57 kB
+dist/assets/KaTeX_Fraktur-Bold-BdnERNNW.ttf              19.58 kB
 dist/assets/KaTeX_Main-Italic-BMLOBm91.woff              19.68 kB
 dist/assets/KaTeX_SansSerif-Italic-YYjJ1zSn.ttf          22.36 kB
 dist/assets/KaTeX_SansSerif-Bold-CFMepnvq.ttf            24.50 kB
@@ -146,11 +268,10 @@ dist/assets/KaTeX_Main-Italic-3WenGoN9.ttf               33.58 kB
 dist/assets/KaTeX_Main-Bold-waoOVXN0.ttf                 51.34 kB
 dist/assets/KaTeX_Main-Regular-ypZvNtVU.ttf              53.58 kB
 dist/assets/KaTeX_AMS-Regular-DRggAlZN.ttf               63.63 kB
-dist/assets/index-jhjfNuwh.css                           60.76 kB │ gzip:  14.28 kB
-dist/assets/index-BgbJ4eWH.js                         1,195.63 kB │ gzip: 317.07 kB
-✓ built in 3.70s
-
-===== root-e2e.stdout
+dist/assets/index-DU2avWxF.css                           60.76 kB │ gzip:  14.27 kB
+dist/assets/index-C75Vxo7v.js                         1,204.78 kB │ gzip: 319.39 kB
+✓ built in 4.18s
+--- root-e2e.stdout ---
 
 > diedrico@0.1.0 test:e2e
 > npm run test:e2e --workspace=frontend
@@ -160,55 +281,72 @@ dist/assets/index-BgbJ4eWH.js                         1,195.63 kB │ gzip: 317.
 > playwright test
 
 
-Running 8 tests using 4 workers
+Running 10 tests using 4 workers
 
-[1A[2K[1/8] [chromium] › tests/e2e/current-ui-contract.spec.ts:40:3 › Current Diedrico UI contract › plane selector exposes current projection planes and switches active plane
-[1A[2K[2/8] [chromium] › tests/e2e/current-ui-contract.spec.ts:57:3 › Current Diedrico UI contract › selection masks allow free-point creation and point-only line argument collection
-[1A[2K[3/8] [chromium] › tests/e2e/current-ui-contract.spec.ts:26:3 › Current Diedrico UI contract › creates a free point through stable tool and canvas test IDs
-[1A[2K[4/8] [chromium] › tests/e2e/current-ui-contract.spec.ts:12:3 › Current Diedrico UI contract › renders the current app shell, canvas, toolbar, status bar, and plane selector
-[1A[2K[5/8] [chromium] › tests/e2e/current-ui-contract.spec.ts:78:3 › Current Diedrico UI contract › updates 3D coordinate status through the current canvas mouse contract
-[1A[2K[6/8] [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:9:3 › Keyboard shortcuts › tool shortcut keys activate current tool buttons
-[1A[2K[7/8] [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:24:3 › Keyboard shortcuts › Escape returns to select tool after starting a point workflow
-[1A[2K[8/8] [chromium] › tests/e2e/wave010-app-shell-project-flow.spec.ts:4:3 › Wave 010 app-shell project boundary › starts without Google credentials and opens the app-shell project chooser without backend project API calls
-[1A[2K  8 passed (11.8s)
-
-===== frontend-e2e.stdout
+[1A[2K[1/10] [chromium] › tests/e2e/current-ui-contract.spec.ts:26:3 › Current Diedrico UI contract › creates a free point through stable tool and canvas test IDs
+[1A[2K[2/10] [chromium] › tests/e2e/current-ui-contract.spec.ts:57:3 › Current Diedrico UI contract › selection masks allow free-point creation and point-only line argument collection
+[1A[2K[3/10] [chromium] › tests/e2e/current-ui-contract.spec.ts:40:3 › Current Diedrico UI contract › plane selector exposes current projection planes and switches active plane
+[1A[2K[4/10] [chromium] › tests/e2e/current-ui-contract.spec.ts:12:3 › Current Diedrico UI contract › renders the current app shell, canvas, toolbar, status bar, and plane selector
+[1A[2K[5/10] [chromium] › tests/e2e/current-ui-contract.spec.ts:78:3 › Current Diedrico UI contract › updates 3D coordinate status through the current canvas mouse contract
+[1A[2K[6/10] [chromium] › tests/e2e/current-ui-contract.spec.ts:89:3 › Current Diedrico UI contract › 3D overlay owns pointer interaction and does not pass drag gestures through to the 2D canvas
+[1A[2K[7/10] [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:9:3 › Keyboard shortcuts › tool shortcut keys activate current tool buttons
+[1A[2K[8/10] [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:24:3 › Keyboard shortcuts › Escape returns to select tool after starting a point workflow
+[1A[2K[9/10] [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:32:3 › Keyboard shortcuts › Delete, undo, redo, Escape, and Ctrl+A preserve selection command behavior
+[1A[2K[10/10] [chromium] › tests/e2e/wave010-app-shell-project-flow.spec.ts:4:3 › Wave 010 app-shell project boundary › starts without Google credentials and opens the app-shell project chooser without backend project API calls
+[1A[2K  10 passed (15.3s)
+--- frontend-e2e.stdout ---
 
 > diedrico-frontend@0.1.0 test:e2e
 > playwright test
 
 
-Running 8 tests using 4 workers
+Running 10 tests using 4 workers
 
-[1A[2K[1/8] [chromium] › tests/e2e/current-ui-contract.spec.ts:12:3 › Current Diedrico UI contract › renders the current app shell, canvas, toolbar, status bar, and plane selector
-[1A[2K[2/8] [chromium] › tests/e2e/current-ui-contract.spec.ts:40:3 › Current Diedrico UI contract › plane selector exposes current projection planes and switches active plane
-[1A[2K[3/8] [chromium] › tests/e2e/current-ui-contract.spec.ts:57:3 › Current Diedrico UI contract › selection masks allow free-point creation and point-only line argument collection
-[1A[2K[4/8] [chromium] › tests/e2e/current-ui-contract.spec.ts:26:3 › Current Diedrico UI contract › creates a free point through stable tool and canvas test IDs
-[1A[2K[5/8] [chromium] › tests/e2e/current-ui-contract.spec.ts:78:3 › Current Diedrico UI contract › updates 3D coordinate status through the current canvas mouse contract
-[1A[2K[6/8] [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:9:3 › Keyboard shortcuts › tool shortcut keys activate current tool buttons
-[1A[2K[7/8] [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:24:3 › Keyboard shortcuts › Escape returns to select tool after starting a point workflow
-[1A[2K[8/8] [chromium] › tests/e2e/wave010-app-shell-project-flow.spec.ts:4:3 › Wave 010 app-shell project boundary › starts without Google credentials and opens the app-shell project chooser without backend project API calls
-[1A[2K  8 passed (11.7s)
+[1A[2K[1/10] [chromium] › tests/e2e/current-ui-contract.spec.ts:26:3 › Current Diedrico UI contract › creates a free point through stable tool and canvas test IDs
+[1A[2K[2/10] [chromium] › tests/e2e/current-ui-contract.spec.ts:57:3 › Current Diedrico UI contract › selection masks allow free-point creation and point-only line argument collection
+[1A[2K[3/10] [chromium] › tests/e2e/current-ui-contract.spec.ts:12:3 › Current Diedrico UI contract › renders the current app shell, canvas, toolbar, status bar, and plane selector
+[1A[2K[4/10] [chromium] › tests/e2e/current-ui-contract.spec.ts:40:3 › Current Diedrico UI contract › plane selector exposes current projection planes and switches active plane
+[1A[2K[5/10] [chromium] › tests/e2e/current-ui-contract.spec.ts:78:3 › Current Diedrico UI contract › updates 3D coordinate status through the current canvas mouse contract
+[1A[2K[6/10] [chromium] › tests/e2e/current-ui-contract.spec.ts:89:3 › Current Diedrico UI contract › 3D overlay owns pointer interaction and does not pass drag gestures through to the 2D canvas
+[1A[2K[7/10] [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:9:3 › Keyboard shortcuts › tool shortcut keys activate current tool buttons
+[1A[2K[8/10] [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:24:3 › Keyboard shortcuts › Escape returns to select tool after starting a point workflow
+[1A[2K[9/10] [chromium] › tests/e2e/keyboard-shortcuts.spec.ts:32:3 › Keyboard shortcuts › Delete, undo, redo, Escape, and Ctrl+A preserve selection command behavior
+[1A[2K[10/10] [chromium] › tests/e2e/wave010-app-shell-project-flow.spec.ts:4:3 › Wave 010 app-shell project boundary › starts without Google credentials and opens the app-shell project chooser without backend project API calls
+[1A[2K  10 passed (14.6s)
+--- live-preview-probe.stdout ---
+HTTP/1.1 200 OK
+Vary: Origin
+Content-Type: text/html
+Cache-Control: no-cache
+Etag: W/"2b2-tMATjDhHqJEIGrKZlFe2A0XUMxs"
+Date: Thu, 28 May 2026 00:08:34 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Content-Length: 690
 
-===== live-3d-smoke-rerun.stdout
-  "consoleMessages": [
-    "debug: [vite] connecting...",
-    "debug: [vite] connected.",
-    "log: [ElementsPanel] Computing projection planes list, version: 0 forceUpdate: 0",
-    "log: [ElementsPanel] Computing 3D elements",
-    "log: [ElementsPanel] 3D elements: {points: 0, lines: 0, segments: 0, planes: 0}",
-    "log: [ElementsPanel] Mounted, initial World version: 0",
-    "log: World initialized",
-    "log: Points in world: 0",
-    "log: [ElementsPanel] World version changed: 0 → 27",
-    "log: [ElementsPanel] Computing projection planes list, version: 0 forceUpdate: 1",
-    "log: [ElementsPanel] Computing projection planes list, version: 0 forceUpdate: 1",
-    "log: [ElementsPanel] Computing 3D elements",
-    "log: [ElementsPanel] 3D elements: {points: 0, lines: 0, segments: 0, planes: 2}",
-    "warning: [.WebGL-0x5540014da00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
-    "warning: [.WebGL-0x5540014da00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
-    "warning: [.WebGL-0x5540014da00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
-    "warning: [.WebGL-0x5540014da00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
-  ]
-}
+<!doctype html>
+<html lang="en">
+  <head>
+    <script type="module" src="/@vite/client"></script>
 
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Diedrico - Dihedral Learning MVP</title>
+    <!-- Google API Client Library -->
+    <script src="https://apis.google.com/js/api.js"></script>
+    <!-- Google Identity Services (new OAuth library) -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts?t=1779923523135"></script>
+  </body>
+</html>
+--- live-browser-smoke.stdout ---
+
+Running 2 tests using 2 workers
+
+[1A[2K[1/2] [chromium] › tests/e2e/current-ui-contract.spec.ts:12:3 › Current Diedrico UI contract › renders the current app shell, canvas, toolbar, status bar, and plane selector
+[1A[2K[2/2] [chromium] › tests/e2e/current-ui-contract.spec.ts:89:3 › Current Diedrico UI contract › 3D overlay owns pointer interaction and does not pass drag gestures through to the 2D canvas
+[1A[2K  2 passed (4.5s)

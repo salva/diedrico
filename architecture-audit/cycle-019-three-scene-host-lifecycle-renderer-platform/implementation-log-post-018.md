@@ -84,3 +84,26 @@ All commands were run from `/work/diedrico` unless noted.
 ## Next-wave candidates
 
 - None introduced by this implementation. Existing non-Wave-019 noise and unrelated dirty files should remain outside this wave and be handled only by their owning stages if still relevant.
+
+## Closure validation — cycle-019-validation-and-preview-refresh-post-018
+
+Status: **Wave 019 COMPLETE** after independent closure verification.
+
+Closure verifier re-read the implementation summary, `decision-post-018.md`, synthesized implementation-stage review, validation directory, live-preview evidence, 3D hotfix context, and `architecture-audit/wave-plan.md`. MCP `git_diff` for the protected Wave 019 source/test paths returned empty before closure edits, confirming no additional production/source refactor was present or needed for closure.
+
+Fresh closure evidence captured under `validation/`:
+
+- `validation/closure-validation-tail-check.stdout` / `.stderr` — independent tail/index check over the recorded static scans, focused Vitest, root/frontend lint, full root/frontend Vitest, root/frontend build, root/frontend e2e, frontend e2e, live preview probe, and live browser smoke logs. The checked logs show green completion markers, including 5 focused three-view test files / 12 tests, 4 architecture lint files / 11 tests, 114 full Vitest files passed with expected skips/todos, successful root/frontend builds, and 10 Playwright e2e tests including the 3D overlay pointer-boundary test.
+- `validation/closure-live-preview-probe.stdout` / `.stderr` — fresh closure probe at `2026-05-28T00:20:07Z`: `curl -i -fsS http://127.0.0.1:5173/ | head -40` returned `HTTP/1.1 200 OK`, confirming the preview remained reachable after implementation on the refreshed Vite dev server.
+- `validation/closure-wave-plan-headings.stdout` / `.stderr` — closure re-read of the current wave-plan ordering/headings. The remaining central follow-up after Wave 019 is Wave 020, `App-shell project session and browser integration boundary`; Wave 019 did not invalidate the plan premise or require a plan-edit mini-cycle.
+- `validation/closure-scoped-diff-names.stdout` / `.stderr` — closure note recording that protected Wave 019 source/test path diff was empty before closure edits.
+
+3D interaction regression verification remains green by substitution evidence: `root-e2e.stdout` and `frontend-e2e.stdout` both include `current-ui-contract.spec.ts` test `3D overlay owns pointer interaction and does not pass drag gestures through to the 2D canvas`, and `live-browser-smoke.stdout` covers live preview overlay pointer ownership/no drag-through. The fresh closure HTTP probe confirms that live target stayed reachable. Playwright MCP was not used directly in this closure task; the accepted substitute is CLI Playwright plus live browser smoke against the live preview, with residual risk limited to MCP-specific harness availability rather than source behavior.
+
+Protected-surface reconciliation for closure:
+
+- No production Three runtime/host/registry/adapters, `ThreeView.vue`, e2e spec, package/tooling, backend, docs/specs, persistence/schema/replay, command/undo, app-shell lifecycle, canvas presentation selectors, validation-platform, Drive/auth, OrbitControls/CSS pointer behavior, or Wave 018 realization/read-context files were edited by this closure task.
+- The broad-facade static scan remains authoritative for Wave 019: no generic scene/platform/world/read-model/app-kernel facade or `ThreeViewPlatform.ts` was introduced, and the existing read-model files are outside the prohibited renderer-platform churn.
+- Known unrelated dirty files named by prior stages remain out of scope and were not normalized.
+
+Next-wave recommendation after re-rank: proceed to the next canonical fresh-scout/proposals stage for **Wave 020 — App-shell project session and browser integration boundary**. Wave 019 found no new renderer lifecycle follow-up requiring insertion ahead of Wave 020, and closure does not implement any next-wave work.
