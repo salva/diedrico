@@ -2160,3 +2160,103 @@ All Wave 029 implementation validation stdout/stderr must be captured under `arc
 **No-backcompat rationale**
 
 3D presentation read ports are internal architecture contracts. Keeping domain realization/style leakage plus new DTO contracts would preserve a bypass path and invite renderer code to keep depending on mutable domain objects. Once reviewed DTO/read-port replacements exist, delete replaced raw fields, raw traversal seams, duplicate context assembly, transitional wrappers, stale mocks, and dual raw-and-DTO paths. Backward compatibility for internal 3D read-port shapes has zero priority compared with a clean rendering/read boundary.
+
+---
+
+## Wave 030 — App-shell persistence DTO port contract cleanup
+
+**Status**
+
+Added by `cycle-030-wave-plan-extension-post-029` after Wave 029 closure. Requires Critic approval and bounded Reviewer validation of this plan extension before the canonical `cycle-030-fresh-scout-proposals-app-shell-persistence-dto-port-contract-cleanup` stage and before any source implementation.
+
+**Scope**
+
+- `frontend/src/application/appShell/AppShellPorts.ts`
+- `frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts`
+- `frontend/src/application/appShell/ProjectSessionPersistenceTargets.ts`
+- `frontend/src/application/appShell/ProjectSessionKernel.ts`
+- `frontend/src/application/appShell/RuntimeSession.ts` only where snapshot/restore method signatures and validation flow must consume the narrowed persistence port
+- `frontend/src/application/appShell/ProjectSessionUseCases.ts` and `frontend/src/application/appShell/AutoSaveUseCases.ts` only where project snapshot/save/open types must stop flowing as `object`
+- `frontend/src/services/ProjectService.ts` only to export or colocate a current-schema persistence DTO type/validator if the reviewed proposal proves that is the smallest clean owner; do not redesign command replay or schema semantics in this wave
+- focused app-shell persistence/session tests, `ProjectService` contract tests, and project save/open/autosave e2e coverage where touched
+
+**Scope guard**
+
+This wave owns the app-shell persistence DTO port seam left after the runtime/session and 3D presentation boundary waves. It must not broaden into command descriptor redesign, operation registry normalization, command-stack semantics, project schema migration/backcompat, Drive/auth internals, local-storage/browser repository redesign, backend/frontend contract stance, package/tooling, validation-platform work, rendering/3D style cleanup, docs/specs, preview ergonomics, UI feature work, or stale audit-history recovery.
+
+The fresh-scout stage must begin with a current caller/type inventory for `ProjectSessionPersistencePort`, `OpenedProjectSession`, `PersistedProjectSession`, `ProjectData`, `RuntimeSession.snapshot(...)`, `RuntimeSession.restoreValidatedProject(...)`, `ProjectSessionUseCases`, and autosave save/open call sites. If that inventory proves the cast seam is caused by command descriptor/output shapes rather than app-shell port typing, stop and write a reviewed plan-edit or delta proposal; do not hide command serialization redesign inside this DTO-port cleanup.
+
+Known unrelated dirty files and broad workspace dirt are protected. Do not read for implementation premises, revert, normalize, stage, or depend on unrelated modified command/process/source files unless a reviewed plan edit explicitly scopes them. Secret/config surfaces remain protected and must not be read.
+
+**Current grounding**
+
+Cycle 029 completed the 3D presentation DTO read-port boundary and explicitly left future candidates for adapter-private style mapping, thin selector orchestration, and persistence adapter DTO-cast cleanup (`architecture-audit/cycle-029-3d-presentation-dto-read-ports-and-realization-context-ownership/implementation-log.md`, “Residual risks and next-wave recommendation”). Current evidence ranks the persistence DTO cast seam higher than presentation-private style cleanup because it sits on the project save/open/restore contract rather than inside an already-guarded rendering adapter.
+
+`ProjectSessionPersistenceAdapter` currently validates unknown project data through `ProjectService.validateProjectData(data)`, then casts the now-validated value to `ProjectData`, casts it again through `unknown` into `PersistedProjectSession`, and later casts `PersistedProjectSession` back through `unknown` to `ProjectData` for restore (`frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:10-20`). That means the application port names a generic persisted session while the actual runtime payload is the concrete current project DTO.
+
+`ProjectService` is already much cleaner than the old baseline persistence smell: it defines `ProjectData`, serializes committed commands using `Command.toSnapshot()`, restores by deserializing operation descriptors through `OperationRegistry`, replays operations into a fresh world, restores command history through `Command.restore(...)`, and validates project/command/operation descriptor shape before replay (`frontend/src/services/ProjectService.ts:11-24`, `frontend/src/services/ProjectService.ts:27-78`, `frontend/src/services/ProjectService.ts:80-129`). Therefore Wave 030 should align the app-shell port to this current schema instead of recreating broad migration/private-cast work from earlier plans.
+
+Current command/persistence residuals are real but must remain separate unless scout evidence proves they are directly required for the app-shell port fix. Targeted scans still find `Record<string, any>` and descriptor restoration casts in operation families, including process-tree output restoration and action casts (`frontend/src/commands/operations/processTree/registerProcessTreeOperationDescriptors.ts:17-20`) and setup-factory `(line as any).hingeLineId` access (`frontend/src/commands/factories/ProjectionSetupFactory.ts:60-61`, `frontend/src/commands/factories/ProjectionSetupFactory.ts:105-106`). Those residuals span command/domain contracts and should be a future wave candidate, not implicit scope creep.
+
+Adapter-private 3D style cleanup is lower centrality for Wave 030. Current `ThreeStylePolicy.ts` still imports `VisualStyle` and maps domain `visualStyle` to DTO style/visibility (`frontend/src/application/threePresentation/ThreeStylePolicy.ts:1-31`), and 3D read ports use those helpers (`frontend/src/application/threePresentation/ThreePlanarElementReadPort.ts:6-31`, `frontend/src/application/threePresentation/ThreeReconstructedElementReadPort.ts:6-46`, `frontend/src/application/threePresentation/ThreeGuideReadPort.ts:7-66`). However, the public selector/read-model leak is already deleted and guarded: selectors consume DTO visibility/style, and the architecture test permits domain style only in adapter-private conversion while forbidding selector-facing `VisualStyle`/realization carriers (`frontend/tests/unit/application/threePresentation/threePresentationArchitectureBoundary.spec.ts:47-59`).
+
+Remaining 3D selector orchestration is also lower centrality. The current selectors are thin DTO assemblers that filter display options and convert read-port models into final presentation DTOs (`frontend/src/application/threePresentation/PlanarElement3DSelector.ts:5-13`, `frontend/src/application/threePresentation/ReconstructedElement3DSelector.ts:5-24`, `frontend/src/application/threePresentation/ProjectionPlane3DSelector.ts:7-39`, `frontend/src/application/threePresentation/Guide3DSelector.ts:7-41`). That may merit a later presentation cleanup wave, but it is not a cross-layer project persistence contract leak.
+
+**Target outcome**
+
+The app shell has one explicit typed persistence DTO contract for the current project/session payload. Validation, opened-session payload typing, snapshot return typing, restore input typing, autosave/open/save call sites, and `RuntimeSession` snapshot/restore signatures agree without `object`, `unknown as`, or `PersistedProjectSession` casts. `ProjectService` remains the current-schema command-stream persistence owner unless the reviewed proposal chooses a narrower DTO module/facade solely to express the same current contract cleanly.
+
+After the wave, callers should be able to trace project persistence flow as: runtime session snapshot handle → typed project/session DTO → repository/Drive/local save/open path → validation result with typed payload → runtime restore target. No step should require an untyped app-shell payload alias that hides `ProjectData` or an equivalent current-schema DTO.
+
+Expected user-visible behavior change is none. New/open/save/autosave, local and Drive-backed persistence where currently exercised, undo/redo after load, active-plane restoration, and current UI behavior must remain equivalent.
+
+**Explicit DELETE list**
+
+- Delete `ProjectSessionPersistenceAdapter` casts that route validated project data through `unknown` between `ProjectData` and `PersistedProjectSession`.
+- Delete app-shell persistence port return/input types of `object` where they carry the current project/session DTO.
+- Delete or rename `PersistedProjectSession` if it is only an untyped alias hiding the concrete project DTO; replace it with a current-schema DTO type owned by the reviewed boundary.
+- Delete stale tests/mocks that assert generic `object` payloads or double-cast persistence flow; replace them with typed app-shell persistence/session contract tests.
+- Delete any compatibility wrappers, dual `ProjectData`/`PersistedProjectSession` public paths, schema migration branches, corrupted-format fallbacks, or current-format shims introduced merely to preserve the old port shape.
+- Delete new broad `any`, blanket `unknown as`, `@ts-ignore`, `@ts-expect-error`, relaxed TypeScript config, alternate build script, or validation allowlist if proposed to force type compatibility.
+- Do not delete or rewrite operation descriptor registries, command operations, `CommandStack`, `OperationRegistry`, `ProjectService` replay semantics, Drive/auth internals, backend, docs/specs, rendering/style selectors, or package/tooling without a reviewed plan edit.
+
+**Success criteria**
+
+- `ProjectSessionPersistencePort`, `OpenedProjectSession`, runtime snapshot/restore signatures, project use cases, and autosave/open/save callers use one explicit current-schema persistence DTO type instead of `object` or cast-only aliases.
+- `ProjectSessionPersistenceAdapter.ts` contains no `as unknown as ProjectData`, `as unknown as PersistedProjectSession`, or equivalent double-cast bridge for validated project data.
+- `ProjectService.validateProjectData` remains the validation gate for unknown project input, and its successful assertion/result is reflected directly in the app-shell opened-session payload type.
+- `ProjectService` does not regain migration/backcompat branches, corrupted-operation compatibility fallbacks, private command/world field casts, or monolithic operation-switch logic.
+- Command descriptor/operation residuals discovered during scout are either untouched and logged as future-wave candidates or explicitly scoped through a reviewed delta if they are directly necessary for the app-shell port fix.
+- Local project save/open/autosave and Drive-backed save/open paths where currently tested still compile and behave with the narrowed DTO contract.
+- Focused tests cover typed validation/opened-session payload flow, snapshot/restore port contracts, restore-into-candidate safety, and save/open/autosave use-case wiring where touched.
+- No production/test changes occur before the canonical fresh-scout/proposals/review/decision sequence.
+
+**Dependencies / ordering**
+
+Depends on Wave 029 because Wave 029 closed the higher-centrality 3D read-port/domain-realization leak and left the app-shell persistence DTO cast as an explicit next-wave candidate. Wave 030 should precede adapter-private 3D style-policy polish and thin selector orchestration cleanup because it governs the project save/open/restore contract rather than presentation-private mapping. It should also precede a broad command descriptor/output normalization wave only if scout confirms the app-shell port can be fixed without redesigning command descriptors; otherwise stop and re-plan that larger command/persistence wave explicitly.
+
+**Validation requirements**
+
+All Wave 030 implementation validation stdout/stderr must be captured under `architecture-audit/cycle-030-app-shell-persistence-dto-port-contract-cleanup/validation/`. Undefined commands may be skipped only with exact package-script evidence in the implementation log; defined root or workspace commands are mandatory.
+
+1. Capture pre-edit path-scoped git status/diff and static scans for app-shell persistence port types, `object` snapshot payloads, `PersistedProjectSession`, `ProjectData`, `unknown as` casts, `ProjectService` validation/serialization/deserialization, Drive/local repository save/open callers, and protected unrelated dirty files.
+2. Run focused static/architecture tests proving the app-shell persistence boundary has one typed current-schema payload and no double-cast bridge.
+3. Run focused unit tests for `ProjectSessionPersistenceAdapter`, `RuntimeSession` snapshot/restore, `ProjectSessionUseCases`, `AutoSaveUseCases`, and `ProjectService` validation/serialization/deserialization where touched.
+4. Run persistence-focused e2e or current UI save/open/autosave coverage where currently available; include undo/redo-after-load if any restore behavior is touched.
+5. Run `npm run lint` at the repository root and in every workspace where a lint script is defined, including `frontend` while active.
+6. Run full Vitest at the repository root and in every workspace where a test/Vitest script is defined, including `frontend` while active.
+7. Run `npm run build` at the repository root and in every workspace where a build script is defined, including `frontend` while active.
+8. Run Playwright/e2e at the repository root and in every workspace where an e2e script is defined because project open/save and app-shell restore behavior are user-observable.
+9. Refresh the live preview bound to `0.0.0.0:5173`, capture HTTP 200 reachability, and run credential-free Playwright/live browser smoke through project creation, representative drawing, save/open or local persistence behavior available without real Drive/auth credentials, and undo/redo after restore where possible.
+
+**Risks**
+
+- The DTO-port cleanup can accidentally become a broad persistence or command descriptor redesign. Enforce the scope guard and stop for a reviewed plan edit if operation descriptors or command outputs are the true blocker.
+- If `PersistedProjectSession` is used by browser/Drive repository boundaries in ways not visible from the initial file list, the fresh-scout stage must inventory those callers before deleting or renaming it.
+- Tightening types can reveal stale tests or mocks that used generic `object` payloads. Delete/update those tests to the current contract rather than preserving compatibility wrappers.
+- Save/open/autosave behavior is user-observable; validation must include e2e/live smoke and not rely on type checks alone.
+- The repository has broad unrelated dirty context. Use path-scoped status/diff and do not depend on unowned source modifications.
+
+**No-backcompat rationale**
+
+The app-shell persistence port is an internal architecture contract. Keeping both `ProjectData` and a cast-only `PersistedProjectSession` public shape would preserve an untyped bypass at the save/open boundary and obscure which layer owns project DTO validation. Backward compatibility for the internal app-shell port has zero priority. Once reviewed proposals select the current DTO owner, delete cast shims, generic object payloads, stale mocks, and dual paths rather than wrapping them.
