@@ -115,3 +115,67 @@ The existing live preview server on `0.0.0.0:5173` remained running. It hot-relo
 
 - A future wave can further split style mapping so `ThreeStylePolicy.ts` no longer imports `VisualStyle`, but this should be scoped separately because current imports are adapter-private conversion support rather than selector-facing leakage.
 - A future wave can evaluate whether final 3D renderer DTOs should absorb the remaining thin selector orchestration, if that improves the presentation layer without introducing a generic scene/world facade.
+
+## Final closure verification — validation and preview stage
+
+Closure timestamp (UTC): 2026-05-28T05:59:18Z.
+
+This validation/preview closure independently re-read `decision.md`, this implementation log, Cycle 029 validation artifacts, the 3D presentation source boundary, protected Wave 028 canvas read-port files, and `architecture-audit/wave-plan.md`. No production source, package/tooling, backend/docs/spec, persistence/command, Drive/auth, rendering/CSS, or UI-feature changes were made during closure.
+
+### Closure evidence written
+
+- `validation/closure-scoped-status-diff.stdout.log` / `.stderr.log` — path-scoped source-control evidence for Cycle 029 artifacts, 3D presentation targets, protected canvas/ThreeView files, e2e contract, wave plan, and this worker report path.
+- `validation/closure-verification.stdout.log` / `.stderr.log` — consolidated validation-log presence check, validation pass-marker scan, static boundary scans, live-preview process check, and fresh HTTP reachability probe.
+- `validation/closure-verification-summary.stdout.log` / `.stderr.log` — concise summary proving no `MISSING`/`FORBIDDEN` closure scan hits and showing HTTP 200 reachability.
+- `validation/closure-wave-plan-scan.stdout.log` / `.stderr.log` and `validation/closure-post-029-wave-headings.stdout.log` / `.stderr.log` — re-read evidence for next-wave recommendation.
+
+### Independent decision/scope match
+
+Closure confirms the implementation followed the Cycle 029 decision-selected direct path:
+
+- `ThreePresentationAdapter.ts` is the focused private owner for concrete `World` traversal and shared 3D realization-context assembly.
+- `ThreeWorldReadPort.ts` now constructs one adapter and wires named concern read ports rather than exporting a generic world-like read facade.
+- `ThreePresentationReadModel.ts` exposes DTO-native source contracts: ids, discriminated kinds, primitive geometry, visibility, and `ThreeStyleDto` style data.
+- 3D selectors consume DTO source models and do not import selector-facing domain realization/style carriers.
+- `ThreeView.vue` remains a shell over `ThreePresentationPort` / `ThreeViewRuntime`; it was not redesigned and has no concrete `World` import/injection.
+- Wave 028 canvas DTO boundaries remain protected; closure scans found no reintroduced canvas process-tree/world/realization-context seam.
+
+No broadening was observed into command producers/history, persistence schema/replay, command descriptors/serialization, `OperationRegistry`, Drive/auth, backend/docs/specs/package-tooling, validation-platform work, UI features, app-shell production composition redesign, broad domain-realization redesign, package/tooling churn, or DTO-native canvas style cleanup outside the selected 3D scope.
+
+### Mandatory validation evidence status
+
+All required Cycle 029 validation evidence is present and green:
+
+- Static scans: `validation/static-scans.log` and closure scan — PASS; selector/read-model forbidden scan empty; adapter-private conversion localized; no broad facade or Wave 028 canvas raw seam regression.
+- Root lint: `validation/root-lint.stdout.log` — PASS.
+- Frontend lint: `validation/frontend-lint.stdout.log` — PASS.
+- Focused 3D presentation Vitest: `validation/focused-three-presentation.stdout.log` — PASS, 3 files / 14 tests.
+- Root full Vitest: `validation/root-full-vitest.stdout.log` — PASS.
+- Frontend full Vitest: `validation/frontend-full-vitest.stdout.log` — PASS.
+- Root build: `validation/root-build.stdout.log` — PASS with the previously noted Vite chunk-size warning.
+- Frontend build: `validation/frontend-build.stdout.log` — PASS with the previously noted Vite chunk-size warning.
+- Root e2e/Playwright: `validation/root-e2e.stdout.log` — PASS, 10 tests including `current-ui-contract.spec.ts` overlay pointer ownership.
+- Frontend e2e/Playwright: `validation/frontend-e2e.stdout.log` — PASS, 10 tests including `current-ui-contract.spec.ts` overlay pointer ownership.
+- Credential-free current UI smoke against the live app: `validation/live-smoke-current-ui-contract-final.out` — PASS, 6 current UI contract tests including 3D overlay pointer-boundary behavior.
+
+No source-attributable validation failure remains. Earlier failed focused/build attempts are already documented above as implementation-time test/type adjustments and were followed by green final validation.
+
+### Live preview closure
+
+The live preview server remained running from `validation/live-preview-server.pid` on `0.0.0.0:5173`. Closure performed a fresh reachability probe to `http://127.0.0.1:5173/` and recorded `HTTP/1.1 200 OK` in `validation/closure-verification.stdout.log`; the prior final refresh probe also recorded `HTTP/1.1 200 OK` in `validation/live-preview-refresh-probe-final.out`. Credential-free Playwright smoke evidence is recorded in `validation/live-smoke-current-ui-contract-final.out`.
+
+### Source-control reconciliation
+
+Path-scoped closure status/diff was used because broad workspace status can overflow in this repository. The scoped diffstat for Cycle 029 source targets was empty at closure time. The scoped status showed untracked Cycle 029 `critique/` and `reviews/` audit artifacts as pre-existing review evidence; closure did not revert, normalize, or incorporate unrelated dirty files. Protected unrelated dirty source files named by the decision remained untouched.
+
+Closure added only audit/validation/report evidence:
+
+- this final closure section in `implementation-log.md`;
+- closure validation logs under `validation/`;
+- the required worker report JSON under `.saivage/stages/.../reports/`.
+
+### Residual risks and next-wave recommendation
+
+Wave 029 is complete. The remaining residuals are intentionally outside Cycle 029: `ThreeStylePolicy.ts` still converts private domain `VisualStyle` into DTO style, and `CanvasPresentationSelector` still has DTO-to-style/primitive cleanup opportunities already lower-priority than the just-closed 3D read-port boundary.
+
+Re-reading `architecture-audit/wave-plan.md` shows no Wave 030 entry after Wave 029. The precise next stage should therefore be a reviewed wave-plan extension/fresh-scout stage, tentatively `cycle-030-wave-plan-extension-post-029`, to rank the next central residual from current evidence. Recommended candidates to scout first are: DTO-native canvas/3D style-policy cleanup, persistence adapter DTO-cast cleanup, and any remaining presentation selector orchestration cleanup. Do not proceed directly to implementation until that Wave 030 scope is designed and reviewed.
