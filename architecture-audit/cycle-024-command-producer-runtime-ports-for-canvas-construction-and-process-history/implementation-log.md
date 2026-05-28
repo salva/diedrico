@@ -81,3 +81,49 @@ Unrelated dirty files noted in the Cycle 024 decision (`frontend/src/commands/Co
 - `ConstructionUseCases.ts` remains broad and factory-heavy; Cycle 024 intentionally only moved command lifecycle ownership. Future waves should consider construction operation/factory decomposition if it remains central.
 - Tests still contain protected raw `CommandStack` usage for persistence and selection-deletion services, which are explicitly out of Cycle 024 scope.
 - Vite reports the existing large chunk warning during build; this is not attributable to Cycle 024 and belongs to a future performance/tooling wave if prioritized.
+
+## Final validation/preview closure — 2026-05-28
+
+Cycle 024 is closed as complete after independent validation-stage verification. This closure did not change production source, package/tooling, backend/docs/specs, persistence, rendering/Three/CSS/canvas behavior, command descriptors/serialization, OperationRegistry, Drive/auth, or protected configuration/secret files.
+
+### Decision/proposal conformance
+
+- Re-read `decision.md` and `proposals/proposal-direct.md`; the implemented shape matches the selected direct path.
+- `RuntimeSession` privately owns `World` and `CommandStack`, composes one private `RuntimeCommandProducer`, and passes behavior-sized `commands` ports into `CanvasToolController` and `ProcessHistoryController` instead of handing over raw `CommandStack`.
+- `RuntimeCommandProducer` is the only scoped migrated module that imports `CommandStack`, constructs `new Command(...)`, and calls `commandStack.push(...)`; it exposes command execution, preview sessions, and process command execution rather than stack arrays, undo/redo/history, serialization, raw stack, or a public `push` API.
+- Canvas movement/style, construction, quick-tool, process-history controller/use-case modules no longer receive raw stack params or own stack push. Quick-tool stale `world` / `commandStack` params remain deleted. `CanvasStyleUseCase` has no local `as any` cast.
+- Protected out-of-scope surfaces remained unchanged by this closure; `SelectionDeletionCommandService`, persistence schema/replay, command descriptors/serialization, OperationRegistry, rendering/Three/CSS/canvas presentation, Drive/auth, backend/docs/specs/package tooling, and app-shell production composition redesign were not broadened into this stage.
+
+### Validation evidence checked
+
+All checked evidence is under `architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/`.
+
+- Static/protected-boundary evidence: `final-static-scans.stdout`, plus closure rerun `closure-static-scans.stdout` / `.stderr`.
+- Root lint: `root-lint-final.stdout` passed architecture tests (4 files, 11 tests).
+- Frontend lint: `frontend-lint-final.stdout` passed architecture tests (4 files, 11 tests).
+- Focused Vitest: `focused-vitest-final.stdout`, `focused-legacy-controller-tests.stdout`, and `focused-process-history-tests.stdout` passed the runtime producer, boundary, tool/controller, canvas movement/style, construction, and process-history focused sets.
+- Full Vitest: `root-vitest-pass-summary.stdout` and `frontend-vitest-pass-summary.stdout` passed (115 files passed, 1 skipped; 1289 passed, 45 skipped, 11 todo). Reported stderr lines are existing diagnostic console output from degenerate geometry tests, not test failures.
+- Builds: `root-build-final.stdout` and `frontend-build-final.stdout` passed `vue-tsc && vite build`; the only noted warning is the pre-existing large bundle/chunk-size condition already recorded above.
+- E2E/Playwright: `root-e2e.stdout` and `frontend-e2e.stdout` passed 10/10 tests, including current UI contract, point creation, selection/line argument collection, keyboard undo/redo/delete/Ctrl+A, app-shell project chooser without credentials, and 3D overlay pointer ownership/non-pass-through behavior.
+
+No stale or missing mandatory evidence was found that requires rerunning the full validation cadence in this closure stage. The closure reran only source-scope static scans and live preview reachability/smoke checks.
+
+### Live preview closure evidence
+
+- Existing frontend preview remained bound to `0.0.0.0:5173` and reachable from loopback.
+- Closure probe evidence: `closure-live-preview-smoke.stdout` / `.stderr` records listening socket evidence, HTTP `200 OK` from `http://127.0.0.1:5173/`, the Diedrico HTML title/app marker, and a credential-free smoke. No protected config, env, OAuth, Drive, or provider files were read.
+- Earlier implementation evidence remains valid: `live-preview-server-frontend.stdout` / `.stderr` and `live-preview-reachability-frontend.stdout` / `.stderr` record the authoritative refreshed frontend dev server after the failed root-script forwarding attempt.
+
+### Source-control reconciliation
+
+- MCP scoped diff on the Cycle 024 production implementation files was empty at closure time, confirming this validation task did not modify production source.
+- The new closure artifacts are limited to validation evidence and this implementation-log section.
+- Previously noted unrelated dirty files (`frontend/src/commands/Command.ts` and panel/toolbar component edits) were not read as premises, modified, normalized, reverted, or incorporated by this closure.
+- The full `git status` output is too large for the MCP status buffer in this workspace; closure relied on scoped MCP diffs plus path-scoped validation/static evidence rather than normalizing unrelated workspace noise.
+
+### Residual risks and next-wave recommendation
+
+Residual Cycle 024 risks are accepted as non-blocking: `ConstructionUseCases.ts` remains broad/factory-heavy by design, and protected raw stack usage remains in persistence/selection-deletion/runtime-owned services that were explicitly out of scope. The pre-existing Vite bundle-size warning is not attributable to Cycle 024.
+
+After re-reading `wave-plan.md` and Cycle 024 residuals, the recommended next fresh-scout is the central command/intent cleanup that remains after this runtime-port wave: proceed to the next plan-authorized command-boundary wave for panel/toolbar/process-history or reconcile the stale wave-plan ordering before implementation if the plan still points at already-completed Wave 006-era surfaces. Do not pull rendering, UI styling, docs, backend, Drive/auth, or tooling cleanup ahead of unresolved command/persistence/process-history boundary work.
+

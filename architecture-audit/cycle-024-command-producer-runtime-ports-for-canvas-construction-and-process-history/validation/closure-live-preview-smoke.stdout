@@ -1,0 +1,48 @@
+--- closure preview timestamp ---
+2026-05-28T04:29:31Z
+--- listening processes/ports ---
+State  Recv-Q Send-Q Local Address:Port Peer Address:PortProcess                                 
+LISTEN 0      4096         0.0.0.0:22        0.0.0.0:*                                           
+LISTEN 0      4096      127.0.0.54:53        0.0.0.0:*                                           
+LISTEN 0      511          0.0.0.0:8080      0.0.0.0:*    users:(("MainThread",pid=46759,fd=22)) 
+LISTEN 0      511          0.0.0.0:5173      0.0.0.0:*    users:(("MainThread",pid=145748,fd=25))
+LISTEN 0      4096   127.0.0.53%lo:53        0.0.0.0:*                                           
+LISTEN 0      4096            [::]:22           [::]:*                                           
+--- existing preview pid file ---
+145735
+--- reachability probe ---
+HTTP/1.1 200 OK
+Vary: Origin
+Content-Type: text/html
+Cache-Control: no-cache
+Etag: W/"2a2-jmzE7161kdnXI7JasQMw+v8+14s"
+Date: Thu, 28 May 2026 04:29:31 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Content-Length: 674
+
+--- body marker scan ---
+<!doctype html>
+<html lang="en">
+  <head>
+    <script type="module" src="/@vite/client"></script>
+
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Diedrico - Dihedral Learning MVP</title>
+    <!-- Google API Client Library -->
+    <script src="https://apis.google.com/js/api.js"></script>
+    <!-- Google Identity Services (new OAuth library) -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
+--- credential-free smoke: no credential/config content requested; app html fetched over loopback only ---
+src="/@vite/client"
+<title>Diedrico - Dihedral Learning MVP</title>
+id="app"
+src="/src/main.ts"

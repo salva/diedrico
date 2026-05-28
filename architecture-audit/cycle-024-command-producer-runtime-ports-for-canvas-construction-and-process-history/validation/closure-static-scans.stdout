@@ -1,0 +1,270 @@
+--- closure timestamp ---
+2026-05-28T04:29:23Z
+--- forbidden raw accessor/provide scans ---
+frontend/src/application/commandProduction/RuntimeCommandProducer.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/commandProduction/RuntimeCommandProducer.ts:18:    private readonly commandStack: CommandStack
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:65:    expect(selection).not.toMatch(/DeletionSequenceFactory|new Command|CommandStack|commandStack\.push|\.commit\(/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:77:    expect(appShellPorts).not.toMatch(/@\/commands\/CommandStack|@\/domain\/world\/World|@\/services\/ProjectService/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:84:    expect(projectSessionKernel).not.toMatch(/@\/commands\/CommandStack|@\/domain\/world\/World|@\/services\/ProjectService/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:88:    expect(projectSession).not.toMatch(/@\/commands\/CommandStack|@\/domain\/world\/World|@\/services\/ProjectService|initializeWorld|from '\.\/RuntimeSession'/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:90:    expect(autoSave).not.toMatch(/@\/commands\/CommandStack|@\/domain\/world\/World/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:113:    expect(runtimeSession).not.toMatch(/commandStackForDeferredCommandProducers\(/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:125:    expect(keyboard).not.toMatch(/@\/commands\/CommandStack/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:136:    expect(appShellRuntime).not.toMatch(/commandStackForDeferredCommandProducers|commandStack,/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:156:    expect(projectSessionPersistenceTargets).toMatch(/@\/commands\/CommandStack/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:183:      expect(content).not.toMatch(/@\/commands\/CommandStack/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:190:    expect(runtimeCommandProducer).toMatch(/@\/commands\/CommandStack/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:200:    expect(canvasToolController).not.toMatch(/CommandStack/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:201:    expect(processHistoryController).not.toMatch(/CommandStack/);
+--- scoped commandStack.push/new Command scans ---
+frontend/src/application/commandProduction/RuntimeCommandProducer.ts:22:    const command = new Command(description, this.world);
+frontend/src/application/commandProduction/RuntimeCommandProducer.ts:27:      this.commandStack.push(command);
+frontend/src/application/commandProduction/RuntimeCommandProducer.ts:36:    const command = new Command(description, this.world);
+frontend/src/application/commandProduction/RuntimeCommandProducer.ts:58:          this.commandStack.push(command);
+frontend/src/application/commandProduction/RuntimeCommandProducer.ts:76:    const command = new Command(description, this.world);
+frontend/src/application/commandProduction/RuntimeCommandProducer.ts:81:      this.commandStack.push(command);
+--- quick-tool stale params scan ---
+3:export interface ExecuteQuickToolParams {
+7:export function executeQuickToolIntent({ intent }: ExecuteQuickToolParams): ToolCommandResult {
+--- CanvasStyleUseCase any-cast scan ---
+--- protected surface diff-name scan from working tree (non-git; file mtimes not authoritative) ---
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/critique/critic-review-addendum.md
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/critique/critic-review.md
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/critique/decision-critic-review-addendum.md
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/critique/decision-critic-review.md
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/decision.md
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/implementation-log.md
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/proposals/proposal-direct.md
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/proposals/proposal-restructure.md
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/reviews/decision-stage-review.md
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/reviews/implementation-stage-review.md
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/reviews/round-01-review.md
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/scope-check.md
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/closure-static-scans.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/closure-static-scans.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/early-frontend-build-2.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/early-frontend-build-2.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/early-frontend-build.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/early-frontend-build.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/edit-canvas-tool-controller-tests.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/edit-canvas-tool-controller-tests.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/edit-process-history-tests.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/edit-process-history-tests.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/edit-script-1.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/edit-script-1.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/edit-script-2.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/edit-script-2.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/edit-test-controller-wiring.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/edit-test-controller-wiring.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/edit-tests-boundary.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/edit-tests-boundary.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/edit-tests-legacy-term.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/edit-tests-legacy-term.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/edit-tests-producer.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/edit-tests-producer.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/edit-tests-valid-ids.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/edit-tests-valid-ids.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/edit-tool-validation-test.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/edit-tool-validation-test.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/final-static-scans.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/final-static-scans.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/focused-legacy-controller-tests.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/focused-legacy-controller-tests.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/focused-process-history-tests.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/focused-process-history-tests.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/focused-vitest-2.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/focused-vitest-2.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/focused-vitest-final.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/focused-vitest-final.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/focused-vitest-initial.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/focused-vitest-initial.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/focused-vitest.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/focused-vitest.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/frontend-build-final.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/frontend-build-final.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/frontend-build.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/frontend-build.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/frontend-e2e.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/frontend-e2e.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/frontend-lint-final.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/frontend-lint-final.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/frontend-lint-rerun.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/frontend-lint-rerun.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/frontend-lint.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/frontend-lint.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/frontend-vitest-clean.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/frontend-vitest-clean.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/frontend-vitest-clean-summary.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/frontend-vitest-clean-summary.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/frontend-vitest-final.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/frontend-vitest-final.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/frontend-vitest-final-summary.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/frontend-vitest-final-summary.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/frontend-vitest-pass.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/frontend-vitest-pass.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/frontend-vitest-pass-summary.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/frontend-vitest-pass-summary.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/frontend-vitest-rerun.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/frontend-vitest-rerun.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/frontend-vitest.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/frontend-vitest.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/frontend-vitest-summary.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/frontend-vitest-summary.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/live-preview-kill.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/live-preview-kill.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/live-preview-ps.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/live-preview-ps.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/live-preview-reachability-final.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/live-preview-reachability-final.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/live-preview-reachability-frontend.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/live-preview-reachability-frontend.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/live-preview-reachability-pass.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/live-preview-reachability-pass.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/live-preview-reachability.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/live-preview-reachability.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/live-preview-server-frontend.pid
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/live-preview-server-frontend.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/live-preview-server-frontend.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/live-preview-server.pid
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/live-preview-server.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/live-preview-server.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/manager-final-static-check.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/pre-diffstat.txt
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/pre-status.txt
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/process-history-raw-grep.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/process-history-raw-grep.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/raw-controller-test-grep-after.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/raw-controller-test-grep-after.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/raw-controller-test-grep.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/raw-controller-test-grep.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/reviewer-key-diff.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/reviewer-key-diff.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/reviewer-retry-commit-show.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/reviewer-retry-commit-show.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/reviewer-retry-head-status.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/reviewer-retry-head-status.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/reviewer-scoped-diffstat.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/reviewer-scoped-diffstat.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/reviewer-scoped-status.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/reviewer-scoped-status.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/root-build-final.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/root-build-final.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/root-build.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/root-build.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/root-e2e.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/root-e2e.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/root-lint-final.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/root-lint-final.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/root-lint-rerun.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/root-lint-rerun.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/root-lint.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/root-lint.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/root-vitest-clean.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/root-vitest-clean.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/root-vitest-clean-summary.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/root-vitest-clean-summary.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/root-vitest-final.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/root-vitest-final.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/root-vitest-final-summary.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/root-vitest-final-summary.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/root-vitest-pass.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/root-vitest-pass.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/root-vitest-pass-summary.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/root-vitest-pass-summary.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/root-vitest-rerun.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/root-vitest-rerun.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/root-vitest.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/root-vitest.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/root-vitest-summary.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/root-vitest-summary.stdout
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/static-scans.stderr
+architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/static-scans.stdout
+frontend/src/application/appShell/ActivePlaneUseCases.ts
+frontend/src/application/appShell/AppShellErrorClassifier.ts
+frontend/src/application/appShell/AppShellPorts.ts
+frontend/src/application/appShell/AppShellProductionRuntime.ts
+frontend/src/application/appShell/AppShellRuntime.ts
+frontend/src/application/appShell/AutoSaveUseCases.ts
+frontend/src/application/appShell/BrowserLastProjectRepository.ts
+frontend/src/application/appShell/KeyboardShortcutRouter.ts
+frontend/src/application/appShell/ProjectSessionKernel.ts
+frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts
+frontend/src/application/appShell/ProjectSessionPersistenceTargets.ts
+frontend/src/application/appShell/ProjectSessionUseCases.ts
+frontend/src/application/appShell/readModels/ElementsPanelReadModel.ts
+frontend/src/application/appShell/readModels/ElementVisibilityIntent.ts
+frontend/src/application/appShell/readModels/ProcessTreeReadModel.ts
+frontend/src/application/appShell/readModels/PropertiesDialogReadModel.ts
+frontend/src/application/appShell/RuntimeInjectionKeys.ts
+frontend/src/application/appShell/RuntimeSession.ts
+frontend/src/application/appShell/RuntimeViewPorts.ts
+frontend/src/application/appShell/SelectionUseCases.ts
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts
+frontend/src/application/canvas/CanvasStyleUseCase.ts
+frontend/src/application/canvasPresentation/CanvasGridSelector.ts
+frontend/src/application/canvasPresentation/CanvasInteractionQuery.ts
+frontend/src/application/canvasPresentation/CanvasPresentationController.ts
+frontend/src/application/canvasPresentation/CanvasPresentationModel.ts
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts
+frontend/src/application/canvasPresentation/CanvasVisibilityPolicy.ts
+frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts
+frontend/src/application/canvasPresentation/Projected3DCanvasReadPort.ts
+frontend/src/application/canvasPresentation/Projected3DCanvasSelector.ts
+frontend/src/application/commandProduction/CommandProductionPorts.ts
+frontend/src/application/commandProduction/RuntimeCommandProducer.ts
+frontend/src/application/construction/ConstructionUseCases.ts
+frontend/src/application/construction/QuickToolUseCases.ts
+frontend/src/application/presentation/WorldRealizationContext.ts
+frontend/src/application/processHistory/ProcessHistoryController.ts
+frontend/src/application/processHistory/ProcessHistoryIntents.ts
+frontend/src/application/processHistory/ProcessHistoryUseCases.ts
+frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts
+frontend/src/application/selectionDeletion/SelectionDeletionPorts.ts
+frontend/src/application/threePresentation/Guide3DSelector.ts
+frontend/src/application/threePresentation/Hinge3DSelector.ts
+frontend/src/application/threePresentation/PlanarElement3DSelector.ts
+frontend/src/application/threePresentation/ProjectionPlane3DSelector.ts
+frontend/src/application/threePresentation/ReconstructedElement3DSelector.ts
+frontend/src/application/threePresentation/ThreeGuideReadPort.ts
+frontend/src/application/threePresentation/ThreeHingeReadPort.ts
+frontend/src/application/threePresentation/ThreePlanarElementReadPort.ts
+frontend/src/application/threePresentation/ThreePresentationController.ts
+frontend/src/application/threePresentation/ThreePresentationModel.ts
+frontend/src/application/threePresentation/ThreePresentationReadModel.ts
+frontend/src/application/threePresentation/ThreePresentationSelector.ts
+frontend/src/application/threePresentation/ThreeProjectionPlaneReadPort.ts
+frontend/src/application/threePresentation/ThreeRealizationContext.ts
+frontend/src/application/threePresentation/ThreeReconstructedElementReadPort.ts
+frontend/src/application/threePresentation/ThreeStylePolicy.ts
+frontend/src/application/threePresentation/ThreeWorldReadPort.ts
+frontend/src/application/toolbar/ToolbarHistoryController.ts
+frontend/src/application/toolbar/ToolbarHistoryIntents.ts
+frontend/src/application/toolbar/ToolbarHistoryUseCases.ts
+frontend/src/application/tools/CanvasToolController.ts
+frontend/src/application/tools/ToolCommandIntents.ts
+frontend/src/application/tools/ToolInteractionReadPort.ts
+frontend/src/application/world/initializeWorld.ts
+frontend/tests/integration/factories/AllFactories.spec.ts
+frontend/tests/integration/guide-creation.test.ts
+frontend/tests/integration/phase76-fail-fast.spec.ts
+frontend/tests/integration/pointCreation.spec.ts
+frontend/tests/integration/processTree-stack.test.ts
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts
+frontend/tests/integration/projectService.determinism.spec.ts
+frontend/tests/integration/semanticReferences.spec.ts
+frontend/tests/integration/world/defaultLabels.integration.test.ts
+frontend/tests/integration/worldInitialization.spec.ts
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts
+frontend/tests/unit/application/appShell/Cycle027Architecture.test.ts
+frontend/tests/unit/application/appShell/KeyboardShortcutRouter.test.ts
+frontend/tests/unit/application/appShell/RuntimeReadModels.test.ts
+frontend/tests/unit/application/canvasPresentation/canvasGridSelector.spec.ts
+frontend/tests/unit/application/canvasPresentation/canvasInteractionQuery.spec.ts
+frontend/tests/unit/application/canvasPresentation/canvasPresentationSelector.spec.ts
+frontend/tests/unit/application/canvasPresentation/canvasWorldReadPort.spec.ts
+frontend/tests/unit/application/canvasPresentation/projected3DCanvasSelector.spec.ts
+frontend/tests/unit/application/canvasToolControllers.spec.ts
+frontend/tests/unit/application/commandProduction/RuntimeCommandProducer.test.ts
+frontend/tests/unit/application/panelToolbarIntentControllers.spec.ts
