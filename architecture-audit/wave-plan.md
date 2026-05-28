@@ -1214,86 +1214,68 @@ The current hidden browser/static-service construction inside app-shell runtime 
 
 **Status**
 
-Added by `cycle-021-wave-plan-extension` after Wave 020 completed. Requires review of this plan extension before the canonical `cycle-021-fresh-scout-proposals` stage and before any implementation. This entry is grounded in post-Wave-020 source evidence and the Wave 020 decision/implementation logs, which explicitly retained `SelectionUseCases` direct delete-command construction as residual debt.
+Superseded / already satisfied by current source as of `cycle-021-plan-correction-and-rerank-post-020`. The post-Wave-020 fresh scout found that this entry's original implementation premise was stale: `SelectionUseCases` no longer constructs delete commands directly. No production source/test implementation is authorized for Wave 021 unless a future reviewed plan edit identifies new, current-source evidence.
 
-**Scope**
+**Corrected current-source grounding**
 
-- `frontend/src/application/appShell/SelectionUseCases.ts`
-- command execution/kernel boundary modules that should own application command creation for selection/delete, expected under `frontend/src/application/` if the reviewed proposal introduces them
-- `frontend/src/application/appShell/AppShellRuntime.ts` only where it wires the selected selection/delete command service or command-kernel port; do not move `World`/`CommandStack` ownership broadly unless selected by reviewed proposal
-- `frontend/src/application/appShell/AppShellPorts.ts` only where selection/delete command execution needs a narrow typed port
-- `frontend/src/application/appShell/KeyboardShortcutRouter.ts` only to preserve delete/select-all shortcut routing through the cleaned selection API
-- `frontend/src/commands/factories/DeletionSequenceFactory.ts` and deletion-related command tests only as the command-side dependency that the new boundary consumes; do not redesign cascade deletion semantics unless current evidence proves the factory contract itself must move
-- focused app-shell selection/use-case/command-kernel tests and representative keyboard/delete/select-all e2e/live checks
+The stale premise claimed `SelectionUseCases` imported `Command`, `CommandStack`, `DeletionSequenceFactory`, and `World`, received raw runtime objects, and created/committed/pushed delete commands directly. Current source contradicts that claim:
 
-**Scope guard**
+- `SelectionUseCases` imports only Vue watch types, `SelectionDeletionCommandPort`, and app-shell selection/read-store ports; its constructor receives `selectionRead`, `deleteSelectionCommand`, `selectionStore`, and `getActivePlaneId`, not `World` or `CommandStack` (`frontend/src/application/appShell/SelectionUseCases.ts:1-13`).
+- `SelectionUseCases.deleteSelected()` reads selected ids, returns on an empty selection, delegates to `deleteSelectionCommand.execute(selectedIds)`, and clears selection; it does not call `new Command`, `DeletionSequenceFactory`, `commit()`, or `commandStack.push(...)` (`frontend/src/application/appShell/SelectionUseCases.ts:30-35`).
+- `SelectionReadPort` is already a narrow app-shell query boundary for active-plane selectable ids and cascade-preview ids (`frontend/src/application/appShell/AppShellPorts.ts:45-48`; `frontend/src/application/appShell/SelectionUseCases.ts:41-55`).
+- `SelectionDeletionCommandPort` is a behavior-sized boundary with `execute(selectedIds: readonly string[]): void` (`frontend/src/application/selectionDeletion/SelectionDeletionPorts.ts:1-3`).
+- `SelectionDeletionCommandService` owns concrete command creation, cascade deletion factory use, commit, and command-stack push for the selection-delete slice (`frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:1-5`, `frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:12-17`, `frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:30-37`).
+- `RuntimeSession.selectionDeletionCommandPort()` wires the concrete service using runtime-owned `world` and `commandStack`, preserving `RuntimeSession` as the owner of those concrete objects (`frontend/src/application/appShell/RuntimeSession.ts:31-33`, `frontend/src/application/appShell/RuntimeSession.ts:170-172`).
+- `AppShellBoundary.test.ts` already guards the corrected boundary by asserting `SelectionUseCases` does not contain `DeletionSequenceFactory`, `new Command`, `CommandStack`, `commandStack.push`, or `.commit(` while `SelectionDeletionCommandService` owns those command-lifecycle tokens (`frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:62-69`).
 
-This wave owns the post-Wave-020 selection/delete command-construction seam. It must start with a current inventory of all active delete-selection call sites, direct `new Command(...)` construction in application/UI layers, `DeletionSequenceFactory` consumers, `CommandStack` push paths reachable from keyboard/app-shell selection flows, and selection-store cascade-preview coupling.
+The authoritative Wave 021 post-020 scout artifacts are `architecture-audit/cycle-021-selection-delete-command-kernel-boundary/scope-check.md`, `proposals/proposal-direct.md`, `proposals/proposal-restructure.md`, `critique/round-01-critique-post-020.md`, and `reviews/manager-reconciliation-post-020.md`. Older Cycle 021 decision/implementation/validation artifacts in the same directory are stale audit noise unless explicitly revalidated by a future stage.
 
-Do not reopen project persistence schema, command descriptor serialization, operation replay, Google Drive/auth, app-shell production browser composition, canvas/tool construction controllers, process-history panel/toolbar controllers, rendering selectors, Three scene-host lifecycle, backend stance, validation platform, docs/spec reconciliation, or placeholder/debug cleanup. If the inventory proves that a broader application kernel for all command execution is required before selection/delete can be cleaned, the proposals may select that higher-layer restructure, but implementation must remain bounded to the reviewed selection/delete slice and must not silently absorb canvas/tool/panel/toolbar command paths.
+**Corrected target outcome**
 
-**Baseline/current grounding**
+No source implementation remains for Wave 021. The intended selection/delete command boundary is already present: selection intent orchestration stays in `SelectionUseCases`; command lifecycle ownership stays in `SelectionDeletionCommandService`; runtime wiring stays in `RuntimeSession`; cascade preview reads stay behind `SelectionReadPort`; keyboard Delete/Backspace continues to route through app-shell selection behavior.
 
-Wave 020 deliberately cleaned app-shell production composition but retained selection/delete command construction as accepted residual debt. The Wave 020 decision states that `frontend/src/application/appShell/SelectionUseCases.ts` direct construction of delete commands through `Command` / `DeletionSequenceFactory` is intentionally retained for that cycle and may need a future reviewed wave (`architecture-audit/cycle-020-app-shell-project-session-browser-boundary/decision.md`, “SelectionUseCases residual handling”; “Residual risks accepted for implementation”). The Wave 020 implementation log confirms the same residual after validation: `SelectionUseCases` still directly constructs delete commands via `Command` / `DeletionSequenceFactory`, while `AppShellRuntime.ts` still creates `World` and `CommandStack` as an allowed residual application-kernel question (`architecture-audit/cycle-020-app-shell-project-session-browser-boundary/implementation-log.md`, “Protected-surface checks”; “Residual risks / future wave candidates”; “Residual risks accepted after closure”).
+The only Wave 021 work in this correction stage is plan hygiene: delete stale plan claims, record the current evidence, and re-rank to the next central wave rather than implementing a no-op or silently broadening into unrelated command producers.
 
-Current post-Wave-020 source evidence confirms the residual is active and central rather than historical. `SelectionUseCases` imports `Command`, `CommandStack`, `DeletionSequenceFactory`, and `World`; its constructor receives `world` and `commandStack`; `deleteSelected()` creates `new Command('Delete elements', this.world)`, asks `DeletionSequenceFactory.createCascadeDeletion(...)` to fill it, commits it, pushes it to `commandStack`, and clears selection (`frontend/src/application/appShell/SelectionUseCases.ts:2`, `frontend/src/application/appShell/SelectionUseCases.ts:3`, `frontend/src/application/appShell/SelectionUseCases.ts:4`, `frontend/src/application/appShell/SelectionUseCases.ts:12`, `frontend/src/application/appShell/SelectionUseCases.ts:13`, `frontend/src/application/appShell/SelectionUseCases.ts:36`, `frontend/src/application/appShell/SelectionUseCases.ts:37`, `frontend/src/application/appShell/SelectionUseCases.ts:38`, `frontend/src/application/appShell/SelectionUseCases.ts:39`). The same class also reaches through `World` for dependency cascade preview (`frontend/src/application/appShell/SelectionUseCases.ts:58`), so deletion behavior mixes selection state, dependency preview, command construction, command commit/push, and active-plane selection reads in one app-shell use case.
+**Superseded DELETE list**
 
-`AppShellRuntime` remains the composition point that creates `new World()` and `new CommandStack()`, then passes both concrete objects into `SelectionUseCases` and other app-shell/session use cases (`frontend/src/application/appShell/AppShellRuntime.ts:16`, `frontend/src/application/appShell/AppShellRuntime.ts:17`, `frontend/src/application/appShell/AppShellRuntime.ts:31`). `AppShellPorts` still types project-session persistence in terms of concrete `CommandStack`, `World`, and `ProjectData` (`frontend/src/application/appShell/AppShellPorts.ts:2`, `frontend/src/application/appShell/AppShellPorts.ts:3`, `frontend/src/application/appShell/AppShellPorts.ts:5`, `frontend/src/application/appShell/AppShellPorts.ts:26`, `frontend/src/application/appShell/AppShellPorts.ts:28`), which shows the broader kernel/persistence contract question remains present but should not displace the narrower selection/delete seam unless a reviewed proposal proves it is necessary.
+Already satisfied / no-op in current source:
 
-Lower-priority candidates remain real but are less central for the immediate next wave. Current scans show `ProjectService` still owns command-stream persistence orchestration and is still reached through the narrow Wave 020 app-shell adapter (`frontend/src/services/ProjectService.ts:2`, `frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:7`, `frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:16`), but Wave 020 intentionally did not redesign persistence internals and a selection/delete command boundary is the active app-shell command leak directly called by keyboard behavior. Placeholder/debug/noisy logging surfaces exist in canvas/toolbars/panels and command factories (`frontend/src/components/workspace/SvgCanvas.vue:491`, `frontend/src/components/toolbars/ToolFamilyButton.vue:98`, `frontend/src/components/dialogs/PropertiesDialog.vue:329`, `frontend/src/commands/factories/DeletionSequenceFactory.ts:65`), but cleanup would be peripheral before the command-use-case seam is resolved. Backend/frontend contract stance, docs/spec drift, and validation-gate hardening remain deferred because the current active frontend application-kernel boundary still exposes concrete command construction.
+- `SelectionUseCases.ts` imports of `Command`, `CommandStack`, `DeletionSequenceFactory`, and `World` for delete command construction are already absent.
+- Direct `new Command(...)`, `DeletionSequenceFactory.createCascadeDeletion(...)`, `commit()`, and `commandStack.push(...)` calls in `SelectionUseCases.deleteSelected()` are already absent.
+- Selection-use-case tests requiring concrete command construction in `SelectionUseCases` are not the current boundary; current architecture coverage asserts the opposite.
+- Parallel old/new delete-selected paths were not found in the current app-shell selection-delete path.
 
-**Target outcome**
+Do not delete or rewrite `SelectionDeletionCommandService`, `DeletionSequenceFactory`, command descriptor persistence, project serialization, canvas/tool command controllers, process-history panel/toolbar controllers, backend files, docs/specs, package/tooling, rendering/Three/canvas, Drive/auth internals, debug/placeholder surfaces, or unrelated dirty files as part of this superseded Wave 021 closure.
 
-Selection/delete application behavior is routed through a typed application command boundary rather than constructing and pushing concrete `Command` objects inside `SelectionUseCases`. `SelectionUseCases` owns selection intent orchestration and selection-store updates; a command-kernel/use-case service owns delete command creation, cascade deletion factory use, commit/push behavior, and error/result reporting for delete-selected. Cascade preview should be expressed through a narrow read/query dependency rather than making selection state reach through the entire mutable `World` unless the reviewed proposal explicitly keeps a minimal world-read port as the current bounded compromise.
+**Closure criteria**
 
-The wave should clarify, not broaden, runtime object ownership. `AppShellRuntime` may continue to own the current in-memory `World` and `CommandStack` if the selected proposal keeps the slice narrow, but it should wire them behind an explicit delete-selection command service/port so the app-shell selection use case no longer imports command construction primitives. If the restructure proposal selects a small command-kernel composition object, it must be limited to selection/delete and must leave canvas/tool, panel/toolbar, persistence, and project/session command paths untouched except for named wiring needed by this wave.
+- This `wave-plan.md` section no longer claims `SelectionUseCases` directly constructs or pushes delete commands.
+- The plan records the already-satisfied selection/delete boundary with current-source citations.
+- The next wave recommendation is explicit and based on current-source re-rank, not stale Wave 021 implementation history.
+- No production source/test/package/tooling/preview/validation changes are performed for this plan correction.
 
-**Explicit DELETE list**
+**Re-rank / next canonical stage**
 
-- Delete `SelectionUseCases.ts` imports of `Command`, `CommandStack`, and `DeletionSequenceFactory` once a typed delete-selection command boundary is introduced.
-- Delete `SelectionUseCases.deleteSelected()` direct `new Command(...)`, `DeletionSequenceFactory.createCascadeDeletion(...)`, `commit()`, and `commandStack.push(...)` calls.
-- Delete any selection-use-case test assertions that inspect concrete command internals or require `SelectionUseCases` to construct commands itself; replace with intent/result/port interaction tests and command-boundary tests.
-- Delete broad fake `World as any` / `CommandStack as any` test helpers in touched selection tests where typed test doubles or command-boundary fakes replace them.
-- Delete transitional overloads, compatibility wrappers, or parallel old/new delete-selected paths that preserve both direct command construction in `SelectionUseCases` and the new command boundary.
-- Do not delete or rewrite `DeletionSequenceFactory` cascade semantics, command descriptor persistence, project serialization, canvas/tool command controllers, process-history panel/toolbar controllers, backend files, docs/specs, package/tooling, or debug/placeholder surfaces in this wave unless a reviewed mini-cycle explicitly broadens scope.
+The next central canonical stage should be `cycle-022-fresh-scout-proposals-post-021-plan-correction` for **Wave 022 — Runtime session kernel and persistence port boundary**, subject to a fresh current-source scope check before any implementation. Wave 022 remains the highest-centrality next candidate because it addresses runtime/session ownership, project-session persistence ports, initialization/session lifecycle, and the raw `World`/`CommandStack` pair contract that later command-producer, persistence, rendering, backend, validation, placeholder/debug, and docs waves should consume rather than preserve.
 
-**Success criteria**
-
-- `SelectionUseCases.ts` no longer imports or directly instantiates `Command`, imports `CommandStack`, imports `DeletionSequenceFactory`, commits commands, or pushes commands to the stack.
-- Delete-selected behavior remains user-visible equivalent: empty selection is a no-op, selected elements and dependent cascade elements are removed in the existing order, selection is cleared after successful deletion, cascade highlight behavior remains correct, undo/redo restores/deletes as before, and keyboard Delete/Backspace routing still invokes the selection flow.
-- A focused command-boundary/use-case test covers successful cascade deletion, empty selection, failure/result handling if introduced, command-stack push/undo integration, and selection-store clearing without mounting Vue components.
-- A focused selection-use-case test covers selection intent orchestration and cascade-preview query behavior through typed fakes/ports rather than concrete command internals.
-- `AppShellRuntime` wiring makes the command ownership boundary explicit and does not reintroduce hidden browser/global or production-composition defaults cleaned in Wave 020.
-- No project persistence schema, command descriptor/replay behavior, Google Drive/auth behavior, rendering/Three/canvas/tool/panel/toolbar controller architecture, backend stance, package/tooling, docs/spec, or placeholder/debug cleanup is changed without reviewed plan edit.
-- Mandatory validation cadence passes with stable logs: root/frontend lint where defined, focused Vitest for selection/app-shell command-boundary tests, full root/frontend Vitest, root/frontend build, root/frontend Playwright e2e because delete/undo/keyboard behavior is user-observable, live preview refresh on `0.0.0.0:5173`, HTTP reachability probe, and Playwright/live smoke for representative selection-delete-undo keyboard behavior.
-
-**Dependencies**
-
-Depends on Wave 020 because Wave 020 established the explicit app-shell production composition and intentionally left `SelectionUseCases` direct command construction as residual debt. It is ordered before broader application-kernel/runtime-object ownership, persistence-contract residue cleanup, backend/frontend contract stance, validation-gate hardening, placeholder/debug cleanup, docs/spec drift, and remaining rendering/domain-contract seams because the active app-shell command leak sits on the keyboard/delete path and is a central application/use-case boundary violation.
+This re-rank does **not** authorize using Wave 021 to broaden into canvas movement/style, construction, process-history, panel/toolbar, command descriptor/replay, persistence schema, rendering, Three/canvas, backend/docs/specs, package/tooling, Drive/auth, validation-platform, or UI feature work. If the Wave 022 fresh scope check finds its premises already satisfied or invalidated by current source, edit this plan through another reviewed plan-correction mini-cycle before proceeding.
 
 **Validation requirements**
 
-All Wave 021 validation stdout/stderr must be captured to stable files under the reviewed Cycle 021 implementation directory's `validation/` subdirectory. Undefined commands may be skipped only with exact package-script evidence in the implementation log; defined root or workspace commands are mandatory.
+Plan correction only: capture path-scoped git status/diff and current-source static evidence for the selection/delete boundary. Do not run lint/build/Vitest/e2e or refresh preview unless needed to verify accidental source changes, because no production/test source is changed.
 
-1. Capture pre-edit scoped git status/diff and static scans for `SelectionUseCases`, delete-selected call sites, `new Command`, `DeletionSequenceFactory`, `CommandStack.push`, cascade-preview dependency reads, and keyboard delete routing.
-2. Run focused Vitest for changed selection use-case, command-boundary/kernel, app-shell runtime wiring, and keyboard routing modules.
-3. Run `npm run lint` at the repository root and in every workspace where a lint script is defined, including `frontend` while it remains the active workspace.
-4. Run full Vitest at the repository root and in every workspace where a test/Vitest script is defined, including `frontend` while it remains the active workspace.
-5. Run `npm run build` at the repository root and in every workspace where a build script is defined, including `frontend` while it remains the active workspace.
-6. Run Playwright/e2e at the repository root and in every workspace where an e2e script is defined because selection/delete/undo/keyboard behavior is user-observable.
-7. Refresh the live preview bound to `0.0.0.0:5173`, capture HTTP 200 reachability probes for loopback and in-container host binding where meaningful, and run focused Playwright/live browser smoke for creating/selecting/deleting/restoring representative elements via keyboard or UI without real Drive credentials.
+If a future reviewed source wave touches selection/delete, app-shell keyboard routing, command lifecycle, runtime wiring, or user-visible deletion behavior, it must use the full mandatory validation cadence in that wave's implementation log.
 
 **Risks**
 
-- A “command kernel” can become a new god service if it absorbs canvas/tool, panel/toolbar, persistence, and project/session command concerns in one wave. Keep Wave 021 limited to selection/delete unless a reviewed proposal explicitly selects a bounded higher-layer design.
-- Deletion cascade order and dependency cleanup are correctness-critical; tests must prove dependent elements, process-tree actions, undo/redo, and selection clearing remain equivalent.
-- Moving command push/commit ownership can change autosave dirty-version behavior if command-stack mutation timing changes. Include focused assertions and e2e/live smoke for delete/undo and save-status-adjacent behavior where practical.
-- Cascade preview still needs dependency information from the domain. Avoid replacing full `World` with an equally broad read port; expose only the dependency/candidate lookups actually needed by the selection flow.
-- Existing unrelated dirty source files are present in command and component paths. Implementation must use path-scoped status/diff, avoid reverting unrelated work, and not depend on unowned dirty changes.
+- Leaving stale Wave 021 text would invite fake no-op implementation churn or an unreviewed generic command-kernel facade. This correction deletes that process debt.
+- Later waves still include active command/runtime and read-model seams. They must be scoped by fresh current-source evidence rather than inferred from older Cycle 021 artifacts.
+- The worktree contains unrelated/protected dirty source and e2e deletions. This plan correction documents them as out of scope and does not normalize, stage, or depend on them.
 
 **No-backcompat rationale**
 
-Direct command construction inside `SelectionUseCases` is internal architecture debt, not a compatibility surface. Preserving old and new delete-selected paths would keep the application/use-case boundary ambiguous and would let future app-shell behavior keep reaching into command internals. Delete the old direct command imports/calls once the reviewed boundary is in place, and update active callers/tests directly.
+Stale plan claims are not compatibility surfaces. Keeping an implementation wave for work that current source has already deleted would preserve process debt and encourage dual-path thinking. The correct no-backcompat action is to remove the stale premise from the plan, record the current boundary as closed, and move to the next central architecture seam through the normal fresh-scout/proposal path.
+
 ---
 
 ## Wave 022 — Runtime session kernel and persistence port boundary
