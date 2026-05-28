@@ -27,8 +27,8 @@ This decision is design/audit-only. It does not authorize or perform source impl
 
 Path-scoped status and diffstat were captured before authoring this decision under:
 
-- `.saivage/stages/cycle-024-decision-command-producer-runtime-ports-for-canvas-construction-and-process-history/design-notes/pre-status.stdout`
-- `.saivage/stages/cycle-024-decision-command-producer-runtime-ports-for-canvas-construction-and-process-history/design-notes/pre-diffstat.stdout`
+- `.saivage/stages/cycle-024-decision-command-producer-runtime-ports-for-canvas-construction-and-process-history/pre-status.stdout`
+- `.saivage/stages/cycle-024-decision-command-producer-runtime-ports-for-canvas-construction-and-process-history/pre-diffstat.stdout`
 
 Observed dirty context includes unrelated production edits in:
 
