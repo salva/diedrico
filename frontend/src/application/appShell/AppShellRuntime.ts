@@ -68,7 +68,10 @@ export function createAppShellRuntime(options: AppShellRuntimeOptions) {
     saveStatus,
     startupDialog,
     autoSave,
-    ports,
+    drive,
+    authStore: ports.authStore,
+    lastProjectRepository: ports.lastProjectRepository,
+    persistence: ports.persistence,
   });
   const keyboard = new KeyboardShortcutRouter({
     commandHistory,

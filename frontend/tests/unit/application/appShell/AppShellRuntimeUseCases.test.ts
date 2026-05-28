@@ -3,12 +3,12 @@ import { nextTick, reactive, ref } from 'vue';
 import { createAppShellRuntime } from '@/application/appShell/AppShellRuntime';
 import { createProductionAppShellRuntime } from '@/application/appShell/AppShellProductionRuntime';
 import { ActivePlaneUseCases } from '@/application/appShell/ActivePlaneUseCases';
-import { AutoSaveUseCases } from '@/application/appShell/AutoSaveUseCases';
+import { AutoSaveUseCases, type AutoSaveRuntimeSessionPort } from '@/application/appShell/AutoSaveUseCases';
 import { BrowserLastProjectRepository } from '@/application/appShell/BrowserLastProjectRepository';
 import { ProjectSessionUseCases } from '@/application/appShell/ProjectSessionUseCases';
 import { RuntimeSession } from '@/application/appShell/RuntimeSession';
 import { SelectionUseCases } from '@/application/appShell/SelectionUseCases';
-import type { AppShellRuntimePorts, DrivePort, LastProjectRepositoryPort, ProjectSessionPersistencePort, SchedulerPort } from '@/application/appShell/AppShellPorts';
+import type { AppShellRuntimePorts, DrivePort, LastProjectRepositoryPort, ProjectSessionPersistencePort, SchedulerPort, SelectionStorePort } from '@/application/appShell/AppShellPorts';
 
 function scheduler() {
   let nextHandle = 1;
@@ -86,6 +86,23 @@ function lastProjectRepository(): LastProjectRepositoryPort & { records: { set: 
     }),
   };
   return repository;
+}
+
+
+function autoSaveSession(versionSource: () => number = () => 1): AutoSaveRuntimeSessionPort {
+  return {
+    getVersion: versionSource,
+    snapshot: (projectName, port) => port.snapshotCurrentSession({ nextElementId: 10 }, projectName),
+  };
+}
+
+function autoSaveFixture() {
+  return {
+    start: vi.fn(),
+    schedule: vi.fn(),
+    stop: vi.fn(),
+    dispose: vi.fn(),
+  } satisfies Pick<AutoSaveUseCases, 'start' | 'schedule' | 'stop' | 'dispose'>;
 }
 
 function runtimePorts(overrides: Partial<AppShellRuntimePorts> = {}) {
@@ -204,7 +221,7 @@ describe('AutoSaveUseCases', () => {
     const currentFileId = ref('file-1');
     const currentProjectName = ref('Project');
     const autoSave = new AutoSaveUseCases({
-      session: { getVersion: () => version, snapshot: (_projectName: string, p: ProjectSessionPersistencePort) => p.snapshotCurrentSession({ commandStack: {} as any, nextElementId: 10 } as any, _projectName) } as any,
+      session: autoSaveSession(() => version),
       drive: drive(),
       persistence: persistence(),
       lastProjectRepository: lastProjectRepository(),
@@ -241,7 +258,7 @@ describe('AutoSaveUseCases', () => {
     const isSignedIn = ref(true);
     const saveStatus = ref<'idle' | 'saving' | 'saved'>('idle');
     const autoSave = new AutoSaveUseCases({
-      session: { getVersion: () => 1, snapshot: (_projectName: string, p: ProjectSessionPersistencePort) => p.snapshotCurrentSession({ commandStack: {} as any, nextElementId: 10 } as any, _projectName) } as any,
+      session: autoSaveSession(),
       drive: drive({ updateFile: vi.fn().mockRejectedValue(new Error('401 authentication expired')) }),
       persistence: persistence(),
       lastProjectRepository: lastProjectRepository(),
@@ -269,7 +286,7 @@ describe('AutoSaveUseCases', () => {
     const currentFileId = ref('missing-file');
     const currentProjectName = ref('Project');
     const autoSave = new AutoSaveUseCases({
-      session: { getVersion: () => 1, snapshot: (_projectName: string, p: ProjectSessionPersistencePort) => p.snapshotCurrentSession({ commandStack: {} as any, nextElementId: 10 } as any, _projectName) } as any,
+      session: autoSaveSession(),
       drive: drive({
         updateFile: vi.fn().mockRejectedValue(new Error('File not found')),
         createFile: vi.fn().mockResolvedValue('replacement-file'),
@@ -327,7 +344,7 @@ describe('ActivePlaneUseCases', () => {
       getProjectionPlaneName: vi.fn((id: string) => (id === 'plane-a' ? planeA : planeB).name),
     };
     const state = { activePlaneId: ref<string | undefined>(), activePlaneName: ref('') };
-    const useCases = new ActivePlaneUseCases(world as any, state);
+    const useCases = new ActivePlaneUseCases(world, state);
 
     useCases.start();
     useCases.start();
@@ -358,7 +375,7 @@ describe('SelectionUseCases', () => {
     const useCases = new SelectionUseCases(
       { getSelectableIdsInPlane: vi.fn(() => []), getCascadePreviewIds: vi.fn(() => ['dependent']) },
       { execute: vi.fn() },
-      selectionStore as any,
+      selectionStore as SelectionStorePort,
       () => 'plane-a',
     );
 
@@ -463,9 +480,10 @@ describe('SelectionUseCases', () => {
 });
 
 describe('ProjectSessionUseCases startup and project flows', () => {
-  function projectSessionDeps(overrides: Partial<ConstructorParameters<typeof ProjectSessionUseCases>[0]> = {}) {
+  function projectSessionDeps(overrides: Partial<ConstructorParameters<typeof ProjectSessionUseCases>[0]> & { ports?: AppShellRuntimePorts } = {}) {
     const session = new RuntimeSession();
-    const ports = runtimePorts();
+    const { ports: overridePorts, ...depsOverrides } = overrides;
+    const ports = overridePorts ?? runtimePorts();
     return {
       session,
       hasGoogleCredentials: true,
@@ -476,15 +494,18 @@ describe('ProjectSessionUseCases startup and project flows', () => {
       isRenamingProject: ref(false),
       saveStatus: ref<'idle' | 'saving' | 'saved'>('idle'),
       startupDialog: { files: ref([]), loading: ref(false), loadingFiles: ref(false), error: ref<string | null>(null) },
-      autoSave: { start: vi.fn(), schedule: vi.fn(), stop: vi.fn(), dispose: vi.fn() } as any,
-      ports,
-      ...overrides,
+      autoSave: autoSaveFixture(),
+      drive: ports.drive,
+      authStore: ports.authStore,
+      lastProjectRepository: ports.lastProjectRepository,
+      persistence: ports.persistence,
+      ...depsOverrides,
     };
   }
 
   it('initializes local-only startup without Drive and creates default planes', async () => {
     const deps = projectSessionDeps({ hasGoogleCredentials: false, ports: runtimePorts({ drive: null }) });
-    const useCases = new ProjectSessionUseCases(deps as any);
+    const useCases = new ProjectSessionUseCases(deps);
 
     await useCases.initialize();
 
@@ -494,7 +515,7 @@ describe('ProjectSessionUseCases startup and project flows', () => {
 
   it('loads and resets startup-dialog file list through typed runtime state', async () => {
     const deps = projectSessionDeps();
-    const useCases = new ProjectSessionUseCases(deps as any);
+    const useCases = new ProjectSessionUseCases(deps);
 
     await useCases.requestFiles();
     expect(deps.startupDialog.files.value).toHaveLength(1);
@@ -524,7 +545,7 @@ describe('ProjectSessionUseCases startup and project flows', () => {
     const preOpenPlaneCount = deps.session.activePlanePort().getProjectionPlaneSummaries().length;
     const preOpenCommandHistory = deps.session.commandHistoryPort();
     const preOpenCanUndo = preOpenCommandHistory.canUndo();
-    const useCases = new ProjectSessionUseCases(deps as any);
+    const useCases = new ProjectSessionUseCases(deps);
 
     await expect(useCases.openProject('bad-file')).rejects.toThrow('invalid payload');
 
@@ -552,7 +573,7 @@ describe('ProjectSessionUseCases startup and project flows', () => {
     const preOpenPlaneCount = deps.session.activePlanePort().getProjectionPlaneSummaries().length;
     const preOpenCommandHistory = deps.session.commandHistoryPort();
     const preOpenCanUndo = preOpenCommandHistory.canUndo();
-    const useCases = new ProjectSessionUseCases(deps as any);
+    const useCases = new ProjectSessionUseCases(deps);
 
     await expect(useCases.openProject('file-opened')).rejects.toThrow('restore exploded');
 
@@ -571,7 +592,7 @@ describe('ProjectSessionUseCases startup and project flows', () => {
     const fakeScheduler = scheduler();
     const saveStatus = ref<'idle' | 'saving' | 'saved'>('saving');
     const autoSave = new AutoSaveUseCases({
-      session: { getVersion: () => 1, snapshot: () => { throw new Error('snapshot failed'); } } as any,
+      session: { getVersion: () => 1, snapshot: () => { throw new Error('snapshot failed'); } } satisfies AutoSaveRuntimeSessionPort,
       drive: drive(),
       persistence: persistence(),
       lastProjectRepository: lastProjectRepository(),
@@ -594,22 +615,22 @@ describe('ProjectSessionUseCases startup and project flows', () => {
     const deps = projectSessionDeps();
     const originalPlaneCount = deps.session.activePlanePort().getProjectionPlaneSummaries().length;
     const originalCommandHistory = deps.session.commandHistoryPort();
-    const useCases = new ProjectSessionUseCases(deps as any);
+    const useCases = new ProjectSessionUseCases(deps);
 
     await useCases.createProject('Created');
     expect(deps.currentProjectName.value).toBe('Created');
     expect(deps.currentFileId.value).toBe('file-created');
     expect(deps.autoSave.start).toHaveBeenCalled();
-    expect(deps.ports.lastProjectRepository.setLastProject).toHaveBeenCalledWith({ id: 'file-created', name: 'Created' });
+    expect(deps.lastProjectRepository.setLastProject).toHaveBeenCalledWith({ id: 'file-created', name: 'Created' });
 
     await useCases.openProject('file-opened');
     expect(deps.currentProjectName.value).toBe('Loaded project');
     expect(deps.currentFileId.value).toBe('file-opened');
-    expect(deps.ports.persistence.restoreSession).toHaveBeenCalled();
+    expect(deps.persistence.restoreSession).toHaveBeenCalled();
 
     await useCases.renameProject('Renamed');
     expect(deps.currentProjectName.value).toBe('Renamed');
-    expect(deps.ports.lastProjectRepository.setLastProject).toHaveBeenCalledWith({ id: 'file-opened', name: 'Renamed' });
+    expect(deps.lastProjectRepository.setLastProject).toHaveBeenCalledWith({ id: 'file-opened', name: 'Renamed' });
     expect(deps.autoSave.schedule).toHaveBeenCalled();
 
     await useCases.signOut();

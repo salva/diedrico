@@ -1,6 +1,6 @@
 import type { Ref } from 'vue';
 import type { AutoSaveUseCases } from './AutoSaveUseCases';
-import type { AppShellRuntimePorts, SaveStatus, StartupDialogState } from './AppShellPorts';
+import type { AuthStorePort, DrivePort, LastProjectRepositoryPort, ProjectSessionPersistencePort, SaveStatus, StartupDialogState } from './AppShellPorts';
 import { describeUnknownError } from './AppShellErrorClassifier';
 import type { RuntimeSession } from './RuntimeSession';
 
@@ -17,12 +17,15 @@ export class ProjectSessionUseCases {
       saveStatus: Ref<SaveStatus>;
       startupDialog: StartupDialogState;
       autoSave: AutoSaveUseCases;
-      ports: AppShellRuntimePorts;
+      drive: DrivePort | null;
+      authStore: AuthStorePort;
+      lastProjectRepository: LastProjectRepositoryPort;
+      persistence: ProjectSessionPersistencePort;
     },
   ) {}
 
   async initialize(): Promise<void> {
-    const { drive, authStore, lastProjectRepository } = this.deps.ports;
+    const { drive, authStore, lastProjectRepository } = this.deps;
     if (!this.deps.hasGoogleCredentials || !drive) {
       this.deps.session.initializeDefaultWorldIfNeeded();
       this.deps.showStartupDialog.value = false;
@@ -61,7 +64,7 @@ export class ProjectSessionUseCases {
       this.deps.isSignedIn.value = drive.isSignedIn();
       try {
         const profile = await drive.fetchUserProfile();
-        this.deps.ports.authStore.setAuthenticated(profile, '', undefined);
+        this.deps.authStore.setAuthenticated(profile, '', undefined);
       } catch { /* allow Drive use without profile */ }
       await this.requestFiles();
     } catch (error: unknown) {
@@ -78,7 +81,7 @@ export class ProjectSessionUseCases {
   async signOut(): Promise<void> {
     const drive = this.requireDrive();
     await drive.signOut();
-    this.deps.ports.authStore.clearAuth();
+    this.deps.authStore.clearAuth();
     this.deps.isSignedIn.value = false;
     this.deps.currentProjectName.value = null;
     this.deps.currentFileId.value = null;
@@ -91,7 +94,7 @@ export class ProjectSessionUseCases {
     const drive = this.requireDrive();
     try {
       this.deps.session.resetToEmptyInitializedWorld();
-      const projectData = this.deps.session.snapshot(projectName, this.deps.ports.persistence);
+      const projectData = this.deps.session.snapshot(projectName, this.deps.persistence);
       const fileId = await drive.createFile(projectName, projectData);
       this.setCurrentProject(projectName, fileId);
       this.deps.showStartupDialog.value = false;
@@ -107,8 +110,8 @@ export class ProjectSessionUseCases {
     const drive = this.requireDrive();
     try {
       const loadedProject = await drive.loadFile(fileId);
-      const openedSession = this.deps.session.validateProjectData(loadedProject, this.deps.ports.persistence);
-      this.deps.session.restoreValidatedProject(openedSession, this.deps.ports.persistence);
+      const openedSession = this.deps.session.validateProjectData(loadedProject, this.deps.persistence);
+      this.deps.session.restoreValidatedProject(openedSession, this.deps.persistence);
       this.setCurrentProject(openedSession.projectName, fileId);
       this.deps.showStartupDialog.value = false;
       this.deps.autoSave.start();
@@ -141,7 +144,7 @@ export class ProjectSessionUseCases {
     try {
       await drive.renameFile(this.deps.currentFileId.value, newName);
       this.deps.currentProjectName.value = newName;
-      this.deps.ports.lastProjectRepository.setLastProject({ id: this.deps.currentFileId.value, name: newName });
+      this.deps.lastProjectRepository.setLastProject({ id: this.deps.currentFileId.value, name: newName });
       this.deps.autoSave.schedule();
     } finally {
       this.deps.isRenamingProject.value = false;
@@ -171,11 +174,11 @@ export class ProjectSessionUseCases {
   private setCurrentProject(projectName: string, fileId: string): void {
     this.deps.currentProjectName.value = projectName;
     this.deps.currentFileId.value = fileId;
-    this.deps.ports.lastProjectRepository.setLastProject({ id: fileId, name: projectName });
+    this.deps.lastProjectRepository.setLastProject({ id: fileId, name: projectName });
   }
 
   private requireDrive() {
-    if (!this.deps.ports.drive) throw new Error('Google Drive service not available');
-    return this.deps.ports.drive;
+    if (!this.deps.drive) throw new Error('Google Drive service not available');
+    return this.deps.drive;
   }
 }

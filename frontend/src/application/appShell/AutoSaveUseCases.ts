@@ -1,7 +1,11 @@
 import type { Ref } from 'vue';
 import type { DrivePort, IntervalHandle, LastProjectRepositoryPort, ProjectSessionPersistencePort, SaveStatus, SchedulerPort, TimeoutHandle } from './AppShellPorts';
 import { isAuthenticationError, isMissingRemoteFileError, isQuotaError } from './AppShellErrorClassifier';
-import type { RuntimeSession } from './RuntimeSession';
+
+export interface AutoSaveRuntimeSessionPort {
+  getVersion(): number;
+  snapshot(projectName: string, persistence: ProjectSessionPersistencePort): object;
+}
 
 export class AutoSaveUseCases {
   private pollInterval: IntervalHandle | null = null;
@@ -11,7 +15,7 @@ export class AutoSaveUseCases {
 
   constructor(
     private readonly deps: {
-      session: RuntimeSession;
+      session: AutoSaveRuntimeSessionPort;
       drive: DrivePort | null;
       persistence: ProjectSessionPersistencePort;
       lastProjectRepository: LastProjectRepositoryPort;
