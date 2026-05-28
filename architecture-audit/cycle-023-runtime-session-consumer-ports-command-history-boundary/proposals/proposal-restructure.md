@@ -1,141 +1,90 @@
-# Proposal Restructure — Extract an app-shell runtime capability boundary first
+# Proposal Restructure — Convert Cycle 023 into a reviewed plan-correction / re-rank
 
 ## Summary
 
-This alternative asks whether Wave 023 should move one conceptual layer higher than replacing individual consumers in place. Instead of adding several port methods directly to `RuntimeSession`, introduce a small app-shell runtime capability boundary that groups runtime ownership concerns into explicit capability factories: view read handoff, active-plane session, selection session, command history, command execution, and persistence adapter handles. `RuntimeSession` remains the concrete implementation, but consumers depend on capability interfaces grouped in a new boundary module rather than on `RuntimeSession` methods or concrete `World` / `CommandStack`.
+This alternative treats the stale Wave 023 premise as requiring a small reviewed plan correction before proceeding. Instead of merely closing Cycle 023, update the wave plan and cycle records to reflect that the runtime-session consumer-port and command-history boundary is already present in current source, then re-rank the remaining central work.
 
-No production code is changed by this proposal stage.
+No production source changes are proposed.
+
+## When to choose this path
+
+Choose this proposal if Critic/reviewer or Manager believes the existing `architecture-audit/wave-plan.md` text is misleading enough that a formal plan edit is required before continuing. This is appropriate because the Wave 023 entry still describes raw accessors and consumer dependencies that current source has already removed.
 
 ## Target outcome
 
-After implementation:
+After the plan-correction path:
 
-- `RuntimeSession` is treated as the concrete kernel, not the surface that every app-shell consumer knows about.
-- A new app-shell boundary module defines capability interfaces and a `RuntimeCapabilities` aggregate.
-- `AppShellRuntime` obtains capability objects from `RuntimeSession` and wires consumers to those interfaces.
-- `ActivePlaneUseCases`, `SelectionUseCases`, and `KeyboardShortcutRouter` depend only on capability interfaces.
-- `SelectionDeletionCommandService` is either hidden behind a capability or refactored to consume a small command-execution context.
-- Persistence adapter typed handles are represented only as adapter-local/schema-neutral handles, not as general capabilities for ordinary app-shell consumers.
-- View-facing raw `World` exposure remains isolated as a named `viewWorld` / `viewReadRuntime` capability with an explicit future rendering-boundary citation.
-
-This provides a cleaner architectural seam for later waves that migrate canvas tools, process history, or rendering without expanding the `RuntimeSession` public class surface each time. Toolbar history is not deferred in this corrected proposal: because it is already a direct command-history consumer and can share `CommandHistoryPort` without broader toolbar composition changes, it is included in Cycle 023.
+- `architecture-audit/wave-plan.md` no longer presents Wave 023 as a pending implementation target against already-changed source.
+- The plan explicitly records the current source state: active-plane, selection, keyboard, and selection-delete app-shell consumers are already behind ports; remaining central debt is command-producer runtime ports (Wave 024), view/read presentation concentration, and persistence adapter DTO casts.
+- The next canonical stage is a fresh Wave 024 scout/proposal stage unless the plan correction re-ranks another more central current-source seam.
+- No source implementation occurs during the correction.
 
 ## Files to change
 
-### Production source
+### Audit/docs artifacts only
 
-- `frontend/src/application/appShell/RuntimeCapabilities.ts` (new)
-  - Define behavior-scoped interfaces such as:
-    - `ActivePlaneSessionPort`;
-    - `SelectionReadSessionPort`;
-    - `CommandHistoryPort` shared by keyboard shortcuts and toolbar history;
-    - `SelectionDeletionPort`;
-    - `RuntimePersistenceSnapshotHandle` / `RuntimePersistenceRestoreHandle` as adapter-only equivalents, clearly excluded from general consumer contracts;
-    - `RuntimeViewHandoff` for explicitly deferred view/rendering `World` exposure.
-  - Avoid importing broad `World` / `CommandStack` in consumer-facing interfaces except the explicitly named view handoff and adapter-private persistence handles. Adapter-private handles must not be exported as a convenient runtime facade for active-plane, selection, keyboard, toolbar, or command services.
+- `architecture-audit/wave-plan.md`
+  - Mark Wave 023 as complete/stale-against-current-source or move its completed target outcome into historical grounding.
+  - Confirm Wave 024 command-producer runtime ports as the next central candidate, or explicitly re-rank if fresh evidence says otherwise.
+  - Preserve the no-backcompat/aggressive deletion requirements for future implementation waves.
 
-- `frontend/src/application/appShell/RuntimeSession.ts`
-  - Implement the capability aggregate/factory.
-  - Keep concrete `World` / `CommandStack` ownership private.
-  - Replace raw use-case/history accessors with capability production methods.
-  - Keep initialization, reset, clear, snapshot, validate, and restore responsibilities from Wave 022.
+- `architecture-audit/cycle-023-runtime-session-consumer-ports-command-history-boundary/decision.md` or a similarly named closure/plan-correction decision artifact
+  - Cite the revised scope check and Critic/reviewer outcome.
+  - State that no Wave 023 source implementation is authorized.
 
-- `frontend/src/application/appShell/AppShellRuntime.ts`
-  - Request a `RuntimeCapabilities` aggregate from `RuntimeSession` and pass capability slices to consumers.
-  - Return the view handoff only where currently required by app-level provide/inject/rendering.
+- Optional `architecture-audit/cycle-023-runtime-session-consumer-ports-command-history-boundary/reviews/*` updates only through the normal review/critic path.
 
-- `frontend/src/application/appShell/ActivePlaneUseCases.ts`
-  - Depend on `ActivePlaneSessionPort` from the capability module.
+### Production/test files
 
-- `frontend/src/application/appShell/SelectionUseCases.ts`
-  - Depend on `SelectionReadSessionPort` and `SelectionDeletionPort`.
-
-- `frontend/src/application/appShell/KeyboardShortcutRouter.ts`
-  - Depend on `CommandHistoryPort`.
-
-- `frontend/src/application/toolbar/ToolbarHistoryUseCases.ts`
-  - Depend on the same `CommandHistoryPort` rather than direct `CommandStack`.
-
-- `frontend/src/application/toolbar/ToolbarHistoryController.ts`
-  - Update wiring/fakes only enough to provide `CommandHistoryPort`; do not redesign toolbar state or composition.
-
-- `frontend/src/components/toolbars/Toolbar.vue`
-  - Remove toolbar-history raw command-stack handoff only if current component wiring passes it; leave unrelated toolbar UI surfaces unchanged.
-
-- `frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts`
-  - Move construction behind a runtime capability or narrow its constructor to a command-execution context.
-
-- `frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts`
-  - Consume typed persistence handles only as adapter-local persistence handles. They may carry the concrete internals required by `ProjectService.serializeCommands` / `deserializeCommands`, but they must not become a broader capability available to ordinary app-shell consumers.
-  - If removing casts requires changes to `ProjectService`, schema/replay, command descriptors, operation registry, or migration behavior, stop and defer persistence-handle cleanup instead of broadening Cycle 023.
-
-### Tests / validation source
-
-- `frontend/tests/unit/application/appShell/AppShellBoundary.test.ts`
-  - Add assertions that consumer-facing capability interfaces do not import concrete runtime objects except named view handoff and adapter-only persistence internals.
-  - Assert `RuntimeSession` is the only app-shell owner/importer of concrete `World` / `CommandStack` for runtime ownership, and that keyboard plus toolbar history use `CommandHistoryPort` rather than raw `CommandStack`.
-
-- `frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts`
-  - Update to use capability fakes and preserve behavior coverage.
-
-- New focused tests for `RuntimeCapabilities` only if the boundary cannot be covered via existing app-shell tests.
+None.
 
 ## Files/tests/docs/fixtures to DELETE
 
-- Delete `RuntimeSession.worldForUseCases()`.
-- Delete `RuntimeSession.commandStackForCommandServices()`.
-- Delete `RuntimeSession.commandStackForShortcuts()` after keyboard shortcuts and toolbar history both use `CommandHistoryPort`.
-- Delete direct `World` imports from `ActivePlaneUseCases.ts` and `SelectionUseCases.ts`.
-- Delete direct `CommandStack` import from `KeyboardShortcutRouter.ts`.
-- Delete direct `CommandStack` imports/constructor expectations from `ToolbarHistoryUseCases.ts` and touched toolbar history controller/wiring fakes.
-- Delete raw `World` / `CommandStack` injection tests and fakes for these app-shell consumers.
-- Delete adapter-private casts by replacing them with adapter-local typed persistence handles; do not replace them with a general capability facade.
-- Delete transitional compatibility wrappers and any broad `RuntimeFacade` that simply mirrors `World` / `CommandStack`.
-
-Do not delete canvas/tool/construction/process-history producers, rendering read ports, persistence schema/replay fixtures, backend files, docs/spec source, package/tooling, or e2e specs without a reviewed scope edit.
+None in the correction itself. Do not delete existing source/tests, validation logs, or e2e specs while correcting plan text. Future implementation waves must still delete obsolete raw command-producer surfaces rather than keep shims.
 
 ## Expected behavior change
 
-No user-visible behavior change is intended. The architectural behavior changes more than the direct proposal: later consumers would see a stable `RuntimeCapabilities` boundary rather than reaching into `RuntimeSession`. Active-plane, keyboard undo/redo, toolbar undo/redo, selection, deletion, autosave, restore, and rendering behavior should remain equivalent.
+None. This is a plan/artifact correction.
 
-## No-backcompat rationale
+## Current-source residuals to carry forward
 
-The restructure path deliberately refuses to preserve raw-object compatibility surfaces. A named capability boundary should replace the raw accessors, not sit beside them indefinitely. Any remaining raw view handoff must be explicit and isolated rather than being a generic escape hatch.
+A corrected plan should carry forward these current-source findings:
+
+1. **Wave 024 command-producer seam:** `RuntimeSession.canvasCommandProducerPort(...)` and `processHistoryCommandPort()` pass the owned `world` and `commandStack` to command-producing controllers (`frontend/src/application/appShell/RuntimeSession.ts:109-121`). This is the next likely central implementation wave.
+2. **View/read-model concentration:** `RuntimeSession` owns canvas, process-tree, elements-panel, three-presentation, active-plane selector, and properties-dialog read handoffs (`RuntimeSession.ts:29-107`, `:226-236`). Defer to a later read-model/rendering wave.
+3. **Persistence DTO/cast seam:** `ProjectSessionPersistenceAdapter` still bridges opaque app-shell payloads to `ProjectData` casts (`frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:10-20`), while concrete persistence handles live in `ProjectSessionPersistenceTargets.ts:1-12`. Defer until a persistence-contract wave if it cannot be fixed without `ProjectService` redesign.
+4. **3D overlay contract:** any future rendering/read-model wave must preserve `frontend/tests/e2e/current-ui-contract.spec.ts:89-117`.
 
 ## Risks
 
-- This may be too much abstraction if the capability aggregate becomes an anemic directory of interfaces with little additional value over direct `RuntimeSession` methods.
-- A poorly designed aggregate could centralize too many unrelated concerns and become a new god-boundary.
-- Introducing a new module increases test/update churn compared with the direct proposal.
-- Including toolbar history could broaden the wave into UI composition if wiring is not simple; stop rather than redesign toolbar composition if the migration cannot be limited to the command-history dependency.
-- Typed persistence handles could still pull schema/replay concerns into the wave; defer if they require `ProjectService`, schema, replay, descriptor, registry, or migration redesign.
-- The view handoff can become a sanctioned broad facade unless explicitly named as deferred rendering work.
+- A plan correction can become process churn if it rewrites too much of the wave plan. Keep the edit narrow: mark Wave 023 reconciled and confirm/re-rank the next wave.
+- If the correction over-focuses on persistence casts, it may pull persistence schema/replay work ahead of the more central command-producer seam; require source evidence and centrality rationale before re-ranking away from Wave 024.
+- Existing Cycle 023 implementation/validation artifacts in the worktree may be noisy. The correction should cite current source, not assume every artifact in the directory is authoritative.
+
+## Protected surfaces
+
+No production source, tests, package/tooling, backend, docs/spec source outside the wave-plan correction, Drive/auth internals, rendering/Three/canvas/CSS, persistence schema/replay, command descriptors, or protected config/env/provider files may be touched.
 
 ## Validation plan
 
-Same mandatory cadence as the direct proposal, with added static checks for the new capability boundary:
+Because this path changes only audit/plan artifacts, validation is limited to:
 
-1. Pre-edit status/diff and scans for raw accessors/imports/casts plus any capability module imports.
-2. Focused Vitest for app-shell runtime capability wiring, active-plane, selection, keyboard history, toolbar history, selection deletion, and persistence adapter if changed.
-3. Static architecture tests verifying consumer-facing capability interfaces stay behavior-scoped and selected consumers no longer import `World` / `CommandStack`, including keyboard and toolbar undo/redo.
-4. Root and frontend lint.
-5. Root and frontend full Vitest.
-6. Root and frontend build.
-7. Root/frontend Playwright e2e where defined.
-8. Live preview refresh/probe plus browser smoke for active-plane cycling, select-all/delete/keyboard undo-redo/toolbar undo-redo, startup/new project, and credential-free behavior.
+1. Path-scoped status/diff for `architecture-audit/wave-plan.md` and Cycle 023 artifacts.
+2. Static source scans attached as evidence for the plan correction.
+3. Critic/reviewer approval of the corrected plan text.
 
-## Stop conditions / explicit non-goals
+Do not run source validation or preview refresh unless a later implementation wave changes source.
 
-Stop and return to review if the restructure begins to require:
+## Stop conditions
 
-- an application-kernel rewrite beyond app-shell runtime capability interfaces;
-- renderer/canvas/tool migration beyond naming the current view handoff;
-- replacing `World` / `CommandStack` object identity;
-- persistence schema/replay/descriptor/registry/migration changes;
-- backend, Drive/auth, package/tooling, docs/spec, validation-platform, or debug cleanup;
-- toolbar/UI composition changes beyond replacing toolbar history's raw command-stack dependency with `CommandHistoryPort`;
-- compatibility shims that keep raw accessors alive beside capability ports.
+Stop and request a new design/review round if the correction would:
+
+- rewrite Wave 024 implementation details without fresh scout evidence;
+- reorder waves away from command-producer runtime ports without explicit centrality evidence;
+- authorize source changes in the plan-correction stage;
+- touch package/tooling/backend/docs/spec source broadly;
+- inspect or cite protected secret/config/env/provider file contents.
 
 ## Recommendation
 
-Choose this proposal if review believes Wave 023 should create a durable capability layer for subsequent waves, especially canvas/tool command cleanup after the included toolbar history migration. Otherwise choose the direct proposal: it deletes the known raw app-shell seams with less abstraction and less risk of creating a new central god-boundary.
+Prefer the direct closure proposal if the Manager can proceed with a Cycle 023 decision/closure artifact without editing the wave plan. Choose this restructure proposal only if formal plan text must be corrected before the next scout. In both cases, do not schedule a Wave 023 implementation coder from the stale original proposal set.

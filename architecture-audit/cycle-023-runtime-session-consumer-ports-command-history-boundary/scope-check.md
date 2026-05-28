@@ -1,144 +1,103 @@
-# Cycle 023 Scope Check — Runtime-session consumer ports and command-history boundary
+# Cycle 023 Scope Check — Runtime-session consumer ports / command-history boundary
 
 ## Stage boundary
 
-This is a planning/scout stage only. It does **not** implement source changes, modify tests, alter package/tooling, touch backend code, change docs/spec source, or normalize unrelated dirty state. The next required stage is `cycle-023-review-round-01` before any decision or implementation.
+This is a design/scout artifact for the current `cycle-023-fresh-scout-proposals-runtime-session-consumer-ports-command-history-boundary` dispatch. It does **not** implement source changes, change tests, run validation, refresh preview, touch package/tooling, backend, docs/spec source, Drive/auth internals, rendering/Three/CSS, or protected config/env/provider files.
 
 ## Source-control reconciliation
 
-Scoped status was captured before writing this cycle's artifacts in `evidence/cycle-023-fresh-scout-status.stdout` / `.stderr`. The workspace is noisy and contains broad pre-existing dirty/untracked state, including old audit artifacts, `.saivage` stage files, protected config paths listed by name only, deleted speckit scaffolding, and unrelated frontend source/test paths such as `frontend/src/commands/Command.ts`, command factories/operations, panel/toolbar/view-store files, and deleted e2e specs. This stage did not revert, inspect protected file contents, or incorporate unrelated dirty files.
+Path-scoped status/diff evidence was captured before writing this revision in `.saivage/stages/cycle-023-fresh-scout-proposals-runtime-session-consumer-ports-command-history-boundary/design-notes/scout-plan-status.txt`.
 
-Files intentionally created by this task are limited to:
+Observed scoped dirty context:
 
-- `architecture-audit/cycle-023-runtime-session-consumer-ports-command-history-boundary/scope-check.md`
-- `architecture-audit/cycle-023-runtime-session-consumer-ports-command-history-boundary/proposals/proposal-direct.md`
-- `architecture-audit/cycle-023-runtime-session-consumer-ports-command-history-boundary/proposals/proposal-restructure.md`
-- `architecture-audit/cycle-023-runtime-session-consumer-ports-command-history-boundary/evidence/*`
-- `.saivage/stages/cycle-023-fresh-scout-proposals/reports/t1-scope-and-proposals.json`
+- Modified Cycle 022 audit artifacts: `architecture-audit/cycle-022-runtime-session-kernel-persistence-port-boundary/decision-post-021-plan-correction.md`, `decision.md`, and `validation/live-preview.stdout`.
+- Modified production file outside this design task: `frontend/src/commands/Command.ts`.
+- Untracked Cycle 022 audit/review/validation artifacts.
+- Pre-existing `architecture-audit/cycle-023-runtime-session-consumer-ports-command-history-boundary/reviews/` artifacts.
+
+This task did not inspect protected secret/config/env/provider file contents, did not revert or normalize unrelated dirty work, and did not use unrelated dirty source as implementation authority. It intentionally touched only Cycle 023 design artifacts, stage design notes, and the task report.
 
 ## Inputs inspected
 
-- Wave 023 entry from `architecture-audit/wave-plan.md`, captured in `evidence/cycle-023-wave023-entry.stdout`.
-- Cycle 023 wave-plan extension note, especially the selected next-wave ranking and residual-risk evidence.
-- Cycle 022 implementation log, especially Wave 022 completion, validation closure, and residual raw `World` / `CommandStack` accessors.
-- Current source evidence captured in `evidence/cycle-023-source-evidence.stdout` for `RuntimeSession`, `AppShellRuntime`, `ActivePlaneUseCases`, `KeyboardShortcutRouter`, `SelectionUseCases`, `SelectionDeletionCommandService`, `ProjectSessionPersistenceAdapter`, and `SvgCanvas.vue`.
-- Current boundary scan captured in `evidence/cycle-023-boundary-scan.stdout` for app-shell raw accessors, app/application command producers, canvas/tool/rendering consumers, and persistence casts.
+- `architecture-audit/wave-plan.md` Wave 023 and Wave 024 sections, captured in `design-notes/scout-plan-status.txt`.
+- Cycle 022 closure/implementation artifacts, especially the residual-risk note that Wave 022 left raw runtime consumers for follow-up.
+- Current app-shell source excerpts captured in `design-notes/source-excerpts.txt` and `design-notes/consumer-seams.txt`.
+- Current UI contract e2e excerpt captured in `design-notes/current-ui-contract-lines.txt`.
+- Existing Cycle 023 artifact directory inventory, which shows prior Cycle 023 proposals, reviews, validation logs, and `implementation-log.md` are already present in the working tree.
 
-## Wave 023 premises checked
+## Current-source finding: Wave 023 implementation premise is now stale
 
-### Premise: RuntimeSession owns concrete runtime objects but still exposes raw consumer accessors
+The Wave 023 plan entry is valid historically and was central after Wave 022, but the **current source no longer matches the pre-implementation premise**. The core Wave 023 cleanup appears already present in source:
 
-Confirmed. `RuntimeSession` imports and owns `CommandStack` and `World` at `frontend/src/application/appShell/RuntimeSession.ts:1-2` and instantiates both at `RuntimeSession.ts:17-18` (`evidence/cycle-023-source-evidence.stdout:1-18`). It still exposes:
+- `RuntimeSession` owns concrete `World` and `CommandStack` privately (`frontend/src/application/appShell/RuntimeSession.ts:24-26`) and no longer exposes the old raw accessors named by the Wave 023 delete list. A current grep found no `worldForView`, `worldForUseCases`, `commandStackForShortcuts`, or `commandStackForCommandServices` call sites in the inspected application/component/tool paths.
+- App-shell consumer ports already exist in `AppShellPorts.ts`: `ActivePlanePort` (`frontend/src/application/appShell/AppShellPorts.ts:31-43`), `SelectionReadPort` (`AppShellPorts.ts:45-48`), and `CommandHistoryPort` (`AppShellPorts.ts:50-56`).
+- `ActivePlaneUseCases` already depends on `ActivePlanePort`, not `World` (`frontend/src/application/appShell/ActivePlaneUseCases.ts:1-12`), and uses only port methods for subscription, active-plane reads/writes, summaries, and name lookup (`ActivePlaneUseCases.ts:14-56`).
+- `SelectionUseCases` already depends on `SelectionReadPort` plus `SelectionDeletionCommandPort`, not `World` (`frontend/src/application/appShell/SelectionUseCases.ts:1-13`), and uses narrow methods for select-all and cascade preview (`SelectionUseCases.ts:41-55`).
+- `KeyboardShortcutRouter` already depends on `CommandHistoryPort`, not `CommandStack` (`frontend/src/application/appShell/KeyboardShortcutRouter.ts:1-17`), and uses it only for undo/redo predicates/actions (`KeyboardShortcutRouter.ts:96-100`).
+- `AppShellRuntime` wires named session ports into app-shell use cases instead of immediately unwrapping raw runtime objects for those consumers (`frontend/src/application/appShell/AppShellRuntime.ts:15-23`, `:44-47`, `:76-85`).
+- `RuntimeSession` already creates `activePlanePort`, `selectionReadPort`, `commandHistoryPort`, and `selectionDeletionCommandPort` (`frontend/src/application/appShell/RuntimeSession.ts:124-165`).
 
-- `worldForView()` returning `World` at `RuntimeSession.ts:20-22` (`evidence/...:20-22`);
-- `commandStackForShortcuts()` returning `CommandStack` at `RuntimeSession.ts:24-26` (`evidence/...:24-26`);
-- `worldForUseCases()` returning `World` at `RuntimeSession.ts:28-30` (`evidence/...:28-30`);
-- `commandStackForCommandServices()` returning `CommandStack` at `RuntimeSession.ts:32-34` (`evidence/...:32-34`).
+Therefore the expected Cycle 023 direct implementation should **not** be run again. Reimplementing the old proposal would at best duplicate existing structure and at worst churn current source/tests outside a valid implementation cycle.
 
-### Premise: AppShellRuntime unwraps session into broad runtime objects for app-shell consumers
+## Residual seams after current-source scout
 
-Confirmed. `createAppShellRuntime()` creates one `RuntimeSession`, stores `world = session.worldForView()` and `commandStack = session.commandStackForShortcuts()` at `frontend/src/application/appShell/AppShellRuntime.ts:107-110` (`evidence/...:106-110`), then wires raw objects into:
+The current source still has architecture debt, but most of it belongs to later or corrected waves rather than another Wave 023 implementation.
 
-- `ActivePlaneUseCases(session.worldForUseCases(), ...)` at `AppShellRuntime.ts:130`;
-- `SelectionDeletionCommandService(session.worldForUseCases(), session.commandStackForCommandServices())` at `AppShellRuntime.ts:131`;
-- `SelectionUseCases(session.worldForUseCases(), ...)` at `AppShellRuntime.ts:132`;
-- `KeyboardShortcutRouter({ commandStack, ... })` at `AppShellRuntime.ts:159-168`.
+### 1. Deferred command-producer seam — belongs to Wave 024
 
-The returned runtime still exposes `world` and `commandStack` at `AppShellRuntime.ts:190-192`, and `SvgCanvas.vue` consumes an injected `World` (`frontend/src/components/workspace/SvgCanvas.vue:695`, `:665`, and source-evidence lines `693-727`, `661-668`). That view-facing seam is broader than this wave unless the reviewed proposal deliberately includes only an app-shell read-port handoff.
+`RuntimeSession` now exposes command-producer/controller ports for canvas/tools and process history, and those still pass owned `world`/`commandStack` into command-producing controllers:
 
-### Premise: ActivePlaneUseCases needs a behavior-sized active-plane port, not full World
+- `canvasCommandProducerPort(...)` constructs `CanvasToolController` with `world` and `commandStack` (`frontend/src/application/appShell/RuntimeSession.ts:109-115`).
+- `processHistoryCommandPort()` constructs `ProcessHistoryController` with `world` and `commandStack` (`RuntimeSession.ts:117-121`).
+- `AppShellRuntime` returns `canvasCommandProducerPort` and `processHistoryCommandPort` to downstream UI/controller composition (`frontend/src/application/appShell/AppShellRuntime.ts:16-18`, `:107-115`).
 
-Confirmed. `ActivePlaneUseCases` imports `World` at `frontend/src/application/appShell/ActivePlaneUseCases.ts:2` (`evidence/...:229-240`) and uses only:
+This matches the Wave 024 plan entry's premise: command-producer runtime ports for canvas, construction, and process history should be the next central implementation target after Wave 023, not hidden inside this scout.
 
-- `subscribeToChanges` / `unsubscribeFromChanges` at `ActivePlaneUseCases.ts:17-23` (`evidence/...:242-252`);
-- `getActivePlaneId` / `setActivePlaneId` at `ActivePlaneUseCases.ts:28-29`, `34-42` (`evidence/...:255-270`);
-- `getAllProjectionPlanes` at `ActivePlaneUseCases.ts:34` (`evidence/...:261-263`);
-- `getProjectionPlaneById` for the active-plane name at `ActivePlaneUseCases.ts:54` (`evidence/...:273-284`).
+### 2. View/read/presentation seam — not Wave 023 implementation scope
 
-### Premise: KeyboardShortcutRouter needs a command-history port, not full CommandStack
+`RuntimeSession` now owns several view/read ports around the same `World`: `canvasViewPort`, `processTreeReadPort`, `elementsPanelPort`, `threePresentationPort`, and `activePlaneSelectorPort` (`frontend/src/application/appShell/RuntimeSession.ts:29-107`). These are narrower than raw `worldForView()`, but they still concentrate multiple read-model/presentation responsibilities in `RuntimeSession` and call world-backed helpers (`RuntimeSession.ts:29-107`, `:226-236`). This is a later rendering/read-model boundary concern, not a reason to reopen Wave 023's consumer-port implementation.
 
-Confirmed. `KeyboardShortcutRouter` imports `CommandStack` at `frontend/src/application/appShell/KeyboardShortcutRouter.ts:1` (`evidence/...:286-303`) and uses it only for undo/redo predicates and actions at `KeyboardShortcutRouter.ts:97-100` (`evidence/...:376-386`).
+### 3. Persistence adapter concrete handle / DTO cast seam — candidate future cleanup, not current Wave 023 blocker
 
-### Premise: SelectionUseCases needs selection read/cascade-preview capabilities, not full World
+The public app-shell persistence contract remains opaque in `AppShellPorts.ts` (`frontend/src/application/appShell/AppShellPorts.ts:7-14`, `:58-68`), while adapter-facing concrete handles live in `ProjectSessionPersistenceTargets.ts` (`frontend/src/application/appShell/ProjectSessionPersistenceTargets.ts:1-12`). `ProjectSessionPersistenceAdapter` still casts unknown validated data to `ProjectData` and persisted payload back to `ProjectData` when bridging to `ProjectService` (`frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts:1-20`).
 
-Confirmed. `SelectionUseCases` imports `World` at `frontend/src/application/appShell/SelectionUseCases.ts:2` (`evidence/...:389-399`) and uses only:
+This is bounded adapter debt. Removing the remaining DTO casts cleanly likely intersects the persistence contract / `ProjectService` DTO boundary, which Wave 023 explicitly protected. It should be recorded as a future persistence-port candidate or folded into a later plan correction only after Wave 024 command-producer ownership is settled.
 
-- active-plane element enumeration through `getProjectionPlaneById(...).getAllPoints/getAllLines/getAllCircles()` at `SelectionUseCases.ts:45-50` (`evidence/...:430-439`);
-- cascade-preview dependency order through `getDependencyService().getElementsInDeletionOrder(...)` at `SelectionUseCases.ts:59` (`evidence/...:442-448`).
+### 4. Selection deletion command service still uses raw runtime internally by design
 
-### Premise: SelectionDeletionCommandService still needs raw world/command stack for command creation unless a command-service port is introduced
+`SelectionDeletionCommandService` remains the concrete command-building service and imports `World`/`CommandStack` (`frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts` per `design-notes/consumer-seams.txt`). Current app-shell use cases consume it through `SelectionDeletionCommandPort` (`frontend/src/application/appShell/SelectionUseCases.ts:1-13`) and `RuntimeSession.selectionDeletionCommandPort()` constructs it internally (`frontend/src/application/appShell/RuntimeSession.ts:163-165`). That satisfies the Wave 023 consumer boundary; deeper command-production cleanup belongs with Wave 024-style command-producer work.
 
-Confirmed. `SelectionDeletionCommandService` imports `CommandStack`, `Command`, `DeletionSequenceFactory`, and `World` (`frontend/src/application/selectionDeletion/SelectionDeletionCommandService.ts:1-4`; `evidence/...:451-455`) and constructs/pushes a concrete delete command at `SelectionDeletionCommandService.ts:32-37` (`evidence/...:480-487`). This is a command-service boundary seam. A direct implementation can move this behind a narrow session command port, but it should not redesign `Command`, `DeletionSequenceFactory`, command descriptors, or replay in this wave.
+## Protected surfaces and preservation requirements
 
-### Premise: ProjectSessionPersistenceAdapter casts opaque handles back to concrete runtime objects
+Do not change in this scout or any immediate Cycle 023 correction/closure stage:
 
-Confirmed. `RuntimeSession`'s private handles still contain concrete `world` and `commandStack` at `RuntimeSession.ts:77-89` (`evidence/...:77-89`). `ProjectSessionPersistenceAdapter` imports `ProjectService`, `ProjectData`, `CommandStack`, and `World` at `ProjectSessionPersistenceAdapter.ts:1-4` (`evidence/...:489-492`), casts snapshot handles to `{ commandStack }` at `ProjectSessionPersistenceAdapter.ts:8` (`evidence/...:494-498`), casts validated payloads to `ProjectData` at `ProjectSessionPersistenceAdapter.ts:14-17` (`evidence/...:500-506`), and casts restore targets to `{ world; commandStack }` at `ProjectSessionPersistenceAdapter.ts:22-23` (`evidence/...:509-512`). This cast removal is in scope only if it remains a typed adapter-handle refactor without persistence schema/replay redesign.
+- Production source/tests as part of this design task.
+- Persistence schema/replay, command descriptors, `OperationRegistry`, migration/backcompat behavior, or `ProjectService` internals.
+- Canvas/tool/construction/process-history command-producer implementation until the reviewed Wave 024 cycle.
+- Rendering/Three/canvas/CSS/domain realization internals.
+- Drive/auth/browser credentials, backend, docs/spec source, package/tooling, validation platform, or debug cleanup.
+- Protected secret/config/env/provider files.
 
-### Premise: broader canvas/tool/rendering/raw-world consumers exist but should not broaden Cycle 023 by default
+3D overlay pointer behavior remains a protected user-visible contract: `frontend/tests/e2e/current-ui-contract.spec.ts:89-117` asserts the 3D overlay has `pointer-events: auto`, owns hit testing, and does not pass drag gestures through to the SVG canvas.
 
-Confirmed. Boundary scan shows direct `World` / `CommandStack` dependencies in canvas/tool/construction/process-history/toolbar/application modules, including `CanvasToolController`, `CanvasPointMovementUseCase`, `CanvasStyleUseCase`, `ConstructionUseCases`, `QuickToolUseCases`, `ProcessHistoryUseCases`, and `ToolbarHistoryUseCases` (`evidence/cycle-023-boundary-scan.stdout`). `SvgCanvas.vue` injects full `World`, polls version, derives active plane, passes `world` to `PropertiesDialog`, and builds canvas presentation read ports (`frontend/src/components/workspace/SvgCanvas.vue:665`, `695`, `741-746`, `824-850`, `872-900`; `evidence/...:661-727`, `741-850`, `872-900`). Those seams are real, but broad rendering/presentation/tool migration is explicitly out of scope for this scout unless review chooses the restructure path.
+## Premise decision
 
-## Selected bounded scope for Wave 023
+**Wave 023 runtime-session consumer ports / command-history boundary is valid in centrality, but stale as a next implementation wave against the current source.** The current tree already contains the core Wave 023 outcome. The correct next action is not another Cycle 023 implementation; it is a short Cycle 023 closure/decision reconciliation or plan-correction note that recognizes the boundary is already applied, then proceeds to the next central wave (currently Wave 024) after required review/decision hygiene.
 
-Cycle 023 should stay centered on app-shell runtime-session consumer ports and command-history boundary:
+## DELETE list candidates for any future correction
 
-1. Define narrow behavior ports/capabilities owned or produced by `RuntimeSession` for:
-   - active-plane subscription/read/write/cycle support;
-   - selection active-plane element IDs and dependency cascade preview;
-   - command-history undo/redo availability and execution;
-   - selection-delete command execution if review accepts moving `SelectionDeletionCommandService` behind a session-created command port;
-   - typed persistence snapshot/restore adapter handles if casts can be deleted without `ProjectService` redesign.
-2. Update app-shell consumers to depend on those ports instead of full `World`/`CommandStack`.
-3. Keep `RuntimeSession` as sole owner of current in-memory `World` and `CommandStack`.
-4. Keep `worldForView()` only as an explicitly documented rendering/view seam for `AppShellRuntime`/`SvgCanvas` if not addressed by review.
-5. Do not implement leaf command-producer cleanup, rendering rewrite, persistence schema/replay redesign, backend/frontend contract changes, package/tooling churn, or docs/debug cleanup.
+No production DELETE list is authorized from this scout. If a reviewer/critic requires a tiny Cycle 023 correction rather than closure, limit it to artifact-level clarification or static boundary assertions. Do **not** delete source surfaces in this scout. Source DELETE candidates for future cycles are:
 
-## Invalidated assumptions
+- Wave 024: delete command-producer raw stack handoffs from canvas/tool/process-history command producers after reviewed proposals.
+- Later persistence-port cleanup: delete remaining adapter DTO casts only if the reviewed persistence contract can do so without schema/replay redesign.
+- Later rendering/read-model cleanup: split `RuntimeSession` read/presentation helper concentration into named read-model owners.
 
-No Wave 023 premise was invalidated by current evidence. One caveat emerged: `ToolbarHistoryUseCases` / `ToolbarHistoryController` are also command-history consumers in `frontend/src/application/toolbar` (`evidence/cycle-023-boundary-scan.stdout`), but they are not listed in the Wave 023 starting points. They should be inventoried during implementation pre-edit scans. Include them only if they are wired from the same app-shell command-history seam and can be migrated without broad toolbar/UI composition work; otherwise record them as an adjacent future wave candidate.
+## Validation requirements for the next implementation wave
 
-No wave-plan edit is required before review. The current Wave 023 entry already contains suitable stop conditions for adapter casts, rendering/view-facing world exposure, command-kernel work, backend, and broader canvas/tool migration.
+If the project proceeds to Wave 024 implementation, validation must follow the mandatory cadence under that cycle's `validation/` directory: path-scoped pre/post status/diff, static boundary scans, focused Vitest for touched runtime/command-producer modules, root/frontend lint, root/frontend full Vitest, root/frontend build, root/frontend e2e, live preview refresh on `0.0.0.0:5173`, HTTP probe, and Playwright/live smoke for representative command-producer and undo/redo flows.
 
-## Explicit out-of-scope items / stop conditions
-
-Stop and request a reviewed plan-edit mini-cycle if implementation would require any of the following:
-
-- changing persistence schema, serialized project shape, command descriptors, operation registry, replay algorithm, migration behavior, or `ProjectService` internals to remove adapter casts;
-- replacing `World` identity, command-stack identity, or app-wide provide/inject behavior for rendering descendants;
-- migrating canvas movement/style/construction/process-history/tool command producers beyond adding typed port consumption required by app-shell wiring;
-- redesigning rendering/presentation read ports, Three scene-host, domain realization contexts, or `SvgCanvas` as a whole;
-- changing backend, Drive/auth, browser credentials, package/tooling, docs/spec source, validation-platform/debug surfaces, or e2e fixture strategy;
-- preserving old raw-object and new port paths in parallel as compatibility shims.
-
-## DELETE list candidates
-
-Implementation should delete, not wrap, the following if selected by review:
-
-- `RuntimeSession.worldForUseCases()` once active-plane, selection, and selection-delete app-shell consumers use narrow ports;
-- `RuntimeSession.commandStackForCommandServices()` once selection-delete consumes a narrow command execution/session port;
-- `RuntimeSession.commandStackForShortcuts()` once keyboard and any app-shell history consumers use a command-history port;
-- direct `World` import/dependency in `ActivePlaneUseCases`;
-- direct `World` import/dependency in `SelectionUseCases`;
-- direct `CommandStack` import/dependency in `KeyboardShortcutRouter`;
-- adapter-private casts in `ProjectSessionPersistenceAdapter` if a typed runtime adapter handle can replace them without changing persistence internals;
-- tests/fakes that assert raw `World` / `CommandStack` injection into these consumers;
-- any transitional overloads, broad runtime facades, dead exports, or dual raw-object/port paths created during the migration.
-
-Do **not** delete canvas/style/construction/process-history command producers, `ProjectService` serialization internals, rendering read ports, backend/docs/spec/package files, or validation/debug surfaces in this wave without review-approved scope change.
-
-## Validation requirements for implementation stage
-
-The future implementation must capture full stdout/stderr under `architecture-audit/cycle-023-runtime-session-consumer-ports-command-history-boundary/validation/` and run the mandatory cadence:
-
-1. Pre-edit scoped git status/diff and static scans for all raw `RuntimeSession` accessors, app-shell `World`/`CommandStack` imports, keyboard undo/redo history consumers, selection active-plane/cascade reads, adapter casts, and explicitly deferred direct command producers.
-2. Focused Vitest for `RuntimeSession` ports, `ActivePlaneUseCases`, `SelectionUseCases`, `KeyboardShortcutRouter`, selection-delete wiring, and persistence adapter handle behavior if changed.
-3. Static architecture/boundary tests or scans proving selected app-shell consumers no longer import concrete `World`/`CommandStack` and no dual paths remain.
-4. `npm run lint` at root and root workspace invocation for frontend where defined.
-5. Full Vitest at root and frontend workspace where defined.
-6. `npm run build` at root and frontend workspace where defined.
-7. Playwright/e2e at root and frontend workspace where defined because keyboard, selection, active-plane, deletion, undo/redo, and project-session behavior are user-observable.
-8. Live preview refresh bound to `0.0.0.0:5173`, HTTP 200 reachability probe, and focused browser smoke for active-plane cycling, select-all/delete/undo/redo, startup/new-project behavior, and no real Drive credential use.
+If the manager instead schedules a Cycle 023 closure/reconciliation stage, it should run only focused static scans and artifact review sufficient to prove Wave 023 source criteria are already met; it should not implement or validate broad source behavior again.
 
 ## Recommendation
 
-Proceed to `cycle-023-review-round-01` with the two proposals in this directory. Do not implement Cycle 023 until review convergence and a decision are recorded.
+Do **not** implement the original Wave 023 direct or restructure proposal against this current source. Route these revised artifacts to the Critic/reviewer. If approved, the Manager should write a precise Cycle 023 decision/closure artifact stating that Wave 023's target outcome is already present in current source and that the next canonical stage should be `cycle-024-fresh-scout-proposals-command-producer-runtime-ports-for-canvas-construction-and-process-history` (or a reviewed wave-plan correction if the manager finds Wave 024's current text is inconsistent with source).
