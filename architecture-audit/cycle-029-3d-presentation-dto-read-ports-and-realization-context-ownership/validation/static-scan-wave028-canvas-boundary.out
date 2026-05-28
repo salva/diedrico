@@ -1,0 +1,6 @@
+Wave 028 canvas boundary preservation scan
+frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:19:  return world.getAllProjectionPlanes().flatMap((plane) => {
+frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:27:  return world.getAllProjectionPlanes().flatMap((plane) => {
+frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:34:      const realization = plane.realizePoint2D(point, context);
+frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:47:      const realization = plane.realizeLine2D(line, context);
+frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:72:      const realization = plane.realizeCircle2D(circle, context);

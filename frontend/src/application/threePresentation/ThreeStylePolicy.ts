@@ -1,7 +1,8 @@
 import type { VisualStyle } from '@/domain/world/VisualStyle';
 import type { ThreeStyleDto } from './ThreePresentationModel';
+import type { ThreeEntitySourceDto } from './ThreePresentationReadModel';
 
-export interface ThreeStyleSource { visualStyle?: VisualStyle }
+interface DomainStyleSource { visualStyle?: VisualStyle }
 
 export const THREE_STYLE = {
   grid: { color: 0x888888, opacity: 0.7, transparent: true },
@@ -19,13 +20,14 @@ export const THREE_STYLE = {
   zOffset: 0.01,
 } as const;
 
-export function planarStyle(element: ThreeStyleSource): ThreeStyleDto {
+export function planarStyleFromDomain(element: DomainStyleSource): ThreeStyleDto {
   return { ...THREE_STYLE.planarElement, color: element.visualStyle?.color ?? THREE_STYLE.planarElement.color };
 }
 
-export function reconstructedStyle(element: ThreeStyleSource): ThreeStyleDto {
+export function reconstructedStyleFromDomain(element: DomainStyleSource): ThreeStyleDto {
   return { ...THREE_STYLE.reconstructedElement, color: element.visualStyle?.color ?? THREE_STYLE.reconstructedElement.color };
 }
 
-export function isVisible2D(element: ThreeStyleSource): boolean { return element.visualStyle?.visible !== false; }
-export function isVisible3D(element: ThreeStyleSource): boolean { return element.visualStyle?.visible !== false; }
+export function visibleFromDomain(element: DomainStyleSource): boolean { return element.visualStyle?.visible !== false; }
+
+export function isVisible(element: ThreeEntitySourceDto): boolean { return element.visible; }

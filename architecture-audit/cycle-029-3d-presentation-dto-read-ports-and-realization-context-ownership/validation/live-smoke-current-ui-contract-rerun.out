@@ -1,0 +1,18 @@
+[1A[2K[WebServer] 
+[WebServer] > diedrico-frontend@0.1.0 dev
+[WebServer] > vite
+[WebServer] 
+
+[1A[2K[WebServer] Port 5173 is in use, trying another one...
+
+[1A[2K[WebServer] 
+[WebServer]   [32m[1mVITE[22m v5.4.21[39m  [2mready in [0m[1m463[22m[2m[0m ms[22m
+[WebServer] 
+
+[1A[2K[WebServer]   [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5174[22m/[39m
+
+[1A[2K[WebServer] [2m  [32m➜[39m  [1mNetwork[22m[2m: use [22m[1m--host[22m[2m to expose[22m
+
+Error: Timed out waiting 120000ms from config.webServer.
+
+[1A[2K

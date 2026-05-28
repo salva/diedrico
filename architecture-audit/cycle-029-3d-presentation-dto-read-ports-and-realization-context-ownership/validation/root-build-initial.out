@@ -1,0 +1,26 @@
+
+> diedrico@0.1.0 build
+> npm run build --workspace=frontend
+
+
+> diedrico-frontend@0.1.0 build
+> vue-tsc && vite build
+
+src/application/threePresentation/PlanarElement3DSelector.ts(17,213): error TS2339: Property 'points' does not exist on type 'ThreePlanarLineSourceDto | ThreePlanarCircleSourceDto'.
+  Property 'points' does not exist on type 'ThreePlanarLineSourceDto'.
+src/application/threePresentation/ProjectionPlane3DSelector.ts(21,40): error TS2345: Argument of type 'Vector3' is not assignable to parameter of type 'Vector4'.
+  Type 'Vector3' is missing the following properties from type 'Vector4': w, width, height, isVector4, and 3 more.
+src/application/threePresentation/ThreePlanarElementReadPort.ts(23,33): error TS2322: Type '{ id: string; elements: unknown[]; }[]' is not assignable to type 'ThreePlanarPlaneReadModel[]'.
+  Type '{ id: string; elements: unknown[]; }' is not assignable to type 'ThreePlanarPlaneReadModel'.
+    Types of property 'elements' are incompatible.
+      Type 'unknown[]' is not assignable to type 'ThreePlanarElementSourceDto[]'.
+        Type 'unknown' is not assignable to type 'ThreePlanarElementSourceDto'.
+src/application/threePresentation/ThreePlanarElementReadPort.ts(31,49): error TS2345: Argument of type '(this: undefined, line: Line2D) => { id: string; kind: "planar-segment"; planeId: string; visible: boolean; style: ThreeStyleDto; start: Vec3; end: Vec3; }[] | { ...; }[]' is not assignable to parameter of type '(this: undefined, value: Line2D, index: number, array: Line2D[]) => { id: string; kind: "planar-segment"; planeId: string; visible: boolean; style: ThreeStyleDto; start: Vec3; end: Vec3; } | readonly { ...; }[]'.
+  Type '{ id: string; kind: "planar-segment"; planeId: string; visible: boolean; style: ThreeStyleDto; start: Vec3; end: Vec3; }[] | { id: string; kind: "planar-line"; planeId: string; visible: boolean; style: ThreeStyleDto; start: Vec3; end: Vec3; }[]' is not assignable to type '{ id: string; kind: "planar-segment"; planeId: string; visible: boolean; style: ThreeStyleDto; start: Vec3; end: Vec3; } | readonly { id: string; kind: "planar-segment"; planeId: string; visible: boolean; style: ThreeStyleDto; start: Vec3; end: Vec3; }[]'.
+    Type '{ id: string; kind: "planar-line"; planeId: string; visible: boolean; style: ThreeStyleDto; start: Vec3; end: Vec3; }[]' is not assignable to type '{ id: string; kind: "planar-segment"; planeId: string; visible: boolean; style: ThreeStyleDto; start: Vec3; end: Vec3; } | readonly { id: string; kind: "planar-segment"; planeId: string; visible: boolean; style: ThreeStyleDto; start: Vec3; end: Vec3; }[]'.
+      Type '{ id: string; kind: "planar-line"; planeId: string; visible: boolean; style: ThreeStyleDto; start: Vec3; end: Vec3; }[]' is not assignable to type 'readonly { id: string; kind: "planar-segment"; planeId: string; visible: boolean; style: ThreeStyleDto; start: Vec3; end: Vec3; }[]'.
+        Type '{ id: string; kind: "planar-line"; planeId: string; visible: boolean; style: ThreeStyleDto; start: Vec3; end: Vec3; }' is not assignable to type '{ id: string; kind: "planar-segment"; planeId: string; visible: boolean; style: ThreeStyleDto; start: Vec3; end: Vec3; }'.
+          Types of property 'kind' are incompatible.
+            Type '"planar-line"' is not assignable to type '"planar-segment"'.
+src/application/threePresentation/ThreeProjectionPlaneReadPort.ts(33,64): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.

@@ -1,12 +1,9 @@
-import type { ThreeEntityPresentationData } from './ThreePresentationReadModel';
 import type { World } from '@/domain/world/World';
 import { createThreeGuideReadPort, type ThreeGuideIntersectionReadModel, type ThreeGuideReadModel, type ThreeGuideReadPort } from './ThreeGuideReadPort';
 import { createThreeHingeReadPort, type ThreeHingeReadModel, type ThreeHingeReadPort } from './ThreeHingeReadPort';
-import { createThreePlanarElementReadPort, type ThreePlanarCircleReadModel, type ThreePlanarElementReadPort, type ThreePlanarLineReadModel, type ThreePlanarPlaneReadModel, type ThreePlanarPointReadModel } from './ThreePlanarElementReadPort';
-import { createThreeProjectionPlaneReadPort, type ThreeProjectionPlaneGridSource, type ThreeProjectionPlaneReadModel, type ThreeProjectionPlaneReadPort } from './ThreeProjectionPlaneReadPort';
+import { createThreePlanarElementReadPort, type ThreePlanarCircleReadModel, type ThreePlanarElementReadPort, type ThreePlanarElementSourceDto, type ThreePlanarLineReadModel, type ThreePlanarPlaneReadModel, type ThreePlanarPointReadModel } from './ThreePlanarElementReadPort';
+import { createThreeProjectionPlaneReadPort, type ThreeProjectionPlaneReadModel, type ThreeProjectionPlaneReadPort } from './ThreeProjectionPlaneReadPort';
 import { createThreeReconstructedElementReadPort, type ThreeReconstructedElementReadPort, type ThreeReconstructedReadModel } from './ThreeReconstructedElementReadPort';
-
-export type { ThreeEntityPresentationData };
 
 export type {
   ThreeGuideIntersectionReadModel,
@@ -16,10 +13,10 @@ export type {
   ThreeHingeReadPort,
   ThreePlanarCircleReadModel,
   ThreePlanarElementReadPort,
+  ThreePlanarElementSourceDto,
   ThreePlanarLineReadModel,
   ThreePlanarPlaneReadModel,
   ThreePlanarPointReadModel,
-  ThreeProjectionPlaneGridSource,
   ThreeProjectionPlaneReadModel,
   ThreeProjectionPlaneReadPort,
   ThreeReconstructedElementReadPort,

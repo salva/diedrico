@@ -1,0 +1,17 @@
+ .../threePresentation/Guide3DSelector.ts           | 52 +++++--------
+ .../threePresentation/Hinge3DSelector.ts           | 14 +---
+ .../threePresentation/PlanarElement3DSelector.ts   | 66 ++++------------
+ .../threePresentation/ProjectionPlane3DSelector.ts | 60 +++------------
+ .../ReconstructedElement3DSelector.ts              | 37 +++------
+ .../threePresentation/ThreeGuideReadPort.ts        | 77 +++++++++++++------
+ .../threePresentation/ThreeHingeReadPort.ts        | 22 ++++--
+ .../ThreePlanarElementReadPort.ts                  | 81 ++++++++++++++------
+ .../ThreePresentationReadModel.ts                  | 88 +++++++++++++++++++++-
+ .../ThreeProjectionPlaneReadPort.ts                | 84 ++++++++++++++-------
+ .../ThreeReconstructedElementReadPort.ts           | 51 ++++++++++---
+ .../threePresentation/ThreeStylePolicy.ts          | 12 +--
+ .../threePresentation/ThreeWorldReadPort.ts        |  9 +--
+ .../threePresentationArchitectureBoundary.spec.ts  | 19 ++++-
+ .../threePresentationConcernSelectors.spec.ts      | 46 +++++------
+ .../threePresentationSelector.spec.ts              |  2 +-
+ 16 files changed, 420 insertions(+), 300 deletions(-)

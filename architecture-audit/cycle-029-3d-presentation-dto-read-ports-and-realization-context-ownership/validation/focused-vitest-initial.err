@@ -1,0 +1,99 @@
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts > threePresentation concern selectors > builds planar 2D-on-3D DTOs from projection-plane realizations only when the display option is enabled
+TypeError: plane.elements is not iterable
+ ❯ PlanarElement3DSelector.select src/application/threePresentation/PlanarElement3DSelector.ts:10:35
+      8|     const items: PlanarElementPresentationDto[] = [];
+      9|     for (const plane of readPort.getPlanarPlaneModels()) {
+     10|       for (const element of plane.elements) {
+       |                                   ^
+     11|         if (!isVisible(element)) continue;
+     12|         if (element.kind === 'planar-point') {
+ ❯ tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:41:48
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts > threePresentation concern selectors > builds reconstructed 3D point, line, segment, and plane DTOs behind a single concern boundary
+AssertionError: expected [] to deeply equal ArrayContaining{…}
+
+- Expected
++ Received
+
+- ArrayContaining [
+-   "reconstructed-point",
+-   "reconstructed-line",
+-   "reconstructed-segment",
+-   "reconstructed-plane",
+- ]
++ Array []
+
+ ❯ tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:59:19
+     57|     const kinds = new ReconstructedElement3DSelector().select(readPort…
+     58| 
+     59|     expect(kinds).toEqual(expect.arrayContaining(['reconstructed-point…
+       |                   ^
+     60|     expect(new ReconstructedElement3DSelector().select(readPort, false…
+     61|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts > threePresentation concern selectors > builds selected-guide perpendicular-plane and intersection-marker DTOs from selected IDs
+AssertionError: expected [] to deeply equal ArrayContaining{…}
+
+- Expected
++ Received
+
+- ArrayContaining [
+-   "guide-perpendicular-plane",
+-   "guide-intersection-marker",
+- ]
++ Array []
+
+ ❯ tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:76:43
+     74|     const unselected = new Guide3DSelector().select(readPort, ['unrela…
+     75| 
+     76|     expect(selected.map(dto => dto.kind)).toEqual(expect.arrayContaini…
+       |                                           ^
+     77|     expect(selected[0]).toMatchObject({ sourceEntityId: 'PH/guide-1', …
+     78|     expect(unselected).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts > threePresentation concern selectors > builds hinge DTOs only from feasible hinge-line realizations when planes are visible
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:86:18
+     84|     const dtos = new Hinge3DSelector().select(readPort, true);
+     85| 
+     86|     expect(dtos).toHaveLength(1);
+       |                  ^
+     87|     expect(dtos[0]).toMatchObject({ id: 'hinge-line-h1', kind: 'hinge-…
+     88|     expect(new Hinge3DSelector().select(readPort, false)).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts > threePresentation concern selectors > adapts injected World to the narrow three-presentation read port at the boundary
+TypeError: Cannot read properties of undefined (reading '0')
+ ❯ tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:111:63
+    109| 
+    110|     expect(readPorts.projectionPlanes.getProjectionPlaneModels()).toHa…
+    111|     expect(readPorts.planarElements.getPlanarPlaneModels()[0].points[0…
+       |                                                               ^
+    112|     expect(readPorts.guides.getSelectedGuideModels(['PH/guide-1'])[0])…
+    113|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c vitest run --run tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts tests/unit/application/threePresentation/threePresentationSelector.spec.ts tests/unit/application/threePresentation/threePresentationArchitectureBoundary.spec.ts tests/unit/components/panels/threeViewShellBoundary.spec.ts

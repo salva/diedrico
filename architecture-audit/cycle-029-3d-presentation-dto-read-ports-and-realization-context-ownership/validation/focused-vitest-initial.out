@@ -1,0 +1,27 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run --run tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts tests/unit/application/threePresentation/threePresentationSelector.spec.ts tests/unit/application/threePresentation/threePresentationArchitectureBoundary.spec.ts tests/unit/components/panels/threeViewShellBoundary.spec.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/components/panels/threeViewShellBoundary.spec.ts  (2 tests) 44ms
+ ✓ tests/unit/application/threePresentation/threePresentationArchitectureBoundary.spec.ts  (5 tests) 14ms
+ ✓ tests/unit/application/threePresentation/threePresentationSelector.spec.ts  (1 test) 10ms
+ ❯ tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts  (6 tests | 5 failed) 25ms
+   ❯ tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts > threePresentation concern selectors > builds planar 2D-on-3D DTOs from projection-plane realizations only when the display option is enabled
+     → plane.elements is not iterable
+   ❯ tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts > threePresentation concern selectors > builds reconstructed 3D point, line, segment, and plane DTOs behind a single concern boundary
+     → expected [] to deeply equal ArrayContaining{…}
+   ❯ tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts > threePresentation concern selectors > builds selected-guide perpendicular-plane and intersection-marker DTOs from selected IDs
+     → expected [] to deeply equal ArrayContaining{…}
+   ❯ tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts > threePresentation concern selectors > builds hinge DTOs only from feasible hinge-line realizations when planes are visible
+     → expected [] to have a length of 1 but got +0
+   ❯ tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts > threePresentation concern selectors > adapts injected World to the narrow three-presentation read port at the boundary
+     → Cannot read properties of undefined (reading '0')
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  5 failed | 9 passed (14)
+   Start at  05:20:52
+   Duration  2.15s (transform 979ms, setup 1ms, collect 1.69s, tests 93ms, environment 3.38s, prepare 530ms)
+

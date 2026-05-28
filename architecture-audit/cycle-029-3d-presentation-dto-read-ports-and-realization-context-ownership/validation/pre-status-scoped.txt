@@ -1,0 +1,3 @@
+?? architecture-audit/cycle-029-3d-presentation-dto-read-ports-and-realization-context-ownership/critique/
+?? architecture-audit/cycle-029-3d-presentation-dto-read-ports-and-realization-context-ownership/reviews/
+?? architecture-audit/cycle-029-3d-presentation-dto-read-ports-and-realization-context-ownership/validation/

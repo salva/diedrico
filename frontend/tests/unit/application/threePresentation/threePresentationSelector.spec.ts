@@ -42,7 +42,7 @@ describe('ThreePresentationSelector', () => {
   it('orchestrates concern-split selectors through named read-port slices and passes selected IDs only to guide selection', () => {
     const { selector, projectionPlanes, planarElements, reconstructedElements, guides, hinges } = selectorWithSpies();
     const readPorts: ThreePresentationReadPorts = {
-      projectionPlanes: { getProjectionPlaneModels: () => [], getProjectionPlaneGridSource: () => ({ plane3DRealization: undefined, projectionRealization: undefined }) },
+      projectionPlanes: { getProjectionPlaneModels: () => [] },
       planarElements: { getPlanarPlaneModels: () => [] },
       reconstructedElements: { getReconstructedModels: () => ({ points: [], lines: [], segments: [], planes: [] }) },
       guides: { getSelectedGuideModels: () => [], getGuideIntersectionModels: () => ({ points: [], lines: [], segments: [] }) },

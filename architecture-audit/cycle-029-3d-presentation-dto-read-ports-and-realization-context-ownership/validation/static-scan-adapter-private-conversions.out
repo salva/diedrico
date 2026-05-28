@@ -1,0 +1,68 @@
+Adapter-private conversion scan (allowed locations)
+frontend/src/application/threePresentation/ThreeGuideReadPort.ts:28:        const planeRealization = world.getProjectionPlane3DRealization(line.planeId);
+frontend/src/application/threePresentation/ThreeGuideReadPort.ts:53:      points: world.getAll3DPoints().flatMap(point => {
+frontend/src/application/threePresentation/ThreeGuideReadPort.ts:55:        const realization = world.get3DPointRealization(point.id!);
+frontend/src/application/threePresentation/ThreeGuideReadPort.ts:56:        if (!realization?.isFeasible()) return [];
+frontend/src/application/threePresentation/ThreeGuideReadPort.ts:57:        const [x, y, z] = realization.getCartesian();
+frontend/src/application/threePresentation/ThreeGuideReadPort.ts:60:      lines: world.getAll3DLines().flatMap(line => {
+frontend/src/application/threePresentation/ThreeGuideReadPort.ts:62:        const realization = world.get3DLineRealization(line.id!);
+frontend/src/application/threePresentation/ThreeGuideReadPort.ts:63:        if (!realization?.isFeasible()) return [];
+frontend/src/application/threePresentation/ThreeGuideReadPort.ts:64:        return [{ id: line.id!, visible: true, style: THREE_STYLE.guideMarker, point: v(realization.point), direction: v(realization.getDirection()) }];
+frontend/src/application/threePresentation/ThreeGuideReadPort.ts:66:      segments: world.getAll3DSegments().flatMap(segment => {
+frontend/src/application/threePresentation/ThreeGuideReadPort.ts:68:        const realization = world.get3DSegmentRealization(segment.id!);
+frontend/src/application/threePresentation/ThreeGuideReadPort.ts:69:        if (!realization?.isFeasible()) return [];
+frontend/src/application/threePresentation/ThreeGuideReadPort.ts:70:        return [{ id: segment.id!, visible: true, style: THREE_STYLE.guideMarker, start: v(realization.startPoint), end: v(realization.endPoint) }];
+frontend/src/application/threePresentation/ThreeHingeReadPort.ts:16:  const getHingeLines = () => world.getAllHingeLines();
+frontend/src/application/threePresentation/ThreeHingeReadPort.ts:18:    getProjectionPlanes: () => world.getAllProjectionPlanes(),
+frontend/src/application/threePresentation/ThreeHingeReadPort.ts:24:      const realization = hingeLine.realize3D(realizationContext);
+frontend/src/application/threePresentation/ThreeHingeReadPort.ts:25:      if (!realization?.isFeasible() || !realization.point || !realization.direction) return [];
+frontend/src/application/threePresentation/ThreeHingeReadPort.ts:26:      const origin = domainToThreeJS(realization.point);
+frontend/src/application/threePresentation/ThreeHingeReadPort.ts:27:      const direction = domainDirectionToThreeJS(new Vector3(realization.direction.x, realization.direction.y, realization.direction.z)).normalize();
+frontend/src/application/threePresentation/ThreePlanarElementReadPort.ts:17:  const getProjectionPlanes = () => world.getAllProjectionPlanes();
+frontend/src/application/threePresentation/ThreePlanarElementReadPort.ts:24:      const planeRealization = world.getProjectionPlane3DRealization(plane.id);
+frontend/src/application/threePresentation/ThreePlanarElementReadPort.ts:27:        const realization = point.realize2D(realizationContext);
+frontend/src/application/threePresentation/ThreePlanarElementReadPort.ts:28:        if (!realization?.feasible || !visibleFromDomain(point)) return [];
+frontend/src/application/threePresentation/ThreePlanarElementReadPort.ts:29:        return [{ id: point.id, kind: 'planar-point' as const, planeId: plane.id, visible: true, style: planarStyleFromDomain(point), position: v(lift(realization.position, planeRealization.planeTo3D)) }];
+frontend/src/application/threePresentation/ThreePlanarElementReadPort.ts:32:        const realization = line.realize2D(realizationContext);
+frontend/src/application/threePresentation/ThreePlanarElementReadPort.ts:33:        if (!realization?.feasible || !visibleFromDomain(line)) return [];
+frontend/src/application/threePresentation/ThreePlanarElementReadPort.ts:35:        if (line instanceof Segment2DByPoints || realization.isBounded()) {
+frontend/src/application/threePresentation/ThreePlanarElementReadPort.ts:36:          return [{ id: line.id, kind: 'planar-segment' as const, planeId: plane.id, visible: true, style, start: v(lift(realization.point1, planeRealization.planeTo3D)), end: v(lift(realization.point2, planeRealization.planeTo3D)) }];
+frontend/src/application/threePresentation/ThreePlanarElementReadPort.ts:38:        const direction = realization.getDirection().clone().normalize();
+frontend/src/application/threePresentation/ThreePlanarElementReadPort.ts:39:        const start2D = realization.point1.clone().add(direction.clone().multiplyScalar(-THREE_STYLE.planarLineExtent / 2));
+frontend/src/application/threePresentation/ThreePlanarElementReadPort.ts:40:        const end2D = realization.point1.clone().add(direction.clone().multiplyScalar(THREE_STYLE.planarLineExtent / 2));
+frontend/src/application/threePresentation/ThreePlanarElementReadPort.ts:44:        const realization = circle.realize2D(realizationContext);
+frontend/src/application/threePresentation/ThreePlanarElementReadPort.ts:45:        if (!realization?.feasible || !visibleFromDomain(circle)) return [];
+frontend/src/application/threePresentation/ThreePlanarElementReadPort.ts:46:        const radius = realization.getRadius();
+frontend/src/application/threePresentation/ThreePlanarElementReadPort.ts:50:          const p = realization.center.clone();
+frontend/src/application/threePresentation/ThreeProjectionPlaneReadPort.ts:3:import type { ProjectionPlaneRealization3D } from '@/domain/world/projectionPlane/ProjectionPlaneRealization';
+frontend/src/application/threePresentation/ThreeProjectionPlaneReadPort.ts:4:import type { Plane3DRealization3D } from '@/domain/world/Element3DRealization3D';
+frontend/src/application/threePresentation/ThreeProjectionPlaneReadPort.ts:20:    getProjectionPlaneModels: () => world.getAllProjectionPlanes().flatMap(plane => {
+frontend/src/application/threePresentation/ThreeProjectionPlaneReadPort.ts:21:      const projectionRealization = world.getProjectionPlane3DRealization(plane.id);
+frontend/src/application/threePresentation/ThreeProjectionPlaneReadPort.ts:23:      const plane3DId = plane instanceof AuxiliaryProjectionPlane ? plane.plane3DId : plane.id;
+frontend/src/application/threePresentation/ThreeProjectionPlaneReadPort.ts:30:        kind: plane instanceof AuxiliaryProjectionPlane ? 'auxiliary' : 'fixed',
+frontend/src/application/threePresentation/ThreeProjectionPlaneReadPort.ts:33:        gridSegments: gridSegments(world.get3DPlaneRealization(plane3DId), projectionRealization).map(segment => to3DSegment(segment, projectionRealization.planeTo3D)),
+frontend/src/application/threePresentation/ThreeProjectionPlaneReadPort.ts:34:        auxiliaryAxes: plane instanceof AuxiliaryProjectionPlane ? { origin: v(basis.origin), uDirection: v(basis.uAxis), vDirection: v(basis.vAxis) } : undefined,
+frontend/src/application/threePresentation/ThreeProjectionPlaneReadPort.ts:40:function gridSegments(plane3DRealization: Plane3DRealization3D | undefined, projectionRealization: ProjectionPlaneRealization3D): Segment2D[] {
+frontend/src/application/threePresentation/ThreeReconstructedElementReadPort.ts:18:      points: world.getAll3DPoints().flatMap(point => {
+frontend/src/application/threePresentation/ThreeReconstructedElementReadPort.ts:20:        const realization = world.get3DPointRealization(point.id!);
+frontend/src/application/threePresentation/ThreeReconstructedElementReadPort.ts:21:        if (!realization?.isFeasible()) return [];
+frontend/src/application/threePresentation/ThreeReconstructedElementReadPort.ts:22:        const [x, y, z] = realization.getCartesian();
+frontend/src/application/threePresentation/ThreeReconstructedElementReadPort.ts:25:      lines: world.getAll3DLines().flatMap(line => {
+frontend/src/application/threePresentation/ThreeReconstructedElementReadPort.ts:27:        const realization = world.get3DLineRealization(line.id!);
+frontend/src/application/threePresentation/ThreeReconstructedElementReadPort.ts:28:        if (!realization?.isFeasible()) return [];
+frontend/src/application/threePresentation/ThreeReconstructedElementReadPort.ts:29:        const point = domainToThreeJS(realization.point);
+frontend/src/application/threePresentation/ThreeReconstructedElementReadPort.ts:30:        const direction = domainDirectionToThreeJS(new Vector3(realization.getDirection().x, realization.getDirection().y, realization.getDirection().z)).normalize();
+frontend/src/application/threePresentation/ThreeReconstructedElementReadPort.ts:33:      segments: world.getAll3DSegments().flatMap(segment => {
+frontend/src/application/threePresentation/ThreeReconstructedElementReadPort.ts:35:        const realization = world.get3DSegmentRealization(segment.id!);
+frontend/src/application/threePresentation/ThreeReconstructedElementReadPort.ts:36:        if (!realization?.isFeasible()) return [];
+frontend/src/application/threePresentation/ThreeReconstructedElementReadPort.ts:37:        return [{ id: segment.id!, kind: 'reconstructed-segment' as const, visible: true, style: reconstructedStyleFromDomain(segment), start: v(domainToThreeJS(realization.startPoint)), end: v(domainToThreeJS(realization.endPoint)) }];
+frontend/src/application/threePresentation/ThreeReconstructedElementReadPort.ts:39:      planes: world.getAllPlanes().flatMap(plane => {
+frontend/src/application/threePresentation/ThreeReconstructedElementReadPort.ts:41:        const realization = world.get3DPlaneRealization(plane.id!);
+frontend/src/application/threePresentation/ThreeReconstructedElementReadPort.ts:42:        if (!realization?.feasible || !realization.originPoint || !realization.normal) return [];
+frontend/src/application/threePresentation/ThreeReconstructedElementReadPort.ts:43:        const origin = domainToThreeJS(realization.originPoint);
+frontend/src/application/threePresentation/ThreeReconstructedElementReadPort.ts:44:        const normal = domainDirectionToThreeJS(new Vector3(realization.normal.x, realization.normal.y, realization.normal.z)).normalize();
+frontend/src/application/threePresentation/ThreeStylePolicy.ts:1:import type { VisualStyle } from '@/domain/world/VisualStyle';
+frontend/src/application/threePresentation/ThreeStylePolicy.ts:5:interface DomainStyleSource { visualStyle?: VisualStyle }
+frontend/src/application/threePresentation/ThreeStylePolicy.ts:24:  return { ...THREE_STYLE.planarElement, color: element.visualStyle?.color ?? THREE_STYLE.planarElement.color };
+frontend/src/application/threePresentation/ThreeStylePolicy.ts:28:  return { ...THREE_STYLE.reconstructedElement, color: element.visualStyle?.color ?? THREE_STYLE.reconstructedElement.color };
+frontend/src/application/threePresentation/ThreeStylePolicy.ts:31:export function visibleFromDomain(element: DomainStyleSource): boolean { return element.visualStyle?.visible !== false; }
