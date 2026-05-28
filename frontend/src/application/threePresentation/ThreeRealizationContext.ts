@@ -9,10 +9,12 @@ interface ThreeRealizationContextCollections {
   getHingeLines: () => HingeLine[];
 }
 
+export type ThreeRealizationContext = ProjectionElementDiagnosticRealizationContext & HingeLineRealizationContext;
+
 export function createThreeRealizationContext(
   world: World,
   collections: ThreeRealizationContextCollections,
-): ProjectionElementDiagnosticRealizationContext & HingeLineRealizationContext {
+): ThreeRealizationContext {
   return {
     ...createWorldRealizationContext(world),
     getAllProjectionPlanes: collections.getProjectionPlanes,

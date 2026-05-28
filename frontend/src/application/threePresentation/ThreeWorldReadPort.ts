@@ -1,4 +1,5 @@
 import type { World } from '@/domain/world/World';
+import { createThreePresentationAdapter } from './ThreePresentationAdapter';
 import { createThreeGuideReadPort, type ThreeGuideIntersectionReadModel, type ThreeGuideReadModel, type ThreeGuideReadPort } from './ThreeGuideReadPort';
 import { createThreeHingeReadPort, type ThreeHingeReadModel, type ThreeHingeReadPort } from './ThreeHingeReadPort';
 import { createThreePlanarElementReadPort, type ThreePlanarCircleReadModel, type ThreePlanarElementReadPort, type ThreePlanarElementSourceDto, type ThreePlanarLineReadModel, type ThreePlanarPlaneReadModel, type ThreePlanarPointReadModel } from './ThreePlanarElementReadPort';
@@ -32,11 +33,12 @@ export interface ThreePresentationReadPorts {
 }
 
 export function createThreePresentationReadPorts(world: World): ThreePresentationReadPorts {
+  const adapter = createThreePresentationAdapter(world);
   return {
-    projectionPlanes: createThreeProjectionPlaneReadPort(world),
-    planarElements: createThreePlanarElementReadPort(world),
-    reconstructedElements: createThreeReconstructedElementReadPort(world),
-    guides: createThreeGuideReadPort(world),
-    hinges: createThreeHingeReadPort(world),
+    projectionPlanes: createThreeProjectionPlaneReadPort(adapter),
+    planarElements: createThreePlanarElementReadPort(adapter),
+    reconstructedElements: createThreeReconstructedElementReadPort(adapter),
+    guides: createThreeGuideReadPort(adapter),
+    hinges: createThreeHingeReadPort(adapter),
   };
 }

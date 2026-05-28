@@ -2,7 +2,7 @@ import { Vector3, Vector4 } from 'three';
 import { AuxiliaryProjectionPlane } from '@/domain/world/projectionPlane/AuxiliaryProjectionPlane';
 import type { ProjectionPlaneRealization3D } from '@/domain/world/projectionPlane/ProjectionPlaneRealization';
 import type { Plane3DRealization3D } from '@/domain/world/Element3DRealization3D';
-import type { World } from '@/domain/world/World';
+import type { ThreePresentationAdapter } from './ThreePresentationAdapter';
 import { getPlaneMeshSize, PLANE_RENDERING_CONFIG } from '@/config/rendering3D';
 import { applyMatrix4x3, domainDirectionToThreeJS, domainToThreeJS, type Matrix4x3 } from '@/utils/threeUtils';
 import { convertPlaneRectangleTo2D, generateClippedGrid, type Segment2D } from '@/utils/rectangleGrid';
@@ -15,10 +15,10 @@ export interface ThreeProjectionPlaneReadPort {
   getProjectionPlaneModels(): ThreeProjectionPlaneReadModel[];
 }
 
-export function createThreeProjectionPlaneReadPort(world: World): ThreeProjectionPlaneReadPort {
+export function createThreeProjectionPlaneReadPort(adapter: ThreePresentationAdapter): ThreeProjectionPlaneReadPort {
   return {
-    getProjectionPlaneModels: () => world.getAllProjectionPlanes().flatMap(plane => {
-      const projectionRealization = world.getProjectionPlane3DRealization(plane.id);
+    getProjectionPlaneModels: () => adapter.getProjectionPlanes().flatMap(plane => {
+      const projectionRealization = adapter.getProjectionPlane3DRealization(plane.id);
       if (!projectionRealization?.feasible) return [];
       const plane3DId = plane instanceof AuxiliaryProjectionPlane ? plane.plane3DId : plane.id;
       const basis = planeBasis(projectionRealization.planeTo3D.elements);
@@ -30,7 +30,7 @@ export function createThreeProjectionPlaneReadPort(world: World): ThreeProjectio
         kind: plane instanceof AuxiliaryProjectionPlane ? 'auxiliary' : 'fixed',
         plane3DId,
         surface,
-        gridSegments: gridSegments(plane3DId ? world.get3DPlaneRealization(plane3DId) : undefined, projectionRealization).map(segment => to3DSegment(segment, projectionRealization.planeTo3D)),
+        gridSegments: gridSegments(plane3DId ? adapter.get3DPlaneRealization(plane3DId) : undefined, projectionRealization).map(segment => to3DSegment(segment, projectionRealization.planeTo3D)),
         auxiliaryAxes: plane instanceof AuxiliaryProjectionPlane ? { origin: v(basis.origin), uDirection: v(basis.uAxis), vDirection: v(basis.vAxis) } : undefined,
       }];
     }),

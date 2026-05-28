@@ -8,3 +8,19 @@
   ➜  Local:   http://localhost:5173/
   ➜  Network: http://10.0.3.113:5173/
 5:34:46 AM [vite] page reload playwright-report/index.html
+5:38:52 AM [vite] page reload src/application/threePresentation/ThreeWorldReadPort.ts
+5:39:26 AM [vite] page reload src/application/threePresentation/ThreeProjectionPlaneReadPort.ts
+5:39:26 AM [vite] page reload src/application/threePresentation/ThreePlanarElementReadPort.ts
+5:39:26 AM [vite] page reload src/application/threePresentation/ThreeReconstructedElementReadPort.ts
+5:39:26 AM [vite] page reload src/application/threePresentation/ThreeGuideReadPort.ts
+5:39:26 AM [vite] page reload src/application/threePresentation/ThreeHingeReadPort.ts
+5:40:14 AM [vite] page reload src/application/threePresentation/ThreeWorldReadPort.ts
+5:40:34 AM [vite] page reload src/application/threePresentation/ThreeProjectionPlaneReadPort.ts
+5:40:34 AM [vite] page reload src/application/threePresentation/ThreePlanarElementReadPort.ts
+5:40:34 AM [vite] page reload src/application/threePresentation/ThreeReconstructedElementReadPort.ts
+5:40:34 AM [vite] page reload src/application/threePresentation/ThreeGuideReadPort.ts
+5:40:34 AM [vite] page reload src/application/threePresentation/ThreeHingeReadPort.ts
+5:40:57 AM [vite] page reload src/application/threePresentation/ThreeRealizationContext.ts
+5:43:57 AM [vite] page reload playwright-report/index.html
+5:43:57 AM [vite] page reload playwright-report/index.html
+5:44:49 AM [vite] page reload playwright-report/index.html

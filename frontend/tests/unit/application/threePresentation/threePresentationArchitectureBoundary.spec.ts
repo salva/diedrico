@@ -6,6 +6,7 @@ import guideSelectorSource from '../../../../src/application/threePresentation/G
 import hingeSelectorSource from '../../../../src/application/threePresentation/Hinge3DSelector.ts?raw';
 import presentationSelectorSource from '../../../../src/application/threePresentation/ThreePresentationSelector.ts?raw';
 import presentationReadPortsSource from '../../../../src/application/threePresentation/ThreeWorldReadPort.ts?raw';
+import presentationAdapterSource from '../../../../src/application/threePresentation/ThreePresentationAdapter.ts?raw';
 import presentationReadModelSource from '../../../../src/application/threePresentation/ThreePresentationReadModel.ts?raw';
 import projectionPlaneReadPortSource from '../../../../src/application/threePresentation/ThreeProjectionPlaneReadPort.ts?raw';
 import planarReadPortSource from '../../../../src/application/threePresentation/ThreePlanarElementReadPort.ts?raw';
@@ -19,6 +20,7 @@ import threeViewSource from '../../../../src/components/panels/ThreeView.vue?raw
 
 const selectorSources = [projectionPlaneSelectorSource, planarSelectorSource, reconstructedSelectorSource, guideSelectorSource, hingeSelectorSource];
 const readPortSources = [presentationReadPortsSource, projectionPlaneReadPortSource, planarReadPortSource, reconstructedReadPortSource, guideReadPortSource, hingeReadPortSource, realizationContextSource];
+const adapterPrivateSources = [presentationAdapterSource, projectionPlaneReadPortSource, planarReadPortSource, reconstructedReadPortSource, guideReadPortSource, hingeReadPortSource];
 const selectorAndReadModelSources = [presentationReadModelSource, ...selectorSources];
 
 describe('three presentation architecture boundary', () => {
@@ -37,7 +39,7 @@ describe('three presentation architecture boundary', () => {
     for (const source of selectorSources) {
       expect(source).not.toMatch(/@\/domain\/world\/World/);
     }
-    for (const source of readPortSources) {
+    for (const source of [...readPortSources, presentationAdapterSource]) {
       expect(source).not.toMatch(new RegExp(['RuntimeWorld', 'WorldReadModel', 'PresentationWorld', 'get' + 'World\\s*\\('].join('|')));
     }
   });
@@ -53,18 +55,21 @@ describe('three presentation architecture boundary', () => {
   it('allows adapter-private domain conversion while keeping public read-model names DTO-native', () => {
     expect(planarReadPortSource).toMatch(/instanceof Segment2DByPoints/);
     expect(projectionPlaneReadPortSource).toMatch(/instanceof AuxiliaryProjectionPlane/);
+    expect(adapterPrivateSources.join('\n')).toMatch(/Realization|realize2D|realize3D|VisualStyle|visualStyle/);
     expect(readPortSources.join('\n')).not.toMatch(/ThreeEntityPresentationData/);
     expect(presentationReadPortsSource).not.toMatch(/ThreeProjectionPlaneGridSource|getProjectionPlaneGridSource/);
   });
 
   it('keeps realization context helper free of broad world collection traversal', () => {
     expect(realizationContextSource).not.toMatch(/world\.getAllProjectionPlanes|world\.getAllHingeLines/);
-    expect(planarReadPortSource).toContain('const getProjectionPlanes = () => world.getAllProjectionPlanes()');
-    expect(hingeReadPortSource).toContain('const getHingeLines = () => world.getAllHingeLines()');
+    expect(presentationAdapterSource).toContain('const getProjectionPlanes = () => world.getAllProjectionPlanes()');
+    expect(presentationAdapterSource).toContain('const getHingeLines = () => world.getAllHingeLines()');
+    expect(planarReadPortSource).not.toMatch(/world\.getAllProjectionPlanes/);
+    expect(hingeReadPortSource).not.toMatch(/world\.getAllHingeLines/);
   });
 
   it('does not introduce generic world/read-model facades or canvas raw seams', () => {
-    const searchedSources = [presentationSelectorSource, runtimeViewPortsSource, canvasReadPortSource, ...readPortSources].join('\n');
+    const searchedSources = [presentationSelectorSource, runtimeViewPortsSource, canvasReadPortSource, ...readPortSources, presentationAdapterSource].join('\n');
     expect(searchedSources).not.toMatch(new RegExp(['RuntimeWorld', 'WorldReadModel', 'PresentationWorld', 'SceneKernel', 'get' + 'World\\s*\\('].join('|')));
     expect(canvasReadPortSource).not.toMatch(new RegExp(['getProcessTree', 'get' + 'World', 'getRealizationContext'].join('|')));
   });

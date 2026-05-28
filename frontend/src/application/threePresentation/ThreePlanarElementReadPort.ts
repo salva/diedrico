@@ -1,10 +1,9 @@
 import { Vector3 } from 'three';
-import type { World } from '@/domain/world/World';
+import type { ThreePresentationAdapter } from './ThreePresentationAdapter';
 import { Segment2DByPoints } from '@/domain/world/Segment';
 import { applyMatrix4x3, domainToThreeJS, type Matrix4x3 } from '@/utils/threeUtils';
 import type { ThreePlanarElementSourceDto, ThreePlanarPlaneReadModel } from './ThreePresentationReadModel';
 import { planarStyleFromDomain, THREE_STYLE, visibleFromDomain } from './ThreeStylePolicy';
-import { createThreeRealizationContext } from './ThreeRealizationContext';
 import type { Vec3 } from './ThreePresentationModel';
 
 export type { ThreePlanarCircleSourceDto as ThreePlanarCircleReadModel, ThreePlanarElementSourceDto, ThreePlanarLineSourceDto as ThreePlanarLineReadModel, ThreePlanarPlaneReadModel, ThreePlanarPointSourceDto as ThreePlanarPointReadModel } from './ThreePresentationReadModel';
@@ -13,15 +12,12 @@ export interface ThreePlanarElementReadPort {
   getPlanarPlaneModels(): ThreePlanarPlaneReadModel[];
 }
 
-export function createThreePlanarElementReadPort(world: World): ThreePlanarElementReadPort {
-  const getProjectionPlanes = () => world.getAllProjectionPlanes();
-  const realizationContext = createThreeRealizationContext(world, {
-    getProjectionPlanes,
-    getHingeLines: () => [],
-  });
+export function createThreePlanarElementReadPort(adapter: ThreePresentationAdapter): ThreePlanarElementReadPort {
+  const getProjectionPlanes = () => adapter.getProjectionPlanes();
+  const realizationContext = adapter.realizationContext;
   return {
     getPlanarPlaneModels: () => getProjectionPlanes().flatMap(plane => {
-      const planeRealization = world.getProjectionPlane3DRealization(plane.id);
+      const planeRealization = adapter.getProjectionPlane3DRealization(plane.id);
       if (!planeRealization?.feasible) return [];
       const elements: ThreePlanarElementSourceDto[] = [];
       for (const point of plane.getAllPoints()) {
