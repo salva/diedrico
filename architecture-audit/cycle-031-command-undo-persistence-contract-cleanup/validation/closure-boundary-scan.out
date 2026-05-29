@@ -1,0 +1,42 @@
+== timestamp ==
+2026-05-29T03:05:35+00:00
+
+== ProjectService concrete operation imports ==
+PASS: no ProjectService concrete operation imports
+
+== ProjectService migration/backcompat/switch indicators ==
+PASS: no migration/backcompat/reconstruction switch indicators in ProjectService
+
+== forbidden command/stack private persistence casts ==
+PASS: no forbidden cmd/commandStack private persistence seams outside CommandStack internals
+
+== process-tree Action descriptor cast ==
+PASS: process-tree Action descriptor cast absent
+
+== converted persisted operation mutable parameter/output bags ==
+PASS: no mutable parameter/output bags in world/processTree persisted operation source
+
+== public persistence APIs present ==
+frontend/src/commands/Command.ts:114:  static restore(input: RestoredCommandInput, world: World): Command {
+frontend/src/commands/Command.ts:136:  toSnapshot(): CommandSnapshot {
+frontend/src/commands/CommandStack.ts:137:  getCommittedCommands(): readonly Command[] {
+frontend/src/commands/CommandStack.ts:141:  restoreCommittedCommands(commands: readonly Command[]): void {
+
+== OperationRegistry descriptor boundary APIs ==
+8:  register<TDescriptor extends OperationDescriptor>(opType: TDescriptor['opType'], restore: OperationRestorer<TDescriptor>): void {
+35:      throw new Error(`Operation type is not registered: ${descriptor.opType}`);
+56:let registered = false;
+58:export function registerAllOperations(registry: OperationRegistry = defaultRegistry): OperationRegistry {
+59:  if (registry === defaultRegistry && registered) {
+62:  registerWorldOperationDescriptors(registry);
+63:  registerProcessTreeOperationDescriptors(registry);
+65:    registered = true;
+70:export function serializeOperation(operation: IOperation): OperationDescriptor {
+71:  return registerAllOperations().serialize(operation);
+74:export function deserializeOperation(descriptor: OperationDescriptor): IOperation {
+75:  return registerAllOperations().deserialize(descriptor);
+78:export function assertRestorableOperationDescriptor(descriptor: OperationDescriptor): void {
+79:  registerAllOperations().assertRestorable(descriptor);
+83:  return registerAllOperations().getRegisteredTypes();
+86:import { registerWorldOperationDescriptors } from './world/registerWorldOperationDescriptors';
+87:import { registerProcessTreeOperationDescriptors } from './processTree/registerProcessTreeOperationDescriptors';

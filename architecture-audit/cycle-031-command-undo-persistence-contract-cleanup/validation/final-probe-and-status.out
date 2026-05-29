@@ -1,0 +1,30 @@
+== timestamp ==
+2026-05-29T03:05:35+00:00
+
+== git status short selected paths ==
+ M architecture-audit/cycle-031-command-undo-persistence-contract-cleanup/decision.md
+ M architecture-audit/cycle-031-command-undo-persistence-contract-cleanup/validation/final-probe-and-status.out
+ M frontend/src/commands/Command.ts
+ M frontend/src/commands/factories/DeletionSequenceFactory.ts
+ M frontend/src/commands/factories/PointSequenceFactory.ts
+ D frontend/tests/e2e/active-plane-shortcuts.spec.ts
+ D frontend/tests/e2e/selection-mask.spec.ts
+?? architecture-audit/cycle-031-command-undo-persistence-contract-cleanup/reviews/
+?? architecture-audit/cycle-031-command-undo-persistence-contract-cleanup/validation/closure-boundary-scan.err
+?? architecture-audit/cycle-031-command-undo-persistence-contract-cleanup/validation/closure-boundary-scan.out
+
+== git diff stat selected paths ==
+ .../decision.md                                    |  8 +++----
+ .../validation/final-probe-and-status.out          | 16 +++++++++++++
+ frontend/src/commands/Command.ts                   |  6 ++---
+ .../commands/factories/DeletionSequenceFactory.ts  |  2 +-
+ .../src/commands/factories/PointSequenceFactory.ts |  3 +++
+ frontend/tests/e2e/active-plane-shortcuts.spec.ts  | 26 ----------------------
+ frontend/tests/e2e/selection-mask.spec.ts          | 25 ---------------------
+ 7 files changed, 27 insertions(+), 59 deletions(-)
+
+== live preview process/listener ==
+LISTEN 0      511          0.0.0.0:5173      0.0.0.0:*    users:(("MainThread",pid=181145,fd=22))
+
+== live preview HTTP probe ==
+http://127.0.0.1:5173/ status=200 content_type=text/html first_bytes='<!doctype html>\n<html lang="en">\n  <head>\n    <script type="module" src="/@vite/'

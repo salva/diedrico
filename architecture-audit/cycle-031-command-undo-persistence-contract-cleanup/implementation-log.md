@@ -173,3 +173,78 @@ Preview / live evidence:
 - Introduce operation-family-specific descriptor type aliases to replace remaining generic `OperationDescriptor` annotations where useful.
 - Replace isolated registry storage cast with a typed descriptor/restorer registry table if a later wave chooses to split descriptor contracts by operation family.
 - Clean non-persistence test fake operation contracts separately if broad `Record<string, any>` test fixtures become confusing.
+
+## Final validation-and-preview closure — 2026-05-29
+
+Closure task: `cycle-031-validation-and-preview-refresh-command-undo-persistence-contract-cleanup` / `t1-close-validation-preview`.
+
+### Closure scope
+
+This closure inspected the Cycle 031 decision, direct proposal, review artifact, implementation summary, implementation log, validation directory, current wave plan, and selected scoped diffs. It did not perform production implementation changes, package/tooling churn, backend/docs/spec edits, rendering/CSS/canvas/3D behavior changes, Drive/auth changes, ProjectService schema migration/backcompat work, domain snapshot redesign, monolithic reconstruction switch work, OperationRegistry global redesign, or unrelated dirty-file normalization.
+
+### Decision/proposal conformance verified
+
+- `decision.md` selected `proposals/proposal-direct.md` as the unique implementation path and rejected `proposal-restructure.md` except as a stop-condition fallback.
+- `reviews/round-01-review.md` found no blocking issues and confirmed the narrowed current-source premise: ProjectService was already a current-schema command-stream orchestrator, so Cycle 031 was correctly bounded to descriptor/registry/private-cast cleanup.
+- `.saivage/stages/cycle-031-implement-command-undo-persistence-contract-cleanup/summary.json` records completed implementation of the direct path and Reviewer retry with no blocking implementation issues.
+- The final implementation evidence preserves current-schema command-stream persistence and does not broaden into the protected stop-condition surfaces named in the decision.
+
+### Mandatory validation evidence confirmed green
+
+Existing Cycle 031 validation logs under `validation/` were re-read and confirmed:
+
+- Focused Vitest: `focused-vitest-final.out` — 6 files, 82 tests passed.
+- Root lint: `root-lint.out` — architecture lint suite passed, 4 files / 11 tests.
+- Frontend lint: `frontend-lint.out` — architecture lint suite passed, 4 files / 11 tests.
+- Root Vitest: `root-vitest.out` — green.
+- Frontend Vitest: `frontend-vitest.out` — green.
+- Root build: `root-build.out` — `vue-tsc && vite build` completed successfully.
+- Frontend build: `frontend-build.out` — `vue-tsc && vite build` completed successfully.
+- Root e2e / Playwright: `root-e2e.out` — 10 tests passed.
+- Frontend e2e / Playwright: `frontend-e2e.out` — 10 tests passed.
+- Static scan baseline: `static-scans-final.txt` — only non-persistence test-local fake operation `Record<string, any>` matches remained.
+
+Additional closure-safe verification was captured without source changes:
+
+- `validation/closure-boundary-scan.out` / `.err`
+- `validation/final-probe-and-status.out` / `.err`
+
+### Protected command/persistence boundary evidence
+
+`validation/closure-boundary-scan.out` confirms:
+
+- ProjectService has no concrete world/process-tree operation imports.
+- ProjectService has no migration/backcompat/reconstruction switch indicators.
+- No forbidden `(cmd as any).operations` or `(commandStack as any).undoStack` persistence seam is present outside CommandStack internals.
+- The process-tree descriptor cast `obj(d, 'action') as unknown as Action` is absent.
+- Converted persisted world/process-tree operation sources contain no `parameters: Record<string, any>` or `outputs: Record<string, any>` mutable bags.
+- Public command/undo persistence APIs remain present: `Command.restore(...)`, `Command.toSnapshot()`, `CommandStack.getCommittedCommands()`, and `CommandStack.restoreCommittedCommands(...)`.
+- OperationRegistry remains the descriptor boundary with `serializeOperation`, `deserializeOperation`, and `assertRestorableOperationDescriptor`.
+
+This independently confirms the protected Cycle 031 contract: ProjectService remains current-schema command-stream orchestration; descriptor restore/validation is delegated to the registry boundary; unsupported schema versions remain rejected by current validation policy; and no private command/stack persistence casts or dual descriptor compatibility path were introduced.
+
+### Live preview evidence
+
+Existing implementation evidence showed a Vite preview/dev server bound to `0.0.0.0:5173` and reachable. Closure re-probed it in `validation/final-probe-and-status.out`:
+
+- Listener: `0.0.0.0:5173`.
+- HTTP probe: `http://127.0.0.1:5173/ status=200 content_type=text/html`.
+
+Credential-free e2e/smoke evidence is covered by the green root/frontend Playwright logs, including app-shell project chooser startup without Google credentials and current UI contract tests.
+
+### Source-control reconciliation
+
+`validation/final-probe-and-status.out` records scoped status and diffstat at closure time. Dirty files unrelated to closure remain attributed and were not normalized or reverted, including pre-existing command/factory edits and deleted e2e specs. Closure-added audit evidence is limited to this implementation log section and the closure validation/probe logs.
+
+A first attempted closure command failed before producing validation artifacts because `/bin/sh` did not support `set -o pipefail`; the successful rerun used an explicit bash script and produced the closure evidence above. This was a closure-script issue only and did not affect source or validation status.
+
+### Residual risks
+
+- Non-persistence test-local fake operations still contain broad `Record<string, any>` bags in command/commandStack tests; this remains outside the converted persisted-operation scope.
+- OperationRegistry still has an isolated validation-boundary generic storage cast, already recorded as a future cleanup candidate.
+- Pre-existing deleted e2e specs and unrelated dirty command/factory diffs remain dirty and unstaged; Cycle 031 validation passed without needing to adopt or normalize them.
+
+### Next-wave recommendation
+
+Cycle 031 can be closed as complete. The next stage should be a fresh scout/scope-check for the next central wave according to the current wave-plan ordering and the latest source reality. Based on the remaining plan, recommend scouting **Wave 005 — Clean process-tree/dependency ownership and remove deprecated process APIs** next, unless the Manager determines the plan has already advanced past earlier waves and requires a reviewed wave-plan re-rank/extension first. Do not expand Cycle 031 implementation scope during that transition.
+
