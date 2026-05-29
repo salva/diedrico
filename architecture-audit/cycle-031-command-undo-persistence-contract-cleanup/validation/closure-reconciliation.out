@@ -1,0 +1,74 @@
+== timestamp ==
+2026-05-29T03:10:07+00:00
+
+== HEAD and closure commit ==
+cd596c6 [tsk-t1-close-validation-preview] [t1-close-validation-preview] close cycle 031 validation preview evidence
+edf896c [tsk-t1-implement-direct-contract-cleanup] [t1-implement-direct-contract-cleanup] implement typed operation descriptor cleanup
+
+== files changed by closure commit cd596c656f2ed5f8916b488edbea8fa483cbf24c ==
+cd596c656f2ed5f8916b488edbea8fa483cbf24c [tsk-t1-close-validation-preview] [t1-close-validation-preview] close cycle 031 validation preview evidence
+A	.saivage/stages/cycle-031-validation-and-preview-refresh-command-undo-persistence-contract-cleanup/reports/t1-close-validation-preview.json
+M	architecture-audit/cycle-031-command-undo-persistence-contract-cleanup/implementation-log.md
+A	architecture-audit/cycle-031-command-undo-persistence-contract-cleanup/validation/closure-boundary-scan.err
+A	architecture-audit/cycle-031-command-undo-persistence-contract-cleanup/validation/closure-boundary-scan.out
+M	architecture-audit/cycle-031-command-undo-persistence-contract-cleanup/validation/final-probe-and-status.out
+
+== production/test source diff relative to HEAD after closure ==
+M	frontend/src/commands/Command.ts
+M	frontend/src/commands/factories/DeletionSequenceFactory.ts
+M	frontend/src/commands/factories/PointSequenceFactory.ts
+M	frontend/src/components/panels/ActionGroupItem.vue
+M	frontend/src/components/panels/ActionItem.vue
+M	frontend/src/components/panels/ElementTypeGroup.vue
+M	frontend/src/components/toolbars/MainToolbar.vue
+M	frontend/src/composables/useHoverHighlight.ts
+M	frontend/src/domain/calculations/Intersections.ts
+M	frontend/src/domain/processTree/ActionGroup.ts
+M	frontend/src/stores/processStore.ts
+M	frontend/src/stores/viewStore.ts
+D	frontend/tests/e2e/active-plane-shortcuts.spec.ts
+D	frontend/tests/e2e/selection-mask.spec.ts
+
+== selected dirty lines already recorded before Cycle 031 implementation ==
+ M architecture-audit/cycle-031-command-undo-persistence-contract-cleanup/decision.md
+ M frontend/src/commands/Command.ts
+ M frontend/src/commands/factories/DeletionSequenceFactory.ts
+ M frontend/src/commands/factories/PointSequenceFactory.ts
+ D frontend/tests/e2e/active-plane-shortcuts.spec.ts
+ D frontend/tests/e2e/selection-mask.spec.ts
+
+== selected dirty lines at closure final probe ==
+ M architecture-audit/cycle-031-command-undo-persistence-contract-cleanup/decision.md
+ M frontend/src/commands/Command.ts
+ M frontend/src/commands/factories/DeletionSequenceFactory.ts
+ M frontend/src/commands/factories/PointSequenceFactory.ts
+ D frontend/tests/e2e/active-plane-shortcuts.spec.ts
+ D frontend/tests/e2e/selection-mask.spec.ts
+ frontend/src/commands/Command.ts                   |  6 ++---
+ frontend/tests/e2e/active-plane-shortcuts.spec.ts  | 26 ----------------------
+ frontend/tests/e2e/selection-mask.spec.ts          | 25 ---------------------
+
+== tracked/untracked Cycle 031 review and validation artifacts owned by commits ==
+UNTRACKED architecture-audit/cycle-031-command-undo-persistence-contract-cleanup/reviews/critic-round-01.md
+UNTRACKED architecture-audit/cycle-031-command-undo-persistence-contract-cleanup/reviews/decision-critic-round-01.md
+UNTRACKED architecture-audit/cycle-031-command-undo-persistence-contract-cleanup/reviews/reviewer-artifact-crosscheck.err.log
+UNTRACKED architecture-audit/cycle-031-command-undo-persistence-contract-cleanup/reviews/reviewer-artifact-crosscheck.log
+UNTRACKED architecture-audit/cycle-031-command-undo-persistence-contract-cleanup/reviews/reviewer-evidence-scan.err.log
+UNTRACKED architecture-audit/cycle-031-command-undo-persistence-contract-cleanup/reviews/reviewer-evidence-scan.log
+UNTRACKED architecture-audit/cycle-031-command-undo-persistence-contract-cleanup/reviews/reviewer-scoped-diffstat.err.log
+UNTRACKED architecture-audit/cycle-031-command-undo-persistence-contract-cleanup/reviews/reviewer-scoped-diffstat.log
+UNTRACKED architecture-audit/cycle-031-command-undo-persistence-contract-cleanup/reviews/reviewer-scoped-status.err.log
+UNTRACKED architecture-audit/cycle-031-command-undo-persistence-contract-cleanup/reviews/reviewer-scoped-status.log
+UNTRACKED architecture-audit/cycle-031-command-undo-persistence-contract-cleanup/reviews/round-01-review.md
+TRACKED architecture-audit/cycle-031-command-undo-persistence-contract-cleanup/validation/closure-boundary-scan.out
+TRACKED architecture-audit/cycle-031-command-undo-persistence-contract-cleanup/validation/closure-boundary-scan.err
+TRACKED architecture-audit/cycle-031-command-undo-persistence-contract-cleanup/validation/final-probe-and-status.out
+TRACKED architecture-audit/cycle-031-command-undo-persistence-contract-cleanup/validation/final-probe-and-status.err
+UNTRACKED architecture-audit/cycle-031-command-undo-persistence-contract-cleanup/validation/closure-reconciliation.out
+UNTRACKED architecture-audit/cycle-031-command-undo-persistence-contract-cleanup/validation/closure-reconciliation.err
+
+== current status for Cycle 031 closure-owned paths ==
+?? .saivage/stages/cycle-031-validation-and-preview-refresh-command-undo-persistence-contract-cleanup/reviews/
+?? .saivage/stages/cycle-031-validation-and-preview-refresh-command-undo-persistence-contract-cleanup/tasks.json
+?? architecture-audit/cycle-031-command-undo-persistence-contract-cleanup/validation/closure-reconciliation.err
+?? architecture-audit/cycle-031-command-undo-persistence-contract-cleanup/validation/closure-reconciliation.out

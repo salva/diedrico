@@ -248,3 +248,17 @@ A first attempted closure command failed before producing validation artifacts b
 
 Cycle 031 can be closed as complete. The next stage should be a fresh scout/scope-check for the next central wave according to the current wave-plan ordering and the latest source reality. Based on the remaining plan, recommend scouting **Wave 005 — Clean process-tree/dependency ownership and remove deprecated process APIs** next, unless the Manager determines the plan has already advanced past earlier waves and requires a reviewed wave-plan re-rank/extension first. Do not expand Cycle 031 implementation scope during that transition.
 
+### Closure reconciliation addendum — Reviewer round 01 follow-up
+
+Reviewer round 01 asked for explicit reconciliation of dirty selected-path files and untracked cycle-owned artifacts before closure. The follow-up evidence is captured in `validation/closure-reconciliation.out` / `.err`.
+
+Reconciliation findings:
+
+- Closure commit `cd596c656f2ed5f8916b488edbea8fa483cbf24c` changed only closure/audit artifacts: this implementation log, closure validation/probe logs, and the persisted closure task report. It did **not** change production source, production tests, package/tooling, backend, docs/specs, rendering, Drive/auth, or protected configuration.
+- The dirty selected production/test paths reported in `validation/final-probe-and-status.out` are also present in `validation/pre-edit-status.txt`, captured before the Cycle 031 implementation stage: `frontend/src/commands/Command.ts`, `frontend/src/commands/factories/DeletionSequenceFactory.ts`, `frontend/src/commands/factories/PointSequenceFactory.ts`, and deleted e2e specs `frontend/tests/e2e/active-plane-shortcuts.spec.ts` / `frontend/tests/e2e/selection-mask.spec.ts`. They were not created, reverted, staged, or normalized by this closure stage.
+- `architecture-audit/cycle-031-command-undo-persistence-contract-cleanup/decision.md` was likewise already dirty in the pre-implementation baseline and was not changed by the closure commit.
+- Cycle-owned review artifacts under `architecture-audit/cycle-031-command-undo-persistence-contract-cleanup/reviews/` are authoritative Cycle 031 review/decision evidence and are finalized as audit artifacts, not production implementation changes.
+- The new reconciliation log itself is closure evidence and is limited to audit/source-control attribution.
+
+Acceptance statement after reconciliation: Cycle 031 closure made no production implementation changes and did not normalize unrelated dirty files. Remaining production/test dirt in the worktree is pre-existing or from earlier implementation context and must not be attributed to this closure stage. Cycle 031 can be closed based on the tracked closure evidence, with the next stage recommended as a fresh scout/scope-check for Wave 005 unless the Planner elects a reviewed wave-plan re-rank/extension.
+
