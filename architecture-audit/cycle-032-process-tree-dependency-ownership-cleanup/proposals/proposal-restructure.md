@@ -31,7 +31,7 @@ Same as proposal-direct:
 - `frontend/src/stores/processStore.ts` if unused, with explicit implementation-log attribution that the file was pre-dirty and Cycle 032 owns deletion of the whole legacy store rather than merging its local edits.
 - Unimplemented process-tree operation classes and registry entries for action-group/subprocess removal.
 - Round-trip tests for deleted unimplemented descriptors.
-- Stale README entries or the README if it becomes placeholder-only.
+- Stale README entries for the unimplemented operation placeholders confirmed by round-01 review, or the README if it becomes placeholder-only.
 - Tests asserting deprecated implicit action insertion or process-tree-owned dependency queries if discovered.
 
 ## Expected behavior change
