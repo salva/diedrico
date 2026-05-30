@@ -4,11 +4,18 @@
 
 Scoped pre-design status for Wave 005 paths was inspected before writing this artifact:
 
-- `git status --short -- ...` showed pre-existing scoped dirt in `frontend/src/domain/processTree/ActionGroup.ts` plus deleted e2e specs `frontend/tests/e2e/active-plane-shortcuts.spec.ts` and `frontend/tests/e2e/selection-mask.spec.ts`.
-- `git diff --stat -- ...` showed `ActionGroup.ts` changed by 22 lines and the two e2e specs deleted.
-- These files were not normalized, reverted, staged, or incorporated as Cycle 032 implementation. Cycle 031 also records those e2e deletions as pre-existing and not attributable to closure (`architecture-audit/cycle-031-command-undo-persistence-contract-cleanup/implementation-log.md:257-263`).
+- `git status --short -- ...` showed pre-existing scoped dirt in `frontend/src/domain/processTree/ActionGroup.ts`, `frontend/src/stores/processStore.ts`, plus deleted e2e specs `frontend/tests/e2e/active-plane-shortcuts.spec.ts` and `frontend/tests/e2e/selection-mask.spec.ts`.
+- `git diff --stat -- ...` showed `ActionGroup.ts` changed by 22 lines, `processStore.ts` changed by 20 lines, and the two e2e specs deleted.
+- The `processStore.ts` pre-existing diff is type/null-safety churn inside an unused legacy Pinia store: it changes `ConstructiveAction` references to `ActionNode`, adds child null checks, and keeps the same exported `useProcessStore` surface. Current evidence still shows the store's only usage is its own export (`frontend/src/stores/processStore.ts:14`) and it still owns a parallel `CommandStack` plus process mutators (`frontend/src/stores/processStore.ts:7-18`, `:91-188`).
+- These pre-existing dirty files were not normalized, reverted, staged, or incorporated as Cycle 032 implementation during this design correction. Cycle 031 also records the e2e deletions as pre-existing and not attributable to closure (`architecture-audit/cycle-031-command-undo-persistence-contract-cleanup/implementation-log.md:257-263`).
 
-This design-only scout changes only `architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/**` and the stage report.
+This design-only correction changes only `architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/**` and the stage report.
+
+### Ownership decision for dirty `processStore.ts`
+
+Cycle 032 may still own deletion of `frontend/src/stores/processStore.ts` despite its pre-existing dirty state, because the architectural target is to remove the entire unused parallel process-history store, not to preserve or merge the local edits inside it. The file is direct evidence of the remaining ownership smell: it defines a separate Pinia process store, a separate `CommandStack`, path-based process mutations, and the only remaining `addAction(` method in active source (`frontend/src/stores/processStore.ts:14-18`, `:91-188`). If implementation confirms the usage scan remains empty, deleting the whole file intentionally supersedes the pre-existing local edits and must be recorded in `implementation-log.md` as a Cycle 032-owned deletion of a pre-dirty file.
+
+If implementation finds any active import, dynamic registration, or user-owned purpose for the dirty edits that cannot be cleanly attributed, Cycle 032 must stop for a reviewed delta or narrow the direct proposal by removing `processStore.ts` from the delete list. It must not silently absorb unrelated edits by rewriting the store in place.
 
 ## Wave validity and centrality
 
@@ -30,7 +37,7 @@ Remaining process-history smells inside scope:
 
 ### Deprecated process APIs
 
-Static scan found no active `ProcessTree.addAction()` or `getActionsDependingOnElement()` in `frontend/src/domain/processTree/ProcessTree.ts` or active callers. The only `addAction(` match is `frontend/src/stores/processStore.ts:117`, in an unused Pinia store that imports a separate process model and owns a parallel `CommandStack` (`frontend/src/stores/processStore.ts:1-18`, `:91-188`); static usage scan found only the store's own export. This is a remaining legacy/dead process surface and should be a DELETE candidate if implementation confirms no dynamic use.
+Static scan found no active `ProcessTree.addAction()` or `getActionsDependingOnElement()` in `frontend/src/domain/processTree/ProcessTree.ts` or active callers. The only `addAction(` match is `frontend/src/stores/processStore.ts:117`, in an unused Pinia store that imports a separate process model and owns a parallel `CommandStack` (`frontend/src/stores/processStore.ts:1-18`, `:91-188`); static usage scan found only the store's own export. This file is already dirty before Cycle 032 implementation, but the dirt is inside the same unused legacy surface. Deletion remains in-scope if implementation records that it is deleting a pre-dirty file rather than adopting its edits; otherwise stop/narrow if ownership cannot be cleanly attributed.
 
 ### DependencyService overlap
 
@@ -63,7 +70,7 @@ Focused surfaces include `frontend/tests/unit/processTree.spec.ts`, `frontend/te
 Cycle 032 should propose a bounded Wave 005 implementation that:
 
 1. Treats absent `ProcessTree.addAction()` / `getActionsDependingOnElement()` as already deleted and proves absence with architecture/static tests.
-2. Deletes the unused legacy `frontend/src/stores/processStore.ts` if implementation confirms no active imports beyond its own export.
+2. Deletes the unused legacy `frontend/src/stores/processStore.ts` if implementation confirms no active imports beyond its own export; because the file is pre-dirty, the implementation log must explicitly state that Cycle 032 owns deletion of the whole unused file and is not preserving/merging the pre-existing local edits.
 3. Deletes unimplemented future process operations and their registry/tests/docs entries: `RemoveActionGroupFromProcessTreeOp`, `RemoveSubprocessFromProcessTreeOp`, round-trip tests for them, README bullets, and exports/imports.
 4. Normalizes remaining process/dependency comments and read-model seams without changing user behavior: ProcessTree remains construction history; DependencyService remains dependency graph; related-action calculation remains outside ProcessTree.
 5. Optionally adds a narrow read-port seam for related-action lookup if it can be done without broad AppShell/RuntimeSession redesign; otherwise leave that to later UI/app-shell waves.
@@ -77,7 +84,7 @@ Stop and request a reviewed wave-plan correction or delta proposal if implementa
 - Rendering, CSS, canvas, 3D, Drive/auth, backend/docs/specs/package-tooling, validation-platform, or app-shell production composition redesign.
 - Broad ActionsPanel feature changes; the component already consumes intents.
 - Broad command-controller work belonging to Wave 006a/006b.
-- Adoption/normalization of pre-existing dirty `ActionGroup.ts` or deleted e2e specs unless directly reviewed as in-scope.
+- Adoption/normalization of pre-existing dirty `ActionGroup.ts` or deleted e2e specs unless directly reviewed as in-scope. `processStore.ts` is the exception only if the selected proposal deletes the whole unused file after confirming no active imports and records the pre-dirty deletion attribution; otherwise dirty-store authorship uncertainty is a stop/narrow condition.
 
 ## Validation requirements for eventual implementation
 

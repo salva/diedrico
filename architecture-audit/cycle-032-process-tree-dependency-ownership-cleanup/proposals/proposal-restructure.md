@@ -21,14 +21,14 @@ Likely source changes:
 - Add a small application process-history read boundary under `frontend/src/application/processHistory/` or refactor `frontend/src/application/appShell/readModels/ProcessTreeReadModel.ts` to accept narrow ports instead of `World`.
 - `frontend/src/application/appShell/RuntimeSession.ts`: wire the new boundary from current `World` methods without changing app-shell composition behavior.
 - `frontend/src/application/appShell/RuntimeViewPorts.ts`: adjust `ProcessTreeReadPort` types only if needed.
-- Same direct-path deletions: unused `processStore.ts`; unimplemented `RemoveActionGroupFromProcessTreeOp` / `RemoveSubprocessFromProcessTreeOp`; descriptor registrations and tests; stale README entries.
+- Same direct-path deletions: unused `processStore.ts`; unimplemented `RemoveActionGroupFromProcessTreeOp` / `RemoveSubprocessFromProcessTreeOp`; descriptor registrations and tests; stale README entries. The `processStore.ts` deletion inherits the direct proposal's pre-dirty attribution rule: delete the whole unused file only after confirming no active imports, record the pre-dirty deletion, and do not rewrite it in place.
 - Focused tests for the new read boundary plus the same process/panel/persistence tests.
 
 ## Files/tests/docs/fixtures to DELETE
 
 Same as proposal-direct:
 
-- `frontend/src/stores/processStore.ts` if unused.
+- `frontend/src/stores/processStore.ts` if unused, with explicit implementation-log attribution that the file was pre-dirty and Cycle 032 owns deletion of the whole legacy store rather than merging its local edits.
 - Unimplemented process-tree operation classes and registry entries for action-group/subprocess removal.
 - Round-trip tests for deleted unimplemented descriptors.
 - Stale README entries or the README if it becomes placeholder-only.
@@ -44,6 +44,7 @@ No user-visible behavior change. The construction history panel should render th
 - **Risk:** Description and infeasibility rendering still need world/domain element lookup. **Mitigation:** either keep those as explicit narrow ports or stop if the seam becomes a general selector/rendering redesign better suited to later waves.
 - **Risk:** This overlaps Wave 006b panel/use-case cleanup. **Mitigation:** do not touch panel command intents beyond preserving existing injected ports.
 - **Risk:** More files and tests than direct path. **Mitigation:** choose this only if critic/reviewer requires stronger ownership proof than deletion/static tests.
+- **Risk:** The fallback inherits the dirty `processStore.ts` blocker if it treats the store as something to preserve. **Mitigation:** keep the same delete-or-stop rule as the direct proposal: either delete the whole unused pre-dirty store with explicit attribution, or stop/narrow if any active usage or ownership uncertainty appears.
 
 ## Validation plan
 
@@ -68,7 +69,8 @@ Stop and prefer proposal-direct or a wave-plan correction if the read-port split
 - moving DependencyService out of `World`,
 - changing descriptor/description architecture,
 - command descriptor redesign,
-- or panel/toolbar command-intent work belonging to Wave 006b.
+- panel/toolbar command-intent work belonging to Wave 006b,
+- or preservation/rewriting of the dirty `processStore.ts` instead of whole-file deletion after an empty usage scan.
 
 ## No-backcompat rationale
 

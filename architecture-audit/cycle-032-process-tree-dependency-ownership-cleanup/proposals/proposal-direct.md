@@ -14,7 +14,7 @@ Expected source changes:
 
 - `frontend/src/domain/processTree/Action.ts` and action creator comments: remove phase-era/deprecated wording and state that dependency relations are queried through the dependency boundary, not stored on actions.
 - `frontend/src/domain/processTree/ProcessTree.ts`: delete routine debug `console.log`/`console.error` from toggle methods if touched; optionally add comments/tests documenting absence of dependency query APIs. Do not add new dependency-service imports.
-- `frontend/src/stores/processStore.ts`: delete after confirming no active imports. It is an unused parallel process store with its own `CommandStack` and `addAction` mutator.
+- `frontend/src/stores/processStore.ts`: delete after confirming no active imports. It is an unused parallel process store with its own `CommandStack` and `addAction` mutator. The file is already dirty before Cycle 032 implementation; deletion is still owned by this proposal because the whole legacy surface is being removed, but the implementation log must call out the pre-dirty state and must not rewrite or preserve its local edits.
 - `frontend/src/commands/operations/processTree/ProcessTreeOperations.ts`: delete `RemoveActionGroupFromProcessTreeOp` and `RemoveSubprocessFromProcessTreeOp`; keep `RemoveActionFromProcessTreeOp` because deletion flows use it.
 - `frontend/src/commands/operations/processTree/registerProcessTreeOperationDescriptors.ts`: delete registrations/imports for the removed unimplemented operations.
 - `frontend/src/commands/operations/processTree/README.md`: delete or update bullets that advertise removed unimplemented operations; delete the README if it becomes stale/noisy placeholder documentation.
@@ -25,7 +25,7 @@ No expected changes to `ActionsPanel.vue` unless a small import/type adjustment 
 
 ## Files/tests/docs/fixtures to DELETE
 
-- `frontend/src/stores/processStore.ts` if static import scan remains empty.
+- `frontend/src/stores/processStore.ts` if static import scan remains empty. This deletion intentionally supersedes the pre-existing type/null-safety edits in that unused file; if any active usage appears, remove this deletion from scope via reviewed delta instead of partially migrating the store.
 - `RemoveActionGroupFromProcessTreeOp` and `RemoveSubprocessFromProcessTreeOp` classes from `frontend/src/commands/operations/processTree/ProcessTreeOperations.ts`.
 - Their descriptor registrations in `registerProcessTreeOperationDescriptors.ts`.
 - Their serialization round-trip tests in `frontend/tests/unit/services/ProjectService.roundTrip.spec.ts`.
@@ -41,6 +41,7 @@ No intended user-visible behavior change. Construction history panel push/pop/to
 - **Risk:** ProjectService round-trip tests currently assert descriptor support for the dead operations. **Mitigation:** delete those tests with the operations and retain active process operation round-trip coverage.
 - **Risk:** `processStore.ts` may be dynamically imported. **Mitigation:** require static search and build; if any active import appears, stop and revise scope rather than partially migrating a parallel store.
 - **Risk:** Removing registry entries changes open-project behavior for current files containing dead operation types. **Mitigation:** accepted by no-backcompat priorities because those operations never implemented successful behavior.
+- **Risk:** `processStore.ts` is already dirty before implementation. **Mitigation:** treat deletion as a deliberate Cycle 032-owned deletion of the whole unused legacy store only after confirming no active imports; record the pre-dirty deletion in `implementation-log.md`; do not edit the file in place or silently merge its local changes. If ownership cannot be cleanly attributed, stop for reviewed narrowing.
 - **Risk:** Dirty `ActionGroup.ts` may overlap. **Mitigation:** inspect diff before implementation; do not adopt unrelated changes without explicit attribution.
 
 ## Validation plan
@@ -67,7 +68,7 @@ Do not modify ProjectService schema/replay semantics, OperationRegistry architec
 
 ## Stop conditions
 
-Stop for a reviewed delta/plan correction if cleanup requires broad ActionsPanel command-controller redesign, ProjectService migrations/backcompat, operation descriptor framework redesign, DependencyService relocation, app-shell RuntimeSession rewrite, or adoption of pre-existing dirty files outside the selected cleanup.
+Stop for a reviewed delta/plan correction if cleanup requires broad ActionsPanel command-controller redesign, ProjectService migrations/backcompat, operation descriptor framework redesign, DependencyService relocation, app-shell RuntimeSession rewrite, adoption of pre-existing dirty files outside the selected cleanup, or rewriting/preserving the dirty `processStore.ts` edits instead of deleting the unused store outright.
 
 ## No-backcompat rationale
 
