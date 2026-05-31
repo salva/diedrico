@@ -32,7 +32,7 @@ import { AddLineCircleIntersectionPoint2DOp } from '@/commands/operations/world/
 import { AddCircleCircleIntersectionPoint2DOp } from '@/commands/operations/world/AddCircleCircleIntersectionPoint2DOp';
 import { RemovePoint2DOp, RemoveLine2DOp, RemoveSegment2DOp, RemoveCircle2DOp, RemoveGuide2DOp } from '@/commands/operations/world/RemoveElementOps';
 import { UpdateElementStyleOp } from '@/commands/operations/world/UpdateElementStyleOp';
-import { RemoveActionFromProcessTreeOp, RemoveActionGroupFromProcessTreeOp, RemoveSubprocessFromProcessTreeOp } from '@/commands/operations/processTree/ProcessTreeOperations';
+import { RemoveActionFromProcessTreeOp } from '@/commands/operations/processTree/ProcessTreeOperations';
 
 describe('Round-Trip Serialization Tests', () => {
   let world: World;
@@ -198,24 +198,6 @@ describe('Round-Trip Serialization Tests', () => {
     
     expect(result.type).toBe('RemoveActionFromProcessTree');
     expect(result.serialize()).toMatchObject({ opType: 'RemoveActionFromProcessTree', actionId: 'action_123' });
-  });
-
-  it('RemoveActionGroupFromProcessTree survives round-trip', () => {
-    const op = new RemoveActionGroupFromProcessTreeOp('group_456');
-    
-    const result = roundTripOperation(op, world, commandStack);
-    
-    expect(result.type).toBe('RemoveActionGroupFromProcessTree');
-    expect(result.serialize()).toMatchObject({ opType: 'RemoveActionGroupFromProcessTree', groupId: 'group_456' });
-  });
-
-  it('RemoveSubprocessFromProcessTree survives round-trip', () => {
-    const op = new RemoveSubprocessFromProcessTreeOp('subprocess_789');
-    
-    const result = roundTripOperation(op, world, commandStack);
-    
-    expect(result.type).toBe('RemoveSubprocessFromProcessTree');
-    expect(result.serialize()).toMatchObject({ opType: 'RemoveSubprocessFromProcessTree', subprocessId: 'subprocess_789' });
   });
 });
 

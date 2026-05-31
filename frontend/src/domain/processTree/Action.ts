@@ -1,25 +1,10 @@
 /**
- * Action - Base interface for construction actions in the process tree
- * 
- * Phase 93: Minimal Action interface - only 3 fields
- * - elementId: The created element (type derivable from element itself)
- * - description: Human-readable narrative (static for now, dynamic later)
- * - isOutput: Black box visibility flag (defaults to true)
- * 
- * Phase 98: Dynamic Action Descriptions
- * - Added getDescriptionParts() helper function (not a method on interface)
- * - Descriptions computed dynamically from current world state
- * - Uses Descriptor pattern for separation of concerns
- * 
- * Removed fields (all redundant):
- * - id: Actions tied to elements, use elementId
- * - type: Always 'action', unnecessary discriminator
- * - actionType: Derivable from element.type
- * - timestamp: Can be derived from element.created if needed
- * 
- * Dependencies: Query world.dependencyService.getDependencies(elementId)
- * Element properties: Direct access (element.planeId, line.point1Id, etc.)
- * 
+ * Action - metadata for a construction step in the process tree.
+ *
+ * Actions identify the element produced by a construction step, carry a
+ * human-readable fallback description, and store the process-tree output flag.
+ * Dependency relations are not stored on actions; callers query them through
+ * the dependency boundary owned by the world/domain layer.
  */
 
 import type { World } from '@/domain/world/World';
@@ -29,7 +14,7 @@ import { DescriptorRegistry } from '@/domain/world/descriptors/DescriptorRegistr
 export interface Action {
   elementId: string;             // Element created by this action
   description: string;           // Human-readable action narrative
-  isOutput: boolean;             // Phase 87: Output flag (Show in black box stack)
+  isOutput: boolean;             // Output flag (show in black box stack)
 }
 
 /**
@@ -114,6 +99,6 @@ export function createAction(
   return {
     elementId,
     description: description ?? `Created ${elementId}`,
-    isOutput: true  // Default to true (user correction from Phase 93 planning)
+    isOutput: true
   };
 }

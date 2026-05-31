@@ -1,0 +1,162 @@
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Line-Line Intersection > should return infeasible for parallel lines
+[Point2DLineLineIntersection] Lines do not intersect (parallel or coincident)
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Line-Segment Intersection > should return infeasible when intersection is outside segment bounds
+[Point2DLineLineIntersection] Intersection falls outside segment bounds (line2)
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Segment-Segment Intersection > should return infeasible when intersection is outside one segment
+[Point2DLineLineIntersection] Intersection falls outside segment bounds (line1)
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Segment-Segment Intersection > should return infeasible when intersection is outside both segments
+[Point2DLineLineIntersection] Intersection falls outside segment bounds (line1)
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Line-Circle Intersection > should return infeasible when line does not intersect circle
+[Point2DLineCircleIntersection] Line and circle do not intersect
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Segment-Circle Intersection > should return infeasible when intersection is outside segment bounds
+[Point2DLineCircleIntersection] Intersection falls outside segment bounds
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Segment-Circle Intersection > should handle segment partially intersecting circle
+[Point2DLineCircleIntersection] Intersection falls outside segment bounds
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Circle-Circle Intersection > should return infeasible when circles do not intersect
+[Point2DCircleCircleIntersection] Circles do not intersect
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Parent Infeasibility Propagation > should propagate infeasible line to line-line intersection
+[Point2DLineLineIntersection] Parent element is infeasible, marking this as infeasible
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Parent Infeasibility Propagation > should propagate infeasible circle to line-circle intersection
+Circle projPlane3/circle2d15: center and circumference point are coincident
+Circle projPlane3/circle2d15: center and circumference point are coincident
+[Point2DLineCircleIntersection] Parent element is infeasible, marking this as infeasible
+
+stderr | tests/unit/domain/world.spec.ts > ProjectionPlane Factory Methods > Factory Methods > addLineLineIntersection > should throw error for parallel lines
+[Point2DLineLineIntersection] Lines do not intersect (parallel or coincident)
+
+stderr | tests/unit/services/googleDriveService.spec.ts > GoogleDriveService > initialize > should throw error if initialization fails
+[GoogleDrive] Initialization failed: Error: Init failed
+    at /work/diedrico/frontend/tests/unit/services/googleDriveService.spec.ts:123:46
+    at file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:135:14
+    at file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:60:26
+    at runTest (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:781:17)
+    at runSuite (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runSuite (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runSuite (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runFiles (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:958:5)
+    at startTests (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:967:3)
+    at file:///work/diedrico/frontend/node_modules/vitest/dist/chunks/runtime-runBaseTests.oAvMKtQC.js:116:7
+[GoogleDrive] Error details: {}
+
+stderr | tests/unit/domain/Line3DReconstruction.test.ts > Line3D Reconstruction from Projections > should detect infeasible 3D line when lifted planes are parallel
+[Line3DFromProjections] Planes are parallel - no intersection
+
+stderr | tests/unit/commands/factories/DeletionSequenceFactory.spec.ts > DeletionSequenceFactory > createCascadeDeletion > should handle element without process tree action
+[DeletionSequenceFactory] Element projPlane3/point2d10 has no producing action - skipping
+
+stderr | tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Save behavior > should not save with validation errors
+[PropertiesDialog] Validation failed
+
+stderr | tests/unit/stores/authStore.spec.ts > authStore > restoreSession > should handle corrupted profile data
+[AuthStore] Failed to parse stored profile: SyntaxError: Unexpected token 'i', "invalid-json{" is not valid JSON
+    at JSON.parse (<anonymous>)
+    at Object.restoreSession (/work/diedrico/frontend/src/stores/authStore.ts:96:28)
+    at /work/diedrico/frontend/tests/unit/stores/authStore.spec.ts:166:34
+    at file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:135:14
+    at file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:60:26
+    at runTest (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:781:17)
+    at runSuite (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runSuite (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runSuite (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runFiles (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:958:5)
+
+stderr | tests/unit/domain/degenerateRealize2D.spec.ts > Degenerate Point Handling in realize2D > Line2DParallel > should return infeasible when through-point is infeasible
+[Point2DLineLineIntersection] Lines do not intersect (parallel or coincident)
+[Point2DLineLineIntersection] Lines do not intersect (parallel or coincident)
+
+stderr | tests/unit/domain/degenerateRealize2D.spec.ts > Degenerate Point Handling in realize2D > Circle2D > should return infeasible when center and circumference point coincide
+Circle projPlane3/circle2d12: center and circumference point are coincident
+
+stderr | tests/unit/domain/circle.spec.ts > Circle2D > Circle2DByCenterAndPoint > should return null for degenerate circle (center = circumference point)
+Circle projPlane3/circle2d15: center and circumference point are coincident
+
+stderr | tests/unit/domain/circle.spec.ts > Circle2D > Circle2DByThreePoints > should return null for collinear points
+Circle projPlane3/circle2d17: three points are collinear
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/commands/initializationOps.spec.ts > Initialization Operations > CreateInitializationSubprocessOp > should have valid parameters and outputs
+AssertionError: expected undefined to deeply equal { subprocessName: 'Custom Name' }
+
+- Expected: 
+Object {
+  "subprocessName": "Custom Name",
+}
+
++ Received: 
+undefined
+
+ ❯ tests/unit/commands/initializationOps.spec.ts:97:29
+     95|       const op = new CreateInitializationSubprocessOp('Custom Name');
+     96|       
+     97|       expect(op.parameters).toEqual({ subprocessName: 'Custom Name' });
+       |                             ^
+     98|       expect(op.outputs).toEqual({});
+     99|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  tests/unit/commands/initializationOps.spec.ts > Initialization Operations > AddPlane3DFixedOp > should have valid parameters and outputs
+TypeError: Cannot read properties of undefined (reading 'point')
+ ❯ tests/unit/commands/initializationOps.spec.ts:163:28
+    161|       const op = new AddPlane3DFixedOp(point, normal, 'plane_test');
+    162|       
+    163|       expect(op.parameters.point).toEqual({ x: 0, y: 0, z: 0, w: 1 });
+       |                            ^
+    164|       expect(op.parameters.normal).toEqual({ x: 0, y: 0, z: 1, w: 0 });
+    165|       expect(op.parameters.planeId).toBe('plane_test');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  tests/unit/commands/initializationOps.spec.ts > Initialization Operations > AddProjectionPlaneFixedOp > should have valid parameters with matrix arrays
+TypeError: Cannot read properties of undefined (reading 'plane3DId')
+ ❯ tests/unit/commands/initializationOps.spec.ts:236:28
+    234|       );
+    235|       
+    236|       expect(op.parameters.plane3DId).toBe('plane_3d');
+       |                            ^
+    237|       expect(op.parameters.projPlaneId).toBe('proj_test');
+    238|       expect(op.parameters.planeToPaper2D).toBeDefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  tests/unit/commands/initializationOps.spec.ts > Initialization Operations > AddOriginPoint2DOp > should have valid parameters
+TypeError: Cannot read properties of undefined (reading 'projPlaneId')
+ ❯ tests/unit/commands/initializationOps.spec.ts:284:28
+    282|       const op = new AddOriginPoint2DOp('proj', position);
+    283|       
+    284|       expect(op.parameters.projPlaneId).toBe('proj');
+       |                            ^
+    285|       expect(op.parameters.position).toEqual({ x: 1, y: 2, z: 1 });
+    286|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  tests/unit/commands/initializationOps.spec.ts > Initialization Operations > AddHalfHingeLine2DOp > should have valid parameters
+TypeError: Cannot read properties of undefined (reading 'projPlaneId')
+ ❯ tests/unit/commands/initializationOps.spec.ts:388:28
+    386|       const op = new AddHalfHingeLine2DOp('proj_plane_id', 'hinge_line…
+    387|       
+    388|       expect(op.parameters.projPlaneId).toBe('proj_plane_id');
+       |                            ^
+    389|       expect(op.parameters.hingeLineId).toBe('hinge_line_id');
+    390|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c vitest run

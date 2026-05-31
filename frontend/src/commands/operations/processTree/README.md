@@ -2,11 +2,8 @@
 
 Operations modifying the construction history tree.
 
-**Scope**: Actions, action groups, subprocesses, construction organization.
+**Scope**: construction-history actions and subprocess stack organization.
 
-**Examples**:
-- `RemoveActionFromProcessTreeOp` - Remove action from history
-- `RemoveActionGroupFromProcessTreeOp` - Remove action group
-- `RemoveSubprocessFromProcessTreeOp` - Remove subprocess
+**Active operations** include adding action groups/actions, pushing and popping subprocesses, renaming/toggling process nodes, and `RemoveActionFromProcessTreeOp` for tombstone-based action deletion.
 
-All ProcessTree operations modify the construction history (ProcessTree class) which tracks how the geometric model was built.
+Dependency relations are queried through the dependency boundary; these operations only mutate the ProcessTree construction history.

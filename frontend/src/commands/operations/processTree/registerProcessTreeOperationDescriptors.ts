@@ -8,7 +8,7 @@ import { PopSubprocessOp } from './PopSubprocessOp';
 import { RenameSubprocessOp } from './RenameSubprocessOp';
 import { ToggleEncapsulationOp } from './ToggleEncapsulationOp';
 import { ToggleOutputOp } from './ToggleOutputOp';
-import { RemoveActionFromProcessTreeOp, RemoveActionGroupFromProcessTreeOp, RemoveSubprocessFromProcessTreeOp } from './ProcessTreeOperations';
+import { RemoveActionFromProcessTreeOp } from './ProcessTreeOperations';
 import type { Action } from '@/domain/processTree/Action';
 
 function s(d: JsonObject, key: string): string { const v = d[key]; if (typeof v !== 'string') throw new Error(`Invalid ${String(d.opType)} descriptor: ${key} must be string`); return v; }
@@ -39,6 +39,4 @@ export function registerProcessTreeOperationDescriptors(registry: OperationRegis
   registry.register('ToggleEncapsulation', d => new ToggleEncapsulationOp(s(d, 'subprocessId')));
   registry.register('ToggleOutput', d => new ToggleOutputOp(s(d, 'nodeId')));
   registry.register('RemoveActionFromProcessTree', d => new RemoveActionFromProcessTreeOp(s(d, 'actionId')));
-  registry.register('RemoveActionGroupFromProcessTree', d => new RemoveActionGroupFromProcessTreeOp(s(d, 'groupId')));
-  registry.register('RemoveSubprocessFromProcessTree', d => new RemoveSubprocessFromProcessTreeOp(s(d, 'subprocessId')));
 }

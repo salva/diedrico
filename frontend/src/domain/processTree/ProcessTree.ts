@@ -26,14 +26,14 @@ export interface Subprocess extends ProcessNodeBase {
   name: string;
   children: (Subprocess | ActionGroup)[];  // Mixed children, no direct actions
   showIntermediates: boolean;              // Phase 87: Encapsulation (Positive Logic)
-  isOutput: boolean;                       // Phase 87: Output flag (punches through encapsulation)
+  isOutput: boolean;                       // Output flag (punches through encapsulation)
 }
 
 export interface ActionGroup extends ProcessNodeBase {
   type: 'actionGroup';
   children: (ActionNode | null)[];         // Actions or tombstones (null = deleted)
   isAuxiliary: boolean;                    // Auxiliary actions (lighter styling)
-  isOutput: boolean;                       // Phase 87: Output flag
+  isOutput: boolean;                       // Output flag
 }
 
 // ActionNode wraps Action to fit the tree structure
@@ -48,12 +48,11 @@ type ChangeListener = (version: number) => void;
 export class ProcessTree {
   root: Subprocess;
   private _version: number = 0;
-  private subprocessStack: Subprocess[] = [];  // Phase 85: Subprocess stack
+  private subprocessStack: Subprocess[] = [];
   private listeners: ChangeListener[] = [];
 
   constructor() {
     // Initialize with root subprocess
-    // Phase 95: Use fixed ID for root so toggle operations work across sessions
     this.root = {
       id: 'root',
       type: 'subprocess',
@@ -91,7 +90,6 @@ export class ProcessTree {
 
   /**
    * Get the current active subprocess (top of stack)
-   * Phase 85: Stack-based subprocess management
    */
   getCurrentSubprocess(): Subprocess {
     return this.subprocessStack[this.subprocessStack.length - 1];
@@ -100,7 +98,6 @@ export class ProcessTree {
   /**
    * Push a new subprocess onto the stack
    * All subsequent actions will be added to this subprocess
-   * Phase 85: Stack-based subprocess management
    * @param id - Optional ID to use (for deserialization), otherwise generates new ID
    */
   pushSubprocess(name: string, id?: string): Subprocess {
@@ -129,7 +126,6 @@ export class ProcessTree {
    * Pop the current subprocess from the stack
    * Returns to parent subprocess
    * The subprocess remains in the tree as a child of its parent
-   * Phase 85: Stack-based subprocess management
    */
   popSubprocess(): void {
     if (this.subprocessStack.length <= 1) {
@@ -200,10 +196,9 @@ export class ProcessTree {
       throw new Error(`ActionGroup ${groupId} not found`);
     }
 
-    // Phase 93: Wrap Action (3 fields) in ActionNode (adds id, type, created)
     const actionNode: ActionNode = {
       ...action,
-      id: this.generateId(),  // Generate ID for tree node
+      id: this.generateId(),
       type: 'action',
       isOutput: action.isOutput !== undefined ? action.isOutput : true,
       created: new Date()
@@ -233,9 +228,7 @@ export class ProcessTree {
   toggleSubprocessEncapsulation(subprocessId: string): void {
     this.traverseSubprocesses(this.root, (subprocess) => {
       if (subprocess.id === subprocessId) {
-        const oldValue = subprocess.showIntermediates;
         subprocess.showIntermediates = !subprocess.showIntermediates;
-        console.log(`[ProcessTree.toggleSubprocessEncapsulation] subprocessId: ${subprocessId}, ${oldValue} → ${subprocess.showIntermediates}`);
         this.notifyChange();
       }
     });
@@ -250,9 +243,7 @@ export class ProcessTree {
     let handled = false;
     this.traverseSubprocesses(this.root, (subprocess) => {
       if (subprocess.id === nodeId) {
-        const oldValue = subprocess.isOutput;
         subprocess.isOutput = !subprocess.isOutput;
-        console.log(`[ProcessTree.toggleOutput] subprocess ${nodeId}, ${oldValue} → ${subprocess.isOutput}`);
         handled = true;
       }
     });
@@ -267,15 +258,11 @@ export class ProcessTree {
     this.traverseAllNodes(this.root, (node) => {
       if (node.type === 'actionGroup' && node.id === nodeId) {
         const group = node as ActionGroup;
-        const oldValue = group.isOutput;
         group.isOutput = !group.isOutput;
-        console.log(`[ProcessTree.toggleOutput] actionGroup ${nodeId}, ${oldValue} → ${group.isOutput}`);
         handled = true;
       } else if (node.type === 'action' && node.id === nodeId) {
         const action = node as ActionNode;
-        const oldValue = action.isOutput;
         action.isOutput = !action.isOutput;
-        console.log(`[ProcessTree.toggleOutput] action ${nodeId}, ${oldValue} → ${action.isOutput}`);
         // Also toggle the parent group? 
         // For now, let's assume we operate on individual IDs.
         // But UI usually displays Groups or merged items.
@@ -288,8 +275,6 @@ export class ProcessTree {
     
     if (handled) {
       this.notifyChange();
-    } else {
-      console.error(`[ProcessTree.toggleOutput] Node ${nodeId} not found`);
     }
   }
 
@@ -360,8 +345,7 @@ export class ProcessTree {
   }
 
   /**
-   * Get actions that produce a specific element (by elementId)
-   * Phase 92: Use action.elementId instead of action.outputs
+   * Get actions that produce a specific element.
    */
   getActionsProducingElement(elementId: string): ActionNode[] {
     const actions: ActionNode[] = [];
@@ -397,8 +381,7 @@ export class ProcessTree {
   }
 
   /**
-   * Remove an action by elementId (Phase 93)
-   * Used when actions no longer have persistent IDs
+   * Remove an action by elementId.
    * 
    * @param elementId - ID of element produced by action
    * @returns Object with removed action data and location, or null if not found
