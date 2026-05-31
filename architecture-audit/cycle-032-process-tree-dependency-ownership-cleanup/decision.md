@@ -2,191 +2,244 @@
 
 ## Decision status
 
-Cycle 032 is approved to proceed to implementation. Review convergence is complete with no remaining blockers.
+Cycle 032 review convergence is complete. `architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/reviews/round-02-review.md` reports **no blocking issues remain** and explicitly recommends proceeding to this decision stage with `proposal-direct.md` preferred.
 
-Evidence used for this decision:
+The round-01 blocker about dirty `frontend/src/stores/processStore.ts` attribution is resolved. `round-02-review.md` confirms that the corrections added a coherent delete-or-stop rule for the pre-existing dirty store in `scope-check.md`, `proposal-direct.md`, and `proposal-restructure.md`. The implementation stage must preserve that rule exactly.
+
+This decision performs no source implementation, validation, preview refresh, package/tooling churn, or unrelated dirty-file normalization.
+
+## Inspected current state
+
+Before writing this decision, the stage inspected the current path-scoped source-control state and reviewed Cycle 032 artifacts.
+
+Path-scoped status captured in `.saivage/stages/cycle-032-decision-process-tree-dependency-ownership-cleanup/scoped-status.log`:
+
+```text
+ M frontend/src/domain/processTree/ActionGroup.ts
+ M frontend/src/stores/processStore.ts
+ D frontend/tests/e2e/active-plane-shortcuts.spec.ts
+ D frontend/tests/e2e/selection-mask.spec.ts
+?? architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/reviews/
+```
+
+Path-scoped diff stat captured in `.saivage/stages/cycle-032-decision-process-tree-dependency-ownership-cleanup/scoped-diff-stat.log`:
+
+```text
+ frontend/src/domain/processTree/ActionGroup.ts    | 22 ++++++-------------
+ frontend/src/stores/processStore.ts               | 20 ++++++++---------
+ frontend/tests/e2e/active-plane-shortcuts.spec.ts | 26 -----------------------
+ frontend/tests/e2e/selection-mask.spec.ts         | 25 ----------------------
+ 4 files changed, 16 insertions(+), 77 deletions(-)
+```
+
+Reviewed artifacts:
 
 - `scope-check.md`
 - `proposals/proposal-direct.md`
 - `proposals/proposal-restructure.md`
 - `reviews/critic-round-01.md`
-- `reviews/critic-corrections-round-01.md`
 - `reviews/round-01-review.md`
+- `reviews/critic-corrections-round-01.md`
 - `reviews/round-02-review.md`
 - `architecture-audit/wave-plan.md` Wave 005 entry
-- Current path-scoped status/diff captured during this decision stage for the Cycle 032 paths and scoped source files.
-
-`reviews/round-02-review.md` is the canonical convergence artifact for this decision. It reports: “No blocking issues remain in the corrected proposal set,” states that the round-01 `processStore.ts` dirty-file/deletion blocker is resolved, and recommends proceeding with `proposal-direct.md` as the preferred path.
-
-This decision stage performed design/decision work only. It did not implement source/test changes, run validation, refresh preview, inspect protected secrets/configs, normalize unrelated dirty files, or mine stale audit history.
 
 ## Selected implementation path
 
-Selected path: **`proposals/proposal-direct.md` — Bounded process-tree/dependency cleanup**.
+Selected path: **`proposals/proposal-direct.md`**.
 
 Rationale:
 
-1. It best matches the current source reality discovered in `scope-check.md`: active `ProcessTree.ts` already lacks the historical `ProcessTree.addAction()` and `ProcessTree.getActionsDependingOnElement()` targets, so Cycle 032 must not chase phantom stale delete work.
-2. It advances Wave 005’s target outcome with the least scope: `ProcessTree` remains construction-history ownership; dependency queries remain outside `ProcessTree`; dead/parallel process-history surfaces are deleted.
-3. It respects the project’s no-backcompat/aggressive-deletion priorities by deleting the unused legacy process store and unimplemented operation descriptors rather than preserving shims, placeholders, or false compatibility branches.
-4. It avoids over-broad app-shell/read-port restructuring and keeps Wave 006b panel command-controller work out of this cycle.
+1. It matches the current code reality. The originally named deprecated `ProcessTree.addAction()` and `ProcessTree.getActionsDependingOnElement()` targets are already absent from active `ProcessTree.ts`; Cycle 032 must not chase them as phantom delete targets.
+2. It advances Wave 005 by cleaning the remaining concrete ownership seams: unused parallel process store, unimplemented process-tree operation placeholders, stale process-operation documentation, and process/dependency comments.
+3. It best respects the project priority order: deletion of dead/parallel surfaces over shims or compatibility branches, while avoiding unnecessary app-shell or panel-controller broadening.
+4. `round-02-review.md` scores the direct proposal as sufficient, bounded, and preferred after resolving the dirty-file blocker.
 
-Rejected path: **`proposals/proposal-restructure.md`** for this implementation cycle.
+Rejected default path: **`proposals/proposal-restructure.md`**.
 
-`proposal-restructure.md` remains a valid fallback/stop path if direct implementation proves that the process-history/dependency read seam must be split now. It is rejected as the default because it has higher scope-creep risk into `ProcessTreeReadModel`/`World` read-port and app-shell wiring work, while round-02 review found the direct deletion-focused cleanup sufficient and no longer blocked.
+Rejection rationale: the restructure path is a valid fallback/stop path if implementation proves the direct cleanup cannot maintain the ownership boundary, but it is broader than necessary now. It risks pulling `ProcessTreeReadModel`/`World` read-port work and app-shell wiring into Cycle 032 when the reviewed direct path can remove dead surfaces without changing user-observable behavior. Do not implement the restructure path unless a stop condition below fires and a reviewed delta/plan correction selects it.
 
-## Exact implementation scope
+## Bound implementation scope
 
-Implementation must stay within the direct proposal’s bounded scope.
+The next implementation stage must implement only the selected direct path.
 
-### Required source cleanup targets
+### Required source/update targets
 
-1. **Construction-history/dependency ownership boundary**
-   - Preserve `ProcessTree` as a construction-history tree/stack owner only.
+Implementation may change only what is necessary for the following targets:
+
+1. **ProcessTree construction-history ownership**
+   - Keep `frontend/src/domain/processTree/ProcessTree.ts` as construction-history/tree/stack ownership only.
    - Do not add dependency-service imports or dependency-query APIs to `ProcessTree`.
-   - Normalize process/dependency comments only where they are stale or phase-era and directly touched by this cleanup.
+   - If `ProcessTree.ts` is touched for nearby cleanup, delete routine debug logging from domain mutation methods when safe.
+   - Prove the absence of `ProcessTree.addAction()` and `ProcessTree.getActionsDependingOnElement()` with static scans/tests; do not recreate or chase those already-absent APIs.
 
-2. **Already-absent deprecated ProcessTree APIs**
-   - Treat `ProcessTree.addAction()` and `ProcessTree.getActionsDependingOnElement()` as already absent.
-   - Do not recreate, migrate, wrap, or search for implementation work around those phantom targets beyond static proof of absence.
-   - Any tests added/updated should assert the current boundary/absence rather than preserve old names.
+2. **Process action/dependency comments**
+   - Normalize `frontend/src/domain/processTree/Action.ts` and action-creator comments away from phase-era/private-service wording.
+   - Preserve the contract that process actions store action metadata, while dependency relations are queried through the dependency boundary.
 
-3. **`frontend/src/stores/processStore.ts` delete-or-stop rule**
-   - Immediately before deletion, re-run a usage scan for `processStore.ts` / `useProcessStore`.
-   - If no active import/usage exists, delete the whole file as a Cycle 032-owned removal of an unused parallel process-history store.
-   - The implementation log must explicitly state that the file was pre-dirty before Cycle 032 implementation and that deletion intentionally superseded the whole unused legacy surface, not that the local edits were merged or adopted.
-   - If any active import, dynamic registration, user-owned purpose, or attribution uncertainty appears, stop for a reviewed delta or narrow the scope by removing this deletion target. Do not rewrite the store in place.
+3. **Unused legacy process store**
+   - Delete `frontend/src/stores/processStore.ts` only after a fresh implementation-stage usage scan confirms no active imports/usages beyond its own export.
+   - Treat this as deletion of the whole unused legacy parallel process-history store, not preservation or merging of its pre-existing local edits.
+   - If active usage, dynamic registration evidence, or authorship uncertainty appears, stop for reviewed narrowing instead of editing the store in place.
 
 4. **Unimplemented process-tree operation placeholders**
    - Delete `RemoveActionGroupFromProcessTreeOp` and `RemoveSubprocessFromProcessTreeOp` from `frontend/src/commands/operations/processTree/ProcessTreeOperations.ts`.
    - Delete their descriptor registrations/imports from `frontend/src/commands/operations/processTree/registerProcessTreeOperationDescriptors.ts`.
-   - Update `frontend/src/commands/operations/processTree/index.ts` if exports reference the removed classes.
-   - Keep behavior-bearing active operations, including `RemoveActionFromProcessTreeOp`.
+   - Update `frontend/src/commands/operations/processTree/index.ts` only as needed for removed exports.
+   - Keep `RemoveActionFromProcessTreeOp` if active deletion flows still use it.
 
-5. **Process-tree README cleanup/update target**
-   - Update `frontend/src/commands/operations/processTree/README.md` to remove bullets or descriptions for the deleted unimplemented operations.
-   - Delete the README only if, after removing stale operation-placeholder content, it becomes placeholder-only/noisy documentation. Record the choice in `implementation-log.md`.
+5. **Process operation README/doc cleanup**
+   - Update or delete `frontend/src/commands/operations/processTree/README.md` so it no longer advertises the removed unimplemented operation placeholders.
+   - If the README becomes stale/noisy placeholder documentation after removing those entries, delete it rather than preserving obsolete documentation.
 
-6. **Action contract/comment cleanup**
-   - `frontend/src/domain/processTree/Action.ts` and action creator comments may be updated to remove phase-era/private-boundary wording and clarify that dependency relations are queried through the dependency boundary rather than stored on actions.
-   - Do not redesign the action descriptor model in this cycle.
+6. **Tests tied to removed dead descriptors/surfaces**
+   - Delete or update tests that assert serialization/registration support for the removed unimplemented process-tree operation descriptors.
+   - Retain and update active process-tree, process-history, undo/redo, panel, and ProjectService round-trip coverage for remaining active operations.
 
-7. **`ProcessTree.ts` cleanup limits**
-   - Remove routine debug `console.log` / `console.error` leakage from touched process-tree mutation methods if implementation touches the file.
-   - Do not broaden into subprocess API redesign or dependency-query reinvention.
+### Coupling limits
 
-8. **`ActionsPanel.vue` coupling limits**
-   - No expected changes to `frontend/src/components/panels/ActionsPanel.vue`.
-   - It may receive only minimal import/type fallout if direct deletion requires it.
-   - Do not implement Wave 006b panel command-controller work here; the panel already consumes injected read/intent ports for this cycle’s target.
+- `frontend/src/components/panels/ActionsPanel.vue` is already at the desired component boundary: it consumes injected read/intent ports. Do not redesign it. Touch it only for small import/type fallout directly caused by the selected cleanup.
+- Application-layer `ProcessHistoryUseCases` may continue to construct concrete process-tree operations for this wave. Broad panel command-controller work belongs to later Wave 006b scope.
+- `ProcessTreeReadModel` may continue joining process history with dependency data outside `ProcessTree` for this direct path. A narrow read-port split is not selected in this decision.
 
-9. **Focused tests**
-   - Remove tests that assert the deleted unimplemented operation descriptors.
-   - Keep or update coverage for active process-tree insertion, stack behavior, action-group behavior, process-history use cases, undo/redo, ProjectService round-trip for active descriptors, and dependency/update behavior.
-   - Do not perform a broad test rewrite unrelated to this cleanup.
+## Explicit delete/update list
 
-### Dirty-file attribution requirements
+Implementation must delete/update these surfaces if the preconditions above remain true:
 
-Current path-scoped status/diff during this decision stage showed pre-existing dirt in:
+- Delete `frontend/src/stores/processStore.ts` after fresh no-usage confirmation, with explicit pre-dirty deletion attribution.
+- Delete `RemoveActionGroupFromProcessTreeOp` and `RemoveSubprocessFromProcessTreeOp` classes.
+- Delete their descriptor registrations/imports.
+- Delete their exports if present.
+- Delete/update ProjectService round-trip tests that cover only those removed unimplemented descriptors.
+- Delete/update README bullets for those removed operations, or delete the README if it becomes obsolete.
+- Delete any discovered tests that assert deprecated implicit process-tree `addAction()` behavior, if any still exist.
 
-- `frontend/src/domain/processTree/ActionGroup.ts`
-- `frontend/src/stores/processStore.ts`
-- the untracked `architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/reviews/` artifacts
+Non-delete clarification: `ProcessTree.addAction()` and `ProcessTree.getActionsDependingOnElement()` are already absent and are not implementation delete targets.
 
-Implementation must capture a fresh scoped baseline before editing and must preserve source-control hygiene:
+## Source-control hygiene and attribution
 
-- `processStore.ts`: may be deleted whole only under the delete-or-stop rule above, with explicit pre-dirty deletion attribution in `implementation-log.md`.
-- `ActionGroup.ts`: treat as pre-existing dirty context. Do not silently adopt, revert, normalize, or depend on its local changes. Any cleanup there requires explicit reviewed need and implementation-log attribution.
-- Deleted or dirty e2e specs from prior context remain unrelated; do not adopt, restore, or normalize them in Cycle 032 unless a reviewed delta explicitly brings them into scope.
+The implementation stage must capture a fresh scoped baseline before modifying source files.
 
-## Protected surfaces and explicit exclusions
+### `frontend/src/stores/processStore.ts`
+
+This file is currently dirty before implementation. The implementation may delete it only as a deliberate Cycle 032-owned whole-file deletion of an unused legacy process store. The implementation log must state:
+
+- the file was pre-dirty before Cycle 032 implementation;
+- a fresh usage scan showed no active imports/usages;
+- Cycle 032 intentionally deleted the whole legacy surface;
+- pre-existing local edits inside that file were superseded by deletion, not silently merged, normalized, or adopted.
+
+If those statements cannot be made truthfully, stop for a reviewed delta or narrow the scope by removing the file from the delete list.
+
+### `frontend/src/domain/processTree/ActionGroup.ts`
+
+This file is also pre-existing dirty context. Implementation must not silently adopt, revert, normalize, or depend on unrelated edits in it. If implementation needs to touch it, the implementation log must explain exactly which changes are Cycle 032-owned and why they are required by the selected proposal. Otherwise leave it untouched.
+
+### Pre-existing deleted e2e specs
+
+The deleted `frontend/tests/e2e/active-plane-shortcuts.spec.ts` and `frontend/tests/e2e/selection-mask.spec.ts` are unrelated pre-existing dirt. Cycle 032 implementation must not adopt, restore, normalize, or rely on those deletions unless a reviewed delta explicitly brings them into scope.
+
+### Review artifacts directory
+
+The untracked `architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/reviews/` directory contains review-convergence evidence for this cycle and is part of audit history, not source implementation.
+
+## Protected surfaces / forbidden broadening
 
 Cycle 032 implementation must not broaden into:
 
-- Wave 006b panel command-controller implementation.
-- ProjectService schema/replay semantics, migrations, compatibility fallbacks, domain snapshot persistence, or concrete operation imports.
-- Command descriptor framework redesign beyond deleting the two dead process-tree registrations.
-- Rendering, CSS, canvas, 3D behavior, 3D overlay behavior, or visual UI feature work.
-- Drive/auth internals, backend, docs/specs outside the named process-tree README, package/tooling churn, validation-platform work, or app-shell production composition redesign.
-- Toolbar/example setup, generalized selector/read-port framework, RuntimeSession rewrite, DependencyService relocation, or broad `World` read-port restructuring.
-- Protected config/secret reads, including `.saivage/auth-profiles.json`, `.saivage/saivage.json`, env files, provider configs, tokens, Drive credentials, shell history, or keychain material.
-- Stale audit-history mining or unrelated dirty-file normalization.
+- Wave 006b panel command-controller implementation;
+- ProjectService schema/replay semantics, migrations, corrupted-operation compatibility, domain snapshot persistence, or concrete operation imports;
+- command descriptor framework redesign beyond deleting the dead process-tree registrations;
+- rendering, CSS, canvas, 3D behavior, 3D overlay behavior, or preview UI features;
+- Drive/auth internals or protected config/secret reads;
+- backend, docs/specs outside the named process-operation README, package/tooling, or validation-platform work;
+- app-shell production composition redesign or generalized selector/read-port framework;
+- UI feature changes;
+- stale audit-history mining;
+- unrelated dirty-file normalization.
+
+Secret/config safety remains binding: do not read or cite `.saivage/auth-profiles.json`, `.saivage/saivage.json`, env files, provider configs, OAuth/Drive credentials, shell history, or keychain material.
 
 ## Preservation requirements
 
 Implementation must preserve:
 
-- User-visible process panel push/pop/toggle/rename behavior.
-- Related-action highlighting behavior.
-- Active process-tree action insertion and action-group behavior.
-- Undo/redo behavior for active process-history operations.
-- Current-schema command-stream persistence and ProjectService save/open replay for active operations.
-- OperationRegistry descriptor boundary from Cycle 031.
-- Current 2D/3D rendering and live preview behavior, including the 3D overlay.
+- current user-visible Actions panel push/pop/toggle/rename behavior;
+- related-action highlighting behavior;
+- undo/redo behavior for active process-tree operations;
+- current-schema project save/open replay for active process operations;
+- OperationRegistry descriptor boundary established by prior waves;
+- no ProjectService concrete operation imports;
+- current 2D/3D rendering and 3D overlay behavior;
+- live preview reachability after validation/refresh.
 
-Persisted command streams containing the removed unimplemented operation types may fail as unknown current-schema operations. That is accepted under no-backcompat priorities because those descriptors represented unimplemented/failure placeholders, not working behavior.
+Persisted command streams containing the deleted unimplemented operation types may fail as unknown current-schema operations. That is acceptable under the no-backcompat priority because those descriptors represented inactive/failure placeholders, not supported behavior.
 
 ## Validation requirements for implementation
 
-The implementation stage must capture full stdout/stderr to stable files under:
+Implementation must capture full stdout/stderr logs under:
 
 `architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/`
 
-Minimum required evidence:
+Required validation set:
 
 1. **Static scans**
-   - No `ProcessTree.addAction(` in active source.
-   - No `getActionsDependingOnElement` in active source.
-   - No active `useProcessStore` / `processStore.ts` import after deletion.
-   - No active `RemoveActionGroupFromProcessTree` or `RemoveSubprocessFromProcessTree` references after deletion.
+   - prove no active `ProcessTree.addAction(`;
+   - prove no active `getActionsDependingOnElement`;
+   - prove no active `useProcessStore`/`processStore.ts` imports before deletion and no remaining references after deletion;
+   - prove no active `RemoveActionGroupFromProcessTree` or `RemoveSubprocessFromProcessTree` references after deletion.
 
 2. **Focused tests**
-   - `frontend/tests/unit/processTree.spec.ts`
-   - `frontend/tests/integration/processTree-stack.test.ts`
-   - `frontend/tests/unit/application/panelToolbarIntentControllers.spec.ts`
-   - `frontend/tests/unit/components/panelToolbarBehavior.spec.ts`
-   - `frontend/tests/unit/services/ProjectService.roundTrip.spec.ts`
-   - Any deletion/selection/dependency tests touched by the cleanup.
+   - process tree unit tests;
+   - process-tree stack integration tests;
+   - process-history/panel toolbar intent controller tests;
+   - panel toolbar/component behavior tests;
+   - ProjectService round-trip/operation registry tests for remaining active operations;
+   - any deletion/selection dependency tests touched by the cleanup.
 
-3. **Mandatory validation cadence**
-   - Root lint where defined.
-   - Frontend/workspace lint where defined.
-   - Focused Vitest for touched modules.
-   - Full root/frontend Vitest suite as applicable.
-   - Root/frontend build where defined.
-   - Playwright e2e because process panel, undo/redo, persistence, and user-observable flows are in the protected behavior set.
+3. **Mandatory suite commands**
+   - root lint where defined;
+   - frontend/workspace lint where defined;
+   - focused Vitest commands above;
+   - full root Vitest where defined;
+   - full frontend/workspace Vitest where defined;
+   - root build where defined;
+   - frontend/workspace build where defined.
 
-4. **Live preview refresh**
-   - Refresh the live Diedrico preview bound on `0.0.0.0` after successful validation.
-   - Record the refresh command and an HTTP reachability probe in `implementation-log.md`.
-   - Confirm construction history panel and 3D overlay remain available; any skipped live check requires explicit justification.
+4. **User-observable validation**
+   - Playwright e2e because process panel, undo/redo, persistence, and panel behavior are user-observable;
+   - live application exercise through Playwright MCP if frontend/user behavior is touched;
+   - live preview refresh bound on `0.0.0.0`, with a reachability probe recorded in `implementation-log.md`;
+   - smoke verification that the construction history panel and 3D overlay still render.
+
+Any skipped command must be explicitly justified in `implementation-log.md`. The wave must be rejected if validation fails for reasons attributable to the implementation.
 
 ## Stop conditions
 
-Stop and request a reviewed delta proposal, plan correction, or fallback decision if implementation requires any of the following:
+Stop and request a reviewed delta proposal or wave-plan correction if implementation requires any of the following:
 
-- Preserving, migrating, or rewriting `processStore.ts` instead of deleting the unused pre-dirty file whole.
-- Any active usage of `processStore.ts` that cannot be deleted within the direct path.
-- Adoption, reversion, or normalization of unrelated dirty `ActionGroup.ts` edits.
-- ProjectService migration/backcompat work or command descriptor redesign beyond removing dead registrations.
-- Broad `ActionsPanel.vue` command-controller work or UI feature changes.
-- App-shell/RuntimeSession/read-port redesign, generalized selector framework, or DependencyService relocation.
-- Rendering/CSS/canvas/3D changes.
-- Protected config/secret inspection.
-- Validation failures attributable to the change that cannot be fixed within the selected direct scope.
+- preserving, rewriting, or migrating `processStore.ts` instead of deleting the whole unused store;
+- any active usage of `processStore.ts` that cannot be cleanly removed within the direct proposal;
+- adoption/reversion/normalization of unrelated dirty `ActionGroup.ts` or e2e deletions;
+- broad ActionsPanel, toolbar, or command-controller redesign;
+- ProjectService migration/backcompat/schema/replay redesign;
+- operation descriptor framework redesign beyond deleting dead process registrations;
+- moving or redesigning `DependencyService`;
+- generalized process-history read-port/app-shell/RuntimeSession restructuring;
+- rendering/CSS/canvas/3D changes;
+- Drive/auth/backend/package/tooling/config work;
+- source-control uncertainty that prevents clean attribution of Cycle 032 changes.
 
 ## Residual risks accepted for implementation
 
-1. `processStore.ts` non-use must still be re-verified immediately before deletion; current evidence is static and time-sensitive.
-2. Deleting a pre-dirty file is source-control-sensitive and must be documented precisely.
-3. Removing unimplemented operation descriptors changes handling of any current-schema files that contain those placeholder operation types; this is accepted because the operations were not working behavior and no-backcompat priorities favor deletion.
-4. `ProcessTreeReadModel` still couples related-action lookup to broader `World` access. This is accepted as out of direct scope and may become a later read-port/app-shell wave if it remains architecturally central after this cleanup.
-5. Existing `ActionGroup.ts` dirty context may overlap with future process-tree type cleanup; this cycle must not silently absorb it.
+- Static scans may miss unusual dynamic imports of the legacy store; build/tests/e2e and implementation-stage grep must mitigate this before deletion.
+- Removing dead descriptor registrations changes behavior for files containing those operation type names; this is accepted as no-backcompat deletion of unsupported placeholder behavior.
+- `ActionGroup.ts` and `processStore.ts` are pre-dirty and require careful attribution in the implementation log.
+- The direct path intentionally leaves `ProcessTreeReadModel` coupled to `World`; a future wave may narrow that read boundary if it remains architecturally important.
 
-## Next stage recommendation
+## Next-stage recommendation
 
-Proceed to the unique next stage:
+Proceed to the unique implementation stage:
 
 `cycle-032-implement-process-tree-dependency-ownership-cleanup`
 
-That stage should implement `proposal-direct.md` exactly as constrained by this decision, then write `architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/implementation-log.md` with changed files, deleted legacy surfaces, validation log paths, preview refresh/probe evidence, dirty-file attribution, residual risks, and any newly observed candidate waves.
+Recommended objective: implement the selected `proposal-direct.md` exactly as bound by this decision, then produce `implementation-log.md` and validation logs under `architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/`.
