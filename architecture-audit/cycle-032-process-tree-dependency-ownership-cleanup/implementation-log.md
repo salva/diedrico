@@ -112,3 +112,39 @@ Playwright e2e covered current app shell, canvas, toolbar, status bar, plane sel
 
 - Resolve the unrelated initialization operation parameter/test contract mismatch in a dedicated validation/command-contract wave or correction.
 - Consider a future read-port split for `ProcessTreeReadModel` if `World` coupling remains architecturally central after the cleanup.
+
+## Corrective validation addendum — initialization operation contract
+
+A narrow correction stage resolved the full Vitest blocker recorded above without changing the reviewed Cycle 032 process-tree/dependency cleanup.
+
+### Root cause
+
+`frontend/tests/unit/commands/initializationOps.spec.ts` still contained five obsolete assertions against `op.parameters` on initialization operation instances (`CreateInitializationSubprocessOp`, `AddPlane3DFixedOp`, `AddProjectionPlaneFixedOp`, `AddOriginPoint2DOp`, and `AddHalfHingeLine2DOp`). The active operation boundary no longer exposes a generic `parameters` property: `frontend/src/commands/operations/IOperation.ts` defines `type`, `apply`, `undo`, optional `serialize`, and `outputs`; initialization operation replay/persistence is represented by each operation's typed `serialize()` descriptor plus `registerWorldOperationDescriptors.ts`. The tests already covered apply/undo behavior and typed serialization descriptors, so the parameter-property checks were stale parallel-contract expectations.
+
+### Correction and rationale
+
+Changed only `frontend/tests/unit/commands/initializationOps.spec.ts` by deleting the five parameter-property-only tests. No initialization operation source, ProjectService replay/schema code, process-tree cleanup files, rendering/UI/backend/docs/specs/package tooling, Drive/auth internals, or protected configuration were touched.
+
+This deliberately deletes obsolete test expectations rather than restoring a `parameters` shim because adding `parameters` back to these classes would introduce a second mutable descriptor surface beside the active `serialize()`/OperationRegistry contract, contrary to the current clean-architecture boundary and no-backcompat priority.
+
+### Corrective validation evidence
+
+All logs below are under `architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/`:
+
+- `correction-00-parameters-grep.stdout` / `.stderr`: confirmed `op.parameters` references were limited to the obsolete initializationOps assertions, view-state operations that intentionally expose parameters, and unrelated command test doubles.
+- `correction-01-ioperation-grep.stdout` / `.stderr`: confirmed `IOperation` does not require or define a generic `parameters` property.
+- `correction-02-edit-tests.stdout` / `.stderr`: test edit script completed.
+- `correction-10-focused-initializationOps-vitest.stdout` / `.stderr`: `npm run test --workspace=frontend -- tests/unit/commands/initializationOps.spec.ts` passed, 15/15 tests.
+- `correction-20-root-lint.stdout` / `.stderr`: root `npm run lint` passed, 11/11 architecture tests.
+- `correction-21-frontend-lint.stdout` / `.stderr`: frontend `npm run lint --workspace=frontend` passed, 11/11 architecture tests.
+- `correction-30-root-vitest.stdout` / `.stderr`: root `npm run test` passed.
+- `correction-31-frontend-vitest.stdout` / `.stderr`: frontend `npm run test --workspace=frontend` passed.
+- `correction-40-root-build.stdout` / `.stderr`: root `npm run build` passed; Vite emitted the existing large-chunk warning.
+- `correction-41-frontend-build.stdout` / `.stderr`: frontend `npm run build --workspace=frontend` passed; same large-chunk warning.
+- `correction-90-static-invariant-scans.stdout` / `.stderr`: static scans found no `ProcessTree.addAction`, no `getActionsDependingOnElement`, no `useProcessStore`/`processStore` references, no removed process-tree operation names, and no ProjectService concrete process-operation imports.
+
+No additional e2e or live-preview refresh was run for this correction because it is a unit-test-only deletion of obsolete assertions and does not change production source or user-observable behavior. The prior Cycle 032 root/frontend e2e and preview refresh evidence remains applicable.
+
+### Residual risks
+
+No new architectural risk was introduced by the correction. Existing residuals remain: persisted streams using the deleted unimplemented process-tree descriptor names fail as unknown operations by accepted no-backcompat decision, and unrelated pre-existing workspace dirt (`ActionGroup.ts` plus two deleted e2e specs) remains outside this correction.

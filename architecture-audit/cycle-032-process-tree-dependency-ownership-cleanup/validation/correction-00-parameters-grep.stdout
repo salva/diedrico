@@ -1,0 +1,18 @@
+frontend/src/commands/factories/README.md:42:  ...parameters: any[],   // Domain-specific parameters
+frontend/src/commands/operations/viewState/ViewStateOperations.ts:41:    this.parameters = { beforePlanePath, afterPlanePath };
+frontend/src/commands/operations/viewState/ViewStateOperations.ts:83:    this.parameters = { planePath, beforeState, afterState };
+frontend/src/commands/operations/viewState/ViewStateOperations.ts:125:    this.parameters = { planePath, beforeVisible, afterVisible };
+frontend/tests/unit/commands/command.spec.ts:78:    this.parameters = { inputId };
+frontend/tests/unit/commands/initializationOps.spec.ts:97:      expect(op.parameters).toEqual({ subprocessName: 'Custom Name' });
+frontend/tests/unit/commands/initializationOps.spec.ts:163:      expect(op.parameters.point).toEqual({ x: 0, y: 0, z: 0, w: 1 });
+frontend/tests/unit/commands/initializationOps.spec.ts:164:      expect(op.parameters.normal).toEqual({ x: 0, y: 0, z: 1, w: 0 });
+frontend/tests/unit/commands/initializationOps.spec.ts:165:      expect(op.parameters.planeId).toBe('plane_test');
+frontend/tests/unit/commands/initializationOps.spec.ts:236:      expect(op.parameters.plane3DId).toBe('plane_3d');
+frontend/tests/unit/commands/initializationOps.spec.ts:237:      expect(op.parameters.projPlaneId).toBe('proj_test');
+frontend/tests/unit/commands/initializationOps.spec.ts:238:      expect(op.parameters.planeToPaper2D).toBeDefined();
+frontend/tests/unit/commands/initializationOps.spec.ts:239:      expect(op.parameters.planeTo3D).toBeDefined();
+frontend/tests/unit/commands/initializationOps.spec.ts:284:      expect(op.parameters.projPlaneId).toBe('proj');
+frontend/tests/unit/commands/initializationOps.spec.ts:285:      expect(op.parameters.position).toEqual({ x: 1, y: 2, z: 1 });
+frontend/tests/unit/commands/initializationOps.spec.ts:388:      expect(op.parameters.projPlaneId).toBe('proj_plane_id');
+frontend/tests/unit/commands/initializationOps.spec.ts:389:      expect(op.parameters.hingeLineId).toBe('hinge_line_id');
+frontend/tests/unit/commands/viewStateOperations.spec.ts:28:    expect(op.parameters).toEqual({

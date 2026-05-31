@@ -1,0 +1,8 @@
+frontend/src/commands/factories/README.md:42:  ...parameters: any[],   // Domain-specific parameters
+frontend/src/commands/operations/viewState/ViewStateOperations.ts:33:  readonly parameters: Record<string, unknown>;
+frontend/src/commands/operations/viewState/ViewStateOperations.ts:74:  readonly parameters: Record<string, unknown>;
+frontend/src/commands/operations/viewState/ViewStateOperations.ts:116:  readonly parameters: Record<string, unknown>;
+frontend/src/commands/operations/IOperation.ts:32:export interface IOperation<
+frontend/tests/unit/commands/command.spec.ts:69:  parameters: Record<string, any>;
+frontend/tests/unit/commands/commandStackObserver.spec.ts:20:  parameters: {},
+frontend/tests/unit/commands/commandStack.spec.ts:23:  parameters: {},

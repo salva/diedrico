@@ -91,12 +91,6 @@ describe('Initialization Operations', () => {
       expect(subprocess?.type).toBe('subprocess');
     });
 
-    it('should have valid parameters and outputs', () => {
-      const op = new CreateInitializationSubprocessOp('Custom Name');
-      
-      expect(op.parameters).toEqual({ subprocessName: 'Custom Name' });
-      expect(op.outputs).toEqual({});
-    });
 
     it('should serialize correctly', () => {
       const op = new CreateInitializationSubprocessOp('Test');
@@ -155,15 +149,6 @@ describe('Initialization Operations', () => {
       expect(world.getPlaneById(result.outputs.planeId)).toBeUndefined();
     });
 
-    it('should have valid parameters and outputs', () => {
-      const point = new Vector4(0, 0, 0, 1);
-      const normal = new Vector4(0, 0, 1, 0);
-      const op = new AddPlane3DFixedOp(point, normal, 'plane_test');
-      
-      expect(op.parameters.point).toEqual({ x: 0, y: 0, z: 0, w: 1 });
-      expect(op.parameters.normal).toEqual({ x: 0, y: 0, z: 1, w: 0 });
-      expect(op.parameters.planeId).toBe('plane_test');
-    });
 
     it('should serialize correctly', () => {
       const point = new Vector4(0, 0, 0, 1);
@@ -224,21 +209,6 @@ describe('Initialization Operations', () => {
       expect(world.getProjectionPlaneById('proj_undo')).toBeUndefined();
     });
 
-    it('should have valid parameters with matrix arrays', () => {
-      const matrices = createPVMatrices();
-      const op = new AddProjectionPlaneFixedOp(
-        'plane_3d',
-        matrices.planeToPaper,
-        matrices.planeTo3D,
-        'proj_test'  // Phase 94: threeDToPlane removed, this is projPlaneId
-      );
-      
-      expect(op.parameters.plane3DId).toBe('plane_3d');
-      expect(op.parameters.projPlaneId).toBe('proj_test');
-      expect(op.parameters.planeToPaper2D).toBeDefined();
-      expect(op.parameters.planeTo3D).toBeDefined();
-      // Phase 94: threeDToPlane parameter removed, computed from planeTo3D
-    });
   });
 
   describe('AddOriginPoint2DOp', () => {
@@ -277,13 +247,6 @@ describe('Initialization Operations', () => {
       expect(result.outputs).toEqual({});
     });
 
-    it('should have valid parameters', () => {
-      const position = new Vector3(1, 2, 1);
-      const op = new AddOriginPoint2DOp('proj', position);
-      
-      expect(op.parameters.projPlaneId).toBe('proj');
-      expect(op.parameters.position).toEqual({ x: 1, y: 2, z: 1 });
-    });
   });
 
   describe('AddHingeLineOp', () => {
@@ -382,11 +345,5 @@ describe('Initialization Operations', () => {
       expect(result.outputs).toEqual({});
     });
 
-    it('should have valid parameters', () => {
-      const op = new AddHalfHingeLine2DOp('proj_plane_id', 'hinge_line_id');
-      
-      expect(op.parameters.projPlaneId).toBe('proj_plane_id');
-      expect(op.parameters.hingeLineId).toBe('hinge_line_id');
-    });
   });
 });

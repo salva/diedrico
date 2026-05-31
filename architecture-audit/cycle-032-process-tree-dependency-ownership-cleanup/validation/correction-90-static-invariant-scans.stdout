@@ -1,0 +1,7 @@
+## Cycle 032 invariant scans after initializationOps correction
+# ProcessTree.addAction(
+# getActionsDependingOnElement
+# useProcessStore/processStore
+# Removed process-tree operation names
+# ProjectService concrete process-operation imports
+# Protected out-of-scope source diff names (expected only initializationOps test plus log/report artifacts)
