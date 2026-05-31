@@ -1,0 +1,482 @@
+     1	<template>
+     2	  <div id="app" class="app-container">
+     3	    <!-- Startup Dialog for Google Drive authentication and project selection -->
+     4	    <StartupDialog
+     5	      v-if="showStartupDialog"
+     6	      ref="startupDialogRef"
+     7	      :show="showStartupDialog"
+     8	      :is-signed-in="isSignedIn"
+     9	      @sign-in="handleSignIn"
+    10	      @open="handleOpenProject"
+    11	    />
+    12	
+    13	    <!-- Header: Top toolbar area -->
+    14	    <header class="app-header">
+    15	      <ProjectNameDisplay 
+    16	        ref="projectNameDisplayRef"
+    17	        :project-name="currentProjectName"
+    18	        :is-renaming="isRenamingProject"
+    19	        @rename="handleRenameProject"
+    20	      />
+    21	      <Toolbar 
+    22	        @new-project="handleNewProject"
+    23	        @open-project="handleOpenProjectDialog"
+    24	        @fit-to-view="handleFitToView"
+    25	        @sign-in="handleToolbarSignIn"
+    26	        @sign-out="handleToolbarSignOut"
+    27	      />
+    28	    </header>
+    29	
+    30	    <!-- Main Workspace: Sidebar + Canvas area -->
+    31	    <main class="app-main">
+    32	      <!-- Left Sidebar: Stacked Panels -->
+    33	      <aside class="left-sidebar">
+    34	        <div class="panel-stack">
+    35	          <!-- Elements Panel (top) -->
+    36	          <div class="stacked-panel">
+    37	            <ElementsPanel 
+    38	              @highlight-elements="handleHighlightElements"
+    39	              @clear-highlight="handleClearHighlight"
+    40	            />
+    41	          </div>
+    42	          
+    43	          <!-- Resizer -->
+    44	          <div class="panel-resizer"></div>
+    45	          
+    46	          <!-- Actions Panel (bottom) -->
+    47	          <div class="stacked-panel">
+    48	            <ActionsPanel 
+    49	              @highlight-elements="handleHighlightElements"
+    50	              @clear-highlight="handleClearHighlight"
+    51	            />
+    52	          </div>
+    53	        </div>
+    54	      </aside>
+    55	
+    56	      <!-- Canvas Area -->
+    57	      <div class="canvas-area">
+    58	        <SvgCanvas 
+    59	          ref="svgCanvasRef"
+    60	          @update-3d-coordinates="handleCoordinateUpdate"
+    61	          @update-active-plane="handleActivePlaneUpdate"
+    62	        />
+    63	      </div>
+    64	    </main>
+    65	
+    66	    <!-- Footer: Status bar -->
+    67	    <footer class="app-footer">
+    68	      <StatusBar 
+    69	        :active-plane-id="activePlaneId"
+    70	        :active-plane-name="activePlaneName"
+    71	        :active-tool="activeTool"
+    72	        :coordinates3-d="coordinates3D"
+    73	        :save-status="saveStatus"
+    74	        :cascade-count="selectionStore.cascadeHighlightIdsArray.length"
+    75	      />
+    76	    </footer>
+    77	  </div>
+    78	</template>
+    79	
+    80	<script setup lang="ts">
+    81	import { provide, ref, onMounted, onUnmounted } from 'vue';
+    82	import SvgCanvas from './components/workspace/SvgCanvas.vue';
+    83	import Toolbar from './components/toolbars/Toolbar.vue';
+    84	import StatusBar from './components/toolbars/StatusBar.vue';
+    85	import ActionsPanel from './components/panels/ActionsPanel.vue';
+    86	import ElementsPanel from './components/panels/ElementsPanel.vue';
+    87	import StartupDialog from './components/dialogs/StartupDialog.vue';
+    88	import ProjectNameDisplay from './components/header/ProjectNameDisplay.vue';
+    89	import { Command } from './commands/Command';
+    90	import { CommandStack } from './commands/CommandStack';
+    91	import { DeletionSequenceFactory } from './commands/factories/DeletionSequenceFactory';
+    92	import { TOOL_FAMILIES } from './config/toolFamilies';
+    93	import { ProjectStateRuntimeHolder } from './domain/world/ProjectStateRuntime';
+    94	import { getActiveProjectionPlaneId } from './domain/world/ProjectStateSelectors';
+    95	import { useAppCanvasSession } from './composables/useAppCanvasSession';
+    96	import { useAppKeyboardShortcuts } from './composables/useAppKeyboardShortcuts';
+    97	import { useCommandExecution } from './composables/useCommandExecution';
+    98	import { useDriveProjectSession } from './composables/useDriveProjectSession';
+    99	import { useProjectStateRuntimeSnapshot } from './composables/useProjectStateRuntimeSnapshot';
+   100	import { useSelectionStore } from './stores/selectionStore';
+   101	import { useSettingsStore } from './stores/settingsStore';
+   102	import { useToolStore } from './stores/toolStore';
+   103	
+   104	const GOOGLE_CONFIG = {
+   105	  clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID || '',
+   106	  apiKey: import.meta.env.VITE_GOOGLE_API_KEY || '',
+   107	  appId: import.meta.env.VITE_GOOGLE_APP_ID || '',
+   108	};
+   109	
+   110	const projectRuntime = new ProjectStateRuntimeHolder();
+   111	provide('projectRuntime', projectRuntime);
+   112	const projectState = useProjectStateRuntimeSnapshot(projectRuntime);
+   113	
+   114	const commandStack = new CommandStack();
+   115	provide('commandStack', commandStack);
+   116	
+   117	const svgCanvasRef = ref<InstanceType<typeof SvgCanvas> | null>(null);
+   118	const startupDialogRef = ref<InstanceType<typeof StartupDialog> | null>(null);
+   119	const projectNameDisplayRef = ref<InstanceType<typeof ProjectNameDisplay> | null>(null);
+   120	
+   121	const toolStore = useToolStore();
+   122	toolStore.setToolFamilies(TOOL_FAMILIES);
+   123	const activeTool = toolStore.currentTool;
+   124	const selectionStore = useSelectionStore();
+   125	useSettingsStore();
+   126	
+   127	const projectSession = useDriveProjectSession({
+   128	  runtime: projectRuntime,
+   129	  commandStack,
+   130	  config: GOOGLE_CONFIG,
+   131	  startupDialogRef,
+   132	});
+   133	
+   134	const canvasSession = useAppCanvasSession({
+   135	  runtime: projectRuntime,
+   136	  projectState,
+   137	  svgCanvasRef,
+   138	});
+   139	const { executeToolCommandIntent } = useCommandExecution();
+   140	
+   141	const {
+   142	  showStartupDialog,
+   143	  isSignedIn,
+   144	  currentProjectName,
+   145	  isRenamingProject,
+   146	  saveStatus,
+   147	  initialize,
+   148	  signIn: handleSignIn,
+   149	  loadFilesForStartupDialog,
+   150	  openProject: handleOpenProject,
+   151	  createNewProject: handleNewProject,
+   152	  openProjectDialog: handleOpenProjectDialog,
+   153	  renameProject: handleRenameProject,
+   154	  toolbarSignIn: handleToolbarSignIn,
+   155	  toolbarSignOut: handleToolbarSignOut,
+   156	  stopAutoSave,
+   157	} = projectSession;
+   158	
+   159	const {
+   160	  activePlaneId,
+   161	  activePlaneName,
+   162	  coordinates3D,
+   163	  updateCoordinates: handleCoordinateUpdate,
+   164	  updateActivePlane: handleActivePlaneUpdate,
+   165	  fitToView: handleFitToView,
+   166	  highlightElements: handleHighlightElements,
+   167	  clearHighlight: handleClearHighlight,
+   168	} = canvasSession;
+   169	
+   170	function handleKeyboardDeleteSelected() {
+   171	  const selectedIds = selectionStore.selectedIdsArray;
+   172	  if (selectedIds.length === 0) return;
+   173	
+   174	  try {
+   175	    const command = new Command('Delete selected elements', projectRuntime.state, nextState => {
+   176	      projectRuntime.commit(nextState);
+   177	    });
+   178	    const result = DeletionSequenceFactory.createCascadeDeletion(command, selectedIds);
+   179	
+   180	    if (result.deletionOrder.length === 0) return;
+   181	
+   182	    executeToolCommandIntent(
+   183	      {
+   184	        kind: 'project-state-commit-preview-command',
+   185	        command,
+   186	        completionBehavior: 'stay-active',
+   187	        message: 'Deleted selected elements',
+   188	      },
+   189	      commandStack,
+   190	      toolStore,
+   191	    );
+   192	    selectionStore.clearSelection();
+   193	    selectionStore.clearCascadeHighlight();
+   194	  } catch (error) {
+   195	    console.error('[AppKeyboard] Failed to delete selected elements:', error);
+   196	  }
+   197	}
+   198	
+   199	function handleKeyboardSelectAllInActivePlane() {
+   200	  const planeId = getActiveProjectionPlaneId(projectState.value);
+   201	  const selectedIds: string[] = [];
+   202	  for (const element of Object.values(projectState.value.elements)) {
+   203	    if (element.planeId === planeId) selectedIds.push(element.id);
+   204	  }
+   205	  for (const guide of Object.values(projectState.value.guides)) {
+   206	    if (guide.planeId === planeId) selectedIds.push(guide.id);
+   207	  }
+   208	  if (selectedIds.length > 0) selectionStore.selectMultiple(selectedIds);
+   209	}
+   210	
+   211	function handleKeyboardCancelInteraction() {
+   212	  toolStore.setTool('select');
+   213	  selectionStore.clearSelection();
+   214	}
+   215	
+   216	useAppKeyboardShortcuts({
+   217	  newProject: handleNewProject,
+   218	  openProjectDialog: handleOpenProjectDialog,
+   219	  renameProject: () => projectNameDisplayRef.value?.startEditing(),
+   220	  fitToView: handleFitToView,
+--- useDrive
+     1	import { computed, ref, type Ref } from 'vue';
+     2	import type { CommandStack } from '@/commands/CommandStack';
+     3	import { resetProjectState } from '@/domain/world/ProjectStateActions';
+     4	import type { ProjectStateRuntimeHolder } from '@/domain/world/ProjectStateRuntime';
+     5	import { GoogleDriveService, type GoogleDriveConfig, type GoogleDriveFile } from '@/services/GoogleDriveService';
+     6	import { ProjectService } from '@/services/ProjectService';
+     7	import { useAuthStore } from '@/stores/authStore';
+     8	
+     9	export interface StartupDialogHandle {
+    10	  setFiles(files: GoogleDriveFile[]): void;
+    11	  setError(error: string): void;
+    12	  setLoading(loading: boolean): void;
+    13	}
+    14	
+    15	export interface DriveProjectSessionOptions {
+    16	  runtime: ProjectStateRuntimeHolder;
+    17	  commandStack: CommandStack;
+    18	  config: GoogleDriveConfig;
+    19	  startupDialogRef: Ref<StartupDialogHandle | null>;
+    20	  autoSaveDelayMs?: number;
+    21	  savedStatusDurationMs?: number;
+    22	  createDriveService?: (config: GoogleDriveConfig) => GoogleDriveService;
+    23	}
+    24	
+    25	export type SaveStatus = 'idle' | 'saving' | 'saved';
+    26	
+    27	const DEFAULT_AUTO_SAVE_DELAY_MS = 2000;
+    28	const DEFAULT_SAVED_STATUS_DURATION_MS = 2000;
+    29	
+    30	export function hasGoogleDriveCredentials(config: GoogleDriveConfig): boolean {
+    31	  return config.clientId.trim().length > 0;
+    32	}
+    33	
+    34	export function useDriveProjectSession(options: DriveProjectSessionOptions) {
+    35	  const authStore = useAuthStore();
+    36	  const driveService = hasGoogleDriveCredentials(options.config)
+    37	    ? options.createDriveService?.(options.config) ?? new GoogleDriveService(options.config)
+    38	    : null;
+    39	
+    40	  const autoSaveDelayMs = options.autoSaveDelayMs ?? DEFAULT_AUTO_SAVE_DELAY_MS;
+    41	  const savedStatusDurationMs = options.savedStatusDurationMs ?? DEFAULT_SAVED_STATUS_DURATION_MS;
+    42	  const showStartupDialog = ref(false);
+    43	  const isSignedIn = ref(false);
+    44	  const currentProjectName = ref<string | null>(null);
+    45	  const currentFileId = ref<string | null>(null);
+    46	  const isRenamingProject = ref(false);
+    47	  const saveStatus = ref<SaveStatus>('idle');
+    48	
+    49	  let autoSaveTimer: ReturnType<typeof setTimeout> | null = null;
+    50	  let savedStatusTimer: ReturnType<typeof setTimeout> | null = null;
+    51	  let stopAutoSaveSubscription: (() => void) | null = null;
+    52	
+    53	  const hasCredentials = computed(() => driveService !== null);
+    54	
+    55	  function clearTimer(timer: ReturnType<typeof setTimeout> | null) {
+    56	    if (timer) clearTimeout(timer);
+    57	  }
+    58	
+    59	  function stopAutoSave() {
+    60	    if (stopAutoSaveSubscription) {
+    61	      stopAutoSaveSubscription();
+    62	      stopAutoSaveSubscription = null;
+    63	    }
+    64	    clearTimer(autoSaveTimer);
+    65	    clearTimer(savedStatusTimer);
+    66	    autoSaveTimer = null;
+    67	    savedStatusTimer = null;
+    68	  }
+    69	
+    70	  function startAutoSave() {
+    71	    stopAutoSave();
+    72	    stopAutoSaveSubscription = options.runtime.subscribe(() => {
+    73	      scheduleAutoSave();
+    74	    });
+    75	  }
+    76	
+    77	  function reportDialogError(message: string) {
+    78	    options.startupDialogRef.value?.setError(message);
+    79	    options.startupDialogRef.value?.setLoading(false);
+    80	  }
+    81	
+    82	  async function initialize() {
+    83	    if (!driveService) {
+    84	      console.warn('Google Drive credentials not configured. Running in local-only mode.');
+    85	      showStartupDialog.value = false;
+    86	      return;
+    87	    }
+    88	
+    89	    try {
+    90	      await driveService.initialize();
+    91	      isSignedIn.value = driveService.isSignedIn();
+    92	
+    93	      if (isSignedIn.value && authStore.restoreSession()) {
+    94	        try {
+    95	          authStore.setUser(await driveService.fetchUserProfile());
+    96	        } catch (error) {
+    97	          console.warn('[Auth] Could not refresh profile:', error);
+    98	        }
+    99	      }
+   100	
+   101	      showStartupDialog.value = true;
+   102	    } catch (error) {
+   103	      console.error('Failed to initialize Google Drive:', error);
+   104	      console.warn('Running in local-only mode without Google Drive integration.');
+   105	      showStartupDialog.value = false;
+   106	    }
+   107	  }
+   108	
+   109	  async function signIn() {
+   110	    if (!driveService) {
+   111	      reportDialogError('Google Drive service not available');
+   112	      return;
+   113	    }
+   114	
+   115	    try {
+   116	      await driveService.signIn();
+   117	      isSignedIn.value = driveService.isSignedIn();
+   118	
+   119	      try {
+   120	        const profile = await driveService.fetchUserProfile();
+   121	        authStore.setAuthenticated(profile, driveService.getAccessToken() ?? '', undefined);
+   122	      } catch (profileError) {
+   123	        console.warn('[Auth] Failed to fetch profile, continuing without it:', profileError);
+   124	      }
+   125	
+   126	      await loadFilesForStartupDialog();
+   127	      options.startupDialogRef.value?.setLoading(false);
+   128	    } catch (error) {
+   129	      console.error('Sign-in failed:', error);
+   130	      reportDialogError(`Sign-in failed: ${error}`);
+   131	    }
+   132	  }
+   133	
+   134	  async function loadFilesForStartupDialog() {
+   135	    if (!driveService) {
+   136	      reportDialogError('Google Drive service not available');
+   137	      return;
+   138	    }
+   139	
+   140	    try {
+   141	      options.startupDialogRef.value?.setFiles(await driveService.listFiles());
+   142	    } catch (error) {
+   143	      console.error('Failed to load files:', error);
+   144	      reportDialogError(`Failed to load files: ${error}`);
+   145	    }
+   146	  }
+   147	
+   148	  async function createProject(projectName: string) {
+   149	    if (!driveService) {
+   150	      reportDialogError('Google Drive service not available');
+   151	      return;
+   152	    }
+   153	
+   154	    try {
+   155	      const projectData = ProjectService.createProjectSnapshot(options.runtime.state, projectName, { source: 'google-drive' });
+   156	      const fileId = await driveService.createFile(projectName, projectData);
+   157	      currentProjectName.value = projectName;
+   158	      currentFileId.value = fileId;
+   159	      showStartupDialog.value = false;
+   160	      startAutoSave();
+   161	      saveStatus.value = 'saved';
+   162	    } catch (error) {
+   163	      console.error('Failed to create project:', error);
+   164	      reportDialogError(`Failed to create project: ${error}`);
+   165	    }
+   166	  }
+   167	
+   168	  async function openProject(fileId: string) {
+   169	    if (!driveService) {
+   170	      reportDialogError('Google Drive service not available');
+   171	      return;
+   172	    }
+   173	
+   174	    try {
+   175	      const projectData = await driveService.loadFile(fileId);
+   176	      ProjectService.validateProjectData(projectData);
+   177	      options.runtime.commit(ProjectService.restoreProjectSnapshot(projectData, options.commandStack));
+   178	      currentProjectName.value = projectData.name;
+   179	      currentFileId.value = fileId;
+   180	      showStartupDialog.value = false;
+   181	      startAutoSave();
+   182	      saveStatus.value = 'saved';
+   183	    } catch (error) {
+   184	      console.error('Failed to open project:', error);
+   185	      reportDialogError(`Failed to open project: ${error}`);
+   186	    }
+   187	  }
+   188	
+   189	  async function createNewProject() {
+   190	    if (!driveService) {
+   191	      console.error('Google Drive service not available');
+   192	      return;
+   193	    }
+   194	
+   195	    try {
+   196	      const projectName = await driveService.generateDefaultProjectName();
+   197	      options.runtime.reset(resetProjectState());
+   198	      options.commandStack.clear();
+   199	      await createProject(projectName);
+   200	    } catch (error) {
+   201	      console.error('Failed to create new project:', error);
+   202	      showStartupDialog.value = true;
+   203	    }
+   204	  }
+   205	
+   206	  function openProjectDialog() {
+   207	    showStartupDialog.value = true;
+   208	  }
+   209	
+   210	  async function renameProject(newName: string) {
+   211	    if (!driveService || !currentFileId.value) {
+   212	      console.error('Cannot rename: no drive service or file ID');
+   213	      return;
+   214	    }
+   215	
+   216	    isRenamingProject.value = true;
+   217	    try {
+   218	      await driveService.renameFile(currentFileId.value, newName);
+   219	      currentProjectName.value = newName;
+   220	    } catch (error) {
+   221	      console.error('Failed to rename project:', error);
+   222	    } finally {
+   223	      isRenamingProject.value = false;
+   224	    }
+   225	  }
+   226	
+   227	  async function toolbarSignIn() {
+   228	    if (!driveService) {
+   229	      console.error('[Auth] Google Drive service not available');
+   230	      return;
+   231	    }
+   232	
+   233	    try {
+   234	      await driveService.signIn();
+   235	      isSignedIn.value = driveService.isSignedIn();
+   236	      try {
+   237	        const profile = await driveService.fetchUserProfile();
+   238	        authStore.setAuthenticated(profile, driveService.getAccessToken() ?? '', undefined);
+   239	      } catch (profileError) {
+   240	        console.warn('[Auth] Failed to fetch profile:', profileError);
+   241	      }
+   242	    } catch (error) {
+   243	      console.error('[Auth] Sign-in failed:', error);
+   244	    }
+   245	  }
+   246	
+   247	  async function toolbarSignOut() {
+   248	    if (!driveService) {
+   249	      console.error('[Auth] Google Drive service not available');
+   250	      return;
+   251	    }
+   252	
+   253	    try {
+   254	      await driveService.signOut();
+   255	      authStore.clearAuth();
+   256	      isSignedIn.value = false;
+   257	      currentProjectName.value = null;
+   258	      currentFileId.value = null;
+   259	      stopAutoSave();
+   260	      options.runtime.reset(resetProjectState());
+--- useProjectSession

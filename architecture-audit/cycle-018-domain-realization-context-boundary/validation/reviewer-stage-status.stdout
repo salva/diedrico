@@ -1,0 +1,104 @@
+ M architecture-audit/cycle-018-domain-realization-context-boundary/validation/closure-live-preview-server.stdout
+ M architecture-audit/cycle-018-domain-realization-context-boundary/validation/live-preview-server.stdout
+ M frontend/src/commands/Command.ts
+ M frontend/src/commands/factories/DeletionSequenceFactory.ts
+ M frontend/src/commands/factories/PointSequenceFactory.ts
+ M frontend/src/commands/operations/IOperation.ts
+ M frontend/src/commands/operations/world/AddCircleCircleIntersectionPoint2DOp.ts
+ M frontend/src/commands/operations/world/AddFreePointOp.ts
+ M frontend/src/commands/operations/world/AddLineCircleIntersectionPoint2DOp.ts
+ M frontend/src/commands/operations/world/AddLineLineIntersectionPoint2DOp.ts
+ M frontend/src/commands/operations/world/AddSiblingIntersectionPoint2DOp.ts
+ M frontend/src/components/panels/ActionGroupItem.vue
+ M frontend/src/components/panels/ActionItem.vue
+ M frontend/src/components/panels/ElementTypeGroup.vue
+ M frontend/src/components/toolbars/MainToolbar.vue
+ M frontend/src/composables/useHoverHighlight.ts
+ M frontend/src/domain/calculations/Intersections.ts
+ M frontend/src/domain/processTree/ActionGroup.ts
+ M frontend/src/stores/processStore.ts
+ M frontend/src/stores/viewStore.ts
+?? .saivage/stages/cycle-018-implement-domain-realization-context-boundary-post-017/tasks.json
+?? architecture-audit/cycle-018-domain-realization-context-boundary/critique/decision-post-017-critique.md
+?? architecture-audit/cycle-018-domain-realization-context-boundary/critique/round-01-critique.md
+?? architecture-audit/cycle-018-domain-realization-context-boundary/decision-final-status-postcommit.stderr
+?? architecture-audit/cycle-018-domain-realization-context-boundary/decision-final-status-postcommit.stdout
+?? architecture-audit/cycle-018-domain-realization-context-boundary/decision-final-status-precommit.stderr
+?? architecture-audit/cycle-018-domain-realization-context-boundary/decision-final-status-precommit.stdout
+?? architecture-audit/cycle-018-domain-realization-context-boundary/decision-status-post-write.stderr
+?? architecture-audit/cycle-018-domain-realization-context-boundary/decision-status-post-write.stdout
+?? architecture-audit/cycle-018-domain-realization-context-boundary/decision-status-pre.stderr
+?? architecture-audit/cycle-018-domain-realization-context-boundary/decision-status-pre.stdout
+?? architecture-audit/cycle-018-domain-realization-context-boundary/manager-post-t1-status.stderr
+?? architecture-audit/cycle-018-domain-realization-context-boundary/manager-post-t1-status.stdout
+?? architecture-audit/cycle-018-domain-realization-context-boundary/manager-source-evidence-1.stderr
+?? architecture-audit/cycle-018-domain-realization-context-boundary/manager-source-evidence-1.stdout
+?? architecture-audit/cycle-018-domain-realization-context-boundary/manager-static-scan-realization.stderr
+?? architecture-audit/cycle-018-domain-realization-context-boundary/manager-static-scan-realization.stdout
+?? architecture-audit/cycle-018-domain-realization-context-boundary/manager-status-pre.stderr
+?? architecture-audit/cycle-018-domain-realization-context-boundary/manager-status-pre.stdout
+?? architecture-audit/cycle-018-domain-realization-context-boundary/manager-wave018-grep.stderr
+?? architecture-audit/cycle-018-domain-realization-context-boundary/manager-wave018-grep.stdout
+?? architecture-audit/cycle-018-domain-realization-context-boundary/reviews/decision-stage-review.md
+?? architecture-audit/cycle-018-domain-realization-context-boundary/reviews/round-01-post-review-status.stderr
+?? architecture-audit/cycle-018-domain-realization-context-boundary/reviews/round-01-post-review-status.stdout
+?? architecture-audit/cycle-018-domain-realization-context-boundary/reviews/round-01-review-post-017.md
+?? architecture-audit/cycle-018-domain-realization-context-boundary/reviews/round-01-review.md
+?? architecture-audit/cycle-018-domain-realization-context-boundary/reviews/round-01-status.stderr
+?? architecture-audit/cycle-018-domain-realization-context-boundary/reviews/round-01-status.stdout
+?? architecture-audit/cycle-018-domain-realization-context-boundary/reviews/wave-018-entry-round-01.stderr
+?? architecture-audit/cycle-018-domain-realization-context-boundary/reviews/wave-018-entry-round-01.stdout
+?? architecture-audit/cycle-018-domain-realization-context-boundary/source-evidence-pre-design.txt
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/decision-final-scoped-status.stderr
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/decision-final-scoped-status.stdout
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/decision-post-designer-status.stderr
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/decision-post-designer-status.stdout
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/decision-scoped-diff.stderr
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/decision-scoped-diff.stdout
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/decision-scoped-status.stderr
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/decision-scoped-status.stdout
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/decision-wave018-entry.stderr
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/decision-wave018-entry.stdout
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/designer-final-status-command.stderr
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/designer-final-status-command.stdout
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/designer-final-status.stderr
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/designer-final-status.stdout
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/designer-realization-scan-command.stderr
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/designer-realization-scan-command.stdout
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/reviewer-diff-wave018.stderr
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/reviewer-diff-wave018.stdout
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/reviewer-line-evidence.stderr
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/reviewer-line-evidence.stdout
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/reviewer-preview-evidence.stderr
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/reviewer-preview-evidence.stdout
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/reviewer-realization-scan.stderr
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/reviewer-realization-scan.stdout
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/reviewer-retry-targeted-diff.stderr
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/reviewer-retry-targeted-diff.stdout
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/reviewer-retry-targeted-status.stderr
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/reviewer-retry-targeted-status.stdout
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/reviewer-retry-validation-summary.stderr
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/reviewer-retry-validation-summary.stdout
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/reviewer-seam-check.stderr
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/reviewer-seam-check.stdout
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/reviewer-stage-status.stderr
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/reviewer-stage-status.stdout
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/reviewer-status-wave018.stderr
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/reviewer-status-wave018.stdout
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/reviewer-targeted-diff.stderr
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/reviewer-targeted-diff.stdout
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/reviewer-targeted-status.stderr
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/reviewer-targeted-status.stdout
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/reviewer-wave018-entry.stderr
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/reviewer-wave018-entry.stdout
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/reviewer-write-report-python3.stderr
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/reviewer-write-report-python3.stdout
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/reviewer-write-report.stderr
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/reviewer-write-report.stdout
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/reviewer-write-retry-report.stderr
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/reviewer-write-retry-report.stdout
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/reviewer-write-stage-quality-report.stderr
+?? architecture-audit/cycle-018-domain-realization-context-boundary/validation/reviewer-write-stage-quality-report.stdout
+?? architecture-audit/cycle-018-domain-realization-context-boundary/wave-018-entry-for-decision.stderr
+?? architecture-audit/cycle-018-domain-realization-context-boundary/wave-018-entry-for-decision.stdout
+?? frontend/src/vite-env.d.ts

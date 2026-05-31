@@ -7,3 +7,5 @@
 
   ➜  Local:   http://localhost:5173/
   ➜  Network: http://10.0.3.113:5173/
+2:36:56 AM [vite] page reload playwright-report/index.html
+2:38:32 AM [vite] page reload src/types/SelectionMask.ts

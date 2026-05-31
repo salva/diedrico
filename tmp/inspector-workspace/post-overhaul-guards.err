@@ -1,0 +1,7 @@
+stderr | tests/integration/projects.spec.ts > Projects API Integration Tests > GET /api/projects > skips invalid project filenames and malformed JSON without leaking stored domain data
+Failed to read project project_1234567890000_abcdefghi.json: Error: Failed to read file
+    at FileStorage.readJSON (/work/diedrico/backend/src/storage/FileStorage.ts:38:13)
+    at ProjectRepository.list (/work/diedrico/backend/src/storage/ProjectRepository.ts:54:25)
+    at /work/diedrico/backend/src/api/projects.ts:277:22
+    at /work/diedrico/backend/src/api/projects.ts:56:7
+

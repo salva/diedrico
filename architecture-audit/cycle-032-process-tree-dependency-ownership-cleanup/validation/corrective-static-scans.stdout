@@ -1,0 +1,17 @@
+## Cycle 032 invariant scans after initializationOps correction
+### ProcessTree.addAction
+no matches
+### getActionsDependingOnElement
+no matches
+### useProcessStore/processStore
+no matches
+### removed process-tree operation names
+no matches
+### ProjectService concrete process-operation imports
+no matches
+### protected-surface path diffstat
+ frontend/src/domain/processTree/ActionGroup.ts    | 22 ++++++-------------
+ frontend/src/stores/viewStore.ts                  |  3 ++-
+ frontend/tests/e2e/active-plane-shortcuts.spec.ts | 26 -----------------------
+ frontend/tests/e2e/selection-mask.spec.ts         | 25 ----------------------
+ 4 files changed, 8 insertions(+), 68 deletions(-)

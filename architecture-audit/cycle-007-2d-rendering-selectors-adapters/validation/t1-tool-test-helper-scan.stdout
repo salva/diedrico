@@ -1,0 +1,35 @@
+--- frontend/tests/unit/tools/pointTool.spec.ts ---
+17 import type { ToolContext } from '@/tools/ITool';
+21 import { CanvasInteractionQuery } from '@/application/canvasPresentation/CanvasInteractionQuery';
+31   let interactionQuery: CanvasInteractionQuery;
+33   // Helper to create complete ToolContext
+34   const createToolContext = (planeId: string, planeCoords: Vector3, canvasCoords = { x: 100, y: 100 }): ToolContext => ({
+40     interactionQuery,
+41       viewport: { zoom: 1, panX: 0, panY: 0 },
+53     interactionQuery = new CanvasInteractionQuery([]);
+78       const context = createToolContext(
+101       const context = createToolContext(
+113       const context = createToolContext(verticalPlaneId, planeCoords);
+--- frontend/tests/unit/tools/CircleTool.spec.ts ---
+22 import type { ToolContext } from '@/tools/ITool';
+26 import { CanvasInteractionQuery } from '@/application/canvasPresentation/CanvasInteractionQuery';
+33   let interactionQuery: CanvasInteractionQuery;
+40     interactionQuery = new CanvasInteractionQuery([]);
+68       const firstClickContext: ToolContext = {
+74         interactionQuery,
+75       viewport: { zoom: 1, panX: 0, panY: 0 },
+85       const secondClickContext: ToolContext = {
+91         interactionQuery,
+92       viewport: { zoom: 1, panX: 0, panY: 0 },
+--- frontend/tests/unit/tools/toolValidation.spec.ts ---
+28 import type { ToolContext } from '@/tools/ITool';
+32 import { CanvasInteractionQuery } from '@/application/canvasPresentation/CanvasInteractionQuery';
+38   let interactionQuery: CanvasInteractionQuery;
+40   function makeContext(coords: Vector3): ToolContext {
+47       interactionQuery,
+48       viewport: { zoom: 1, panX: 0, panY: 0 },
+67     interactionQuery = new CanvasInteractionQuery([]);
+77       const ctx = makeContext(new Vector3(100, 100, 1));
+93       const r1 = tool.handleClick(makeContext(new Vector3(100, 100, 1)));
+96       const r2 = tool.handleClick(makeContext(new Vector3(200, 100, 1)));
+107       const ctx = makeContext(new Vector3(100, 100, 1));

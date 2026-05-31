@@ -1,0 +1,30 @@
+frontend/tests/unit/tools/pointTool.spec.ts:90:      for (const plane of world.projectionPlanes.values()) {
+frontend/tests/unit/tools/pointTool.spec.ts:118:      for (const plane of world.projectionPlanes.values()) {
+frontend/tests/unit/tools/pointTool.spec.ts:141:      for (const plane of world.projectionPlanes.values()) {
+frontend/tests/unit/tools/pointTool.spec.ts:233:      for (const plane of world.projectionPlanes.values()) {
+frontend/tests/unit/tools/pointTool.spec.ts:315:      for (const plane of world.projectionPlanes.values()) {
+frontend/tests/unit/tools/pointTool.spec.ts:407:      for (const plane of world.projectionPlanes.values()) {
+frontend/tests/unit/tools/pointTool.spec.ts:419:      for (const plane of world.projectionPlanes.values()) {
+frontend/tests/unit/tools/pointTool.spec.ts:440:      for (const plane of world.projectionPlanes.values()) {
+frontend/src/services/Element2DRenderer3D.ts:73:    const planes = Array.from(world.projectionPlanes.values());
+frontend/tests/unit/domain/world.spec.ts:34:      for (const plane of world.projectionPlanes.values()) {
+frontend/tests/unit/domain/world.spec.ts:53:        for (const plane of world.projectionPlanes.values()) {
+frontend/tests/unit/domain/world.spec.ts:68:        for (const plane of world.projectionPlanes.values()) {
+frontend/src/components/panels/ThreeView.vue:140:  // console.log('[ThreeView] World projection planes count:', world.projectionPlanes.size);
+frontend/src/components/panels/ThreeView.vue:141:  // console.log('[ThreeView] World projection planes:', Array.from(world.projectionPlanes.keys()));
+frontend/src/components/panels/ThreeView.vue:254:  const projectionPlanes = Array.from(world.projectionPlanes.values());
+frontend/src/commands/factories/DeletionSequenceFactory.ts:98:      for (const [planeId, plane] of world.projectionPlanes.entries()) {
+frontend/src/commands/operations/world/RemoveElementOps.ts:42:      const plane = world.projectionPlanes.get(this.planeId);
+frontend/src/commands/operations/world/RemoveElementOps.ts:90:    const plane = world.projectionPlanes.get(this.planeId);
+frontend/src/commands/operations/world/RemoveElementOps.ts:128:      const plane = world.projectionPlanes.get(this.planeId);
+frontend/src/commands/operations/world/RemoveElementOps.ts:176:    const plane = world.projectionPlanes.get(this.planeId);
+frontend/src/commands/operations/world/RemoveElementOps.ts:212:      const plane = world.projectionPlanes.get(this.planeId);
+frontend/src/commands/operations/world/RemoveElementOps.ts:261:    const plane = world.projectionPlanes.get(this.planeId);
+frontend/src/commands/operations/world/RemoveElementOps.ts:297:      const plane = world.projectionPlanes.get(this.planeId);
+frontend/src/commands/operations/world/RemoveElementOps.ts:345:    const plane = world.projectionPlanes.get(this.planeId);
+frontend/src/commands/operations/world/RemoveElementOps.ts:390:      const plane = world.projectionPlanes.get(this.planeId);
+frontend/src/commands/operations/world/RemoveElementOps.ts:486:    const plane = world.projectionPlanes.get(this.planeId);
+frontend/src/commands/operations/world/RemoveElementOps.ts:496:      const siblingPlane = world.projectionPlanes.get(this.siblingPlaneId);
+frontend/src/commands/operations/world/AddSiblingIntersectionPoint2DOp.ts:67:        for (const projPlane of world.projectionPlanes.values()) {
+frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts:111:      world.projectionPlanes.set(projPlaneId, plane);
+frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts:141:      world.projectionPlanes.delete(this.outputs.projPlaneId);

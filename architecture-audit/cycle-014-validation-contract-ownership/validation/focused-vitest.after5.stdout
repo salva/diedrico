@@ -1,0 +1,42 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run tests/unit/calculations/intersections.spec.ts tests/unit/components/propertiesDialog.spec.ts tests/integration/guide-creation.test.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/calculations/intersections.spec.ts  (44 tests) 24ms
+ ❯ tests/integration/guide-creation.test.ts  (3 tests | 2 failed) 18ms
+   ❯ tests/integration/guide-creation.test.ts > Guide Creation - Integration Tests > Regular Line Reference > should create guide on regular line without sibling
+     → plane.getElement is not a function
+   ❯ tests/integration/guide-creation.test.ts > Guide Creation - Integration Tests > HalfHingeLine2D Reference > should create sibling guide when reference is hinge line
+     → Cannot read properties of undefined (reading 'values')
+stdout | tests/integration/guide-creation.test.ts > Guide Creation - Integration Tests > Regular Line Reference > should create guide on regular line without sibling
+[GuideSequenceFactory] createGuideWithSibling called: plane=projPlane3, refLine=projPlane3/line2d12, point=projPlane3/point2d13
+[GuideSequenceFactory] Primary guide created: projPlane3/guide2d14
+[GuideSequenceFactory] Getting sibling plane info...
+[GuideSequenceFactory] No sibling info - reference line is not a HalfHingeLine or BrokenHalfHingeLine2D
+
+stdout | tests/integration/guide-creation.test.ts > Guide Creation - Integration Tests > Error Prevention > should not throw when creating guide on non-hinge line
+[GuideSequenceFactory] createGuideWithSibling called: plane=projPlane3, refLine=projPlane3/line2d12, point=projPlane3/point2d13
+[GuideSequenceFactory] Primary guide created: projPlane3/guide2d14
+[GuideSequenceFactory] Getting sibling plane info...
+[GuideSequenceFactory] No sibling info - reference line is not a HalfHingeLine or BrokenHalfHingeLine2D
+
+ ❯ tests/unit/components/propertiesDialog.spec.ts  (18 tests | 5 failed) 194ms
+   ❯ tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Dialog visibility > should emit close event when close button clicked
+     → expected undefined to be truthy
+   ❯ tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Dialog visibility > should emit close event when overlay clicked
+     → expected undefined to be truthy
+   ❯ tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Dialog visibility > should emit close event when cancel button clicked
+     → expected undefined to be truthy
+   ❯ tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Save behavior > should emit save event with valid changes
+     → expected undefined to be truthy
+   ❯ tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Save behavior > should only include overridden properties in save event
+     → Cannot read properties of undefined (reading 'color')
+
+ Test Files  2 failed | 1 passed (3)
+      Tests  7 failed | 58 passed (65)
+   Start at  14:07:22
+   Duration  2.27s (transform 1.73s, setup 0ms, collect 2.95s, tests 236ms, environment 1.67s, prepare 268ms)
+

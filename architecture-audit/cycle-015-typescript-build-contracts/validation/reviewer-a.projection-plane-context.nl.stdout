@@ -1,0 +1,28 @@
+     1	import type { HingeLine } from '../HingeLine';
+     2	import type { Line2D } from '../Line';
+     3	import type { Point2D } from '../Point';
+     4	import type { ProjectionPlane } from '@/domain/world/projectionPlane/ProjectionPlane';
+     5	
+     6	export interface ProjectionPlaneRealizationContext {
+     7	  getLine2D(id: string): Line2D | undefined;
+     8	}
+     9	
+    10	export interface ProjectionPlaneElementRealizationContext extends ProjectionPlaneRealizationContext {
+    11	  getPoint2D?(id: string): Point2D | undefined;
+    12	  getProjectionPlaneById(id: string): ProjectionPlane | undefined;
+    13	}
+    14	
+    15	export interface ProjectionPlaneDependencyRegistrar {
+    16	  registerNode(id: string, dependencies: string[]): void;
+    17	  unregisterNode(id: string): void;
+    18	}
+    19	
+    20	export interface ProjectionPlaneMutationContext extends ProjectionPlaneElementRealizationContext {
+    21	  getNextId(): number;
+    22	  generateDefaultLabel(elementId: string, elementType: string): string;
+    23	  getDependencyService(): ProjectionPlaneDependencyRegistrar;
+    24	  markDirty(): void;
+    25	  getHingeLineById(id: string): HingeLine | undefined;
+    26	  getPlaneForElement(id: string): ProjectionPlane | undefined;
+    27	  getSiblingPlaneForIntersection?(point: Point2D): string | undefined;
+    28	}

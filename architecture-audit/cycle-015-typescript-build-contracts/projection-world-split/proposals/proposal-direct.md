@@ -1,29 +1,28 @@
 # Proposal Direct — Bounded Context Contract Completion
 
 **Stage:** `cycle-015-projection-world-split-scout-proposals`  
-**Purpose:** make the projection-plane/world realization lane compile only if the required contract remains a genuinely narrow read-only realization port. If implementation still needs both auxiliary matrix helpers and sibling owner-plane lookup, this proposal must yield to `proposal-restructure.md` rather than grow into a structural `World` subset.
+**Purpose:** make the projection-plane/world realization lane compile with the smallest coherent contract correction, without broad geometry redesign.
 
 ## Summary
 
-Complete the already-started narrow context direction by making 2D element realization depend on an explicit projection realization context rather than concrete `World`, then add strict guards at the existing dependency lookup sites. This is a direct correction only while the context remains limited to current-code, evidence-backed, read-only realization needs. It must not absorb mutation services, global aggregate behavior, or every `World` lookup simply because structural typing would make the compiler pass.
+Complete the already-started narrow context direction by making 2D element realization depend on an explicit projection realization context rather than concrete `World`, then add strict guards at the existing dependency lookup sites. This is a direct correction because it does not change geometric algorithms, projection-plane ownership, cache semantics, or command behavior; it only aligns the type contract with how `ProjectionPlane` is already trying to call element realization.
 
-If the implementation proves that auxiliary projection matrix computation and sibling-intersection owner lookup are both required by the same read-only surface, stop the direct path and select the restructure proposal. That combination is evidence of multiple owner boundaries, not a small local contract completion.
+**Reviewer correction:** this direct path is valid only if the resulting read-only context stays a genuinely narrow, evidence-backed lookup/realization port. It must not become a structural subset of `World`. If implementation confirms that both auxiliary matrix helpers (`AuxiliaryProjectionPlane.ts:67-75`, `:118-126`; `projectionPlaneUtils.ts:179-186`) and sibling owner lookup (`ProjectionPlane.ts:1075-1080`) remain required in the same public read-only contract, this proposal yields to `proposal-restructure.md` rather than growing a pseudo-`World` interface.
 
 ## Files to change
 
 Primary lane files:
 
 - `frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts`
-  - Define one explicit required read-only realization context only if its members are all proven by current call sites. The direct context may include:
-    - `getLine2D` for line realization and projection-plane intersection call sites already using line lookups;
-    - `getPoint2D` only where existing point/line/segment/guide realization call sites dereference point dependencies;
-    - `getCircle2D` only where existing circle/intersection realization call sites dereference circle dependencies;
-    - `getProjectionPlaneById` only for existing same-plane or referenced-plane element lookup code;
-    - `getProjectionPlane2DRealization` and `getProjectionPlane3DRealization` only if auxiliary matrix/projection realization code demonstrably reads cached plane realizations through the port.
-  - Do **not** add methods merely because `World` has them. Each method added to the direct context must have a cited call site in the implementation log or decision.
-  - `getPlaneForElement` is not a default member of the direct context. It may remain only under the explicit owner-plane exit criteria below; otherwise direct implementation must restore `World.getPlaneForElement` to non-public visibility.
+  - Define one explicit required read-only realization context only for current, cited read needs. The direct interface may include methods only when backed by an active call site:
+    - `getProjectionPlaneById` for same-plane/cross-plane element lookup currently exercised by element realization classes (`Point.ts`, `Line.ts`, `Circle.ts`) and projection orchestration.
+    - `getPoint2D`, `getLine2D`, and `getCircle2D` only where current realization code dereferences existing realized elements from projection orchestration or element classes.
+    - `getProjectionPlane2DRealization` and `getProjectionPlane3DRealization` only if the auxiliary-plane matrix helper can be proven to need plane realizations and not broader `World` state.
+    - `getPlaneForElement` only if it is deliberately named as an owner-plane query for sibling/intersection creation at `ProjectionPlane.ts:1075-1080`.
+  - Do **not** include methods merely because `World` has them. Exclude mutation, dependency-registration, dirty-marking, id-generation, project-state, rendering, persistence, and command/undo behavior from the read-only context.
   - Remove optional methods unless a call site truly branches on absence. The current optional `getPoint2D?` is misleading because callers invoke realization as if lookup services exist.
   - Keep mutation-only methods (`generatePoint2DId`, `getDependencyService`, `markElementDirty`, etc.) in `ProjectionPlaneMutationContext`; do not let read-only realization depend on mutation services.
+  - **Direct-path exit rule:** if the narrow list above must expand to satisfy both auxiliary projection matrix computation and owner-plane/sibling lookup as generic read services, stop direct implementation and select the restructure proposal.
 - `frontend/src/domain/world/Element2D.ts`
 - `frontend/src/domain/world/Point.ts`
 - `frontend/src/domain/world/Line.ts`
@@ -41,35 +40,19 @@ Primary lane files:
   - Guard every build-cited nullable lookup before dereference (`l1`, `l2`, `lineElement`, `circleElement`, `circle1Element`, `circle2Element`, `refLineElement`).
   - Remove the unused `IntersectionPoint2D` import cited at `ProjectionPlane.ts:6` if still present.
 - `frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts`
-  - Either update `computeProjectionPlaneMatrices` to accept the read-only realization context if it only uses read-only methods, or introduce a tiny helper signature that names the exact projection realization methods. Do not cast context to `World`.
-  - If this helper also requires owner-plane lookup, stop and use `proposal-restructure.md`.
+  - Either update `computeProjectionPlaneMatrices` to accept the read-only realization context if it only uses read-only methods, or introduce a tiny adapter/helper call that supplies only the required projection realization methods. Do not cast context to `World`.
+  - If this helper needs both projection realizations and owner-plane discovery through a broad shared contract, reject this direct path and use the restructure proposal.
 - `frontend/src/utils/projectionPlaneUtils.ts` if and only if `computeProjectionPlaneMatrices` currently types its context as `World` while using only the read-only subset.
 - `frontend/src/domain/world/World.ts`
   - Keep implementing the selected read-only realization context through its existing lookup methods.
-  - Retain public `getPlaneForElement` only under the owner-plane exit criteria below. If that criterion is not met, restore private/non-public visibility.
+  - Apply the `World.getPlaneForElement` exit criteria below; it must not remain public merely for structural compatibility.
 
-## Contract ownership constraints for the direct path
+## `World.getPlaneForElement` exit criteria
 
-The direct path may proceed only if the final contract table in the decision stays smaller than the table below and each retained method has a cited call site. If the table must be accepted in full, choose `proposal-restructure.md` instead.
+The decision/implementation must choose exactly one outcome:
 
-| Required method | Direct-path owner | Evidence-backed call site / use | Direct-path constraint |
-| --- | --- | --- | --- |
-| `getPoint2D` | Read-only realization context only if point dependencies are dereferenced by existing element realization | Reviewer B cites point dependency realization in `Point.ts`, `Line.ts`, `Segment.ts`; Reviewer A cites `ProjectionPlane.ts:252-315` dependent realization | Required, not optional, only when callers do not branch on absence. |
-| `getLine2D` | Read-only realization context | Existing `ProjectionPlaneRealizationContext` already exposes it; reviewers cite `ProjectionPlane.ts:426-429`, `475-476`, `527-528`, `593-594`, `647`, `694`, `805`, `968`, `1017` | Guard undefined before dereference. |
-| `getCircle2D` | Read-only realization context only for existing circle/intersection lookup sites | Reviewers cite strict-null failures and circle lookup use in `ProjectionPlane.ts`, `Circle.ts`, `Line.ts`, `Segment.ts` | Guard undefined before dereference. |
-| `getProjectionPlaneById` | Read-only realization context only for same-plane/referenced-plane element lookup | Reviewers cite `ProjectionPlaneContext.ts:6-26` and element implementations in `Point.ts`, `Line.ts`, `Circle.ts` using plane lookup | Do not substitute global lookup if same-plane ownership is the actual dependency. |
-| `getProjectionPlane2DRealization` | Read-only plane realization context only if auxiliary/projection matrix code reads cached 2D realizations | Reviewers cite `AuxiliaryProjectionPlane.ts:67-75`, `projectionPlaneUtils.ts:179-186` | If combined with owner lookup, direct path stops. |
-| `getProjectionPlane3DRealization` | Read-only plane realization context only if auxiliary/projection matrix code reads cached 3D realizations | Reviewers cite `AuxiliaryProjectionPlane.ts:118-126`, `projectionPlaneUtils.ts:179-186` | If combined with owner lookup, direct path stops. |
-| `getPlaneForElement` | No default direct owner; allowed only as named owner-plane query | Reviewers cite `ProjectionPlane.ts:1075-1080` and `World.ts:494-500` | See exit criteria below; if retained plus auxiliary matrix helpers are both required, direct yields to restructure. |
-
-## `World.getPlaneForElement` visibility exit criteria
-
-The decision and implementation must choose exactly one outcome:
-
-1. **Public named owner-plane query:** `getPlaneForElement` remains public only because it is documented as an intentional owner-plane query for sibling intersection realization/creation. The sanctioned consumers must be named explicitly; current evidence identifies `ProjectionPlane.ts:1075-1080` as the consumer. No unrelated code may use the public method for structural compatibility.
-2. **Narrower port or non-public world method:** if the final split can express the need through a narrower owner lookup port/method, then public `World.getPlaneForElement` must be reverted to non-public visibility and the implementation must route the call through that named port.
-
-Leaving `World.getPlaneForElement` public merely so a context structurally resembles `World` is forbidden.
+1. **Intentional public owner-plane query:** `World.getPlaneForElement` remains public only if the selected contract names it as an owner-plane query required by sibling/intersection realization or creation. The only sanctioned consumers for this mini-cycle are the projection-plane sibling/intersection path evidenced at `ProjectionPlane.ts:1075-1080` and any named projection realization port that directly serves that path.
+2. **Narrower port / restored non-public method:** if implementation can replace owner lookup with a narrower port method or avoid exposing the aggregate method, `World.getPlaneForElement` must return to non-public visibility. No proposal may leave it public because structural typing happened to require it.
 
 ## Files/tests/docs/fixtures to delete or revert
 
@@ -99,15 +82,9 @@ Capture all stdout/stderr under `architecture-audit/cycle-015-typescript-build-c
 Focused validation:
 
 1. `npm run test --workspace=frontend -- --run tests/unit/domain/projectionPlaneRealization.spec.ts tests/unit/projectionPlane.spec.ts`
-2. Add or adjust focused tests so at least one missing-dependency or missing-owner path is exercised for each guarded lookup category actually changed by implementation:
-   - line-line intersection missing line dependency;
-   - line-circle intersection missing line or circle dependency;
-   - circle-circle intersection missing circle dependency;
-   - guide/reference-line missing reference-line dependency;
-   - sibling/owner-plane lookup failure if `getPlaneForElement` or its narrower replacement is touched;
-   - auxiliary projection realization missing plane-realization dependency if matrix helpers are retyped.
-3. Run focused tests covering `Guide2D`, sibling guides, `HalfHingeLine2D`, `BrokenHalfHingeLine2D`, and auxiliary projection planes where present. If no existing fixture covers a changed path, add a small focused unit test rather than relying on build success.
-4. Rerun the focused process-tree deletion/undo regression required by the correction decision, proving action-node ids remain authoritative for removal (`RemoveActionFromProcessTreeOp(actionId)` still receives action-node ids, not element ids or legacy process ids).
+2. Add or adjust focused tests for every changed strict guard category rather than relying on build success. At minimum, if changed by the implementation, include one missing-dependency or missing-owner assertion for each of: line-line intersections, line-circle intersections, circle-circle intersections, guide/reference-line lookup, auxiliary projection plane realization/matrix lookup, and sibling owner-plane lookup.
+3. Run any existing world/hinge-line tests that cover `BrokenHalfHingeLine2D`, `Guide2D`, or auxiliary projection planes if present.
+4. Rerun the focused process-tree deletion/undo regression required by the Wave 015 correction decision, proving `RemoveActionFromProcessTreeOp(actionId)` still receives authoritative action-node ids and undo preserves those identities. This is required even though this mini-cycle is projection/world scoped because the parent wave protects that repair.
 5. `npm run build --workspace=frontend` to verify this lane’s errors are gone. Other Wave 015 categories may remain red; the implementation log must separate residual non-projection errors from projection-lane errors.
 
 Full Wave 015 validation remains required later by the parent wave after all build-contract categories are closed.
@@ -115,7 +92,7 @@ Full Wave 015 validation remains required later by the parent wave after all bui
 ## Risks
 
 - The context may need more read-only methods than initially listed because element realization still reaches across plane/hinge/sibling relationships. This is acceptable only if each method is current-code evidence-backed and read-only.
-- If `computeProjectionPlaneMatrices` uses broad `World` behavior beyond read-only projection lookups, this direct path must stop.
+- If `computeProjectionPlaneMatrices` uses broad `World` behavior beyond read-only projection lookups, this direct path may no longer be small and must stop.
 - If many element realization APIs require domain semantics beyond lookup/realization caches, the direct proposal risks turning into a structural `World` clone and must be rejected.
 
 ## Stop conditions
@@ -125,6 +102,6 @@ Stop and return to review if implementation requires:
 - adding mutation methods to the read-only realization context;
 - making optional context methods required without updating all callers and implementations coherently;
 - preserving `World.getPlaneForElement` public solely for structural compatibility rather than a named owner-plane query;
-- using both auxiliary matrix helper retyping and sibling owner-plane lookup in the same broad direct context;
 - broadening the context until it mirrors `World`;
-- changing geometry algorithms, persistence, rendering DTOs, command factory semantics, or process-tree deletion contracts.
+- changing geometry algorithms, persistence, rendering DTOs, command factory semantics, or process-tree deletion contracts;
+- satisfying both auxiliary matrix helpers and sibling-owner lookup by aggregating unrelated `World` read methods into one undifferentiated context.

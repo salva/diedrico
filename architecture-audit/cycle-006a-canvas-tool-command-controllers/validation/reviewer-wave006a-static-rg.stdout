@@ -1,0 +1,880 @@
+frontend/tests/helpers/worldHelpers.ts:10: * const { world, commandStack } = createTestWorld();
+frontend/tests/helpers/worldHelpers.ts:35: * const { world, commandStack } = createTestWorld();
+frontend/tests/helpers/worldHelpers.ts:42:export function createTestWorld(): { world: World; commandStack: CommandStack } {
+frontend/tests/helpers/worldHelpers.ts:44:  const commandStack = new CommandStack();
+frontend/tests/helpers/worldHelpers.ts:45:  initializeWorld(world, commandStack);
+frontend/tests/helpers/worldHelpers.ts:46:  return { world, commandStack };
+frontend/tests/helpers/worldHelpers.ts:53: * @returns Object with world, commandStack, and plane IDs
+frontend/tests/helpers/worldHelpers.ts:57:  commandStack: CommandStack;
+frontend/tests/helpers/worldHelpers.ts:61:  const { world, commandStack } = createTestWorld();
+frontend/tests/helpers/worldHelpers.ts:64:    commandStack,
+frontend/src/App.vue:117:import { DeletionSequenceFactory } from './commands/factories/DeletionSequenceFactory';
+frontend/src/App.vue:152:const commandStack = new CommandStack();
+frontend/src/App.vue:153:provide('commandStack', commandStack);
+frontend/src/App.vue:322:        initializeWorld(world, commandStack);
+frontend/src/App.vue:382:    commandStack.clear();
+frontend/src/App.vue:383:    initializeWorld(world, commandStack);
+frontend/src/App.vue:386:    const projectData = ProjectService.serializeCommands(commandStack, world.peekNextId(), projectName);
+frontend/src/App.vue:431:    ProjectService.deserializeCommands(projectData, world, commandStack);
+frontend/src/App.vue:438:      initializeWorld(world, commandStack);
+frontend/src/App.vue:521:    console.log(`[App] Performing auto-save. Commands in stack: ${commandStack.getUndoCount()}`);
+frontend/src/App.vue:524:    const projectData = ProjectService.serializeCommands(commandStack, world.peekNextId(), currentProjectName.value);
+frontend/src/App.vue:547:        const projectData = ProjectService.serializeCommands(commandStack, world.peekNextId(), currentProjectName.value);
+frontend/src/App.vue:584:        const projectData = ProjectService.serializeCommands(commandStack, world.peekNextId(), currentProjectName.value);
+frontend/src/App.vue:701:    commandStack.clear();
+frontend/src/App.vue:779:    commandStack.clear();
+frontend/src/App.vue:811:  const deleteCommand = new Command('Delete elements', world);
+frontend/src/App.vue:818:    commandStack.push(deleteCommand);
+frontend/src/App.vue:1009:  if (event.key === 'z' && !event.shiftKey && commandStack.canUndo()) {
+frontend/src/App.vue:1011:    commandStack.undo();
+frontend/src/App.vue:1017:    if (commandStack.canRedo()) {
+frontend/src/App.vue:1019:      commandStack.redo();
+frontend/src/application/construction/QuickToolUseCases.ts:8:  commandStack: CommandStack;
+frontend/src/application/construction/ConstructionUseCases.ts:8:import { PointSequenceFactory } from '@/commands/factories/PointSequenceFactory';
+frontend/src/application/construction/ConstructionUseCases.ts:9:import { LineSequenceFactory } from '@/commands/factories/LineSequenceFactory';
+frontend/src/application/construction/ConstructionUseCases.ts:10:import { CircleSequenceFactory } from '@/commands/factories/CircleSequenceFactory';
+frontend/src/application/construction/ConstructionUseCases.ts:11:import { GuideSequenceFactory } from '@/commands/factories/GuideSequenceFactory';
+frontend/src/application/construction/ConstructionUseCases.ts:12:import { IntersectionSequenceFactory } from '@/commands/factories/IntersectionSequenceFactory';
+frontend/src/application/construction/ConstructionUseCases.ts:13:import { PlaneSequenceFactory } from '@/services/factories/PlaneSequenceFactory';
+frontend/src/application/construction/ConstructionUseCases.ts:20:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/application/construction/ConstructionUseCases.ts:21:import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+frontend/src/application/construction/ConstructionUseCases.ts:32:  commandStack: CommandStack;
+frontend/src/application/construction/ConstructionUseCases.ts:35:export function executeConstructionIntent({ intent, world, commandStack }: ExecuteConstructionParams): ToolCommandResult {
+frontend/src/application/construction/ConstructionUseCases.ts:36:  const cmd = new Command(intent.description, world);
+frontend/src/application/construction/ConstructionUseCases.ts:40:    cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+frontend/src/application/construction/ConstructionUseCases.ts:44:    commandStack.push(cmd);
+frontend/src/application/construction/ConstructionUseCases.ts:74:      cmd.addAndExecute(new AddProcessTreeActionOp(createSegmentAction(result.outputs.segmentId as string), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:87:      cmd.addAndExecute(new AddProcessTreeActionOp(createGuideAction(result.guideId), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:88:      if (result.siblingGuideId) cmd.addAndExecute(new AddProcessTreeActionOp(createSiblingGuideAction(result.siblingGuideId), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:112:      cmd.addAndExecute(new AddProcessTreeActionOp(createTangentLineToCircleThroughPointAction(result.outputs.lineId as string), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:120:      cmd.addAndExecute(new AddProcessTreeActionOp(createTangentLineToCircleParallelToLineAction(result.outputs.lineId as string), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:127:      cmd.addAndExecute(new AddProcessTreeActionOp(createAdd3DPointAction(result.outputs.pointId as string), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:134:      cmd.addAndExecute(new AddProcessTreeActionOp(createAdd3DLineAction(result.outputs.lineId as string), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:141:      cmd.addAndExecute(new AddProcessTreeActionOp(createAdd3DSegmentAction(result.outputs.segmentId as string), groupId));
+frontend/src/application/construction/ConstructionUseCases.ts:158:    case 'interactiveprojectionsetup': {
+frontend/src/application/canvas/CanvasStyleUseCase.ts:4:import { UpdateElementStyleOp } from '@/commands/operations/world/UpdateElementStyleOp';
+frontend/src/application/canvas/CanvasStyleUseCase.ts:8:  constructor(private readonly world: World, private readonly commandStack: CommandStack) {}
+frontend/src/application/canvas/CanvasStyleUseCase.ts:11:    const cmd = new Command(`Update style: ${request.elementId}`, this.world);
+frontend/src/application/canvas/CanvasStyleUseCase.ts:13:      cmd.addAndExecute(new UpdateElementStyleOp(request.elementId, request.planeId, request.style) as any);
+frontend/src/application/canvas/CanvasStyleUseCase.ts:15:      this.commandStack.push(cmd);
+frontend/src/services/factories/PlaneSequenceFactory.ts:23:import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+frontend/src/services/factories/PlaneSequenceFactory.ts:24:import { UpdateElementStyleOp } from '@/commands/operations/world/UpdateElementStyleOp';
+frontend/src/services/factories/PlaneSequenceFactory.ts:76:      cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
+frontend/src/services/factories/PlaneSequenceFactory.ts:133:    cmd.addAndExecute(new AddProcessTreeActionOp(projPlaneAction, groupId));
+frontend/src/services/factories/PlaneSequenceFactory.ts:145:    cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/services/factories/PlaneSequenceFactory.ts:155:    cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/services/factories/PlaneSequenceFactory.ts:164:    cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/services/factories/PlaneSequenceFactory.ts:176:        cmd.addAndExecute(new UpdateElementStyleOp(
+frontend/src/services/factories/PlaneSequenceFactory.ts:231:    cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/services/factories/PlaneSequenceFactory.ts:238:    cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/services/factories/PlaneSequenceFactory.ts:246:    cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:5:import { UpdateFreePoint2DPositionOp } from '@/commands/operations/world/UpdateFreePoint2DPositionOp';
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:9:  constructor(private readonly world: World, private readonly commandStack: CommandStack) {}
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:12:    const cmd = new Command(`Move point ${request.label ?? request.pointId}`, this.world);
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:19:          cmd.addAndExecute(new UpdateFreePoint2DPositionOp(request.planeId, request.pointId, position));
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:33:        this.commandStack.push(cmd);
+frontend/tests/e2e/command-chaining.spec.ts:12: * - frontend/tests/unit/commands/commandStack.spec.ts (command stack integration - 29 tests)
+frontend/tests/e2e/command-chaining.spec.ts:38: * const command = new Command();
+frontend/tests/e2e/command-chaining.spec.ts:67: * commandStack.push(command);
+frontend/src/application/tools/CanvasToolController.ts:4:import type { ToolCommandSink, ToolConstructionIntent, QuickToolIntent, MoveFreePointRequest, FreePointMoveSession, StyleUpdateRequest, ToolCommandResult } from './ToolCommandIntents';
+frontend/src/application/tools/CanvasToolController.ts:12:  commandStack: CommandStack;
+frontend/src/application/tools/CanvasToolController.ts:18:  commandStack: unknown;
+frontend/src/application/tools/CanvasToolController.ts:22:export function createCanvasToolController(deps: CanvasToolControllerProviderDependencies): CanvasToolController {
+frontend/src/application/tools/CanvasToolController.ts:23:  if (!deps.commandStack) {
+frontend/src/application/tools/CanvasToolController.ts:28:    commandStack: deps.commandStack as CommandStack,
+frontend/src/application/tools/CanvasToolController.ts:33:export class CanvasToolController implements ToolCommandSink {
+frontend/src/application/tools/CanvasToolController.ts:38:    this.movement = new CanvasPointMovementUseCase(deps.world, deps.commandStack);
+frontend/src/application/tools/CanvasToolController.ts:39:    this.style = new CanvasStyleUseCase(deps.world, deps.commandStack);
+frontend/src/application/tools/CanvasToolController.ts:46:      commandStack: this.deps.commandStack
+frontend/src/application/tools/CanvasToolController.ts:51:  executeQuickIntent(intent: QuickToolIntent): ToolCommandResult {
+frontend/src/application/tools/CanvasToolController.ts:55:      commandStack: this.deps.commandStack
+frontend/src/application/tools/CanvasToolController.ts:61:  startFreePointMove(request: MoveFreePointRequest): FreePointMoveSession {
+frontend/src/application/tools/CanvasToolController.ts:65:  updateElementStyle(request: StyleUpdateRequest): ToolCommandResult {
+frontend/src/services/ProjectService.ts:27:  static serializeCommands(commandStack: CommandStack, nextElementId: number, projectName: string): ProjectData {
+frontend/src/services/ProjectService.ts:32:    const commands = commandStack.getCommittedCommands().map(command => command.toSnapshot());
+frontend/src/services/ProjectService.ts:45:  static deserializeCommands(data: ProjectData, world: World, commandStack: CommandStack): void {
+frontend/src/services/ProjectService.ts:47:    commandStack.clear();
+frontend/src/services/ProjectService.ts:67:    commandStack.restoreCommittedCommands(restoredCommands);
+frontend/src/application/tools/ToolCommandIntents.ts:20:  | 'interactiveprojectionsetup';
+frontend/src/application/tools/ToolCommandIntents.ts:23:  | 'quickprojectionsetup'
+frontend/src/application/tools/ToolCommandIntents.ts:24:  | 'quick3dline'
+frontend/src/application/tools/ToolCommandIntents.ts:25:  | 'quick3dsegment';
+frontend/src/application/tools/ToolCommandIntents.ts:68:export interface ToolCommandSink {
+frontend/src/application/tools/ToolCommandIntents.ts:70:  executeQuickIntent(intent: QuickToolIntent): ToolCommandResult;
+frontend/src/application/tools/ToolCommandIntents.ts:71:  startFreePointMove(request: MoveFreePointRequest): FreePointMoveSession;
+frontend/src/application/tools/ToolCommandIntents.ts:72:  updateElementStyle(request: StyleUpdateRequest): ToolCommandResult;
+frontend/src/types/ToolArgumentCollector.ts:148:   * @param context - Tool execution context (world, commandStack, planeId, etc.)
+frontend/src/application/world/initializeWorld.ts:3:import { buildWorldInitialization } from '@/commands/factories/InitializationSequenceFactory';
+frontend/src/application/world/initializeWorld.ts:4:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/src/application/world/initializeWorld.ts:19:export function initializeWorld(world: World, commandStack: CommandStack): void {
+frontend/src/application/world/initializeWorld.ts:22:  const initCmd = new Command('Initialize World', world);
+frontend/src/application/world/initializeWorld.ts:28:  initCmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+frontend/src/application/world/initializeWorld.ts:34:  commandStack.push(initCmd);
+frontend/src/config/toolFamilies.ts:223:    defaultTool: 'quickprojectionsetup',
+frontend/src/config/toolFamilies.ts:226:        id: 'quickprojectionsetup',
+frontend/src/config/toolFamilies.ts:233:        id: 'quick3dline',
+frontend/src/config/toolFamilies.ts:240:        id: 'quick3dsegment',
+frontend/src/config/toolFamilies.ts:247:        id: 'interactiveprojectionsetup',
+frontend/src/components/menus/ExamplesMenu.vue:58:const commandStack = inject<CommandStack>('commandStack')!;
+frontend/src/components/menus/ExamplesMenu.vue:72:    const cmd = new Command(`Add ${setupType} example`, world);
+frontend/src/components/menus/ExamplesMenu.vue:75:    commandStack.push(cmd);
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:11:import { buildWorldInitialization } from '@/commands/factories/InitializationSequenceFactory';
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:17:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:21:  let commandStack: CommandStack;
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:26:    commandStack = new CommandStack();
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:27:    initializeWorld(world, commandStack);
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:32:      const cmd = new Command('Initialize World', world);
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:38:      const cmd = new Command('Initialize World', world);
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:157:      const commandStack = new CommandStack();
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:160:      expect(commandStack.canUndo()).toBe(false);
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:164:      const cmd = new Command('Test Command', world);
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:173:      const cmd = new Command('Initialize World', world);
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:178:      cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:190:      expect(opTypes[0]).toBe('AddProcessTreeActionGroup');
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:198:      expect(opTypes).toContain('AddProcessTreeActionOp'); // ProcessTree tracking
+frontend/src/components/workspace/SvgCanvas.vue:212:import { createCanvasToolController } from '@/application/tools/CanvasToolController';
+frontend/src/components/workspace/SvgCanvas.vue:423:const canvasToolController = createCanvasToolController({
+frontend/src/components/workspace/SvgCanvas.vue:425:  commandStack: inject('commandStack'),
+frontend/src/components/workspace/SvgCanvas.vue:1370:        moveSession: canvasToolController.startFreePointMove({ planeId: activePlane.value, pointId: hit.elementId, label: point.label ?? hit.elementId }),
+frontend/src/components/workspace/SvgCanvas.vue:1430:  const result = canvasToolController.updateElementStyle({
+frontend/src/tools/ITool.ts:14:import type { ToolCommandSink } from '@/application/tools/ToolCommandIntents';
+frontend/src/tools/ITool.ts:23:  commandSink: ToolCommandSink;
+frontend/tests/unit/commands.spec.ts:53:    command = new Command('Test command', world);
+frontend/src/components/toolbars/Toolbar.vue:164:const commandStack = inject<CommandStack>('commandStack')!;
+frontend/src/components/toolbars/Toolbar.vue:165:if (!commandStack) {
+frontend/src/components/toolbars/Toolbar.vue:182:  return commandStack.canUndo();
+frontend/src/components/toolbars/Toolbar.vue:187:  return commandStack.canRedo();
+frontend/src/components/toolbars/Toolbar.vue:263:    const cmd = new Command('Add projection plane example setup', world);
+frontend/src/components/toolbars/Toolbar.vue:299:    commandStack.push(cmd);
+frontend/src/components/toolbars/Toolbar.vue:311:  unsubscribeStack = commandStack.subscribe(() => {
+frontend/src/components/toolbars/Toolbar.vue:328:  if (commandStack.canUndo()) {
+frontend/src/components/toolbars/Toolbar.vue:329:    commandStack.undo();
+frontend/src/components/toolbars/Toolbar.vue:337:  if (commandStack.canRedo()) {
+frontend/src/components/toolbars/Toolbar.vue:338:    commandStack.redo();
+frontend/tests/unit/commands/commandStack.spec.ts:31:  let commandStack: CommandStack;
+frontend/tests/unit/commands/commandStack.spec.ts:38:    commandStack = new CommandStack();
+frontend/tests/unit/commands/commandStack.spec.ts:43:      expect(commandStack.canUndo()).toBe(false);
+frontend/tests/unit/commands/commandStack.spec.ts:44:      expect(commandStack.canRedo()).toBe(false);
+frontend/tests/unit/commands/commandStack.spec.ts:45:      expect(commandStack.getUndoCount()).toBe(0);
+frontend/tests/unit/commands/commandStack.spec.ts:46:      expect(commandStack.getRedoCount()).toBe(0);
+frontend/tests/unit/commands/commandStack.spec.ts:52:      const command = new Command('Test Command', world);
+frontend/tests/unit/commands/commandStack.spec.ts:56:      commandStack.push(command);
+frontend/tests/unit/commands/commandStack.spec.ts:58:      expect(commandStack.canUndo()).toBe(true);
+frontend/tests/unit/commands/commandStack.spec.ts:59:      expect(commandStack.getUndoCount()).toBe(1);
+frontend/tests/unit/commands/commandStack.spec.ts:63:      const cmd1 = new Command('Command 1', world);
+frontend/tests/unit/commands/commandStack.spec.ts:67:      const cmd2 = new Command('Command 2', world);
+frontend/tests/unit/commands/commandStack.spec.ts:71:      commandStack.push(cmd1);
+frontend/tests/unit/commands/commandStack.spec.ts:72:      commandStack.push(cmd2);
+frontend/tests/unit/commands/commandStack.spec.ts:74:      expect(commandStack.getUndoCount()).toBe(2);
+frontend/tests/unit/commands/commandStack.spec.ts:78:      const cmd1 = new Command('Command 1', world);
+frontend/tests/unit/commands/commandStack.spec.ts:81:      commandStack.push(cmd1);
+frontend/tests/unit/commands/commandStack.spec.ts:84:      commandStack.undo();
+frontend/tests/unit/commands/commandStack.spec.ts:85:      expect(commandStack.getRedoCount()).toBe(1);
+frontend/tests/unit/commands/commandStack.spec.ts:88:      const cmd2 = new Command('Command 2', world);
+frontend/tests/unit/commands/commandStack.spec.ts:91:      commandStack.push(cmd2);
+frontend/tests/unit/commands/commandStack.spec.ts:94:      expect(commandStack.getRedoCount()).toBe(0);
+frontend/tests/unit/commands/commandStack.spec.ts:95:      expect(commandStack.canRedo()).toBe(false);
+frontend/tests/unit/commands/commandStack.spec.ts:99:      const command = new Command('Uncommitted', world);
+frontend/tests/unit/commands/commandStack.spec.ts:104:        commandStack.push(command);
+frontend/tests/unit/commands/commandStack.spec.ts:109:      const command = new Command('Multi-op Command', world);
+frontend/tests/unit/commands/commandStack.spec.ts:115:      commandStack.push(command);
+frontend/tests/unit/commands/commandStack.spec.ts:117:      expect(commandStack.getUndoCount()).toBe(1);
+frontend/tests/unit/commands/commandStack.spec.ts:118:      expect(commandStack.canUndo()).toBe(true);
+frontend/tests/unit/commands/commandStack.spec.ts:124:      const command = new Command('Test Command', world);
+frontend/tests/unit/commands/commandStack.spec.ts:127:      commandStack.push(command);
+frontend/tests/unit/commands/commandStack.spec.ts:129:      commandStack.undo();
+frontend/tests/unit/commands/commandStack.spec.ts:135:      const command = new Command('Test Command', world);
+frontend/tests/unit/commands/commandStack.spec.ts:138:      commandStack.push(command);
+frontend/tests/unit/commands/commandStack.spec.ts:140:      expect(commandStack.getUndoCount()).toBe(1);
+frontend/tests/unit/commands/commandStack.spec.ts:141:      expect(commandStack.getRedoCount()).toBe(0);
+frontend/tests/unit/commands/commandStack.spec.ts:143:      commandStack.undo();
+frontend/tests/unit/commands/commandStack.spec.ts:145:      expect(commandStack.getUndoCount()).toBe(0);
+frontend/tests/unit/commands/commandStack.spec.ts:146:      expect(commandStack.getRedoCount()).toBe(1);
+frontend/tests/unit/commands/commandStack.spec.ts:152:      const cmd1 = new Command('Command 1', world);
+frontend/tests/unit/commands/commandStack.spec.ts:153:      const cmd2 = new Command('Command 2', world);
+frontend/tests/unit/commands/commandStack.spec.ts:154:      const cmd3 = new Command('Command 3', world);
+frontend/tests/unit/commands/commandStack.spec.ts:165:        commandStack.push(cmd);
+frontend/tests/unit/commands/commandStack.spec.ts:168:      commandStack.undo();
+frontend/tests/unit/commands/commandStack.spec.ts:169:      commandStack.undo();
+frontend/tests/unit/commands/commandStack.spec.ts:177:        commandStack.undo();
+frontend/tests/unit/commands/commandStack.spec.ts:184:      const command = new Command('Test Command', world);
+frontend/tests/unit/commands/commandStack.spec.ts:187:      commandStack.push(command);
+frontend/tests/unit/commands/commandStack.spec.ts:188:      commandStack.undo();
+frontend/tests/unit/commands/commandStack.spec.ts:190:      commandStack.redo();
+frontend/tests/unit/commands/commandStack.spec.ts:196:      const command = new Command('Test Command', world);
+frontend/tests/unit/commands/commandStack.spec.ts:199:      commandStack.push(command);
+frontend/tests/unit/commands/commandStack.spec.ts:200:      commandStack.undo();
+frontend/tests/unit/commands/commandStack.spec.ts:202:      expect(commandStack.getUndoCount()).toBe(0);
+frontend/tests/unit/commands/commandStack.spec.ts:203:      expect(commandStack.getRedoCount()).toBe(1);
+frontend/tests/unit/commands/commandStack.spec.ts:205:      commandStack.redo();
+frontend/tests/unit/commands/commandStack.spec.ts:207:      expect(commandStack.getUndoCount()).toBe(1);
+frontend/tests/unit/commands/commandStack.spec.ts:208:      expect(commandStack.getRedoCount()).toBe(0);
+frontend/tests/unit/commands/commandStack.spec.ts:214:      const cmd1 = new Command('Command 1', world);
+frontend/tests/unit/commands/commandStack.spec.ts:215:      const cmd2 = new Command('Command 2', world);
+frontend/tests/unit/commands/commandStack.spec.ts:230:        commandStack.push(cmd);
+frontend/tests/unit/commands/commandStack.spec.ts:233:      commandStack.undo();
+frontend/tests/unit/commands/commandStack.spec.ts:234:      commandStack.undo();
+frontend/tests/unit/commands/commandStack.spec.ts:236:      commandStack.redo();
+frontend/tests/unit/commands/commandStack.spec.ts:237:      commandStack.redo();
+frontend/tests/unit/commands/commandStack.spec.ts:246:        commandStack.redo();
+frontend/tests/unit/commands/commandStack.spec.ts:253:      expect(commandStack.canUndo()).toBe(false);
+frontend/tests/unit/commands/commandStack.spec.ts:257:      const command = new Command('Test Command', world);
+frontend/tests/unit/commands/commandStack.spec.ts:260:      commandStack.push(command);
+frontend/tests/unit/commands/commandStack.spec.ts:262:      expect(commandStack.canUndo()).toBe(true);
+frontend/tests/unit/commands/commandStack.spec.ts:266:      const command = new Command('Test Command', world);
+frontend/tests/unit/commands/commandStack.spec.ts:269:      commandStack.push(command);
+frontend/tests/unit/commands/commandStack.spec.ts:270:      commandStack.undo();
+frontend/tests/unit/commands/commandStack.spec.ts:272:      expect(commandStack.canUndo()).toBe(false);
+frontend/tests/unit/commands/commandStack.spec.ts:278:      expect(commandStack.canRedo()).toBe(false);
+frontend/tests/unit/commands/commandStack.spec.ts:282:      const command = new Command('Test Command', world);
+frontend/tests/unit/commands/commandStack.spec.ts:285:      commandStack.push(command);
+frontend/tests/unit/commands/commandStack.spec.ts:286:      commandStack.undo();
+frontend/tests/unit/commands/commandStack.spec.ts:288:      expect(commandStack.canRedo()).toBe(true);
+frontend/tests/unit/commands/commandStack.spec.ts:292:      const command = new Command('Test Command', world);
+frontend/tests/unit/commands/commandStack.spec.ts:295:      commandStack.push(command);
+frontend/tests/unit/commands/commandStack.spec.ts:296:      commandStack.undo();
+frontend/tests/unit/commands/commandStack.spec.ts:297:      commandStack.redo();
+frontend/tests/unit/commands/commandStack.spec.ts:299:      expect(commandStack.canRedo()).toBe(false);
+frontend/tests/unit/commands/commandStack.spec.ts:303:      const cmd1 = new Command('Command 1', world);
+frontend/tests/unit/commands/commandStack.spec.ts:306:      commandStack.push(cmd1);
+frontend/tests/unit/commands/commandStack.spec.ts:307:      commandStack.undo();
+frontend/tests/unit/commands/commandStack.spec.ts:309:      expect(commandStack.canRedo()).toBe(true);
+frontend/tests/unit/commands/commandStack.spec.ts:311:      const cmd2 = new Command('Command 2', world);
+frontend/tests/unit/commands/commandStack.spec.ts:314:      commandStack.push(cmd2);
+frontend/tests/unit/commands/commandStack.spec.ts:316:      expect(commandStack.canRedo()).toBe(false);
+frontend/tests/unit/commands/commandStack.spec.ts:322:      expect(commandStack.getUndoCount()).toBe(0);
+frontend/tests/unit/commands/commandStack.spec.ts:324:      const cmd1 = new Command('Command 1', world);
+frontend/tests/unit/commands/commandStack.spec.ts:327:      commandStack.push(cmd1);
+frontend/tests/unit/commands/commandStack.spec.ts:328:      expect(commandStack.getUndoCount()).toBe(1);
+frontend/tests/unit/commands/commandStack.spec.ts:330:      const cmd2 = new Command('Command 2', world);
+frontend/tests/unit/commands/commandStack.spec.ts:333:      commandStack.push(cmd2);
+frontend/tests/unit/commands/commandStack.spec.ts:334:      expect(commandStack.getUndoCount()).toBe(2);
+frontend/tests/unit/commands/commandStack.spec.ts:336:      commandStack.undo();
+frontend/tests/unit/commands/commandStack.spec.ts:337:      expect(commandStack.getUndoCount()).toBe(1);
+frontend/tests/unit/commands/commandStack.spec.ts:341:      expect(commandStack.getRedoCount()).toBe(0);
+frontend/tests/unit/commands/commandStack.spec.ts:343:      const cmd1 = new Command('Command 1', world);
+frontend/tests/unit/commands/commandStack.spec.ts:346:      commandStack.push(cmd1);
+frontend/tests/unit/commands/commandStack.spec.ts:347:      commandStack.undo();
+frontend/tests/unit/commands/commandStack.spec.ts:348:      expect(commandStack.getRedoCount()).toBe(1);
+frontend/tests/unit/commands/commandStack.spec.ts:350:      const cmd2 = new Command('Command 2', world);
+frontend/tests/unit/commands/commandStack.spec.ts:353:      commandStack.push(cmd2);
+frontend/tests/unit/commands/commandStack.spec.ts:354:      expect(commandStack.getRedoCount()).toBe(0);
+frontend/tests/unit/commands/commandStack.spec.ts:360:      const cmd1 = new Command('Command 1', world);
+frontend/tests/unit/commands/commandStack.spec.ts:363:      commandStack.push(cmd1);
+frontend/tests/unit/commands/commandStack.spec.ts:365:      const cmd2 = new Command('Command 2', world);
+frontend/tests/unit/commands/commandStack.spec.ts:368:      commandStack.push(cmd2);
+frontend/tests/unit/commands/commandStack.spec.ts:369:      commandStack.undo();
+frontend/tests/unit/commands/commandStack.spec.ts:371:      expect(commandStack.getUndoCount()).toBe(1);
+frontend/tests/unit/commands/commandStack.spec.ts:372:      expect(commandStack.getRedoCount()).toBe(1);
+frontend/tests/unit/commands/commandStack.spec.ts:374:      commandStack.clear();
+frontend/tests/unit/commands/commandStack.spec.ts:376:      expect(commandStack.getUndoCount()).toBe(0);
+frontend/tests/unit/commands/commandStack.spec.ts:377:      expect(commandStack.getRedoCount()).toBe(0);
+frontend/tests/unit/commands/commandStack.spec.ts:378:      expect(commandStack.canUndo()).toBe(false);
+frontend/tests/unit/commands/commandStack.spec.ts:379:      expect(commandStack.canRedo()).toBe(false);
+frontend/tests/unit/commands/commandStack.spec.ts:385:      const command = new Command('Test Command', world);
+frontend/tests/unit/commands/commandStack.spec.ts:390:      commandStack.push(command);
+frontend/tests/unit/commands/commandStack.spec.ts:392:      expect(commandStack.getUndoCount()).toBe(1);
+frontend/tests/unit/commands/commandStack.spec.ts:395:      commandStack.undo();
+frontend/tests/unit/commands/commandStack.spec.ts:397:      expect(commandStack.getRedoCount()).toBe(1);
+frontend/tests/unit/commands/commandStack.spec.ts:400:      commandStack.redo();
+frontend/tests/unit/commands/commandStack.spec.ts:402:      expect(commandStack.getUndoCount()).toBe(1);
+frontend/tests/unit/commands/commandStack.spec.ts:405:      commandStack.undo();
+frontend/tests/unit/commands/commandStack.spec.ts:411:        const cmd = new Command(`Command ${i}`, world);
+frontend/tests/unit/commands/commandStack.spec.ts:418:      commands.forEach(cmd => commandStack.push(cmd));
+frontend/tests/unit/commands/commandStack.spec.ts:419:      expect(commandStack.getUndoCount()).toBe(3);
+frontend/tests/unit/commands/commandStack.spec.ts:422:      commandStack.undo();
+frontend/tests/unit/commands/commandStack.spec.ts:423:      commandStack.undo();
+frontend/tests/unit/commands/commandStack.spec.ts:424:      commandStack.undo();
+frontend/tests/unit/commands/commandStack.spec.ts:425:      expect(commandStack.getUndoCount()).toBe(0);
+frontend/tests/unit/commands/commandStack.spec.ts:426:      expect(commandStack.getRedoCount()).toBe(3);
+frontend/tests/unit/commands/commandStack.spec.ts:429:      commandStack.redo();
+frontend/tests/unit/commands/commandStack.spec.ts:430:      commandStack.redo();
+frontend/tests/unit/commands/commandStack.spec.ts:431:      commandStack.redo();
+frontend/tests/unit/commands/commandStack.spec.ts:432:      expect(commandStack.getUndoCount()).toBe(3);
+frontend/tests/unit/commands/commandStack.spec.ts:433:      expect(commandStack.getRedoCount()).toBe(0);
+frontend/tests/unit/commands/commandStack.spec.ts:442:      commandStack.restoreCommittedCommands([cmd1, cmd2]);
+frontend/tests/unit/commands/commandStack.spec.ts:444:      expect(commandStack.getCommittedCommands()).toEqual([cmd1, cmd2]);
+frontend/tests/unit/commands/commandStack.spec.ts:445:      expect(commandStack.getUndoCount()).toBe(2);
+frontend/tests/unit/commands/commandStack.spec.ts:446:      expect(commandStack.getRedoCount()).toBe(0);
+frontend/tests/unit/commands/commandStack.spec.ts:447:      expect(commandStack.canUndo()).toBe(true);
+frontend/tests/unit/commands/commandStack.spec.ts:448:      expect(commandStack.canRedo()).toBe(false);
+frontend/tests/unit/commands/commandStack.spec.ts:452:      const cmd = new Command('Building', world);
+frontend/tests/unit/commands/commandStack.spec.ts:455:      expect(() => commandStack.restoreCommittedCommands([cmd])).toThrow('Can only restore committed commands');
+frontend/tests/unit/commands/updateFreePoint2DPositionOp.spec.ts:2: * Unit Tests: UpdateFreePoint2DPositionOp
+frontend/tests/unit/commands/updateFreePoint2DPositionOp.spec.ts:8:import { UpdateFreePoint2DPositionOp } from '@/commands/operations/world/UpdateFreePoint2DPositionOp';
+frontend/tests/unit/commands/updateFreePoint2DPositionOp.spec.ts:11:describe('UpdateFreePoint2DPositionOp', () => {
+frontend/tests/unit/commands/updateFreePoint2DPositionOp.spec.ts:25:    const op = new UpdateFreePoint2DPositionOp(planeId, point.id, new Vector3(100, 200, 1));
+frontend/tests/unit/commands/updateFreePoint2DPositionOp.spec.ts:44:    const op = new UpdateFreePoint2DPositionOp(planeId, originId, new Vector3(1, 2, 1));
+frontend/tests/unit/commands/removeElementOps.spec.ts:26:  let commandStack: CommandStack;
+frontend/tests/unit/commands/removeElementOps.spec.ts:29:    const { world: w, commandStack: cs } = createTestWorld();
+frontend/tests/unit/commands/removeElementOps.spec.ts:31:    commandStack = cs;
+frontend/tests/unit/commands/removeElementOps.spec.ts:150:      const deleteCmd = new Command('Delete point with cascade', world);
+frontend/tests/unit/commands/removeElementOps.spec.ts:161:      commandStack.push(deleteCmd);
+frontend/tests/unit/commands/removeElementOps.spec.ts:181:      const deleteCmd = new Command('Delete with cascade', world);
+frontend/tests/unit/commands/removeElementOps.spec.ts:187:      commandStack.push(deleteCmd);
+frontend/tests/unit/commands/removeElementOps.spec.ts:194:      commandStack.undo();
+frontend/tests/unit/commands/removeElementOps.spec.ts:211:      const deleteCmd = new Command('Delete', world);
+frontend/tests/unit/commands/removeElementOps.spec.ts:217:      commandStack.push(deleteCmd);
+frontend/tests/unit/commands/removeElementOps.spec.ts:220:      commandStack.undo();
+frontend/tests/unit/commands/removeElementOps.spec.ts:224:      commandStack.redo();
+frontend/tests/unit/commands/removeElementOps.spec.ts:241:      const deleteCmd = new Command('Delete two points', world);
+frontend/tests/unit/commands/removeElementOps.spec.ts:247:      commandStack.push(deleteCmd);
+frontend/tests/unit/commands/createSegment.spec.ts:24:      const cmd = new Command("Create segment with points", world);
+frontend/tests/unit/commands/createSegment.spec.ts:47:      const cmd = new Command("Create segment", world);
+frontend/tests/unit/commands/createSegment.spec.ts:65:      const cmd = new Command("Create segment", world);
+frontend/tests/unit/commands/createSegment.spec.ts:88:      const cmd = new Command("Create segment", world);
+frontend/src/stores/toolStore.ts:36:  INTERACTIVEPROJECTIONSETUP: 'interactiveprojectionsetup',
+frontend/src/stores/toolStore.ts:37:  QUICKPROJECTIONSETUP: 'quickprojectionsetup',
+frontend/src/stores/toolStore.ts:38:  QUICK3DLINE: 'quick3dline',
+frontend/src/stores/toolStore.ts:39:  QUICK3DSEGMENT: 'quick3dsegment',
+frontend/tests/unit/commands/createLine.spec.ts:26:      const cmd = new Command("Create line with points", world);
+frontend/tests/unit/commands/createLine.spec.ts:52:      const cmd = new Command("Create line", world);
+frontend/tests/unit/commands/createLine.spec.ts:70:      const cmd = new Command("Create line", world);
+frontend/tests/unit/commands/createLine.spec.ts:95:      const cmd = new Command("Create line", world);
+frontend/tests/unit/commandStack.spec.ts:45:      const cmd = new Command('Command 1', world);
+frontend/tests/unit/commandStack.spec.ts:56:      const cmd = new Command('Command 1', world);
+frontend/tests/unit/commandStack.spec.ts:64:      const cmd1 = new Command('Command 1', world);
+frontend/tests/unit/commandStack.spec.ts:69:      const cmd2 = new Command('Command 2', world);
+frontend/tests/unit/commandStack.spec.ts:77:      const cmd3 = new Command('Command 3', world);
+frontend/tests/unit/commandStack.spec.ts:87:      const cmd = new Command('Non-undoable', world);
+frontend/tests/unit/commandStack.spec.ts:102:      const cmd = new Command('Command 1', world);
+frontend/tests/unit/commandStack.spec.ts:114:      const cmd = new Command('Command 1', world);
+frontend/tests/unit/commandStack.spec.ts:127:      const cmd1 = new Command('Command 1', world);
+frontend/tests/unit/commandStack.spec.ts:132:      const cmd2 = new Command('Command 2', world);
+frontend/tests/unit/commandStack.spec.ts:137:      const cmd3 = new Command('Command 3', world);
+frontend/tests/unit/commandStack.spec.ts:153:      const cmd1 = new Command('Command 1', world);
+frontend/tests/unit/commandStack.spec.ts:158:      const cmd2 = new Command('Command 2', world);
+frontend/tests/unit/commandStack.spec.ts:189:      const cmd = new Command('Command 1', world);
+frontend/tests/unit/commandStack.spec.ts:199:      const cmd = new Command('Command 1', world);
+frontend/tests/unit/commandStack.spec.ts:212:      const cmd1 = new Command('Command 1', world);
+frontend/tests/unit/commandStack.spec.ts:217:      const cmd2 = new Command('Command 2', world);
+frontend/tests/unit/commandStack.spec.ts:232:      const cmd1 = new Command('Command 1', world);
+frontend/tests/unit/commandStack.spec.ts:237:      const cmd2 = new Command('Command 2', world);
+frontend/tests/unit/commands/createIntersectionPoint.spec.ts:25:      const cmd = new Command("Create intersection point", world);
+frontend/tests/unit/commands/createIntersectionPoint.spec.ts:67:      const cmd = new Command("Create intersection", world);
+frontend/tests/unit/commands/createIntersectionPoint.spec.ts:100:      const cmd = new Command("Create intersection", world);
+frontend/tests/unit/commands/createIntersectionPoint.spec.ts:139:      const cmd = new Command("Create intersection", world);
+frontend/src/commands/Command.ts:23: *    belongs in Operation classes (AddFreePoint2DOp, AddLine2DOp, UpdateElementStyleOp).
+frontend/src/commands/Command.ts:29: *    const cmd = new Command("Create segment", world);
+frontend/src/commands/Command.ts:44: * - Tools create generic Command: `new Command("Create point", world)`
+frontend/src/commands/Command.ts:46: * - Tools commit: `cmd.commit()` and `commandStack.push(cmd)`
+frontend/src/commands/Command.ts:53: * See UpdateElementStyleOp as example of correct pattern - it's an Operation,
+frontend/src/commands/Command.ts:124:    const command = new Command(input.description, world);
+frontend/src/components/panels/ActionsPanel.vue:73:const commandStack = inject<CommandStack>('commandStack')!;
+frontend/src/components/panels/ActionsPanel.vue:267:  const cmd = new Command('Push subprocess', world);
+frontend/src/components/panels/ActionsPanel.vue:270:  commandStack.push(cmd);
+frontend/src/components/panels/ActionsPanel.vue:276:    const cmd = new Command('Pop subprocess', world);
+frontend/src/components/panels/ActionsPanel.vue:279:    commandStack.push(cmd);
+frontend/src/components/panels/ActionsPanel.vue:291:  const cmd = new Command('Toggle subprocess encapsulation', world);
+frontend/src/components/panels/ActionsPanel.vue:294:  commandStack.push(cmd);
+frontend/src/components/panels/ActionsPanel.vue:300:  const cmd = new Command('Toggle output status', world);
+frontend/src/components/panels/ActionsPanel.vue:303:  commandStack.push(cmd);
+frontend/src/components/panels/ActionsPanel.vue:309:  const cmd = new Command('Rename subprocess', world);
+frontend/src/components/panels/ActionsPanel.vue:312:  commandStack.push(cmd);
+frontend/tests/unit/commands/createGuide.spec.ts:26:      const cmd = new Command("Create guide", world);
+frontend/tests/unit/commands/createGuide.spec.ts:62:      const cmd = new Command("Create guide", world);
+frontend/tests/unit/commands/createGuide.spec.ts:88:      const cmd = new Command("Create guide", world);
+frontend/tests/unit/commands/createGuide.spec.ts:120:      const cmd = new Command("Create guide", world);
+frontend/tests/unit/commands/createFreePoint.spec.ts:25:      const cmd = new Command("Create free point", world);
+frontend/tests/unit/commands/createFreePoint.spec.ts:41:      const cmd = new Command("Create free point", world);
+frontend/tests/unit/commands/createFreePoint.spec.ts:60:      const cmd = new Command("Create free point", world);
+frontend/tests/unit/commands/createFreePoint.spec.ts:71:      const cmd = new Command("Create free point", world);
+frontend/tests/unit/commands/createFreePoint.spec.ts:83:      const cmd = new Command("Create free point", world);
+frontend/tests/unit/commands/createFreePoint.spec.ts:104:      const cmd = new Command("Create free point", world);
+frontend/tests/unit/commands/createFreePoint.spec.ts:124:      const cmd = new Command("Create free point", world);
+frontend/tests/unit/commands/createCircle.spec.ts:28:      const cmd = new Command("Create circle with two points", world);
+frontend/tests/unit/commands/createCircle.spec.ts:61:      const cmd = new Command("Create circle", world);
+frontend/tests/unit/commands/createCircle.spec.ts:80:      const cmd = new Command("Create circle", world);
+frontend/tests/unit/commands/createCircle.spec.ts:104:      const cmd = new Command("Create circle", world);
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:18:import { DeletionSequenceFactory } from '../../../../src/commands/factories/DeletionSequenceFactory';
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:30:  let commandStack: CommandStack;
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:34:    const { world: w, commandStack: cs } = createTestWorld();
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:36:    commandStack = cs;
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:72:      const deleteCmd = new Command('Delete nothing', world);
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:79:      const setupCmd = new Command('Setup point', world);
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:87:      const deleteCmd = new Command('Delete point', world);
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:101:      const setupCmd = new Command('Setup', world);
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:106:      const deleteCmd = new Command('Delete point', world);
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:116:      const setupCmd = new Command('Setup line', world);
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:130:      const deleteCmd = new Command('Delete point with cascade', world);
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:153:      const setupCmd = new Command('Setup circle', world);
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:167:      const deleteCmd = new Command('Delete center with cascade', world);
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:187:      const setupCmd = new Command('Setup multiple points', world);
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:196:      const deleteCmd = new Command('Delete multiple points', world);
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:216:      const setupCmd = new Command('Setup line', world);
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:229:      commandStack.push(setupCmd);
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:231:      const deleteCmd = new Command('Delete point with cascade', world);
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:234:      commandStack.push(deleteCmd);
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:242:      commandStack.undo();
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:248:      commandStack.redo();
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:256:      const setupCmd = new Command('Setup segment', world);
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:270:      const deleteCmd = new Command('Delete segment', world);
+frontend/tests/unit/commands/commandStackObserver.spec.ts:27:  let commandStack: CommandStack;
+frontend/tests/unit/commands/commandStackObserver.spec.ts:31:    const { world: w, commandStack: cs } = createTestWorld();
+frontend/tests/unit/commands/commandStackObserver.spec.ts:32:    commandStack = cs;
+frontend/tests/unit/commands/commandStackObserver.spec.ts:38:    commandStack.subscribe(callback);
+frontend/tests/unit/commands/commandStackObserver.spec.ts:40:    const command = new Command('Test Command', world);
+frontend/tests/unit/commands/commandStackObserver.spec.ts:44:    commandStack.push(command);
+frontend/tests/unit/commands/commandStackObserver.spec.ts:50:    const command = new Command('Test Command', world);
+frontend/tests/unit/commands/commandStackObserver.spec.ts:53:    commandStack.push(command);
+frontend/tests/unit/commands/commandStackObserver.spec.ts:56:    commandStack.subscribe(callback);
+frontend/tests/unit/commands/commandStackObserver.spec.ts:58:    commandStack.undo();
+frontend/tests/unit/commands/commandStackObserver.spec.ts:64:    const command = new Command('Test Command', world);
+frontend/tests/unit/commands/commandStackObserver.spec.ts:67:    commandStack.push(command);
+frontend/tests/unit/commands/commandStackObserver.spec.ts:68:    commandStack.undo();
+frontend/tests/unit/commands/commandStackObserver.spec.ts:71:    commandStack.subscribe(callback);
+frontend/tests/unit/commands/commandStackObserver.spec.ts:73:    commandStack.redo();
+frontend/tests/unit/commands/commandStackObserver.spec.ts:80:    const unsubscribe = commandStack.subscribe(callback);
+frontend/tests/unit/commands/commandStackObserver.spec.ts:82:    const command1 = new Command('Command 1', world);
+frontend/tests/unit/commands/commandStackObserver.spec.ts:85:    commandStack.push(command1);
+frontend/tests/unit/commands/commandStackObserver.spec.ts:91:    const command2 = new Command('Command 2', world);
+frontend/tests/unit/commands/commandStackObserver.spec.ts:94:    commandStack.push(command2);
+frontend/tests/unit/commands/commandStackObserver.spec.ts:103:    commandStack.subscribe(callback1);
+frontend/tests/unit/commands/commandStackObserver.spec.ts:104:    commandStack.subscribe(callback2);
+frontend/tests/unit/commands/commandStackObserver.spec.ts:106:    const command = new Command('Test Command', world);
+frontend/tests/unit/commands/commandStackObserver.spec.ts:109:    commandStack.push(command);
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:9:import { IntersectionSequenceFactory } from '@/commands/factories/IntersectionSequenceFactory';
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:19:import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:25:  cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:42:      const cmd = new Command('Setup', world);
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:69:      const intersectionCmd = new Command('Create HHL intersection', world);
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:113:      const cmd = new Command('Setup', world);
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:128:      const intersectionCmd = new Command('Create regular intersection', world);
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:142:      const cmd = new Command('Setup', world);
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:168:      const intersectionCmd = new Command('Create HHL-circle intersection', world);
+frontend/src/commands/operations/debug/AddExampleSetupOp.ts:18:import { PlaneSequenceFactory } from '@/services/factories/PlaneSequenceFactory';
+frontend/src/commands/operations/debug/AddExampleSetupOp.ts:47:      this.command = new Command(`Add ${this.parameters.setupType} example`, world);
+frontend/tests/unit/commands/command.spec.ts:106:    command = new Command('Test Command', world);
+frontend/tests/unit/commands/command.spec.ts:111:      const cmd = new Command('Direct instantiation', world);
+frontend/tests/unit/commands/command.spec.ts:117:      const cmd = new Command('No execute needed', world);
+frontend/tests/unit/commands/command.spec.ts:129:      const command2 = new Command('Another Command', world);
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:7:import { GuideSequenceFactory } from '../../../../src/commands/factories/GuideSequenceFactory';
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:31:      const cmd = new Command('Test', world);
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:73:      const cmd = new Command('Test', world);
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:124:      const cmd = new Command('Test', world);
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:155:      const cmd = new Command('Test', world);
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:173:      const cmd = new Command('Test', world);
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:197:      const cmd = new Command('Create guide with sibling', world);
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:230:      const cmd = new Command('Create multiple guides', world);
+frontend/tests/unit/tools/toolValidation.spec.ts:35:  let commandStack: CommandStack;
+frontend/tests/unit/tools/toolValidation.spec.ts:44:      commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/toolValidation.spec.ts:53:    const cmd = new Command('Add point', world);
+frontend/tests/unit/tools/toolValidation.spec.ts:57:    commandStack.push(cmd);
+frontend/tests/unit/tools/toolValidation.spec.ts:62:    const { world: w, commandStack: cs } = createTestWorld();
+frontend/tests/unit/tools/toolValidation.spec.ts:64:    commandStack = cs;
+frontend/tests/unit/tools/pointTool.spec.ts:27:  let commandStack: CommandStack;
+frontend/tests/unit/tools/pointTool.spec.ts:37:    commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/pointTool.spec.ts:48:    const { world: w, commandStack: cs } = createTestWorld();
+frontend/tests/unit/tools/pointTool.spec.ts:50:    commandStack = cs;
+frontend/tests/unit/tools/pointTool.spec.ts:58:    while (commandStack.canUndo()) {
+frontend/tests/unit/tools/pointTool.spec.ts:59:      commandStack.undo();
+frontend/tests/unit/tools/pointTool.spec.ts:63:      commandStack.redo();
+frontend/tests/unit/tools/pointTool.spec.ts:106:      expect(commandStack.canUndo()).toBe(true);
+frontend/tests/unit/tools/pointTool.spec.ts:254:      // Create a spy on commandStack.push to throw error
+frontend/tests/unit/tools/pointTool.spec.ts:255:      const pushSpy = vi.spyOn(commandStack, 'push').mockImplementation(() => {
+frontend/tests/unit/tools/pointTool.spec.ts:283:      while (commandStack.canUndo()) {
+frontend/tests/unit/tools/pointTool.spec.ts:284:        commandStack.undo();
+frontend/tests/unit/tools/pointTool.spec.ts:289:        commandStack.redo();
+frontend/tests/unit/tools/pointTool.spec.ts:331:      expect(commandStack.canUndo()).toBe(true);
+frontend/tests/unit/tools/pointTool.spec.ts:332:      commandStack.undo();
+frontend/tests/unit/tools/pointTool.spec.ts:333:      commandStack.undo();
+frontend/tests/unit/tools/pointTool.spec.ts:334:      commandStack.undo();
+frontend/tests/unit/tools/pointTool.spec.ts:338:      while (commandStack.canUndo()) {
+frontend/tests/unit/tools/pointTool.spec.ts:339:        commandStack.undo();
+frontend/tests/unit/tools/pointTool.spec.ts:344:        commandStack.redo();
+frontend/tests/unit/tools/pointTool.spec.ts:347:        commandStack.redo();
+frontend/tests/unit/tools/pointTool.spec.ts:413:      commandStack.undo();
+frontend/tests/unit/tools/pointTool.spec.ts:431:      commandStack.undo();
+frontend/tests/unit/tools/pointTool.spec.ts:434:      commandStack.redo();
+frontend/tests/unit/services/projectionDisplay.spec.ts:174:      const cmd = new Command('test-3d-line', world);
+frontend/src/commands/operations/world/registerWorldOperationDescriptors.ts:22:import { UpdateElementStyleOp } from './UpdateElementStyleOp';
+frontend/src/commands/operations/world/registerWorldOperationDescriptors.ts:23:import { UpdateFreePoint2DPositionOp } from './UpdateFreePoint2DPositionOp';
+frontend/src/commands/operations/world/registerWorldOperationDescriptors.ts:66:  registry.register('UpdateElementStyle', d => new UpdateElementStyleOp(s(d, 'elementId'), s(d, 'planeId'), (d.newStyle ?? {}) as JsonObject));
+frontend/src/commands/operations/world/registerWorldOperationDescriptors.ts:67:  registry.register('UpdateFreePoint2DPosition', d => new UpdateFreePoint2DPositionOp(s(d, 'planeId'), s(d, 'pointId'), new Vector3(...arr(d, 'newPosition', 3))));
+frontend/tests/unit/services/ProjectService.subprocess.spec.ts:23:  let commandStack: CommandStack;
+frontend/tests/unit/services/ProjectService.subprocess.spec.ts:26:    const { world: w, commandStack: cs } = createTestWorld();
+frontend/tests/unit/services/ProjectService.subprocess.spec.ts:28:    commandStack = cs;
+frontend/tests/unit/services/ProjectService.subprocess.spec.ts:34:    const result = roundTripOperation(op, world, commandStack);
+frontend/tests/unit/services/ProjectService.subprocess.spec.ts:44:    const result = roundTripOperation(op, world, commandStack);
+frontend/tests/unit/services/ProjectService.subprocess.spec.ts:53:    const result = roundTripOperation(op, world, commandStack);
+frontend/tests/unit/services/ProjectService.subprocess.spec.ts:64:    const result = roundTripOperation(op, world, commandStack);
+frontend/tests/unit/services/ProjectService.subprocess.spec.ts:74:    const result = roundTripOperation(op, world, commandStack);
+frontend/tests/unit/services/ProjectService.subprocess.spec.ts:85:function roundTripOperation(op: any, world: World, commandStack: CommandStack): any {
+frontend/tests/unit/services/ProjectService.subprocess.spec.ts:93:  commandStack.restoreCommittedCommands([cmd]);
+frontend/tests/unit/services/ProjectService.subprocess.spec.ts:96:  const projectData = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'test-project');
+frontend/src/commands/operations/world/index.ts:12:export * from './UpdateElementStyleOp';
+frontend/tests/unit/architecture/noCommandSubclasses.spec.ts:11: * classes (AddFreePoint2DOp, AddLine2DOp, UpdateElementStyleOp, etc.) that implement
+frontend/tests/unit/architecture/noCommandSubclasses.spec.ts:87:          `   const cmd = new Command("My action", world);\n` +
+frontend/tests/unit/architecture/noCommandSubclasses.spec.ts:91:          `See UpdateElementStyleOp as an example of correct pattern.\n` +
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:42:  UpdateElementStyleOp 
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:43:} from '@/commands/operations/world/UpdateElementStyleOp';
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:47:  let commandStack: CommandStack;
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:51:    const { world: w, commandStack: cs } = createTestWorld();
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:53:    commandStack = cs;
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:67:    const cmd = new Command('Test', world);
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:70:    commandStack.push(cmd);
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:73:    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Test Project');
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:76:    const { world: freshWorld, commandStack: freshStack } = createTestWorld();
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:95:    const cmd = new Command('Test', world);
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:100:    commandStack.push(cmd);
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:103:    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Test Project');
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:106:    const { world: freshWorld, commandStack: freshStack } = createTestWorld();
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:117:    const cmd = new Command('Test', world);
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:122:    commandStack.push(cmd);
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:124:    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Test Project');
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:125:    const { world: freshWorld, commandStack: freshStack } = createTestWorld();
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:136:    const cmd = new Command('Test', world);
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:141:    commandStack.push(cmd);
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:143:    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Test Project');
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:144:    const { world: freshWorld, commandStack: freshStack } = createTestWorld();
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:158:    const cmd = new Command('Test', world);
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:169:    commandStack.push(cmd);
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:171:    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Test Project');
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:172:    const { world: freshWorld, commandStack: freshStack } = createTestWorld();
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:180:   * Test that UpdateElementStyleOp is self-contained
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:182:  it('UpdateElementStyleOp should be self-contained', () => {
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:183:    const cmd = new Command('Test', world);
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:185:    cmd.addAndExecute(new UpdateElementStyleOp(
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:191:    commandStack.push(cmd);
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:193:    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Test Project');
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:194:    const { world: freshWorld, commandStack: freshStack } = createTestWorld();
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:206:    const cmd1 = new Command('Create', world);
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:209:    commandStack.push(cmd1);
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:211:    const cmd2 = new Command('Remove', world);
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:214:    commandStack.push(cmd2);
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:216:    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Test Project');
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:217:    const { world: freshWorld, commandStack: freshStack } = createTestWorld();
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:233:    const cmd = new Command('Complex', world);
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:253:    cmd.addAndExecute(new UpdateElementStyleOp(p1Result.outputs.pointId, planeId, { color: '#0000FF' }));
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:256:    commandStack.push(cmd);
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:259:    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Test Project');
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:260:    const { world: freshWorld, commandStack: freshStack } = createTestWorld();
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:34:import { UpdateElementStyleOp } from '@/commands/operations/world/UpdateElementStyleOp';
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:39:  let commandStack: CommandStack;
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:42:    const { world: w, commandStack: cs } = createTestWorld();
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:44:    commandStack = cs;
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:50:    const result = roundTripOperation(op, world, commandStack);
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:60:    const result = roundTripOperation(op, world, commandStack);
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:71:    const result = roundTripOperation(op, world, commandStack);
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:82:    const result = roundTripOperation(op, world, commandStack);
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:93:    const result = roundTripOperation(op, world, commandStack);
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:108:    const result = roundTripOperation(op, world, commandStack);
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:123:    const result = roundTripOperation(op, world, commandStack);
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:134:    const result = roundTripOperation(op, world, commandStack);
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:146:    const result = roundTripOperation(op, world, commandStack);
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:158:    const result = roundTripOperation(op, world, commandStack);
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:168:    const result = roundTripOperation(op, world, commandStack);
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:178:    const result = roundTripOperation(op, world, commandStack);
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:188:    const result = roundTripOperation(op, world, commandStack);
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:198:    const result = roundTripOperation(op, world, commandStack);
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:206:    const op = new UpdateElementStyleOp('point1', 'projPlaneH', { color: '#FF0000', strokeWidth: 2 });
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:208:    const result = roundTripOperation(op, world, commandStack);
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:219:    const result = roundTripOperation(op, world, commandStack);
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:228:    const result = roundTripOperation(op, world, commandStack);
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:237:    const result = roundTripOperation(op, world, commandStack);
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:248:function roundTripOperation(op: any, world: World, commandStack: CommandStack): any {
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:256:  commandStack.restoreCommittedCommands([cmd]);
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:259:  const projectData = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'test-project');
+frontend/tests/integration/worldInitialization.spec.ts:5: * - initializeWorld(world, commandStack) application use case
+frontend/tests/integration/worldInitialization.spec.ts:21:      const commandStack = new CommandStack();
+frontend/tests/integration/worldInitialization.spec.ts:22:      initializeWorld(world, commandStack);
+frontend/tests/integration/worldInitialization.spec.ts:50:      const commandStack = new CommandStack();
+frontend/tests/integration/worldInitialization.spec.ts:51:      initializeWorld(world, commandStack);
+frontend/tests/integration/worldInitialization.spec.ts:67:      const commandStack = new CommandStack();
+frontend/tests/integration/worldInitialization.spec.ts:68:      initializeWorld(world, commandStack);
+frontend/tests/integration/worldInitialization.spec.ts:82:      const commandStack = new CommandStack();
+frontend/tests/integration/worldInitialization.spec.ts:83:      initializeWorld(world, commandStack);
+frontend/tests/integration/worldInitialization.spec.ts:114:      const commandStack = new CommandStack();
+frontend/tests/integration/worldInitialization.spec.ts:115:      initializeWorld(world, commandStack);
+frontend/tests/integration/worldInitialization.spec.ts:125:      initializeWorld(world, commandStack);
+frontend/tests/integration/worldInitialization.spec.ts:149:      const commandStack = new CommandStack();
+frontend/tests/integration/worldInitialization.spec.ts:150:      initializeWorld(world, commandStack);
+frontend/tests/integration/worldInitialization.spec.ts:152:      initializeWorld(world, commandStack);
+frontend/tests/integration/worldInitialization.spec.ts:169:      const commandStack = new CommandStack();
+frontend/tests/integration/worldInitialization.spec.ts:170:      initializeWorld(world, commandStack);
+frontend/tests/integration/worldInitialization.spec.ts:184:      const commandStack = new CommandStack();
+frontend/tests/integration/worldInitialization.spec.ts:185:      initializeWorld(world, commandStack);
+frontend/tests/integration/worldInitialization.spec.ts:198:      const commandStack = new CommandStack();
+frontend/tests/integration/worldInitialization.spec.ts:199:      initializeWorld(world, commandStack);
+frontend/tests/integration/worldInitialization.spec.ts:221:      const commandStack = new CommandStack();
+frontend/tests/integration/worldInitialization.spec.ts:222:      initializeWorld(world, commandStack);
+frontend/tests/integration/worldInitialization.spec.ts:247:      const commandStack = new CommandStack();
+frontend/tests/integration/worldInitialization.spec.ts:248:      initializeWorld(world, commandStack);
+frontend/tests/integration/worldInitialization.spec.ts:260:      const commandStack = new CommandStack();
+frontend/tests/integration/worldInitialization.spec.ts:261:      initializeWorld(world, commandStack);
+frontend/tests/unit/tools/GuideTool.test.ts:9:  let commandStack: CommandStack;
+frontend/tests/unit/tools/GuideTool.test.ts:15:    commandStack = setup.commandStack;
+frontend/tests/unit/tools/GuideTool.test.ts:16:    tool = new GuideTool(world, commandStack);
+frontend/tests/unit/tools/CircleTool.spec.ts:21:import { UpdateFreePoint2DPositionOp } from '@/commands/operations/world/UpdateFreePoint2DPositionOp';
+frontend/tests/unit/tools/CircleTool.spec.ts:30:  let commandStack: CommandStack;
+frontend/tests/unit/tools/CircleTool.spec.ts:36:    const { world: w, commandStack: cs } = createTestWorld();
+frontend/tests/unit/tools/CircleTool.spec.ts:38:    commandStack = cs;
+frontend/tests/unit/tools/CircleTool.spec.ts:54:      const setupCmd = new Command('Create test points', world);
+frontend/tests/unit/tools/CircleTool.spec.ts:64:      commandStack.push(setupCmd);
+frontend/tests/unit/tools/CircleTool.spec.ts:71:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:87:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:109:      const setupCmd = new Command('Setup test points', world);
+frontend/tests/unit/tools/CircleTool.spec.ts:120:      commandStack.push(setupCmd);
+frontend/tests/unit/tools/CircleTool.spec.ts:131:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:147:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:173:      const setupCmd = new Command('Setup center point', world);
+frontend/tests/unit/tools/CircleTool.spec.ts:178:      commandStack.push(setupCmd);
+frontend/tests/unit/tools/CircleTool.spec.ts:185:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:200:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:225:      const setupCmd = new Command('Setup acceptable points', world);
+frontend/tests/unit/tools/CircleTool.spec.ts:234:      commandStack.push(setupCmd);
+frontend/tests/unit/tools/CircleTool.spec.ts:241:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:256:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:280:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:297:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:313:      const setupCmd = new Command('Setup points', world);
+frontend/tests/unit/tools/CircleTool.spec.ts:319:      commandStack.push(setupCmd);
+frontend/tests/unit/tools/CircleTool.spec.ts:326:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:339:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:353:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:368:      const centerCmd = new Command('Create center', world);
+frontend/tests/unit/tools/CircleTool.spec.ts:372:      commandStack.push(centerCmd);
+frontend/tests/unit/tools/CircleTool.spec.ts:376:      const circumferenceCmd = new Command('Create circumference', world);
+frontend/tests/unit/tools/CircleTool.spec.ts:380:      commandStack.push(circumferenceCmd);
+frontend/tests/unit/tools/CircleTool.spec.ts:388:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:401:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:424:      const moveCmd = new Command('Move circumference point', world);
+frontend/tests/unit/tools/CircleTool.spec.ts:425:      const moveOp = new UpdateFreePoint2DPositionOp(
+frontend/tests/unit/tools/CircleTool.spec.ts:432:      commandStack.push(moveCmd);
+frontend/tests/unit/tools/CircleTool.spec.ts:446:      const centerCmd = new Command('Create center', world);
+frontend/tests/unit/tools/CircleTool.spec.ts:450:      commandStack.push(centerCmd);
+frontend/tests/unit/tools/CircleTool.spec.ts:454:      const circumferenceCmd = new Command('Create circumference', world);
+frontend/tests/unit/tools/CircleTool.spec.ts:458:      commandStack.push(circumferenceCmd);
+frontend/tests/unit/tools/CircleTool.spec.ts:465:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:477:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:491:      const moveCmd = new Command('Move center point', world);
+frontend/tests/unit/tools/CircleTool.spec.ts:492:      const moveOp = new UpdateFreePoint2DPositionOp(
+frontend/tests/unit/tools/CircleTool.spec.ts:499:      commandStack.push(moveCmd);
+frontend/tests/integration/projectService.determinism.spec.ts:36:    const { world, commandStack } = createTestWorld();
+frontend/tests/integration/projectService.determinism.spec.ts:40:    const cmd1 = new Command('Create points', world);
+frontend/tests/integration/projectService.determinism.spec.ts:50:    commandStack.push(cmd1);
+frontend/tests/integration/projectService.determinism.spec.ts:53:    const cmd2 = new Command('Create lines', world);
+frontend/tests/integration/projectService.determinism.spec.ts:60:    commandStack.push(cmd2);
+frontend/tests/integration/projectService.determinism.spec.ts:63:    const cmd3 = new Command('Create intersection', world);
+frontend/tests/integration/projectService.determinism.spec.ts:67:    commandStack.push(cmd3);
+frontend/tests/integration/projectService.determinism.spec.ts:70:    const cmd4 = new Command('Create circle', world);
+frontend/tests/integration/projectService.determinism.spec.ts:73:    commandStack.push(cmd4);
+frontend/tests/integration/projectService.determinism.spec.ts:78:      const cmd5 = new Command('Create guide', world);
+frontend/tests/integration/projectService.determinism.spec.ts:81:      commandStack.push(cmd5);
+frontend/tests/integration/projectService.determinism.spec.ts:85:    const cmd6 = new Command('Delete point', world);
+frontend/tests/integration/projectService.determinism.spec.ts:88:    commandStack.push(cmd6);
+frontend/tests/integration/projectService.determinism.spec.ts:91:    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Determinism Test Project');
+frontend/tests/integration/projectService.determinism.spec.ts:97:      const { world: freshWorld, commandStack: freshStack } = createTestWorld();
+frontend/tests/integration/projectService.determinism.spec.ts:138:    const { world, commandStack } = createTestWorld();
+frontend/tests/integration/projectService.determinism.spec.ts:141:    const cmd = new Command('Create elements', world);
+frontend/tests/integration/projectService.determinism.spec.ts:146:    commandStack.push(cmd);
+frontend/tests/integration/projectService.determinism.spec.ts:148:    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'ID Test');
+frontend/tests/integration/projectService.determinism.spec.ts:154:      const { world: freshWorld, commandStack: freshStack } = createTestWorld();
+frontend/tests/integration/guide-creation.test.ts:7:import { GuideSequenceFactory } from '../../src/commands/factories/GuideSequenceFactory';
+frontend/tests/integration/guide-creation.test.ts:12:  let commandStack: CommandStack;
+frontend/tests/integration/guide-creation.test.ts:17:    commandStack = setup.commandStack;
+frontend/tests/integration/guide-creation.test.ts:26:      const cmd = new Command('Setup test geometry', world);
+frontend/tests/integration/guide-creation.test.ts:50:      commandStack.push(cmd);
+frontend/tests/integration/guide-creation.test.ts:53:      const guideCmd = new Command('Create guide on regular line', world);
+frontend/tests/integration/guide-creation.test.ts:63:      commandStack.push(guideCmd);
+frontend/tests/integration/guide-creation.test.ts:92:      const cmd = new Command('Create test point', world);
+frontend/tests/integration/guide-creation.test.ts:98:      commandStack.push(cmd);
+frontend/tests/integration/guide-creation.test.ts:101:      const guideCmd = new Command('Create guide on hinge line', world);
+frontend/tests/integration/guide-creation.test.ts:111:      commandStack.push(guideCmd);
+frontend/tests/integration/guide-creation.test.ts:152:      const cmd = new Command('Setup', world);
+frontend/tests/integration/guide-creation.test.ts:158:      commandStack.push(cmd);
+frontend/tests/integration/guide-creation.test.ts:162:        const guideCmd = new Command('Create guide', world);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:29:  let commandStack: CommandStack;
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:35:    commandStack = testWorld.commandStack;
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:44:    const createCmd = new Command('Create points', world);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:48:    commandStack.push(createCmd);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:54:    const deleteCmd = new Command('Delete point', world);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:57:    commandStack.push(deleteCmd);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:65:    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Deletion Test');
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:68:    const { world: freshWorld, commandStack: freshStack } = createTestWorld();
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:87:    const createCmd = new Command('Create points', world);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:92:    commandStack.push(createCmd);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:99:    const delete1Cmd = new Command('Delete p1', world);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:102:    commandStack.push(delete1Cmd);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:105:    const delete3Cmd = new Command('Delete p3', world);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:108:    commandStack.push(delete3Cmd);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:111:    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Multiple Deletions');
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:112:    const { world: freshWorld, commandStack: freshStack } = createTestWorld();
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:135:    const createCmd = new Command('Create', world);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:138:    commandStack.push(createCmd);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:142:    const deleteCmd = new Command('Delete', world);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:145:    commandStack.push(deleteCmd);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:148:    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Undo/Redo Test');
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:149:    const { world: freshWorld, commandStack: freshStack } = createTestWorld();
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:174:    const create1Cmd = new Command('Create 1', world);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:177:    commandStack.push(create1Cmd);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:181:    const deleteCmd = new Command('Delete', world);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:184:    commandStack.push(deleteCmd);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:187:    const create2Cmd = new Command('Create 2', world);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:190:    commandStack.push(create2Cmd);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:196:    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Create-Delete-Create Test');
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:197:    const { world: freshWorld, commandStack: freshStack } = createTestWorld();
+frontend/tests/unit/domain/segment3DRealization.spec.ts:228:    command = new Command('test-cmd', world);
+frontend/tests/integration/processTree-stack.test.ts:13:  let commandStack: CommandStack;
+frontend/tests/integration/processTree-stack.test.ts:18:    commandStack = testWorld.commandStack;
+frontend/tests/integration/processTree-stack.test.ts:23:    const cmd = new Command('Push subprocess', world);
+frontend/tests/integration/processTree-stack.test.ts:26:    commandStack.push(cmd);
+frontend/tests/integration/processTree-stack.test.ts:30:    const cmd = new Command('Pop subprocess', world);
+frontend/tests/integration/processTree-stack.test.ts:33:    commandStack.push(cmd);
+frontend/tests/integration/processTree-stack.test.ts:69:      commandStack.undo();
+frontend/tests/integration/processTree-stack.test.ts:79:      commandStack.undo();
+frontend/tests/integration/processTree-stack.test.ts:80:      commandStack.redo();
+frontend/tests/integration/processTree-stack.test.ts:128:      commandStack.undo();
+frontend/tests/integration/processTree-stack.test.ts:139:      commandStack.undo();
+frontend/tests/integration/processTree-stack.test.ts:140:      commandStack.redo();
+frontend/tests/integration/processTree-stack.test.ts:226:      commandStack.undo(); // Undo pop
+frontend/tests/integration/processTree-stack.test.ts:229:      commandStack.undo(); // Undo second push
+frontend/tests/integration/processTree-stack.test.ts:232:      commandStack.undo(); // Undo first push
+frontend/tests/integration/processTree-stack.test.ts:236:      commandStack.redo();
+frontend/tests/integration/processTree-stack.test.ts:239:      commandStack.redo();
+frontend/tests/integration/processTree-stack.test.ts:242:      commandStack.redo();
+frontend/tests/integration/pointCreation.spec.ts:32:  let commandStack: CommandStack;
+frontend/tests/integration/pointCreation.spec.ts:38:    commandStack = testWorld.commandStack;
+frontend/tests/integration/pointCreation.spec.ts:47:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/integration/pointCreation.spec.ts:59:      expect(commandStack.canUndo()).toBe(true);
+frontend/tests/integration/pointCreation.spec.ts:79:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/integration/pointCreation.spec.ts:89:      expect(commandStack.canUndo()).toBe(true);
+frontend/tests/integration/pointCreation.spec.ts:104:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/integration/pointCreation.spec.ts:128:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/integration/pointCreation.spec.ts:139:      commandStack.undo();
+frontend/tests/integration/pointCreation.spec.ts:150:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/integration/pointCreation.spec.ts:160:      commandStack.undo();
+frontend/tests/integration/pointCreation.spec.ts:164:      commandStack.redo();
+frontend/tests/integration/pointCreation.spec.ts:177:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/integration/pointCreation.spec.ts:186:        commandStack.undo();
+frontend/tests/integration/pointCreation.spec.ts:190:        commandStack.redo();
+frontend/tests/integration/pointCreation.spec.ts:209:          commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/integration/pointCreation.spec.ts:220:      commandStack.undo();
+frontend/tests/integration/pointCreation.spec.ts:225:      commandStack.undo();
+frontend/tests/integration/pointCreation.spec.ts:229:      commandStack.undo();
+frontend/tests/integration/pointCreation.spec.ts:233:      commandStack.redo();
+frontend/tests/integration/pointCreation.spec.ts:237:      commandStack.redo();
+frontend/tests/integration/pointCreation.spec.ts:241:      commandStack.redo();
+frontend/tests/integration/pointCreation.spec.ts:251:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/integration/pointCreation.spec.ts:262:      commandStack.undo();
+frontend/tests/integration/pointCreation.spec.ts:268:      commandStack.redo();
+frontend/tests/integration/pointCreation.spec.ts:280:          commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/integration/pointCreation.spec.ts:290:      commandStack.undo();
+frontend/tests/integration/pointCreation.spec.ts:291:      commandStack.undo();
+frontend/tests/integration/pointCreation.spec.ts:292:      commandStack.undo();
+frontend/tests/integration/pointCreation.spec.ts:298:      commandStack.redo();
+frontend/tests/integration/pointCreation.spec.ts:299:      commandStack.redo();
+frontend/tests/integration/pointCreation.spec.ts:300:      commandStack.redo();
+frontend/tests/integration/pointCreation.spec.ts:313:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/integration/pointCreation.spec.ts:328:      expect(commandStack.canUndo()).toBe(false);
+frontend/tests/integration/pointCreation.spec.ts:335:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/integration/pointCreation.spec.ts:347:      expect(commandStack.canUndo()).toBe(false);
+frontend/tests/integration/pointCreation.spec.ts:356:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/integration/pointCreation.spec.ts:364:      expect(commandStack.canUndo()).toBe(true);
+frontend/tests/integration/pointCreation.spec.ts:367:      commandStack.undo();
+frontend/tests/integration/pointCreation.spec.ts:370:      commandStack.redo();
+frontend/tests/integration/pointCreation.spec.ts:378:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/integration/pointCreation.spec.ts:407:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/integration/pointCreation.spec.ts:422:      commandStack.undo();
+frontend/tests/integration/pointCreation.spec.ts:423:      commandStack.redo();
+frontend/tests/integration/factories/AllFactories.spec.ts:18:import { GuideSequenceFactory } from '@/commands/factories/GuideSequenceFactory';
+frontend/tests/integration/factories/AllFactories.spec.ts:19:import { DeletionSequenceFactory } from '@/commands/factories/DeletionSequenceFactory';
+frontend/tests/integration/factories/AllFactories.spec.ts:29:  let commandStack: CommandStack;
+frontend/tests/integration/factories/AllFactories.spec.ts:33:    const { world: w, commandStack: cs } = createTestWorld();
+frontend/tests/integration/factories/AllFactories.spec.ts:35:    commandStack = cs;
+frontend/tests/integration/factories/AllFactories.spec.ts:42:      const setupCmd = new Command('Setup', world);
+frontend/tests/integration/factories/AllFactories.spec.ts:53:      commandStack.push(setupCmd);
+frontend/tests/integration/factories/AllFactories.spec.ts:60:      const guideCmd = new Command('Create guide', world);
+frontend/tests/integration/factories/AllFactories.spec.ts:66:      commandStack.push(guideCmd);
+frontend/tests/integration/factories/AllFactories.spec.ts:85:      commandStack.undo();
+frontend/tests/integration/factories/AllFactories.spec.ts:91:      commandStack.redo();
+frontend/tests/integration/factories/AllFactories.spec.ts:99:      const setupCmd = new Command('Setup line', world);
+frontend/tests/integration/factories/AllFactories.spec.ts:114:      commandStack.push(setupCmd);
+frontend/tests/integration/factories/AllFactories.spec.ts:117:      const guideCmd = new Command('Create guide', world);
+frontend/tests/integration/factories/AllFactories.spec.ts:123:      commandStack.push(guideCmd);
+frontend/tests/integration/factories/AllFactories.spec.ts:138:      const setupCmd = new Command('Setup', world);
+frontend/tests/integration/factories/AllFactories.spec.ts:150:      commandStack.push(setupCmd);
+frontend/tests/integration/factories/AllFactories.spec.ts:158:      const deleteCmd = new Command('Delete with cascade', world);
+frontend/tests/integration/factories/AllFactories.spec.ts:162:      commandStack.push(deleteCmd);
+frontend/tests/integration/factories/AllFactories.spec.ts:172:      commandStack.undo();
+frontend/tests/integration/factories/AllFactories.spec.ts:179:      commandStack.redo();
+frontend/tests/integration/factories/AllFactories.spec.ts:188:      const setupCmd = new Command('Setup', world);
+frontend/tests/integration/factories/AllFactories.spec.ts:200:      commandStack.push(setupCmd);
+frontend/tests/integration/factories/AllFactories.spec.ts:208:      const deleteCmd = new Command('Delete with cascade', world);
+frontend/tests/integration/factories/AllFactories.spec.ts:212:      commandStack.push(deleteCmd);
+frontend/tests/integration/factories/AllFactories.spec.ts:224:      const setupCmd = new Command('Setup', world);
+frontend/tests/integration/factories/AllFactories.spec.ts:236:      commandStack.push(setupCmd);
+frontend/tests/integration/factories/AllFactories.spec.ts:243:      const deleteCmd = new Command('Delete multiple', world);
+frontend/tests/integration/factories/AllFactories.spec.ts:247:      commandStack.push(deleteCmd);
+frontend/tests/integration/factories/AllFactories.spec.ts:256:      commandStack.undo();
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:24:    command = new Command('test-command', world);
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:290:    command = new Command('test-command-2', world);
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:333:  it('should handle original Quick3DLineTool geometry (horizontal + vertical)', () => {
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:334:    // Original geometry from Quick3DLineTool before commit 638f8aee:
+frontend/src/commands/operations/processTree/AddProcessTreeActionGroupOp.ts:2: * AddProcessTreeActionGroupOp - Operation for adding an ActionGroup to the ProcessTree
+frontend/src/commands/operations/processTree/AddProcessTreeActionGroupOp.ts:5: * This operation creates the container group, while AddProcessTreeActionOp adds items to it.
+frontend/src/commands/operations/processTree/AddProcessTreeActionGroupOp.ts:12:export class AddProcessTreeActionGroupOp implements IOperation {
+frontend/src/commands/operations/processTree/AddProcessTreeActionGroupOp.ts:13:  readonly type = 'AddProcessTreeActionGroup';
+frontend/src/commands/factories/GuideSequenceFactory.ts:38:   * const cmd = new Command('Create guide', world);
+frontend/src/commands/factories/GuideSequenceFactory.ts:48:   * commandStack.push(cmd);
+frontend/src/commands/factories/ProjectionSetupFactory.ts:8: * - InteractiveProjectionSetupTool (user selects points)
+frontend/src/commands/factories/ProjectionSetupFactory.ts:9: * - QuickProjectionSetupTool (uses predefined points)
+frontend/src/commands/factories/ProjectionSetupFactory.ts:20:import { PlaneSequenceFactory } from '@/services/factories/PlaneSequenceFactory';
+frontend/src/commands/operations/world/README.md:11:- `UpdateElementStyleOp` - Change element styling
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:2: * UpdateElementStyleOp - Operation to update visual style properties of an element
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:30: * UpdateElementStyleOp - Updates element visual style
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:35:export class UpdateElementStyleOp implements IOperation {
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:97:      console.log('[UpdateElementStyleOp] Applied style to:', this.elementId, element.visualStyle);
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:117:        console.error('[UpdateElementStyleOp] Cannot undo: Plane not found:', this.planeId);
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:130:        console.error('[UpdateElementStyleOp] Cannot undo: Element not found:', this.elementId);
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:137:      console.log('[UpdateElementStyleOp] Restored style for:', this.elementId, element.visualStyle);
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:139:      console.error('[UpdateElementStyleOp] Undo failed:', error);
+frontend/src/commands/operations/processTree/registerProcessTreeOperationDescriptors.ts:4:import { AddProcessTreeActionOp } from './AddProcessTreeActionOp';
+frontend/src/commands/operations/processTree/registerProcessTreeOperationDescriptors.ts:5:import { AddProcessTreeActionGroupOp } from './AddProcessTreeActionGroupOp';
+frontend/src/commands/operations/processTree/registerProcessTreeOperationDescriptors.ts:20:  registry.register('AddProcessTreeActionOp', d => restoreOutput(new AddProcessTreeActionOp(obj(d, 'action') as unknown as Action, s(d, 'groupId')), d.outputs));
+frontend/src/commands/operations/processTree/registerProcessTreeOperationDescriptors.ts:21:  registry.register('AddProcessTreeActionGroup', d => {
+frontend/src/commands/operations/processTree/registerProcessTreeOperationDescriptors.ts:25:    return restoreOutput(new AddProcessTreeActionGroupOp(group), d.outputs);
+frontend/src/commands/factories/CircleSequenceFactory.ts:18:import { AddProcessTreeActionOp } from '../operations/processTree/AddProcessTreeActionOp';
+frontend/src/commands/factories/CircleSequenceFactory.ts:61:    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
+frontend/src/commands/factories/InitializationSequenceFactory.ts:8:import { AddProcessTreeActionOp } from '../operations/processTree/AddProcessTreeActionOp';
+frontend/src/commands/factories/InitializationSequenceFactory.ts:51:  cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/commands/factories/InitializationSequenceFactory.ts:66:  cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/commands/factories/InitializationSequenceFactory.ts:90:  cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/commands/factories/InitializationSequenceFactory.ts:113:  cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/commands/factories/InitializationSequenceFactory.ts:124:  cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/commands/factories/InitializationSequenceFactory.ts:131:  cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/commands/operations/processTree/AddProcessTreeActionOp.ts:2: * AddProcessTreeActionOp - Operation for adding ProcessTree actions
+frontend/src/commands/operations/processTree/AddProcessTreeActionOp.ts:15:export class AddProcessTreeActionOp implements IOperation {
+frontend/src/commands/operations/processTree/AddProcessTreeActionOp.ts:16:  readonly type = 'AddProcessTreeActionOp';
+frontend/src/commands/operations/processTree/AddProcessTreeActionOp.ts:61:    // Removed fallback: We rely on AddProcessTreeActionGroupOp to manage group lifecycle.
+frontend/src/commands/factories/README.md:64:const cmd = new Command('Create guide', world);
+frontend/src/commands/factories/README.md:77:commandStack.push(cmd);
+frontend/src/commands/factories/README.md:84:const cmd = new Command('Create intersection', world);
+frontend/src/commands/factories/README.md:97:commandStack.push(cmd);
+frontend/src/commands/factories/README.md:104:const cmd = new Command('Delete elements', world);
+frontend/src/commands/factories/README.md:114:commandStack.push(cmd);
+frontend/src/commands/factories/README.md:145:    const cmd = new Command('Test', mockWorld);
+frontend/src/commands/factories/README.md:153:    const cmd = new Command('Test', mockWorldWithHHL);
+frontend/src/commands/factories/README.md:169:  const cmd = new Command('Create guide', world);
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:27: * const cmd = new Command('Create intersection', world);
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:40: * @see frontend/src/commands/factories/README.md
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:50:import { AddProcessTreeActionOp } from '../operations/processTree/AddProcessTreeActionOp';
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:96:    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:109:          cmd.addAndExecute(new AddProcessTreeActionOp(siblingAction, groupId));
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:146:    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:159:          cmd.addAndExecute(new AddProcessTreeActionOp(siblingAction, groupId));
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:196:    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
+frontend/src/commands/factories/HingeLineSequenceFactory.ts:23:import { AddProcessTreeActionOp } from '../operations/processTree/AddProcessTreeActionOp';
+frontend/src/commands/factories/HingeLineSequenceFactory.ts:55:  cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/commands/factories/HingeLineSequenceFactory.ts:64:  cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/commands/factories/HingeLineSequenceFactory.ts:72:  cmd.addAndExecute(new AddProcessTreeActionOp(
+frontend/src/commands/operations/world/UpdateFreePoint2DPositionOp.ts:2: * UpdateFreePoint2DPositionOp - Move a FreePoint2D by updating its defining rule.
+frontend/src/commands/operations/world/UpdateFreePoint2DPositionOp.ts:20:export class UpdateFreePoint2DPositionOp implements IOperation {
+frontend/src/commands/factories/PointSequenceFactory.ts:11: * Eliminates code duplication between PointTool, QuickProjectionSetupTool, and other
+frontend/src/commands/factories/PointSequenceFactory.ts:18:import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+frontend/src/commands/factories/PointSequenceFactory.ts:48:    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
+frontend/src/commands/factories/LineSequenceFactory.ts:21: * const cmd = new Command('Create construction', world);
+frontend/src/commands/factories/LineSequenceFactory.ts:43:import { AddProcessTreeActionOp } from '../operations/processTree/AddProcessTreeActionOp';
+frontend/src/commands/factories/LineSequenceFactory.ts:88:    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
+frontend/src/commands/factories/LineSequenceFactory.ts:122:    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
+frontend/src/commands/factories/LineSequenceFactory.ts:156:    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));

@@ -1,0 +1,167 @@
+     1	import { Command } from '@/commands/Command';
+     2	import type { CommandStack } from '@/commands/CommandStack';
+     3	import type { World } from '@/domain/world/World';
+     4	import { UpdateElementStyleOp } from '@/commands/operations/world/UpdateElementStyleOp';
+     5	import type { StyleUpdateRequest, ToolCommandResult } from '@/application/tools/ToolCommandIntents';
+     6	
+     7	export class CanvasStyleUseCase {
+     8	  constructor(private readonly world: World, private readonly commandStack: CommandStack) {}
+     9	
+    10	  update(request: StyleUpdateRequest): ToolCommandResult {
+    11	    const cmd = new Command(`Update style: ${request.elementId}`, this.world);
+    12	    try {
+    13	      cmd.addAndExecute(new UpdateElementStyleOp(request.elementId, request.planeId, request.style) as any);
+    14	      cmd.commit();
+    15	      this.commandStack.push(cmd);
+    16	      return { success: true };
+    17	    } catch (error) {
+    18	      cmd.rollback();
+    19	      return { success: false, message: error instanceof Error ? error.message : String(error) };
+    20	    }
+    21	  }
+    22	}
+
+--- ConstructionUseCases ---
+   140	      const result = cmd.addAndExecute(new Add3DSegmentOp(s1.id, s2.id, s1.planeId, s2.planeId));
+   141	      cmd.addAndExecute(new AddProcessTreeActionOp(createAdd3DSegmentAction(result.outputs.segmentId as string), groupId));
+   142	      return;
+   143	    }
+   144	    case 'create3dplane': {
+   145	      const t1 = args.get('trace1')!.element!;
+   146	      const t2 = args.get('trace2')!.element!;
+   147	      PlaneSequenceFactory.create3DPlaneFromTraces(cmd, t1.id, t2.id, t1.planeId, t2.planeId, undefined, groupId);
+   148	      return;
+   149	    }
+   150	    case 'createprojectionplane': {
+   151	      const t1 = args.get('t1HingeTrace')!.element!;
+   152	      const t2 = args.get('t2OtherTrace')!.element!;
+   153	      const t2Prime = args.get('t2PrimePositionLine')!.element!;
+   154	      const { planeId: plane3DId } = PlaneSequenceFactory.create3DPlaneFromTraces(cmd, t1.id, t2.id, t1.planeId, t2.planeId, undefined, groupId);
+   155	      PlaneSequenceFactory.createAuxiliaryProjectionPlane(cmd, world, plane3DId, t1.id, t2.id, t2Prime.id, t1.planeId, undefined, groupId);
+   156	      return;
+   157	    }
+   158	    case 'interactiveprojectionsetup': {
+   159	      throw new Error('Interactive projection setup is not retained in Wave 006a application controller');
+   160	    }
+   161	    default:
+   162	      throw new Error(`Unsupported construction intent: ${(intent as any).type}`);
+   163	  }
+   164	}
+   165	
+   166	function createIntersection(cmd: Command, intent: Extract<ToolConstructionIntent, { type: 'intersection' }>, world: World, groupId: string): void {
+   167	  const element1 = intent.args.get('element1')!.element!;
+   168	  const element2 = intent.args.get('element2')!.element!;
+   169	  const selectionPoint = intent.metadata.selectionPoint;
+   170	  if (element1 instanceof Line2D && element2 instanceof Line2D) {
+   171	    const r1 = element1.realize2D(world);
+   172	    const r2 = element2.realize2D(world);
+   173	    if (!r1 || !r2) throw new Error('Could not realize lines.');
+   174	    if (areLinesParallel(r1, r2)) throw new Error('Lines are parallel and do not intersect.');
+   175	    IntersectionSequenceFactory.createLineLineIntersection(cmd, intent.planeId, element1.id, element2.id, world, groupId);
+   176	  } else if (element1 instanceof Line2D && element2 instanceof Circle2D) {
+   177	    const index = lineCircleIndex(element1.id, element2.id, selectionPoint, world);
+   178	    if (index === null) throw new Error('Line and circle do not intersect.');
+   179	    IntersectionSequenceFactory.createLineCircleIntersection(cmd, intent.planeId, element1.id, element2.id, index, world, groupId);
+   180	  } else if (element1 instanceof Circle2D && element2 instanceof Line2D) {
+   181	    const index = lineCircleIndex(element2.id, element1.id, selectionPoint, world);
+   182	    if (index === null) throw new Error('Circle and line do not intersect.');
+   183	    IntersectionSequenceFactory.createLineCircleIntersection(cmd, intent.planeId, element2.id, element1.id, index, world, groupId);
+   184	  } else if (element1 instanceof Circle2D && element2 instanceof Circle2D) {
+   185	    const index = circleCircleIndex(element1.id, element2.id, selectionPoint, world);
+   186	    if (index === null) throw new Error('Circles do not intersect.');
+   187	    IntersectionSequenceFactory.createCircleCircleIntersection(cmd, intent.planeId, element1.id, element2.id, index, world, groupId);
+   188	  } else {
+   189	    throw new Error('Unsupported element type combination for intersection.');
+   190	  }
+   191	}
+   192	
+   193	function lineCircleIndex(lineId: string, circleId: string, mousePos: THREE.Vector3, world: World): number | null {
+   194	  const line = world.getLine2D(lineId);
+   195	  const circle = world.getCircle2D(circleId);
+   196	  if (!line || !circle) return null;
+   197	  const lr = line.realize2D(world);
+   198	  const cr = circle.realize2D(world);
+   199	  if (!lr || !cr) return null;
+   200	  const intersections = intersectLineCircle(lr, cr);
+   201	  if (intersections.length === 0) return null;
+   202	  if (intersections.length === 1) return 0;
+   203	  return intersections[0].distanceTo(mousePos) <= intersections[1].distanceTo(mousePos) ? 0 : 1;
+   204	}
+   205	
+   206	function circleCircleIndex(circle1Id: string, circle2Id: string, mousePos: THREE.Vector3, world: World): number | null {
+   207	  const c1 = world.getCircle2D(circle1Id);
+   208	  const c2 = world.getCircle2D(circle2Id);
+   209	  if (!c1 || !c2) return null;
+   210	  const r1 = c1.realize2D(world);
+   211	  const r2 = c2.realize2D(world);
+   212	  if (!r1 || !r2) return null;
+   213	  const intersections = intersectCircleCircle(r1, r2);
+   214	  if (intersections.length === 0) return null;
+   215	  if (intersections.length === 1) return 0;
+   216	  return intersections[0].distanceTo(mousePos) <= intersections[1].distanceTo(mousePos) ? 0 : 1;
+   217	}
+   218	
+   219	function validateCoordinates(coords: any): void {
+   220	  if (!coords || !isFinite(coords.x) || !isFinite(coords.y) || !isFinite(coords.z)) {
+   221	    throw new Error('Invalid coordinates: NaN or Infinity not allowed');
+   222	  }
+   223	}
+   224	
+   225	function checkCreatedElementsFeasibility(cmd: Command, world: World): void {
+   226	  for (const op of cmd.getOperations()) {
+   227	    for (const [key, value] of Object.entries(op.outputs)) {
+   228	      if (typeof value !== 'string' || !key.endsWith('Id') || key === 'groupId' || key === 'actionId') continue;
+   229	      const element = world.getPoint2D(value) ?? world.getLine2D(value) ?? world.getCircle2D(value);
+   230	      try {
+
+--- ITool ---
+     1	/**
+     2	 * ITool - Interface for geometric construction tools.
+     3	 *
+     4	 * Tools collect interaction arguments and emit typed application intents.
+     5	 * Application controllers own command creation, validation orchestration,
+     6	 * commit/rollback, and command-stack execution.
+     7	 */
+     8	
+     9	import type { Vector3 } from 'three';
+    10	import type { World } from '@/domain/world/World';
+    11	import type { CanvasInteractionQuery } from '@/application/canvasPresentation/CanvasInteractionQuery';
+    12	import type { SelectionMask } from '@/types/SelectionMask';
+    13	import type { useToolStore } from '@/stores/toolStore';
+    14	import type { ToolCommandSink } from '@/application/tools/ToolCommandIntents';
+    15	
+    16	/**
+    17	 * Context provided to tools when handling user input.
+    18	 */
+    19	export interface ToolContext {
+    20	  planeId: string;
+    21	  planeCoords: Vector3;
+    22	  canvasCoords: { x: number; y: number };
+    23	  commandSink: ToolCommandSink;
+    24	  world: World;
+    25	  interactionQuery: CanvasInteractionQuery;
+    26	  paperToPlaneTransform: any;
+    27	  viewport: { zoom: number; panX: number; panY: number };
+    28	  toolStore: ReturnType<typeof useToolStore>;
+    29	}
+    30	
+    31	/**
+    32	 * Result of a tool operation
+    33	 */
+    34	export interface ToolResult {
+    35	  success: boolean;
+    36	  message?: string;
+    37	}
+    38	
+    39	/**
+    40	 * Base interface for all tools.
+    41	 */
+    42	export interface ITool {
+    43	  readonly name: string;
+    44	  handleClick(context: ToolContext): ToolResult;
+    45	  activate?(context: ToolContext): void;
+    46	  deactivate?(context: ToolContext): void;
+    47	  cancel?(): void;
+    48	  getState?(): Record<string, any>;
+    49	  getSelectionMask?(): SelectionMask | undefined;
+    50	}

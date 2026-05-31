@@ -1,0 +1,21 @@
+
+> diedrico@0.1.0 build
+> npm run build --workspace=frontend; frontend_status=$?; npm run build --workspace=backend; backend_status=$?; exit $((frontend_status || backend_status))
+
+
+> diedrico-frontend@0.1.0 build
+> vue-tsc && vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 167 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.72 kB │ gzip:  0.42 kB
+dist/assets/index-O50-h4uL.css   26.38 kB │ gzip:  5.27 kB
+dist/assets/index-inB7bLHK.js   279.94 kB │ gzip: 85.25 kB
+✓ built in 2.05s
+
+> diedrico-backend@0.1.0 build
+> tsc
+

@@ -1,0 +1,41 @@
+49:**Target outcome**
+51:`World` becomes a domain-owned model root with no imports from commands, command stacks, application services, Vue, or persistence. Initialization orchestration lives outside the domain root in an application/use-case layer. Domain realization, descriptor registration, and visibility dependencies are expressed through narrow domain ports/contexts rather than the whole `World` object where practical within this wave. If `styleService.ts` still needs process-tree-specific cleanup after the `World` dependency is removed, that residual ProcessTree ownership question is explicitly deferred to Wave 005 rather than hidden in this boundary wave.
+67:**Dependencies**
+88:**Target outcome**
+106:**Dependencies**
+128:**Target outcome**
+147:**Dependencies**
+168:**Target outcome**
+186:**Dependencies**
+207:**Target outcome**
+224:**Dependencies**
+243:This wave is the immediate replacement for the original Wave 006 implementation slice required by `architecture-audit/cycle-006-ui-command-controllers/scope-check.md`. It is limited to the active canvas/tool surface. `ActionsPanel.vue` and `Toolbar.vue` are explicitly excluded except as named residual command leaks scheduled for Wave 006b. If implementation discovers a necessary change to those panel/toolbar surfaces, stop and run a reviewed plan-edit mini-cycle before broadening this wave.
+249:**Target outcome**
+251:The active canvas/tool path has Vue components and tool interaction classes emit typed user intents, collected arguments, and interaction state while application use-cases/tool controllers own command construction, validation orchestration, command-stack execution, commit/rollback, feasibility checks, undo/redo lifecycle, point movement, and style update for canvas-driven construction. Tool/factory modules touched by that path have a coherent application-owned location and dependency direction. `ActionsPanel.vue` and `Toolbar.vue` remain known, intentional residuals for Wave 006b rather than accidental leftovers.
+270:- `ActionsPanel.vue` and `Toolbar.vue` direct command/operation construction are explicitly cited in the implementation log as Wave 006b residuals if still present.
+272:**Dependencies**
+297:**Target outcome**
+318:**Dependencies**
+340:**Target outcome**
+357:**Dependencies**
+377:**Target outcome**
+393:**Dependencies**
+415:**Target outcome**
+431:**Dependencies**
+453:**Target outcome**
+470:**Dependencies**
+491:**Target outcome**
+507:**Dependencies**
+528:**Target outcome**
+545:**Dependencies**
+566:**Target outcome**
+582:**Dependencies**
+611:**Target outcome**
+660:**Dependencies**
+707:**Target outcome**
+709:The frontend source tree compiles for the current `frontend-build.after5.stdout` error set because cross-layer contracts are explicit and owned, not because errors were hidden. `npm run build --workspace=frontend` succeeds using the existing `vue-tsc && vite build` script, and any root build path succeeds where defined. Each of the six scope boundaries has a concise ownership note in the implementation log describing authoritative types/interfaces after the wave, stale exports/fields/call sites deleted, behavior-bearing tests, and residual architectural questions deferred to future waves.
+779:**Dependencies**
+789:## Wave 016 — Canvas presentation read ports and overlay interaction boundary
+799:- a new narrow canvas presentation read-port module such as `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts`
+814:**Target outcome**
+837:**Dependencies**

@@ -1,0 +1,4 @@
+  File "<stdin>", line 9
+    ('import Element2DRenderer3D', 'import { Element2DRenderer3D } from ../../services/Element2DRenderer3D';),
+                                                                                                           ^
+SyntaxError: invalid syntax

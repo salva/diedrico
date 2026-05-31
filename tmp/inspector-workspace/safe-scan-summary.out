@@ -1,0 +1,192 @@
+## compat: 61
+frontend/src/commands/factories/README.md:5:not own command state, create compatibility adapters, or mutate `World` as the
+frontend/src/domain/presentation/Paper.ts:120: * Endpoints are stored as Vector3 for compatibility with Three.js
+frontend/src/tools/ArgumentCollectorTool.ts:9: * - Automatic viable set tracking: Framework prunes incompatible argument sets as arguments are collected
+frontend/src/tools/ArgumentCollectorTool.ts:125:   * 3. Update viable sets (prune incompatible sets)
+frontend/src/tools/ArgumentCollectorTool.ts:383:          // Collected argument not in this set - set is incompatible
+frontend/src/types/ResultTypes.ts:51:  IncompatibleProjections = 'incompatible_projections',
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:116:  /\b(?:backwards? compatibility|compatibility shim|migration path|legacy preservation|preserve legacy|old format|old contract)\b/i,
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:119:const explicitHistoricalOrRejectedContext = /\b(?:deleted|historical|stale|obsolete|pre-design|not current|reject(?:s|ed|ion)?|unsupported|no[- ]backcompat|not a migration 
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:635:      `Selected ARCH-012 source/test comments present stale pre-design, rejected archival authority, or compatibility-preservation language as current behavior:\n${findings
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:949:    expectSourceExcludes(driveSessionSource, /compat(?:ibility|ible)|legacy|dual flow/i, 'useDriveProjectSession');
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:966:      /compat(?:ibility|ible)|legacy|dual flow/i,
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:985:      /compat(?:ibility|ible)|legacy|dual flow/i,
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:993:  it('rejects legacy command-stream persistence keys instead of accepting compatibility payloads', () => {
+architecture-audit/continuous-improvement/2026-05-24-source-defect-scout.md:18:- Usage search found `useSnapping` is not imported by current runtime or tests outside its own file, while `worldStore` is only used by `useSnapping` plus its ow
+architecture-audit/continuous-improvement/2026-05-24-source-defect-scout.md:25:Objective: decide and execute one source-grounded deletion-first cleanup for `frontend/src/stores/worldStore.ts` and `frontend/src/composables/useSnapping.ts`; d
+architecture-audit/continuous-improvement/2026-05-24-source-defect-scout-after-snapping-cleanup.md:12:- Persistence/API contracts remain current-snapshot and no-backcompat by code path. `frontend/src/services/ProjectService.ts:1` declares c
+architecture-audit/continuous-improvement/2026-05-24-arch-004-decision-conformance-refresh.md:4:This continuous-improvement check revalidated current source conformance to the ARCH-004 decision without implementation changes. The decision s
+architecture-audit/continuous-improvement/2026-05-24-arch-006-decision-conformance-refresh.md:46:ARCH-006 remains resolved. Current source continues to route rendering through domain-owned typed presentation primitives in `frontend/src/doma
+architecture-audit/continuous-improvement/2026-05-24-arch-010-decision-conformance-refresh.md:4:This continuous-improvement check verified current-source conformance to the ARCH-010 decision without implementation-source changes. The decisi
+architecture-audit/continuous-improvement/2026-05-24-arch-010-decision-conformance-refresh.md:31:- The same guard requires Drive session ownership of `GoogleDriveService`, project snapshots, restore, and autosave while rejecting `localStora
+## legacy: 108
+frontend/src/commands/factories/README.md:48:- Do not add legacy world-application hooks, no-argument execution, inverse
+frontend/src/commands/operations/world/README.md:13:World operations are reducer operations over ProjectStateRecord data. The legacy mutable World/ProjectionPlane authority is not part of the command contract.
+backend/src/api/projects.ts:187:      throw new ApiError(400, 'INVALID_PROJECT_DOMAIN', 'Project domain must not contain legacy projection-plane arrays');
+backend/src/api/projects.ts:236:      throw new ApiError(400, 'INVALID_PROJECT_PAYLOAD', `Unsupported legacy project field: ${key}`);
+frontend/tests/e2e/current-ui-contract.spec.ts:58:  test('supports dropdown-only current subtools without legacy aliases', async ({ page }) => {
+frontend/tests/e2e/current-persistence-contract.spec.ts:67:  test('rejects deleted legacy command-stream payloads', async ({ request }) => {
+frontend/tests/e2e/current-persistence-contract.spec.ts:74:    const legacyResponse = await request.put(`http://localhost:3000/api/projects/${projectId}`, {
+frontend/tests/e2e/current-persistence-contract.spec.ts:78:    expect(legacyResponse.status()).toBe(400);
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:116:  /\b(?:backwards? compatibility|compatibility shim|migration path|legacy preservation|preserve legacy|old format|old contract)\b/i,
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:119:const explicitHistoricalOrRejectedContext = /\b(?:deleted|historical|stale|obsolete|pre-design|not current|reject(?:s|ed|ion)?|unsupported|no[- ]backcompat|not a migration 
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:158:const legacyCommandStreamPayloads = [
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:322:  /^.*legacy.*\.(?:json|ya?ml|ts)$/i,
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:510:    id: 'legacy-rejection-guard',
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:622:  it('keeps selected retained source and test comments from presenting stale docs or legacy preservation as current authority', () => {
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:639:  it('keeps deleted legacy authorities, duplicate renderers, placeholder tools, and historical specs absent', () => {
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:643:    expect(restoredPaths, `Deleted legacy surfaces were restored:\n${restoredPaths.join('\n')}`).toEqual([]);
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:733:    expectSourceContains(backendSpecSource, 'rejects legacy command-stream fields at top level and nested positions without migration aliases', 'backend projects integratio
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:737:      expectSourceExcludes(backendSpecSource, weakToken, 'backend projects integration spec weak legacy contract tokens');
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:748:    for (const token of ['current-snapshot', 'ProjectStateRecord', 'commands).toBeUndefined()', 'commandHistory).toBeUndefined()', 'legacyResponse.status()).toBe(400)']) {
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:795:    expectSourceContains(persistenceContractSource, 'rejects deleted legacy command-stream payloads', 'current persistence e2e spec');
+## migration: 21
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:116:  /\b(?:backwards? compatibility|compatibility shim|migration path|legacy preservation|preserve legacy|old format|old contract)\b/i,
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:119:const explicitHistoricalOrRejectedContext = /\b(?:deleted|historical|stale|obsolete|pre-design|not current|reject(?:s|ed|ion)?|unsupported|no[- ]backcompat|not a migration 
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:334:  'migration',
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:733:    expectSourceContains(backendSpecSource, 'rejects legacy command-stream fields at top level and nested positions without migration aliases', 'backend projects integratio
+backend/tests/integration/projects.spec.ts:299:          payload: setPath(project, ['provenance'], { ...project.provenance, source: 'migration' }),
+backend/tests/integration/projects.spec.ts:353:    it('rejects legacy command-stream fields at top level and nested positions without migration aliases', async () => {
+architecture-audit/continuous-improvement/2026-05-24-arch-012-decision-conformance-refresh.md:9:ARCH-012 selected Proposal A: delete obsolete spec-pack artifacts and keep a lean current architecture reference plus source-near comments (`arc
+architecture-audit/continuous-improvement/2026-05-24-arch-002-decision-conformance-refresh.md:10:- The same decision explicitly rejected event-log/command replay persistence and required no compatibility shim, adapter, dual path, old comman
+architecture-audit/continuous-improvement/2026-05-24-arch-002-decision-conformance-refresh.md:11:- The ARCH-002 implementation plan restated the required replacement as a single current snapshot/provenance DTO, runtime-only command stacks, 
+architecture-audit/continuous-improvement/2026-05-24-arch-002-decision-conformance-refresh.md:31:Backend API validation is likewise strict: it pins `CURRENT_CONTRACT` to `current-snapshot` (`backend/src/api/projects.ts:8`), validates projec
+architecture-audit/continuous-improvement/2026-05-24-arch-002-decision-conformance-refresh.md:33:**Classification:** conformant. No compatibility migration reader was found in the inspected persistence paths.
+architecture-audit/continuous-improvement/2026-05-24-arch-003-decision-conformance-refresh.md:10:- The decision forbids compatibility shims, adapters, dual paths, old command aliases, migration readers, and preserved legacy DTOs (`architect
+architecture-audit/continuous-improvement/2026-05-24-arch-003-decision-conformance-refresh.md:11:- The plan requires an immutable project-state reducer as the only domain authority with no backward-compatibility adapter, migration reader, o
+architecture-audit/final-review/05-command-undo-redo.md:10:Implementation logs `architecture-audit/implementation-log/ARCH-002.md:1`, `architecture-audit/implementation-log/ARCH-003-command-reducer-migration.md:1`, and `architecture-audit/i
+architecture-audit/final-review/08-persistence-drive.md:13:No migration reader, command stream replay path, private command-stack restore, old `elements2D`/`elements3D` DTO, or Drive last-file auto-open compatibility path remains. Legacy co
+architecture-audit/final-review/12-documentation.md:19:The current documentation authority check was optionally hardened in `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:1` to keep deleted pre-design/spec-pack files absen
+architecture-audit/final-review/cross-arch-guard-coverage-map.md:50:Focused backend API/storage guard coverage was strengthened in `backend/tests/integration/projects.spec.ts:1` for the current typed project route contract in `backend/src/a
+architecture-audit/final-review/cross-arch-guard-coverage-map.md:63:Focused ARCH-011 guard coverage was strengthened in `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:1` so the root `package.json:15` `test` script and `pac
+architecture-audit/final-review/cross-arch-guard-coverage-map.md:66:Focused ARCH-012 guard coverage was strengthened in `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:1` for retained current docs (`README.md:1`, `docs/DEPL
+architecture-audit/final-review/source-control-change-manifest.md:22:- Untracked prior-stage validation/review outputs under `.saivage/stages/phase-c-proposals/`, `.saivage/stages/phase-e-implementation-plans/`, `.saivage/stages/phase-f-arc
+## migrate: 2
+backend/tests/integration/projects.spec.ts:303:          payload: setPath(project, ['provenance'], { ...project.provenance, migratedFrom: '3.0.0' }),
+architecture-audit/continuous-improvement/2026-05-24-arch-002-decision-conformance-refresh.md:27:### 2. Weak and legacy shapes are rejected, not migrated or silently accepted
+## schemaVersion: 36
+frontend/src/domain/world/DependencyGraph.ts:228:    schemaVersion: '4.0.0',
+frontend/src/domain/world/ProjectState.ts:22:  readonly schemaVersion: string;
+frontend/src/domain/world/ProjectState.ts:159:    schemaVersion: '4.0.0',
+frontend/src/services/ProjectService.ts:25:  schemaVersion: '4.0.0';
+frontend/src/services/ProjectService.ts:56:      schemaVersion: this.SCHEMA_VERSION,
+frontend/src/services/ProjectService.ts:83:    const required = ['id', 'name', 'schemaVersion', 'createdAt', 'updatedAt', 'provenance', 'domain'];
+frontend/src/services/ProjectService.ts:90:    if (project.schemaVersion !== this.SCHEMA_VERSION) {
+frontend/src/services/ProjectService.ts:91:      throw new Error(`Unsupported project schema: ${String(project.schemaVersion)}`);
+frontend/src/services/ProjectService.ts:109:      'schemaVersion',
+frontend/src/services/ProjectService.ts:124:    if (domain.schemaVersion !== this.SCHEMA_VERSION) {
+backend/src/api/projects.ts:10:const PROJECT_FIELDS = ['id', 'name', 'schemaVersion', 'createdAt', 'updatedAt', 'provenance', 'domain'];
+backend/src/api/projects.ts:13:  'schemaVersion',
+backend/src/api/projects.ts:119:  if (project.schemaVersion !== CURRENT_SCHEMA_VERSION) {
+backend/src/api/projects.ts:120:    throw new ApiError(400, 'INVALID_PROJECT_SCHEMA', 'Project schemaVersion must be 4.0.0');
+backend/src/api/projects.ts:133:    schemaVersion: CURRENT_SCHEMA_VERSION,
+backend/src/api/projects.ts:160:  if (domain.schemaVersion !== CURRENT_SCHEMA_VERSION) {
+backend/src/api/projects.ts:161:    throw new ApiError(400, 'INVALID_PROJECT_SCHEMA', 'Project domain schemaVersion must be 4.0.0');
+backend/src/models/Project.ts:134:  schemaVersion: '4.0.0';
+backend/src/models/Project.ts:154:  schemaVersion: '4.0.0';
+backend/src/models/Project.ts:181:    schemaVersion: '4.0.0',
+## TODO: 5
+frontend/src/components/dialogs/PropertiesDialog.vue:253:  // TODO: Load current element properties from world
+frontend/src/components/panels/ElementTypeGroup.vue:64:  // TODO: Emit highlight event
+frontend/src/components/panels/ElementTypeGroup.vue:68:  // TODO: Clear highlight
+frontend/src/domain/world/Line.ts:187: * TODO: Implement in later phase when parallel line tool is added
+frontend/src/domain/world/Line.ts:227: * TODO: Implement in later phase when perpendicular line tool is added
+## FIXME: 0
+## placeholder: 65
+frontend/src/components/LoginStatusWidget.vue:35:      <div v-else class="user-avatar-placeholder">
+frontend/src/components/LoginStatusWidget.vue:98: * Get initials from name for avatar placeholder
+frontend/src/components/LoginStatusWidget.vue:191:.user-avatar-placeholder {
+frontend/src/components/dialogs/ElementPropertiesDialog.vue:23:              placeholder="Element name..."
+frontend/src/components/dialogs/ElementPropertiesDialog.vue:45:                placeholder="#000000"
+frontend/src/components/dialogs/NewProjectDialog.vue:13:            placeholder="Enter project name..."
+frontend/src/components/dialogs/PropertiesDialog.vue:62:                placeholder="#000000"
+frontend/src/services/ValidationService.ts:17:    // This is a placeholder - actual validation depends on element type
+frontend/tests/e2e/current-ui-contract.spec.ts:36:  test('exposes current executable tools and no deleted placeholder tools', async ({ page }) => {
+frontend/tests/e2e/current-ui-contract.spec.ts:44:    await expect(page.getByText(/not yet implemented|placeholder/i)).toHaveCount(0);
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:50:    label: 'placeholder snapping geometry returning zero',
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:51:    pattern: /For now return 0 as placeholder|return\s+0\s*;\s*(?:\n|.){0,140}getPoint[XY]|getPoint[XY](?:\n|.){0,300}return\s+0\s*;/,
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:194:const secretSafetyPlaceholderContext = /\b(?:placeholder|example|dummy|fake|test|synthetic|mock|sample|redacted|replace-me|your[-_\s]?(?:token|key|secret|client)|xxxx+)\b/i
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:242:  return secretSafetyPlaceholderContext.test(line);
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:315:  /^placeholder(?:[-_].*)?\.spec\.ts$/,
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:316:  /^.*[-_]placeholder(?:[-_].*)?\.spec\.ts$/,
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:639:  it('keeps deleted legacy authorities, duplicate renderers, placeholder tools, and historical specs absent', () => {
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:648:  it('keeps the deleted worldStore/useSnapping projection and placeholder snapping island absent', () => {
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:655:      'Live frontend source/tests reintroduced the deleted worldStore/useSnapping island, worldStore projection fallback, placeholder snapping geometry, or deleted any-cast
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:786:    expect(staleSpecs, `Stale pre-overhaul or placeholder/transport e2e specs were restored:\n${staleSpecs.join('\n')}`).toEqual([]);
+## deprecated: 1
+architecture-audit/final-review/11-specs-contracts.md:13:`specs/001-dihedral-learning-mvp/` is absent per `.saivage/stages/phase-g-final-review/logs/filesystem-deletion-evidence.log:1`; stale contract files were not preserved as deprecated 
+## adapter: 11
+frontend/src/commands/factories/README.md:5:not own command state, create compatibility adapters, or mutate `World` as the
+frontend/src/commands/factories/README.md:50:- Do not create adapters around the old command constructor.
+frontend/src/domain/world/ProjectStateRuntime.ts:19: * construction-history, dependency-service, or adapter instances.
+architecture-audit/continuous-improvement/2026-05-24-arch-005-decision-conformance-refresh.md:13:- `ProjectStateRuntimeHolder` owns the reducer record state and documents that it must not retain mutable geometry, construction-history, depen
+architecture-audit/continuous-improvement/2026-05-24-arch-006-decision-conformance-refresh.md:46:ARCH-006 remains resolved. Current source continues to route rendering through domain-owned typed presentation primitives in `frontend/src/doma
+architecture-audit/continuous-improvement/2026-05-24-arch-012-decision-conformance-refresh.md:9:ARCH-012 selected Proposal A: delete obsolete spec-pack artifacts and keep a lean current architecture reference plus source-near comments (`arc
+architecture-audit/continuous-improvement/2026-05-24-arch-002-decision-conformance-refresh.md:10:- The same decision explicitly rejected event-log/command replay persistence and required no compatibility shim, adapter, dual path, old comman
+architecture-audit/continuous-improvement/2026-05-24-arch-002-decision-conformance-refresh.md:11:- The ARCH-002 implementation plan restated the required replacement as a single current snapshot/provenance DTO, runtime-only command stacks, 
+architecture-audit/continuous-improvement/2026-05-24-arch-003-decision-conformance-refresh.md:10:- The decision forbids compatibility shims, adapters, dual paths, old command aliases, migration readers, and preserved legacy DTOs (`architect
+architecture-audit/continuous-improvement/2026-05-24-arch-003-decision-conformance-refresh.md:11:- The plan requires an immutable project-state reducer as the only domain authority with no backward-compatibility adapter, migration reader, o
+architecture-audit/final-review/06-rendering-pipeline.md:13:Duplicate render services are absent: `frontend/src/services/RenderService.ts`, `frontend/src/services/SVGRenderer.ts`, `frontend/src/services/PaperService.ts`, and `frontend/src/c
+## shim: 11
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:116:  /\b(?:backwards? compatibility|compatibility shim|migration path|legacy preservation|preserve legacy|old format|old contract)\b/i,
+architecture-audit/continuous-improvement/2026-05-24-arch-004-decision-conformance-refresh.md:4:This continuous-improvement check revalidated current source conformance to the ARCH-004 decision without implementation changes. The decision s
+architecture-audit/continuous-improvement/2026-05-24-arch-012-decision-conformance-refresh.md:9:ARCH-012 selected Proposal A: delete obsolete spec-pack artifacts and keep a lean current architecture reference plus source-near comments (`arc
+architecture-audit/continuous-improvement/2026-05-24-arch-002-decision-conformance-refresh.md:10:- The same decision explicitly rejected event-log/command replay persistence and required no compatibility shim, adapter, dual path, old comman
+architecture-audit/continuous-improvement/2026-05-24-arch-003-decision-conformance-refresh.md:10:- The decision forbids compatibility shims, adapters, dual paths, old command aliases, migration readers, and preserved legacy DTOs (`architect
+architecture-audit/continuous-improvement/2026-05-24-arch-003-decision-conformance-refresh.md:19:## Deleted-authority / no-shim checks
+architecture-audit/continuous-improvement/2026-05-24-arch-003-decision-conformance-refresh.md:44:ARCH-003 remains resolved. The current source keeps `ProjectStateRecord` reducer/selectors/materializers as the authority, the mutable `World`/
+architecture-audit/final-review/00-summary.md:50:Selected proposals from Phase D are recorded in `architecture-audit/issues/register.md:1` and decisions `architecture-audit/decisions/ARCH-001.md:1` through `architecture-audit/decisions/ARCH
+architecture-audit/final-review/12-documentation.md:19:The current documentation authority check was optionally hardened in `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:1` to keep deleted pre-design/spec-pack files absen
+architecture-audit/final-review/cross-arch-guard-coverage-map.md:63:Focused ARCH-011 guard coverage was strengthened in `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:1` so the root `package.json:15` `test` script and `pac
+architecture-audit/final-review/cross-arch-guard-coverage-map.md:66:Focused ARCH-012 guard coverage was strengthened in `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:1` for retained current docs (`README.md:1`, `docs/DEPL
+## fallback: 12
+frontend/src/domain/world/Element2DUtils.ts:128: * Get label for an element, with fallback to ID if no label set
+frontend/src/domain/world/Element2DUtils.ts:134: * @returns Label string (either label or id as fallback)
+frontend/src/domain/world/ProjectStateSelectors.ts:699:function readNumberMetadata(value: unknown, fallback: number): number {
+frontend/src/domain/world/ProjectStateSelectors.ts:700:  return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+frontend/src/domain/world/ProjectStateSelectors.ts:982:function readNumber(value: unknown, fallback: number): number { return typeof value === 'number' ? value : fallback; }
+frontend/src/types/SelectionMask.ts:91:  // Default fallback
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:46:    label: 'worldStore projection authority fallback',
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:655:      'Live frontend source/tests reintroduced the deleted worldStore/useSnapping island, worldStore projection fallback, placeholder snapping geometry, or deleted any-cast
+frontend/tests/unit/services/googleDriveService.spec.ts:440:    it('should use email as fallback when name not available', async () => {
+architecture-audit/continuous-improvement/2026-05-24-source-defect-scout.md:16:- `frontend/src/composables/useSnapping.ts:2` imports `useWorldStore`, and `frontend/src/composables/useSnapping.ts:19` plus `frontend/src/composables/useSnappin
+architecture-audit/continuous-improvement/2026-05-24-delete-unused-snapping-worldstore-island.md:10:- `frontend/src/composables/useSnapping.ts:1` deleted the unused snapping composable, including its `worldStore.allElements2D` fallback and 
+architecture-audit/continuous-improvement/2026-05-24-arch-008-decision-conformance-refresh.md:18:- `frontend/src/domain/world/ProjectStateSelectors.ts:149` reads `producedByActionId` from an element and resolves it in `state.processTree.nod
+## dual: 31
+frontend/src/domain/world/Guide.ts:79:   * Guides are lines with special rendering (dashed, dual-plane), but geometrically
+frontend/src/types/ToolConfig.ts:4: * Defines the structure for tool families and individual tools.
+frontend/src/types/ToolConfig.ts:14: * Configuration for an individual tool
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:949:    expectSourceExcludes(driveSessionSource, /compat(?:ibility|ible)|legacy|dual flow/i, 'useDriveProjectSession');
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:966:      /compat(?:ibility|ible)|legacy|dual flow/i,
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:985:      /compat(?:ibility|ible)|legacy|dual flow/i,
+frontend/tests/unit/domain/elementId.spec.ts:154:      // Extract individual components
+architecture-audit/continuous-improvement/2026-05-24-source-defect-scout.md:20:This does not reopen `ARCH-001` through `ARCH-012` as completed issues. It is a new continuous-improvement candidate because the source evidence is narrower than
+architecture-audit/continuous-improvement/2026-05-24-source-defect-scout.md:25:Objective: decide and execute one source-grounded deletion-first cleanup for `frontend/src/stores/worldStore.ts` and `frontend/src/composables/useSnapping.ts`; d
+architecture-audit/continuous-improvement/2026-05-24-arch-010-decision-conformance-refresh.md:31:- The same guard requires Drive session ownership of `GoogleDriveService`, project snapshots, restore, and autosave while rejecting `localStora
+architecture-audit/continuous-improvement/2026-05-24-arch-012-decision-conformance-refresh.md:9:ARCH-012 selected Proposal A: delete obsolete spec-pack artifacts and keep a lean current architecture reference plus source-near comments (`arc
+architecture-audit/continuous-improvement/2026-05-24-arch-002-decision-conformance-refresh.md:10:- The same decision explicitly rejected event-log/command replay persistence and required no compatibility shim, adapter, dual path, old comman
+architecture-audit/continuous-improvement/2026-05-24-arch-003-decision-conformance-refresh.md:10:- The decision forbids compatibility shims, adapters, dual paths, old command aliases, migration readers, and preserved legacy DTOs (`architect
+architecture-audit/continuous-improvement/2026-05-24-arch-003-decision-conformance-refresh.md:11:- The plan requires an immutable project-state reducer as the only domain authority with no backward-compatibility adapter, migration reader, o
+architecture-audit/continuous-improvement/2026-05-24-arch-003-decision-conformance-refresh.md:30:Forbidden-contract grep evidence in `.saivage/stages/ci-arch-003-decision-conformance-refresh/logs/evidence-scan.stdout.log:1` found no live du
+architecture-audit/continuous-improvement/2026-05-24-arch-003-decision-conformance-refresh.md:44:ARCH-003 remains resolved. The current source keeps `ProjectStateRecord` reducer/selectors/materializers as the authority, the mutable `World`/
+architecture-audit/final-review/00-summary.md:50:Selected proposals from Phase D are recorded in `architecture-audit/issues/register.md:1` and decisions `architecture-audit/decisions/ARCH-001.md:1` through `architecture-audit/decisions/ARCH
+architecture-audit/final-review/01-workspace.md:15:## Residual decision
+architecture-audit/final-review/02-backend-layering.md:15:## Residual decision
+architecture-audit/final-review/03-frontend-layering.md:15:## Residual decision
+## not implemented: 0
+## as any: 15
+frontend/src/components/toolbars/ToolFamilyButton.vue:34:        :class="{ active: toolStore.isToolActive(tool.id as any) }"
+frontend/src/components/toolbars/ToolFamilyButton.vue:40:        <span v-if="toolStore.isToolActive(tool.id as any)" class="checkmark">✓</span>
+frontend/src/components/toolbars/ToolFamilyButton.vue:64:  return props.family.tools.some(tool => toolStore.isToolActive(tool.id as any));
+frontend/src/components/toolbars/ToolFamilyButton.vue:69:  const activeTool = props.family.tools.find(tool => toolStore.isToolActive(tool.id as any));
+frontend/src/domain/presentation/Paper.ts:801:   * Check if paper has any dirty primitives
+frontend/src/services/GoogleDriveService.ts:108:          this.tokenClient = (window as any).google.accounts.oauth2.initTokenClient({
+frontend/src/services/GoogleDriveService.ts:244:        await (window as any).google.accounts.oauth2.revoke(this.accessToken);
+frontend/src/stores/settingsStore.ts:195:    (settings.value as any)[category] = structuredClone((DEFAULT_SETTINGS as any)[category]);
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:45:    const project = ProjectService.createProjectSnapshot(emptyProjectState(), 'Bad Provenance', { source: 'test' }) as any;
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:52:    const project = JSON.parse(JSON.stringify(ProjectService.createProjectSnapshot(emptyProjectState(), 'Bad Stack', { source: 'test' }))) as any;
+frontend/tests/unit/services/googleDriveService.spec.ts:31:global.gapi = mockGapi as any;
+frontend/tests/unit/services/googleDriveService.spec.ts:47:    (globalThis as any).google = {
+frontend/tests/unit/services/googleDriveService.spec.ts:144:      expect((globalThis as any).google.accounts.oauth2.revoke).toHaveBeenCalledWith('test-access-token');
+frontend/tests/unit/useDriveProjectSession.spec.ts:48:    } as any;
+frontend/tests/unit/useDriveProjectSession.spec.ts:83:    } as any;

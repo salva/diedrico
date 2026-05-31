@@ -1,0 +1,17 @@
+frontend/src/components/menus/ExamplesMenu.vue:72:    const cmd = new Command(`Add ${setupType} example`, world);
+frontend/src/application/world/initializeWorld.ts:22:  const initCmd = new Command('Initialize World', world);
+frontend/src/application/canvas/CanvasStyleUseCase.ts:11:    const cmd = new Command(`Update style: ${request.elementId}`, this.world);
+frontend/src/application/processHistory/ProcessHistoryUseCases.ts:73:    const command = new Command(description, this.world);
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:12:    const cmd = new Command(`Move point ${request.label ?? request.pointId}`, this.world);
+frontend/src/application/construction/ConstructionUseCases.ts:36:  const cmd = new Command(intent.description, world);
+frontend/src/application/construction/ConstructionUseCases.ts:171:    const r1 = element1.realize2D(world);
+frontend/src/application/construction/ConstructionUseCases.ts:172:    const r2 = element2.realize2D(world);
+frontend/src/application/construction/ConstructionUseCases.ts:197:  const lr = line.realize2D(world);
+frontend/src/application/construction/ConstructionUseCases.ts:198:  const cr = circle.realize2D(world);
+frontend/src/application/construction/ConstructionUseCases.ts:210:  const r1 = c1.realize2D(world);
+frontend/src/application/construction/ConstructionUseCases.ts:211:  const r2 = c2.realize2D(world);
+frontend/src/application/construction/ConstructionUseCases.ts:231:        const realization = element?.realize2D(world);
+frontend/src/components/panels/ThreeView.vue:140:  // console.log('[ThreeView] World projection planes count:', world.projectionPlanes.size);
+frontend/src/components/panels/ThreeView.vue:141:  // console.log('[ThreeView] World projection planes:', Array.from(world.projectionPlanes.keys()));
+frontend/src/components/panels/ThreeView.vue:254:  const projectionPlanes = Array.from(world.projectionPlanes.values());
+frontend/src/components/panels/ThreeView.vue:632:      const guideReal = line.realize2D(world);

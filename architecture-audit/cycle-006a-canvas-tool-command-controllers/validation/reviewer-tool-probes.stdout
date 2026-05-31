@@ -1,0 +1,60 @@
+
+### frontend/src/tools/PointTool.ts
+buildConstructionIntent: false
+executeConstructionIntent: false
+executeQuickIntent: false
+Command: true
+commandStack: false
+SequenceFactory: false
+AddProcessTree: false
+ToolCommandIntents: false
+
+### frontend/src/tools/GuideTool.ts
+buildConstructionIntent: false
+executeConstructionIntent: false
+executeQuickIntent: false
+Command: false
+commandStack: false
+SequenceFactory: true
+AddProcessTree: false
+ToolCommandIntents: false
+
+### frontend/src/tools/IntersectionTool.ts
+buildConstructionIntent: false
+executeConstructionIntent: false
+executeQuickIntent: false
+Command: true
+commandStack: false
+SequenceFactory: false
+AddProcessTree: false
+ToolCommandIntents: false
+
+### frontend/src/tools/CreateProjectionPlaneTool.ts
+buildConstructionIntent: false
+executeConstructionIntent: false
+executeQuickIntent: false
+Command: true
+commandStack: false
+SequenceFactory: false
+AddProcessTree: false
+ToolCommandIntents: false
+
+### frontend/src/tools/Create3DPointTool.ts
+buildConstructionIntent: false
+executeConstructionIntent: false
+executeQuickIntent: false
+Command: true
+commandStack: false
+SequenceFactory: false
+AddProcessTree: false
+ToolCommandIntents: false
+
+### frontend/src/tools/TangentLineToCircleThroughPointTool.ts
+buildConstructionIntent: false
+executeConstructionIntent: false
+executeQuickIntent: false
+Command: true
+commandStack: false
+SequenceFactory: false
+AddProcessTree: false
+ToolCommandIntents: false

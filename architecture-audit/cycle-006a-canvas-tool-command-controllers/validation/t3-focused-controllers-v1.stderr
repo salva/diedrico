@@ -1,0 +1,28 @@
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/application/canvasToolControllers.spec.ts > Wave 006a canvas/tool command controllers > lets tools emit typed construction intents with ambiguous-choice metadata through the command sink
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ tests/unit/application/canvasToolControllers.spec.ts:229:48
+    227|     expect(intents[1].type).toBe('tangent-line-to-circle-parallel');
+    228|     if (intents[1].type === 'tangent-line-to-circle-parallel') {
+    229|       expect(intents[1].metadata.tangentIndex).toBe(0);
+       |                                                ^
+    230|     }
+    231|     expect(intents[2].type).toBe('intersection');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c vitest run tests/unit/application/canvasToolControllers.spec.ts

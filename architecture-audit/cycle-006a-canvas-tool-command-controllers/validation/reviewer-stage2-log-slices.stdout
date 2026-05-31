@@ -1,0 +1,40 @@
+# selected presentation/tool path prohibited refs
+frontend/src/components/workspace/SvgCanvas.vue:425:  commandStack: inject('commandStack'),
+# direct concrete operation imports in selected presentation/tools
+# Wave 006b deferred files changed in working tree
+
+---SPLIT---
+sh: 1: eslint: not found
+npm error Lifecycle script `lint` failed with error:
+npm error code 127
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore
+
+---SPLIT---
+
+/work/diedrico/node_modules/vue-tsc/bin/vue-tsc.js:68
+			throw err;
+			^
+Search string not found: "/supportedTSExtensions = .*(?=;)/"
+(Use `node --trace-uncaught ...` to show where the exception was thrown)
+
+Node.js v24.15.0
+npm error Lifecycle script `build` failed with error:
+npm error code 1
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c vue-tsc && vite build
+
+---SPLIT---
+npm error Lifecycle script `test:e2e` failed with error:
+npm error code 1
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c playwright test

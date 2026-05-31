@@ -1,0 +1,1085 @@
+=== files ===
+FILE architecture-audit/continuous-improvement/2026-05-24-acceptance-refresh.md
+FILE architecture-audit/continuous-improvement/2026-05-24-arch-001-decision-conformance-refresh.md
+FILE architecture-audit/continuous-improvement/2026-05-24-arch-002-decision-conformance-refresh.md
+FILE architecture-audit/continuous-improvement/2026-05-24-arch-003-decision-conformance-refresh.md
+FILE architecture-audit/continuous-improvement/2026-05-24-arch-004-decision-conformance-refresh.md
+FILE architecture-audit/continuous-improvement/2026-05-24-arch-005-decision-conformance-refresh.md
+FILE architecture-audit/continuous-improvement/2026-05-24-arch-006-decision-conformance-refresh.md
+FILE architecture-audit/continuous-improvement/2026-05-24-arch-007-decision-conformance-refresh.md
+FILE architecture-audit/continuous-improvement/2026-05-24-arch-008-decision-conformance-refresh.md
+FILE architecture-audit/continuous-improvement/2026-05-24-arch-009-decision-conformance-refresh.md
+FILE architecture-audit/continuous-improvement/2026-05-24-arch-010-decision-conformance-refresh.md
+FILE architecture-audit/continuous-improvement/2026-05-24-arch-011-decision-conformance-refresh.md
+FILE architecture-audit/continuous-improvement/2026-05-24-arch-012-decision-conformance-refresh.md
+FILE architecture-audit/continuous-improvement/2026-05-24-ci-readiness-handoff-source-control-snapshot.md
+FILE architecture-audit/continuous-improvement/2026-05-24-decision-conformance-coverage-map-refresh.md
+FILE architecture-audit/continuous-improvement/2026-05-24-delete-unused-snapping-worldstore-island.md
+FILE architecture-audit/continuous-improvement/2026-05-24-source-control-archival-plan.md
+FILE architecture-audit/continuous-improvement/2026-05-24-source-control-archival-verification.md
+FILE architecture-audit/continuous-improvement/2026-05-24-source-defect-scout-after-snapping-cleanup.md
+FILE architecture-audit/continuous-improvement/2026-05-24-source-defect-scout.md
+FILE architecture-audit/final-review/00-summary.md
+FILE architecture-audit/final-review/01-workspace.md
+FILE architecture-audit/final-review/02-backend-layering.md
+FILE architecture-audit/final-review/03-frontend-layering.md
+FILE architecture-audit/final-review/04-domain-model.md
+FILE architecture-audit/final-review/05-command-undo-redo.md
+FILE architecture-audit/final-review/06-rendering-pipeline.md
+FILE architecture-audit/final-review/07-tooling-state-machine.md
+FILE architecture-audit/final-review/08-persistence-drive.md
+FILE architecture-audit/final-review/09-test-surface.md
+FILE architecture-audit/final-review/10-build-ci-surface.md
+FILE architecture-audit/final-review/11-specs-contracts.md
+FILE architecture-audit/final-review/12-documentation.md
+FILE architecture-audit/final-review/cross-arch-guard-coverage-map.md
+FILE architecture-audit/final-review/post-overhaul-guards.md
+FILE architecture-audit/final-review/source-control-change-manifest.md
+FILE backend/src/api/health.ts
+FILE backend/src/api/projects.ts
+FILE backend/src/models/Project.ts
+FILE backend/src/server.ts
+FILE backend/src/storage/FileStorage.ts
+FILE backend/src/storage/ProjectRepository.ts
+FILE backend/tests/integration/projects.spec.ts
+FILE frontend/src/App.vue
+FILE frontend/src/assets/styles/main.css
+FILE frontend/src/commands/CommandStack.ts
+FILE frontend/src/commands/Command.ts
+FILE frontend/src/commands/factories/DeletionSequenceFactory.ts
+FILE frontend/src/commands/factories/GuideSequenceFactory.ts
+FILE frontend/src/commands/factories/HingeLineSequenceFactory.ts
+FILE frontend/src/commands/factories/InitializationSequenceFactory.ts
+FILE frontend/src/commands/factories/IntersectionSequenceFactory.ts
+FILE frontend/src/commands/factories/README.md
+FILE frontend/src/commands/operations/IOperation.ts
+FILE frontend/src/commands/operations/OperationReducers.ts
+FILE frontend/src/commands/operations/paper/README.md
+FILE frontend/src/commands/operations/processTree/index.ts
+FILE frontend/src/commands/operations/processTree/ProcessTreeOperations.ts
+FILE frontend/src/commands/operations/processTree/README.md
+FILE frontend/src/commands/operations/toolbar/README.md
+FILE frontend/src/commands/operations/world/AddCircleCircleIntersectionPoint2DOp.ts
+FILE frontend/src/commands/operations/world/AddCircleOp.ts
+FILE frontend/src/commands/operations/world/AddFreePointOp.ts
+FILE frontend/src/commands/operations/world/AddGuideOp.ts
+FILE frontend/src/commands/operations/world/AddIntersectionPointOp.ts
+FILE frontend/src/commands/operations/world/AddLineCircleIntersectionPoint2DOp.ts
+FILE frontend/src/commands/operations/world/AddLineLineIntersectionPoint2DOp.ts
+FILE frontend/src/commands/operations/world/AddLineOp.ts
+FILE frontend/src/commands/operations/world/AddSegmentOp.ts
+FILE frontend/src/commands/operations/world/AddSiblingIntersectionPoint2DOp.ts
+FILE frontend/src/commands/operations/world/index.ts
+FILE frontend/src/commands/operations/world/InitializationOps.ts
+FILE frontend/src/commands/operations/world/README.md
+FILE frontend/src/commands/operations/world/RemoveElementOps.ts
+FILE frontend/src/commands/operations/world/ToggleElementVisibilityOp.ts
+FILE frontend/src/commands/operations/world/UpdateElementStyleOp.ts
+FILE frontend/src/commands/operations/world/UpdateFreePoint2DPositionOp.ts
+FILE frontend/src/components/dialogs/ElementPropertiesDialog.vue
+FILE frontend/src/components/dialogs/NewProjectDialog.vue
+FILE frontend/src/components/dialogs/OpenProjectDialog.vue
+FILE frontend/src/components/dialogs/PropertiesDialog.vue
+FILE frontend/src/components/dialogs/StartupDialog.vue
+FILE frontend/src/components/header/ProjectNameDisplay.vue
+FILE frontend/src/components/icons/toolbar/ActivePlaneIcon.vue
+FILE frontend/src/components/icons/toolbar/CircleIcon.vue
+FILE frontend/src/components/icons/toolbar/FreePointIcon.vue
+FILE frontend/src/components/icons/toolbar/GuideLineIcon.vue
+FILE frontend/src/components/icons/toolbar/index.ts
+FILE frontend/src/components/icons/toolbar/IntersectionPointIcon.vue
+FILE frontend/src/components/icons/toolbar/LineByTwoPointsIcon.vue
+FILE frontend/src/components/icons/toolbar/NewFileIcon.vue
+FILE frontend/src/components/icons/toolbar/OpenFileIcon.vue
+FILE frontend/src/components/icons/toolbar/PanIcon.vue
+FILE frontend/src/components/icons/toolbar/ParallelLineIcon.vue
+FILE frontend/src/components/icons/toolbar/PerpendicularLineIcon.vue
+FILE frontend/src/components/icons/toolbar/RedoIcon.vue
+FILE frontend/src/components/icons/toolbar/SaveFileIcon.vue
+FILE frontend/src/components/icons/toolbar/SegmentIcon.vue
+FILE frontend/src/components/icons/toolbar/SelectionToolIcon.vue
+FILE frontend/src/components/icons/toolbar/TangentParallelIcon.vue
+FILE frontend/src/components/icons/toolbar/TangentThroughPointIcon.vue
+FILE frontend/src/components/icons/toolbar/UndoIcon.vue
+FILE frontend/src/components/icons/toolbar/ZoomFitIcon.vue
+FILE frontend/src/components/icons/toolbar/ZoomInIcon.vue
+FILE frontend/src/components/icons/toolbar/ZoomOutIcon.vue
+FILE frontend/src/components/LoginStatusWidget.vue
+FILE frontend/src/components/panels/ActionGroupItem.vue
+FILE frontend/src/components/panels/ActionItem.vue
+FILE frontend/src/components/panels/ActionsPanel.vue
+FILE frontend/src/components/panels/ElementGroup.vue
+FILE frontend/src/components/panels/ElementsPanel.vue
+FILE frontend/src/components/panels/ElementTypeGroup.vue
+FILE frontend/src/components/panels/ProcessTreeNode.vue
+FILE frontend/src/components/toolbars/mainToolbarTools.ts
+FILE frontend/src/components/toolbars/MainToolbar.vue
+FILE frontend/src/components/toolbars/PlaneSelector.vue
+FILE frontend/src/components/toolbars/StatusBar.vue
+FILE frontend/src/components/toolbars/Toolbar.vue
+FILE frontend/src/components/toolbars/ToolFamilyButton.vue
+FILE frontend/src/components/workspace/SvgCanvas.vue
+FILE frontend/src/composables/useAppCanvasSession.ts
+FILE frontend/src/composables/useAppKeyboardShortcuts.ts
+FILE frontend/src/composables/useCommandExecution.ts
+FILE frontend/src/composables/useDriveProjectSession.ts
+FILE frontend/src/composables/useHoverHighlight.ts
+FILE frontend/src/composables/useProjectStateRuntimeSnapshot.ts
+FILE frontend/src/composables/useToolFeedback.ts
+FILE frontend/src/composables/useViewport.ts
+FILE frontend/src/config/toolFamilies.ts
+FILE frontend/src/constants/colors.ts
+FILE frontend/src/domain/calculations/CircleGeometry.ts
+FILE frontend/src/domain/calculations/CoordinateTransform.ts
+FILE frontend/src/domain/calculations/distances.ts
+FILE frontend/src/domain/calculations/Intersections.ts
+FILE frontend/src/domain/calculations/perpendiculars.ts
+FILE frontend/src/domain/presentation/Paper.ts
+FILE frontend/src/domain/processTree/ActionGroup.ts
+FILE frontend/src/domain/processTree/actions/CreateCircleAction.ts
+FILE frontend/src/domain/processTree/actions/CreateCircleCircleIntersectionPointAction.ts
+FILE frontend/src/domain/processTree/actions/CreateGuideAction.ts
+FILE frontend/src/domain/processTree/actions/CreateIntersectionPointAction.ts
+FILE frontend/src/domain/processTree/actions/CreateLineAction.ts
+FILE frontend/src/domain/processTree/actions/CreateLineCircleIntersectionPointAction.ts
+FILE frontend/src/domain/processTree/actions/CreateLineLineIntersectionPointAction.ts
+FILE frontend/src/domain/processTree/actions/CreateParallelLineAction.ts
+FILE frontend/src/domain/processTree/actions/CreatePerpendicularLineAction.ts
+FILE frontend/src/domain/processTree/actions/CreatePointAction.ts
+FILE frontend/src/domain/processTree/actions/CreateSegmentAction.ts
+FILE frontend/src/domain/processTree/actions/CreateSiblingGuideAction.ts
+FILE frontend/src/domain/processTree/actions/CreateSiblingIntersectionPointAction.ts
+FILE frontend/src/domain/processTree/actions/CreateTangentLineAction.ts
+FILE frontend/src/domain/processTree/actions/InitializeWorldActions.ts
+FILE frontend/src/domain/processTree/Action.ts
+FILE frontend/src/domain/processTree/Process.ts
+FILE frontend/src/domain/processTree/Subprocess.ts
+FILE frontend/src/domain/viewState/HingeLine.ts
+FILE frontend/src/domain/world/Circle.ts
+FILE frontend/src/domain/world/DependencyGraph.ts
+FILE frontend/src/domain/world/Element2DRealization2D.ts
+FILE frontend/src/domain/world/Element2D.ts
+FILE frontend/src/domain/world/Element2DUtils.ts
+FILE frontend/src/domain/world/Element3D.ts
+FILE frontend/src/domain/world/ElementId.ts
+FILE frontend/src/domain/world/Element.ts
+FILE frontend/src/domain/world/Guide.ts
+FILE frontend/src/domain/world/HingeLine.ts
+FILE frontend/src/domain/world/index.ts
+FILE frontend/src/domain/world/Line.ts
+FILE frontend/src/domain/world/Plane.ts
+FILE frontend/src/domain/world/Point.ts
+FILE frontend/src/domain/world/ProjectStateActions.ts
+FILE frontend/src/domain/world/ProjectStateProcessReducers.ts
+FILE frontend/src/domain/world/ProjectStateRuntime.ts
+FILE frontend/src/domain/world/ProjectStateSelectors.ts
+FILE frontend/src/domain/world/ProjectState.ts
+FILE frontend/src/domain/world/Realization.ts
+FILE frontend/src/domain/world/Segment.ts
+FILE frontend/src/domain/world/VisualStyle.ts
+FILE frontend/src/main.ts
+FILE frontend/src/services/GeometryService.ts
+FILE frontend/src/services/GoogleDriveService.ts
+FILE frontend/src/services/InputService.ts
+FILE frontend/src/services/ProjectService.ts
+FILE frontend/src/services/ValidationService.ts
+FILE frontend/src/stores/authStore.ts
+FILE frontend/src/stores/processStore.ts
+FILE frontend/src/stores/selectionStore.ts
+FILE frontend/src/stores/settingsStore.ts
+FILE frontend/src/stores/toolStore.ts
+FILE frontend/src/stores/viewStore.ts
+FILE frontend/src/tools/ArgumentCollectorTool.ts
+FILE frontend/src/tools/BaseTool.ts
+FILE frontend/src/tools/CircleTool.ts
+FILE frontend/src/tools/GuideTool.ts
+FILE frontend/src/tools/IntersectionTool.ts
+FILE frontend/src/tools/ITool.ts
+FILE frontend/src/tools/LineTool.ts
+FILE frontend/src/tools/ParallelLineTool.ts
+FILE frontend/src/tools/PerpendicularLineTool.ts
+FILE frontend/src/tools/PointTool.ts
+FILE frontend/src/tools/projectStateToolCommands.ts
+FILE frontend/src/tools/SegmentTool.ts
+FILE frontend/src/tools/selectionCommandIntents.ts
+FILE frontend/src/tools/TangentLineToCircleParallelToLineTool.ts
+FILE frontend/src/tools/TangentLineToCircleThroughPointTool.ts
+FILE frontend/src/types/CommandTypes.ts
+FILE frontend/src/types/ElementTypes.ts
+FILE frontend/src/types/GeometricSolution.ts
+FILE frontend/src/types/ResultTypes.ts
+FILE frontend/src/types/SelectionMask.ts
+FILE frontend/src/types/ToolArgumentCollector.ts
+FILE frontend/src/types/ToolConfig.ts
+FILE frontend/src/utils/coordinateTransform.ts
+FILE frontend/src/utils/threeUtils.ts
+FILE frontend/src/vite-env.d.ts
+FILE frontend/tests/e2e/current-persistence-contract.spec.ts
+FILE frontend/tests/e2e/current-ui-contract.spec.ts
+FILE frontend/tests/unit/architecture/noCommandSubclasses.spec.ts
+FILE frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts
+FILE frontend/tests/unit/autosave.spec.ts
+FILE frontend/tests/unit/calculations/distances.spec.ts
+FILE frontend/tests/unit/calculations/intersections.spec.ts
+FILE frontend/tests/unit/calculations/perpendiculars.spec.ts
+FILE frontend/tests/unit/commands/command.spec.ts
+FILE frontend/tests/unit/commands/commandStack.spec.ts
+FILE frontend/tests/unit/commands/reducerOperations.spec.ts
+FILE frontend/tests/unit/components/actionsPanel.spec.ts
+FILE frontend/tests/unit/components/elementsPanel.spec.ts
+FILE frontend/tests/unit/components/mainToolbar.spec.ts
+FILE frontend/tests/unit/components/propertiesDialog.spec.ts
+FILE frontend/tests/unit/composables/hoverHighlight.spec.ts
+FILE frontend/tests/unit/config.toolFamilies.spec.ts
+FILE frontend/tests/unit/coordinateTransform.spec.ts
+FILE frontend/tests/unit/dependencyGraphOrder.spec.ts
+FILE frontend/tests/unit/dependencyGraph.spec.ts
+FILE frontend/tests/unit/domain/calculations/CircleGeometry.test.ts
+FILE frontend/tests/unit/domain/element2dRealization.spec.ts
+FILE frontend/tests/unit/domain/element2dUtils.spec.ts
+FILE frontend/tests/unit/domain/elementId.spec.ts
+FILE frontend/tests/unit/domain/paperHitTesting.spec.ts
+FILE frontend/tests/unit/domain/plane.spec.ts
+FILE frontend/tests/unit/domain/presentationPrimitives.spec.ts
+FILE frontend/tests/unit/domain/projectStateReadOnlyProcessHistory.spec.ts
+FILE frontend/tests/unit/domain/projectStateReducerProvenanceInvariants.spec.ts
+FILE frontend/tests/unit/domain/projectStateRuntimeReactiveSelectors.spec.ts
+FILE frontend/tests/unit/domain/projectStateRuntime.spec.ts
+FILE frontend/tests/unit/domain/projectStateSelectors.spec.ts
+FILE frontend/tests/unit/domain/projectState.spec.ts
+FILE frontend/tests/unit/projectStateProcessDependency.spec.ts
+FILE frontend/tests/unit/services/googleDriveService.spec.ts
+FILE frontend/tests/unit/services/ProjectService.roundTrip.spec.ts
+FILE frontend/tests/unit/services/ProjectService.selfContainment.spec.ts
+FILE frontend/tests/unit/smoke.spec.ts
+FILE frontend/tests/unit/stores/authStore.spec.ts
+FILE frontend/tests/unit/stores/selectionStore.spec.ts
+FILE frontend/tests/unit/stores/toolStore.spec.ts
+FILE frontend/tests/unit/stores/viewStore.spec.ts
+FILE frontend/tests/unit/tools/pointTool.spec.ts
+FILE frontend/tests/unit/types/SelectionMask.spec.ts
+FILE frontend/tests/unit/useAppKeyboardShortcuts.spec.ts
+FILE frontend/tests/unit/useDriveProjectSession.spec.ts
+FILE frontend/tests/unit/utils/coordinateTransform.spec.ts
+FILE frontend/tests/unit/utils/threeUtils.spec.ts
+=== suspicious terms (safe excludes) ===
+frontend/src/App.vue:93:import { ProjectStateRuntimeHolder } from './domain/world/ProjectStateRuntime';
+frontend/src/App.vue:110:const projectRuntime = new ProjectStateRuntimeHolder();
+frontend/src/commands/Command.ts:65:      throw new Error('Cannot add operations to non-building command');
+frontend/src/commands/Command.ts:75:        throw new Error(result.error || 'Operation failed');
+frontend/src/commands/Command.ts:97:      throw new Error('Cannot commit empty command');
+frontend/src/commands/Command.ts:115:      throw new Error('Can only undo committed commands');
+frontend/src/commands/Command.ts:128:      throw new Error('Can only redo undone commands');
+frontend/src/commands/CommandStack.ts:27:      throw new Error('Can only push committed commands to stack');
+frontend/src/commands/CommandStack.ts:48:      throw new Error('Nothing to undo');
+frontend/src/commands/CommandStack.ts:62:      throw new Error('Nothing to redo');
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:90:        throw new Error('Line-circle intersection requires lineId, circleId, and index');
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:102:        throw new Error('Circle-circle intersection requires index');
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:112:      throw new Error(`Unknown intersection type: ${(intersectionData as IntersectionData).type}`);
+frontend/src/commands/factories/README.md:5:not own command state, create compatibility adapters, or mutate `World` as the
+frontend/src/commands/factories/README.md:48:- Do not add legacy world-application hooks, no-argument execution, inverse
+frontend/src/commands/factories/README.md:50:- Do not create adapters around the old command constructor.
+frontend/src/commands/operations/IOperation.ts:19:  outputs: Record<string, any>;
+frontend/src/commands/operations/IOperation.ts:28:  parameters: Record<string, any>;
+frontend/src/commands/operations/IOperation.ts:29:  outputs: Record<string, any>;
+frontend/src/commands/operations/processTree/ProcessTreeOperations.ts:14:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/processTree/ProcessTreeOperations.ts:15:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/AddCircleCircleIntersectionPoint2DOp.ts:7:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/AddCircleCircleIntersectionPoint2DOp.ts:8:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/AddCircleOp.ts:7:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/AddCircleOp.ts:8:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/AddFreePointOp.ts:8:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/AddFreePointOp.ts:9:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/AddGuideOp.ts:7:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/AddGuideOp.ts:8:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/AddGuideOp.ts:23:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/AddGuideOp.ts:24:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/AddIntersectionPointOp.ts:7:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/AddIntersectionPointOp.ts:8:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/AddLineCircleIntersectionPoint2DOp.ts:7:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/AddLineCircleIntersectionPoint2DOp.ts:8:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/AddLineLineIntersectionPoint2DOp.ts:7:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/AddLineLineIntersectionPoint2DOp.ts:8:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/AddLineOp.ts:6:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/AddLineOp.ts:7:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/AddLineOp.ts:13:    protected definition: Record<string, any>,
+frontend/src/commands/operations/world/AddSegmentOp.ts:7:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/AddSegmentOp.ts:8:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/AddSiblingIntersectionPoint2DOp.ts:7:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/AddSiblingIntersectionPoint2DOp.ts:8:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/InitializationOps.ts:13:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/InitializationOps.ts:14:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/InitializationOps.ts:32:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/InitializationOps.ts:33:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/InitializationOps.ts:51:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/InitializationOps.ts:52:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/InitializationOps.ts:65:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/InitializationOps.ts:66:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/InitializationOps.ts:78:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/InitializationOps.ts:79:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/InitializationOps.ts:92:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/InitializationOps.ts:93:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/InitializationOps.ts:104:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/InitializationOps.ts:105:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/README.md:13:World operations are reducer operations over ProjectStateRecord data. The legacy mutable World/ProjectionPlane authority is not part of the command contract.
+frontend/src/commands/operations/world/RemoveElementOps.ts:6:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/RemoveElementOps.ts:7:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/RemoveElementOps.ts:27:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/RemoveElementOps.ts:28:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:13:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/UpdateElementStyleOp.ts:14:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/UpdateFreePoint2DPositionOp.ts:10:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/UpdateFreePoint2DPositionOp.ts:11:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/world/ToggleElementVisibilityOp.ts:7:  readonly parameters: Record<string, any>;
+frontend/src/commands/operations/world/ToggleElementVisibilityOp.ts:8:  outputs: Record<string, any> = {};
+frontend/src/commands/operations/OperationReducers.ts:7:export function ok(state: ProjectStateRecord, outputs: Record<string, any>): OperationResult {
+frontend/src/commands/operations/OperationReducers.ts:265:    throw new Error(`Process root is not a subprocess: ${state.processTree.rootId}`);
+frontend/src/components/LoginStatusWidget.vue:35:      <div v-else class="user-avatar-placeholder">
+frontend/src/components/LoginStatusWidget.vue:98: * Get initials from name for avatar placeholder
+frontend/src/components/LoginStatusWidget.vue:191:.user-avatar-placeholder {
+frontend/src/components/dialogs/ElementPropertiesDialog.vue:23:              placeholder="Element name..."
+frontend/src/components/dialogs/ElementPropertiesDialog.vue:45:                placeholder="#000000"
+frontend/src/components/dialogs/NewProjectDialog.vue:13:            placeholder="Enter project name..."
+frontend/src/components/dialogs/NewProjectDialog.vue:75:  } catch (err: any) {
+frontend/src/components/dialogs/OpenProjectDialog.vue:88:  } catch (err: any) {
+frontend/src/components/dialogs/OpenProjectDialog.vue:108:  } catch (err: any) {
+frontend/src/components/dialogs/PropertiesDialog.vue:62:                placeholder="#000000"
+frontend/src/components/dialogs/PropertiesDialog.vue:253:  // TODO: Load current element properties from world
+frontend/src/components/icons/toolbar/OpenFileIcon.vue:3:    <!-- Folder icon -->
+frontend/src/components/panels/ActionsPanel.vue:25:import type { ProjectStateRuntimeHolder } from '@/domain/world/ProjectStateRuntime';
+frontend/src/components/panels/ActionsPanel.vue:37:const injectedProjectRuntime = inject<ProjectStateRuntimeHolder>('projectRuntime');
+frontend/src/components/panels/ActionsPanel.vue:39:  throw new Error('[ActionsPanel] ProjectState runtime not provided');
+frontend/src/components/panels/ActionsPanel.vue:63:    throw new Error(result.error ?? 'Failed to toggle subprocess visibility');
+frontend/src/components/panels/ElementGroup.vue:148:  font-weight: bold;
+frontend/src/components/panels/ElementTypeGroup.vue:64:  // TODO: Emit highlight event
+frontend/src/components/panels/ElementTypeGroup.vue:68:  // TODO: Clear highlight
+frontend/src/components/panels/ElementsPanel.vue:158:import type { ProjectStateRuntimeHolder } from '@/domain/world/ProjectStateRuntime';
+frontend/src/components/panels/ElementsPanel.vue:170:const injectedProjectRuntime = inject<ProjectStateRuntimeHolder>('projectRuntime');
+frontend/src/components/panels/ElementsPanel.vue:172:  throw new Error('[ElementsPanel] ProjectState runtime not provided');
+frontend/src/components/panels/ElementsPanel.vue:211:    throw new Error(result.error ?? 'Failed to toggle element visibility');
+frontend/src/components/toolbars/PlaneSelector.vue:28:import type { ProjectStateRuntimeHolder } from '@/domain/world/ProjectStateRuntime';
+frontend/src/components/toolbars/PlaneSelector.vue:33:const projectRuntime = inject<ProjectStateRuntimeHolder>('projectRuntime');
+frontend/src/components/toolbars/PlaneSelector.vue:35:  throw new Error('[PlaneSelector] ProjectState runtime not provided');
+frontend/src/components/toolbars/ToolFamilyButton.vue:34:        :class="{ active: toolStore.isToolActive(tool.id as any) }"
+frontend/src/components/toolbars/ToolFamilyButton.vue:40:        <span v-if="toolStore.isToolActive(tool.id as any)" class="checkmark">✓</span>
+frontend/src/components/toolbars/ToolFamilyButton.vue:64:  return props.family.tools.some(tool => toolStore.isToolActive(tool.id as any));
+frontend/src/components/toolbars/ToolFamilyButton.vue:69:  const activeTool = props.family.tools.find(tool => toolStore.isToolActive(tool.id as any));
+frontend/src/components/toolbars/ToolFamilyButton.vue:263:  font-weight: bold;
+frontend/src/components/toolbars/Toolbar.vue:160:  throw new Error('CommandStack not provided');
+frontend/src/components/workspace/SvgCanvas.vue:169:import type { ProjectStateRuntimeHolder } from '@/domain/world/ProjectStateRuntime';
+frontend/src/components/workspace/SvgCanvas.vue:185:const projectRuntime = inject<ProjectStateRuntimeHolder | undefined>('projectRuntime');
+frontend/src/components/workspace/SvgCanvas.vue:347:  throw new Error('CommandStack not provided');
+frontend/src/components/workspace/SvgCanvas.vue:447:  // Hover uses lighter blue; selection uses bold blue.
+frontend/src/components/workspace/SvgCanvas.vue:461:    selectedIds: selectedIdsSet,  // Selection state (bold highlight)
+frontend/src/components/workspace/SvgCanvas.vue:944:    // Small drag threshold to avoid turning clicks into moves
+frontend/src/components/workspace/SvgCanvas.vue:1171:  // Check if we found any valid bounds
+frontend/src/composables/useCommandExecution.ts:10:export interface CommandResult<T = any> {
+frontend/src/composables/useCommandExecution.ts:30:  const executeCommand = async <T = any>(command: Command): Promise<CommandResult<T>> => {
+frontend/src/composables/useCommandExecution.ts:50:  const previewCommand = async <T = any>(command: Command): Promise<CommandResult<T>> => {
+frontend/src/composables/useHoverHighlight.ts:31: * - isHovering: Whether any element is currently hovered
+frontend/src/composables/useToolFeedback.ts:15:  const previewElements = ref<any[]>([]);
+frontend/src/composables/useToolFeedback.ts:39:  const setPreview = (elements: any[]) => {
+frontend/src/composables/useProjectStateRuntimeSnapshot.ts:2:import type { ProjectStateRuntimeHolder } from '@/domain/world/ProjectStateRuntime';
+frontend/src/composables/useProjectStateRuntimeSnapshot.ts:6:  runtime: ProjectStateRuntimeHolder,
+frontend/src/composables/useDriveProjectSession.ts:4:import type { ProjectStateRuntimeHolder } from '@/domain/world/ProjectStateRuntime';
+frontend/src/composables/useDriveProjectSession.ts:16:  runtime: ProjectStateRuntimeHolder;
+frontend/src/composables/useDriveProjectSession.ts:291:    } catch (error: any) {
+frontend/src/composables/useAppCanvasSession.ts:7:import type { ProjectStateRuntimeHolder } from '@/domain/world/ProjectStateRuntime';
+frontend/src/composables/useAppCanvasSession.ts:11:  runtime: ProjectStateRuntimeHolder;
+frontend/src/domain/calculations/CoordinateTransform.ts:144:  const getCoord = (v: any, axis: 'x' | 'y' | 'z'): number => {
+frontend/src/domain/calculations/Intersections.ts:38: * For any point I on line L = P + s×V, the parameter s = (I - P) · V / |V|²
+frontend/src/domain/presentation/Paper.ts:120: * Endpoints are stored as Vector3 for compatibility with Three.js
+frontend/src/domain/presentation/Paper.ts:454:  throw new Error(`Unhandled presentation primitive type: ${(_exhaustive as { type: string }).type}`);
+frontend/src/domain/presentation/Paper.ts:801:   * Check if paper has any dirty primitives
+frontend/src/domain/processTree/Action.ts:35:  parameters: Record<string, any>; // Tool-specific parameters
+frontend/src/domain/processTree/Action.ts:40:  [key: string]: any;
+frontend/src/domain/viewState/HingeLine.ts:3: * Used for guide creation and plane folding
+frontend/src/domain/world/DependencyGraph.ts:41:  if (!graph.nodes[fromId]) throw new Error(`Node ${fromId} not found`);
+frontend/src/domain/world/DependencyGraph.ts:42:  if (!graph.nodes[toId]) throw new Error(`Node ${toId} not found`);
+frontend/src/domain/world/DependencyGraph.ts:44:    throw new Error(`Adding edge ${fromId} -> ${toId} would create a cycle`);
+frontend/src/domain/world/DependencyGraph.ts:162:    if (temp.has(id)) throw new Error('Cycle detected in dependency graph');
+frontend/src/domain/world/DependencyGraph.ts:228:    schemaVersion: '4.0.0',
+frontend/src/domain/world/Element.ts:19: * - **Uniform Interface**: Can write functions accepting Element to work with any geometric object
+frontend/src/domain/world/Element.ts:58:export function isElement(obj: any): obj is Element {
+frontend/src/domain/world/Element2D.ts:44: * function isElement2D(obj: any): obj is Element2D {
+frontend/src/domain/world/Element2D.ts:126:export function isElement2D(obj: any): obj is Element2D {
+frontend/src/domain/world/Element2DUtils.ts:4: * These utilities work with any Element2D regardless of specific type (Point2D, Line2D, Circle2D).
+frontend/src/domain/world/Element2DUtils.ts:57:export function isElement2D(obj: any): obj is Element2D {
+frontend/src/domain/world/Element2DUtils.ts:93: * Mutates the element in place. Works with any Element2D type.
+frontend/src/domain/world/Element2DUtils.ts:111: * Mutates the element in place. Works with any Element2D type.
+frontend/src/domain/world/Element2DUtils.ts:128: * Get label for an element, with fallback to ID if no label set
+frontend/src/domain/world/Element2DUtils.ts:134: * @returns Label string (either label or id as fallback)
+frontend/src/domain/world/Element3D.ts:59:export function isElement3D(obj: any): obj is Element3D {
+frontend/src/domain/world/ElementId.ts:34:    throw new Error(
+frontend/src/domain/world/ElementId.ts:42:    throw new Error(
+frontend/src/domain/world/ElementId.ts:93:    throw new Error(
+frontend/src/domain/world/ElementId.ts:117:    throw new Error(
+frontend/src/domain/world/Guide.ts:79:   * Guides are lines with special rendering (dashed, dual-plane), but geometrically
+frontend/src/domain/world/HingeLine.ts:4: * A hinge line represents the physical fold between two projection planes
+frontend/src/domain/world/HingeLine.ts:28: * It's a fixed line (cannot be deleted) that represents the fold between planes.
+frontend/src/domain/world/HingeLine.ts:77: * HingeLine - Physical fold between two projection planes
+frontend/src/domain/world/HingeLine.ts:108:      throw new Error('HingeLine: plane1 and plane2 must be distinct');
+frontend/src/domain/world/HingeLine.ts:182:      throw new Error(
+frontend/src/domain/world/HingeLine.ts:193:      throw new Error(
+frontend/src/domain/world/HingeLine.ts:207:      throw new Error(
+frontend/src/domain/world/Line.ts:187: * TODO: Implement in later phase when parallel line tool is added
+frontend/src/domain/world/Line.ts:227: * TODO: Implement in later phase when perpendicular line tool is added
+frontend/src/domain/world/Plane.ts:85:      throw new Error('Cannot normalize zero vector');
+frontend/src/domain/world/Plane.ts:161: * represent any plane defined by point and normal without dependencies.
+frontend/src/domain/world/Point.ts:404:   * When this parametric consistency holds:
+frontend/src/domain/world/Segment.ts:76:  readonly lineId: string;   // ID of the line (any Line2D subtype)
+frontend/src/domain/world/ProjectState.ts:22:  readonly schemaVersion: string;
+frontend/src/domain/world/ProjectState.ts:159:    schemaVersion: '4.0.0',
+frontend/src/domain/world/ProjectStateSelectors.ts:699:function readNumberMetadata(value: unknown, fallback: number): number {
+frontend/src/domain/world/ProjectStateSelectors.ts:700:  return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+frontend/src/domain/world/ProjectStateSelectors.ts:982:function readNumber(value: unknown, fallback: number): number { return typeof value === 'number' ? value : fallback; }
+frontend/src/domain/world/ProjectStateRuntime.ts:10:export interface ProjectStateRuntimeHolderOptions {
+frontend/src/domain/world/ProjectStateRuntime.ts:17: * This holder intentionally stores only the immutable ProjectStateRecord plus
+frontend/src/domain/world/ProjectStateRuntime.ts:19: * construction-history, dependency-service, or adapter instances.
+frontend/src/domain/world/ProjectStateRuntime.ts:21:export class ProjectStateRuntimeHolder {
+frontend/src/domain/world/ProjectStateRuntime.ts:26:  constructor(options: ProjectStateRuntimeHolderOptions = {}) {
+frontend/src/domain/world/ProjectStateActions.ts:12:    throw new Error(`Projection plane not found: ${planeId}`);
+frontend/src/domain/world/ProjectStateProcessReducers.ts:12:  if (!node) throw new Error(`Subprocess not found: ${subprocessId}`);
+frontend/src/domain/world/ProjectStateProcessReducers.ts:13:  if (node.kind !== 'subprocess') throw new Error(`Process node is not a subprocess: ${subprocessId}`);
+frontend/src/services/GeometryService.ts:155:   * Check if points are within distance threshold
+frontend/src/services/GeometryService.ts:160:    threshold: number
+frontend/src/services/GeometryService.ts:162:    return isWithinDistance(point1, point2, threshold);
+frontend/src/services/GoogleDriveService.ts:5: * Projects are stored in a "diedrico" folder in the user's Google Drive as .diedrico files.
+frontend/src/services/GoogleDriveService.ts:55:  private folderId: string | null = null;
+frontend/src/services/GoogleDriveService.ts:56:  private tokenClient: any = null;
+frontend/src/services/GoogleDriveService.ts:97:          const initConfig: any = {
+frontend/src/services/GoogleDriveService.ts:108:          this.tokenClient = (window as any).google.accounts.oauth2.initTokenClient({
+frontend/src/services/GoogleDriveService.ts:121:        } catch (error: any) {
+frontend/src/services/GoogleDriveService.ts:162:      throw new Error('Service not initialized');
+frontend/src/services/GoogleDriveService.ts:167:        this.tokenClient.callback = (response: any) => {
+frontend/src/services/GoogleDriveService.ts:186:      } catch (error: any) {
+frontend/src/services/GoogleDriveService.ts:202:        this.tokenClient.callback = (response: any) => {
+frontend/src/services/GoogleDriveService.ts:228:      } catch (error: any) {
+frontend/src/services/GoogleDriveService.ts:244:        await (window as any).google.accounts.oauth2.revoke(this.accessToken);
+frontend/src/services/GoogleDriveService.ts:249:      this.folderId = null;
+frontend/src/services/GoogleDriveService.ts:251:      throw new Error(`Failed to sign out: ${error}`);
+frontend/src/services/GoogleDriveService.ts:261:      throw new Error('User not signed in');
+frontend/src/services/GoogleDriveService.ts:272:        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+frontend/src/services/GoogleDriveService.ts:283:    } catch (error: any) {
+frontend/src/services/GoogleDriveService.ts:285:        throw new Error('Authentication expired. Please sign in again.');
+frontend/src/services/GoogleDriveService.ts:287:      throw new Error(`Failed to fetch user profile: ${error.message || error}`);
+frontend/src/services/GoogleDriveService.ts:292:   * Get or create the "diedrico" folder in user's Drive
+frontend/src/services/GoogleDriveService.ts:294:  private async getDiedricoFolderId(): Promise<string> {
+frontend/src/services/GoogleDriveService.ts:295:    if (this.folderId) {
+frontend/src/services/GoogleDriveService.ts:296:      return this.folderId;
+frontend/src/services/GoogleDriveService.ts:300:      // Search for existing folder
+frontend/src/services/GoogleDriveService.ts:302:        q: `name='${GoogleDriveService.FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+frontend/src/services/GoogleDriveService.ts:308:        this.folderId = response.result.files[0].id!;
+frontend/src/services/GoogleDriveService.ts:309:        return this.folderId;
+frontend/src/services/GoogleDriveService.ts:312:      // Create folder if it doesn't exist
+frontend/src/services/GoogleDriveService.ts:316:          mimeType: 'application/vnd.google-apps.folder',
+frontend/src/services/GoogleDriveService.ts:321:      this.folderId = createResponse.result.id!;
+frontend/src/services/GoogleDriveService.ts:322:      return this.folderId;
+frontend/src/services/GoogleDriveService.ts:324:      throw new Error(`Failed to get or create diedrico folder: ${error}`);
+frontend/src/services/GoogleDriveService.ts:329:   * List all .diedrico files from the diedrico folder
+frontend/src/services/GoogleDriveService.ts:333:      throw new Error('User not signed in');
+frontend/src/services/GoogleDriveService.ts:337:      const folderId = await this.getDiedricoFolderId();
+frontend/src/services/GoogleDriveService.ts:340:        q: `'${folderId}' in parents and name contains '${GoogleDriveService.FILE_EXTENSION}' and trashed=false`,
+frontend/src/services/GoogleDriveService.ts:351:    } catch (error: any) {
+frontend/src/services/GoogleDriveService.ts:353:        throw new Error('Authentication expired. Please sign in again.');
+frontend/src/services/GoogleDriveService.ts:355:        throw new Error('Permission denied. Please grant access to Google Drive.');
+frontend/src/services/GoogleDriveService.ts:357:        throw new Error('Diedrico folder not found.');
+frontend/src/services/GoogleDriveService.ts:359:      throw new Error(`Failed to list files: ${error.message || error}`);
+frontend/src/services/GoogleDriveService.ts:369:      throw new Error('User not signed in');
+frontend/src/services/GoogleDriveService.ts:379:      throw new Error(`Failed to get recent files: ${error}`);
+frontend/src/services/GoogleDriveService.ts:384:   * Create a new .diedrico file in the diedrico folder
+frontend/src/services/GoogleDriveService.ts:388:      throw new Error('User not signed in');
+frontend/src/services/GoogleDriveService.ts:392:      const folderId = await this.getDiedricoFolderId();
+frontend/src/services/GoogleDriveService.ts:401:        parents: [folderId],
+frontend/src/services/GoogleDriveService.ts:433:        throw new Error('Google Drive did not return a file id');
+frontend/src/services/GoogleDriveService.ts:437:      throw new Error(`Failed to create file: ${error}`);
+frontend/src/services/GoogleDriveService.ts:446:      throw new Error('User not signed in');
+frontend/src/services/GoogleDriveService.ts:457:    } catch (error: any) {
+frontend/src/services/GoogleDriveService.ts:459:        throw new Error('Authentication expired. Please sign in again.');
+frontend/src/services/GoogleDriveService.ts:461:        throw new Error('File not found. It may have been deleted.');
+frontend/src/services/GoogleDriveService.ts:463:        throw new Error('No internet connection. Please check your network.');
+frontend/src/services/GoogleDriveService.ts:465:      throw new Error(`Failed to load file: ${error.message || error}`);
+frontend/src/services/GoogleDriveService.ts:474:      throw new Error('User not signed in');
+frontend/src/services/GoogleDriveService.ts:504:    } catch (error: any) {
+frontend/src/services/GoogleDriveService.ts:506:        throw new Error('Authentication expired. Please sign in again.');
+frontend/src/services/GoogleDriveService.ts:508:        throw new Error('Insufficient permissions or storage quota exceeded.');
+frontend/src/services/GoogleDriveService.ts:510:        throw new Error('File not found. It may have been deleted.');
+frontend/src/services/GoogleDriveService.ts:512:        throw new Error('No internet connection. Changes will be saved when you\'re back online.');
+frontend/src/services/GoogleDriveService.ts:514:      throw new Error(`Failed to save file: ${error.message || error}`);
+frontend/src/services/GoogleDriveService.ts:528:      // List all .diedrico files in the diedrico folder
+frontend/src/services/GoogleDriveService.ts:579:      throw new Error('User not signed in');
+frontend/src/services/GoogleDriveService.ts:584:      throw new Error('File name cannot be empty');
+frontend/src/services/GoogleDriveService.ts:590:      throw new Error('File name contains invalid characters');
+frontend/src/services/GoogleDriveService.ts:606:    } catch (error: any) {
+frontend/src/services/GoogleDriveService.ts:608:        throw new Error('Authentication expired. Please sign in again.');
+frontend/src/services/GoogleDriveService.ts:610:        throw new Error('File not found. It may have been deleted.');
+frontend/src/services/GoogleDriveService.ts:612:      throw new Error(`Failed to rename file: ${error.message || error}`);
+frontend/src/services/GoogleDriveService.ts:621:      throw new Error('User not signed in');
+frontend/src/services/GoogleDriveService.ts:629:      throw new Error(`Failed to delete file: ${error}`);
+frontend/src/services/ProjectService.ts:25:  schemaVersion: '4.0.0';
+frontend/src/services/ProjectService.ts:56:      schemaVersion: this.SCHEMA_VERSION,
+frontend/src/services/ProjectService.ts:77:      throw new Error('Invalid project file - not a valid JSON object');
+frontend/src/services/ProjectService.ts:83:    const required = ['id', 'name', 'schemaVersion', 'createdAt', 'updatedAt', 'provenance', 'domain'];
+frontend/src/services/ProjectService.ts:86:        throw new Error(`Invalid project file - missing required field: ${field}`);
+frontend/src/services/ProjectService.ts:90:    if (project.schemaVersion !== this.SCHEMA_VERSION) {
+frontend/src/services/ProjectService.ts:91:      throw new Error(`Unsupported project schema: ${String(project.schemaVersion)}`);
+frontend/src/services/ProjectService.ts:96:      throw new Error('Invalid project file - provenance must declare the current snapshot contract');
+frontend/src/services/ProjectService.ts:104:      throw new Error('Invalid project file - domain must be a reducer ProjectStateRecord');
+frontend/src/services/ProjectService.ts:109:      'schemaVersion',
+frontend/src/services/ProjectService.ts:120:        throw new Error(`Invalid project file - domain ProjectStateRecord missing field: ${field}`);
+frontend/src/services/ProjectService.ts:124:    if (domain.schemaVersion !== this.SCHEMA_VERSION) {
+frontend/src/services/ProjectService.ts:125:      throw new Error(`Invalid project file - domain schema must be ${this.SCHEMA_VERSION}`);
+frontend/src/services/ProjectService.ts:129:      throw new Error('Invalid project file - mutable projection plane snapshots are not supported');
+frontend/src/services/ProjectService.ts:133:      throw new Error('Invalid project file - ProjectStateRecord collections must be plain records');
+frontend/src/services/ProjectService.ts:139:      throw new Error(`Invalid project file - domain must contain plain reducer DTO data: ${String(error)}`);
+frontend/src/services/ProjectService.ts:162:      throw new Error(`Invalid project file - command persistence field is not supported: ${key}`);
+frontend/src/services/ValidationService.ts:17:    // This is a placeholder - actual validation depends on element type
+frontend/src/stores/selectionStore.ts:34:  // Computed: Check if any elements are selected
+frontend/src/stores/settingsStore.ts:172:  function updateSetting(path: string, value: any) {
+frontend/src/stores/settingsStore.ts:174:    let target: any = settings.value;
+frontend/src/stores/settingsStore.ts:195:    (settings.value as any)[category] = structuredClone((DEFAULT_SETTINGS as any)[category]);
+frontend/src/stores/viewStore.ts:83:    const oldZoom = zoom.value;
+frontend/src/stores/viewStore.ts:84:    const newZoom = Math.max(0.1, Math.min(10, oldZoom * (1 + delta)));
+frontend/src/stores/viewStore.ts:89:      const paperFocusX = (focusX - panX.value) / oldZoom;
+frontend/src/stores/viewStore.ts:90:      const paperFocusY = (focusY - panY.value) / oldZoom;
+frontend/src/tools/ArgumentCollectorTool.ts:8: * - Any-order collection: Users can select arguments in any sequence
+frontend/src/tools/ArgumentCollectorTool.ts:9: * - Automatic viable set tracking: Framework prunes incompatible argument sets as arguments are collected
+frontend/src/tools/ArgumentCollectorTool.ts:111:    throw new Error(
+frontend/src/tools/ArgumentCollectorTool.ts:125:   * 3. Update viable sets (prune incompatible sets)
+frontend/src/tools/ArgumentCollectorTool.ts:227:      throw new Error('No viable next arguments - tool should have completed or failed');
+frontend/src/tools/ArgumentCollectorTool.ts:298:  getState(): Record<string, any> {
+frontend/src/tools/ArgumentCollectorTool.ts:359:      error: 'Element does not match any required argument in viable sets' 
+frontend/src/tools/ArgumentCollectorTool.ts:383:          // Collected argument not in this set - set is incompatible
+frontend/src/tools/BaseTool.ts:103:  getState?(): Record<string, any>;
+frontend/src/tools/CircleTool.ts:24: * - Argument collection (any-order, though semantically both are 'point' so order doesn't matter)
+frontend/src/tools/GuideTool.ts:191:  getState(): Record<string, any> {
+frontend/src/tools/ITool.ts:17:import type { ProjectStateRuntimeHolder } from '@/domain/world/ProjectStateRuntime';
+frontend/src/tools/ITool.ts:29:  projectRuntime: ProjectStateRuntimeHolder; // Reducer runtime authority for command construction/commit
+frontend/src/tools/ITool.ts:32:  paperToPlaneTransform: any;  // Transform matrix from paper to plane coordinates (Matrix3 | undefined)
+frontend/src/tools/ITool.ts:118:  getState?(): Record<string, any>;
+frontend/src/tools/IntersectionTool.ts:338:function asLineRealization(line: ReturnType<typeof materializeProjectStateLine2D> | undefined): any {
+frontend/src/tools/IntersectionTool.ts:345:function asCircleRealization(circle: ReturnType<typeof materializeProjectStateCircle2D> | undefined): any {
+frontend/src/tools/ParallelLineTool.ts:34:   * Single set with point and any-line arguments
+frontend/src/tools/PerpendicularLineTool.ts:34:   * Single set with point and any-line arguments
+frontend/src/tools/SegmentTool.ts:124:  getState(): Record<string, any> {
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts:5: * Phase 62: Accepts any Line2D subtype as reference (lines, segments, guides, half-hinge-lines)
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts:8: * 2. Second click: Select reference line (any Line2D subtype)
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts:146:    if (!circleReal) throw new Error(`Circle infeasible: ${circleId}`);
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts:148:    if (!refLine) throw new Error(`Reference line infeasible: ${referenceLineId}`);
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts:218:   * Get selection mask - Phase 62: hierarchical any-line selector
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts:235:  getState(): Record<string, any> {
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts:143:    if (!circleReal) throw new Error(`Circle infeasible: ${circleId}`);
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts:145:    if (!pointReal) throw new Error(`Point infeasible: ${throughPointId}`);
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts:229:  getState(): Record<string, any> {
+frontend/src/tools/projectStateToolCommands.ts:3:import type { ProjectStateRuntimeHolder } from '@/domain/world/ProjectStateRuntime';
+frontend/src/tools/projectStateToolCommands.ts:8:  readonly projectRuntime: ProjectStateRuntimeHolder;
+frontend/src/tools/projectStateToolCommands.ts:12:export function buildToolCommand(options: BuildToolCommandOptions): { command: Command; outputs: Record<string, any> } {
+frontend/src/tools/projectStateToolCommands.ts:18:  const outputs: Record<string, any> = {};
+frontend/src/tools/selectionCommandIntents.ts:6:import type { ProjectStateRuntimeHolder } from '@/domain/world/ProjectStateRuntime';
+frontend/src/tools/selectionCommandIntents.ts:14:  readonly projectRuntime: ProjectStateRuntimeHolder;
+frontend/src/tools/selectionCommandIntents.ts:26:  readonly projectRuntime: ProjectStateRuntimeHolder;
+frontend/src/types/CommandTypes.ts:16:  outputs: Record<string, any>;  // Dictionary of symbolic paths or fixed values
+frontend/src/types/GeometricSolution.ts:144:    // Use minimum distance from each click to any feature
+frontend/src/types/ResultTypes.ts:51:  IncompatibleProjections = 'incompatible_projections',
+frontend/src/types/SelectionMask.ts:91:  // Default fallback
+frontend/src/types/SelectionMask.ts:179:   * Create mask matching any Line2D subtype (lines, segments, guides, half-hinge-lines)
+frontend/src/types/SelectionMask.ts:180:   * Replaces 'any-line' string from Phase 62
+frontend/src/types/SelectionMask.ts:187:   * Create mask matching any of the provided masks (logical OR)
+frontend/src/types/SelectionMask.ts:189:   * @returns UnionMask that matches if any child mask matches
+frontend/src/types/SelectionMask.ts:194:      throw new Error('union() requires at least one mask');
+frontend/src/types/SelectionMask.ts:209:      throw new Error('intersection() requires at least one mask');
+frontend/src/types/SelectionMask.ts:271: * Replaces 'any-line' string from Phase 62
+frontend/src/types/SelectionMask.ts:315: * - "point or any line": union(point(), anyLine())
+frontend/src/types/SelectionMask.ts:322:      throw new Error('UnionMask requires at least one child mask');
+frontend/src/types/SelectionMask.ts:358:      throw new Error('IntersectionMask requires at least one child mask');
+frontend/src/types/ToolArgumentCollector.ts:8: * - Any-order collection: Arguments can be selected in any sequence
+frontend/src/types/ToolArgumentCollector.ts:117:   * Order doesn't matter - framework supports any-order collection
+frontend/src/types/ToolConfig.ts:4: * Defines the structure for tool families and individual tools.
+frontend/src/types/ToolConfig.ts:14: * Configuration for an individual tool
+backend/src/api/projects.ts:10:const PROJECT_FIELDS = ['id', 'name', 'schemaVersion', 'createdAt', 'updatedAt', 'provenance', 'domain'];
+backend/src/api/projects.ts:13:  'schemaVersion',
+backend/src/api/projects.ts:119:  if (project.schemaVersion !== CURRENT_SCHEMA_VERSION) {
+backend/src/api/projects.ts:120:    throw new ApiError(400, 'INVALID_PROJECT_SCHEMA', 'Project schemaVersion must be 4.0.0');
+backend/src/api/projects.ts:133:    schemaVersion: CURRENT_SCHEMA_VERSION,
+backend/src/api/projects.ts:160:  if (domain.schemaVersion !== CURRENT_SCHEMA_VERSION) {
+backend/src/api/projects.ts:161:    throw new ApiError(400, 'INVALID_PROJECT_SCHEMA', 'Project domain schemaVersion must be 4.0.0');
+backend/src/api/projects.ts:187:      throw new ApiError(400, 'INVALID_PROJECT_DOMAIN', 'Project domain must not contain legacy projection-plane arrays');
+backend/src/api/projects.ts:236:      throw new ApiError(400, 'INVALID_PROJECT_PAYLOAD', `Unsupported legacy project field: ${key}`);
+backend/src/models/Project.ts:134:  schemaVersion: '4.0.0';
+backend/src/models/Project.ts:154:  schemaVersion: '4.0.0';
+backend/src/models/Project.ts:181:    schemaVersion: '4.0.0',
+backend/src/models/Project.ts:191:      schemaVersion: '4.0.0',
+backend/src/storage/FileStorage.ts:21:      throw new Error('Failed to create data directory');
+backend/src/storage/FileStorage.ts:36:        throw new Error('File not found');
+backend/src/storage/FileStorage.ts:38:      throw new Error('Failed to read file');
+backend/src/storage/FileStorage.ts:53:      throw new Error('Failed to write file');
+backend/src/storage/FileStorage.ts:67:        throw new Error('File not found');
+backend/src/storage/FileStorage.ts:69:      throw new Error('Failed to delete file');
+backend/src/storage/FileStorage.ts:82:      throw new Error('Failed to list files');
+backend/src/storage/FileStorage.ts:102:      throw new Error('Unsafe storage filename');
+backend/src/storage/FileStorage.ts:108:      throw new Error('Unsafe storage filename');
+backend/src/storage/ProjectRepository.ts:106:      throw new Error('Project not found');
+frontend/tests/e2e/current-ui-contract.spec.ts:31:  if (!box) throw new Error('Primitive is not visible');
+frontend/tests/e2e/current-ui-contract.spec.ts:36:  test('exposes current executable tools and no deleted placeholder tools', async ({ page }) => {
+frontend/tests/e2e/current-ui-contract.spec.ts:44:    await expect(page.getByText(/not yet implemented|placeholder/i)).toHaveCount(0);
+frontend/tests/e2e/current-ui-contract.spec.ts:58:  test('supports dropdown-only current subtools without legacy aliases', async ({ page }) => {
+frontend/tests/e2e/current-persistence-contract.spec.ts:20:    expect(created.schemaVersion).toBe('4.0.0');
+frontend/tests/e2e/current-persistence-contract.spec.ts:67:  test('rejects deleted legacy command-stream payloads', async ({ request }) => {
+frontend/tests/e2e/current-persistence-contract.spec.ts:74:    const legacyResponse = await request.put(`http://localhost:3000/api/projects/${projectId}`, {
+frontend/tests/e2e/current-persistence-contract.spec.ts:78:    expect(legacyResponse.status()).toBe(400);
+frontend/tests/unit/architecture/noCommandSubclasses.spec.ts:17: * This test scans the codebase for any `extends Command` patterns and fails if found.
+frontend/tests/unit/architecture/noCommandSubclasses.spec.ts:18: * Test files are excluded as they may contain mock subclasses for testing purposes.
+frontend/tests/unit/architecture/noCommandSubclasses.spec.ts:28:  it('should NOT have any Command subclasses in production code', () => {
+frontend/tests/unit/architecture/noCommandSubclasses.spec.ts:79:        throw new Error(
+frontend/tests/unit/architecture/noCommandSubclasses.spec.ts:133:      throw new Error(
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:46:    label: 'worldStore projection authority fallback',
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:50:    label: 'placeholder snapping geometry returning zero',
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:51:    pattern: /For now return 0 as placeholder|return\s+0\s*;\s*(?:\n|.){0,140}getPoint[XY]|getPoint[XY](?:\n|.){0,300}return\s+0\s*;/,
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:54:    label: 'deleted snapping any-cast coordinate access',
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:55:    pattern: /\(\s*point\s+as\s+any\s*\)\s*\.\s*[xy]\b/,
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:116:  /\b(?:backwards? compatibility|compatibility shim|migration path|legacy preservation|preserve legacy|old format|old contract)\b/i,
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:119:const explicitHistoricalOrRejectedContext = /\b(?:deleted|historical|stale|obsolete|pre-design|not current|reject(?:s|ed|ion)?|unsupported|no[- ]backcompat|not a migration path|not a legacy compatibility check|without migration aliases)\b/i;
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:149:  'frontend/src/tools/CircleTool.old.ts',
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:150:  'frontend/src/tools/ParallelLineTool.old.ts',
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:151:  'frontend/src/tools/PerpendicularLineTool.old.ts',
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:158:const legacyCommandStreamPayloads = [
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:194:const secretSafetyPlaceholderContext = /\b(?:placeholder|example|dummy|fake|test|synthetic|mock|sample|redacted|replace-me|your[-_\s]?(?:token|key|secret|client)|xxxx+)\b/i;
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:242:  return secretSafetyPlaceholderContext.test(line);
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:315:  /^placeholder(?:[-_].*)?\.spec\.ts$/,
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:316:  /^.*[-_]placeholder(?:[-_].*)?\.spec\.ts$/,
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:322:  /^.*legacy.*\.(?:json|ya?ml|ts)$/i,
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:334:  'migration',
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:451:  expect(script, `Expected package script to exist: ${scriptName}`).toEqual(expect.any(String));
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:510:    id: 'legacy-rejection-guard',
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:512:    schemaVersion: '4.0.0',
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:522:      schemaVersion: '4.0.0',
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:622:  it('keeps selected retained source and test comments from presenting stale docs or legacy preservation as current authority', () => {
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:635:      `Selected ARCH-012 source/test comments present stale pre-design, rejected archival authority, or compatibility-preservation language as current behavior:\n${findings.join('\n')}`,
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:639:  it('keeps deleted legacy authorities, duplicate renderers, placeholder tools, and historical specs absent', () => {
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:643:    expect(restoredPaths, `Deleted legacy surfaces were restored:\n${restoredPaths.join('\n')}`).toEqual([]);
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:648:  it('keeps the deleted worldStore/useSnapping projection and placeholder snapping island absent', () => {
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:655:      'Live frontend source/tests reintroduced the deleted worldStore/useSnapping island, worldStore projection fallback, placeholder snapping geometry, or deleted any-cast coordinate access',
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:733:    expectSourceContains(backendSpecSource, 'rejects legacy command-stream fields at top level and nested positions without migration aliases', 'backend projects integration spec');
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:737:      expectSourceExcludes(backendSpecSource, weakToken, 'backend projects integration spec weak legacy contract tokens');
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:748:    for (const token of ['current-snapshot', 'ProjectStateRecord', 'commands).toBeUndefined()', 'commandHistory).toBeUndefined()', 'legacyResponse.status()).toBe(400)']) {
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:786:    expect(staleSpecs, `Stale pre-overhaul or placeholder/transport e2e specs were restored:\n${staleSpecs.join('\n')}`).toEqual([]);
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:795:    expectSourceContains(persistenceContractSource, 'rejects deleted legacy command-stream payloads', 'current persistence e2e spec');
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:796:    expectSourceContains(persistenceContractSource, 'legacyResponse.status()).toBe(400)', 'current persistence e2e spec');
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:804:    expectSourceMatches(uiContractSource, /not yet implemented\|placeholder/i, 'current UI e2e spec');
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:850:      'client_secret: "placeholder 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t123456789"',
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:856:      expect(findCredentialLiterals(sample), `Credential guard must allow synthetic placeholder sample: ${sample}`).toEqual([]);
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:879:      fsReadSpy.mock.calls.map(call => String(call[0])),
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:882:    fsReadSpy.mockRestore();
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:949:    expectSourceExcludes(driveSessionSource, /compat(?:ibility|ible)|legacy|dual flow/i, 'useDriveProjectSession');
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:966:      /compat(?:ibility|ible)|legacy|dual flow/i,
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:985:      /compat(?:ibility|ible)|legacy|dual flow/i,
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:993:  it('rejects legacy command-stream persistence keys instead of accepting compatibility payloads', () => {
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:994:    for (const { field, payload } of legacyCommandStreamPayloads) {
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:997:        `Expected ProjectService to reject legacy command-stream field: ${field}`,
+frontend/tests/unit/autosave.spec.ts:15:    // This is a placeholder test that verifies the autosave timing logic
+frontend/tests/unit/autosave.spec.ts:22:    const mockSave = () => {
+frontend/tests/unit/autosave.spec.ts:32:      timeoutId = setTimeout(mockSave, 500);
+frontend/tests/unit/autosave.spec.ts:49:    const mockSave = () => {
+frontend/tests/unit/autosave.spec.ts:58:      timeoutId = setTimeout(mockSave, 500);
+frontend/tests/unit/autosave.spec.ts:87:    const mockSave = () => {
+frontend/tests/unit/autosave.spec.ts:100:      timeoutId = setTimeout(mockSave, 500);
+frontend/tests/unit/commands/command.spec.ts:11:    idCounters: { ...state.idCounters, custom: { ...state.idCounters.custom, mock: value } },
+frontend/tests/unit/commands/command.spec.ts:18:  outputs: Record<string, any> = {};
+frontend/tests/unit/commands/command.spec.ts:26:    this.outputs = { mockData: this.outputValue };
+frontend/tests/unit/commands/command.spec.ts:33:  parameters: Record<string, any>;
+frontend/tests/unit/commands/command.spec.ts:34:  outputs: Record<string, any> = {};
+frontend/tests/unit/commands/command.spec.ts:38:    return { success: true, state: stateWithCounter(state, (state.idCounters.custom.mock ?? 0) + 1), outputs: this.outputs };
+frontend/tests/unit/commands/command.spec.ts:64:    expect(result.outputs).toEqual({ mockData: 'test_value' });
+frontend/tests/unit/commands/command.spec.ts:66:    expect(command.state.idCounters.custom.mock).toBe(1);
+frontend/tests/unit/commands/command.spec.ts:72:    const second = command.addAndExecute(new DependentReducerOperation(first.outputs.mockData));
+frontend/tests/unit/components/actionsPanel.spec.ts:6:import { ProjectStateRuntimeHolder } from '../../../src/domain/world/ProjectStateRuntime';
+frontend/tests/unit/components/actionsPanel.spec.ts:113:function mountPanel(runtime = new ProjectStateRuntimeHolder({ initialState: actionsPanelState() })) {
+frontend/tests/unit/components/actionsPanel.spec.ts:161:    const runtime = new ProjectStateRuntimeHolder({ initialState: actionsPanelState() });
+frontend/tests/unit/components/actionsPanel.spec.ts:180:    const runtime = new ProjectStateRuntimeHolder({ initialState: actionsPanelState() });
+frontend/tests/unit/components/elementsPanel.spec.ts:6:import { ProjectStateRuntimeHolder } from '../../../src/domain/world/ProjectStateRuntime';
+frontend/tests/unit/components/elementsPanel.spec.ts:52:function mountPanel(runtime = new ProjectStateRuntimeHolder({ initialState: elementsPanelState() })) {
+frontend/tests/unit/components/elementsPanel.spec.ts:78:    const runtime = new ProjectStateRuntimeHolder({ initialState: emptyProjectState() });
+frontend/tests/unit/components/elementsPanel.spec.ts:86:    const runtime = new ProjectStateRuntimeHolder({ initialState: emptyProjectState() });
+frontend/tests/unit/components/elementsPanel.spec.ts:98:    const runtime = new ProjectStateRuntimeHolder({ initialState: elementsPanelState() });
+frontend/tests/unit/components/mainToolbar.spec.ts:16:  it('renders no placeholder or transport tool button', () => {
+frontend/tests/unit/components/mainToolbar.spec.ts:24:    expect(wrapper.text()).not.toMatch(/not yet implemented|placeholder/i);
+frontend/tests/unit/composables/hoverHighlight.spec.ts:93:    it('should update hover from any instance', () => {
+frontend/tests/unit/coordinateTransform.spec.ts:21:    if (!planeToPaperDto || !paperToPlaneDto) throw new Error(`Missing ${planeId} transform`);
+frontend/tests/unit/domain/element2dRealization.spec.ts:108:    it('should allow generic code to check feasibility on any realization type', () => {
+frontend/tests/unit/domain/elementId.spec.ts:154:      // Extract individual components
+frontend/tests/unit/domain/plane.spec.ts:75:  // Skip old createPH/createPV tests - these static methods were removed
+frontend/tests/unit/domain/projectState.spec.ts:10:    schemaVersion: '4.0.0',
+frontend/tests/unit/domain/projectStateRuntime.spec.ts:6:import { ProjectStateRuntimeHolder } from '@/domain/world/ProjectStateRuntime';
+frontend/tests/unit/domain/projectStateRuntime.spec.ts:22:describe('ProjectStateRuntimeHolder', () => {
+frontend/tests/unit/domain/projectStateRuntime.spec.ts:24:    const runtime = new ProjectStateRuntimeHolder();
+frontend/tests/unit/domain/projectStateRuntime.spec.ts:27:    expect(runtime.state.schemaVersion).toBe('4.0.0');
+frontend/tests/unit/domain/projectStateRuntime.spec.ts:33:    const runtime = new ProjectStateRuntimeHolder();
+frontend/tests/unit/domain/projectStateRuntime.spec.ts:55:    const runtime = new ProjectStateRuntimeHolder();
+frontend/tests/unit/domain/projectStateRuntime.spec.ts:67:    const runtime = new ProjectStateRuntimeHolder();
+frontend/tests/unit/domain/projectStateRuntimeReactiveSelectors.spec.ts:6:import { ProjectStateRuntimeHolder } from '@/domain/world/ProjectStateRuntime';
+frontend/tests/unit/domain/projectStateRuntimeReactiveSelectors.spec.ts:66:      type: Object as PropType<ProjectStateRuntimeHolder>,
+frontend/tests/unit/domain/projectStateRuntimeReactiveSelectors.spec.ts:86:    const runtime = new ProjectStateRuntimeHolder();
+frontend/tests/unit/domain/projectStateReadOnlyProcessHistory.spec.ts:7:import { ProjectStateRuntimeHolder } from '@/domain/world/ProjectStateRuntime';
+frontend/tests/unit/domain/projectStateReadOnlyProcessHistory.spec.ts:106:    const runtime = new ProjectStateRuntimeHolder({ initialState: state });
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:43:    expect(project.schemaVersion).toBe('4.0.0');
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:70:  it('rejects old command-stream project files instead of migrating them', () => {
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:71:    const oldProject = {
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:72:      id: 'legacy',
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:74:      schemaVersion: '3.1.0',
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:80:    expect(() => ProjectService.validateProjectData(oldProject)).toThrow(/command persistence field|Unsupported project schema/);
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:85:      id: 'legacy-mutable',
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:87:      schemaVersion: '4.0.0',
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:45:    const project = ProjectService.createProjectSnapshot(emptyProjectState(), 'Bad Provenance', { source: 'test' }) as any;
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:52:    const project = JSON.parse(JSON.stringify(ProjectService.createProjectSnapshot(emptyProjectState(), 'Bad Stack', { source: 'test' }))) as any;
+frontend/tests/unit/services/googleDriveService.spec.ts:5: * Uses mocks for gapi client library.
+frontend/tests/unit/services/googleDriveService.spec.ts:12:const mockGapi = {
+frontend/tests/unit/services/googleDriveService.spec.ts:30:// Setup global gapi mock
+frontend/tests/unit/services/googleDriveService.spec.ts:31:global.gapi = mockGapi as any;
+frontend/tests/unit/services/googleDriveService.spec.ts:35:  let mockTokenClient: any;
+frontend/tests/unit/services/googleDriveService.spec.ts:38:    // Reset all mocks
+frontend/tests/unit/services/googleDriveService.spec.ts:42:    mockTokenClient = {
+frontend/tests/unit/services/googleDriveService.spec.ts:43:      callback: null as ((response: any) => void) | null,
+frontend/tests/unit/services/googleDriveService.spec.ts:44:      requestAccessToken: vi.fn(() => mockTokenClient.callback?.({ access_token: 'test-access-token' })),
+frontend/tests/unit/services/googleDriveService.spec.ts:47:    (globalThis as any).google = {
+frontend/tests/unit/services/googleDriveService.spec.ts:50:          initTokenClient: vi.fn(() => mockTokenClient),
+frontend/tests/unit/services/googleDriveService.spec.ts:55:    mockGapi.load.mockImplementation((_api: string, callback: () => void) => {
+frontend/tests/unit/services/googleDriveService.spec.ts:58:    mockGapi.client.init.mockResolvedValue(undefined);
+frontend/tests/unit/services/googleDriveService.spec.ts:59:    mockGapi.client.getToken.mockReturnValue(null);
+frontend/tests/unit/services/googleDriveService.spec.ts:60:    mockGapi.client.setToken.mockImplementation((token: any) => {
+frontend/tests/unit/services/googleDriveService.spec.ts:61:      mockGapi.client.getToken.mockReturnValue(token);
+frontend/tests/unit/services/googleDriveService.spec.ts:76:      expect(mockGapi.load).toHaveBeenCalledWith('client', expect.any(Function));
+frontend/tests/unit/services/googleDriveService.spec.ts:77:      expect(mockGapi.client.init).toHaveBeenCalledWith({
+frontend/tests/unit/services/googleDriveService.spec.ts:87:      expect(mockGapi.load).toHaveBeenCalledTimes(1);
+frontend/tests/unit/services/googleDriveService.spec.ts:91:      mockGapi.client.init.mockRejectedValue(new Error('Init failed'));
+frontend/tests/unit/services/googleDriveService.spec.ts:104:      mockGapi.client.getToken.mockReturnValue({ access_token: 'test-access-token' });
+frontend/tests/unit/services/googleDriveService.spec.ts:111:      mockGapi.client.getToken.mockReturnValue(null);
+frontend/tests/unit/services/googleDriveService.spec.ts:121:      expect(mockGapi.load).toHaveBeenCalled();
+frontend/tests/unit/services/googleDriveService.spec.ts:122:      expect(mockTokenClient.requestAccessToken).toHaveBeenCalledWith({ prompt: 'consent' });
+frontend/tests/unit/services/googleDriveService.spec.ts:126:      mockTokenClient.requestAccessToken.mockImplementationOnce(() => mockTokenClient.callback?.({ error: 'popup_closed_by_user' }));
+frontend/tests/unit/services/googleDriveService.spec.ts:132:      mockTokenClient.requestAccessToken.mockImplementationOnce(() => mockTokenClient.callback?.({ error: 'access_denied' }));
+frontend/tests/unit/services/googleDriveService.spec.ts:144:      expect((globalThis as any).google.accounts.oauth2.revoke).toHaveBeenCalledWith('test-access-token');
+frontend/tests/unit/services/googleDriveService.spec.ts:155:      mockGapi.client.getToken.mockReturnValue({ access_token: 'test-access-token' });
+frontend/tests/unit/services/googleDriveService.spec.ts:157:      // Mock folder lookup
+frontend/tests/unit/services/googleDriveService.spec.ts:158:      mockGapi.client.drive.files.list.mockResolvedValueOnce({
+frontend/tests/unit/services/googleDriveService.spec.ts:160:          files: [{ id: 'folder-123', name: 'diedrico' }],
+frontend/tests/unit/services/googleDriveService.spec.ts:165:    it('should list .diedrico files from diedrico folder', async () => {
+frontend/tests/unit/services/googleDriveService.spec.ts:166:      const mockFiles = [
+frontend/tests/unit/services/googleDriveService.spec.ts:171:      mockGapi.client.drive.files.list.mockResolvedValueOnce({
+frontend/tests/unit/services/googleDriveService.spec.ts:172:        result: { files: mockFiles },
+frontend/tests/unit/services/googleDriveService.spec.ts:186:      mockGapi.client.drive.files.list.mockResolvedValueOnce({
+frontend/tests/unit/services/googleDriveService.spec.ts:196:      mockGapi.client.getToken.mockReturnValue(null);
+frontend/tests/unit/services/googleDriveService.spec.ts:202:      // Note: This test is skipped because folderId caching makes it complex to test
+frontend/tests/unit/services/googleDriveService.spec.ts:204:      // Reset and setup mocks for this test
+frontend/tests/unit/services/googleDriveService.spec.ts:207:      mockGapi.client.getToken.mockReturnValue({ access_token: 'test-access-token' });
+frontend/tests/unit/services/googleDriveService.spec.ts:209:      // First call succeeds (folder lookup), second call fails (list files)
+frontend/tests/unit/services/googleDriveService.spec.ts:210:      mockGapi.client.drive.files.list
+frontend/tests/unit/services/googleDriveService.spec.ts:211:        .mockResolvedValueOnce({
+frontend/tests/unit/services/googleDriveService.spec.ts:213:            files: [{ id: 'folder-123', name: 'diedrico' }],
+frontend/tests/unit/services/googleDriveService.spec.ts:216:        .mockRejectedValueOnce({ status: 401 });
+frontend/tests/unit/services/googleDriveService.spec.ts:225:      mockGapi.client.getToken.mockReturnValue({ access_token: 'test-access-token' });
+frontend/tests/unit/services/googleDriveService.spec.ts:227:      // Mock folder lookup
+frontend/tests/unit/services/googleDriveService.spec.ts:228:      mockGapi.client.drive.files.list.mockResolvedValue({
+frontend/tests/unit/services/googleDriveService.spec.ts:230:          files: [{ id: 'folder-123', name: 'diedrico' }],
+frontend/tests/unit/services/googleDriveService.spec.ts:236:      const mockData = { id: 'proj-1', name: 'Test Project' };
+frontend/tests/unit/services/googleDriveService.spec.ts:238:      // Mock folder lookup to return existing folder
+frontend/tests/unit/services/googleDriveService.spec.ts:239:      mockGapi.client.drive.files.list.mockResolvedValue({
+frontend/tests/unit/services/googleDriveService.spec.ts:241:          files: [{ id: 'folder-123', name: 'diedrico' }],
+frontend/tests/unit/services/googleDriveService.spec.ts:245:      mockGapi.client.request.mockResolvedValue({
+frontend/tests/unit/services/googleDriveService.spec.ts:249:      const fileId = await service.createFile('test-project', mockData);
+frontend/tests/unit/services/googleDriveService.spec.ts:252:      expect(mockGapi.client.request).toHaveBeenCalledWith(
+frontend/tests/unit/services/googleDriveService.spec.ts:261:      // Note: This test is skipped due to folder ID caching complexity
+frontend/tests/unit/services/googleDriveService.spec.ts:263:      // Mock folder lookup
+frontend/tests/unit/services/googleDriveService.spec.ts:264:      mockGapi.client.drive.files.list.mockResolvedValue({
+frontend/tests/unit/services/googleDriveService.spec.ts:266:          files: [{ id: 'folder-123', name: 'diedrico' }],
+frontend/tests/unit/services/googleDriveService.spec.ts:270:      mockGapi.client.request.mockResolvedValue({
+frontend/tests/unit/services/googleDriveService.spec.ts:276:      const requestCall = mockGapi.client.request.mock.calls[0][0];
+frontend/tests/unit/services/googleDriveService.spec.ts:281:      // Mock folder lookup
+frontend/tests/unit/services/googleDriveService.spec.ts:282:      mockGapi.client.drive.files.list.mockResolvedValue({
+frontend/tests/unit/services/googleDriveService.spec.ts:284:          files: [{ id: 'folder-123', name: 'diedrico' }],
+frontend/tests/unit/services/googleDriveService.spec.ts:288:      mockGapi.client.request.mockResolvedValue({
+frontend/tests/unit/services/googleDriveService.spec.ts:294:      const requestCall = mockGapi.client.request.mock.calls[0][0];
+frontend/tests/unit/services/googleDriveService.spec.ts:301:      mockGapi.client.getToken.mockReturnValue(null);
+frontend/tests/unit/services/googleDriveService.spec.ts:310:      mockGapi.client.getToken.mockReturnValue({ access_token: 'test-access-token' });
+frontend/tests/unit/services/googleDriveService.spec.ts:314:      const mockData = { id: 'proj-1', name: 'Test Project' };
+frontend/tests/unit/services/googleDriveService.spec.ts:316:      mockGapi.client.drive.files.get.mockResolvedValue({
+frontend/tests/unit/services/googleDriveService.spec.ts:317:        body: JSON.stringify(mockData),
+frontend/tests/unit/services/googleDriveService.spec.ts:322:      expect(data).toEqual(mockData);
+frontend/tests/unit/services/googleDriveService.spec.ts:323:      expect(mockGapi.client.drive.files.get).toHaveBeenCalledWith({
+frontend/tests/unit/services/googleDriveService.spec.ts:330:      mockGapi.client.drive.files.get.mockRejectedValue({ status: 404 });
+frontend/tests/unit/services/googleDriveService.spec.ts:336:      mockGapi.client.getToken.mockReturnValue(null);
+frontend/tests/unit/services/googleDriveService.spec.ts:345:      mockGapi.client.getToken.mockReturnValue({ access_token: 'test-access-token' });
+frontend/tests/unit/services/googleDriveService.spec.ts:349:      const mockData = { id: 'proj-1', name: 'Updated Project' };
+frontend/tests/unit/services/googleDriveService.spec.ts:351:      mockGapi.client.request.mockResolvedValue({});
+frontend/tests/unit/services/googleDriveService.spec.ts:353:      await service.updateFile('file-123', mockData);
+frontend/tests/unit/services/googleDriveService.spec.ts:355:      expect(mockGapi.client.request).toHaveBeenCalledWith(
+frontend/tests/unit/services/googleDriveService.spec.ts:364:      mockGapi.client.request.mockRejectedValue({ status: 403 });
+frontend/tests/unit/services/googleDriveService.spec.ts:370:      mockGapi.client.getToken.mockReturnValue(null);
+frontend/tests/unit/services/googleDriveService.spec.ts:379:      mockGapi.client.getToken.mockReturnValue({ access_token: 'test-access-token' });
+frontend/tests/unit/services/googleDriveService.spec.ts:383:      mockGapi.client.drive.files.delete.mockResolvedValue({});
+frontend/tests/unit/services/googleDriveService.spec.ts:387:      expect(mockGapi.client.drive.files.delete).toHaveBeenCalledWith({
+frontend/tests/unit/services/googleDriveService.spec.ts:393:      mockGapi.client.getToken.mockReturnValue(null);
+frontend/tests/unit/services/googleDriveService.spec.ts:402:      mockGapi.client.getToken.mockReturnValue({ access_token: 'test-access-token' });
+frontend/tests/unit/services/googleDriveService.spec.ts:405:      mockGapi.client.getToken.mockReturnValue({ access_token: 'test-access-token' });
+frontend/tests/unit/services/googleDriveService.spec.ts:409:      const mockProfileData = {
+frontend/tests/unit/services/googleDriveService.spec.ts:416:      global.fetch = vi.fn().mockResolvedValue({
+frontend/tests/unit/services/googleDriveService.spec.ts:418:        json: async () => mockProfileData,
+frontend/tests/unit/services/googleDriveService.spec.ts:440:    it('should use email as fallback when name not available', async () => {
+frontend/tests/unit/services/googleDriveService.spec.ts:441:      const mockProfileData = {
+frontend/tests/unit/services/googleDriveService.spec.ts:448:      global.fetch = vi.fn().mockResolvedValue({
+frontend/tests/unit/services/googleDriveService.spec.ts:450:        json: async () => mockProfileData,
+frontend/tests/unit/services/googleDriveService.spec.ts:459:      mockGapi.client.getToken.mockReturnValue(null);
+frontend/tests/unit/services/googleDriveService.spec.ts:466:      global.fetch = vi.fn().mockResolvedValue({
+frontend/tests/unit/services/googleDriveService.spec.ts:476:      global.fetch = vi.fn().mockRejectedValue(new Error('401: Unauthorized'));
+frontend/tests/unit/services/googleDriveService.spec.ts:482:      global.fetch = vi.fn().mockRejectedValue(new Error('Network error'));
+frontend/tests/unit/stores/authStore.spec.ts:14:  const mockProfile: GoogleUserProfile = {
+frontend/tests/unit/stores/authStore.spec.ts:25:    // Clear any existing auth state by calling clearAuth
+frontend/tests/unit/stores/authStore.spec.ts:52:      authStore.setAuthenticated(mockProfile, token);
+frontend/tests/unit/stores/authStore.spec.ts:55:      expect(authStore.user.value).toEqual(mockProfile);
+frontend/tests/unit/stores/authStore.spec.ts:62:      authStore.setAuthenticated(mockProfile, token);
+frontend/tests/unit/stores/authStore.spec.ts:65:      expect(sessionStorage.getItem('diedrico_user_profile')).toBe(JSON.stringify(mockProfile));
+frontend/tests/unit/stores/authStore.spec.ts:72:      authStore.setAuthenticated(mockProfile, token, expiry);
+frontend/tests/unit/stores/authStore.spec.ts:82:      authStore.setAuthenticated(mockProfile, 'token');
+frontend/tests/unit/stores/authStore.spec.ts:86:        ...mockProfile,
+frontend/tests/unit/stores/authStore.spec.ts:100:      authStore.setAuthenticated(mockProfile, 'token');
+frontend/tests/unit/stores/authStore.spec.ts:113:      authStore.setAuthenticated(mockProfile, 'token');
+frontend/tests/unit/stores/authStore.spec.ts:130:      sessionStorage.setItem('diedrico_user_profile', JSON.stringify(mockProfile));
+frontend/tests/unit/stores/authStore.spec.ts:136:      expect(authStore.user.value).toEqual(mockProfile);
+frontend/tests/unit/stores/authStore.spec.ts:152:      sessionStorage.setItem('diedrico_user_profile', JSON.stringify(mockProfile));
+frontend/tests/unit/stores/authStore.spec.ts:177:      sessionStorage.setItem('diedrico_user_profile', JSON.stringify(mockProfile));
+frontend/tests/unit/stores/authStore.spec.ts:190:      authStore.setAuthenticated(mockProfile, 'token');
+frontend/tests/unit/stores/authStore.spec.ts:197:      authStore.setAuthenticated(mockProfile, 'token', expiredDate);
+frontend/tests/unit/stores/authStore.spec.ts:204:      authStore.setAuthenticated(mockProfile, 'token', soonExpiry);
+frontend/tests/unit/stores/authStore.spec.ts:211:      authStore.setAuthenticated(mockProfile, 'token', futureExpiry);
+frontend/tests/unit/stores/authStore.spec.ts:219:      authStore.setAuthenticated(mockProfile, 'token');
+frontend/tests/unit/stores/authStore.spec.ts:228:      authStore.setAuthenticated(mockProfile, 'token');
+frontend/tests/unit/stores/selectionStore.spec.ts:311:      store.addToSelection('old-1');
+frontend/tests/unit/stores/selectionStore.spec.ts:312:      store.addToSelection('old-2');
+frontend/tests/unit/stores/selectionStore.spec.ts:316:      expect(store.isSelected('old-1')).toBe(false);
+frontend/tests/unit/stores/selectionStore.spec.ts:317:      expect(store.isSelected('old-2')).toBe(false);
+frontend/tests/unit/stores/toolStore.spec.ts:140:    it('does not preserve the deleted transport placeholder in family lookup or config lookup', () => {
+frontend/tests/unit/tools/pointTool.spec.ts:145:  it('does not import deleted legacy pointer/direct-mutation surfaces in this focused suite', () => {
+frontend/tests/unit/types/SelectionMask.spec.ts:96:    it('T1070.4: union() should match any of its constituent masks', () => {
+frontend/tests/unit/types/SelectionMask.spec.ts:205:    it('T1071.1: anyLine() replaces Phase 62 "any-line" string', () => {
+frontend/tests/unit/types/SelectionMask.spec.ts:206:      // Phase 62: selectionMask = ['point', 'any-line']
+frontend/tests/unit/types/SelectionMask.spec.ts:214:      // Same behavior as Phase 62 'any-line'
+frontend/tests/unit/utils/coordinateTransform.spec.ts:25:      // Create mock SVG element
+frontend/tests/unit/config.toolFamilies.spec.ts:45:  'placeholder',
+frontend/tests/unit/config.toolFamilies.spec.ts:56:const placeholderToolbarIcons = new Set(['?', '…', '...', '🚚', '📦']);
+frontend/tests/unit/config.toolFamilies.spec.ts:73:  it('does not expose deleted placeholder transport surfaces', () => {
+frontend/tests/unit/config.toolFamilies.spec.ts:80:    expect(text).not.toMatch(/not yet implemented|placeholder|transport/i);
+frontend/tests/unit/config.toolFamilies.spec.ts:91:      expect(implementation.createCommandIntent).toEqual(expect.any(Function));
+frontend/tests/unit/config.toolFamilies.spec.ts:92:      expect(implementation.getSelectionMask).toEqual(expect.any(Function));
+frontend/tests/unit/config.toolFamilies.spec.ts:103:  it('rejects legacy, placeholder, and documentation-only tool surfaces in runtime registration', () => {
+frontend/tests/unit/config.toolFamilies.spec.ts:107:    const legacyToolFiles = fs.readdirSync(toolsDir).filter((name: string) => name.endsWith('.old.ts'));
+frontend/tests/unit/config.toolFamilies.spec.ts:110:      .filter(tool => placeholderToolbarIcons.has(tool.icon))
+frontend/tests/unit/config.toolFamilies.spec.ts:113:    expect(legacyToolFiles, `Deleted legacy .old.ts tools were restored under ${toolsDir}`).toEqual([]);
+frontend/tests/unit/config.toolFamilies.spec.ts:114:    expect(toolbarIconViolations, `Runtime toolbar uses placeholder/transport icons: ${toolbarIconViolations.join(', ')}`).toEqual([]);
+frontend/tests/unit/useDriveProjectSession.spec.ts:4:import { ProjectStateRuntimeHolder } from '../../src/domain/world/ProjectStateRuntime';
+frontend/tests/unit/useDriveProjectSession.spec.ts:33:    const runtime = new ProjectStateRuntimeHolder();
+frontend/tests/unit/useDriveProjectSession.spec.ts:36:      initialize: vi.fn().mockResolvedValue(undefined),
+frontend/tests/unit/useDriveProjectSession.spec.ts:37:      isSignedIn: vi.fn().mockReturnValue(true),
+frontend/tests/unit/useDriveProjectSession.spec.ts:38:      loadFile: vi.fn().mockResolvedValue(projectData),
+frontend/tests/unit/useDriveProjectSession.spec.ts:48:    } as any;
+frontend/tests/unit/useDriveProjectSession.spec.ts:68:    const runtime = new ProjectStateRuntimeHolder();
+frontend/tests/unit/useDriveProjectSession.spec.ts:71:      createFile: vi.fn().mockResolvedValue('file-123'),
+frontend/tests/unit/useDriveProjectSession.spec.ts:72:      updateFile: vi.fn().mockResolvedValue(undefined),
+frontend/tests/unit/useDriveProjectSession.spec.ts:83:    } as any;
+backend/tests/integration/projects.spec.ts:16:    message: expect.any(String),
+backend/tests/integration/projects.spec.ts:22:function expectCurrentProjectDTO(project: any): void {
+backend/tests/integration/projects.spec.ts:24:  expect(project.schemaVersion).toBe('4.0.0');
+backend/tests/integration/projects.spec.ts:28:    savedAt: expect.any(String),
+backend/tests/integration/projects.spec.ts:38:function expectEmptyReducerState(domain: any): void {
+backend/tests/integration/projects.spec.ts:39:  expect(domain.schemaVersion).toBe('4.0.0');
+backend/tests/integration/projects.spec.ts:64:async function createProject(name = 'Test Project'): Promise<any> {
+backend/tests/integration/projects.spec.ts:69:function cloneProject(project: any): any {
+backend/tests/integration/projects.spec.ts:73:function setPath(target: any, pathSegments: string[], value: unknown): any {
+backend/tests/integration/projects.spec.ts:150:        { payload: { name: 'Legacy', commands: [] }, label: 'legacy extra field' },
+backend/tests/integration/projects.spec.ts:160:        expect(response.body.message, label).toEqual(expect.any(String));
+backend/tests/integration/projects.spec.ts:279:    it('rejects partial, legacy, unknown, schema, and provenance-mismatched payloads', async () => {
+backend/tests/integration/projects.spec.ts:282:      const invalidPayloads: Array<{ payload: any; code: string }> = [
+backend/tests/integration/projects.spec.ts:288:        { payload: setPath(project, ['schemaVersion'], '3.0.0'), code: 'INVALID_PROJECT_SCHEMA' },
+backend/tests/integration/projects.spec.ts:289:        { payload: setPath(project, ['domain', 'schemaVersion'], '3.0.0'), code: 'INVALID_PROJECT_SCHEMA' },
+backend/tests/integration/projects.spec.ts:291:          payload: setPath(project, ['provenance'], { ...project.provenance, contract: 'legacy-snapshot' }),
+backend/tests/integration/projects.spec.ts:295:          payload: setPath(project, ['provenance'], { ...project.provenance, app: 'legacy-diedrico' }),
+backend/tests/integration/projects.spec.ts:299:          payload: setPath(project, ['provenance'], { ...project.provenance, source: 'migration' }),
+backend/tests/integration/projects.spec.ts:303:          payload: setPath(project, ['provenance'], { ...project.provenance, migratedFrom: '3.0.0' }),
+backend/tests/integration/projects.spec.ts:307:          payload: setPath(project, ['domain'], { ...project.domain, legacyDomain: true }),
+backend/tests/integration/projects.spec.ts:353:    it('rejects legacy command-stream fields at top level and nested positions without migration aliases', async () => {
+backend/tests/integration/projects.spec.ts:355:      const legacyFields = [
+backend/tests/integration/projects.spec.ts:366:      for (const field of legacyFields) {
+backend/tests/integration/projects.spec.ts:413:      expect(response.body.map((project: any) => project.id)).toEqual([p3.id, p2.id, p1.id]);
+backend/tests/integration/projects.spec.ts:417:        createdAt: expect.any(String),
+backend/tests/integration/projects.spec.ts:418:        updatedAt: expect.any(String),
+backend/tests/integration/projects.spec.ts:453:          createdAt: expect.any(String),
+backend/tests/integration/projects.spec.ts:454:          updatedAt: expect.any(String),
+architecture-audit/continuous-improvement/2026-05-24-source-defect-scout.md:10:- Tool/render boundaries: completed guard evidence keeps deleted mutable authorities, duplicate renderers, placeholder tools, and stale e2e contracts absent according to `architecture-audit/final-review/cross-arch-guard-coverage-map.md:12`, `architecture-audit/final-review/cross-arch-guard-coverage-map.md:15`, `architecture-audit/final-review/cross-arch-guard-coverage-map.md:18`, and `architecture-audit/final-review/cross-arch-guard-coverage-map.md:20`.
+architecture-audit/continuous-improvement/2026-05-24-source-defect-scout.md:16:- `frontend/src/composables/useSnapping.ts:2` imports `useWorldStore`, and `frontend/src/composables/useSnapping.ts:19` plus `frontend/src/composables/useSnapping.ts:47` fall back to `worldStore.allElements2D[0]?.planeId` when no injected reducer runtime exists. That fallback reintroduces behavior based on a separate projection surface rather than the reducer snapshot authority described in `architecture-audit/final-review/00-summary.md:11`.
+architecture-audit/continuous-improvement/2026-05-24-source-defect-scout.md:17:- `frontend/src/composables/useSnapping.ts:94` and `frontend/src/composables/useSnapping.ts:106` cast `Point2D` to `any` to read coordinates, while `frontend/src/composables/useSnapping.ts:97` through `frontend/src/composables/useSnapping.ts:99` and `frontend/src/composables/useSnapping.ts:109` through `frontend/src/composables/useSnapping.ts:111` return `0` for point kinds that require computed geometry. This is a live placeholder geometry path in `frontend/src`, not merely documentation.
+architecture-audit/continuous-improvement/2026-05-24-source-defect-scout.md:18:- Usage search found `useSnapping` is not imported by current runtime or tests outside its own file, while `worldStore` is only used by `useSnapping` plus its own store definition; see `.saivage/stages/ci-new-cycle-source-defect-scout/logs/live-usage-query.stdout.log:1`. That makes the island either dead code that should be deleted under the no-backcompat/deletion posture, or an unintegrated feature that must be redesigned around `ProjectStateRecord` selectors before use.
+architecture-audit/continuous-improvement/2026-05-24-source-defect-scout.md:20:This does not reopen `ARCH-001` through `ARCH-012` as completed issues. It is a new continuous-improvement candidate because the source evidence is narrower than the original resolved defects: a residual, apparently unused projection/snapping island remains after the final review's broad reducer-authority cleanup.
+architecture-audit/continuous-improvement/2026-05-24-source-defect-scout.md:25:Objective: decide and execute one source-grounded deletion-first cleanup for `frontend/src/stores/worldStore.ts` and `frontend/src/composables/useSnapping.ts`; delete both if they are unused, or replace the snapping logic with reducer-selector-backed geometry in the same stage only if a current runtime caller is introduced and justified. No compatibility facade, no dual projection authority, and no placeholder `0` geometry path should remain.
+architecture-audit/continuous-improvement/2026-05-24-source-defect-scout.md:29:Acceptance criteria: remove unused `worldStore`/`useSnapping` source and any obsolete tests/types/imports, or land a single reducer-backed snapping implementation with focused tests; add/update a guard so placeholder snapping and duplicate projection-state authority cannot return; run `npm run lint`, focused Vitest for changed files, `npm run build`, `npm run test:post-overhaul-guards`, full `npm test`, and Playwright only if UI behavior is touched; refresh live preview if frontend runtime source changes.
+architecture-audit/continuous-improvement/2026-05-24-delete-unused-snapping-worldstore-island.md:10:- `frontend/src/composables/useSnapping.ts:1` deleted the unused snapping composable, including its `worldStore.allElements2D` fallback and placeholder coordinate logic.
+architecture-audit/continuous-improvement/2026-05-24-delete-unused-snapping-worldstore-island.md:16:`frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:21` records the deleted paths, `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:25` through `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:56` define targeted forbidden imports/usages/patterns, and `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:648` verifies the deleted files and placeholder snapping island do not return.
+architecture-audit/continuous-improvement/2026-05-24-source-defect-scout-after-snapping-cleanup.md:11:- Reducer/domain authority remains centralized in current source. `frontend/src/domain/world/ProjectStateRuntime.ts:15` documents that the holder stores only immutable `ProjectStateRecord` data plus runtime metadata, `frontend/src/domain/world/ProjectStateRuntime.ts:22` keeps the state private, and `frontend/src/domain/world/ProjectStateRuntime.ts:42` commits cloned records through `createProjectStateRecord` before notifying subscribers. No fresh mutable-authority island comparable to the deleted snapping store was found in this bounded pass.
+architecture-audit/continuous-improvement/2026-05-24-source-defect-scout-after-snapping-cleanup.md:12:- Persistence/API contracts remain current-snapshot and no-backcompat by code path. `frontend/src/services/ProjectService.ts:1` declares current reducer-state snapshot persistence, `frontend/src/services/ProjectService.ts:31` forbids command-history persistence keys, `frontend/src/services/ProjectService.ts:72` validates schema/provenance/domain before restore, and `backend/src/api/projects.ts:5` through `backend/src/api/projects.ts:27` define the backend schema/contract/forbidden-field boundary. No fresh source signal showed legacy command-stream or projection-array acceptance.
+architecture-audit/continuous-improvement/2026-05-24-source-control-archival-plan.md:20:Full tests are not rerun for this documentation-only archival plan because this task only classifies source-control/archive batches from existing path-only evidence and does not modify implementation or test code. If any implementation code changes before archival, rerun the normal acceptance cadence from `package.json:10`.
+architecture-audit/continuous-improvement/2026-05-24-source-control-archival-plan.md:75:Before any commit or archive operation, a human reviewer should confirm:
+architecture-audit/continuous-improvement/2026-05-24-source-control-archival-plan.md:90:5. **Package/workspace batch**: `frontend/package.json`, `package-lock.json`, and any reviewed root workspace/package changes.
+architecture-audit/continuous-improvement/2026-05-24-source-control-archival-plan.md:91:6. **Deletion batch**: pre-design/spec-pack deletions and deleted legacy command-operation/test surfaces, with a final human deletion review.
+architecture-audit/continuous-improvement/2026-05-24-source-control-archival-plan.md:96:2. Run a path-only staging preview before any commit, using the same categories as `.saivage/stages/ci-source-control-archival-plan-2026-05-24/logs/path-only-git-status.stdout.log:1`.
+architecture-audit/continuous-improvement/2026-05-24-source-control-archival-plan.md:99:5. After final source/archive selection, rerun the full acceptance cadence if any implementation/test/package content changed after `architecture-audit/continuous-improvement/2026-05-24-acceptance-refresh.md:1`.
+architecture-audit/continuous-improvement/2026-05-24-arch-004-decision-conformance-refresh.md:4:This continuous-improvement check revalidated current source conformance to the ARCH-004 decision without implementation changes. The decision selected a command-first pointer pipeline where tools translate user input into typed command intents, and rejected direct canvas/world mutation or compatibility shims (`architecture-audit/decisions/ARCH-004.md:10`, `architecture-audit/decisions/ARCH-004.md:18`, `architecture-audit/decisions/ARCH-004.md:22`).
+architecture-audit/continuous-improvement/2026-05-24-arch-004-decision-conformance-refresh.md:11:- `frontend/src/components/workspace/SvgCanvas.vue:727` through `frontend/src/components/workspace/SvgCanvas.vue:747` looks up the active tool, delegates non-select canvas clicks to `ITool.createCommandIntent(...)`, then executes successful intents through `executeToolCommandIntent(...)` instead of mutating a `World`/`ProjectionPlane` authority or old `Workspace2D` path.
+architecture-audit/continuous-improvement/2026-05-24-arch-004-decision-conformance-refresh.md:14:- `frontend/tests/unit/tools/pointTool.spec.ts:155` through `frontend/tests/unit/tools/pointTool.spec.ts:177` statically guards the focused suite against imports of deleted legacy pointer/direct-mutation surfaces such as `Workspace2D`, `ElementRenderer`, `World`, `ProjectionPlane`, `ProcessTree`, and `DependencyService`.
+architecture-audit/continuous-improvement/2026-05-24-arch-004-decision-conformance-refresh.md:15:- `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:129` through `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:135` lists the deleted ARCH-004 legacy canvas surfaces as absent guard targets, and the deleted-surface invariant at `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:459` through `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:464` fails if any are restored.
+architecture-audit/continuous-improvement/2026-05-24-arch-004-decision-conformance-refresh.md:38:The same log shows `frontend/src/components/workspace/SvgCanvas.vue` as the only direct file in `frontend/src/components/workspace/`, and the safe filename search for the old direct-mutation/legacy authority filenames under `frontend/src` returned no paths.
+architecture-audit/continuous-improvement/2026-05-24-arch-005-decision-conformance-refresh.md:13:- `ProjectStateRuntimeHolder` owns the reducer record state and documents that it must not retain mutable geometry, construction-history, dependency-service, or adapter instances (`frontend/src/domain/world/ProjectStateRuntime.ts:14`, `frontend/src/domain/world/ProjectStateRuntime.ts:21`, `frontend/src/domain/world/ProjectStateRuntime.ts:44`).
+architecture-audit/continuous-improvement/2026-05-24-arch-005-decision-conformance-refresh.md:19:`ProjectStateRuntimeSnapshot` still carries runtime metadata named `version`, and `ProjectStateRuntimeHolder` increments it on commit (`frontend/src/domain/world/ProjectStateRuntime.ts:5`, `frontend/src/domain/world/ProjectStateRuntime.ts:22`, `frontend/src/domain/world/ProjectStateRuntime.ts:48`). This is not acting as the deleted ARCH-005 Vue-facing manual refresh authority: the current snapshot composable returns `ProjectStateRecord` only and ignores that metadata (`frontend/src/composables/useProjectStateRuntimeSnapshot.ts:5`, `frontend/src/composables/useProjectStateRuntimeSnapshot.ts:8`), while the panel selectors consume `projectState.value` rather than a version counter (`frontend/src/components/panels/ActionsPanel.vue:45`, `frontend/src/components/panels/ActionsPanel.vue:48`, `frontend/src/components/panels/ActionsPanel.vue:52`).
+architecture-audit/continuous-improvement/2026-05-24-arch-005-decision-conformance-refresh.md:24:- `source-anchors.stdout.log:1` records line-anchored evidence for the decision, runtime holder, Vue snapshot composable, selectors, panel consumer, and focused reactive selector spec.
+architecture-audit/continuous-improvement/2026-05-24-arch-005-decision-conformance-refresh.md:25:- `safe-absence-evidence.stdout.log:1` confirms these deleted legacy authority files are absent: `frontend/src/domain/world/World.ts`, `frontend/src/domain/processTree/ProcessTree.ts`, `frontend/src/domain/world/ProjectionPlane.ts`, and `frontend/src/domain/viewState/ProjectionPlane.ts`.
+architecture-audit/continuous-improvement/2026-05-24-arch-006-decision-conformance-refresh.md:46:ARCH-006 remains resolved. Current source continues to route rendering through domain-owned typed presentation primitives in `frontend/src/domain/presentation/Paper.ts`, while `frontend/src/components/workspace/SvgCanvas.vue` consumes those primitives rather than reintroducing component-local projection authority or compatibility render adapters. The duplicate renderer services/components remain absent, and both required focused validations passed.
+architecture-audit/continuous-improvement/2026-05-24-arch-007-decision-conformance-refresh.md:13:### Typed snapshot contract and arbitrary/legacy payload rejection
+architecture-audit/continuous-improvement/2026-05-24-arch-007-decision-conformance-refresh.md:17:- `backend/src/api/projects.ts:22` through `backend/src/api/projects.ts:31` enumerate deleted legacy command-stream and old element fields; `backend/src/api/projects.ts:226` through `backend/src/api/projects.ts:240` recursively reject those fields anywhere in the submitted payload.
+architecture-audit/continuous-improvement/2026-05-24-arch-007-decision-conformance-refresh.md:19:- `backend/src/api/projects.ts:141` through `backend/src/api/projects.ts:195` validate provenance and the reducer `ProjectStateRecordDTO` domain shape, including current projection-plane records and rejection of legacy projection-plane arrays at `backend/src/api/projects.ts:184` through `backend/src/api/projects.ts:193`.
+architecture-audit/continuous-improvement/2026-05-24-arch-007-decision-conformance-refresh.md:27:- `backend/tests/integration/projects.spec.ts:13` through `backend/tests/integration/projects.spec.ts:20` assert the typed error body and explicitly reject legacy `{ error }` aliases.
+architecture-audit/continuous-improvement/2026-05-24-arch-007-decision-conformance-refresh.md:39:- `backend/tests/integration/projects.spec.ts:22` through `backend/tests/integration/projects.spec.ts:62` assert current DTO shape, schema `4.0.0`, `current-snapshot` provenance, reducer projection-plane records, and absence of legacy command/element surfaces.
+architecture-audit/continuous-improvement/2026-05-24-arch-007-decision-conformance-refresh.md:42:- `backend/tests/integration/projects.spec.ts:208` through `backend/tests/integration/projects.spec.ts:351` verify full reducer snapshot replacement and reject partial, arbitrary, schema-mismatched, provenance-mismatched, unknown, and legacy projection-plane payloads.
+architecture-audit/continuous-improvement/2026-05-24-arch-007-decision-conformance-refresh.md:43:- `backend/tests/integration/projects.spec.ts:353` through `backend/tests/integration/projects.spec.ts:394` reject legacy command-stream fields both top-level and nested.
+architecture-audit/continuous-improvement/2026-05-24-arch-007-decision-conformance-refresh.md:46:- `architecture-audit/final-review/cross-arch-guard-coverage-map.md:16` records ARCH-007 as resolved with backend integration coverage for typed errors, current DTO replacement, legacy field rejection, and path confinement.
+architecture-audit/continuous-improvement/2026-05-24-arch-007-decision-conformance-refresh.md:47:- `architecture-audit/final-review/post-overhaul-guards.md:12` through `architecture-audit/final-review/post-overhaul-guards.md:17` documents the backend DTO/API/storage guard scope, including typed errors and no legacy `{ error }` alias.
+architecture-audit/continuous-improvement/2026-05-24-arch-007-decision-conformance-refresh.md:59:ARCH-007 remains resolved. The current backend API/storage implementation still enforces the typed `4.0.0`/`current-snapshot` project contract, rejects arbitrary and legacy payloads with consistent typed errors, and confines project ids/filenames to the project-local JSON namespace. No current-source ARCH-007 regression was found, so no implementation source changes were warranted or made.
+architecture-audit/continuous-improvement/2026-05-24-arch-008-decision-conformance-refresh.md:7:`architecture-audit/decisions/ARCH-008.md:10` selects Proposal B: delete partial process-tree editing/operations and keep read-only derived history. The decision states that reducer/project snapshots are authoritative and that making the Process Tree authoritative would introduce a second educational-script authority (`architecture-audit/decisions/ARCH-008.md:13`). The legacy surfaces to keep deleted are hard-coded user action IDs/bypassable provenance paths, partial process-tree editing/operation commands, and UI affordances implying unsupported process-tree authority (`architecture-audit/decisions/ARCH-008.md:22`, `architecture-audit/decisions/ARCH-008.md:23`, `architecture-audit/decisions/ARCH-008.md:24`, `architecture-audit/decisions/ARCH-008.md:25`).
+architecture-audit/continuous-improvement/2026-05-24-arch-008-decision-conformance-refresh.md:18:- `frontend/src/domain/world/ProjectStateSelectors.ts:149` reads `producedByActionId` from an element and resolves it in `state.processTree.nodes`; fallback lookup also derives from `processTree` output ids at `frontend/src/domain/world/ProjectStateSelectors.ts:139`.
+architecture-audit/continuous-improvement/2026-05-24-arch-009-decision-conformance-refresh.md:4:This refresh checked current source conformance to the ARCH-009 selected decision at `architecture-audit/decisions/ARCH-009.md:10`: runtime registration must remain minimal and expose only implemented executable tools, while planned/curriculum/tool-roadmap material must not leak into runtime manifests (`architecture-audit/decisions/ARCH-009.md:13`). The deleted legacy surface remains `.old.ts` production tools and placeholder registrations for non-executable tools (`architecture-audit/decisions/ARCH-009.md:22`).
+architecture-audit/continuous-improvement/2026-05-24-arch-009-decision-conformance-refresh.md:11:- The current `ToolType` union contains only `select` and the same implemented construction ids in `frontend/src/stores/toolStore.ts:15`; it does not include transport, placeholder, roadmap, or planned-only ids.
+architecture-audit/continuous-improvement/2026-05-24-arch-009-decision-conformance-refresh.md:12:- Focused palette guard coverage defines the expected executable ids in `frontend/tests/unit/config.toolFamilies.spec.ts:17` through `frontend/tests/unit/config.toolFamilies.spec.ts:28`, instantiates each implementation in `frontend/tests/unit/config.toolFamilies.spec.ts:30` through `frontend/tests/unit/config.toolFamilies.spec.ts:41`, checks toolbar/family alignment with command-intent APIs in `frontend/tests/unit/config.toolFamilies.spec.ts:83` through `frontend/tests/unit/config.toolFamilies.spec.ts:100`, and rejects `.old.ts`, placeholder icons, and unsupported runtime terms in `frontend/tests/unit/config.toolFamilies.spec.ts:103` through `frontend/tests/unit/config.toolFamilies.spec.ts:119`.
+architecture-audit/continuous-improvement/2026-05-24-arch-009-decision-conformance-refresh.md:13:- The post-overhaul guard also keeps deleted legacy/placeholder surfaces absent through `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:66` and the ARCH-009 coverage map entry in `architecture-audit/final-review/cross-arch-guard-coverage-map.md:1`.
+architecture-audit/continuous-improvement/2026-05-24-arch-009-decision-conformance-refresh.md:18:- `.old.ts` tool files: `find frontend/src/tools -name '*.old.ts' -print` produced an empty log at `.saivage/stages/ci-arch-009-decision-conformance-refresh/logs/path-only-old-tools.stdout.log:1`.
+architecture-audit/continuous-improvement/2026-05-24-arch-009-decision-conformance-refresh.md:19:- Placeholder/transport toolbar icons: `find frontend/src/components/icons/toolbar -name '*Transport*' -o -name '*Placeholder*' -print` produced an empty log at `.saivage/stages/ci-arch-009-decision-conformance-refresh/logs/path-only-placeholder-icons.stdout.log:1`.
+architecture-audit/continuous-improvement/2026-05-24-arch-009-decision-conformance-refresh.md:20:- Allowed runtime placeholder-term scan over `frontend/src/components/toolbars/mainToolbarTools.ts`, `frontend/src/config/toolFamilies.ts`, `frontend/src/stores/toolStore.ts`, `frontend/src/tools/`, and `frontend/src/components/icons/toolbar/` produced one non-registration source-comment hit, `frontend/src/tools/GuideTool.ts:9` using the geometry word "transporting". That is not a runtime palette entry, placeholder icon, planned-tool manifest, or unsupported tool id; the command output is stored at `.saivage/stages/ci-arch-009-decision-conformance-refresh/logs/path-only-runtime-placeholder-term-grep.stdout.log:1`.
+architecture-audit/continuous-improvement/2026-05-24-arch-009-decision-conformance-refresh.md:28:ARCH-009 remains **resolved**. Current runtime palette registration still exposes only implemented command-intent tools, planned/placeholder tool surfaces remain absent from runtime manifests, legacy `.old.ts` tool files remain deleted, and the focused plus post-overhaul guards passed.
+architecture-audit/continuous-improvement/2026-05-24-arch-009-decision-conformance-refresh.md:30:No follow-up implementation stage is warranted for ARCH-009 from this refresh. Future work should only open a new implementation stage if a concrete source regression reintroduces unsupported runtime tools, placeholder icons, legacy `.old.ts` files, or planned-tool palette entries.
+architecture-audit/continuous-improvement/2026-05-24-arch-010-decision-conformance-refresh.md:4:This continuous-improvement check verified current-source conformance to the ARCH-010 decision without implementation-source changes. The decision selected a separated App/session structure and required deletion of App-owned Drive/auth/project orchestration, localStorage restoration/autosave compatibility paths, and compatibility facades (`architecture-audit/decisions/ARCH-010.md:9`, `architecture-audit/decisions/ARCH-010.md:18`, `architecture-audit/decisions/ARCH-010.md:22`).
+architecture-audit/continuous-improvement/2026-05-24-arch-010-decision-conformance-refresh.md:31:- The same guard requires Drive session ownership of `GoogleDriveService`, project snapshots, restore, and autosave while rejecting `localStorage`, `diedrico_last_file*`, and compatibility/legacy/dual-flow language in the session (`frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:939`, `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:947`).
+architecture-audit/continuous-improvement/2026-05-24-arch-010-decision-conformance-refresh.md:33:- A focused public-source search across `frontend/src/App.vue`, the ARCH-010 composables, `frontend/src/services/ProjectService.ts`, and current guard/e2e specs found no `localStorage` or compatibility/legacy terms in App/session implementation files; remaining hits are expected current autosave/session methods or guard text in tests (`.saivage/stages/ci-arch-010-decision-conformance-refresh/logs/negative-pattern-search.stdout.log:1`).
+architecture-audit/continuous-improvement/2026-05-24-arch-010-decision-conformance-refresh.md:52:ARCH-010 remains resolved in the current source. The App shell continues to compose specialized session composables, Drive/auth/project lifecycle orchestration is not re-concentrated in `App.vue`, and deleted localStorage restoration/autosave compatibility paths remain absent.
+architecture-audit/continuous-improvement/2026-05-24-arch-011-decision-conformance-refresh.md:28:- Stale pre-overhaul e2e specs remain absent: `frontend/tests/e2e/persistence.spec.ts`, `frontend/tests/e2e/undo-redo.spec.ts`, `frontend/tests/e2e/selection.spec.ts`, `frontend/tests/e2e/geometry.spec.ts`, `frontend/tests/e2e/transport.spec.ts`, and `frontend/tests/e2e/placeholder.spec.ts`.
+architecture-audit/continuous-improvement/2026-05-24-arch-011-decision-conformance-refresh.md:30:- Deleted weak/old-shape persistence and command tests remain absent, including `frontend/tests/integration/projectService.cascadeDeletion.spec.ts`, `frontend/tests/integration/projectService.determinism.spec.ts`, `frontend/tests/unit/architecture/serializationCoverage.spec.ts`, `frontend/tests/unit/commandStack.spec.ts`, `frontend/tests/unit/commands.spec.ts`, and deleted old command factory/operation specs listed in the absence log.
+architecture-audit/continuous-improvement/2026-05-24-arch-011-decision-conformance-refresh.md:35:The current frontend ProjectService tests assert `ProjectStateRecord` current-snapshot persistence and legacy command-stream rejection (`frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:38`, `frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:70`, `frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:29`). Current e2e contracts cover backend persistence shape and deleted legacy command-stream rejection (`frontend/tests/e2e/current-persistence-contract.spec.ts:12`, `frontend/tests/e2e/current-persistence-contract.spec.ts:67`) plus current UI hooks and executable tool IDs (`frontend/tests/e2e/current-ui-contract.spec.ts:36`, `frontend/tests/e2e/current-ui-contract.spec.ts:70`). Backend contract coverage continues to validate current DTO creation, legacy field rejection, and storage/path safety (`backend/tests/integration/projects.spec.ts:129`, `backend/tests/integration/projects.spec.ts:353`, `backend/tests/integration/projects.spec.ts:465`).
+architecture-audit/continuous-improvement/2026-05-24-arch-012-decision-conformance-refresh.md:9:ARCH-012 selected Proposal A: delete obsolete spec-pack artifacts and keep a lean current architecture reference plus source-near comments (`architecture-audit/decisions/ARCH-012.md:11`). The decision explicitly rejected Proposal B because archiving historical specs would keep misleading material in the repository (`architecture-audit/decisions/ARCH-012.md:16`). The no-backcompat stance forbids compatibility shims, adapters, dual paths, migration readers, or preserved legacy DTOs for this issue (`architecture-audit/decisions/ARCH-012.md:20`).
+architecture-audit/continuous-improvement/2026-05-24-arch-012-decision-conformance-refresh.md:11:The legacy surfaces named for deletion remain the correct acceptance baseline: `specs/001-dihedral-learning-mvp/`, `pre-spec.md`, `pre-plan.md`, `pre-spec-ui.md`, `pre-spec-ui-tool.md`, and stale source/README sections that describe old validation, persistence, tool, or rendering behavior (`architecture-audit/decisions/ARCH-012.md:22`, `architecture-audit/decisions/ARCH-012.md:23`, `architecture-audit/decisions/ARCH-012.md:24`, `architecture-audit/decisions/ARCH-012.md:25`).
+architecture-audit/continuous-improvement/2026-05-24-arch-012-decision-conformance-refresh.md:28:- `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:597` checks retained docs stay anchored to current source/audit authorities, and `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:622` checks selected retained source/test comments do not present stale docs or legacy preservation as current authority.
+architecture-audit/continuous-improvement/2026-05-24-arch-012-decision-conformance-refresh.md:31:The final-review guard documentation says the executable guard preserves retained-doc current authority, deleted-surface absence, and legacy-command rejection (`architecture-audit/final-review/post-overhaul-guards.md:4`, `architecture-audit/final-review/post-overhaul-guards.md:8`, `architecture-audit/final-review/post-overhaul-guards.md:9`, `architecture-audit/final-review/post-overhaul-guards.md:10`). The ARCH-012 final review records no follow-up required and identifies the optional hardened authority guard (`architecture-audit/final-review/12-documentation.md:16`, `architecture-audit/final-review/12-documentation.md:19`).
+architecture-audit/continuous-improvement/2026-05-24-source-control-archival-verification.md:46:6. **Deletion batch:** deleted pre-design/spec-pack files and deleted legacy command-operation/test paths, with explicit human deletion confirmation.
+architecture-audit/continuous-improvement/2026-05-24-arch-001-decision-conformance-refresh.md:7:- Decision authority: `architecture-audit/decisions/ARCH-001.md:10` selects the root workspace script contract as the authority, and `architecture-audit/decisions/ARCH-001.md:22`-`25` requires deletion of mutating lint flags, frontend-only root scripts, and validation aliases preserving old semantics.
+architecture-audit/continuous-improvement/2026-05-24-arch-002-decision-conformance-refresh.md:10:- The same decision explicitly rejected event-log/command replay persistence and required no compatibility shim, adapter, dual path, old command alias, migration reader, or preserved legacy DTO (`architecture-audit/decisions/ARCH-002.md:16`, `architecture-audit/decisions/ARCH-002.md:20`).
+architecture-audit/continuous-improvement/2026-05-24-arch-002-decision-conformance-refresh.md:11:- The ARCH-002 implementation plan restated the required replacement as a single current snapshot/provenance DTO, runtime-only command stacks, no backward-compatibility adapter/migration reader, and deletion of old format support (`architecture-audit/plans/ARCH-002.md:12`, `architecture-audit/plans/ARCH-002.md:47`, `architecture-audit/plans/ARCH-002.md:48`, `architecture-audit/plans/ARCH-002.md:49`).
+architecture-audit/continuous-improvement/2026-05-24-arch-002-decision-conformance-refresh.md:12:- The implementation log records that `ProjectService` moved to schema `4.0.0`, provenance metadata, reducer snapshot capture/restore, validation, and runtime command-history clearing (`architecture-audit/implementation-log/ARCH-002.md:9`). It also records backend rejection of legacy flat/command update fields (`architecture-audit/implementation-log/ARCH-002.md:15`) and focused tests for no command-history serialization, runtime-only restore, old command-stream rejection, and private-stack validation (`architecture-audit/implementation-log/ARCH-002.md:16`, `architecture-audit/implementation-log/ARCH-002.md:17`).
+architecture-audit/continuous-improvement/2026-05-24-arch-002-decision-conformance-refresh.md:19:Frontend persistence still exposes one `ProjectData` shape with `schemaVersion: '4.0.0'`, typed provenance, and a `domain: ProjectStateRecord` field (`frontend/src/services/ProjectService.ts:17`, `frontend/src/services/ProjectService.ts:25`, `frontend/src/services/ProjectService.ts:28`, `frontend/src/services/ProjectService.ts:29`). Snapshot creation clones and freezes the provided reducer record and writes provenance with `contract: 'current-snapshot'` (`frontend/src/services/ProjectService.ts:47`, `frontend/src/services/ProjectService.ts:56`, `frontend/src/services/ProjectService.ts:59`, `frontend/src/services/ProjectService.ts:61`, `frontend/src/services/ProjectService.ts:65`).
+architecture-audit/continuous-improvement/2026-05-24-arch-002-decision-conformance-refresh.md:21:The reducer DTO itself is still the current plain record authority: `ProjectStateRecord` carries `schemaVersion` (`frontend/src/domain/world/ProjectState.ts:21`, `frontend/src/domain/world/ProjectState.ts:22`), `emptyProjectState()` initializes version `4.0.0` (`frontend/src/domain/world/ProjectState.ts:157`, `frontend/src/domain/world/ProjectState.ts:159`), and `createProjectStateRecord()` rejects class instances instead of copying them into the DTO (`frontend/src/domain/world/ProjectState.ts:235`, `frontend/src/domain/world/ProjectState.ts:238`, `frontend/src/domain/world/ProjectState.ts:241`).
+architecture-audit/continuous-improvement/2026-05-24-arch-002-decision-conformance-refresh.md:27:### 2. Weak and legacy shapes are rejected, not migrated or silently accepted
+architecture-audit/continuous-improvement/2026-05-24-arch-002-decision-conformance-refresh.md:31:Backend API validation is likewise strict: it pins `CURRENT_CONTRACT` to `current-snapshot` (`backend/src/api/projects.ts:8`), validates project schema/provenance/domain on replacement (`backend/src/api/projects.ts:106`, `backend/src/api/projects.ts:119`, `backend/src/api/projects.ts:127`, `backend/src/api/projects.ts:141`, `backend/src/api/projects.ts:145`, `backend/src/api/projects.ts:156`, `backend/src/api/projects.ts:160`), rejects legacy projection-plane arrays in the domain (`backend/src/api/projects.ts:187`), and rejects unsupported legacy project fields before acceptance (`backend/src/api/projects.ts:236`). The backend test suite explicitly covers weak create payload rejection (`backend/tests/integration/projects.spec.ts:146`, `backend/tests/integration/projects.spec.ts:150`), schema/provenance/domain mismatch rejection (`backend/tests/integration/projects.spec.ts:279`, `backend/tests/integration/projects.spec.ts:288`, `backend/tests/integration/projects.spec.ts:291`, `backend/tests/integration/projects.spec.ts:299`, `backend/tests/integration/projects.spec.ts:303`, `backend/tests/integration/projects.spec.ts:307`), and command-stream legacy fields without migration aliases (`backend/tests/integration/projects.spec.ts:353`, `backend/tests/integration/projects.spec.ts:355`, `backend/tests/integration/projects.spec.ts:358`, `backend/tests/integration/projects.spec.ts:359`, `backend/tests/integration/projects.spec.ts:366`).
+architecture-audit/continuous-improvement/2026-05-24-arch-002-decision-conformance-refresh.md:33:**Classification:** conformant. No compatibility migration reader was found in the inspected persistence paths.
+architecture-audit/continuous-improvement/2026-05-24-arch-002-decision-conformance-refresh.md:37:`ProjectService` documentation states that runtime command stacks are intentionally not serialized or restored and that old mutable shapes are rejected (`frontend/src/services/ProjectService.ts:2`, `frontend/src/services/ProjectService.ts:4`, `frontend/src/services/ProjectService.ts:5`, `frontend/src/services/ProjectService.ts:6`). Its forbidden persistence-field list includes `undoStack` and `redoStack` (`frontend/src/services/ProjectService.ts:37`, `frontend/src/services/ProjectService.ts:38`), and restore clears the optional runtime `CommandStack` instead of reconstructing undo/redo history from persisted data (`frontend/src/services/ProjectService.ts:69`, `frontend/src/services/ProjectService.ts:70`, `frontend/src/services/ProjectService.ts:71`, `frontend/src/services/ProjectService.ts:72`).
+architecture-audit/continuous-improvement/2026-05-24-arch-002-decision-conformance-refresh.md:39:`CommandStack` itself remains an in-memory command history object: it holds private `#undoStack` and `#redoStack` arrays (`frontend/src/commands/CommandStack.ts:11`, `frontend/src/commands/CommandStack.ts:12`), mutates them through runtime push/undo/redo/clear operations (`frontend/src/commands/CommandStack.ts:36`, `frontend/src/commands/CommandStack.ts:39`, `frontend/src/commands/CommandStack.ts:51`, `frontend/src/commands/CommandStack.ts:53`, `frontend/src/commands/CommandStack.ts:65`, `frontend/src/commands/CommandStack.ts:67`, `frontend/src/commands/CommandStack.ts:102`, `frontend/src/commands/CommandStack.ts:103`), and exposes only runtime counts/capabilities (`frontend/src/commands/CommandStack.ts:74`, `frontend/src/commands/CommandStack.ts:81`, `frontend/src/commands/CommandStack.ts:88`, `frontend/src/commands/CommandStack.ts:95`). No serialization getter/restoration API is present in the inspected class.
+architecture-audit/continuous-improvement/2026-05-24-arch-002-decision-conformance-refresh.md:41:Backend API also treats command-stack fields as legacy/unsupported: `undoStack` and `redoStack` appear in the rejected legacy field list (`backend/src/api/projects.ts:25`, `backend/src/api/projects.ts:26`) and unsupported legacy fields throw an invalid payload error (`backend/src/api/projects.ts:236`).
+architecture-audit/continuous-improvement/2026-05-24-arch-002-decision-conformance-refresh.md:47:Frontend round-trip tests assert that serialized project JSON does not contain `undoStack` or `redoStack` (`frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:15`, `frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:16`), that current snapshots carry schema/provenance (`frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:38`, `frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:43`, `frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:44`, `frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:46`), that restore returns the authoritative record and clears runtime command history (`frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:56`), that old command-stream files are rejected (`frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:70`, `frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:80`), and that mutable projection-plane arrays are rejected (`frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:83`, `frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:102`).
+architecture-audit/continuous-improvement/2026-05-24-arch-002-decision-conformance-refresh.md:51:Backend integration tests assert current DTO creation (`backend/tests/integration/projects.spec.ts:129`, `backend/tests/integration/projects.spec.ts:137`), full reducer snapshot replacement (`backend/tests/integration/projects.spec.ts:209`, `backend/tests/integration/projects.spec.ts:218`, `backend/tests/integration/projects.spec.ts:253`), strict legacy/schema/provenance rejection (`backend/tests/integration/projects.spec.ts:279`, `backend/tests/integration/projects.spec.ts:288`, `backend/tests/integration/projects.spec.ts:291`, `backend/tests/integration/projects.spec.ts:299`, `backend/tests/integration/projects.spec.ts:303`), and legacy command-stream field rejection without aliases (`backend/tests/integration/projects.spec.ts:353`, `backend/tests/integration/projects.spec.ts:355`, `backend/tests/integration/projects.spec.ts:358`, `backend/tests/integration/projects.spec.ts:359`).
+architecture-audit/continuous-improvement/2026-05-24-arch-002-decision-conformance-refresh.md:68:ARCH-002 remains decision-conformant. The current frontend and backend persistence surfaces use a single current `4.0.0` `ProjectStateRecord` snapshot plus `current-snapshot` provenance DTO, reject weak/legacy/project-command shapes instead of migrating them, and keep `CommandStack` / `undoStack` / `redoStack` internals runtime-only. Required focused, guard, lint, build, and full test validations all passed. No concrete ARCH-002 regression was found, so no runtime source changes were made.
+architecture-audit/continuous-improvement/2026-05-24-arch-003-decision-conformance-refresh.md:10:- The decision forbids compatibility shims, adapters, dual paths, old command aliases, migration readers, and preserved legacy DTOs (`architecture-audit/decisions/ARCH-003.md:20`).
+architecture-audit/continuous-improvement/2026-05-24-arch-003-decision-conformance-refresh.md:11:- The plan requires an immutable project-state reducer as the only domain authority with no backward-compatibility adapter, migration reader, old command alias, or dual runtime path (`architecture-audit/plans/ARCH-003.md:15`). It also requires deterministic reducer command/dependency behavior and direct reducer-state persistence (`architecture-audit/plans/ARCH-003.md:64`, `architecture-audit/plans/ARCH-003.md:66`).
+architecture-audit/continuous-improvement/2026-05-24-arch-003-decision-conformance-refresh.md:19:## Deleted-authority / no-shim checks
+architecture-audit/continuous-improvement/2026-05-24-arch-003-decision-conformance-refresh.md:28:The post-overhaul guard source also codifies these deleted legacy surfaces (`frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:136`). The implementation log records the final deletion of mutable `ProjectionPlane` authority (`architecture-audit/implementation-log/ARCH-003.md:1273`) and dead view-state projection-plane shape (`architecture-audit/implementation-log/ARCH-003.md:1274`), following earlier deletion of `World`, mutable `ProcessTree`, and `DependencyService` (`architecture-audit/implementation-log/ARCH-003.md:1153`, `architecture-audit/implementation-log/ARCH-003.md:1154`, `architecture-audit/implementation-log/ARCH-003.md:1155`).
+architecture-audit/continuous-improvement/2026-05-24-arch-003-decision-conformance-refresh.md:30:Forbidden-contract grep evidence in `.saivage/stages/ci-arch-003-decision-conformance-refresh/logs/evidence-scan.stdout.log:1` found no live dual `apply(world)` / `apply(state)` operation contract, no `nextState` operation facade, and no `World.getState`, `replaceState`, or `reduceState` compatibility wrapper. Remaining matches are reducer/runtime names such as `nextState` local parameters, `ProjectStateRuntime.commit(nextState)`, explicit test strings rejecting `DependencyService`, or current `Command` construction over `ProjectStateRecord`; none are mutable authority restorations.
+architecture-audit/continuous-improvement/2026-05-24-arch-003-decision-conformance-refresh.md:44:ARCH-003 remains resolved. The current source keeps `ProjectStateRecord` reducer/selectors/materializers as the authority, the mutable `World`/`ProjectionPlane`/`ProcessTree`/`DependencyService` authorities remain deleted, duplicate mutable process-tree authority has not resurfaced, and no compatibility shim or dual world/state operation contract was found.
+architecture-audit/continuous-improvement/2026-05-24-decision-conformance-coverage-map-refresh.md:13:| ARCH-002 | `architecture-audit/continuous-improvement/2026-05-24-arch-002-decision-conformance-refresh.md:1`; direct current coverage is classified conformant at `architecture-audit/continuous-improvement/2026-05-24-arch-002-decision-conformance-refresh.md:53`; conclusion keeps the snapshot/no-legacy persistence contract conformant at `architecture-audit/continuous-improvement/2026-05-24-arch-002-decision-conformance-refresh.md:66`-`68`. | `architecture-audit/issues/register.md:11` | Covered: current snapshot persistence and command-stack non-serialization conformance are current. |
+architecture-audit/continuous-improvement/2026-05-24-decision-conformance-coverage-map-refresh.md:15:| ARCH-004 | `architecture-audit/continuous-improvement/2026-05-24-arch-004-decision-conformance-refresh.md:1`; command-first pointer/tool pipeline evidence is at `architecture-audit/continuous-improvement/2026-05-24-arch-004-decision-conformance-refresh.md:8`-`15`; conclusion states no follow-up is warranted at `architecture-audit/continuous-improvement/2026-05-24-arch-004-decision-conformance-refresh.md:40`-`41`. | `architecture-audit/issues/register.md:13` | Covered: command-intent tool/canvas boundary and deleted legacy pointer surfaces have current conformance coverage. |
+architecture-audit/continuous-improvement/2026-05-24-decision-conformance-coverage-map-refresh.md:18:| ARCH-007 | `architecture-audit/continuous-improvement/2026-05-24-arch-007-decision-conformance-refresh.md:1`; backend DTO/error/storage guard evidence is at `architecture-audit/continuous-improvement/2026-05-24-arch-007-decision-conformance-refresh.md:37`-`48`; conclusion and follow-up recommendation are at `architecture-audit/continuous-improvement/2026-05-24-arch-007-decision-conformance-refresh.md:57`-`63`. | `architecture-audit/issues/register.md:16` | Covered: typed backend project API/storage contract, legacy payload rejection, and safe id/path handling are current. |
+architecture-audit/continuous-improvement/2026-05-24-decision-conformance-coverage-map-refresh.md:20:| ARCH-009 | `architecture-audit/continuous-improvement/2026-05-24-arch-009-decision-conformance-refresh.md:1`; current executable palette evidence is at `architecture-audit/continuous-improvement/2026-05-24-arch-009-decision-conformance-refresh.md:8`-`13`; resolution/no-follow-up recommendation is at `architecture-audit/continuous-improvement/2026-05-24-arch-009-decision-conformance-refresh.md:27`-`30`. | `architecture-audit/issues/register.md:18` | Covered: runtime palette exposes implemented command-intent tools only, with placeholder/legacy tool surfaces absent. |
+architecture-audit/final-review/00-summary.md:4:Final acceptance is **met for the architecture-overhaul cycle**. The Phase B register marks `ARCH-001` through `ARCH-012` resolved in `architecture-audit/issues/register.md:1`; the implementation evidence in `architecture-audit/implementation-log/ARCH-001.md:1` through `architecture-audit/implementation-log/ARCH-012.md:1` is cross-checked below against current source, deletion evidence, validation logs, and no-backcompat leakage checks. Current source remains the authority: root workspace scripts are in `package.json:10`, live frontend state authority is `frontend/src/domain/world/ProjectState.ts:1` plus `frontend/src/domain/world/ProjectStateRuntime.ts:1`, backend contracts are in `backend/src/api/projects.ts:1`, and current e2e contracts are `frontend/tests/e2e/current-ui-contract.spec.ts:1` plus `frontend/tests/e2e/current-persistence-contract.spec.ts:1`.
+architecture-audit/final-review/00-summary.md:10:| ARCH-002 | resolved | Current snapshot DTO and legacy command-stream rejection in `frontend/src/services/ProjectService.ts:1`, `backend/src/models/Project.ts:1`; log `architecture-audit/implementation-log/ARCH-002.md:1`. | None. |
+architecture-audit/final-review/00-summary.md:16:| ARCH-008 | resolved | Reducer-authored process provenance in `frontend/src/commands/operations/OperationReducers.ts:1` and read model in `frontend/src/domain/world/ProjectStateProcessReducers.ts:1`; log `architecture-audit/implementation-log/ARCH-008.md:1`. | None; note implementation intentionally followed direct stage assignment over the older selected Proposal B text recorded in `architecture-audit/implementation-log/ARCH-008.md:1`. |
+architecture-audit/final-review/00-summary.md:17:| ARCH-009 | resolved | Runtime palette list in `frontend/src/components/toolbars/mainToolbarTools.ts:1` and `frontend/src/config/toolFamilies.ts:1`; placeholder files absent; log `architecture-audit/implementation-log/ARCH-009.md:1`. | None. |
+architecture-audit/final-review/00-summary.md:45:- ARCH-009 deleted placeholder/legacy tools: `frontend/src/components/icons/toolbar/TransportPointIcon.vue`, `frontend/src/tools/CircleTool.old.ts`, `frontend/src/tools/ParallelLineTool.old.ts`, `frontend/src/tools/PerpendicularLineTool.old.ts`, and transport e2e specs are absent; commit `0f055d...` records deletion.
+architecture-audit/final-review/00-summary.md:49:## Rejected-proposal / compatibility leakage check
+architecture-audit/final-review/00-summary.md:50:Selected proposals from Phase D are recorded in `architecture-audit/issues/register.md:1` and decisions `architecture-audit/decisions/ARCH-001.md:1` through `architecture-audit/decisions/ARCH-012.md:1`. The final source check found no compatibility shim, dual old/new runtime authority, preserved legacy DTO reader, or placeholder runtime facade reintroduced. Evidence:
+architecture-audit/final-review/00-summary.md:52:- Legacy command-stream names appear only as rejection keys/tests (`frontend/src/services/ProjectService.ts:36`, `backend/src/api/projects.ts:24`, `frontend/tests/e2e/current-persistence-contract.spec.ts:67`) or private runtime history fields (`frontend/src/commands/CommandStack.ts:11`), not as persistence compatibility.
+architecture-audit/final-review/00-summary.md:53:- Mutable `World`, `ProjectionPlane`, `ProcessTree`, `DependencyService`, `RenderService`, `SVGRenderer`, `PaperService`, `.old.ts` tool files, and transport placeholder icon files are absent per `.saivage/stages/phase-g-final-review/logs/filesystem-deletion-evidence.log:1` and `.saivage/stages/phase-g-final-review/logs/source-tree-extract.log:1`.
+architecture-audit/final-review/00-summary.md:54:- Current tests assert no-backcompat behavior: backend rejects legacy payloads in `backend/tests/integration/projects.spec.ts:249`, ProjectService tests reject old command snapshots in `frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:72`, and e2e persistence rejects deleted command-stream payloads in `frontend/tests/e2e/current-persistence-contract.spec.ts:67`.
+architecture-audit/final-review/01-workspace.md:12:## Deletion / no-backcompat check
+architecture-audit/final-review/01-workspace.md:13:The old frontend-only validation semantics and mutating `--fix` lint path are gone. No compatibility alias for the old partial root test command was retained; `package.json:15` is now full-workspace authority.
+architecture-audit/final-review/01-workspace.md:15:## Residual decision
+architecture-audit/final-review/02-backend-layering.md:12:## Deletion / no-backcompat check
+architecture-audit/final-review/02-backend-layering.md:13:Undocumented `proj_` IDs, arbitrary update merging, and ad hoc `{ error }` response shapes were deleted rather than adapted. Current tests assert rejection of legacy/partial/unsafe payloads in `backend/tests/integration/projects.spec.ts:249`.
+architecture-audit/final-review/02-backend-layering.md:15:## Residual decision
+architecture-audit/final-review/03-frontend-layering.md:12:## Deletion / no-backcompat check
+architecture-audit/final-review/03-frontend-layering.md:15:## Residual decision
+architecture-audit/final-review/04-domain-model.md:12:## Deletion / no-backcompat check
+architecture-audit/final-review/04-domain-model.md:13:No mutable World/ProjectionPlane compatibility facade remains. Historical partial/open ARCH-003 entries in `architecture-audit/implementation-log/ARCH-003.md:1` are superseded by later register and deletion evidence in `architecture-audit/issues/register.md:1`.
+architecture-audit/final-review/04-domain-model.md:15:## Residual decision
+architecture-audit/final-review/05-command-undo-redo.md:10:Implementation logs `architecture-audit/implementation-log/ARCH-002.md:1`, `architecture-audit/implementation-log/ARCH-003-command-reducer-migration.md:1`, and `architecture-audit/implementation-log/ARCH-004.md:1` document the sequence. Final tests include command coverage in `frontend/tests/unit/commands/command.spec.ts:1`, `frontend/tests/unit/commands/commandStack.spec.ts:1`, and `frontend/tests/unit/commands/reducerOperations.spec.ts:1`; all passed within `.saivage/stages/phase-g-final-review/logs/npm-test.stdout.log:1`.
+architecture-audit/final-review/05-command-undo-redo.md:12:## Deletion / no-backcompat check
+architecture-audit/final-review/05-command-undo-redo.md:13:Persisted command history, command replay reconstruction, and command-stack serialization APIs were removed. Remaining `undoStack`/`redoStack` names in `frontend/src/commands/CommandStack.ts:11` are private runtime history, not a persistence compatibility path; legacy persistence keys are rejection keys in `frontend/src/services/ProjectService.ts:36` and `backend/src/api/projects.ts:24`.
+architecture-audit/final-review/05-command-undo-redo.md:15:## Residual decision
+architecture-audit/final-review/06-rendering-pipeline.md:12:## Deletion / no-backcompat check
+architecture-audit/final-review/06-rendering-pipeline.md:13:Duplicate render services are absent: `frontend/src/services/RenderService.ts`, `frontend/src/services/SVGRenderer.ts`, `frontend/src/services/PaperService.ts`, and `frontend/src/composables/useElementGeometry.ts` are absent per `.saivage/stages/phase-g-final-review/logs/filesystem-deletion-evidence.log:1`. No renderer adapter or legacy façade remains.
+architecture-audit/final-review/06-rendering-pipeline.md:15:## Residual decision
+architecture-audit/final-review/07-tooling-state-machine.md:4:Phase A found split tool/canvas architectures, placeholder tools, and direct command/state mutation paths (`architecture-audit/reports/07-tooling-state-machine.md:1`). ARCH-004 established the command-intent interaction pipeline and ARCH-009 removed placeholder/legacy tools (`architecture-audit/issues/ARCH-004.md:1`, `architecture-audit/issues/ARCH-009.md:1`).
+architecture-audit/final-review/07-tooling-state-machine.md:10:ARCH-004 and ARCH-009 logs are `architecture-audit/implementation-log/ARCH-004.md:1` and `architecture-audit/implementation-log/ARCH-009.md:1`. Current e2e UI contract tests passed in `.saivage/stages/phase-g-final-review/logs/playwright.stdout.log:1`, including toolbar activation and absence of deleted placeholders from `frontend/tests/e2e/current-ui-contract.spec.ts:1`.
+architecture-audit/final-review/07-tooling-state-machine.md:12:## Deletion / no-backcompat check
+architecture-audit/final-review/07-tooling-state-machine.md:13:`frontend/src/tools/CircleTool.old.ts`, `frontend/src/tools/ParallelLineTool.old.ts`, `frontend/src/tools/PerpendicularLineTool.old.ts`, and `frontend/src/components/icons/toolbar/TransportPointIcon.vue` are absent. No placeholder transport runtime alias remains; current negative coverage exists in `frontend/tests/unit/config.toolFamilies.spec.ts:1`.
+architecture-audit/final-review/07-tooling-state-machine.md:15:## Residual decision
+architecture-audit/final-review/08-persistence-drive.md:7:`frontend/src/services/ProjectService.ts:1` owns current `schemaVersion: '4.0.0'` snapshot serialization/restoration and rejects legacy project shapes. Google Drive file operations use the current DTO through `frontend/src/services/GoogleDriveService.ts:1`. Session orchestration is in `frontend/src/composables/useDriveProjectSession.ts:1`, not in the root shell.
+architecture-audit/final-review/08-persistence-drive.md:12:## Deletion / no-backcompat check
+architecture-audit/final-review/08-persistence-drive.md:13:No migration reader, command stream replay path, private command-stack restore, old `elements2D`/`elements3D` DTO, or Drive last-file auto-open compatibility path remains. Legacy command/payload keys are rejected in `frontend/src/services/ProjectService.ts:36`, `backend/src/api/projects.ts:24`, and `frontend/tests/e2e/current-persistence-contract.spec.ts:67`.
+architecture-audit/final-review/08-persistence-drive.md:15:## Residual decision
+architecture-audit/final-review/09-test-surface.md:12:## Deletion / no-backcompat check
+architecture-audit/final-review/09-test-surface.md:13:Stale e2e specs asserting pre-overhaul geometry/selection/persistence behavior were deleted in git history `.saivage/stages/phase-g-final-review/logs/git-deletions-summary.log:1`; no tests preserve deleted command-stream or placeholder-tool behavior except explicit rejection/absence assertions.
+architecture-audit/final-review/09-test-surface.md:15:## Residual decision
+architecture-audit/final-review/10-build-ci-surface.md:12:## Deletion / no-backcompat check
+architecture-audit/final-review/10-build-ci-surface.md:13:The old root validation surface was not retained as an alias; root commands are authoritative. Lint no longer runs `eslint --fix`; `frontend/package.json:15` uses `vue-tsc --noEmit`.
+architecture-audit/final-review/10-build-ci-surface.md:15:## Residual decision
+architecture-audit/final-review/11-specs-contracts.md:12:## Deletion / no-backcompat check
+architecture-audit/final-review/11-specs-contracts.md:13:`specs/001-dihedral-learning-mvp/` is absent per `.saivage/stages/phase-g-final-review/logs/filesystem-deletion-evidence.log:1`; stale contract files were not preserved as deprecated references. Historical audit paths remain in `architecture-audit:1` only as trace evidence.
+architecture-audit/final-review/11-specs-contracts.md:15:## Residual decision
+architecture-audit/final-review/12-documentation.md:7:Current user/developer documentation cites current source: `README.md:1` describes workspace commands and current architecture; `frontend/REALIZATION_ARCHITECTURE.md:1` documents ProjectState-driven realization; `docs/DEPLOYMENT.md:1` documents current workspace build/deploy; `docs/GOOGLE_DRIVE_SETUP.md:1` uses synthetic placeholders and current Drive/session references.
+architecture-audit/final-review/12-documentation.md:12:## Deletion / no-backcompat check
+architecture-audit/final-review/12-documentation.md:13:Historical pre-design files `pre-spec.md`, `pre-plan.md`, `pre-spec-ui.md`, `pre-spec-ui-tool.md`, and the stale `specs/001-dihedral-learning-mvp/` tree are absent per `.saivage/stages/phase-g-final-review/logs/filesystem-deletion-evidence.log:1`. Live docs do not promise compatibility for deleted formats or old tool/runtime paths.
+architecture-audit/final-review/12-documentation.md:15:## Residual decision
+architecture-audit/final-review/12-documentation.md:19:The current documentation authority check was optionally hardened in `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:1` to keep deleted pre-design/spec-pack files absent, reject retained-doc citations that treat deleted historical files as current authority, and scan a narrow selected source/test comment set for stale spec-pack, rejected archival, migration, compatibility-shim, or legacy-preservation language as current behavior. Coverage and validation evidence are summarized in `architecture-audit/final-review/cross-arch-guard-coverage-map.md:1` and `.saivage/stages/ci-arch-012-current-doc-authority-hardening/logs/`; ARCH-012 remains resolved.
+architecture-audit/final-review/post-overhaul-guards.md:4:The executable guard in `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:1` preserves the Phase G acceptance boundary recorded in `architecture-audit/final-review/00-summary.md:1`. It is intentionally narrow: it checks that current reducer snapshot authorities remain present, retained documentation stays anchored to current source/audit paths, deleted legacy paths remain absent, and legacy command-stream persistence is rejected rather than reintroduced through compatibility handling.
+architecture-audit/final-review/post-overhaul-guards.md:8:- Retained-documentation authority checks cover `README.md:1`, `docs/DEPLOYMENT.md:1`, `docs/GOOGLE_DRIVE_SETUP.md:1`, and `frontend/REALIZATION_ARCHITECTURE.md:1` when present. Each retained document must cite current repository source/audit paths, and any citation to deleted historical pre-design/spec-pack paths must describe those paths as deleted, historical, stale, obsolete, not current, or pre-design rather than current authority.
+architecture-audit/final-review/post-overhaul-guards.md:9:- Deleted-surface checks fail if old mutable authorities or stale surfaces are recreated, including `frontend/src/domain/world/World.ts`, `frontend/src/domain/world/ProjectionPlane.ts`, `frontend/src/domain/processTree/ProcessTree.ts`, `frontend/src/services/DependencyService.ts`, `frontend/src/commands/operations/viewState/ViewStateOperations.ts`, old `.old.ts` tools, duplicate renderer services, and historical pre-spec/spec paths such as `pre-spec.md` and `specs/001-dihedral-learning-mvp/spec.md`.
+architecture-audit/final-review/post-overhaul-guards.md:10:- The negative persistence check calls `ProjectService.validateProjectData` from `frontend/src/services/ProjectService.ts:1` with otherwise-current snapshot envelopes containing legacy `commands`, `commandHistory`, `undoStack`, `redoStack`, `SerializedCommand`, or `SerializedOperation` fields. The test must throw instead of accepting or migrating those payloads.
+architecture-audit/final-review/post-overhaul-guards.md:14:- The guards reject legacy command-stream and pre-current DTO fields (`commands`, `commandHistory`, `undoStack`, `redoStack`, `SerializedCommand`, `SerializedOperation`, `elements2D`, `elements3D`) at top-level and nested payload positions rather than accepting, migrating, or aliasing them.
+architecture-audit/final-review/post-overhaul-guards.md:15:- Malformed `4.0.0`/`current-snapshot` envelopes are covered with missing/extra top-level fields, domain/provenance extra fields, schema mismatches, provenance app/contract/source mismatches, and legacy projection-plane arrays.
+architecture-audit/final-review/post-overhaul-guards.md:17:- Invalid current-contract requests assert typed API bodies `{ code, message, status }` and explicitly reject legacy `{ error }` aliases.
+architecture-audit/final-review/post-overhaul-guards.md:47:The same guard rejects mutating validation lint behavior for the root, frontend, and backend package scripts by checking `package.json:17`, `frontend/package.json:15`, and `backend/package.json:12` for `--fix`, `--write`, or equivalent formatter-write tokens. This ensures the old frontend-only/mutating validation surface cannot return as a compatibility alias or silent lint side effect.
+architecture-audit/final-review/post-overhaul-guards.md:58:The guard derives scan candidates only from tracked repository paths returned by `git ls-files`, filters them to allowed source/docs/test roots, and excludes forbidden or operational paths before any file read. Exclusions include `.saivage/auth-profiles.json`, `.saivage/saivage.json`, any basename beginning with `.env` such as `.envrc` (including nested allowed-root examples), provider config directories, OAuth token stores, shell-history paths, and keychain paths. The test asserts those exclusions with synthetic path samples and proves untracked/out-of-root candidates are not read, logged, grepped, or opened.
+architecture-audit/final-review/post-overhaul-guards.md:60:The invariant fails on real-looking credential literals in the allowed scan surface: private key block headers, OAuth access/refresh token forms, Google OAuth client secret forms, `Authorization: Bearer` literals, and API-key assignments or JSON fields. Lines clearly marked as placeholder/example/dummy/fake/test/synthetic/mock/sample/redacted are allowed, and the spec includes in-test fail/allow samples proving both behaviors.
+architecture-audit/final-review/post-overhaul-guards.md:65:The post-overhaul invariant guard now includes a static ARCH-011/current e2e contract check in `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:1`. It scans active `.spec.ts` files under `frontend/tests/e2e` and requires the retained Playwright contract specs `frontend/tests/e2e/current-persistence-contract.spec.ts:1` and `frontend/tests/e2e/current-ui-contract.spec.ts:1` to remain active. The same guard fails if stale pre-overhaul or placeholder/transport spec filenames return, including `persistence.spec.ts`, `undo-redo.spec.ts`, `selection.spec.ts`, `geometry.spec.ts`, and `transport`/`placeholder` spec variants.
+architecture-audit/final-review/post-overhaul-guards.md:67:The guard also reads the retained e2e source text rather than launching browser flows from Vitest. For persistence, `frontend/tests/e2e/current-persistence-contract.spec.ts:1` must assert the `ProjectStateRecord`/`current-snapshot` payload shape, current `domain.projectionPlanes` state, absent legacy `commands`/`commandHistory` fields, and HTTP 400 rejection for deleted command-stream payloads. For UI, `frontend/tests/e2e/current-ui-contract.spec.ts:1` must assert current executable tool ids, absence of the deleted transport/placeholder surface, and current app-shell hooks such as `svg-canvas`, `status-bar`, `elements-panel`, `actions-panel`, and `plane-selector`.
+architecture-audit/final-review/cross-arch-guard-coverage-map.md:8:| Issue | Decision / proposal outcome | Implementation and final-review evidence | Existing executable guard coverage | Unguarded residual risk |
+architecture-audit/final-review/cross-arch-guard-coverage-map.md:11:| ARCH-002 | Resolved by selected Proposal B: replace weak project persistence/command replay with the current reducer snapshot contract; see `architecture-audit/decisions/ARCH-002.md:1` and `architecture-audit/proposals/ARCH-002/proposal-b.md:1`. | Current snapshot DTO and legacy command-stream rejection live in `frontend/src/services/ProjectService.ts:1` and `backend/src/models/Project.ts:1`; final evidence is in `architecture-audit/implementation-log/ARCH-002.md:1` and `architecture-audit/final-review/08-persistence-drive.md:1`. | Frontend guard rejects legacy `commands`, `commandHistory`, `undoStack`, `redoStack`, `SerializedCommand`, and `SerializedOperation` through `ProjectService.validateProjectData` in `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:551`; backend API/storage tests reject legacy fields in `backend/tests/integration/projects.spec.ts:249`. | No unresolved persistence-contract risk. Optional future hardening could add property-based malformed DTO generation, but current no-backcompat contract is guarded. |
+architecture-audit/final-review/cross-arch-guard-coverage-map.md:12:| ARCH-003 | Resolved by selected Proposal B, later completed by final mutable-authority deletion; see `architecture-audit/decisions/ARCH-003.md:1`, `architecture-audit/proposals/ARCH-003/proposal-b.md:1`, and the superseding register trace in `architecture-audit/issues/register.md:1`. | Reducer runtime authority is `frontend/src/domain/world/ProjectStateRuntime.ts:1` over records from `frontend/src/domain/world/ProjectState.ts:1`; deleted mutable authorities are cross-checked in `architecture-audit/implementation-log/ARCH-003.md:1` and `architecture-audit/final-review/04-domain-model.md:1`. | Deleted-authority guard keeps `frontend/src/domain/world/World.ts`, `frontend/src/domain/world/ProjectionPlane.ts`, `frontend/src/domain/processTree/ProcessTree.ts`, and `frontend/src/services/DependencyService.ts` absent in `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:66`; final evidence is summarized in `architecture-audit/final-review/post-overhaul-guards.md:1`. | No unresolved multi-authority risk. Optional future hardening could add reducer-level invariant fuzzing, but the old mutable authority surfaces are executable-deletion guarded. |
+architecture-audit/final-review/cross-arch-guard-coverage-map.md:13:| ARCH-004 | Resolved by selected Proposal B: unify canvas/tool interaction around command-intent execution; see `architecture-audit/decisions/ARCH-004.md:1` and `architecture-audit/proposals/ARCH-004/proposal-b.md:1`. | Current boundary is `frontend/src/tools/ITool.ts:1`, `frontend/src/composables/useCommandExecution.ts:1`, and `frontend/src/components/workspace/SvgCanvas.vue:1`; evidence is in `architecture-audit/implementation-log/ARCH-004.md:1` and `architecture-audit/final-review/07-tooling-state-machine.md:1`. | Deletion guard keeps the old parallel canvas/render path absent, including `frontend/src/components/workspace/Workspace2D.vue` and `frontend/src/components/workspace/ElementRenderer.vue`, via `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:66`; current e2e UI contract is required by `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:426` and implemented in `frontend/tests/e2e/current-ui-contract.spec.ts:1`. | No unresolved split-interaction risk. Fine-grained pointer-sequence behavioral regressions remain outside this static guard and are optional future UI test hardening. |
+architecture-audit/final-review/cross-arch-guard-coverage-map.md:14:| ARCH-005 | Resolved by selected Proposal A: move process-tree/reactive reads to ProjectState snapshots instead of polling/version forcing; see `architecture-audit/decisions/ARCH-005.md:1` and `architecture-audit/proposals/ARCH-005/proposal-a.md:1`. | Snapshot reactivity is in `frontend/src/composables/useProjectStateRuntimeSnapshot.ts:1` and process UI reads in `frontend/src/components/panels/ActionsPanel.vue:1`; evidence is in `architecture-audit/implementation-log/ARCH-005.md:1` and `architecture-audit/final-review/03-frontend-layering.md:1`. | `frontend/tests/unit/domain/projectStateRuntimeReactiveSelectors.spec.ts:1` now mounts a Vue computed-selector probe over `ProjectStateRuntimeHolder` and `useProjectStateRuntimeSnapshot`, proving process/action and element read models update after runtime commit, reset, and replacement. `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:66` also keeps deleted mutable `frontend/src/domain/processTree/ProcessTree.ts` authority absent. | No unresolved polling-authority risk. This optional reactive selector hardening keeps ARCH-005 resolved and adds a focused regression guard against stale snapshot-derived UI/process reads. |
+architecture-audit/final-review/cross-arch-guard-coverage-map.md:16:| ARCH-007 | Resolved by selected Proposal A: enforce typed backend DTO/API/storage contracts and safe IDs; see `architecture-audit/decisions/ARCH-007.md:1` and `architecture-audit/proposals/ARCH-007/proposal-a.md:1`. | Typed API and storage contracts are `backend/src/api/projects.ts:1`, `backend/src/storage/FileStorage.ts:1`, and `backend/src/storage/ProjectRepository.ts:1`; evidence is in `architecture-audit/implementation-log/ARCH-007.md:1` and `architecture-audit/final-review/02-backend-layering.md:1`. | `backend/tests/integration/projects.spec.ts:105` through `backend/tests/integration/projects.spec.ts:332` guard typed errors, current DTO replacement, legacy field rejection, and path confinement. The backend guard is part of `npm run test:post-overhaul-guards` in `package.json:18`. | No unresolved backend contract risk. Optional future hardening could add concurrency/storage-failure cases, but arbitrary update/path traversal defects are guarded. |
+architecture-audit/final-review/cross-arch-guard-coverage-map.md:17:| ARCH-008 | Resolved by selected Proposal B as adjusted by direct stage implementation: process provenance is reducer-authored and authoritative; see `architecture-audit/decisions/ARCH-008.md:1`, `architecture-audit/proposals/ARCH-008/proposal-b.md:1`, and `architecture-audit/implementation-log/ARCH-008.md:1`. | Current provenance writes are in `frontend/src/commands/operations/OperationReducers.ts:1` and read models in `frontend/src/domain/world/ProjectStateProcessReducers.ts:1`; final evidence is in `architecture-audit/final-review/04-domain-model.md:1`. | Guard coverage is indirect through current reducer-authority checks in `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:15` and deleted mutable process-tree authority absence in `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:66`; final-review evidence remains the primary ARCH-008 guard. | No unresolved process-tree-authority risk. Optional future hardening could add reducer provenance assertions per operation type, but the old non-authoritative ProcessTree surface is absent. |
+architecture-audit/final-review/cross-arch-guard-coverage-map.md:18:| ARCH-009 | Resolved by selected Proposal B: delete placeholder/legacy tools and keep palette entries executable; see `architecture-audit/decisions/ARCH-009.md:1` and `architecture-audit/proposals/ARCH-009/proposal-b.md:1`. | Runtime palette configuration is `frontend/src/components/toolbars/mainToolbarTools.ts:1` and `frontend/src/config/toolFamilies.ts:1`; deletion evidence is in `architecture-audit/implementation-log/ARCH-009.md:1` and `architecture-audit/final-review/07-tooling-state-machine.md:1`. | `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:66` guard keeps `.old.ts` tools and `frontend/src/components/icons/toolbar/TransportPointIcon.vue` absent; `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:426` checks active e2e source excludes transport/placeholder behavior via `frontend/tests/e2e/current-ui-contract.spec.ts:1`. | No unresolved placeholder-tool risk. Optional future hardening could assert every toolbar ID has an executable command-intent integration test. |
+architecture-audit/final-review/cross-arch-guard-coverage-map.md:19:| ARCH-010 | Resolved by selected Proposal A: extract App shell responsibilities into Drive/session/keyboard/canvas composables; see `architecture-audit/decisions/ARCH-010.md:1` and `architecture-audit/proposals/ARCH-010/proposal-a.md:1`. | Current extraction is visible in `frontend/src/App.vue:1`, `frontend/src/composables/useDriveProjectSession.ts:1`, `frontend/src/composables/useAppKeyboardShortcuts.ts:1`, and `frontend/src/composables/useAppCanvasSession.ts:1`; evidence is in `architecture-audit/implementation-log/ARCH-010.md:1` and `architecture-audit/final-review/03-frontend-layering.md:1`. | `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:1` now includes a focused static ARCH-010 guard requiring App.vue to compose through `useDriveProjectSession`, `useAppKeyboardShortcuts`, and `useAppCanvasSession`, rejecting reintroduced App-owned localStorage restoration, Drive singleton/private-access orchestration, inline autosave, keyboard listener, and canvas/session orchestration. The same guard checks the three composables own their intended current concerns without old localStorage compatibility, command/store keyboard authority, or Drive/persistence canvas coupling. | No unresolved App-shell risk. This optional hardening adds executable import/source-boundary checks while keeping ARCH-010 resolved. |
+architecture-audit/final-review/cross-arch-guard-coverage-map.md:20:| ARCH-011 | Resolved by selected Proposal A: make test and contract coverage include frontend, backend, and current e2e contracts; see `architecture-audit/decisions/ARCH-011.md:1` and `architecture-audit/proposals/ARCH-011/proposal-a.md:1`. | Root full test command is `package.json:15`; backend integration coverage is `backend/tests/integration/projects.spec.ts:1`; active current e2e specs are `frontend/tests/e2e/current-persistence-contract.spec.ts:1` and `frontend/tests/e2e/current-ui-contract.spec.ts:1`; evidence is in `architecture-audit/implementation-log/ARCH-011.md:1` and `architecture-audit/final-review/09-test-surface.md:1`. | `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:426` requires current e2e specs to remain active and stale `persistence.spec.ts`, `undo-redo.spec.ts`, `selection.spec.ts`, `geometry.spec.ts`, transport, and placeholder specs to remain absent. Backend API/storage tests are run by `npm run test:post-overhaul-guards` from `package.json:18`. | No unresolved test-surface risk. Optional future hardening could broaden scenario coverage, but stale pre-overhaul test contracts are guarded. |
+architecture-audit/final-review/cross-arch-guard-coverage-map.md:28:All twelve ARCH issues remain **resolved** by the current issue register and Phase G final review (`architecture-audit/issues/register.md:1`, `architecture-audit/final-review/00-summary.md:1`). The residual items above are optional future hardening ideas only; they are not reopened issues because the current source and guard evidence do not expose a concrete architecture defect.
+architecture-audit/final-review/cross-arch-guard-coverage-map.md:37:A focused reducer invariant guard was added in `frontend/tests/unit/domain/projectStateReducerProvenanceInvariants.spec.ts:1` for the current `ProjectStateRecord` authority in `frontend/src/domain/world/ProjectState.ts:1`, reducer runtime boundary in `frontend/src/domain/world/ProjectStateRuntime.ts:1`, process reducer read helpers in `frontend/src/domain/world/ProjectStateProcessReducers.ts:1`, and construction reducer writes in `frontend/src/commands/operations/OperationReducers.ts:1`. The guard covers free point construction plus dependent line, segment, circle, and guide construction through current operation APIs only. It asserts frozen plain DTO state, deterministic action ids/createdAt/root child order/process-tree version, and dependency graph input-to-output/input-to-action/action-to-output edges. This is optional hardening for resolved ARCH-003, ARCH-005, and ARCH-008 coverage; it does not reopen any ARCH issue. Focused validation evidence is recorded in `.saivage/stages/ci-domain-reducer-provenance-invariant-hardening/logs/focused-projectstate-reducer-invariants.stdout.log:1`.
+architecture-audit/final-review/cross-arch-guard-coverage-map.md:40:Focused pointer/tool command-intent coverage was added in `frontend/tests/unit/tools/pointTool.spec.ts:1` for representative `PointTool` and `LineTool` flows through the current `frontend/src/composables/useCommandExecution.ts:1` and `frontend/src/commands/CommandStack.ts:1` boundary. The guard also checks this focused suite does not import deleted legacy direct-mutation/canvas surfaces such as `Workspace2D`, `ElementRenderer`, `World`, `ProjectionPlane`, `ProcessTree`, or `DependencyService`. This is optional hardening for resolved ARCH-004 only; the issue remains resolved by `architecture-audit/issues/register.md:1` and is not reopened. Validation evidence for this hardening is recorded under `.saivage/stages/ci-arch-004-command-intent-pointer-hardening/logs/`, including the focused pointer test, post-overhaul guards, lint, build, full test, Playwright/e2e attempt, and live preview reachability logs.
+architecture-audit/final-review/cross-arch-guard-coverage-map.md:44:A focused reactive selector guard was added in `frontend/tests/unit/domain/projectStateRuntimeReactiveSelectors.spec.ts:1` for the current runtime holder in `frontend/src/domain/world/ProjectStateRuntime.ts:1`, Vue snapshot composable in `frontend/src/composables/useProjectStateRuntimeSnapshot.ts:1`, and selector read models in `frontend/src/domain/world/ProjectStateSelectors.ts:1`. The test mounts a small Vue computed probe and verifies ProjectState process/action and element panel-equivalent read models update from runtime `commit`, `reset`, and replacement commits without polling, force-refresh helpers, manual version counters as the assertion mechanism, command invalidation facts, or deleted mutable authorities. ARCH-005 remains resolved by `architecture-audit/issues/register.md:1`; this is optional hardening only. Validation evidence for this stage is recorded under `.saivage/stages/ci-arch-005-reactive-selector-hardening/logs/`.
+architecture-audit/final-review/cross-arch-guard-coverage-map.md:50:Focused backend API/storage guard coverage was strengthened in `backend/tests/integration/projects.spec.ts:1` for the current typed project route contract in `backend/src/api/projects.ts:1`, project-local filename guard in `backend/src/storage/FileStorage.ts:1`, and strict project id namespace in `backend/src/storage/ProjectRepository.ts:1`. The added cases reject non-object, array, null, extra-key, arbitrary blob, and malformed nested DTO update payloads with `{ code, message, status }` only, assert no legacy `{ error }` alias appears, and verify list metadata skips invalid project filenames/malformed JSON without leaking `domain` or `provenance`. ARCH-007 remains resolved by `architecture-audit/issues/register.md:1`; this is optional hardening only, with no compatibility reader, migration path, old DTO alias, or broad validation framework introduced. Validation evidence is recorded under `.saivage/stages/ci-arch-007-backend-error-storage-hardening/logs/`.
+architecture-audit/final-review/cross-arch-guard-coverage-map.md:56:Focused runtime palette coverage was added in `frontend/tests/unit/config.toolFamilies.spec.ts:1` for the current toolbar authority `frontend/src/components/toolbars/mainToolbarTools.ts:1`, grouped palette config `frontend/src/config/toolFamilies.ts:1`, current `ToolType` union in `frontend/src/stores/toolStore.ts:1`, and current `ITool` command-intent implementations under `frontend/src/tools/`. The guard asserts `MAIN_TOOLBAR_TOOLS` and `TOOL_FAMILIES` expose only select plus implemented command-intent construction tools, instantiates each current tool class to verify the registered id matches the implementation API, keeps deleted `.old.ts` tool files absent, and rejects transport, placeholder, roadmap, future, planned, documentation-only, and placeholder-icon runtime registrations. ARCH-009 remains resolved by `architecture-audit/issues/register.md:1`; this is optional hardening only and does not add executable manifests for unsupported tools. Focused validation evidence is recorded in `.saivage/stages/ci-arch-009-runtime-tool-palette-hardening/logs/focused-arch-009-palette-guard.stdout.log:1`.
+architecture-audit/final-review/cross-arch-guard-coverage-map.md:60:Focused static App-shell boundary coverage was added in `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:1` for the current shell in `frontend/src/App.vue:1`, Drive/session lifecycle in `frontend/src/composables/useDriveProjectSession.ts:1`, keyboard action router in `frontend/src/composables/useAppKeyboardShortcuts.ts:1`, and canvas/session boundary in `frontend/src/composables/useAppCanvasSession.ts:1`. The guard fails if App.vue reintroduces deleted `diedrico_last_file`/`localStorage` restoration, direct `new GoogleDriveService` orchestration, private Drive access, inline autosave timers/subscriptions, inline keydown listener orchestration, or canvas/session implementation details beyond handler wiring. It also asserts the Drive composable owns GoogleDriveService/ProjectService/autosave concerns without localStorage compatibility, the keyboard composable remains an injected-action router without command/store authority, and the canvas composable owns active-plane/coordinate/fit/cascade-preview concerns without Drive/project persistence coupling. ARCH-010 remains resolved by `architecture-audit/issues/register.md:1`; this is optional hardening only. Focused validation evidence is recorded in `.saivage/stages/ci-arch-010-app-shell-boundary-hardening/logs/focused-arch-010-guard-rerun.stdout.log:1`.
+architecture-audit/final-review/cross-arch-guard-coverage-map.md:63:Focused ARCH-011 guard coverage was strengthened in `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:1` so the root `package.json:15` `test` script and `package.json:18` `test:post-overhaul-guards` command must continue wiring the frontend architecture guard and backend `backend/tests/integration/projects.spec.ts:1` contract tests. The guard also requires the current ProjectService contract specs in `frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:1` and `frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:1`, current Playwright contracts in `frontend/tests/e2e/current-persistence-contract.spec.ts:1` and `frontend/tests/e2e/current-ui-contract.spec.ts:1`, and absence of stale spec-only contracts under `specs/001-dihedral-learning-mvp/contracts`. ARCH-011 remains resolved by `architecture-audit/issues/register.md:1`; this is optional hardening only, with no generated contract toolchain, compatibility reader, migration shim, or broad acceptance-suite framework. Validation evidence for this stage is recorded under `.saivage/stages/ci-arch-011-contract-coverage-hardening/logs/`.
+architecture-audit/final-review/cross-arch-guard-coverage-map.md:66:Focused ARCH-012 guard coverage was strengthened in `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:1` for retained current docs (`README.md:1`, `docs/DEPLOYMENT.md:1`, `docs/GOOGLE_DRIVE_SETUP.md:1`, `frontend/REALIZATION_ARCHITECTURE.md:1`) and a bounded source/test comment set around validation, persistence, tooling, and rendering behavior. The guard continues to keep deleted historical/pre-design artifacts such as `pre-spec.md`, `pre-plan.md`, `pre-spec-ui.md`, `pre-spec-ui-tool.md`, and `specs/001-dihedral-learning-mvp/` absent; it also fails if retained docs cite those deleted artifacts as current authority or if selected source/test comments present stale spec-pack, rejected archival, migration, compatibility-shim, or legacy-preservation language as current behavior. ARCH-012 remains resolved by `architecture-audit/issues/register.md:1`; this is optional hardening only. Validation evidence for this stage is recorded under `.saivage/stages/ci-arch-012-current-doc-authority-hardening/logs/`.
+architecture-audit/final-review/source-control-change-manifest.md:13:- Frontend command/domain/tool/runtime changes and deletions under `frontend/src/commands/`, `frontend/src/domain/`, `frontend/src/services/`, `frontend/src/stores/`, `frontend/src/tools/`, and `frontend/src/types/`; these match the resolved reducer/current-snapshot and deleted legacy authority themes in `architecture-audit/final-review/00-summary.md:1` and `architecture-audit/final-review/cross-arch-guard-coverage-map.md:1`.
+architecture-audit/final-review/source-control-change-manifest.md:22:- Untracked prior-stage validation/review outputs under `.saivage/stages/phase-c-proposals/`, `.saivage/stages/phase-e-implementation-plans/`, `.saivage/stages/phase-f-arch-003-command-reducer-migration/`, `.saivage/stages/phase-f-arch-003-recovery-replan/`, and `.saivage/stages/phase-f-implement-arch-012/` (`.saivage/stages/ci-source-control-change-manifest/logs/path-only-status-fresh.log:1`).
+architecture-audit/final-review/source-control-change-manifest.md:37:- `inspections/inspect-arch-003-record-first-runtime-redesign.json` and `inspections/inspect-arch-003-runtime-migration-map.json` are kept as audit evidence beside the already tracked Inspector JSON reports under `inspections/`; their paths and Inspector-report names identify them as non-secret architecture inspection outputs.
+architecture-audit/final-review/source-control-change-manifest.md:39:- Modified `.saivage/stages/...` operational outputs that are path-visible in git status remain outside this disposition; review whether any are intentionally tracked operational records or should remain uncommitted/generated (`.saivage/stages/ci-source-control-change-manifest/logs/path-only-status-fresh.log:1`, `.gitignore:42`).

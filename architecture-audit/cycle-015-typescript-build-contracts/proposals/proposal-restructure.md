@@ -130,6 +130,14 @@ This proposal explicitly forbids:
 
 Expansion stop rule: if an owner boundary cannot be converged without broader conceptual redesign than required to honestly close the current build errors, stop and propose a reviewed mini-cycle. Do not smuggle a later wave into Wave 015.
 
+
+
+## Prior-wave repaired surface constraint: ActionsPanel
+
+The current build log directly cites `frontend/src/components/panels/ActionsPanel.vue(218,46)`, `(219,15)`, and `(223,26)`. That file belongs to a previously repaired process-tree/dependency-ownership surface, so implementation may reopen it only for those current type-contract failures and direct owner dependencies.
+
+Implementation must preserve earlier process-tree/dependency behavior and must not use Wave 015 to redesign `ActionsPanel.vue`, reopen dependency-service architecture, normalize panel workflows, or perform command-controller cleanup. If the cited errors cannot be fixed without such broader Wave 005-area redesign, stop for a reviewed delta/mini-cycle.
+
 ## Protected Wave 014 surfaces
 
 Preserve:

@@ -1,0 +1,945 @@
+### architecture-audit/continuous-improvement/2026-05-24-arch-004-decision-conformance-refresh.md
+   1: # ARCH-004 decision conformance refresh — 2026-05-24
+   2: 
+   3: ## Scope and safety
+   4: This continuous-improvement check revalidated current source conformance to the ARCH-004 decision without implementation changes. The decision selected a command-first pointer pipeline where tools translate user input into typed command intents, and rejected direct canvas/world mutation or compatibility shims (`architecture-audit/decisions/ARCH-004.md:10`, `architecture-audit/decisions/ARCH-004.md:18`, `architecture-audit/decisions/ARCH-004.md:22`).
+   5: 
+   6: Secret-safety constraint: this check used only safe source, test, documentation, and path-only shell evidence. It did not read, grep, log, copy, summarize, or open forbidden secret/env/provider paths.
+   7: 
+   8: ## Current source conformance
+   9: - `frontend/src/tools/ITool.ts:1` documents tools as translators from user input into commands, and `frontend/src/tools/ITool.ts:46` through `frontend/src/tools/ITool.ts:67` define typed command-intent variants for committed, preview, commit-preview, and discard reducer-backed command flows.
+  10: - `frontend/src/composables/useCommandExecution.ts:59` through `frontend/src/composables/useCommandExecution.ts:117` keeps `executeToolCommandIntent` as the shared reducer-backed completion boundary that previews, discards, commits, pushes command history, and applies tool completion behavior.
+  11: - `frontend/src/components/workspace/SvgCanvas.vue:727` through `frontend/src/components/workspace/SvgCanvas.vue:747` looks up the active tool, delegates non-select canvas clicks to `ITool.createCommandIntent(...)`, then executes successful intents through `executeToolCommandIntent(...)` instead of mutating a `World`/`ProjectionPlane` authority or old `Workspace2D` path.
+  12: - `frontend/tests/unit/tools/pointTool.spec.ts:64` through `frontend/tests/unit/tools/pointTool.spec.ts:91` verifies `PointTool` emits a typed project-state command intent without pushing command history itself, then routes execution through `useCommandExecution` and `CommandStack`.
+  13: - `frontend/tests/unit/tools/pointTool.spec.ts:96` through `frontend/tests/unit/tools/pointTool.spec.ts:152` verifies a representative `LineTool` two-pick flow emits an executable command intent through the same shared executor.
+  14: - `frontend/tests/unit/tools/pointTool.spec.ts:155` through `frontend/tests/unit/tools/pointTool.spec.ts:177` statically guards the focused suite against imports of deleted legacy pointer/direct-mutation surfaces such as `Workspace2D`, `ElementRenderer`, `World`, `ProjectionPlane`, `ProcessTree`, and `DependencyService`.
+  15: - `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:129` through `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:135` lists the deleted ARCH-004 legacy canvas surfaces as absent guard targets, and the deleted-surface invariant at `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:459` through `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:464` fails if any are restored.
+  16: 
+  17: ## Validation commands
+  18: Logs are stored under `.saivage/stages/ci-arch-004-decision-conformance-refresh/logs/`.
+  19: 
+  20: | Command | Result | Evidence |
+  21: |---|---:|---|
+  22: | `npm run test --workspace=frontend -- --run tests/unit/tools/pointTool.spec.ts` | Passed | `.saivage/stages/ci-arch-004-decision-conformance-refresh/logs/focused-arch-004-point-tool-vitest.stdout.log:1` reports 1 file / 6 tests passed. |
+  23: | `npm run test:post-overhaul-guards` | Passed | `.saivage/stages/ci-arch-004-decision-conformance-refresh/logs/npm-run-test-post-overhaul-guards.stdout.log:1` reports frontend architecture guard 11 tests passed and backend project integration guard 22 tests passed. |
+  24: 
+  25: Note: the backend guard emitted an expected stderr diagnostic while testing malformed stored JSON handling, but the command exited 0 and the suite passed; see `.saivage/stages/ci-arch-004-decision-conformance-refresh/logs/npm-run-test-post-overhaul-guards.stderr.log:1`.
+  26: 
+  27: ## Deleted-surface absence evidence
+  28: Path-only evidence was collected in `.saivage/stages/ci-arch-004-decision-conformance-refresh/logs/deleted-surface-absence-evidence.log:1` using safe repository source paths only.
+  29: 
+  30: Recorded absent paths:
+  31: - `frontend/src/components/workspace/Workspace2D.vue`
+  32: - `frontend/src/components/workspace/ElementRenderer.vue`
+  33: - `frontend/src/domain/world/World.ts`
+  34: - `frontend/src/domain/world/ProjectionPlane.ts`
+  35: - `frontend/src/domain/processTree/ProcessTree.ts`
+  36: - `frontend/src/services/DependencyService.ts`
+  37: 
+  38: The same log shows `frontend/src/components/workspace/SvgCanvas.vue` as the only direct file in `frontend/src/components/workspace/`, and the safe filename search for the old direct-mutation/legacy authority filenames under `frontend/src` returned no paths.
+  39: 
+  40: ## Conclusion
+  41: ARCH-004 remains resolved. Current source still uses the selected command-first pointer/tool pipeline, the focused pointer/tool Vitest and root post-overhaul guard command are green, and the deleted `Workspace2D`/`ElementRenderer`/mutable authority surfaces remain absent. No concrete current-source ARCH-004 regression was found, so no follow-up implementation is warranted from this check.
+
+### architecture-audit/continuous-improvement/2026-05-24-arch-005-decision-conformance-refresh.md
+   1: # ARCH-005 decision conformance refresh — 2026-05-24
+   2: 
+   3: ## Scope and secret-safety boundary
+   4: This refresh validates current-source conformance to `architecture-audit/decisions/ARCH-005.md:1` without implementation changes. The ARCH-005 decision selects reactive ProjectState-derived read models and rejects polling, manual force-refresh helpers, duplicated command invalidation facts, and restored mutable `World`/`ProcessTree` authorities (`architecture-audit/decisions/ARCH-005.md:10`, `architecture-audit/decisions/ARCH-005.md:19`, `architecture-audit/decisions/ARCH-005.md:22`).
+   5: 
+   6: Only safe source, test, and audit paths were inspected: `architecture-audit/decisions/ARCH-005.md:1`, `frontend/src/domain/world/ProjectStateRuntime.ts:1`, `frontend/src/composables/useProjectStateRuntimeSnapshot.ts:1`, `frontend/src/domain/world/ProjectStateSelectors.ts:1`, `frontend/src/components/panels/ActionsPanel.vue:1`, `frontend/tests/unit/domain/projectStateRuntimeReactiveSelectors.spec.ts:1`, and `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:1`. No forbidden secret/env/provider files were read, grepped, logged, copied, or summarized.
+   7: 
+   8: ## Current conformance finding
+   9: ARCH-005 remains **resolved**. No follow-up implementation stage is warranted.
+  10: 
+  11: The current Vue-facing process-tree and world read path derives from immutable `ProjectStateRecord` snapshots:
+  12: 
+  13: - `ProjectStateRuntimeHolder` owns the reducer record state and documents that it must not retain mutable geometry, construction-history, dependency-service, or adapter instances (`frontend/src/domain/world/ProjectStateRuntime.ts:14`, `frontend/src/domain/world/ProjectStateRuntime.ts:21`, `frontend/src/domain/world/ProjectStateRuntime.ts:44`).
+  14: - The Vue composable exposes only a `ShallowRef<ProjectStateRecord>` and updates that ref from runtime commits via `snapshot.value = nextSnapshot.state` (`frontend/src/composables/useProjectStateRuntimeSnapshot.ts:5`, `frontend/src/composables/useProjectStateRuntimeSnapshot.ts:8`, `frontend/src/composables/useProjectStateRuntimeSnapshot.ts:9`). It does not expose a UI force-refresh counter or polling source.
+  15: - Process-tree read models are selector materializations over `ProjectStateRecord`, including `getProcessTreeView` and `getRelatedActionIdsForElements` (`frontend/src/domain/world/ProjectStateSelectors.ts:360`, `frontend/src/domain/world/ProjectStateSelectors.ts:370`).
+  16: - `ActionsPanel.vue` injects the current ProjectState runtime, consumes `useProjectStateRuntimeSnapshot`, and wraps selector calls in Vue `computed` values (`frontend/src/components/panels/ActionsPanel.vue:24`, `frontend/src/components/panels/ActionsPanel.vue:37`, `frontend/src/components/panels/ActionsPanel.vue:45`, `frontend/src/components/panels/ActionsPanel.vue:47`, `frontend/src/components/panels/ActionsPanel.vue:51`).
+  17: - The focused guard mounts a Vue computed selector probe and proves process/action and element read models update after runtime `commit`, `reset`, and replacement commit (`frontend/tests/unit/domain/projectStateRuntimeReactiveSelectors.spec.ts:63`, `frontend/tests/unit/domain/projectStateRuntimeReactiveSelectors.spec.ts:70`, `frontend/tests/unit/domain/projectStateRuntimeReactiveSelectors.spec.ts:84`, `frontend/tests/unit/domain/projectStateRuntimeReactiveSelectors.spec.ts:92`, `frontend/tests/unit/domain/projectStateRuntimeReactiveSelectors.spec.ts:98`, `frontend/tests/unit/domain/projectStateRuntimeReactiveSelectors.spec.ts:104`).
+  18: 
+  19: `ProjectStateRuntimeSnapshot` still carries runtime metadata named `version`, and `ProjectStateRuntimeHolder` increments it on commit (`frontend/src/domain/world/ProjectStateRuntime.ts:5`, `frontend/src/domain/world/ProjectStateRuntime.ts:22`, `frontend/src/domain/world/ProjectStateRuntime.ts:48`). This is not acting as the deleted ARCH-005 Vue-facing manual refresh authority: the current snapshot composable returns `ProjectStateRecord` only and ignores that metadata (`frontend/src/composables/useProjectStateRuntimeSnapshot.ts:5`, `frontend/src/composables/useProjectStateRuntimeSnapshot.ts:8`), while the panel selectors consume `projectState.value` rather than a version counter (`frontend/src/components/panels/ActionsPanel.vue:45`, `frontend/src/components/panels/ActionsPanel.vue:48`, `frontend/src/components/panels/ActionsPanel.vue:52`).
+  20: 
+  21: ## Safe absence / non-authority evidence
+  22: Safe restricted evidence was captured under `.saivage/stages/ci-arch-005-decision-conformance-refresh/logs/`:
+  23: 
+  24: - `source-anchors.stdout.log:1` records line-anchored evidence for the decision, runtime holder, Vue snapshot composable, selectors, panel consumer, and focused reactive selector spec.
+  25: - `safe-absence-evidence.stdout.log:1` confirms these deleted legacy authority files are absent: `frontend/src/domain/world/World.ts`, `frontend/src/domain/processTree/ProcessTree.ts`, `frontend/src/domain/world/ProjectionPlane.ts`, and `frontend/src/domain/viewState/ProjectionPlane.ts`.
+  26: - The same restricted absence log searches only `frontend/src` and `frontend/tests` for manual force-refresh/version-counter candidates, polling candidates (`setInterval`, `requestAnimationFrame`, `poll`), and imports or instantiations of deleted `World`/`ProcessTree` authorities. It reports no matches (`safe-absence-evidence.stdout.log:1`).
+  27: - The post-overhaul invariant guard keeps deleted mutable and historical authorities absent through the current guard surface (`frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:66`).
+  28: 
+  29: ## Validation results
+  30: 
+  31: | Command | Result | Evidence |
+  32: |---|---:|---|
+  33: | `npm run test --workspace=frontend -- --run tests/unit/domain/projectStateRuntimeReactiveSelectors.spec.ts` | passed | `.saivage/stages/ci-arch-005-decision-conformance-refresh/logs/reactive-selectors-vitest.stdout.log:1`, `.saivage/stages/ci-arch-005-decision-conformance-refresh/logs/reactive-selectors-vitest.stderr.log:1` |
+  34: | `npm run test:post-overhaul-guards` | passed | `.saivage/stages/ci-arch-005-decision-conformance-refresh/logs/post-overhaul-guards.stdout.log:1`, `.saivage/stages/ci-arch-005-decision-conformance-refresh/logs/post-overhaul-guards.stderr.log:1` |
+  35: 
+  36: The reactive selector Vitest run passed 1 file / 1 test. The post-overhaul guard run passed the frontend architecture invariant suite (11 tests) and backend project integration suite (22 tests). The backend negative-path test emitted its expected synthetic storage-read error to stderr while the command exited 0; no ARCH-005 regression is indicated by that output.
+  37: 
+  38: ## Source-change conclusion
+  39: No implementation files were changed. This stage added this continuous-improvement report only. The current source continues to conform to the ARCH-005 decision by keeping Vue-facing process/world reads selector-derived from immutable ProjectState snapshots and by keeping the deleted mutable `World`/`ProcessTree` surfaces absent.
+  40: 
+  41: ## Recommendation
+  42: No follow-up implementation is recommended. Future work should open a new bounded issue only if current source reintroduces a Vue-facing manual refresh counter, polling authority, deleted mutable process/world authority, or a failing validation log with a concrete source-grounded root cause.
+
+### architecture-audit/continuous-improvement/2026-05-24-arch-006-decision-conformance-refresh.md
+   1: # ARCH-006 decision conformance refresh — 2026-05-24
+   2: 
+   3: ## Scope
+   4: This continuous-improvement check revalidated the current source against the ARCH-006 decision. `architecture-audit/decisions/ARCH-006.md:10` selects Proposal A: projection responsibility belongs in domain geometry and Vue renders only typed presentation primitives. The same decision rejects partial symptom patching at `architecture-audit/decisions/ARCH-006.md:15` and requires deletion of duplicate render services/components at `architecture-audit/decisions/ARCH-006.md:22`.
+   5: 
+   6: ## Current-source conformance evidence
+   7: - `frontend/src/domain/presentation/Paper.ts:1` remains the domain-owned rendering/presentation authority. Its file header describes the pipeline as domain/rules to realization, plane transform, Paper coordinates, viewport transform, then SVG at `frontend/src/domain/presentation/Paper.ts:9`.
+   8: - `frontend/src/domain/presentation/Paper.ts:181` defines the typed `PresentationPrimitiveContext`, and `frontend/src/domain/presentation/Paper.ts:254` materializes primitives from `ProjectStateRecord` render candidates rather than from a component-local renderer authority.
+   9: - Representative primitives are built in domain code for points, circles, segments, lines, and guides at `frontend/src/domain/presentation/Paper.ts:269`, `frontend/src/domain/presentation/Paper.ts:285`, `frontend/src/domain/presentation/Paper.ts:307`, and `frontend/src/domain/presentation/Paper.ts:323`.
+  10: - SVG projection remains in the domain presentation helper `renderPresentationPrimitiveToSvg` at `frontend/src/domain/presentation/Paper.ts:388`, with batch rendering at `frontend/src/domain/presentation/Paper.ts:457`.
+  11: - `frontend/src/components/workspace/SvgCanvas.vue:114` documents the current rendering pipeline as ProjectState selectors, domain presentation primitive materializer, domain presentation SVG projection, then SVG elements. It imports `generateProjectStatePresentationPrimitives` and `renderPresentationPrimitiveToSvg` from `@/domain/presentation/Paper` at `frontend/src/components/workspace/SvgCanvas.vue:131`.
+  12: - `SvgCanvas.vue` materializes plane transforms from `ProjectStateRecord` selectors at `frontend/src/components/workspace/SvgCanvas.vue:416`, uses render-direction plane transforms at `frontend/src/components/workspace/SvgCanvas.vue:433`, creates `PresentationPrimitiveContext` at `frontend/src/components/workspace/SvgCanvas.vue:457`, and calls `generateProjectStatePresentationPrimitives` at `frontend/src/components/workspace/SvgCanvas.vue:466`.
+  13: - Vue rendering remains a consumer of typed primitives: point/line/segment/circle/guide/arc computed renderers call `renderPresentationPrimitiveToSvg` at `frontend/src/components/workspace/SvgCanvas.vue:562`, `frontend/src/components/workspace/SvgCanvas.vue:576`, `frontend/src/components/workspace/SvgCanvas.vue:589`, `frontend/src/components/workspace/SvgCanvas.vue:602`, `frontend/src/components/workspace/SvgCanvas.vue:615`, and `frontend/src/components/workspace/SvgCanvas.vue:627`.
+  14: 
+  15: ## Guard and test evidence
+  16: - Focused presentation coverage in `frontend/tests/unit/domain/presentationPrimitives.spec.ts:25` verifies a ProjectState point becomes a typed primitive and SVG circle attributes through the domain helper.
+  17: - The same spec checks active-plane, hover/selected/snap styling at `frontend/tests/unit/domain/presentationPrimitives.spec.ts:50`, representative line/segment/circle/guide primitive generation at `frontend/tests/unit/domain/presentationPrimitives.spec.ts:66`, and single presentation authority for representative SVG projection at `frontend/tests/unit/domain/presentationPrimitives.spec.ts:88`.
+  18: - Deleted duplicate renderer path coverage is explicit in `frontend/tests/unit/domain/presentationPrimitives.spec.ts:139`, including the five ARCH-006 deleted paths at `frontend/tests/unit/domain/presentationPrimitives.spec.ts:142` and the SvgCanvas deleted-boundary import/invocation check at `frontend/tests/unit/domain/presentationPrimitives.spec.ts:153`.
+  19: - Cross-ARCH static guard coverage includes `frontend/src/domain/presentation/Paper.ts` as a current authority at `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:75` and keeps duplicate renderer paths absent through `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:136`.
+  20: - `architecture-audit/final-review/cross-arch-guard-coverage-map.md:15` records ARCH-006 as resolved through the single presentation primitive path and notes no unresolved duplicate-renderer risk.
+  21: 
+  22: ## Validation results
+  23: Validation logs were written under `.saivage/stages/ci-arch-006-decision-conformance-refresh/logs/`.
+  24: 
+  25: | Command | Result | Log paths |
+  26: |---|---:|---|
+  27: | `npm run test --workspace=frontend -- --run tests/unit/domain/presentationPrimitives.spec.ts` | Passed: 1 file, 7 tests | `.saivage/stages/ci-arch-006-decision-conformance-refresh/logs/focused-presentation-primitives.stdout.log`, `.saivage/stages/ci-arch-006-decision-conformance-refresh/logs/focused-presentation-primitives.stderr.log` |
+  28: | `npm run test:post-overhaul-guards` | Passed: frontend guard 11 tests; backend guard 22 tests | `.saivage/stages/ci-arch-006-decision-conformance-refresh/logs/npm-run-test-post-overhaul-guards.stdout.log`, `.saivage/stages/ci-arch-006-decision-conformance-refresh/logs/npm-run-test-post-overhaul-guards.stderr.log` |
+  29: 
+  30: The post-overhaul guard stderr contains the expected backend test diagnostic for a malformed project-file fixture while the command exits 0; this is part of `backend/tests/integration/projects.spec.ts` error-path coverage, not an ARCH-006 rendering regression.
+  31: 
+  32: ## Path-only deleted renderer absence evidence
+  33: Path-only evidence was captured in `.saivage/stages/ci-arch-006-decision-conformance-refresh/logs/deleted-renderer-path-absence.stdout.log`:
+  34: 
+  35: ```text
+  36: ABSENT frontend/src/services/RenderService.ts
+  37: ABSENT frontend/src/services/SVGRenderer.ts
+  38: ABSENT frontend/src/services/PaperService.ts
+  39: ABSENT frontend/src/components/workspace/ElementRenderer.vue
+  40: ABSENT frontend/src/composables/useElementGeometry.ts
+  41: ```
+  42: 
+  43: No file contents from forbidden secret/env/provider locations were read, grepped, logged, or summarized. The absence check printed only the five requested path names and existence status.
+  44: 
+  45: ## Conclusion
+  46: ARCH-006 remains resolved. Current source continues to route rendering through domain-owned typed presentation primitives in `frontend/src/domain/presentation/Paper.ts`, while `frontend/src/components/workspace/SvgCanvas.vue` consumes those primitives rather than reintroducing component-local projection authority or compatibility render adapters. The duplicate renderer services/components remain absent, and both required focused validations passed.
+  47: 
+  48: No follow-up implementation is warranted from this refresh.
+
+### architecture-audit/continuous-improvement/2026-05-24-arch-007-decision-conformance-refresh.md
+   1: # ARCH-007 Decision Conformance Refresh — 2026-05-24
+   2: 
+   3: ## Scope and secret-safety boundary
+   4: 
+   5: This continuous-improvement check verifies whether the current backend project API/storage surface still conforms to the selected ARCH-007 decision. The review inspected only the ARCH-007 decision, safe backend source/test files, safe final-review guard documents, and root package scripts. It did not read or log protected secret, environment, provider, OAuth, shell-history, keychain, or backend runtime project data contents.
+   6: 
+   7: ## Decision baseline
+   8: 
+   9: `architecture-audit/decisions/ARCH-007.md:10` selects Proposal A: derive the backend API directly from the selected persistence contract and reject payloads outside it. The decision requires deletion/no retention of arbitrary request-body update forwarding, unsafe ID/path assumptions, and inconsistent ad hoc error response shapes at `architecture-audit/decisions/ARCH-007.md:19` through `architecture-audit/decisions/ARCH-007.md:25`. Its Phase E acceptance notes require schema validation at API boundaries, consistent error contracts, safe storage IDs/paths, and backend integration tests at `architecture-audit/decisions/ARCH-007.md:34` through `architecture-audit/decisions/ARCH-007.md:37`.
+  10: 
+  11: ## Current source evidence
+  12: 
+  13: ### Typed snapshot contract and arbitrary/legacy payload rejection
+  14: 
+  15: - `backend/src/api/projects.ts:7` and `backend/src/api/projects.ts:8` pin the backend contract to schema version `4.0.0` and provenance contract `current-snapshot`.
+  16: - `backend/src/api/projects.ts:10` through `backend/src/api/projects.ts:21` enumerate the exact top-level project, provenance, and domain fields accepted by the API instead of forwarding arbitrary payloads.
+  17: - `backend/src/api/projects.ts:22` through `backend/src/api/projects.ts:31` enumerate deleted legacy command-stream and old element fields; `backend/src/api/projects.ts:226` through `backend/src/api/projects.ts:240` recursively reject those fields anywhere in the submitted payload.
+  18: - `backend/src/api/projects.ts:106` through `backend/src/api/projects.ts:139` validate full replacement DTOs, require route/body id agreement, require schema `4.0.0`, and preserve a typed `ProjectDTO` return shape.
+  19: - `backend/src/api/projects.ts:141` through `backend/src/api/projects.ts:195` validate provenance and the reducer `ProjectStateRecordDTO` domain shape, including current projection-plane records and rejection of legacy projection-plane arrays at `backend/src/api/projects.ts:184` through `backend/src/api/projects.ts:193`.
+  20: - `backend/src/api/projects.ts:249` through `backend/src/api/projects.ts:260` require exact accepted keys and reject unknown fields.
+  21: - The current PUT route validates the route id and replacement payload before repository update at `backend/src/api/projects.ts:317` through `backend/src/api/projects.ts:329`; this is not the arbitrary `req.body` forwarding rejected by the decision.
+  22: 
+  23: ### Consistent API errors
+  24: 
+  25: - `backend/src/api/projects.ts:33` through `backend/src/api/projects.ts:69` define and emit a uniform `{ code, message, status }` error body.
+  26: - `backend/src/api/projects.ts:72` through `backend/src/api/projects.ts:83` maps known invalid project-id errors into `INVALID_PROJECT_ID` and otherwise uses `PROJECT_INTERNAL_ERROR`.
+  27: - `backend/tests/integration/projects.spec.ts:13` through `backend/tests/integration/projects.spec.ts:20` assert the typed error body and explicitly reject legacy `{ error }` aliases.
+  28: - `backend/tests/integration/projects.spec.ts:110` through `backend/tests/integration/projects.spec.ts:125` cover typed error bodies for malformed JSON and unknown API routes.
+  29: 
+  30: ### Safe project IDs and storage paths
+  31: 
+  32: - `backend/src/storage/ProjectRepository.ts:12` restricts project ids to the `project_<timestamp>_<suffix>` namespace, and `backend/src/storage/ProjectRepository.ts:25` through `backend/src/storage/ProjectRepository.ts:37` validates ids before deriving filenames.
+  33: - `backend/src/storage/FileStorage.ts:100` through `backend/src/storage/FileStorage.ts:116` resolves filenames inside the configured project-local data directory, rejects path traversal/absolute paths, and accepts only basename JSON filenames matching `[A-Za-z0-9_-]+.json`.
+  34: - `backend/src/storage/ProjectRepository.ts:47` through `backend/src/storage/ProjectRepository.ts:54` skips filenames whose stem is not a valid project id before reading metadata, so unrelated JSON filenames are not treated as projects.
+  35: - Route handlers validate ids before storage access for GET, PUT, and DELETE at `backend/src/api/projects.ts:299` through `backend/src/api/projects.ts:309`, `backend/src/api/projects.ts:317` through `backend/src/api/projects.ts:329`, and `backend/src/api/projects.ts:337` through `backend/src/api/projects.ts:348`.
+  36: 
+  37: ## Current test/guard evidence
+  38: 
+  39: - `backend/tests/integration/projects.spec.ts:22` through `backend/tests/integration/projects.spec.ts:62` assert current DTO shape, schema `4.0.0`, `current-snapshot` provenance, reducer projection-plane records, and absence of legacy command/element surfaces.
+  40: - `backend/tests/integration/projects.spec.ts:128` through `backend/tests/integration/projects.spec.ts:165` verify creation stores only the current snapshot DTO and rejects weak create payloads.
+  41: - `backend/tests/integration/projects.spec.ts:189` through `backend/tests/integration/projects.spec.ts:205` reject unsafe route ids and ambiguous path segments before storage access.
+  42: - `backend/tests/integration/projects.spec.ts:208` through `backend/tests/integration/projects.spec.ts:351` verify full reducer snapshot replacement and reject partial, arbitrary, schema-mismatched, provenance-mismatched, unknown, and legacy projection-plane payloads.
+  43: - `backend/tests/integration/projects.spec.ts:353` through `backend/tests/integration/projects.spec.ts:394` reject legacy command-stream fields both top-level and nested.
+  44: - `backend/tests/integration/projects.spec.ts:429` through `backend/tests/integration/projects.spec.ts:459` verify list metadata skips invalid filenames/malformed JSON without leaking domain/provenance data.
+  45: - `backend/tests/integration/projects.spec.ts:464` through `backend/tests/integration/projects.spec.ts:500` directly test FileStorage and ProjectRepository path/id safety.
+  46: - `architecture-audit/final-review/cross-arch-guard-coverage-map.md:16` records ARCH-007 as resolved with backend integration coverage for typed errors, current DTO replacement, legacy field rejection, and path confinement.
+  47: - `architecture-audit/final-review/post-overhaul-guards.md:12` through `architecture-audit/final-review/post-overhaul-guards.md:17` documents the backend DTO/API/storage guard scope, including typed errors and no legacy `{ error }` alias.
+  48: - Root `test:post-overhaul-guards` wiring runs the frontend architecture guard and backend projects integration guard, as shown in `package.json` script output captured at `.saivage/stages/ci-arch-007-decision-conformance-refresh/logs/package-scripts.stdout.log:1`.
+  49: 
+  50: ## Validation run
+  51: 
+  52: | Command | Result | Logs | Notes |
+  53: |---|---:|---|---|
+  54: | `npm run test --workspace=backend -- --run tests/integration/projects.spec.ts` | Passed | `.saivage/stages/ci-arch-007-decision-conformance-refresh/logs/backend-projects-integration.stdout.log:1`, `.saivage/stages/ci-arch-007-decision-conformance-refresh/logs/backend-projects-integration.stderr.log:1` | 1 file passed, 22 tests passed. Stderr contains the expected malformed-JSON list-test diagnostic from `ProjectRepository.list`; the command exit code was 0. |
+  55: | `npm run test:post-overhaul-guards` | Passed | `.saivage/stages/ci-arch-007-decision-conformance-refresh/logs/npm-run-test-post-overhaul-guards.stdout.log:1`, `.saivage/stages/ci-arch-007-decision-conformance-refresh/logs/npm-run-test-post-overhaul-guards.stderr.log:1` | Frontend post-overhaul guard passed 11 tests and backend projects integration passed 22 tests. Stderr repeats the expected malformed-JSON list-test diagnostic; the command exit code was 0. |
+  56: 
+  57: ## Conclusion
+  58: 
+  59: ARCH-007 remains resolved. The current backend API/storage implementation still enforces the typed `4.0.0`/`current-snapshot` project contract, rejects arbitrary and legacy payloads with consistent typed errors, and confines project ids/filenames to the project-local JSON namespace. No current-source ARCH-007 regression was found, so no implementation source changes were warranted or made.
+  60: 
+  61: ## Follow-up recommendation
+  62: 
+  63: No follow-up implementation work is warranted for ARCH-007 at this time. Optional future hardening may add storage-failure or concurrency cases, but the decision's resolved acceptance surface remains covered by current source and executable guards.
+
+### architecture-audit/continuous-improvement/2026-05-24-arch-008-decision-conformance-refresh.md
+   1: # ARCH-008 decision conformance refresh — ci-arch-008-decision-conformance-refresh
+   2: 
+   3: ## Conclusion
+   4: ARCH-008 remains conformant in the current source. No current-source regression was found, no implementation source was changed, and no ARCH-008 implementation stage is warranted. Future ARCH-008 work should be trigger-based only: run the same verification when a later decision changes reducer provenance, process-history UI, or command/process contracts.
+   5: 
+   6: ## Decision baseline
+   7: `architecture-audit/decisions/ARCH-008.md:10` selects Proposal B: delete partial process-tree editing/operations and keep read-only derived history. The decision states that reducer/project snapshots are authoritative and that making the Process Tree authoritative would introduce a second educational-script authority (`architecture-audit/decisions/ARCH-008.md:13`). The legacy surfaces to keep deleted are hard-coded user action IDs/bypassable provenance paths, partial process-tree editing/operation commands, and UI affordances implying unsupported process-tree authority (`architecture-audit/decisions/ARCH-008.md:22`, `architecture-audit/decisions/ARCH-008.md:23`, `architecture-audit/decisions/ARCH-008.md:24`, `architecture-audit/decisions/ARCH-008.md:25`).
+   8: 
+   9: ## Source conformance evidence
+  10: 
+  11: ### Reducer-authored process provenance remains authoritative
+  12: - `frontend/src/commands/operations/OperationReducers.ts:31` derives a new process action id from `ProjectStateRecord.idCounters`, and element construction writes `producedByActionId` onto the created element at `frontend/src/commands/operations/OperationReducers.ts:40`.
+  13: - The same construction reducer creates the action record from operation inputs/outputs at `frontend/src/commands/operations/OperationReducers.ts:42`, appends it into `processTree` at `frontend/src/commands/operations/OperationReducers.ts:43`, writes dependency graph action/output nodes and edges at `frontend/src/commands/operations/OperationReducers.ts:59`, and increments action/process counters at `frontend/src/commands/operations/OperationReducers.ts:72`.
+  14: - Guide construction follows the same reducer-authored provenance path: `frontend/src/commands/operations/OperationReducers.ts:198` creates the next action id, `frontend/src/commands/operations/OperationReducers.ts:199` stores `producedByActionId`, `frontend/src/commands/operations/OperationReducers.ts:200` creates the action record, and `frontend/src/commands/operations/OperationReducers.ts:209` stores the next process tree.
+  15: - The private helper appends actions only through the current state tree (`frontend/src/commands/operations/OperationReducers.ts:262`) and increments the tree version (`frontend/src/commands/operations/OperationReducers.ts:274`). This is not a standalone public process-edit command surface.
+  16: 
+  17: ### Process-history views are derived/read models
+  18: - `frontend/src/domain/world/ProjectStateSelectors.ts:149` reads `producedByActionId` from an element and resolves it in `state.processTree.nodes`; fallback lookup also derives from `processTree` output ids at `frontend/src/domain/world/ProjectStateSelectors.ts:139`.
+  19: - Property-panel metadata is derived from `record.producedByActionId` and action description at `frontend/src/domain/world/ProjectStateSelectors.ts:347` and `frontend/src/domain/world/ProjectStateSelectors.ts:355`.
+  20: - The process-tree UI DTO is materialized from the current `ProjectStateRecord` root at `frontend/src/domain/world/ProjectStateSelectors.ts:360` through `frontend/src/domain/world/ProjectStateSelectors.ts:367`, while related action highlighting is derived by scanning current action inputs/outputs at `frontend/src/domain/world/ProjectStateSelectors.ts:370` through `frontend/src/domain/world/ProjectStateSelectors.ts:382`.
+  21: - `frontend/tests/unit/domain/projectStateReadOnlyProcessHistory.spec.ts:95` mutates the selector DTO copy and verifies the reducer state and subsequent selector output remain unchanged at `frontend/tests/unit/domain/projectStateReadOnlyProcessHistory.spec.ts:97` and `frontend/tests/unit/domain/projectStateReadOnlyProcessHistory.spec.ts:98`.
+  22: 
+  23: ### Mutable ProcessTree authority and partial editing commands are absent/non-authoritative
+  24: - Deleted mutable authority paths are still guarded absent by the post-overhaul invariant list: `frontend/src/domain/world/World.ts`, `frontend/src/domain/world/ProjectionPlane.ts`, `frontend/src/domain/processTree/ProcessTree.ts`, and `frontend/src/services/DependencyService.ts` appear in the deleted-surface guard at `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:136` through `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:154`.
+  25: - The focused ARCH-008 guard asserts the process reducer module does not expose `addProcessAction`, `addProcessActionGroup`, `addProcessSubprocess`, or `removeProcessNode`, while allowing only subprocess visibility toggling (`frontend/tests/unit/domain/projectStateReadOnlyProcessHistory.spec.ts:100` through `frontend/tests/unit/domain/projectStateReadOnlyProcessHistory.spec.ts:104`).
+  26: - The same guard scans `frontend/src/domain/world/ProjectStateSelectors.ts`, `frontend/src/domain/world/ProjectStateProcessReducers.ts`, `frontend/src/commands/operations/OperationReducers.ts`, and `frontend/src/components/panels/ActionsPanel.vue` for deleted mutable-authority imports and standalone process edit/bypass names (`frontend/tests/unit/domain/projectStateReadOnlyProcessHistory.spec.ts:133` through `frontend/tests/unit/domain/projectStateReadOnlyProcessHistory.spec.ts:152`). The safe pattern-evidence log shows no live source matches outside that test assertion.
+  27: - `frontend/src/domain/world/ProjectStateProcessReducers.ts:7` exposes only `toggleProcessSubprocessVisibility`, which updates a subprocess visibility flag through `createProjectStateRecord` at `frontend/src/domain/world/ProjectStateProcessReducers.ts:15` and increments process-tree version at `frontend/src/domain/world/ProjectStateProcessReducers.ts:23`; this is presentation visibility, not partial process-authoring authority.
+  28: 
+  29: ### Hard-coded bypass/provenance paths are absent/non-authoritative
+  30: - Current construction action IDs are computed from state counters (`frontend/src/commands/operations/OperationReducers.ts:233`) rather than user-supplied/manual action IDs.
+  31: - The focused guard rejects source text containing `userActionId`, `manualActionId`, or `hardCodedActionId` in covered ARCH-008 source files (`frontend/tests/unit/domain/projectStateReadOnlyProcessHistory.spec.ts:151`). The safe pattern-evidence command found no current-source matches for those bypass names.
+  32: - Deterministic provenance is asserted across point, line, segment, circle, and guide construction: `frontend/tests/unit/domain/projectStateReducerProvenanceInvariants.spec.ts:27` through `frontend/tests/unit/domain/projectStateReducerProvenanceInvariants.spec.ts:56` check produced-by IDs, action records, dependency nodes, and edges, and `frontend/tests/unit/domain/projectStateReducerProvenanceInvariants.spec.ts:95` through `frontend/tests/unit/domain/projectStateReducerProvenanceInvariants.spec.ts:112` assert the expected ordered action IDs and provenance for representative operations.
+  33: 
+  34: ### ActionsPanel does not imply unsupported process-tree editing authority
+  35: - `frontend/src/components/panels/ActionsPanel.vue:4` labels the panel as “Construction History”; it renders a `ProcessTreeNode` from the computed read model at `frontend/src/components/panels/ActionsPanel.vue:47` through `frontend/src/components/panels/ActionsPanel.vue:49`.
+  36: - The only process mutation wired by the panel is subprocess visibility toggling through `ToggleSubprocessVisibilityOp` (`frontend/src/components/panels/ActionsPanel.vue:59` through `frontend/src/components/panels/ActionsPanel.vue:65`). There is no add/edit/delete process-authoring UI in this component.
+  37: - The focused UI guard mounts `ActionsPanel` and verifies it renders reducer-derived action descriptions at `frontend/tests/unit/domain/projectStateReadOnlyProcessHistory.spec.ts:114` through `frontend/tests/unit/domain/projectStateReadOnlyProcessHistory.spec.ts:118`, while asserting add subprocess/dialog/action-id/add/edit/delete controls are absent at `frontend/tests/unit/domain/projectStateReadOnlyProcessHistory.spec.ts:122` through `frontend/tests/unit/domain/projectStateReadOnlyProcessHistory.spec.ts:127`.
+  38: 
+  39: ## Validation
+  40: 
+  41: | Command | Result | Log paths |
+  42: |---|---:|---|
+  43: | `npm run test --workspace=frontend -- --run tests/unit/domain/projectStateReadOnlyProcessHistory.spec.ts tests/unit/domain/projectStateReducerProvenanceInvariants.spec.ts` | Passed: 2 files, 3 tests | `.saivage/stages/ci-arch-008-decision-conformance-refresh/logs/focused-arch008-process-history-provenance.stdout.log`; `.saivage/stages/ci-arch-008-decision-conformance-refresh/logs/focused-arch008-process-history-provenance.stderr.log` |
+  44: | `npm run test:post-overhaul-guards` | Passed: frontend guard 11 tests and backend guard 22 tests | `.saivage/stages/ci-arch-008-decision-conformance-refresh/logs/npm-run-test-post-overhaul-guards.stdout.log`; `.saivage/stages/ci-arch-008-decision-conformance-refresh/logs/npm-run-test-post-overhaul-guards.stderr.log` |
+  45: | Safe line-numbered evidence capture for listed ARCH-008 source/test files | Passed | `.saivage/stages/ci-arch-008-decision-conformance-refresh/logs/line-numbered-arch008-evidence.stdout.log`; `.saivage/stages/ci-arch-008-decision-conformance-refresh/logs/line-numbered-arch008-evidence.stderr.log`; `.saivage/stages/ci-arch-008-decision-conformance-refresh/logs/line-numbered-arch008-process-helpers.stdout.log`; `.saivage/stages/ci-arch-008-decision-conformance-refresh/logs/line-numbered-arch008-process-helpers.stderr.log` |
+  46: | Safe ARCH-008 pattern evidence over `frontend/src/commands`, `frontend/src/domain`, `frontend/src/components/panels`, `frontend/tests/unit/domain`, and `frontend/tests/unit/architecture` | Passed; no current-source bypass/edit matches | `.saivage/stages/ci-arch-008-decision-conformance-refresh/logs/safe-arch008-pattern-evidence.stdout.log`; `.saivage/stages/ci-arch-008-decision-conformance-refresh/logs/safe-arch008-pattern-evidence.stderr.log` |
+  47: 
+  48: Note: the post-overhaul guard command emitted expected backend stderr from the test case that verifies malformed stored project data is skipped without leaking domain data. The command exit code was 0, and the stdout reports all frontend/backend guard tests passed.
+  49: 
+  50: ## Secret-safety note
+  51: This refresh inspected only the listed source, audit, tests, task metadata, and safe path/pattern evidence. It did not read, grep, log, copy, summarize, or open forbidden secret/env/provider paths such as `.saivage/auth-profiles.json`, `.saivage/saivage.json`, `.env*`, provider configs, OAuth token stores, shell history, or keychain material.
+  52: 
+  53: ## Recommendation
+  54: No ARCH-008 implementation stage is warranted. Keep ARCH-008 closed unless a future source-grounded change reintroduces process-tree edit authority, manual/bypass provenance IDs, mutable ProcessTree/World/ProjectionPlane/DependencyService authorities, or UI affordances that present construction history as an editable process-authoring surface.
+
+### architecture-audit/continuous-improvement/2026-05-24-arch-009-decision-conformance-refresh.md
+   1: # ARCH-009 Decision Conformance Refresh — 2026-05-24
+   2: 
+   3: ## Scope and decision baseline
+   4: This refresh checked current source conformance to the ARCH-009 selected decision at `architecture-audit/decisions/ARCH-009.md:10`: runtime registration must remain minimal and expose only implemented executable tools, while planned/curriculum/tool-roadmap material must not leak into runtime manifests (`architecture-audit/decisions/ARCH-009.md:13`). The deleted legacy surface remains `.old.ts` production tools and placeholder registrations for non-executable tools (`architecture-audit/decisions/ARCH-009.md:22`).
+   5: 
+   6: No source implementation files were changed for this refresh because no current-source ARCH-009 regression was found.
+   7: 
+   8: ## Current source conformance evidence
+   9: - The main toolbar registers only select mode plus current executable construction tool ids in `frontend/src/components/toolbars/mainToolbarTools.ts:10` through `frontend/src/components/toolbars/mainToolbarTools.ts:23`.
+  10: - Grouped tool families explicitly state that runtime families expose only executable command-intent tools in `frontend/src/config/toolFamilies.ts:23` through `frontend/src/config/toolFamilies.ts:29`, and the registered family entries are the current point/intersection/line/parallel/perpendicular/tangent/segment/circle/guide tools in `frontend/src/config/toolFamilies.ts:31` through `frontend/src/config/toolFamilies.ts:146`.
+  11: - The current `ToolType` union contains only `select` and the same implemented construction ids in `frontend/src/stores/toolStore.ts:15`; it does not include transport, placeholder, roadmap, or planned-only ids.
+  12: - Focused palette guard coverage defines the expected executable ids in `frontend/tests/unit/config.toolFamilies.spec.ts:17` through `frontend/tests/unit/config.toolFamilies.spec.ts:28`, instantiates each implementation in `frontend/tests/unit/config.toolFamilies.spec.ts:30` through `frontend/tests/unit/config.toolFamilies.spec.ts:41`, checks toolbar/family alignment with command-intent APIs in `frontend/tests/unit/config.toolFamilies.spec.ts:83` through `frontend/tests/unit/config.toolFamilies.spec.ts:100`, and rejects `.old.ts`, placeholder icons, and unsupported runtime terms in `frontend/tests/unit/config.toolFamilies.spec.ts:103` through `frontend/tests/unit/config.toolFamilies.spec.ts:119`.
+  13: - The post-overhaul guard also keeps deleted legacy/placeholder surfaces absent through `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:66` and the ARCH-009 coverage map entry in `architecture-audit/final-review/cross-arch-guard-coverage-map.md:1`.
+  14: 
+  15: ## Path-only absence evidence
+  16: All absence checks avoided forbidden secret/provider/env paths and used only safe listed source/test/tool paths.
+  17: 
+  18: - `.old.ts` tool files: `find frontend/src/tools -name '*.old.ts' -print` produced an empty log at `.saivage/stages/ci-arch-009-decision-conformance-refresh/logs/path-only-old-tools.stdout.log:1`.
+  19: - Placeholder/transport toolbar icons: `find frontend/src/components/icons/toolbar -name '*Transport*' -o -name '*Placeholder*' -print` produced an empty log at `.saivage/stages/ci-arch-009-decision-conformance-refresh/logs/path-only-placeholder-icons.stdout.log:1`.
+  20: - Allowed runtime placeholder-term scan over `frontend/src/components/toolbars/mainToolbarTools.ts`, `frontend/src/config/toolFamilies.ts`, `frontend/src/stores/toolStore.ts`, `frontend/src/tools/`, and `frontend/src/components/icons/toolbar/` produced one non-registration source-comment hit, `frontend/src/tools/GuideTool.ts:9` using the geometry word "transporting". That is not a runtime palette entry, placeholder icon, planned-tool manifest, or unsupported tool id; the command output is stored at `.saivage/stages/ci-arch-009-decision-conformance-refresh/logs/path-only-runtime-placeholder-term-grep.stdout.log:1`.
+  21: 
+  22: ## Validation results
+  23: - Focused runtime palette Vitest passed: `npm run test --workspace=frontend -- --run tests/unit/config.toolFamilies.spec.ts` completed with 1 passed file and 4 passed tests. Log: `.saivage/stages/ci-arch-009-decision-conformance-refresh/logs/focused-arch-009-palette-guard.stdout.log:1`.
+  24: - Post-overhaul guard validation passed: `npm run test:post-overhaul-guards` completed with the frontend architecture guard passing 11 tests and backend project guard passing 22 tests. Logs: `.saivage/stages/ci-arch-009-decision-conformance-refresh/logs/npm-run-test-post-overhaul-guards.stdout.log:1` and `.saivage/stages/ci-arch-009-decision-conformance-refresh/logs/npm-run-test-post-overhaul-guards.stderr.log:1`.
+  25: - The backend guard emitted the expected handled stderr line while testing malformed stored project handling, but the command exit code was 0 and all tests passed; no ARCH-009 corrective action is indicated by that stderr.
+  26: 
+  27: ## Resolution and follow-up recommendation
+  28: ARCH-009 remains **resolved**. Current runtime palette registration still exposes only implemented command-intent tools, planned/placeholder tool surfaces remain absent from runtime manifests, legacy `.old.ts` tool files remain deleted, and the focused plus post-overhaul guards passed.
+  29: 
+  30: No follow-up implementation stage is warranted for ARCH-009 from this refresh. Future work should only open a new implementation stage if a concrete source regression reintroduces unsupported runtime tools, placeholder icons, legacy `.old.ts` files, or planned-tool palette entries.
+  31: 
+  32: ## Secret-safety note
+  33: This refresh did not read, grep, log, copy, or summarize forbidden secret/provider/env files. Evidence was gathered from the listed source/docs/tests/tool paths and path-only filesystem checks.
+
+### architecture-audit/continuous-improvement/2026-05-24-arch-010-decision-conformance-refresh.md
+   1: # ARCH-010 decision conformance refresh — 2026-05-24
+   2: 
+   3: ## Scope and secret-safety note
+   4: This continuous-improvement check verified current-source conformance to the ARCH-010 decision without implementation-source changes. The decision selected a separated App/session structure and required deletion of App-owned Drive/auth/project orchestration, localStorage restoration/autosave compatibility paths, and compatibility facades (`architecture-audit/decisions/ARCH-010.md:9`, `architecture-audit/decisions/ARCH-010.md:18`, `architecture-audit/decisions/ARCH-010.md:22`).
+   5: 
+   6: Secret-safety was maintained. This check did not read, grep, copy, log, or summarize `.saivage/auth-profiles.json`, `.saivage/saivage.json`, provider configs, env files, tokens, credentials, shell history, or keychain material. Inspection was limited to public source/audit/test files and generated validation logs under `.saivage/stages/ci-arch-010-decision-conformance-refresh/logs/`.
+   7: 
+   8: ## Current conformance evidence
+   9: 
+  10: ### App.vue remains a thin composition shell
+  11: - `frontend/src/App.vue:95` imports `useAppCanvasSession`, `frontend/src/App.vue:96` imports `useAppKeyboardShortcuts`, and `frontend/src/App.vue:98` imports `useDriveProjectSession`.
+  12: - `frontend/src/App.vue:127` creates `projectSession = useDriveProjectSession(...)`, passing runtime, command stack, Google config, and dialog ref instead of constructing Drive services or owning project lifecycle in the shell.
+  13: - `frontend/src/App.vue:134` creates `canvasSession = useAppCanvasSession(...)`, and `frontend/src/App.vue:159` destructures canvas-facing state/actions from that session.
+  14: - `frontend/src/App.vue:216` delegates global keyboard behavior to `useAppKeyboardShortcuts(...)`.
+  15: - App-level lifecycle is limited to initialization/event wiring and teardown: `frontend/src/App.vue:235` calls `initialize()`, `frontend/src/App.vue:237` registers the file-load event, and `frontend/src/App.vue:242` calls `stopAutoSave()` during unmount cleanup.
+  16: 
+  17: ### Drive/auth/project lifecycle is owned by the session composable
+  18: - `frontend/src/composables/useDriveProjectSession.ts:34` defines `useDriveProjectSession` as the lifecycle boundary.
+  19: - Drive service creation is contained in the composable at `frontend/src/composables/useDriveProjectSession.ts:36` rather than in `App.vue`.
+  20: - Startup/auth initialization lives in `frontend/src/composables/useDriveProjectSession.ts:82`; sign-in and startup file loading live at `frontend/src/composables/useDriveProjectSession.ts:109` and `frontend/src/composables/useDriveProjectSession.ts:134`.
+  21: - Current project creation/opening uses `ProjectService.createProjectSnapshot` and `ProjectService.restoreProjectSnapshot` from the session at `frontend/src/composables/useDriveProjectSession.ts:155` and `frontend/src/composables/useDriveProjectSession.ts:177`.
+  22: - Autosave lifecycle is contained in the session: `startAutoSave` subscribes to runtime changes at `frontend/src/composables/useDriveProjectSession.ts:70`, `scheduleAutoSave` owns the delay at `frontend/src/composables/useDriveProjectSession.ts:268`, and `performAutoSave` updates the Drive file at `frontend/src/composables/useDriveProjectSession.ts:276`.
+  23: 
+  24: ### Keyboard and canvas concerns remain separated
+  25: - `frontend/src/composables/useAppKeyboardShortcuts.ts:24` exposes a composable that receives injected callbacks; it owns `keydown` handling and registers/unregisters the listener at `frontend/src/composables/useAppKeyboardShortcuts.ts:97` and `frontend/src/composables/useAppKeyboardShortcuts.ts:98`.
+  26: - `frontend/src/composables/useAppCanvasSession.ts:16` exposes the canvas session, owns active plane and coordinate state at `frontend/src/composables/useAppCanvasSession.ts:18`, and applies active-plane reducer updates at `frontend/src/composables/useAppCanvasSession.ts:36`.
+  27: - Canvas fit-to-view delegation remains canvas-only at `frontend/src/composables/useAppCanvasSession.ts:44`.
+  28: 
+  29: ### Negative-pattern checks
+  30: - The ARCH-010 guard explicitly requires the three composables in `App.vue` and rejects App-owned localStorage, Drive service construction, autosave functions, runtime autosave subscription, keyboard listener ownership, and canvas update functions (`frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:902`, `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:917`).
+  31: - The same guard requires Drive session ownership of `GoogleDriveService`, project snapshots, restore, and autosave while rejecting `localStorage`, `diedrico_last_file*`, and compatibility/legacy/dual-flow language in the session (`frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:939`, `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:947`).
+  32: - The guard enforces keyboard and canvas boundary exclusions, including command/store/service leakage into keyboard shortcuts and Drive/autosave/localStorage leakage into the canvas session (`frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:951`, `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:972`).
+  33: - A focused public-source search across `frontend/src/App.vue`, the ARCH-010 composables, `frontend/src/services/ProjectService.ts`, and current guard/e2e specs found no `localStorage` or compatibility/legacy terms in App/session implementation files; remaining hits are expected current autosave/session methods or guard text in tests (`.saivage/stages/ci-arch-010-decision-conformance-refresh/logs/negative-pattern-search.stdout.log:1`).
+  34: 
+  35: ## Validation
+  36: 
+  37: | Command | Result | Evidence |
+  38: |---|---:|---|
+  39: | `npm run lint` | passed | `.saivage/stages/ci-arch-010-decision-conformance-refresh/logs/npm-run-lint.stdout.log:1`, `.saivage/stages/ci-arch-010-decision-conformance-refresh/logs/npm-run-lint.stderr.log:1` |
+  40: | `npm run test:post-overhaul-guards` | passed | `.saivage/stages/ci-arch-010-decision-conformance-refresh/logs/npm-run-test-post-overhaul-guards.stdout.log:1`, `.saivage/stages/ci-arch-010-decision-conformance-refresh/logs/npm-run-test-post-overhaul-guards.stderr.log:1` |
+  41: | `npm run test:e2e --workspace frontend -- current-ui-contract.spec.ts` | passed | `.saivage/stages/ci-arch-010-decision-conformance-refresh/logs/npm-run-test-e2e-current-ui-contract.stdout.log:1`, `.saivage/stages/ci-arch-010-decision-conformance-refresh/logs/npm-run-test-e2e-current-ui-contract.stderr.log:1` |
+  42: 
+  43: Observed validation summaries:
+  44: - Lint completed frontend `vue-tsc --noEmit` and backend `tsc --noEmit` with exit code 0.
+  45: - Post-overhaul guards passed the ARCH guard suite and backend projects guard suite: 11 frontend architecture tests and 22 backend integration tests passed. Backend stderr includes expected negative-path logging from malformed project-file handling while the command exited 0.
+  46: - The focused current UI contract ran directly instead of relying on prior acceptance evidence. Playwright passed all 6 Chromium tests in `frontend/tests/e2e/current-ui-contract.spec.ts:35`, including current tool exposure, app-shell panels, active runtime construction, undo/redo, and current select-mode behavior (`frontend/tests/e2e/current-ui-contract.spec.ts:70`, `frontend/tests/e2e/current-ui-contract.spec.ts:82`, `frontend/tests/e2e/current-ui-contract.spec.ts:99`).
+  47: 
+  48: ## Source-change discipline
+  49: No implementation source files were changed for this conformance check. The only intended repository artifact is this Markdown report; validation/inspection logs are stage artifacts under `.saivage/stages/ci-arch-010-decision-conformance-refresh/logs/`.
+  50: 
+  51: ## Resolution and recommendation
+  52: ARCH-010 remains resolved in the current source. The App shell continues to compose specialized session composables, Drive/auth/project lifecycle orchestration is not re-concentrated in `App.vue`, and deleted localStorage restoration/autosave compatibility paths remain absent.
+  53: 
+  54: No follow-up implementation is warranted. Future action should be trigger-based only: a failing ARCH-010 guard, a reproducible UI contract regression, or a cited source change that reintroduces App-owned Drive/auth/project/autosave/keyboard/canvas orchestration.
+
+### architecture-audit/continuous-improvement/2026-05-24-arch-011-decision-conformance-refresh.md
+   1: # ARCH-011 Decision Conformance Refresh — ci-arch-011-decision-conformance-refresh
+   2: 
+   3: ## Scope
+   4: This continuous-improvement refresh verifies that ARCH-011 remains resolved against the current repository source without making implementation changes. The check focuses on the selected ARCH-011 decision to keep backend, frontend, root, and current e2e contract coverage executable while stale spec-only contracts and weak pre-overhaul persistence tests remain deleted (`architecture-audit/decisions/ARCH-011.md:6`, `architecture-audit/decisions/ARCH-011.md:22`).
+   5: 
+   6: ## Sources reviewed
+   7: - ARCH-011 decision: `architecture-audit/decisions/ARCH-011.md:6`, `architecture-audit/decisions/ARCH-011.md:22`.
+   8: - Root validation wiring: `package.json:16`, `package.json:19`.
+   9: - Post-overhaul guard source: `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:691`, `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:772`.
+  10: - Current frontend persistence contract specs: `frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:38`, `frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:70`, `frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:29`, `frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:44`, `frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:51`.
+  11: - Current Playwright contracts: `frontend/tests/e2e/current-persistence-contract.spec.ts:12`, `frontend/tests/e2e/current-persistence-contract.spec.ts:67`, `frontend/tests/e2e/current-ui-contract.spec.ts:36`, `frontend/tests/e2e/current-ui-contract.spec.ts:70`.
+  12: - Backend contract/API/storage guard: `backend/tests/integration/projects.spec.ts:129`, `backend/tests/integration/projects.spec.ts:353`, `backend/tests/integration/projects.spec.ts:465`.
+  13: - Prior guard map context: `architecture-audit/final-review/cross-arch-guard-coverage-map.md:1`, `architecture-audit/final-review/post-overhaul-guards.md:1`.
+  14: 
+  15: ## Validation results
+  16: All commands were run from `/work/diedrico` with explicit logs under `.saivage/stages/ci-arch-011-decision-conformance-refresh/logs/`.
+  17: 
+  18: | Command | Result | Evidence |
+  19: |---|---:|---|
+  20: | `npm run test:post-overhaul-guards` | Passed | `.saivage/stages/ci-arch-011-decision-conformance-refresh/logs/npm-run-test-post-overhaul-guards.stdout.log:1`; stderr contains only expected negative-path malformed JSON logging from `backend/tests/integration/projects.spec.ts:1` in `.saivage/stages/ci-arch-011-decision-conformance-refresh/logs/npm-run-test-post-overhaul-guards.stderr.log:1`. |
+  21: | `npm test` | Passed | `.saivage/stages/ci-arch-011-decision-conformance-refresh/logs/npm-test.stdout.log:1`; stderr contains expected test-exercised error logs from Google Drive/auth/properties/backend negative cases in `.saivage/stages/ci-arch-011-decision-conformance-refresh/logs/npm-test.stderr.log:1`. |
+  22: | `npm run lint` | Passed | `.saivage/stages/ci-arch-011-decision-conformance-refresh/logs/npm-run-lint.stdout.log:1`; `.saivage/stages/ci-arch-011-decision-conformance-refresh/logs/npm-run-lint.stderr.log:1` is empty. |
+  23: 
+  24: ## Path-only absence evidence
+  25: The path-only absence command did not read file contents. It checked names/existence only and wrote results to `.saivage/stages/ci-arch-011-decision-conformance-refresh/logs/path-only-absence-evidence.stdout.log:1`.
+  26: 
+  27: - Stale spec-only contract directory remains absent: `specs/001-dihedral-learning-mvp/contracts`.
+  28: - Stale pre-overhaul e2e specs remain absent: `frontend/tests/e2e/persistence.spec.ts`, `frontend/tests/e2e/undo-redo.spec.ts`, `frontend/tests/e2e/selection.spec.ts`, `frontend/tests/e2e/geometry.spec.ts`, `frontend/tests/e2e/transport.spec.ts`, and `frontend/tests/e2e/placeholder.spec.ts`.
+  29: - Active e2e path names are limited to the current contracts: `frontend/tests/e2e/current-persistence-contract.spec.ts` and `frontend/tests/e2e/current-ui-contract.spec.ts`.
+  30: - Deleted weak/old-shape persistence and command tests remain absent, including `frontend/tests/integration/projectService.cascadeDeletion.spec.ts`, `frontend/tests/integration/projectService.determinism.spec.ts`, `frontend/tests/unit/architecture/serializationCoverage.spec.ts`, `frontend/tests/unit/commandStack.spec.ts`, `frontend/tests/unit/commands.spec.ts`, and deleted old command factory/operation specs listed in the absence log.
+  31: 
+  32: ## Decision-conformance assessment
+  33: ARCH-011 remains resolved. The root `test` script still aggregates frontend and backend workspaces instead of preserving frontend-only validation (`package.json:16`), and the explicit post-overhaul guard command still runs the frontend architecture invariant spec and backend projects integration spec (`package.json:19`). The invariant guard now directly checks ARCH-011 contract wiring and stale authority deletion (`frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:691`) and separately keeps only current Playwright contract specs active (`frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:772`).
+  34: 
+  35: The current frontend ProjectService tests assert `ProjectStateRecord` current-snapshot persistence and legacy command-stream rejection (`frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:38`, `frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:70`, `frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:29`). Current e2e contracts cover backend persistence shape and deleted legacy command-stream rejection (`frontend/tests/e2e/current-persistence-contract.spec.ts:12`, `frontend/tests/e2e/current-persistence-contract.spec.ts:67`) plus current UI hooks and executable tool IDs (`frontend/tests/e2e/current-ui-contract.spec.ts:36`, `frontend/tests/e2e/current-ui-contract.spec.ts:70`). Backend contract coverage continues to validate current DTO creation, legacy field rejection, and storage/path safety (`backend/tests/integration/projects.spec.ts:129`, `backend/tests/integration/projects.spec.ts:353`, `backend/tests/integration/projects.spec.ts:465`).
+  36: 
+  37: No concrete ARCH-011 regression was found.
+  38: 
+  39: ## Secret-safety statement
+  40: This refresh did not read, grep, copy, summarize, or log contents of forbidden secret/env/provider/runtime credential files. Absence checks were path/name-only. Reviewed files were limited to current decision, final-review documentation, package/test/source-contract files, generated validation logs, and this report.
+  41: 
+  42: ## Source-change statement
+  43: No implementation source or test code was modified because no ARCH-011 regression was found. The only intended repository artifact from this task is this continuous-improvement Markdown report under `architecture-audit/continuous-improvement/`; generated validation logs are under `.saivage/stages/ci-arch-011-decision-conformance-refresh/logs/`.
+  44: 
+  45: The workspace already contained unrelated modified, deleted, and untracked files before this task. They were not reverted or edited for this refresh.
+  46: 
+  47: ## Recommendation
+  48: No follow-up implementation is warranted for ARCH-011. Continue to rely on `npm run test:post-overhaul-guards`, `npm test`, and the path-only absence guard pattern for future conformance refreshes. Reopen ARCH-011 only if a future source-grounded regression restores stale contracts/tests, removes backend/current e2e coverage from root validation, or weakens current ProjectState/API contract assertions.
+
+### architecture-audit/continuous-improvement/2026-05-24-arch-012-decision-conformance-refresh.md
+   1: # ARCH-012 decision conformance refresh — 2026-05-24
+   2: 
+   3: ## Scope
+   4: This refresh verifies current conformance to the ARCH-012 documentation-authority decision without source or retained-documentation implementation changes. It checks the selected decision at `architecture-audit/decisions/ARCH-012.md:1`, retained current docs, current guard coverage, selected source/test comment authority, and path-only absence evidence for deleted historical pre-design/spec-pack files.
+   5: 
+   6: Secret/env/provider files were not read, grepped, logged, copied, summarized, or cited. All commands were run from `/work/diedrico`, and validation logs are under `.saivage/stages/ci-arch-012-decision-conformance-refresh/logs/`.
+   7: 
+   8: ## Decision baseline
+   9: ARCH-012 selected Proposal A: delete obsolete spec-pack artifacts and keep a lean current architecture reference plus source-near comments (`architecture-audit/decisions/ARCH-012.md:11`). The decision explicitly rejected Proposal B because archiving historical specs would keep misleading material in the repository (`architecture-audit/decisions/ARCH-012.md:16`). The no-backcompat stance forbids compatibility shims, adapters, dual paths, migration readers, or preserved legacy DTOs for this issue (`architecture-audit/decisions/ARCH-012.md:20`).
+  10: 
+  11: The legacy surfaces named for deletion remain the correct acceptance baseline: `specs/001-dihedral-learning-mvp/`, `pre-spec.md`, `pre-plan.md`, `pre-spec-ui.md`, `pre-spec-ui-tool.md`, and stale source/README sections that describe old validation, persistence, tool, or rendering behavior (`architecture-audit/decisions/ARCH-012.md:22`, `architecture-audit/decisions/ARCH-012.md:23`, `architecture-audit/decisions/ARCH-012.md:24`, `architecture-audit/decisions/ARCH-012.md:25`).
+  12: 
+  13: ## Retained-doc authority
+  14: The retained docs continue to present current source/audit authority rather than deleted historical specs:
+  15: 
+  16: - `README.md:3` states that the current repository authority is the source tree, not the deleted pre-design spec pack, and cites the ARCH-012 cleanup decision. It also cites current persistence and guard surfaces at `README.md:10`, `README.md:37`, `README.md:43`, and lists retained current docs plus the ARCH-012 implementation log at `README.md:59` through `README.md:62`. Its deleted-spec mention at `README.md:64` is explicitly historical/deleted, not current authority.
+  17: - `docs/DEPLOYMENT.md:3` anchors deployment commands to current package files, and `docs/DEPLOYMENT.md:49` states that obsolete persisted project formats are not read while the current persisted shape is the `ProjectService` snapshot contract.
+  18: - `docs/GOOGLE_DRIVE_SETUP.md:3` anchors Drive setup to current frontend source entry points, `docs/GOOGLE_DRIVE_SETUP.md:39` describes only the current ProjectState snapshot project-file contents, and `docs/GOOGLE_DRIVE_SETUP.md:47` reinforces secret-safety handling.
+  19: - `frontend/REALIZATION_ARCHITECTURE.md:3` identifies itself as the landed reducer-record realization path replacing deleted historical notes; `frontend/REALIZATION_ARCHITECTURE.md:9` rejects mutable World/ProjectionPlane and command-replay persistence as current architecture; `frontend/REALIZATION_ARCHITECTURE.md:29` cites the current snapshot persistence behavior.
+  20: 
+  21: The focused authority check confirmed all retained docs above cite current source/audit paths and do not cite deleted historical paths as current authority (`.saivage/stages/ci-arch-012-decision-conformance-refresh/logs/focused-doc-source-authority-check.stdout.log:1`).
+  22: 
+  23: ## Source/test comment authority
+  24: Current guard coverage remains aligned with ARCH-012:
+  25: 
+  26: - `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:86` through `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:90` enumerate the retained documentation paths checked by the guard.
+  27: - `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:122` through `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:133` enumerate deleted historical docs/spec-pack paths.
+  28: - `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:597` checks retained docs stay anchored to current source/audit authorities, and `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:622` checks selected retained source/test comments do not present stale docs or legacy preservation as current authority.
+  29: - `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:772` checks current Playwright contracts remain active while stale pre-overhaul e2e specs stay absent.
+  30: 
+  31: The final-review guard documentation says the executable guard preserves retained-doc current authority, deleted-surface absence, and legacy-command rejection (`architecture-audit/final-review/post-overhaul-guards.md:4`, `architecture-audit/final-review/post-overhaul-guards.md:8`, `architecture-audit/final-review/post-overhaul-guards.md:9`, `architecture-audit/final-review/post-overhaul-guards.md:10`). The ARCH-012 final review records no follow-up required and identifies the optional hardened authority guard (`architecture-audit/final-review/12-documentation.md:16`, `architecture-audit/final-review/12-documentation.md:19`).
+  32: 
+  33: The bounded source/comment authority script read only allowed current docs/tests/source paths and passed (`.saivage/stages/ci-arch-012-decision-conformance-refresh/logs/focused-doc-source-authority-check.stdout.log:1`).
+  34: 
+  35: ## Safe deleted-path absence evidence
+  36: Path-only checks confirmed the historical pre-design/spec-pack paths remain absent from the working tree:
+  37: 
+  38: - `test -e` reported `ABSENT pre-spec.md`, `ABSENT pre-plan.md`, `ABSENT pre-spec-ui.md`, `ABSENT pre-spec-ui-tool.md`, and `ABSENT specs/001-dihedral-learning-mvp` (`.saivage/stages/ci-arch-012-decision-conformance-refresh/logs/path-only-deleted-historical-paths.stdout.log:1`).
+  39: - `git status --short -- pre-spec.md pre-plan.md pre-spec-ui.md pre-spec-ui-tool.md specs/001-dihedral-learning-mvp/` and `git ls-files --deleted -- ...` list those historical paths as deleted, which is consistent with the ARCH-012 deletion acceptance baseline and does not require reading their contents (`.saivage/stages/ci-arch-012-decision-conformance-refresh/logs/path-only-deleted-historical-paths.stdout.log:1`).
+  40: 
+  41: No deleted file contents were opened or summarized.
+  42: 
+  43: ## Validation evidence
+  44: | Check | Result | Evidence |
+  45: |---|---:|---|
+  46: | Path-only deleted historical evidence | passed | `.saivage/stages/ci-arch-012-decision-conformance-refresh/logs/path-only-deleted-historical-paths.stdout.log:1`, `.saivage/stages/ci-arch-012-decision-conformance-refresh/logs/path-only-deleted-historical-paths.stderr.log:1` |
+  47: | Bounded docs/source authority check | passed | `.saivage/stages/ci-arch-012-decision-conformance-refresh/logs/focused-doc-source-authority-check.stdout.log:1`, `.saivage/stages/ci-arch-012-decision-conformance-refresh/logs/focused-doc-source-authority-check.stderr.log:1` |
+  48: | `npm run test:post-overhaul-guards` | passed | `.saivage/stages/ci-arch-012-decision-conformance-refresh/logs/npm-run-test-post-overhaul-guards.stdout.log:1`, `.saivage/stages/ci-arch-012-decision-conformance-refresh/logs/npm-run-test-post-overhaul-guards.stderr.log:1` |
+  49: | `npm run lint` | passed | `.saivage/stages/ci-arch-012-decision-conformance-refresh/logs/npm-run-lint.stdout.log:1`, `.saivage/stages/ci-arch-012-decision-conformance-refresh/logs/npm-run-lint.stderr.log:1` |
+  50: 
+  51: Observed command summaries:
+  52: 
+  53: - `npm run test:post-overhaul-guards` passed `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts` with 11 tests and `backend/tests/integration/projects.spec.ts` with 22 tests. Backend stderr includes the expected negative-path malformed-file logging while the command exited 0 (`.saivage/stages/ci-arch-012-decision-conformance-refresh/logs/npm-run-test-post-overhaul-guards.stdout.log:1`, `.saivage/stages/ci-arch-012-decision-conformance-refresh/logs/npm-run-test-post-overhaul-guards.stderr.log:1`).
+  54: - `npm run lint` passed through the root workspace script, running `vue-tsc --noEmit` for `frontend/` and `tsc --noEmit` for `backend/` (`.saivage/stages/ci-arch-012-decision-conformance-refresh/logs/npm-run-lint.stdout.log:1`).
+  55: 
+  56: ## Secret-safety note
+  57: This refresh maintained secret safety. It did not read, grep, log, copy, summarize, or include contents from `.saivage/auth-profiles.json`, `.saivage/saivage.json`, `.saivage/config.json`, provider configuration, env files including `frontend/.env*`, OAuth tokens, credentials, shell history, or keychain material. The deleted-path evidence used path-only `git status`, `git ls-files --deleted`, and `test -e` checks.
+  58: 
+  59: The existing post-overhaul guard also documents a bounded secret-safety scan over allowed source/docs/test surfaces only (`architecture-audit/final-review/post-overhaul-guards.md:56`) and records that forbidden secret/env/provider files are excluded before reading (`architecture-audit/final-review/post-overhaul-guards.md:62`).
+  60: 
+  61: ## Recommendation
+  62: ARCH-012 remains resolved. No follow-up implementation or retained-doc rewrite stage is warranted from this refresh.
+  63: 
+  64: The cross-ARCH guard map already records ARCH-012 as resolved with no unresolved documentation-authority risk (`architecture-audit/final-review/cross-arch-guard-coverage-map.md:21`) and recommends no next guard/improvement stage for registered `ARCH-001` through `ARCH-012` absent a new source-grounded defect (`architecture-audit/final-review/cross-arch-guard-coverage-map.md:27`). With this report, ARCH-004 through ARCH-012 have now received formal conformance refreshes/hardening-sweep validation coverage, while ARCH-001 through ARCH-003 remain covered by the existing cross-ARCH guard map and post-overhaul guards.
+
+### architecture-audit/final-review/00-summary.md
+   1: # Phase G Final Review Summary
+   2: 
+   3: ## Acceptance result
+   4: Final acceptance is **met for the architecture-overhaul cycle**. The Phase B register marks `ARCH-001` through `ARCH-012` resolved in `architecture-audit/issues/register.md:1`; the implementation evidence in `architecture-audit/implementation-log/ARCH-001.md:1` through `architecture-audit/implementation-log/ARCH-012.md:1` is cross-checked below against current source, deletion evidence, validation logs, and no-backcompat leakage checks. Current source remains the authority: root workspace scripts are in `package.json:10`, live frontend state authority is `frontend/src/domain/world/ProjectState.ts:1` plus `frontend/src/domain/world/ProjectStateRuntime.ts:1`, backend contracts are in `backend/src/api/projects.ts:1`, and current e2e contracts are `frontend/tests/e2e/current-ui-contract.spec.ts:1` plus `frontend/tests/e2e/current-persistence-contract.spec.ts:1`.
+   5: 
+   6: ## ARCH issue status table
+   7: | Issue | Status | Final evidence | Follow-up recommendation |
+   8: |---|---|---|---|
+   9: | ARCH-001 | resolved | Root scripts validate frontend and backend in `package.json:14`; implementation log `architecture-audit/implementation-log/ARCH-001.md:1`. | None. |
+  10: | ARCH-002 | resolved | Current snapshot DTO and legacy command-stream rejection in `frontend/src/services/ProjectService.ts:1`, `backend/src/models/Project.ts:1`; log `architecture-audit/implementation-log/ARCH-002.md:1`. | None. |
+  11: | ARCH-003 | resolved | Mutable `World`/`ProjectionPlane`/`ProcessTree` authorities are absent per `.saivage/stages/phase-g-final-review/logs/filesystem-deletion-evidence.log:1`; reducer runtime in `frontend/src/domain/world/ProjectStateRuntime.ts:1`; register trace in `architecture-audit/issues/register.md:1`. | None. Historical partial/open entries in `architecture-audit/implementation-log/ARCH-003.md:1` are superseded by later deletion commits and register notes. |
+  12: | ARCH-004 | resolved | Tool/canvas command-intent boundary in `frontend/src/tools/ITool.ts:1`, `frontend/src/composables/useCommandExecution.ts:1`, `frontend/src/components/workspace/SvgCanvas.vue:1`; log `architecture-audit/implementation-log/ARCH-004.md:1`. | None. |
+  13: | ARCH-005 | resolved | Reactive ProjectState snapshot composable `frontend/src/composables/useProjectStateRuntimeSnapshot.ts:1`; UI read models in `frontend/src/components/panels/ActionsPanel.vue:1`; log `architecture-audit/implementation-log/ARCH-005.md:1`. | None. |
+  14: | ARCH-006 | resolved | Single presentation primitive path `frontend/src/domain/presentation/Paper.ts:1`; deleted renderer services absent; log `architecture-audit/implementation-log/ARCH-006.md:1`. | None. |
+  15: | ARCH-007 | resolved | Typed API/storage contract in `backend/src/api/projects.ts:1`, `backend/src/storage/FileStorage.ts:1`, `backend/src/storage/ProjectRepository.ts:1`; log `architecture-audit/implementation-log/ARCH-007.md:1`. | None. |
+  16: | ARCH-008 | resolved | Reducer-authored process provenance in `frontend/src/commands/operations/OperationReducers.ts:1` and read model in `frontend/src/domain/world/ProjectStateProcessReducers.ts:1`; log `architecture-audit/implementation-log/ARCH-008.md:1`. | None; note implementation intentionally followed direct stage assignment over the older selected Proposal B text recorded in `architecture-audit/implementation-log/ARCH-008.md:1`. |
+  17: | ARCH-009 | resolved | Runtime palette list in `frontend/src/components/toolbars/mainToolbarTools.ts:1` and `frontend/src/config/toolFamilies.ts:1`; placeholder files absent; log `architecture-audit/implementation-log/ARCH-009.md:1`. | None. |
+  18: | ARCH-010 | resolved | App shell extraction in `frontend/src/App.vue:1`, `frontend/src/composables/useDriveProjectSession.ts:1`, `frontend/src/composables/useAppKeyboardShortcuts.ts:1`, `frontend/src/composables/useAppCanvasSession.ts:1`; log `architecture-audit/implementation-log/ARCH-010.md:1`. | None. |
+  19: | ARCH-011 | resolved | Root full test command in `package.json:15`, backend API tests `backend/tests/integration/projects.spec.ts:1`, current e2e contracts under `frontend/tests/e2e:1`; log `architecture-audit/implementation-log/ARCH-011.md:1`. | None. |
+  20: | ARCH-012 | resolved | Historical spec/pre-design files deleted; current docs `README.md:1`, `docs/DEPLOYMENT.md:1`, `docs/GOOGLE_DRIVE_SETUP.md:1`, `frontend/REALIZATION_ARCHITECTURE.md:1`; log `architecture-audit/implementation-log/ARCH-012.md:1`. | None. |
+  21: 
+  22: No ARCH issue is left neither resolved nor deferred. No deferred issues remain in `architecture-audit/issues/register.md:1`.
+  23: 
+  24: ## Validation evidence from Phase G
+  25: Commands were run from `/work/diedrico` with logs under `.saivage/stages/phase-g-final-review/logs/`.
+  26: 
+  27: | Command | Result | Evidence |
+  28: |---|---:|---|
+  29: | `npm run lint` | passed | `.saivage/stages/phase-g-final-review/logs/npm-run-lint.stdout.log:1` and `.saivage/stages/phase-g-final-review/logs/npm-run-lint.stderr.log:1`; frontend `vue-tsc --noEmit` and backend `tsc --noEmit` exited 0. |
+  30: | `npm run build` | passed | `.saivage/stages/phase-g-final-review/logs/npm-run-build.stdout.log:1`; frontend Vite build produced `dist/index.html` and backend `tsc` exited 0. |
+  31: | `npm test` | passed | `.saivage/stages/phase-g-final-review/logs/npm-test.stdout.log:1`; frontend 42 files passed with 470 passed / 8 skipped and backend 1 file passed with 18 tests. Stderr contains expected negative-path test logging in `.saivage/stages/phase-g-final-review/logs/npm-test.stderr.log:1`, exit code 0. |
+  32: | `npm run test:e2e --workspace=frontend` | passed | `.saivage/stages/phase-g-final-review/logs/playwright.stdout.log:1`; 8 Chromium tests passed across `current-ui-contract.spec.ts` and `current-persistence-contract.spec.ts`; stderr empty at `.saivage/stages/phase-g-final-review/logs/playwright.stderr.log:1`. |
+  33: | Markdown citation self-check | passed | `.saivage/stages/phase-g-final-review/markdown-citation-self-check.out:1`; all 13 final-review Markdown files contain repo-path citations. |
+  34: 
+  35: ## Preview status
+  36: The frontend preview is running and reachable. Listener evidence shows PID `112773` bound to `0.0.0.0:5173` in `.saivage/stages/phase-g-final-review/logs/listeners.log:1`; reachability check `curl -I http://127.0.0.1:5173/` returned `HTTP/1.1 200 OK` and `Content-Type: text/html` in `.saivage/stages/phase-g-final-review/logs/preview-curl-5173.log:1`. Additional Vite preview listeners exist from earlier stages, but the accepted live preview target is `0.0.0.0:5173`.
+  37: 
+  38: ## Deletion inventory cross-check
+  39: Deletion evidence was checked by both git deletion history and current filesystem evidence: `.saivage/stages/phase-g-final-review/logs/git-deletions-summary.log:1` and `.saivage/stages/phase-g-final-review/logs/filesystem-deletion-evidence.log:1`.
+  40: 
+  41: - ARCH-002 removed persisted command-stream surfaces: `CommandStack.getCommands()` and ProjectService command reconstruction were deleted; current rejection keys are explicit in `frontend/src/services/ProjectService.ts:36` and backend rejection keys in `backend/src/api/projects.ts:24`.
+  42: - ARCH-003 deleted mutable authorities: `frontend/src/domain/world/World.ts`, `frontend/src/domain/world/ProjectionPlane.ts`, `frontend/src/domain/viewState/ProjectionPlane.ts`, `frontend/src/domain/processTree/ProcessTree.ts`, `frontend/src/services/DependencyService.ts`, and related mutable/factory tests are absent; git deletion commits include `b4016c72...` and `924ba825...` in `.saivage/stages/phase-g-final-review/logs/git-deletions-summary.log:1`.
+  43: - ARCH-004 deleted the parallel interaction path: `frontend/src/components/workspace/Workspace2D.vue` and `frontend/src/components/workspace/ElementRenderer.vue` are deleted in commit `ca04ffc...`; current canvas uses `frontend/src/components/workspace/SvgCanvas.vue:1` and the command-intent executor.
+  44: - ARCH-006 deleted duplicate rendering services: `frontend/src/services/RenderService.ts`, `frontend/src/services/SVGRenderer.ts`, `frontend/src/services/PaperService.ts`, and `frontend/src/composables/useElementGeometry.ts` are absent; commit `37b14ac...` records deletion.
+  45: - ARCH-009 deleted placeholder/legacy tools: `frontend/src/components/icons/toolbar/TransportPointIcon.vue`, `frontend/src/tools/CircleTool.old.ts`, `frontend/src/tools/ParallelLineTool.old.ts`, `frontend/src/tools/PerpendicularLineTool.old.ts`, and transport e2e specs are absent; commit `0f055d...` records deletion.
+  46: - ARCH-011/e2e repair deleted stale pre-overhaul e2e specs and retained current e2e contracts only: current files are `frontend/tests/e2e/current-ui-contract.spec.ts:1` and `frontend/tests/e2e/current-persistence-contract.spec.ts:1`; commit `562fad...` records deletion of stale geometry/selection/persistence specs.
+  47: - ARCH-012 deleted stale historical documents: `specs/001-dihedral-learning-mvp/`, `pre-spec.md`, `pre-plan.md`, `pre-spec-ui.md`, and `pre-spec-ui-tool.md` are absent per filesystem evidence.
+  48: 
+  49: ## Rejected-proposal / compatibility leakage check
+  50: Selected proposals from Phase D are recorded in `architecture-audit/issues/register.md:1` and decisions `architecture-audit/decisions/ARCH-001.md:1` through `architecture-audit/decisions/ARCH-012.md:1`. The final source check found no compatibility shim, dual old/new runtime authority, preserved legacy DTO reader, or placeholder runtime facade reintroduced. Evidence:
+  51: 
+  52: - Legacy command-stream names appear only as rejection keys/tests (`frontend/src/services/ProjectService.ts:36`, `backend/src/api/projects.ts:24`, `frontend/tests/e2e/current-persistence-contract.spec.ts:67`) or private runtime history fields (`frontend/src/commands/CommandStack.ts:11`), not as persistence compatibility.
+  53: - Mutable `World`, `ProjectionPlane`, `ProcessTree`, `DependencyService`, `RenderService`, `SVGRenderer`, `PaperService`, `.old.ts` tool files, and transport placeholder icon files are absent per `.saivage/stages/phase-g-final-review/logs/filesystem-deletion-evidence.log:1` and `.saivage/stages/phase-g-final-review/logs/source-tree-extract.log:1`.
+  54: - Current tests assert no-backcompat behavior: backend rejects legacy payloads in `backend/tests/integration/projects.spec.ts:249`, ProjectService tests reject old command snapshots in `frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:72`, and e2e persistence rejects deleted command-stream payloads in `frontend/tests/e2e/current-persistence-contract.spec.ts:67`.
+  55: 
+  56: ## Follow-up cycle decision
+  57: No follow-up architecture cycle is required for the registered `ARCH-001` through `ARCH-012` scope. Any future work should start from new user/product objectives, not from unresolved items in this overhaul cycle.
+  58: 
+  59: ## Secret-safety note
+  60: This review did not read, copy, or log forbidden secret/env/provider files. Evidence and citations are limited to source, audit Markdown, test logs, package manifests, and non-secret Saivage stage logs.
+
+### architecture-audit/final-review/cross-arch-guard-coverage-map.md
+   1: # Cross-ARCH Guard Coverage Map
+   2: 
+   3: ## Scope
+   4: This map is a bounded post-overhaul cross-check for `ARCH-001` through `ARCH-012`. It maps the selected decision/proposal outcome, implementation/final-review evidence, executable guard coverage, and remaining unguarded risk. The resolved status is inherited from `architecture-audit/issues/register.md:1` and `architecture-audit/final-review/00-summary.md:1`; this document does not reopen resolved issues without a new source-grounded defect.
+   5: 
+   6: ## Coverage table
+   7: 
+   8: | Issue | Decision / proposal outcome | Implementation and final-review evidence | Existing executable guard coverage | Unguarded residual risk |
+   9: |---|---|---|---|---|
+  10: | ARCH-001 | Resolved by selected Proposal A: make root validation non-mutating and workspace-wide; see `architecture-audit/decisions/ARCH-001.md:1` and `architecture-audit/proposals/ARCH-001/proposal-a.md:1`. | Root scripts now aggregate frontend/backend validation in `package.json:14`; final evidence is in `architecture-audit/implementation-log/ARCH-001.md:1` and `architecture-audit/final-review/01-workspace.md:1`. | `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:103` checks root `lint`, `test`, and `build` scripts invoke both workspaces and do not short-circuit; `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:141` rejects mutating lint tokens. The root command is `npm run test:post-overhaul-guards` from `package.json:18`, documented in `architecture-audit/final-review/post-overhaul-guards.md:1`. | No unresolved ARCH-001 risk. Optional future hardening would be CI-environment replication of these local guards, not an open architecture defect. |
+  11: | ARCH-002 | Resolved by selected Proposal B: replace weak project persistence/command replay with the current reducer snapshot contract; see `architecture-audit/decisions/ARCH-002.md:1` and `architecture-audit/proposals/ARCH-002/proposal-b.md:1`. | Current snapshot DTO and legacy command-stream rejection live in `frontend/src/services/ProjectService.ts:1` and `backend/src/models/Project.ts:1`; final evidence is in `architecture-audit/implementation-log/ARCH-002.md:1` and `architecture-audit/final-review/08-persistence-drive.md:1`. | Frontend guard rejects legacy `commands`, `commandHistory`, `undoStack`, `redoStack`, `SerializedCommand`, and `SerializedOperation` through `ProjectService.validateProjectData` in `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:551`; backend API/storage tests reject legacy fields in `backend/tests/integration/projects.spec.ts:249`. | No unresolved persistence-contract risk. Optional future hardening could add property-based malformed DTO generation, but current no-backcompat contract is guarded. |
+  12: | ARCH-003 | Resolved by selected Proposal B, later completed by final mutable-authority deletion; see `architecture-audit/decisions/ARCH-003.md:1`, `architecture-audit/proposals/ARCH-003/proposal-b.md:1`, and the superseding register trace in `architecture-audit/issues/register.md:1`. | Reducer runtime authority is `frontend/src/domain/world/ProjectStateRuntime.ts:1` over records from `frontend/src/domain/world/ProjectState.ts:1`; deleted mutable authorities are cross-checked in `architecture-audit/implementation-log/ARCH-003.md:1` and `architecture-audit/final-review/04-domain-model.md:1`. | Deleted-authority guard keeps `frontend/src/domain/world/World.ts`, `frontend/src/domain/world/ProjectionPlane.ts`, `frontend/src/domain/processTree/ProcessTree.ts`, and `frontend/src/services/DependencyService.ts` absent in `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:66`; final evidence is summarized in `architecture-audit/final-review/post-overhaul-guards.md:1`. | No unresolved multi-authority risk. Optional future hardening could add reducer-level invariant fuzzing, but the old mutable authority surfaces are executable-deletion guarded. |
+  13: | ARCH-004 | Resolved by selected Proposal B: unify canvas/tool interaction around command-intent execution; see `architecture-audit/decisions/ARCH-004.md:1` and `architecture-audit/proposals/ARCH-004/proposal-b.md:1`. | Current boundary is `frontend/src/tools/ITool.ts:1`, `frontend/src/composables/useCommandExecution.ts:1`, and `frontend/src/components/workspace/SvgCanvas.vue:1`; evidence is in `architecture-audit/implementation-log/ARCH-004.md:1` and `architecture-audit/final-review/07-tooling-state-machine.md:1`. | Deletion guard keeps the old parallel canvas/render path absent, including `frontend/src/components/workspace/Workspace2D.vue` and `frontend/src/components/workspace/ElementRenderer.vue`, via `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:66`; current e2e UI contract is required by `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:426` and implemented in `frontend/tests/e2e/current-ui-contract.spec.ts:1`. | No unresolved split-interaction risk. Fine-grained pointer-sequence behavioral regressions remain outside this static guard and are optional future UI test hardening. |
+  14: | ARCH-005 | Resolved by selected Proposal A: move process-tree/reactive reads to ProjectState snapshots instead of polling/version forcing; see `architecture-audit/decisions/ARCH-005.md:1` and `architecture-audit/proposals/ARCH-005/proposal-a.md:1`. | Snapshot reactivity is in `frontend/src/composables/useProjectStateRuntimeSnapshot.ts:1` and process UI reads in `frontend/src/components/panels/ActionsPanel.vue:1`; evidence is in `architecture-audit/implementation-log/ARCH-005.md:1` and `architecture-audit/final-review/03-frontend-layering.md:1`. | `frontend/tests/unit/domain/projectStateRuntimeReactiveSelectors.spec.ts:1` now mounts a Vue computed-selector probe over `ProjectStateRuntimeHolder` and `useProjectStateRuntimeSnapshot`, proving process/action and element read models update after runtime commit, reset, and replacement. `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:66` also keeps deleted mutable `frontend/src/domain/processTree/ProcessTree.ts` authority absent. | No unresolved polling-authority risk. This optional reactive selector hardening keeps ARCH-005 resolved and adds a focused regression guard against stale snapshot-derived UI/process reads. |
+  15: | ARCH-006 | Resolved by selected Proposal A: consolidate rendering through the single presentation primitive path; see `architecture-audit/decisions/ARCH-006.md:1` and `architecture-audit/proposals/ARCH-006/proposal-a.md:1`. | Current presentation authority is `frontend/src/domain/presentation/Paper.ts:1`; duplicate renderer deletions are recorded in `architecture-audit/implementation-log/ARCH-006.md:1` and `architecture-audit/final-review/06-rendering-pipeline.md:1`. | `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:66` keeps deleted duplicate renderer services absent (`frontend/src/services/RenderService.ts`, `frontend/src/services/SVGRenderer.ts`, `frontend/src/services/PaperService.ts`, `frontend/src/composables/useElementGeometry.ts`), and `frontend/tests/e2e/current-ui-contract.spec.ts:1` covers current canvas shell availability. | No unresolved duplicate-renderer risk. Visual pixel/layout regressions are not fully covered by the architecture guard and would be optional future visual-regression hardening. |
+  16: | ARCH-007 | Resolved by selected Proposal A: enforce typed backend DTO/API/storage contracts and safe IDs; see `architecture-audit/decisions/ARCH-007.md:1` and `architecture-audit/proposals/ARCH-007/proposal-a.md:1`. | Typed API and storage contracts are `backend/src/api/projects.ts:1`, `backend/src/storage/FileStorage.ts:1`, and `backend/src/storage/ProjectRepository.ts:1`; evidence is in `architecture-audit/implementation-log/ARCH-007.md:1` and `architecture-audit/final-review/02-backend-layering.md:1`. | `backend/tests/integration/projects.spec.ts:105` through `backend/tests/integration/projects.spec.ts:332` guard typed errors, current DTO replacement, legacy field rejection, and path confinement. The backend guard is part of `npm run test:post-overhaul-guards` in `package.json:18`. | No unresolved backend contract risk. Optional future hardening could add concurrency/storage-failure cases, but arbitrary update/path traversal defects are guarded. |
+  17: | ARCH-008 | Resolved by selected Proposal B as adjusted by direct stage implementation: process provenance is reducer-authored and authoritative; see `architecture-audit/decisions/ARCH-008.md:1`, `architecture-audit/proposals/ARCH-008/proposal-b.md:1`, and `architecture-audit/implementation-log/ARCH-008.md:1`. | Current provenance writes are in `frontend/src/commands/operations/OperationReducers.ts:1` and read models in `frontend/src/domain/world/ProjectStateProcessReducers.ts:1`; final evidence is in `architecture-audit/final-review/04-domain-model.md:1`. | Guard coverage is indirect through current reducer-authority checks in `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:15` and deleted mutable process-tree authority absence in `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:66`; final-review evidence remains the primary ARCH-008 guard. | No unresolved process-tree-authority risk. Optional future hardening could add reducer provenance assertions per operation type, but the old non-authoritative ProcessTree surface is absent. |
+  18: | ARCH-009 | Resolved by selected Proposal B: delete placeholder/legacy tools and keep palette entries executable; see `architecture-audit/decisions/ARCH-009.md:1` and `architecture-audit/proposals/ARCH-009/proposal-b.md:1`. | Runtime palette configuration is `frontend/src/components/toolbars/mainToolbarTools.ts:1` and `frontend/src/config/toolFamilies.ts:1`; deletion evidence is in `architecture-audit/implementation-log/ARCH-009.md:1` and `architecture-audit/final-review/07-tooling-state-machine.md:1`. | `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:66` guard keeps `.old.ts` tools and `frontend/src/components/icons/toolbar/TransportPointIcon.vue` absent; `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:426` checks active e2e source excludes transport/placeholder behavior via `frontend/tests/e2e/current-ui-contract.spec.ts:1`. | No unresolved placeholder-tool risk. Optional future hardening could assert every toolbar ID has an executable command-intent integration test. |
+  19: | ARCH-010 | Resolved by selected Proposal A: extract App shell responsibilities into Drive/session/keyboard/canvas composables; see `architecture-audit/decisions/ARCH-010.md:1` and `architecture-audit/proposals/ARCH-010/proposal-a.md:1`. | Current extraction is visible in `frontend/src/App.vue:1`, `frontend/src/composables/useDriveProjectSession.ts:1`, `frontend/src/composables/useAppKeyboardShortcuts.ts:1`, and `frontend/src/composables/useAppCanvasSession.ts:1`; evidence is in `architecture-audit/implementation-log/ARCH-010.md:1` and `architecture-audit/final-review/03-frontend-layering.md:1`. | `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:1` now includes a focused static ARCH-010 guard requiring App.vue to compose through `useDriveProjectSession`, `useAppKeyboardShortcuts`, and `useAppCanvasSession`, rejecting reintroduced App-owned localStorage restoration, Drive singleton/private-access orchestration, inline autosave, keyboard listener, and canvas/session orchestration. The same guard checks the three composables own their intended current concerns without old localStorage compatibility, command/store keyboard authority, or Drive/persistence canvas coupling. | No unresolved App-shell risk. This optional hardening adds executable import/source-boundary checks while keeping ARCH-010 resolved. |
+  20: | ARCH-011 | Resolved by selected Proposal A: make test and contract coverage include frontend, backend, and current e2e contracts; see `architecture-audit/decisions/ARCH-011.md:1` and `architecture-audit/proposals/ARCH-011/proposal-a.md:1`. | Root full test command is `package.json:15`; backend integration coverage is `backend/tests/integration/projects.spec.ts:1`; active current e2e specs are `frontend/tests/e2e/current-persistence-contract.spec.ts:1` and `frontend/tests/e2e/current-ui-contract.spec.ts:1`; evidence is in `architecture-audit/implementation-log/ARCH-011.md:1` and `architecture-audit/final-review/09-test-surface.md:1`. | `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:426` requires current e2e specs to remain active and stale `persistence.spec.ts`, `undo-redo.spec.ts`, `selection.spec.ts`, `geometry.spec.ts`, transport, and placeholder specs to remain absent. Backend API/storage tests are run by `npm run test:post-overhaul-guards` from `package.json:18`. | No unresolved test-surface risk. Optional future hardening could broaden scenario coverage, but stale pre-overhaul test contracts are guarded. |
+  21: | ARCH-012 | Resolved by selected Proposal A: delete stale pre-design/spec-pack documents and rewrite retained docs as current-source anchored material; see `architecture-audit/decisions/ARCH-012.md:1` and `architecture-audit/proposals/ARCH-012/proposal-a.md:1`. | Retained current docs are `README.md:1`, `docs/DEPLOYMENT.md:1`, `docs/GOOGLE_DRIVE_SETUP.md:1`, and `frontend/REALIZATION_ARCHITECTURE.md:1`; deletion and rewrite evidence is in `architecture-audit/implementation-log/ARCH-012.md:1` and `architecture-audit/final-review/12-documentation.md:1`. | `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:354` keeps retained docs citing current source/audit paths, while `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:44` and `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:66` keep deleted historical pre-spec/spec-pack paths absent or only cited as deleted/historical. | No unresolved documentation-authority risk. Optional future hardening could add Markdown link checking, but current-source citation authority is guarded. |
+  22: 
+  23: ## Cross-cutting resolved/future distinction
+  24: All twelve ARCH issues remain **resolved** by the current issue register and Phase G final review (`architecture-audit/issues/register.md:1`, `architecture-audit/final-review/00-summary.md:1`). The residual items above are optional future hardening ideas only; they are not reopened issues because the current source and guard evidence do not expose a concrete architecture defect.
+  25: 
+  26: ## Next-stage recommendation
+  27: No next guard/improvement stage is warranted for the registered `ARCH-001` through `ARCH-012` scope. If future product work changes architecture boundaries, open a new bounded issue from the new source-grounded defect rather than extending this completed overhaul cycle.
+  28: 
+  29: ## Validation record for this document
+  30: Validation for this map is recorded under `.saivage/stages/ci-post-overhaul-cross-arch-guard-coverage-map/logs/` and the task report at `.saivage/stages/ci-post-overhaul-cross-arch-guard-coverage-map/reports/t1-cross-arch-guard-coverage-map.json`.
+  31: 
+  32: ## Optional ARCH-003/005/008 reducer provenance hardening
+  33: A focused reducer invariant guard was added in `frontend/tests/unit/domain/projectStateReducerProvenanceInvariants.spec.ts:1` for the current `ProjectStateRecord` authority in `frontend/src/domain/world/ProjectState.ts:1`, reducer runtime boundary in `frontend/src/domain/world/ProjectStateRuntime.ts:1`, process reducer read helpers in `frontend/src/domain/world/ProjectStateProcessReducers.ts:1`, and construction reducer writes in `frontend/src/commands/operations/OperationReducers.ts:1`. The guard covers free point construction plus dependent line, segment, circle, and guide construction through current operation APIs only. It asserts frozen plain DTO state, deterministic action ids/createdAt/root child order/process-tree version, and dependency graph input-to-output/input-to-action/action-to-output edges. This is optional hardening for resolved ARCH-003, ARCH-005, and ARCH-008 coverage; it does not reopen any ARCH issue. Focused validation evidence is recorded in `.saivage/stages/ci-domain-reducer-provenance-invariant-hardening/logs/focused-projectstate-reducer-invariants.stdout.log:1`.
+  34: 
+  35: ## Optional ARCH-004 pointer command-intent hardening
+  36: Focused pointer/tool command-intent coverage was added in `frontend/tests/unit/tools/pointTool.spec.ts:1` for representative `PointTool` and `LineTool` flows through the current `frontend/src/composables/useCommandExecution.ts:1` and `frontend/src/commands/CommandStack.ts:1` boundary. The guard also checks this focused suite does not import deleted legacy direct-mutation/canvas surfaces such as `Workspace2D`, `ElementRenderer`, `World`, `ProjectionPlane`, `ProcessTree`, or `DependencyService`. This is optional hardening for resolved ARCH-004 only; the issue remains resolved by `architecture-audit/issues/register.md:1` and is not reopened. Validation evidence for this hardening is recorded under `.saivage/stages/ci-arch-004-command-intent-pointer-hardening/logs/`, including the focused pointer test, post-overhaul guards, lint, build, full test, Playwright/e2e attempt, and live preview reachability logs.
+  37: 
+  38: 
+  39: ## Optional ARCH-005 reactive selector hardening
+  40: A focused reactive selector guard was added in `frontend/tests/unit/domain/projectStateRuntimeReactiveSelectors.spec.ts:1` for the current runtime holder in `frontend/src/domain/world/ProjectStateRuntime.ts:1`, Vue snapshot composable in `frontend/src/composables/useProjectStateRuntimeSnapshot.ts:1`, and selector read models in `frontend/src/domain/world/ProjectStateSelectors.ts:1`. The test mounts a small Vue computed probe and verifies ProjectState process/action and element panel-equivalent read models update from runtime `commit`, `reset`, and replacement commits without polling, force-refresh helpers, manual version counters as the assertion mechanism, command invalidation facts, or deleted mutable authorities. ARCH-005 remains resolved by `architecture-audit/issues/register.md:1`; this is optional hardening only. Validation evidence for this stage is recorded under `.saivage/stages/ci-arch-005-reactive-selector-hardening/logs/`.
+  41: 
+  42: ## Optional ARCH-006 presentation primitive hardening
+  43: Focused presentation-boundary coverage was added in `frontend/tests/unit/domain/presentationPrimitives.spec.ts:1` for the current rendering authority in `frontend/src/domain/presentation/Paper.ts:1` and the Vue canvas consumer in `frontend/src/components/workspace/SvgCanvas.vue:1`. The guard uses current `ProjectStateRecord` presentation APIs to materialize representative point, segment, circle, and guide primitives, projects them to SVG attributes through the domain presentation helpers, and verifies deleted duplicate renderer/service/component paths remain absent: `frontend/src/services/RenderService.ts`, `frontend/src/services/SVGRenderer.ts`, `frontend/src/services/PaperService.ts`, `frontend/src/components/workspace/ElementRenderer.vue`, and `frontend/src/composables/useElementGeometry.ts`. ARCH-006 remains resolved by `architecture-audit/issues/register.md:1`; this is optional hardening only. Validation evidence for this stage is recorded under `.saivage/stages/ci-arch-006-presentation-primitive-hardening/logs/`, including focused presentation coverage, post-overhaul guards, lint, build, full test, Playwright/e2e attempt, and live preview reachability logs.
+  44: 
+  45: ## Optional ARCH-007 backend error/storage hardening
+  46: Focused backend API/storage guard coverage was strengthened in `backend/tests/integration/projects.spec.ts:1` for the current typed project route contract in `backend/src/api/projects.ts:1`, project-local filename guard in `backend/src/storage/FileStorage.ts:1`, and strict project id namespace in `backend/src/storage/ProjectRepository.ts:1`. The added cases reject non-object, array, null, extra-key, arbitrary blob, and malformed nested DTO update payloads with `{ code, message, status }` only, assert no legacy `{ error }` alias appears, and verify list metadata skips invalid project filenames/malformed JSON without leaking `domain` or `provenance`. ARCH-007 remains resolved by `architecture-audit/issues/register.md:1`; this is optional hardening only, with no compatibility reader, migration path, old DTO alias, or broad validation framework introduced. Validation evidence is recorded under `.saivage/stages/ci-arch-007-backend-error-storage-hardening/logs/`.
+  47: 
+  48: ## Optional ARCH-008 read-only process history hardening
+  49: Focused read-only process/history coverage was added in `frontend/tests/unit/domain/projectStateReadOnlyProcessHistory.spec.ts:1` for reducer-authored construction provenance from `frontend/src/commands/operations/OperationReducers.ts:1`, process read helpers in `frontend/src/domain/world/ProjectStateSelectors.ts:1` and `frontend/src/domain/world/ProjectStateProcessReducers.ts:1`, and the read-only panel consumer in `frontend/src/components/panels/ActionsPanel.vue:1`. The guard constructs representative point/line operations through current `ProjectStateRecord` APIs, verifies selectors and the ActionsPanel render history from `processTree`/`producedByActionId`, mutates the selector DTO copy to prove it does not edit reducer state, and checks covered files do not import deleted `World`, `ProjectionPlane`, `ProcessTree`, or `DependencyService` authorities or expose standalone process-tree add/remove/hard-coded action-id paths. ARCH-008 remains resolved by `architecture-audit/issues/register.md:1`; this is optional hardening only. Validation evidence for this stage is recorded under `.saivage/stages/ci-arch-008-readonly-process-history-hardening/logs/`.
+  50: 
+  51: ## Optional ARCH-009 runtime palette hardening
+  52: Focused runtime palette coverage was added in `frontend/tests/unit/config.toolFamilies.spec.ts:1` for the current toolbar authority `frontend/src/components/toolbars/mainToolbarTools.ts:1`, grouped palette config `frontend/src/config/toolFamilies.ts:1`, current `ToolType` union in `frontend/src/stores/toolStore.ts:1`, and current `ITool` command-intent implementations under `frontend/src/tools/`. The guard asserts `MAIN_TOOLBAR_TOOLS` and `TOOL_FAMILIES` expose only select plus implemented command-intent construction tools, instantiates each current tool class to verify the registered id matches the implementation API, keeps deleted `.old.ts` tool files absent, and rejects transport, placeholder, roadmap, future, planned, documentation-only, and placeholder-icon runtime registrations. ARCH-009 remains resolved by `architecture-audit/issues/register.md:1`; this is optional hardening only and does not add executable manifests for unsupported tools. Focused validation evidence is recorded in `.saivage/stages/ci-arch-009-runtime-tool-palette-hardening/logs/focused-arch-009-palette-guard.stdout.log:1`.
+  53: 
+  54: 
+  55: ## Optional ARCH-010 App shell boundary hardening
+  56: Focused static App-shell boundary coverage was added in `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:1` for the current shell in `frontend/src/App.vue:1`, Drive/session lifecycle in `frontend/src/composables/useDriveProjectSession.ts:1`, keyboard action router in `frontend/src/composables/useAppKeyboardShortcuts.ts:1`, and canvas/session boundary in `frontend/src/composables/useAppCanvasSession.ts:1`. The guard fails if App.vue reintroduces deleted `diedrico_last_file`/`localStorage` restoration, direct `new GoogleDriveService` orchestration, private Drive access, inline autosave timers/subscriptions, inline keydown listener orchestration, or canvas/session implementation details beyond handler wiring. It also asserts the Drive composable owns GoogleDriveService/ProjectService/autosave concerns without localStorage compatibility, the keyboard composable remains an injected-action router without command/store authority, and the canvas composable owns active-plane/coordinate/fit/cascade-preview concerns without Drive/project persistence coupling. ARCH-010 remains resolved by `architecture-audit/issues/register.md:1`; this is optional hardening only. Focused validation evidence is recorded in `.saivage/stages/ci-arch-010-app-shell-boundary-hardening/logs/focused-arch-010-guard-rerun.stdout.log:1`.
+  57: 
+  58: ## Optional ARCH-011 contract coverage hardening
+  59: Focused ARCH-011 guard coverage was strengthened in `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:1` so the root `package.json:15` `test` script and `package.json:18` `test:post-overhaul-guards` command must continue wiring the frontend architecture guard and backend `backend/tests/integration/projects.spec.ts:1` contract tests. The guard also requires the current ProjectService contract specs in `frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:1` and `frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:1`, current Playwright contracts in `frontend/tests/e2e/current-persistence-contract.spec.ts:1` and `frontend/tests/e2e/current-ui-contract.spec.ts:1`, and absence of stale spec-only contracts under `specs/001-dihedral-learning-mvp/contracts`. ARCH-011 remains resolved by `architecture-audit/issues/register.md:1`; this is optional hardening only, with no generated contract toolchain, compatibility reader, migration shim, or broad acceptance-suite framework. Validation evidence for this stage is recorded under `.saivage/stages/ci-arch-011-contract-coverage-hardening/logs/`.
+  60: 
+  61: ## Optional ARCH-012 documentation/source-comment authority hardening
+  62: Focused ARCH-012 guard coverage was strengthened in `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:1` for retained current docs (`README.md:1`, `docs/DEPLOYMENT.md:1`, `docs/GOOGLE_DRIVE_SETUP.md:1`, `frontend/REALIZATION_ARCHITECTURE.md:1`) and a bounded source/test comment set around validation, persistence, tooling, and rendering behavior. The guard continues to keep deleted historical/pre-design artifacts such as `pre-spec.md`, `pre-plan.md`, `pre-spec-ui.md`, `pre-spec-ui-tool.md`, and `specs/001-dihedral-learning-mvp/` absent; it also fails if retained docs cite those deleted artifacts as current authority or if selected source/test comments present stale spec-pack, rejected archival, migration, compatibility-shim, or legacy-preservation language as current behavior. ARCH-012 remains resolved by `architecture-audit/issues/register.md:1`; this is optional hardening only. Validation evidence for this stage is recorded under `.saivage/stages/ci-arch-012-current-doc-authority-hardening/logs/`.
+  63: 
+  64: ## Cross-ARCH hardening sweep validation — ci-cross-arch-hardening-sweep-validation
+  65: This validation sweep rechecked the completed hardening coverage for `ARCH-004` through `ARCH-012` against the resolved register at `architecture-audit/issues/register.md:1`, the selected decisions in `architecture-audit/decisions/ARCH-004.md:1` through `architecture-audit/decisions/ARCH-012.md:1`, and the prior `ARCH-001` through `ARCH-003` guard coverage already mapped above. No source-grounded validation defect was exposed, so no `ARCH-NNN` issue is reopened by this addendum.
+  66: 
+  67: Explicit guard coverage remains in place across the post-overhaul surface: command-intent pointer coverage for `ARCH-004` in `frontend/tests/unit/tools/pointTool.spec.ts:1`; reactive ProjectState selector coverage for `ARCH-005` in `frontend/tests/unit/domain/projectStateRuntimeReactiveSelectors.spec.ts:1`; presentation primitive coverage for `ARCH-006` in `frontend/tests/unit/domain/presentationPrimitives.spec.ts:1`; backend DTO/error/storage coverage for `ARCH-007` in `backend/tests/integration/projects.spec.ts:1`; read-only process history coverage for `ARCH-008` in `frontend/tests/unit/domain/projectStateReadOnlyProcessHistory.spec.ts:1`; runtime palette coverage for `ARCH-009` in `frontend/tests/unit/config.toolFamilies.spec.ts:1`; App-shell/source-boundary, `ARCH-011`, `ARCH-012`, secret-safety, deleted-surface, and prior `ARCH-001` through `ARCH-003` guards in `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:1` plus root wiring in `package.json:18`.
+  68: 
+  69: Validation evidence for this sweep is stored under `.saivage/stages/ci-cross-arch-hardening-sweep-validation/logs/`: `npm-run-test-post-overhaul-guards.stdout.log:1` passed the frontend architecture guard and backend project integration guard; `npm-run-lint.stdout.log:1`, `npm-run-build.stdout.log:1`, `npm-test.stdout.log:1`, and `npm-run-test-e2e-workspace-frontend.stdout.log:1` all passed. Live preview reachability is recorded in `preview-reachability.stdout.log:1`: an existing Vite preview was listening on `0.0.0.0:5173` with PID `183257`, and `http://127.0.0.1:5173/` returned `HTTP/1.1 200 OK`.
+  70: 
+  71: Future continuous-improvement work should start from a new explicit proposal/decision source grounded in a new source defect or product objective. It should not rework or extend the completed `ARCH-001` through `ARCH-012` guard set unless validation first identifies a concrete reopened defect.
+
+### architecture-audit/final-review/post-overhaul-guards.md
+   1: # Post-overhaul Architecture Invariant Guards
+   2: 
+   3: ## Rationale
+   4: The executable guard in `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:1` preserves the Phase G acceptance boundary recorded in `architecture-audit/final-review/00-summary.md:1`. It is intentionally narrow: it checks that current reducer snapshot authorities remain present, retained documentation stays anchored to current source/audit paths, deleted legacy paths remain absent, and legacy command-stream persistence is rejected rather than reintroduced through compatibility handling.
+   5: 
+   6: ## Guard evidence
+   7: - Phase G/current-authority citations are read from `architecture-audit/final-review/00-summary.md:1` and checked against current source paths including `frontend/src/domain/world/ProjectState.ts:1`, `frontend/src/domain/world/ProjectStateRuntime.ts:1`, `frontend/src/services/ProjectService.ts:1`, and `backend/src/api/projects.ts:1`.
+   8: - Retained-documentation authority checks cover `README.md:1`, `docs/DEPLOYMENT.md:1`, `docs/GOOGLE_DRIVE_SETUP.md:1`, and `frontend/REALIZATION_ARCHITECTURE.md:1` when present. Each retained document must cite current repository source/audit paths, and any citation to deleted historical pre-design/spec-pack paths must describe those paths as deleted, historical, stale, obsolete, not current, or pre-design rather than current authority.
+   9: - Deleted-surface checks fail if old mutable authorities or stale surfaces are recreated, including `frontend/src/domain/world/World.ts`, `frontend/src/domain/world/ProjectionPlane.ts`, `frontend/src/domain/processTree/ProcessTree.ts`, `frontend/src/services/DependencyService.ts`, `frontend/src/commands/operations/viewState/ViewStateOperations.ts`, old `.old.ts` tools, duplicate renderer services, and historical pre-spec/spec paths such as `pre-spec.md` and `specs/001-dihedral-learning-mvp/spec.md`.
+  10: - The negative persistence check calls `ProjectService.validateProjectData` from `frontend/src/services/ProjectService.ts:1` with otherwise-current snapshot envelopes containing legacy `commands`, `commandHistory`, `undoStack`, `redoStack`, `SerializedCommand`, or `SerializedOperation` fields. The test must throw instead of accepting or migrating those payloads.
+  11: 
+  12: ## Backend DTO/API/storage guards
+  13: - Backend post-overhaul guards live in `backend/tests/integration/projects.spec.ts:1` and exercise the current project API in `backend/src/api/projects.ts:1`, the DTO contract in `backend/src/models/Project.ts:1`, project-id validation in `backend/src/storage/ProjectRepository.ts:1`, and storage filename confinement in `backend/src/storage/FileStorage.ts:1`.
+  14: - The guards reject legacy command-stream and pre-current DTO fields (`commands`, `commandHistory`, `undoStack`, `redoStack`, `SerializedCommand`, `SerializedOperation`, `elements2D`, `elements3D`) at top-level and nested payload positions rather than accepting, migrating, or aliasing them.
+  15: - Malformed `4.0.0`/`current-snapshot` envelopes are covered with missing/extra top-level fields, domain/provenance extra fields, schema mismatches, provenance app/contract/source mismatches, and legacy projection-plane arrays.
+  16: - Route-level and direct storage/repository tests assert project identifiers remain confined to the project-local JSON namespace and cannot traverse directories or use absolute/path-like filenames.
+  17: - Invalid current-contract requests assert typed API bodies `{ code, message, status }` and explicitly reject legacy `{ error }` aliases.
+  18: 
+  19: ## Files changed
+  20: - Prior frontend invariant guard stage added `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:1` and this addendum at `architecture-audit/final-review/post-overhaul-guards.md:1`.
+  21: - Backend contract guard stage added evidence in `backend/tests/integration/projects.spec.ts:1` and updated this addendum at `architecture-audit/final-review/post-overhaul-guards.md:1`.
+  22: - Documentation-authority guard stage extended `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:1` and this addendum at `architecture-audit/final-review/post-overhaul-guards.md:1`.
+  23: 
+  24: ## Explicit root guard command
+  25: Run the combined post-overhaul guard from the repository root with:
+  26: 
+  27: ```sh
+  28: npm run test:post-overhaul-guards
+  29: ```
+  30: 
+  31: This command is intentionally narrower than, and complementary to, `npm run lint`, `npm run build`, and `npm test`: it uses the existing frontend and backend workspace test runners to execute only `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:1` and `backend/tests/integration/projects.spec.ts:1`, and it returns failure if either guard fails.
+  32: 
+  33: ## Validation and preview status
+  34: Validation logs for the prior frontend invariant guard stage are stored under `.saivage/stages/ci-post-overhaul-architecture-invariant-guards/logs/`. Commands run: focused guard Vitest, `npm run lint`, `npm run build`, and `npm test` from `/work/diedrico`.
+  35: 
+  36: Backend guard validation logs for `ci-post-overhaul-backend-contract-guards` are stored under `.saivage/stages/ci-post-overhaul-backend-contract-guards/logs/`. Planned/actual commands: focused backend integration Vitest (`npm run test --workspace=backend -- --run backend/tests/integration/projects.spec.ts`), `npm run lint`, `npm run build`, `npm test`, and preview reachability against `http://127.0.0.1:5173/` without restarting the preview.
+  37: 
+  38: Documentation-authority guard validation logs for `ci-post-overhaul-doc-authority-guards` are stored under `.saivage/stages/ci-post-overhaul-doc-authority-guards/logs/`. The suggested focused command with a root-relative path produced no Vitest match, so the passing focused guard command used the frontend-relative path: `npm run test --workspace=frontend -- --run tests/unit/architecture/postOverhaulInvariants.spec.ts` (`focused-post-overhaul-invariants-rerun.stdout.log:1`). Root validation passed with `npm run lint`, `npm run build`, and `npm test` (`npm-run-lint.stdout.log:1`, `npm-run-build.stdout.log:1`, `npm-test.stdout.log:1`). Preview reachability was checked against the existing server without restart at `http://127.0.0.1:5173/` and returned `HTTP/1.1 200 OK` (`preview-reachability.stdout.log:1`).
+  39: 
+  40: Explicit root guard command validation logs for `ci-post-overhaul-explicit-guard-command` are stored under `.saivage/stages/ci-post-overhaul-explicit-guard-command/logs/`. The explicit command `npm run test:post-overhaul-guards` passed both guard specs (`npm-run-test-post-overhaul-guards.stdout.log:1`), root validation passed with `npm run lint`, `npm run build`, and `npm test` (`npm-run-lint.stdout.log:1`, `npm-run-build.stdout.log:1`, `npm-test.stdout.log:1`), and preview reachability against the existing server without restart returned `HTTP/1.1 200 OK` (`preview-reachability.stdout.log:1`).
+  41: 
+  42: These guard stages are tests/docs only and did not refresh the frontend runtime. Preview reachability was checked against the existing live server and recorded in the stage logs listed above.
+  43: 
+  44: ## ARCH-001 workspace validation script guards
+  45: The frontend invariant guard now includes executable ARCH-001 workspace validation checks in `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:6` through `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:16` and `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:103` through `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:159`. These checks read `package.json:15`, `package.json:16`, and `package.json:17` directly and require root `build`, `test`, and `lint` scripts to invoke both `--workspace=frontend` and `--workspace=backend`, capture `frontend_status=$?` and `backend_status=$?`, and exit only after both sides run with `exit $((frontend_status || backend_status))`. This preserves the ARCH-001 implementation contract recorded in `architecture-audit/implementation-log/ARCH-001.md:1` and the Phase G workspace review in `architecture-audit/final-review/01-workspace.md:1`.
+  46: 
+  47: The same guard rejects mutating validation lint behavior for the root, frontend, and backend package scripts by checking `package.json:17`, `frontend/package.json:15`, and `backend/package.json:12` for `--fix`, `--write`, or equivalent formatter-write tokens. This ensures the old frontend-only/mutating validation surface cannot return as a compatibility alias or silent lint side effect.
+  48: 
+  49: Validation evidence for `ci-post-overhaul-workspace-validation-guards` is stored under `.saivage/stages/ci-post-overhaul-workspace-validation-guards/logs/`. The focused root guard command `npm run test:post-overhaul-guards` passed both workspaces, including `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:1` and `backend/tests/integration/projects.spec.ts:1` (`t3-npm-run-test-post-overhaul-guards.stdout.log:1`). Required root validation also passed with `npm run lint`, `npm run build`, and `npm test` (`t3-npm-run-lint.stdout.log:1`, `t3-npm-run-build.stdout.log:1`, `t3-npm-test.stdout.log:1`). Existing live preview reachability was checked without restart at `http://127.0.0.1:5173/` and returned `HTTP/1.1 200 OK` (`t3-preview-reachability.stdout.log:1`).
+  50: 
+  51: Reviewer-gap correction `t3-fix-lint-mutating-token-boundaries` extended the same guard in `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:141` so mutating lint tokens are rejected before whitespace, end-of-string, or shell separators (`;`, `&&`, `||`, and `|`). In-test regression samples now prove detection for `--fix;`, `--write;`, formatter `--write;`, and the boolean/pipe separator forms in `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:258`.
+  52: 
+  53: 
+  54: 
+  55: ## Secret-safety source/docs/test guard
+  56: The post-overhaul invariant guard now includes a bounded secret-safety check in `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:1`. It scans only allowed repository source, documentation, and test surfaces: `README.md:1`, `docs/DEPLOYMENT.md:1`, `docs/GOOGLE_DRIVE_SETUP.md:1`, `architecture-audit/final-review/post-overhaul-guards.md:1`, `frontend/REALIZATION_ARCHITECTURE.md:1`, `frontend/src/services/GoogleDriveService.ts:1`, `backend/src/api/projects.ts:1`, `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:1`, and `backend/tests/integration/projects.spec.ts:1`.
+  57: 
+  58: The guard derives scan candidates only from tracked repository paths returned by `git ls-files`, filters them to allowed source/docs/test roots, and excludes forbidden or operational paths before any file read. Exclusions include `.saivage/auth-profiles.json`, `.saivage/saivage.json`, any basename beginning with `.env` such as `.envrc` (including nested allowed-root examples), provider config directories, OAuth token stores, shell-history paths, and keychain paths. The test asserts those exclusions with synthetic path samples and proves untracked/out-of-root candidates are not read, logged, grepped, or opened.
+  59: 
+  60: The invariant fails on real-looking credential literals in the allowed scan surface: private key block headers, OAuth access/refresh token forms, Google OAuth client secret forms, `Authorization: Bearer` literals, and API-key assignments or JSON fields. Lines clearly marked as placeholder/example/dummy/fake/test/synthetic/mock/sample/redacted are allowed, and the spec includes in-test fail/allow samples proving both behaviors.
+  61: 
+  62: Validation evidence for `ci-post-overhaul-secret-safety-guards` is stored under `.saivage/stages/ci-post-overhaul-secret-safety-guards/logs/`. The focused root guard command `npm run test:post-overhaul-guards` passed both `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:1` and `backend/tests/integration/projects.spec.ts:1` (`npm-run-test-post-overhaul-guards.stdout.log:1`). Required root validation passed with `npm run lint`, `npm run build`, and `npm test` (`npm-run-lint.stdout.log:1`, `npm-run-build.stdout.log:1`, `npm-test.stdout.log:1`). Playwright browser execution was available and `npm run test:e2e --workspace=frontend` passed the active current e2e contracts (`npm-run-test-e2e-workspace-frontend.stdout.log:1`). Existing preview reachability was checked without restart at `http://127.0.0.1:5173/` and returned `HTTP/1.1 200 OK` (`preview-reachability.stdout.log:1`). This validation task did not read, grep, log, or open forbidden secret/env/provider files.
+  63: 
+  64: ## ARCH-011 current e2e contract guard
+  65: The post-overhaul invariant guard now includes a static ARCH-011/current e2e contract check in `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:1`. It scans active `.spec.ts` files under `frontend/tests/e2e` and requires the retained Playwright contract specs `frontend/tests/e2e/current-persistence-contract.spec.ts:1` and `frontend/tests/e2e/current-ui-contract.spec.ts:1` to remain active. The same guard fails if stale pre-overhaul or placeholder/transport spec filenames return, including `persistence.spec.ts`, `undo-redo.spec.ts`, `selection.spec.ts`, `geometry.spec.ts`, and `transport`/`placeholder` spec variants.
+  66: 
+  67: The guard also reads the retained e2e source text rather than launching browser flows from Vitest. For persistence, `frontend/tests/e2e/current-persistence-contract.spec.ts:1` must assert the `ProjectStateRecord`/`current-snapshot` payload shape, current `domain.projectionPlanes` state, absent legacy `commands`/`commandHistory` fields, and HTTP 400 rejection for deleted command-stream payloads. For UI, `frontend/tests/e2e/current-ui-contract.spec.ts:1` must assert current executable tool ids, absence of the deleted transport/placeholder surface, and current app-shell hooks such as `svg-canvas`, `status-bar`, `elements-panel`, `actions-panel`, and `plane-selector`.
+  68: 
+  69: Validation evidence for `ci-post-overhaul-e2e-contract-guards` is stored under `.saivage/stages/ci-post-overhaul-e2e-contract-guards/logs/`. The focused root guard command `npm run test:post-overhaul-guards` passed both `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:1` and `backend/tests/integration/projects.spec.ts:1` (`npm-run-test-post-overhaul-guards-final.stdout.log:1`). Required root validation passed with `npm run lint`, `npm run build`, and `npm test` (`npm-run-lint.stdout.log:1`, `npm-run-build.stdout.log:1`, `npm-test.stdout.log:1`). Playwright browser execution was available and `npm run test:e2e --workspace=frontend` passed the active current e2e contracts in `frontend/tests/e2e/current-persistence-contract.spec.ts:1` and `frontend/tests/e2e/current-ui-contract.spec.ts:1` (`npm-run-test-e2e-workspace-frontend.stdout.log:1`). Existing preview reachability was checked without restarting runtime source at `http://127.0.0.1:5173/` and returned `HTTP/1.1 200 OK` (`preview-reachability.stdout.log:1`).
+  70: 
+  71: ## Source-control secret-ignore hygiene
+  72: The repository ignore policy in `.gitignore:1` now explicitly excludes Saivage secret/provider/runtime artifacts such as `.saivage/auth-profiles.json`, `.saivage/saivage.json`, `.saivage/config.json`, provider configuration directories, runtime/tmp/log/notes paths, generated `.saivage/stages/**/logs/`, `.saivage/stages/**/reports/`, `.saivage/stages/**/summary.json`, `.saivage/stages/**/tasks.json`, and generated stage `.out`/`.err`/`.pid` artifacts. It explicitly ignores root `.env.*` variants such as `.env.production`, `.env.development`, and `.env.test`, and adds nested `frontend/.env*` and `backend/.env*` coverage.
+  73: 
+  74: Validation evidence for `ci-source-control-secret-ignore-hygiene` is stored under `.saivage/stages/ci-source-control-secret-ignore-hygiene/logs/`. The stage used path/name-only git status checks and did not read, grep, log, copy, summarize, or commit forbidden secret/env/provider file contents.
+
+### architecture-audit/final-review/source-control-change-manifest.md
+   1: # Source-control Change Manifest
+   2: 
+   3: ## Scope and evidence
+   4: This manifest classifies the post-overhaul workspace from path/name-only source-control evidence and safe validation outputs. It uses `git status --short`, `git diff --name-status`, `git ls-files --others --exclude-standard`, and synthetic `git check-ignore -v` path checks recorded at `.saivage/stages/ci-source-control-change-manifest/logs/path-only-status-fresh.log:1` and `.saivage/stages/ci-source-control-change-manifest/logs/check-ignore-path-only-fresh.log:1`. It also cross-references current audit summaries at `architecture-audit/final-review/00-summary.md:1`, guard coverage at `architecture-audit/final-review/cross-arch-guard-coverage-map.md:1`, guard command documentation at `architecture-audit/final-review/post-overhaul-guards.md:1`, resolved issue status at `architecture-audit/issues/register.md:1`, root command wiring at `package.json:18`, and ignore policy at `.gitignore:31`.
+   5: 
+   6: No forbidden secret/env/provider file contents were read, grepped, copied, or logged. Secret-sensitive evidence below is limited to path names and ignore-pattern categories.
+   7: 
+   8: ## Intended source/audit overhaul artifacts
+   9: Path-only status shows expected overhaul deltas across the architecture cycle rather than a clean working tree. These include:
+  10: 
+  11: - Audit/decision/planning artifacts: `architecture-audit/reports/`, `architecture-audit/issues/`, `architecture-audit/decisions/`, `architecture-audit/proposals/`, `architecture-audit/plans/`, `architecture-audit/implementation-log/`, and this manifest at `architecture-audit/final-review/source-control-change-manifest.md` (`.saivage/stages/ci-source-control-change-manifest/logs/path-only-status-fresh.log:1`).
+  12: - Current documentation updates: `docs/DEPLOYMENT.md`, `docs/GOOGLE_DRIVE_SETUP.md`, and `frontend/REALIZATION_ARCHITECTURE.md`; these align with Phase G retained-current-doc evidence in `architecture-audit/final-review/00-summary.md:1`.
+  13: - Frontend command/domain/tool/runtime changes and deletions under `frontend/src/commands/`, `frontend/src/domain/`, `frontend/src/services/`, `frontend/src/stores/`, `frontend/src/tools/`, and `frontend/src/types/`; these match the resolved reducer/current-snapshot and deleted legacy authority themes in `architecture-audit/final-review/00-summary.md:1` and `architecture-audit/final-review/cross-arch-guard-coverage-map.md:1`.
+  14: - Frontend test-surface changes/deletions under `frontend/tests/`, including stale command/serialization/dependency test removals and current guard/test additions; this aligns with ARCH-011 coverage in `architecture-audit/issues/register.md:1` and `architecture-audit/final-review/post-overhaul-guards.md:1`.
+  15: - Deleted historical pre-design/spec-pack files: `pre-plan.md`, `pre-spec.md`, `pre-spec-ui.md`, `pre-spec-ui-tool.md`, and `specs/001-dihedral-learning-mvp/`; these deletions are expected by Phase G final review at `architecture-audit/final-review/00-summary.md:1`.
+  16: - Workspace/package updates: `frontend/package.json`, `package-lock.json`, and root scripts documented in `package.json:18`.
+  17: 
+  18: ## Generated Saivage operational artifacts
+  19: Path-only status also shows generated Saivage stage material. These are operational artifacts, not source/runtime changes:
+  20: 
+  21: - Modified/generated stage files under `.saivage/stages/`, including prior reports, reviews, tasks, dev-server outputs, and this stage's logs (`.saivage/stages/ci-source-control-change-manifest/logs/path-only-status-fresh.log:1`).
+  22: - Untracked prior-stage validation/review outputs under `.saivage/stages/phase-c-proposals/`, `.saivage/stages/phase-e-implementation-plans/`, `.saivage/stages/phase-f-arch-003-command-reducer-migration/`, `.saivage/stages/phase-f-arch-003-recovery-replan/`, and `.saivage/stages/phase-f-implement-arch-012/` (`.saivage/stages/ci-source-control-change-manifest/logs/path-only-status-fresh.log:1`).
+  23: - Recent validation log path inventory is recorded, by path only, at `.saivage/stages/ci-source-control-change-manifest/logs/recent-validation-log-paths.log:1`.
+  24: 
+  25: ## Ignored or secret-sensitive path patterns
+  26: Synthetic path-only ignore checks confirm the relevant secret/runtime patterns are ignored by `.gitignore:31` through `.gitignore:79`:
+  27: 
+  28: - Saivage secret/provider/runtime paths: `.saivage/auth-profiles.json`, `.saivage/saivage.json`, `.saivage/config.json`, `.saivage/provider-configs/`, `.saivage/stages/**/logs/`, and `.saivage/stages/**/reports/` (`.saivage/stages/ci-source-control-change-manifest/logs/check-ignore-path-only-fresh.log:1`).
+  29: - Environment files: `.env`, `.env.*`, `frontend/.env.*`, and `backend/.env.*` (`.saivage/stages/ci-source-control-change-manifest/logs/check-ignore-path-only-fresh.log:1`).
+  30: - Local backend project JSON data: `backend/data/projects/*.json` except the tracked keep-file policy noted in `.gitignore:79` and checked at `.saivage/stages/ci-source-control-change-manifest/logs/check-ignore-path-only-fresh.log:1`.
+  31: 
+  32: These are categorized by path/pattern only; no contents were inspected.
+  33: 
+  34: ## Follow-up-review items
+  35: The path-name-only disposition review for `inspections/` and `tmp/inspector-workspace/` was completed during `ci-inspection-artifact-disposition`:
+  36: 
+  37: - `inspections/inspect-arch-003-record-first-runtime-redesign.json` and `inspections/inspect-arch-003-runtime-migration-map.json` are kept as audit evidence beside the already tracked Inspector JSON reports under `inspections/`; their paths and Inspector-report names identify them as non-secret architecture inspection outputs.
+  38: - `tmp/inspector-workspace/` was classified by path/name-only evidence as generated Inspector scratch output (`*.out`, `*.err`, `*.log`, grep inventories, validation transcripts, and temporary scan lists), deleted from the working tree, and covered by the `tmp/` ignore rule at `.gitignore:83`.
+  39: - Modified `.saivage/stages/...` operational outputs that are path-visible in git status remain outside this disposition; review whether any are intentionally tracked operational records or should remain uncommitted/generated (`.saivage/stages/ci-source-control-change-manifest/logs/path-only-status-fresh.log:1`, `.gitignore:42`).
+  40: 
+  41: ## Validation evidence
+  42: - `npm run test:post-overhaul-guards` passed from the repository root. Frontend guard: 1 file / 10 tests passed. Backend guard: 1 file / 22 tests passed. Logs: `.saivage/stages/ci-source-control-change-manifest/logs/npm-run-test-post-overhaul-guards.stdout.log:1` and `.saivage/stages/ci-source-control-change-manifest/logs/npm-run-test-post-overhaul-guards.stderr.log:1`. Backend stderr contains expected negative-path logging from the invalid-file skip test; command exit code was 0.
+  43: - Lightweight path-only status validation was rerun and recorded at `.saivage/stages/ci-source-control-change-manifest/logs/path-only-status-fresh.log:1`.
+  44: - Preview reachability check `curl -I http://127.0.0.1:5173/` returned `HTTP/1.1 200 OK` with `Content-Type: text/html`; logs are `.saivage/stages/ci-source-control-change-manifest/logs/preview-reachability.stdout.log:1` and `.saivage/stages/ci-source-control-change-manifest/logs/preview-reachability.stderr.log:1`.
+  45: 
+  46: ## Next safe formal action
+  47: The prior `inspections/` and `tmp/inspector-workspace/` disposition gap is resolved: the inspection JSON artifacts were classified as retained audit evidence, and the generated `tmp/inspector-workspace/` scratch tree was deleted and covered by the existing `tmp/` ignore rule. Any remaining next safe formal action is a broader final handoff/source-control review outside this disposition stage.
+
+### architecture-audit/continuous-improvement/2026-05-24-acceptance-refresh.md
+   1: # Acceptance refresh — 2026-05-24
+   2: 
+   3: ## Scope
+   4: This refresh reran the final-acceptance validation cadence from `/work/diedrico` without source implementation changes. It uses the root workspace command surface in `package.json:10`, Playwright wiring in `frontend/playwright.config.ts:1`, Phase G acceptance baseline in `architecture-audit/final-review/00-summary.md:1`, post-overhaul guard documentation in `architecture-audit/final-review/post-overhaul-guards.md:1`, and the prior source-control manifest in `architecture-audit/final-review/source-control-change-manifest.md:1`.
+   5: 
+   6: No forbidden secret/env/provider contents were read, grepped, copied, logged, or summarized. This refresh did not inspect `.saivage/auth-profiles.json`, `.saivage/saivage.json`, `.saivage/config.json`, provider configuration contents, frontend/backend environment files, OAuth credentials, shell history, or keychain material. Source-control evidence is path/name-only and stored at `.saivage/stages/ci-full-acceptance-refresh-2026-05-24/logs/path-only-source-control-status.stdout.log:1`.
+   7: 
+   8: ## Validation status
+   9: All required validation commands passed. Full stdout/stderr logs are under `.saivage/stages/ci-full-acceptance-refresh-2026-05-24/logs/`.
+  10: 
+  11: | Command | Result | Evidence |
+  12: |---|---:|---|
+  13: | `npm run lint` | passed | `.saivage/stages/ci-full-acceptance-refresh-2026-05-24/logs/npm-run-lint.stdout.log:1`, `.saivage/stages/ci-full-acceptance-refresh-2026-05-24/logs/npm-run-lint.stderr.log:1` |
+  14: | `npm run build` | passed | `.saivage/stages/ci-full-acceptance-refresh-2026-05-24/logs/npm-run-build.stdout.log:1`, `.saivage/stages/ci-full-acceptance-refresh-2026-05-24/logs/npm-run-build.stderr.log:1` |
+  15: | `npm test` | passed | `.saivage/stages/ci-full-acceptance-refresh-2026-05-24/logs/npm-test.stdout.log:1`, `.saivage/stages/ci-full-acceptance-refresh-2026-05-24/logs/npm-test.stderr.log:1` |
+  16: | `npm run test:post-overhaul-guards` | passed | `.saivage/stages/ci-full-acceptance-refresh-2026-05-24/logs/npm-run-test-post-overhaul-guards.stdout.log:1`, `.saivage/stages/ci-full-acceptance-refresh-2026-05-24/logs/npm-run-test-post-overhaul-guards.stderr.log:1` |
+  17: | `npm run test:e2e --workspace=frontend` | passed | `.saivage/stages/ci-full-acceptance-refresh-2026-05-24/logs/npm-run-test-e2e-workspace-frontend.stdout.log:1`, `.saivage/stages/ci-full-acceptance-refresh-2026-05-24/logs/npm-run-test-e2e-workspace-frontend.stderr.log:1` |
+  18: 
+  19: Observed summaries:
+  20: 
+  21: - Lint ran `vue-tsc --noEmit` for `frontend/` and `tsc --noEmit` for `backend/` through the root script in `package.json:17`.
+  22: - Build produced the frontend Vite output and completed backend TypeScript compilation through `package.json:14`.
+  23: - Full Vitest passed 46 frontend files / 491 tests with 8 skipped, then 1 backend file / 22 tests. Stderr contains expected negative-path test logging already documented in `architecture-audit/final-review/post-overhaul-guards.md:1`; exit code was 0.
+  24: - Post-overhaul guards passed `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:1` and `backend/tests/integration/projects.spec.ts:1` through the root command documented in `architecture-audit/final-review/post-overhaul-guards.md:1`.
+  25: - Playwright passed 8 Chromium tests covering `frontend/tests/e2e/current-persistence-contract.spec.ts:1` and `frontend/tests/e2e/current-ui-contract.spec.ts:1`.
+  26: 
+  27: ## Preview reachability
+  28: A frontend preview/dev server was already reachable, so no restart was required. Listener evidence shows a process bound to `0.0.0.0:5173`, and the inside-container HTTP check returned `HTTP/1.1 200 OK` with `Content-Type: text/html`.
+  29: 
+  30: Evidence:
+  31: 
+  32: - `.saivage/stages/ci-full-acceptance-refresh-2026-05-24/logs/preview-reachability-before.stdout.log:1`
+  33: - `.saivage/stages/ci-full-acceptance-refresh-2026-05-24/logs/preview-reachability-before.stderr.log:1`
+  34: 
+  35: ## ARCH-001 through ARCH-012 status
+  36: `ARCH-001` through `ARCH-012` remain resolved. This is grounded in the Phase G status table at `architecture-audit/final-review/00-summary.md:1`, the resolved issue register at `architecture-audit/issues/register.md:1`, implementation logs cited from `architecture-audit/final-review/00-summary.md:1`, and the passing guard/test/e2e validation logs listed above.
+  37: 
+  38: | Issue range | Current status | Evidence |
+  39: |---|---|---|
+  40: | ARCH-001 through ARCH-012 | remain resolved | `architecture-audit/final-review/00-summary.md:1`, `architecture-audit/final-review/post-overhaul-guards.md:1`, `.saivage/stages/ci-full-acceptance-refresh-2026-05-24/logs/npm-run-test-post-overhaul-guards.stdout.log:1`, `.saivage/stages/ci-full-acceptance-refresh-2026-05-24/logs/npm-test.stdout.log:1`, `.saivage/stages/ci-full-acceptance-refresh-2026-05-24/logs/npm-run-test-e2e-workspace-frontend.stdout.log:1` |
+  41: 
+  42: ## Source-control and source-change note
+  43: This refresh made no source implementation changes. It added this continuous-improvement report only. Path-only status evidence was captured at `.saivage/stages/ci-full-acceptance-refresh-2026-05-24/logs/path-only-source-control-status.stdout.log:1`; the broad pre-existing overhaul-era source/audit/generated-artifact categories match the prior manifest in `architecture-audit/final-review/source-control-change-manifest.md:1` and the prior CI handoff in `architecture-audit/continuous-improvement/2026-05-24-ci-readiness-handoff-source-control-snapshot.md:1`.
+  44: 
+  45: ## Recommendation
+  46: No implementation work is recommended. The full final-acceptance cadence passes, preview is reachable on `0.0.0.0:5173`, and no new source-grounded defect was found.
+  47: 
+  48: Future work should be trigger-based only: a new user/product objective, a reproducible validation regression in the commands above, a new cited source defect, or a source-control/secret-safety hygiene change that introduces unclassified artifacts or exposes forbidden material by path/pattern.
+
+### architecture-audit/continuous-improvement/2026-05-24-ci-readiness-handoff-source-control-snapshot.md
+   1: # Continuous-improvement readiness handoff and source-control snapshot — 2026-05-24
+   2: 
+   3: ## Scope and constraints
+   4: This bounded handoff stage rechecked the post-overhaul guard command and classified current source-control status by safe path/category only. It used the root guard command wired in `package.json:18`, the final acceptance baseline in `architecture-audit/final-review/00-summary.md:1`, the guard documentation in `architecture-audit/final-review/post-overhaul-guards.md:1`, the prior source-control baseline in `architecture-audit/final-review/source-control-change-manifest.md:1`, and the immediately preceding continuous-improvement scout at `architecture-audit/continuous-improvement/2026-05-24-source-defect-scout-after-snapping-cleanup.md:1`.
+   5: 
+   6: No source implementation files were modified in this stage. No forbidden secret/env/provider contents were read, copied, grepped, logged, summarized, or cited. Secret-sensitive evidence below is limited to path names and ignore-pattern categories; this stage did not inspect `.saivage/auth-profiles.json`, `.saivage/saivage.json`, provider configuration contents, frontend/backend environment files, OAuth credentials, shell history, or keychain material.
+   7: 
+   8: ## Validation status
+   9: `npm run test:post-overhaul-guards` was rerun from `/work/diedrico` and passed. Logs are stored at `.saivage/stages/ci-readiness-handoff-source-control-snapshot/logs/npm-run-test-post-overhaul-guards.stdout.log:1` and `.saivage/stages/ci-readiness-handoff-source-control-snapshot/logs/npm-run-test-post-overhaul-guards.stderr.log:1`.
+  10: 
+  11: Observed result:
+  12: 
+  13: - Frontend guard `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:1` passed 11 tests.
+  14: - Backend guard `backend/tests/integration/projects.spec.ts:1` passed 22 tests.
+  15: - Backend stderr includes the expected invalid-file negative-path read error from the storage/API guard; the command exit code was 0, consistent with the documented prior behavior in `architecture-audit/final-review/source-control-change-manifest.md:1` and `architecture-audit/final-review/post-overhaul-guards.md:1`.
+  16: 
+  17: ## ARCH resolution handoff
+  18: `ARCH-001` through `ARCH-012` remain resolved absent a new source-grounded defect. This statement is grounded in the Phase G acceptance table at `architecture-audit/final-review/00-summary.md:1`, the executable guard map in `architecture-audit/final-review/post-overhaul-guards.md:1`, and the current guard rerun logs listed above. This handoff found no new source-grounded implementation defect requiring a Phase F-style implementation stage.
+  19: 
+  20: ## Safe source-control classification
+  21: Path-only status was captured at `.saivage/stages/ci-readiness-handoff-source-control-snapshot/logs/path-only-status.log:1` and compared to the existing manifest at `architecture-audit/final-review/source-control-change-manifest.md:1`. The current status remains consistent with that manifest's categories:
+  22: 
+  23: 1. **Intended source/audit overhaul artifacts.** The path-only status still shows overhaul-era source, test, docs, package, and deletion deltas under `frontend/src/`, `frontend/tests/`, `docs/`, `frontend/REALIZATION_ARCHITECTURE.md`, `architecture-audit/`, `package-lock.json`, deleted historical pre-design files such as `pre-spec.md`, and deleted historical spec-pack paths under `specs/001-dihedral-learning-mvp/`. These are the same broad categories documented in `architecture-audit/final-review/source-control-change-manifest.md:1` and tied to final review evidence in `architecture-audit/final-review/00-summary.md:1`.
+  24: 2. **Generated Saivage operational artifacts.** Path-only status still shows generated or modified `.saivage/stages/` operational files from prior stages. This matches the manifest's operational-artifact category at `architecture-audit/final-review/source-control-change-manifest.md:1`. This handoff adds only new logs under `.saivage/stages/ci-readiness-handoff-source-control-snapshot/logs/`, which are generated validation evidence.
+  25: 3. **Untracked audit/planning evidence.** Untracked paths under `architecture-audit/decisions/`, `architecture-audit/plans/`, `architecture-audit/proposals/`, `architecture-audit/reports/`, selected issue files, and implementation logs remain visible by path only. This is consistent with the previous manifest's description of audit/decision/planning artifacts at `architecture-audit/final-review/source-control-change-manifest.md:1`.
+  26: 4. **Ignored secret/runtime patterns.** Synthetic path-only ignore checks were captured at `.saivage/stages/ci-readiness-handoff-source-control-snapshot/logs/check-ignore-path-only.log:1`. They confirm ignore coverage for Saivage auth/provider/runtime paths, root and workspace environment-file patterns, generated stage logs/reports, backend local project JSON data, and `tmp/` scratch paths. This matches the ignore-policy category documented in `architecture-audit/final-review/source-control-change-manifest.md:1` and `.gitignore:31`.
+  27: 
+  28: This classification is path/category-only. It does not judge ownership of unrelated existing changes beyond confirming they match the existing manifest categories, and it does not read contents of forbidden files.
+  29: 
+  30: ## Recommended next action
+  31: No implementation stage is recommended from this handoff. The post-overhaul guards pass, the source-control status remains consistent with the prior safe manifest categories, and no new concrete source-grounded defect was identified.
+  32: 
+  33: Appropriate future triggers are limited to:
+  34: 
+  35: - a new user/product objective that changes current project behavior or scope;
+  36: - a fresh source-grounded defect with cited current paths and reproducible evidence;
+  37: - a validation regression in `npm run test:post-overhaul-guards`, `npm run lint`, `npm run build`, `npm test`, or relevant Playwright contracts;
+  38: - a source-control hygiene change that introduces unclassified non-generated artifacts, removes expected audit evidence, or exposes secret/env/provider material by path/pattern.
+  39: 
+  40: Until one of those triggers occurs, the safe handoff is to keep `ARCH-001` through `ARCH-012` closed and avoid broad cleanup or implementation work that is not anchored to a new objective or defect.
+
+### architecture-audit/continuous-improvement/2026-05-24-source-control-archival-plan.md
+   1: # Source-control archival plan — 2026-05-24
+   2: 
+   3: ## Scope and evidence
+   4: This archival grouping plan classifies the completed Diedrico overhaul from path-only source-control evidence and safe non-secret documentation. It cites the latest acceptance refresh at `architecture-audit/continuous-improvement/2026-05-24-acceptance-refresh.md:1` and the prior source-control manifest at `architecture-audit/final-review/source-control-change-manifest.md:1`.
+   5: 
+   6: Evidence used:
+   7: 
+   8: - Latest acceptance/validation refresh: `architecture-audit/continuous-improvement/2026-05-24-acceptance-refresh.md:1`.
+   9: - Prior path-only source-control manifest: `architecture-audit/final-review/source-control-change-manifest.md:1`.
+  10: - Current path-only status evidence for this archival-plan stage: `.saivage/stages/ci-source-control-archival-plan-2026-05-24/logs/path-only-git-status.stdout.log:1`.
+  11: - Current path-only ignore evidence for this archival-plan stage: `.saivage/stages/ci-source-control-archival-plan-2026-05-24/logs/check-ignore-path-only.stdout.log:1`.
+  12: - Ignore policy: `.gitignore:31` through `.gitignore:83`.
+  13: - Root workspace command surface: `package.json:10`.
+  14: 
+  15: No forbidden secret, environment, provider, OAuth, credential, shell-history, or keychain contents were read, copied, pasted, logged, or summarized. This report uses safe path names and ignore-pattern classifications only.
+  16: 
+  17: ## Validation status
+  18: Validation is already green based on the latest acceptance refresh at `architecture-audit/continuous-improvement/2026-05-24-acceptance-refresh.md:1`. That refresh reports passing `npm run lint`, `npm run build`, `npm test`, `npm run test:post-overhaul-guards`, and `npm run test:e2e --workspace=frontend`, and confirms preview reachability on `0.0.0.0:5173`.
+  19: 
+  20: Full tests are not rerun for this documentation-only archival plan because this task only classifies source-control/archive batches from existing path-only evidence and does not modify implementation or test code. If any implementation code changes before archival, rerun the normal acceptance cadence from `package.json:10`.
+  21: 
+  22: ## Path-only grouping: source/runtime changes
+  23: Treat these as source/runtime overhaul batches, not generated artifacts:
+  24: 
+  25: - Frontend command and reducer contract changes under `frontend/src/commands/`, including `frontend/src/commands/Command.ts`, `frontend/src/commands/CommandStack.ts`, `frontend/src/commands/factories/`, and `frontend/src/commands/operations/world/` as listed in `.saivage/stages/ci-source-control-archival-plan-2026-05-24/logs/path-only-git-status.stdout.log:1`.
+  26: - Frontend component, composable, store, service, tool, type, utility, calculation, presentation, process-tree, and world-domain changes under `frontend/src/components/`, `frontend/src/composables/`, `frontend/src/stores/`, `frontend/src/services/`, `frontend/src/tools/`, `frontend/src/types/`, `frontend/src/utils/`, `frontend/src/domain/calculations/`, `frontend/src/domain/presentation/`, `frontend/src/domain/processTree/`, and `frontend/src/domain/world/` as listed in `.saivage/stages/ci-source-control-archival-plan-2026-05-24/logs/path-only-git-status.stdout.log:1`.
+  27: - New record/DTO authority source path `frontend/src/domain/world/ProjectState.ts` as listed in `.saivage/stages/ci-source-control-archival-plan-2026-05-24/logs/path-only-git-status.stdout.log:1`.
+  28: - Google Drive and project persistence source changes at `frontend/src/services/GoogleDriveService.ts` and `frontend/src/services/ProjectService.ts` as listed in `.saivage/stages/ci-source-control-archival-plan-2026-05-24/logs/path-only-git-status.stdout.log:1`.
+  29: 
+  30: ## Path-only grouping: tests
+  31: Treat these as test-surface overhaul batches:
+  32: 
+  33: - Modified/current frontend unit and architecture tests under `frontend/tests/unit/architecture/`, `frontend/tests/unit/calculations/`, `frontend/tests/unit/commands/`, `frontend/tests/unit/services/`, and `frontend/tests/unit/dependencyGraph.spec.ts` as listed in `.saivage/stages/ci-source-control-archival-plan-2026-05-24/logs/path-only-git-status.stdout.log:1`.
+  34: - New reducer-focused test `frontend/tests/unit/commands/reducerOperations.spec.ts` as listed in `.saivage/stages/ci-source-control-archival-plan-2026-05-24/logs/path-only-git-status.stdout.log:1`.
+  35: - Deleted stale integration/unit tests under `frontend/tests/integration/`, `frontend/tests/unit/architecture/`, `frontend/tests/unit/commands/`, and `frontend/tests/unit/services/` as listed in `.saivage/stages/ci-source-control-archival-plan-2026-05-24/logs/path-only-git-status.stdout.log:1`.
+  36: 
+  37: ## Path-only grouping: docs and audit artifacts
+  38: Treat these as human-readable audit/documentation archive batches:
+  39: 
+  40: - Current audit register and ARCH artifacts under `architecture-audit/issues/`, `architecture-audit/decisions/`, `architecture-audit/proposals/`, `architecture-audit/plans/`, `architecture-audit/reports/`, and `architecture-audit/implementation-log/` as listed in `.saivage/stages/ci-source-control-archival-plan-2026-05-24/logs/path-only-git-status.stdout.log:1` and summarized in `architecture-audit/final-review/source-control-change-manifest.md:1`.
+  41: - Current project documentation changes at `docs/DEPLOYMENT.md`, `docs/GOOGLE_DRIVE_SETUP.md`, and `frontend/REALIZATION_ARCHITECTURE.md` as listed in `.saivage/stages/ci-source-control-archival-plan-2026-05-24/logs/path-only-git-status.stdout.log:1`.
+  42: - This continuous-improvement report should remain in the docs/audit batch: `architecture-audit/continuous-improvement/2026-05-24-source-control-archival-plan.md`.
+  43: 
+  44: ## Path-only grouping: deletions
+  45: Treat these as intended deletion batches requiring human review before commit, because deletions can be harder to recover from once archived:
+  46: 
+  47: - Deleted view-state command-operation surface under `frontend/src/commands/operations/viewState/` as listed in `.saivage/stages/ci-source-control-archival-plan-2026-05-24/logs/path-only-git-status.stdout.log:1`.
+  48: - Deleted stale frontend tests under `frontend/tests/integration/` and `frontend/tests/unit/` as listed in `.saivage/stages/ci-source-control-archival-plan-2026-05-24/logs/path-only-git-status.stdout.log:1`.
+  49: - Deleted historical pre-design files `pre-plan.md`, `pre-spec.md`, `pre-spec-ui.md`, and `pre-spec-ui-tool.md` as listed in `.saivage/stages/ci-source-control-archival-plan-2026-05-24/logs/path-only-git-status.stdout.log:1`.
+  50: - Deleted historical spec-pack paths under `specs/001-dihedral-learning-mvp/` as listed in `.saivage/stages/ci-source-control-archival-plan-2026-05-24/logs/path-only-git-status.stdout.log:1`.
+  51: 
+  52: ## Path-only grouping: package and workspace files
+  53: Treat these as package/workspace archive batches:
+  54: 
+  55: - `frontend/package.json` and `package-lock.json` are modified according to `.saivage/stages/ci-source-control-archival-plan-2026-05-24/logs/path-only-git-status.stdout.log:1`.
+  56: - Root workspace scripts are defined in `package.json:10`; the latest acceptance refresh validates the current command surface at `architecture-audit/continuous-improvement/2026-05-24-acceptance-refresh.md:1`.
+  57: 
+  58: ## Path-only grouping: generated Saivage artifacts
+  59: Do not include generated Saivage operational outputs in source commits unless project policy explicitly changes. Path-only status shows generated/modified operational artifacts under `.saivage/stages/`, including stage reports, reviews, tasks, dev-server outputs, proposal/plan validation outputs, recovery-preview outputs, and stale-reference scan outputs at `.saivage/stages/ci-source-control-archival-plan-2026-05-24/logs/path-only-git-status.stdout.log:1`.
+  60: 
+  61: These paths are operational evidence, not source/runtime deliverables. If a future policy requires preserving them, archive them separately from product source with a clear retention rule and without forbidden contents.
+  62: 
+  63: ## Path-only grouping: ignored, forbidden, and runtime paths
+  64: Explicitly do not commit forbidden runtime/provider material unless project policy changes and secret-safety controls are redesigned. Current path-only ignore evidence confirms these categories are ignored:
+  65: 
+  66: - Saivage secret/provider/runtime paths such as `.saivage/auth-profiles.json`, `.saivage/saivage.json`, `.saivage/config.json`, and `.saivage/provider-configs/` via `.saivage/stages/ci-source-control-archival-plan-2026-05-24/logs/check-ignore-path-only.stdout.log:1` and `.gitignore:31`.
+  67: - Saivage generated stage logs/reports such as `.saivage/stages/**/logs/` and `.saivage/stages/**/reports/` via `.saivage/stages/ci-source-control-archival-plan-2026-05-24/logs/check-ignore-path-only.stdout.log:1` and `.gitignore:42`.
+  68: - Environment files such as `.env`, `.env.*`, `frontend/.env.*`, and `backend/.env.*` via `.saivage/stages/ci-source-control-archival-plan-2026-05-24/logs/check-ignore-path-only.stdout.log:1` and `.gitignore:18`.
+  69: - Runtime backend project JSON data under `backend/data/projects/*.json` via `.saivage/stages/ci-source-control-archival-plan-2026-05-24/logs/check-ignore-path-only.stdout.log:1` and `.gitignore:79`.
+  70: - Temporary scratch output under `tmp/` via `.saivage/stages/ci-source-control-archival-plan-2026-05-24/logs/check-ignore-path-only.stdout.log:1` and `.gitignore:83`.
+  71: 
+  72: Warning: do not paste, stage, archive, or commit contents from these forbidden/runtime/provider paths. Keep evidence path-only.
+  73: 
+  74: ## Human-review items
+  75: Before any commit or archive operation, a human reviewer should confirm:
+  76: 
+  77: 1. The broad source/runtime changes match the resolved ARCH issue scope summarized in `architecture-audit/final-review/source-control-change-manifest.md:1`.
+  78: 2. The deleted tests and deleted historical docs are intentional and not needed for current acceptance, using the green latest refresh at `architecture-audit/continuous-improvement/2026-05-24-acceptance-refresh.md:1` as validation evidence.
+  79: 3. Generated `.saivage/stages/` operational files are excluded from source commits unless a deliberate policy decision says otherwise.
+  80: 4. No forbidden ignored path from `.saivage/stages/ci-source-control-archival-plan-2026-05-24/logs/check-ignore-path-only.stdout.log:1` is staged or copied into a source archive.
+  81: 5. The final commit/archive diff is reviewed path-only first, then content-reviewed only for non-secret source/docs files.
+  82: 
+  83: ## Recommended commit/archive batches
+  84: Recommended batching, in order:
+  85: 
+  86: 1. **Audit and decision record batch**: `architecture-audit/reports/`, `architecture-audit/issues/`, `architecture-audit/decisions/`, `architecture-audit/proposals/`, `architecture-audit/plans/`, `architecture-audit/implementation-log/`, final-review docs, and continuous-improvement docs. Include this report.
+  87: 2. **Core source/runtime batch**: frontend command/reducer/domain/service/store/tool/runtime files under `frontend/src/`.
+  88: 3. **Test-surface batch**: current tests plus intentional stale-test deletions under `frontend/tests/`.
+  89: 4. **Documentation batch**: `docs/DEPLOYMENT.md`, `docs/GOOGLE_DRIVE_SETUP.md`, and `frontend/REALIZATION_ARCHITECTURE.md` if not already included with audit docs.
+  90: 5. **Package/workspace batch**: `frontend/package.json`, `package-lock.json`, and any reviewed root workspace/package changes.
+  91: 6. **Deletion batch**: pre-design/spec-pack deletions and deleted legacy command-operation/test surfaces, with a final human deletion review.
+  92: 7. **Do-not-commit batch**: generated `.saivage/stages/` operational outputs, logs, reports, provider/runtime files, environment files, backend runtime data, and temporary scratch paths. Keep these out of source commits unless project policy changes.
+  93: 
+  94: ## Exact next steps
+  95: 1. Review `architecture-audit/continuous-improvement/2026-05-24-source-control-archival-plan.md` for completeness and secret-safety.
+  96: 2. Run a path-only staging preview before any commit, using the same categories as `.saivage/stages/ci-source-control-archival-plan-2026-05-24/logs/path-only-git-status.stdout.log:1`.
+  97: 3. Exclude generated `.saivage/stages/` logs/reports/tasks/dev-server outputs and all ignored/forbidden/runtime paths confirmed by `.saivage/stages/ci-source-control-archival-plan-2026-05-24/logs/check-ignore-path-only.stdout.log:1`.
+  98: 4. If committing, stage only one recommended batch at a time and perform a human review before each commit.
+  99: 5. After final source/archive selection, rerun the full acceptance cadence if any implementation/test/package content changed after `architecture-audit/continuous-improvement/2026-05-24-acceptance-refresh.md:1`.
+ 100: 6. If no new path anomaly beyond known overhaul categories is found, do no implementation work. Future activity should be trigger-based only: a new product objective, a reproducible validation regression, a newly cited source defect, or a source-control/secret-safety hygiene policy change.
+ 101: 
+ 102: ## Recommendation
+ 103: No implementation work is recommended from this archival review. The path-only evidence matches the known overhaul categories documented in `architecture-audit/final-review/source-control-change-manifest.md:1`, and validation is already green according to `architecture-audit/continuous-improvement/2026-05-24-acceptance-refresh.md:1`. Future work should remain trigger-based rather than proactive implementation churn.
+
+### architecture-audit/continuous-improvement/2026-05-24-source-defect-scout-after-snapping-cleanup.md
+   1: # Continuous-improvement source defect scout after snapping cleanup — 2026-05-24
+   2: 
+   3: ## Scope and method
+   4: This bounded scout inspected current source and retained audit evidence after the deletion of the unused `worldStore` / `useSnapping` island. It checked root validation wiring in `package.json:14`, `package.json:15`, `package.json:16`, and `package.json:18`; reducer/runtime authority in `frontend/src/domain/world/ProjectStateRuntime.ts:15` and `frontend/src/domain/world/ProjectStateRuntime.ts:22`; current persistence contracts in `frontend/src/services/ProjectService.ts:1` and `backend/src/api/projects.ts:5`; current command undo/redo runtime scope in `frontend/src/commands/CommandStack.ts:1`; and executable guard coverage in `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:21` and `backend/tests/integration/projects.spec.ts:1`. Inspection notes were recorded in `.saivage/stages/ci-next-source-defect-scout-after-snapping-cleanup/logs/source-scout-inspection.stdout.log:1`.
+   5: 
+   6: ## Explicit exclusions
+   7: No forbidden secret/env/provider contents were read, copied, grepped, or logged. This scout did not inspect `.saivage/auth-profiles.json`, `.saivage/saivage.json`, provider configs, frontend env files, backend env files, OAuth credentials, shell history, or keychain material. It also did not reopen completed `ARCH-001` through `ARCH-012` guard surfaces unless fresh current source or validation evidence showed a concrete defect; no such evidence was found. Historical pre-design/spec-pack paths remain excluded as current authority by the final-review guard map at `architecture-audit/final-review/cross-arch-guard-coverage-map.md:1` and source-control guidance at `architecture-audit/final-review/source-control-change-manifest.md:1`.
+   8: 
+   9: ## Current source findings
+  10: - The deleted snapping island remains absent. Path search found no `frontend/src` file named `worldStore` or `useSnapping`, and live text search for `useSnapping`, `worldStore`, and `useWorldStore` under source/tests found no runtime reintroduction; see `.saivage/stages/ci-next-source-defect-scout-after-snapping-cleanup/logs/source-scout-inspection.stdout.log:1`. The executable guard now includes deleted path constants at `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:21`, import/pattern bans at `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:25`, and the absence assertion at `frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:648`.
+  11: - Reducer/domain authority remains centralized in current source. `frontend/src/domain/world/ProjectStateRuntime.ts:15` documents that the holder stores only immutable `ProjectStateRecord` data plus runtime metadata, `frontend/src/domain/world/ProjectStateRuntime.ts:22` keeps the state private, and `frontend/src/domain/world/ProjectStateRuntime.ts:42` commits cloned records through `createProjectStateRecord` before notifying subscribers. No fresh mutable-authority island comparable to the deleted snapping store was found in this bounded pass.
+  12: - Persistence/API contracts remain current-snapshot and no-backcompat by code path. `frontend/src/services/ProjectService.ts:1` declares current reducer-state snapshot persistence, `frontend/src/services/ProjectService.ts:31` forbids command-history persistence keys, `frontend/src/services/ProjectService.ts:72` validates schema/provenance/domain before restore, and `backend/src/api/projects.ts:5` through `backend/src/api/projects.ts:27` define the backend schema/contract/forbidden-field boundary. No fresh source signal showed legacy command-stream or projection-array acceptance.
+  13: - Command undo/redo remains runtime-only rather than persisted authority. `frontend/src/commands/CommandStack.ts:1` states the stack is runtime-only, `frontend/src/commands/CommandStack.ts:10` and `frontend/src/commands/CommandStack.ts:11` keep undo/redo arrays private, and `frontend/src/commands/CommandStack.ts:91` clears runtime history without file-format restoration. This matches the current snapshot persistence boundary above.
+  14: - Validation gates are still wired through root scripts and executable guards. Root `lint`, `test`, and `build` aggregate frontend and backend workspaces at `package.json:14`, `package.json:15`, and `package.json:16`; `package.json:18` wires the post-overhaul frontend architecture guard plus backend projects integration guard. The required rerun passed in `.saivage/stages/ci-next-source-defect-scout-after-snapping-cleanup/logs/npm-run-test-post-overhaul-guards.stdout.log:1`; backend stderr contains the expected invalid-file negative-path log while the command exited 0 at `.saivage/stages/ci-next-source-defect-scout-after-snapping-cleanup/logs/npm-run-test-post-overhaul-guards.stderr.log:1`.
+  15: 
+  16: ## Recommended next formal stage
+  17: No new formal stage is warranted from this scout. The prior recommended cleanup was executed: the `worldStore` / `useSnapping` island is absent and guarded, `ARCH-001` through `ARCH-012` remain resolved by current guard evidence, and this bounded pass did not find a fresh central defect in reducer/domain invariants, persistence/API/security behavior by code path, command/undo determinism, rendering/tool boundaries, validation gates, or source-control/secret hygiene.
+  18: 
+  19: ## Validation record
+  20: - `npm run test:post-overhaul-guards` was run from `/work/diedrico` and passed. Logs: `.saivage/stages/ci-next-source-defect-scout-after-snapping-cleanup/logs/npm-run-test-post-overhaul-guards.stdout.log:1` and `.saivage/stages/ci-next-source-defect-scout-after-snapping-cleanup/logs/npm-run-test-post-overhaul-guards.stderr.log:1`.
+  21: - Citation/path self-check passed after this report was written. Log: `.saivage/stages/ci-next-source-defect-scout-after-snapping-cleanup/logs/citation-path-self-check.stdout.log:1`.
+

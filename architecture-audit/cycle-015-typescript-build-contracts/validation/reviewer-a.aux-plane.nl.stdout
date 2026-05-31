@@ -1,0 +1,163 @@
+     1	import { Matrix3 } from 'three';
+     2	import { Matrix4x3, Matrix3x4 } from '@/utils/threeUtils';
+     3	import { computeProjectionPlaneMatrices } from '@/utils/projectionPlaneUtils';
+     4	import type { ProjectionPlaneRealizationContext } from './ProjectionPlaneContext';
+     5	import { ProjectionPlane, type ProjectionPlaneType } from '@/domain/world/projectionPlane/ProjectionPlane';
+     6	import { ProjectionPlaneRealization2D, ProjectionPlaneRealization3D } from './ProjectionPlaneRealization';
+     7	
+     8	export class AuxiliaryProjectionPlane extends ProjectionPlane {
+     9	  readonly type: ProjectionPlaneType = 'auxiliary';
+    10	
+    11	  // Dependencies for computing transformation (the RULE)
+    12	  readonly t1HingeTraceId: string;      // Trace line used as hinge (T1)
+    13	  readonly t2OtherTraceId: string;      // Other trace line on different plane (T2)
+    14	  readonly t2PrimeLineId: string;       // Position/orientation line on same plane as T1 (T2')
+    15	
+    16	  constructor(
+    17	    id: string,
+    18	    name: string,
+    19	    t1HingeTraceId: string,
+    20	    t2OtherTraceId: string,
+    21	    t2PrimeLineId: string,
+    22	    isActive: boolean = false,
+    23	    isVisible: boolean = true,
+    24	    color: string = '#000000',
+    25	    plane3DId?: string
+    26	  ) {
+    27	    super(id, name, isActive, isVisible, color, plane3DId);
+    28	    this.t1HingeTraceId = t1HingeTraceId;
+    29	    this.t2OtherTraceId = t2OtherTraceId;
+    30	    this.t2PrimeLineId = t2PrimeLineId;
+    31	  }
+    32	
+    33	  clone(): AuxiliaryProjectionPlane {
+    34	    return new AuxiliaryProjectionPlane(
+    35	      this.id,
+    36	      this.name,
+    37	      this.t1HingeTraceId,
+    38	      this.t2OtherTraceId,
+    39	      this.t2PrimeLineId,
+    40	      this.isActive,
+    41	      this.isVisible,
+    42	      this.color,
+    43	      this.plane3DId
+    44	    );
+    45	  }
+    46	
+    47	  /**
+    48	   * Get dependencies - returns IDs of trace lines this plane depends on
+    49	   * Used for invalidation tracking when traces move
+    50	   */
+    51	  getDependencies(): string[] {
+    52	    return [this.t1HingeTraceId, this.t2OtherTraceId, this.t2PrimeLineId];
+    53	  }
+    54	
+    55	  /**
+    56	   * Calculate the 3D transformation realization for this auxiliary plane
+    57	   * Computes transformation matrices from trace dependencies using computeProjectionPlaneMatrices().
+    58	   * 
+    59	   * @param world - World instance for element lookup
+    60	   * @returns ProjectionPlaneRealization3D with computed transformation matrices
+    61	   */
+    62	  realize3D(context: ProjectionPlaneRealizationContext): ProjectionPlaneRealization3D {
+    63	    if (!this.id) {
+    64	      throw new Error('Cannot create realization for plane without ID');
+    65	    }
+    66	    
+    67	    
+    68	    try {
+    69	      // Compute transformation matrices from trace dependencies
+    70	      const matrices = computeProjectionPlaneMatrices(
+    71	        this.t1HingeTraceId,
+    72	        this.t2OtherTraceId,
+    73	        this.t2PrimeLineId,
+    74	        context
+    75	      );
+    76	      
+    77	      if (!matrices) {
+    78	        // Trace lines are not feasible - return infeasible realization
+    79	        return new ProjectionPlaneRealization3D(
+    80	          this.id,
+    81	          new Matrix4x3(),
+    82	          new Matrix3x4(),
+    83	          false
+    84	        );
+    85	      }
+    86	      
+    87	      
+    88	      return new ProjectionPlaneRealization3D(
+    89	        this.id,
+    90	        matrices.planeTo3D,
+    91	        matrices.threeDToPlane,
+    92	        true
+    93	      );
+    94	      
+    95	    } catch (error) {
+    96	      console.error('[AuxiliaryProjectionPlane] Failed to compute realization:', error);
+    97	      // Return infeasible realization with fallback identity matrices
+    98	      return new ProjectionPlaneRealization3D(
+    99	        this.id,
+   100	        new Matrix4x3(),
+   101	        new Matrix3x4(),
+   102	        false
+   103	      );
+   104	    }
+   105	  }
+   106	
+   107	  /**
+   108	   * Calculate the 2D realization (transformation matrices) for this auxiliary plane
+   109	   * Unlike base planes, this requires World context to resolve trace dependencies.
+   110	   * 
+   111	   * @param world - World instance for element lookup
+   112	   * @returns ProjectionPlaneRealization2D with computed transformation matrices
+   113	   */
+   114	  realize2D(context: ProjectionPlaneRealizationContext): ProjectionPlaneRealization2D {
+   115	    if (!this.id) {
+   116	      throw new Error('Cannot create realization for plane without ID');
+   117	    }
+   118	    
+   119	    try {
+   120	      // Compute transformation matrices
+   121	      const matrices = computeProjectionPlaneMatrices(
+   122	        this.t1HingeTraceId,
+   123	        this.t2OtherTraceId,
+   124	        this.t2PrimeLineId,
+   125	        context
+   126	      );
+   127	      
+   128	      if (!matrices) {
+   129	        // Trace lines are not feasible - return infeasible realization
+   130	        const identityMatrix = new Matrix3();
+   131	        identityMatrix.identity();
+   132	        return new ProjectionPlaneRealization2D(
+   133	          this.id,
+   134	          identityMatrix,
+   135	          identityMatrix.clone(),
+   136	          false
+   137	        );
+   138	      }
+   139	      
+   140	      // Use shared helper to compute backward matrix with determinant check
+   141	      const { paperToPlane, feasible } = this.computeBackward2DMatrix(matrices.planeToPaper);
+   142	      
+   143	      return new ProjectionPlaneRealization2D(
+   144	        this.id,
+   145	        matrices.planeToPaper,
+   146	        paperToPlane,
+   147	        feasible
+   148	      );
+   149	      
+   150	    } catch (error) {
+   151	      console.error('[AuxiliaryProjectionPlane] Failed to compute 2D realization:', error);
+   152	      // Return fallback identity matrices
+   153	      const identityMatrix = new Matrix3();
+   154	      identityMatrix.identity();
+   155	      return new ProjectionPlaneRealization2D(
+   156	        this.id,
+   157	        identityMatrix,
+   158	        identityMatrix.clone(),
+   159	        false
+   160	      );
+   161	    }
+   162	  }
+   163	}

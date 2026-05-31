@@ -1,0 +1,31 @@
+frontend/src/components/workspace/SvgCanvas.vue:183:import { World } from '@/domain/world/World';
+frontend/src/components/workspace/SvgCanvas.vue:200:import { CreateProjectionPlaneTool } from '@/tools/CreateProjectionPlaneTool';
+frontend/src/components/workspace/SvgCanvas.vue:304:  return point instanceof FreePoint2D && !point.locked;
+frontend/src/components/workspace/SvgCanvas.vue:366:    const plane = world.getProjectionPlaneById(planeId);
+frontend/src/components/workspace/SvgCanvas.vue:388:    for (const plane of world.getAllProjectionPlanes()) {
+frontend/src/components/workspace/SvgCanvas.vue:444:  'createprojectionplane': () => new CreateProjectionPlaneTool(),
+frontend/src/components/workspace/SvgCanvas.vue:494:  const allPlanes = world.getAllProjectionPlanes();
+frontend/src/components/workspace/SvgCanvas.vue:537:  for (const plane of world.getAllProjectionPlanes()) {
+frontend/src/components/workspace/SvgCanvas.vue:538:    const realization = world.getProjectionPlane2DRealization(plane.id);
+frontend/src/components/workspace/SvgCanvas.vue:552:  for (const plane of world.getAllProjectionPlanes()) {
+frontend/src/components/workspace/SvgCanvas.vue:553:    const realization = world.getProjectionPlane2DRealization(plane.id);
+frontend/src/components/workspace/SvgCanvas.vue:860:    const plane = world.getProjectionPlaneById(activePlane.value);
+frontend/src/application/canvasPresentation/CanvasPresentationController.ts:1:import type { World } from '@/domain/world/World';
+frontend/src/application/canvasPresentation/CanvasVisibilityPolicy.ts:1:import type { World } from '@/domain/world/World';
+frontend/src/application/canvasPresentation/CanvasVisibilityPolicy.ts:2:import { resolveVisibility } from '@/domain/world/styleService';
+frontend/src/application/canvasPresentation/CanvasVisibilityPolicy.ts:5:  return resolveVisibility(element as never, world);
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:2:import type { World } from '@/domain/world/World';
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:18:    for (const plane of world.getAllProjectionPlanes()) {
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:19:      const realization = world.getProjectionPlane2DRealization(plane.id);
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:22:    for (const plane of world.getAllProjectionPlanes()) {
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:37:        const kind = line instanceof HalfHingeLine2D ? 'half-hinge-line' : line instanceof Segment2DByPoints ? 'finite-segment' : line instanceof SiblingGuide2D ? 'sibling-guide' : line instanceof Guide2D ? 'guide' : 'infinite-line';
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:49:          const arcGeometry = (line as any).arcGeometry;
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:50:          if (arcGeometry?.startPoint && arcGeometry?.endPoint && arcGeometry?.controlPoints?.length) {
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:51:            const style = { stroke: arcGeometry.style.color, strokeWidth: arcGeometry.style.width, strokeStyle: arcGeometry.style.dashArray ? 'dashed' as const : 'solid' as const, fill: 'none', opacity: arcGeometry.style.opacity, zIndex: 2 };
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:52:            const path: PathPrimitive = { type: 'path', id: `arc-${line.id}`, sourceEntityId: line.id, planeId: undefined, layer: RenderLayer.Guides, visible: true, style, points: [[arcGeometry.startPoint.x, arcGeometry.startPoint.y], [arcGeometry.controlPoints[0].x, arcGeometry.controlPoints[0].y], [arcGeometry.endPoint.x, arcGeometry.endPoint.y]], closed: false };
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:79:  for (const plane of world.getAllProjectionPlanes()) {
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:80:    const planeRealization = world.getProjectionPlane3DRealization(plane.id); const planeToPaper = planeTransforms.get(plane.id)?.planeToPaper;
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:18:  else if (ctx.selected) { fill = point instanceof FreePoint2D ? '#4A90E2' : '#E94E77'; stroke = '#0066CC'; strokeWidth = 2; }
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:19:  else if (ctx.hovered) { fill = point instanceof FreePoint2D ? '#6BB6FF' : '#FF6B9D'; stroke = '#4A90E2'; strokeWidth = 1.5; }
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:20:  else { fill = point instanceof FreePoint2D ? '#4A90E2' : '#E94E77'; stroke = '#333333'; strokeWidth = 1.5; }
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:21:  return { layer: ctx.snapTarget ? RenderLayer.Highlights : RenderLayer.Elements, radius: point instanceof FreePoint2D ? 5 : 4, style: { stroke, strokeWidth, strokeStyle: 'solid', fill, opacity: opacity(point.planeId, ctx.activePlaneId), zIndex: 10 + zBoost(point.planeId, ctx.activePlaneId) } };

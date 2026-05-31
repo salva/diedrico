@@ -1,0 +1,68 @@
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:7:import { RenderLayer, type LinePrimitive, type PointPrimitive, type SegmentPrimitive, type CirclePrimitive, type PathPrimitive } from '@/domain/presentation/Paper';
+frontend/src/application/canvasPresentation/CanvasStylePolicy.ts:7:import { RenderLayer, type ResolvedStyle } from '@/domain/presentation/Paper';
+frontend/tests/unit/application/canvasToolControllers.spec.ts:12:import { Paper } from '@/domain/presentation/Paper';
+frontend/tests/unit/application/canvasToolControllers.spec.ts:29:    paper: overrides.paper ?? new Paper(),
+frontend/tests/unit/application/canvasToolControllers.spec.ts:201:    const paper = new Paper();
+frontend/tests/unit/application/canvasToolControllers.spec.ts:202:    vi.spyOn(paper, 'hitTest')
+frontend/tests/unit/application/canvasToolControllers.spec.ts:210:    const base = { planeId: plane.id, world, paper, commandSink: sink };
+frontend/tests/unit/application/canvasToolControllers.spec.ts:260:      paper: new Paper(),
+frontend/src/application/canvasPresentation/CanvasPresentationModel.ts:2:import type { Primitive, ResolvedStyle } from '@/domain/presentation/Paper';
+frontend/src/utils/projectionPlaneUtils.ts:162: * - V-axis: Perpendicular to T1 on paper, oriented via T2 side test
+frontend/src/utils/projectionPlaneUtils.ts:215:  // V-axis: Perpendicular to T1 on paper, oriented via T2 side test
+frontend/tests/unit/selectionMask.spec.ts:16:import { Paper } from '@/domain/presentation/Paper';
+frontend/tests/unit/selectionMask.spec.ts:36:  let paper: Paper;
+frontend/tests/unit/selectionMask.spec.ts:41:    paper = new Paper();
+frontend/tests/unit/selectionMask.spec.ts:147:      const hit = paper.hitTest(queryPos, 20, planeId, paperToPlaneTransform, world, mask);
+frontend/tests/unit/selectionMask.spec.ts:162:      const hit = paper.hitTest(queryPos, 20, planeId, paperToPlaneTransform, world, mask);
+frontend/tests/unit/selectionMask.spec.ts:181:      const hit = paper.hitTest(queryPos, 20, planeId, paperToPlaneTransform, world, mask);
+frontend/tests/unit/selectionMask.spec.ts:201:      const hit = paper.hitTest(queryPos, 20, planeId, paperToPlaneTransform, world, mask);
+frontend/tests/unit/selectionMask.spec.ts:217:      const hit = paper.hitTest(queryPos, 20, planeId, paperToPlaneTransform, world, mask);
+frontend/tests/unit/selectionMask.spec.ts:232:      const hit = paper.hitTest(queryPos, 20, planeId, paperToPlaneTransform, world, mask);
+frontend/tests/unit/selectionMask.spec.ts:253:      const hit1 = paper.hitTest(queryPos, 20, planeId, paperToPlaneTransform, world, mask1);
+frontend/tests/unit/selectionMask.spec.ts:263:      const hit2 = paper.hitTest(queryPos, 20, planeId, paperToPlaneTransform, world, mask2);
+frontend/tests/unit/tools/toolValidation.spec.ts:31:import { Paper } from '@/domain/presentation/Paper';
+frontend/tests/unit/tools/toolValidation.spec.ts:37:  let paper: Paper;
+frontend/tests/unit/tools/toolValidation.spec.ts:46:      paper,
+frontend/tests/unit/tools/toolValidation.spec.ts:65:    paper = new Paper();
+frontend/tests/unit/tools/pointTool.spec.ts:20:import { Paper } from '@/domain/presentation/Paper';
+frontend/tests/unit/tools/pointTool.spec.ts:30:  let paper: Paper;
+frontend/tests/unit/tools/pointTool.spec.ts:39:    paper,
+frontend/tests/unit/tools/pointTool.spec.ts:51:    paper = new Paper();
+frontend/src/domain/world/projectionPlane/ProjectionPlaneRealization.ts:8:  // Plane-to-paper: 3x3 homogeneous matrix
+frontend/tests/unit/tools/CircleTool.spec.ts:25:import { Paper } from '@/domain/presentation/Paper';
+frontend/tests/unit/tools/CircleTool.spec.ts:32:  let paper: Paper;
+frontend/tests/unit/tools/CircleTool.spec.ts:39:    paper = new Paper();
+frontend/tests/unit/tools/CircleTool.spec.ts:73:        paper,
+frontend/tests/unit/tools/CircleTool.spec.ts:89:        paper,
+frontend/tests/unit/tools/CircleTool.spec.ts:133:        paper,
+frontend/tests/unit/tools/CircleTool.spec.ts:149:        paper,
+frontend/tests/unit/tools/CircleTool.spec.ts:187:        paper,
+frontend/tests/unit/tools/CircleTool.spec.ts:202:        paper,
+frontend/tests/unit/tools/CircleTool.spec.ts:243:        paper,
+frontend/tests/unit/tools/CircleTool.spec.ts:258:        paper,
+frontend/tests/unit/tools/CircleTool.spec.ts:282:        paper,
+frontend/tests/unit/tools/CircleTool.spec.ts:299:        paper,
+frontend/tests/unit/tools/CircleTool.spec.ts:328:        paper,
+frontend/tests/unit/tools/CircleTool.spec.ts:341:        paper,
+frontend/tests/unit/tools/CircleTool.spec.ts:355:        paper,
+frontend/tests/unit/tools/CircleTool.spec.ts:390:        paper,
+frontend/tests/unit/tools/CircleTool.spec.ts:403:        paper,
+frontend/tests/unit/tools/CircleTool.spec.ts:467:        paper,
+frontend/tests/unit/tools/CircleTool.spec.ts:479:        paper,
+frontend/tests/unit/services/projectionDisplay.spec.ts:3: * Tests that PaperService generates projected primitives for 3D elements
+frontend/tests/unit/services/projectionDisplay.spec.ts:9:import { PaperService, type PrimitiveContext } from '../../../src/services/PaperService';
+frontend/tests/unit/services/projectionDisplay.spec.ts:18:import type { PointPrimitive, LinePrimitive, SegmentPrimitive } from '../../../src/domain/presentation/Paper';
+frontend/tests/unit/services/projectionDisplay.spec.ts:20:describe('PaperService - 3D Element Projection Display (Phase 106)', () => {
+frontend/tests/unit/services/projectionDisplay.spec.ts:21:  let paperService: PaperService;
+frontend/tests/unit/services/projectionDisplay.spec.ts:28:    paperService = new PaperService();
+frontend/tests/unit/services/projectionDisplay.spec.ts:90:      const context: PrimitiveContext = {
+frontend/tests/unit/services/projectionDisplay.spec.ts:104:      const context: PrimitiveContext = {
+frontend/tests/unit/services/projectionDisplay.spec.ts:121:      const context: PrimitiveContext = {
+frontend/tests/unit/services/projectionDisplay.spec.ts:153:      const context: PrimitiveContext = {
+frontend/tests/unit/services/projectionDisplay.spec.ts:188:      const context: PrimitiveContext = {
+frontend/tests/unit/services/projectionDisplay.spec.ts:240:      const context: PrimitiveContext = {
+frontend/src/services/SVGRenderer.ts:33:} from '../domain/presentation/Paper';
+frontend/src/services/InputService.ts:10: * This service is separate from PaperService because:
+frontend/src/services/InputService.ts:11: * - PaperService works at the paper level (like a plotter)
+frontend/src/domain/presentation/Paper.ts:19: * This matches the rendering pattern in PaperService and eliminates World facade calls.
+frontend/src/commands/operations/paper/README.md:12:All Paper operations modify the presentation layer (PaperService) without affecting the domain model.

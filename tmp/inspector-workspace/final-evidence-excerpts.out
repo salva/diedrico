@@ -1,0 +1,239 @@
+     1	/**
+     2	 * Symbolic path types for element addressing
+     3	 */
+     4	export type ElementPath = string;  // Format: "/world/elements2D/{id}" or "/world/elements3D/{id}"
+     5	export type ActionPath = string;   // Format: "/process/subprocess/{id}/actionGroup/{id}/action/{id}"
+     6	export type PlanePath = string;    // Format: "/world/planes/{id}"
+     7	
+     8	/**
+     9	 * Base interface for all 2D elements (without discriminator)
+    10	 */
+    11	export interface Element2DBase {
+    12	  id: string;
+    13	  name: string;
+    14	  planeId: string;
+    15	  createdBy: string;             // ActionId that created this element
+    16	  infeasible: boolean;
+    17	  visualStyle: VisualStyle;
+    18	}
+    19	
+    20	/**
+    21	 * === POINT 2D CONSTRUCTIONS ===
+    22	 */
+    23	
+    24	/**
+    25	 * Free point - placed at arbitrary location
+    26	 */
+    27	export interface Point2DFree extends Element2DBase {
+    28	  kind: 'Point2DFree';
+    29	  x: number;
+    30	  y: number;
+    31	}
+    32	
+    33	/**
+    34	 * Point constrained to lie on an element
+    35	 */
+    36	export interface Point2DOnElement extends Element2DBase {
+    37	  kind: 'Point2DOnElement';
+    38	  hostElementId: string;         // Line, segment, or circle
+    39	  parameter: number;             // Position along element (0-1 for segments, angle for circles)
+    40	}
+--- processStore
+     1	import { defineStore } from "pinia";
+     2	import { CommandStack } from "../commands/CommandStack";
+     3	import type { Command } from "../commands/Command";
+     4	
+     5	interface ProcessProjectionState {
+     6	  commandHistory: CommandStack;
+     7	}
+     8	
+     9	/**
+    10	 * Runtime command-history projection.
+    11	 *
+    12	 * Process tree/domain state is reducer-owned by ProjectStateRecord. This Pinia store does
+    13	 * not duplicate or mutate the process tree; it only exposes the runtime-only
+    14	 * CommandStack used by runtime callers that receive command-stack state from this store.
+    15	 */
+    16	export const useProcessStore = defineStore("process", {
+    17	  state: (): ProcessProjectionState => ({
+    18	    commandHistory: new CommandStack(),
+    19	  }),
+    20	
+    21	  getters: {
+    22	    canUndo: (state): boolean => state.commandHistory.canUndo(),
+    23	    canRedo: (state): boolean => state.commandHistory.canRedo(),
+    24	    undoCount: (state): number => state.commandHistory.getUndoCount(),
+    25	    redoCount: (state): number => state.commandHistory.getRedoCount(),
+    26	  },
+    27	
+    28	  actions: {
+    29	    pushCommand(command: Command): void {
+    30	      this.commandHistory.push(command);
+    31	    },
+    32	
+    33	    undo(): boolean {
+    34	      if (!this.commandHistory.canUndo()) return false;
+    35	      this.commandHistory.undo();
+    36	      return true;
+    37	    },
+    38	
+    39	    redo(): boolean {
+    40	      if (!this.commandHistory.canRedo()) return false;
+    41	      this.commandHistory.redo();
+    42	      return true;
+    43	    },
+    44	
+    45	    clear(): void {
+    46	      this.commandHistory.clear();
+    47	    },
+    48	  },
+    49	});
+--- keyboard rest
+   216	useAppKeyboardShortcuts({
+   217	  newProject: handleNewProject,
+   218	  openProjectDialog: handleOpenProjectDialog,
+   219	  renameProject: () => projectNameDisplayRef.value?.startEditing(),
+   220	  fitToView: handleFitToView,
+   221	  selectAllInActivePlane: handleKeyboardSelectAllInActivePlane,
+   222	  deleteSelected: handleKeyboardDeleteSelected,
+   223	  cancelInteraction: handleKeyboardCancelInteraction,
+   224	  activateTool: toolStore.setTool,
+   225	  undo: () => commandStack.undo(),
+   226	  redo: () => commandStack.redo(),
+   227	  canUndo: () => commandStack.canUndo(),
+   228	  canRedo: () => commandStack.canRedo(),
+   229	});
+   230	
+   231	function handleLoadFiles() {
+   232	  void loadFilesForStartupDialog();
+   233	}
+   234	
+   235	onMounted(() => {
+   236	  void initialize();
+   237	  window.addEventListener('load-files', handleLoadFiles);
+   238	});
+   239	
+   240	onUnmounted(() => {
+   241	  window.removeEventListener('load-files', handleLoadFiles);
+   242	  stopAutoSave();
+   243	});
+   244	</script>
+   245	
+   246	<style scoped>
+   247	.app-container {
+   248	  display: flex;
+   249	  flex-direction: column;
+   250	  width: 100vw;
+   251	  height: 100vh;
+   252	  overflow: hidden;
+   253	  background-color: #f5f5f5;
+   254	}
+   255	
+   256	.app-header {
+   257	  display: flex;
+   258	  align-items: center;
+   259	  justify-content: space-between;
+   260	  padding: 0.75rem 1rem;
+--- guard relevant app/toolbar assertions
+   900	
+   901	
+   902	  it('keeps ARCH-010 App shell responsibilities separated into current composables', () => {
+   903	    const fs = require('fs');
+   904	    const appSource = fs.readFileSync(appVuePath, 'utf8');
+   905	    const driveSessionSource = fs.readFileSync(driveProjectSessionPath, 'utf8');
+   906	    const keyboardSource = fs.readFileSync(appKeyboardShortcutsPath, 'utf8');
+   907	    const canvasSessionSource = fs.readFileSync(appCanvasSessionPath, 'utf8');
+   908	
+   909	    expectSourceContains(appSource, "import { useDriveProjectSession } from './composables/useDriveProjectSession'", 'App.vue');
+   910	    expectSourceContains(appSource, "import { useAppKeyboardShortcuts } from './composables/useAppKeyboardShortcuts'", 'App.vue');
+   911	    expectSourceContains(appSource, "import { useAppCanvasSession } from './composables/useAppCanvasSession'", 'App.vue');
+   912	    expectSourceContains(appSource, 'const projectSession = useDriveProjectSession({', 'App.vue');
+   913	    expectSourceContains(appSource, 'const canvasSession = useAppCanvasSession({', 'App.vue');
+   914	    expectSourceContains(appSource, 'useAppKeyboardShortcuts({', 'App.vue');
+   915	    expectSourceContains(appSource, 'stopAutoSave();', 'App.vue unmount cleanup delegates autosave teardown to session composable');
+   916	
+   917	    const appForbiddenPatterns = [
+   918	      /\bdiedrico_last_file(?:_id|_name)?\b/,
+   919	      /\blocalStorage\b/,
+   920	      /new\s+GoogleDriveService\s*\(/,
+   921	      /driveService\s*\[/,
+   922	      /\[\s*['"]accessToken['"]\s*\]/,
+   923	      /function\s+(?:startAutoSave|scheduleAutoSave|performAutoSave|stopAutoSave)\b/,
+   924	      /\b(?:startAutoSave|scheduleAutoSave|performAutoSave)\s*=\s*(?:async\s*)?\(/,
+   925	      /setTimeout\s*\(\s*(?:async\s*)?\(?.*AutoSave/s,
+   926	      /runtime\.subscribe\s*\(/,
+   927	      /window\.addEventListener\s*\(\s*['"]keydown['"]/,
+   928	      /window\.removeEventListener\s*\(\s*['"]keydown['"]/,
+   929	      /function\s+handleKeyDown\b/,
+   930	      /function\s+updateCoordinates\b/,
+   931	      /function\s+updateActivePlane\b/,
+   932	      /function\s+fitToView\b/,
+   933	      /previewCascadeDeletion\s*\(/,
+   934	    ] as const;
+   935	    for (const forbidden of appForbiddenPatterns) {
+   936	      expectSourceExcludes(appSource, forbidden, 'App.vue ARCH-010 shell boundary');
+   937	    }
+   938	
+   939	    expectSourceContains(driveSessionSource, 'new GoogleDriveService(options.config)', 'useDriveProjectSession');
+   940	    expectSourceContains(driveSessionSource, 'ProjectService.createProjectSnapshot', 'useDriveProjectSession');
+   941	    expectSourceContains(driveSessionSource, 'ProjectService.restoreProjectSnapshot', 'useDriveProjectSession');
+   942	    expectSourceContains(driveSessionSource, 'function startAutoSave()', 'useDriveProjectSession');
+   943	    expectSourceContains(driveSessionSource, 'function scheduleAutoSave()', 'useDriveProjectSession');
+   944	    expectSourceContains(driveSessionSource, 'function performAutoSave()', 'useDriveProjectSession');
+   945	    expectSourceContains(driveSessionSource, 'options.runtime.subscribe', 'useDriveProjectSession');
+   946	    expectSourceContains(driveSessionSource, 'setTimeout(() =>', 'useDriveProjectSession');
+   947	    expectSourceExcludes(driveSessionSource, /\bdiedrico_last_file(?:_id|_name)?\b/, 'useDriveProjectSession');
+   948	    expectSourceExcludes(driveSessionSource, /\blocalStorage\b/, 'useDriveProjectSession');
+   949	    expectSourceExcludes(driveSessionSource, /compat(?:ibility|ible)|legacy|dual flow/i, 'useDriveProjectSession');
+   950	
+   951	    expectSourceContains(keyboardSource, "import { onMounted, onUnmounted } from 'vue'", 'useAppKeyboardShortcuts');
+   952	    expectSourceContains(keyboardSource, 'export interface AppKeyboardShortcutsOptions', 'useAppKeyboardShortcuts');
+   953	    expectSourceContains(keyboardSource, "window.addEventListener('keydown', handleKeyDown)", 'useAppKeyboardShortcuts');
+   954	    expectSourceContains(keyboardSource, 'options.deleteSelected()', 'useAppKeyboardShortcuts');
+   955	    expectSourceContains(keyboardSource, 'options.activateTool(toolId)', 'useAppKeyboardShortcuts');
+   956	    const keyboardForbiddenPatterns = [
+   957	      /@\/commands\//,
+   958	      /\.\.\/commands\//,
+   959	      /CommandStack/,
+   960	      /\bnew\s+Command\b/,
+   961	      /DeletionSequenceFactory/,
+   962	      /import\s+(?!type\b)[^;]+(?:@\/stores\/|\.\.\/stores\/)/,
+   963	      /use(?:Selection|Tool|Settings|Auth)Store\s*\(/,
+   964	      /ProjectService|GoogleDriveService/,
+   965	      /\blocalStorage\b/,
+   966	      /compat(?:ibility|ible)|legacy|dual flow/i,
+   967	    ] as const;
+   968	    for (const forbidden of keyboardForbiddenPatterns) {
+   969	      expectSourceExcludes(keyboardSource, forbidden, 'useAppKeyboardShortcuts injected-action boundary');
+   970	    }
+   971	
+   972	    expectSourceContains(canvasSessionSource, 'getActiveProjectionPlaneId', 'useAppCanvasSession');
+   973	    expectSourceContains(canvasSessionSource, 'getActiveProjectionPlaneDisplayName', 'useAppCanvasSession');
+   974	    expectSourceContains(canvasSessionSource, 'setActiveProjectionPlane', 'useAppCanvasSession');
+   975	    expectSourceContains(canvasSessionSource, 'previewCascadeDeletion', 'useAppCanvasSession');
+   976	    expectSourceContains(canvasSessionSource, 'options.svgCanvasRef.value?.fitToView()', 'useAppCanvasSession');
+   977	    expectSourceContains(canvasSessionSource, 'coordinates3D', 'useAppCanvasSession');
+   978	    const canvasForbiddenPatterns = [
+   979	      /ProjectService|GoogleDriveService/,
+   980	      /createProjectSnapshot|restoreProjectSnapshot|validateProjectData/,
+   981	      /\b(?:autoSave|AutoSave|currentFileId|currentProjectName)\b/,
+   982	      /\blocalStorage\b/,
+   983	      /\bdiedrico_last_file(?:_id|_name)?\b/,
+   984	      /window\.addEventListener\s*\(\s*['"]keydown['"]/,
+   985	      /compat(?:ibility|ible)|legacy|dual flow/i,
+   986	    ] as const;
+   987	    for (const forbidden of canvasForbiddenPatterns) {
+   988	      expectSourceExcludes(canvasSessionSource, forbidden, 'useAppCanvasSession canvas-only boundary');
+   989	    }
+   990	  });
+   991	
+   992	
+   993	  it('rejects legacy command-stream persistence keys instead of accepting compatibility payloads', () => {
+   994	    for (const { field, payload } of legacyCommandStreamPayloads) {
+   995	      expect(
+   996	        () => ProjectService.validateProjectData(currentSnapshotProject(payload)),
+   997	        `Expected ProjectService to reject legacy command-stream field: ${field}`,
+   998	      ).toThrow(/command persistence field is not supported/);
+   999	    }
+  1000	  });
+  1001	});

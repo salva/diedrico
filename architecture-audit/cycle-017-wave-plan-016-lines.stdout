@@ -1,0 +1,62 @@
+   789	## Wave 016 — Canvas presentation read ports and overlay interaction boundary
+   790	
+   791	**Scope**
+   792	
+   793	- `frontend/src/application/canvasPresentation/CanvasPresentationController.ts`
+   794	- `frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts`
+   795	- `frontend/src/application/canvasPresentation/CanvasPresentationModel.ts`
+   796	- `frontend/src/application/canvasPresentation/CanvasInteractionQuery.ts`
+   797	- `frontend/src/application/canvasPresentation/CanvasVisibilityPolicy.ts`
+   798	- `frontend/src/application/canvasPresentation/CanvasStylePolicy.ts`
+   799	- a new narrow canvas presentation read-port module such as `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts`
+   800	- a named projected-3D-on-2D adapter such as `frontend/src/application/canvasPresentation/Projected3DCanvasSelector.ts`
+   801	- `frontend/src/application/threePresentation/*` only where shared overlay/projection DTO ownership is needed
+   802	- `frontend/src/rendering/threeView/*` only where explicit pointer-event/overlay boundary behavior is needed
+   803	- `frontend/src/components/workspace/SvgCanvas.vue`
+   804	- `frontend/src/components/panels/ThreeView.vue`
+   805	- `frontend/src/domain/presentation/Paper.ts` only if static usage proves its mutable query responsibilities are obsolete
+   806	- focused unit tests under current canvas/three presentation test locations and current-contract e2e/live checks if overlay behavior changes
+   807	
+   808	**Scope guard**
+   809	
+   810	This wave replaces the now-invalid old Wave 007/008/009 premises rather than continuing them literally. The old Wave 007 named `PaperService.ts` and `RenderService.ts`, but current scout evidence says those files are absent and the active rendering path is `SVGRenderer.ts` plus `canvasPresentation/*`. The old Wave 008 assumed a large `ThreeView.vue` extraction, but current `ThreeView.vue` is already a small runtime shell. The old Wave 009 app-shell god-component premise is also mostly invalidated by the current `App.vue` runtime/action composition. Therefore this wave is the next central post-Wave-015 source boundary: active canvas presentation still receives full `World`, contains `any` seams, embeds projected-3D-on-2D ownership, and has user-observable overlay pointer interception that validation previously routed around.
+   811	
+   812	Do not reopen broad rendering, 3D scene, app-shell, command, persistence, backend, package/tooling, docs/spec, or validation-platform redesigns inside this wave. If implementation discovers those areas are required, stop and run a reviewed plan-edit mini-cycle before broadening scope.
+   813	
+   814	**Target outcome**
+   815	
+   816	The 2D canvas presentation path consumes explicit narrow read ports/DTOs instead of a full mutable `World`; 2D primitive selection, projected-3D-on-2D projection, hit/query input, style policy, visibility policy, and overlay event ownership have named modules with one responsibility each. Broad `any` helper seams in active presentation code are deleted rather than cast over. The 3D overlay either deliberately owns pointer interaction in its region or deliberately allows underlying canvas interaction; that contract is encoded in source and tests instead of hidden in e2e click-coordinate workarounds.
+   817	
+   818	**Explicit DELETE list**
+   819	
+   820	- Delete `CanvasPresentationController.buildModel(world: World, ...)` or any equivalent full-`World` selector API once the reviewed read port is introduced.
+   821	- Delete `CanvasPresentationSelector` helper signatures that use `any`, including untyped primitive/kind and plane-transform helper seams.
+   822	- Delete direct projected-3D rendering loops from `CanvasPresentationSelector` when moved to a named projected-3D canvas selector/adapter.
+   823	- Delete obsolete selector tests that instantiate concrete `World` only to inspect traversal internals; replace them with read-port/DTO tests.
+   824	- Delete mutable/spatial-query responsibilities from `frontend/src/domain/presentation/Paper.ts` only if static usage and focused tests prove `CanvasInteractionQuery` is the active query owner.
+   825	- Delete e2e workarounds that avoid overlay interception if the implementation changes overlay input ownership; replace them with current behavior contracts.
+   826	- Delete any compatibility wrapper, dual full-`World`/read-port path, broad presentation facade, or dead export created during the transition.
+   827	
+   828	**Success criteria**
+   829	
+   830	- Canvas presentation selectors/controllers no longer depend on a full mutable `World` where a narrow read port/DTO is sufficient.
+   831	- Active `CanvasPresentationSelector` helper seams no longer use `any` for primitive/kind or plane-transform data.
+   832	- Projected-3D-on-2D rendering has an explicit owner outside the general 2D selector loop, or the implementation log explains with reviewed evidence why the owner remains there.
+   833	- Overlay pointer ownership is inventoried against current `ThreeView`/three-rendering handlers before any behavior change, then covered by focused e2e/live evidence if user-observable behavior changes.
+   834	- No broad rendering platform, shared god snapshot factory, app-shell redesign, command/persistence/backend change, package/tooling change, or stale audit-history dependency is introduced.
+   835	- Mandatory validation cadence passes with stable logs: root/frontend lint where defined, focused Vitest for touched presentation/query modules, full root/frontend Vitest, root/frontend build, root/frontend e2e when user-facing overlay/canvas behavior changes, live preview refresh on `0.0.0.0:5173`, HTTP reachability probe, and Playwright/live browser evidence for the affected canvas/overlay region when applicable.
+   836	
+   837	**Dependencies**
+   838	
+   839	Depends on Wave 015 and the subsequent Wave 014 validation closure, because this wave relies on the now-green TypeScript/build/test/e2e gates and on the extracted command/use-case, rendering, and validation contracts produced by earlier cycles. It is ordered before any remaining peripheral docs/debug cleanup because it is the most central current user-input/rendering boundary left after Wave 015.
+   840	
+   841	**Validation requirements**
+   842	
+   843	1. Capture static scans for full-`World` canvas presentation APIs, `CanvasPresentationSelector` `any` seams, projected-3D loops, `Paper` query usage, and current 3D overlay pointer handlers before edits.
+   844	2. Run focused Vitest for changed canvas presentation selector/controller/read-port/query modules and any three-presentation shared DTO/overlay boundary.
+   845	3. Run root and frontend lint where scripts exist.
+   846	4. Run full root and frontend Vitest.
+   847	5. Run root and frontend build.
+   848	6. Run root/frontend Playwright e2e if overlay/canvas interaction or other user-facing behavior changes; otherwise record exact justification in the implementation log.
+   849	7. Refresh the live preview on `0.0.0.0:5173`, capture an HTTP 200 reachability probe, and run a Playwright/live browser check for the current canvas area affected by the 3D overlay.
+   850	

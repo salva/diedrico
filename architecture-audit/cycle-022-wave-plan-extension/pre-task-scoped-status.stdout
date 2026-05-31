@@ -1,0 +1,26 @@
+## branch
+develop
+## scoped status
+ M architecture-audit/cycle-020-app-shell-project-session-browser-boundary/validation/live-preview-server.stdout
+ M frontend/src/commands/Command.ts
+ M frontend/src/commands/factories/DeletionSequenceFactory.ts
+ M frontend/src/commands/factories/PointSequenceFactory.ts
+ M frontend/src/commands/operations/IOperation.ts
+ M frontend/src/commands/operations/world/AddCircleCircleIntersectionPoint2DOp.ts
+ M frontend/src/commands/operations/world/AddFreePointOp.ts
+ M frontend/src/commands/operations/world/AddLineCircleIntersectionPoint2DOp.ts
+ M frontend/src/commands/operations/world/AddLineLineIntersectionPoint2DOp.ts
+ M frontend/src/commands/operations/world/AddSiblingIntersectionPoint2DOp.ts
+?? architecture-audit/cycle-020-app-shell-project-session-browser-boundary/reviews/
+?? architecture-audit/cycle-022-wave-plan-extension/
+## scoped diff stat
+ frontend/src/commands/Command.ts                             |  6 +++---
+ frontend/src/commands/factories/DeletionSequenceFactory.ts   |  2 +-
+ frontend/src/commands/factories/PointSequenceFactory.ts      |  3 +++
+ frontend/src/commands/operations/IOperation.ts               |  9 ++++++---
+ .../operations/world/AddCircleCircleIntersectionPoint2DOp.ts | 12 ++++++++----
+ frontend/src/commands/operations/world/AddFreePointOp.ts     | 12 ++++++++----
+ .../operations/world/AddLineCircleIntersectionPoint2DOp.ts   | 12 ++++++++----
+ .../operations/world/AddLineLineIntersectionPoint2DOp.ts     | 12 ++++++++----
+ .../operations/world/AddSiblingIntersectionPoint2DOp.ts      | 12 ++++++++----
+ 9 files changed, 53 insertions(+), 27 deletions(-)

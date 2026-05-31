@@ -1,0 +1,389 @@
+--- 175-270 ---
+175:  * - Will support pan/zoom viewport transformations in Phase 6
+176:  * - Elements rendered using principle-based algorithms (Constitution Principle IV)
+177:  * 
+178:  * @see specs/001-dihedral-learning-mvp/ui-spec.md#canvas-component
+179:  */
+180: 
+181: import { ref, computed, watch, onMounted, onUnmounted, inject, provide } from 'vue';
+182: import { Matrix3, Vector3 } from 'three';
+183: import { World } from '@/domain/world/World';
+184: import { SVGRenderer, type ViewportTransform } from '@/services/SVGRenderer';
+185: import { InputService } from '@/services/InputService';
+186: import { PointTool } from '@/tools/PointTool';
+187: import { LineTool } from '@/tools/LineTool';
+188: import { SegmentTool } from '@/tools/SegmentTool';
+189: import { CircleTool } from '@/tools/CircleTool';
+190: import { GuideTool } from '@/tools/GuideTool';
+191: import { IntersectionTool } from '@/tools/IntersectionTool';
+192: import { ParallelLineTool } from '@/tools/ParallelLineTool';
+193: import { PerpendicularLineTool } from '@/tools/PerpendicularLineTool';
+194: import { TangentLineToCircleThroughPointTool } from '@/tools/TangentLineToCircleThroughPointTool';
+195: import { TangentLineToCircleParallelToLineTool } from '@/tools/TangentLineToCircleParallelToLineTool';
+196: import { Create3DPointTool } from '@/tools/Create3DPointTool';
+197: import { Create3DLineTool } from '@/tools/Create3DLineTool';
+198: import { Create3DSegmentTool } from '@/tools/Create3DSegmentTool';
+199: import { Create3DPlaneTool } from '@/tools/Create3DPlaneTool';
+200: import { CreateProjectionPlaneTool } from '@/tools/CreateProjectionPlaneTool';
+201: import { FreePoint2D } from '@/domain/world/Point';
+202: import { useToolStore } from '@/stores/toolStore';
+203: import { useViewStore } from '@/stores/viewStore';
+204: import { useSelectionStore } from '@/stores/selectionStore';
+205: import { useViewport } from '@/composables/useViewport';
+206: import { useGlobalHoverHighlight } from '@/composables/useHoverHighlight';
+207: import { screenTo3D } from '@/utils/coordinateTransform';
+208: import PropertiesDialog from '@/components/dialogs/PropertiesDialog.vue';
+209: import type { ITool } from '@/tools/ITool';
+210: import { createCanvasToolController } from '@/application/tools/CanvasToolController';
+211: import type { FreePointMoveSession } from '@/application/tools/ToolCommandIntents';
+212: import { CanvasPresentationController } from '@/application/canvasPresentation/CanvasPresentationController';
+213: import { CanvasInteractionQuery } from '@/application/canvasPresentation/CanvasInteractionQuery';
+214: 
+215: // Define emits
+216: const emit = defineEmits<{
+217:   'update-3d-coordinates': [coords: { x: number; y: number; z: number } | null];
+218:   'update-active-plane': [planeInfo: { id: string; name: string }];
+219: }>();
+220: 
+221: const svgElement = ref<SVGSVGElement | null>(null);
+222: 
+223: // Track World version changes (World is not reactive by itself)
+224: const worldVersion = ref(0);
+225: let versionPollId: number | null = null;
+226: let lastWorldVersion = 0;
+227: 
+228: // Active plane - derived from World (managed by App.vue)
+229: const activePlane = computed(() => {
+230:   // Depend on worldVersion so plane switching triggers recomputation
+231:   const _ = worldVersion.value;
+232:   return world.getActivePlaneId();
+233: });
+234: 
+235: // Dynamic canvas dimensions - updated based on container size
+236: const canvasWidth = ref(1600);
+237: const canvasHeight = ref(1000);
+238: 
+239: // Properties dialog state
+240: const showPropertiesDialog = ref(false);
+241: const propertiesElementId = ref<string | null>(null);
+242: 
+243: // Viewport transformation (pan/zoom)
+244: const viewStore = useViewStore();
+245: const viewport = computed<ViewportTransform>(() => {
+246:   const vp = viewStore.viewportState.value;
+247:   return vp;
+248: });
+249: 
+250: // Setup viewport interactions (pan/zoom)
+251: const viewportComposable = useViewport({ element: svgElement });
+252: 
+253: // Services
+254: const canvasPresentationController = new CanvasPresentationController();
+255: const svgRenderer = new SVGRenderer();
+256: const inputService = new InputService();
+257: const toolStore = useToolStore();
+258: const selectionStore = useSelectionStore();
+259: const hoverHighlight = useGlobalHoverHighlight();
+260: const hoveredElementId = ref<string | undefined>(undefined);
+261: 
+262: // Tooltip position (offset from cursor)
+263: const tooltipPosition = ref({ x: 0, y: 0 });
+264: 
+265: // Snap target tracking - shows visual indicator when hovering near a point
+266: const snapTarget = ref<{ pointId: string | null; position: { x: number; y: number } | null }>({
+267:   pointId: null,
+268:   position: null
+269: });
+270: 
+--- 410-540 ---
+410:   return element ? element.label || elementId : elementId;
+411: }
+412: 
+413: // World instance - injected from App.vue
+414: const world = inject<World>('world')!;
+415: if (!world) {
+416:   throw new Error('World not provided');
+417: }
+418: 
+419: const canvasToolController = createCanvasToolController({
+420:   world,
+421:   commandStack: inject('commandStack'),
+422:   toolStore
+423: });
+424: 
+425: // Tool factory registry - map tool names to factory functions
+426: // Creates new instances instead of reusing singletons to avoid state leakage
+427: const toolFactories: Record<string, () => ITool> = {
+428:   'point': () => new PointTool(),
+429:   'line': () => new LineTool(),
+430:   'segment': () => new SegmentTool(),
+431:   'circle': () => new CircleTool(),
+432:   'guide': () => new GuideTool(),
+433:   'intersection': () => new IntersectionTool(),
+434:   'parallel-line': () => new ParallelLineTool(),
+435:   'perpendicular-line': () => new PerpendicularLineTool(),
+436:   'tangent-line-to-circle-through-point': () => new TangentLineToCircleThroughPointTool(),
+437:   'tangent-line-to-circle-parallel': () => new TangentLineToCircleParallelToLineTool(),
+438:   // Phase 78: 3D Element Creation Tools
+439:   'create3dpoint': () => new Create3DPointTool(),
+440:   'create3dline': () => new Create3DLineTool(),
+441:   'create3dsegment': () => new Create3DSegmentTool(),
+442:   'create3dplane': () => new Create3DPlaneTool(),
+443:   // Phase 82: Auxiliary Projection Plane Tool
+444:   'createprojectionplane': () => new CreateProjectionPlaneTool(),
+445: };
+446: 
+447: // Current tool instance - created fresh when tool is selected
+448: const currentToolInstance = ref<ITool | null>(null);
+449: 
+450: // Reactivity trigger - increment this to force re-render when non-reactive state changes (e.g. Paper hover)
+451: const renderTick = ref(0);
+452: 
+453: // Throttle for coordinate updates (limits update frequency)
+454: let lastCoordinateUpdate = 0;
+455: const COORDINATE_UPDATE_THROTTLE_MS = 50; // 20fps for coordinate updates
+456: 
+457: // Update canvas dimensions based on container size
+458: function updateCanvasDimensions() {
+459:   if (!svgElement.value) return;
+460:   
+461:   const rect = svgElement.value.getBoundingClientRect();
+462:   // Use container dimensions as logical coordinates (1:1 mapping)
+463:   canvasWidth.value = rect.width;
+464:   canvasHeight.value = rect.height;
+465: }
+466: 
+467: // Initialize canvas on mount
+468: const resizeHandler = () => updateCanvasDimensions();
+469: 
+470: onMounted(() => {
+471:   // World is already initialized by initialization factory in constructor
+472:   // Just trigger initial render
+473:   renderTick.value++;
+474: 
+475:   // Set initial canvas dimensions
+476:   updateCanvasDimensions();
+477: 
+478:   // Update dimensions on window resize
+479:   window.addEventListener('resize', resizeHandler);
+480: 
+481:   // Poll World version so UI reacts to domain changes (e.g. active plane switching)
+482:   lastWorldVersion = world.getVersion();
+483:   worldVersion.value = lastWorldVersion;
+484:   versionPollId = window.setInterval(() => {
+485:     const current = world.getVersion();
+486:     if (current !== lastWorldVersion) {
+487:       lastWorldVersion = current;
+488:       worldVersion.value = current;
+489:       renderTick.value++;
+490:     }
+491:   }, 100);
+492: 
+493:   console.log('World initialized');
+494:   const allPlanes = world.getAllProjectionPlanes();
+495:   const totalPoints = allPlanes.reduce((sum, plane) => sum + plane.getAllPoints().length, 0);
+496:   console.log('Points in world:', totalPoints);
+497: });
+498: 
+499: onUnmounted(() => {
+500:   window.removeEventListener('resize', resizeHandler);
+501:   window.removeEventListener('keydown', handleGlobalKeyDown);
+502:   if (versionPollId !== null) {
+503:     clearInterval(versionPollId);
+504:   }
+505: });
+506: 
+507: // Global key handling (Esc cancels point-drag)
+508: onMounted(() => {
+509:   window.addEventListener('keydown', handleGlobalKeyDown);
+510: });
+511: 
+512: // Watch for tool changes and create new tool instance
+513: // This prevents state leakage by creating fresh instances instead of reusing singletons
+514: watch(() => toolStore.currentTool.value, (newTool) => {
+515:   const factory = toolFactories[newTool];
+516:   if (factory) {
+517:     currentToolInstance.value = factory();
+518:     console.log(`[SvgCanvas] Created new tool instance: ${newTool}`);
+519:     // Show initial tool feedback (e.g. "Creating line: pick point1, point2")
+520:     if (currentToolInstance.value && 'getStatusMessage' in currentToolInstance.value) {
+521:       const msg = (currentToolInstance.value as any).getStatusMessage();
+522:       if (msg) toolStore.setToolStepMessage(msg);
+523:     }
+524:   } else {
+525:     currentToolInstance.value = null;
+526:     if (newTool !== 'select') {
+527:       console.warn(`[SvgCanvas] No tool factory for: ${newTool}`);
+528:     }
+529:   }
+530: }, { immediate: true }); // Create initial tool instance
+531: 
+532: // Get plane transforms for INPUT (canvas click → plane coordinates)
+533: function getPlaneTransformsForInput(): Map<string, Matrix3> {
+534:   const transforms = new Map<string, Matrix3>();
+535:   
+536:   // Get all projection planes dynamically
+537:   for (const plane of world.getAllProjectionPlanes()) {
+538:     const realization = world.getProjectionPlane2DRealization(plane.id);
+539:     if (realization) {
+540:       transforms.set(plane.id, realization.paperToPlane2D);
+--- 680-780 ---
+680:   pt.y = event.clientY;
+681:   
+682:   // Transform screen coordinates to SVG coordinates
+683:   const ctm = svg.getScreenCTM();
+684:   if (!ctm) return;
+685:   
+686:   const canvasPoint = pt.matrixTransform(ctm.inverse());
+687:   
+688:   // console.log('[SvgCanvas] Click at canvas coords:', { x: canvasPoint.x, y: canvasPoint.y });
+689:   
+690:   // Step 2-3: Canvas → Paper → Plane using InputService
+691:   const activePlaneId = activePlane.value;
+692:   const planeTransforms = getPlaneTransformsForInput();
+693:   const planeTransform = planeTransforms.get(activePlaneId);
+694:   
+695:   if (!planeTransform) {
+696:     console.error('[SvgCanvas] No transform for active plane:', activePlaneId);
+697:     return;
+698:   }
+699:   
+700:   const planePos = inputService.canvasToPlaneCoordinates(
+701:     canvasPoint.x,
+702:     canvasPoint.y,
+703:     planeTransform,
+704:     viewport.value
+705:   );
+706:   
+707:   if (!planePos) {
+708:     console.error('[SvgCanvas] Failed to convert canvas to plane coordinates');
+709:     return;
+710:   }
+711:   
+712:   // console.log('[SvgCanvas] Plane coords (u,v,w):', planePos);
+713:   
+714:   // Debug: Check what Paper.hitTest() would return for this click
+715:   const canvasPos = new Vector3(canvasPoint.x, canvasPoint.y, 1);
+716:   const paperToPlane = planeTransforms.get(activePlane.value);
+717:   const hit = interactionQuery.value.hitTest(canvasPos, 20, { viewport: viewport.value, activePlaneId: activePlane.value, paperToPlaneTransform: paperToPlane });
+718:   // console.log('[SvgCanvas] Paper.hitTest() result:', hit);
+719:   // console.log('[SvgCanvas] Paper has', paper.size, 'primitives');
+720:   
+721:   // Phase 20: Handle selection mode when 'select' tool is active
+722:   const activeToolName = toolStore.currentTool.value;
+723:   
+724:   if (activeToolName === 'select') {
+725:     // Selection mode per ui-spec.md §Element Interaction
+726:     // Click element: Select (Shift+click: add to selection)
+727:     // Click empty: Deselect all
+728:     
+729:     const hit = interactionQuery.value.hitTest(canvasPos, 20, { viewport: viewport.value, activePlaneId: activePlane.value, paperToPlaneTransform: paperToPlane });
+730:     
+731:     if (hit) {
+732:       // Element clicked - handle selection
+733:       if (event.shiftKey) {
+734:         // Shift+click: Add to selection (multi-select)
+735:         selectionStore.addToSelection(hit.elementId);
+736:         // console.log('[SvgCanvas] Added to selection:', hit.elementId);
+737:       } else {
+738:         // Regular click: Single selection (replaces current selection)
+739:         selectionStore.selectSingle(hit.elementId);
+740:         // console.log('[SvgCanvas] Selected:', hit.elementId);
+741:       }
+742:     } else {
+743:       // Clicked empty space - clear selection
+744:       selectionStore.clearSelection();
+745:       // console.log('[SvgCanvas] Cleared selection');
+746:     }
+747:     return;
+748:   }
+749:   
+750:   // Phase 6.5: Delegate to active tool instead of direct World mutation
+751:   // Use current tool instance (created fresh on tool switch to avoid state leakage)
+752:   const activeTool = currentToolInstance.value;
+753:   
+754:   if (!activeTool) {
+755:     console.warn(`[SvgCanvas] No tool instance for: ${activeToolName}`);
+756:     return;
+757:   }
+758:   
+759:   // Delegate to tool with context including both canvas and plane coordinates
+760:   const result = activeTool.handleClick({
+761:     planeId: activePlaneId,
+762:     planeCoords: planePos,
+763:     canvasCoords: { x: canvasPoint.x, y: canvasPoint.y },
+764:     commandSink: canvasToolController,
+765:     world,
+766:     paper,
+767:     paperToPlaneTransform: paperToPlane,
+768:     toolStore
+769:   });
+770:   
+771:   // Trigger reactivity regardless of success/failure
+772:   // Even on failure, rollback or partial state changes may need visual refresh
+773:   renderTick.value++;
+774:   // console.log('[SvgCanvas] Reactivity triggered, renderTick:', renderTick.value);
+775:   
+776:   if (result.success) {
+777:     console.log('[SvgCanvas] Tool operation succeeded:', result.message);
+778:   } else {
+779:     console.error('[SvgCanvas] Tool operation failed:', result.message);
+780:   }
+--- 1030-1070 ---
+1030:   const ctm = svg.getScreenCTM();
+1031:   if (!ctm) return;
+1032:   
+1033:   const canvasPoint = pt.matrixTransform(ctm.inverse());
+1034:   
+1035:   // Get paperToPlane transform for active plane
+1036:   const planeTransformsInput = getPlaneTransformsForInput();
+1037:   const paperToPlane = planeTransformsInput.get(activePlane.value);
+1038:   
+1039:   // Get active tool's selection mask
+1040:   const activeToolName = toolStore.currentTool.value;
+1041:   const activeTool = currentToolInstance.value;
+1042:   // 'select' is a special mode (not a tool), allow hover on all elements
+1043:   const selectionMask = activeTool ? activeTool.getSelectionMask() : undefined;
+1044:   
+1045:   // Use Paper.hitTest() to find element near cursor (filtered by selection mask)
+1046:   const canvasPos = new Vector3(canvasPoint.x, canvasPoint.y, 1);
+1047:   const hit = interactionQuery.value.hitTest(canvasPos, 20, { viewport: viewport.value, activePlaneId: activePlane.value, paperToPlaneTransform: paperToPlane }, selectionMask);
+1048:   
+1049:   // Update snap target if hovering over a point within snap radius
+1050:   // Per ui-spec.md: "Point Snap: When cursor within snap radius of existing point: bright outline or glow"
+1051:   if (hit && hit.elementType === 'point') {
+1052:     // Point is within snap radius - show snap preview indicator
+1053:     snapTarget.value = {
+1054:       pointId: hit.elementId,
+1055:       position: { x: canvasPoint.x, y: canvasPoint.y }
+1056:     };
+1057:   } else {
+1058:     // No point nearby - clear snap indicator
+1059:     snapTarget.value = {
+1060:       pointId: null,
+1061:       position: null
+1062:     };
+1063:   }
+1064:   
+1065:   const previousHovered = hoveredElementId.value;
+1066:   const newHovered = hit ? hit.elementId : undefined;
+1067:   
+1068:   if (previousHovered !== newHovered) {
+1069:     hoveredElementId.value = newHovered;
+1070:     
+29:      <!-- Render all lines through Paper pipeline (including HL_HV projections) -->
+36:      <!-- Render all segments through Paper pipeline -->
+43:      <!-- Render all guides through Paper pipeline -->
+50:      <!-- Render all circles through Paper pipeline -->
+57:      <!-- Render all arcs through Paper pipeline -->
+64:      <!-- Render all points through Paper pipeline -->
+167: * 2. → PaperService (generates Paper primitives in paper coordinates)
+173: * - All rendering goes through Paper abstraction layer
+450:// Reactivity trigger - increment this to force re-render when non-reactive state changes (e.g. Paper hover)
+555:      transforms.set(plane.id, realization.planeToPaper2D);
+690:  // Step 2-3: Canvas → Paper → Plane using InputService
+714:  // Debug: Check what Paper.hitTest() would return for this click
+718:  // console.log('[SvgCanvas] Paper.hitTest() result:', hit);
+719:  // console.log('[SvgCanvas] Paper has', paper.size, 'primitives');
+956: * Uses Paper.hitTest() to detect elements near cursor
+1045:  // Use Paper.hitTest() to find element near cursor (filtered by selection mask)

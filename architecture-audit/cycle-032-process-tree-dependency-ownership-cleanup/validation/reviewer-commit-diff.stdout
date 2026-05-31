@@ -1,0 +1,357 @@
+commit 0048f4672cc96ce5c639f07434bfafb7f4600287
+Author: Saivage Coder <saivage-coder@example.invalid>
+Date:   Sun May 31 07:42:42 2026 +0000
+
+    [tsk-t1-implement-direct-cleanup] [t1-implement-direct-cleanup] implement process tree ownership cleanup
+
+diff --git a/frontend/src/commands/operations/processTree/ProcessTreeOperations.ts b/frontend/src/commands/operations/processTree/ProcessTreeOperations.ts
+index 138a74c..5ad0788 100644
+--- a/frontend/src/commands/operations/processTree/ProcessTreeOperations.ts
++++ b/frontend/src/commands/operations/processTree/ProcessTreeOperations.ts
+@@ -84,80 +84,3 @@ export class RemoveActionFromProcessTreeOp implements IOperation {
+     return { opType: this.type, actionId: this.actionId, outputs: this.outputs };
+   }
+ }
+-
+-/**
+- * RemoveActionGroupFromProcessTreeOp - Remove an entire ActionGroup
+- * 
+- * Used when deleting a group of related elements or when user explicitly
+- * deletes an ActionGroup from the UI.
+- * 
+- * Note: Currently not used by DeleteElementsCommand, but available for
+- * future features (e.g., "delete construction step").
+- */
+-export class RemoveActionGroupFromProcessTreeOp implements IOperation {
+-  readonly type = 'RemoveActionGroupFromProcessTree';
+-  outputs: OperationOutputBag = {};
+-  
+-  // TODO: Implement when needed
+-  // Similar pattern: store group data, parent ID, index
+-
+-  constructor(
+-    private groupId: string
+-  ) {
+-  }
+-
+-  apply(_world: World): OperationResult {
+-    return {
+-      success: false,
+-      outputs: {},
+-      error: 'RemoveActionGroupFromProcessTreeOp not yet implemented'
+-    };
+-  }
+-
+-  undo(_world: World): void {
+-    throw new Error('Not implemented');
+-  }
+-
+-  serialize() {
+-    return { opType: this.type, groupId: this.groupId, outputs: this.outputs };
+-  }
+-}
+-
+-
+-/**
+- * RemoveSubprocessFromProcessTreeOp - Remove an entire Subprocess
+- * 
+- * Used when deleting a subprocess branch. Removes all contained
+- * ActionGroups and Actions recursively.
+- * 
+- * Note: Currently not used, but available for future features.
+- */
+-export class RemoveSubprocessFromProcessTreeOp implements IOperation {
+-  readonly type = 'RemoveSubprocessFromProcessTree';
+-  outputs: OperationOutputBag = {};
+-  
+-  // TODO: Implement when needed
+-  // Must store entire subtree for restoration
+-
+-  constructor(
+-    private subprocessId: string
+-  ) {
+-  }
+-
+-  apply(_world: World): OperationResult {
+-    return {
+-      success: false,
+-      outputs: {},
+-      error: 'RemoveSubprocessFromProcessTreeOp not yet implemented'
+-    };
+-  }
+-
+-  undo(_world: World): void {
+-    throw new Error('Not implemented');
+-  }
+-
+-  serialize() {
+-    return { opType: this.type, subprocessId: this.subprocessId, outputs: this.outputs };
+-  }
+-}
+-
+diff --git a/frontend/src/commands/operations/processTree/README.md b/frontend/src/commands/operations/processTree/README.md
+index 0e5b4af..19afa7c 100644
+--- a/frontend/src/commands/operations/processTree/README.md
++++ b/frontend/src/commands/operations/processTree/README.md
+@@ -2,11 +2,8 @@
+ 
+ Operations modifying the construction history tree.
+ 
+-**Scope**: Actions, action groups, subprocesses, construction organization.
++**Scope**: construction-history actions and subprocess stack organization.
+ 
+-**Examples**:
+-- `RemoveActionFromProcessTreeOp` - Remove action from history
+-- `RemoveActionGroupFromProcessTreeOp` - Remove action group
+-- `RemoveSubprocessFromProcessTreeOp` - Remove subprocess
++**Active operations** include adding action groups/actions, pushing and popping subprocesses, renaming/toggling process nodes, and `RemoveActionFromProcessTreeOp` for tombstone-based action deletion.
+ 
+-All ProcessTree operations modify the construction history (ProcessTree class) which tracks how the geometric model was built.
++Dependency relations are queried through the dependency boundary; these operations only mutate the ProcessTree construction history.
+diff --git a/frontend/src/commands/operations/processTree/registerProcessTreeOperationDescriptors.ts b/frontend/src/commands/operations/processTree/registerProcessTreeOperationDescriptors.ts
+index 48331bc..8484b11 100644
+--- a/frontend/src/commands/operations/processTree/registerProcessTreeOperationDescriptors.ts
++++ b/frontend/src/commands/operations/processTree/registerProcessTreeOperationDescriptors.ts
+@@ -8,7 +8,7 @@ import { PopSubprocessOp } from './PopSubprocessOp';
+ import { RenameSubprocessOp } from './RenameSubprocessOp';
+ import { ToggleEncapsulationOp } from './ToggleEncapsulationOp';
+ import { ToggleOutputOp } from './ToggleOutputOp';
+-import { RemoveActionFromProcessTreeOp, RemoveActionGroupFromProcessTreeOp, RemoveSubprocessFromProcessTreeOp } from './ProcessTreeOperations';
++import { RemoveActionFromProcessTreeOp } from './ProcessTreeOperations';
+ import type { Action } from '@/domain/processTree/Action';
+ 
+ function s(d: JsonObject, key: string): string { const v = d[key]; if (typeof v !== 'string') throw new Error(`Invalid ${String(d.opType)} descriptor: ${key} must be string`); return v; }
+@@ -39,6 +39,4 @@ export function registerProcessTreeOperationDescriptors(registry: OperationRegis
+   registry.register('ToggleEncapsulation', d => new ToggleEncapsulationOp(s(d, 'subprocessId')));
+   registry.register('ToggleOutput', d => new ToggleOutputOp(s(d, 'nodeId')));
+   registry.register('RemoveActionFromProcessTree', d => new RemoveActionFromProcessTreeOp(s(d, 'actionId')));
+-  registry.register('RemoveActionGroupFromProcessTree', d => new RemoveActionGroupFromProcessTreeOp(s(d, 'groupId')));
+-  registry.register('RemoveSubprocessFromProcessTree', d => new RemoveSubprocessFromProcessTreeOp(s(d, 'subprocessId')));
+ }
+diff --git a/frontend/src/domain/processTree/Action.ts b/frontend/src/domain/processTree/Action.ts
+index 948c6d2..2808eee 100644
+--- a/frontend/src/domain/processTree/Action.ts
++++ b/frontend/src/domain/processTree/Action.ts
+@@ -1,25 +1,10 @@
+ /**
+- * Action - Base interface for construction actions in the process tree
+- * 
+- * Phase 93: Minimal Action interface - only 3 fields
+- * - elementId: The created element (type derivable from element itself)
+- * - description: Human-readable narrative (static for now, dynamic later)
+- * - isOutput: Black box visibility flag (defaults to true)
+- * 
+- * Phase 98: Dynamic Action Descriptions
+- * - Added getDescriptionParts() helper function (not a method on interface)
+- * - Descriptions computed dynamically from current world state
+- * - Uses Descriptor pattern for separation of concerns
+- * 
+- * Removed fields (all redundant):
+- * - id: Actions tied to elements, use elementId
+- * - type: Always 'action', unnecessary discriminator
+- * - actionType: Derivable from element.type
+- * - timestamp: Can be derived from element.created if needed
+- * 
+- * Dependencies: Query world.dependencyService.getDependencies(elementId)
+- * Element properties: Direct access (element.planeId, line.point1Id, etc.)
+- * 
++ * Action - metadata for a construction step in the process tree.
++ *
++ * Actions identify the element produced by a construction step, carry a
++ * human-readable fallback description, and store the process-tree output flag.
++ * Dependency relations are not stored on actions; callers query them through
++ * the dependency boundary owned by the world/domain layer.
+  */
+ 
+ import type { World } from '@/domain/world/World';
+@@ -29,7 +14,7 @@ import { DescriptorRegistry } from '@/domain/world/descriptors/DescriptorRegistr
+ export interface Action {
+   elementId: string;             // Element created by this action
+   description: string;           // Human-readable action narrative
+-  isOutput: boolean;             // Phase 87: Output flag (Show in black box stack)
++  isOutput: boolean;             // Output flag (show in black box stack)
+ }
+ 
+ /**
+@@ -114,6 +99,6 @@ export function createAction(
+   return {
+     elementId,
+     description: description ?? `Created ${elementId}`,
+-    isOutput: true  // Default to true (user correction from Phase 93 planning)
++    isOutput: true
+   };
+ }
+diff --git a/frontend/src/domain/processTree/ProcessTree.ts b/frontend/src/domain/processTree/ProcessTree.ts
+index 9b12674..af403b1 100644
+--- a/frontend/src/domain/processTree/ProcessTree.ts
++++ b/frontend/src/domain/processTree/ProcessTree.ts
+@@ -26,14 +26,14 @@ export interface Subprocess extends ProcessNodeBase {
+   name: string;
+   children: (Subprocess | ActionGroup)[];  // Mixed children, no direct actions
+   showIntermediates: boolean;              // Phase 87: Encapsulation (Positive Logic)
+-  isOutput: boolean;                       // Phase 87: Output flag (punches through encapsulation)
++  isOutput: boolean;                       // Output flag (punches through encapsulation)
+ }
+ 
+ export interface ActionGroup extends ProcessNodeBase {
+   type: 'actionGroup';
+   children: (ActionNode | null)[];         // Actions or tombstones (null = deleted)
+   isAuxiliary: boolean;                    // Auxiliary actions (lighter styling)
+-  isOutput: boolean;                       // Phase 87: Output flag
++  isOutput: boolean;                       // Output flag
+ }
+ 
+ // ActionNode wraps Action to fit the tree structure
+@@ -48,12 +48,11 @@ type ChangeListener = (version: number) => void;
+ export class ProcessTree {
+   root: Subprocess;
+   private _version: number = 0;
+-  private subprocessStack: Subprocess[] = [];  // Phase 85: Subprocess stack
++  private subprocessStack: Subprocess[] = [];
+   private listeners: ChangeListener[] = [];
+ 
+   constructor() {
+     // Initialize with root subprocess
+-    // Phase 95: Use fixed ID for root so toggle operations work across sessions
+     this.root = {
+       id: 'root',
+       type: 'subprocess',
+@@ -91,7 +90,6 @@ export class ProcessTree {
+ 
+   /**
+    * Get the current active subprocess (top of stack)
+-   * Phase 85: Stack-based subprocess management
+    */
+   getCurrentSubprocess(): Subprocess {
+     return this.subprocessStack[this.subprocessStack.length - 1];
+@@ -100,7 +98,6 @@ export class ProcessTree {
+   /**
+    * Push a new subprocess onto the stack
+    * All subsequent actions will be added to this subprocess
+-   * Phase 85: Stack-based subprocess management
+    * @param id - Optional ID to use (for deserialization), otherwise generates new ID
+    */
+   pushSubprocess(name: string, id?: string): Subprocess {
+@@ -129,7 +126,6 @@ export class ProcessTree {
+    * Pop the current subprocess from the stack
+    * Returns to parent subprocess
+    * The subprocess remains in the tree as a child of its parent
+-   * Phase 85: Stack-based subprocess management
+    */
+   popSubprocess(): void {
+     if (this.subprocessStack.length <= 1) {
+@@ -200,10 +196,9 @@ export class ProcessTree {
+       throw new Error(`ActionGroup ${groupId} not found`);
+     }
+ 
+-    // Phase 93: Wrap Action (3 fields) in ActionNode (adds id, type, created)
+     const actionNode: ActionNode = {
+       ...action,
+-      id: this.generateId(),  // Generate ID for tree node
++      id: this.generateId(),
+       type: 'action',
+       isOutput: action.isOutput !== undefined ? action.isOutput : true,
+       created: new Date()
+@@ -233,9 +228,7 @@ export class ProcessTree {
+   toggleSubprocessEncapsulation(subprocessId: string): void {
+     this.traverseSubprocesses(this.root, (subprocess) => {
+       if (subprocess.id === subprocessId) {
+-        const oldValue = subprocess.showIntermediates;
+         subprocess.showIntermediates = !subprocess.showIntermediates;
+-        console.log(`[ProcessTree.toggleSubprocessEncapsulation] subprocessId: ${subprocessId}, ${oldValue} → ${subprocess.showIntermediates}`);
+         this.notifyChange();
+       }
+     });
+@@ -250,9 +243,7 @@ export class ProcessTree {
+     let handled = false;
+     this.traverseSubprocesses(this.root, (subprocess) => {
+       if (subprocess.id === nodeId) {
+-        const oldValue = subprocess.isOutput;
+         subprocess.isOutput = !subprocess.isOutput;
+-        console.log(`[ProcessTree.toggleOutput] subprocess ${nodeId}, ${oldValue} → ${subprocess.isOutput}`);
+         handled = true;
+       }
+     });
+@@ -267,15 +258,11 @@ export class ProcessTree {
+     this.traverseAllNodes(this.root, (node) => {
+       if (node.type === 'actionGroup' && node.id === nodeId) {
+         const group = node as ActionGroup;
+-        const oldValue = group.isOutput;
+         group.isOutput = !group.isOutput;
+-        console.log(`[ProcessTree.toggleOutput] actionGroup ${nodeId}, ${oldValue} → ${group.isOutput}`);
+         handled = true;
+       } else if (node.type === 'action' && node.id === nodeId) {
+         const action = node as ActionNode;
+-        const oldValue = action.isOutput;
+         action.isOutput = !action.isOutput;
+-        console.log(`[ProcessTree.toggleOutput] action ${nodeId}, ${oldValue} → ${action.isOutput}`);
+         // Also toggle the parent group? 
+         // For now, let's assume we operate on individual IDs.
+         // But UI usually displays Groups or merged items.
+@@ -288,8 +275,6 @@ export class ProcessTree {
+     
+     if (handled) {
+       this.notifyChange();
+-    } else {
+-      console.error(`[ProcessTree.toggleOutput] Node ${nodeId} not found`);
+     }
+   }
+ 
+@@ -360,8 +345,7 @@ export class ProcessTree {
+   }
+ 
+   /**
+-   * Get actions that produce a specific element (by elementId)
+-   * Phase 92: Use action.elementId instead of action.outputs
++   * Get actions that produce a specific element.
+    */
+   getActionsProducingElement(elementId: string): ActionNode[] {
+     const actions: ActionNode[] = [];
+@@ -397,8 +381,7 @@ export class ProcessTree {
+   }
+ 
+   /**
+-   * Remove an action by elementId (Phase 93)
+-   * Used when actions no longer have persistent IDs
++   * Remove an action by elementId.
+    * 
+    * @param elementId - ID of element produced by action
+    * @returns Object with removed action data and location, or null if not found
+diff --git a/frontend/tests/unit/services/ProjectService.roundTrip.spec.ts b/frontend/tests/unit/services/ProjectService.roundTrip.spec.ts
+index 8fad5ae..2592d13 100644
+--- a/frontend/tests/unit/services/ProjectService.roundTrip.spec.ts
++++ b/frontend/tests/unit/services/ProjectService.roundTrip.spec.ts
+@@ -32,7 +32,7 @@ import { AddLineCircleIntersectionPoint2DOp } from '@/commands/operations/world/
+ import { AddCircleCircleIntersectionPoint2DOp } from '@/commands/operations/world/AddCircleCircleIntersectionPoint2DOp';
+ import { RemovePoint2DOp, RemoveLine2DOp, RemoveSegment2DOp, RemoveCircle2DOp, RemoveGuide2DOp } from '@/commands/operations/world/RemoveElementOps';
+ import { UpdateElementStyleOp } from '@/commands/operations/world/UpdateElementStyleOp';
+-import { RemoveActionFromProcessTreeOp, RemoveActionGroupFromProcessTreeOp, RemoveSubprocessFromProcessTreeOp } from '@/commands/operations/processTree/ProcessTreeOperations';
++import { RemoveActionFromProcessTreeOp } from '@/commands/operations/processTree/ProcessTreeOperations';
+ 
+ describe('Round-Trip Serialization Tests', () => {
+   let world: World;
+@@ -199,24 +199,6 @@ describe('Round-Trip Serialization Tests', () => {
+     expect(result.type).toBe('RemoveActionFromProcessTree');
+     expect(result.serialize()).toMatchObject({ opType: 'RemoveActionFromProcessTree', actionId: 'action_123' });
+   });
+-
+-  it('RemoveActionGroupFromProcessTree survives round-trip', () => {
+-    const op = new RemoveActionGroupFromProcessTreeOp('group_456');
+-    
+-    const result = roundTripOperation(op, world, commandStack);
+-    
+-    expect(result.type).toBe('RemoveActionGroupFromProcessTree');
+-    expect(result.serialize()).toMatchObject({ opType: 'RemoveActionGroupFromProcessTree', groupId: 'group_456' });
+-  });
+-
+-  it('RemoveSubprocessFromProcessTree survives round-trip', () => {
+-    const op = new RemoveSubprocessFromProcessTreeOp('subprocess_789');
+-    
+-    const result = roundTripOperation(op, world, commandStack);
+-    
+-    expect(result.type).toBe('RemoveSubprocessFromProcessTree');
+-    expect(result.serialize()).toMatchObject({ opType: 'RemoveSubprocessFromProcessTree', subprocessId: 'subprocess_789' });
+-  });
+ });
+ 
+ /**

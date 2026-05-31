@@ -455,7 +455,6 @@ frontend/src/commands/factories/IntersectionSequenceFactory.ts:42: * @see specs/
 specs/001-dihedral-learning-mvp/tasks.md:1:# Tasks: Diedrico Dihedral Learning MVP
 specs/001-dihedral-learning-mvp/tasks.md:3:**Input**: Design documents from `/specs/001-dihedral-learning-mvp/`  
 specs/001-dihedral-learning-mvp/tasks.md:43:- [X] T006 [P] Implement realize() method in FreePoint2D (returns position) and IntersectionPoint2D (placeholder)
-specs/001-dihedral-learning-mvp/tasks.md:90:- **Component Structure**: Use Vue 3 Composition API per [constitution.md](../../.specify/memory/constitution.md#principle-iv-technology-discipline). All components must be .vue single-file components.
 specs/001-dihedral-learning-mvp/tasks.md:213:- [X] T043 [P] E2E test for pan/zoom (deferred - E2E infrastructure needs backend fix)
 specs/001-dihedral-learning-mvp/tasks.md:235:- **CommandStack**: Implement undo/redo stack infrastructure for future undo/redo UI (Phase 10)
 specs/001-dihedral-learning-mvp/tasks.md:269:- [X] T063b [P] Create CommandStack class in frontend/src/commands/CommandStack.ts

@@ -59,7 +59,8 @@ function loadThreeViewOptions(): ThreeViewDisplayOptions {
     showPlanes: true,
     show2DElementsOnPlanes: false,
     showLinkingVisuals: false,
-    showGrid: true
+    showGrid: true,
+    showReferenceAxes: true
   };
 }
 

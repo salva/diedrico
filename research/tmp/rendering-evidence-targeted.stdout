@@ -1,0 +1,584 @@
+## frontend/src/services/PaperService.ts
+2: * PaperService - Converts domain entities and realizations to Paper primitives
+4: * **RENDERING PATTERN**: Iterate planes, get elements and realizations, render primitives.
+8: * 2. REALIZE: Compute numeric data via plane.realizePoint2D(point, world)
+9: * 3. RENDER: Use realization (numeric) + point (structural) to generate primitives
+17: * 3. Generate primitive with paper coordinates + resolved styles
+23: * - Convert domain entities + realizations → drawing primitives
+25: * - Resolve style inheritance from process tree
+26: * - Compute visibility from subprocess visibility + infeasibility
+27: * - Generate primitives for all element types
+32:import { Matrix3 } from 'three';
+33:import { HalfHingeLine2D } from '@/domain/world/HingeLine';
+34:import { FreePoint2D } from '@/domain/world/Point';
+35:import { Segment2DByPoints } from '@/domain/world/Segment';
+36:import { Guide2D, SiblingGuide2D, isGuide2D, isSiblingGuide2D } from '@/domain/world/Guide';
+37:import type { Point2D, Point2DRealization2D } from '../domain/world/Point';
+38:import type { Line2D, Line2DRealization2D } from '../domain/world/Line';
+39:import type { Circle2D, Circle2DRealization2D } from '../domain/world/Circle';
+40:import type { Guide2D } from '../domain/world/Guide';
+41:import type { HingeLine } from '../domain/world/HingeLine';
+42:import type { HalfHingeLine2D } from '../domain/world/HingeLine';
+43:import type { World } from '../domain/world/World';
+44:import {
+59:export interface PrimitiveContext {
+71:import { resolveVisibility } from '../domain/world/styleService';
+72:import { applyMatrix3x4 } from '../utils/threeUtils';
+75: * Phase 106: Visual styles for projected 3D elements.
+106: * Service for converting domain entities to Paper primitives
+108:export class PaperService {
+110:   * Generate primitives for all entities
+117:  generatePrimitives(context: PrimitiveContext): Primitive[] {
+118:    const primitives: Primitive[] = [];
+121:    for (const plane of context.world.projectionPlanes.values()) {
+127:        // Skip invisible points (Phase 87: Encapsulation support via styleService)
+128:        if (!resolveVisibility(point, context.world)) continue;
+131:        const realization = plane.realizePoint2D(point, context.world);
+136:          primitives.push(primitive);
+143:        // Skip invisible lines (Phase 87: Encapsulation support via styleService)
+144:        const isVisible = resolveVisibility(line, context.world);
+145:        if (line instanceof HalfHingeLine2D) {
+146:          console.log(`[PaperService] Checking visibility for ${line.constructor.name}: ${line.id} (${line.label}) - visible: ${isVisible}`);
+151:        const realization = plane.realizeLine2D(line, context.world);
+155:          if (line instanceof HalfHingeLine2D) {
+156:            console.log(`[PaperService] Creating primitive for ${line.constructor.name}: ${line.id} (${line.label})`);
+158:            console.log(`[PaperService] Created primitive:`, primitive.id, 'visible:', primitive.visible, 'layer:', primitive.layer);
+159:            primitives.push(primitive);
+160:          } else if (line instanceof Segment2DByPoints) {
+163:            primitives.push(primitive);
+164:          } else if (line instanceof Guide2D || line instanceof SiblingGuide2D) {
+167:            primitives.push(primitive);
+173:                primitives.push(arcPrimitive);
+179:            primitives.push(primitive);
+188:        // Skip invisible circles (Phase 87: Encapsulation support via styleService)
+189:        if (!resolveVisibility(circle, context.world)) continue;
+192:        const realization = plane.realizeCircle2D(circle, context.world);
+197:          primitives.push(primitive);
+202:    // TODO: Add primitives for other element types (arcs, etc.)
+204:    // Phase 106: Generate projected 3D element primitives if enabled
+205:    primitives.push(...this.generate3DProjectionPrimitives(context));
+207:    return primitives;
+229:    // Resolve visual style
+230:    const style = this.resolvePointStyle(point, isSelected, isHovered, isSnapTarget, context.activePlaneId);
+236:      planeId: point.planeId,  // FR-002: For active plane hit testing filter
+238:      visible: true, // TODO: Compute from subprocess visibility + infeasibility
+239:      style,
+241:      radius: point instanceof FreePoint2D ? 5 : 4,
+246:   * Resolve visual style for a point
+274:      fill = point instanceof FreePoint2D ? '#4A90E2' : '#E94E77';
+279:      fill = point instanceof FreePoint2D ? '#6BB6FF' : '#FF6B9D';
+284:      fill = point instanceof FreePoint2D ? '#4A90E2' : '#E94E77';
+334:    // Resolve visual style
+335:    const style = this.resolveLineStyle(line, isSelected, isHovered, context.activePlaneId, isCascadeHighlighted);
+341:      planeId: line.planeId,  // FR-002: For active plane hit testing filter
+343:      visible: true, // TODO: Compute from subprocess visibility + infeasibility
+344:      style,
+351:   * Resolve visual style for a line
+428:    // Resolve visual style
+429:    const style = this.resolveSegmentStyle(segment, isSelected, isHovered, context.activePlaneId, isCascadeHighlighted);
+435:      planeId: segment.planeId,  // FR-002: For active plane hit testing filter
+437:      visible: true, // TODO: Compute from subprocess visibility + infeasibility
+438:      style,
+445:   * Resolve visual style for a segment
+512:    // Resolve visual style
+513:    const style = this.resolveCircleStyle(circle, isSelected, isHovered, context.activePlaneId, isCascadeHighlighted);
+521:      style,
+529:   * Resolve visual style for a circle
+580:   * NOTE: Uses Line2DRealization2D per architectural principle - guides are
+601:    // Resolve visual style (dashed line)
+602:    const style = this.resolveGuideStyle(guide, isSelected, isHovered, context.activePlaneId, isCascadeHighlighted);
+610:      visible: true, // TODO: Compute from subprocess visibility + infeasibility
+611:      style,
+618:   * Resolve visual style for a guide (primary or sibling)
+624:    _guide: Guide2D | SiblingGuide2D,  // Reserved for future style inheritance
+650:      strokeStyle: 'dashed',  // Dashed style distinguishes guides from lines
+687:    // Use arc style from arcGeometry
+688:    const style: ResolvedStyle = {
+689:      stroke: arcGeometry.style.color,
+690:      strokeWidth: arcGeometry.style.width,
+691:      strokeStyle: arcGeometry.style.dashArray ? 'dashed' : 'solid',
+693:      opacity: arcGeometry.style.opacity,
+704:      style,
+740:    // Resolve visual style (dashed gray line)
+741:    const style = this.resolveHingeLineStyle(hingeLine, isHighlighted, context.activePlaneId);
+750:      style,
+757:   * Resolve visual style for a hinge line
+772:      strokeStyle: 'dashed',  // Dashed style per spec
+807:    // Resolve visual style (dashed gray line)
+808:    const style = this.resolveHalfHingeLineStyle(halfHinge, isHighlighted, context.activePlaneId);
+817:      style,
+824:   * Resolve visual style for a half-hinge line
+842:      strokeStyle: 'dashed',  // Dashed style per spec
+850:   * Update paper with current primitives
+853:    // Clear existing primitives
+854:    paper.clear();
+856:    // Generate new primitives for all planes
+857:    const primitives = this.generatePrimitives(context);
+860:    paper.setPrimitives(primitives);
+864:   * Update primitives for a specific entity (incremental update)
+871:    // Remove old primitives for this entity
+872:    paper.removePrimitivesByEntity(entityId);
+875:    for (const plane of context.world.projectionPlanes.values()) {
+878:        const realization = plane.realizePoint2D(point, context.world);
+883:          paper.setPrimitive(primitive);
+888:      // TODO: Handle other element types (lines, circles)
+893:   * Phase 106: Generate primitives for 3D elements projected back onto projection planes.
+898:   *   3. Create primitive with projected visual style (purple, transparent)
+900:   * Projected primitives use `proj3d-` ID prefix and are non-interactive.
+902:  private generate3DProjectionPrimitives(context: PrimitiveContext): Primitive[] {
+905:    const primitives: Primitive[] = [];
+925:        primitives.push({
+932:          style: PROJECTED_POINT_STYLE,
+953:        primitives.push({
+960:          style: PROJECTED_LINE_STYLE,
+977:        primitives.push({
+984:          style: PROJECTED_SEGMENT_STYLE,
+991:    return primitives;
+
+## frontend/src/services/SVGRenderer.ts
+2: * SVGRenderer - Converts Paper primitives to SVG elements
+4: * This renderer applies viewport transformation (pan/zoom) to primitives
+8: * Paper primitives (paper coords) → Viewport transform → Canvas coords → SVG
+10: * Note: Plane-to-paper transformation is already applied when generating primitives.
+11: * This renderer only handles viewport transformation (pan/zoom).
+15: * - Convert primitives to SVG element attributes
+21:import { Vector3 } from 'three';
+22:import { vec3 } from '../utils/threeUtils';
+24:import type {
+38:export interface SVGAttributes {
+45:export interface ViewportTransform {
+52: * Renderer for converting Paper primitives to SVG
+54:export class SVGRenderer {
+60:  transformPoint(
+90:  private renderPoint(
+95:    const canvasPos = this.transformPoint(
+104:      fill: primitive.style.fill,
+105:      stroke: primitive.style.stroke,
+106:      'stroke-width': primitive.style.strokeWidth,
+107:      opacity: primitive.style.opacity,
+126:      this.transformPoint(vec3(x, y), viewport)
+152:      fill: primitive.closed ? primitive.style.fill : 'none',
+153:      stroke: primitive.style.stroke,
+154:      'stroke-width': primitive.style.strokeWidth,
+155:      'stroke-dasharray': this.getStrokeDashArray(primitive.style.strokeStyle),
+156:      opacity: primitive.style.opacity,
+169:    const canvasPos = this.transformPoint(
+181:      fill: primitive.style.fill,
+182:      stroke: primitive.style.stroke,
+183:      'stroke-width': primitive.style.strokeWidth,
+184:      'stroke-dasharray': this.getStrokeDashArray(primitive.style.strokeStyle),
+185:      opacity: primitive.style.opacity,
+203:  private renderLine(
+208:    const canvasPoint = this.transformPoint(
+220:    // Get viewport bounds (TODO: get actual canvas dimensions)
+286:    // Sort t values and use first two (handles case where line intersects corners)
+307:      stroke: primitive.style.stroke,
+308:      'stroke-width': primitive.style.strokeWidth,
+309:      'stroke-dasharray': this.getStrokeDashArray(primitive.style.strokeStyle),
+310:      opacity: primitive.style.opacity,
+325:    const p1Canvas = this.transformPoint(primitive.point1, viewport);
+326:    const p2Canvas = this.transformPoint(primitive.point2, viewport);
+334:      stroke: primitive.style.stroke,
+335:      'stroke-width': primitive.style.strokeWidth,
+336:      'stroke-dasharray': this.getStrokeDashArray(primitive.style.strokeStyle),
+337:      opacity: primitive.style.opacity,
+350:    const center = this.transformPoint(
+372:      stroke: primitive.style.stroke,
+373:      'stroke-width': primitive.style.strokeWidth,
+374:      'stroke-dasharray': this.getStrokeDashArray(primitive.style.strokeStyle),
+375:      opacity: primitive.style.opacity,
+388:    const canvasPos = this.transformPoint(
+398:      fill: primitive.style.fill,
+399:      opacity: primitive.style.opacity,
+407:   * Convert stroke style to SVG dasharray
+409:  private getStrokeDashArray(style: 'solid' | 'dashed' | 'dotted'): string {
+410:    switch (style) {
+423:  renderPrimitive(
+428:      return { element: 'circle', attributes: this.renderPoint(primitive, viewport) };
+434:      return { element: 'line', attributes: this.renderLine(primitive, viewport) };
+450:    throw new Error(`Unhandled primitive type: ${(_exhaustive as any).type}`);
+454:   * Render all primitives from a Paper to SVG attributes
+456:  renderPaper(
+457:    primitives: Primitive[],
+460:    return primitives
+462:      .map(p => this.renderPrimitive(p, viewport));
+
+## frontend/src/services/RenderService.ts
+22:import { FreePoint2D } from '@/domain/world/Point';
+24:import { Vector3 } from 'three';
+25:import type { Point2D, Point2DRealization2D } from '../domain/world/Point';
+27:import type { Plane3D } from '../domain/world/Plane';
+28:import { planeToCanvas } from '../domain/calculations/CoordinateTransform';
+33:export interface SVGElementAttributes {
+58:export function renderPoint(
+89:  const isFreePoint = point instanceof FreePoint2D;
+111: * NOTE: This function is only used in tests. Production rendering uses SVGRenderer.
+119:export function renderPlane(
+163: * NOTE: This function is only used in tests. Production rendering uses SVGRenderer.
+176: * @param style - Optional line styling (color, width, dash pattern)
+184:export function renderLine(
+188:  style?: {
+229:  const stroke = style?.color || '#333333';
+230:  const strokeWidth = style?.width || 2;
+231:  const strokeDasharray = style?.dashArray || 'none';
+
+## frontend/src/components/workspace/SvgCanvas.vue
+9:      @mousedown="handleMouseDown"
+10:      @click="handleCanvasClick"
+11:      @dblclick="handleDoubleClick"
+12:      @mousemove="handleMouseMove"
+13:      @wheel.prevent="handleWheel"
+142:      :style="{ left: tooltipPosition.x + 'px', top: tooltipPosition.y + 'px' }"
+153:      @save="handleSaveProperties"
+167: * 2. → PaperService (generates Paper primitives in paper coordinates)
+181:import { ref, computed, watch, onMounted, onUnmounted, inject, provide } from 'vue';
+182:import { Matrix3, Vector3 } from 'three';
+183:import { World } from '@/domain/world/World';
+184:import { Paper } from '@/domain/presentation/Paper';
+185:import { PaperService, type PrimitiveContext } from '@/services/PaperService';
+186:import { SVGRenderer, type ViewportTransform } from '@/services/SVGRenderer';
+187:import { InputService } from '@/services/InputService';
+188:import { PointTool } from '@/tools/PointTool';
+189:import { LineTool } from '@/tools/LineTool';
+190:import { SegmentTool } from '@/tools/SegmentTool';
+191:import { CircleTool } from '@/tools/CircleTool';
+192:import { GuideTool } from '@/tools/GuideTool';
+193:import { IntersectionTool } from '@/tools/IntersectionTool';
+194:import { ParallelLineTool } from '@/tools/ParallelLineTool';
+195:import { PerpendicularLineTool } from '@/tools/PerpendicularLineTool';
+196:import { TangentLineToCircleThroughPointTool } from '@/tools/TangentLineToCircleThroughPointTool';
+197:import { TangentLineToCircleParallelToLineTool } from '@/tools/TangentLineToCircleParallelToLineTool';
+198:import { Create3DPointTool } from '@/tools/Create3DPointTool';
+199:import { Create3DLineTool } from '@/tools/Create3DLineTool';
+200:import { Create3DSegmentTool } from '@/tools/Create3DSegmentTool';
+201:import { Create3DPlaneTool } from '@/tools/Create3DPlaneTool';
+202:import { CreateProjectionPlaneTool } from '@/tools/CreateProjectionPlaneTool';
+203:import { FreePoint2D } from '@/domain/world/Point';
+204:import { useToolStore } from '@/stores/toolStore';
+205:import { useViewStore } from '@/stores/viewStore';
+206:import { useSelectionStore } from '@/stores/selectionStore';
+207:import { useViewport } from '@/composables/useViewport';
+208:import { useGlobalHoverHighlight } from '@/composables/useHoverHighlight';
+209:import { screenTo3D } from '@/utils/coordinateTransform';
+210:import PropertiesDialog from '@/components/dialogs/PropertiesDialog.vue';
+211:import type { ITool } from '@/tools/ITool';
+212:import { createCanvasToolController } from '@/application/tools/CanvasToolController';
+213:import type { FreePointMoveSession } from '@/application/tools/ToolCommandIntents';
+229:const activePlane = computed(() => {
+248:  paper.setViewportTransform(vp);
+256:const paperService = new PaperService();
+257:const svgRenderer = new SVGRenderer();
+305:  return point instanceof FreePoint2D && !point.locked;
+336:function handleGlobalKeyDown(event: KeyboardEvent) {
+389:    for (const plane of world.projectionPlanes.values()) {
+497:  console.log('World initialized');
+500:  console.log('Points in world:', totalPoints);
+505:  window.removeEventListener('keydown', handleGlobalKeyDown);
+513:  window.addEventListener('keydown', handleGlobalKeyDown);
+522:    console.log(`[SvgCanvas] Created new tool instance: ${newTool}`);
+566:// Generate primitives from World using PaperService
+567:const primitives = computed(() => {
+576:  const hoveredId = paper.getHoveredElement();
+595:  const prims = paperService.generatePrimitives(context);
+596:  // console.log('Generated primitives:', prims.length, prims);
+598:  // Sort primitives by layer first, then z-index (same as Paper.getPrimitives())
+603:    return a.style.zIndex - b.style.zIndex;
+606:  // Update Paper with primitives for spatial queries (hit testing)
+607:  paper.setPrimitives(prims);
+674:const gridLines = computed(() => {
+706:  // console.log('[gridLines] origin_paper:', origin_paper);
+707:  // console.log('[gridLines] u_paper:', u_paper);
+708:  // console.log('[gridLines] v_paper:', v_paper);
+709:  // console.log('[gridLines] viewport.panX:', viewport.value.panX, 'panY:', viewport.value.panY);
+710:  // console.log('[gridLines] viewport.zoom:', viewport.value.zoom);
+711:  // console.log('[gridLines] canvasWidth:', canvasWidth.value, 'canvasHeight:', canvasHeight.value);
+719:  // console.log('[gridLines] viewportWidth:', viewportWidth, 'viewportHeight:', viewportHeight);
+720:  // console.log('[gridLines] offsetX:', offsetX, 'offsetY:', offsetY);
+721:  // console.log('[gridLines] viewport top-left corner in paper:', offsetX, offsetY);
+722:  // console.log('[gridLines] viewport center in paper:', offsetX + viewportWidth/2, offsetY + viewportHeight/2);
+734:  const u_coords = viewport_corners_paper.map(corner => {
+736:    return offset.dot(u_paper) / u_paper.lengthSq();
+738:  const v_coords = viewport_corners_paper.map(corner => {
+740:    return offset.dot(v_paper) / v_paper.lengthSq();
+768:    const screenX1 = (p1_paper.x + viewport.value.panX) * zoom;
+769:    const screenY1 = (p1_paper.y + viewport.value.panY) * zoom;
+770:    const screenX2 = (p2_paper.x + viewport.value.panX) * zoom;
+771:    const screenY2 = (p2_paper.y + viewport.value.panY) * zoom;
+797:    const screenX1 = (p1_paper.x + viewport.value.panX) * zoom;
+798:    const screenY1 = (p1_paper.y + viewport.value.panY) * zoom;
+799:    const screenX2 = (p2_paper.x + viewport.value.panX) * zoom;
+800:    const screenY2 = (p2_paper.y + viewport.value.panY) * zoom;
+831:const gridLabels = computed(() => {
+857:  // If |u_paper.x| / |u_paper.y| > 1, u is more horizontal
+858:  const uHorizontalRatio = Math.abs(u_paper.x) / (Math.abs(u_paper.y) + 1e-10);
+874:      u: offset.dot(u_paper) / u_paper.lengthSq(),
+875:      v: offset.dot(v_paper) / v_paper.lengthSq()
+883:    // Want: origin_paper.y + u*u_paper.y + v*v_paper.y = y_paper
+884:    // Solve for v: v = (y_paper - origin_paper.y - u*u_paper.y) / v_paper.y
+885:    if (Math.abs(v_paper.y) < 1e-10) return null; // Grid line parallel to horizontal
+886:    const v = (y_paper - origin_paper.y - u * u_paper.y) / v_paper.y;
+887:    const x_paper = origin_paper.x + u * u_paper.x + v * v_paper.x;
+895:    // Want: origin_paper.y + u*u_paper.y + v*v_paper.y = y_paper
+896:    // Solve for u: u = (y_paper - origin_paper.y - v*v_paper.y) / u_paper.y
+897:    if (Math.abs(u_paper.y) < 1e-10) return null; // Grid line parallel to horizontal
+898:    const u = (y_paper - origin_paper.y - v * v_paper.y) / u_paper.y;
+899:    const x_paper = origin_paper.x + u * u_paper.x + v * v_paper.x;
+907:    // Want: origin_paper.x + u*u_paper.x + v*v_paper.x = x_paper
+908:    // Solve for v: v = (x_paper - origin_paper.x - u*u_paper.x) / v_paper.x
+909:    if (Math.abs(v_paper.x) < 1e-10) return null; // Grid line parallel to vertical
+910:    const v = (x_paper - origin_paper.x - u * u_paper.x) / v_paper.x;
+911:    const y_paper = origin_paper.y + u * u_paper.y + v * v_paper.y;
+919:    // Want: origin_paper.x + u*u_paper.x + v*v_paper.x = x_paper
+920:    // Solve for u: u = (x_paper - origin_paper.x - v*v_paper.x) / u_paper.x
+921:    if (Math.abs(u_paper.x) < 1e-10) return null; // Grid line parallel to vertical
+922:    const u = (x_paper - origin_paper.x - v * v_paper.x) / u_paper.x;
+923:    const y_paper = origin_paper.y + u * u_paper.y + v * v_paper.y;
+1076:// Render primitives to SVG attributes
+1077:const renderedPoints = computed(() => {
+1078:  return primitives.value
+1081:      const result = svgRenderer.renderPrimitive(p, viewport.value);
+1082:      // console.log('Rendering point primitive:', p, '→ SVG attrs:', result.attributes);
+1090:const renderedLines = computed(() => {
+1091:  const linePrimitives = primitives.value.filter(p => p.type === 'line');
+1094:    console.log('[SvgCanvas] BHHL primitives in renderedLines:', bhhlPrimitives.map(p => `${p.id} (plane: ${p.planeId})`));
+1097:      const result = svgRenderer.renderPrimitive(p, viewport.value);
+1099:        console.log(`[SvgCanvas] Rendered ${p.id}:`, result.attributes);
+1108:const renderedSegments = computed(() => {
+1109:  return primitives.value
+1112:      const result = svgRenderer.renderPrimitive(p, viewport.value);
+1113:      // console.log('Rendering segment primitive:', p, '→ SVG attrs:', result.attributes);
+1121:const renderedCircles = computed(() => {
+1122:  return primitives.value
+1125:      const result = svgRenderer.renderPrimitive(p, viewport.value);
+1126:      // console.log('Rendering circle primitive:', p, '→ SVG attrs:', result.attributes);
+1134:const renderedGuides = computed(() => {
+1135:  return primitives.value
+1138:      const result = svgRenderer.renderPrimitive(p, viewport.value);
+1146:const renderedArcs = computed(() => {
+1147:  return primitives.value
+1150:      const result = svgRenderer.renderPrimitive(p, viewport.value);
+1162:function handleCanvasClick(event: MouseEvent) {
+1184:  // console.log('[SvgCanvas] Click at canvas coords:', { x: canvasPoint.x, y: canvasPoint.y });
+1208:  // console.log('[SvgCanvas] Plane coords (u,v,w):', planePos);
+1210:  // Debug: Check what Paper.hitTest() would return for this click
+1213:  const hit = paper.hitTest(canvasPos, 20, activePlane.value, paperToPlane, world);  // FR-002: Hit test in plane space
+1214:  // console.log('[SvgCanvas] Paper.hitTest() result:', hit);
+1215:  // console.log('[SvgCanvas] Paper has', paper.size, 'primitives');
+1225:    const hit = paper.hitTest(canvasPos, 20, activePlane.value, paperToPlane, world);
+1227:    if (hit) {
+1228:      // Element clicked - handle selection
+1231:        selectionStore.addToSelection(hit.elementId);
+1232:        // console.log('[SvgCanvas] Added to selection:', hit.elementId);
+1235:        selectionStore.selectSingle(hit.elementId);
+1236:        // console.log('[SvgCanvas] Selected:', hit.elementId);
+1241:      // console.log('[SvgCanvas] Cleared selection');
+1256:  const result = activeTool.handleClick({
+1270:  // console.log('[SvgCanvas] Reactivity triggered, renderTick:', renderTick.value);
+1273:    console.log('[SvgCanvas] Tool operation succeeded:', result.message);
+1286:function handleWheel(event: WheelEvent) {
+1302:  console.log('[Zoom] BEFORE:', {
+1318:  console.log('[Zoom] AFTER:', {
+1330:function handleMouseDown(event: MouseEvent) {
+1336:  // Only left button drag, no modifiers (Shift is handled by useViewport)
+1354:  const hit = paper.hitTest(canvasPos, 20, activePlane.value, paperToPlane, world);
+1356:  // Check if we hit a movable point
+1357:  if (hit && hit.elementType === 'point') {
+1360:    const point = plane.getPoint(hit.elementId);
+1364:      selectionStore.selectSingle(hit.elementId);
+1369:        pointId: hit.elementId,
+1370:        moveSession: canvasToolController.startFreePointMove({ planeId: activePlane.value, pointId: hit.elementId, label: point.label ?? hit.elementId }),
+1379:  // No movable point hit - start viewport pan (T965: Drag empty space pans)
+1380:  // Note: useViewport composable handles Shift+drag pan automatically
+1381:  // Here we handle non-Shift drag when selection tool is active
+1393:function handleDoubleClick(event: MouseEvent) {
+1409:  // Get plane transform for hit testing
+1414:  const hit = paper.hitTest(canvasPos, 20, activePlane.value, paperToPlane, world);
+1416:  if (hit) {
+1418:    propertiesElementId.value = hit.elementId;
+1420:    console.log('[SvgCanvas] Opening properties dialog for:', hit.elementId);
+1428:function handleSaveProperties(changes: any) {
+1429:  console.log('[SvgCanvas] Saving property changes:', changes);
+1433:    style: {
+1444:    console.log('[SvgCanvas] Style updated and command added to stack');
+1452: * Uses Paper.hitTest() to detect elements near cursor
+1457:function handleMouseMove(event: MouseEvent) {
+1541:  // Use Paper.hitTest() to find element near cursor (filtered by selection mask)
+1543:  const hit = paper.hitTest(canvasPos, 20, activePlane.value, paperToPlane, world, selectionMask); // FR-002: Hit test in plane space
+1547:  if (hit && hit.elementType === 'point') {
+1550:      pointId: hit.elementId,
+1562:  const previousHovered = paper.getHoveredElement();
+1563:  const newHovered = hit ? hit.elementId : undefined;
+1566:    paper.setHoveredElement(newHovered);
+1569:    if (newHovered && hit) {
+1570:      const label = getElementLabel(newHovered, hit.elementType, activePlane.value);
+1573:        hit.elementType,
+1625:function handleGlobalMouseUp() {
+1653:  window.addEventListener('mouseup', handleGlobalMouseUp);
+1657:  window.removeEventListener('mouseup', handleGlobalMouseUp);
+1667:  console.log('[SvgCanvas] fitToView called');
+1669:  // Get all rendered primitives
+1670:  const allPrimitives = primitives.value;
+1674:    console.log('[SvgCanvas] No elements to fit, resetting to default view');
+1680:  // Calculate bounding box of all primitives in paper coordinates
+1687:    // Skip primitives with undefined geometry
+1716:    console.log('[SvgCanvas] No valid bounds found, resetting to default view');
+1740:  console.log('[SvgCanvas] Fit to view:', {
+1760:<style scoped>
+1824:  color: white;
+1830:  white-space: nowrap;
+1845:</style>
+
+## frontend/src/domain/presentation/Paper.ts
+4: * Paper provides a virtual drawing surface with primitives in a unified "paper coordinate system".
+6: * to the shared paper coordinates. Paper primitives only need viewport transformation (pan/zoom)
+9: * Architecture:
+14: *   const plane = world.projectionPlanes.get(activePlaneId);
+16: *     const realization = plane.realizePoint2D(point, world);
+45:import { Vector3, Matrix3 } from 'three';
+46:import type { World } from '../world/World';
+47:import type { Line2DRealization2D } from '../world/Line';
+48:import type { Circle2DRealization2D } from '../world/Circle';
+49:import type { Element2D } from '../world/Element2D';
+50:import type { SelectionMask, SelectableElementType } from '@/types/SelectionMask';
+51:import { getSelectableType } from '@/types/SelectionMask';
+54: * Visual style attributes resolved and ready for rendering
+56:export interface ResolvedStyle {
+74:  Handles = 40,       // Control handles
+79: * Base interface for all drawing primitives
+81:export interface DrawingPrimitive {
+84:  planeId?: string;                 // Plane this element belongs to (for hit testing filter)
+87:  style: ResolvedStyle;             // Fully resolved visual attributes
+94:export interface PointPrimitive extends DrawingPrimitive {
+104:export interface PathPrimitive extends DrawingPrimitive {
+115:export interface LinePrimitive extends DrawingPrimitive {
+126:export interface SegmentPrimitive extends DrawingPrimitive {
+136:export interface CirclePrimitive extends DrawingPrimitive {
+147:export interface ArcPrimitive extends DrawingPrimitive {
+162:export interface TextPrimitive extends DrawingPrimitive {
+172: * Union type of all drawing primitives
+174:export type Primitive = 
+186:export interface ViewportTransform {
+193: * Result of a hit test query
+196:export interface HitResult {
+205: * Paper - Collection of drawing primitives in unified paper coordinate system
+207: * Paper contains primitives from all projection planes in a shared coordinate system.
+209: * its intrinsic <u,v> coordinates to paper coordinates when generating primitives.
+211: * Paper also serves as the spatial query engine for hit testing and hover detection,
+212: * applying correct coordinate transforms to handle snap radius and element proximity.
+214:export class Paper {
+215:  private primitives: Map<string, Primitive>;
+222:    this.primitives = new Map();
+256:   * Three.js stores matrices in COLUMN-MAJOR order internally (OpenGL style),
+292:   * This triggers re-generation of primitives with hover styling
+311:   * ARCHITECTURAL UPDATE: This method now performs hit testing in PLANE COORDINATE SPACE
+331:  hitTest(
+340:      // No active plane or transform - cannot perform hit testing
+350:    // Transform snap radius as a VECTOR (not scalar) to handle non-uniform scaling
+363:    const activePlane = activePlaneId ? world.projectionPlanes.get(activePlaneId) : null;
+373:        // Filter by selection mask if provided (uses instanceof)
+379:        const realization = activePlane.realizePoint2D(point, world);
+407:        // Filter by selection mask if provided (uses instanceof)
+413:        const realization = activePlane.realizeLine2D(line, world);
+436:        // Filter by selection mask if provided (uses instanceof)
+441:        const realization = activePlane.realizeCircle2D(circle, world);
+459:    // Note: Segments, guides, and hinge lines are all handled in the line iteration above
+476:   * Used for selection mask filtering in hit testing.
+483:   * Get selectable element type for hit testing
+484:   * Phase 63: Delegates to getSelectableType() which uses instanceof checks
+602:    this.primitives.set(primitive.id, primitive);
+607:   * Add or update multiple primitives
+609:  setPrimitives(primitives: Primitive[]): void {
+610:    for (const primitive of primitives) {
+619:    this.primitives.delete(id);
+624:   * Remove all primitives generated by a specific entity
+628:    for (const [id, primitive] of this.primitives) {
+642:    return this.primitives.get(id);
+646:   * Get all primitives, optionally filtered by visibility and layer
+648:  getPrimitives(options?: {
+652:    let result = Array.from(this.primitives.values());
+668:      return a.style.zIndex - b.style.zIndex;
+675:   * Get primitives that need re-rendering
+680:      const primitive = this.primitives.get(id);
+696:   * Clear all primitives
+699:    this.primitives.clear();
+704:   * Get count of primitives
+707:    return this.primitives.size;
+711:   * Check if paper has any dirty primitives
+
+## frontend/src/domain/world/styleService.ts
+7: * particularly visibility with subprocess inheritance support.
+9: * @see specs/001-dihedral-learning-mvp/data-model.md#phase-83-element-visibility-property
+12:import type { Element } from './Element';
+13:import type { World } from './World';
+14:import { ProcessTree, type Subprocess, type ActionGroup, type ProcessNode } from '../processTree/ProcessTree';
+47: * Resolve effective visibility for an element
+58:export function resolveVisibility(element: Element, world: World): boolean {
+82:  // for visibility logic (as requested by user "Action Groups must be transparents in this regard").
+
+## tests grep
+frontend/tests/integration/pointCreation.spec.ts:5: * SvgCanvas click → PointTool → CreateFreePointCommand → AddElementOp → World
+frontend/tests/integration/pointCreation.spec.ts:43:      // Simulate SvgCanvas click providing context
+frontend/tests/unit/services/paperService.spec.ts:3: * Unit tests for PaperService
+frontend/tests/unit/services/paperService.spec.ts:9:import { PaperService, type PrimitiveContext } from '../../../src/services/PaperService';
+frontend/tests/unit/services/paperService.spec.ts:16:describe('PaperService', () => {
+frontend/tests/unit/services/paperService.spec.ts:17:  let paperService: PaperService;
+frontend/tests/unit/services/paperService.spec.ts:22:    paperService = new PaperService();
+frontend/tests/unit/services/paperService.spec.ts:48:      const context: PrimitiveContext = {
+frontend/tests/unit/services/paperService.spec.ts:53:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/paperService.spec.ts:99:      const context: PrimitiveContext = {
+frontend/tests/unit/services/paperService.spec.ts:104:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/paperService.spec.ts:130:      const context: PrimitiveContext = {
+frontend/tests/unit/services/paperService.spec.ts:136:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/paperService.spec.ts:141:      // Verify hover style (per PaperService implementation)
+frontend/tests/unit/services/paperService.spec.ts:153:      const context: PrimitiveContext = {
+frontend/tests/unit/services/paperService.spec.ts:159:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/paperService.spec.ts:181:      const context: PrimitiveContext = {
+frontend/tests/unit/services/paperService.spec.ts:186:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/paperService.spec.ts:214:      const context: PrimitiveContext = {
+frontend/tests/unit/services/paperService.spec.ts:219:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/paperService.spec.ts:234:      const context: PrimitiveContext = {
+frontend/tests/unit/services/paperService.spec.ts:239:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/paperService.spec.ts:255:      const context: PrimitiveContext = {
+frontend/tests/unit/services/paperService.spec.ts:260:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/paperService.spec.ts:293:      const context: PrimitiveContext = {
+frontend/tests/unit/services/paperService.spec.ts:298:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/paperService.spec.ts:329:      const context: PrimitiveContext = {
+frontend/tests/unit/services/paperService.spec.ts:335:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/paperService.spec.ts:354:      const context: PrimitiveContext = {
+frontend/tests/unit/services/paperService.spec.ts:396:      const context: PrimitiveContext = {
+frontend/tests/unit/services/paperService.spec.ts:423:      const context: PrimitiveContext = {
+frontend/tests/unit/services/paperService.spec.ts:466:      const context: PrimitiveContext = {
+frontend/tests/unit/services/paperService.spec.ts:472:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/paperService.spec.ts:484:      const context: PrimitiveContext = {
+frontend/tests/unit/services/paperService.spec.ts:490:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/paperService.spec.ts:505:      const context: PrimitiveContext = {
+frontend/tests/unit/services/paperService.spec.ts:517:      const context: PrimitiveContext = {
+frontend/tests/unit/services/paperService.spec.ts:523:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/paperService.spec.ts:545:      let context: PrimitiveContext = {
+frontend/tests/unit/services/paperService.spec.ts:551:      let primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/paperService.spec.ts:565:      primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/projectionDisplay.spec.ts:3: * Tests that PaperService generates projected primitives for 3D elements
+frontend/tests/unit/services/projectionDisplay.spec.ts:9:import { PaperService, type PrimitiveContext } from '../../../src/services/PaperService';
+frontend/tests/unit/services/projectionDisplay.spec.ts:20:describe('PaperService - 3D Element Projection Display (Phase 106)', () => {
+frontend/tests/unit/services/projectionDisplay.spec.ts:21:  let paperService: PaperService;
+frontend/tests/unit/services/projectionDisplay.spec.ts:28:    paperService = new PaperService();
+frontend/tests/unit/services/projectionDisplay.spec.ts:90:      const context: PrimitiveContext = {
+frontend/tests/unit/services/projectionDisplay.spec.ts:96:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/projectionDisplay.spec.ts:104:      const context: PrimitiveContext = {
+frontend/tests/unit/services/projectionDisplay.spec.ts:109:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/projectionDisplay.spec.ts:121:      const context: PrimitiveContext = {
+frontend/tests/unit/services/projectionDisplay.spec.ts:127:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/projectionDisplay.spec.ts:153:      const context: PrimitiveContext = {
+frontend/tests/unit/services/projectionDisplay.spec.ts:159:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/projectionDisplay.spec.ts:188:      const context: PrimitiveContext = {
+frontend/tests/unit/services/projectionDisplay.spec.ts:194:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/projectionDisplay.spec.ts:240:      const context: PrimitiveContext = {
+frontend/tests/unit/services/projectionDisplay.spec.ts:246:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/renderService.spec.ts:4: * Unit tests for RenderService
+frontend/tests/unit/services/renderService.spec.ts:21:} from '@/services/RenderService';
+frontend/tests/unit/services/renderService.spec.ts:27:describe('RenderService', () => {
+frontend/tests/unit/application/canvasToolControllers.spec.ts:2:import svgCanvasSource from '@/components/workspace/SvgCanvas.vue?raw';
+frontend/tests/unit/application/canvasToolControllers.spec.ts:239:  it('keeps SvgCanvas on the controller boundary for movement and style delegation', () => {
+frontend/tests/e2e/basic-construction.spec.ts:28:    // TODO: Replace placeholder with UI-driven point-tool coverage when the current SvgCanvas workflow has stable test IDs:
+frontend/tests/e2e/basic-construction.spec.ts:53:    // TODO: Replace placeholder with UI-driven segment-tool coverage when the current SvgCanvas workflow has stable test IDs:
+frontend/tests/e2e/distance-transport.spec.ts:30:    // TODO: Replace placeholder with UI-driven distance-transport coverage when the current SvgCanvas workflow exposes stable test IDs:

@@ -1,0 +1,1 @@
+frontend/src/application/threePresentation/ThreeWorldReadPort.ts:65:export function createThreeWorldReadPort(world: World): ThreeWorldReadPort {

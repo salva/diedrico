@@ -1,0 +1,432 @@
+     1	<template>
+     2	  <div class="tool-family-button">
+     3	    <!-- Main button - activates last-used (or default) tool -->
+     4	    <button
+     5	      class="tool-button-main"
+     6	      :data-testid="`tool-${activeToolConfig?.id ?? family.defaultTool}`"
+     7	      :class="{ active: isAnyToolActive }"
+     8	      @click="activateLastUsed"
+     9	      :title="activeToolTooltip"
+    10	      :aria-label="activeToolTooltip"
+    11	    >
+    12	      <component :is="activeToolIcon" v-if="activeToolIcon" class="tool-icon-svg" />
+    13	    </button>
+    14	    
+    15	    <!-- Dropdown arrow button -->
+    16	    <button
+    17	      class="tool-button-dropdown"
+    18	      :data-testid="`tool-family-${family.id}-dropdown`"
+    19	      :class="{ active: isAnyToolActive, open: isDropdownOpen }"
+    20	      @click="toggleDropdown"
+    21	      title="Show all tools in family"
+    22	      aria-label="Show all tools in family"
+    23	    >
+    24	      <span class="dropdown-arrow">▼</span>
+    25	    </button>
+    26	    
+    27	    <!-- Dropdown menu -->
+    28	    <div v-if="isDropdownOpen" class="tool-dropdown-menu">
+    29	      <div
+    30	        v-for="tool in family.tools"
+    31	        :key="tool.id"
+    32	        class="tool-menu-item"
+    33	        :data-testid="`tool-${tool.id}`"
+    34	        :class="{ active: toolStore.isToolActive(tool.id as any) }"
+    35	        @click="selectTool(tool.id)"
+    36	        :title="tool.tooltip"
+    37	      >
+    38	        <component :is="tool.icon" v-if="tool.icon" class="tool-icon-svg-small" />
+    39	        <span v-if="tool.shortcut" class="tool-shortcut">{{ tool.shortcut }}</span>
+    40	        <span v-if="toolStore.isToolActive(tool.id as any)" class="checkmark">✓</span>
+    41	      </div>
+    42	    </div>
+    43	  </div>
+    44	</template>
+    45	
+    46	<script setup lang="ts">
+    47	import { ref, computed, onMounted, onUnmounted } from 'vue';
+    48	import type { ToolFamilyConfig } from '@/types/ToolConfig';
+    49	import { useToolStore } from '@/stores/toolStore';
+    50	
+    51	// Props
+    52	const props = defineProps<{
+    53	  family: ToolFamilyConfig;
+    54	}>();
+    55	
+    56	// Store
+    57	const toolStore = useToolStore();
+    58	
+    59	// State
+    60	const isDropdownOpen = ref(false);
+    61	
+    62	// Computed
+    63	const isAnyToolActive = computed(() => {
+    64	  return props.family.tools.some(tool => toolStore.isToolActive(tool.id as any));
+    65	});
+    66	
+    67	const activeToolConfig = computed(() => {
+    68	  // Find currently active tool in family
+    69	  const activeTool = props.family.tools.find(tool => toolStore.isToolActive(tool.id as any));
+    70	  if (activeTool) return activeTool;
+    71	  
+    72	  // Otherwise, use last-used or default
+    73	  const lastUsed = toolStore.getLastUsedTool(props.family.id);
+    74	  if (lastUsed) {
+    75	    return props.family.tools.find(tool => tool.id === lastUsed);
+    76	  }
+    77	  
+    78	  // Fallback to default
+    79	  return props.family.tools.find(tool => tool.id === props.family.defaultTool);
+    80	});
+    81	
+    82	const activeToolIcon = computed(() => {
+    83	  const icon = activeToolConfig.value?.icon || props.family.icon;
+    84	  console.log('[ToolFamilyButton] activeToolIcon:', icon, 'type:', typeof icon);
+    85	  return icon;
+    86	});
+    87	
+    88	const activeToolTooltip = computed(() => {
+    89	  return activeToolConfig.value?.tooltip || `${props.family.label} tools`;
+    90	});
+    91	
+    92	// Methods
+    93	function activateLastUsed() {
+    94	  toolStore.activateToolFamily(props.family.id);
+    95	  isDropdownOpen.value = false;
+    96	}
+    97	
+    98	function toggleDropdown() {
+    99	  isDropdownOpen.value = !isDropdownOpen.value;
+   100	  if (isDropdownOpen.value) {
+   101	    console.log('[ToolFamilyButton] Dropdown opened for family:', props.family.id);
+   102	    console.log('[ToolFamilyButton] Tools in family:', props.family.tools);
+   103	  }
+   104	}
+   105	
+   106	function selectTool(toolId: string) {
+   107	  console.log('[ToolFamilyButton] Selecting tool:', toolId);
+   108	  toolStore.selectSubTool(props.family.id, toolId);
+   109	  isDropdownOpen.value = false;
+   110	}
+--- settings
+   160	  const defaultGuideWidth = computed(() => settings.value.defaultStyles.guideWidth);
+   161	  const defaultGuideDashed = computed(() => settings.value.defaultStyles.guideDashed);
+   162	  
+   163	  // 3D view settings getters (read-only for now)
+   164	  const showPlanes = computed(() => settings.value.view3D.showPlanes);
+   165	  const showProjectionLines = computed(() => settings.value.view3D.showProjectionLines);
+   166	  const show2DElements = computed(() => settings.value.view3D.show2DElements);
+   167	  const initialCameraDistance = computed(() => settings.value.view3D.initialCameraDistance);
+   168	  
+   169	  /**
+   170	   * Update a specific setting
+   171	   */
+   172	  function updateSetting(path: string, value: any) {
+   173	    const keys = path.split('.');
+   174	    let target: any = settings.value;
+   175	    
+   176	    for (let i = 0; i < keys.length - 1; i++) {
+   177	      target = target[keys[i]];
+   178	    }
+   179	    
+   180	    target[keys[keys.length - 1]] = value;
+   181	  }
+   182	  
+   183	  /**
+   184	   * Reset all settings to defaults
+   185	   */
+   186	  function resetToDefaults() {
+   187	    settings.value = structuredClone(DEFAULT_SETTINGS);
+   188	    console.log('[SettingsStore] Settings reset to defaults');
+   189	  }
+   190	  
+   191	  /**
+   192	   * Reset a specific category to defaults
+   193	   */
+   194	  function resetCategory(category: keyof Settings) {
+   195	    (settings.value as any)[category] = structuredClone((DEFAULT_SETTINGS as any)[category]);
+   196	    console.log(`[SettingsStore] ${category} settings reset to defaults`);
+   197	  }
+   198	  
+   199	  return {
+   200	    // State
+   201	    settings,
+   202	    
+   203	    // Grid settings
+   204	    gridVisible,
+   205	    gridSpacing,
+   206	    gridColor,
+   207	    snapToGrid,
+   208	    
+   209	    // Snap settings
+   210	    snapEnabled,
+   211	    snapRadius,
+   212	    
+   213	    // Default styles
+   214	    defaultPointColor,
+   215	    defaultPointSize,
+--- validationservice
+     1	import type { Result } from '../types/ResultTypes';
+     2	import { Ok, Err, InfeasibilityReason } from '../types/ResultTypes';
+     3	import type { Element2D, Element3D } from '../types/ElementTypes';
+     4	import { isWithinDistance } from '../domain/calculations/distances';
+     5	
+     6	/**
+     7	 * Service for validation and infeasibility checks
+     8	 */
+     9	export class ValidationService {
+    10	  private static readonly COINCIDENCE_THRESHOLD = 1e-6;
+    11	  private static readonly COLLINEARITY_THRESHOLD = 1e-10;
+    12	
+    13	  /**
+    14	   * Validate an element for infeasibility
+    15	   */
+    16	  static validateElement(element: Element2D | Element3D): Result<void, InfeasibilityReason> {
+    17	    // This is a placeholder - actual validation depends on element type
+    18	    // and would need access to world state to check related elements
+    19	    
+    20	    if (element.infeasible) {
+    21	      return Err(InfeasibilityReason.MissingDependency);
+    22	    }
+    23	    
+    24	    return Ok(undefined);
+    25	  }
+    26	
+    27	  /**
+    28	   * Check if two points are coincident
+    29	   */
+    30	  static checkCoincidentPoints(
+    31	    point1: { x: number; y: number },
+    32	    point2: { x: number; y: number }
+    33	  ): Result<void, InfeasibilityReason> {
+    34	    if (isWithinDistance(point1, point2, this.COINCIDENCE_THRESHOLD)) {
+    35	      return Err(InfeasibilityReason.CoincidentPoints);
+    36	    }
+    37	    return Ok(undefined);
+    38	  }
+    39	
+    40	  /**
+    41	   * Check if three points are collinear
+    42	   */
+    43	  static checkCollinearity(
+    44	    p1: { x: number; y: number },
+    45	    p2: { x: number; y: number },
+    46	    p3: { x: number; y: number }
+    47	  ): Result<void, InfeasibilityReason> {
+    48	    // Calculate cross product to check collinearity
+    49	    // (p2 - p1) × (p3 - p1) = 0 for collinear points
+    50	    const crossProduct = 
+    51	      (p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x);
+    52	    
+    53	    if (Math.abs(crossProduct) < this.COLLINEARITY_THRESHOLD) {
+    54	      return Err(InfeasibilityReason.CollinearPoints);
+    55	    }
+    56	    
+    57	    return Ok(undefined);
+    58	  }
+    59	
+    60	  /**
+    61	   * Check if two lines are parallel
+    62	   */
+    63	  static checkParallelLines(
+    64	    line1: { x1: number; y1: number; x2: number; y2: number },
+    65	    line2: { x1: number; y1: number; x2: number; y2: number }
+    66	  ): Result<void, InfeasibilityReason> {
+    67	    const dx1 = line1.x2 - line1.x1;
+    68	    const dy1 = line1.y2 - line1.y1;
+    69	    const dx2 = line2.x2 - line2.x1;
+    70	    const dy2 = line2.y2 - line2.y1;
+    71	    
+    72	    // Check if cross product is near zero (parallel lines)
+    73	    const crossProduct = dx1 * dy2 - dy1 * dx2;
+    74	    
+    75	    if (Math.abs(crossProduct) < this.COLLINEARITY_THRESHOLD) {
+    76	      return Err(InfeasibilityReason.ParallelLines);
+    77	    }
+    78	    
+    79	    return Ok(undefined);
+    80	  }
+    81	
+    82	  /**
+    83	   * Check if a circle has zero radius
+    84	   */
+    85	  static checkZeroRadius(radius: number): Result<void, InfeasibilityReason> {
+    86	    if (radius < this.COINCIDENCE_THRESHOLD) {
+    87	      return Err(InfeasibilityReason.InvalidRadius);
+    88	    }
+    89	    return Ok(undefined);
+    90	  }
+    91	
+    92	  /**
+    93	   * Check if a line has zero length
+    94	   */
+    95	  static checkZeroLength(
+    96	    line: { x1: number; y1: number; x2: number; y2: number }
+    97	  ): Result<void, InfeasibilityReason> {
+    98	    const dx = line.x2 - line.x1;
+    99	    const dy = line.y2 - line.y1;
+   100	    const length = Math.sqrt(dx * dx + dy * dy);
+   101	    
+   102	    if (length < this.COINCIDENCE_THRESHOLD) {
+   103	      return Err(InfeasibilityReason.InvalidRadius); // Using InvalidRadius for zero-length lines
+   104	    }
+   105	    
+   106	    return Ok(undefined);
+   107	  }
+   108	
+   109	  /**
+   110	   * Check if an intersection exists
+   111	   */
+   112	  static checkIntersectionExists(
+   113	    intersectionResult: { x: number; y: number } | null
+   114	  ): Result<void, InfeasibilityReason> {
+   115	    if (intersectionResult === null) {
+   116	      return Err(InfeasibilityReason.NoIntersection);
+   117	    }
+   118	    return Ok(undefined);
+   119	  }
+   120	
+--- line TODO
+   160	    return new Line2DByTwoPoints(
+   161	      this.id,
+   162	      this.point1Id,
+   163	      this.point2Id,
+   164	      this.planeId,
+   165	      this.label
+   166	    );
+   167	  }
+   168	  
+   169	  /**
+   170	   * Calculate 2D realization - compute line in parametric form from two points
+   171	   * 
+   172	   * Returns infinite line representation using homogeneous coordinates:
+   173	   *   point1: finite point on line (z=1)
+   174	   *   point2: direction vector (z=0)
+   175	   */
+   176	  realize2D(state: ProjectStateRecord): Line2DRealization2D | null {
+   177	    const dto = materializeProjectStateLineRealization2D(state, this.id);
+   178	    if (dto) return new Line2DRealization2D(new Vector3(dto.point1.x, dto.point1.y, dto.point1.z ?? 1), new Vector3(dto.point2.x, dto.point2.y, dto.point2.z ?? 0), dto.feasible);
+   179	    return null;
+   180	  }
+   181	}
+   182	
+   183	/**
+   184	 * Line2DParallel - Line parallel to a reference line through a point
+   185	 * The rule is: "line parallel to referenceLineId through throughPointId"
+   186	 * 
+   187	 * TODO: Implement in later phase when parallel line tool is added
+   188	 */
+   189	export class Line2DParallel extends Line2D {
+   190	  readonly type: 'parallel' = 'parallel';
+   191	  readonly referenceLineId: string;  // Line to be parallel to
+   192	  readonly throughPointId: string;   // Point the new line passes through
+   193	  
+   194	  constructor(
+   195	    id: string,
+   196	    referenceLineId: string,
+   197	    throughPointId: string,
+   198	    planeId: string,
+   199	    label?: string
+   200	  ) {
+   201	    super(id, planeId, label);
+   202	    this.referenceLineId = referenceLineId;
+   203	    this.throughPointId = throughPointId;
+   204	  }
+   205	  
+   206	  clone(): Line2DParallel {
+   207	    return new Line2DParallel(
+   208	      this.id,
+   209	      this.referenceLineId,
+   210	      this.throughPointId,
+   211	      this.planeId,
+   212	      this.label
+   213	    );
+   214	  }
+   215	  
+   216	  realize2D(state: ProjectStateRecord): Line2DRealization2D | null {
+   217	    const dto = materializeProjectStateLineRealization2D(state, this.id);
+   218	    if (dto) return new Line2DRealization2D(new Vector3(dto.point1.x, dto.point1.y, dto.point1.z ?? 1), new Vector3(dto.point2.x, dto.point2.y, dto.point2.z ?? 0), dto.feasible);
+   219	    return null;
+   220	  }
+   221	}
+   222	
+   223	/**
+   224	 * Line2DPerpendicular - Line perpendicular to a reference line through a point
+   225	 * The rule is: "line perpendicular to referenceLineId through throughPointId"
+   226	 * 
+   227	 * TODO: Implement in later phase when perpendicular line tool is added
+   228	 */
+   229	/**
+   230	 * Line2DPerpendicularToLine - Line perpendicular to a reference line through a point
+   231	 * 
+   232	 * The rule is: "line perpendicular to referenceLineId through throughPointId"
+   233	 * 
+   234	 * Implementation notes:
+   235	 * - Uses homogeneous coordinates for perpendicular calculation per Principle V
+   236	 * - Perpendicular direction in 2D: if line has direction (dx, dy), perpendicular is (-dy, dx)
+   237	 * - This is a 90-degree rotation, which works correctly in homogeneous coords
+   238	 * 
+   239	 * This is the base class for Guide2D (guides are lines with special rendering/behavior).
+   240	 */
+   241	export class Line2DPerpendicularToLine extends Line2D {
+   242	  readonly type: Line2DType;  // Phase 52: Allow subclasses to override with their own type
+   243	  readonly referenceLineId: string;  // Line to be perpendicular to
+   244	  readonly throughPointId: string;   // Point the new line passes through
+   245	  
+--- properties todo
+   220	});
+   221	
+   222	const coordinates = computed(() => {
+   223	  return propertyView.value?.coordinates ?? null;
+   224	});
+   225	
+   226	const dependencies = computed(() => {
+   227	  return propertyView.value?.dependencies ?? [];
+   228	});
+   229	
+   230	const createdBy = computed(() => {
+   231	  return propertyView.value?.createdBy ?? null;
+   232	});
+   233	
+   234	const hasLineStyle = computed(() => {
+   235	  const type = elementType.value;
+   236	  return type === '2D Line' || type === '2D Segment' || type === '2D Guide';
+   237	});
+   238	
+   239	// Watch for dialog open/close and element changes
+   240	watch(() => props.isOpen, (isOpen) => {
+   241	  if (isOpen && props.elementId && props.projectState) {
+   242	    loadElementProperties();
+   243	  }
+   244	});
+   245	
+   246	watch(() => props.elementId, () => {
+   247	  if (props.isOpen && props.elementId && props.projectState) {
+   248	    loadElementProperties();
+   249	  }
+   250	});
+   251	
+   252	function loadElementProperties() {
+   253	  // TODO: Load current element properties from world
+   254	  // For now, use defaults
+   255	  editableColor.value = '#000000';
+   256	  editableLineWidth.value = 1.0;
+   257	  editableLineStyle.value = 'solid';
+   258	  editableVisible.value = true;
+   259	  
+   260	  // Reset override flags
+   261	  colorOverride.value = false;
+   262	  lineWidthOverride.value = false;
+   263	  lineStyleOverride.value = false;
+   264	  visibilityOverride.value = false;
+   265	  
+   266	  // Clear validation errors
+   267	  colorError.value = '';
+   268	  lineWidthError.value = '';
+   269	  lineStyleError.value = '';
+   270	}
+   271	
+   272	/**
+   273	 * Validate color hex format
+   274	 */
+   275	function validateColor(color: string): boolean {

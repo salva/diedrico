@@ -1,0 +1,56 @@
+     1	import type { Circle2D, Circle2DRealization2D } from '@/domain/world/Circle';
+     2	import type { Line2D, Line2DRealization2D } from '@/domain/world/Line';
+     3	import type { Point2D, Point2DRealization2D } from '@/domain/world/Point';
+     4	import type { Point3D } from '@/domain/world/Point3D';
+     5	import type { Line3D } from '@/domain/world/Line3D';
+     6	import type { Segment3D } from '@/domain/world/Segment3D';
+     7	import type { ProjectionPlane } from '@/domain/world/projectionPlane/ProjectionPlane';
+     8	import type { ProjectionPlaneRealization3D } from '@/domain/world/projectionPlane/ProjectionPlaneRealization';
+     9	import type { Point3DRealization3D, Line3DRealization3D, Segment3DRealization3D } from '@/domain/world/Element3DRealization3D';
+    10	import type { ProcessTree } from '@/domain/processTree/ProcessTree';
+    11	import type { World } from '@/domain/world/World';
+    12	import type { CanvasPlaneTransformModel } from './CanvasPresentationModel';
+    13	
+    14	export interface CanvasWorldReadPort {
+    15	  getAllProjectionPlanes(): ProjectionPlane[];
+    16	  getProjectionPlane2DTransform(planeId: string): CanvasPlaneTransformModel | undefined;
+    17	  getProjectionPlane3DRealization(planeId: string): ProjectionPlaneRealization3D | undefined;
+    18	  getAll3DPoints(): Point3D[];
+    19	  getAll3DLines(): Line3D[];
+    20	  getAll3DSegments(): Segment3D[];
+    21	  realizePoint2D(plane: ProjectionPlane, point: Point2D): Point2DRealization2D | undefined;
+    22	  realizeLine2D(plane: ProjectionPlane, line: Line2D): Line2DRealization2D | undefined;
+    23	  realizeCircle2D(plane: ProjectionPlane, circle: Circle2D): Circle2DRealization2D | undefined | null;
+    24	  realizePoint3D(point: Point3D): Point3DRealization3D;
+    25	  realizeLine3D(line: Line3D): Line3DRealization3D;
+    26	  realizeSegment3D(segment: Segment3D): Segment3DRealization3D;
+    27	  getProcessTree(): ProcessTree;
+    28	}
+    29	
+    30	export function createCanvasWorldReadPort(world: World): CanvasWorldReadPort {
+    31	  return {
+    32	    getAllProjectionPlanes: () => world.getAllProjectionPlanes(),
+    33	    getProjectionPlane2DTransform: (planeId: string) => {
+    34	      const realization = world.getProjectionPlane2DRealization(planeId);
+    35	      if (!realization) return undefined;
+    36	      return {
+    37	        planeId,
+    38	        planeToPaper: realization.planeToPaper2D,
+    39	        paperToPlane: realization.paperToPlane2D,
+    40	      };
+    41	    },
+    42	    getProjectionPlane3DRealization: (planeId: string) => world.getProjectionPlane3DRealization(planeId),
+    43	    getAll3DPoints: () => world.getAll3DPoints(),
+    44	    getAll3DLines: () => world.getAll3DLines(),
+    45	    getAll3DSegments: () => world.getAll3DSegments(),
+    46	    realizePoint2D: (plane, point) => plane.realizePoint2D(point, world),
+    47	    realizeLine2D: (plane, line) => plane.realizeLine2D(line, world),
+    48	    realizeCircle2D: (plane, circle) => plane.realizeCircle2D(circle, world),
+    49	    realizePoint3D: point => point.realize3D(world),
+    50	    realizeLine3D: line => line.realize3D(world),
+    51	    realizeSegment3D: segment => segment.realize3D(world),
+    52	    getProcessTree: () => world.getProcessTree(),
+    53	  };
+    54	}
+    55	
+    56	export type CanvasPlaneTransformMap = Map<string, CanvasPlaneTransformModel>;

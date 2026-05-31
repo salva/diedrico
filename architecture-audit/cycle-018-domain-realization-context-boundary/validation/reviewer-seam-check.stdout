@@ -1,0 +1,13 @@
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:434:    const line1 = l1.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:435:    const line2 = l2.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:487:    const line = lineElement.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:488:    const circle = circleElement.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:545:    const circle1 = circle1Element.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:546:    const circle2 = circle2Element.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:611:    const point1Realization = point1.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:612:    const point2Realization = point2.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:668:    const referenceLine = refLineElement.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:718:    const referenceLine = refLineElement.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:832:    const referenceLine = refLineElement.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:995:    const referenceLine = refLineElement.realize2D(world);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1044:    const referenceLine = refLineElement.realize2D(world);

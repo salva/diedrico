@@ -1,0 +1,200 @@
+ M architecture-audit/cycle-001-invert-world-application-boundary/proposals/proposal-direct.md
+ M architecture-audit/cycle-001-invert-world-application-boundary/proposals/proposal-restructure.md
+ M architecture-audit/cycle-001-invert-world-application-boundary/reviews/corrections-round-01-note.md
+ M architecture-audit/cycle-003-authoritative-world-state-delete-dead-store-workspace/proposals/proposal-direct.md
+ M architecture-audit/cycle-003-authoritative-world-state-delete-dead-store-workspace/proposals/proposal-restructure.md
+ M architecture-audit/cycle-005-process-tree-dependency-ownership/validation/live-preview.stderr
+ M architecture-audit/cycle-005-process-tree-dependency-ownership/validation/live-preview.stdout
+ M architecture-audit/cycle-006a-canvas-tool-command-controllers/decision.md
+ M architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/t1-live-preview.stdout
+ M architecture-audit/cycle-007-2d-rendering-selectors-adapters/validation/t1-stage-live-preview-detached.stdout
+ M architecture-audit/cycle-007-2d-rendering-selectors-adapters/validation/t3-live-preview-refresh2.stdout
+ M architecture-audit/cycle-008-3d-rendering-scene-adapters/corrections-round-01-note.md
+ M architecture-audit/cycle-008-3d-rendering-scene-adapters/proposals/proposal-direct.md
+ M architecture-audit/cycle-008-3d-rendering-scene-adapters/proposals/proposal-restructure.md
+ M architecture-audit/cycle-010-backend-frontend-project-contract/validation/live-preview-refresh.stdout
+ M architecture-audit/cycle-010-backend-frontend-project-contract/validation/pre-implementation-reference-scan.stdout
+ M architecture-audit/cycle-011-architecture-tests-validation-gates/validation/live-preview-refresh.stderr
+ M architecture-audit/cycle-011-architecture-tests-validation-gates/validation/live-preview-refresh.stdout
+ M architecture-audit/cycle-012-placeholder-debug-cleanup/validation/live-preview-refresh.stdout
+ M architecture-audit/cycle-013-docs-specs-reconciliation/line-evidence.stdout
+ M architecture-audit/cycle-013-docs-specs-reconciliation/scout-rg.stdout
+ M architecture-audit/cycle-013-docs-specs-reconciliation/validation/final-live-preview-refresh-02.stdout
+ M architecture-audit/cycle-015-typescript-build-contracts/projection-world-split/proposals/proposal-direct.md
+ M architecture-audit/cycle-015-typescript-build-contracts/projection-world-split/proposals/proposal-restructure.md
+ M architecture-audit/cycle-015-typescript-build-contracts/proposals/proposal-direct.md
+ M architecture-audit/cycle-015-typescript-build-contracts/proposals/proposal-restructure.md
+ M architecture-audit/cycle-015-typescript-build-contracts/scope-check.md
+ M architecture-audit/cycle-015-typescript-build-contracts/validation/final-closure-live-preview.stdout
+ M architecture-audit/cycle-016-canvas-presentation-overlay-boundary/validation/closure-verify-preview-server.stdout
+ M architecture-audit/cycle-016-canvas-presentation-overlay-boundary/validation/preview-server-frontend.stdout
+ M architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/scope-check.md
+ M architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/preview-refresh-final.stdout
+ M architecture-audit/post-phase-3-next-wave-scout/line-evidence.stdout
+?? architecture-audit/baseline/corrections-round-01.md
+?? architecture-audit/cycle-001-invert-world-application-boundary/line-evidence-command.err
+?? architecture-audit/cycle-001-invert-world-application-boundary/reviews/round-01-review.md
+?? architecture-audit/cycle-001-invert-world-application-boundary/reviews/round-02-review.md
+?? architecture-audit/cycle-001-invert-world-application-boundary/scout-evidence.err
+?? architecture-audit/cycle-004-command-undo-persistence-contract/reviews/
+?? architecture-audit/cycle-004-command-undo-persistence-contract/validation/t3-focused-vitest.stderr
+?? architecture-audit/cycle-004-command-undo-persistence-contract/validation/t3-focused-vitest.stdout
+?? architecture-audit/cycle-004-command-undo-persistence-contract/validation/t3-format-cleanup.stderr
+?? architecture-audit/cycle-004-command-undo-persistence-contract/validation/t3-format-cleanup.stdout
+?? architecture-audit/cycle-004-command-undo-persistence-contract/validation/t3-line-evidence.stderr
+?? architecture-audit/cycle-004-command-undo-persistence-contract/validation/t3-line-evidence.stdout
+?? architecture-audit/cycle-004-command-undo-persistence-contract/validation/t3-log-update.stderr
+?? architecture-audit/cycle-004-command-undo-persistence-contract/validation/t3-log-update.stdout
+?? architecture-audit/cycle-004-command-undo-persistence-contract/validation/t3-patch.stderr
+?? architecture-audit/cycle-004-command-undo-persistence-contract/validation/t3-patch.stdout
+?? architecture-audit/cycle-004-command-undo-persistence-contract/validation/t3-test-patch.stderr
+?? architecture-audit/cycle-004-command-undo-persistence-contract/validation/t3-test-patch.stdout
+?? architecture-audit/cycle-005-process-tree-dependency-ownership/reviews/
+?? architecture-audit/cycle-005-process-tree-dependency-ownership/validation/manager-post-t3-focused-deletion.stderr
+?? architecture-audit/cycle-005-process-tree-dependency-ownership/validation/manager-post-t3-focused-deletion.stdout
+?? architecture-audit/cycle-005-process-tree-dependency-ownership/validation/manager-post-t3-static-check.stderr
+?? architecture-audit/cycle-005-process-tree-dependency-ownership/validation/manager-post-t3-static-check.stdout
+?? architecture-audit/cycle-005-process-tree-dependency-ownership/validation/manager-static-check.stderr
+?? architecture-audit/cycle-005-process-tree-dependency-ownership/validation/manager-static-check.stdout
+?? architecture-audit/cycle-005-process-tree-dependency-ownership/validation/reviewer-post-t3-diff.stderr
+?? architecture-audit/cycle-005-process-tree-dependency-ownership/validation/reviewer-post-t3-diff.stdout
+?? architecture-audit/cycle-005-process-tree-dependency-ownership/validation/reviewer-post-t3-rg.stderr
+?? architecture-audit/cycle-005-process-tree-dependency-ownership/validation/reviewer-post-t3-rg.stdout
+?? architecture-audit/cycle-005-process-tree-dependency-ownership/validation/reviewer-preview-recheck.stderr
+?? architecture-audit/cycle-005-process-tree-dependency-ownership/validation/reviewer-preview-recheck.stdout
+?? architecture-audit/cycle-005-process-tree-dependency-ownership/validation/reviewer-report-write.stderr
+?? architecture-audit/cycle-005-process-tree-dependency-ownership/validation/reviewer-report-write.stdout
+?? architecture-audit/cycle-005-process-tree-dependency-ownership/validation/reviewer-rg-check.stderr
+?? architecture-audit/cycle-005-process-tree-dependency-ownership/validation/reviewer-rg-check.stdout
+?? architecture-audit/cycle-005-process-tree-dependency-ownership/validation/reviewer-stage-static-check.stderr
+?? architecture-audit/cycle-005-process-tree-dependency-ownership/validation/reviewer-stage-static-check.stdout
+?? architecture-audit/cycle-005-process-tree-dependency-ownership/validation/reviewer-t4-report-write.stderr
+?? architecture-audit/cycle-005-process-tree-dependency-ownership/validation/reviewer-t4-report-write.stdout
+?? architecture-audit/cycle-005-process-tree-dependency-ownership/validation/reviewer-wave005-diff.stderr
+?? architecture-audit/cycle-005-process-tree-dependency-ownership/validation/reviewer-wave005-diff.stdout
+?? architecture-audit/cycle-005-process-tree-dependency-ownership/validation/t3-report-last-sha-update.stderr
+?? architecture-audit/cycle-005-process-tree-dependency-ownership/validation/t3-report-last-sha-update.stdout
+?? architecture-audit/cycle-006-ui-command-controllers/reviews/
+?? architecture-audit/cycle-006-ui-command-controllers/validation/
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/reviews/
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/manager-decision-git-visibility-command.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/manager-decision-git-visibility-command.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/manager-decision-git-visibility.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/manager-decision-git-visibility.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/manager-decision-no-source-check-command.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/manager-decision-no-source-check-command.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/manager-decision-no-source-diff.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/manager-decision-no-source-diff.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/manager-decision-post-update-artifact-diff.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/manager-decision-post-update-artifact-diff.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/manager-decision-post-update-command.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/manager-decision-post-update-command.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/manager-decision-post-update-no-source-diff.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/manager-decision-post-update-no-source-diff.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/manager-no-source-diff.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/manager-no-source-diff.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-artifact-consolidation-no-source-diff.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-artifact-consolidation-no-source-diff.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-artifact-consolidation.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-artifact-consolidation.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-buildintent-scan.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-buildintent-scan.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-commit-show.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-commit-show.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-decision-stage-decision-diff.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-decision-stage-decision-diff.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-decision-stage-name-only.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-decision-stage-name-only.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-decision-stage-report-write.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-decision-stage-report-write.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-followup-decision-diff.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-followup-decision-diff.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-followup-no-source-diff.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-followup-no-source-diff.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-followup-report-write.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-followup-report-write.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-line-finders.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-line-finders.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-more-slices.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-more-slices.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-no-source-diff.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-no-source-diff.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-report-write.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-report-write.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-retry01-slices.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-retry01-slices.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-retry01-write.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-retry01-write.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-round01-check.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-round01-check.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-selected-tools.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-selected-tools.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-stage-diff.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-stage-diff.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-stage-report-write.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-stage-report-write.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-stage2-artifact-slices.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-stage2-artifact-slices.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-stage2-diff.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-stage2-diff.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-stage2-log-slices.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-stage2-log-slices.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-stage2-namecheck.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-stage2-namecheck.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-stage2-report-write.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-stage2-report-write.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-stage2-static-scan.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-stage2-static-scan.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-stage2-test-slices.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-stage2-test-slices.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-svgcanvas-probes.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-svgcanvas-probes.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-svgcanvas-slices.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-svgcanvas-slices.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-t4-commit-show.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-t4-commit-show.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-t4-diff-names.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-t4-diff-names.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-t4-no-source-diff.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-t4-no-source-diff.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-t4-root-vitest-slices.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-t4-root-vitest-slices.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-t4-static-rg.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-t4-static-rg.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-t4-write-report.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-t4-write-report.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-t4-write.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-t4-write.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-tangent-tools.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-tangent-tools.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-tests-slices.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-tests-slices.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-tool-probes.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-tool-probes.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-tool-usage-counts.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-tool-usage-counts.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-wave006a-rg.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-wave006a-rg.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-wave006a-static-rg.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-wave006a-static-rg.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-write-report.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/reviewer-write-report.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/t1-files-to-commit-list.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/t1-files-to-commit-list.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/t1-files-to-commit-stage.txt
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/t1-files-to-commit.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/t1-files-to-commit.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/t3-focused-combined-final.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/t3-focused-combined-final.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/t3-focused-controllers-after-tangent-choice.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/t3-focused-controllers-after-tangent-choice.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/t3-focused-controllers-v1.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/t3-focused-controllers-v1.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/t3-focused-controllers-v2.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/t3-focused-controllers-v2.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/t3-focused-controllers-v3.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/t3-focused-controllers-v3.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/t3-focused-controllers-v4.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/t3-focused-controllers-v4.stdout
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/t3-focused-controllers-v5.stderr
+?? architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/t3-focused-controllers-v5.stdout

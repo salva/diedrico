@@ -1,0 +1,10 @@
+frontend/src/components/dialogs/NewProjectDialog.vue:74:    const project = await projectService.createProject(projectName.value.trim());
+frontend/src/domain/processTree/actions/CreateProjectionPlaneAction.ts:20:export function createProjectionPlaneAction(
+frontend/src/domain/viewState/ProjectionPlane.ts:16:export function createProjectionPlane(
+frontend/src/domain/viewState/ProjectionPlane.ts:34:export const PLANE_H = createProjectionPlane('P_H', 'Horizontal (P_H)', {
+frontend/src/domain/viewState/ProjectionPlane.ts:39:export const PLANE_V = createProjectionPlane('P_V', 'Vertical (P_V)', {
+frontend/src/services/factories/PlaneSequenceFactory.ts:26:import { createProjectionPlaneAction } from '@/domain/processTree/actions/CreateProjectionPlaneAction';
+frontend/src/services/factories/PlaneSequenceFactory.ts:130:    const projPlaneAction = createProjectionPlaneAction(projPlaneId);
+frontend/src/application/appShell/ProjectSessionUseCases.ts:96:  async createProject(projectName: string): Promise<void> {
+frontend/src/application/appShell/ProjectSessionUseCases.ts:144:      await this.createProject(projectName);
+frontend/src/application/appShell/AppShellRuntime.ts:140:      createProject: (name: string) => projectSession.createProject(name),

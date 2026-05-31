@@ -32,10 +32,10 @@ Review convergence:
 
 This decision stage inspected scoped status and diff summary before authoring the decision. Captured logs:
 
-- `.saivage/tmp/command-logs/t1-cycle031-scoped-status.stdout.log`
-- `.saivage/tmp/command-logs/t1-cycle031-scoped-status.stderr.log`
-- `.saivage/tmp/command-logs/t1-cycle031-scoped-diffstat.stdout.log`
-- `.saivage/tmp/command-logs/t1-cycle031-scoped-diffstat.stderr.log`
+- `.saivage/stages/cycle-031-decision-command-undo-persistence-contract-cleanup/logs/scoped-status.txt`
+- `.saivage/stages/cycle-031-decision-command-undo-persistence-contract-cleanup/logs/scoped-status.err`
+- `.saivage/stages/cycle-031-decision-command-undo-persistence-contract-cleanup/logs/scoped-diffstat.txt`
+- `.saivage/stages/cycle-031-decision-command-undo-persistence-contract-cleanup/logs/scoped-diffstat.err`
 
 Observed scoped dirty source/test context at decision time:
 

@@ -1,0 +1,55 @@
+    45	  return generateClippedGrid(convertPlaneRectangleTo2D(corners, projPlaneRealization.threeDToPlane), PLANE_RENDERING_CONFIG.FALLBACK_GRID.DIVISIONS);
+    46	}
+    47	
+    48	function fallbackGrid(): Segment2D[] {
+    49	  const segments: Segment2D[] = [];
+    50	  const halfSize = PLANE_RENDERING_CONFIG.FALLBACK_GRID.HALF_SIZE;
+    51	  const step = (halfSize * 2) / PLANE_RENDERING_CONFIG.FALLBACK_GRID.DIVISIONS;
+    52	  for (let i = 0; i <= PLANE_RENDERING_CONFIG.FALLBACK_GRID.DIVISIONS; i++) {
+    53	    const t = -halfSize + i * step;
+    54	    segments.push({ start: { u: -halfSize, v: t }, end: { u: halfSize, v: t } }, { start: { u: t, v: -halfSize }, end: { u: t, v: halfSize } });
+    55	  }
+    56	  return segments;
+    57	}
+    58	
+    59	function to3DSegment(segment: Segment2D, matrix: any): SegmentGeometryDto {
+    60	  const start = domainToThreeJS(applyMatrix4x3(new Vector3(segment.start.u, segment.start.v, 1), matrix));
+    61	  const end = domainToThreeJS(applyMatrix4x3(new Vector3(segment.end.u, segment.end.v, 1), matrix));
+    62	  return { start: v(start), end: v(end) };
+    63	}
+    64	
+    65	function planeBasis(e: number[]) {
+    66	  const origin = new Vector3(e[2] / e[11], e[5] / e[11], e[8] / e[11]);
+    67	  const uAxis = new Vector3(e[0], e[3], e[6]);
+    68	  const vAxis = new Vector3(e[1], e[4], e[7]);
+    69	  const normal = new Vector3().crossVectors(uAxis, vAxis).normalize();
+    70	  return { origin, uAxis, vAxis, normal };
+    71	}
+    72	
+    73	function referenceAxes(): (AxisDto | LabelDto)[] {
+    74	  const axes = [ ['x', 'X', 0xff0000, new Vector3(1, 0, 0)], ['y', 'Y', 0x00ff00, new Vector3(0, 1, 0)], ['z', 'Z', 0x0000ff, new Vector3(0, 0, 1)] ] as const;
+    75	  return axes.flatMap(([axis, label, color, domainDir]) => axisDto(`reference-axis-${axis}`, 'reference-axis', axis, label, color, new Vector3(), domainDirectionToThreeJS(domainDir), THREE_STYLE.referenceAxisLength));
+
+--- PlanarElement3DSelector ---
+    45	          p.y += Math.sin(angle) * radius;
+    46	          points.push(v(lift(p, planeRealization.planeTo3D)));
+    47	        }
+    48	        // keep import checked by constructing equivalent curve metadata policy through point order
+    49	        void CatmullRomCurve3;
+    50	        items.push({ id: `planar-circle-${circle.id}`, kind: 'planar-circle', sourceEntityId: circle.id, planeId: plane.id, visible: true, style: planarStyle(circle), renderGroup: 'planarElements', points });
+    51	      }
+    52	    }
+    53	    return items;
+    54	  }
+    55	}
+    56	
+    57	function lift(point2D: Vector3, matrix: any): Vector3 {
+    58	  const domain = applyMatrix4x3(point2D, matrix);
+    59	  const e = matrix.elements;
+    60	  const normal = new Vector3().crossVectors(new Vector3(e[0], e[3], e[6]), new Vector3(e[1], e[4], e[7])).normalize();
+    61	  domain.x += normal.x * THREE_STYLE.zOffset;
+    62	  domain.y += normal.y * THREE_STYLE.zOffset;
+    63	  domain.z += normal.z * THREE_STYLE.zOffset;
+    64	  return domainToThreeJS(domain);
+    65	}
+    66	function v(vector: { x: number; y: number; z: number }): Vec3 { return { x: vector.x, y: vector.y, z: vector.z }; }

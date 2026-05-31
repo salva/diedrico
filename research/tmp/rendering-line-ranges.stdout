@@ -1,0 +1,869 @@
+## SvgCanvas 1,130p
+     1	<template>
+     2	  <div class="svg-canvas-container">
+     3	    <svg
+     4	      ref="svgElement"
+     5	      class="svg-canvas"
+     6	      xmlns="http://www.w3.org/2000/svg"
+     7	      :viewBox="`0 0 ${canvasWidth} ${canvasHeight}`"
+     8	      preserveAspectRatio="xMidYMid meet"
+     9	      @mousedown="handleMouseDown"
+    10	      @click="handleCanvasClick"
+    11	      @dblclick="handleDoubleClick"
+    12	      @mousemove="handleMouseMove"
+    13	      @wheel.prevent="handleWheel"
+    14	    >
+    15	      <!-- Background grid (T275) - Zoom-adaptive grid display -->
+    16	      <g v-if="viewStore.gridVisible.value" class="background-grid">
+    17	        <line
+    18	          v-for="line in gridLines"
+    19	          :key="line.key"
+    20	          :x1="line.x1"
+    21	          :y1="line.y1"
+    22	          :x2="line.x2"
+    23	          :y2="line.y2"
+    24	          :stroke="line.major ? '#C0C0C0' : '#E0E0E0'"
+    25	          :stroke-width="line.major ? 1 : 0.5"
+    26	        />
+    27	      </g>
+    28	      
+    29	      <!-- Render all lines through Paper pipeline (including HL_HV projections) -->
+    30	      <line
+    31	        v-for="{ primitive, attrs } in renderedLines"
+    32	        :key="primitive.id"
+    33	        v-bind="attrs"
+    34	      />
+    35	      
+    36	      <!-- Render all segments through Paper pipeline -->
+    37	      <line
+    38	        v-for="{ primitive, attrs } in renderedSegments"
+    39	        :key="primitive.id"
+    40	        v-bind="attrs"
+    41	      />
+    42	      
+    43	      <!-- Render all guides through Paper pipeline -->
+    44	      <line
+    45	        v-for="{ primitive, attrs } in renderedGuides"
+    46	        :key="primitive.id"
+    47	        v-bind="attrs"
+    48	      />
+    49	      
+    50	      <!-- Render all circles through Paper pipeline -->
+    51	      <circle
+    52	        v-for="{ primitive, attrs } in renderedCircles"
+    53	        :key="primitive.id"
+    54	        v-bind="attrs"
+    55	      />
+    56	      
+    57	      <!-- Render all arcs through Paper pipeline -->
+    58	      <path
+    59	        v-for="{ primitive, attrs } in renderedArcs"
+    60	        :key="primitive.id"
+    61	        v-bind="attrs"
+    62	      />
+    63	      
+    64	      <!-- Render all points through Paper pipeline -->
+    65	      <circle
+    66	        v-for="{ primitive, attrs } in renderedPoints"
+    67	        :key="primitive.id"
+    68	        v-bind="attrs"
+    69	      />
+    70	      
+    71	      <!-- Snap preview indicator - orange glow around snap target point -->
+    72	      <circle
+    73	        v-if="snapTarget.pointId && snapTarget.position"
+    74	        :cx="snapTarget.position.x"
+    75	        :cy="snapTarget.position.y"
+    76	        :r="8"
+    77	        fill="none"
+    78	        stroke="#FF6B35"
+    79	        stroke-width="2"
+    80	        opacity="0.8"
+    81	        class="snap-indicator"
+    82	      />
+    83	      
+    84	      <!-- Grid coordinate labels (Phase 78) - Display u,v values at viewport borders -->
+    85	      <g v-if="viewStore.gridVisible.value" class="grid-labels">
+    86	        <!-- Top edge labels (U-coordinates) -->
+    87	        <text
+    88	          v-for="label in gridLabels.top"
+    89	          :key="label.key"
+    90	          :x="label.position"
+    91	          :y="12"
+    92	          class="grid-label"
+    93	          text-anchor="middle"
+    94	        >
+    95	          {{ label.value }}
+    96	        </text>
+    97	        
+    98	        <!-- Bottom edge labels (U-coordinates) -->
+    99	        <text
+   100	          v-for="label in gridLabels.bottom"
+   101	          :key="label.key"
+   102	          :x="label.position"
+   103	          :y="canvasHeight - 4"
+   104	          class="grid-label"
+   105	          text-anchor="middle"
+   106	        >
+   107	          {{ label.value }}
+   108	        </text>
+   109	        
+   110	        <!-- Left edge labels (V-coordinates) -->
+   111	        <text
+   112	          v-for="label in gridLabels.left"
+   113	          :key="label.key"
+   114	          :x="4"
+   115	          :y="label.position"
+   116	          class="grid-label"
+   117	          text-anchor="start"
+   118	          dominant-baseline="middle"
+   119	        >
+   120	          {{ label.value }}
+   121	        </text>
+   122	        
+   123	        <!-- Right edge labels (V-coordinates) -->
+   124	        <text
+   125	          v-for="label in gridLabels.right"
+   126	          :key="label.key"
+   127	          :x="canvasWidth - 4"
+   128	          :y="label.position"
+   129	          class="grid-label"
+   130	          text-anchor="end"
+## SvgCanvas 560,620p
+   560	    }
+   561	  }
+   562	  
+   563	  return transforms;
+   564	}
+   565	
+   566	// Generate primitives from World using PaperService
+   567	const primitives = computed(() => {
+   568	  // Access renderTick to make this computed reactive to non-reactive sources (World + Paper)
+   569	  renderTick.value;
+   570	  
+   571	  // PaperService uses plane-to-paper transforms for rendering
+   572	  const planeTransforms = getPlaneTransformsForRendering();
+   573	  
+   574	  // Get hovered and selected elements for visual highlighting
+   575	  // Per ui-spec.md: Hover = #4A90E2 (lighter), Selection = #0066CC (bold)
+   576	  const hoveredId = paper.getHoveredElement();
+   577	  const hoveredIds = hoveredId ? new Set([hoveredId]) : undefined;
+   578	  
+   579	  const selectedIds = selectionStore.selectedIdsArray;
+   580	  const selectedIdsSet = selectedIds.length > 0 ? new Set(selectedIds) : undefined;
+   581	  
+   582	  const cascadeHighlightIds = selectionStore.cascadeHighlightIdsArray;
+   583	  const cascadeHighlightIdsSet = cascadeHighlightIds.length > 0 ? new Set(cascadeHighlightIds) : undefined;
+   584	  
+   585	  const context: PrimitiveContext = {
+   586	    world,
+   587	    planeTransforms,
+   588	    hoveredIds,              // Hover state (lighter highlight)
+   589	    selectedIds: selectedIdsSet,  // Selection state (bold highlight)
+   590	    cascadeHighlightIds: cascadeHighlightIdsSet,  // Cascade delete preview (orange warning)
+   591	    activePlaneId: activePlane.value,  // FR-002: Active plane visual emphasis
+   592	    showProjectedElements: viewStore.showProjectedElements.value,  // Phase 106: 3D element projection display
+   593	  };
+   594	  
+   595	  const prims = paperService.generatePrimitives(context);
+   596	  // console.log('Generated primitives:', prims.length, prims);
+   597	  
+   598	  // Sort primitives by layer first, then z-index (same as Paper.getPrimitives())
+   599	  prims.sort((a, b) => {
+   600	    if (a.layer !== b.layer) {
+   601	      return a.layer - b.layer;
+   602	    }
+   603	    return a.style.zIndex - b.style.zIndex;
+   604	  });
+   605	  
+   606	  // Update Paper with primitives for spatial queries (hit testing)
+   607	  paper.setPrimitives(prims);
+   608	  
+   609	  return prims;
+   610	});
+   611	
+   612	/**
+   613	 * Phase 79: Plane-Based Grid with Adaptive Spacing/Subdivisions
+   614	 * 
+   615	 * Grid uses the active projection plane's intrinsic (u,v) coordinate system
+   616	 * Transformation pipeline: Plane (u,v) → Paper (x,y) → Screen (pixels)
+   617	 * 
+   618	 * Major Grid Lines (Powers of 10):
+   619	 * - Major lines always at multiples of 10^n (e.g., 0.1, 1, 10, 100, 1000)
+   620	 * - Power of 10 chosen based on zoom level to keep reasonable density
+## SvgCanvas 1068,1158p
+  1068	    top: topLabels,
+  1069	    bottom: bottomLabels,
+  1070	    left: leftLabels,
+  1071	    right: rightLabels,
+  1072	  };
+  1073	});
+  1074	
+  1075	
+  1076	// Render primitives to SVG attributes
+  1077	const renderedPoints = computed(() => {
+  1078	  return primitives.value
+  1079	    .filter(p => p.type === 'point')
+  1080	    .map(p => {
+  1081	      const result = svgRenderer.renderPrimitive(p, viewport.value);
+  1082	      // console.log('Rendering point primitive:', p, '→ SVG attrs:', result.attributes);
+  1083	      return {
+  1084	        primitive: p,
+  1085	        attrs: result.attributes
+  1086	      };
+  1087	    });
+  1088	});
+  1089	
+  1090	const renderedLines = computed(() => {
+  1091	  const linePrimitives = primitives.value.filter(p => p.type === 'line');
+  1092	  const bhhlPrimitives = linePrimitives.filter(p => p.id.includes('line2d34') || p.id.includes('line2d35'));
+  1093	  if (bhhlPrimitives.length > 0) {
+  1094	    console.log('[SvgCanvas] BHHL primitives in renderedLines:', bhhlPrimitives.map(p => `${p.id} (plane: ${p.planeId})`));
+  1095	  }
+  1096	  return linePrimitives.map(p => {
+  1097	      const result = svgRenderer.renderPrimitive(p, viewport.value);
+  1098	      if (p.id.includes('line2d34') || p.id.includes('line2d35')) {
+  1099	        console.log(`[SvgCanvas] Rendered ${p.id}:`, result.attributes);
+  1100	      }
+  1101	      return {
+  1102	        primitive: p,
+  1103	        attrs: result.attributes
+  1104	      };
+  1105	    });
+  1106	});
+  1107	
+  1108	const renderedSegments = computed(() => {
+  1109	  return primitives.value
+  1110	    .filter(p => p.type === 'segment')
+  1111	    .map(p => {
+  1112	      const result = svgRenderer.renderPrimitive(p, viewport.value);
+  1113	      // console.log('Rendering segment primitive:', p, '→ SVG attrs:', result.attributes);
+  1114	      return {
+  1115	        primitive: p,
+  1116	        attrs: result.attributes
+  1117	      };
+  1118	    });
+  1119	});
+  1120	
+  1121	const renderedCircles = computed(() => {
+  1122	  return primitives.value
+  1123	    .filter(p => p.type === 'circle')
+  1124	    .map(p => {
+  1125	      const result = svgRenderer.renderPrimitive(p, viewport.value);
+  1126	      // console.log('Rendering circle primitive:', p, '→ SVG attrs:', result.attributes);
+  1127	      return {
+  1128	        primitive: p,
+  1129	        attrs: result.attributes
+  1130	      };
+  1131	    });
+  1132	});
+  1133	
+  1134	const renderedGuides = computed(() => {
+  1135	  return primitives.value
+  1136	    .filter(p => p.type === 'line' && p.id.startsWith('guide-'))
+  1137	    .map(p => {
+  1138	      const result = svgRenderer.renderPrimitive(p, viewport.value);
+  1139	      return {
+  1140	        primitive: p,
+  1141	        attrs: result.attributes
+  1142	      };
+  1143	    });
+  1144	});
+  1145	
+  1146	const renderedArcs = computed(() => {
+  1147	  return primitives.value
+  1148	    .filter(p => p.type === 'arc')
+  1149	    .map(p => {
+  1150	      const result = svgRenderer.renderPrimitive(p, viewport.value);
+  1151	      return {
+  1152	        primitive: p,
+  1153	        attrs: result.attributes
+  1154	      };
+  1155	    });
+  1156	});
+  1157	
+  1158	/**
+## SvgCanvas 1208,1245p
+  1208	  // console.log('[SvgCanvas] Plane coords (u,v,w):', planePos);
+  1209	  
+  1210	  // Debug: Check what Paper.hitTest() would return for this click
+  1211	  const canvasPos = new Vector3(canvasPoint.x, canvasPoint.y, 1);
+  1212	  const paperToPlane = planeTransforms.get(activePlane.value);
+  1213	  const hit = paper.hitTest(canvasPos, 20, activePlane.value, paperToPlane, world);  // FR-002: Hit test in plane space
+  1214	  // console.log('[SvgCanvas] Paper.hitTest() result:', hit);
+  1215	  // console.log('[SvgCanvas] Paper has', paper.size, 'primitives');
+  1216	  
+  1217	  // Phase 20: Handle selection mode when 'select' tool is active
+  1218	  const activeToolName = toolStore.currentTool.value;
+  1219	  
+  1220	  if (activeToolName === 'select') {
+  1221	    // Selection mode per ui-spec.md §Element Interaction
+  1222	    // Click element: Select (Shift+click: add to selection)
+  1223	    // Click empty: Deselect all
+  1224	    
+  1225	    const hit = paper.hitTest(canvasPos, 20, activePlane.value, paperToPlane, world);
+  1226	    
+  1227	    if (hit) {
+  1228	      // Element clicked - handle selection
+  1229	      if (event.shiftKey) {
+  1230	        // Shift+click: Add to selection (multi-select)
+  1231	        selectionStore.addToSelection(hit.elementId);
+  1232	        // console.log('[SvgCanvas] Added to selection:', hit.elementId);
+  1233	      } else {
+  1234	        // Regular click: Single selection (replaces current selection)
+  1235	        selectionStore.selectSingle(hit.elementId);
+  1236	        // console.log('[SvgCanvas] Selected:', hit.elementId);
+  1237	      }
+  1238	    } else {
+  1239	      // Clicked empty space - clear selection
+  1240	      selectionStore.clearSelection();
+  1241	      // console.log('[SvgCanvas] Cleared selection');
+  1242	    }
+  1243	    return;
+  1244	  }
+  1245	  
+## SvgCanvas 1350,1375p
+  1350	  const paperToPlane = planeTransforms.get(activePlane.value);
+  1351	  if (!paperToPlane) return;
+  1352	
+  1353	  const canvasPos = new Vector3(canvasPoint.x, canvasPoint.y, 1);
+  1354	  const hit = paper.hitTest(canvasPos, 20, activePlane.value, paperToPlane, world);
+  1355	  
+  1356	  // Check if we hit a movable point
+  1357	  if (hit && hit.elementType === 'point') {
+  1358	    const plane = world.getProjectionPlaneById(activePlane.value);
+  1359	    if (!plane) throw new Error(`Active plane not found: ${activePlane.value}`);
+  1360	    const point = plane.getPoint(hit.elementId);
+  1361	    
+  1362	    if (point && isMovableFreePoint(point)) {
+  1363	      // Start point drag (T954)
+  1364	      selectionStore.selectSingle(hit.elementId);
+  1365	
+  1366	      pointDrag.value = {
+  1367	        active: true,
+  1368	        planeId: activePlane.value,
+  1369	        pointId: hit.elementId,
+  1370	        moveSession: canvasToolController.startFreePointMove({ planeId: activePlane.value, pointId: hit.elementId, label: point.label ?? hit.elementId }),
+  1371	        startClientX: event.clientX,
+  1372	        startClientY: event.clientY,
+  1373	        moved: false
+  1374	      };
+  1375	      return;
+## SvgCanvas 1538,1575p
+  1538	  // 'select' is a special mode (not a tool), allow hover on all elements
+  1539	  const selectionMask = activeTool ? activeTool.getSelectionMask() : undefined;
+  1540	  
+  1541	  // Use Paper.hitTest() to find element near cursor (filtered by selection mask)
+  1542	  const canvasPos = new Vector3(canvasPoint.x, canvasPoint.y, 1);
+  1543	  const hit = paper.hitTest(canvasPos, 20, activePlane.value, paperToPlane, world, selectionMask); // FR-002: Hit test in plane space
+  1544	  
+  1545	  // Update snap target if hovering over a point within snap radius
+  1546	  // Per ui-spec.md: "Point Snap: When cursor within snap radius of existing point: bright outline or glow"
+  1547	  if (hit && hit.elementType === 'point') {
+  1548	    // Point is within snap radius - show snap preview indicator
+  1549	    snapTarget.value = {
+  1550	      pointId: hit.elementId,
+  1551	      position: { x: canvasPoint.x, y: canvasPoint.y }
+  1552	    };
+  1553	  } else {
+  1554	    // No point nearby - clear snap indicator
+  1555	    snapTarget.value = {
+  1556	      pointId: null,
+  1557	      position: null
+  1558	    };
+  1559	  }
+  1560	  
+  1561	  // Update hover state in Paper only if it changed
+  1562	  const previousHovered = paper.getHoveredElement();
+  1563	  const newHovered = hit ? hit.elementId : undefined;
+  1564	  
+  1565	  if (previousHovered !== newHovered) {
+  1566	    paper.setHoveredElement(newHovered);
+  1567	    
+  1568	    // Update global hover state for UI feedback
+  1569	    if (newHovered && hit) {
+  1570	      const label = getElementLabel(newHovered, hit.elementType, activePlane.value);
+  1571	      hoverHighlight.setHoveredElement(
+  1572	        newHovered,
+  1573	        hit.elementType,
+  1574	        label,
+  1575	        false // Not temporary - show tooltip
+## PaperService 56,75p
+    56	/**
+    57	 * Context for primitive generation
+    58	 */
+    59	export interface PrimitiveContext {
+    60	  world: World;
+    61	  planeTransforms: Map<string, Matrix3>;  // planeId → plane-to-paper transformation matrix
+    62	  highlightedEntityIds?: Set<string>;  // Hover/selection state (legacy - use hoveredIds/selectedIds instead)
+    63	  hoveredIds?: Set<string>;            // Hovered entities (lighter highlight)
+    64	  selectedIds?: Set<string>;           // Selected entities (bold highlight)
+    65	  cascadeHighlightIds?: Set<string>;   // Elements that will be cascade deleted (orange warning)
+    66	  activeSnapTargetId?: string;         // Current snap target
+    67	  activePlaneId?: string;              // Active plane for visual emphasis (FR-002)
+    68	  showProjectedElements?: boolean;     // Phase 106: toggle for 3D element projection display
+    69	}
+    70	
+    71	import { resolveVisibility } from '../domain/world/styleService';
+    72	import { applyMatrix3x4 } from '../utils/threeUtils';
+    73	
+    74	/**
+    75	 * Phase 106: Visual styles for projected 3D elements.
+## PaperService 117,207p
+   117	  generatePrimitives(context: PrimitiveContext): Primitive[] {
+   118	    const primitives: Primitive[] = [];
+   119	
+   120	    // WALK: Iterate over all projection planes
+   121	    for (const plane of context.world.projectionPlanes.values()) {
+   122	      const transform = context.planeTransforms.get(plane.id!);
+   123	      if (!transform) continue;
+   124	
+   125	      // WALK: Iterate over all points in this plane
+   126	      for (const point of plane.getAllPoints()) {
+   127	        // Skip invisible points (Phase 87: Encapsulation support via styleService)
+   128	        if (!resolveVisibility(point, context.world)) continue;
+   129	        
+   130	        // REALIZE: Compute position (numeric data) from plane - computes and caches
+   131	        const realization = plane.realizePoint2D(point, context.world);
+   132	        
+   133	        if (realization) {
+   134	          // RENDER: Generate primitive using realization (numeric) + point (structural)
+   135	          const primitive = this.pointToPrimitive(point, realization, transform, context);
+   136	          primitives.push(primitive);
+   137	        }
+   138	      }
+   139	
+   140	      // WALK: Iterate over all lines in this plane (including HalfHingeLine2D)
+   141	      // HalfHingeLine2D are Line2D entities with type 'half-hinge'
+   142	      for (const line of plane.getAllLines()) {
+   143	        // Skip invisible lines (Phase 87: Encapsulation support via styleService)
+   144	        const isVisible = resolveVisibility(line, context.world);
+   145	        if (line instanceof HalfHingeLine2D) {
+   146	          console.log(`[PaperService] Checking visibility for ${line.constructor.name}: ${line.id} (${line.label}) - visible: ${isVisible}`);
+   147	        }
+   148	        if (!isVisible) continue;
+   149	        
+   150	        // REALIZE: Compute line equation (numeric data) from plane - computes and caches
+   151	        const realization = plane.realizeLine2D(line, context.world);
+   152	        
+   153	        if (realization) {
+   154	          // Check most specific types first (subclasses before base classes)
+   155	          if (line instanceof HalfHingeLine2D) {
+   156	            console.log(`[PaperService] Creating primitive for ${line.constructor.name}: ${line.id} (${line.label})`);
+   157	            const primitive = this.halfHingeLineToPrimitive(line, realization, transform, line.planeId!, context);
+   158	            console.log(`[PaperService] Created primitive:`, primitive.id, 'visible:', primitive.visible, 'layer:', primitive.layer);
+   159	            primitives.push(primitive);
+   160	          } else if (line instanceof Segment2DByPoints) {
+   161	            // Segments are Line2D subclass with finite endpoints
+   162	            const primitive = this.segmentToPrimitive(line, realization, transform, context);
+   163	            primitives.push(primitive);
+   164	          } else if (line instanceof Guide2D || line instanceof SiblingGuide2D) {
+   165	            // Guides (both primary and sibling) are perpendicular lines with special rendering
+   166	            const primitive = this.guideToPrimitive(line as Guide2D | SiblingGuide2D, realization, transform, context);
+   167	            primitives.push(primitive);
+   168	            
+   169	            // Phase 101: If guide has arcGeometry, create arc primitive
+   170	            if ((line as any).arcGeometry) {
+   171	              const arcPrimitive = this.arcGeometryToPrimitive(line.id!, (line as any).arcGeometry, context);
+   172	              if (arcPrimitive) {
+   173	                primitives.push(arcPrimitive);
+   174	              }
+   175	            }
+   176	          } else {
+   177	            // RENDER: Normal infinite lines
+   178	            const primitive = this.lineToPrimitive(line, realization, transform, context);
+   179	            primitives.push(primitive);
+   180	          }
+   181	        } else {
+   182	          // console.warn('[PaperService] Skipping line - missing realization');
+   183	        }
+   184	      }
+   185	
+   186	      // WALK: Iterate over all circles in this plane
+   187	      for (const circle of plane.getAllCircles()) {
+   188	        // Skip invisible circles (Phase 87: Encapsulation support via styleService)
+   189	        if (!resolveVisibility(circle, context.world)) continue;
+   190	        
+   191	        // REALIZE: Compute circle geometry (numeric data) from plane - computes and caches
+   192	        const realization = plane.realizeCircle2D(circle, context.world);
+   193	        
+   194	        if (realization) {
+   195	          // RENDER: Generate primitive using realization (numeric) + circle (structural)
+   196	          const primitive = this.circleToPrimitive(circle, realization, transform, context);
+   197	          primitives.push(primitive);
+   198	        }
+   199	      }
+   200	    }
+   201	
+   202	    // TODO: Add primitives for other element types (arcs, etc.)
+   203	
+   204	    // Phase 106: Generate projected 3D element primitives if enabled
+   205	    primitives.push(...this.generate3DProjectionPrimitives(context));
+   206	
+   207	    return primitives;
+## PaperService 850,890p
+   850	   * Update paper with current primitives
+   851	   */
+   852	  updatePaper(paper: Paper, context: PrimitiveContext): void {
+   853	    // Clear existing primitives
+   854	    paper.clear();
+   855	
+   856	    // Generate new primitives for all planes
+   857	    const primitives = this.generatePrimitives(context);
+   858	
+   859	    // Add to paper
+   860	    paper.setPrimitives(primitives);
+   861	  }
+   862	
+   863	  /**
+   864	   * Update primitives for a specific entity (incremental update)
+   865	   */
+   866	  updateEntity(
+   867	    entityId: string,
+   868	    paper: Paper,
+   869	    context: PrimitiveContext
+   870	  ): void {
+   871	    // Remove old primitives for this entity
+   872	    paper.removePrimitivesByEntity(entityId);
+   873	
+   874	    // Find the entity by searching through planes
+   875	    for (const plane of context.world.projectionPlanes.values()) {
+   876	      const point = plane.getPoint(entityId);
+   877	      if (point) {
+   878	        const realization = plane.realizePoint2D(point, context.world);
+   879	        const transform = context.planeTransforms.get(point.planeId!);
+   880	        
+   881	        if (realization && transform) {
+   882	          const primitive = this.pointToPrimitive(point, realization, transform, context);
+   883	          paper.setPrimitive(primitive);
+   884	        }
+   885	        return;
+   886	      }
+   887	
+   888	      // TODO: Handle other element types (lines, circles)
+   889	    }
+   890	  }
+## PaperService 902,990p
+   902	  private generate3DProjectionPrimitives(context: PrimitiveContext): Primitive[] {
+   903	    if (!context.showProjectedElements) return [];
+   904	
+   905	    const primitives: Primitive[] = [];
+   906	    const world = context.world;
+   907	    const EPSILON = 1e-10;
+   908	
+   909	    for (const plane of world.getAllProjectionPlanes()) {
+   910	      const planeRealization = world.getProjectionPlane3DRealization(plane.id);
+   911	      if (!planeRealization) continue;
+   912	
+   913	      const threeDToPlane = planeRealization.threeDToPlane;
+   914	      const planeToPaper = context.planeTransforms.get(plane.id);
+   915	      if (!planeToPaper) continue;
+   916	
+   917	      // Project all feasible 3D points
+   918	      for (const point3D of world.getAll3DPoints()) {
+   919	        const realization = point3D.realize3D(world);
+   920	        if (!realization || !realization.isFeasible()) continue;
+   921	
+   922	        const planeCoords = applyMatrix3x4(realization.position, threeDToPlane);
+   923	        const paperPos = planeCoords.clone().applyMatrix3(planeToPaper);
+   924	
+   925	        primitives.push({
+   926	          type: 'point',
+   927	          id: `proj3d-point-${point3D.id}-on-${plane.id}`,
+   928	          sourceEntityId: point3D.id,
+   929	          planeId: plane.id,
+   930	          layer: RenderLayer.Guides + 3,   // Between Guides(10) and Elements(20)
+   931	          visible: true,
+   932	          style: PROJECTED_POINT_STYLE,
+   933	          position: paperPos,
+   934	          radius: 6,
+   935	        } as PointPrimitive);
+   936	      }
+   937	
+   938	      // Project all feasible 3D lines
+   939	      for (const line3D of world.getAll3DLines()) {
+   940	        const realization = line3D.realize3D(world);
+   941	        if (!realization || !realization.isFeasible()) continue;
+   942	
+   943	        // Project point (w=1) and direction (w=0) separately via threeDToPlane
+   944	        const projPoint = applyMatrix3x4(realization.point, threeDToPlane);
+   945	        const projDir = applyMatrix3x4(realization.direction, threeDToPlane);
+   946	
+   947	        // Skip degenerate cases: direction projects to zero (line perpendicular to plane)
+   948	        if (projDir.length() < EPSILON) continue;
+   949	
+   950	        const paperPoint = projPoint.clone().applyMatrix3(planeToPaper);
+   951	        const paperDir = projDir.clone().applyMatrix3(planeToPaper);
+   952	
+   953	        primitives.push({
+   954	          type: 'line',
+   955	          id: `proj3d-line-${line3D.id}-on-${plane.id}`,
+   956	          sourceEntityId: line3D.id,
+   957	          planeId: plane.id,
+   958	          layer: RenderLayer.Guides + 3,
+   959	          visible: true,
+   960	          style: PROJECTED_LINE_STYLE,
+   961	          point: paperPoint,
+   962	          direction: paperDir,
+   963	        } as LinePrimitive);
+   964	      }
+   965	
+   966	      // Project all feasible 3D segments
+   967	      for (const segment3D of world.getAll3DSegments()) {
+   968	        const realization = segment3D.realize3D(world);
+   969	        if (!realization || !realization.isFeasible()) continue;
+   970	
+   971	        const projStart = applyMatrix3x4(realization.startPoint, threeDToPlane);
+   972	        const projEnd = applyMatrix3x4(realization.endPoint, threeDToPlane);
+   973	
+   974	        const paperStart = projStart.clone().applyMatrix3(planeToPaper);
+   975	        const paperEnd = projEnd.clone().applyMatrix3(planeToPaper);
+   976	
+   977	        primitives.push({
+   978	          type: 'segment',
+   979	          id: `proj3d-segment-${segment3D.id}-on-${plane.id}`,
+   980	          sourceEntityId: segment3D.id,
+   981	          planeId: plane.id,
+   982	          layer: RenderLayer.Guides + 3,
+   983	          visible: true,
+   984	          style: PROJECTED_SEGMENT_STYLE,
+   985	          point1: paperStart,
+   986	          point2: paperEnd,
+   987	        } as SegmentPrimitive);
+   988	      }
+   989	    }
+   990	
+## Paper 79,180p
+    79	 * Base interface for all drawing primitives
+    80	 */
+    81	export interface DrawingPrimitive {
+    82	  id: string;                       // Unique ID for this primitive
+    83	  sourceEntityId?: string;          // ID of domain entity that generated this primitive
+    84	  planeId?: string;                 // Plane this element belongs to (for hit testing filter)
+    85	  layer: RenderLayer;               // Z-ordering layer
+    86	  visible: boolean;                 // Whether to render this primitive
+    87	  style: ResolvedStyle;             // Fully resolved visual attributes
+    88	}
+    89	
+    90	/**
+    91	 * Point primitive - rendered as a circle
+    92	 * Coordinates in paper coordinate system
+    93	 */
+    94	export interface PointPrimitive extends DrawingPrimitive {
+    95	  type: 'point';
+    96	  position: Vector3;                // Position in paper space (homogeneous coordinates)
+    97	  radius: number;                   // Display radius in pixels
+    98	}
+    99	
+   100	/**
+   101	 * Path primitive - rendered as polyline or polygon
+   102	 * All coordinates in paper coordinate system
+   103	 */
+   104	export interface PathPrimitive extends DrawingPrimitive {
+   105	  type: 'path';
+   106	  points: Array<[number, number]>; // Array of [x, y] coordinates in paper space
+   107	  closed: boolean;                  // Connect last to first point?
+   108	}
+   109	
+   110	/**
+   111	 * Line primitive - infinite line in parametric form (clipped to viewport bounds)
+   112	 * Parametric form: P(t) = point + t * direction
+   113	 * All coordinates in paper coordinate system
+   114	 */
+   115	export interface LinePrimitive extends DrawingPrimitive {
+   116	  type: 'line';
+   117	  point: Vector3;                     // Point on the line (paper coords, homogeneous)
+   118	  direction: Vector3;                 // Direction vector (paper coords, homogeneous)
+   119	}
+   120	
+   121	/**
+   122	 * Segment primitive - finite line segment between two points
+   123	 * Endpoints are stored as Vector3 for compatibility with Three.js
+   124	 * Coordinates in paper coordinate system
+   125	 */
+   126	export interface SegmentPrimitive extends DrawingPrimitive {
+   127	  type: 'segment';
+   128	  point1: Vector3;                    // First endpoint in paper space (homogeneous coordinates)
+   129	  point2: Vector3;                    // Second endpoint in paper space (homogeneous coordinates)
+   130	}
+   131	
+   132	/**
+   133	 * Circle primitive
+   134	 * Coordinates in paper coordinate system
+   135	 */
+   136	export interface CirclePrimitive extends DrawingPrimitive {
+   137	  type: 'circle';
+   138	  cx: number;                       // Center X coordinate in paper space
+   139	  cy: number;                       // Center Y coordinate in paper space
+   140	  radius: number;                   // Radius in paper space units
+   141	}
+   142	
+   143	/**
+   144	 * Arc primitive
+   145	 * Coordinates in paper coordinate system
+   146	 */
+   147	export interface ArcPrimitive extends DrawingPrimitive {
+   148	  type: 'arc';
+   149	  cx: number;                       // Center X coordinate in paper space
+   150	  cy: number;                       // Center Y coordinate in paper space
+   151	  radius: number;                   // Radius in paper space units
+   152	  startAngle: number;               // Start angle in radians
+   153	  endAngle: number;                 // End angle in radians
+   154	  largeArc: boolean;                // SVG large-arc-flag
+   155	  sweep: boolean;                   // SVG sweep-flag (clockwise)
+   156	}
+   157	
+   158	/**
+   159	 * Text primitive for labels
+   160	 * Coordinates in paper coordinate system
+   161	 */
+   162	export interface TextPrimitive extends DrawingPrimitive {
+   163	  type: 'text';
+   164	  x: number;                        // X coordinate in paper space
+   165	  y: number;                        // Y coordinate in paper space
+   166	  text: string;                     // Text content
+   167	  fontSize: number;                 // Font size in pixels
+   168	  anchor: 'start' | 'middle' | 'end'; // Text alignment
+   169	}
+   170	
+   171	/**
+   172	 * Union type of all drawing primitives
+   173	 */
+   174	export type Primitive = 
+   175	  | PointPrimitive 
+   176	  | PathPrimitive
+   177	  | LinePrimitive
+   178	  | SegmentPrimitive
+   179	  | CirclePrimitive 
+   180	  | ArcPrimitive 
+## Paper 331,460p
+   331	  hitTest(
+   332	    canvasPos: Vector3,
+   333	    snapRadiusPixels: number,
+   334	    activePlaneId: string | undefined,
+   335	    paperToPlaneTransform: Matrix3 | undefined,
+   336	    world: World,
+   337	    selectionMask?: SelectionMask
+   338	  ): HitResult | null {
+   339	    if (!activePlaneId || !paperToPlaneTransform) {
+   340	      // No active plane or transform - cannot perform hit testing
+   341	      return null;
+   342	    }
+   343	
+   344	    // Transform canvas → paper using inverse viewport
+   345	    const paperPos = this.canvasToPaper(canvasPos);
+   346	    
+   347	    // Transform paper → plane using plane's inverse transform
+   348	    const planePos = paperPos.clone().applyMatrix3(paperToPlaneTransform);
+   349	    
+   350	    // Transform snap radius as a VECTOR (not scalar) to handle non-uniform scaling
+   351	    // The radius vector (snapRadiusPixels, 0, 0) in canvas space transforms through
+   352	    // the same coordinate chain, properly accounting for scaling and rotation
+   353	    const canvasRadiusVector = new Vector3(snapRadiusPixels, 0, 0);
+   354	    const paperRadiusVector = canvasRadiusVector.clone().applyMatrix3(this.canvasToPaperMatrix);
+   355	    const planeRadiusVector = paperRadiusVector.clone().applyMatrix3(paperToPlaneTransform);
+   356	    const planeRadius = planeRadiusVector.length();
+   357	    
+   358	    // Search entity realizations for closest within radius
+   359	    let closestHit: HitResult | null = null;
+   360	    let minDistance = planeRadius;
+   361	    
+   362	    // Get active plane for direct element access
+   363	    const activePlane = activePlaneId ? world.projectionPlanes.get(activePlaneId) : null;
+   364	    
+   365	    // Visual radius for points (used for distance adjustment)
+   366	    // Points rendered as circles with ~5px radius; this creates a "capture zone"
+   367	    const POINT_VISUAL_RADIUS_PIXELS = 5;
+   368	    const pointRadiusInPlaneSpace = POINT_VISUAL_RADIUS_PIXELS / this.viewportTransform.zoom;
+   369	    
+   370	    // Test points (only from active plane)
+   371	    if (activePlane) {
+   372	      for (const point of activePlane.getAllPoints()) {
+   373	        // Filter by selection mask if provided (uses instanceof)
+   374	        const matchesPoint = !selectionMask || selectionMask.matches(point);
+   375	        if (!matchesPoint) {
+   376	          continue;
+   377	        }
+   378	        
+   379	        const realization = activePlane.realizePoint2D(point, world);
+   380	        if (!realization) continue;
+   381	        
+   382	        const distance = planePos.distanceTo(realization.position);
+   383	        
+   384	        // Adjust distance by subtracting point visual radius
+   385	        // This naturally gives points preference when they're nearby
+   386	        const adjustedDistance = distance - pointRadiusInPlaneSpace;
+   387	        
+   388	        if (adjustedDistance < minDistance) {
+   389	          closestHit = {
+   390	            elementId: point.id,
+   391	            elementType: 'point',
+   392	            primitiveId: point.id,
+   393	            distance: distance * this.viewportTransform.zoom, // Store actual distance for consistency
+   394	            snapPoint: realization.position.clone()  // Snap point in plane coordinates
+   395	          };
+   396	          minDistance = adjustedDistance;
+   397	        }
+   398	      }
+   399	    }
+   400	    
+   401	    // Test lines (includes HalfHingeLine2D on active plane)
+   402	    if (activePlane) {
+   403	      for (const line of activePlane.getAllLines()) {
+   404	        // Get actual element type
+   405	        const elementType = this.getElementType(line, world);
+   406	        
+   407	        // Filter by selection mask if provided (uses instanceof)
+   408	        const matchesLine = !selectionMask || selectionMask.matches(line);
+   409	        if (!matchesLine) {
+   410	          continue; // Skip this element - doesn't match selection mask
+   411	        }
+   412	        
+   413	        const realization = activePlane.realizeLine2D(line, world);
+   414	        if (!realization) {
+   415	          continue;
+   416	        }
+   417	        
+   418	        const distance = this.distanceToLineInPlaneSpace(planePos, realization);
+   419	        
+   420	        if (distance < minDistance) {
+   421	          closestHit = {
+   422	            elementId: line.id,
+   423	            elementType: elementType,  // Use actual element type, not hardcoded 'line'
+   424	            primitiveId: line.id,
+   425	            distance: distance * this.viewportTransform.zoom,
+   426	            snapPoint: this.snapToLineInPlaneSpace(planePos, realization)
+   427	          };
+   428	          minDistance = distance;
+   429	        }
+   430	      }
+   431	    }
+   432	    
+   433	    // Test circles (only from active plane)
+   434	    if (activePlane) {
+   435	      for (const circle of activePlane.getAllCircles()) {
+   436	        // Filter by selection mask if provided (uses instanceof)
+   437	        if (selectionMask && !selectionMask.matches(circle)) {
+   438	          continue;
+   439	        }
+   440	        
+   441	        const realization = activePlane.realizeCircle2D(circle, world);
+   442	        if (!realization) continue;
+   443	        
+   444	        const distance = this.distanceToCircleInPlaneSpace(planePos, realization);
+   445	        
+   446	        if (distance < minDistance) {
+   447	          closestHit = {
+   448	            elementId: circle.id,
+   449	            elementType: 'circle',
+   450	            primitiveId: circle.id,
+   451	            distance: distance * this.viewportTransform.zoom,
+   452	            snapPoint: this.snapToCircleInPlaneSpace(planePos, realization)
+   453	          };
+   454	          minDistance = distance;
+   455	        }
+   456	      }
+   457	    }
+   458	    
+   459	    // Note: Segments, guides, and hinge lines are all handled in the line iteration above
+   460	    // (they're all Line2D subclasses tested from the active plane)

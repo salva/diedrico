@@ -1,0 +1,80 @@
+## Wave 019 — Three scene-host lifecycle and renderer platform boundary
+
+**Status**
+
+Added by `cycle-018-wave-plan-extension` correction as the recommended next ordered wave after Wave 018. Requires the Cycle 018 wave-plan-extension review to sign off the ordering before any Wave 019 scout/proposal or implementation. Wave 019 must be re-read after Wave 018 completes; if Wave 018 changes realization/read-context assumptions materially, update this entry through a reviewed plan-edit mini-cycle before implementation.
+
+**Scope**
+
+- `frontend/src/rendering/threeView/ThreeViewRuntime.ts`
+- `frontend/src/rendering/threeView/ThreeSceneHost.ts`
+- `frontend/src/rendering/threeView/ThreeObjectRegistry.ts`
+- 3D scene adapters under `frontend/src/rendering/threeView/` only where their lifecycle/material/disposal contract with the host must be clarified:
+  - `ProjectionPlaneSceneAdapter.ts`
+  - `PlanarElementSceneAdapter.ts`
+  - `ReconstructedElementSceneAdapter.ts`
+  - `GuideSceneAdapter.ts`
+  - `HingeSceneAdapter.ts`
+  - `AxisLabelSceneAdapter.ts` if static use proves it is active or obsolete
+- `frontend/src/components/panels/ThreeView.vue` only as a composition shell for mount/resize/dispose/watch wiring
+- focused three-scene-host/runtime/registry tests and representative live/e2e 3D rendering checks
+
+**Scope guard**
+
+This wave owns the Three.js runtime/platform boundary after the presentation and domain-realization read contracts are stable. It must not reopen domain realization contracts, canvas presentation selectors, app-shell project lifecycle, command/undo, persistence, backend, package/tooling, validation-platform, docs/spec, or broad UI redesign. It must begin with a current inventory of scene-host responsibilities, animation-frame ownership, resize/event ownership, renderer/label-renderer DOM ownership, OrbitControls ownership, registry disposal, and active scene-adapter material/geometry creation.
+
+If Wave 018 leaves full-`World` or `any` realization seams that still force renderer decisions to depend on domain internals, stop and run a reviewed plan edit before starting this wave. If implementation discovers user-facing 3D interaction behavior must change beyond encoding the existing lifecycle/ownership contract, cover it with focused e2e/live evidence or stop for a mini-cycle.
+
+**Baseline/current grounding**
+
+The baseline identified 3D rendering concentration as a major residual rendering risk: `ThreeView.vue` originally combined scene setup, projection-plane rendering, 2D-on-3D rendering, 3D elements, guide geometry, hinge lines, animation, resize, cleanup, domain realization access, and store access (`architecture-audit/baseline/quality-report.md`, Q5; `architecture-audit/baseline/architecture-map.md`, “God-modules”; `architecture-audit/baseline/risk-register.md`, R8). Waves 016 and 017 narrowed the canvas/three presentation read-model boundary first, and Wave 018 is ordered ahead of this entry so the scene platform consumes typed realization/read outputs rather than preserving full-`World` realization seams.
+
+Current source evidence shows the scene work is now a separate platform lifecycle boundary rather than a selector-boundary issue. `ThreeView.vue` is a smaller composition shell, but it still owns Vue watchers, a global resize listener, world-change subscription, runtime creation, and runtime disposal (`frontend/src/components/panels/ThreeView.vue:42`, `frontend/src/components/panels/ThreeView.vue:44`, `frontend/src/components/panels/ThreeView.vue:56`, `frontend/src/components/panels/ThreeView.vue:59`, `frontend/src/components/panels/ThreeView.vue:62`, `frontend/src/components/panels/ThreeView.vue:67`). `ThreeViewRuntime` still hard-wires the host, presentation controller, and five scene adapters in one constructor-less class and replaces registry groups directly (`frontend/src/rendering/threeView/ThreeViewRuntime.ts:10`, `frontend/src/rendering/threeView/ThreeViewRuntime.ts:11`, `frontend/src/rendering/threeView/ThreeViewRuntime.ts:12`, `frontend/src/rendering/threeView/ThreeViewRuntime.ts:13`, `frontend/src/rendering/threeView/ThreeViewRuntime.ts:21`, `frontend/src/rendering/threeView/ThreeViewRuntime.ts:23`). `ThreeSceneHost` owns scene creation, camera defaults, WebGL/CSS2D renderers, label DOM attachment, OrbitControls configuration, lights, resize behavior, animation-frame loop, registry disposal, renderer disposal, and label DOM removal in one class (`frontend/src/rendering/threeView/ThreeSceneHost.ts:10`, `frontend/src/rendering/threeView/ThreeSceneHost.ts:19`, `frontend/src/rendering/threeView/ThreeSceneHost.ts:30`, `frontend/src/rendering/threeView/ThreeSceneHost.ts:32`, `frontend/src/rendering/threeView/ThreeSceneHost.ts:37`, `frontend/src/rendering/threeView/ThreeSceneHost.ts:44`, `frontend/src/rendering/threeView/ThreeSceneHost.ts:52`, `frontend/src/rendering/threeView/ThreeSceneHost.ts:62`, `frontend/src/rendering/threeView/ThreeSceneHost.ts:70`). Static scans for this correction are captured in `architecture-audit/cycle-018-wave-plan-extension/source-three-scene-lifecycle-t3.stdout` and `static-three-scene-lifecycle-t3.stdout`.
+
+**Target outcome**
+
+The 3D rendering platform has explicit lifecycle and ownership seams: Vue shell owns only component mount/unmount and user option wiring; runtime orchestration owns presentation-model refresh to named renderer groups; scene host owns low-level Three.js renderer/camera/controls/animation resources behind testable ports; registry disposal and adapter-created geometry/material ownership are deliberate and covered. The boundary should make it possible to test lifecycle/disposal and group replacement without mounting the full Vue component or leaking domain/presentation responsibilities into the scene host.
+
+**Explicit DELETE list**
+
+- Delete implicit hard-wiring that prevents focused tests from constructing `ThreeViewRuntime` with test doubles for scene host, presentation controller, or adapters, if the reviewed proposal chooses dependency injection or a small composition factory.
+- Delete any duplicate scene-host lifecycle helpers or dead scene adapter exports discovered by static use scans.
+- Delete renderer/label DOM ownership ambiguity: no code path should leave CSS2D label DOM attachment/removal, renderer disposal, or animation-frame cancellation implicit or untested.
+- Delete stale test helpers that mount `ThreeView.vue` only to inspect low-level scene-host behavior; replace with runtime/host/registry tests where possible.
+- Delete compatibility wrappers, transitional overloads, and broad “scene manager” facades that merely rename the existing all-in-one host without reducing lifecycle responsibility seams.
+- Delete active unused adapters such as `AxisLabelSceneAdapter.ts` only if static usage and tests prove they are dead; otherwise include them in the explicit adapter ownership contract.
+
+**Success criteria**
+
+- `ThreeView.vue` remains a thin composition shell and no longer contains low-level Three.js runtime/scene-host lifecycle decisions beyond mount/unmount/option/watch wiring.
+- `ThreeViewRuntime` has a testable orchestration boundary for presentation-model refresh and group replacement; tests can verify group replacement without real WebGL where practical.
+- `ThreeSceneHost` lifecycle responsibilities are explicit and covered: mount, resize, animation-frame start/stop, OrbitControls configuration/disposal, renderer disposal, label renderer DOM attachment/removal, lights/camera defaults, and registry disposal.
+- Scene adapter material/geometry ownership and disposal expectations are documented in code/tests through the registry contract rather than hidden in informal conventions.
+- No domain realization, canvas presentation, command/undo, persistence, backend, app-shell project lifecycle, package/tooling, validation-platform, or docs/spec changes are introduced without a reviewed plan edit.
+- Mandatory validation cadence passes with stable logs: root/frontend lint where defined, focused Vitest for three-scene-host/runtime/registry/adapter modules, full root/frontend Vitest, root/frontend build, root/frontend Playwright e2e because 3D rendering is user-observable, live preview refresh on `0.0.0.0:5173`, HTTP reachability probe, and Playwright/live browser evidence for representative 3D rendering and controls.
+
+**Dependencies**
+
+Depends on Wave 018 because scene-host lifecycle should consume stable typed realization/read-context outputs rather than compensate for domain realization contracts that still require full `World` or `any`. It is ordered before app-shell service concentration, backend/frontend contract stance, validation-gate hardening, placeholder/debug cleanup, and docs/spec drift because the remaining 3D runtime/platform boundary is still central user-visible architecture while those later topics either depend on stable rendering contracts or are more peripheral cleanup.
+
+**Validation requirements**
+
+1. Capture pre-edit static scans for `ThreeView.vue` lifecycle/watch/listener responsibilities, `ThreeViewRuntime` hard-wired dependencies, `ThreeSceneHost` renderer/camera/controls/animation/disposal responsibilities, scene-adapter static usage, and registry disposal behavior.
+2. Run focused Vitest for changed three-scene-host/runtime/registry/adapter modules and any ThreeView shell boundary tests touched by the wave.
+3. Run root and frontend lint where scripts exist.
+4. Run full root and frontend Vitest.
+5. Run root and frontend build.
+6. Run root/frontend Playwright e2e because 3D rendering and controls are user-observable.
+7. Refresh the live preview on `0.0.0.0:5173`, capture HTTP 200, and run focused Playwright/live browser smoke confirming representative 3D view rendering, controls visibility/interaction, and no obvious canvas/overlay regression.
+
+**Risks**
+
+- Over-injecting every Three.js primitive can create an abstract factory maze. Keep ports at lifecycle/test seams, not at every geometry constructor.
+- Moving animation or resize ownership can introduce leaks or double render loops if disposal is not verified with focused tests.
+- Registry disposal changes can accidentally leak geometries/materials or dispose shared objects too early. Treat adapter-created object ownership as an explicit contract.
+- OrbitControls and overlay pointer behavior are user-observable; do not silently change interaction semantics while cleaning lifecycle ownership.
+- App-shell service concentration remains significant, but moving it ahead of the 3D platform boundary would force app-shell code to coordinate a renderer lifecycle that is still too implicit.
+
+**No-backcompat rationale**
+
+The current all-in-one scene-host/runtime wiring is an internal architecture seam, not a compatibility surface. If the reviewed proposal introduces lifecycle ports or runtime composition factories, delete the old implicit wiring and tests that depend on it rather than preserving parallel construction paths. A single clear runtime/platform boundary is more valuable than compatibility wrappers around the old host shape.

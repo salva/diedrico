@@ -44,7 +44,7 @@ interface Element {
 
 defineProps<{
   title: string;
-  elements: Element[];
+  elements: readonly Element[];
   selectedId?: string | null; // Deprecated: use selectionStore instead
 }>();
 

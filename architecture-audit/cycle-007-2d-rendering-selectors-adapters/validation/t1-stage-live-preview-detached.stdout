@@ -7,3 +7,19 @@
 
   ➜  Local:   http://localhost:5173/
   ➜  Network: http://10.0.3.113:5173/
+2:59:23 AM [vite] page reload src/App.vue
+4:02:48 AM [vite] page reload src/components/panels/ThreeView.vue
+4:02:51 AM [vite] page reload src/services/Element2DRenderer3D.ts
+4:04:44 AM [vite] page reload src/rendering/threeView/ProjectionPlaneSceneAdapter.ts
+4:04:51 AM [vite] page reload src/rendering/threeView/HingeSceneAdapter.ts
+4:32:29 AM [vite] page reload playwright-report/index.html
+4:40:58 AM [vite] page reload playwright-report/index.html
+5:37:57 AM [vite] page reload src/App.vue
+5:38:22 AM [vite] page reload src/components/dialogs/StartupDialog.vue
+5:38:22 AM [vite] page reload src/components/toolbars/Toolbar.vue
+5:38:58 AM [vite] page reload src/components/dialogs/StartupDialog.vue
+5:42:25 AM [vite] page reload playwright-report/index.html
+5:42:25 AM [vite] page reload playwright-report/index.html
+5:45:41 AM [vite] page reload src/application/appShell/AppShellPorts.ts
+5:45:41 AM [vite] page reload src/application/appShell/AutoSaveUseCases.ts
+6:02:17 AM [vite] page reload playwright-report/index.html

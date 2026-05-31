@@ -1,0 +1,8 @@
+architecture-audit/cycle-006a-canvas-tool-command-controllers/implementation-log.md
+frontend/src/application/construction/ConstructionUseCases.ts
+frontend/src/application/tools/ToolCommandIntents.ts
+frontend/src/tools/ArgumentCollectorTool.ts
+frontend/src/tools/IntersectionTool.ts
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts
+frontend/tests/unit/application/canvasToolControllers.spec.ts

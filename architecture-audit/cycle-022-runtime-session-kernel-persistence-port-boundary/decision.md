@@ -16,16 +16,12 @@ No source, test, package/tooling, backend, docs/spec source, protected config, e
 
 Decision-stage source-control evidence was captured before writing this artifact:
 
-- `.saivage/stages/cycle-022-decision/decision-scoped-status.stdout`
-- `.saivage/stages/cycle-022-decision/decision-scoped-status.stderr`
-- `.saivage/stages/cycle-022-decision/decision-scoped-diffstat.stdout`
-- `.saivage/stages/cycle-022-decision/decision-scoped-diffstat.stderr`
-- `.saivage/stages/cycle-022-decision/wave-022-entry.stdout`
-- `.saivage/stages/cycle-022-decision/wave-022-entry.stderr`
+- `.saivage/stages/cycle-022-decision/scoped-status-diff.stdout`
+- `.saivage/stages/cycle-022-decision/scoped-status-diff.stderr`
 
 Cycle 022 artifacts inspected:
 
-- `architecture-audit/wave-plan.md` Wave 022 entry, captured for this stage in `.saivage/stages/cycle-022-decision/wave-022-entry.stdout`
+- `architecture-audit/wave-plan.md` Wave 022 entry
 - `scope-check.md`
 - `proposals/proposal-direct.md`
 - `proposals/proposal-restructure.md`
@@ -33,7 +29,7 @@ Cycle 022 artifacts inspected:
 - `corrections-round-01.md`
 - `reviews/round-02-review.md`
 
-The scoped status shows this cycle is operating amid untracked audit/review/stage artifacts, including the current `.saivage/stages/cycle-022-decision/` directory and adjacent Cycle 022 evidence logs/reviews. The scoped diffstat is empty before this decision artifact, confirming no tracked production-source or production-test implementation diff is part of this decision stage. Those adjacent dirty/untracked artifacts must not be reverted, reformatted, incorporated, or treated as implementation scope except where explicitly named by the implementation stage.
+The scoped status shows this cycle is operating amid unrelated dirty frontend source/test files and untracked audit/review/stage artifacts, including the current `.saivage/stages/cycle-022-decision/` directory and adjacent Cycle 022 evidence logs/reviews. The scoped diffstat shows adjacent frontend production/test changes outside this decision scope; they must not be reverted, reformatted, incorporated, or treated as implementation scope except where explicitly authorized by a later implementation task. No decision-stage source implementation was performed.
 
 ## Correction and review history
 

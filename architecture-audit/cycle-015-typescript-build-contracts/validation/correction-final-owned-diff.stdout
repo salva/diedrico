@@ -1,0 +1,260 @@
+diff --git a/frontend/src/commands/factories/DeletionSequenceFactory.ts b/frontend/src/commands/factories/DeletionSequenceFactory.ts
+index 25199ff..d86a5f2 100644
+--- a/frontend/src/commands/factories/DeletionSequenceFactory.ts
++++ b/frontend/src/commands/factories/DeletionSequenceFactory.ts
+@@ -133,7 +133,7 @@ export class DeletionSequenceFactory {
+     }
+     
+     // Step 4: Remove actions from ProcessTree (creates tombstones for undo)
+-    for (const [actionId, _] of actionsToDelete) {
++    for (const [actionId] of actionsToDelete) {
+       cmd.addAndExecute(new RemoveActionFromProcessTreeOp(actionId));
+     }
+   }
+diff --git a/frontend/src/components/panels/ActionGroupItem.vue b/frontend/src/components/panels/ActionGroupItem.vue
+index 291c351..48d6774 100644
+--- a/frontend/src/components/panels/ActionGroupItem.vue
++++ b/frontend/src/components/panels/ActionGroupItem.vue
+@@ -26,7 +26,7 @@
+       </div>
+       <div v-if="isExpanded" class="action-group-children">
+         <ActionItem
+-          v-for="action in node.children"
++          v-for="action in actionChildren"
+           :key="action.id"
+           :action="action"
+         />
+@@ -43,16 +43,14 @@
+ 
+ <script setup lang="ts">
+ import { ref, computed } from 'vue';
+-import type { Subprocess } from '../../domain/processTree/Subprocess';
+-import type { ActionGroup } from '../../domain/processTree/ActionGroup';
+-import type { ConstructiveAction } from '../../domain/processTree/Action';
++import type { Subprocess, ActionGroup, ActionNode } from '../../domain/processTree/ProcessTree';
+ import ActionItem from './ActionItem.vue';
+ 
+ // Allow recursive component
+ import ActionGroupItem from './ActionGroupItem.vue';
+ 
+ interface Props {
+-  node: Subprocess | ActionGroup | ConstructiveAction;
++  node: Subprocess | ActionGroup | ActionNode;
+ }
+ 
+ const props = defineProps<Props>();
+@@ -69,6 +67,13 @@ const childCount = computed(() => {
+   return 0;
+ });
+ 
++const actionChildren = computed<ActionNode[]>(() => {
++  if (props.node.type !== 'actionGroup') {
++    return [];
++  }
++  return props.node.children.filter((action): action is ActionNode => action !== null);
++});
++
+ /**
+  * Toggle expanded/collapsed state
+  */
+diff --git a/frontend/src/domain/processTree/ProcessTree.ts b/frontend/src/domain/processTree/ProcessTree.ts
+index 2f8f519..89e9944 100644
+--- a/frontend/src/domain/processTree/ProcessTree.ts
++++ b/frontend/src/domain/processTree/ProcessTree.ts
+@@ -332,7 +332,7 @@ export class ProcessTree {
+    * Depth-first traversal of actions
+    * Automatically skips null tombstones (deleted actions)
+    */
+-  private traverseActions(node: ProcessNode, callback: (action: Action) => void): void {
++  private traverseActions(node: ProcessNode, callback: (action: ActionNode) => void): void {
+     if (node.type === 'action') {
+       callback(node);
+     } else if (node.type === 'actionGroup') {
+@@ -349,8 +349,8 @@ export class ProcessTree {
+   /**
+    * Find action by ID
+    */
+-  findAction(actionId: string): Action | undefined {
+-    let found: Action | undefined;
++  findAction(actionId: string): ActionNode | undefined {
++    let found: ActionNode | undefined;
+     this.traverseActions(this.root, (action) => {
+       if (action.id === actionId) {
+         found = action;
+@@ -363,8 +363,8 @@ export class ProcessTree {
+    * Get actions that produce a specific element (by elementId)
+    * Phase 92: Use action.elementId instead of action.outputs
+    */
+-  getActionsProducingElement(elementId: string): Action[] {
+-    const actions: Action[] = [];
++  getActionsProducingElement(elementId: string): ActionNode[] {
++    const actions: ActionNode[] = [];
+     this.traverseActions(this.root, (action) => {
+       if (action.elementId === elementId) {
+         actions.push(action);
+diff --git a/frontend/src/domain/world/Circle.ts b/frontend/src/domain/world/Circle.ts
+index 40bc17a..ce51b21 100644
+--- a/frontend/src/domain/world/Circle.ts
++++ b/frontend/src/domain/world/Circle.ts
+@@ -12,6 +12,7 @@
+  * 
+  */
+ 
++import type { World } from './World';
+ import { Vector3 } from 'three';
+ import { Element2DRealization2D } from './Element2DRealization2D';
+ import { Element2D } from './Element2D';
+@@ -85,7 +86,7 @@ export abstract class Circle2D extends Element2D {
+    * Calculate 2D realization - compute center and radius
+    * @param world World instance to access element realizations
+    */
+-  abstract realize2D(world: import('./World').World): Circle2DRealization2D | null;
++  abstract realize2D(world: World): Circle2DRealization2D | null;
+ }
+ 
+ /**
+@@ -132,7 +133,7 @@ export class Circle2DByCenterAndPoint extends Circle2D {
+    * 
+    * Phase 76: Always returns realization (never null). Uses feasible flag for geometric failures.
+    */
+-  realize2D(world: import('./World').World): Circle2DRealization2D {
++  realize2D(world: World): Circle2DRealization2D {
+     // Get both point realizations from world
+     const plane = world.getProjectionPlaneById(this.planeId);
+     const centerPoint = plane.getPoint(this.centerPointId);
+@@ -228,7 +229,7 @@ export class Circle2DByThreePoints extends Circle2D {
+    * 
+    * Phase 76: Always returns realization (never null). Uses feasible flag for geometric failures.
+    */
+-  realize2D(world: import('./World').World): Circle2DRealization2D {
++  realize2D(world: World): Circle2DRealization2D {
+     // Get all three point realizations from world
+     const plane = world.getProjectionPlaneById(this.planeId);
+     const point1 = plane.getPoint(this.point1Id);
+diff --git a/frontend/src/domain/world/Element2D.ts b/frontend/src/domain/world/Element2D.ts
+index 90ae74f..67a1c94 100644
+--- a/frontend/src/domain/world/Element2D.ts
++++ b/frontend/src/domain/world/Element2D.ts
+@@ -1,4 +1,4 @@
+-import { World } from './World';
++import type { World } from './World';
+ import { Point2DRealization2D } from './Point';
+ import { Line2DRealization2D } from './Line';
+ import { Circle2DRealization2D } from './Circle';
+diff --git a/frontend/src/domain/world/Guide.ts b/frontend/src/domain/world/Guide.ts
+index b0890df..c018daf 100644
+--- a/frontend/src/domain/world/Guide.ts
++++ b/frontend/src/domain/world/Guide.ts
+@@ -16,6 +16,7 @@
+  * 
+  */
+ 
++import type { World } from './World';
+ import { Vector3 } from 'three';
+ import { Line2DPerpendicularToLine, Line2DRealization2D, Line2D, Line2DType } from './Line';
+ import { intersectLineLine } from '@/domain/calculations/Intersections';
+@@ -96,7 +97,7 @@ export class Guide2D extends Line2DPerpendicularToLine {
+    * they are simply lines. Type distinction happens at domain level (Guide2D), not
+    * realization level. See data-model.md §Line2D Constructions.
+    */
+-  realize2D(world: import('./World').World): Line2DRealization2D {
++  realize2D(world: World): Line2DRealization2D {
+     // Get reference line realization from world
+     const plane = world.getProjectionPlaneById(this.planeId)!;
+     const refLine = plane.getLine(this.referenceLineId);
+@@ -226,7 +227,7 @@ export class SiblingGuide2D extends Line2D {
+    * @param world World instance for plane and hinge line lookup
+    * @returns Object containing the primary guide, primary HHL, and sibling's own HHL
+    */
+-  private getPrimaryGuideContext(world: import('./World').World): {
++  private getPrimaryGuideContext(world: World): {
+     primaryGuide: Guide2D;
+     primaryHHL: HalfHingeLine2D;
+     myHHL: HalfHingeLine2D;
+@@ -269,7 +270,7 @@ export class SiblingGuide2D extends Line2D {
+    * @param world World instance to access primary guide and HalfHingeLine realizations
+    * @returns Line2DRealization2D with perpendicular line to sibling HalfHingeLine
+    */
+-  realize2D(world: import('./World').World): Line2DRealization2D {
++  realize2D(world: World): Line2DRealization2D {
+     // Get primary guide via: myHHL → HingeLine → otherPlane → primaryGuide
+     const { primaryGuide, primaryHHL, myHHL } = this.getPrimaryGuideContext(world);
+     
+diff --git a/frontend/src/domain/world/HingeLine.ts b/frontend/src/domain/world/HingeLine.ts
+index ddeb414..623e0e7 100644
+--- a/frontend/src/domain/world/HingeLine.ts
++++ b/frontend/src/domain/world/HingeLine.ts
+@@ -13,6 +13,7 @@
+  * 
+  */
+ 
++import type { World } from './World';
+ import { Vector3 } from 'three';
+ import { Line2D, Line2DRealization2D } from './Line';
+ import { Line3D } from './Line3D';
+@@ -97,7 +98,7 @@ export class HalfHingeLine2D extends Line2D {
+    * @returns Object with siblingPlaneId and siblingHalfHingeLineId, or undefined if not a HHL
+    */
+   static getSiblingInfo(
+-    world: import('./World').World,
++    world: World,
+     halfHingeLineId: string,
+     currentPlaneId: string
+   ): { siblingPlaneId: string; siblingHalfHingeLineId: string } | undefined {
+@@ -141,7 +142,7 @@ export class HalfHingeLine2D extends Line2D {
+    * 
+    * @param world World instance for accessing HingeLine and plane realizations
+    */
+-  realize2D(world: import('./World').World): HalfHingeLineRealization2D {
++  realize2D(world: World): HalfHingeLineRealization2D {
+     const hingeLine = world.getHingeLineById(this.hingeLineId)!;
+ 
+     // Plane1: Return canonical coordinates directly
+@@ -235,7 +236,7 @@ export class HingeLine extends Line3D {
+    * 
+    * Returns Line3DRealization3D with point and direction in 3D domain coordinates (Vector4).
+    */
+-  realize3D(world: import('./World').World): Line3DRealization3D {
++  realize3D(world: World): Line3DRealization3D {
+     const projPlane1 = world.getProjectionPlaneById(this.plane1Id);
+     const projPlane2 = world.getProjectionPlaneById(this.plane2Id);
+ 
+diff --git a/frontend/src/domain/world/Line.ts b/frontend/src/domain/world/Line.ts
+index 8119cc5..e7fb8cc 100644
+--- a/frontend/src/domain/world/Line.ts
++++ b/frontend/src/domain/world/Line.ts
+@@ -15,6 +15,7 @@
+  * 
+  */
+ 
++import type { World } from './World';
+ import { Vector3 } from 'three';
+ import { Element2DRealization2D } from './Element2DRealization2D';
+ import { Element2D } from './Element2D';
+@@ -157,7 +158,7 @@ export abstract class Line2D extends Element2D {
+    * - Missing dependencies: throw Error with [INTERNAL ERROR]
+    * - Geometric failures: return realization with feasible=false
+    */
+-  abstract realize2D(world: import('./World').World): Line2DRealization2D;
++  abstract realize2D(world: World): Line2DRealization2D;
+   
+   /**
+    * Check if this line is bounded (finite segment) or unbounded (infinite line)
+@@ -215,7 +216,7 @@ export class Line2DByTwoPoints extends Line2D {
+    *   point1: finite point on line (z=1)
+    *   point2: direction vector (z=0)
+    */
+-  realize2D(world: import('./World').World): Line2DRealization2D {
++  realize2D(world: World): Line2DRealization2D {
+     // Get both points from world
+     const plane = world.getProjectionPlaneById(this.planeId);
+     const point1 = plane.getPoint(this.point1Id);
+@@ -304,7 +305,7 @@ export class Line2DParallel extends Line2D {
+    * - Missing dependencies: asserts handle with explicit errors
+    * - Geometric failures: return realization with feasible=false
+    */
+-  realize2D(world: import('./World').World): Line2DRealization2D {
++  realize2D(world: World): Line2DRealization2D {
+     // Get reference line realization from world
+     const plane = world.getProjectionPlaneById(this.planeId);
+     const refLine = plane.getLine(this.referenceLineId);

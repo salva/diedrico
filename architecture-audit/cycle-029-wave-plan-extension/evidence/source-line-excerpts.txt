@@ -1,0 +1,825 @@
+===== frontend/src/application/threePresentation/ThreeWorldReadPort.ts =====
+     1	import type { ThreeEntityPresentationData } from './ThreePresentationReadModel';
+     2	import type { World } from '@/domain/world/World';
+     3	import { createThreeGuideReadPort, type ThreeGuideIntersectionReadModel, type ThreeGuideReadModel, type ThreeGuideReadPort } from './ThreeGuideReadPort';
+     4	import { createThreeHingeReadPort, type ThreeHingeReadModel, type ThreeHingeReadPort } from './ThreeHingeReadPort';
+     5	import { createThreePlanarElementReadPort, type ThreePlanarCircleReadModel, type ThreePlanarElementReadPort, type ThreePlanarLineReadModel, type ThreePlanarPlaneReadModel, type ThreePlanarPointReadModel } from './ThreePlanarElementReadPort';
+     6	import { createThreeProjectionPlaneReadPort, type ThreeProjectionPlaneGridSource, type ThreeProjectionPlaneReadModel, type ThreeProjectionPlaneReadPort } from './ThreeProjectionPlaneReadPort';
+     7	import { createThreeReconstructedElementReadPort, type ThreeReconstructedElementReadPort, type ThreeReconstructedReadModel } from './ThreeReconstructedElementReadPort';
+     8	
+     9	export type { ThreeEntityPresentationData };
+    10	
+    11	export type {
+    12	  ThreeGuideIntersectionReadModel,
+    13	  ThreeGuideReadModel,
+    14	  ThreeGuideReadPort,
+    15	  ThreeHingeReadModel,
+    16	  ThreeHingeReadPort,
+    17	  ThreePlanarCircleReadModel,
+    18	  ThreePlanarElementReadPort,
+    19	  ThreePlanarLineReadModel,
+    20	  ThreePlanarPlaneReadModel,
+    21	  ThreePlanarPointReadModel,
+    22	  ThreeProjectionPlaneGridSource,
+    23	  ThreeProjectionPlaneReadModel,
+    24	  ThreeProjectionPlaneReadPort,
+    25	  ThreeReconstructedElementReadPort,
+    26	  ThreeReconstructedReadModel,
+    27	};
+    28	
+    29	export interface ThreePresentationReadPorts {
+    30	  readonly projectionPlanes: ThreeProjectionPlaneReadPort;
+    31	  readonly planarElements: ThreePlanarElementReadPort;
+    32	  readonly reconstructedElements: ThreeReconstructedElementReadPort;
+    33	  readonly guides: ThreeGuideReadPort;
+    34	  readonly hinges: ThreeHingeReadPort;
+    35	}
+    36	
+    37	export function createThreePresentationReadPorts(world: World): ThreePresentationReadPorts {
+    38	  return {
+    39	    projectionPlanes: createThreeProjectionPlaneReadPort(world),
+    40	    planarElements: createThreePlanarElementReadPort(world),
+    41	    reconstructedElements: createThreeReconstructedElementReadPort(world),
+    42	    guides: createThreeGuideReadPort(world),
+    43	    hinges: createThreeHingeReadPort(world),
+    44	  };
+    45	}
+===== frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts =====
+     1	import { RenderLayer, type LinePrimitive, type PointPrimitive, type SegmentPrimitive, type CirclePrimitive, type PathPrimitive, type Primitive, type ResolvedStyle } from '@/domain/presentation/Paper';
+     2	import type { CanvasElementKind, CanvasPlaneItem, CanvasPresentationModel, CanvasPresentationState, CanvasQueryItem, CanvasRenderItem, CanvasViewportModel } from './CanvasPresentationModel';
+     3	import { selectCanvasGrid } from './CanvasGridSelector';
+     4	import { circleStyle, guideStyle, hingeStyle, lineStyle, segmentStyle } from './CanvasStylePolicy';
+     5	import type { CanvasPlaneTransformMap, CanvasWorldReadPort } from './CanvasWorldReadPort';
+     6	
+     7	export class CanvasPresentationSelector {
+     8	  select(readPort: CanvasWorldReadPort, viewport: CanvasViewportModel, state: CanvasPresentationState): CanvasPresentationModel {
+     9	    const renderItems: CanvasRenderItem[] = [];
+    10	    const queryItems: CanvasQueryItem[] = [];
+    11	    const planeTransforms: CanvasPlaneTransformMap = new Map();
+    12	
+    13	    for (const transform of readPort.getCanvasPlaneTransforms()) {
+    14	      planeTransforms.set(transform.planeId, transform);
+    15	    }
+    16	
+    17	    for (const planeItems of readPort.getPlaneCanvasItems()) {
+    18	      const transform = planeItems.transform.planeToPaper;
+    19	      for (const item of planeItems.items) {
+    20	        appendPlaneItem(item, transform, state, renderItems, queryItems);
+    21	      }
+    22	    }
+    23	
+    24	    if (state.showProjectedElements) renderItems.push(...readPort.getProjected3DCanvasItems(planeTransforms));
+    25	    renderItems.sort((a, b) => a.primitive.layer === b.primitive.layer ? a.style.zIndex - b.style.zIndex : a.primitive.layer - b.primitive.layer);
+    26	    const activeTransform = state.activePlaneId ? planeTransforms.get(state.activePlaneId)?.planeToPaper : undefined;
+    27	    const grid = state.gridVisible === false ? { lines: [], labels: { top: [], bottom: [], left: [], right: [] } } : selectCanvasGrid(activeTransform, viewport);
+    28	    return { renderItems, queryItems, gridLines: grid.lines, gridLabels: grid.labels, planeTransforms, activePlaneId: state.activePlaneId };
+    29	  }
+    30	}
+    31	
+    32	function appendPlaneItem(item: CanvasPlaneItem, transform: { elements: number[]; clone(): { elements: number[] } } | any, state: CanvasPresentationState, renderItems: CanvasRenderItem[], queryItems: CanvasQueryItem[]): void {
+    33	  switch (item.kind) {
+    34	    case 'point': {
+    35	      const style = pointDtoStyle(item.pointRole, item.planeId, stateFor(item.elementId, state));
+    36	      const position = item.position.clone().applyMatrix3(transform);
+    37	      const primitive: PointPrimitive = { type: 'point', id: `point-${item.elementId}`, sourceEntityId: item.elementId, planeId: item.planeId, layer: style.layer, visible: true, style: style.style, position, radius: style.radius };
+    38	      renderItems.push(canvasRenderItem(primitive, 'point'));
+    39	      queryItems.push({ id: primitive.id, kind: 'point', elementId: item.elementId, elementType: 'point', planeId: item.planeId, selectable: true, planeGeometry: { type: 'point', position: item.position.clone(), visualRadiusPixels: style.radius } });
+    40	      break;
+    41	    }
+    42	    case 'finite-segment': {
+    43	      const style = segmentStyle({ id: item.elementId, planeId: item.planeId } as never, stateFor(item.elementId, state));
+    44	      const primitive: SegmentPrimitive = { type: 'segment', id: `segment-${item.elementId}`, sourceEntityId: item.elementId, planeId: item.planeId, layer: RenderLayer.Elements, visible: true, style, point1: item.point1!.clone().applyMatrix3(transform), point2: item.point2!.clone().applyMatrix3(transform) };
+    45	      renderItems.push(canvasRenderItem(primitive, item.kind));
+    46	      queryItems.push({ id: primitive.id, kind: item.kind, elementId: item.elementId, elementType: 'segment', planeId: item.planeId, selectable: true, planeGeometry: { type: 'segment', point1: item.point1!.clone(), point2: item.point2!.clone() } });
+    47	      break;
+    48	    }
+    49	    case 'guide':
+    50	    case 'sibling-guide':
+    51	    case 'half-hinge-line':
+    52	    case 'infinite-line': {
+    53	      const style = item.kind === 'guide' || item.kind === 'sibling-guide'
+    54	        ? guideStyle({ id: item.elementId, planeId: item.planeId } as never, stateFor(item.elementId, state))
+    55	        : item.kind === 'half-hinge-line'
+    56	          ? hingeStyle({ id: item.elementId, planeId: item.planeId } as never, stateFor(item.elementId, state))
+    57	          : lineStyle({ id: item.elementId, planeId: item.planeId } as never, stateFor(item.elementId, state));
+    58	      const prefix = item.kind === 'guide' || item.kind === 'sibling-guide' ? 'guide' : item.kind === 'half-hinge-line' ? 'halfhingeline' : 'line';
+    59	      const primitive: LinePrimitive = { type: 'line', id: `${prefix}-${item.elementId}`, sourceEntityId: item.elementId, planeId: item.kind === 'guide' || item.kind === 'sibling-guide' ? undefined : item.planeId, layer: item.kind === 'guide' || item.kind === 'sibling-guide' ? RenderLayer.Guides : item.kind === 'half-hinge-line' ? RenderLayer.HingeLines : RenderLayer.Elements, visible: true, style, point: item.point.clone().applyMatrix3(transform), direction: item.direction.clone().applyMatrix3(transform) };
+    60	      renderItems.push(canvasRenderItem(primitive, item.kind));
+    61	      queryItems.push({ id: primitive.id, kind: item.kind, elementId: item.elementId, elementType: item.kind === 'half-hinge-line' ? 'half-hinge-line' : item.kind === 'guide' || item.kind === 'sibling-guide' ? 'guide' : 'line', planeId: item.planeId, selectable: true, planeGeometry: { type: 'line', point: item.point.clone(), direction: item.direction.clone() } });
+    62	
+    63	      const arcGeometry = item.arcGeometry;
+    64	      if (arcGeometry?.startPoint && arcGeometry?.endPoint && arcGeometry.controlPoints?.length && arcGeometry.style) {
+    65	        const pathStyle = { stroke: arcGeometry.style.color, strokeWidth: arcGeometry.style.width, strokeStyle: arcGeometry.style.dashArray ? 'dashed' as const : 'solid' as const, fill: 'none', opacity: arcGeometry.style.opacity, zIndex: 2 };
+    66	        const path: PathPrimitive = { type: 'path', id: `arc-${item.elementId}`, sourceEntityId: item.elementId, planeId: undefined, layer: RenderLayer.Guides, visible: true, style: pathStyle, points: [[arcGeometry.startPoint.x, arcGeometry.startPoint.y], [arcGeometry.controlPoints[0].x, arcGeometry.controlPoints[0].y], [arcGeometry.endPoint.x, arcGeometry.endPoint.y]], closed: false };
+    67	        renderItems.push(canvasRenderItem(path, 'arc'));
+    68	      }
+    69	      break;
+    70	    }
+    71	    case 'circle': {
+    72	      const center = item.center.clone().applyMatrix3(transform);
+    73	      const radius = item.radiusVector.clone().applyMatrix3(transform).length();
+    74	      const primitive: CirclePrimitive = { type: 'circle', id: `circle-${item.elementId}`, sourceEntityId: item.elementId, planeId: item.planeId, layer: RenderLayer.Elements, visible: true, style: circleStyle({ id: item.elementId, planeId: item.planeId } as never, stateFor(item.elementId, state)), cx: center.x, cy: center.y, radius };
+    75	      renderItems.push(canvasRenderItem(primitive, 'circle'));
+    76	      queryItems.push({ id: primitive.id, kind: 'circle', elementId: item.elementId, elementType: 'circle', planeId: item.planeId, selectable: true, planeGeometry: { type: 'circle', center: item.center.clone(), radius: item.radius } });
+    77	      break;
+    78	    }
+    79	  }
+    80	}
+    81	
+    82	function stateFor(id: string, state: CanvasPresentationState) { return { selected: state.selectedIds?.has(id), hovered: state.hoveredIds?.has(id), snapTarget: state.activeSnapTargetId === id, cascade: state.cascadeHighlightIds?.has(id), activePlaneId: state.activePlaneId }; }
+    83	
+    84	function pointDtoStyle(pointRole: 'free' | 'dependent', planeId: string, ctx: ReturnType<typeof stateFor>): { style: ResolvedStyle; layer: RenderLayer; radius: number } {
+    85	  let fill: string; let stroke: string; let strokeWidth: number;
+    86	  if (ctx.cascade) { fill = '#FF9800'; stroke = '#F57C00'; strokeWidth = 2.5; }
+    87	  else if (ctx.snapTarget) { fill = '#FFA500'; stroke = '#FF8C00'; strokeWidth = 2; }
+    88	  else if (ctx.selected) { fill = pointRole === 'free' ? '#4A90E2' : '#E94E77'; stroke = '#0066CC'; strokeWidth = 2; }
+    89	  else if (ctx.hovered) { fill = pointRole === 'free' ? '#6BB6FF' : '#FF6B9D'; stroke = '#4A90E2'; strokeWidth = 1.5; }
+    90	  else { fill = pointRole === 'free' ? '#4A90E2' : '#E94E77'; stroke = '#333333'; strokeWidth = 1.5; }
+    91	  const zBoost = ctx.activePlaneId && planeId === ctx.activePlaneId ? 100 : 0;
+    92	  const opacity = ctx.activePlaneId && planeId !== ctx.activePlaneId ? 0.5 : 1;
+    93	  return { layer: ctx.snapTarget ? RenderLayer.Highlights : RenderLayer.Elements, radius: pointRole === 'free' ? 5 : 4, style: { stroke, strokeWidth, strokeStyle: 'solid', fill, opacity, zIndex: 10 + zBoost } };
+    94	}
+    95	
+    96	export function canvasRenderItem<TPrimitive extends Primitive>(primitive: TPrimitive, kind: CanvasElementKind): CanvasRenderItem {
+    97	  return { id: primitive.id, kind, sourceEntityId: primitive.sourceEntityId, planeId: primitive.planeId, primitive, visible: primitive.visible, style: primitive.style };
+    98	}
+===== frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts =====
+     1	import { Guide2D, SiblingGuide2D } from '@/domain/world/Guide';
+     2	import { HalfHingeLine2D } from '@/domain/world/HingeLine';
+     3	import { Segment2DByPoints } from '@/domain/world/Segment';
+     4	import type { ProjectionElementRealizationContext } from '@/domain/world/projectionPlane/ProjectionPlaneContext';
+     5	import type { World } from '@/domain/world/World';
+     6	import type { CanvasPlaneCanvasItems, CanvasPlaneItem, CanvasPlaneLineItem, CanvasPlaneTransformModel, CanvasRenderItem } from './CanvasPresentationModel';
+     7	import { resolveVisibility } from '@/domain/world/styleService';
+     8	import { Projected3DCanvasSelector } from './Projected3DCanvasSelector';
+     9	import { createProjected3DCanvasReadPort } from './Projected3DCanvasReadPort';
+    10	import { createWorldRealizationContext } from '@/application/presentation/WorldRealizationContext';
+    11	
+    12	export interface CanvasWorldReadPort {
+    13	  getCanvasPlaneTransforms(): CanvasPlaneTransformModel[];
+    14	  getPlaneCanvasItems(): CanvasPlaneCanvasItems[];
+    15	  getProjected3DCanvasItems(planeTransforms: Map<string, CanvasPlaneTransformModel>): CanvasRenderItem[];
+    16	}
+    17	
+    18	function getCanvasPlaneTransforms(world: World): CanvasPlaneTransformModel[] {
+    19	  return world.getAllProjectionPlanes().flatMap((plane) => {
+    20	    const realization = world.getProjectionPlane2DRealization(plane.id);
+    21	    if (!realization) return [];
+    22	    return [{ planeId: plane.id, planeToPaper: realization.planeToPaper2D, paperToPlane: realization.paperToPlane2D }];
+    23	  });
+    24	}
+    25	
+    26	function getPlaneCanvasItems(world: World, context: ProjectionElementRealizationContext): CanvasPlaneCanvasItems[] {
+    27	  return world.getAllProjectionPlanes().flatMap((plane) => {
+    28	    const transform = getCanvasPlaneTransforms(world).find(item => item.planeId === plane.id);
+    29	    if (!transform) return [];
+    30	    const items: CanvasPlaneItem[] = [];
+    31	
+    32	    for (const point of plane.getAllPoints()) {
+    33	      if (!resolveVisibility(point, world)) continue;
+    34	      const realization = plane.realizePoint2D(point, context);
+    35	      if (!realization) continue;
+    36	      items.push({
+    37	        kind: 'point',
+    38	        elementId: point.id,
+    39	        planeId: point.planeId,
+    40	        position: realization.position.clone(),
+    41	        pointRole: point.constructor.name === 'FreePoint2D' ? 'free' : 'dependent',
+    42	      });
+    43	    }
+    44	
+    45	    for (const line of plane.getAllLines()) {
+    46	      if (!resolveVisibility(line, world)) continue;
+    47	      const realization = plane.realizeLine2D(line, context);
+    48	      if (!realization) continue;
+    49	      const kind: CanvasPlaneLineItem['kind'] = line instanceof HalfHingeLine2D
+    50	        ? 'half-hinge-line'
+    51	        : line instanceof Segment2DByPoints
+    52	          ? 'finite-segment'
+    53	          : line instanceof SiblingGuide2D
+    54	            ? 'sibling-guide'
+    55	            : line instanceof Guide2D
+    56	              ? 'guide'
+    57	              : 'infinite-line';
+    58	      items.push({
+    59	        kind,
+    60	        elementId: line.id,
+    61	        planeId: line.planeId,
+    62	        point: realization.point1.clone(),
+    63	        direction: realization.getDirection(),
+    64	        point1: kind === 'finite-segment' ? realization.point1.clone() : undefined,
+    65	        point2: kind === 'finite-segment' ? realization.point2.clone() : undefined,
+    66	        arcGeometry: optionalArcGeometry(line),
+    67	      });
+    68	    }
+    69	
+    70	    for (const circle of plane.getAllCircles()) {
+    71	      if (!resolveVisibility(circle, world)) continue;
+    72	      const realization = plane.realizeCircle2D(circle, context);
+    73	      if (!realization) continue;
+    74	      items.push({
+    75	        kind: 'circle',
+    76	        elementId: circle.id,
+    77	        planeId: circle.planeId,
+    78	        center: realization.center.clone(),
+    79	        radius: realization.getRadius(),
+    80	        radiusVector: realization.radiusVector.clone(),
+    81	      });
+    82	    }
+    83	
+    84	    return [{ planeId: plane.id, transform, items }];
+    85	  });
+    86	}
+    87	
+    88	export function createCanvasWorldReadPort(world: World): CanvasWorldReadPort {
+    89	  const realizationContext = createWorldRealizationContext(world);
+    90	  const projected3DSelector = new Projected3DCanvasSelector();
+    91	  return {
+    92	    getCanvasPlaneTransforms: () => getCanvasPlaneTransforms(world),
+    93	    getPlaneCanvasItems: () => getPlaneCanvasItems(world, realizationContext),
+    94	    getProjected3DCanvasItems: planeTransforms => projected3DSelector.selectWorldProjection(createProjected3DCanvasReadPort(world, realizationContext), planeTransforms),
+    95	  };
+    96	}
+    97	
+    98	export type CanvasPlaneTransformMap = Map<string, CanvasPlaneTransformModel>;
+    99	
+   100	function optionalArcGeometry(line: object): CanvasPlaneLineItem['arcGeometry'] | undefined {
+   101	  return 'arcGeometry' in line ? line.arcGeometry as CanvasPlaneLineItem['arcGeometry'] | undefined : undefined;
+   102	}
+===== frontend/src/application/canvasPresentation/Projected3DCanvasReadPort.ts =====
+     1	import type { Element3DRealizationContext } from '@/domain/world/projectionPlane/ProjectionPlaneContext';
+     2	import type { World } from '@/domain/world/World';
+     3	import type { Projected3DCanvasReadPort } from './Projected3DCanvasSelector';
+     4	
+     5	export function createProjected3DCanvasReadPort(world: World, realizationContext: Element3DRealizationContext): Projected3DCanvasReadPort {
+     6	  return {
+     7	    getProjectionPlanes: () => world.getAllProjectionPlanes().map(plane => ({ id: plane.id })),
+     8	    getProjectionPlane3DRealization: planeId => world.getProjectionPlane3DRealization(planeId),
+     9	    get3DPoints: () => world.getAll3DPoints().map(point => ({ id: point.id, realization: point.realize3D(realizationContext) })),
+    10	    get3DLines: () => world.getAll3DLines().map(line => ({ id: line.id, realization: line.realize3D(realizationContext) })),
+    11	    get3DSegments: () => world.getAll3DSegments().map(segment => ({ id: segment.id, realization: segment.realize3D(realizationContext) })),
+    12	  };
+    13	}
+===== frontend/src/application/appShell/RuntimeSession.ts =====
+     1	import { CommandStack } from '@/commands/CommandStack';
+     2	import { World } from '@/domain/world/World';
+     3	import { initializeWorld } from '@/application/world/initializeWorld';
+     4	import { RuntimeCommandProducer } from '@/application/commandProduction/RuntimeCommandProducer';
+     5	import { SelectionDeletionCommandService } from '@/application/selectionDeletion/SelectionDeletionCommandService';
+     6	import type { SelectionDeletionCommandPort } from '@/application/selectionDeletion/SelectionDeletionPorts';
+     7	import { CanvasToolController } from '@/application/tools/CanvasToolController';
+     8	import { createToolInteractionReadPort } from '@/application/tools/ToolInteractionReadPort';
+     9	import type { CanvasToolControllerToolStore } from '@/application/tools/CanvasToolController';
+    10	import { ProcessHistoryController } from '@/application/processHistory/ProcessHistoryController';
+    11	import type { ActivePlanePort, CommandHistoryPort, OpenedProjectSession, ProjectSessionPersistencePort, SelectionReadPort } from './AppShellPorts';
+    12	import type { ProjectSessionKernel } from './ProjectSessionKernel';
+    13	import type { RuntimeSessionPersistenceRestoreHandle, RuntimeSessionPersistenceSnapshotHandle } from './ProjectSessionPersistenceTargets';
+    14	import { CanvasPresentationController } from '@/application/canvasPresentation/CanvasPresentationController';
+    15	import { createCanvasWorldReadPort } from '@/application/canvasPresentation/CanvasWorldReadPort';
+    16	import { createThreePresentationReadPorts } from '@/application/threePresentation/ThreeWorldReadPort';
+    17	import { screenTo3D } from '@/utils/coordinateTransform';
+    18	import { FreePoint2D } from '@/domain/world/Point';
+    19	import type { CanvasViewPort, ProcessTreeReadPort, ElementsPanelPort, ThreePresentationPort, ActivePlaneSelectorPort } from './RuntimeViewPorts';
+    20	import { buildPropertiesDialogViewModel } from './readModels/PropertiesDialogReadModel';
+    21	import { buildProcessTreeReadModel, countProcessNodeViewModels, getRelatedActionIds } from './readModels/ProcessTreeReadModel';
+    22	import { buildElementsPanelReadModel } from './readModels/ElementsPanelReadModel';
+    23	import { toggleElementVisibility } from './readModels/ElementVisibilityIntent';
+    24	
+    25	export class RuntimeSession implements ProjectSessionKernel {
+    26	  private readonly world = new World();
+    27	  private readonly commandStack = new CommandStack();
+    28	  private readonly commandProducer = new RuntimeCommandProducer(this.world, this.commandStack);
+    29	
+    30	
+    31	  canvasViewPort(): CanvasViewPort {
+    32	    const canvasReadPort = createCanvasWorldReadPort(this.world);
+    33	    const toolReadPort = createToolInteractionReadPort(this.world);
+    34	    const canvasPresentationController = new CanvasPresentationController();
+    35	    return {
+    36	      subscribeToChanges: (listener) => this.world.subscribeToChanges(listener),
+    37	      unsubscribeFromChanges: (listener) => this.world.unsubscribeFromChanges(listener),
+    38	      getActivePlaneId: () => this.world.getActivePlaneId(),
+    39	      getPlaneTransformsForInput: () => new Map(canvasReadPort.getCanvasPlaneTransforms().map(transform => [transform.planeId, transform.paperToPlane])),
+    40	      buildPresentationModel: (viewport, options) => canvasPresentationController.buildModel(
+    41	        canvasReadPort,
+    42	        viewport,
+    43	        {
+    44	          hoveredIds: options.hoveredElementId ? new Set([options.hoveredElementId]) : undefined,
+    45	          selectedIds: options.selectedIds.length > 0 ? new Set(options.selectedIds) : undefined,
+    46	          cascadeHighlightIds: options.cascadeHighlightIds.length > 0 ? new Set(options.cascadeHighlightIds) : undefined,
+    47	          activePlaneId: options.activePlaneId,
+    48	          showProjectedElements: options.showProjectedElements,
+    49	          gridVisible: options.gridVisible,
+    50	        }
+    51	      ),
+    52	      getElementLabel: (elementId, elementType, planeId) => this.getElementLabel(elementId, elementType, planeId),
+    53	      getMovableFreePointMoveSession: ({ planeId, pointId, commandSink }) => {
+    54	        const plane = this.world.getProjectionPlaneById(planeId);
+    55	        const point = plane?.getPoint(pointId);
+    56	        if (!(point instanceof FreePoint2D) || point.locked) return null;
+    57	        return commandSink.startFreePointMove({ planeId, pointId, label: point.label ?? pointId });
+    58	      },
+    59	      invokeToolClick: (tool, context) => tool.handleClick({ ...context, readPort: toolReadPort }),
+    60	      screenTo3D: ({ clientX, clientY, svg, viewportMatrix, activePlaneId }) => screenTo3D(clientX, clientY, svg, viewportMatrix, activePlaneId, this.world),
+    61	      getPropertiesDialogViewModel: (elementId) => this.getPropertiesDialogViewModel(elementId),
+    62	    };
+    63	  }
+    64	
+    65	  processTreeReadPort(): ProcessTreeReadPort {
+    66	    return {
+    67	      subscribeToChanges: (listener) => this.world.subscribeToChanges(listener),
+    68	      unsubscribeFromChanges: (listener) => this.world.unsubscribeFromChanges(listener),
+    69	      subscribeToTree: (listener) => this.world.getProcessTree().subscribe(listener),
+    70	      getTree: () => buildProcessTreeReadModel({ world: this.world }),
+    71	      getRelatedActionIds: (selectedIds) => getRelatedActionIds(selectedIds, { world: this.world }),
+    72	      countNodes: (node) => countProcessNodeViewModels(node),
+    73	    };
+    74	  }
+    75	
+    76	  elementsPanelPort(): ElementsPanelPort {
+    77	    return {
+    78	      subscribeToChanges: (listener) => this.world.subscribeToChanges(listener),
+    79	      unsubscribeFromChanges: (listener) => this.world.unsubscribeFromChanges(listener),
+    80	      getReadModel: () => buildElementsPanelReadModel({ world: this.world }),
+    81	      toggleVisibility: (elementId) => toggleElementVisibility(elementId, {
+    82	        findElement: (id) => this.findVisibleElement(id),
+    83	        markDirty: () => this.world.markDirty(),
+    84	      }),
+    85	    };
+    86	  }
+    87	
+    88	  threePresentationPort(): ThreePresentationPort {
+    89	    const readPorts = createThreePresentationReadPorts(this.world);
+    90	    return {
+    91	      subscribeToChanges: (listener) => this.world.subscribeToChanges(listener),
+    92	      unsubscribeFromChanges: (listener) => this.world.unsubscribeFromChanges(listener),
+    93	      getReadPorts: () => readPorts,
+    94	    };
+    95	  }
+    96	
+    97	  activePlaneSelectorPort(): ActivePlaneSelectorPort {
+    98	    return {
+    99	      subscribeToChanges: (listener) => this.world.subscribeToChanges(listener),
+   100	      unsubscribeFromChanges: (listener) => this.world.unsubscribeFromChanges(listener),
+   101	      getPlaneOptions: () => this.world.getAllProjectionPlanes().filter(p => typeof p.id === 'string' && p.id.length > 0).map(p => ({ id: p.id, label: p.name || p.id })),
+   102	      getActivePlaneId: () => this.world.getActivePlaneId(),
+   103	      getActivePlaneLabel: () => {
+   104	        const planeId = this.world.getActivePlaneId();
+   105	        return planeId ? (this.world.getProjectionPlaneById(planeId)?.name || planeId) : undefined;
+   106	      },
+   107	      setActivePlaneId: (id) => this.world.setActivePlaneId(id),
+   108	    };
+   109	  }
+   110	
+   111	  canvasCommandProducerPort(toolStore: CanvasToolControllerToolStore): CanvasToolController {
+   112	    return new CanvasToolController({
+   113	      world: this.world,
+   114	      commands: this.commandProducer,
+   115	      toolStore,
+   116	    });
+   117	  }
+   118	
+   119	  processHistoryCommandPort(): ProcessHistoryController {
+   120	    return new ProcessHistoryController({
+   121	      world: this.world,
+   122	      commands: this.commandProducer,
+   123	    });
+   124	  }
+   125	
+   126	  activePlanePort(): ActivePlanePort {
+   127	    return {
+   128	      subscribeToChanges: (listener) => this.world.subscribeToChanges(listener),
+   129	      unsubscribeFromChanges: (listener) => this.world.unsubscribeFromChanges(listener),
+   130	      getActivePlaneId: () => this.world.getActivePlaneId(),
+   131	      setActivePlaneId: (id) => this.world.setActivePlaneId(id),
+   132	      getProjectionPlaneSummaries: () => this.world.getAllProjectionPlanes().map((plane) => ({ id: plane.id, name: plane.name })),
+   133	      getProjectionPlaneName: (id) => this.world.getProjectionPlaneById(id)?.name,
+   134	    };
+   135	  }
+   136	
+   137	  selectionReadPort(): SelectionReadPort {
+   138	    return {
+   139	      getSelectableIdsInPlane: (planeId) => {
+   140	        const plane = this.world.getProjectionPlaneById(planeId);
+   141	        if (!plane) return [];
+   142	        return [
+   143	          ...plane.getAllPoints().map((point) => point.id),
+   144	          ...plane.getAllLines().map((line) => line.id),
+   145	          ...plane.getAllCircles().map((circle) => circle.id),
+   146	        ];
+   147	      },
+   148	      getCascadePreviewIds: (selectedIds) => {
+   149	        const deletionOrder = this.world.getDependencyService().getElementsInDeletionOrder([...selectedIds]);
+   150	        return deletionOrder.filter((id) => !selectedIds.includes(id));
+   151	      },
+   152	    };
+   153	  }
+   154	
+   155	  commandHistoryPort(): CommandHistoryPort {
+   156	    return {
+   157	      canUndo: () => this.commandStack.canUndo(),
+   158	      undo: () => this.commandStack.undo(),
+   159	      canRedo: () => this.commandStack.canRedo(),
+   160	      redo: () => this.commandStack.redo(),
+   161	      subscribe: (listener) => this.commandStack.subscribe(listener),
+   162	    };
+   163	  }
+   164	
+   165	  selectionDeletionCommandPort(): SelectionDeletionCommandPort {
+   166	    return new SelectionDeletionCommandService(this.world, this.commandStack);
+   167	  }
+   168	
+   169	  initializeDefaultWorldIfNeeded(): void {
+   170	    initializeWorld(this.world, this.commandStack);
+   171	  }
+   172	
+   173	  resetToEmptyInitializedWorld(): void {
+   174	    this.world.clear();
+   175	    this.commandStack.clear();
+   176	    this.initializeDefaultWorldIfNeeded();
+   177	  }
+   178	
+   179	  clear(): void {
+   180	    this.world.clear();
+   181	    this.commandStack.clear();
+   182	  }
+   183	
+   184	  getVersion(): number {
+   185	    return this.world.getVersion();
+   186	  }
+   187	
+   188	  snapshot(projectName: string, persistence: ProjectSessionPersistencePort): object {
+   189	    return persistence.snapshotCurrentSession(this.snapshotHandle(), projectName);
+   190	  }
+   191	
+   192	  validateProjectData(data: unknown, persistence: ProjectSessionPersistencePort): OpenedProjectSession {
+   193	    return persistence.validateProjectData(data);
+   194	  }
+   195	
+   196	  restoreValidatedProject(openedSession: OpenedProjectSession, persistence: ProjectSessionPersistencePort): void {
+   197	    const candidateWorld = new World();
+   198	    const candidateCommandStack = new CommandStack();
+   199	    persistence.restoreSession(openedSession.payload, { world: candidateWorld, commandStack: candidateCommandStack });
+   200	    if (candidateWorld.getAllProjectionPlanes().length === 0) initializeWorld(candidateWorld, candidateCommandStack);
+   201	    candidateWorld.markDirty();
+   202	
+   203	    this.world.clear();
+   204	    this.commandStack.clear();
+   205	    persistence.restoreSession(openedSession.payload, this.restoreTarget());
+   206	    if (this.world.getAllProjectionPlanes().length === 0) this.initializeDefaultWorldIfNeeded();
+   207	    this.world.markDirty();
+   208	  }
+   209	
+   210	
+   211	  private getElementLabel(elementId: string, elementType: string, planeId?: string): string {
+   212	    const planes = planeId ? [this.world.getProjectionPlaneById(planeId)].filter(Boolean) : this.world.getAllProjectionPlanes();
+   213	    for (const plane of planes) {
+   214	      let element: { label?: string } | undefined;
+   215	      switch (elementType) {
+   216	        case 'point': element = plane?.getPoint(elementId); break;
+   217	        case 'line':
+   218	        case 'half-hinge-line':
+   219	        case 'segment':
+   220	        case 'guide': element = plane?.getLine(elementId); break;
+   221	        case 'circle': element = plane?.getCircle(elementId); break;
+   222	      }
+   223	      if (element) return element.label || elementId;
+   224	    }
+   225	    return elementId;
+   226	  }
+   227	
+   228	  private getPropertiesDialogViewModel(elementId: string | null) {
+   229	    return buildPropertiesDialogViewModel(elementId, {
+   230	      findElement: (id) => this.findVisibleElement(id),
+   231	      world: this.world,
+   232	    });
+   233	  }
+   234	
+   235	  private findVisibleElement(elementId: string) {
+   236	    return this.world.getElement2D(elementId)
+   237	      || this.world.getElement3DById(elementId)
+   238	      || this.world.getProjectionPlaneById(elementId);
+   239	  }
+   240	
+===== frontend/src/application/appShell/ProjectSessionPersistenceAdapter.ts =====
+     1	import { ProjectService, type ProjectData } from '@/services/ProjectService';
+     2	import type { OpenedProjectSession, PersistedProjectSession, ProjectSessionPersistencePort } from './AppShellPorts';
+     3	import type { RuntimeSessionPersistenceRestoreHandle, RuntimeSessionPersistenceSnapshotHandle } from './ProjectSessionPersistenceTargets';
+     4	
+     5	export class ProjectSessionPersistenceAdapter implements ProjectSessionPersistencePort {
+     6	  snapshotCurrentSession(session: RuntimeSessionPersistenceSnapshotHandle, projectName: string): object {
+     7	    return ProjectService.serializeCommands(session.commandStack, session.nextElementId, projectName);
+     8	  }
+     9	
+    10	  validateProjectData(data: unknown): OpenedProjectSession {
+    11	    ProjectService.validateProjectData(data);
+    12	    const projectData = data as ProjectData;
+    13	    return {
+    14	      projectName: projectData.name,
+    15	      payload: projectData as unknown as PersistedProjectSession,
+    16	    };
+    17	  }
+    18	
+    19	  restoreSession(data: PersistedProjectSession, target: RuntimeSessionPersistenceRestoreHandle): void {
+    20	    ProjectService.deserializeCommands(data as unknown as ProjectData, target.world, target.commandStack);
+    21	  }
+    22	}
+===== frontend/src/services/ProjectService.ts =====
+     1	/**
+     2	 * ProjectService - current-schema command-stream persistence orchestration.
+     3	 */
+     4	
+     5	import { World } from '@/domain/world/World';
+     6	import type { CommandStack } from '@/commands/CommandStack';
+     7	import { Command, type CommandSnapshot } from '@/commands/Command';
+     8	import type { OperationDescriptor } from '@/commands/operations/IOperation';
+     9	import { deserializeOperation } from '@/commands/operations/OperationRegistry';
+    10	
+    11	export interface ProjectData {
+    12	  id: string;
+    13	  name: string;
+    14	  schemaVersion: string;
+    15	  created: string;
+    16	  modified: string;
+    17	  nextElementId: number;
+    18	  commands: SerializedCommand[];
+    19	}
+    20	
+    21	type SerializedCommand = CommandSnapshot;
+    22	type SerializedOperation = OperationDescriptor;
+    23	
+    24	export class ProjectService {
+    25	  private static readonly SCHEMA_VERSION = '6.0.0';
+    26	
+    27	  static serializeCommands(commandStack: CommandStack, nextElementId: number, projectName: string): ProjectData {
+    28	    if (!Number.isInteger(nextElementId) || nextElementId < 1) {
+    29	      throw new Error(`Invalid next element ID: ${nextElementId}`);
+    30	    }
+    31	    const now = new Date().toISOString();
+    32	    const commands = commandStack.getCommittedCommands().map(command => command.toSnapshot());
+    33	
+    34	    return {
+    35	      id: this.generateProjectId(),
+    36	      name: projectName,
+    37	      schemaVersion: this.SCHEMA_VERSION,
+    38	      created: now,
+    39	      modified: now,
+    40	      nextElementId,
+    41	      commands
+    42	    };
+    43	  }
+    44	
+    45	  static deserializeCommands(data: ProjectData, world: World, commandStack: CommandStack): void {
+    46	    this.validateProjectData(data);
+    47	    commandStack.clear();
+    48	    world.restoreNextId(data.nextElementId);
+    49	
+    50	    const restoredCommands: Command[] = [];
+    51	    for (const serializedCommand of data.commands) {
+    52	      const operations = serializedCommand.operations.map((descriptor: SerializedOperation) => deserializeOperation(descriptor));
+    53	      for (const operation of operations) {
+    54	        const result = operation.apply(world);
+    55	        if (!result.success) {
+    56	          throw new Error(`Failed to replay operation ${operation.type}: ${result.error}`);
+    57	        }
+    58	      }
+    59	      restoredCommands.push(Command.restore({
+    60	        id: serializedCommand.id,
+    61	        timestamp: serializedCommand.timestamp,
+    62	        description: serializedCommand.description,
+    63	        operations
+    64	      }, world));
+    65	    }
+    66	
+    67	    commandStack.restoreCommittedCommands(restoredCommands);
+    68	
+    69	    if (!world.getActivePlaneId()) {
+    70	      const planes = world.getAllProjectionPlanes();
+    71	      const ph = planes.find(p => p.id === 'projPlaneH' || p.name === 'P_H');
+    72	      if (ph) {
+    73	        world.setActivePlaneId(ph.id);
+    74	      } else if (planes.length > 0) {
+    75	        world.setActivePlaneId(planes[0].id);
+    76	      }
+    77	    }
+    78	  }
+    79	
+    80	  static validateProjectData(data: unknown): asserts data is ProjectData {
+    81	    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    82	      throw new Error('Invalid project file - not a valid JSON object');
+    83	    }
+    84	    const record = data as Partial<ProjectData>;
+    85	    if (record.schemaVersion !== this.SCHEMA_VERSION) {
+    86	      throw new Error(`Unsupported project schema version: ${String(record.schemaVersion)}`);
+    87	    }
+    88	    for (const field of ['id', 'name', 'created', 'modified'] as const) {
+    89	      if (typeof record[field] !== 'string' || record[field]!.length === 0) {
+    90	        throw new Error(`Invalid project file - missing required field: ${field}`);
+    91	      }
+    92	    }
+    93	    if (typeof record.nextElementId !== 'number' || !Number.isInteger(record.nextElementId) || record.nextElementId < 1) {
+    94	      throw new Error('Invalid project file - nextElementId must be a positive integer');
+    95	    }
+    96	    if (!Array.isArray(record.commands)) {
+    97	      throw new Error('Invalid project file - commands must be an array');
+    98	    }
+    99	    for (const command of record.commands) {
+   100	      this.validateSerializedCommand(command);
+   101	    }
+   102	  }
+   103	
+   104	  private static validateSerializedCommand(command: unknown): asserts command is SerializedCommand {
+   105	    if (!command || typeof command !== 'object' || Array.isArray(command)) {
+   106	      throw new Error('Invalid project file - command must be an object');
+   107	    }
+   108	    const record = command as Partial<SerializedCommand>;
+   109	    if (typeof record.id !== 'string' || record.id.length === 0) {
+   110	      throw new Error('Invalid project file - command missing id');
+   111	    }
+   112	    if (typeof record.timestamp !== 'string' || Number.isNaN(Date.parse(record.timestamp))) {
+   113	      throw new Error(`Invalid project file - command ${record.id} has invalid timestamp`);
+   114	    }
+   115	    if (typeof record.description !== 'string' || record.description.length === 0) {
+   116	      throw new Error(`Invalid project file - command ${record.id} missing description`);
+   117	    }
+   118	    if (record.status !== 'committed') {
+   119	      throw new Error(`Invalid project file - command ${record.id} must be committed`);
+   120	    }
+   121	    if (!Array.isArray(record.operations) || record.operations.length === 0) {
+   122	      throw new Error(`Invalid project file - command ${record.id} must contain operations`);
+   123	    }
+   124	    for (const operation of record.operations) {
+   125	      if (!operation || typeof operation !== 'object' || Array.isArray(operation) || typeof (operation as { opType?: unknown }).opType !== 'string') {
+   126	        throw new Error(`Invalid project file - command ${record.id} has invalid operation descriptor`);
+   127	      }
+   128	    }
+   129	  }
+   130	
+   131	  private static generateProjectId(): string {
+   132	    return `proj_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+   133	  }
+   134	}
+===== frontend/tests/unit/application/appShell/Cycle027Architecture.test.ts =====
+     1	import { describe, expect, it } from 'vitest';
+     2	import runtimeSession from '@/application/appShell/RuntimeSession.ts?raw';
+     3	import canvasWorldReadPort from '@/application/canvasPresentation/CanvasWorldReadPort.ts?raw';
+     4	import canvasPresentationSelector from '@/application/canvasPresentation/CanvasPresentationSelector.ts?raw';
+     5	import projected3DCanvasSelector from '@/application/canvasPresentation/Projected3DCanvasSelector.ts?raw';
+     6	import projected3DCanvasReadPort from '@/application/canvasPresentation/Projected3DCanvasReadPort.ts?raw';
+     7	import canvasVisibilityPolicy from '@/application/canvasPresentation/CanvasVisibilityPolicy.ts?raw';
+     8	import elementsPanelReadModel from '@/application/appShell/readModels/ElementsPanelReadModel.ts?raw';
+     9	import elementVisibilityIntent from '@/application/appShell/readModels/ElementVisibilityIntent.ts?raw';
+    10	
+    11	describe('Cycle 027 runtime read-model ownership boundaries', () => {
+    12	  it('removes targeted inline RuntimeSession read-model helper bodies', () => {
+    13	    expect(runtimeSession).not.toMatch(/private describeElementType|private describeCoordinates|private describeDependencies|private styleView/);
+    14	    expect(runtimeSession).not.toMatch(/private createProcessNodeViewModel|private isActionInfeasible|private countProcessNodeViewModels/);
+    15	    expect(runtimeSession).not.toMatch(/private formatElementForPanel|private getElementProperties/);
+    16	    expect(runtimeSession).toMatch(/buildPropertiesDialogViewModel/);
+    17	    expect(runtimeSession).toMatch(/buildProcessTreeReadModel/);
+    18	    expect(runtimeSession).toMatch(/buildElementsPanelReadModel/);
+    19	    expect(runtimeSession).toMatch(/toggleElementVisibility/);
+    20	  });
+    21	
+    22	  it('keeps visibility intent separate from elements read model DTO construction', () => {
+    23	    expect(elementsPanelReadModel).not.toMatch(/toggleElementVisibility|markDirty\(|visualStyle\.visible =/);
+    24	    expect(elementVisibilityIntent).toMatch(/toggleElementVisibility/);
+    25	    expect(elementVisibilityIntent).toMatch(/markDirty\(\)/);
+    26	  });
+    27	
+    28	  it('keeps canvas visibility process-tree seam deleted and Cycle 028 raw collection seams out of the public canvas port', () => {
+    29	    expect(canvasWorldReadPort).not.toMatch(/getProcessTree\(\):|getProcessTree: \(\)/);
+    30	    expect(canvasVisibilityPolicy).not.toMatch(/Pick<World, 'getProcessTree'>|as World/);
+    31	    expect(canvasVisibilityPolicy).toMatch(/CanvasElementVisibilityPort/);
+    32	    expect(canvasWorldReadPort).toMatch(/getCanvasPlaneTransforms\(\): CanvasPlaneTransformModel\[\]/);
+    33	    expect(canvasWorldReadPort).toMatch(/getPlaneCanvasItems\(\): CanvasPlaneCanvasItems\[\]/);
+    34	    expect(canvasWorldReadPort).toMatch(/getProjected3DCanvasItems\(planeTransforms: Map<string, CanvasPlaneTransformModel>\): CanvasRenderItem\[\]/);
+    35	    expect(canvasWorldReadPort).not.toMatch(/getAllProjectionPlanes\(\): ProjectionPlane\[\]|getAll3DPoints\(\): Point3D\[\]|getAll3DLines\(\): Line3D\[\]|getAll3DSegments\(\): Segment3D\[\]/);
+    36	    expect(canvasWorldReadPort).not.toMatch(/realizePoint2D\([^)]*\):|realizeLine2D\([^)]*\):|realizeCircle2D\([^)]*\):|realizePoint3D\([^)]*\):|realizeLine3D\([^)]*\):|realizeSegment3D\([^)]*\):/);
+    37	    expect(canvasPresentationSelector).not.toMatch(/getAllProjectionPlanes\(|plane\.getAllPoints\(|plane\.getAllLines\(|plane\.getAllCircles\(|instanceof/);
+    38	    expect(projected3DCanvasSelector).not.toMatch(/getAllProjectionPlanes\(|getAll3DPoints\(|getAll3DLines\(|getAll3DSegments\(/);
+    39	    expect(canvasWorldReadPort).not.toMatch(/world\.getAll3DPoints\(|world\.getAll3DLines\(|world\.getAll3DSegments\(/);
+    40	    expect(projected3DCanvasReadPort).toMatch(/createProjected3DCanvasReadPort/);
+    41	    expect(projected3DCanvasReadPort).toMatch(/world\.getAll3DPoints\(\)|world\.getAll3DLines\(\)|world\.getAll3DSegments\(\)/);
+    42	  });
+    43	});
+===== frontend/tests/e2e/current-ui-contract.spec.ts =====
+     1	import { expect, test } from '@playwright/test';
+     2	
+     3	const canvas = (page: import('@playwright/test').Page) => page.getByTestId('svg-canvas');
+     4	
+     5	async function openApp(page: import('@playwright/test').Page) {
+     6	  await page.goto('/');
+     7	  await expect(canvas(page)).toBeVisible();
+     8	  await expect(page.getByTestId('status-bar')).toBeVisible();
+     9	}
+    10	
+    11	test.describe('Current Diedrico UI contract', () => {
+    12	  test('renders the current app shell, canvas, toolbar, status bar, and plane selector', async ({ page }) => {
+    13	    await openApp(page);
+    14	
+    15	    await expect(page.getByTestId('tool-select')).toBeVisible();
+    16	    await expect(page.getByTestId('tool-point')).toBeVisible();
+    17	    await expect(page.getByTestId('tool-line')).toBeVisible();
+    18	    await expect(page.getByTestId('tool-circle')).toBeVisible();
+    19	    await expect(page.getByTestId('toolbar-undo')).toBeVisible();
+    20	    await expect(page.getByTestId('toolbar-redo')).toBeVisible();
+    21	    await expect(page.getByTestId('active-plane-status')).toContainText(/P_[HV]/);
+    22	    await expect(page.getByTestId('active-tool-status')).toContainText('Select');
+    23	    await expect(page.getByTestId('coordinates-3d')).toContainText('---');
+    24	  });
+    25	
+    26	  test('creates a free point through stable tool and canvas test IDs', async ({ page }) => {
+    27	    await openApp(page);
+    28	
+    29	    const svg = canvas(page);
+    30	    const initialPointCount = await svg.locator('circle').count();
+    31	
+    32	    await page.getByTestId('tool-point').click();
+    33	    await expect(page.getByTestId('active-tool-status')).toContainText('Point');
+    34	
+    35	    await svg.click({ position: { x: 80, y: 80 } });
+    36	    await expect.poll(async () => svg.locator('circle').count()).toBeGreaterThan(initialPointCount);
+    37	    await expect(page.getByTestId('toolbar-undo')).toBeEnabled();
+    38	  });
+    39	
+    40	  test('plane selector exposes current projection planes and switches active plane', async ({ page }) => {
+    41	    await openApp(page);
+    42	
+    43	    await page.getByTestId('plane-selector-button').click();
+    44	    await expect(page.locator('[role="listbox"]')).toBeVisible();
+    45	    await expect(page.locator('[data-testid^="plane-selector-"]').first()).toBeVisible();
+    46	
+    47	    const pvOption = page.getByTestId('plane-selector-P_V');
+    48	    if (await pvOption.count()) {
+    49	      await pvOption.click();
+    50	      await expect(page.getByTestId('active-plane-status')).toContainText('P_V');
+    51	    } else {
+    52	      await page.locator('[data-testid^="plane-selector-"]').first().click();
+    53	      await expect(page.locator('[role="listbox"]')).toHaveCount(0);
+    54	    }
+    55	  });
+    56	
+    57	  test('selection masks allow free-point creation and point-only line argument collection', async ({ page }) => {
+    58	    await openApp(page);
+    59	
+    60	    const svg = canvas(page);
+    61	    const constructionPoints = svg.locator('circle').filter({ hasNot: svg.locator('.snap-indicator') });
+    62	    const initialPointCount = await constructionPoints.count();
+    63	    const initialLineCount = await svg.locator('line').count();
+    64	
+    65	    await page.getByTestId('tool-point').click();
+    66	    await expect(page.getByTestId('active-tool-status')).toContainText('Point');
+    67	    await svg.click({ position: { x: 40, y: 60 } });
+    68	    await svg.click({ position: { x: 80, y: 90 } });
+    69	    await expect.poll(async () => constructionPoints.count()).toBeGreaterThanOrEqual(initialPointCount + 2);
+    70	
+    71	    await page.getByTestId('tool-line').click();
+    72	    await expect(page.getByTestId('active-tool-status')).toContainText('Line');
+    73	    await svg.click({ position: { x: 40, y: 60 } });
+    74	    await svg.click({ position: { x: 80, y: 90 } });
+    75	    await expect.poll(async () => svg.locator('line').count()).toBeGreaterThan(initialLineCount);
+    76	  });
+    77	
+    78	  test('updates 3D coordinate status through the current canvas mouse contract', async ({ page }) => {
+    79	    await openApp(page);
+    80	
+    81	    const svg = canvas(page);
+    82	    const box = await svg.boundingBox();
+    83	    if (!box) throw new Error('SVG canvas bounding box unavailable');
+    84	
+    85	    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    86	    await expect.poll(async () => page.getByTestId('coordinates-3d').textContent()).toMatch(/---|\(-?\d+\.\d{2}, -?\d+\.\d{2}, -?\d+\.\d{2}\)/);
+    87	  });
+    88	
+    89	  test('3D overlay owns pointer interaction and does not pass drag gestures through to the 2D canvas', async ({ page }) => {
+    90	    await openApp(page);
+    91	
+    92	    const overlay = page.getByTestId('three-view-overlay');
+    93	    await expect(overlay).toBeVisible();
+    94	
+    95	    const overlayBox = await overlay.boundingBox();
+    96	    if (!overlayBox) throw new Error('3D overlay bounding box unavailable');
+    97	
+    98	    const testPoint = {
+    99	      x: overlayBox.x + overlayBox.width / 2,
+   100	      y: overlayBox.y + overlayBox.height / 2,
+   101	    };
+   102	
+   103	    await expect.poll(async () => overlay.evaluate(el => getComputedStyle(el).pointerEvents)).toBe('auto');
+   104	    await expect.poll(async () => page.evaluate(({ x, y }) => {
+   105	      const el = document.elementFromPoint(x, y);
+   106	      return Boolean(el?.closest('[data-testid="three-view-overlay"]'));
+   107	    }, testPoint)).toBe(true);
+   108	
+   109	    const svg = canvas(page);
+   110	    const viewBoxBefore = await svg.getAttribute('viewBox');
+   111	    await page.mouse.move(testPoint.x, testPoint.y);
+   112	    await page.mouse.down();
+   113	    await page.mouse.move(testPoint.x - 80, testPoint.y - 40, { steps: 6 });
+   114	    await page.mouse.up();
+   115	
+   116	    await expect.poll(async () => svg.getAttribute('viewBox')).toBe(viewBoxBefore);
+   117	  });
+   118	
+   119	});

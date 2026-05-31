@@ -1,0 +1,317 @@
+
+> diedrico@0.1.0 test
+> npm run test --workspace=frontend; frontend_status=$?; npm run test --workspace=backend; backend_status=$?; exit $((frontend_status || backend_status))
+
+
+> diedrico-frontend@0.1.0 test
+> vitest run
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/stores/selectionStore.spec.ts  (42 tests) 65ms
+stdout | tests/unit/services/googleDriveService.spec.ts > GoogleDriveService > initialize > should initialize Google API client
+[GoogleDrive] Initializing with config: {
+  clientId: 'test-client-id...',
+  hasApiKey: true,
+  scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email'
+}
+[GoogleDrive] Initialization successful
+
+stdout | tests/unit/services/googleDriveService.spec.ts > GoogleDriveService > initialize > should only initialize once
+[GoogleDrive] Initializing with config: {
+  clientId: 'test-client-id...',
+  hasApiKey: true,
+  scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email'
+}
+[GoogleDrive] Initialization successful
+
+stdout | tests/unit/services/googleDriveService.spec.ts > GoogleDriveService > initialize > should throw error if initialization fails
+[GoogleDrive] Initializing with config: {
+  clientId: 'test-client-id...',
+  hasApiKey: true,
+  scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email'
+}
+
+stdout | tests/unit/services/googleDriveService.spec.ts > GoogleDriveService > isSignedIn > should return true when user is signed in
+[GoogleDrive] Initializing with config: {
+  clientId: 'test-client-id...',
+  hasApiKey: true,
+  scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email'
+}
+[GoogleDrive] Initialization successful
+
+stdout | tests/unit/services/googleDriveService.spec.ts > GoogleDriveService > isSignedIn > should return false when user is not signed in
+[GoogleDrive] Initializing with config: {
+  clientId: 'test-client-id...',
+  hasApiKey: true,
+  scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email'
+}
+[GoogleDrive] Initialization successful
+
+stdout | tests/unit/services/googleDriveService.spec.ts > GoogleDriveService > signIn > should initialize and sign in user
+[GoogleDrive] Initializing with config: {
+  clientId: 'test-client-id...',
+  hasApiKey: true,
+  scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email'
+}
+[GoogleDrive] Initialization successful
+[GoogleDrive] Sign-in successful
+
+stdout | tests/unit/services/googleDriveService.spec.ts > GoogleDriveService > signIn > should throw user-friendly error when popup is closed
+[GoogleDrive] Initializing with config: {
+  clientId: 'test-client-id...',
+  hasApiKey: true,
+  scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email'
+}
+[GoogleDrive] Initialization successful
+
+stdout | tests/unit/services/googleDriveService.spec.ts > GoogleDriveService > signIn > should throw user-friendly error when access is denied
+[GoogleDrive] Initializing with config: {
+  clientId: 'test-client-id...',
+  hasApiKey: true,
+  scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email'
+}
+[GoogleDrive] Initialization successful
+
+stdout | tests/unit/services/googleDriveService.spec.ts > GoogleDriveService > signOut > should sign out user
+[GoogleDrive] Initializing with config: {
+  clientId: 'test-client-id...',
+  hasApiKey: true,
+  scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email'
+}
+[GoogleDrive] Initialization successful
+
+stdout | tests/unit/services/googleDriveService.spec.ts > GoogleDriveService > listFiles > should list .diedrico files from diedrico folder
+[GoogleDrive] Initializing with config: {
+  clientId: 'test-client-id...',
+  hasApiKey: true,
+  scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email'
+}
+[GoogleDrive] Initialization successful
+
+stdout | tests/unit/services/googleDriveService.spec.ts > GoogleDriveService > listFiles > should return empty array when no files exist
+[GoogleDrive] Initializing with config: {
+  clientId: 'test-client-id...',
+  hasApiKey: true,
+  scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email'
+}
+[GoogleDrive] Initialization successful
+
+stdout | tests/unit/services/googleDriveService.spec.ts > GoogleDriveService > listFiles > should throw error when not signed in
+[GoogleDrive] Initializing with config: {
+  clientId: 'test-client-id...',
+  hasApiKey: true,
+  scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email'
+}
+[GoogleDrive] Initialization successful
+
+stdout | tests/unit/services/googleDriveService.spec.ts > GoogleDriveService > createFile > should create .diedrico file with data
+[GoogleDrive] Initializing with config: {
+  clientId: 'test-client-id...',
+  hasApiKey: true,
+  scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email'
+}
+[GoogleDrive] Initialization successful
+
+stdout | tests/unit/services/googleDriveService.spec.ts > GoogleDriveService > createFile > should not duplicate .diedrico extension
+[GoogleDrive] Initializing with config: {
+  clientId: 'test-client-id...',
+  hasApiKey: true,
+  scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email'
+}
+[GoogleDrive] Initialization successful
+
+stdout | tests/unit/services/googleDriveService.spec.ts > GoogleDriveService > createFile > should throw error when not signed in
+[GoogleDrive] Initializing with config: {
+  clientId: 'test-client-id...',
+  hasApiKey: true,
+  scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email'
+}
+[GoogleDrive] Initialization successful
+
+stdout | tests/unit/services/googleDriveService.spec.ts > GoogleDriveService > loadFile > should load and parse .diedrico file
+[GoogleDrive] Initializing with config: {
+  clientId: 'test-client-id...',
+  hasApiKey: true,
+  scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email'
+}
+[GoogleDrive] Initialization successful
+
+stdout | tests/unit/services/googleDriveService.spec.ts > GoogleDriveService > loadFile > should throw error for file not found
+[GoogleDrive] Initializing with config: {
+  clientId: 'test-client-id...',
+  hasApiKey: true,
+  scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email'
+}
+[GoogleDrive] Initialization successful
+
+stdout | tests/unit/services/googleDriveService.spec.ts > GoogleDriveService > loadFile > should throw error when not signed in
+[GoogleDrive] Initializing with config: {
+  clientId: 'test-client-id...',
+  hasApiKey: true,
+  scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email'
+}
+[GoogleDrive] Initialization successful
+
+stdout | tests/unit/services/googleDriveService.spec.ts > GoogleDriveService > updateFile > should update .diedrico file with new data
+[GoogleDrive] Initializing with config: {
+  clientId: 'test-client-id...',
+  hasApiKey: true,
+  scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email'
+}
+[GoogleDrive] Initialization successful
+
+stdout | tests/unit/services/googleDriveService.spec.ts > GoogleDriveService > updateFile > should handle quota exceeded error
+[GoogleDrive] Initializing with config: {
+  clientId: 'test-client-id...',
+  hasApiKey: true,
+  scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email'
+}
+[GoogleDrive] Initialization successful
+
+stdout | tests/unit/services/googleDriveService.spec.ts > GoogleDriveService > updateFile > should throw error when not signed in
+[GoogleDrive] Initializing with config: {
+  clientId: 'test-client-id...',
+  hasApiKey: true,
+  scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email'
+}
+[GoogleDrive] Initialization successful
+
+stdout | tests/unit/services/googleDriveService.spec.ts > GoogleDriveService > deleteFile > should delete .diedrico file
+[GoogleDrive] Initializing with config: {
+  clientId: 'test-client-id...',
+  hasApiKey: true,
+  scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email'
+}
+[GoogleDrive] Initialization successful
+
+stdout | tests/unit/services/googleDriveService.spec.ts > GoogleDriveService > deleteFile > should throw error when not signed in
+[GoogleDrive] Initializing with config: {
+  clientId: 'test-client-id...',
+  hasApiKey: true,
+  scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email'
+}
+[GoogleDrive] Initialization successful
+
+stdout | tests/unit/services/googleDriveService.spec.ts > GoogleDriveService > fetchUserProfile > should fetch user profile from Google userinfo API
+[GoogleDrive] Initializing with config: {
+  clientId: 'test-client-id...',
+  hasApiKey: true,
+  scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email'
+}
+[GoogleDrive] Initialization successful
+
+stdout | tests/unit/services/googleDriveService.spec.ts > GoogleDriveService > fetchUserProfile > should use email as fallback when name not available
+[GoogleDrive] Initializing with config: {
+  clientId: 'test-client-id...',
+  hasApiKey: true,
+  scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email'
+}
+[GoogleDrive] Initialization successful
+
+stdout | tests/unit/services/googleDriveService.spec.ts > GoogleDriveService > fetchUserProfile > should throw error when not signed in
+[GoogleDrive] Initializing with config: {
+  clientId: 'test-client-id...',
+  hasApiKey: true,
+  scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email'
+}
+[GoogleDrive] Initialization successful
+
+stdout | tests/unit/services/googleDriveService.spec.ts > GoogleDriveService > fetchUserProfile > should throw error on HTTP error response
+[GoogleDrive] Initializing with config: {
+  clientId: 'test-client-id...',
+  hasApiKey: true,
+  scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email'
+}
+[GoogleDrive] Initialization successful
+
+stdout | tests/unit/services/googleDriveService.spec.ts > GoogleDriveService > fetchUserProfile > should handle authentication expiry
+[GoogleDrive] Initializing with config: {
+  clientId: 'test-client-id...',
+  hasApiKey: true,
+  scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email'
+}
+[GoogleDrive] Initialization successful
+
+stdout | tests/unit/services/googleDriveService.spec.ts > GoogleDriveService > fetchUserProfile > should handle network errors
+[GoogleDrive] Initializing with config: {
+  clientId: 'test-client-id...',
+  hasApiKey: true,
+  scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email'
+}
+[GoogleDrive] Initialization successful
+
+ ✓ tests/unit/services/googleDriveService.spec.ts  (33 tests | 2 skipped) 59ms
+ ✓ tests/unit/architecture/postOverhaulInvariants.spec.ts  (11 tests) 141ms
+ ✓ tests/unit/utils/coordinateTransform.spec.ts  (14 tests) 24ms
+ ✓ tests/unit/domain/calculations/CircleGeometry.test.ts  (25 tests) 19ms
+ ✓ tests/unit/calculations/intersections.spec.ts  (55 tests) 62ms
+ ✓ tests/unit/domain/element2dUtils.spec.ts  (24 tests) 33ms
+ ✓ tests/unit/types/SelectionMask.spec.ts  (21 tests) 13ms
+ ✓ tests/unit/domain/presentationPrimitives.spec.ts  (7 tests) 21ms
+ ✓ tests/unit/domain/elementId.spec.ts  (21 tests) 13ms
+ ✓ tests/unit/domain/plane.spec.ts  (18 tests | 6 skipped) 13ms
+ ✓ tests/unit/stores/authStore.spec.ts  (18 tests) 25ms
+ ✓ tests/unit/projectStateProcessDependency.spec.ts  (6 tests) 23ms
+stdout | tests/unit/projectStateProcessDependency.spec.ts > ProjectState process/dependency reducers > builds reducer deletion operations without World, DependencyService, or ProcessTree
+[DeletionSequenceFactory] Cascade deletion: {
+  direct: [ 'P_H/point_1' ],
+  cascaded: [ 'P_H/line_3' ],
+  total: [ 'P_H/line_3', 'P_H/point_1' ],
+  order: 'dependents-first (proper deletion order)'
+}
+
+ ✓ tests/unit/tools/pointTool.spec.ts  (6 tests) 31ms
+ ✓ tests/unit/coordinateTransform.spec.ts  (6 tests) 6ms
+ ✓ tests/unit/calculations/distances.spec.ts  (18 tests) 8ms
+ ✓ tests/unit/domain/element2dRealization.spec.ts  (14 tests) 28ms
+ ✓ tests/unit/domain/projectStateReducerProvenanceInvariants.spec.ts  (1 test) 44ms
+ ✓ tests/unit/components/propertiesDialog.spec.ts  (11 tests) 190ms
+ ✓ tests/unit/domain/projectStateReadOnlyProcessHistory.spec.ts  (2 tests) 87ms
+ ✓ tests/unit/components/actionsPanel.spec.ts  (5 tests) 178ms
+ ✓ tests/unit/architecture/noCommandSubclasses.spec.ts  (2 tests) 22ms
+ ✓ tests/unit/stores/viewStore.spec.ts  (23 tests) 17ms
+ ✓ tests/unit/domain/projectState.spec.ts  (3 tests) 14ms
+ ✓ tests/unit/dependencyGraph.spec.ts  (8 tests) 39ms
+ ✓ tests/unit/utils/threeUtils.spec.ts  (13 tests) 10ms
+ ✓ tests/unit/domain/projectStateSelectors.spec.ts  (3 tests) 27ms
+ ✓ tests/unit/commands/command.spec.ts  (6 tests) 48ms
+ ✓ tests/unit/composables/hoverHighlight.spec.ts  (11 tests) 29ms
+ ✓ tests/unit/calculations/perpendiculars.spec.ts  (12 tests) 7ms
+ ✓ tests/unit/services/ProjectService.roundTrip.spec.ts  (4 tests) 17ms
+ ✓ tests/unit/useDriveProjectSession.spec.ts  (3 tests) 27ms
+ ✓ tests/unit/stores/toolStore.spec.ts  (12 tests) 12ms
+ ✓ tests/unit/components/elementsPanel.spec.ts  (4 tests) 119ms
+ ✓ tests/unit/config.toolFamilies.spec.ts  (4 tests) 15ms
+ ✓ tests/unit/domain/projectStateRuntimeReactiveSelectors.spec.ts  (1 test) 26ms
+ ✓ tests/unit/domain/paperHitTesting.spec.ts  (4 tests) 17ms
+ ✓ tests/unit/autosave.spec.ts  (3 tests) 9ms
+ ✓ tests/unit/domain/projectStateRuntime.spec.ts  (4 tests) 14ms
+ ✓ tests/unit/services/ProjectService.selfContainment.spec.ts  (3 tests) 26ms
+ ✓ tests/unit/commands/reducerOperations.spec.ts  (3 tests) 8ms
+ ✓ tests/unit/useAppKeyboardShortcuts.spec.ts  (5 tests) 14ms
+ ✓ tests/unit/commands/commandStack.spec.ts  (4 tests) 6ms
+ ✓ tests/unit/dependencyGraphOrder.spec.ts  (2 tests) 5ms
+ ✓ tests/unit/smoke.spec.ts  (2 tests) 4ms
+ ✓ tests/unit/components/mainToolbar.spec.ts  (2 tests) 56ms
+
+ Test Files  46 passed (46)
+      Tests  491 passed | 8 skipped (499)
+   Start at  06:40:53
+   Duration  8.91s (transform 3.02s, setup 6ms, collect 9.52s, tests 1.67s, environment 29.97s, prepare 6.28s)
+
+
+> diedrico-backend@0.1.0 test
+> vitest run
+
+
+ RUN  v1.6.1 /work/diedrico/backend
+
+ ✓ tests/integration/projects.spec.ts  (22 tests) 241ms
+
+ Test Files  1 passed (1)
+      Tests  22 passed (22)
+   Start at  06:41:02
+   Duration  727ms (transform 94ms, setup 0ms, collect 182ms, tests 241ms, environment 0ms, prepare 68ms)
+

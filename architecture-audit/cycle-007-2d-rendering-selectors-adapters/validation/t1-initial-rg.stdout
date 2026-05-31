@@ -1,0 +1,240 @@
+frontend/src/App.vue:641:  // TODO: Implement element highlighting in Paper/SVGRenderer
+frontend/src/App.vue:650:  // TODO: Implement clearing highlights in Paper/SVGRenderer
+frontend/src/types/ToolConfig.ts:20:  /** Display label for UI */
+frontend/src/types/ToolConfig.ts:21:  label: string;
+frontend/src/types/ToolConfig.ts:43:  /** Display label for family button */
+frontend/src/types/ToolConfig.ts:44:  label: string;
+frontend/tests/unit/application/canvasToolControllers.spec.ts:29:    paper: overrides.paper ?? new Paper(),
+frontend/tests/unit/application/canvasToolControllers.spec.ts:30:    paperToPlaneTransform: undefined,
+frontend/tests/unit/application/canvasToolControllers.spec.ts:144:    const cancelled = useCase.start({ planeId: plane.id, pointId: point.id, label: point.label });
+frontend/tests/unit/application/canvasToolControllers.spec.ts:151:    const committed = useCase.start({ planeId: plane.id, pointId: point.id, label: point.label });
+frontend/tests/unit/application/canvasToolControllers.spec.ts:201:    const paper = new Paper();
+frontend/tests/unit/application/canvasToolControllers.spec.ts:260:      paper: new Paper(),
+frontend/src/types/ToolArgumentCollector.ts:68:   * Framework uses this for Paper.hitTest() filtering and computing next viable selections
+frontend/src/types/ToolArgumentCollector.ts:106:   * Optional human-readable label for this construction method
+frontend/src/types/ToolArgumentCollector.ts:110:  label?: string;
+frontend/src/types/ThreeViewDisplayOptions.ts:15:  /** Show 3D coordinate grid */
+frontend/src/types/SelectionMask.ts:200: * - Paper.hitTest() returns null (no element selected)
+frontend/tests/unit/world/generateDefaultLabel.test.ts:4: * Validates that default labels use sequential mathematical naming:
+frontend/tests/unit/world/generateDefaultLabel.test.ts:23:  describe('Point labels (A, B, C, …)', () => {
+frontend/tests/unit/world/generateDefaultLabel.test.ts:41:      // Exhaust A-Z (26 labels)
+frontend/tests/unit/world/generateDefaultLabel.test.ts:51:      // Exhaust first 26*10 = 260 labels (cycles 0-9)
+frontend/tests/unit/world/generateDefaultLabel.test.ts:60:  describe('Line labels (r, s, t, …)', () => {
+frontend/tests/unit/world/generateDefaultLabel.test.ts:83:      // Exhaust r-z (9 labels)
+frontend/tests/unit/world/generateDefaultLabel.test.ts:92:  describe('Circle labels (α, β, γ, …)', () => {
+frontend/tests/unit/world/generateDefaultLabel.test.ts:112:  describe('Guide labels (g_1, g_2, …)', () => {
+frontend/tests/unit/world/generateDefaultLabel.test.ts:131:  describe('Plane labels (π_1, π_2, …)', () => {
+frontend/tests/unit/world/generateDefaultLabel.test.ts:142:  describe('HingeLine labels (LT_1, LT_2, …)', () => {
+frontend/tests/unit/world/generateDefaultLabel.test.ts:158:      }).toThrow('Unknown element type for labeling: UnknownType');
+frontend/tests/unit/world/generateDefaultLabel.test.ts:163:    it('should not reuse labels for the same type', () => {
+frontend/tests/unit/world/generateDefaultLabel.test.ts:164:      const labels = new Set<string>();
+frontend/tests/unit/world/generateDefaultLabel.test.ts:166:        const label = world.generateDefaultLabel(`point2d${i}`, 'Point2D');
+frontend/tests/unit/world/generateDefaultLabel.test.ts:167:        expect(labels.has(label)).toBe(false);
+frontend/tests/unit/world/generateDefaultLabel.test.ts:168:        labels.add(label);
+frontend/tests/unit/world/generateDefaultLabel.test.ts:172:    it('should produce unique labels across element types that share counters', () => {
+frontend/tests/unit/selectionMask.spec.ts:6: * - Paper.hitTest() respects selection masks
+frontend/tests/unit/selectionMask.spec.ts:41:    paper = new Paper();
+frontend/tests/unit/selectionMask.spec.ts:125:  describe('Paper.hitTest() with selection mask', () => {
+frontend/tests/unit/selectionMask.spec.ts:127:    let paperToPlaneTransform: Matrix3;
+frontend/tests/unit/selectionMask.spec.ts:134:      paperToPlaneTransform = new Matrix3();
+frontend/tests/unit/selectionMask.spec.ts:135:      paperToPlaneTransform.identity();
+frontend/tests/unit/selectionMask.spec.ts:147:      const hit = paper.hitTest(queryPos, 20, planeId, paperToPlaneTransform, world, mask);
+frontend/tests/unit/selectionMask.spec.ts:162:      const hit = paper.hitTest(queryPos, 20, planeId, paperToPlaneTransform, world, mask);
+frontend/tests/unit/selectionMask.spec.ts:181:      const hit = paper.hitTest(queryPos, 20, planeId, paperToPlaneTransform, world, mask);
+frontend/tests/unit/selectionMask.spec.ts:201:      const hit = paper.hitTest(queryPos, 20, planeId, paperToPlaneTransform, world, mask);
+frontend/tests/unit/selectionMask.spec.ts:217:      const hit = paper.hitTest(queryPos, 20, planeId, paperToPlaneTransform, world, mask);
+frontend/tests/unit/selectionMask.spec.ts:232:      const hit = paper.hitTest(queryPos, 20, planeId, paperToPlaneTransform, world, mask);
+frontend/tests/unit/selectionMask.spec.ts:253:      const hit1 = paper.hitTest(queryPos, 20, planeId, paperToPlaneTransform, world, mask1);
+frontend/tests/unit/selectionMask.spec.ts:263:      const hit2 = paper.hitTest(queryPos, 20, planeId, paperToPlaneTransform, world, mask2);
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts:141:      const { paperToPlane, feasible } = this.computeBackward2DMatrix(matrices.planeToPaper);
+frontend/src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts:146:        paperToPlane,
+frontend/tests/unit/rectangleGrid.test.ts:117:  it('should generate grid for axis-aligned rectangle', () => {
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:12:    const cmd = new Command(`Move point ${request.label ?? request.pointId}`, this.world);
+frontend/src/domain/world/projectionPlane/FixedProjectionPlane.ts:48:   * Computes paperToPlane2D (inverse) using shared base class helper.
+frontend/src/domain/world/projectionPlane/FixedProjectionPlane.ts:58:    const { paperToPlane, feasible } = this.computeBackward2DMatrix(this.planeToPaper2D);
+frontend/src/domain/world/projectionPlane/FixedProjectionPlane.ts:63:      paperToPlane,
+frontend/tests/unit/projectionPlane.spec.ts:41:      const planePos = paperPos.clone().applyMatrix3(realization.paperToPlane2D);
+frontend/tests/unit/projectionPlane.spec.ts:55:      const roundtrip = paper.clone().applyMatrix3(realization.paperToPlane2D);
+frontend/tests/unit/projectionPlane.spec.ts:68:      const plane = original.clone().applyMatrix3(realization.paperToPlane2D);
+frontend/tests/unit/projectionPlane.spec.ts:99:      const planePos = paperPos.clone().applyMatrix3(realization.paperToPlane2D);
+frontend/tests/unit/projectionPlane.spec.ts:113:      const roundtrip = paper.clone().applyMatrix3(realization.paperToPlane2D);
+frontend/tests/unit/projectionPlane.spec.ts:126:      const plane = original.clone().applyMatrix3(realization.paperToPlane2D);
+frontend/tests/unit/projectionPlane.spec.ts:136:    it('P_H: paperToPlane should be inverse of planeToPaper', () => {
+frontend/tests/unit/projectionPlane.spec.ts:141:      // Multiply planeToPaper * paperToPlane should give identity
+frontend/tests/unit/projectionPlane.spec.ts:142:      const product = realization.planeToPaper2D.clone().multiply(realization.paperToPlane2D);
+frontend/tests/unit/projectionPlane.spec.ts:157:    it('P_V: paperToPlane should be inverse of planeToPaper', () => {
+frontend/tests/unit/projectionPlane.spec.ts:162:      // Multiply planeToPaper * paperToPlane should give identity
+frontend/tests/unit/projectionPlane.spec.ts:163:      const product = realization.planeToPaper2D.clone().multiply(realization.paperToPlane2D);
+frontend/src/application/tools/ToolCommandIntents.ts:65:  label?: string;
+frontend/tests/unit/coordinateTransform.spec.ts:38:        realization.paperToPlane2D,
+frontend/tests/unit/coordinateTransform.spec.ts:74:          realization.paperToPlane2D,
+frontend/tests/unit/coordinateTransform.spec.ts:105:        realization.paperToPlane2D,
+frontend/tests/unit/coordinateTransform.spec.ts:133:          realization.paperToPlane2D,
+frontend/tests/unit/coordinateTransform.spec.ts:165:        realization.paperToPlane2D,
+frontend/tests/unit/coordinateTransform.spec.ts:194:          realization.paperToPlane2D,
+frontend/src/tools/ITool.ts:26:  paperToPlaneTransform: any;
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:82:   * Get a point by label (semantic access)
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:83:   * Phase 53: Enable label-based point lookup for semantic references
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:85:   * @param label - Point label (e.g., 'O_H', 'O_V', 'A', 'B')
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:86:   * @returns Point with matching label
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:87:   * @throws Error if no point found with given label
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:92:  getPoint2DByLabel(label: string): Point2D {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:94:      if (point.label === label) {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:98:    throw new Error(`Point not found on plane ${this.name} with label: ${label}`);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:383:    label?: string
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:394:    // Phase 97: Generate default label if not provided
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:395:    if (!label) {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:396:      label = world.generateDefaultLabel(id, 'Point2D');
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:399:    const point = new FreePoint2D(id, position, this.id, label);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:443:    // Phase 97: Generate default label if not provided
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:444:    const label = world.generateDefaultLabel(id, 'Point2D');
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:446:    const point = new Point2DLineLineIntersection(id, line1Id, line2Id, this.id, label);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:495:    // Phase 97: Generate default label if not provided
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:496:    const label = world.generateDefaultLabel(id, 'Point2D');
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:498:    const point = new Point2DLineCircleIntersection(id, lineId, circleId, index, this.id, label);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:547:    // Phase 97: Generate default label if not provided
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:548:    const label = world.generateDefaultLabel(id, 'Point2D');
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:550:    const point = new Point2DCircleCircleIntersection(id, circle1Id, circle2Id, index, this.id, label);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:610:    // Phase 97: Generate default label if not provided
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:611:    const label = world.generateDefaultLabel(id, 'Line2D');
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:613:    const line = new Line2DByTwoPoints(id, point1Id, point2Id, this.id, label);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:657:    // Phase 97: Generate default label if not provided
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:658:    const label = world.generateDefaultLabel(id, 'Line2D');
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:660:    const line = new Line2DParallel(id, referenceLineId, throughPointId, this.id, label);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:704:    // Phase 97: Generate default label if not provided
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:705:    const label = world.generateDefaultLabel(id, 'Line2D');
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:707:    const line = new Line2DPerpendicularToLine(id, referenceLineId, throughPointId, this.id, label);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:758:    // Phase 97: Generate default label if not provided
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:759:    const label = world.generateDefaultLabel(id, 'Line2D');
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:767:      label
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:820:    // Phase 97: Generate default label if not provided
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:821:    const label = world.generateDefaultLabel(id, 'Line2D');
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:829:      label
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:877:    // Phase 97: Generate default label if not provided
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:878:    const label = world.generateDefaultLabel(id, 'Segment2D');
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:880:    const segment = new Segment2DByPoints(id, point1Id, point2Id, this.id, label);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:927:    // Phase 97: Generate default label if not provided
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:928:    const label = world.generateDefaultLabel(id, 'Circle2D');
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:930:    const circle = new Circle2DByCenterAndPoint(id, centerPointId, circumferencePointId, this.id, label);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:978:    // Phase 97: Generate default label if not provided
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:979:    const label = world.generateDefaultLabel(id, 'Guide2D');
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:981:    const guide = new Guide2D(id, referenceLineId, throughPointId, this.id, label);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1033:    // Get label from primary guide
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1034:    const label = primaryGuide.label;
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1041:      label
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1099:    // Get label from primary point
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1100:    const label = primaryPoint.label;
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1106:      label
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1125:   * @param label Optional label for semantic access (e.g., 'O_H', 'O_V')
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1132:    label?: string
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1143:    const originPoint = new FreePoint2D(id, position, this.id, label);
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1226:   * Protected helper: Compute backward 2D matrix (paperToPlane) from forward matrix (planeToPaper)
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1231:   * @returns Object with paperToPlane matrix and feasibility flag
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1233:  protected computeBackward2DMatrix(planeToPaper: Matrix3): { paperToPlane: Matrix3; feasible: boolean } {
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1235:    let paperToPlane: Matrix3;
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1243:        paperToPlane = new Matrix3(); // Identity as fallback
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1245:        paperToPlane = planeToPaper.clone().invert();
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1250:      paperToPlane = new Matrix3(); // Identity as fallback
+frontend/src/domain/world/projectionPlane/ProjectionPlane.ts:1253:    return { paperToPlane, feasible };
+frontend/src/domain/world/projectionPlane/ProjectionPlaneRealization.ts:16:  paperToPlane2D: Matrix3;
+frontend/src/domain/world/projectionPlane/ProjectionPlaneRealization.ts:21:    paperToPlane2D: Matrix3,
+frontend/src/domain/world/projectionPlane/ProjectionPlaneRealization.ts:27:    this.paperToPlane2D = paperToPlane2D;
+frontend/src/domain/world/projectionPlane/ProjectionPlaneRealization.ts:37:      this.paperToPlane2D.clone(),
+frontend/src/utils/rectangleGrid.ts:4: * Handles grid generation clipped to a rectangle in 2D space.
+frontend/src/utils/rectangleGrid.ts:203: * Generate grid lines clipped to a rectangle
+frontend/src/utils/rectangleGrid.ts:205: * @param rect - Rectangle to clip grid to (in u,v coordinates)
+frontend/src/utils/rectangleGrid.ts:206: * @param divisions - Number of divisions (grid lines = divisions + 1)
+frontend/src/utils/rectangleGrid.ts:234:  // Lines parallel to U-axis (constant v, vertical grid lines)
+frontend/src/utils/rectangleGrid.ts:271:  // Lines parallel to V-axis (constant u, horizontal grid lines)
+frontend/src/tools/ArgumentCollectorTool.ts:164:    const { planeId, canvasCoords, world, paper, paperToPlaneTransform } = context;
+frontend/src/tools/ArgumentCollectorTool.ts:177:    const hit = paper.hitTest(canvasPos, 50, planeId, paperToPlaneTransform, world, selectionMask);
+frontend/src/tools/ArgumentCollectorTool.ts:324:        const label = set.label || this.name;
+frontend/src/tools/ArgumentCollectorTool.ts:325:        return `Creating ${label}: ${collectedNames} selected, pick ${nextArgs}`;
+frontend/src/tools/ArgumentCollectorTool.ts:329:          .map(index => argumentSets[index].label || `method ${index + 1}`)
+frontend/src/domain/world/World.ts:113:  projectionPlanes: Map<string, ProjectionPlane>;  // All projection planes (base + auxiliary)
+frontend/src/domain/world/World.ts:152:  // Phase 116: Sequential mathematical label generator
+frontend/src/domain/world/World.ts:153:  readonly labelGenerator: LabelGenerator = new LabelGenerator();
+frontend/src/domain/world/World.ts:159:    this.projectionPlanes = new Map();
+frontend/src/domain/world/World.ts:242:    for (const plane of this.projectionPlanes.values()) {
+frontend/src/domain/world/World.ts:248:    this.projectionPlanes.clear();
+frontend/src/domain/world/World.ts:314:   * Phase 97: Generate default label from element ID and type
+frontend/src/domain/world/World.ts:317:   * prefix to create a human-readable label.
+frontend/src/domain/world/World.ts:340:   * @returns Human-readable label (e.g., "A_5", "L_{12}")
+frontend/src/domain/world/World.ts:344:    return this.labelGenerator.next(elementType);
+frontend/src/domain/world/World.ts:357:    if (this.activePlaneId && !this.projectionPlanes.has(this.activePlaneId)) {
+frontend/src/domain/world/World.ts:358:      const firstPlane = this.projectionPlanes.values().next().value;
+frontend/src/domain/world/World.ts:389:   * @param label - Optional label for the plane
+frontend/src/domain/world/World.ts:392:  addPlane3DFixed(point: Vector4, normal: Vector4, planeId?: string, label?: string): Plane3DFixed {
+frontend/src/domain/world/World.ts:395:    // Phase 52: Plane3DFixed constructor signature changed to (id, point, normal, label)
+frontend/src/domain/world/World.ts:396:    const plane = new Plane3DFixed(id, point, normal, label);
+frontend/src/domain/world/World.ts:413:   * Derived matrices (paperToPlane2D, threeDToPlane) computed in realization constructors.
+frontend/src/domain/world/World.ts:419:   * @param name - Optional name/label (defaults to proj_plane_${id})
+frontend/src/domain/world/World.ts:430:    const label = name || this.generateDefaultLabel(id, 'ProjectionPlane');
+frontend/src/domain/world/World.ts:433:    // No need to compute paperToPlane2D or threeDToPlane here
+frontend/src/domain/world/World.ts:438:      label,
+frontend/src/domain/world/World.ts:447:    this.projectionPlanes.set(id, projPlane);
+frontend/src/domain/world/World.ts:473:    const label = this.generateDefaultLabel(id, 'HingeLine');
+frontend/src/domain/world/World.ts:477:      label,
+frontend/src/domain/world/World.ts:496:    for (const plane of this.projectionPlanes.values()) {
+frontend/src/domain/world/World.ts:510:    for (const plane of this.projectionPlanes.values()) {
+frontend/src/domain/world/World.ts:570:    const plane = this.projectionPlanes.get(planeId);
+frontend/src/domain/world/World.ts:596:    const plane = this.projectionPlanes.get(planeId);
+frontend/src/domain/world/World.ts:626:      for (const [projPlaneId, projPlane] of this.projectionPlanes) {
+frontend/src/domain/world/World.ts:638:      for (const plane of this.projectionPlanes.values()) {
+frontend/src/domain/world/World.ts:672:      for (const plane of this.projectionPlanes.values()) {
+frontend/src/domain/world/World.ts:732:    return this.projectionPlanes.get(id);
+frontend/src/domain/world/World.ts:736:   * Get projection plane by label (semantic access)
+frontend/src/domain/world/World.ts:738:   * @param label - Plane label (e.g., 'P_H', 'P_V')
+frontend/src/domain/world/World.ts:739:   * @returns Projection plane with matching label
+frontend/src/domain/world/World.ts:740:   * @throws Error if no plane found with given label
+frontend/src/domain/world/World.ts:742:  getProjectionPlaneByLabel(label: string): ProjectionPlane {
+frontend/src/domain/world/World.ts:743:    for (const plane of this.projectionPlanes.values()) {
+frontend/src/domain/world/World.ts:744:      if (plane.name === label) {
+frontend/src/domain/world/World.ts:748:    throw new Error(`Projection plane not found with label: ${label}`);
+frontend/src/domain/world/World.ts:756:    return Array.from(this.projectionPlanes.values());
+frontend/src/domain/world/World.ts:929:    const plane = this.projectionPlanes.get(planeId);
+frontend/tests/unit/utils/coordinateTransform.spec.ts:16:  paperToPlane,
+frontend/tests/unit/utils/coordinateTransform.spec.ts:131:  describe('paperToPlane', () => {
+frontend/tests/unit/utils/coordinateTransform.spec.ts:146:      const result = paperToPlane(paperPoint, horizontalPlaneId, world);
+frontend/tests/unit/utils/coordinateTransform.spec.ts:162:      const result = paperToPlane(paperPoint, verticalPlaneId, world);
+frontend/tests/unit/utils/coordinateTransform.spec.ts:178:      const result = paperToPlane(paperPoint, 'invalid_plane', world);
+frontend/src/utils/formatUtils.ts:4: * Format element label with KaTeX mathematical notation.
+frontend/src/utils/formatUtils.ts:12: * @param label Raw LaTeX string (no delimiters)
+frontend/src/utils/formatUtils.ts:19:export function formatElementLabel(label: string | undefined): string {
+frontend/src/utils/formatUtils.ts:20:  // Empty label → empty string (caller should use element ID)
+frontend/src/utils/formatUtils.ts:21:  if (!label || label.trim() === '') return '';
+frontend/src/utils/formatUtils.ts:26:    const escapedLabel = label.replace(/ /g, '\\ ');
+frontend/src/utils/formatUtils.ts:42:    console.warn(`KaTeX rendering failed for label "${label}":`, error);
+frontend/src/utils/formatUtils.ts:43:    return label;  // Return unformatted label
+frontend/src/utils/formatUtils.ts:48: * Validate LaTeX label syntax.
+frontend/src/utils/formatUtils.ts:50: * @param label Raw LaTeX string
+frontend/src/utils/formatUtils.ts:53:export function validateLabelSyntax(label: string): { valid: boolean; error?: string } {
+frontend/src/utils/formatUtils.ts:54:  if (!label || label.trim() === '') {
+frontend/src/utils/formatUtils.ts:60:    katex.renderToString(label, { throwOnError: true });
+frontend/src/domain/world/index.ts:47:// Phase 116: Sequential label generation
+frontend/src/utils/coordinateTransform.ts:85: * Uses the projection plane's paperToPlane2D transformation matrix.
+frontend/src/utils/coordinateTransform.ts:92:export function paperToPlane(
+frontend/src/utils/coordinateTransform.ts:109:  return applyMatrix3(paperPoint, realization.paperToPlane2D);
+frontend/src/utils/coordinateTransform.ts:174:    const planeCoords = paperToPlane(paperCoords, activePlaneId, world);
+frontend/src/stores/viewStore.ts:23:  gridVisible: boolean;
+frontend/src/stores/viewStore.ts:31:const gridVisible = ref(true); // Grid visible by default
+frontend/src/stores/viewStore.ts:145:   * Toggle grid visibility (T276)
+frontend/src/stores/viewStore.ts:148:    gridVisible.value = !gridVisible.value;
+frontend/src/stores/viewStore.ts:152:   * Set grid visibility
+frontend/src/stores/viewStore.ts:155:    gridVisible.value = visible;
+frontend/src/stores/viewStore.ts:199:    gridVisible: gridVisible.value,
+frontend/src/stores/viewStore.ts:208:    gridVisible: computed(() => gridVisible.value),
+frontend/tests/unit/tools/toolValidation.spec.ts:47:      paperToPlaneTransform: new Matrix3().identity(),
+frontend/tests/unit/tools/toolValidation.spec.ts:65:    paper = new Paper();
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:42:    label?: string
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:44:    // Create a friendly label like "BHHL_{33}" from "projPlane28/line2d33" if not provided
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:47:    const bhhlLabel = label || `BHHL_{${numericPart}}`;
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:67:      this.label
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:89:   *   T2/T2' local coords → paper coords (via source planeToPaper) → this plane local coords (via paperToPlane)
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:103:      console.error(`[BHHL ${this.label}] Auxiliary plane not found: ${bhl.auxiliaryPlaneId}`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:117:      console.error(`[BHHL ${this.label}] No ${traceName} trace on auxiliary plane ${bhl.auxiliaryPlaneId}`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:124:      console.error(`[BHHL ${this.label}] ${traceName} line not found: ${t2TraceId}`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:130:      console.error(`[BHHL ${this.label}] ${traceName} realization infeasible`);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:145:    const origin2D = pointInPaper.applyMatrix3(targetPlaneReal2D.paperToPlane2D);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:149:    const direction2D = dirInPaper.applyMatrix3(targetPlaneReal2D.paperToPlane2D);
+frontend/src/domain/world/elements/BrokenHalfHingeLine2D.ts:151:    console.log(`[BHHL ${this.label}] ${traceName} (${t2TraceId}) on ${t2Line.planeId}: point=(${t2Real2D.point1.x.toFixed(2)}, ${t2Real2D.point1.y.toFixed(2)})`);

@@ -1,0 +1,104 @@
+frontend/src/components/workspace/SvgCanvas.vue:425:  commandStack: inject('commandStack'),
+frontend/src/components/workspace/SvgCanvas.vue:525:      const msg = (currentToolInstance.value as any).getStatusMessage();
+frontend/tests/unit/application/canvasToolControllers.spec.ts:31:    toolStore: {} as any,
+frontend/tests/unit/application/canvasToolControllers.spec.ts:41:    const { world, commandStack } = createTestWorld();
+frontend/tests/unit/application/canvasToolControllers.spec.ts:43:    const beforeUndoCount = commandStack.getUndoCount();
+frontend/tests/unit/application/canvasToolControllers.spec.ts:47:      commandStack,
+frontend/tests/unit/application/canvasToolControllers.spec.ts:58:    expect(commandStack.getUndoCount()).toBe(beforeUndoCount + 1);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:62:      commandStack,
+frontend/tests/unit/application/canvasToolControllers.spec.ts:72:    expect(commandStack.getUndoCount()).toBe(beforeUndoCount + 1);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:76:  it('uses typed intersection metadata to choose the intended line-circle intersection', () => {
+frontend/tests/unit/application/canvasToolControllers.spec.ts:77:    const { world, commandStack } = createTestWorld();
+frontend/tests/unit/application/canvasToolControllers.spec.ts:89:      commandStack,
+frontend/tests/unit/application/canvasToolControllers.spec.ts:98:        metadata: { selectionPoint: new Vector3(-4, 3, 1) }
+frontend/tests/unit/application/canvasToolControllers.spec.ts:109:  it('uses typed tangent metadata instead of defaulting tangent choices to index zero', () => {
+frontend/tests/unit/application/canvasToolControllers.spec.ts:110:    const { world, commandStack } = createTestWorld();
+frontend/tests/unit/application/canvasToolControllers.spec.ts:120:      commandStack,
+frontend/tests/unit/application/canvasToolControllers.spec.ts:129:        metadata: { tangentIndex: 1, selectionPoint: new Vector3(10, -5, 1) }
+frontend/tests/unit/application/canvasToolControllers.spec.ts:134:    const tangent = plane.getAllLines().at(-1) as any;
+frontend/tests/unit/application/canvasToolControllers.spec.ts:135:    expect(tangent.tangentIndex).toBe(1);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:139:    const { world, commandStack } = createTestWorld();
+frontend/tests/unit/application/canvasToolControllers.spec.ts:142:    const useCase = new CanvasPointMovementUseCase(world, commandStack);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:146:    expect((plane.getPoint(point.id) as any).position.x).toBe(3);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:148:    expect((plane.getPoint(point.id) as any).position.x).toBe(1);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:150:    const beforeUndoCount = commandStack.getUndoCount();
+frontend/tests/unit/application/canvasToolControllers.spec.ts:154:    expect(commandStack.getUndoCount()).toBe(beforeUndoCount + 1);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:155:    expect((plane.getPoint(point.id) as any).position.x).toBe(7);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:156:    commandStack.undo();
+frontend/tests/unit/application/canvasToolControllers.spec.ts:157:    expect((plane.getPoint(point.id) as any).position.x).toBe(1);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:161:    const { world, commandStack } = createTestWorld();
+frontend/tests/unit/application/canvasToolControllers.spec.ts:164:    const useCase = new CanvasStyleUseCase(world, commandStack);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:165:    const beforeUndoCount = commandStack.getUndoCount();
+frontend/tests/unit/application/canvasToolControllers.spec.ts:174:    expect(commandStack.getUndoCount()).toBe(beforeUndoCount + 1);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:176:    commandStack.undo();
+frontend/tests/unit/application/canvasToolControllers.spec.ts:180:  it('lets tools emit typed construction intents with ambiguous-choice metadata through the command sink', () => {
+frontend/tests/unit/application/canvasToolControllers.spec.ts:203:      .mockReturnValueOnce({ elementId: circle.id } as any)
+frontend/tests/unit/application/canvasToolControllers.spec.ts:204:      .mockReturnValueOnce({ elementId: external.id } as any)
+frontend/tests/unit/application/canvasToolControllers.spec.ts:205:      .mockReturnValueOnce({ elementId: refLine.id } as any)
+frontend/tests/unit/application/canvasToolControllers.spec.ts:206:      .mockReturnValueOnce({ elementId: circle.id } as any)
+frontend/tests/unit/application/canvasToolControllers.spec.ts:207:      .mockReturnValueOnce({ elementId: refLine.id } as any)
+frontend/tests/unit/application/canvasToolControllers.spec.ts:208:      .mockReturnValueOnce({ elementId: circle.id } as any);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:225:      expect(intents[0].metadata.tangentIndex).toBe(1);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:226:      expect(intents[0].metadata.selectionPoint.y).toBe(-5);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:230:      expect(intents[1].metadata.tangentIndex).toBe(1);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:234:      expect(intents[2].metadata.selectionPoint.x).toBe(-4);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:246:    expect(source).not.toContain('UpdateFreePoint2DPositionOp');
+frontend/tests/unit/application/canvasToolControllers.spec.ts:247:    expect(source).not.toContain('UpdateElementStyleOp');
+frontend/tests/unit/application/canvasToolControllers.spec.ts:248:    expect(source).not.toContain('new Command(');
+frontend/tests/unit/application/canvasToolControllers.spec.ts:252:    const { world, commandStack } = createTestWorld();
+frontend/tests/unit/application/canvasToolControllers.spec.ts:254:    const controller = new CanvasToolController({ world, commandStack, toolStore: { setTool: vi.fn() } as any });
+frontend/src/application/construction/QuickToolUseCases.ts:8:  commandStack: CommandStack;
+frontend/src/application/construction/ConstructionUseCases.ts:32:  commandStack: CommandStack;
+frontend/src/application/construction/ConstructionUseCases.ts:35:export function executeConstructionIntent({ intent, world, commandStack }: ExecuteConstructionParams): ToolCommandResult {
+frontend/src/application/construction/ConstructionUseCases.ts:36:  const cmd = new Command(intent.description, world);
+frontend/src/application/construction/ConstructionUseCases.ts:44:    commandStack.push(cmd);
+frontend/src/application/construction/ConstructionUseCases.ts:110:      const tangentIndex = intent.metadata.tangentIndex;
+frontend/src/application/construction/ConstructionUseCases.ts:111:      const result = cmd.addAndExecute(new AddLine2DTangentToCircleThroughPointOp(planeId, circle.id, point.id, tangentIndex));
+frontend/src/application/construction/ConstructionUseCases.ts:118:      const tangentIndex = intent.metadata.tangentIndex;
+frontend/src/application/construction/ConstructionUseCases.ts:119:      const result = cmd.addAndExecute(new AddLine2DTangentToCircleParallelToLineOp(planeId, circle.id, line.id, tangentIndex));
+frontend/src/application/construction/ConstructionUseCases.ts:162:      throw new Error(`Unsupported construction intent: ${(intent as any).type}`);
+frontend/src/application/construction/ConstructionUseCases.ts:169:  const selectionPoint = intent.metadata.selectionPoint;
+frontend/src/application/construction/ConstructionUseCases.ts:177:    const index = lineCircleIndex(element1.id, element2.id, selectionPoint, world);
+frontend/src/application/construction/ConstructionUseCases.ts:181:    const index = lineCircleIndex(element2.id, element1.id, selectionPoint, world);
+frontend/src/application/construction/ConstructionUseCases.ts:185:    const index = circleCircleIndex(element1.id, element2.id, selectionPoint, world);
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts:81:    const selectionPoint = args.get('throughPoint')?.planeCoords ?? context.planeCoords;
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts:87:      metadata: {
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts:88:        tangentIndex: this.chooseTangentIndex(selectionPoint),
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts:89:        selectionPoint
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts:94:  private chooseTangentIndex(selectionPoint: import('three').Vector3): 0 | 1 {
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts:95:    return selectionPoint.y >= 0 ? 0 : 1;
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts:78:    const selectionPoint = args.get('referenceLine')?.planeCoords ?? context.planeCoords;
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts:84:      metadata: {
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts:85:        tangentIndex: this.chooseTangentIndex(selectionPoint, circle?.id, context),
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts:86:        selectionPoint
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts:91:  private chooseTangentIndex(selectionPoint: import('three').Vector3, circleId: string | undefined, context: ToolContext): 0 | 1 {
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts:96:    return selectionPoint.distanceTo(realization.center) <= realization.getRadius() ? 0 : 1;
+frontend/src/application/canvas/CanvasStyleUseCase.ts:4:import { UpdateElementStyleOp } from '@/commands/operations/world/UpdateElementStyleOp';
+frontend/src/application/canvas/CanvasStyleUseCase.ts:8:  constructor(private readonly world: World, private readonly commandStack: CommandStack) {}
+frontend/src/application/canvas/CanvasStyleUseCase.ts:11:    const cmd = new Command(`Update style: ${request.elementId}`, this.world);
+frontend/src/application/canvas/CanvasStyleUseCase.ts:13:      cmd.addAndExecute(new UpdateElementStyleOp(request.elementId, request.planeId, request.style) as any);
+frontend/src/application/canvas/CanvasStyleUseCase.ts:15:      this.commandStack.push(cmd);
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:5:import { UpdateFreePoint2DPositionOp } from '@/commands/operations/world/UpdateFreePoint2DPositionOp';
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:9:  constructor(private readonly world: World, private readonly commandStack: CommandStack) {}
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:12:    const cmd = new Command(`Move point ${request.label ?? request.pointId}`, this.world);
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:19:          cmd.addAndExecute(new UpdateFreePoint2DPositionOp(request.planeId, request.pointId, position));
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:33:        this.commandStack.push(cmd);
+frontend/src/tools/IntersectionTool.ts:77:    const selectionPoint = args.get('element2')?.planeCoords ?? context.planeCoords;
+frontend/src/tools/IntersectionTool.ts:83:      metadata: { selectionPoint }
+frontend/src/application/tools/CanvasToolController.ts:12:  commandStack: CommandStack;
+frontend/src/application/tools/CanvasToolController.ts:18:  commandStack: unknown;
+frontend/src/application/tools/CanvasToolController.ts:23:  if (!deps.commandStack) {
+frontend/src/application/tools/CanvasToolController.ts:28:    commandStack: deps.commandStack as CommandStack,
+frontend/src/application/tools/CanvasToolController.ts:38:    this.movement = new CanvasPointMovementUseCase(deps.world, deps.commandStack);
+frontend/src/application/tools/CanvasToolController.ts:39:    this.style = new CanvasStyleUseCase(deps.world, deps.commandStack);
+frontend/src/application/tools/CanvasToolController.ts:46:      commandStack: this.deps.commandStack
+frontend/src/application/tools/CanvasToolController.ts:55:      commandStack: this.deps.commandStack
+frontend/src/application/tools/ToolCommandIntents.ts:28:  tangentIndex: 0 | 1;
+frontend/src/application/tools/ToolCommandIntents.ts:29:  selectionPoint: Vector3;
+frontend/src/application/tools/ToolCommandIntents.ts:33:  selectionPoint: Vector3;
+frontend/src/application/tools/ToolCommandIntents.ts:46:      metadata: TangentChoiceMetadata;
+frontend/src/application/tools/ToolCommandIntents.ts:50:      metadata: IntersectionChoiceMetadata;
+frontend/src/application/tools/ToolCommandIntents.ts:54:      metadata?: never;
+frontend/src/application/world/initializeWorld.ts:19:export function initializeWorld(world: World, commandStack: CommandStack): void {
+frontend/src/application/world/initializeWorld.ts:22:  const initCmd = new Command('Initialize World', world);
+frontend/src/application/world/initializeWorld.ts:34:  commandStack.push(initCmd);

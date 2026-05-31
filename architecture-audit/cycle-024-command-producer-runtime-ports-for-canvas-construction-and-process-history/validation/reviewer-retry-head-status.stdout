@@ -1,0 +1,13 @@
+7f5375bb4efd7571a8940e77abf0dc3fa6adc811
+ D frontend/tests/e2e/active-plane-shortcuts.spec.ts
+ D frontend/tests/e2e/selection-mask.spec.ts
+?? architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/critique/
+?? architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/reviews/
+?? architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/reviewer-key-diff.stderr
+?? architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/reviewer-key-diff.stdout
+?? architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/reviewer-retry-head-status.stderr
+?? architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/reviewer-retry-head-status.stdout
+?? architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/reviewer-scoped-diffstat.stderr
+?? architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/reviewer-scoped-diffstat.stdout
+?? architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/reviewer-scoped-status.stderr
+?? architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/reviewer-scoped-status.stdout

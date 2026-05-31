@@ -1,0 +1,28 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run tests/unit/calculations/intersections.spec.ts tests/unit/components/propertiesDialog.spec.ts tests/integration/guide-creation.test.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/calculations/intersections.spec.ts  (44 tests) 18ms
+stdout | tests/integration/guide-creation.test.ts > Guide Creation - Integration Tests > Regular Line Reference > should create guide on regular line without sibling
+[GuideSequenceFactory] createGuideWithSibling called: plane=projPlane3, refLine=projPlane3/line2d12, point=projPlane3/point2d13
+[GuideSequenceFactory] Primary guide created: projPlane3/guide2d14
+[GuideSequenceFactory] Getting sibling plane info...
+[GuideSequenceFactory] No sibling info - reference line is not a HalfHingeLine or BrokenHalfHingeLine2D
+
+ ✓ tests/integration/guide-creation.test.ts  (2 tests) 11ms
+stdout | tests/integration/guide-creation.test.ts > Guide Creation - Integration Tests > Error Prevention > should not throw when creating guide on non-hinge line
+[GuideSequenceFactory] createGuideWithSibling called: plane=projPlane3, refLine=projPlane3/line2d12, point=projPlane3/point2d13
+[GuideSequenceFactory] Primary guide created: projPlane3/guide2d14
+[GuideSequenceFactory] Getting sibling plane info...
+[GuideSequenceFactory] No sibling info - reference line is not a HalfHingeLine or BrokenHalfHingeLine2D
+
+ ✓ tests/unit/components/propertiesDialog.spec.ts  (18 tests) 159ms
+
+ Test Files  3 passed (3)
+      Tests  64 passed (64)
+   Start at  14:09:52
+   Duration  1.88s (transform 1.42s, setup 0ms, collect 2.40s, tests 188ms, environment 1.40s, prepare 307ms)
+

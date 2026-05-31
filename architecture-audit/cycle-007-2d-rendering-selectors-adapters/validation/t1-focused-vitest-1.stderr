@@ -1,0 +1,33 @@
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/application/canvasPresentation/canvasGridSelector.spec.ts > CanvasGridSelector > derives grid lines and labels from explicit plane transform and viewport DTO
+AssertionError: expected 0 to be greater than 0
+ ❯ tests/unit/application/canvasPresentation/canvasGridSelector.spec.ts:10:117
+      8|     expect(grid.lines.length).toBeGreaterThan(0);
+      9|     expect(grid.lines[0]).toEqual(expect.objectContaining({ key: expec…
+     10|     expect(grid.labels.top.length + grid.labels.bottom.length + grid.l…
+       |                                                                                                                     ^
+     11|   });
+     12| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/unit/application/canvasPresentation/canvasPresentationSelector.spec.ts > CanvasPresentationSelector > builds render/query DTOs and grid labels from one world/view snapshot
+TypeError: plane.addSegment2DByPoints is not a function
+ ❯ tests/unit/application/canvasPresentation/canvasPresentationSelector.spec.ts:12:27
+     10|     const a = plane.addFreePoint2D(new Vector3(0, 0, 1), world as any);
+     11|     const b = plane.addFreePoint2D(new Vector3(10, 0, 1), world as any…
+     12|     const segment = plane.addSegment2DByPoints(a.id!, b.id!, world as …
+       |                           ^
+     13|     const circle = plane.addCircle2DByCenterAndPoint(a.id!, b.id!, wor…
+     14|     const selector = new CanvasPresentationSelector();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c vitest run --run tests/unit/application/canvasPresentation/canvasPresentationSelector.spec.ts tests/unit/application/canvasPresentation/canvasInteractionQuery.spec.ts tests/unit/application/canvasPresentation/canvasGridSelector.spec.ts tests/unit/services/svgCanvasRenderer.spec.ts

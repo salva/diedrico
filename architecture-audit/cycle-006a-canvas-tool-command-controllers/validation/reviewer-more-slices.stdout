@@ -1,0 +1,170 @@
+import type { CommandStack } from '@/commands/CommandStack';
+import type { World } from '@/domain/world/World';
+import type { QuickToolIntent, ToolCommandResult } from '@/application/tools/ToolCommandIntents';
+
+export interface ExecuteQuickToolParams {
+  intent: QuickToolIntent;
+  world: World;
+  commandStack: CommandStack;
+}
+
+export function executeQuickToolIntent({ intent }: ExecuteQuickToolParams): ToolCommandResult {
+  return {
+    success: false,
+    message: `${intent.type} was removed from the active canvas tool registry in Wave 006a as example/debug construction flow`
+  };
+}
+
+---
+/**
+ * PointTool - Tool for creating free points (ArgumentCollectorTool Migration)
+ * 
+ * Migrated to ArgumentCollectorTool framework.
+ * 
+ * Uses SelectionMask.none() to capture just the mouse position without selecting
+ * any existing element. Framework creates ArgumentValue with element=null.
+ * 
+ * Code reduction: ~80 lines → ~50 lines (37% reduction)
+ * 
+ * Reference: specs/001-dihedral-learning-mvp/spec.md §US1
+ */
+
+import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+import type { ToolArgumentSet } from '@/types/ToolArgumentCollector';
+import { SelectionMask } from '@/types/SelectionMask';
+
+/**
+ * PointTool using ArgumentCollectorTool framework
+ * 
+ * Framework handles:
+ * - Click capture with SelectionMask.none()
+ * - ArgumentValue creation with element=null, planeCoords from click
+ * - Automatic execution when position captured
+ * 
+ * Custom behavior:
+ * - Creates free point at mouse position (no element selection)
+ */
+export class PointTool extends ArgumentCollectorTool {
+  readonly name = 'point';
+  readonly completionBehavior = 'stay-active' as const;
+
+  /**
+   * Define argument specification
+   * Single argument with SelectionMask.none() - just captures position
+   */
+  protected getArgumentSets(): ToolArgumentSet[] {
+    return [
+      {
+        arguments: [
+          { 
+            name: 'position', 
+            mask: SelectionMask.none()  // No element selection - just mouse position
+          }
+        ]
+      }
+    ];
+  }
+
+  /**
+   * Execute point creation operations
+   */
+
+
+  /**
+   * Validate that coordinates are finite numbers
+   */
+
+
+  protected getCommandDescription(): string {
+    return "Create free point";
+  }
+}
+
+---
+/**
+ * Create3DPointTool - Creates 3D points from projections (ArgumentCollectorTool Migration)
+ * 
+ * Migrated to ArgumentCollectorTool framework.
+ * 
+ * Two-argument workflow:
+ * 1. Collect two 2D point projections (any order)
+ * 2. Validate they're on DIFFERENT planes (validator)
+ * 3. Create Point3DFromProjections
+ * 
+ * Code reduction: ~215 lines → ~110 lines (49% reduction)
+ * 
+ * Reference: specs/001-dihedral-learning-mvp/spec.md - Phase 78
+ */
+
+import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/ToolArgumentCollector';
+import { SelectionMask } from '@/types/SelectionMask';
+
+/**
+ * Create3DPointTool using ArgumentCollectorTool framework
+ * 
+ * Framework handles:
+ * - Any-order argument collection (projection1, projection2)
+ * - Selection mask computation (point + point)
+ * - UI feedback
+ * - Automatic execution when both projections collected
+ * 
+ * Custom behavior:
+ * - Set-level validator ensures projections are on DIFFERENT planes
+ */
+export class Create3DPointTool extends ArgumentCollectorTool {
+  readonly name = 'create3dpoint';
+  readonly completionBehavior = 'stay-active' as const;
+
+  /**
+   * Define argument specification
+   * Two point arguments with different-plane validation
+   */
+  protected getArgumentSets(): ToolArgumentSet[] {
+    return [
+      {
+        arguments: [
+          { 
+            name: 'projection1', 
+            mask: SelectionMask.point()
+          },
+          { 
+            name: 'projection2', 
+            mask: SelectionMask.point()
+          }
+        ],
+        // Set-level validator: Ensure projections are on different planes
+        setValidator: (args: Map<string, ArgumentValue>, context: CollectionContext) => {
+          const proj1 = args.get('projection1')!;
+          const proj2 = args.get('projection2')!;
+          
+          // Get plane IDs from elements
+          const plane1 = context.world.getProjectionPlaneById(proj1.element!.planeId);
+          const plane2 = context.world.getProjectionPlaneById(proj2.element!.planeId);
+          
+          if (!plane1 || !plane2) {
+            return { valid: false, error: 'One or both projection planes not found' };
+          }
+          
+          if (plane1.id === plane2.id) {
+            return { 
+              valid: false, 
+              error: 'Cannot create 3D point: both projections must be on DIFFERENT planes' 
+            };
+          }
+          
+          return { valid: true };
+        }
+      }
+    ];
+  }
+
+  /**
+   * Execute 3D point creation operations
+   */
+
+
+  protected getCommandDescription(): string {
+    return "Create 3D point from projections";
+  }
+}

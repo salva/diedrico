@@ -198,3 +198,48 @@ Representative focused assertions:
 - **Risk: behavior changes in line clipping/styles.** Mitigation: encode current hard-coded extents/styles as explicit constants first, then improve only if reviewed.
 - **Risk: guide/hinge math accidentally moves from domain to adapters.** Mitigation: selectors may call domain realizations, but adapters consume DTO geometry only.
 - **Risk: e2e remains blocked by pre-existing malformed specs/tooling.** Mitigation: still run mandatory commands, capture logs, and add focused/live browser smoke to prove 3D behavior where global e2e cannot run.
+
+## Round 01 correction addendum — non-negotiable implementation constraints
+
+This addendum resolves the Wave 008 round-01 review blockers and supersedes any earlier wording that could be read as allowing a single god selector or retaining guide/selection geometry in `ThreeView.vue`.
+
+### Shell boundary for selection, guide behavior, and scene construction
+
+`ThreeView.vue` may read `viewStore`, `selectionStore`, and the injected `World` only as shell-level inputs. It must pass the current display options and selected entity IDs into the `threePresentation` boundary as an explicit input object, for example `ThreePresentationInput { world, displayOptions, selectedIds }`. The component must not perform direct selected-element domain lookup, guide/perpendicular-plane geometry derivation, projection-plane matrix interpretation, domain-to-view coordinate conversion, or raw Three.js object construction after the wave.
+
+Guide/perpendicular-plane behavior is part of the `threePresentation` read-model boundary: selected guide IDs enter the selector input, `Guide3DSelector` resolves selected guides and emits guide perpendicular-plane and guide intersection marker DTOs, and `GuideSceneAdapter` consumes those DTOs to create/replace scene objects. `ThreeView.vue` must only trigger runtime refreshes and must not contain guide/perpendicular-plane DTO production or scene-object construction.
+
+### Required concern-split 3D read models
+
+The `ThreePresentationSelector` named earlier is an orchestrator only, not a large replacement module. The implementation must split read-model production by concern under `frontend/src/application/threePresentation/`:
+
+- `ProjectionPlane3DSelector` for projection-plane surfaces, grids, reference axes, auxiliary axes, and projection-plane labels.
+- `PlanarElement3DSelector` for 2D-on-3D-plane point/line/segment/circle DTOs formerly mixed into `Element2DRenderer3D`.
+- `ReconstructedElement3DSelector` for reconstructed 3D point/line/segment/plane DTOs.
+- `Guide3DSelector` for selected-guide perpendicular-plane and intersection-marker DTOs.
+- `Hinge3DSelector` and an axis/label concern (`Axis3DSelector` or the projection-plane selector's axis submodule) for hinge/reference/auxiliary axis geometry and labels.
+
+A single top-level controller may compose these selectors, but no file may absorb all projection-plane, planar-element, reconstructed-element, guide, hinge, and axis traversal. This direct proposal remains a fallback only if it preserves that split.
+
+### Lifecycle, grouped replacement, and CSS2D label disposal requirements
+
+The implementation must introduce a scene-object registry/group-replacement boundary that replaces complete render groups atomically and disposes all removed resources. Validation must prove:
+
+- repeated `scene.children.filter(...).forEach(scene.remove)` clearing patterns are removed from `ThreeView.vue` and replaced by grouped registry replacement;
+- geometries, materials, line materials, meshes/lines, and CSS2D label objects are cleaned up or replaced when render groups refresh;
+- CSS2D labels created for projection planes, auxiliary axes, reference axes, guide markers, or future scene labels are not orphaned across refresh, resize, or unmount;
+- `ThreeView.vue` delegates mount, refresh, resize, and dispose to the runtime/scene host rather than manually clearing object families.
+
+### Tightened validation gates for the direct fallback
+
+The implementation-stage validation must include stable logs for all mandatory cadence commands and these additional Wave 008 checks:
+
+- shell-boundary static scan proving `ThreeView.vue` contains no `new THREE.*`, `scene.children`, `Float32BufferAttribute`, `LineBasicMaterial`, `MeshBasicMaterial`, `SphereGeometry`, `TubeGeometry`, `PlaneGeometry`, `ArrowHelper`, `CSS2DObject`, direct projection/guide domain realization calls, `world.projectionPlanes`, `getAll3D*`, `getAllHingeLines`, `realize2D(world)`, or `realize3D(world)` except shell/controller wiring;
+- scene setup extraction check proving scene/camera/WebGLRenderer/CSS2DRenderer/OrbitControls/lights/animation/resize/dispose live in `ThreeSceneHost`/runtime, not `ThreeView.vue`;
+- selector tests for projection-plane meshes/grids/labels, planar 2D-on-3D elements, reconstructed 3D elements, guide perpendicular planes/intersections, hinge lines, axes, and domain-to-view conversion metadata;
+- adapter/registry tests for projection-plane meshes, CSS2D label replacement/cleanup, guide and hinge objects, grouped object replacement, and disposal semantics;
+- mandatory root and frontend lint/test/build cadence plus e2e/Playwright or exact classification of pre-existing blockers;
+- live 3D smoke proving `canvas.three-canvas` mounts, scene setup occurs through the runtime, display/selection refreshes produce representative 3D groups, and the preview refresh/probe is recorded.
+
+These gates intentionally align with no-backcompat/aggressive-deletion priorities: inline `ThreeView.vue` geometry/mesh helpers, `Element2DRenderer3D`, raw-`World` scene adapters, duplicated 2D/3D render special cases, obsolete tests/fixtures, compatibility shims, and debug logging must be deleted rather than wrapped.
+

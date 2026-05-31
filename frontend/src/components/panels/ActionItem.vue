@@ -1,15 +1,8 @@
 <template>
   <div
     class="action-item"
-    :class="{
-      'infeasible': action.infeasible
-    }"
-    :title="action.infeasible ? `Infeasible: ${action.infeasibilityReason || 'Constraint violation'}` : ''"
+
   >
-    <div class="action-header">
-      <span class="action-type">{{ formatActionType(action.actionType) }}</span>
-      <span class="timestamp">{{ formatTime(action.timestamp) }}</span>
-    </div>
     <!-- Phase 92: Display elementId instead of outputs array -->
     <div v-if="action.elementId" class="action-outputs">
       <span class="label">Element:</span>
@@ -23,34 +16,13 @@
 
 <script setup lang="ts">
 import type { Action } from '../../domain/processTree/Action';
-import { ActionType } from '../../domain/processTree/Action';
 
 interface Props {
   action: Action;
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 
-/**
- * Format ActionType enum to readable string
- */
-function formatActionType(actionType: ActionType): string {
-  // Convert CamelCase to Title Case with spaces
-  return actionType
-    .replace(/([A-Z])/g, ' $1')
-    .trim();
-}
-
-/**
- * Format timestamp to time string
- */
-function formatTime(date: Date): string {
-  return date.toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  });
-}
 </script>
 
 <style scoped>

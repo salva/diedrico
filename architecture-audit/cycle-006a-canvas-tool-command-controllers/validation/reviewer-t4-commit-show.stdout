@@ -1,0 +1,21 @@
+ad914f5 [tsk-t3-correct-ambiguous-intents-and-tests] [t3-correct-ambiguous-intents-and-tests] fix ambiguous tool intents and focused tests
+A	.saivage/stages/cycle-006a-implement-canvas-tool-command-controllers/reports/t3-correct-ambiguous-intents-and-tests.json
+M	architecture-audit/cycle-006a-canvas-tool-command-controllers/implementation-log.md
+A	architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/t3-focused-combined-postchoice.stderr
+A	architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/t3-focused-combined-postchoice.stdout
+A	architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/t3-focused-controllers-final.stderr
+A	architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/t3-focused-controllers-final.stdout
+A	architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/t3-focused-tools.stderr
+A	architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/t3-focused-tools.stdout
+A	architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/t3-static-metadata-boundary-final.stderr
+A	architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/t3-static-metadata-boundary-final.stdout
+A	architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/t3-tsc-filtered-final.stderr
+A	architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/t3-tsc-filtered-final.stdout
+A	architecture-audit/cycle-006a-canvas-tool-command-controllers/validation/t3-tsc-noemit-final.combined
+M	frontend/src/application/construction/ConstructionUseCases.ts
+M	frontend/src/application/tools/ToolCommandIntents.ts
+M	frontend/src/tools/ArgumentCollectorTool.ts
+M	frontend/src/tools/IntersectionTool.ts
+M	frontend/src/tools/TangentLineToCircleParallelToLineTool.ts
+M	frontend/src/tools/TangentLineToCircleThroughPointTool.ts
+A	frontend/tests/unit/application/canvasToolControllers.spec.ts

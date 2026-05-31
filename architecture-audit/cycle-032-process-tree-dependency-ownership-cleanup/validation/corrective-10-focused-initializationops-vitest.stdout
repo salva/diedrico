@@ -1,0 +1,14 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run tests/unit/commands/initializationOps.spec.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/commands/initializationOps.spec.ts  (15 tests) 18ms
+
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+   Start at  08:04:06
+   Duration  2.09s (transform 498ms, setup 0ms, collect 634ms, tests 18ms, environment 738ms, prepare 142ms)
+

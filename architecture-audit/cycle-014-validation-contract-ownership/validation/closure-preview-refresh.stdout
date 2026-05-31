@@ -1,0 +1,25 @@
+
+> diedrico-frontend@0.1.0 dev
+> vite --host 0.0.0.0
+
+
+  VITE v5.4.21  ready in 296 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: http://10.0.3.113:5173/
+8:38:55 PM [vite] page reload playwright-report/index.html
+8:47:39 PM [vite] page reload playwright-report/index.html
+8:47:39 PM [vite] page reload playwright-report/index.html
+8:48:23 PM [vite] page reload playwright-report/index.html
+8:48:42 PM [vite] page reload playwright-report/index.html
+8:49:04 PM [vite] page reload playwright-report/index.html
+9:50:15 PM [vite] page reload src/application/canvasPresentation/CanvasPresentationSelector.ts
+9:50:15 PM [vite] page reload src/application/canvasPresentation/CanvasPresentationController.ts
+9:50:15 PM [vite] page reload src/application/canvasPresentation/CanvasVisibilityPolicy.ts
+9:50:15 PM [vite] page reload src/components/workspace/SvgCanvas.vue
+9:50:15 PM [vite] page reload src/domain/presentation/Paper.ts
+9:50:55 PM [vite] page reload src/application/canvasPresentation/CanvasPresentationSelector.ts
+9:51:48 PM [vite] page reload src/App.vue
+9:51:48 PM [vite] hmr update /src/components/panels/ThreeView.vue?vue&type=style&index=0&scoped=be45d60d&lang.css
+9:56:18 PM [vite] page reload playwright-report/index.html
+9:58:15 PM [vite] page reload playwright-report/index.html

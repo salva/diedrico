@@ -1,0 +1,6 @@
+frontend/tests/unit/tools/pointTool.spec.ts:22:function liveInteractionQuery(worldRef: () => any, planeIdRef: () => string): CanvasInteractionQuery {
+frontend/tests/unit/tools/pointTool.spec.ts:64:    interactionQuery = liveInteractionQuery(() => world, () => horizontalPlaneId);
+frontend/tests/unit/tools/CircleTool.spec.ts:27:function liveInteractionQuery(worldRef: () => any, planeIdRef: () => string): CanvasInteractionQuery {
+frontend/tests/unit/tools/CircleTool.spec.ts:51:    interactionQuery = liveInteractionQuery(() => world, () => planeId);
+frontend/tests/unit/tools/toolValidation.spec.ts:33:function liveInteractionQuery(worldRef: () => any, planeIdRef: () => string): CanvasInteractionQuery {
+frontend/tests/unit/tools/toolValidation.spec.ts:78:    interactionQuery = liveInteractionQuery(() => world, () => planeId);

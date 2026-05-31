@@ -144,6 +144,14 @@ Evidence and owner:
 
 Ownership classification: service/domain strictness. Implementation should fix the exact strict import/nullability/result-contract failures that block `vue-tsc`, with tests for behavior-bearing service/domain contract changes.
 
+
+
+## Prior-wave repaired surface reopened by current build errors
+
+The fresh build also directly cites `frontend/src/components/panels/ActionsPanel.vue(218,46)`, `(219,15)`, and `(223,26)`. This component is a previously repaired/owned process-tree and dependency surface from the earlier process-tree/dependency-ownership work, so Wave 015 may touch it only because the current `vue-tsc` backlog proves direct type-contract failures there.
+
+Allowed Wave 015 touch boundary for `ActionsPanel.vue`: resolve only the cited process-tree/dependency type-contract errors and their direct owner dependencies, preserving the current process-tree/dependency behavior established by earlier waves. Unrelated Wave 005 behavior changes, dependency-service redesign, panel workflow redesign, command-controller cleanup, or UI normalization require a reviewed mini-cycle before implementation.
+
 ## Protected Wave 014 repair surfaces
 
 Wave 014 protected surfaces remain protected unless a direct fresh build error cites them:

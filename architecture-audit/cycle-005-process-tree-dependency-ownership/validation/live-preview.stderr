@@ -1,0 +1,19 @@
+11:30:33 PM [vite] Pre-transform error: Failed to resolve import "@/application/construction/QuickToolUseCases" from "src/application/tools/CanvasToolController.ts". Does the file exist?
+11:30:33 PM [vite] Internal server error: Failed to resolve import "@/application/construction/QuickToolUseCases" from "src/application/tools/CanvasToolController.ts". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /work/diedrico/frontend/src/application/tools/CanvasToolController.ts:6:39
+  1  |  import { executeConstructionIntent } from "@/application/construction/ConstructionUseCases";
+  2  |  import { executeQuickToolIntent } from "@/application/construction/QuickToolUseCases";
+     |                                          ^
+  3  |  import { CanvasPointMovementUseCase } from "@/application/canvas/CanvasPointMovementUseCase";
+  4  |  import { CanvasStyleUseCase } from "@/application/canvas/CanvasStyleUseCase";
+      at TransformPluginContext._formatError (file:///work/diedrico/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49258:41)
+      at TransformPluginContext.error (file:///work/diedrico/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49253:16)
+      at normalizeUrl (file:///work/diedrico/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64307:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async file:///work/diedrico/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64439:39
+      at async Promise.all (index 1)
+      at async TransformPluginContext.transform (file:///work/diedrico/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:64366:7)
+      at async PluginContainer.transform (file:///work/diedrico/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:49099:18)
+      at async loadAndTransform (file:///work/diedrico/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:51978:27)
+      at async viteTransformMiddleware (file:///work/diedrico/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js:62106:24)

@@ -1,31 +1,21 @@
 /**
- * ActionGroup - groups one or more actions together
- * Can be user-created or auto-created (auxiliary)
+ * Authoritative ActionGroup contract lives in ProcessTree.
  */
 
-import type { ConstructiveAction } from './Action';
+import type { ActionNode, ActionGroup as ProcessTreeActionGroup } from './ProcessTree';
 
-export interface ActionGroup {
-  id: string;
-  type: 'actionGroup';
-  children: (ConstructiveAction | null)[];  // One or more actions (or null tombstones)
-  isOutput: boolean;               // Phase 87: Output flag
-  isAuxiliary?: boolean;           // Helper steps
-  created: Date;
-}
+export type ActionGroup = ProcessTreeActionGroup;
 
-/**
- * Factory function to create an action group
- */
 export function createActionGroup(
   id: string,
-  children: ConstructiveAction[] = []
+  children: ActionNode[] = []
 ): ActionGroup {
   return {
     id,
     type: 'actionGroup',
     children,
-    isOutput: true, // Default to true
+    isOutput: true,
+    isAuxiliary: false,
     created: new Date()
   };
 }

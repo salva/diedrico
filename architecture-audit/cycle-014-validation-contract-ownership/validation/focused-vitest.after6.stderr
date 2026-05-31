@@ -1,0 +1,133 @@
+Traceback (most recent call last):
+  File "<stdin>", line 3, in <module>
+  File "/usr/lib/python3.12/pathlib.py", line 1029, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1015, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'frontend/tests/integration/guide-creation.test.ts'
+stderr | tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Save behavior > should not save with validation errors
+[PropertiesDialog] Validation failed
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/integration/guide-creation.test.ts > Guide Creation - Integration Tests > Regular Line Reference > should create guide on regular line without sibling
+TypeError: plane.getElement is not a function
+ ❯ tests/integration/guide-creation.test.ts:75:27
+     73|       // Verify guide exists in world
+     74|       const plane = world.getProjectionPlaneById(planeId)!;
+     75|       const guide = plane.getElement(result.guideId);
+       |                           ^
+     76|       expect(guide).toBeDefined();
+     77|       expect(guide?.elementType).toBe('Guide2D');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  tests/integration/guide-creation.test.ts > Guide Creation - Integration Tests > HalfHingeLine2D Reference > should create sibling guide when reference is hinge line
+TypeError: Cannot read properties of undefined (reading 'values')
+ ❯ tests/integration/guide-creation.test.ts:86:50
+     84|       // Get the hinge line on plane H
+     85|       const planeH = world.getProjectionPlaneById(projPlaneH)!;
+     86|       const hingeLines = Array.from(planeH.lines.values()).filter(
+       |                                                  ^
+     87|         line => line.elementType === 'HalfHingeLine2D'
+     88|       );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Dialog visibility > should emit close event when close button clicked
+AssertionError: expected undefined to be truthy
+
+- Expected: 
+undefined
+
++ Received: 
+false
+
+ ❯ tests/unit/components/propertiesDialog.spec.ts:69:40
+     67|       
+     68|       await wrapper.find('.close-button').trigger('click');
+     69|       expect(wrapper.emitted('close')).toBeTruthy();
+       |                                        ^
+     70|     });
+     71| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Dialog visibility > should emit close event when overlay clicked
+AssertionError: expected undefined to be truthy
+
+- Expected: 
+undefined
+
++ Received: 
+false
+
+ ❯ tests/unit/components/propertiesDialog.spec.ts:82:40
+     80|       
+     81|       await wrapper.find('.dialog-overlay').trigger('click');
+     82|       expect(wrapper.emitted('close')).toBeTruthy();
+       |                                        ^
+     83|     });
+     84| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Dialog visibility > should emit close event when cancel button clicked
+AssertionError: expected undefined to be truthy
+
+- Expected: 
+undefined
+
++ Received: 
+false
+
+ ❯ tests/unit/components/propertiesDialog.spec.ts:95:40
+     93|       
+     94|       await wrapper.find('.button-secondary').trigger('click');
+     95|       expect(wrapper.emitted('close')).toBeTruthy();
+       |                                        ^
+     96|     });
+     97|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Save behavior > should emit save event with valid changes
+AssertionError: expected undefined to be truthy
+
+- Expected: 
+undefined
+
++ Received: 
+false
+
+ ❯ tests/unit/components/propertiesDialog.spec.ts:295:39
+    293|       
+    294|       // Should emit save event with changes
+    295|       expect(wrapper.emitted('save')).toBeTruthy();
+       |                                       ^
+    296|       const saveEvent = wrapper.emitted('save')?.[0]?.[0] as any;
+    297|       expect(saveEvent.elementId).toStrictEqual(pointId);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Save behavior > should only include overridden properties in save event
+TypeError: Cannot read properties of undefined (reading 'color')
+ ❯ tests/unit/components/propertiesDialog.spec.ts:329:24
+    327|       // Should only include color in save event
+    328|       const saveEvent = wrapper.emitted('save')?.[0]?.[0] as any;
+    329|       expect(saveEvent.color).toBe('#FF5733');
+       |                        ^
+    330|       expect(saveEvent.lineWidth).toBeUndefined();
+    331|       expect(saveEvent.lineStyle).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c vitest run tests/unit/components/propertiesDialog.spec.ts tests/integration/guide-creation.test.ts

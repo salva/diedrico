@@ -1,0 +1,47 @@
+    68	    // via dependency tracking, not explicitly here
+    69	  }
+    70	
+    71	  serialize() {
+    72	    return {
+    73	      opType: this.type,
+    74	      planeId: this.parameters.planeId,
+    75	      line1Id: this.parameters.line1Id,
+    76	      line2Id: this.parameters.line2Id,
+    77	      index: this.parameters.index,
+    78	      pointId: this.outputs.pointId
+    79	    };
+    80	  }
+    81	}
+    56	  registry.register('AddCircleCircleIntersectionPoint2D', d => restoreOutput(new AddCircleCircleIntersectionPoint2DOp(s(d, 'planeId'), s(d, 'circle1Id'), s(d, 'circle2Id'), n(d, 'index')), { pointId: so(d, 'pointId') }));
+    57	  registry.register('AddGuide2DPerpendicularToLine', d => restoreOutput(new AddGuide2DPerpendicularToLineOp(s(d, 'planeId'), s(d, 'referenceLineId'), s(d, 'throughPointId'), so(d, 'guideId')), { guideId: so(d, 'guideId') }));
+    58	  registry.register('AddSiblingGuide2D', d => restoreOutput(new AddSiblingGuide2DOp(s(d, 'planeId'), s(d, 'primaryGuideId'), s(d, 'referenceLineId'), so(d, 'siblingGuideId')), { siblingGuideId: so(d, 'siblingGuideId') }));
+    59	  registry.register('AddSiblingIntersectionPoint2D', d => restoreOutput(new AddSiblingIntersectionPoint2DOp(s(d, 'planeId'), s(d, 'primaryIntersectionId')), { pointId: so(d, 'pointId') }));
+    60	  registry.register('AddIntersectionPoint2D', d => restoreOutput(new AddIntersectionPoint2DOp(s(d, 'planeId'), s(d, 'line1Id'), s(d, 'line2Id'), n(d, 'index')), { pointId: so(d, 'pointId') }));
+    61	  registry.register('RemovePoint2D', d => new RemovePoint2DOp(s(d, 'planeId'), s(d, 'pointId')));
+    62	  registry.register('RemoveLine2D', d => new RemoveLine2DOp(s(d, 'planeId'), s(d, 'lineId')));
+    31	    expect(serializeOperation(op)).toEqual(descriptor);
+    32	  });
+    33	
+    34	
+    35	  it('round-trips AddIntersectionPoint2D line identifiers and restored output state', () => {
+    36	    const descriptor = {
+    37	      opType: 'AddIntersectionPoint2D',
+    38	      planeId: 'projPlane3',
+    39	      line1Id: 'projPlane3/line2d4',
+    40	      line2Id: 'projPlane3/line2d5',
+    41	      index: 0,
+    42	      pointId: 'projPlane3/point2d12'
+    43	    };
+    44	
+    45	    const restored = deserializeOperation(descriptor);
+    46	    expect(restored.type).toBe('AddIntersectionPoint2D');
+    47	    expect(serializeOperation(restored)).toEqual(descriptor);
+    48	
+    49	    const created = new AddIntersectionPoint2DOp(descriptor.planeId, descriptor.line1Id, descriptor.line2Id, descriptor.index);
+    50	    created.outputs = { pointId: descriptor.pointId };
+    51	    expect(serializeOperation(created)).toEqual(descriptor);
+    52	  });
+    53	
+    54	  it('persists AddGuide generated IDs from output state, not mutable parameters', () => {
+    55	    const op = new AddGuide2DPerpendicularToLineOp('projPlane3', 'line1', 'point1');
+    56	    op.outputs = { guideId: 'projPlane3/guide2d20' };

@@ -1,0 +1,326 @@
+
+> diedrico-frontend@0.1.0 build
+> vue-tsc && vite build
+
+src/App.vue(85,10): error TS2322: Type 'ComputedRef<string>' is not assignable to type 'string'.
+src/App.vue(110,25): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+src/App.vue(111,23): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+src/App.vue(112,22): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+src/App.vue(130,5): error TS2322: Type '{ isAuthenticated: ComputedRef<boolean>; user: ComputedRef<{ name: string; email: string; picture?: string | undefined; sub: string; } | null>; accessToken: ComputedRef<string | null>; ... 5 more ...; isTokenExpired: () => boolean; }' is not assignable to type 'AuthStorePort'.
+  Types of property 'setAuthenticated' are incompatible.
+    Type '(profile: GoogleUserProfile, token: string, expiry?: Date | undefined) => void' is not assignable to type '(profile: GoogleUserProfile, accessToken: string, refreshToken?: string | undefined) => void'.
+      Types of parameters 'expiry' and 'refreshToken' are incompatible.
+        Type 'string | undefined' is not assignable to type 'Date | undefined'.
+          Type 'string' is not assignable to type 'Date'.
+src/commands/factories/DeletionSequenceFactory.ts(84,41): error TS2339: Property 'id' does not exist on type 'Action'.
+src/commands/factories/DeletionSequenceFactory.ts(85,38): error TS2339: Property 'id' does not exist on type 'Action'.
+src/commands/factories/DeletionSequenceFactory.ts(87,36): error TS2339: Property 'id' does not exist on type 'Action'.
+src/commands/factories/GuideSequenceFactory.ts(81,16): error TS2322: Type 'JsonValue | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/commands/factories/GuideSequenceFactory.ts(90,9): error TS2345: Argument of type 'JsonValue | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/commands/factories/GuideSequenceFactory.ts(97,42): error TS2345: Argument of type 'JsonValue | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/commands/factories/GuideSequenceFactory.ts(111,44): error TS2345: Argument of type 'JsonValue | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/commands/factories/GuideSequenceFactory.ts(114,72): error TS2345: Argument of type 'SiblingGuide2D' is not assignable to parameter of type 'Guide2D'.
+  Property 'throughPointId' is missing in type 'SiblingGuide2D' but required in type 'Guide2D'.
+src/commands/factories/GuideSequenceFactory.ts(127,14): error TS2322: Type 'JsonValue | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/commands/factories/GuideSequenceFactory.ts(127,23): error TS2322: Type 'JsonValue | undefined' is not assignable to type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+src/commands/factories/IntersectionSequenceFactory.ts(94,74): error TS2554: Expected 1 arguments, but got 4.
+src/commands/factories/IntersectionSequenceFactory.ts(105,13): error TS2554: Expected 1 arguments, but got 3.
+src/commands/factories/IntersectionSequenceFactory.ts(144,76): error TS2554: Expected 1 arguments, but got 5.
+src/commands/factories/IntersectionSequenceFactory.ts(155,13): error TS2554: Expected 1 arguments, but got 3.
+src/commands/factories/IntersectionSequenceFactory.ts(193,78): error TS2554: Expected 1 arguments, but got 5.
+src/commands/factories/IntersectionSequenceFactory.ts(224,43): error TS2345: Argument of type 'JsonValue | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/commands/factories/IntersectionSequenceFactory.ts(234,63): error TS2345: Argument of type 'JsonValue | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/commands/factories/IntersectionSequenceFactory.ts(236,9): error TS2322: Type 'JsonValue | undefined' is not assignable to type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+src/commands/factories/IntersectionSequenceFactory.ts(248,14): error TS2322: Type 'JsonValue | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/commands/factories/PointSequenceFactory.ts(46,38): error TS2345: Argument of type 'JsonValue | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/commands/factories/PointSequenceFactory.ts(50,14): error TS2322: Type 'JsonValue | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/commands/operations/processTree/AddProcessTreeActionGroupOp.ts(30,43): error TS2345: Argument of type 'import("/work/diedrico/frontend/src/domain/processTree/ActionGroup").ActionGroup' is not assignable to parameter of type 'import("/work/diedrico/frontend/src/domain/processTree/ProcessTree").ActionGroup'.
+  Types of property 'isAuxiliary' are incompatible.
+    Type 'boolean | undefined' is not assignable to type 'boolean'.
+      Type 'undefined' is not assignable to type 'boolean'.
+src/commands/operations/processTree/PushSubprocessOp.ts(18,64): error TS6138: Property 'subprocessId' is declared but its value is never read.
+src/commands/operations/processTree/RenameSubprocessOp.ts(23,7): error TS2741: Property 'outputs' is missing in type '{ success: false; error: string; }' but required in type 'OperationResult<JsonObject>'.
+src/commands/operations/viewState/ViewStateOperations.ts(5,32): error TS2307: Cannot find module '../Command' or its corresponding type declarations.
+src/commands/operations/viewState/ViewStateOperations.ts(6,38): error TS2307: Cannot find module '../../types/CommandTypes' or its corresponding type declarations.
+src/commands/operations/world/AddBrokenHingeLineOp.ts(72,88): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+src/commands/operations/world/AddBrokenHingeLineOp.ts(73,88): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+src/commands/operations/world/AddCircleCircleIntersectionPoint2DOp.ts(39,9): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+src/commands/operations/world/AddCircleOp.ts(35,9): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+src/commands/operations/world/AddFreePointOp.ts(32,57): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+src/commands/operations/world/AddGuideOp.ts(39,9): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+src/commands/operations/world/AddGuideOp.ts(106,9): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+src/commands/operations/world/AddIntersectionPointOp.ts(22,13): error TS6138: Property 'index' is declared but its value is never read.
+src/commands/operations/world/AddIntersectionPointOp.ts(39,9): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+src/commands/operations/world/AddLineCircleIntersectionPoint2DOp.ts(39,9): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+src/commands/operations/world/AddLineLineIntersectionPoint2DOp.ts(37,9): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+src/commands/operations/world/AddLineOp.ts(34,9): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+src/commands/operations/world/AddLineOp.ts(100,9): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+src/commands/operations/world/AddLineOp.ts(130,22): error TS2339: Property 'circleId' does not exist on type 'AddLine2DParallelToLineOp'.
+src/commands/operations/world/AddLineOp.ts(132,19): error TS2339: Property 'tangentIndex' does not exist on type 'AddLine2DParallelToLineOp'.
+src/commands/operations/world/AddLineOp.ts(167,9): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+src/commands/operations/world/AddLineOp.ts(197,22): error TS2339: Property 'circleId' does not exist on type 'AddLine2DPerpendicularToLineOp'.
+src/commands/operations/world/AddLineOp.ts(199,19): error TS2339: Property 'tangentIndex' does not exist on type 'AddLine2DPerpendicularToLineOp'.
+src/commands/operations/world/AddLineOp.ts(236,9): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+src/commands/operations/world/AddLineOp.ts(305,9): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+src/commands/operations/world/AddSegmentOp.ts(34,9): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+src/commands/operations/world/AddSiblingIntersectionPoint2DOp.ts(42,9): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+src/commands/operations/world/InitializationOps.ts(216,9): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+src/commands/operations/world/InitializationOps.ts(367,9): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+src/commands/operations/world/RemoveElementOps.ts(60,55): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+src/commands/operations/world/RemoveElementOps.ts(93,39): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+src/commands/operations/world/RemoveElementOps.ts(146,53): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+src/commands/operations/world/RemoveElementOps.ts(179,37): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+src/commands/operations/world/RemoveElementOps.ts(231,56): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+src/commands/operations/world/RemoveElementOps.ts(264,40): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+src/commands/operations/world/RemoveElementOps.ts(315,57): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+src/commands/operations/world/RemoveElementOps.ts(348,41): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+src/commands/operations/world/RemoveElementOps.ts(408,36): error TS2580: Cannot find name 'require'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
+src/commands/operations/world/RemoveElementOps.ts(435,76): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+src/commands/operations/world/RemoveElementOps.ts(444,54): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+src/commands/operations/world/RemoveElementOps.ts(450,55): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+src/commands/operations/world/RemoveElementOps.ts(488,40): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+src/commands/operations/world/RemoveElementOps.ts(495,51): error TS2345: Argument of type 'World' is not assignable to parameter of type 'ProjectionPlaneMutationContext'.
+  Property 'getPlaneForElement' is private in type 'World' but not in type 'ProjectionPlaneMutationContext'.
+src/commands/operations/world/UpdateElementStyleOp.ts(59,9): error TS2322: Type 'Line2D | undefined' is not assignable to type 'Point2D | undefined'.
+  Type 'Line2D' is not assignable to type 'Point2D'.
+    The types returned by 'realize2D(...)' are incompatible between these types.
+      Type 'Line2DRealization2D' is missing the following properties from type 'Point2DRealization2D': position, getPosition
+src/commands/operations/world/UpdateElementStyleOp.ts(62,9): error TS2322: Type 'Circle2D | undefined' is not assignable to type 'Point2D | undefined'.
+  Type 'Circle2D' is not assignable to type 'Point2D'.
+    The types returned by 'realize2D(...)' are incompatible between these types.
+      Type 'Circle2DRealization2D | null' is not assignable to type 'Point2DRealization2D'.
+        Type 'null' is not assignable to type 'Point2DRealization2D'.
+src/commands/operations/world/UpdateElementStyleOp.ts(119,9): error TS2322: Type 'Line2D | undefined' is not assignable to type 'Point2D | undefined'.
+  Type 'Line2D' is not assignable to type 'Point2D'.
+    The types returned by 'realize2D(...)' are incompatible between these types.
+      Type 'Line2DRealization2D' is missing the following properties from type 'Point2DRealization2D': position, getPosition
+src/commands/operations/world/UpdateElementStyleOp.ts(122,9): error TS2322: Type 'Circle2D | undefined' is not assignable to type 'Point2D | undefined'.
+  Type 'Circle2D' is not assignable to type 'Point2D'.
+    The types returned by 'realize2D(...)' are incompatible between these types.
+      Type 'Circle2DRealization2D | null' is not assignable to type 'Point2DRealization2D'.
+        Type 'null' is not assignable to type 'Point2DRealization2D'.
+src/commands/operations/world/UpdateElementStyleOp.ts(138,3): error TS2416: Property 'serialize' in type 'UpdateElementStyleOp' is not assignable to the same property in base type 'IOperation<OperationDescriptor<string, JsonObject>>'.
+  Type '() => { opType: string; elementId: string; planeId: string; newStyle: StyleProperties; outputs: Record<string, any>; }' is not assignable to type '() => OperationDescriptor<string, JsonObject>'.
+    Type '{ opType: string; elementId: string; planeId: string; newStyle: StyleProperties; outputs: Record<string, any>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'newStyle' is incompatible with index signature.
+        Type 'StyleProperties' is not assignable to type 'JsonValue | undefined'.
+          Type 'StyleProperties' is not assignable to type 'JsonObject'.
+            Index signature for type 'string' is missing in type 'StyleProperties'.
+src/commands/operations/world/registerWorldOperationDescriptors.ts(66,48): error TS2322: Type 'UpdateElementStyleOp' is not assignable to type 'IOperation<OperationDescriptor<string, JsonObject>>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; elementId: string; planeId: string; newStyle: StyleProperties; outputs: Record<string, any>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'newStyle' is incompatible with index signature.
+        Type 'StyleProperties' is not assignable to type 'JsonValue | undefined'.
+          Type 'StyleProperties' is not assignable to type 'JsonObject'.
+            Index signature for type 'string' is missing in type 'StyleProperties'.
+src/components/dialogs/NewProjectDialog.vue(43,10): error TS2724: '"../../services/ProjectService"' has no exported member named 'projectService'. Did you mean 'ProjectService'?
+src/components/dialogs/PropertiesDialog.vue(290,15): error TS2339: Property 'type' does not exist on type 'Point2D'.
+src/components/panels/ActionGroupItem.vue(48,15): error TS2305: Module '"../../domain/processTree/Action"' has no exported member 'ConstructiveAction'.
+src/components/panels/ActionItem.vue(5,28): error TS2339: Property 'infeasible' does not exist on type 'Action'.
+src/components/panels/ActionItem.vue(7,20): error TS2339: Property 'infeasible' does not exist on type 'Action'.
+src/components/panels/ActionItem.vue(7,55): error TS2339: Property 'infeasibilityReason' does not exist on type 'Action'.
+src/components/panels/ActionItem.vue(10,60): error TS2339: Property 'actionType' does not exist on type 'Action'.
+src/components/panels/ActionItem.vue(11,52): error TS2339: Property 'timestamp' does not exist on type 'Action'.
+src/components/panels/ActionItem.vue(26,10): error TS2305: Module '"../../domain/processTree/Action"' has no exported member 'ActionType'.
+src/components/panels/ActionItem.vue(32,7): error TS6133: 'props' is declared but its value is never read.
+src/components/panels/ActionsPanel.vue(53,61): error TS2307: Cannot find module '@/domain/processTree/ProcessTreeNode' or its corresponding type declarations.
+src/components/panels/ActionsPanel.vue(218,46): error TS2341: Property 'dependencyService' is private and only accessible within class 'World'.
+src/components/panels/ActionsPanel.vue(219,15): error TS2341: Property 'dependencyService' is private and only accessible within class 'World'.
+src/components/panels/ActionsPanel.vue(223,26): error TS2339: Property 'id' does not exist on type 'Action'.
+src/components/panels/ElementTypeGroup.vue(33,15): error TS6133: 'computed' is declared but its value is never read.
+src/components/panels/ElementTypeGroup.vue(45,7): error TS6133: 'props' is declared but its value is never read.
+src/components/panels/ElementTypeGroup.vue(63,27): error TS6133: 'elementId' is declared but its value is never read.
+src/components/panels/ElementsPanel.vue(137,1): error TS6133: 'Element2D' is declared but its value is never read.
+src/components/panels/ElementsPanel.vue(137,10): error TS2724: '"@/domain/world/Element"' has no exported member named 'Element2D'. Did you mean 'Element'?
+src/components/panels/ElementsPanel.vue(168,9): error TS6133: 'totalPoints' is declared but its value is never read.
+src/components/panels/ElementsPanel.vue(169,9): error TS6133: 'totalLines' is declared but its value is never read.
+src/components/panels/ProcessTreeNode.vue(181,25): error TS2339: Property 'inputs' does not exist on type 'ActionNode'.
+src/components/panels/ProcessTreeNode.vue(181,40): error TS2339: Property 'inputs' does not exist on type 'ActionNode'.
+src/components/panels/ProcessTreeNode.vue(182,40): error TS2339: Property 'inputs' does not exist on type 'ActionNode'.
+src/components/panels/ProcessTreeNode.vue(184,25): error TS2339: Property 'outputs' does not exist on type 'ActionNode'.
+src/components/panels/ProcessTreeNode.vue(184,41): error TS2339: Property 'outputs' does not exist on type 'ActionNode'.
+src/components/panels/ProcessTreeNode.vue(185,41): error TS2339: Property 'outputs' does not exist on type 'ActionNode'.
+src/components/panels/ProcessTreeNode.vue(417,49): error TS2339: Property 'name' does not exist on type 'ProcessNode'.
+  Property 'name' does not exist on type 'ActionGroup'.
+src/components/panels/ProcessTreeNode.vue(426,31): error TS2339: Property 'name' does not exist on type 'ProcessNode'.
+  Property 'name' does not exist on type 'ActionGroup'.
+src/components/panels/ProcessTreeNode.vue(429,10): error TS6133: 'formatActionType' is declared but its value is never read.
+src/components/panels/ProcessTreeNode.vue(436,10): error TS6133: 'formatTime' is declared but its value is never read.
+src/components/panels/ProcessTreeNode.vue(441,10): error TS6133: 'formatParameterValue' is declared but its value is never read.
+src/components/toolbars/MainToolbar.vue(45,33): error TS2345: Argument of type 'string' is not assignable to parameter of type 'ToolType'.
+src/components/toolbars/MainToolbar.vue(49,30): error TS2345: Argument of type 'string' is not assignable to parameter of type 'ToolType'.
+src/components/toolbars/MainToolbar.vue(50,15): error TS2339: Property 'clearTool' does not exist on type '{ currentTool: ComputedRef<ToolType>; currentToolStepMessage: ComputedRef<string>; setTool: (tool: ToolType) => void; setToolStepMessage: (message: string) => void; ... 7 more ...; getLastUsedTool: (familyId: string) => string | undefined; }'.
+src/components/toolbars/MainToolbar.vue(52,15): error TS2339: Property 'setActiveTool' does not exist on type '{ currentTool: ComputedRef<ToolType>; currentToolStepMessage: ComputedRef<string>; setTool: (tool: ToolType) => void; setToolStepMessage: (message: string) => void; ... 7 more ...; getLastUsedTool: (familyId: string) => string | undefined; }'.
+src/components/toolbars/PlaneSelector.vue(91,9): error TS6133: '_' is declared but its value is never read.
+src/components/toolbars/PlaneSelector.vue(100,9): error TS6133: '_' is declared but its value is never read.
+src/components/toolbars/PlaneSelector.vue(105,9): error TS6133: '_' is declared but its value is never read.
+src/components/toolbars/PlaneSelector.vue(139,3): error TS18048: 'world' is possibly 'undefined'.
+src/components/workspace/SvgCanvas.vue(140,107): error TS2339: Property 'temporary' does not exist on type '{ hoverState: Ref<{ elementId: string | null; elementType: string | null; label: string | null; temporary: boolean; }, HoverState | { elementId: string | null; elementType: string | null; label: string | null; temporary: boolean; }>; ... 6 more ...; isElementHovered: (elementId: string) => boolean; }'.
+src/components/workspace/SvgCanvas.vue(140,136): error TS2339: Property 'temporary' does not exist on type '{ hoverState: Ref<{ elementId: string | null; elementType: string | null; label: string | null; temporary: boolean; }, HoverState | { elementId: string | null; elementType: string | null; label: string | null; temporary: boolean; }>; ... 6 more ...; isElementHovered: (elementId: string) => boolean; }'.
+src/components/workspace/SvgCanvas.vue(179,64): error TS6133: 'provide' is declared but its value is never read.
+src/components/workspace/SvgCanvas.vue(229,9): error TS6133: '_' is declared but its value is never read.
+src/components/workspace/SvgCanvas.vue(380,27): error TS2339: Property 'getArc' does not exist on type 'ProjectionPlane'.
+src/components/workspace/SvgCanvas.vue(401,27): error TS2339: Property 'getArc' does not exist on type 'ProjectionPlane'.
+src/components/workspace/SvgCanvas.vue(546,10): error TS6133: 'getPlaneTransformsForRendering' is declared but its value is never read.
+src/components/workspace/SvgCanvas.vue(691,46): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/components/workspace/SvgCanvas.vue(713,44): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/components/workspace/SvgCanvas.vue(714,9): error TS6133: 'hit' is declared but its value is never read.
+src/components/workspace/SvgCanvas.vue(756,5): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/components/workspace/SvgCanvas.vue(850,44): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/components/workspace/SvgCanvas.vue(858,48): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/components/workspace/SvgCanvas.vue(868,9): error TS2322: Type 'string | undefined' is not assignable to type 'string | null'.
+  Type 'undefined' is not assignable to type 'string | null'.
+src/components/workspace/SvgCanvas.vue(870,64): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/components/workspace/SvgCanvas.vue(911,44): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/components/workspace/SvgCanvas.vue(932,5): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/components/workspace/SvgCanvas.vue(1033,49): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/components/workspace/SvgCanvas.vue(1036,9): error TS6133: 'activeToolName' is declared but its value is never read.
+src/components/workspace/SvgCanvas.vue(1039,38): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/components/workspace/SvgCanvas.vue(1110,5): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/components/workspace/SvgCanvas.vue(1187,15): error TS2339: Property 'geometry' does not exist on type 'Primitive'.
+  Property 'geometry' does not exist on type 'PointPrimitive'.
+src/components/workspace/SvgCanvas.vue(1192,22): error TS2339: Property 'geometry' does not exist on type 'PointPrimitive'.
+src/components/workspace/SvgCanvas.vue(1198,25): error TS2339: Property 'geometry' does not exist on type 'LinePrimitive | SegmentPrimitive'.
+  Property 'geometry' does not exist on type 'LinePrimitive'.
+src/components/workspace/SvgCanvas.vue(1204,27): error TS2339: Property 'geometry' does not exist on type 'CirclePrimitive'.
+src/composables/useHoverHighlight.ts(15,30): error TS6133: 'Ref' is declared but its value is never read.
+src/domain/calculations/CoordinateTransform.ts(18,15): error TS2305: Module '"../world/Plane"' has no exported member 'Plane3DCoordinateSystem'.
+src/domain/processTree/ActionGroup.ts(6,15): error TS2305: Module '"./Action"' has no exported member 'ConstructiveAction'.
+src/domain/processTree/ProcessTree.ts(355,18): error TS2339: Property 'id' does not exist on type 'Action'.
+src/domain/world/Circle.ts(138,25): error TS18048: 'plane' is possibly 'undefined'.
+src/domain/world/Circle.ts(139,32): error TS18048: 'plane' is possibly 'undefined'.
+src/domain/world/Circle.ts(234,20): error TS18048: 'plane' is possibly 'undefined'.
+src/domain/world/Circle.ts(235,20): error TS18048: 'plane' is possibly 'undefined'.
+src/domain/world/Circle.ts(236,20): error TS18048: 'plane' is possibly 'undefined'.
+src/domain/world/HingeLine.ts(17,18): error TS6133: 'Line2DRealization2D' is declared but its value is never read.
+src/domain/world/Line.ts(221,20): error TS18048: 'plane' is possibly 'undefined'.
+src/domain/world/Line.ts(222,20): error TS18048: 'plane' is possibly 'undefined'.
+src/domain/world/Line.ts(310,21): error TS18048: 'plane' is possibly 'undefined'.
+src/domain/world/Line.ts(322,26): error TS18048: 'plane' is possibly 'undefined'.
+src/domain/world/Line.ts(560,20): error TS18048: 'plane' is possibly 'undefined'.
+src/domain/world/Line.ts(566,26): error TS18048: 'plane' is possibly 'undefined'.
+src/domain/world/Line.ts(736,20): error TS18048: 'plane' is possibly 'undefined'.
+src/domain/world/Segment.ts(76,16): error TS18048: 'plane' is possibly 'undefined'.
+src/domain/world/Segment.ts(77,16): error TS18048: 'plane' is possibly 'undefined'.
+src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts(74,9): error TS2345: Argument of type 'ProjectionPlaneRealizationContext' is not assignable to parameter of type 'World'.
+  Type 'ProjectionPlaneRealizationContext' is missing the following properties from type 'World': hingeLines, planes3D, projectionPlanes, points3D, and 86 more.
+src/domain/world/projectionPlane/AuxiliaryProjectionPlane.ts(125,9): error TS2345: Argument of type 'ProjectionPlaneRealizationContext' is not assignable to parameter of type 'World'.
+  Type 'ProjectionPlaneRealizationContext' is missing the following properties from type 'World': hingeLines, planes3D, projectionPlanes, points3D, and 86 more.
+src/domain/world/projectionPlane/ProjectionPlane.ts(6,23): error TS6133: 'IntersectionPoint2D' is declared but its value is never read.
+src/domain/world/projectionPlane/ProjectionPlane.ts(260,41): error TS2345: Argument of type 'ProjectionPlaneMutationContext' is not assignable to parameter of type 'World'.
+  Type 'ProjectionPlaneMutationContext' is missing the following properties from type 'World': hingeLines, planes3D, projectionPlanes, points3D, and 76 more.
+src/domain/world/projectionPlane/ProjectionPlane.ts(284,40): error TS2345: Argument of type 'ProjectionPlaneMutationContext' is not assignable to parameter of type 'World'.
+  Type 'ProjectionPlaneMutationContext' is missing the following properties from type 'World': hingeLines, planes3D, projectionPlanes, points3D, and 76 more.
+src/domain/world/projectionPlane/ProjectionPlane.ts(308,42): error TS2345: Argument of type 'ProjectionPlaneMutationContext' is not assignable to parameter of type 'World'.
+  Type 'ProjectionPlaneMutationContext' is missing the following properties from type 'World': hingeLines, planes3D, projectionPlanes, points3D, and 76 more.
+src/domain/world/projectionPlane/ProjectionPlane.ts(428,19): error TS18048: 'l1' is possibly 'undefined'.
+src/domain/world/projectionPlane/ProjectionPlane.ts(428,32): error TS2345: Argument of type 'ProjectionPlaneMutationContext' is not assignable to parameter of type 'World'.
+  Type 'ProjectionPlaneMutationContext' is missing the following properties from type 'World': hingeLines, planes3D, projectionPlanes, points3D, and 76 more.
+src/domain/world/projectionPlane/ProjectionPlane.ts(429,19): error TS18048: 'l2' is possibly 'undefined'.
+src/domain/world/projectionPlane/ProjectionPlane.ts(429,32): error TS2345: Argument of type 'ProjectionPlaneMutationContext' is not assignable to parameter of type 'World'.
+  Type 'ProjectionPlaneMutationContext' is missing the following properties from type 'World': hingeLines, planes3D, projectionPlanes, points3D, and 76 more.
+src/domain/world/projectionPlane/ProjectionPlane.ts(475,18): error TS18048: 'lineElement' is possibly 'undefined'.
+src/domain/world/projectionPlane/ProjectionPlane.ts(475,40): error TS2345: Argument of type 'ProjectionPlaneMutationContext' is not assignable to parameter of type 'World'.
+  Type 'ProjectionPlaneMutationContext' is missing the following properties from type 'World': hingeLines, planes3D, projectionPlanes, points3D, and 76 more.
+src/domain/world/projectionPlane/ProjectionPlane.ts(476,20): error TS18048: 'circleElement' is possibly 'undefined'.
+src/domain/world/projectionPlane/ProjectionPlane.ts(476,44): error TS2345: Argument of type 'ProjectionPlaneMutationContext' is not assignable to parameter of type 'World'.
+  Type 'ProjectionPlaneMutationContext' is missing the following properties from type 'World': hingeLines, planes3D, projectionPlanes, points3D, and 76 more.
+src/domain/world/projectionPlane/ProjectionPlane.ts(527,21): error TS18048: 'circle1Element' is possibly 'undefined'.
+src/domain/world/projectionPlane/ProjectionPlane.ts(527,46): error TS2345: Argument of type 'ProjectionPlaneMutationContext' is not assignable to parameter of type 'World'.
+  Type 'ProjectionPlaneMutationContext' is missing the following properties from type 'World': hingeLines, planes3D, projectionPlanes, points3D, and 76 more.
+src/domain/world/projectionPlane/ProjectionPlane.ts(528,21): error TS18048: 'circle2Element' is possibly 'undefined'.
+src/domain/world/projectionPlane/ProjectionPlane.ts(528,46): error TS2345: Argument of type 'ProjectionPlaneMutationContext' is not assignable to parameter of type 'World'.
+  Type 'ProjectionPlaneMutationContext' is missing the following properties from type 'World': hingeLines, planes3D, projectionPlanes, points3D, and 76 more.
+src/domain/world/projectionPlane/ProjectionPlane.ts(593,48): error TS2345: Argument of type 'ProjectionPlaneMutationContext' is not assignable to parameter of type 'World'.
+  Type 'ProjectionPlaneMutationContext' is missing the following properties from type 'World': hingeLines, planes3D, projectionPlanes, points3D, and 76 more.
+src/domain/world/projectionPlane/ProjectionPlane.ts(594,48): error TS2345: Argument of type 'ProjectionPlaneMutationContext' is not assignable to parameter of type 'World'.
+  Type 'ProjectionPlaneMutationContext' is missing the following properties from type 'World': hingeLines, planes3D, projectionPlanes, points3D, and 76 more.
+src/domain/world/projectionPlane/ProjectionPlane.ts(647,27): error TS18048: 'refLineElement' is possibly 'undefined'.
+src/domain/world/projectionPlane/ProjectionPlane.ts(647,52): error TS2345: Argument of type 'ProjectionPlaneMutationContext' is not assignable to parameter of type 'World'.
+  Type 'ProjectionPlaneMutationContext' is missing the following properties from type 'World': hingeLines, planes3D, projectionPlanes, points3D, and 76 more.
+src/domain/world/projectionPlane/ProjectionPlane.ts(694,27): error TS18048: 'refLineElement' is possibly 'undefined'.
+src/domain/world/projectionPlane/ProjectionPlane.ts(694,52): error TS2345: Argument of type 'ProjectionPlaneMutationContext' is not assignable to parameter of type 'World'.
+  Type 'ProjectionPlaneMutationContext' is missing the following properties from type 'World': hingeLines, planes3D, projectionPlanes, points3D, and 76 more.
+src/domain/world/projectionPlane/ProjectionPlane.ts(805,27): error TS18048: 'refLineElement' is possibly 'undefined'.
+src/domain/world/projectionPlane/ProjectionPlane.ts(805,52): error TS2345: Argument of type 'ProjectionPlaneMutationContext' is not assignable to parameter of type 'World'.
+  Type 'ProjectionPlaneMutationContext' is missing the following properties from type 'World': hingeLines, planes3D, projectionPlanes, points3D, and 76 more.
+src/domain/world/projectionPlane/ProjectionPlane.ts(968,52): error TS2345: Argument of type 'ProjectionPlaneMutationContext' is not assignable to parameter of type 'World'.
+  Type 'ProjectionPlaneMutationContext' is missing the following properties from type 'World': hingeLines, planes3D, projectionPlanes, points3D, and 76 more.
+src/domain/world/projectionPlane/ProjectionPlane.ts(1017,52): error TS2345: Argument of type 'ProjectionPlaneMutationContext' is not assignable to parameter of type 'World'.
+  Type 'ProjectionPlaneMutationContext' is missing the following properties from type 'World': hingeLines, planes3D, projectionPlanes, points3D, and 76 more.
+src/domain/world/styleService.ts(69,51): error TS2339: Property 'id' does not exist on type 'Action'.
+src/services/GeometryService.ts(5,8): error TS2307: Cannot find module '../domain/calculations/intersections' or its corresponding type declarations.
+src/services/GeometryService.ts(34,9): error TS2322: Type 'Ok<unknown>' is not assignable to type 'Result<{ x: number; y: number; } | null, string>'.
+  Type 'Ok<unknown>' is not assignable to type 'Ok<{ x: number; y: number; } | null>'.
+    Type 'unknown' is not assignable to type '{ x: number; y: number; } | null'.
+src/services/GoogleDriveService.ts(154,34): error TS2322: Type 'string | null' is not assignable to type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/services/GoogleDriveService.ts(190,34): error TS2322: Type 'string | null' is not assignable to type 'string'.
+  Type 'null' is not assignable to type 'string'.
+src/services/ProjectService.ts(93,52): error TS18048: 'record.nextElementId' is possibly 'undefined'.
+src/services/factories/PlaneSequenceFactory.ts(73,43): error TS2345: Argument of type 'JsonValue | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/services/factories/PlaneSequenceFactory.ts(79,14): error TS2322: Type 'JsonValue | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/services/factories/PlaneSequenceFactory.ts(176,27): error TS2345: Argument of type 'UpdateElementStyleOp' is not assignable to parameter of type 'IOperation<OperationDescriptor<string, JsonObject>>'.
+  The types returned by 'serialize()' are incompatible between these types.
+    Type '{ opType: string; elementId: string; planeId: string; newStyle: StyleProperties; outputs: Record<string, any>; }' is not assignable to type 'OperationDescriptor<string, JsonObject>'.
+      Property 'newStyle' is incompatible with index signature.
+        Type 'StyleProperties' is not assignable to type 'JsonValue | undefined'.
+          Type 'StyleProperties' is not assignable to type 'JsonObject'.
+            Index signature for type 'string' is missing in type 'StyleProperties'.
+src/stores/processStore.ts(5,15): error TS2305: Module '"../domain/processTree/Action"' has no exported member 'ConstructiveAction'.
+src/stores/viewStore.ts(58,3): error TS2741: Property 'showReferenceAxes' is missing in type '{ showPlanes: true; show2DElementsOnPlanes: false; showLinkingVisuals: false; showGrid: true; }' but required in type 'ThreeViewDisplayOptions'.

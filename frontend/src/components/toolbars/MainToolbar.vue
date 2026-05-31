@@ -19,12 +19,12 @@
 </template>
 
 <script setup lang="ts">
-import { useToolStore } from '@/stores/toolStore';
+import { TOOL_TYPE, useToolStore, type ToolType } from '@/stores/toolStore';
 
 const toolStore = useToolStore();
 
 interface Tool {
-  id: string;
+  id: ToolType;
   name: string;
   icon: string;
   category: string;
@@ -32,25 +32,20 @@ interface Tool {
 
 // Define available tools
 const tools: Tool[] = [
-  { id: 'select', name: 'Select', icon: '↖', category: 'basic' },
-  { id: 'point-free', name: 'Point', icon: '●', category: 'point' },
-  { id: 'point-on-element', name: 'Point on Element', icon: '◉', category: 'point' },
-  { id: 'point-intersection', name: 'Intersection Point', icon: '⊗', category: 'point' },
-  { id: 'segment', name: 'Segment', icon: '─', category: 'line' },
-  { id: 'line', name: 'Line', icon: '↔', category: 'line' },
-  { id: 'circle-center-radius', name: 'Circle', icon: '○', category: 'circle' },
+  { id: TOOL_TYPE.SELECT, name: 'Select', icon: '↖', category: 'basic' },
+  { id: TOOL_TYPE.POINT, name: 'Point', icon: '●', category: 'point' },
+  { id: TOOL_TYPE.INTERSECTION, name: 'Intersection Point', icon: '⊗', category: 'point' },
+  { id: TOOL_TYPE.SEGMENT, name: 'Segment', icon: '─', category: 'line' },
+  { id: TOOL_TYPE.LINE, name: 'Line', icon: '↔', category: 'line' },
+  { id: TOOL_TYPE.CIRCLE, name: 'Circle', icon: '○', category: 'circle' },
 ];
 
-const isToolActive = (toolId: string) => {
+const isToolActive = (toolId: ToolType) => {
   return toolStore.isToolActive(toolId);
 };
 
-const selectTool = (toolId: string) => {
-  if (toolStore.isToolActive(toolId)) {
-    toolStore.clearTool();
-  } else {
-    toolStore.setActiveTool(toolId);
-  }
+const selectTool = (toolId: ToolType) => {
+  toolStore.setTool(toolStore.isToolActive(toolId) ? TOOL_TYPE.SELECT : toolId);
 };
 </script>
 

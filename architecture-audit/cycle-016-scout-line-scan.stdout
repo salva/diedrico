@@ -1,0 +1,63 @@
+
+## SvgCanvas imports/commands :: frontend/src/components/workspace/SvgCanvas.vue
+frontend/src/components/workspace/SvgCanvas.vue:210: import type { FreePointMoveSession } from '@/application/tools/ToolCommandIntents';
+frontend/src/components/workspace/SvgCanvas.vue:418:   commandStack: inject('commandStack'),
+
+## Tools command leaks :: frontend/src/tools/ArgumentCollectorTool.ts
+frontend/src/tools/ArgumentCollectorTool.ts:41: import type { ToolContext, ToolResult, ITool } from './ITool';
+frontend/src/tools/ArgumentCollectorTool.ts:42: import type { ToolConstructionIntent } from '@/application/tools/ToolCommandIntents';
+frontend/src/tools/ArgumentCollectorTool.ts:97:     context: ToolContext
+frontend/src/tools/ArgumentCollectorTool.ts:100:       type: this.name as Exclude<import('@/application/tools/ToolCommandIntents').ConstructionIntentType, 'intersection' | 'tangent-line-to-circle-through-point' | 'tangent-line-to-circle-parallel'>,
+frontend/src/tools/ArgumentCollectorTool.ts:101:       description: this.getCommandDescription(),
+frontend/src/tools/ArgumentCollectorTool.ts:111:   protected getCommandDescription(): string {
+frontend/src/tools/ArgumentCollectorTool.ts:133:     context: ToolContext
+frontend/src/tools/ArgumentCollectorTool.ts:140:       throw new Error(result.message || `Failed to ${this.getCommandDescription().toLowerCase()}`);
+frontend/src/tools/ArgumentCollectorTool.ts:162:   handleClick(context: ToolContext): ToolResult {
+frontend/src/tools/ArgumentCollectorTool.ts:245:           return { success: true, message: `${this.getCommandDescription()} completed successfully` };
+frontend/src/tools/ArgumentCollectorTool.ts:251:         return { success: false, message: `Failed to ${this.getCommandDescription().toLowerCase()}: ${message}` };
+frontend/src/tools/ArgumentCollectorTool.ts:521:           specs.push(spec);
+
+## ITool context :: frontend/src/tools/ITool.ts
+frontend/src/tools/ITool.ts:10: import type { World } from '@/domain/world/World';
+frontend/src/tools/ITool.ts:19: export interface ToolContext {
+frontend/src/tools/ITool.ts:24:   world: World;
+frontend/src/tools/ITool.ts:44:   handleClick(context: ToolContext): ToolResult;
+frontend/src/tools/ITool.ts:45:   activate?(context: ToolContext): void;
+frontend/src/tools/ITool.ts:46:   deactivate?(context: ToolContext): void;
+
+## GuideTool imports :: frontend/src/tools/GuideTool.ts
+frontend/src/tools/GuideTool.ts:15:  * - Always creates TWO guides (primary + sibling on paired plane)
+frontend/src/tools/GuideTool.ts:17:  * - Registers TWO ProcessTree actions (primary + sibling)
+frontend/src/tools/GuideTool.ts:38:  * - Creates TWO guides (primary + sibling) via GuideSequenceFactory
+frontend/src/tools/GuideTool.ts:39:  * - Registers TWO ProcessTree actions
+frontend/src/tools/GuideTool.ts:74:    * - Sibling guide on paired plane (automatically via GuideSequenceFactory)
+frontend/src/tools/GuideTool.ts:76:    * Records TWO ProcessTree actions:
+frontend/src/tools/GuideTool.ts:77:    * - createGuideAction (primary guide)
+frontend/src/tools/GuideTool.ts:78:    * - createSiblingGuideAction (sibling guide)
+
+## ActionsPanel imports :: frontend/src/components/panels/ActionsPanel.vue
+frontend/src/components/panels/ActionsPanel.vue:69:   commandStack: inject<unknown>('commandStack')
+
+## Toolbar imports :: frontend/src/components/toolbars/MainToolbar.vue
+
+## PaperService :: frontend/src/services/PaperService.ts
+MISSING
+
+## ThreeView :: frontend/src/components/panels/ThreeView.vue
+frontend/src/components/panels/ThreeView.vue:29: import type { World } from '@/domain/world/World';
+frontend/src/components/panels/ThreeView.vue:30: import { useSelectionStore } from '@/stores/selectionStore';
+frontend/src/components/panels/ThreeView.vue:31: import { useViewStore } from '@/stores/viewStore';
+frontend/src/components/panels/ThreeView.vue:32: import { ThreeViewRuntime } from '@/rendering/threeView/ThreeViewRuntime';
+frontend/src/components/panels/ThreeView.vue:36: const renderTick = ref(0);
+frontend/src/components/panels/ThreeView.vue:41: const world = inject<World>('world')!;
+frontend/src/components/panels/ThreeView.vue:43: let unsubscribeWorldChanges: (() => void) | undefined;
+frontend/src/components/panels/ThreeView.vue:56:   const handleWorldChange = () => { renderTick.value++; };
+frontend/src/components/panels/ThreeView.vue:57:   world.subscribeToChanges(handleWorldChange);
+frontend/src/components/panels/ThreeView.vue:58:   unsubscribeWorldChanges = () => world.unsubscribeFromChanges(handleWorldChange);
+frontend/src/components/panels/ThreeView.vue:60:   watch(renderTick, refreshThreeView);
+frontend/src/components/panels/ThreeView.vue:66:   unsubscribeWorldChanges?.();
+
+## App :: frontend/src/App.vue
+
+## Backend type leak :: frontend/src/components/dialogs/OpenProjectDialog.vue
+MISSING

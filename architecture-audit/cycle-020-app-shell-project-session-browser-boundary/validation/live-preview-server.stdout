@@ -9,3 +9,26 @@
   ➜  Network: http://10.0.3.113:5173/
 3:11:50 AM [vite] page reload src/application/appShell/AppShellPorts.ts
 3:12:13 AM [vite] page reload src/application/appShell/AppShellPorts.ts
+4:19:51 AM [vite] page reload src/application/appShell/SelectionUseCases.ts
+4:20:16 AM [vite] page reload src/application/appShell/AppShellRuntime.ts
+4:25:30 AM [vite] page reload playwright-report/index.html
+4:25:42 AM [vite] page reload playwright-report/index.html
+4:26:46 AM [vite] page reload playwright-report/index.html
+4:27:09 AM [vite] page reload playwright-report/index.html
+4:27:32 AM [vite] page reload playwright-report/index.html
+4:27:55 AM [vite] page reload playwright-report/index.html
+4:28:10 AM [vite] page reload playwright-report/index.html
+4:45:28 AM [vite] page reload playwright-report/index.html
+4:45:48 AM [vite] page reload playwright-report/index.html
+4:46:12 AM [vite] page reload playwright-report/index.html
+5:52:00 AM [vite] page reload src/application/appShell/AppShellPorts.ts
+5:52:10 AM [vite] page reload src/application/appShell/ProjectSessionPersistenceAdapter.ts
+5:52:33 AM [vite] page reload src/application/appShell/AutoSaveUseCases.ts
+5:53:07 AM [vite] page reload src/application/appShell/ProjectSessionUseCases.ts
+5:53:32 AM [vite] page reload src/application/appShell/AppShellRuntime.ts
+5:54:28 AM [vite] page reload src/application/appShell/AppShellPorts.ts
+5:55:39 AM [vite] page reload src/application/appShell/AppShellPorts.ts
+5:55:39 AM [vite] page reload src/application/appShell/ProjectSessionPersistenceAdapter.ts
+5:56:24 AM [vite] page reload src/application/appShell/AppShellPorts.ts
+5:56:24 AM [vite] page reload src/application/appShell/ProjectSessionPersistenceAdapter.ts
+5:57:53 AM [vite] page reload playwright-report/index.html

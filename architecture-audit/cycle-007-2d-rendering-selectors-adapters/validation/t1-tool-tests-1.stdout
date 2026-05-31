@@ -1,0 +1,96 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run --run tests/unit/tools/CircleTool.spec.ts tests/unit/tools/toolValidation.spec.ts tests/unit/tools/pointTool.spec.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ❯ tests/unit/tools/CircleTool.spec.ts  (10 tests | 10 failed) 22ms
+   ❯ tests/unit/tools/CircleTool.spec.ts > CircleTool > Tool Identity > should have correct name
+     → planeId is not defined
+   ❯ tests/unit/tools/CircleTool.spec.ts > CircleTool > Two-Click Workflow > should require two clicks to create circle
+     → planeId is not defined
+   ❯ tests/unit/tools/CircleTool.spec.ts > CircleTool > T983: Both Points Snap (No Duplicates) > should snap to existing points for both center and circumference
+     → planeId is not defined
+   ❯ tests/unit/tools/CircleTool.spec.ts > CircleTool > T984: Require Both Points to Exist > should reject circle when circumference point does not exist
+     → planeId is not defined
+   ❯ tests/unit/tools/CircleTool.spec.ts > CircleTool > T985: Minimum Radius Validation with Snapped Points > should accept circle when snapped points meet minimum radius
+     → planeId is not defined
+   ❯ tests/unit/tools/CircleTool.spec.ts > CircleTool > Error Handling > should reject invalid plane
+     → planeId is not defined
+   ❯ tests/unit/tools/CircleTool.spec.ts > CircleTool > Error Handling > should reject invalid coordinates
+     → planeId is not defined
+   ❯ tests/unit/tools/CircleTool.spec.ts > CircleTool > Tool State Reset > should reset state after successful circle creation
+     → planeId is not defined
+   ❯ tests/unit/tools/CircleTool.spec.ts > CircleTool > T989: Parametric Updates - Circumference Point Movement > should update circle when circumference point moves
+     → planeId is not defined
+   ❯ tests/unit/tools/CircleTool.spec.ts > CircleTool > T992: Regression - Center Point Movement > should still update circle when center point moves
+     → planeId is not defined
+ ❯ tests/unit/tools/toolValidation.spec.ts  (8 tests | 8 failed) 42ms
+   ❯ tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > LineTool > should reject selecting the same point twice
+     → expected false to be true // Object.is equality
+   ❯ tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > LineTool > should accept two different points
+     → expected false to be true // Object.is equality
+   ❯ tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > SegmentTool > should reject selecting the same point twice
+     → expected false to be true // Object.is equality
+   ❯ tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > SegmentTool > should accept two different points
+     → expected false to be true // Object.is equality
+   ❯ tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > CircleTool > should reject zero-radius circle (center == circumference)
+     → expected false to be true // Object.is equality
+   ❯ tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > CircleTool > should accept valid center and circumference point
+     → expected false to be true // Object.is equality
+   ❯ tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > ParallelLineTool > should accept valid reference line and create parallel
+     → expected false to be true // Object.is equality
+   ❯ tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > PerpendicularLineTool > should accept valid reference line and create perpendicular
+     → expected false to be true // Object.is equality
+ ❯ tests/unit/tools/pointTool.spec.ts  (22 tests | 22 failed) 29ms
+   ❯ tests/unit/tools/pointTool.spec.ts > PointTool > Tool Identity > should have correct name
+     → planeId is not defined
+   ❯ tests/unit/tools/pointTool.spec.ts > PointTool > Click Handling > should create free point on valid click
+     → planeId is not defined
+   ❯ tests/unit/tools/pointTool.spec.ts > PointTool > Click Handling > should add command to command stack
+     → planeId is not defined
+   ❯ tests/unit/tools/pointTool.spec.ts > PointTool > Click Handling > should create point with correct coordinates
+     → planeId is not defined
+   ❯ tests/unit/tools/pointTool.spec.ts > PointTool > Click Handling > should create point on correct plane
+     → planeId is not defined
+   ❯ tests/unit/tools/pointTool.spec.ts > PointTool > Coordinate Validation > should accept valid Vector3 homogeneous coordinates
+     → planeId is not defined
+   ❯ tests/unit/tools/pointTool.spec.ts > PointTool > Coordinate Validation > should reject NaN coordinates
+     → planeId is not defined
+   ❯ tests/unit/tools/pointTool.spec.ts > PointTool > Coordinate Validation > should reject Infinity coordinates
+     → planeId is not defined
+   ❯ tests/unit/tools/pointTool.spec.ts > PointTool > Plane Validation > should accept valid plane_H
+     → planeId is not defined
+   ❯ tests/unit/tools/pointTool.spec.ts > PointTool > Plane Validation > should accept valid plane_V
+     → planeId is not defined
+   ❯ tests/unit/tools/pointTool.spec.ts > PointTool > Plane Validation > should reject invalid plane ID
+     → planeId is not defined
+   ❯ tests/unit/tools/pointTool.spec.ts > PointTool > Plane Validation > should not create point for invalid plane
+     → planeId is not defined
+   ❯ tests/unit/tools/pointTool.spec.ts > PointTool > Error Handling > should return failure for invalid coordinates
+     → planeId is not defined
+   ❯ tests/unit/tools/pointTool.spec.ts > PointTool > Error Handling > should handle command execution errors
+     → planeId is not defined
+   ❯ tests/unit/tools/pointTool.spec.ts > PointTool > Error Handling > should not pollute command stack on validation failure
+     → planeId is not defined
+   ❯ tests/unit/tools/pointTool.spec.ts > PointTool > Multiple Operations > should create multiple points in sequence
+     → planeId is not defined
+   ❯ tests/unit/tools/pointTool.spec.ts > PointTool > Multiple Operations > should maintain command stack for multiple operations
+     → planeId is not defined
+   ❯ tests/unit/tools/pointTool.spec.ts > PointTool > Success/Failure Messages > should return descriptive success message
+     → planeId is not defined
+   ❯ tests/unit/tools/pointTool.spec.ts > PointTool > Success/Failure Messages > should return descriptive failure message for invalid coordinates
+     → planeId is not defined
+   ❯ tests/unit/tools/pointTool.spec.ts > PointTool > Success/Failure Messages > should return descriptive failure message for invalid plane
+     → planeId is not defined
+   ❯ tests/unit/tools/pointTool.spec.ts > PointTool > Integration with Command Pattern > should allow undo after point creation
+     → planeId is not defined
+   ❯ tests/unit/tools/pointTool.spec.ts > PointTool > Integration with Command Pattern > should allow redo after undo
+     → planeId is not defined
+
+ Test Files  3 failed (3)
+      Tests  40 failed (40)
+   Start at  02:10:32
+   Duration  1.97s (transform 925ms, setup 0ms, collect 2.67s, tests 93ms, environment 1.79s, prepare 345ms)
+

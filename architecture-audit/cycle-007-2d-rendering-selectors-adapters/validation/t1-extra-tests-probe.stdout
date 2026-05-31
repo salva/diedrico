@@ -1,0 +1,83 @@
+---frontend/tests/unit/tools/pointTool.spec.ts---
+---frontend/tests/unit/tools/CircleTool.spec.ts---
+    357|       };
+    358|       const result = tool.handleClick(secondClickContext);
+    359|       expect(result.success).toBe(true);
+       |                              ^
+    360| 
+    361|       // Third click should start new circle (state reset)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  tests/unit/tools/CircleTool.spec.ts > CircleTool > T989: Parametric Updates - Circumference Point Movement > should update circle when circumference point moves
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/tools/CircleTool.spec.ts:424:30
+    422|       };
+    423|       const result = tool.handleClick(circumferenceClickContext);
+    424|       expect(result.success).toBe(true);
+       |                              ^
+    425| 
+    426|       // Get the created circle
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  tests/unit/tools/CircleTool.spec.ts > CircleTool > T992: Regression - Center Point Movement > should still update circle when center point moves
+TypeError: Cannot read properties of undefined (reading 'realize2D')
+ ❯ tests/unit/tools/CircleTool.spec.ts:520:41
+    518| 
+    519|       // Verify circle center updated, radius unchanged
+    520|       const updatedRealization = circle.realize2D(world);
+       |                                         ^
+    521|       expect(updatedRealization).not.toBeNull();
+    522|       expect(updatedRealization!.center.x).toBeCloseTo(200, 2);  // Ce…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+---frontend/tests/unit/tools/toolValidation.spec.ts---
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > ParallelLineTool > should accept valid reference line and create parallel
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/tools/toolValidation.spec.ts:175:26
+    173|       // Click on line (near midpoint), then on through-point
+    174|       const r1 = tool.handleClick(makeContext(new Vector3(150, 100, 1)…
+    175|       expect(r1.success).toBe(true);
+       |                          ^
+    176| 
+    177|       const r2 = tool.handleClick(makeContext(new Vector3(150, 200, 1)…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > PerpendicularLineTool > should accept valid reference line and create perpendicular
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/unit/tools/toolValidation.spec.ts:195:26
+    193| 
+    194|       const r1 = tool.handleClick(makeContext(new Vector3(150, 100, 1)…
+    195|       expect(r1.success).toBe(true);
+       |                          ^
+    196| 
+    197|       const r2 = tool.handleClick(makeContext(new Vector3(150, 200, 1)…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+

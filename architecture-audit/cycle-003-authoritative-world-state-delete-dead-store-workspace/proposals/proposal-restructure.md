@@ -67,6 +67,7 @@ All validation logs must be captured under `architecture-audit/cycle-003-authori
 
 - Deleted-file checks for `Workspace2D.vue`, `ElementRenderer.vue`, `worldStore.ts`, `useSnapping.ts`, `useElementGeometry.ts`, `ElementPropertiesDialog.vue`, `ElementGroup.vue`, `ValidationService.ts`, `formatUtils.integration.spec.ts`, and `ElementTypes.ts`.
 - Grep for forbidden imports: `worldStore`, `useWorldStore`, `Workspace2D`, `ElementRenderer`, `ElementTypes`, `useSnapping`, `useElementGeometry`.
+- `grep -n "getWorld\|worldStore\|useWorldStore" frontend/tests/e2e/*.spec.ts || true` and confirm zero matches after deleting `dynamic-planes.spec.ts` and removing debug-helper references.
 - Grep/read architecture test to confirm no new store owns geometry maps.
 - If a new read-model module is introduced, grep to confirm it imports `World`/domain types but not Pinia stores and does not instantiate `Map` fields as mutable source-of-truth geometry storage.
 

@@ -1,0 +1,2081 @@
+---frontend/src/commands/factories/DeletionSequenceFactory.ts
+     1	/**
+     2	 * DeletionSequenceFactory - Factory for cascade deletion sequences
+     3	 * 
+     4	 * Encapsulates the complex cascade deletion logic:
+     5	 * 1. Compute dependency cascade (dependents before dependencies)
+     6	 * 2. Sort elements in proper deletion order (reverse topological)
+     7	 * 3. Add type-specific RemoveElementOp for each element
+     8	 * 4. Remove corresponding ProcessTree actions
+     9	 * 
+    10	 * Design: This factory follows the Open Command pattern:
+    11	 * - Receives open Command object
+    12	 * - Adds operations via cmd.addAndExecute()
+    13	 * - Returns void (caller handles commit/push/feedback)
+    14	 * - Encapsulates complex cascade logic
+    15	 * 
+    16	 * CRITICAL: Elements must be deleted in reverse topological order to maintain
+    17	 * referential integrity (dependents first, roots last).
+    18	 * 
+    19	 */
+    20	
+    21	import type { Command } from '@/commands/Command';
+    22	import type { World } from '@/domain/world/World';
+    23	import { 
+    24	  RemovePoint2DOp, 
+    25	  RemoveLine2DOp, 
+    26	  RemoveSegment2DOp, 
+    27	  RemoveCircle2DOp, 
+    28	  RemoveGuide2DOp 
+    29	} from '@/commands/operations/world/RemoveElementOps';
+    30	import { RemoveActionFromProcessTreeOp } from '@/commands/operations/processTree/ProcessTreeOperations';
+    31	import { Segment2DByPoints } from '@/domain/world/Segment';
+    32	import { Guide2D, SiblingGuide2D } from '@/domain/world/Guide';
+    33	
+    34	/**
+    35	 * DeletionSequenceFactory - Factory for cascade deletion sequences
+    36	 * 
+    37	 * Encapsulates multi-element deletion logic extracted from App.vue lines 660-760.
+    38	 * Handles cascade computation, topological sorting, and operation sequencing.
+    39	 */
+    40	export class DeletionSequenceFactory {
+    41	  /**
+    42	   * Create cascade deletion sequence for selected elements
+    43	   * 
+    44	   * Algorithm:
+    45	   * 1. Compute cascade using dependency service (get all dependent elements)
+    46	   * 2. Sort elements in deletion order (dependents first, roots last)
+    47	   * 3. Add type-specific RemoveElementOp for each element
+    48	   * 4. Add RemoveActionFromProcessTreeOp for each producing action
+    49	   * 
+    50	   * @param cmd - Open command to add operations to
+    51	   * @param selectedIds - IDs of elements user wants to delete
+    52	   * @param world - World instance for element lookup and dependency analysis
+    53	   */
+    54	  static createCascadeDeletion(
+    55	    cmd: Command,
+    56	    selectedIds: string[],
+    57	    world: World
+    58	  ): void {
+    59	    // Step 1: Compute cascade and get elements in proper deletion order
+    60	    const dependencyService = world.getDependencyService();
+    61	    const allElementsToDelete = dependencyService.getElementsInDeletionOrder(selectedIds);
+    62	    
+    63	    const cascadedElements = allElementsToDelete.filter(id => !selectedIds.includes(id));
+    64	    
+    65	    console.log('[DeletionSequenceFactory] Cascade deletion:', {
+    66	      direct: selectedIds,
+    67	      cascaded: cascadedElements,
+    68	      total: allElementsToDelete,
+    69	      order: 'dependents-first (proper deletion order)'
+    70	    });
+    71	    
+    72	    // Step 2: Find all actions that produce these elements
+    73	    const processTree = world.getProcessTree();
+    74	    const actionsToDelete = new Map<string, string[]>();
+    75	    
+    76	    for (const elementId of allElementsToDelete) {
+    77	      const actions = processTree.getActionsProducingElement(elementId);
+    78	      if (actions.length === 0) {
+    79	        console.warn(`[DeletionSequenceFactory] Element ${elementId} has no producing action - skipping`);
+    80	        continue;
+    81	      }
+    82	      
+    83	      for (const action of actions) {
+    84	        const actionNode = processTree.getActionsProducingElement(elementId).find(a => a.elementId === elementId);
+    85	        const actionKey = actionNode?.elementId ?? elementId;
+    86	        if (!actionsToDelete.has(actionKey)) {
+    87	          actionsToDelete.set(actionKey, []);
+    88	        }
+    89	        actionsToDelete.get(actionKey)!.push(elementId);
+    90	      }
+    91	    }
+    92	    
+    93	    // Step 3: Add operations to command in proper order
+    94	    // Search through projection planes to find each element and determine its type
+    95	    for (const elementId of allElementsToDelete) {
+    96	      let found = false;
+    97	      
+    98	      // Search in all projection planes
+    99	      for (const [planeId, plane] of world.projectionPlanes.entries()) {
+   100	        // Check if it's a point
+   101	        const point = plane.getPoint(elementId);
+   102	        if (point) {
+   103	          cmd.addAndExecute(new RemovePoint2DOp(planeId, elementId));
+   104	          found = true;
+   105	          break;
+   106	        }
+   107	        
+   108	        // Check if it's a line (includes segments and guides)
+   109	        const line = plane.getLine(elementId);
+   110	        if (line) {
+   111	          // Determine specific line subtype using instanceof for type-safe dispatch
+   112	          if (line instanceof Segment2DByPoints) {
+   113	            cmd.addAndExecute(new RemoveSegment2DOp(planeId, elementId));
+   114	          } else if (line instanceof Guide2D || line instanceof SiblingGuide2D) {
+   115	            cmd.addAndExecute(new RemoveGuide2DOp(planeId, elementId));
+   116	          } else {
+   117	            cmd.addAndExecute(new RemoveLine2DOp(planeId, elementId));
+   118	          }
+   119	          found = true;
+   120	          break;
+   121	        }
+   122	        
+   123	        // Check if it's a circle
+   124	        const circle = plane.getCircle(elementId);
+   125	        if (circle) {
+   126	          cmd.addAndExecute(new RemoveCircle2DOp(planeId, elementId));
+   127	          found = true;
+   128	          break;
+   129	        }
+   130	      }
+   131	      
+   132	      if (!found) {
+   133	        console.warn(`[DeletionSequenceFactory] Element ${elementId} not found in any plane`);
+   134	      }
+   135	    }
+   136	    
+   137	    // Step 4: Remove actions from ProcessTree (creates tombstones for undo)
+   138	    for (const [actionId, _] of actionsToDelete) {
+   139	      cmd.addAndExecute(new RemoveActionFromProcessTreeOp(actionId));
+   140	    }
+   141	  }
+   142	}
+---frontend/src/commands/operations/processTree/PushSubprocessOp.ts
+     1	/**
+     2	 * PushSubprocessOp - Push subprocess onto ProcessTree stack
+     3	 * 
+     4	 * Creates a new subprocess and pushes it onto the ProcessTree subprocess stack.
+     5	 * All subsequent actions will be added to this subprocess until it is popped.
+     6	 * 
+     7	 * Phase 85: ProcessTree Subprocess Stack Architecture
+     8	 */
+     9	
+    10	import type { IOperation, OperationResult } from '../IOperation';
+    11	import type { World } from '@/domain/world/World';
+    12	
+    13	export class PushSubprocessOp implements IOperation {
+    14	  readonly type = 'PushSubprocess';
+    15	  parameters: Record<string, any>;
+    16	  outputs: Record<string, any> = {};
+    17	
+    18	  constructor(private readonly subprocessName: string, private subprocessId?: string) {
+    19	    this.parameters = { subprocessName };
+    20	    // If subprocessId provided (during deserialization), store it in outputs
+    21	    if (subprocessId) {
+    22	      this.outputs = { subprocessId };
+    23	    }
+    24	  }
+    25	
+    26	  apply(world: World): OperationResult {
+    27	    // On replay (deserialization), reuse the stored subprocessId from outputs
+    28	    // This ensures toggle operations can find the correct subprocess
+    29	    const existingId = this.outputs.subprocessId;
+    30	    const subprocess = world.getProcessTree().pushSubprocess(this.subprocessName, existingId);
+    31	    this.outputs = { subprocessId: subprocess.id };
+    32	    return { success: true, outputs: this.outputs };
+    33	  }
+    34	
+    35	  undo(world: World): void {
+    36	    // Undo by popping the subprocess from the stack
+    37	    world.getProcessTree().popSubprocess();
+    38	  }
+    39	
+    40	  serialize() {
+    41	    return { opType: this.type, subprocessName: this.parameters.subprocessName, subprocessId: this.outputs.subprocessId, outputs: this.outputs };
+    42	  }
+    43	}
+---frontend/src/commands/operations/processTree/RenameSubprocessOp.ts
+     1	/**
+     2	 * RenameSubprocessOp - Rename a subprocess in the ProcessTree
+     3	 */
+     4	
+     5	import type { IOperation, OperationResult } from '../IOperation';
+     6	import type { World } from '@/domain/world/World';
+     7	
+     8	export class RenameSubprocessOp implements IOperation {
+     9	  readonly type = 'RenameSubprocess';
+    10	  parameters: Record<string, any>;
+    11	  outputs: Record<string, any> = {};
+    12	  private oldName: string | null = null;
+    13	
+    14	  constructor(private readonly subprocessId: string, private readonly newName: string) {
+    15	    this.parameters = { subprocessId, newName };
+    16	  }
+    17	
+    18	  apply(world: World): OperationResult {
+    19	    const processTree = world.getProcessTree();
+    20	    const subprocess = processTree.findSubprocessById(this.subprocessId);
+    21	    
+    22	    if (!subprocess) {
+    23	      return { success: false, error: `Subprocess not found: ${this.subprocessId}` };
+    24	    }
+    25	
+    26	    if (this.oldName === null) {
+    27	      this.oldName = subprocess.name;
+    28	    }
+    29	
+    30	    processTree.renameSubprocess(this.subprocessId, this.newName);
+    31	    return { success: true, outputs: this.outputs };
+    32	  }
+    33	
+    34	  undo(world: World): void {
+    35	    if (this.oldName !== null) {
+    36	      const processTree = world.getProcessTree();
+    37	      processTree.renameSubprocess(this.subprocessId, this.oldName);
+    38	    }
+    39	  }
+    40	
+    41	  redo(world: World): void {
+    42	    const processTree = world.getProcessTree();
+    43	    processTree.renameSubprocess(this.subprocessId, this.newName);
+    44	  }
+    45	
+    46	  serialize() {
+    47	    return { opType: this.type, subprocessId: this.parameters.subprocessId, newName: this.parameters.newName };
+    48	  }
+    49	}
+---frontend/src/stores/processStore.ts
+     1	import { defineStore } from 'pinia';
+     2	import type { Process } from '../domain/processTree/Process';
+     3	import type { Subprocess } from '../domain/processTree/Subprocess';
+     4	import type { ActionGroup } from '../domain/processTree/ActionGroup';
+     5	import { createProcess } from '../domain/processTree/Process';
+     6	import { CommandStack } from '../commands/CommandStack';
+     7	
+     8	interface ProcessState {
+     9	  root: Process;
+    10	  commandHistory: CommandStack;
+    11	}
+    12	
+    13	export const useProcessStore = defineStore('process', {
+    14	  state: (): ProcessState => ({
+    15	    root: createProcess(),
+    16	    commandHistory: new CommandStack()
+    17	  }),
+    18	
+    19	  getters: {
+    20	    /**
+    21	     * Get node by path (e.g., "/subprocess/sp1/actionGroup/ag1")
+    22	     */
+    23	    getNodeByPath: (state) => (path: string): Subprocess | ActionGroup | ConstructiveAction | null => {
+    24	      const parts = path.split('/').filter(Boolean);
+    25	      let current: any = state.root;
+    26	
+    27	      for (let i = 0; i < parts.length; i += 2) {
+    28	        const type = parts[i];
+    29	        const id = parts[i + 1];
+    30	
+    31	        if (type === 'subprocess') {
+    32	          current = current.children?.find((c: any) => c.id === id);
+    33	        } else if (type === 'actionGroup') {
+    34	          current = current.children?.find((c: any) => c.id === id);
+    35	        } else if (type === 'action') {
+    36	          current = current.children?.find((c: any) => c.id === id);
+    37	        }
+    38	
+    39	        if (!current) return null;
+    40	      }
+    41	
+    42	      return current;
+    43	    },
+    44	
+    45	    /**
+    46	     * Get all subprocesses (recursive)
+    47	     */
+    48	    visibleSubprocesses: (state) => {
+    49	      const result: Subprocess[] = [];
+    50	      const traverse = (subprocess: Subprocess) => {
+    51	        result.push(subprocess);
+    52	        subprocess.children.forEach(child => {
+    53	          if (child?.type === 'subprocess') {
+    54	            traverse(child as Subprocess);
+    55	          }
+    56	        });
+    57	      };
+    58	      
+    59	      if (state.root) {
+    60	        // Cast Process to Subprocess for traversal
+    61	        traverse(state.root as unknown as Subprocess);
+    62	      }
+    63	      return result;
+    64	    },
+    65	
+    66	    /**
+    67	     * Get all actions (flat array)
+    68	     */
+    69	    allActions: (state) => {
+    70	      const result: ConstructiveAction[] = [];
+    71	      const traverse = (node: Subprocess | ActionGroup) => {
+    72	        node.children.forEach(child => {
+    73	          if ('type' in child && child?.type === 'action') {
+    74	            result.push(child as ConstructiveAction);
+    75	          } else if ('children' in child) {
+    76	            traverse(child as Subprocess | ActionGroup);
+    77	          }
+    78	        });
+    79	      };
+    80	      // Start from root's children (which are Subprocess or ActionGroup)
+    81	      state.root.children.forEach(child => {
+    82	        if ('children' in child) {
+    83	          traverse(child as Subprocess | ActionGroup);
+    84	        }
+    85	      });
+    86	      return result;
+    87	    }
+    88	  },
+    89	
+    90	  actions: {
+    91	    /**
+    92	     * Add subprocess to parent path
+    93	     */
+    94	    addSubprocess(parentPath: string, subprocess: Subprocess): void {
+    95	      const parent = this.getNodeByPath(parentPath) as Subprocess;
+    96	      if (parent && 'children' in parent) {
+    97	        parent.children.push(subprocess);
+    98	      } else if (parentPath === '/') {
+    99	        this.root.children.push(subprocess);
+   100	      }
+   101	    },
+   102	
+   103	    /**
+   104	     * Add action group to subprocess
+   105	     */
+   106	    addActionGroup(subprocessPath: string, actionGroup: ActionGroup): void {
+   107	      const subprocess = this.getNodeByPath(subprocessPath) as Subprocess;
+   108	      if (subprocess && 'children' in subprocess) {
+   109	        subprocess.children.push(actionGroup);
+   110	      }
+   111	    },
+   112	
+   113	    /**
+   114	     * Add action to action group
+   115	     */
+   116	    addAction(actionGroupPath: string, action: ConstructiveAction): void {
+   117	      const actionGroup = this.getNodeByPath(actionGroupPath) as ActionGroup;
+   118	      if (actionGroup && 'children' in actionGroup) {
+   119	        actionGroup.children.push(action);
+   120	      }
+   121	    },
+   122	
+   123	    /**
+   124	     * Remove subprocess by path
+   125	     */
+   126	    removeSubprocess(subprocessPath: string): Subprocess | null {
+   127	      const parts = subprocessPath.split('/').filter(Boolean);
+   128	      const id = parts[parts.length - 1];
+   129	      const parentPath = '/' + parts.slice(0, -2).join('/');
+   130	
+   131	      const parent = parentPath === '/' ? this.root : this.getNodeByPath(parentPath) as Subprocess;
+   132	      if (parent && 'children' in parent) {
+   133	        const index = parent.children.findIndex((c: any) => c.id === id);
+   134	        if (index !== -1) {
+   135	          const removed = parent.children.splice(index, 1)[0];
+   136	          return removed as Subprocess;
+   137	        }
+   138	      }
+   139	      return null;
+   140	    },
+   141	
+   142	    /**
+   143	     * Remove action group by path
+   144	     */
+   145	    removeActionGroup(actionGroupPath: string): ActionGroup | null {
+   146	      const parts = actionGroupPath.split('/').filter(Boolean);
+   147	      const id = parts[parts.length - 1];
+   148	      const parentPath = '/' + parts.slice(0, -2).join('/');
+   149	
+   150	      const parent = this.getNodeByPath(parentPath) as Subprocess;
+   151	      if (parent && 'children' in parent) {
+   152	        const index = parent.children.findIndex((c: any) => c.id === id);
+   153	        if (index !== -1) {
+   154	          const removed = parent.children.splice(index, 1)[0];
+   155	          return removed as ActionGroup;
+   156	        }
+   157	      }
+   158	      return null;
+   159	    },
+   160	
+   161	    /**
+   162	     * Remove action by path
+   163	     */
+   164	    removeAction(actionPath: string): ConstructiveAction | null {
+   165	      const parts = actionPath.split('/').filter(Boolean);
+   166	      const id = parts[parts.length - 1];
+   167	      const parentPath = '/' + parts.slice(0, -2).join('/');
+   168	
+   169	      const parent = this.getNodeByPath(parentPath) as ActionGroup;
+   170	      if (parent && 'children' in parent) {
+   171	        const index = parent.children.findIndex((c: any) => c.id === id);
+   172	        if (index !== -1) {
+   173	          const removed = parent.children.splice(index, 1)[0];
+   174	          return removed as ConstructiveAction;
+   175	        }
+   176	      }
+   177	      return null;
+   178	    },
+   179	
+   180	    /**
+   181	     * Clear process tree (for testing or reset)
+   182	     */
+   183	    clear(): void {
+   184	      this.root = createProcess();
+   185	      this.commandHistory.clear();
+   186	    }
+   187	  }
+   188	});
+---frontend/src/services/ProjectService.ts
+     1	/**
+     2	 * ProjectService - current-schema command-stream persistence orchestration.
+     3	 */
+     4	
+     5	import { World } from '@/domain/world/World';
+     6	import type { CommandStack } from '@/commands/CommandStack';
+     7	import { Command, type CommandSnapshot } from '@/commands/Command';
+     8	import type { OperationDescriptor } from '@/commands/operations/IOperation';
+     9	import { deserializeOperation } from '@/commands/operations/OperationRegistry';
+    10	
+    11	export interface ProjectData {
+    12	  id: string;
+    13	  name: string;
+    14	  schemaVersion: string;
+    15	  created: string;
+    16	  modified: string;
+    17	  nextElementId: number;
+    18	  commands: SerializedCommand[];
+    19	}
+    20	
+    21	type SerializedCommand = CommandSnapshot;
+    22	type SerializedOperation = OperationDescriptor;
+    23	
+    24	export class ProjectService {
+    25	  private static readonly SCHEMA_VERSION = '6.0.0';
+    26	
+    27	  static serializeCommands(commandStack: CommandStack, nextElementId: number, projectName: string): ProjectData {
+    28	    if (!Number.isInteger(nextElementId) || nextElementId < 1) {
+    29	      throw new Error(`Invalid next element ID: ${nextElementId}`);
+    30	    }
+    31	    const now = new Date().toISOString();
+    32	    const commands = commandStack.getCommittedCommands().map(command => command.toSnapshot());
+    33	
+    34	    return {
+    35	      id: this.generateProjectId(),
+    36	      name: projectName,
+    37	      schemaVersion: this.SCHEMA_VERSION,
+    38	      created: now,
+    39	      modified: now,
+    40	      nextElementId,
+    41	      commands
+    42	    };
+    43	  }
+    44	
+    45	  static deserializeCommands(data: ProjectData, world: World, commandStack: CommandStack): void {
+    46	    this.validateProjectData(data);
+    47	    commandStack.clear();
+    48	    world.restoreNextId(data.nextElementId);
+    49	
+    50	    const restoredCommands: Command[] = [];
+    51	    for (const serializedCommand of data.commands) {
+    52	      const operations = serializedCommand.operations.map((descriptor: SerializedOperation) => deserializeOperation(descriptor));
+    53	      for (const operation of operations) {
+    54	        const result = operation.apply(world);
+    55	        if (!result.success) {
+    56	          throw new Error(`Failed to replay operation ${operation.type}: ${result.error}`);
+    57	        }
+    58	      }
+    59	      restoredCommands.push(Command.restore({
+    60	        id: serializedCommand.id,
+    61	        timestamp: serializedCommand.timestamp,
+    62	        description: serializedCommand.description,
+    63	        operations
+    64	      }, world));
+    65	    }
+    66	
+    67	    commandStack.restoreCommittedCommands(restoredCommands);
+    68	
+    69	    if (!world.getActivePlaneId()) {
+    70	      const planes = world.getAllProjectionPlanes();
+    71	      const ph = planes.find(p => p.id === 'projPlaneH' || p.name === 'P_H');
+    72	      if (ph) {
+    73	        world.setActivePlaneId(ph.id);
+    74	      } else if (planes.length > 0) {
+    75	        world.setActivePlaneId(planes[0].id);
+    76	      }
+    77	    }
+    78	  }
+    79	
+    80	  static validateProjectData(data: unknown): asserts data is ProjectData {
+    81	    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    82	      throw new Error('Invalid project file - not a valid JSON object');
+    83	    }
+    84	    const record = data as Partial<ProjectData>;
+    85	    if (record.schemaVersion !== this.SCHEMA_VERSION) {
+    86	      throw new Error(`Unsupported project schema version: ${String(record.schemaVersion)}`);
+    87	    }
+    88	    for (const field of ['id', 'name', 'created', 'modified'] as const) {
+    89	      if (typeof record[field] !== 'string' || record[field]!.length === 0) {
+    90	        throw new Error(`Invalid project file - missing required field: ${field}`);
+    91	      }
+    92	    }
+    93	    if (!Number.isInteger(record.nextElementId) || record.nextElementId < 1) {
+    94	      throw new Error('Invalid project file - nextElementId must be a positive integer');
+    95	    }
+    96	    if (!Array.isArray(record.commands)) {
+    97	      throw new Error('Invalid project file - commands must be an array');
+    98	    }
+    99	    for (const command of record.commands) {
+   100	      this.validateSerializedCommand(command);
+   101	    }
+   102	  }
+   103	
+   104	  private static validateSerializedCommand(command: unknown): asserts command is SerializedCommand {
+   105	    if (!command || typeof command !== 'object' || Array.isArray(command)) {
+   106	      throw new Error('Invalid project file - command must be an object');
+   107	    }
+   108	    const record = command as Partial<SerializedCommand>;
+   109	    if (typeof record.id !== 'string' || record.id.length === 0) {
+   110	      throw new Error('Invalid project file - command missing id');
+   111	    }
+   112	    if (typeof record.timestamp !== 'string' || Number.isNaN(Date.parse(record.timestamp))) {
+   113	      throw new Error(`Invalid project file - command ${record.id} has invalid timestamp`);
+   114	    }
+   115	    if (typeof record.description !== 'string' || record.description.length === 0) {
+   116	      throw new Error(`Invalid project file - command ${record.id} missing description`);
+   117	    }
+   118	    if (record.status !== 'committed') {
+   119	      throw new Error(`Invalid project file - command ${record.id} must be committed`);
+   120	    }
+   121	    if (!Array.isArray(record.operations) || record.operations.length === 0) {
+   122	      throw new Error(`Invalid project file - command ${record.id} must contain operations`);
+   123	    }
+   124	    for (const operation of record.operations) {
+   125	      if (!operation || typeof operation !== 'object' || Array.isArray(operation) || typeof (operation as { opType?: unknown }).opType !== 'string') {
+   126	        throw new Error(`Invalid project file - command ${record.id} has invalid operation descriptor`);
+   127	      }
+   128	    }
+   129	  }
+   130	
+   131	  private static generateProjectId(): string {
+   132	    return `proj_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+   133	  }
+   134	}
+---frontend/src/services/GoogleDriveService.ts
+     1	/**
+     2	 * GoogleDriveService
+     3	 * 
+     4	 * Service for interacting with Google Drive API to store and retrieve project files.
+     5	 * Projects are stored in a "diedrico" folder in the user's Google Drive as .diedrico files.
+     6	 * 
+     7	 * Architecture:
+     8	 * - Direct browser-to-Drive communication using gapi.client
+     9	 * - OAuth2 authentication with scope: drive.file (app-created files only)
+    10	 * - No backend server required
+    11	 * 
+    12	 */
+    13	
+    14	/// <reference types="gapi" />
+    15	/// <reference types="gapi.client.drive-v3" />
+    16	
+    17	export interface GoogleDriveFile {
+    18	  id: string;
+    19	  name: string;
+    20	  modifiedTime: string;
+    21	}
+    22	
+    23	export interface GoogleDriveConfig {
+    24	  clientId: string;
+    25	  apiKey?: string;  // Optional: recommended for quota tracking but not required for OAuth
+    26	  appId: string;
+    27	}
+    28	
+    29	export interface GoogleUserProfile {
+    30	  name: string;       // Display name (e.g., "John Doe")
+    31	  email: string;      // Email address
+    32	  picture?: string;   // Avatar URL (if available)
+    33	  sub: string;        // Google user ID (unique identifier)
+    34	}
+    35	
+    36	/**
+    37	 * Service for Google Drive operations
+    38	 */
+    39	export class GoogleDriveService {
+    40	  private static readonly DISCOVERY_DOCS = [
+    41	    'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest',
+    42	  ];
+    43	  
+    44	  // T400: Add profile and email scopes for user profile information
+    45	  private static readonly SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email';
+    46	  
+    47	  private static readonly FOLDER_NAME = 'diedrico';
+    48	  private static readonly FILE_EXTENSION = '.diedrico';
+    49	  
+    50	  private config: GoogleDriveConfig;
+    51	  private initialized = false;
+    52	  private initializing = false; // Prevent multiple simultaneous initializations
+    53	  private folderId: string | null = null;
+    54	  private tokenClient: any = null;
+    55	  private accessToken: string | null = null;
+    56	
+    57	  constructor(config: GoogleDriveConfig) {
+    58	    this.config = config;
+    59	  }
+    60	
+    61	  /**
+    62	   * Initialize Google API client with new Google Identity Services
+    63	   */
+    64	  async initialize(): Promise<void> {
+    65	    if (this.initialized) {
+    66	      return;
+    67	    }
+    68	    
+    69	    // Prevent multiple simultaneous initializations
+    70	    if (this.initializing) {
+    71	      return;
+    72	    }
+    73	    
+    74	    this.initializing = true;
+    75	
+    76	    return new Promise((resolve, reject) => {
+    77	      // Load gapi client
+    78	      gapi.load('client', async () => {
+    79	        try {
+    80	          // Initialize gapi client (for Drive API calls)
+    81	          const initConfig: any = {
+    82	            discoveryDocs: GoogleDriveService.DISCOVERY_DOCS,
+    83	          };
+    84	          
+    85	          if (this.config.apiKey) {
+    86	            initConfig.apiKey = this.config.apiKey;
+    87	          }
+    88	          
+    89	          await gapi.client.init(initConfig);
+    90	          
+    91	          // Initialize Token Client (new GIS auth)
+    92	          this.tokenClient = (window as any).google.accounts.oauth2.initTokenClient({
+    93	            client_id: this.config.clientId,
+    94	            scope: GoogleDriveService.SCOPES,
+    95	            callback: '', // Will be set during signIn
+    96	          });
+    97	          
+    98	          this.initialized = true;
+    99	          this.initializing = false;
+   100	          // Try to restore previous session AFTER initialization is complete
+   101	          await this.tryRestoreSession();
+   102	          resolve();
+   103	        } catch (error: any) {
+   104	          console.error('[GoogleDrive] Initialization failed:', error);
+   105	          console.error('[GoogleDrive] Error details:', JSON.stringify(error, null, 2));
+   106	          reject(new Error(`Failed to initialize Google API: ${error.error || error.message || JSON.stringify(error)}`));
+   107	        }
+   108	      });
+   109	    });
+   110	  }
+   111	
+   112	  /**
+   113	   * Try to restore previous session (silent sign-in)
+   114	   */
+   115	  private async tryRestoreSession(): Promise<void> {
+   116	    const wasSignedIn = localStorage.getItem('diedrico_was_signed_in');
+   117	    if (wasSignedIn === 'true') {
+   118	      try {
+   119	        // Try silent sign-in (no popup if user is still signed in to Google)
+   120	        await this.signInSilently();
+   121	      } catch (error) {
+   122	        localStorage.removeItem('diedrico_was_signed_in');
+   123	      }
+   124	    }
+   125	  }
+   126	
+   127	  /**
+   128	   * Check if user is signed in (has valid access token)
+   129	   */
+   130	  isSignedIn(): boolean {
+   131	    // Check if we have an access token, or if gapi client has a token
+   132	    const token = gapi.client.getToken();
+   133	    return this.accessToken !== null || (token !== null && token.access_token !== undefined);
+   134	  }
+   135	
+   136	  /**
+   137	   * Sign in silently (no popup) if user is already signed in to Google
+   138	   */
+   139	  private async signInSilently(): Promise<void> {
+   140	    // Don't call initialize again - we should already be initialized
+   141	    if (!this.initialized) {
+   142	      throw new Error('Service not initialized');
+   143	    }
+   144	
+   145	    return new Promise((resolve, reject) => {
+   146	      try {
+   147	        this.tokenClient.callback = (response: any) => {
+   148	          if (response.error) {
+   149	            reject(new Error(response.error));
+   150	            return;
+   151	          }
+   152	          
+   153	          this.accessToken = response.access_token;
+   154	          gapi.client.setToken({ access_token: this.accessToken });
+   155	          localStorage.setItem('diedrico_was_signed_in', 'true');
+   156	          resolve();
+   157	        };
+   158	        
+   159	        // Request access token silently (no popup if already signed in)
+   160	        this.tokenClient.requestAccessToken({ prompt: '' });
+   161	      } catch (error: any) {
+   162	        reject(error);
+   163	      }
+   164	    });
+   165	  }
+   166	
+   167	  /**
+   168	   * Sign in with Google using new GIS library (shows popup)
+   169	   */
+   170	  async signIn(): Promise<void> {
+   171	    if (!this.initialized) {
+   172	      await this.initialize();
+   173	    }
+   174	
+   175	    return new Promise((resolve, reject) => {
+   176	      try {
+   177	        this.tokenClient.callback = (response: any) => {
+   178	          if (response.error) {
+   179	            if (response.error === 'popup_closed_by_user') {
+   180	              reject(new Error('Sign-in cancelled by user'));
+   181	            } else if (response.error === 'access_denied') {
+   182	              reject(new Error('Access denied. Please grant permission to access Google Drive.'));
+   183	            } else {
+   184	              reject(new Error(`Sign-in failed: ${response.error}`));
+   185	            }
+   186	            return;
+   187	          }
+   188	          
+   189	          this.accessToken = response.access_token;
+   190	          gapi.client.setToken({ access_token: this.accessToken });
+   191	          localStorage.setItem('diedrico_was_signed_in', 'true');
+   192	          resolve();
+   193	        };
+   194	        
+   195	        // Request access token (will show popup)
+   196	        this.tokenClient.requestAccessToken({ prompt: 'consent' });
+   197	      } catch (error: any) {
+   198	        reject(new Error(`Sign-in failed: ${error.message}`));
+   199	      }
+   200	    });
+   201	  }
+   202	
+   203	  /**
+   204	   * Sign out from Google (revoke access token)
+   205	   */
+   206	  async signOut(): Promise<void> {
+   207	    if (!this.initialized) {
+   208	      return;
+   209	    }
+   210	
+   211	    try {
+   212	      if (this.accessToken) {
+   213	        await (window as any).google.accounts.oauth2.revoke(this.accessToken);
+   214	        this.accessToken = null;
+   215	        gapi.client.setToken(null);
+   216	      }
+   217	      localStorage.removeItem('diedrico_was_signed_in');
+   218	      this.folderId = null;
+   219	    } catch (error) {
+   220	      throw new Error(`Failed to sign out: ${error}`);
+   221	    }
+   222	  }
+   223	
+   224	  /**
+   225	   * T401: Fetch user profile information from Google
+   226	   * Uses the OAuth2 userinfo endpoint to get profile data
+   227	   */
+   228	  async fetchUserProfile(): Promise<GoogleUserProfile> {
+   229	    if (!this.isSignedIn()) {
+   230	      throw new Error('User not signed in');
+   231	    }
+   232	
+   233	    try {
+   234	      const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+   235	        headers: {
+   236	          Authorization: `Bearer ${this.accessToken}`,
+   237	        },
+   238	      });
+   239	
+   240	      if (!response.ok) {
+---frontend/src/services/GeometryService.ts
+     1	import type { Result } from '../types/ResultTypes';
+     2	import { Ok, Err, isOk } from '../types/ResultTypes';
+     3	import {
+     4	  lineLineIntersection
+     5	} from '../domain/calculations/Intersections';
+     6	import {
+     7	  perpendicularThroughPoint,
+     8	  perpendicularFoot,
+     9	  arePerpendicular
+    10	} from '../domain/calculations/perpendiculars';
+    11	import {
+    12	  pointPointDistance,
+    13	  pointLineDistance,
+    14	  pointSegmentDistance,
+    15	  closestPointOnLine,
+    16	  closestPointOnSegment,
+    17	  isWithinDistance
+    18	} from '../domain/calculations/distances';
+    19	
+    20	/**
+    21	 * Geometry service that wraps calculation functions with validation and Result types
+    22	 */
+    23	export class GeometryService {
+    24	  /**
+    25	   * Calculate line-line intersection
+    26	   */
+    27	  static calculateLineLineIntersection(
+    28	    line1: { x1: number; y1: number; x2: number; y2: number },
+    29	    line2: { x1: number; y1: number; x2: number; y2: number }
+    30	  ): Result<{ x: number; y: number } | null, string> {
+    31	    try {
+    32	      const result = lineLineIntersection(line1, line2);
+    33	      if (isOk(result)) {
+    34	        return Ok(result.value);
+    35	      } else {
+    36	        return Err(result.error);
+    37	      }
+    38	    } catch (error) {
+    39	      return Err(error instanceof Error ? error.message : 'Unknown error');
+    40	    }
+    41	  }
+    42	
+    43	  /**
+    44	   * Calculate perpendicular line through point
+    45	   */
+    46	  static calculatePerpendicularThroughPoint(
+    47	    line: { x1: number; y1: number; x2: number; y2: number },
+    48	    point: { x: number; y: number }
+    49	  ): Result<{ x1: number; y1: number; x2: number; y2: number }, string> {
+    50	    const result = perpendicularThroughPoint(line, point);
+    51	    if (isOk(result)) {
+    52	      return Ok(result.value);
+    53	    } else {
+    54	      return Err(result.error);
+    55	    }
+    56	  }
+    57	
+    58	  /**
+    59	   * Calculate perpendicular foot from point to line
+    60	   */
+    61	  static calculatePerpendicularFoot(
+    62	    line: { x1: number; y1: number; x2: number; y2: number },
+    63	    point: { x: number; y: number }
+    64	  ): Result<{ x: number; y: number }, string> {
+    65	    const result = perpendicularFoot(line, point);
+    66	    if (isOk(result)) {
+    67	      return Ok(result.value);
+    68	    } else {
+    69	      return Err(result.error);
+    70	    }
+    71	  }
+    72	
+    73	  /**
+    74	   * Check if two lines are perpendicular
+    75	   */
+    76	  static checkPerpendicular(
+    77	    line1: { x1: number; y1: number; x2: number; y2: number },
+    78	    line2: { x1: number; y1: number; x2: number; y2: number }
+    79	  ): boolean {
+    80	    return arePerpendicular(line1, line2);
+    81	  }
+    82	
+    83	  /**
+    84	   * Measure distance between two points
+    85	   */
+    86	  static measurePointPointDistance(
+    87	    point1: { x: number; y: number },
+    88	    point2: { x: number; y: number }
+    89	  ): number {
+    90	    return pointPointDistance(point1, point2);
+    91	  }
+    92	
+    93	  /**
+    94	   * Measure distance from point to line
+    95	   */
+    96	  static measurePointLineDistance(
+    97	    point: { x: number; y: number },
+    98	    line: { x1: number; y1: number; x2: number; y2: number }
+    99	  ): Result<number, string> {
+   100	    const result = pointLineDistance(point, line);
+   101	    if (isOk(result)) {
+   102	      return Ok(result.value);
+   103	    } else {
+   104	      return Err(result.error);
+   105	    }
+   106	  }
+   107	
+   108	  /**
+   109	   * Measure distance from point to segment
+   110	   */
+   111	  static measurePointSegmentDistance(
+   112	    point: { x: number; y: number },
+   113	    segment: { x1: number; y1: number; x2: number; y2: number }
+   114	  ): Result<number, string> {
+   115	    const result = pointSegmentDistance(point, segment);
+   116	    if (isOk(result)) {
+   117	      return Ok(result.value);
+   118	    } else {
+   119	      return Err(result.error);
+   120	    }
+   121	  }
+   122	
+   123	  /**
+   124	   * Find closest point on line
+   125	   */
+   126	  static findClosestPointOnLine(
+   127	    point: { x: number; y: number },
+   128	    line: { x1: number; y1: number; x2: number; y2: number }
+   129	  ): Result<{ x: number; y: number }, string> {
+   130	    const result = closestPointOnLine(point, line);
+   131	    if (isOk(result)) {
+   132	      return Ok(result.value);
+   133	    } else {
+   134	      return Err(result.error);
+   135	    }
+   136	  }
+   137	
+   138	  /**
+   139	   * Find closest point on segment
+   140	   */
+   141	  static findClosestPointOnSegment(
+   142	    point: { x: number; y: number },
+   143	    segment: { x1: number; y1: number; x2: number; y2: number }
+   144	  ): Result<{ x: number; y: number }, string> {
+   145	    const result = closestPointOnSegment(point, segment);
+   146	    if (isOk(result)) {
+   147	      return Ok(result.value);
+   148	    } else {
+   149	      return Err(result.error);
+   150	    }
+   151	  }
+   152	
+   153	  /**
+   154	   * Check if points are within distance threshold
+   155	   */
+   156	  static arePointsWithinDistance(
+   157	    point1: { x: number; y: number },
+   158	    point2: { x: number; y: number },
+   159	    threshold: number
+   160	  ): boolean {
+   161	    return isWithinDistance(point1, point2, threshold);
+   162	  }
+   163	}
+---frontend/src/components/dialogs/NewProjectDialog.vue
+     1	<template>
+     2	  <div v-if="isOpen" class="dialog-overlay" @click="handleOverlayClick">
+     3	    <div class="dialog-content" @click.stop>
+     4	      <h2 class="dialog-title">New Project</h2>
+     5	      
+     6	      <form @submit.prevent="handleSubmit">
+     7	        <div class="form-group">
+     8	          <label for="project-name">Project Name</label>
+     9	          <input
+    10	            id="project-name"
+    11	            v-model="projectName"
+    12	            type="text"
+    13	            placeholder="Enter project name..."
+    14	            class="form-input"
+    15	            autofocus
+    16	            required
+    17	          />
+    18	        </div>
+    19	
+    20	        <div class="dialog-actions">
+    21	          <button type="button" class="btn btn-secondary" @click="handleCancel">
+    22	            Cancel
+    23	          </button>
+    24	          <button
+    25	            type="submit"
+    26	            class="btn btn-primary"
+    27	            :disabled="!projectName.trim() || isCreating"
+    28	          >
+    29	            {{ isCreating ? 'Creating...' : 'Create Project' }}
+    30	          </button>
+    31	        </div>
+    32	      </form>
+    33	
+    34	      <div v-if="error" class="error-message">
+    35	        {{ error }}
+    36	      </div>
+    37	    </div>
+    38	  </div>
+    39	</template>
+    40	
+    41	<script setup lang="ts">
+    42	import { ref, watch } from 'vue';
+    43	import { ProjectService } from '../../services/ProjectService';
+    44	
+    45	const props = defineProps<{
+    46	  isOpen: boolean;
+    47	}>();
+    48	
+    49	const emit = defineEmits<{
+    50	  close: [];
+    51	  created: [projectId: string];
+    52	}>();
+    53	
+    54	const projectName = ref('');
+    55	const isCreating = ref(false);
+    56	const error = ref('');
+    57	
+    58	// Reset form when dialog opens
+    59	watch(() => props.isOpen, (isOpen) => {
+    60	  if (isOpen) {
+    61	    projectName.value = '';
+    62	    error.value = '';
+    63	    isCreating.value = false;
+    64	  }
+    65	});
+    66	
+    67	async function handleSubmit() {
+    68	  if (!projectName.value.trim() || isCreating.value) return;
+    69	
+    70	  isCreating.value = true;
+    71	  error.value = '';
+    72	
+    73	  try {
+    74	    const project = await new ProjectService().createProject(projectName.value.trim());
+    75	    emit('created', project.id);
+    76	    emit('close');
+    77	  } catch (err: any) {
+    78	    error.value = err.message || 'Failed to create project';
+    79	    isCreating.value = false;
+    80	  }
+    81	}
+    82	
+    83	function handleCancel() {
+    84	  emit('close');
+    85	}
+    86	
+    87	function handleOverlayClick() {
+    88	  if (!isCreating.value) {
+    89	    emit('close');
+    90	  }
+    91	}
+    92	</script>
+    93	
+    94	<style scoped>
+    95	.dialog-overlay {
+    96	  position: fixed;
+    97	  top: 0;
+    98	  left: 0;
+    99	  right: 0;
+   100	  bottom: 0;
+   101	  background-color: rgba(0, 0, 0, 0.5);
+   102	  display: flex;
+   103	  align-items: center;
+   104	  justify-content: center;
+   105	  z-index: 1000;
+   106	}
+   107	
+   108	.dialog-content {
+   109	  background: white;
+   110	  border-radius: 8px;
+   111	  padding: 24px;
+   112	  min-width: 400px;
+   113	  max-width: 90vw;
+   114	  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+   115	}
+   116	
+   117	.dialog-title {
+   118	  margin: 0 0 20px 0;
+   119	  font-size: 20px;
+   120	  font-weight: 600;
+   121	  color: #1f2937;
+   122	}
+   123	
+   124	.form-group {
+   125	  margin-bottom: 20px;
+   126	}
+   127	
+   128	.form-group label {
+   129	  display: block;
+   130	  margin-bottom: 8px;
+   131	  font-weight: 500;
+   132	  color: #374151;
+   133	}
+   134	
+   135	.form-input {
+   136	  width: 100%;
+   137	  padding: 8px 12px;
+   138	  border: 1px solid #d1d5db;
+   139	  border-radius: 4px;
+   140	  font-size: 14px;
+   141	}
+   142	
+   143	.form-input:focus {
+   144	  outline: none;
+   145	  border-color: #2563eb;
+   146	  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+   147	}
+   148	
+   149	.dialog-actions {
+   150	  display: flex;
+   151	  justify-content: flex-end;
+   152	  gap: 12px;
+   153	  margin-top: 24px;
+   154	}
+   155	
+   156	.btn {
+   157	  padding: 8px 16px;
+   158	  border: none;
+   159	  border-radius: 4px;
+   160	  font-size: 14px;
+   161	  font-weight: 500;
+   162	  cursor: pointer;
+   163	  transition: background-color 0.2s;
+   164	}
+   165	
+   166	.btn-secondary {
+   167	  background-color: #f3f4f6;
+   168	  color: #374151;
+   169	}
+   170	
+   171	.btn-secondary:hover {
+   172	  background-color: #e5e7eb;
+   173	}
+   174	
+   175	.btn-primary {
+   176	  background-color: #2563eb;
+   177	  color: white;
+   178	}
+   179	
+   180	.btn-primary:hover:not(:disabled) {
+   181	  background-color: #1d4ed8;
+   182	}
+   183	
+   184	.btn-primary:disabled {
+   185	  opacity: 0.5;
+   186	  cursor: not-allowed;
+   187	}
+   188	
+   189	.error-message {
+   190	  margin-top: 16px;
+   191	  padding: 12px;
+   192	  background-color: #fef2f2;
+   193	  border: 1px solid #fecaca;
+   194	  border-radius: 4px;
+   195	  color: #dc2626;
+   196	  font-size: 14px;
+   197	}
+   198	</style>
+---frontend/src/components/panels/ActionItem.vue
+     1	<template>
+     2	  <div
+     3	    class="action-item"
+     4	    :class="{
+     5	      'infeasible': action.infeasible
+     6	    }"
+     7	    :title="action.infeasible ? `Infeasible: ${action.infeasibilityReason || 'Constraint violation'}` : ''"
+     8	  >
+     9	    <div class="action-header">
+    10	      <span class="action-type">{{ formatActionType(action.actionType) }}</span>
+    11	      <span class="timestamp">{{ formatTime(action.timestamp) }}</span>
+    12	    </div>
+    13	    <!-- Phase 92: Display elementId instead of outputs array -->
+    14	    <div v-if="action.elementId" class="action-outputs">
+    15	      <span class="label">Element:</span>
+    16	      <span class="outputs">{{ action.elementId }}</span>
+    17	    </div>
+    18	    <div class="action-description">
+    19	      <span class="description">{{ action.description }}</span>
+    20	    </div>
+    21	  </div>
+    22	</template>
+    23	
+    24	<script setup lang="ts">
+    25	import type { Action } from '../../domain/processTree/Action';
+    26	import { ActionType } from '../../domain/processTree/Action';
+    27	
+    28	interface Props {
+    29	  action: Action;
+    30	}
+    31	
+    32	const props = defineProps<Props>();
+    33	
+    34	/**
+    35	 * Format ActionType enum to readable string
+    36	 */
+    37	function formatActionType(actionType: ActionType): string {
+    38	  // Convert CamelCase to Title Case with spaces
+    39	  return actionType
+    40	    .replace(/([A-Z])/g, ' $1')
+    41	    .trim();
+    42	}
+    43	
+    44	/**
+    45	 * Format timestamp to time string
+    46	 */
+    47	function formatTime(date: Date): string {
+    48	  return date.toLocaleTimeString('en-US', {
+    49	    hour: '2-digit',
+    50	    minute: '2-digit',
+    51	    second: '2-digit'
+    52	  });
+    53	}
+    54	</script>
+    55	
+    56	<style scoped>
+    57	.action-item {
+    58	  padding: 6px 8px;
+    59	  background-color: var(--color-background);
+    60	  border: 1px solid var(--color-border);
+    61	  border-radius: 3px;
+    62	  margin-bottom: 2px;
+    63	  font-size: 12px;
+    64	  transition: background-color 0.2s ease;
+    65	}
+    66	
+    67	.action-item:hover {
+    68	  background-color: var(--color-background-soft);
+    69	}
+    70	
+    71	.action-item.infeasible {
+    72	  border-color: var(--color-error);
+    73	  background-color: rgba(255, 0, 0, 0.05);
+    74	}
+    75	
+    76	.action-header {
+    77	  display: flex;
+    78	  justify-content: space-between;
+    79	  align-items: center;
+    80	  margin-bottom: 4px;
+    81	}
+    82	
+    83	.action-type {
+    84	  font-weight: 600;
+    85	  color: var(--color-heading);
+    86	}
+    87	
+    88	.action-item.infeasible .action-type {
+    89	  color: var(--color-error);
+    90	}
+    91	
+    92	.timestamp {
+    93	  font-size: 11px;
+    94	  color: var(--color-text-muted);
+    95	  font-family: monospace;
+    96	}
+    97	
+    98	.action-outputs,
+    99	.action-inputs {
+   100	  display: flex;
+   101	  gap: 4px;
+   102	  font-size: 11px;
+   103	  margin-top: 2px;
+   104	}
+   105	
+   106	.label {
+   107	  color: var(--color-text-muted);
+   108	  font-weight: 500;
+   109	}
+   110	
+   111	.outputs,
+   112	.inputs {
+   113	  color: var(--color-text);
+   114	  font-family: monospace;
+   115	}
+   116	</style>
+---frontend/src/components/panels/ActionGroupItem.vue
+     1	<template>
+     2	  <div class="action-group-item">
+     3	    <!-- Subprocess -->
+     4	    <div v-if="node.type === 'subprocess'" class="subprocess-item">
+     5	      <div class="subprocess-header" @click="toggleExpanded">
+     6	        <span class="expand-icon" :class="{ expanded: isExpanded }">▶</span>
+     7	        <span class="subprocess-name">{{ node.name }}</span>
+     8	        <span class="subprocess-count">({{ childCount }})</span>
+     9	      </div>
+    10	      <div v-if="isExpanded" class="subprocess-children">
+    11	        <ActionGroupItem
+    12	          v-for="child in node.children"
+    13	          :key="child.id"
+    14	          :node="child"
+    15	        />
+    16	      </div>
+    17	    </div>
+    18	
+    19	    <!-- Action Group -->
+    20	    <div v-else-if="node.type === 'actionGroup'" class="action-group">
+    21	      <div class="action-group-header" @click="toggleExpanded">
+    22	        <span class="expand-icon" :class="{ expanded: isExpanded }">▶</span>
+    23	        <span class="action-group-label">Group</span>
+    24	        <span class="action-count">({{ node.children.length }} actions)</span>
+    25	        <span class="timestamp">{{ formatTime(node.created) }}</span>
+    26	      </div>
+    27	      <div v-if="isExpanded" class="action-group-children">
+    28	        <ActionItem
+    29	          v-for="action in node.children"
+    30	          :key="action.id"
+    31	          :action="action"
+    32	        />
+    33	      </div>
+    34	    </div>
+    35	
+    36	    <!-- Single Action (if passed directly) -->
+    37	    <ActionItem
+    38	      v-else-if="node.type === 'action'"
+    39	      :action="node"
+    40	    />
+    41	  </div>
+    42	</template>
+    43	
+    44	<script setup lang="ts">
+    45	import { ref, computed } from 'vue';
+    46	import type { Subprocess } from '../../domain/processTree/Subprocess';
+    47	import type { ActionGroup } from '../../domain/processTree/ActionGroup';
+    48	import type { ConstructiveAction } from '../../domain/processTree/Action';
+    49	import ActionItem from './ActionItem.vue';
+    50	
+    51	// Allow recursive component
+    52	import ActionGroupItem from './ActionGroupItem.vue';
+    53	
+    54	interface Props {
+    55	  node: Subprocess | ActionGroup | ConstructiveAction;
+    56	}
+    57	
+    58	const props = defineProps<Props>();
+    59	
+    60	const isExpanded = ref(true);
+    61	
+    62	/**
+    63	 * Count children for subprocess
+    64	 */
+    65	const childCount = computed(() => {
+    66	  if (props.node.type === 'subprocess') {
+    67	    return props.node.children.length;
+    68	  }
+    69	  return 0;
+    70	});
+    71	
+    72	/**
+    73	 * Toggle expanded/collapsed state
+    74	 */
+    75	function toggleExpanded() {
+    76	  isExpanded.value = !isExpanded.value;
+    77	}
+    78	
+    79	/**
+    80	 * Format timestamp to time string
+    81	 */
+    82	function formatTime(date: Date): string {
+    83	  return date.toLocaleTimeString('en-US', {
+    84	    hour: '2-digit',
+    85	    minute: '2-digit',
+    86	    second: '2-digit'
+    87	  });
+    88	}
+    89	</script>
+    90	
+    91	<style scoped>
+    92	.action-group-item {
+    93	  width: 100%;
+    94	}
+    95	
+    96	/* Subprocess styling */
+    97	.subprocess-item {
+    98	  margin-bottom: 8px;
+    99	}
+   100	
+   101	.subprocess-header {
+   102	  display: flex;
+   103	  align-items: center;
+   104	  padding: 6px 8px;
+   105	  background-color: var(--color-background-soft);
+   106	  border: 1px solid var(--color-border);
+   107	  border-radius: 4px;
+   108	  cursor: pointer;
+   109	  user-select: none;
+   110	}
+   111	
+   112	.subprocess-header:hover {
+   113	  background-color: var(--color-background-mute);
+   114	}
+   115	
+   116	.subprocess-name {
+   117	  flex: 1;
+   118	  font-size: 13px;
+   119	  font-weight: 600;
+   120	  color: var(--color-heading);
+   121	}
+   122	
+   123	.subprocess-count {
+   124	  font-size: 12px;
+   125	  color: var(--color-text-muted);
+   126	  margin-left: 4px;
+   127	}
+   128	
+   129	.subprocess-children {
+   130	  margin-top: 4px;
+   131	  margin-left: 16px;
+   132	  padding-left: 8px;
+   133	  border-left: 2px solid var(--color-border);
+   134	}
+   135	
+   136	/* Action Group styling */
+   137	.action-group {
+   138	  margin-bottom: 4px;
+   139	}
+   140	
+   141	.action-group-header {
+   142	  display: flex;
+   143	  align-items: center;
+   144	  padding: 4px 8px;
+   145	  background-color: var(--color-background);
+   146	  border: 1px solid var(--color-border-hover);
+   147	  border-radius: 3px;
+   148	  cursor: pointer;
+   149	  user-select: none;
+   150	}
+   151	
+   152	.action-group-header:hover {
+   153	  background-color: var(--color-background-soft);
+   154	}
+   155	
+   156	.action-group-label {
+   157	  font-size: 12px;
+   158	  font-weight: 500;
+   159	  color: var(--color-text);
+   160	  margin-right: 4px;
+   161	}
+   162	
+   163	.action-count {
+   164	  font-size: 11px;
+   165	  color: var(--color-text-muted);
+   166	  margin-right: 8px;
+   167	}
+   168	
+   169	.timestamp {
+   170	  font-size: 11px;
+   171	  color: var(--color-text-muted);
+   172	  margin-left: auto;
+   173	  font-family: monospace;
+   174	}
+   175	
+   176	.action-group-children {
+   177	  margin-top: 2px;
+   178	  margin-left: 16px;
+   179	  padding-left: 8px;
+   180	  border-left: 1px solid var(--color-border-hover);
+   181	}
+   182	
+   183	/* Expand icon */
+   184	.expand-icon {
+   185	  display: inline-block;
+   186	  margin-right: 6px;
+   187	  font-size: 10px;
+   188	  transition: transform 0.2s ease;
+   189	  color: var(--color-text-muted);
+   190	}
+   191	
+   192	.expand-icon.expanded {
+   193	  transform: rotate(90deg);
+   194	}
+   195	</style>
+---frontend/src/components/panels/ActionsPanel.vue
+     1	<template>
+     2	  <aside class="actions-panel">
+     3	    <header class="panel-header">
+     4	      <h2 class="panel-title">Construction History</h2>
+     5	      <div class="header-controls">
+     6	        <!-- Stack management buttons -->
+     7	        <div class="stack-controls">
+     8	          <button 
+     9	            class="stack-btn stack-pop-btn"
+    10	            :disabled="!canPop"
+    11	            @click="popSubprocess"
+    12	            :title="canPop ? 'Close current subprocess (Ctrl+Shift+[)' : 'Cannot close root'"
+    13	            aria-label="Pop subprocess from stack"
+    14	          >
+    15	            &lt;
+    16	          </button>
+    17	          <button 
+    18	            class="stack-btn stack-push-btn"
+    19	            @click="pushSubprocess"
+    20	            title="Create and enter new subprocess (Ctrl+Shift+])"
+    21	            aria-label="Push subprocess to stack"
+    22	          >
+    23	            &gt;
+    24	          </button>
+    25	        </div>
+    26	      </div>
+    27	    </header>
+    28	
+    29	    <!-- Process Tree -->
+    30	    <div class="process-tree" ref="treeContainer">
+    31	      <ProcessTreeNode
+    32	        v-if="processTree"
+    33	        :node="processTree.root"
+    34	        :world="world"
+    35	        :data-version="treeVersion"
+    36	        :selected-node-id="selectedNodeId"
+    37	        :active-subprocess-id="activeSubprocessId"
+    38	        :related-action-ids="relatedActionIds"
+    39	        @select-node="handleNodeSelect"
+    40	        @toggle-encapsulate="handleToggleEncapsulate"
+    41	        @toggle-output="handleToggleOutput"
+    42	        @highlight-elements="(...args) => emit('highlightElements', ...args)"
+    43	        @clear-highlight="emit('clearHighlight')"
+    44	        @rename-node="handleRenameNode"
+    45	      />
+    46	    </div>
+    47	  </aside>
+    48	</template>
+    49	
+    50	<script setup lang="ts">
+    51	import { ref, computed, inject, onMounted, onUnmounted, watch, nextTick } from 'vue';
+    52	import type { World } from '@/domain/world/World';
+    53	import type { ProcessTreeNode as ProcessTreeNodeType } from '@/domain/processTree/ProcessTreeNode';
+    54	import { createProcessHistoryController } from '@/application/processHistory/ProcessHistoryController';
+    55	import ProcessTreeNode from './ProcessTreeNode.vue';
+    56	import { useSelectionStore } from '@/stores/selectionStore';
+    57	import { useProcessTreeStore } from '@/stores/processTreeStore';
+    58	
+    59	// Emits
+    60	const emit = defineEmits<{
+    61	  highlightElements: [elementIds: string[], temporary: boolean];
+    62	  clearHighlight: [];
+    63	}>();
+    64	
+    65	// Injected dependencies
+    66	const world = inject<World>('world')!;
+    67	const processHistoryController = createProcessHistoryController({
+    68	  world,
+    69	  commandStack: inject<unknown>('commandStack')
+    70	});
+    71	
+    72	// Selection store
+    73	const selectionStore = useSelectionStore();
+    74	const processTreeStore = useProcessTreeStore();
+    75	
+    76	// Local state
+    77	const treeContainer = ref<HTMLElement | null>(null);
+    78	const selectedNodeId = ref<string | null>(null);
+    79	const relatedActionIds = ref<Set<string>>(new Set());
+    80	const stackVersion = ref(0); // Track stack changes
+    81	const lastNodeCount = ref(0); // Track number of nodes for auto-scroll
+    82	
+    83	// Get current ProcessTree - use reactive ref that we update when World changes
+    84	const processTree = ref(world.getProcessTree());
+    85	
+    86	// Stack management computed properties
+    87	const canPop = computed(() => {
+    88	  stackVersion.value; // Depend on stack changes
+    89	  return processHistoryController.getState().canPop;
+    90	});
+    91	const activeSubprocessId = computed(() => {
+    92	  stackVersion.value; // Depend on stack changes
+    93	  return processHistoryController.getState().activeSubprocessId;
+    94	});
+    95	
+    96	// Watch ProcessTree version for reactivity, triggered by stackVersion changes
+    97	const treeVersion = computed(() => {
+    98	  // Depend on stackVersion to trigger updates when push/pop occurs
+    99	  stackVersion.value;
+   100	  return processTree.value.getVersion();
+   101	});
+   102	
+   103	// Keyboard shortcuts for stack management
+   104	function handleKeyDown(event: KeyboardEvent) {
+   105	  if (event.ctrlKey && event.shiftKey) {
+   106	    if (event.key === '[') {
+   107	      event.preventDefault();
+   108	      popSubprocess();
+   109	    } else if (event.key === ']') {
+   110	      event.preventDefault();
+   111	      pushSubprocess();
+   112	    }
+   113	  }
+   114	}
+   115	
+   116	// Subscription cleanup
+   117	let unsubscribeTree: (() => void) | null = null;
+   118	let unsubscribeWorld: (() => void) | null = null;
+   119	
+   120	function scrollToBottom() {
+   121	  if (treeContainer.value) {
+   122	    treeContainer.value.scrollTop = treeContainer.value.scrollHeight;
+   123	  }
+   124	}
+   125	
+   126	function refreshAfterTreeChange(ensureExpandedForActiveSubprocess: boolean) {
+   127	  const currentCount = countNodes(processTree.value.root);
+   128	  const shouldScroll = currentCount > lastNodeCount.value;
+   129	  lastNodeCount.value = currentCount;
+   130	
+   131	  stackVersion.value++;
+   132	
+   133	  if (shouldScroll && ensureExpandedForActiveSubprocess) {
+   134	    processTreeStore.ensureExpanded(processTree.value.getCurrentSubprocess().id);
+   135	  }
+   136	
+   137	  if (shouldScroll) {
+   138	    nextTick(() => {
+   139	      scrollToBottom();
+   140	    });
+   141	  }
+   142	}
+   143	
+   144	function subscribeToCurrentProcessTree(ensureExpandedForActiveSubprocess: boolean) {
+   145	  unsubscribeTree = processTree.value.subscribe(() => {
+   146	    refreshAfterTreeChange(ensureExpandedForActiveSubprocess);
+   147	  });
+   148	}
+   149	
+   150	function handleWorldChange() {
+   151	  if (unsubscribeTree) {
+   152	    unsubscribeTree();
+   153	  }
+   154	
+   155	  processTree.value = world.getProcessTree();
+   156	  lastNodeCount.value = countNodes(processTree.value.root);
+   157	  subscribeToCurrentProcessTree(false);
+   158	  stackVersion.value++;
+   159	}
+   160	
+   161	onMounted(() => {
+   162	  // Register keyboard shortcuts
+   163	  window.addEventListener('keydown', handleKeyDown);
+   164	
+   165	  // Initialize node count
+   166	  lastNodeCount.value = countNodes(processTree.value.root);
+   167	
+   168	  // Subscribe to ProcessTree changes
+   169	  subscribeToCurrentProcessTree(true);
+   170	
+   171	  // Subscribe to World changes to detect when clear() creates new ProcessTree
+   172	  world.subscribeToChanges(handleWorldChange);
+   173	  unsubscribeWorld = () => world.unsubscribeFromChanges(handleWorldChange);
+   174	});
+   175	
+   176	onUnmounted(() => {
+   177	  window.removeEventListener('keydown', handleKeyDown);
+   178	  if (unsubscribeTree) {
+   179	    unsubscribeTree();
+   180	  }
+   181	  if (unsubscribeWorld) {
+   182	    unsubscribeWorld();
+   183	  }
+   184	});
+   185	
+   186	// Watch selection changes and find related actions
+   187	watch(
+   188	  () => selectionStore.selectedIdsArray,
+   189	  (selectedIds) => {
+   190	    if (selectedIds.length === 0) {
+   191	      // No selection, clear related actions
+   192	      relatedActionIds.value.clear();
+   193	    } else {
+   194	      // Find actions related to selected elements
+   195	      findRelatedActions(selectedIds);
+   196	    }
+   197	  },
+   198	  { immediate: true }
+   199	);
+   200	
+   201	/**
+   202	 * Find actions that have any of the selected element IDs in their inputs or outputs
+   203	 */
+   204	function findRelatedActions(selectedIds: string[]): void {
+   205	  const related = new Set<string>();
+   206	  const selectedIdSet = new Set(selectedIds);
+   207	
+   208	  // Get all actions from process tree
+   209	  const allActions = processTree.value.getAllActions();
+   210	
+   211	  // Check each action's elementId and dependencies (Phase 92)
+   212	  for (const action of allActions) {
+   213	    // Check if action produces any selected element
+   214	    const producesSelected = selectedIdSet.has(action.elementId);
+   215	
+   216	    // Check if action depends on any selected element
+   217	    // Dependencies are now in DependencyService, accessible via element
+   218	    const dependsOnSelected = world && world.dependencyService
+   219	      ? world.dependencyService.getDependencies(action.elementId).some(depId => selectedIdSet.has(depId))
+   220	      : false;
+   221	
+   222	    if (producesSelected || dependsOnSelected) {
+   223	      related.add(action.id);
+   224	    }
+   225	  }
+   226	
+   227	  relatedActionIds.value = related;
+   228	}
+   229	
+   230	/**
+   231	 * Recursively count total nodes in the tree
+   232	 */
+   233	function countNodes(node: ProcessTreeNodeType): number {
+   234	  let count = 1;
+   235	  if (node.children) {
+   236	    for (const child of node.children) {
+   237	      if (child) {
+   238	        count += countNodes(child);
+   239	      }
+   240	    }
+---frontend/src/components/panels/ProcessTreeNode.vue
+     1	<template>
+     2	  <div class="tree-node">
+     3	    <!-- Subprocess Node -->
+     4	    <div
+     5	      v-if="node.type === 'subprocess'"
+     6	      class="subprocess-node"
+     7	      :class="{ 
+     8	        'node-selected': isSelected, 
+     9	        'subprocess-active': isActiveSubprocess,
+    10	        'faded': isFaded
+    11	      }"
+    12	    >
+    13	      <div class="subprocess-header">
+    14	        <span class="collapse-icon" @click.stop="toggleCollapse">{{ isCollapsed ? '▶' : '▼' }}</span>
+    15	        
+    16	        <span 
+    17	          v-if="!isEditing"
+    18	          class="subprocess-name" 
+    19	          @dblclick.stop="startEditing"
+    20	        >
+    21	          {{ node.name }}
+    22	        </span>
+    23	        <input
+    24	          v-else
+    25	          ref="nameInput"
+    26	          v-model="editName"
+    27	          class="subprocess-name-input"
+    28	          @blur="submitName"
+    29	          @keydown.enter="submitName"
+    30	          @keydown.esc="cancelEditing"
+    31	          @keydown.stop
+    32	          @click.stop
+    33	        />
+    34	        
+    35	        <span v-if="isActiveSubprocess" class="active-indicator" title="Current subprocess">●</span>
+    36	
+    37	        <!-- Right Side Controls Matrix -->
+    38	        <div class="node-controls">
+    39	          <!-- Show Intermediates Toggle (Triangle Down) -->
+    40	          <!-- Was Encapsulate Toggle + Internal Button. Consolidated here. -->
+    41	          <button
+    42	            class="icon-btn internal-btn"
+    43	            :class="{ 'active': node.showIntermediates }"
+    44	            @click.stop="emit('toggleEncapsulate', node.id)"
+    45	            title="Show Intermediates"
+    46	          >
+    47	            {{ node.showIntermediates ? '▼' : '▽' }}
+    48	          </button>
+    49	          
+    50	          <!-- Output Selection (Triangle Up) -->
+    51	          <button
+    52	            class="icon-btn output-btn"
+    53	            :class="{ 'active': node.isOutput }"
+    54	            @click.stop="emit('toggleOutput', node.id)"
+    55	            title="Mark as Output"
+    56	          >
+    57	            {{ node.isOutput ? '▲' : '△' }}
+    58	          </button>
+    59	        </div>
+    60	      </div>
+    61	
+    62	      <!-- Child nodes (when expanded) -->
+    63	      <div v-show="!isCollapsed" class="subprocess-children">
+    64	        <ProcessTreeNode
+    65	          v-for="child in allChildren"
+    66	          :key="child.id"
+    67	          :node="child"
+    68	          :world="world"
+    69	          :data-version="dataVersion"
+    70	          :selected-node-id="selectedNodeId"
+    71	          :active-subprocess-id="activeSubprocessId"
+    72	          :related-action-ids="relatedActionIds"
+    73	          :is-parent-encapsulated="isEffectivelyEncapsulated"
+    74	          @select-node="emit('selectNode', $event)"
+    75	          @toggle-encapsulate="emit('toggleEncapsulate', $event)"
+    76	          @toggle-output="emit('toggleOutput', $event)"
+    77	          @highlight-elements="(...args) => emit('highlightElements', ...args)"
+    78	          @clear-highlight="emit('clearHighlight')"
+    79	          @rename-node="(...args) => emit('renameNode', ...args)"
+    80	        />
+    81	        
+    82	        <!-- Insertion Point Cursor -->
+    83	        <div v-if="isActiveSubprocess" class="insertion-point" title="Next action will be added here">
+    84	          <span class="insertion-arrow">➤</span>
+    85	          <span class="insertion-line"></span>
+    86	        </div>
+    87	      </div>
+    88	    </div>
+    89	
+    90	    <!-- ActionGroup Node -->
+    91	    <div
+    92	      v-else-if="node.type === 'actionGroup' && allChildren.length > 0"
+    93	      class="actiongroup-node"
+    94	      :class="{ 
+    95	        'auxiliary': node.isAuxiliary,
+    96	        'faded': isFaded
+    97	      }"
+    98	    >
+    99	      <div class="actiongroup-header">
+   100	        <span v-if="node.isAuxiliary" class="auxiliary-icon" title="Auxiliary actions">⚙</span>
+   101	
+   102	        <!-- Right Side Controls Matrix - REMOVED for ActionGroup to avoid button duplication -->
+   103	        <!-- User sees group+action as one unit, so we only show controls on the action itself -->
+   104	      </div>
+   105	
+   106	      <!-- Child actions (always shown) -->
+   107	      <div class="actiongroup-children">
+   108	        <ProcessTreeNode
+   109	          v-for="child in allChildren"
+   110	          :key="child.id"
+   111	          :node="child"
+   112	          :world="world"
+   113	          :data-version="dataVersion"
+   114	          :selected-node-id="selectedNodeId"
+   115	          :active-subprocess-id="activeSubprocessId"
+   116	          :related-action-ids="relatedActionIds"
+   117	          :is-parent-encapsulated="isEffectivelyEncapsulated"
+   118	          @select-node="emit('selectNode', $event)"
+   119	          @toggle-encapsulate="emit('toggleEncapsulate', $event)"
+   120	          @toggle-output="emit('toggleOutput', $event)"
+   121	          @highlight-elements="(...args) => emit('highlightElements', ...args)"
+   122	          @clear-highlight="emit('clearHighlight')"
+   123	          @rename-node="(...args) => emit('renameNode', ...args)"
+   124	        />
+   125	      </div>
+   126	    </div>
+   127	
+   128	    <!-- Action Node (leaf) -->
+   129	    <div
+   130	      v-else-if="node.type === 'action' && descriptionParts.length > 0"
+   131	      class="action-node"
+   132	      :class="{ 
+   133	        'node-selected': isSelected,
+   134	        'action-infeasible': isInfeasible,
+   135	        'action-related': isRelated,
+   136	        'faded': isFaded
+   137	      }"
+   138	      @click="handleActionClick"
+   139	      @dblclick="toggleDescriptionExpand"
+   140	      @mouseenter="handleActionHover(true)"
+   141	      @mouseleave="handleActionHover(false)"
+   142	    >
+   143	      <div class="action-main">
+   144	        <span 
+   145	          class="action-description"
+   146	          :class="{ 'description-expanded': isDescriptionExpanded }"
+   147	          :title="isDescriptionExpanded ? '' : 'Double-click to expand'"
+   148	        >
+   149	          <template v-for="(part, index) in descriptionParts" :key="index">
+   150	            <span v-if="part.type === 'text'">{{ part.content }}</span>
+   151	            <span 
+   152	              v-else 
+   153	              class="label-clickable"
+   154	              :data-element-id="part.elementId"
+   155	              @click.stop="handleLabelClick(part.elementId, $event)"
+   156	              v-html="formatElementLabel(part.content)"
+   157	            ></span>
+   158	          </template>
+   159	        </span>
+   160	        <span v-if="isRelated && !isSelected" class="related-indicator" title="Related to selected elements">🔗</span>
+   161	
+   162	        <!-- Right Side Controls Matrix -->
+   163	        <div class="node-controls">
+   164	          <!-- Spacer for Show Intermediates (Down) column -->
+   165	          <div class="icon-spacer"></div>
+   166	
+   167	          <!-- Output Selection (Triangles) -->
+   168	          <button
+   169	            class="icon-btn output-btn"
+   170	            :class="{ 'active': node.isOutput }"
+   171	            @click.stop="emit('toggleOutput', node.id)"
+   172	            title="Toggle Output"
+   173	          >
+   174	            {{ node.isOutput ? '▲' : '△' }}
+   175	          </button>
+   176	        </div>
+   177	      </div>
+   178	
+   179	      <!-- Action Details (when selected) -->
+   180	      <div v-if="isSelected" class="action-details">
+   181	        <div v-if="node.inputs && node.inputs.length > 0" class="action-io">
+   182	          <strong>In:</strong> {{ node.inputs.join(', ') }}
+   183	        </div>
+   184	        <div v-if="node.outputs && node.outputs.length > 0" class="action-io">
+   185	          <strong>Out:</strong> {{ node.outputs.join(', ') }}
+   186	        </div>
+   187	      </div>
+   188	    </div>
+   189	  </div>
+   190	</template>
+   191	
+   192	<script setup lang="ts">
+   193	import { ref, computed, nextTick } from 'vue';
+   194	import type { ProcessNode } from '@/domain/processTree/ProcessTree';
+   195	import type { World } from '@/domain/world/World';
+   196	import { formatElementLabel } from '@/utils/formatUtils';
+   197	import { getActionDescriptionParts } from '@/domain/processTree/Action';
+   198	import { useSelectionStore } from '@/stores/selectionStore';
+   199	import { useProcessTreeStore } from '@/stores/processTreeStore';
+   200	import { Element2D } from '@/domain/world/Element2D';
+   201	
+   202	// Props
+   203	const props = withDefaults(defineProps<{
+   204	  node: ProcessNode;
+   205	  world: World;
+   206	  selectedNodeId: string | null;
+   207	  activeSubprocessId?: string;
+   208	  relatedActionIds?: Set<string>;
+   209	  isParentEncapsulated?: boolean;
+   210	  dataVersion?: number;
+   211	}>(), {
+   212	  isParentEncapsulated: false,
+   213	  dataVersion: 0
+   214	});
+   215	
+   216	// Emits
+   217	const emit = defineEmits<{
+   218	  selectNode: [nodeId: string];
+   219	  toggleEncapsulate: [nodeId: string];
+   220	  toggleOutput: [nodeId: string];
+   221	  highlightElements: [elementIds: string[], temporary: boolean];
+   222	  clearHighlight: [];
+   223	  renameNode: [nodeId: string, newName: string];
+   224	}>();
+   225	
+   226	// Local state
+   227	const processTreeStore = useProcessTreeStore();
+   228	const isCollapsed = computed(() =>
+   229	  props.node.type === 'subprocess'
+   230	    ? processTreeStore.isCollapsed(props.node.id, props.node.name)
+   231	    : false
+   232	);
+   233	const isEditing = ref(false);
+   234	const editName = ref('');
+   235	const nameInput = ref<HTMLInputElement | null>(null);
+   236	
+   237	// Computed
+   238	const isSelected = computed(() => props.selectedNodeId === props.node.id);
+   239	
+   240	const isActiveSubprocess = computed(() => {
+---frontend/src/components/toolbars/MainToolbar.vue
+     1	<template>
+     2	  <div class="main-toolbar">
+     3	    <div class="toolbar-section">
+     4	      <h3 class="toolbar-title">Tools</h3>
+     5	      <div class="tool-buttons">
+     6	        <button
+     7	          v-for="tool in tools"
+     8	          :key="tool.id"
+     9	          :class="['tool-button', { active: isToolActive(tool.id) }]"
+    10	          :title="tool.name"
+    11	          @click="selectTool(tool.id)"
+    12	        >
+    13	          <span class="tool-icon">{{ tool.icon }}</span>
+    14	          <span class="tool-label">{{ tool.name }}</span>
+    15	        </button>
+    16	      </div>
+    17	    </div>
+    18	  </div>
+    19	</template>
+    20	
+    21	<script setup lang="ts">
+    22	import { useToolStore } from '@/stores/toolStore';
+    23	
+    24	const toolStore = useToolStore();
+    25	
+    26	interface Tool {
+    27	  id: string;
+    28	  name: string;
+    29	  icon: string;
+    30	  category: string;
+    31	}
+    32	
+    33	// Define available tools
+    34	const tools: Tool[] = [
+    35	  { id: 'select', name: 'Select', icon: '↖', category: 'basic' },
+    36	  { id: 'point-free', name: 'Point', icon: '●', category: 'point' },
+    37	  { id: 'point-on-element', name: 'Point on Element', icon: '◉', category: 'point' },
+    38	  { id: 'point-intersection', name: 'Intersection Point', icon: '⊗', category: 'point' },
+    39	  { id: 'segment', name: 'Segment', icon: '─', category: 'line' },
+    40	  { id: 'line', name: 'Line', icon: '↔', category: 'line' },
+    41	  { id: 'circle-center-radius', name: 'Circle', icon: '○', category: 'circle' },
+    42	];
+    43	
+    44	const isToolActive = (toolId: string) => {
+    45	  return toolStore.isToolActive(toolId);
+    46	};
+    47	
+    48	const selectTool = (toolId: string) => {
+    49	  if (toolStore.isToolActive(toolId)) {
+    50	    toolStore.clearTool();
+    51	  } else {
+    52	    toolStore.setActiveTool(toolId);
+    53	  }
+    54	};
+    55	</script>
+    56	
+    57	<style scoped>
+    58	.main-toolbar {
+    59	  background-color: #ffffff;
+    60	  border-right: 1px solid #ddd;
+    61	  padding: 16px;
+    62	  width: 200px;
+    63	  overflow-y: auto;
+    64	}
+    65	
+    66	.toolbar-section {
+    67	  margin-bottom: 24px;
+    68	}
+    69	
+    70	.toolbar-title {
+    71	  font-size: 14px;
+    72	  font-weight: 600;
+    73	  color: #666;
+    74	  text-transform: uppercase;
+    75	  margin: 0 0 12px 0;
+    76	  letter-spacing: 0.5px;
+    77	}
+    78	
+    79	.tool-buttons {
+    80	  display: flex;
+    81	  flex-direction: column;
+    82	  gap: 4px;
+    83	}
+    84	
+    85	.tool-button {
+    86	  display: flex;
+    87	  align-items: center;
+    88	  gap: 8px;
+    89	  padding: 10px 12px;
+    90	  background-color: #f5f5f5;
+    91	  border: 1px solid #e0e0e0;
+    92	  border-radius: 4px;
+    93	  cursor: pointer;
+    94	  transition: all 0.15s ease;
+    95	  font-size: 14px;
+    96	  color: #333;
+    97	  text-align: left;
+    98	}
+    99	
+   100	.tool-button:hover {
+   101	  background-color: #e8e8e8;
+   102	  border-color: #ccc;
+   103	}
+   104	
+   105	.tool-button.active {
+   106	  background-color: #2196f3;
+   107	  border-color: #2196f3;
+   108	  color: #ffffff;
+   109	}
+   110	
+   111	.tool-icon {
+   112	  font-size: 18px;
+   113	  width: 24px;
+   114	  text-align: center;
+   115	}
+   116	
+   117	.tool-label {
+   118	  flex: 1;
+   119	}
+   120	</style>

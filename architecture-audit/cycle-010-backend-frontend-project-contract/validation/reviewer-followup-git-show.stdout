@@ -1,0 +1,19 @@
+commit 7aefeed55a3eb52362185ea05fd73527f045f151
+Author:     Saivage Coder <saivage-coder@example.invalid>
+AuthorDate: Tue May 26 07:24:16 2026 +0000
+Commit:     Saivage Coder <saivage-coder@example.invalid>
+CommitDate: Tue May 26 07:24:16 2026 +0000
+
+    [tsk-t3-correct-focused-e2e-evidence] [t3-correct-focused-e2e-evidence] add focused app-shell e2e evidence
+
+M	architecture-audit/cycle-010-backend-frontend-project-contract/implementation-log.md
+A	architecture-audit/cycle-010-backend-frontend-project-contract/validation/focused-wave010-playwright-app-shell-project-flow-rerun.stderr
+A	architecture-audit/cycle-010-backend-frontend-project-contract/validation/focused-wave010-playwright-app-shell-project-flow-rerun.stdout
+A	architecture-audit/cycle-010-backend-frontend-project-contract/validation/focused-wave010-playwright-app-shell-project-flow.stderr
+A	architecture-audit/cycle-010-backend-frontend-project-contract/validation/focused-wave010-playwright-app-shell-project-flow.stdout
+A	architecture-audit/cycle-010-backend-frontend-project-contract/validation/t3-static-scan-focused-e2e-stale-project-api.stderr
+A	architecture-audit/cycle-010-backend-frontend-project-contract/validation/t3-static-scan-focused-e2e-stale-project-api.stdout
+A	architecture-audit/cycle-010-backend-frontend-project-contract/validation/t3-static-scan-no-openProjectDialog.stderr
+A	architecture-audit/cycle-010-backend-frontend-project-contract/validation/t3-static-scan-no-openProjectDialog.stdout
+M	frontend/src/App.vue
+A	frontend/tests/e2e/wave010-app-shell-project-flow.spec.ts

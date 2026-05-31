@@ -27,8 +27,8 @@ Decision-stage hygiene evidence captured before writing this artifact:
 
 - `.saivage/stages/cycle-022-decision-post-021-plan-correction/logs/path-scoped-status-and-diff.stdout`
 - `.saivage/stages/cycle-022-decision-post-021-plan-correction/logs/path-scoped-status-and-diff.stderr`
-- `.saivage/stages/cycle-022-decision-post-021-plan-correction/logs/wave022-entry.stdout`
-- `.saivage/stages/cycle-022-decision-post-021-plan-correction/logs/wave022-entry.stderr`
+- `.saivage/stages/cycle-022-decision-post-021-plan-correction/logs/wave022-section.stdout`
+- `.saivage/stages/cycle-022-decision-post-021-plan-correction/logs/wave022-section.stderr`
 
 The full workspace `git_status` is too large for the MCP status buffer in this repository. The decision therefore relies on path-scoped status/diff for the Wave 022 audit directory and the named app-shell/runtime/session/persistence files. That scoped evidence shows broad dirty/untracked audit and validation-log context already present around Cycle 022, including modified `decision.md`, validation preview stdout files, and untracked review/status artifacts. This decision does not normalize, revert, incorporate, or treat those adjacent artifacts as implementation scope.
 

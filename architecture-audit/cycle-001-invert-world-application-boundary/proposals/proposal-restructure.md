@@ -123,13 +123,14 @@ Even though this restructure proposal is rejected for Wave 001, any accepted Wav
 | `frontend/src/App.vue` | active calls at `frontend/src/App.vue:323`, `frontend/src/App.vue:384`, `frontend/src/App.vue:439`; stale comment at `frontend/src/App.vue:157` | Replace with `initializeWorld(world, commandStack)` and delete stale commented call. |
 | `frontend/tests/integration/worldInitialization.spec.ts` | direct calls at lines 21, 50, 67, 82, 114, 124, 149, 151, 169, 184, 198, 221, 247, 260 | Convert to initializer integration coverage while preserving geometric/process-tree assertions. |
 | `frontend/tests/unit/commands/initializeWorldCommand.spec.ts` | direct call at line 26 | Replace obsolete `World.initialize` API assertion with initializer/command-stack behavior or delete if redundant. |
-| `frontend/tests/helpers/worldHelpers.ts` | `new CommandStack(world)` and `world.initialize(commandStack)` at lines 42 and 44 | Import/call `initializeWorld(world, commandStack)`, remove the stale constructor argument, and keep returning `{ world, commandStack }`. |
+| `frontend/tests/helpers/worldHelpers.ts` | `new CommandStack(world)` and `world.initialize(commandStack)` at `frontend/tests/helpers/worldHelpers.ts:43` and `frontend/tests/helpers/worldHelpers.ts:44` | Import/call `initializeWorld(world, commandStack)`, remove the stale constructor argument, and keep returning `{ world, commandStack }`. |
+| `frontend/tests/unit/commands/commandStack.spec.ts` | stale `new CommandStack(world)` constructor argument at `frontend/tests/unit/commands/commandStack.spec.ts:38` | Remove the unused `world` argument so the test matches the current constructorless `CommandStack` contract. |
 
 The review-mentioned `frontend/tests/e2e/active-plane-shortcuts.spec.ts` and `frontend/tests/unit/services/paperService.spec.ts` are not direct call sites in current grep output, but may depend on initialized-world behavior and must be covered by focused/full validation.
 
 ## CommandStack dependency direction and constructor implications
 
-`CommandStack` currently imports `Command` only (`frontend/src/commands/CommandStack.ts:16`) and declares no constructor (`frontend/src/commands/CommandStack.ts:22`); it does not import `World` or own application initialization. The existing `new CommandStack(world)` in `frontend/tests/helpers/worldHelpers.ts:42` is a stale extra argument and should be removed during the accepted direct implementation. The allowed direction remains `application initializer -> commands/CommandStack -> domain World`; the forbidden direction is `World -> CommandStack`.
+`CommandStack` currently imports `Command` only (`frontend/src/commands/CommandStack.ts:16`) and declares no constructor (`frontend/src/commands/CommandStack.ts:22`); it does not import `World` or own application initialization. The existing `new CommandStack(world)` in `frontend/tests/helpers/worldHelpers.ts:43` is a stale extra argument and should be removed during the accepted direct implementation. The allowed direction remains `application initializer -> commands/CommandStack -> domain World`; the forbidden direction is `World -> CommandStack`.
 
 ## Validation plan for implementation wave
 

@@ -1,0 +1,200 @@
+frontend/src/commands/operations/world/Add3DLineOp.ts:77:      // Validate that projections are geometrically feasible
+frontend/src/commands/operations/world/Add3DLineOp.ts:81:      if (!proj1Real || !proj2Real || !proj1Real.isFeasible() || !proj2Real.isFeasible()) {
+frontend/src/commands/operations/world/Add3DLineOp.ts:82:        throw new Error('Cannot create 3D line: one or both projections are not geometrically feasible');
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:78:      // Validate that traces are geometrically feasible
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:82:      if (!trace1Real || !trace2Real || !trace1Real.isFeasible() || !trace2Real.isFeasible()) {
+frontend/src/commands/operations/world/Add3DPlaneOp.ts:83:        throw new Error('Cannot create 3D plane: one or both traces are not geometrically feasible');
+frontend/src/commands/operations/world/Add3DPointOp.ts:84:      // Validate that projections are geometrically feasible
+frontend/src/commands/operations/world/Add3DPointOp.ts:88:      if (!proj1Real.isFeasible() || !proj2Real.isFeasible()) {
+frontend/src/commands/operations/world/Add3DPointOp.ts:89:        throw new Error('Cannot create 3D point: one or both projections are not geometrically feasible');
+frontend/src/commands/operations/world/Add3DSegmentOp.ts:78:      // Validate that projections are geometrically feasible
+frontend/src/commands/operations/world/Add3DSegmentOp.ts:82:      if (!proj1Real || !proj2Real || !proj1Real.isFeasible() || !proj2Real.isFeasible()) {
+frontend/src/commands/operations/world/Add3DSegmentOp.ts:83:        throw new Error('Cannot create 3D segment: one or both projections are not geometrically feasible');
+frontend/src/commands/operations/world/Add3DSegmentOp.ts:104:        const pairingA_ok = pA_start.feasible && pA_end.feasible;
+frontend/src/commands/operations/world/Add3DSegmentOp.ts:113:        const pairingB_ok = pB_start.feasible && pB_end.feasible;
+frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts:79:      // Validate that traces are geometrically feasible
+frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts:85:          !t1Real.isFeasible() || !t2Real.isFeasible() || !t2PrimeReal.isFeasible()) {
+frontend/src/commands/operations/world/AddAuxiliaryProjectionPlaneOp.ts:86:        throw new Error('Cannot create auxiliary projection plane: one or more trace lines are not geometrically feasible');
+frontend/src/components/panels/ActionItem.vue:5:      'infeasible': action.infeasible
+frontend/src/components/panels/ActionItem.vue:7:    :title="action.infeasible ? `Infeasible: ${action.infeasibilityReason || 'Constraint violation'}` : ''"
+frontend/src/components/panels/ActionItem.vue:71:.action-item.infeasible {
+frontend/src/components/panels/ActionItem.vue:88:.action-item.infeasible .action-type {
+frontend/src/components/panels/ProcessTreeNode.vue:134:        'action-infeasible': isInfeasible,
+frontend/src/components/panels/ProcessTreeNode.vue:251:const isInfeasible = computed(() => {
+frontend/src/components/panels/ProcessTreeNode.vue:268:  // Only 2D elements have feasibility checking via realize2D
+frontend/src/components/panels/ProcessTreeNode.vue:271:    return realization ? !realization.isFeasible() : false;
+frontend/src/components/panels/ProcessTreeNode.vue:274:  // 3D elements and projection planes don't have infeasibility yet
+frontend/src/components/panels/ProcessTreeNode.vue:709:.action-node.action-infeasible {
+frontend/src/domain/calculations/Intersections.ts:78: * @returns Point2DRealization2D with feasible=false if parallel/coincident, feasible=true otherwise
+frontend/src/domain/calculations/Intersections.ts:113:    // Lines are parallel or coincident - return infeasible realization
+frontend/src/domain/world/VisualStyle.ts:39:export const infeasibleStyle: Partial<VisualStyle> = {
+frontend/src/domain/world/Element2DRealization2D.ts:7: * **Phase 44**: Originally introduced as standalone base class with feasible property.
+frontend/src/domain/world/Element2DRealization2D.ts:10: * to share feasible property with potential future 3D realizations.
+frontend/src/domain/world/Element2DRealization2D.ts:12: * Architectural principle: All 2D element realizations share a common feasibility property.
+frontend/src/domain/world/Element2DRealization2D.ts:13: * This base class provides uniform feasibility checking across all realization types.
+frontend/src/domain/world/Element2DRealization2D.ts:16: * - DRY principle: feasible property defined in Realization base, not duplicated
+frontend/src/domain/world/Element2DRealization2D.ts:17: * - Type safety: isFeasible() method guaranteed to exist on all realizations
+frontend/src/domain/world/Element2DRealization2D.ts:21: * Realization classes contain ONLY geometric data (positions, vectors, feasibility).
+frontend/src/domain/world/Element2DRealization2D.ts:31:   * @param feasible - Whether the geometric computation succeeded (default: true)
+frontend/src/domain/world/Element2DRealization2D.ts:33:  constructor(feasible: boolean = true) {
+frontend/src/domain/world/Element2DRealization2D.ts:34:    // Phase 52: Call Realization base constructor with feasible
+frontend/src/domain/world/Element2DRealization2D.ts:35:    super(feasible);
+frontend/src/domain/world/Realization.ts:6: * - Feasibility status (whether computation succeeded)
+frontend/src/domain/world/Realization.ts:11: * duplication and enable uniform feasibility checking.
+frontend/src/domain/world/Realization.ts:20: * - All realizations share feasibility property
+frontend/src/domain/world/Realization.ts:21: * - Enables uniform feasibility checking
+frontend/src/domain/world/Realization.ts:24: * - **DRY Principle**: feasible property defined once, not duplicated in Element2DRealization2D and potential future realization classes
+frontend/src/domain/world/Realization.ts:25: * - **Uniform Interface**: isFeasible() method guaranteed to exist on all realizations
+frontend/src/domain/world/Realization.ts:28: * - **Generic Processing**: Infeasibility handling code can work with Realization base type
+frontend/src/domain/world/Realization.ts:40:   * Feasibility indicates whether the realization could be computed from the domain
+frontend/src/domain/world/Realization.ts:42:   * - Intersection of parallel lines → feasible = false
+frontend/src/domain/world/Realization.ts:43:   * - Intersection of perpendicular lines → feasible = true
+frontend/src/domain/world/Realization.ts:44:   * - Circle with negative radius → feasible = false
+frontend/src/domain/world/Realization.ts:45:   * - Plane from parallel traces → feasible = false
+frontend/src/domain/world/Realization.ts:47:  readonly feasible: boolean;
+frontend/src/domain/world/Realization.ts:52:   * @param feasible - Whether the geometric computation succeeded (default: true)
+frontend/src/domain/world/Realization.ts:54:  constructor(feasible: boolean = true) {
+frontend/src/domain/world/Realization.ts:55:    this.feasible = feasible;
+frontend/src/domain/world/Realization.ts:59:   * Check if this realization is feasible (geometric computation succeeded)
+frontend/src/domain/world/Realization.ts:61:   * This method provides a uniform way to check feasibility across all realization types.
+frontend/src/domain/world/Realization.ts:62:   * Infeasible realizations typically should not be rendered or used in further calculations.
+frontend/src/domain/world/Realization.ts:64:   * @returns true if the realization is feasible, false otherwise
+frontend/src/domain/world/Realization.ts:66:  isFeasible(): boolean {
+frontend/src/domain/world/Realization.ts:67:    return this.feasible;
+frontend/src/domain/world/BrokenHingeLine.ts:74:      return Line3DRealization3D.createInfeasible();
+frontend/src/domain/world/BrokenHingeLine.ts:89:      return Line3DRealization3D.createInfeasible();
+frontend/src/domain/world/BrokenHingeLine.ts:96:      return Line3DRealization3D.createInfeasible();
+frontend/src/domain/world/BrokenHingeLine.ts:100:    if (!t2Real2D.feasible) {
+frontend/src/domain/world/BrokenHingeLine.ts:101:      return Line3DRealization3D.createInfeasible();
+frontend/src/domain/world/BrokenHingeLine.ts:107:    if (!sourcePlaneReal3D || !sourcePlaneReal3D.feasible) {
+frontend/src/domain/world/BrokenHingeLine.ts:108:      return Line3DRealization3D.createInfeasible();
+frontend/src/domain/world/Circle.ts:52:  constructor(center: Vector3, radiusVector: Vector3, feasible: boolean = true) {
+frontend/src/domain/world/Circle.ts:53:    super(feasible);
+frontend/src/domain/world/Circle.ts:133:   * Phase 76: Always returns realization (never null). Uses feasible flag for geometric failures.
+frontend/src/domain/world/Circle.ts:152:    // Check if parent points are infeasible - propagate infeasibility
+frontend/src/domain/world/Circle.ts:153:    if (!centerRealization.feasible || !circumferenceRealization.feasible) {
+frontend/src/domain/world/Circle.ts:154:      console.warn('[Circle2DByCenterAndPoint] Parent point is infeasible, marking circle as infeasible');
+frontend/src/domain/world/Circle.ts:155:      // Return infeasible circle with dummy radius vector
+frontend/src/domain/world/Circle.ts:229:   * Phase 76: Always returns realization (never null). Uses feasible flag for geometric failures.
+frontend/src/domain/world/Circle.ts:253:    // Check if parent points are infeasible - propagate infeasibility
+frontend/src/domain/world/Circle.ts:254:    if (!p1Realization.feasible || !p2Realization.feasible || !p3Realization.feasible) {
+frontend/src/domain/world/Circle.ts:255:      console.warn('[Circle2DByThreePoints] Parent point is infeasible, marking circle as infeasible');
+frontend/src/domain/world/Circle.ts:272:      return new Circle2DRealization2D(p1.clone(), new Vector3(1, 0, 0), false);  // Infeasible circle
+frontend/src/domain/world/DependencyGraph.ts:9:  infeasible: boolean;
+frontend/src/domain/world/DependencyGraph.ts:26:      this.nodes.set(id, { id, type, infeasible: false });
+frontend/src/domain/world/DependencyGraph.ts:161:   * Mark a node and all its descendants as infeasible
+frontend/src/domain/world/DependencyGraph.ts:163:  propagateInfeasibility(id: string): Set<string> {
+frontend/src/domain/world/DependencyGraph.ts:171:        node.infeasible = true;
+frontend/src/domain/world/DependencyGraph.ts:177:      node.infeasible = true;
+frontend/src/domain/world/DependencyGraph.ts:184:   * Clear infeasibility flag for a node
+frontend/src/domain/world/DependencyGraph.ts:186:  clearInfeasibility(id: string): void {
+frontend/src/domain/world/DependencyGraph.ts:189:      node.infeasible = false;
+frontend/src/domain/world/Element3D.ts:38:   * @returns Element3DRealization3D with numeric coordinates, or infeasible if computation fails
+frontend/src/domain/world/Element3DRealization3D.ts:7: * - Extends Realization to inherit feasible property
+frontend/src/domain/world/Element3DRealization3D.ts:22: * Provides common feasibility status for all 3D geometric computations.
+frontend/src/domain/world/Element3DRealization3D.ts:31:   * @param feasible - Whether the geometric computation succeeded (default: true)
+frontend/src/domain/world/Element3DRealization3D.ts:33:  constructor(feasible: boolean = true) {
+frontend/src/domain/world/Element3DRealization3D.ts:34:    super(feasible);
+frontend/src/domain/world/Element3DRealization3D.ts:47:  constructor(position: Vector4, feasible: boolean = true) {
+frontend/src/domain/world/Element3DRealization3D.ts:48:    super(feasible);
+frontend/src/domain/world/Element3DRealization3D.ts:53:   * Factory method for creating an infeasible point realization
+frontend/src/domain/world/Element3DRealization3D.ts:55:  static infeasible(): Point3DRealization3D {
+frontend/src/domain/world/Element3DRealization3D.ts:95:  constructor(point: Vector4, direction: Vector4, feasible: boolean = true) {
+frontend/src/domain/world/Element3DRealization3D.ts:96:    super(feasible);
+frontend/src/domain/world/Element3DRealization3D.ts:102:   * Create an infeasible line realization
+frontend/src/domain/world/Element3DRealization3D.ts:103:   * Used when parent dependencies are infeasible
+frontend/src/domain/world/Element3DRealization3D.ts:105:  static createInfeasible(): Line3DRealization3D {
+frontend/src/domain/world/Element3DRealization3D.ts:147:  constructor(startPoint: Vector4, endPoint: Vector4, feasible: boolean = true) {
+frontend/src/domain/world/Element3DRealization3D.ts:148:    super(feasible);
+frontend/src/domain/world/Element3DRealization3D.ts:212:    feasible: boolean = true,
+frontend/src/domain/world/Element3DRealization3D.ts:216:    super(feasible);
+frontend/src/domain/world/Element3DRealization3D.ts:223:   * Factory method for creating an infeasible plane realization
+frontend/src/domain/world/Element3DRealization3D.ts:225:  static infeasible(): Plane3DRealization3D {
+frontend/src/domain/world/Guide.ts:76:   * - Geometric failures: return realization with feasible=false
+frontend/src/domain/world/Guide.ts:110:    // Check if reference line is infeasible - propagate infeasibility
+frontend/src/domain/world/Guide.ts:111:    if (!referenceLine.feasible) {
+frontend/src/domain/world/Guide.ts:112:      console.warn('[Guide2DPerpendicularToLine] Reference line is infeasible, marking guide as infeasible');
+frontend/src/domain/world/Guide.ts:125:    // Check if through-point is infeasible - propagate infeasibility
+frontend/src/domain/world/Guide.ts:126:    if (!throughPointRealization.feasible) {
+frontend/src/domain/world/Guide.ts:127:      console.warn('[Guide2DPerpendicularToLine] Through-point is infeasible, marking guide as infeasible');
+frontend/src/domain/world/Guide.ts:250:   * - Geometric failures: return realization with feasible=false
+frontend/src/domain/world/Guide.ts:277:    // Check if primary guide is infeasible - propagate infeasibility
+frontend/src/domain/world/Guide.ts:278:    if (!primaryGuideRealization.feasible) {
+frontend/src/domain/world/Guide.ts:279:      console.warn('[SiblingGuide2D] Primary guide is infeasible, marking sibling guide as infeasible');
+frontend/src/domain/world/Guide.ts:289:    // Check if intersection is feasible (lines not parallel)
+frontend/src/domain/world/Guide.ts:290:    if (!intersectionPointReal.feasible) {
+frontend/src/domain/world/Guide.ts:316:      if (!primaryPlaneReal3D?.feasible || !siblingPlaneReal3D?.feasible) {
+frontend/src/domain/world/Guide.ts:317:        console.warn('[SiblingGuide2D] 3D plane realization infeasible for BHHL round-trip');
+frontend/src/domain/world/Guide.ts:357:    // Check if sibling HalfHingeLine is infeasible - propagate infeasibility
+frontend/src/domain/world/Guide.ts:358:    if (!siblingHalfHingeLineRealization.feasible) {
+frontend/src/domain/world/Guide.ts:359:      console.warn('[SiblingGuide2D] Sibling HalfHingeLine is infeasible, marking sibling guide as infeasible');
+frontend/src/domain/world/HalfHingeLineRealization2D.ts:31: * - feasible: Whether this realization is geometrically valid
+frontend/src/domain/world/HalfHingeLineRealization2D.ts:40:    feasible: boolean = true
+frontend/src/domain/world/HalfHingeLineRealization2D.ts:42:    super(point1, point2, feasible);
+frontend/src/domain/world/HalfHingeLineRealization2D.ts:54:   * Create an infeasible half hinge line realization
+frontend/src/domain/world/HalfHingeLineRealization2D.ts:55:   * Used when parent dependencies are infeasible
+frontend/src/domain/world/HalfHingeLineRealization2D.ts:57:  static createInfeasible(): HalfHingeLineRealization2D {
+frontend/src/domain/world/HalfHingeLineRealization2D.ts:62:      false                   // infeasible
+frontend/src/domain/world/HingeLine.ts:149:      // Check feasibility of underlying Plane3D (if projection plane has one)
+frontend/src/domain/world/HingeLine.ts:153:        if (!plane3DReal.isFeasible()) {
+frontend/src/domain/world/HingeLine.ts:154:          // Return infeasible realization instead of throwing
+frontend/src/domain/world/HingeLine.ts:155:          return HalfHingeLineRealization2D.createInfeasible();
+frontend/src/domain/world/HingeLine.ts:166:        true                      // feasible
+frontend/src/domain/world/HingeLine.ts:174:    // Check feasibility of 3D line (depends on plane1)
+frontend/src/domain/world/HingeLine.ts:175:    if (!line3D.isFeasible()) {
+frontend/src/domain/world/HingeLine.ts:176:      // Return infeasible realization instead of throwing
+frontend/src/domain/world/HingeLine.ts:177:      return HalfHingeLineRealization2D.createInfeasible();
+frontend/src/domain/world/HingeLine.ts:190:      true  // feasible
+frontend/src/domain/world/HingeLine.ts:263:    // Check feasibility of underlying Plane3D (feasibility propagation)
+frontend/src/domain/world/HingeLine.ts:264:    // For main planes (P_H, P_V), there's no plane3DId - they're always feasible
+frontend/src/domain/world/HingeLine.ts:265:    // For auxiliary planes, check the underlying Plane3D feasibility
+frontend/src/domain/world/HingeLine.ts:269:        // Plane3D not realized yet - return infeasible
+frontend/src/domain/world/HingeLine.ts:271:        return Line3DRealization3D.createInfeasible();
+frontend/src/domain/world/HingeLine.ts:273:      if (!plane3DReal.isFeasible()) {
+frontend/src/domain/world/HingeLine.ts:274:        // Return infeasible realization instead of throwing
+frontend/src/domain/world/HingeLine.ts:275:        return Line3DRealization3D.createInfeasible();
+frontend/src/domain/world/Line.ts:76:    feasible: boolean = true
+frontend/src/domain/world/Line.ts:78:    super(feasible);
+frontend/src/domain/world/Line.ts:84:   * Create an infeasible line realization
+frontend/src/domain/world/Line.ts:85:   * Used when parent dependencies are infeasible
+frontend/src/domain/world/Line.ts:87:  static createInfeasible(): Line2DRealization2D {
+frontend/src/domain/world/Line.ts:158:   * - Geometric failures: return realization with feasible=false
+frontend/src/domain/world/Line.ts:212:   * - Geometric failures: return realization with feasible=false
+frontend/src/domain/world/Line.ts:235:    // Check if parent points are infeasible - propagate infeasibility
+frontend/src/domain/world/Line.ts:236:    if (!p1Realization.feasible || !p2Realization.feasible) {
+frontend/src/domain/world/Line.ts:237:      // Return infeasible line with dummy geometry (point and horizontal direction)
+frontend/src/domain/world/Line.ts:305:   * - Geometric failures: return realization with feasible=false
+frontend/src/domain/world/Line.ts:316:    // Check if reference line is infeasible - propagate infeasibility
+frontend/src/domain/world/Line.ts:317:    if (!referenceLine.feasible) {
+frontend/src/domain/world/Line.ts:328:    // Check if through-point is infeasible - propagate infeasibility
+frontend/src/domain/world/Line.ts:329:    if (!throughPointRealization.feasible) {
+frontend/src/domain/world/Line.ts:347:      true                                       // Feasible
+frontend/src/domain/world/Line.ts:409:   * - Geometric failures: return realization with feasible=false
+frontend/src/domain/world/Line.ts:431:    // Check if reference line is infeasible - propagate infeasibility
+frontend/src/domain/world/Line.ts:432:    if (!referenceLine.feasible) {
+frontend/src/domain/world/Line.ts:442:    // Check if through-point is infeasible - propagate infeasibility
+frontend/src/domain/world/Line.ts:443:    if (!throughPointRealization.feasible) {
+frontend/src/domain/world/Line.ts:534:   * 3. Check feasibility: distance d = ||P - C|| must be > r
+frontend/src/domain/world/Line.ts:553:   * - Geometric failures: return realization with feasible=false (point inside/on circle)
+frontend/src/domain/world/Line.ts:571:    // Step 4: Check infeasibility propagation
+frontend/src/domain/world/Line.ts:572:    if (!circleRealization.feasible || !throughPointRealization.feasible) {
+frontend/src/domain/world/Line.ts:586:    // Step 6: Check geometric feasibility
+frontend/src/domain/world/Line.ts:594:        false  // Mark as infeasible
+frontend/src/domain/world/Line.ts:715:   * 3. Check feasibility: distance from C to reference line must be > r
+frontend/src/domain/world/Line.ts:729:   * - Geometric failures: return realization with feasible=false (line intersects circle)
+frontend/src/domain/world/Line.ts:748:    // Step 4: Check infeasibility propagation
+frontend/src/domain/world/Line.ts:749:    if (!circleRealization.feasible || !refLineRealization.feasible) {
+frontend/src/domain/world/Line.ts:763:    // Step 8: Check geometric feasibility
+frontend/src/domain/world/Line.ts:783:        false  // Mark as infeasible
+frontend/src/domain/world/Line3D.ts:102:      if (!line1Real || !line2Real || !line1Real.isFeasible() || !line2Real.isFeasible()) {
+frontend/src/domain/world/Plane.ts:40:      return Plane3DRealization3D.infeasible();
+frontend/src/domain/world/Plane.ts:291:    // Check feasibility of all realizations
+frontend/src/domain/world/Plane.ts:292:    if (!t1InP1.feasible || !t2InP2.feasible || !p1.feasible || !p2.feasible) {
+frontend/src/domain/world/Plane.ts:293:      console.warn('[Plane3DFromTraces] Infeasible realizations', { 
+frontend/src/domain/world/Plane.ts:294:        t1Feasible: t1InP1.feasible, 
+frontend/src/domain/world/Plane.ts:295:        t2Feasible: t2InP2.feasible,
+frontend/src/domain/world/Plane.ts:296:        p1Feasible: p1.feasible,
+frontend/src/domain/world/Plane.ts:297:        p2Feasible: p2.feasible
+frontend/src/domain/world/Plane.ts:302:    console.log('[Plane3DFromTraces] All realizations feasible - computing plane');
+frontend/src/domain/world/Plane.ts:324:    if (!intersection.feasible) {
+frontend/src/domain/world/Point.ts:50:  constructor(position: Vector3, feasible: boolean = true) {

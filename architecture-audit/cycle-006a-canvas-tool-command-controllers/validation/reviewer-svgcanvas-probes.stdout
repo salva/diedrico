@@ -1,0 +1,338 @@
+
+--- createCanvasToolController ---
+7382
+'@/stores/viewStore';
+import { useSelectionStore } from '@/stores/selectionStore';
+import { useViewport } from '@/composables/useViewport';
+import { useGlobalHoverHighlight } from '@/composables/useHoverHighlight';
+import { screenTo3D } from '@/utils/coordinateTransform';
+import PropertiesDialog from '@/components/dialogs/PropertiesDialog.vue';
+import type { ITool } from '@/tools/ITool';
+import { createCanvasToolController } from '@/application/tools/CanvasToolController';
+import type { FreePointMoveSession } from '@/application/tools/ToolCommandIntents';
+
+// Define emits
+const emit = defineEmits<{
+  'update-3d-coordinates': [coords: { x: number; y: number; z: number } | null];
+  'update-active-plane': [planeInfo: { id: string; name: string }];
+}>();
+
+const svgElement = ref<SVGSVGElement | null>(null);
+
+// Track World version changes (World is not reactive by itself)
+const worldVersion = ref(0);
+let versionPollId: number | null = null;
+let lastWorldVersion = 0;
+
+// Active plane - derived from World (managed by App.vue)
+const activePlane = computed(() => {
+  // Depend on worldVersion so plane switching triggers recomputation
+  const _ = worldVersion.value;
+  return world.getActivePlaneId();
+});
+
+// Dynamic canvas dimensions - updated based on container size
+const canvasWidth = ref(1600);
+const canvasHeight = ref(1000);
+
+// Properties dialog state
+const showPropertiesDialog = ref(false);
+const propertiesElementId = ref<string | null>(null);
+
+// Viewport transformation (pan/zoom)
+const viewStore = useViewStore();
+const viewport = computed<ViewportTransform>(() => {
+  const vp 
+
+--- startFreePointMove ---
+50720
+ew Error(`Active plane not found: ${activePlane.value}`);
+    const point = plane.getPoint(hit.elementId);
+    
+    if (point && isMovableFreePoint(point)) {
+      // Start point drag (T954)
+      selectionStore.selectSingle(hit.elementId);
+
+      pointDrag.value = {
+        active: true,
+        planeId: activePlane.value,
+        pointId: hit.elementId,
+        moveSession: canvasToolController.startFreePointMove({ planeId: activePlane.value, pointId: hit.elementId, label: point.label ?? hit.elementId }),
+        startClientX: event.clientX,
+        startClientY: event.clientY,
+        moved: false
+      };
+      return;
+    }
+  }
+  
+  // No movable point hit - start viewport pan (T965: Drag empty space pans)
+  // Note: useViewport composable handles Shift+drag pan automatically
+  // Here we handle non-Shift drag when selection tool is active
+  viewportPan.value = {
+    active: true,
+    startX: event.clientX,
+    startY: event.clientY
+  };
+}
+
+/**
+ * Handle double-click to show properties dialog
+ * T188: Show properties dialog when user double-clicks an element
+ */
+function handleDoubleClick(event: MouseEvent) {
+  // Get SVG element for coordinate conversion
+  if (!svgElement.value) return;
+  
+  // Transform screen coordinates to SVG coordinates
+  const svg = svgElement.value;
+  const pt = svg.createSVGPoint();
+  pt.x = event.clientX;
+  pt.y = event.clientY;
+  
+  const ctm = svg.getScreenCTM();
+  if (!ctm) return;
+  
+  const canvasPoint = pt.matrixTransform(ctm.inverse());
+  const canvasPos = new Vector3(canvasPoint.x, canvasPoint.y, 1);
+  
+  // Get plane transform for hi
+
+--- updateElementStyle( ---
+52676
+.elementId;
+    showPropertiesDialog.value = true;
+    console.log('[SvgCanvas] Opening properties dialog for:', hit.elementId);
+  }
+}
+
+/**
+ * Handle property changes from the properties dialog
+ * T193: Apply property changes and record as command
+ */
+function handleSaveProperties(changes: any) {
+  console.log('[SvgCanvas] Saving property changes:', changes);
+  const result = canvasToolController.updateElementStyle({
+    elementId: changes.elementId,
+    planeId: activePlane.value,
+    style: {
+      color: changes.color,
+      lineWidth: changes.lineWidth,
+      lineStyle: changes.lineStyle,
+      opacity: changes.opacity,
+      visible: changes.visible
+    }
+  });
+
+  if (result.success) {
+    renderTick.value++;
+    console.log('[SvgCanvas] Style updated and command added to stack');
+  } else {
+    console.error('[SvgCanvas] Style update failed:', result.message);
+  }
+}
+
+/**
+ * Handle mouse movement for hover feedback and 3D coordinate display
+ * Uses Paper.hitTest() to detect elements near cursor
+ * Computes 3D coordinates from cursor position with debouncing
+ * T955: Continuous feedback for point dragging
+ * T965: Viewport pan when dragging empty space
+ */
+function handleMouseMove(event: MouseEvent) {
+  if (!svgElement.value) return;
+
+  // T965: Handle viewport pan in select mode (drag empty space)
+  if (viewportPan.value.active) {
+    const dx = event.clientX - viewportPan.value.startX;
+    const dy = event.clientY - viewportPan.value.startY;
+    
+    // Adjust pan by dividing by zoom - at high zoom, screen pixels translate to smaller world movement
+    const zoom = vi
+
+--- commandSink: ---
+47052
+const activeTool = currentToolInstance.value;
+  
+  if (!activeTool) {
+    console.warn(`[SvgCanvas] No tool instance for: ${activeToolName}`);
+    return;
+  }
+  
+  // Delegate to tool with context including both canvas and plane coordinates
+  const result = activeTool.handleClick({
+    planeId: activePlaneId,
+    planeCoords: planePos,
+    canvasCoords: { x: canvasPoint.x, y: canvasPoint.y },
+    commandSink: canvasToolController,
+    world,
+    paper,
+    paperToPlaneTransform: paperToPlane,
+    toolStore
+  });
+  
+  // Trigger reactivity regardless of success/failure
+  // Even on failure, rollback or partial state changes may need visual refresh
+  renderTick.value++;
+  // console.log('[SvgCanvas] Reactivity triggered, renderTick:', renderTick.value);
+  
+  if (result.success) {
+    console.log('[SvgCanvas] Tool operation succeeded:', result.message);
+  } else {
+    console.error('[SvgCanvas] Tool operation failed:', result.message);
+  }
+
+  // Phase 115: Update tool step message for contextual feedback
+  toolStore.setToolStepMessage(result.message || '');
+}
+
+/**
+ * Handle mouse wheel for zoom with mouse position as center (Phase 70)
+ * Prevents default page scroll and zooms toward cursor position
+ */
+function handleWheel(event: WheelEvent) {
+  if (!svgElement.value) return;
+
+  // Get mouse position in canvas coordinates
+  const svg = svgElement.value;
+  const pt = svg.createSVGPoint();
+  pt.x = event.clientX;
+  pt.y = event.clientY;
+
+  const ctm = svg.getScreenCTM();
+  if (!ctm) return;
+  
+  const canvasPoint = pt.matrixTransform(ctm.inverse());
+
+  // Get current viewport st
+
+--- Quick3D ---
+-1
+
+--- QuickProjection ---
+-1
+
+--- ExampleConstructionsTool ---
+-1
+
+--- handleSaveProperties ---
+4484
+value"
+      class="hover-tooltip"
+      :style="{ left: tooltipPosition.x + 'px', top: tooltipPosition.y + 'px' }"
+    >
+      {{ hoverHighlight.hoveredElementLabel.value }}
+    </div>
+    
+    <!-- Properties Dialog -->
+    <PropertiesDialog
+      :is-open="showPropertiesDialog"
+      :element-id="propertiesElementId"
+      :world="world"
+      @close="showPropertiesDialog = false"
+      @save="handleSaveProperties"
+    />
+  </div>
+</template>
+
+<script setup lang="ts">
+/**
+ * SvgCanvas.vue - Main 2D drawing canvas component
+ * 
+ * This is the primary workspace where all 2D geometric elements are rendered.
+ * Uses SVG for crisp, scalable vector graphics per Constitution Principle IV.
+ * 
+ * Rendering Pipeline:
+ * 1. World (domain objects + realizations) 
+ * 2. → PaperService (generates Paper primitives in paper coordinates)
+ * 3. → SVGRenderer (applies viewport transform, generates SVG attributes)
+ * 4. → SVG elements
+ * 
+ * Key requirements:
+ * - SVG element (not HTML Canvas) per ui-spec.md
+ * - All rendering goes through Paper abstraction layer
+ * - Generic rendering algorithms (no special cases for fixed elements)
+ * - Will support pan/zoom viewport transformations in Phase 6
+ * - Elements rendered using principle-based algorithms (Constitution Principle IV)
+ * 
+ * @see specs/001-dihedral-learning-mvp/ui-spec.md#canvas-component
+ */
+
+import { ref, computed, watch, onMounted, onUnmounted, inject, provide } from 'vue';
+import { Matrix3, Vector3 } from 'three';
+import { World } from '@/domain/world/World';
+import { Paper } from '@/domain/presentation/Paper';
+import { Paper
+
+--- moveSession ---
+9517
+et from cursor)
+const tooltipPosition = ref({ x: 0, y: 0 });
+
+// Snap target tracking - shows visual indicator when hovering near a point
+const snapTarget = ref<{ pointId: string | null; position: { x: number; y: number } | null }>({
+  pointId: null,
+  position: null
+});
+
+// Drag-to-move (Select mode)
+const pointDrag = ref<{
+  active: boolean;
+  planeId: string | null;
+  pointId: string | null;
+  moveSession: FreePointMoveSession | null;
+  startClientX: number;
+  startClientY: number;
+  moved: boolean;
+}>({
+  active: false,
+  planeId: null,
+  pointId: null,
+  moveSession: null,
+  startClientX: 0,
+  startClientY: 0,
+  moved: false
+});
+
+// Viewport pan in select mode (T965: drag empty space pans)
+const viewportPan = ref<{
+  active: boolean;
+  startX: number;
+  startY: number;
+}>({
+  active: false,
+  startX: 0,
+  startY: 0
+});
+
+let ignoreNextClick = false;
+
+function isMovableFreePoint(point: any): point is FreePoint2D {
+  return point instanceof FreePoint2D && !point.locked;
+}
+
+function endPointDrag(commit: boolean): void {
+  if (!pointDrag.value.active) return;
+
+  const moveSession = pointDrag.value.moveSession;
+
+  try {
+    if (moveSession) {
+      if (commit) {
+        const result = moveSession.commit();
+        if (!result.success) console.error('[SvgCanvas] Point move commit failed:', result.message);
+      } else {
+        moveSession.cancel();
+      }
+    }
+  } finally {
+    pointDrag.value = {
+      active: false,
+      planeId: null,
+      pointId: null,
+      moveSession: null,
+      startClientX: 0,
+      startClientY: 0,
+      moved: false
+    };
+    renderTick.va

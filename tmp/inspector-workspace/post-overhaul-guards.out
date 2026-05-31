@@ -1,0 +1,32 @@
+
+> diedrico@0.1.0 test:post-overhaul-guards
+> npm run test --workspace=frontend -- --run tests/unit/architecture/postOverhaulInvariants.spec.ts; frontend_status=$?; npm run test --workspace=backend -- --run tests/integration/projects.spec.ts; backend_status=$?; exit $((frontend_status || backend_status))
+
+
+> diedrico-frontend@0.1.0 test
+> vitest run --run tests/unit/architecture/postOverhaulInvariants.spec.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/architecture/postOverhaulInvariants.spec.ts  (11 tests) 90ms
+
+ Test Files  1 passed (1)
+      Tests  11 passed (11)
+   Start at  06:40:38
+   Duration  883ms (transform 91ms, setup 0ms, collect 84ms, tests 90ms, environment 394ms, prepare 71ms)
+
+
+> diedrico-backend@0.1.0 test
+> vitest run --run tests/integration/projects.spec.ts
+
+
+ RUN  v1.6.1 /work/diedrico/backend
+
+ ✓ tests/integration/projects.spec.ts  (22 tests) 219ms
+
+ Test Files  1 passed (1)
+      Tests  22 passed (22)
+   Start at  06:40:39
+   Duration  704ms (transform 103ms, setup 0ms, collect 193ms, tests 219ms, environment 0ms, prepare 66ms)
+

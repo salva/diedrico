@@ -1,0 +1,126 @@
+--- frontend/tests/unit/tools/CircleTool.spec.ts ---
+45: 
+46:   beforeEach(() => {
+47:     tool = new CircleTool();
+48:     const { world: w, commandStack: cs } = createTestWorld();
+49:     world = w;
+50:     commandStack = cs;
+51:     interactionQuery = liveInteractionQuery(() => world, () => planeId);
+52:     
+53:     // Get actual plane ID from initialized world
+54:     horizontalPlaneId = world.getProjectionPlaneByLabel('P_H').id!;
+55:   });
+56: 
+57:   describe('Tool Identity', () => {
+58:     it('should have correct name', () => {
+59:       expect(tool.name).toBe('circle');
+60:     });
+61:   });
+62: 
+63:   describe('Two-Click Workflow', () => {
+64:     it('should require two clicks to create circle', () => {
+65:       // Create both center and circumference points
+66:       const setupCmd = new Command('Create test points', world);
+67:       const centerOp = new AddFreePoint2DOp(horizontalPlaneId, new Vector3(100, 100, 1));
+68:       setupCmd.addAndExecute(centerOp);
+69:       const centerPointId = centerOp.outputs.pointId as string;
+70:       
+71:       const circumferenceOp = new AddFreePoint2DOp(horizontalPlaneId, new Vector3(200, 100, 1));
+72:       setupCmd.addAndExecute(circumferenceOp);
+73:       const circumferencePointId = circumferenceOp.outputs.pointId as string;
+74:       
+75:       setupCmd.commit();
+76:       commandStack.push(setupCmd);
+77: 
+78:       // First click - select center
+79:       const firstClickContext: ToolContext = {
+80:         planeId: horizontalPlaneId,
+81:         planeCoords: new Vector3(100, 100, 1),
+82:         canvasCoords: new Vector3(100, 100, 1),
+83:         commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+84:         world,
+85:         interactionQuery,
+--- frontend/tests/unit/tools/toolValidation.spec.ts ---
+45: describe('Tool Argument Validation', () => {
+46:   let world: World;
+47:   let commandStack: CommandStack;
+48:   let planeId: string;
+49:   let interactionQuery: CanvasInteractionQuery;
+50: 
+51:   function makeContext(coords: Vector3): ToolContext {
+52:     return {
+53:       planeId,
+54:       planeCoords: coords.clone(),
+55:       canvasCoords: coords.clone(),
+56:       commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+57:       world,
+58:       interactionQuery,
+59:       viewport: { zoom: 1, panX: 0, panY: 0 },
+60:       paperToPlaneTransform: new Matrix3().identity(),
+61:         toolStore: {} as any,
+62:     };
+63:   }
+64: 
+65:   function addPoint(x: number, y: number): string {
+66:     const cmd = new Command('Add point', world);
+67:     const op = new AddFreePoint2DOp(planeId, new Vector3(x, y, 1));
+68:     cmd.addAndExecute(op);
+69:     cmd.commit();
+70:     commandStack.push(cmd);
+71:     return op.outputs.pointId as string;
+72:   }
+73: 
+74:   beforeEach(() => {
+75:     const { world: w, commandStack: cs } = createTestWorld();
+76:     world = w;
+77:     commandStack = cs;
+78:     interactionQuery = liveInteractionQuery(() => world, () => planeId);
+79:     planeId = world.getProjectionPlaneByLabel('P_H').id!;
+80:   });
+81: 
+82:   describe('LineTool', () => {
+83:     it('should reject selecting the same point twice', () => {
+84:       const tool = new LineTool();
+85:       addPoint(100, 100);
+--- frontend/tests/unit/tools/pointTool.spec.ts ---
+45:   const createToolContext = (planeId: string, planeCoords: Vector3, canvasCoords = { x: 100, y: 100 }): ToolContext => ({
+46:     planeId,
+47:     planeCoords,
+48:     canvasCoords,
+49:     commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+50:     world,
+51:     interactionQuery,
+52:       viewport: { zoom: 1, panX: 0, panY: 0 },
+53:     paperToPlaneTransform: undefined,
+54:     toolStore: {} as any, // Mock tool store
+55:   });
+56: 
+57:   let initialUndoDepth: number;
+58: 
+59:   beforeEach(() => {
+60:     tool = new PointTool();
+61:     const { world: w, commandStack: cs } = createTestWorld();
+62:     world = w;
+63:     commandStack = cs;
+64:     interactionQuery = liveInteractionQuery(() => world, () => horizontalPlaneId);
+65:     // Get actual plane IDs from initialized world
+66:     horizontalPlaneId = world.getProjectionPlaneByLabel('P_H').id!;
+67:     verticalPlaneId = world.getProjectionPlaneByLabel('P_V').id!;
+68:     // Record initial undo count after initialization
+69:     // Use a trick: undo until we can't, then count how many we did, then redo them all
+70:     let undoCount = 0;
+71:     while (commandStack.canUndo()) {
+72:       commandStack.undo();
+73:       undoCount++;
+74:     }
+75:     for (let i = 0; i < undoCount; i++) {
+76:       commandStack.redo();
+77:     }
+78:     initialUndoDepth = undoCount;
+79:   });
+80: 
+81:   describe('Tool Identity', () => {
+82:     it('should have correct name', () => {
+83:       expect(tool.name).toBe('point');
+84:     });
+85:   });

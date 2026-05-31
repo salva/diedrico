@@ -1,0 +1,156 @@
+ M .saivage/stages/ci-arch-004-command-intent-pointer-hardening/reports/t2-arch004-coverage-doc-validation-preview.json
+ M .saivage/stages/ops-reconcile-stale-plan-after-arch003-stuckness/reviews/commit-review.out
+ M .saivage/stages/phase-f-arch-003-panel-process-dependency-deletion/dev-server.out
+ M .saivage/stages/phase-f-arch-003-projectionplane-factory-deletion/dev-server-t2.out
+ M .saivage/stages/phase-f-arch-003-toolcontext-screen3d/dev-server.out
+ M .saivage/stages/phase-g-playwright-provision-rerun/tasks.json
+ M architecture-audit/issues/register.md
+ M docs/DEPLOYMENT.md
+ M docs/GOOGLE_DRIVE_SETUP.md
+ M frontend/REALIZATION_ARCHITECTURE.md
+ M frontend/package.json
+ M frontend/src/commands/Command.ts
+ M frontend/src/commands/CommandStack.ts
+ M frontend/src/commands/factories/HingeLineSequenceFactory.ts
+ M frontend/src/commands/factories/IntersectionSequenceFactory.ts
+ M frontend/src/commands/factories/README.md
+ M frontend/src/commands/operations/IOperation.ts
+ D frontend/src/commands/operations/viewState/README.md
+ D frontend/src/commands/operations/viewState/ViewStateOperations.ts
+ D frontend/src/commands/operations/viewState/index.ts
+ M frontend/src/commands/operations/world/AddCircleCircleIntersectionPoint2DOp.ts
+ M frontend/src/commands/operations/world/AddCircleOp.ts
+ M frontend/src/commands/operations/world/AddFreePointOp.ts
+ M frontend/src/commands/operations/world/AddGuideOp.ts
+ M frontend/src/commands/operations/world/AddIntersectionPointOp.ts
+ M frontend/src/commands/operations/world/AddLineCircleIntersectionPoint2DOp.ts
+ M frontend/src/commands/operations/world/AddLineLineIntersectionPoint2DOp.ts
+ M frontend/src/commands/operations/world/AddLineOp.ts
+ M frontend/src/commands/operations/world/AddSegmentOp.ts
+ M frontend/src/commands/operations/world/AddSiblingIntersectionPoint2DOp.ts
+ M frontend/src/commands/operations/world/InitializationOps.ts
+ M frontend/src/commands/operations/world/UpdateElementStyleOp.ts
+ M frontend/src/commands/operations/world/UpdateFreePoint2DPositionOp.ts
+ M frontend/src/components/LoginStatusWidget.vue
+ M frontend/src/components/dialogs/NewProjectDialog.vue
+ M frontend/src/components/dialogs/OpenProjectDialog.vue
+ M frontend/src/components/header/ProjectNameDisplay.vue
+ M frontend/src/components/panels/ProcessTreeNode.vue
+ M frontend/src/composables/useHoverHighlight.ts
+ M frontend/src/composables/useViewport.ts
+ M frontend/src/domain/calculations/CircleGeometry.ts
+ M frontend/src/domain/calculations/CoordinateTransform.ts
+ M frontend/src/domain/calculations/Intersections.ts
+ M frontend/src/domain/presentation/Paper.ts
+ M frontend/src/domain/processTree/Action.ts
+ M frontend/src/domain/processTree/actions/CreateCircleAction.ts
+ M frontend/src/domain/processTree/actions/CreateCircleCircleIntersectionPointAction.ts
+ M frontend/src/domain/processTree/actions/CreateGuideAction.ts
+ M frontend/src/domain/processTree/actions/CreateIntersectionPointAction.ts
+ M frontend/src/domain/processTree/actions/CreateLineAction.ts
+ M frontend/src/domain/processTree/actions/CreateLineCircleIntersectionPointAction.ts
+ M frontend/src/domain/processTree/actions/CreateLineLineIntersectionPointAction.ts
+ M frontend/src/domain/processTree/actions/CreateParallelLineAction.ts
+ M frontend/src/domain/processTree/actions/CreatePerpendicularLineAction.ts
+ M frontend/src/domain/processTree/actions/CreatePointAction.ts
+ M frontend/src/domain/processTree/actions/CreateSegmentAction.ts
+ M frontend/src/domain/processTree/actions/CreateSiblingGuideAction.ts
+ M frontend/src/domain/processTree/actions/CreateSiblingIntersectionPointAction.ts
+ M frontend/src/domain/processTree/actions/CreateTangentLineAction.ts
+ M frontend/src/domain/world/Circle.ts
+ M frontend/src/domain/world/Element.ts
+ M frontend/src/domain/world/Element2DRealization2D.ts
+ M frontend/src/domain/world/Element3D.ts
+ M frontend/src/domain/world/Guide.ts
+ M frontend/src/domain/world/HingeLine.ts
+ M frontend/src/domain/world/Line.ts
+ M frontend/src/domain/world/Plane.ts
+ M frontend/src/domain/world/Point.ts
+ M frontend/src/domain/world/Realization.ts
+ M frontend/src/domain/world/Segment.ts
+ M frontend/src/domain/world/index.ts
+ M frontend/src/services/GoogleDriveService.ts
+ M frontend/src/services/ProjectService.ts
+ M frontend/src/stores/authStore.ts
+ M frontend/src/stores/processStore.ts
+ M frontend/src/stores/selectionStore.ts
+ M frontend/src/stores/settingsStore.ts
+ M frontend/src/stores/viewStore.ts
+ M frontend/src/tools/ArgumentCollectorTool.ts
+ M frontend/src/tools/BaseTool.ts
+ M frontend/src/tools/CircleTool.ts
+ M frontend/src/tools/GuideTool.ts
+ M frontend/src/tools/ITool.ts
+ M frontend/src/tools/IntersectionTool.ts
+ M frontend/src/tools/ParallelLineTool.ts
+ M frontend/src/tools/PerpendicularLineTool.ts
+ M frontend/src/tools/PointTool.ts
+ M frontend/src/tools/SegmentTool.ts
+ M frontend/src/tools/TangentLineToCircleParallelToLineTool.ts
+ M frontend/src/tools/TangentLineToCircleThroughPointTool.ts
+ M frontend/src/types/ElementTypes.ts
+ M frontend/src/types/GeometricSolution.ts
+ M frontend/src/types/SelectionMask.ts
+ M frontend/src/types/ToolArgumentCollector.ts
+ M frontend/src/types/ToolConfig.ts
+ M frontend/src/utils/coordinateTransform.ts
+ D frontend/tests/integration/projectService.cascadeDeletion.spec.ts
+ D frontend/tests/integration/projectService.determinism.spec.ts
+ M frontend/tests/unit/architecture/noCommandSubclasses.spec.ts
+ D frontend/tests/unit/architecture/serializationCoverage.spec.ts
+ M frontend/tests/unit/calculations/intersections.spec.ts
+ D frontend/tests/unit/commandStack.spec.ts
+ D frontend/tests/unit/commands.spec.ts
+ M frontend/tests/unit/commands/command.spec.ts
+ M frontend/tests/unit/commands/commandStack.spec.ts
+ D frontend/tests/unit/commands/createCircle.spec.ts
+ D frontend/tests/unit/commands/createFreePoint.spec.ts
+ D frontend/tests/unit/commands/createGuide.spec.ts
+ D frontend/tests/unit/commands/createIntersectionPoint.spec.ts
+ D frontend/tests/unit/commands/createLine.spec.ts
+ D frontend/tests/unit/commands/createSegment.spec.ts
+ D frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts
+ D frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts
+ D frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts
+ D frontend/tests/unit/commands/initializationOps.spec.ts
+ D frontend/tests/unit/commands/initializeWorldCommand.spec.ts
+ D frontend/tests/unit/commands/removeElementOps.spec.ts
+ D frontend/tests/unit/commands/updateFreePoint2DPositionOp.spec.ts
+ M frontend/tests/unit/dependencyGraph.spec.ts
+ M frontend/tests/unit/services/ProjectService.roundTrip.spec.ts
+ M frontend/tests/unit/services/ProjectService.selfContainment.spec.ts
+ D frontend/tests/unit/services/dependencyService.spec.ts
+ M package-lock.json
+ D pre-plan.md
+ D pre-spec-ui-tool.md
+ D pre-spec-ui.md
+ D pre-spec.md
+ D specs/001-dihedral-learning-mvp/checklists/requirements.md
+ D specs/001-dihedral-learning-mvp/contracts/api.yaml
+ D specs/001-dihedral-learning-mvp/data-model.md
+ D specs/001-dihedral-learning-mvp/for-planing.md
+ D specs/001-dihedral-learning-mvp/plan.md
+ D specs/001-dihedral-learning-mvp/quickstart.md
+ D specs/001-dihedral-learning-mvp/research.md
+ D specs/001-dihedral-learning-mvp/spec.md
+ D specs/001-dihedral-learning-mvp/tasks.md
+ D specs/001-dihedral-learning-mvp/ui-spec.md
+?? .saivage/stages/phase-c-proposals/
+?? .saivage/stages/phase-e-implementation-plans/
+?? .saivage/stages/phase-f-arch-003-command-reducer-migration/
+?? .saivage/stages/phase-f-arch-003-recovery-replan/
+?? .saivage/stages/phase-f-implement-arch-012/
+?? architecture-audit/continuous-improvement/2026-05-24-source-control-archival-plan.md
+?? architecture-audit/decisions/
+?? architecture-audit/implementation-log/ARCH-001.md
+?? architecture-audit/implementation-log/ARCH-002.md
+?? architecture-audit/implementation-log/ARCH-003-command-reducer-migration.md
+?? architecture-audit/implementation-log/ARCH-012.md
+?? architecture-audit/issues/ARCH-001.md
+?? architecture-audit/issues/ARCH-002.md
+?? architecture-audit/issues/ARCH-012.md
+?? architecture-audit/plans/
+?? architecture-audit/proposals/
+?? architecture-audit/reports/
+?? frontend/src/domain/world/ProjectState.ts
+?? frontend/tests/unit/commands/reducerOperations.spec.ts

@@ -1,0 +1,3 @@
+118:## t3 live preview smoke correction
+140:- Live preview refresh and reachability are complete: the refreshed Vite process is bound on `0.0.0.0` and the app answers HTTP 200.
+142:- User-visible 2D geometry smoke remains inconclusive/blocked by default-state behavior: the empty initial project exposes no visible grid labels/lines and a Free Point click did not render a point. The stable logs above classify the observed behavior precisely for the validation stage/reviewer rather than hiding it as a generic Playwright failure.

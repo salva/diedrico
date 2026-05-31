@@ -1,0 +1,130 @@
+--- 180-300 ---
+180: 
+181: import { ref, computed, watch, onMounted, onUnmounted, inject, provide } from 'vue';
+182: import { Matrix3, Vector3 } from 'three';
+183: import { World } from '@/domain/world/World';
+184: import { Paper } from '@/domain/presentation/Paper';
+185: import { PaperService, type PrimitiveContext } from '@/services/PaperService';
+186: import { SVGRenderer, type ViewportTransform } from '@/services/SVGRenderer';
+187: import { InputService } from '@/services/InputService';
+188: import { PointTool } from '@/tools/PointTool';
+189: import { LineTool } from '@/tools/LineTool';
+190: import { SegmentTool } from '@/tools/SegmentTool';
+191: import { CircleTool } from '@/tools/CircleTool';
+192: import { GuideTool } from '@/tools/GuideTool';
+193: import { IntersectionTool } from '@/tools/IntersectionTool';
+194: import { ParallelLineTool } from '@/tools/ParallelLineTool';
+195: import { PerpendicularLineTool } from '@/tools/PerpendicularLineTool';
+196: import { TangentLineToCircleThroughPointTool } from '@/tools/TangentLineToCircleThroughPointTool';
+197: import { TangentLineToCircleParallelToLineTool } from '@/tools/TangentLineToCircleParallelToLineTool';
+198: import { Create3DPointTool } from '@/tools/Create3DPointTool';
+199: import { Create3DLineTool } from '@/tools/Create3DLineTool';
+200: import { Create3DSegmentTool } from '@/tools/Create3DSegmentTool';
+201: import { Create3DPlaneTool } from '@/tools/Create3DPlaneTool';
+202: import { CreateProjectionPlaneTool } from '@/tools/CreateProjectionPlaneTool';
+203: import { FreePoint2D } from '@/domain/world/Point';
+204: import { useToolStore } from '@/stores/toolStore';
+205: import { useViewStore } from '@/stores/viewStore';
+206: import { useSelectionStore } from '@/stores/selectionStore';
+207: import { useViewport } from '@/composables/useViewport';
+208: import { useGlobalHoverHighlight } from '@/composables/useHoverHighlight';
+209: import { screenTo3D } from '@/utils/coordinateTransform';
+210: import PropertiesDialog from '@/components/dialogs/PropertiesDialog.vue';
+211: import type { ITool } from '@/tools/ITool';
+212: import { createCanvasToolController } from '@/application/tools/CanvasToolController';
+213: import type { FreePointMoveSession } from '@/application/tools/ToolCommandIntents';
+214: 
+215: // Define emits
+216: const emit = defineEmits<{
+217:   'update-3d-coordinates': [coords: { x: number; y: number; z: number } | null];
+218:   'update-active-plane': [planeInfo: { id: string; name: string }];
+219: }>();
+220: 
+221: const svgElement = ref<SVGSVGElement | null>(null);
+222: 
+223: // Track World version changes (World is not reactive by itself)
+224: const worldVersion = ref(0);
+225: let versionPollId: number | null = null;
+226: let lastWorldVersion = 0;
+227: 
+228: // Active plane - derived from World (managed by App.vue)
+229: const activePlane = computed(() => {
+230:   // Depend on worldVersion so plane switching triggers recomputation
+231:   const _ = worldVersion.value;
+232:   return world.getActivePlaneId();
+233: });
+234: 
+235: // Dynamic canvas dimensions - updated based on container size
+236: const canvasWidth = ref(1600);
+237: const canvasHeight = ref(1000);
+238: 
+239: // Properties dialog state
+240: const showPropertiesDialog = ref(false);
+241: const propertiesElementId = ref<string | null>(null);
+242: 
+243: // Viewport transformation (pan/zoom)
+244: const viewStore = useViewStore();
+245: const viewport = computed<ViewportTransform>(() => {
+246:   const vp = viewStore.viewportState.value;
+247:   // Update Paper's viewport transform when it changes
+248:   paper.setViewportTransform(vp);
+249:   return vp;
+250: });
+251: 
+252: // Setup viewport interactions (pan/zoom)
+253: const viewportComposable = useViewport({ element: svgElement });
+254: 
+255: // Services
+256: const paperService = new PaperService();
+257: const svgRenderer = new SVGRenderer();
+258: const inputService = new InputService();
+259: const toolStore = useToolStore();
+260: const selectionStore = useSelectionStore();
+261: const hoverHighlight = useGlobalHoverHighlight();
+262: 
+263: // Tooltip position (offset from cursor)
+264: const tooltipPosition = ref({ x: 0, y: 0 });
+265: 
+266: // Snap target tracking - shows visual indicator when hovering near a point
+267: const snapTarget = ref<{ pointId: string | null; position: { x: number; y: number } | null }>({
+268:   pointId: null,
+269:   position: null
+270: });
+271: 
+272: // Drag-to-move (Select mode)
+273: const pointDrag = ref<{
+274:   active: boolean;
+275:   planeId: string | null;
+276:   pointId: string | null;
+277:   moveSession: FreePointMoveSession | null;
+278:   startClientX: number;
+279:   startClientY: number;
+280:   moved: boolean;
+281: }>({
+282:   active: false,
+283:   planeId: null,
+284:   pointId: null,
+285:   moveSession: null,
+286:   startClientX: 0,
+287:   startClientY: 0,
+288:   moved: false
+289: });
+290: 
+291: // Viewport pan in select mode (T965: drag empty space pans)
+292: const viewportPan = ref<{
+293:   active: boolean;
+294:   startX: number;
+295:   startY: number;
+296: }>({
+297:   active: false,
+298:   startX: 0,
+299:   startY: 0
+300: });
+frontend/src/components/workspace/SvgCanvas.vue:187:import { InputService } from '@/services/InputService';
+frontend/src/components/workspace/SvgCanvas.vue:256:const paperService = new PaperService();
+frontend/src/components/workspace/SvgCanvas.vue:257:const svgRenderer = new SVGRenderer();
+frontend/src/components/workspace/SvgCanvas.vue:258:const inputService = new InputService();
+frontend/src/components/workspace/SvgCanvas.vue:1186:  // Step 2-3: Canvas → Paper → Plane using InputService
+frontend/src/services/InputService.ts:2: * InputService - Handles user input coordinate conversions
+frontend/src/services/InputService.ts:12: * - InputService handles the inverse transformations for user input
+frontend/src/services/InputService.ts:23:export class InputService {

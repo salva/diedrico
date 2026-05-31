@@ -1,0 +1,161 @@
+diff --git a/frontend/src/commands/factories/DeletionSequenceFactory.ts b/frontend/src/commands/factories/DeletionSequenceFactory.ts
+index 25199ff..d86a5f2 100644
+--- a/frontend/src/commands/factories/DeletionSequenceFactory.ts
++++ b/frontend/src/commands/factories/DeletionSequenceFactory.ts
+@@ -133,7 +133,7 @@ export class DeletionSequenceFactory {
+     }
+     
+     // Step 4: Remove actions from ProcessTree (creates tombstones for undo)
+-    for (const [actionId, _] of actionsToDelete) {
++    for (const [actionId] of actionsToDelete) {
+       cmd.addAndExecute(new RemoveActionFromProcessTreeOp(actionId));
+     }
+   }
+diff --git a/frontend/src/components/panels/ActionGroupItem.vue b/frontend/src/components/panels/ActionGroupItem.vue
+index 291c351..48d6774 100644
+--- a/frontend/src/components/panels/ActionGroupItem.vue
++++ b/frontend/src/components/panels/ActionGroupItem.vue
+@@ -26,7 +26,7 @@
+       </div>
+       <div v-if="isExpanded" class="action-group-children">
+         <ActionItem
+-          v-for="action in node.children"
++          v-for="action in actionChildren"
+           :key="action.id"
+           :action="action"
+         />
+@@ -43,16 +43,14 @@
+ 
+ <script setup lang="ts">
+ import { ref, computed } from 'vue';
+-import type { Subprocess } from '../../domain/processTree/Subprocess';
+-import type { ActionGroup } from '../../domain/processTree/ActionGroup';
+-import type { ConstructiveAction } from '../../domain/processTree/Action';
++import type { Subprocess, ActionGroup, ActionNode } from '../../domain/processTree/ProcessTree';
+ import ActionItem from './ActionItem.vue';
+ 
+ // Allow recursive component
+ import ActionGroupItem from './ActionGroupItem.vue';
+ 
+ interface Props {
+-  node: Subprocess | ActionGroup | ConstructiveAction;
++  node: Subprocess | ActionGroup | ActionNode;
+ }
+ 
+ const props = defineProps<Props>();
+@@ -69,6 +67,13 @@ const childCount = computed(() => {
+   return 0;
+ });
+ 
++const actionChildren = computed<ActionNode[]>(() => {
++  if (props.node.type !== 'actionGroup') {
++    return [];
++  }
++  return props.node.children.filter((action): action is ActionNode => action !== null);
++});
++
+ /**
+  * Toggle expanded/collapsed state
+  */
+diff --git a/frontend/src/components/toolbars/MainToolbar.vue b/frontend/src/components/toolbars/MainToolbar.vue
+index 8486280..b55718e 100644
+--- a/frontend/src/components/toolbars/MainToolbar.vue
++++ b/frontend/src/components/toolbars/MainToolbar.vue
+@@ -19,12 +19,12 @@
+ </template>
+ 
+ <script setup lang="ts">
+-import { useToolStore } from '@/stores/toolStore';
++import { TOOL_TYPE, useToolStore, type ToolType } from '@/stores/toolStore';
+ 
+ const toolStore = useToolStore();
+ 
+ interface Tool {
+-  id: string;
++  id: ToolType;
+   name: string;
+   icon: string;
+   category: string;
+@@ -32,25 +32,20 @@ interface Tool {
+ 
+ // Define available tools
+ const tools: Tool[] = [
+-  { id: 'select', name: 'Select', icon: '↖', category: 'basic' },
+-  { id: 'point-free', name: 'Point', icon: '●', category: 'point' },
+-  { id: 'point-on-element', name: 'Point on Element', icon: '◉', category: 'point' },
+-  { id: 'point-intersection', name: 'Intersection Point', icon: '⊗', category: 'point' },
+-  { id: 'segment', name: 'Segment', icon: '─', category: 'line' },
+-  { id: 'line', name: 'Line', icon: '↔', category: 'line' },
+-  { id: 'circle-center-radius', name: 'Circle', icon: '○', category: 'circle' },
++  { id: TOOL_TYPE.SELECT, name: 'Select', icon: '↖', category: 'basic' },
++  { id: TOOL_TYPE.POINT, name: 'Point', icon: '●', category: 'point' },
++  { id: TOOL_TYPE.INTERSECTION, name: 'Intersection Point', icon: '⊗', category: 'point' },
++  { id: TOOL_TYPE.SEGMENT, name: 'Segment', icon: '─', category: 'line' },
++  { id: TOOL_TYPE.LINE, name: 'Line', icon: '↔', category: 'line' },
++  { id: TOOL_TYPE.CIRCLE, name: 'Circle', icon: '○', category: 'circle' },
+ ];
+ 
+-const isToolActive = (toolId: string) => {
++const isToolActive = (toolId: ToolType) => {
+   return toolStore.isToolActive(toolId);
+ };
+ 
+-const selectTool = (toolId: string) => {
+-  if (toolStore.isToolActive(toolId)) {
+-    toolStore.clearTool();
+-  } else {
+-    toolStore.setActiveTool(toolId);
+-  }
++const selectTool = (toolId: ToolType) => {
++  toolStore.setTool(toolStore.isToolActive(toolId) ? TOOL_TYPE.SELECT : toolId);
+ };
+ </script>
+ 
+diff --git a/frontend/src/domain/processTree/ProcessTree.ts b/frontend/src/domain/processTree/ProcessTree.ts
+index 2f8f519..89e9944 100644
+--- a/frontend/src/domain/processTree/ProcessTree.ts
++++ b/frontend/src/domain/processTree/ProcessTree.ts
+@@ -332,7 +332,7 @@ export class ProcessTree {
+    * Depth-first traversal of actions
+    * Automatically skips null tombstones (deleted actions)
+    */
+-  private traverseActions(node: ProcessNode, callback: (action: Action) => void): void {
++  private traverseActions(node: ProcessNode, callback: (action: ActionNode) => void): void {
+     if (node.type === 'action') {
+       callback(node);
+     } else if (node.type === 'actionGroup') {
+@@ -349,8 +349,8 @@ export class ProcessTree {
+   /**
+    * Find action by ID
+    */
+-  findAction(actionId: string): Action | undefined {
+-    let found: Action | undefined;
++  findAction(actionId: string): ActionNode | undefined {
++    let found: ActionNode | undefined;
+     this.traverseActions(this.root, (action) => {
+       if (action.id === actionId) {
+         found = action;
+@@ -363,8 +363,8 @@ export class ProcessTree {
+    * Get actions that produce a specific element (by elementId)
+    * Phase 92: Use action.elementId instead of action.outputs
+    */
+-  getActionsProducingElement(elementId: string): Action[] {
+-    const actions: Action[] = [];
++  getActionsProducingElement(elementId: string): ActionNode[] {
++    const actions: ActionNode[] = [];
+     this.traverseActions(this.root, (action) => {
+       if (action.elementId === elementId) {
+         actions.push(action);
+diff --git a/frontend/src/domain/world/World.ts b/frontend/src/domain/world/World.ts
+index cce8bcf..80875fb 100644
+--- a/frontend/src/domain/world/World.ts
++++ b/frontend/src/domain/world/World.ts
+@@ -491,7 +491,7 @@ export class World {
+    * @param elementId ID of element to find
+    * @returns ProjectionPlane that owns the element, or undefined if not found
+    */
+-  private getPlaneForElement(elementId: string): ProjectionPlane | undefined {
++  getPlaneForElement(elementId: string): ProjectionPlane | undefined {
+     for (const plane of this.projectionPlanes.values()) {
+       if (plane.getPoint(elementId) || plane.getLine(elementId) || plane.getCircle(elementId)) {
+         return plane;

@@ -1,0 +1,294 @@
+## frontend/src/application/canvasPresentation/CanvasPresentationController.ts
+frontend/src/application/canvasPresentation/CanvasPresentationController.ts:1: import type { World } from '@/domain/world/World';
+frontend/src/application/canvasPresentation/CanvasPresentationController.ts:2: import type { CanvasPresentationModel, CanvasPresentationState, CanvasViewportModel } from './CanvasPresentationModel';
+frontend/src/application/canvasPresentation/CanvasPresentationController.ts:3: import { CanvasPresentationSelector } from './CanvasPresentationSelector';
+frontend/src/application/canvasPresentation/CanvasPresentationController.ts:5: export class CanvasPresentationController {
+frontend/src/application/canvasPresentation/CanvasPresentationController.ts:7:   buildModel(world: World, viewport: CanvasViewportModel, state: CanvasPresentationState): CanvasPresentationModel {
+
+## frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:1: import { Matrix3 } from 'three';
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:2: import type { World } from '@/domain/world/World';
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:3: import { Segment2DByPoints } from '@/domain/world/Segment';
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:4: import { Guide2D, SiblingGuide2D } from '@/domain/world/Guide';
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:5: import { HalfHingeLine2D } from '@/domain/world/HingeLine';
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:6: import { RenderLayer, type LinePrimitive, type PointPrimitive, type SegmentPrimitive, type CirclePrimitive, type PathPrimitive } from '@/domain/presentation/Paper';
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:7: import { applyMatrix3x4 } from '@/utils/threeUtils';
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:8: import type { CanvasPresentationModel, CanvasPresentationState, CanvasQueryItem, CanvasRenderItem, CanvasViewportModel } from './CanvasPresentationModel';
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:9: import { selectCanvasGrid } from './CanvasGridSelector';
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:10: import { circleStyle, guideStyle, hingeStyle, lineStyle, pointStyle, PROJECTED_LINE_STYLE, PROJECTED_POINT_STYLE, PROJECTED_SEGMENT_STYLE, segmentStyle } from './CanvasStylePolicy';
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:11: import { isCanvasElementVisible } from './CanvasVisibilityPolicy';
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:13: export class CanvasPresentationSelector {
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:14:   select(world: World, viewport: CanvasViewportModel, state: CanvasPresentationState): CanvasPresentationModel {
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:15:     const renderItems: CanvasRenderItem[] = [];
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:20:       if (realization) planeTransforms.set(plane.id, { planeId: plane.id, planeToPaper: realization.planeToPaper2D, paperToPlane: realization.paperToPlane2D });
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:23:       const transform = planeTransforms.get(plane.id)?.planeToPaper as Matrix3 | undefined;
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:30:         const primitive: PointPrimitive = { type: 'point', id: `point-${point.id}`, sourceEntityId: point.id, planeId: point.planeId, layer: s.layer, visible: true, style: s.style, position,
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:31:         renderItems.push(item(primitive, 'point'));
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:39:           const style = segmentStyle(line, stateFor(line.id!, state));
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:40:           const primitive: SegmentPrimitive = { type: 'segment', id: `segment-${line.id}`, sourceEntityId: line.id, planeId: line.planeId, layer: RenderLayer.Elements, visible: true, style, 
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:41:           renderItems.push(item(primitive, kind));
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:44:           const style = kind === 'guide' || kind === 'sibling-guide' ? guideStyle(line as Guide2D | SiblingGuide2D, stateFor(line.id!, state)) : kind === 'half-hinge-line' ? hingeStyle(line 
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:46:           const primitive: LinePrimitive = { type: 'line', id: `${prefix}-${line.id}`, sourceEntityId: line.id, planeId: kind === 'guide' || kind === 'sibling-guide' ? undefined : line.plane
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:47:           renderItems.push(item(primitive, kind));
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:51:             const style = { stroke: arcGeometry.style.color, strokeWidth: arcGeometry.style.width, strokeStyle: arcGeometry.style.dashArray ? 'dashed' as const : 'solid' as const, fill: 'non
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:52:             const path: PathPrimitive = { type: 'path', id: `arc-${line.id}`, sourceEntityId: line.id, planeId: undefined, layer: RenderLayer.Guides, visible: true, style, points: [[arcGeome
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:53:             renderItems.push(item(path, 'arc'));
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:62:         const primitive: CirclePrimitive = { type: 'circle', id: `circle-${circle.id}`, sourceEntityId: circle.id!, planeId: circle.planeId, layer: RenderLayer.Elements, visible: true, style
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:63:         renderItems.push(item(primitive, 'circle'));
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:67:     if (state.showProjectedElements) renderItems.push(...projected3D(world, planeTransforms));
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:68:     renderItems.sort((a, b) => a.primitive.layer === b.primitive.layer ? a.style.zIndex - b.style.zIndex : a.primitive.layer - b.primitive.layer);
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:69:     const activeTransform = state.activePlaneId ? planeTransforms.get(state.activePlaneId)?.planeToPaper : undefined;
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:71:     return { renderItems, queryItems, gridLines: grid.lines, gridLabels: grid.labels, planeTransforms, activePlaneId: state.activePlaneId };
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:75: function stateFor(id: string, state: CanvasPresentationState) { return { selected: state.selectedIds?.has(id), hovered: state.hoveredIds?.has(id), snapTarget: state.activeSnapTargetId === id
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:76: function item(primitive: any, kind: any): CanvasRenderItem { return { id: primitive.id, kind, sourceEntityId: primitive.sourceEntityId, planeId: primitive.planeId, primitive, visible: primit
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:77: function projected3D(world: World, planeTransforms: Map<string, any>): CanvasRenderItem[] {
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:80:     const planeRealization = world.getProjectionPlane3DRealization(plane.id); const planeToPaper = planeTransforms.get(plane.id)?.planeToPaper;
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:81:     if (!planeRealization || !planeToPaper) continue;
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:82:     for (const point3D of world.getAll3DPoints()) { const r = point3D.realize3D(world); if (!r?.isFeasible()) continue; const position = applyMatrix3x4(r.position, planeRealization.threeDToP
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:83:     for (const line3D of world.getAll3DLines()) { const r = line3D.realize3D(world); if (!r?.isFeasible()) continue; const dir = applyMatrix3x4(r.direction, planeRealization.threeDToPlane); 
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:84:     for (const segment3D of world.getAll3DSegments()) { const r = segment3D.realize3D(world); if (!r?.isFeasible()) continue; items.push(item({ type: 'segment', id: `proj3d-segment-${segment
+
+## frontend/src/application/canvasPresentation/CanvasPresentationModel.ts
+frontend/src/application/canvasPresentation/CanvasPresentationModel.ts:1: import type { Matrix3, Vector3 } from 'three';
+frontend/src/application/canvasPresentation/CanvasPresentationModel.ts:2: import type { Primitive, ResolvedStyle } from '@/domain/presentation/Paper';
+frontend/src/application/canvasPresentation/CanvasPresentationModel.ts:4: export type CanvasElementKind =
+frontend/src/application/canvasPresentation/CanvasPresentationModel.ts:18: export interface CanvasStyleState extends ResolvedStyle {}
+frontend/src/application/canvasPresentation/CanvasPresentationModel.ts:20: export interface CanvasRenderItem {
+frontend/src/application/canvasPresentation/CanvasPresentationModel.ts:25:   primitive: Primitive;
+frontend/src/application/canvasPresentation/CanvasPresentationModel.ts:27:   style: CanvasStyleState;
+frontend/src/application/canvasPresentation/CanvasPresentationModel.ts:30: export interface CanvasQueryItem {
+frontend/src/application/canvasPresentation/CanvasPresentationModel.ts:44: export interface CanvasSnapPoint {
+frontend/src/application/canvasPresentation/CanvasPresentationModel.ts:52: export interface CanvasPlaneTransformModel {
+frontend/src/application/canvasPresentation/CanvasPresentationModel.ts:54:   planeToPaper: Matrix3;
+frontend/src/application/canvasPresentation/CanvasPresentationModel.ts:58: export interface CanvasGridLine {
+frontend/src/application/canvasPresentation/CanvasPresentationModel.ts:67: export interface CanvasGridLabel {
+frontend/src/application/canvasPresentation/CanvasPresentationModel.ts:74: export interface CanvasGridLabels {
+frontend/src/application/canvasPresentation/CanvasPresentationModel.ts:81: export interface CanvasViewportModel {
+frontend/src/application/canvasPresentation/CanvasPresentationModel.ts:89: export interface CanvasPresentationModel {
+frontend/src/application/canvasPresentation/CanvasPresentationModel.ts:90:   renderItems: CanvasRenderItem[];
+frontend/src/application/canvasPresentation/CanvasPresentationModel.ts:98: export interface CanvasPresentationState {
+frontend/src/application/canvasPresentation/CanvasPresentationModel.ts:100:   selectedIds?: Set<string>;
+
+## frontend/src/application/canvasPresentation/CanvasInteractionQuery.ts
+frontend/src/application/canvasPresentation/CanvasInteractionQuery.ts:1: import { Matrix3, Vector3 } from 'three';
+frontend/src/application/canvasPresentation/CanvasInteractionQuery.ts:2: import type { CanvasQueryItem, CanvasSnapPoint } from './CanvasPresentationModel';
+frontend/src/application/canvasPresentation/CanvasInteractionQuery.ts:3: import type { SelectionMask, SelectableElementType } from '@/types/SelectionMask';
+frontend/src/application/canvasPresentation/CanvasInteractionQuery.ts:4: import { isHierarchyMask, isIntersectionMask, isTypeMask, isUnionMask, NoneMask } from '@/types/SelectionMask';
+frontend/src/application/canvasPresentation/CanvasInteractionQuery.ts:6: export interface CanvasInteractionQueryContext { viewport: { zoom: number; panX: number; panY: number }; paperToPlaneTransform?: Matrix3; activePlaneId?: string }
+frontend/src/application/canvasPresentation/CanvasInteractionQuery.ts:8: export class CanvasInteractionQuery {
+frontend/src/application/canvasPresentation/CanvasInteractionQuery.ts:13:     const canvasToPaper = new Matrix3().set(1 / context.viewport.zoom, 0, -context.viewport.panX, 0, 1 / context.viewport.zoom, -context.viewport.panY, 0, 0, 1);
+frontend/src/application/canvasPresentation/CanvasInteractionQuery.ts:14:     const paperPos = canvasPos.clone().applyMatrix3(canvasToPaper);
+frontend/src/application/canvasPresentation/CanvasInteractionQuery.ts:16:     const radiusVector = new Vector3(snapRadiusPixels, 0, 0).applyMatrix3(canvasToPaper).applyMatrix3(context.paperToPlaneTransform);
+
+## frontend/src/application/threePresentation/ThreePresentationController.ts
+frontend/src/application/threePresentation/ThreePresentationController.ts:1: import type { ThreePresentationInput, ThreePresentationModel } from './ThreePresentationModel';
+frontend/src/application/threePresentation/ThreePresentationController.ts:2: import { ThreePresentationSelector } from './ThreePresentationSelector';
+frontend/src/application/threePresentation/ThreePresentationController.ts:4: export class ThreePresentationController {
+
+## frontend/src/application/threePresentation/ThreePresentationSelector.ts
+frontend/src/application/threePresentation/ThreePresentationSelector.ts:1: import type { ThreePresentationInput, ThreePresentationModel } from './ThreePresentationModel';
+frontend/src/application/threePresentation/ThreePresentationSelector.ts:2: import { ProjectionPlane3DSelector } from './ProjectionPlane3DSelector';
+frontend/src/application/threePresentation/ThreePresentationSelector.ts:3: import { PlanarElement3DSelector } from './PlanarElement3DSelector';
+frontend/src/application/threePresentation/ThreePresentationSelector.ts:4: import { ReconstructedElement3DSelector } from './ReconstructedElement3DSelector';
+frontend/src/application/threePresentation/ThreePresentationSelector.ts:5: import { Guide3DSelector } from './Guide3DSelector';
+frontend/src/application/threePresentation/ThreePresentationSelector.ts:6: import { Hinge3DSelector } from './Hinge3DSelector';
+frontend/src/application/threePresentation/ThreePresentationSelector.ts:8: export class ThreePresentationSelector {
+frontend/src/application/threePresentation/ThreePresentationSelector.ts:18:     const { world, displayOptions, selectedIds } = input;
+frontend/src/application/threePresentation/ThreePresentationSelector.ts:23:       guides: this.guides.select(world, selectedIds),
+
+## frontend/src/application/threePresentation/ThreePresentationModel.ts
+frontend/src/application/threePresentation/ThreePresentationModel.ts:1: import type { World } from '@/domain/world/World';
+frontend/src/application/threePresentation/ThreePresentationModel.ts:2: import type { ThreeViewDisplayOptions } from '@/types/ThreeViewDisplayOptions';
+frontend/src/application/threePresentation/ThreePresentationModel.ts:4: export type Vec3 = { x: number; y: number; z: number };
+frontend/src/application/threePresentation/ThreePresentationModel.ts:5: export type QuaternionDto = { x: number; y: number; z: number; w: number };
+frontend/src/application/threePresentation/ThreePresentationModel.ts:6: export type ThreeRenderGroup = 'projectionPlanes' | 'planarElements' | 'reconstructedElements' | 'guides' | 'hinges' | 'axes' | 'labels';
+frontend/src/application/threePresentation/ThreePresentationModel.ts:8: export interface ThreeStyleDto { color: number | string; opacity?: number; lineWidth?: number; radius?: number; transparent?: boolean; dashSize?: number; gapSize?: number }
+frontend/src/application/threePresentation/ThreePresentationModel.ts:10: export interface ThreePresentationInput { world: World; displayOptions: ThreeViewDisplayOptions; selectedIds: readonly string[] }
+frontend/src/application/threePresentation/ThreePresentationModel.ts:12: interface BaseDto { id: string; sourceEntityId?: string; planeId?: string; visible: boolean; style: ThreeStyleDto; renderGroup: ThreeRenderGroup }
+frontend/src/application/threePresentation/ThreePresentationModel.ts:13: export interface SegmentGeometryDto { start: Vec3; end: Vec3 }
+frontend/src/application/threePresentation/ThreePresentationModel.ts:14: export interface PlaneGeometryDto { center: Vec3; normal: Vec3; size: number; quaternion?: QuaternionDto }
+frontend/src/application/threePresentation/ThreePresentationModel.ts:16: export interface ProjectionPlaneGridDto extends BaseDto { kind: 'projection-plane-grid'; segments: SegmentGeometryDto[] }
+frontend/src/application/threePresentation/ThreePresentationModel.ts:17: export interface ProjectionPlaneSurfaceDto extends BaseDto { kind: 'projection-plane-surface'; geometry: PlaneGeometryDto }
+frontend/src/application/threePresentation/ThreePresentationModel.ts:18: export interface AxisDto extends BaseDto { kind: 'reference-axis' | 'auxiliary-axis'; axis: string; origin: Vec3; direction: Vec3; length: number; label: string }
+frontend/src/application/threePresentation/ThreePresentationModel.ts:19: export interface LabelDto extends BaseDto { kind: 'axis-label' | 'projection-plane-label'; text: string; position: Vec3; className: string }
+frontend/src/application/threePresentation/ThreePresentationModel.ts:21: export interface PlanarPointDto extends BaseDto { kind: 'planar-point'; position: Vec3 }
+frontend/src/application/threePresentation/ThreePresentationModel.ts:22: export interface PlanarLineDto extends BaseDto { kind: 'planar-line' | 'planar-segment'; start: Vec3; end: Vec3 }
+frontend/src/application/threePresentation/ThreePresentationModel.ts:23: export interface PlanarCircleDto extends BaseDto { kind: 'planar-circle'; points: Vec3[] }
+frontend/src/application/threePresentation/ThreePresentationModel.ts:25: export interface ReconstructedPointDto extends BaseDto { kind: 'reconstructed-point'; position: Vec3 }
+frontend/src/application/threePresentation/ThreePresentationModel.ts:26: export interface ReconstructedLineDto extends BaseDto { kind: 'reconstructed-line' | 'reconstructed-segment'; start: Vec3; end: Vec3 }
+frontend/src/application/threePresentation/ThreePresentationModel.ts:27: export interface ReconstructedPlaneDto extends BaseDto { kind: 'reconstructed-plane'; geometry: PlaneGeometryDto }
+frontend/src/application/threePresentation/ThreePresentationModel.ts:29: export interface HingeLineDto extends BaseDto { kind: 'hinge-line'; start: Vec3; end: Vec3 }
+frontend/src/application/threePresentation/ThreePresentationModel.ts:30: export interface GuidePerpendicularPlaneDto extends BaseDto { kind: 'guide-perpendicular-plane'; geometry: PlaneGeometryDto }
+frontend/src/application/threePresentation/ThreePresentationModel.ts:31: export interface GuideIntersectionMarkerDto extends BaseDto { kind: 'guide-intersection-marker'; position: Vec3 }
+frontend/src/application/threePresentation/ThreePresentationModel.ts:33: export type ProjectionPlanePresentationDto = ProjectionPlaneGridDto | ProjectionPlaneSurfaceDto | AxisDto | LabelDto;
+frontend/src/application/threePresentation/ThreePresentationModel.ts:34: export type PlanarElementPresentationDto = PlanarPointDto | PlanarLineDto | PlanarCircleDto;
+frontend/src/application/threePresentation/ThreePresentationModel.ts:35: export type ReconstructedElementPresentationDto = ReconstructedPointDto | ReconstructedLineDto | ReconstructedPlaneDto;
+frontend/src/application/threePresentation/ThreePresentationModel.ts:36: export type GuidePresentationDto = GuidePerpendicularPlaneDto | GuideIntersectionMarkerDto;
+frontend/src/application/threePresentation/ThreePresentationModel.ts:37: export type HingePresentationDto = HingeLineDto;
+frontend/src/application/threePresentation/ThreePresentationModel.ts:39: export interface ThreePresentationModel {
+
+## frontend/src/rendering/threeView/ThreeViewRuntime.ts
+frontend/src/rendering/threeView/ThreeViewRuntime.ts:1: import type { ThreePresentationInput } from '@/application/threePresentation/ThreePresentationModel';
+frontend/src/rendering/threeView/ThreeViewRuntime.ts:2: import { ThreePresentationController } from '@/application/threePresentation/ThreePresentationController';
+frontend/src/rendering/threeView/ThreeViewRuntime.ts:3: import { ThreeSceneHost, type ThreeSceneHostMount } from './ThreeSceneHost';
+frontend/src/rendering/threeView/ThreeViewRuntime.ts:4: import { ProjectionPlaneSceneAdapter } from './ProjectionPlaneSceneAdapter';
+frontend/src/rendering/threeView/ThreeViewRuntime.ts:5: import { PlanarElementSceneAdapter } from './PlanarElementSceneAdapter';
+frontend/src/rendering/threeView/ThreeViewRuntime.ts:6: import { ReconstructedElementSceneAdapter } from './ReconstructedElementSceneAdapter';
+frontend/src/rendering/threeView/ThreeViewRuntime.ts:7: import { GuideSceneAdapter } from './GuideSceneAdapter';
+frontend/src/rendering/threeView/ThreeViewRuntime.ts:8: import { HingeSceneAdapter } from './HingeSceneAdapter';
+frontend/src/rendering/threeView/ThreeViewRuntime.ts:10: export class ThreeViewRuntime {
+
+MISSING frontend/src/rendering/threeView/ThreeSceneRenderer.ts
+MISSING frontend/src/rendering/threeView/ThreeSceneObjects.ts
+## frontend/src/services/SVGRenderer.ts
+frontend/src/services/SVGRenderer.ts:2:  * SVGRenderer - Converts Paper primitives to SVG elements
+frontend/src/services/SVGRenderer.ts:4:  * This renderer applies viewport transformation (pan/zoom) to primitives
+frontend/src/services/SVGRenderer.ts:8:  * Paper primitives (paper coords) → Viewport transform → Canvas coords → SVG
+frontend/src/services/SVGRenderer.ts:11:  * This renderer only handles viewport transformation (pan/zoom).
+frontend/src/services/SVGRenderer.ts:20: import { Vector3 } from 'three';
+frontend/src/services/SVGRenderer.ts:21: import { vec3 } from '../utils/threeUtils';
+frontend/src/services/SVGRenderer.ts:23: import type {
+frontend/src/services/SVGRenderer.ts:24:   Primitive,
+frontend/src/services/SVGRenderer.ts:25:   PointPrimitive,
+frontend/src/services/SVGRenderer.ts:26:   PathPrimitive,
+frontend/src/services/SVGRenderer.ts:27:   LinePrimitive,
+frontend/src/services/SVGRenderer.ts:28:   SegmentPrimitive,
+frontend/src/services/SVGRenderer.ts:29:   CirclePrimitive,
+frontend/src/services/SVGRenderer.ts:30:   ArcPrimitive,
+frontend/src/services/SVGRenderer.ts:31:   TextPrimitive,
+frontend/src/services/SVGRenderer.ts:32: } from '../domain/presentation/Paper';
+frontend/src/services/SVGRenderer.ts:35:  * SVG element attributes ready for rendering
+frontend/src/services/SVGRenderer.ts:37: export interface SVGAttributes {
+frontend/src/services/SVGRenderer.ts:44: export interface ViewportTransform {
+frontend/src/services/SVGRenderer.ts:51:  * Renderer for converting Paper primitives to SVG
+frontend/src/services/SVGRenderer.ts:53: export class SVGRenderer {
+frontend/src/services/SVGRenderer.ts:87:    * Render a PointPrimitive to SVG circle attributes
+frontend/src/services/SVGRenderer.ts:89:   private renderPoint(
+frontend/src/services/SVGRenderer.ts:90:     primitive: PointPrimitive,
+frontend/src/services/SVGRenderer.ts:103:       fill: primitive.style.fill,
+frontend/src/services/SVGRenderer.ts:104:       stroke: primitive.style.stroke,
+frontend/src/services/SVGRenderer.ts:105:       'stroke-width': primitive.style.strokeWidth,
+frontend/src/services/SVGRenderer.ts:106:       opacity: primitive.style.opacity,
+frontend/src/services/SVGRenderer.ts:113:    * Render a PathPrimitive to SVG path attributes
+frontend/src/services/SVGRenderer.ts:115:   private renderPath(
+frontend/src/services/SVGRenderer.ts:116:     primitive: PathPrimitive,
+frontend/src/services/SVGRenderer.ts:151:       fill: primitive.closed ? primitive.style.fill : 'none',
+frontend/src/services/SVGRenderer.ts:152:       stroke: primitive.style.stroke,
+frontend/src/services/SVGRenderer.ts:153:       'stroke-width': primitive.style.strokeWidth,
+frontend/src/services/SVGRenderer.ts:154:       'stroke-dasharray': this.getStrokeDashArray(primitive.style.strokeStyle),
+frontend/src/services/SVGRenderer.ts:155:       opacity: primitive.style.opacity,
+frontend/src/services/SVGRenderer.ts:162:    * Render a CirclePrimitive to SVG circle attributes
+frontend/src/services/SVGRenderer.ts:164:   private renderCircle(
+frontend/src/services/SVGRenderer.ts:165:     primitive: CirclePrimitive,
+frontend/src/services/SVGRenderer.ts:180:       fill: primitive.style.fill,
+frontend/src/services/SVGRenderer.ts:181:       stroke: primitive.style.stroke,
+frontend/src/services/SVGRenderer.ts:182:       'stroke-width': primitive.style.strokeWidth,
+frontend/src/services/SVGRenderer.ts:183:       'stroke-dasharray': this.getStrokeDashArray(primitive.style.strokeStyle),
+frontend/src/services/SVGRenderer.ts:184:       opacity: primitive.style.opacity,
+frontend/src/services/SVGRenderer.ts:191:    * Render a LinePrimitive to SVG line element
+frontend/src/services/SVGRenderer.ts:202:   private renderLine(
+frontend/src/services/SVGRenderer.ts:203:     primitive: LinePrimitive,
+frontend/src/services/SVGRenderer.ts:307:       stroke: primitive.style.stroke,
+frontend/src/services/SVGRenderer.ts:308:       'stroke-width': primitive.style.strokeWidth,
+frontend/src/services/SVGRenderer.ts:309:       'stroke-dasharray': this.getStrokeDashArray(primitive.style.strokeStyle),
+frontend/src/services/SVGRenderer.ts:310:       opacity: primitive.style.opacity,
+frontend/src/services/SVGRenderer.ts:317:    * Render a SegmentPrimitive to SVG line attributes
+frontend/src/services/SVGRenderer.ts:320:   private renderSegment(
+frontend/src/services/SVGRenderer.ts:321:     primitive: SegmentPrimitive,
+frontend/src/services/SVGRenderer.ts:334:       stroke: primitive.style.stroke,
+frontend/src/services/SVGRenderer.ts:335:       'stroke-width': primitive.style.strokeWidth,
+frontend/src/services/SVGRenderer.ts:336:       'stroke-dasharray': this.getStrokeDashArray(primitive.style.strokeStyle),
+frontend/src/services/SVGRenderer.ts:337:       opacity: primitive.style.opacity,
+frontend/src/services/SVGRenderer.ts:344:    * Render an ArcPrimitive to SVG path attributes
+frontend/src/services/SVGRenderer.ts:346:   private renderArc(
+frontend/src/services/SVGRenderer.ts:347:     primitive: ArcPrimitive,
+frontend/src/services/SVGRenderer.ts:372:       stroke: primitive.style.stroke,
+frontend/src/services/SVGRenderer.ts:373:       'stroke-width': primitive.style.strokeWidth,
+frontend/src/services/SVGRenderer.ts:374:       'stroke-dasharray': this.getStrokeDashArray(primitive.style.strokeStyle),
+frontend/src/services/SVGRenderer.ts:375:       opacity: primitive.style.opacity,
+frontend/src/services/SVGRenderer.ts:382:    * Render a TextPrimitive to SVG text attributes
+frontend/src/services/SVGRenderer.ts:384:   private renderText(
+frontend/src/services/SVGRenderer.ts:385:     primitive: TextPrimitive,
+frontend/src/services/SVGRenderer.ts:398:       fill: primitive.style.fill,
+frontend/src/services/SVGRenderer.ts:399:       opacity: primitive.style.opacity,
+frontend/src/services/SVGRenderer.ts:407:    * Convert stroke style to SVG dasharray
+frontend/src/services/SVGRenderer.ts:409:   private getStrokeDashArray(style: 'solid' | 'dashed' | 'dotted'): string {
+frontend/src/services/SVGRenderer.ts:410:     switch (style) {
+frontend/src/services/SVGRenderer.ts:423:   renderPrimitive(
+frontend/src/services/SVGRenderer.ts:424:     primitive: Primitive,
+frontend/src/services/SVGRenderer.ts:429:       return { element: 'circle', attributes: this.renderPoint(primitive, viewport) };
+frontend/src/services/SVGRenderer.ts:432:       return { element: 'path', attributes: this.renderPath(primitive, viewport) };
+frontend/src/services/SVGRenderer.ts:435:       return { element: 'line', attributes: this.renderLine(primitive, viewport, bounds) };
+frontend/src/services/SVGRenderer.ts:438:       return { element: 'line', attributes: this.renderSegment(primitive, viewport) };
+frontend/src/services/SVGRenderer.ts:441:       return { element: 'circle', attributes: this.renderCircle(primitive, viewport) };
+frontend/src/services/SVGRenderer.ts:444:       return { element: 'path', attributes: this.renderArc(primitive, viewport) };
+frontend/src/services/SVGRenderer.ts:447:       return { element: 'text', attributes: this.renderText(primitive, viewport) };
+frontend/src/services/SVGRenderer.ts:455:    * Render all primitives from a Paper to SVG attributes
+frontend/src/services/SVGRenderer.ts:457:   renderPaper(
+frontend/src/services/SVGRenderer.ts:458:     primitives: Primitive[],
+frontend/src/services/SVGRenderer.ts:463:       .map(p => this.renderPrimitive(p, viewport));
+
+## frontend/src/domain/presentation/Paper.ts
+frontend/src/domain/presentation/Paper.ts:2:  * Paper - pure intermediate drawing primitive collection.
+frontend/src/domain/presentation/Paper.ts:4:  * Paper stores primitives in paper coordinates and exposes collection helpers.
+frontend/src/domain/presentation/Paper.ts:6:  * selector/query layer; this module intentionally has no World dependency.
+frontend/src/domain/presentation/Paper.ts:9: import { Vector3, Matrix3 } from 'three';
+frontend/src/domain/presentation/Paper.ts:12:  * Visual style attributes resolved and ready for rendering
+frontend/src/domain/presentation/Paper.ts:14: export interface ResolvedStyle {
+frontend/src/domain/presentation/Paper.ts:39: export interface DrawingPrimitive {
+frontend/src/domain/presentation/Paper.ts:44:   visible: boolean;                 // Whether to render this primitive
+frontend/src/domain/presentation/Paper.ts:45:   style: ResolvedStyle;             // Fully resolved visual attributes
+frontend/src/domain/presentation/Paper.ts:49:  * Point primitive - rendered as a circle
+frontend/src/domain/presentation/Paper.ts:52: export interface PointPrimitive extends DrawingPrimitive {
+frontend/src/domain/presentation/Paper.ts:59:  * Path primitive - rendered as polyline or polygon
+frontend/src/domain/presentation/Paper.ts:62: export interface PathPrimitive extends DrawingPrimitive {
+frontend/src/domain/presentation/Paper.ts:73: export interface LinePrimitive extends DrawingPrimitive {
+frontend/src/domain/presentation/Paper.ts:84: export interface SegmentPrimitive extends DrawingPrimitive {
+frontend/src/domain/presentation/Paper.ts:94: export interface CirclePrimitive extends DrawingPrimitive {
+frontend/src/domain/presentation/Paper.ts:105: export interface ArcPrimitive extends DrawingPrimitive {
+frontend/src/domain/presentation/Paper.ts:120: export interface TextPrimitive extends DrawingPrimitive {
+frontend/src/domain/presentation/Paper.ts:132: export type Primitive = 
+frontend/src/domain/presentation/Paper.ts:133:   | PointPrimitive 
+frontend/src/domain/presentation/Paper.ts:134:   | PathPrimitive
+frontend/src/domain/presentation/Paper.ts:135:   | LinePrimitive
+frontend/src/domain/presentation/Paper.ts:136:   | SegmentPrimitive
+frontend/src/domain/presentation/Paper.ts:137:   | CirclePrimitive 
+frontend/src/domain/presentation/Paper.ts:138:   | ArcPrimitive 
+frontend/src/domain/presentation/Paper.ts:139:   | TextPrimitive;
+frontend/src/domain/presentation/Paper.ts:142:  * Viewport transformation parameters for canvas rendering
+frontend/src/domain/presentation/Paper.ts:144: export interface ViewportTransform {
+frontend/src/domain/presentation/Paper.ts:154: export interface HitResult {
+frontend/src/domain/presentation/Paper.ts:157:   primitiveId: string;              // Primitive ID ("point-point_1")
+frontend/src/domain/presentation/Paper.ts:163:  * Paper - Collection of drawing primitives in unified paper coordinate system
+frontend/src/domain/presentation/Paper.ts:165:  * Paper contains primitives from all projection planes in a shared coordinate system.
+frontend/src/domain/presentation/Paper.ts:169:  * Paper also serves as the spatial query engine for hit testing and hover detection,
+frontend/src/domain/presentation/Paper.ts:172: export class Paper {
+frontend/src/domain/presentation/Paper.ts:173:   private primitives: Map<string, Primitive>;
+frontend/src/domain/presentation/Paper.ts:174:   private dirtyPrimitiveIds: Set<string>;
+frontend/src/domain/presentation/Paper.ts:177:   private canvasToPaperMatrix: Matrix3;  // Cached inverse viewport transform matrix
+frontend/src/domain/presentation/Paper.ts:181:     this.dirtyPrimitiveIds = new Set();
+frontend/src/domain/presentation/Paper.ts:183:     this.canvasToPaperMatrix = new Matrix3(); // Identity
+frontend/src/domain/presentation/Paper.ts:214:    * Three.js stores matrices in COLUMN-MAJOR order internally (OpenGL style),
+frontend/src/domain/presentation/Paper.ts:234:     this.canvasToPaperMatrix.set(
+frontend/src/domain/presentation/Paper.ts:255:       // Note: Caller should trigger re-render after setting hover state
+frontend/src/domain/presentation/Paper.ts:269:   setPrimitive(primitive: Primitive): void {
+frontend/src/domain/presentation/Paper.ts:271:     this.dirtyPrimitiveIds.add(primitive.id);
+frontend/src/domain/presentation/Paper.ts:277:   setPrimitives(primitives: Primitive[]): void {
+frontend/src/domain/presentation/Paper.ts:279:       this.setPrimitive(primitive);
+frontend/src/domain/presentation/Paper.ts:286:   removePrimitive(id: string): void {
+frontend/src/domain/presentation/Paper.ts:288:     this.dirtyPrimitiveIds.delete(id);
+frontend/src/domain/presentation/Paper.ts:294:   removePrimitivesByEntity(entityId: string): void {
+frontend/src/domain/presentation/Paper.ts:302:       this.removePrimitive(id);
+frontend/src/domain/presentation/Paper.ts:309:   getPrimitive(id: string): Primitive | undefined {
+frontend/src/domain/presentation/Paper.ts:314:    * Get all primitives, optionally filtered by visibility and layer
+frontend/src/domain/presentation/Paper.ts:316:   getPrimitives(options?: {
+frontend/src/domain/presentation/Paper.ts:319:   }): Primitive[] {
+frontend/src/domain/presentation/Paper.ts:336:       return a.style.zIndex - b.style.zIndex;
+frontend/src/domain/presentation/Paper.ts:343:    * Get primitives that need re-rendering
+frontend/src/domain/presentation/Paper.ts:345:   getDirtyPrimitives(): Primitive[] {
+frontend/src/domain/presentation/Paper.ts:346:     const result: Primitive[] = [];
+frontend/src/domain/presentation/Paper.ts:347:     for (const id of this.dirtyPrimitiveIds) {
+frontend/src/domain/presentation/Paper.ts:360:     this.dirtyPrimitiveIds.clear();
+frontend/src/domain/presentation/Paper.ts:368:     this.dirtyPrimitiveIds.clear();
+frontend/src/domain/presentation/Paper.ts:382:     return this.dirtyPrimitiveIds.size > 0;
+

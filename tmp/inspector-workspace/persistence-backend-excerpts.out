@@ -1,0 +1,662 @@
+     1	/**
+     2	 * ProjectService - current reducer-state project snapshot persistence.
+     3	 *
+     4	 * Persisted projects contain the current immutable ProjectStateRecord plus
+     5	 * provenance metadata. Runtime command stacks are intentionally not serialized
+     6	 * or restored, and pre-reducer mutable World/ProjectionPlane shapes are rejected.
+     7	 */
+     8	
+     9	import type { CommandStack } from '@/commands/CommandStack';
+    10	import {
+    11	  createProjectStateRecord,
+    12	  type ProjectStateRecord,
+    13	} from '@/domain/world/ProjectState';
+    14	
+    15	export interface ProjectProvenance {
+    16	  app: 'diedrico';
+    17	  contract: 'current-snapshot';
+    18	  savedAt: string;
+    19	  source: 'local' | 'google-drive' | 'backend' | 'test';
+    20	}
+    21	
+    22	export interface ProjectData {
+    23	  id: string;
+    24	  name: string;
+    25	  schemaVersion: '4.0.0';
+    26	  createdAt: string;
+    27	  updatedAt: string;
+    28	  provenance: ProjectProvenance;
+    29	  domain: ProjectStateRecord;
+    30	}
+    31	
+    32	type PlainObject = Record<string, unknown>;
+    33	
+    34	const FORBIDDEN_PERSISTENCE_KEYS = [
+    35	  'commands',
+    36	  'commandHistory',
+    37	  'undoStack',
+    38	  'redoStack',
+    39	  'SerializedCommand',
+    40	  'SerializedOperation',
+    41	];
+    42	
+    43	export class ProjectService {
+    44	  private static readonly SCHEMA_VERSION = '4.0.0' as const;
+    45	
+    46	  static createProjectSnapshot(
+    47	    state: ProjectStateRecord,
+    48	    projectName: string,
+    49	    options: { id?: string; createdAt?: string; source?: ProjectProvenance['source'] } = {},
+    50	  ): ProjectData {
+    51	    const now = new Date().toISOString();
+    52	
+    53	    return {
+    54	      id: options.id ?? this.generateProjectId(),
+    55	      name: projectName,
+    56	      schemaVersion: this.SCHEMA_VERSION,
+    57	      createdAt: options.createdAt ?? now,
+    58	      updatedAt: now,
+    59	      provenance: {
+    60	        app: 'diedrico',
+    61	        contract: 'current-snapshot',
+    62	        savedAt: now,
+    63	        source: options.source ?? 'local',
+    64	      },
+    65	      domain: createProjectStateRecord(cloneProjectStateRecord(state)),
+    66	    };
+    67	  }
+    68	
+    69	  static restoreProjectSnapshot(data: ProjectData, commandStack?: CommandStack): ProjectStateRecord {
+    70	    this.validateProjectData(data);
+    71	    commandStack?.clear();
+    72	    return createProjectStateRecord(cloneProjectStateRecord(data.domain));
+    73	  }
+    74	
+    75	  static validateProjectData(data: unknown): asserts data is ProjectData {
+    76	    if (!data || typeof data !== 'object') {
+    77	      throw new Error('Invalid project file - not a valid JSON object');
+    78	    }
+    79	
+    80	    assertNoForbiddenPersistenceKeys(data, 'project');
+    81	
+    82	    const project = data as PlainObject;
+    83	    const required = ['id', 'name', 'schemaVersion', 'createdAt', 'updatedAt', 'provenance', 'domain'];
+    84	    for (const field of required) {
+    85	      if (!(field in project)) {
+    86	        throw new Error(`Invalid project file - missing required field: ${field}`);
+    87	      }
+    88	    }
+    89	
+    90	    if (project.schemaVersion !== this.SCHEMA_VERSION) {
+    91	      throw new Error(`Unsupported project schema: ${String(project.schemaVersion)}`);
+    92	    }
+    93	
+    94	    const provenance = project.provenance as PlainObject;
+    95	    if (!provenance || provenance.app !== 'diedrico' || provenance.contract !== 'current-snapshot') {
+    96	      throw new Error('Invalid project file - provenance must declare the current snapshot contract');
+    97	    }
+    98	
+    99	    this.validateProjectStateRecord(project.domain);
+   100	  }
+   101	
+   102	  private static validateProjectStateRecord(value: unknown): asserts value is ProjectStateRecord {
+   103	    if (!value || typeof value !== 'object') {
+   104	      throw new Error('Invalid project file - domain must be a reducer ProjectStateRecord');
+   105	    }
+   106	
+   107	    const domain = value as PlainObject;
+   108	    const required = [
+   109	      'schemaVersion',
+   110	      'planes',
+   111	      'projectionPlanes',
+   112	      'elements',
+   113	      'guides',
+   114	      'processTree',
+   115	      'dependencyGraph',
+   116	      'idCounters',
+   117	    ];
+   118	    for (const field of required) {
+   119	      if (!(field in domain)) {
+   120	        throw new Error(`Invalid project file - domain ProjectStateRecord missing field: ${field}`);
+   121	      }
+   122	    }
+   123	
+   124	    if (domain.schemaVersion !== this.SCHEMA_VERSION) {
+   125	      throw new Error(`Invalid project file - domain schema must be ${this.SCHEMA_VERSION}`);
+   126	    }
+   127	
+   128	    if (Array.isArray(domain.projectionPlanes)) {
+   129	      throw new Error('Invalid project file - mutable projection plane snapshots are not supported');
+   130	    }
+   131	
+   132	    if (!isPlainRecord(domain.projectionPlanes) || !isPlainRecord(domain.elements) || !isPlainRecord(domain.guides)) {
+   133	      throw new Error('Invalid project file - ProjectStateRecord collections must be plain records');
+   134	    }
+   135	
+   136	    try {
+   137	      createProjectStateRecord(cloneProjectStateRecord(value as ProjectStateRecord));
+   138	    } catch (error) {
+   139	      throw new Error(`Invalid project file - domain must contain plain reducer DTO data: ${String(error)}`);
+   140	    }
+   141	  }
+   142	
+   143	  private static generateProjectId(): string {
+   144	    return `proj_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+   145	  }
+   146	}
+   147	
+   148	function cloneProjectStateRecord(state: ProjectStateRecord): ProjectStateRecord {
+   149	  return JSON.parse(JSON.stringify(state)) as ProjectStateRecord;
+   150	}
+   151	
+   152	function assertNoForbiddenPersistenceKeys(value: unknown, path: string): void {
+   153	  if (!value || typeof value !== 'object') return;
+   154	
+   155	  if (Array.isArray(value)) {
+   156	    value.forEach((item, index) => assertNoForbiddenPersistenceKeys(item, `${path}[${index}]`));
+   157	    return;
+   158	  }
+   159	
+   160	  for (const [key, child] of Object.entries(value as PlainObject)) {
+   161	    if (FORBIDDEN_PERSISTENCE_KEYS.includes(key)) {
+   162	      throw new Error(`Invalid project file - command persistence field is not supported: ${key}`);
+   163	    }
+   164	    assertNoForbiddenPersistenceKeys(child, `${path}.${key}`);
+   165	  }
+   166	}
+   167	
+   168	function isPlainRecord(value: unknown): value is PlainObject {
+   169	  return !!value && typeof value === 'object' && !Array.isArray(value);
+   170	}
+--- backend projects
+     1	import express, { Request, Response } from 'express';
+     2	import { InvalidProjectIdError, ProjectRepository } from '../storage/ProjectRepository.js';
+     3	import type { ProjectDTO, ProjectProvenanceDTO, ProjectStateRecordDTO } from '../models/Project.js';
+     4	
+     5	const router = express.Router();
+     6	const projectRepo = new ProjectRepository();
+     7	const CURRENT_SCHEMA_VERSION = '4.0.0';
+     8	const CURRENT_CONTRACT = 'current-snapshot';
+     9	const PROJECT_SOURCES = ['local', 'google-drive', 'backend', 'test'] as const;
+    10	const PROJECT_FIELDS = ['id', 'name', 'schemaVersion', 'createdAt', 'updatedAt', 'provenance', 'domain'];
+    11	const PROJECT_PROVENANCE_FIELDS = ['app', 'contract', 'savedAt', 'source'];
+    12	const PROJECT_STATE_FIELDS = [
+    13	  'schemaVersion',
+    14	  'planes',
+    15	  'projectionPlanes',
+    16	  'elements',
+    17	  'guides',
+    18	  'processTree',
+    19	  'dependencyGraph',
+    20	  'idCounters',
+    21	];
+    22	const FORBIDDEN_PROJECT_FIELDS = [
+    23	  'commands',
+    24	  'commandHistory',
+    25	  'undoStack',
+    26	  'redoStack',
+    27	  'SerializedCommand',
+    28	  'SerializedOperation',
+    29	  'elements2D',
+    30	  'elements3D',
+    31	];
+    32	
+    33	interface ApiErrorBody {
+    34	  code: string;
+    35	  message: string;
+    36	  status: number;
+    37	}
+    38	
+    39	type PlainObject = Record<string, unknown>;
+    40	
+    41	type ProjectRouteHandler = (req: Request, res: Response) => Promise<void>;
+    42	
+    43	class ApiError extends Error {
+    44	  constructor(
+    45	    readonly status: number,
+    46	    readonly code: string,
+    47	    message: string,
+    48	  ) {
+    49	    super(message);
+    50	  }
+    51	}
+    52	
+    53	function asyncRoute(handler: ProjectRouteHandler): ProjectRouteHandler {
+    54	  return async (req, res) => {
+    55	    try {
+    56	      await handler(req, res);
+    57	    } catch (error) {
+    58	      sendError(res, toApiError(error));
+    59	    }
+    60	  };
+    61	}
+    62	
+    63	function sendError(res: Response, error: ApiError): void {
+    64	  const body: ApiErrorBody = {
+    65	    code: error.code,
+    66	    message: error.message,
+    67	    status: error.status,
+    68	  };
+    69	  res.status(error.status).json(body);
+    70	}
+    71	
+    72	function toApiError(error: unknown): ApiError {
+    73	  if (error instanceof ApiError) {
+    74	    return error;
+    75	  }
+    76	
+    77	  if (error instanceof InvalidProjectIdError) {
+    78	    return new ApiError(400, 'INVALID_PROJECT_ID', 'Project id is invalid');
+    79	  }
+    80	
+    81	  console.error('Unhandled project API error:', error);
+    82	  return new ApiError(500, 'PROJECT_INTERNAL_ERROR', 'Project request failed');
+    83	}
+    84	
+    85	function validateProjectIdParam(id: unknown): string {
+    86	  if (typeof id !== 'string' || !ProjectRepository.isValidProjectId(id)) {
+    87	    throw new ApiError(400, 'INVALID_PROJECT_ID', 'Project id is invalid');
+    88	  }
+    89	  return id;
+    90	}
+    91	
+    92	function validateCreatePayload(value: unknown): string {
+    93	  const payload = requirePlainRecord(value, 'Project create payload');
+    94	  const keys = Object.keys(payload);
+    95	  if (keys.some((key) => key !== 'name')) {
+    96	    throw new ApiError(400, 'INVALID_PROJECT_PAYLOAD', 'Project create payload may only include name');
+    97	  }
+    98	
+    99	  if (typeof payload.name !== 'string' || payload.name.trim().length === 0) {
+   100	    throw new ApiError(400, 'INVALID_PROJECT_PAYLOAD', 'Project name is required');
+   101	  }
+   102	
+   103	  return payload.name.trim();
+   104	}
+   105	
+   106	function validateProjectDTO(value: unknown, expectedId: string): ProjectDTO {
+   107	  assertNoForbiddenProjectFields(value, 'project');
+   108	  const project = requirePlainRecord(value, 'Project update payload');
+   109	  requireExactKeys(project, PROJECT_FIELDS, 'Project update payload');
+   110	
+   111	  if (project.id !== expectedId) {
+   112	    throw new ApiError(400, 'INVALID_PROJECT_PAYLOAD', 'Project id must match the route id');
+   113	  }
+   114	
+   115	  if (typeof project.name !== 'string' || project.name.trim().length === 0) {
+   116	    throw new ApiError(400, 'INVALID_PROJECT_PAYLOAD', 'Project name is required');
+   117	  }
+   118	
+   119	  if (project.schemaVersion !== CURRENT_SCHEMA_VERSION) {
+   120	    throw new ApiError(400, 'INVALID_PROJECT_SCHEMA', 'Project schemaVersion must be 4.0.0');
+   121	  }
+   122	
+   123	  if (typeof project.createdAt !== 'string' || typeof project.updatedAt !== 'string') {
+   124	    throw new ApiError(400, 'INVALID_PROJECT_PAYLOAD', 'Project timestamps are required');
+   125	  }
+   126	
+   127	  const provenance = validateProjectProvenance(project.provenance);
+   128	  const domain = validateProjectStateRecord(project.domain);
+   129	
+   130	  return {
+   131	    id: expectedId,
+   132	    name: project.name.trim(),
+   133	    schemaVersion: CURRENT_SCHEMA_VERSION,
+   134	    createdAt: project.createdAt,
+   135	    updatedAt: project.updatedAt,
+   136	    provenance,
+   137	    domain,
+   138	  };
+   139	}
+   140	
+   141	function validateProjectProvenance(value: unknown): ProjectProvenanceDTO {
+   142	  const provenance = requirePlainRecord(value, 'Project provenance');
+   143	  requireExactKeys(provenance, PROJECT_PROVENANCE_FIELDS, 'Project provenance');
+   144	
+   145	  if (provenance.app !== 'diedrico' || provenance.contract !== CURRENT_CONTRACT) {
+   146	    throw new ApiError(400, 'INVALID_PROJECT_PROVENANCE', 'Project provenance must declare the current snapshot contract');
+   147	  }
+   148	
+   149	  if (typeof provenance.savedAt !== 'string' || !PROJECT_SOURCES.includes(provenance.source as ProjectProvenanceDTO['source'])) {
+   150	    throw new ApiError(400, 'INVALID_PROJECT_PROVENANCE', 'Project provenance is invalid');
+   151	  }
+   152	
+   153	  return provenance as unknown as ProjectProvenanceDTO;
+   154	}
+   155	
+   156	function validateProjectStateRecord(value: unknown): ProjectStateRecordDTO {
+   157	  const domain = requirePlainRecord(value, 'Project domain');
+   158	  requireExactKeys(domain, PROJECT_STATE_FIELDS, 'Project domain');
+   159	
+   160	  if (domain.schemaVersion !== CURRENT_SCHEMA_VERSION) {
+   161	    throw new ApiError(400, 'INVALID_PROJECT_SCHEMA', 'Project domain schemaVersion must be 4.0.0');
+   162	  }
+   163	
+   164	  if (!isPlainRecord(domain.planes)) {
+   165	    throw new ApiError(400, 'INVALID_PROJECT_DOMAIN', 'Project domain planes must be a plain record');
+   166	  }
+   167	
+   168	  if (!isPlainRecord(domain.projectionPlanes) || Array.isArray(domain.projectionPlanes)) {
+   169	    throw new ApiError(400, 'INVALID_PROJECT_DOMAIN', 'Project domain projectionPlanes must be reducer records');
+   170	  }
+   171	
+   172	  if (!isPlainRecord(domain.elements)) {
+   173	    throw new ApiError(400, 'INVALID_PROJECT_DOMAIN', 'Project domain elements must be a plain record');
+   174	  }
+   175	
+   176	  if (!isPlainRecord(domain.guides)) {
+   177	    throw new ApiError(400, 'INVALID_PROJECT_DOMAIN', 'Project domain guides must be a plain record');
+   178	  }
+   179	
+   180	  validateProcessTree(domain.processTree);
+   181	  validateDependencyGraph(domain.dependencyGraph);
+   182	  validateIdCounters(domain.idCounters);
+   183	
+   184	  for (const [planeId, projectionPlane] of Object.entries(domain.projectionPlanes)) {
+   185	    const plane = requirePlainRecord(projectionPlane, `Project domain projectionPlane ${planeId}`);
+   186	    if (Array.isArray(plane.points) || Array.isArray(plane.lines) || Array.isArray(plane.circles)) {
+   187	      throw new ApiError(400, 'INVALID_PROJECT_DOMAIN', 'Project domain must not contain legacy projection-plane arrays');
+   188	    }
+   189	
+   190	    if (!Array.isArray(plane.elementIds) || !Array.isArray(plane.guideIds)) {
+   191	      throw new ApiError(400, 'INVALID_PROJECT_DOMAIN', 'Project domain projectionPlanes require elementIds and guideIds arrays');
+   192	    }
+   193	  }
+   194	
+   195	  return domain as unknown as ProjectStateRecordDTO;
+   196	}
+   197	
+   198	function validateProcessTree(value: unknown): void {
+   199	  const processTree = requirePlainRecord(value, 'Project domain processTree');
+   200	  if (typeof processTree.rootId !== 'string' || !isPlainRecord(processTree.nodes) || typeof processTree.version !== 'number') {
+   201	    throw new ApiError(400, 'INVALID_PROJECT_DOMAIN', 'Project domain processTree is invalid');
+   202	  }
+   203	}
+   204	
+   205	function validateDependencyGraph(value: unknown): void {
+   206	  const dependencyGraph = requirePlainRecord(value, 'Project domain dependencyGraph');
+   207	  if (!isPlainRecord(dependencyGraph.nodes) || !Array.isArray(dependencyGraph.edges)) {
+   208	    throw new ApiError(400, 'INVALID_PROJECT_DOMAIN', 'Project domain dependencyGraph is invalid');
+   209	  }
+   210	}
+   211	
+   212	function validateIdCounters(value: unknown): void {
+   213	  const idCounters = requirePlainRecord(value, 'Project domain idCounters');
+   214	  const fields = ['planes', 'projectionPlanes', 'elements', 'guides', 'actions', 'processNodes'];
+   215	  for (const field of fields) {
+   216	    if (typeof idCounters[field] !== 'number') {
+   217	      throw new ApiError(400, 'INVALID_PROJECT_DOMAIN', 'Project domain idCounters are invalid');
+   218	    }
+   219	  }
+   220	
+   221	  if (!isPlainRecord(idCounters.custom)) {
+   222	    throw new ApiError(400, 'INVALID_PROJECT_DOMAIN', 'Project domain idCounters custom must be a plain record');
+   223	  }
+   224	}
+   225	
+   226	function assertNoForbiddenProjectFields(value: unknown, path: string): void {
+   227	  if (!value || typeof value !== 'object') return;
+   228	
+   229	  if (Array.isArray(value)) {
+   230	    value.forEach((item, index) => assertNoForbiddenProjectFields(item, `${path}[${index}]`));
+   231	    return;
+   232	  }
+   233	
+   234	  for (const [key, child] of Object.entries(value as PlainObject)) {
+   235	    if (FORBIDDEN_PROJECT_FIELDS.includes(key)) {
+   236	      throw new ApiError(400, 'INVALID_PROJECT_PAYLOAD', `Unsupported legacy project field: ${key}`);
+   237	    }
+   238	    assertNoForbiddenProjectFields(child, `${path}.${key}`);
+   239	  }
+   240	}
+   241	
+   242	function requirePlainRecord(value: unknown, label: string): PlainObject {
+   243	  if (!isPlainRecord(value)) {
+   244	    throw new ApiError(400, 'INVALID_PROJECT_PAYLOAD', `${label} must be a JSON object`);
+   245	  }
+   246	  return value;
+   247	}
+   248	
+   249	function requireExactKeys(value: PlainObject, expectedKeys: readonly string[], label: string): void {
+   250	  const expected = new Set(expectedKeys);
+   251	  for (const key of expectedKeys) {
+   252	    if (!(key in value)) {
+   253	      throw new ApiError(400, 'INVALID_PROJECT_PAYLOAD', `${label} missing required field: ${key}`);
+   254	    }
+   255	  }
+   256	
+   257	  for (const key of Object.keys(value)) {
+   258	    if (!expected.has(key)) {
+   259	      throw new ApiError(400, 'INVALID_PROJECT_PAYLOAD', `${label} contains unsupported field: ${key}`);
+   260	    }
+   261	  }
+   262	}
+   263	
+   264	function isPlainRecord(value: unknown): value is PlainObject {
+   265	  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+   266	  const prototype = Object.getPrototypeOf(value);
+   267	  return prototype === Object.prototype || prototype === null;
+   268	}
+   269	
+   270	/**
+--- project model
+     1	/**
+     2	 * Current Project Data Transfer Object.
+     3	 *
+     4	 * A project persists one authoritative reducer-owned ProjectStateRecord snapshot
+     5	 * plus provenance metadata. Undo/redo command stacks are runtime-only and are
+     6	 * not part of this DTO.
+     7	 */
+     8	
+     9	export type JsonPrimitiveDTO = string | number | boolean | null;
+    10	export type JsonValueDTO = JsonPrimitiveDTO | JsonObjectDTO | JsonArrayDTO;
+    11	export interface JsonObjectDTO {
+    12	  [key: string]: JsonValueDTO;
+    13	}
+    14	export type JsonArrayDTO = JsonValueDTO[];
+    15	
+    16	export type ProjectElementKindDTO = 'point' | 'line' | 'segment' | 'circle';
+    17	export type ProjectGuideKindDTO = 'line' | 'circle' | 'point' | 'custom';
+    18	export type ProcessNodeRecordKindDTO = 'subprocess' | 'actionGroup' | 'action';
+    19	export type DependencyNodeKindDTO = 'element' | 'action';
+    20	
+    21	export interface Vector3RecordDTO {
+    22	  x: number;
+    23	  y: number;
+    24	  z: number;
+    25	}
+    26	
+    27	export interface PlaneRecordDTO {
+    28	  id: string;
+    29	  kind: 'horizontal' | 'vertical' | 'auxiliary';
+    30	  label?: string;
+    31	  normal: Vector3RecordDTO;
+    32	  origin: Vector3RecordDTO;
+    33	  metadata: JsonObjectDTO;
+    34	}
+    35	
+    36	export interface ProjectionPlaneRecordDTO {
+    37	  id: string;
+    38	  sourcePlaneId: string;
+    39	  label?: string;
+    40	  basisU: Vector3RecordDTO;
+    41	  basisV: Vector3RecordDTO;
+    42	  origin: Vector3RecordDTO;
+    43	  elementIds: string[];
+    44	  guideIds: string[];
+    45	  metadata: JsonObjectDTO;
+    46	}
+    47	
+    48	export interface ElementRecordDTO {
+    49	  id: string;
+    50	  planeId: string;
+    51	  kind: ProjectElementKindDTO;
+    52	  constructionType: string;
+    53	  label?: string;
+    54	  visible: boolean;
+    55	  definition: JsonObjectDTO;
+    56	  dependencyIds: string[];
+    57	  producedByActionId?: string;
+    58	}
+    59	
+    60	export interface GuideRecordDTO {
+    61	  id: string;
+    62	  planeId: string;
+    63	  kind: ProjectGuideKindDTO;
+    64	  constructionType: string;
+    65	  visible: boolean;
+    66	  definition: JsonObjectDTO;
+    67	  dependencyIds: string[];
+    68	  producedByActionId?: string;
+    69	}
+    70	
+    71	export interface ProcessTreeRecordDTO {
+    72	  rootId: string;
+    73	  nodes: Record<string, ProcessNodeRecordDTO>;
+    74	  version: number;
+    75	}
+    76	
+    77	export type ProcessNodeRecordDTO = SubprocessRecordDTO | ActionGroupRecordDTO | ActionRecordDTO;
+    78	
+    79	export interface SubprocessRecordDTO {
+    80	  id: string;
+    81	  kind: 'subprocess';
+    82	  name: string;
+    83	  childIds: string[];
+    84	  visible: boolean;
+    85	  createdAt: string;
+    86	}
+    87	
+    88	export interface ActionGroupRecordDTO {
+    89	  id: string;
+    90	  kind: 'actionGroup';
+    91	  childIds: (string | null)[];
+    92	  auxiliary: boolean;
+    93	  createdAt: string;
+    94	}
+    95	
+    96	export interface ActionRecordDTO {
+    97	  id: string;
+    98	  kind: 'action';
+    99	  actionType: string;
+   100	  inputIds: string[];
+   101	  outputIds: string[];
+   102	  parameters: JsonObjectDTO;
+   103	  description: string;
+   104	  createdAt: string;
+   105	}
+   106	
+   107	export interface DependencyGraphRecordDTO {
+   108	  nodes: Record<string, DependencyNodeRecordDTO>;
+   109	  edges: DependencyEdgeRecordDTO[];
+   110	}
+   111	
+   112	export interface DependencyNodeRecordDTO {
+   113	  id: string;
+   114	  kind: DependencyNodeKindDTO;
+   115	  infeasible: boolean;
+   116	}
+   117	
+   118	export interface DependencyEdgeRecordDTO {
+   119	  fromId: string;
+   120	  toId: string;
+   121	}
+   122	
+   123	export interface IdCounterRecordDTO {
+   124	  planes: number;
+   125	  projectionPlanes: number;
+   126	  elements: number;
+   127	  guides: number;
+   128	  actions: number;
+   129	  processNodes: number;
+   130	  custom: Record<string, number>;
+   131	}
+   132	
+   133	export interface ProjectStateRecordDTO {
+   134	  schemaVersion: '4.0.0';
+   135	  planes: Record<string, PlaneRecordDTO>;
+   136	  projectionPlanes: Record<string, ProjectionPlaneRecordDTO>;
+   137	  elements: Record<string, ElementRecordDTO>;
+   138	  guides: Record<string, GuideRecordDTO>;
+   139	  processTree: ProcessTreeRecordDTO;
+   140	  dependencyGraph: DependencyGraphRecordDTO;
+   141	  idCounters: IdCounterRecordDTO;
+   142	}
+   143	
+   144	export interface ProjectProvenanceDTO {
+   145	  app: 'diedrico';
+   146	  contract: 'current-snapshot';
+   147	  savedAt: string;
+   148	  source: 'local' | 'google-drive' | 'backend' | 'test';
+   149	}
+   150	
+   151	export interface ProjectDTO {
+   152	  id: string;
+   153	  name: string;
+   154	  schemaVersion: '4.0.0';
+   155	  createdAt: string;
+   156	  updatedAt: string;
+   157	  provenance: ProjectProvenanceDTO;
+   158	  domain: ProjectStateRecordDTO;
+   159	}
+   160	
+   161	/**
+   162	 * Project metadata for listing projects
+   163	 */
+   164	export interface ProjectMetadata {
+   165	  id: string;
+   166	  name: string;
+   167	  createdAt: string;
+   168	  updatedAt: string;
+   169	}
+   170	
+   171	/**
+   172	 * Create a new empty project with default current reducer snapshot values
+   173	 */
+   174	export function createEmptyProject(name: string): ProjectDTO {
+   175	  const now = new Date().toISOString();
+   176	  const id = `project_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+   177	
+   178	  return {
+   179	    id,
+   180	    name,
+   181	    schemaVersion: '4.0.0',
+   182	    createdAt: now,
+   183	    updatedAt: now,
+   184	    provenance: {
+   185	      app: 'diedrico',
+   186	      contract: 'current-snapshot',
+   187	      savedAt: now,
+   188	      source: 'backend'
+   189	    },
+   190	    domain: {
+   191	      schemaVersion: '4.0.0',
+   192	      planes: {
+   193	        P_H: {
+   194	          id: 'P_H',
+   195	          kind: 'horizontal',
+   196	          label: 'Horizontal Plane',
+   197	          normal: { x: 0, y: 0, z: 1 },
+   198	          origin: { x: 0, y: 0, z: 0 },
+   199	          metadata: {}
+   200	        },
+   201	        P_V: {
+   202	          id: 'P_V',
+   203	          kind: 'vertical',
+   204	          label: 'Vertical Plane',
+   205	          normal: { x: 0, y: 1, z: 0 },
+   206	          origin: { x: 0, y: 0, z: 0 },
+   207	          metadata: {}
+   208	        }
+   209	      },
+   210	      projectionPlanes: {
+   211	        P_H: {
+   212	          id: 'P_H',
+   213	          sourcePlaneId: 'P_H',
+   214	          label: 'Horizontal Projection',
+   215	          basisU: { x: 1, y: 0, z: 0 },
+   216	          basisV: { x: 0, y: 1, z: 0 },
+   217	          origin: { x: 0, y: 0, z: 0 },
+   218	          elementIds: [],
+   219	          guideIds: [],
+   220	          metadata: {}

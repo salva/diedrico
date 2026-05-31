@@ -1,0 +1,218 @@
+frontend/src/application/canvas/CanvasStyleUseCase.ts:13:      cmd.addAndExecute(new UpdateElementStyleOp(request.elementId, request.planeId, request.style) as any);
+frontend/src/application/construction/ConstructionUseCases.ts:162:      throw new Error(`Unsupported construction intent: ${(intent as any).type}`);
+frontend/src/application/construction/ConstructionUseCases.ts:219:function validateCoordinates(coords: any): void {
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:10:import type { CanvasPlaneTransformMap, CanvasWorldReadPort } from './CanvasWorldReadPort';
+frontend/src/application/canvasPresentation/CanvasPresentationSelector.ts:22:  select(readPort: CanvasWorldReadPort, viewport: CanvasViewportModel, state: CanvasPresentationState): CanvasPresentationModel {
+frontend/src/application/canvasPresentation/CanvasPresentationController.ts:3:import type { CanvasWorldReadPort } from './CanvasWorldReadPort';
+frontend/src/application/canvasPresentation/CanvasPresentationController.ts:7:  buildModel(readPort: CanvasWorldReadPort, viewport: CanvasViewportModel, state: CanvasPresentationState): CanvasPresentationModel {
+frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:14:export interface CanvasWorldReadPort {
+frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:30:export function createCanvasWorldReadPort(world: World): CanvasWorldReadPort {
+frontend/src/application/canvasPresentation/Projected3DCanvasSelector.ts:6:import type { CanvasWorldReadPort } from './CanvasWorldReadPort';
+frontend/src/application/canvasPresentation/Projected3DCanvasSelector.ts:10:  select(readPort: CanvasWorldReadPort, planeTransforms: Map<string, { planeToPaper: Matrix3 }>): CanvasRenderItem[] {
+frontend/src/application/threePresentation/ProjectionPlane3DSelector.ts:59:function to3DSegment(segment: Segment2D, matrix: any): SegmentGeometryDto {
+frontend/src/application/threePresentation/PlanarElement3DSelector.ts:57:function lift(point2D: Vector3, matrix: any): Vector3 {
+frontend/src/application/appShell/AutoSaveUseCases.ts:61:    } catch (error: any) {
+frontend/src/application/appShell/AutoSaveUseCases.ts:92:  private async handleSaveError(error: any): Promise<void> {
+frontend/src/components/panels/ElementsPanel.vue:271:function formatElement(element: any): any {
+frontend/src/components/panels/ElementsPanel.vue:295:function formatLabel(element: any): string {
+frontend/src/components/panels/ElementsPanel.vue:302:function getElementProperties(element: any): string {
+frontend/src/components/toolbars/ToolFamilyButton.vue:32:        :class="{ active: toolStore.isToolActive(tool.id as any) }"
+frontend/src/components/toolbars/ToolFamilyButton.vue:39:        <span v-if="toolStore.isToolActive(tool.id as any)" class="checkmark">✓</span>
+frontend/src/components/toolbars/ToolFamilyButton.vue:63:  return props.family.tools.some(tool => toolStore.isToolActive(tool.id as any));
+frontend/src/components/toolbars/ToolFamilyButton.vue:68:  const activeTool = props.family.tools.find(tool => toolStore.isToolActive(tool.id as any));
+frontend/src/components/workspace/SvgCanvas.vue:213:import { createCanvasWorldReadPort } from '@/application/canvasPresentation/CanvasWorldReadPort';
+frontend/src/components/workspace/SvgCanvas.vue:366:  let element: any;
+frontend/src/components/workspace/SvgCanvas.vue:552:    createCanvasWorldReadPort(world),
+frontend/src/components/workspace/SvgCanvas.vue:921:function handleSaveProperties(changes: any) {
+frontend/src/tools/ITool.ts:26:  paperToPlaneTransform: any;
+frontend/tests/integration/pointCreation.spec.ts:47:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/integration/pointCreation.spec.ts:70:      const position = (createdPoint as any).position;
+frontend/tests/integration/pointCreation.spec.ts:79:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/integration/pointCreation.spec.ts:104:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/integration/pointCreation.spec.ts:128:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/integration/pointCreation.spec.ts:150:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/integration/pointCreation.spec.ts:177:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/integration/pointCreation.spec.ts:209:          commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/integration/pointCreation.spec.ts:251:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/integration/pointCreation.spec.ts:280:          commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/integration/pointCreation.spec.ts:313:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/integration/pointCreation.spec.ts:335:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/integration/pointCreation.spec.ts:356:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/integration/pointCreation.spec.ts:378:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/integration/pointCreation.spec.ts:407:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/integration/pointCreation.spec.ts:416:      const createdPoint = world.getPoint2DById(pointId) as any;
+frontend/tests/integration/pointCreation.spec.ts:425:      const restoredPoint = world.getPoint2DById(pointId) as any;
+frontend/tests/integration/projectService.determinism.spec.ts:94:    const worldStates: any[] = [];
+frontend/tests/integration/projectService.determinism.spec.ts:128:    firstState.points.forEach((point: any, index: number) => {
+frontend/tests/integration/projectService.determinism.spec.ts:175:function captureWorldState(world: World): any {
+frontend/tests/integration/worldInitialization.spec.ts:91:      const halfHingeH = linesH.find((l: any) => l instanceof HalfHingeLine2D);
+frontend/tests/integration/worldInitialization.spec.ts:92:      const halfHingeV = linesV.find((l: any) => l instanceof HalfHingeLine2D);
+frontend/tests/integration/worldInitialization.spec.ts:204:      const halfHingeH = projPlaneH.getAllLines().find((l: any) => l instanceof HalfHingeLine2D);
+frontend/tests/integration/worldInitialization.spec.ts:205:      const halfHingeV = projPlaneV.getAllLines().find((l: any) => l instanceof HalfHingeLine2D);
+frontend/tests/integration/worldInitialization.spec.ts:252:        (child: any) => child.type === 'subprocess'
+frontend/tests/integration/worldInitialization.spec.ts:265:        (child: any) => child.type === 'subprocess' && 'name' in child
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:117:      expect((primaryGuide as any).siblingGuideId).toBe(result.siblingGuideId);
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:118:      expect((siblingGuide as any).primaryGuideId).toBe(result.guideId);
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:48:        l => (l as any).hingeLineId === mainHingeLine.id
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:98:      expect((primaryPoint as any).siblingPointId).toBe(result.siblingPointId);
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:99:      expect((siblingPoint as any).primaryIntersectionId).toBe(result.pointId);
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:148:        l => (l as any).hingeLineId === mainHingeLine.id
+frontend/tests/unit/commands/initializationOps.spec.ts:321:      expect((world as any).hingeLines.has('hl_undo')).toBe(true);
+frontend/tests/unit/commands/initializationOps.spec.ts:325:      expect((world as any).hingeLines.has('hl_undo')).toBe(false);
+frontend/tests/unit/commands/initializationOps.spec.ts:326:      expect((world as any).mainHingeLineId).toBeUndefined();
+frontend/tests/unit/commands/updateFreePoint2DPositionOp.spec.ts:35:    const restored = plane.getPoint(point.id) as any;
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:113:        (child: any) => child.type === 'subprocess'
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:119:        (sp: any) => sp.type === 'subprocess' && sp.name === 'World Initialization'
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:128:        (child: any) => child.type === 'subprocess' && child.name === 'World Initialization'
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:129:      ) as any;
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:134:        (child: any) => child?.type === 'actionGroup'
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:147:      actions.forEach((action: any) => {
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:189:      const opTypes = operations.map((op: any) => op.type);
+frontend/tests/unit/components/panels/threeViewShellBoundary.spec.ts:13:    expect(source).not.toMatch(/CSS2DObject|CSS2DRenderer|OrbitControls|WebGLRenderer|Mesh\(|Line\(|PlaneGeometry|SphereGeometry/);
+frontend/tests/unit/domain/element2d.spec.ts:107:      point.visualStyle = { ...point.visualStyle, visible: false } as any;
+frontend/tests/unit/domain/element2d.spec.ts:119:      line.visualStyle = { ...line.visualStyle, visible: false } as any;
+frontend/tests/unit/domain/element2d.spec.ts:131:      circle.visualStyle = { ...circle.visualStyle, visible: false } as any;
+frontend/tests/unit/domain/element2d.spec.ts:309:      elements.forEach(el => el.visualStyle = { ...el.visualStyle, visible: false } as any);
+frontend/tests/unit/domain/element2d.spec.ts:331:      elements[1].visualStyle = { ...elements[1].visualStyle, visible: false } as any;  // Hide the line
+frontend/tests/unit/domain/guide.spec.ts:227:      expect((siblingGuide as any).throughPointId).toBeUndefined();
+frontend/tests/unit/domain/guide.spec.ts:244:      expect((cloned as any).throughPointId).toBeUndefined();
+frontend/tests/unit/domain/lineHierarchy.spec.ts:24:  let planeH: any;
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:21:  let planeH: any;
+frontend/tests/unit/domain/segment.spec.ts:21:  let planeH: any;
+frontend/tests/unit/domain/world.spec.ts:21:  let planeH: any;
+frontend/tests/unit/domain/world.spec.ts:22:  let planeV: any;
+frontend/tests/unit/domain/world.spec.ts:33:      const allPoints: any[] = [];
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:248:function roundTripOperation(op: any, world: World, commandStack: CommandStack): any {
+frontend/tests/unit/services/ProjectService.subprocess.spec.ts:85:function roundTripOperation(op: any, world: World, commandStack: CommandStack): any {
+frontend/tests/unit/services/googleDriveService.spec.ts:13:  callback: null as any,
+frontend/tests/unit/services/googleDriveService.spec.ts:47:global.gapi = mockGapi as any;
+frontend/tests/unit/services/googleDriveService.spec.ts:48:(global as any).google = mockGoogle;
+frontend/tests/unit/tools/CircleTool.spec.ts:26:import { createCanvasWorldReadPort } from '@/application/canvasPresentation/CanvasWorldReadPort';
+frontend/tests/unit/tools/CircleTool.spec.ts:30:    hitTest(canvasPos: any, snapRadiusPixels: number, context: any, selectionMask?: any) {
+frontend/tests/unit/tools/CircleTool.spec.ts:33:      const model = new CanvasPresentationSelector().select(createCanvasWorldReadPort(world), { zoom: 1, panX: 0, panY: 0, width: 800, height: 600 }, { activePlaneId });
+frontend/tests/unit/tools/CircleTool.spec.ts:84:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:89:        toolStore: {} as any,
+frontend/tests/unit/tools/CircleTool.spec.ts:101:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:106:        toolStore: {} as any,
+frontend/tests/unit/tools/CircleTool.spec.ts:116:      const userCircles = circles.filter((c: any) => c.id?.startsWith(horizontalPlaneId));
+frontend/tests/unit/tools/CircleTool.spec.ts:146:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:151:        toolStore: {} as any,
+frontend/tests/unit/tools/CircleTool.spec.ts:163:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:168:        toolStore: {} as any,
+frontend/tests/unit/tools/CircleTool.spec.ts:180:      const circle = plane?.getAllCircles().find((c: any) => c.id?.startsWith(horizontalPlaneId));
+frontend/tests/unit/tools/CircleTool.spec.ts:202:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:207:        toolStore: {} as any,
+frontend/tests/unit/tools/CircleTool.spec.ts:218:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:223:        toolStore: {} as any,
+frontend/tests/unit/tools/CircleTool.spec.ts:232:      const circles = plane?.getAllCircles().filter((c: any) => c.id?.startsWith(horizontalPlaneId)) || [];
+frontend/tests/unit/tools/CircleTool.spec.ts:260:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:265:        toolStore: {} as any,
+frontend/tests/unit/tools/CircleTool.spec.ts:276:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:281:        toolStore: {} as any,
+frontend/tests/unit/tools/CircleTool.spec.ts:290:      const circles = plane?.getAllCircles().filter((c: any) => c.id?.startsWith(horizontalPlaneId)) || [];
+frontend/tests/unit/tools/CircleTool.spec.ts:301:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:306:        toolStore: {} as any,
+frontend/tests/unit/tools/CircleTool.spec.ts:319:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:324:        toolStore: {} as any,
+frontend/tests/unit/tools/CircleTool.spec.ts:349:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:354:        toolStore: {} as any,
+frontend/tests/unit/tools/CircleTool.spec.ts:363:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:368:        toolStore: {} as any,
+frontend/tests/unit/tools/CircleTool.spec.ts:378:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:383:        toolStore: {} as any,
+frontend/tests/unit/tools/CircleTool.spec.ts:414:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:419:        toolStore: {} as any,
+frontend/tests/unit/tools/CircleTool.spec.ts:428:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:433:        toolStore: {} as any,
+frontend/tests/unit/tools/CircleTool.spec.ts:493:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:498:        toolStore: {} as any,
+frontend/tests/unit/tools/CircleTool.spec.ts:506:        commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/CircleTool.spec.ts:511:        toolStore: {} as any,
+frontend/tests/unit/tools/pointTool.spec.ts:21:import { createCanvasWorldReadPort } from '@/application/canvasPresentation/CanvasWorldReadPort';
+frontend/tests/unit/tools/pointTool.spec.ts:25:    hitTest(canvasPos: any, snapRadiusPixels: number, context: any, selectionMask?: any) {
+frontend/tests/unit/tools/pointTool.spec.ts:28:      const model = new CanvasPresentationSelector().select(createCanvasWorldReadPort(world), { zoom: 1, panX: 0, panY: 0, width: 800, height: 600 }, { activePlaneId });
+frontend/tests/unit/tools/pointTool.spec.ts:50:    commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/pointTool.spec.ts:55:    toolStore: {} as any, // Mock tool store
+frontend/tests/unit/tools/pointTool.spec.ts:101:      const allPoints: any[] = [];
+frontend/tests/unit/tools/pointTool.spec.ts:129:      const allPoints: any[] = [];
+frontend/tests/unit/tools/pointTool.spec.ts:138:      const position = (createdPoint as any).position;
+frontend/tests/unit/tools/pointTool.spec.ts:152:      const allPoints: any[] = [];
+frontend/tests/unit/tools/pointTool.spec.ts:244:      const allPoints: any[] = [];
+frontend/tests/unit/tools/pointTool.spec.ts:326:      const allPoints: any[] = [];
+frontend/tests/unit/tools/pointTool.spec.ts:418:      let allPoints: any[] = [];
+frontend/tests/unit/tools/pointTool.spec.ts:451:      const allPoints: any[] = [];
+frontend/tests/unit/tools/toolValidation.spec.ts:32:import { createCanvasWorldReadPort } from '@/application/canvasPresentation/CanvasWorldReadPort';
+frontend/tests/unit/tools/toolValidation.spec.ts:36:    hitTest(canvasPos: any, snapRadiusPixels: number, context: any, selectionMask?: any) {
+frontend/tests/unit/tools/toolValidation.spec.ts:39:      const model = new CanvasPresentationSelector().select(createCanvasWorldReadPort(world), { zoom: 1, panX: 0, panY: 0, width: 800, height: 600 }, { activePlaneId });
+frontend/tests/unit/tools/toolValidation.spec.ts:57:      commandSink: new CanvasToolController({ world, commandStack, toolStore: {} as any }),
+frontend/tests/unit/tools/toolValidation.spec.ts:62:        toolStore: {} as any,
+frontend/tests/unit/types/SelectionMask.spec.ts:33:  const halfHingeLine = new HalfHingeLine2D(`${planeId}/hhl2d_1`, { id: 'hinge_1' } as any, planeId);
+frontend/tests/unit/types/SelectionMask.spec.ts:81:    it('T1070.1: anyLine() should match all Line2D subtypes', () => {
+frontend/tests/unit/types/SelectionMask.spec.ts:222:    it('T1071.1: anyLine() replaces Phase 62 "any-line" string', () => {
+frontend/tests/unit/commandStack.spec.ts:91:      (cmd as any).canUndo = () => false;
+frontend/tests/unit/application/canvasToolControllers.spec.ts:18:function userPoints(world: any, planeId: string) {
+frontend/tests/unit/application/canvasToolControllers.spec.ts:19:  return world.getProjectionPlaneById(planeId).getAllPoints().filter((point: any) => !point.locked);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:32:    toolStore: {} as any,
+frontend/tests/unit/application/canvasToolControllers.spec.ts:36:function arg(element: any, planeCoords = new Vector3(0, 0, 1)): ArgumentValue {
+frontend/tests/unit/application/canvasToolControllers.spec.ts:135:    const tangent = plane.getAllLines().at(-1) as any;
+frontend/tests/unit/application/canvasToolControllers.spec.ts:147:    expect((plane.getPoint(point.id) as any).position.x).toBe(3);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:149:    expect((plane.getPoint(point.id) as any).position.x).toBe(1);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:156:    expect((plane.getPoint(point.id) as any).position.x).toBe(7);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:158:    expect((plane.getPoint(point.id) as any).position.x).toBe(1);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:204:      .mockReturnValueOnce({ elementId: circle.id } as any)
+frontend/tests/unit/application/canvasToolControllers.spec.ts:205:      .mockReturnValueOnce({ elementId: external.id } as any)
+frontend/tests/unit/application/canvasToolControllers.spec.ts:206:      .mockReturnValueOnce({ elementId: refLine.id } as any)
+frontend/tests/unit/application/canvasToolControllers.spec.ts:207:      .mockReturnValueOnce({ elementId: circle.id } as any)
+frontend/tests/unit/application/canvasToolControllers.spec.ts:208:      .mockReturnValueOnce({ elementId: refLine.id } as any)
+frontend/tests/unit/application/canvasToolControllers.spec.ts:209:      .mockReturnValueOnce({ elementId: circle.id } as any);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:256:    const controller = new CanvasToolController({ world, commandStack, toolStore: { setTool: vi.fn() } as any });
+frontend/tests/unit/application/canvasToolControllers.spec.ts:262:      interactionQuery: new CanvasInteractionQuery([]) as any,
+frontend/tests/unit/application/canvasPresentation/canvasPresentationSelector.spec.ts:4:import { createCanvasWorldReadPort } from '@/application/canvasPresentation/CanvasWorldReadPort';
+frontend/tests/unit/application/canvasPresentation/canvasPresentationSelector.spec.ts:11:    const a = plane.addFreePoint2D(new Vector3(0, 0, 1), world as any);
+frontend/tests/unit/application/canvasPresentation/canvasPresentationSelector.spec.ts:12:    const b = plane.addFreePoint2D(new Vector3(10, 0, 1), world as any);
+frontend/tests/unit/application/canvasPresentation/canvasPresentationSelector.spec.ts:13:    const segment = plane.addSegment2DBetweenPoints(a.id!, b.id!, world as any);
+frontend/tests/unit/application/canvasPresentation/canvasPresentationSelector.spec.ts:14:    const circle = plane.addCircle2DByCenterAndPoint(a.id!, b.id!, world as any);
+frontend/tests/unit/application/canvasPresentation/canvasPresentationSelector.spec.ts:16:    const model = selector.select(createCanvasWorldReadPort(world), { zoom: 1, panX: 0, panY: 0, width: 400, height: 300 }, { activePlaneId: plane.id, selectedIds: new Set([segment.id!]), hoveredIds: new Set([circle.id!]), gridVisible: true });
+frontend/tests/unit/application/canvasPresentation/canvasWorldReadPort.spec.ts:5:import { createCanvasWorldReadPort } from '@/application/canvasPresentation/CanvasWorldReadPort';
+frontend/tests/unit/application/canvasPresentation/canvasWorldReadPort.spec.ts:9:describe('CanvasWorldReadPort boundary', () => {
+frontend/tests/unit/application/canvasPresentation/canvasWorldReadPort.spec.ts:17:    const readPort = createCanvasWorldReadPort(world);
+frontend/tests/unit/application/canvasPresentation/projected3DCanvasSelector.spec.ts:4:import type { CanvasWorldReadPort } from '@/application/canvasPresentation/CanvasWorldReadPort';
+frontend/tests/unit/application/canvasPresentation/projected3DCanvasSelector.spec.ts:12:function readPort(): CanvasWorldReadPort {
+frontend/tests/unit/application/threePresentation/threePresentationSelector.spec.ts:12:  return { selector: new ThreePresentationSelector(projectionPlanes as any, planarElements as any, reconstructedElements as any, guides as any, hinges as any), projectionPlanes, planarElements, reconstructedElements, guides, hinges };
+frontend/tests/unit/application/threePresentation/threePresentationSelector.spec.ts:15:function viFn<T extends (...args: any[]) => any>(impl: T): T & { calls: any[][] } {
+frontend/tests/unit/application/threePresentation/threePresentationSelector.spec.ts:16:  const calls: any[][] = [];
+frontend/tests/unit/application/threePresentation/threePresentationSelector.spec.ts:17:  const fn = ((...args: any[]) => { calls.push(args); return impl(...args); }) as T & { calls: any[][] };
+frontend/tests/unit/application/threePresentation/threePresentationSelector.spec.ts:25:    const world = { marker: 'world' } as any;
+frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:24:    } as any;
+frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:32:    expect(dtos.every(dto => !(dto as any).isObject3D)).toBe(true);
+frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:40:    } as any;
+frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:63:    } as any;
+frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:73:    guide.realize2D = () => feasible({ point1: new Vector3(0, 0, 1), point2: new Vector3(1, 0, 1), getDirection: () => new Vector3(1, 0, 0) }) as any;
+frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:82:    } as any;
+frontend/tests/unit/application/threePresentation/threePresentationConcernSelectors.spec.ts:94:    const world = { getAllHingeLines: () => [hinge] } as any;
+frontend/tests/unit/application/appShell/KeyboardShortcutRouter.test.ts:27:  } as any;
+frontend/tests/unit/application/appShell/KeyboardShortcutRouter.test.ts:35:    router.install(target as any);
+frontend/tests/unit/application/appShell/KeyboardShortcutRouter.test.ts:36:    router.install(target as any);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:15:    expect(appVue).not.toMatch(/DeletionSequenceFactory|ProjectService|GoogleDriveService|window as any|__autoSaveInterval|CustomEvent\('load-files'\)|Environment variables/);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:65:    } as any)),
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:112:      googleConfig: {} as any,
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:146:      googleConfig: {} as any,
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:175:      world: { getVersion: () => version, peekNextId: () => 10 } as any,
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:176:      commandStack: {} as any,
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:213:      world: { getVersion: () => 1, peekNextId: () => 10 } as any,
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:214:      commandStack: {} as any,
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:252:    const useCases = new ActivePlaneUseCases(world as any, state);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:281:      { getDependencyService: () => ({ getElementsInDeletionOrder: vi.fn(() => ['selected', 'dependent']) }) } as any,
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:282:      { push: vi.fn() } as any,
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:283:      selectionStore as any,
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:315:      { getProjectionPlaneById: vi.fn(() => activePlane) } as any,
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:316:      { push: vi.fn() } as any,
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:343:      autoSave: { start: vi.fn(), schedule: vi.fn(), stop: vi.fn(), dispose: vi.fn() } as any,
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:351:    const useCases = new ProjectSessionUseCases(deps as any);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:361:    const useCases = new ProjectSessionUseCases(deps as any);
+frontend/tests/unit/application/appShell/AppShellRuntimeUseCases.test.ts:378:    const useCases = new ProjectSessionUseCases(deps as any);
+frontend/tests/unit/rendering/threeView/threeSceneAdapters.spec.ts:15:    ] as any);
+frontend/tests/unit/rendering/threeView/threeSceneAdapters.spec.ts:22:    expect(new PlanarElementSceneAdapter().createObjects([{ id: 'p', kind: 'planar-point', visible: true, style: { color: 1, radius: 0.1 }, renderGroup: 'planarElements', position: { x: 0, y: 0, z: 0 } }] as any)[0]).toBeInstanceOf(THREE.Mesh);
+frontend/tests/unit/rendering/threeView/threeSceneAdapters.spec.ts:23:    expect(new ReconstructedElementSceneAdapter().createObjects([{ id: 'l', kind: 'reconstructed-line', visible: true, style: { color: 1 }, renderGroup: 'reconstructedElements', start: { x: 0, y: 0, z: 0 }, end: { x: 1, y: 0, z: 0 } }] as any)[0]).toBeInstanceOf(THREE.Line);
+frontend/tests/unit/rendering/threeView/threeSceneAdapters.spec.ts:24:    expect(new GuideSceneAdapter().createObjects([{ id: 'g', kind: 'guide-intersection-marker', visible: true, style: { color: 1, radius: 0.1 }, renderGroup: 'guides', position: { x: 0, y: 0, z: 0 } }] as any)[0]).toBeInstanceOf(THREE.Mesh);
+frontend/tests/unit/rendering/threeView/threeSceneAdapters.spec.ts:25:    expect(new HingeSceneAdapter().createObjects([{ id: 'h', kind: 'hinge-line', visible: true, style: { color: 1 }, renderGroup: 'hinges', start: { x: 0, y: 0, z: 0 }, end: { x: 1, y: 0, z: 0 } }] as any)[0]).toBeInstanceOf(THREE.Line);

@@ -8,3 +8,16 @@
   ➜  Local:   http://localhost:5173/
   ➜  Network: http://10.0.3.113:5173/
 2:41:41 AM [vite] page reload playwright-report/index.html
+2:55:57 AM [vite] page reload playwright-report/index.html
+2:55:57 AM [vite] page reload playwright-report/index.html
+4:03:01 AM [vite] page reload src/application/canvas/CanvasPointMovementUseCase.ts
+4:03:06 AM [vite] page reload src/application/canvas/CanvasStyleUseCase.ts
+4:03:24 AM [vite] page reload src/application/construction/ConstructionUseCases.ts
+4:03:24 AM [vite] page reload src/application/construction/QuickToolUseCases.ts
+4:03:38 AM [vite] page reload src/application/processHistory/ProcessHistoryUseCases.ts
+4:03:48 AM [vite] page reload src/application/processHistory/ProcessHistoryController.ts
+4:03:58 AM [vite] page reload src/application/tools/CanvasToolController.ts
+4:04:10 AM [vite] page reload src/application/appShell/RuntimeSession.ts
+4:15:13 AM [vite] page reload playwright-report/index.html
+4:15:35 AM [vite] page reload playwright-report/index.html
+4:15:35 AM [vite] page reload playwright-report/index.html

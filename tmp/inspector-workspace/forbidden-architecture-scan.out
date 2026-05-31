@@ -1,0 +1,69 @@
+frontend/src/commands/CommandStack.ts:11:  #undoStack: Command[] = [];
+frontend/src/commands/CommandStack.ts:12:  #redoStack: Command[] = [];
+frontend/src/commands/CommandStack.ts:36:    this.#undoStack.push(command);
+frontend/src/commands/CommandStack.ts:39:    this.#redoStack = [];
+frontend/src/commands/CommandStack.ts:47:    if (this.#undoStack.length === 0) {
+frontend/src/commands/CommandStack.ts:51:    const command = this.#undoStack.pop()!;
+frontend/src/commands/CommandStack.ts:53:    this.#redoStack.push(command);
+frontend/src/commands/CommandStack.ts:61:    if (this.#redoStack.length === 0) {
+frontend/src/commands/CommandStack.ts:65:    const command = this.#redoStack.pop()!;
+frontend/src/commands/CommandStack.ts:67:    this.#undoStack.push(command);
+frontend/src/commands/CommandStack.ts:74:    return this.#undoStack.length > 0;
+frontend/src/commands/CommandStack.ts:81:    return this.#redoStack.length > 0;
+frontend/src/commands/CommandStack.ts:88:    return this.#undoStack.length;
+frontend/src/commands/CommandStack.ts:95:    return this.#redoStack.length;
+frontend/src/commands/CommandStack.ts:102:    this.#undoStack = [];
+frontend/src/commands/CommandStack.ts:103:    this.#redoStack = [];
+frontend/src/services/ProjectService.ts:36:  'commandHistory',
+frontend/src/services/ProjectService.ts:37:  'undoStack',
+frontend/src/services/ProjectService.ts:38:  'redoStack',
+frontend/src/stores/processStore.ts:6:  commandHistory: CommandStack;
+frontend/src/stores/processStore.ts:18:    commandHistory: new CommandStack(),
+frontend/src/stores/processStore.ts:22:    canUndo: (state): boolean => state.commandHistory.canUndo(),
+frontend/src/stores/processStore.ts:23:    canRedo: (state): boolean => state.commandHistory.canRedo(),
+frontend/src/stores/processStore.ts:24:    undoCount: (state): number => state.commandHistory.getUndoCount(),
+frontend/src/stores/processStore.ts:25:    redoCount: (state): number => state.commandHistory.getRedoCount(),
+frontend/src/stores/processStore.ts:30:      this.commandHistory.push(command);
+frontend/src/stores/processStore.ts:34:      if (!this.commandHistory.canUndo()) return false;
+frontend/src/stores/processStore.ts:35:      this.commandHistory.undo();
+frontend/src/stores/processStore.ts:40:      if (!this.commandHistory.canRedo()) return false;
+frontend/src/stores/processStore.ts:41:      this.commandHistory.redo();
+frontend/src/stores/processStore.ts:46:      this.commandHistory.clear();
+frontend/src/types/ElementTypes.ts:4:export type ElementPath = string;  // Format: "/world/elements2D/{id}" or "/world/elements3D/{id}"
+frontend/tests/e2e/current-persistence-contract.spec.ts:25:    expect(created.commandHistory).toBeUndefined();
+frontend/tests/e2e/current-persistence-contract.spec.ts:75:      data: { commands: [], commandHistory: [] },
+frontend/tests/unit/architecture/noCommandSubclasses.spec.ts:17: * This test scans the codebase for any `extends Command` patterns and fails if found.
+frontend/tests/unit/architecture/noCommandSubclasses.spec.ts:29:    // Search for "extends Command" pattern in TypeScript files
+frontend/tests/unit/architecture/noCommandSubclasses.spec.ts:36:      // Use grep to find "extends Command" pattern
+frontend/tests/unit/architecture/noCommandSubclasses.spec.ts:41:      const command = `cd ${projectRoot} && grep -rn "extends Command" \
+frontend/tests/unit/architecture/noCommandSubclasses.spec.ts:71:        if (match.includes('"extends Command"') || match.includes("'extends Command'")) {
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:159:  { field: 'commands', payload: { commands: [] } },
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:160:  { field: 'commandHistory', payload: { commandHistory: [] } },
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:161:  { field: 'undoStack', payload: { undoStack: [] } },
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:162:  { field: 'redoStack', payload: { redoStack: [] } },
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:326:  'elements2D',
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:327:  'elements3D',
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:330:  'commandHistory',
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:748:    for (const token of ['current-snapshot', 'ProjectStateRecord', 'commands).toBeUndefined()', 'commandHistory).toBeUndefined()', 'legacyResponse.status()).toBe(400)']) {
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:751:    for (const weakToken of weakPersistenceContractTokens.filter(token => !['commandHistory', 'command-stream'].includes(token))) {
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:794:    expectSourceContains(persistenceContractSource, 'created.commandHistory).toBeUndefined()', 'current persistence e2e spec');
+frontend/tests/unit/architecture/postOverhaulInvariants.spec.ts:797:    expectSourceMatches(persistenceContractSource, /data:\s*\{\s*commands:\s*\[\],\s*commandHistory:\s*\[\]\s*\}/, 'current persistence e2e spec');
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:14:  expect(serialized).not.toContain('commandHistory');
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:15:  expect(serialized).not.toContain('undoStack');
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:16:  expect(serialized).not.toContain('redoStack');
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:77:      commands: [],
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:53:    project.domain.undoStack = [];
+backend/src/api/projects.ts:24:  'commandHistory',
+backend/src/api/projects.ts:25:  'undoStack',
+backend/src/api/projects.ts:26:  'redoStack',
+backend/src/api/projects.ts:29:  'elements2D',
+backend/src/api/projects.ts:30:  'elements3D',
+backend/tests/integration/projects.spec.ts:33:  expect(project).not.toHaveProperty('commandHistory');
+backend/tests/integration/projects.spec.ts:34:  expect(project).not.toHaveProperty('elements2D');
+backend/tests/integration/projects.spec.ts:35:  expect(project).not.toHaveProperty('elements3D');
+backend/tests/integration/projects.spec.ts:150:        { payload: { name: 'Legacy', commands: [] }, label: 'legacy extra field' },
+backend/tests/integration/projects.spec.ts:357:        'commandHistory',
+backend/tests/integration/projects.spec.ts:358:        'undoStack',
+backend/tests/integration/projects.spec.ts:359:        'redoStack',
+backend/tests/integration/projects.spec.ts:362:        'elements2D',
+backend/tests/integration/projects.spec.ts:363:        'elements3D',

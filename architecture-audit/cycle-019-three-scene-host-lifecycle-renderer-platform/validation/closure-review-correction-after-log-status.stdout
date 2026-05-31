@@ -1,0 +1,23 @@
+ M .saivage/stages/cycle-019-validation-and-preview-refresh/reports/t1-verify-validation-preview-and-finalize-log.json
+ M architecture-audit/cycle-019-three-scene-host-lifecycle-renderer-platform/implementation-log.md
+?? .saivage/stages/cycle-019-implement-three-scene-host-lifecycle-renderer-platform/summary.json
+?? .saivage/stages/cycle-019-validation-and-preview-refresh/initial-scoped-diff-names.stderr
+?? .saivage/stages/cycle-019-validation-and-preview-refresh/initial-scoped-diff-names.stdout
+?? .saivage/stages/cycle-019-validation-and-preview-refresh/initial-scoped-status.stderr
+?? .saivage/stages/cycle-019-validation-and-preview-refresh/initial-scoped-status.stdout
+?? .saivage/stages/cycle-019-validation-and-preview-refresh/reports/t2-review-stage-closure.json
+?? .saivage/stages/cycle-019-validation-and-preview-refresh/review-correction-rerun.stderr
+?? .saivage/stages/cycle-019-validation-and-preview-refresh/review-correction-rerun.stdout
+?? .saivage/stages/cycle-019-validation-and-preview-refresh/review-correction.stderr
+?? .saivage/stages/cycle-019-validation-and-preview-refresh/review-correction.stdout
+?? .saivage/stages/cycle-019-validation-and-preview-refresh/tasks.json
+?? .saivage/stages/cycle-019-validation-and-preview-refresh/wave-headings.stderr
+?? .saivage/stages/cycle-019-validation-and-preview-refresh/wave-headings.stdout
+?? architecture-audit/cycle-019-three-scene-host-lifecycle-renderer-platform/validation/closure-review-correction-after-log-status.stderr
+?? architecture-audit/cycle-019-three-scene-host-lifecycle-renderer-platform/validation/closure-review-correction-after-log-status.stdout
+?? architecture-audit/cycle-019-three-scene-host-lifecycle-renderer-platform/validation/closure-review-correction-scoped-diff-names.stderr
+?? architecture-audit/cycle-019-three-scene-host-lifecycle-renderer-platform/validation/closure-review-correction-scoped-diff-names.stdout
+?? architecture-audit/cycle-019-three-scene-host-lifecycle-renderer-platform/validation/closure-review-correction-scoped-status.stderr
+?? architecture-audit/cycle-019-three-scene-host-lifecycle-renderer-platform/validation/closure-review-correction-scoped-status.stdout
+?? architecture-audit/cycle-019-three-scene-host-lifecycle-renderer-platform/validation/closure-review-correction-source-diff-names.stderr
+?? architecture-audit/cycle-019-three-scene-host-lifecycle-renderer-platform/validation/closure-review-correction-source-diff-names.stdout

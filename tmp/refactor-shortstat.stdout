@@ -1,0 +1,220 @@
+a9d68cd [tsk-t1-correct-wave-012-proposals] [t1-correct-wave-012-proposals] bound Wave 012 hygiene gate proposals
+ 3 files changed, 105 insertions(+), 18 deletions(-)
+
+417ae13 [tsk-cycle-012-review-round-01] [stg-cycle-012-review-round-01] review wave 012 proposals
+ 1 file changed, 129 insertions(+)
+
+4c87f7d [tsk-t4-correct-operation-readme-classification] [t4-correct-operation-readme-classification] Correct operation README classification
+ 3 files changed, 33 insertions(+), 12 deletions(-)
+
+6eb2beb [tsk-t2-write-wave-012-proposals-retry-01] [t2-write-wave-012-proposals-retry-01] validate wave 012 proposals
+ 2 files changed, 111 insertions(+)
+
+c268011 [tsk-t2-write-wave-012-proposals] [t2-write-wave-012-proposals] Write Wave 012 cleanup proposals
+ 2 files changed, 348 insertions(+)
+
+7f08b6e [tsk-t1-scout-wave-012-current-tree] [t1-scout-wave-012-current-tree] research: scout Wave 012 cleanup evidence
+ 1 file changed, 150 insertions(+)
+
+f3d90ce [stg-cycle-011-validation-and-preview-refresh] validate wave 011 gates and refresh preview
+ 50 files changed, 2288 insertions(+)
+
+c5ea84c [tsk-t1-run-validation-and-preview-refresh] [t1-run-validation-and-preview-refresh] record validation report commit sha
+ 2 files changed, 0 insertions(+), 0 deletions(-)
+
+ba43852 [tsk-t1-run-validation-and-preview-refresh] [t1-run-validation-and-preview-refresh] validate wave 011 and refresh preview
+ 42 files changed, 3634 insertions(+)
+
+241f9d6 [tsk-t1-implement-wave-011-restructure] [t1-implement-wave-011-restructure] tighten architecture validation gates
+ 9 files changed, 295 insertions(+), 696 deletions(-)
+
+6299c44 [tsk-t1-write-wave-011-decision] [t1-write-wave-011-decision] Record Wave 011 convergence decision
+ 1 file changed, 172 insertions(+)
+
+90453f9 [tsk-cycle-011-corrections-round-01] [stg-cycle-011-corrections-round-01] correct wave 011 proposals
+ 2 files changed, 31 insertions(+), 52 deletions(-)
+
+fcea027 [tsk-t1-correct-wave-011-proposals-attempt-2] [t1-correct-wave-011-proposals-attempt-2] correct wave 011 proposal blockers
+ 3 files changed, 64 insertions(+), 61 deletions(-)
+
+264f085 [tsk-t1-correct-wave-011-proposals] [t1-correct-wave-011-proposals] correct Wave 011 proposal blockers
+ 3 files changed, 200 insertions(+), 46 deletions(-)
+
+b82b48e [tsk-t3-correct-review-blockers] [t3-correct-review-blockers] Correct Wave 011 review blockers
+ 4 files changed, 8 insertions(+), 5 deletions(-)
+
+9f655c5 [tsk-t1-scout-wave011-artifacts] [t1-scout-wave011-artifacts] research: wave 011 architecture tests validation gates
+ 11 files changed, 2092 insertions(+)
+
+1560f10 [tsk-cycle-010-validation-and-preview-refresh] [stg-cycle-010-validation-and-preview-refresh] record validation stage review
+ 1 file changed, 81 insertions(+)
+
+429249d [tsk-t1-audit-validation-and-log-retry-01] [t1-audit-validation-and-log-retry-01] record retry report commit sha
+ 2 files changed, 0 insertions(+), 0 deletions(-)
+
+30dbeef [tsk-t1-audit-validation-and-log-retry-01] [t1-audit-validation-and-log-retry-01] record wave 010 validation retry report
+ 2 files changed, 13 insertions(+)
+
+6149757 [tsk-t1-audit-validation-and-log] [t1-audit-validation-and-log] record validation audit commit sha
+ 2 files changed, 0 insertions(+), 0 deletions(-)
+
+7aefeed [tsk-t3-correct-focused-e2e-evidence] [t3-correct-focused-e2e-evidence] add focused app-shell e2e evidence
+ 11 files changed, 97 insertions(+), 1 deletion(-)
+
+47e99eb [tsk-t1-implement-wave-010-deletion-contract] [t1-implement-wave-010-deletion-contract] delete stale backend project contract
+ 88 files changed, 5414 insertions(+), 271 deletions(-)
+
+ce73cbd [tsk-t1-write-wave-010-decision] [t1-write-wave-010-decision] record wave 010 convergence decision
+ 1 file changed, 140 insertions(+)
+
+1cac1e1 [tsk-t1-correct-wave-010-proposals] [t1-correct-wave-010-proposals] correct Wave 010 proposal blockers
+ 3 files changed, 74 insertions(+), 8 deletions(-)
+
+a0aaf34 [tsk-t3-correct-backend-validation-alternatives] [t3-correct-backend-validation-alternatives] clarify backend validation alternatives
+ 2 files changed, 27 insertions(+), 1 deletion(-)
+
+04e19bb [tsk-t1-scout-wave-010-contract] [t1-scout-wave-010-contract] research: wave 010 project contract scout
+ 3 files changed, 364 insertions(+)
+
+b186910 [tsk-cycle-009-validation-and-preview-refresh] [stg-cycle-009-validation-and-preview-refresh] validation and preview refresh
+ 1 file changed, 1 insertion(+)
+
+29f297e [t1-validation-cadence-and-preview] validate app-shell services wave
+ 1 file changed, 35 insertions(+)
+
+4bae102 [tsk-t2-correct-review-blockers] [t2-correct-review-blockers] add app-shell lifecycle coverage
+ 2 files changed, 406 insertions(+), 2 deletions(-)
+
+9adcff9 [tsk-t1-implement-app-shell-runtime] [t1-implement-app-shell-runtime] extract app shell runtime services
+ 13 files changed, 1058 insertions(+), 1053 deletions(-)
+
+c6f72a6 [tsk-t1-write-wave-009-decision] [t1-write-wave-009-decision] Record Wave 009 convergence decision
+ 1 file changed, 153 insertions(+)
+
+20f2865 [tsk-t1-correct-wave-009-proposals] [t1-correct-wave-009-proposals] Correct Wave 009 proposal blockers
+ 3 files changed, 87 insertions(+), 5 deletions(-)
+
+197ac4f [t3-correct-keyboard-ownership-proposals] clarify keyboard ownership in Wave 009 proposals
+ 2 files changed, 23 insertions(+), 10 deletions(-)
+
+77e3a58 [tsk-t1-scout-app-shell-proposals] [t1-scout-app-shell-proposals] research: app shell services scout
+ 3 files changed, 271 insertions(+)
+
+904ce17 [tsk-cycle-008-validation-and-preview-refresh] [stg-cycle-008-validation-and-preview-refresh] finalize validation summary metadata
+ 2 files changed, 0 insertions(+), 0 deletions(-)
+
+480caa1 [tsk-cycle-008-validation-and-preview-refresh] [stg-cycle-008-validation-and-preview-refresh] record validation closure artifacts
+ 3 files changed, 9 insertions(+)
+
+782869a [tsk-t1-run-validation-cadence-and-refresh-preview] [t1-run-validation-cadence-and-refresh-preview] validate wave 008 preview
+ 1 file changed, 35 insertions(+)
+
+dcfb77c [stg-cycle-008-implement-3d-rendering-scene-adapters] record mandatory cadence evidence
+ 3 files changed, 29 insertions(+)
+
+67b871e [tsk-t3-correct-review-blockers-round-01] [t3-correct-review-blockers-round-01] record followup report sha
+ 2 files changed, 0 insertions(+), 0 deletions(-)
+
+9a3d6c4 [tsk-t3-correct-review-blockers-round-01] [t3-correct-review-blockers-round-01] record correction commit sha
+ 2 files changed, 0 insertions(+), 0 deletions(-)
+
+8234b6d [tsk-t3-correct-review-blockers-round-01] [t3-correct-review-blockers-round-01] add Wave 008 selector shell validation evidence
+ 17 files changed, 425 insertions(+)
+
+c0a7cab [tsk-t1-implement-wave-008-restructure] [t1-implement-wave-008-restructure] extract 3d scene adapters
+ 24 files changed, 921 insertions(+), 1562 deletions(-)
+
+258dadb [t1-write-wave-008-decision] Record Wave 008 decision
+ 3 files changed, 198 insertions(+)
+
+e7bee24 [tsk-t1-correct-wave-008-proposals-retry-01] [t1-correct-wave-008-proposals-retry-01] update final report sha
+ 2 files changed, 0 insertions(+), 0 deletions(-)
+
+7815c6f [tsk-t1-correct-wave-008-proposals-retry-01] [t1-correct-wave-008-proposals-retry-01] finalize task report
+ 2 files changed, 0 insertions(+), 0 deletions(-)
+
+fa0e2f2 [tsk-t1-correct-wave-008-proposals-retry-01] [t1-correct-wave-008-proposals-retry-01] record task report commit
+ 2 files changed, 0 insertions(+), 0 deletions(-)
+
+00e942a [tsk-t1-correct-wave-008-proposals-retry-01] [t1-correct-wave-008-proposals-retry-01] correct wave 008 proposals
+ 5 files changed, 202 insertions(+), 28 deletions(-)
+
+03b1d86 [tsk-t1-correct-wave-008-proposals] [t1-correct-wave-008-proposals] Correct Wave 008 proposal blockers
+ 3 files changed, 104 insertions(+), 25 deletions(-)
+
+744e55e [tsk-t3-correct-test-surface-evidence] [t3-correct-test-surface-evidence] add Wave 008 test surface evidence
+ 1 file changed, 13 insertions(+), 7 deletions(-)
+
+4c03b3e [tsk-t1-scope-check-and-proposals] [t1-scope-check-and-proposals] record wave 008 report commit sha
+ 2 files changed, 0 insertions(+), 0 deletions(-)
+
+e3eb233 [tsk-t1-scope-check-and-proposals] [t1-scope-check-and-proposals] add wave 008 scope check and proposals
+ 11 files changed, 3150 insertions(+)
+
+cea3405 [t3-correct-live-smoke-classification] fix local preview smoke initialization
+ 18 files changed, 503 insertions(+)
+
+10db9c1 [tsk-t1-validation-cadence-static-preview-log] [t1-validation-cadence-static-preview-log] record validation report sha
+ 2 files changed, 0 insertions(+), 0 deletions(-)
+
+3d68985 [tsk-t1-validation-cadence-static-preview-log] [t1-validation-cadence-static-preview-log] validate wave 007 preview
+ 67 files changed, 4228 insertions(+), 3 deletions(-)
+
+17503ef [tsk-t3-live-preview-smoke-correction] [t3-live-preview-smoke-correction] record report commit sha
+ 2 files changed, 0 insertions(+), 0 deletions(-)
+
+eba5bbc [tsk-t3-live-preview-smoke-correction] [t3-live-preview-smoke-correction] capture preview smoke evidence
+ 42 files changed, 851 insertions(+)
+
+23f5e15 [tsk-t1b-complete-and-report-wave007-implementation] [t1b-complete-and-report-wave007-implementation] record report commit sha
+ 2 files changed, 0 insertions(+), 0 deletions(-)
+
+044c007 [tsk-t1b-complete-and-report-wave007-implementation] [t1b-complete-and-report-wave007-implementation] verify wave 007 implementation
+ 11 files changed, 356 insertions(+)
+
+951230c [t1-implement-canvas-presentation-boundary] extract canvas presentation boundary
+ 47 files changed, 3096 insertions(+), 4028 deletions(-)
+
+c9352eb [tsk-t1-write-wave-007-decision] [t1-write-wave-007-decision] record wave 007 decision
+ 1 file changed, 216 insertions(+)
+
+aa00efe [tsk-t1-correct-wave-007-proposals] [t1-correct-wave-007-proposals] correct Wave 007 proposal blockers
+ 3 files changed, 90 insertions(+), 30 deletions(-)
+
+4e107d6 [tsk-t2-write-scope-and-proposals] [t2-write-scope-and-proposals] write wave 007 scope and proposals
+ 3 files changed, 357 insertions(+)
+
+1961306 [tsk-t3-add-focused-component-validation] [t3-add-focused-component-validation] add panel toolbar component validation
+ 2 files changed, 235 insertions(+), 2 deletions(-)
+
+3bb04c2 [tsk-t1-run-validation-refresh-and-log] [t1-run-validation-refresh-and-log] validate wave 006b and refresh preview
+ 28 files changed, 627 insertions(+)
+
+acba22a [tsk-t3-correct-toolbar-log-and-evidence-claims] [t3-correct-toolbar-log-and-evidence-claims] Remove toolbar logging and align evidence claims
+ 2 files changed, 9 insertions(+), 5 deletions(-)
+
+4ec7d4c [tsk-t1-implement-panel-toolbar-intent-controllers] [t1-implement-panel-toolbar-intent-controllers] extract panel toolbar command intents
+ 10 files changed, 625 insertions(+), 208 deletions(-)
+
+5a0a78d [t1-write-wave-006b-decision] record Wave 006b decision
+ 1 file changed, 176 insertions(+)
+
+cecae1a [tsk-t3-correct-toolbar-undo-redo-scope] [t3-correct-toolbar-undo-redo-scope] Correct toolbar undo redo proposal scope
+ 1 file changed, 17 insertions(+), 7 deletions(-)
+
+81150f1 [tsk-t1-scout-006b-panel-toolbar-proposals] [t1-scout-006b-panel-toolbar-proposals] research: wave 006b panel toolbar proposals
+ 7 files changed, 1843 insertions(+)
+
+7a6a420 [tsk-t3-rerun-root-vitest-after-guidetool-fix] [t3-rerun-root-vitest-after-guidetool-fix] rerun root vitest validation
+ 11 files changed, 2056 insertions(+)
+
+5708c64 [tsk-t1-run-validation-cadence-and-refresh-preview] [t1-run-validation-cadence-and-refresh-preview] record validation report sha
+ 2 files changed, 0 insertions(+), 0 deletions(-)
+
+30314ca [tsk-t1-run-validation-cadence-and-refresh-preview] [t1-run-validation-cadence-and-refresh-preview] validate wave 006a and refresh preview
+ 54 files changed, 6781 insertions(+), 41 deletions(-)
+
+ad914f5 [tsk-t3-correct-ambiguous-intents-and-tests] [t3-correct-ambiguous-intents-and-tests] fix ambiguous tool intents and focused tests
+ 19 files changed, 1068 insertions(+), 24 deletions(-)
+
+bcb3927 [tsk-t1-implement-wave-006a-direct] [t1-implement-wave-006a-direct] extract canvas tool command controllers

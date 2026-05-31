@@ -1,0 +1,253 @@
+
+> diedrico@0.1.0 test
+> npm run test --workspace=frontend
+
+
+> diedrico-frontend@0.1.0 test
+> vitest run
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+stdout | tests/unit/domain/plane.spec.ts > Plane3DFixed > realize3D > Plane3DFromTraces > should compute plane from two trace lines
+[Plane3DFromTraces] getPlaneEquation called for plane: plane_from_traces trace1: trace1_id trace2: trace2_id
+[Plane3DFromTraces] All realizations feasible - computing plane
+[Plane3DFromTraces] t1 in 3D: t1PointIn3D: Vector4 { x: 0, y: 0, z: 0, w: 1 } t1DirIn3D: Vector4 { x: 1, y: 0, z: 0, w: 1 }
+[Plane3DFromTraces] t2 in 3D: t2PointIn3D: Vector4 { x: 0, y: 0, z: 0, w: 1 } t2DirIn3D: Vector4 { x: 0, y: 0, z: 1, w: 1 }
+[Plane3DFromTraces] Traces intersect at: Vector4 { x: 0, y: 0, z: 0, w: 1 }
+[Plane3DFromTraces] Normalized normal: [ 0, -1, 0 ]
+[Plane3DFromTraces] Plane equation: a= 0 b= -1 c= 0 d= -0
+
+ ✓ tests/unit/domain/plane.spec.ts  (39 tests | 6 skipped) 84ms
+ ❯ tests/unit/calculations/intersections.spec.ts  (44 tests | 10 failed) 107ms
+   ❯ tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should find intersection of perpendicular lines
+     → expected undefined to be close to 3, received difference is NaN, but expected 5e-7
+   ❯ tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should find intersection of diagonal lines
+     → expected undefined to be close to 2, received difference is NaN, but expected 5e-7
+   ❯ tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should detect parallel horizontal lines
+     → expected Point2DRealization2D{ …(2) } to be null
+   ❯ tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should detect parallel vertical lines
+     → expected Point2DRealization2D{ …(2) } to be null
+   ❯ tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should detect parallel diagonal lines
+     → expected Point2DRealization2D{ …(2) } to be null
+   ❯ tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should detect coincident lines
+     → expected Point2DRealization2D{ …(2) } to be null
+   ❯ tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should handle lines with non-unit direction vectors
+     → expected undefined to be close to 4, received difference is NaN, but expected 5e-7
+   ❯ tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should produce homogeneous points with z=1
+     → expected undefined to be 1 // Object.is equality
+   ❯ tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should handle intersection at origin
+     → expected undefined to be close to +0, received difference is NaN, but expected 5e-7
+   ❯ tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should handle intersection with negative coordinates
+     → expected undefined to be close to -5, received difference is NaN, but expected 5e-7
+ ✓ tests/unit/domain/segmentIntersections.spec.ts  (19 tests) 112ms
+stdout | tests/unit/services/paperService.spec.ts > PaperService > Point Primitive Generation > should generate PointPrimitive for free point on P_H
+[PaperService] Checking visibility for HalfHingeLine2D: projPlane3/line2d8 (HHL_{8}) - visible: true
+[PaperService] Creating primitive for HalfHingeLine2D: projPlane3/line2d8 (HHL_{8})
+[PaperService] Created primitive: halfhingeline-projPlane3/line2d8 visible: true layer: 5
+[PaperService] Checking visibility for HalfHingeLine2D: projPlane4/line2d9 (HHL_{9}) - visible: true
+[PaperService] Creating primitive for HalfHingeLine2D: projPlane4/line2d9 (HHL_{9})
+[PaperService] Created primitive: halfhingeline-projPlane4/line2d9 visible: true layer: 5
+
+stdout | tests/unit/services/paperService.spec.ts > PaperService > Point Primitive Generation > should generate PointPrimitive for intersection point on P_V
+[PaperService] Checking visibility for HalfHingeLine2D: projPlane3/line2d8 (HHL_{8}) - visible: true
+[PaperService] Creating primitive for HalfHingeLine2D: projPlane3/line2d8 (HHL_{8})
+[PaperService] Created primitive: halfhingeline-projPlane3/line2d8 visible: true layer: 5
+[PaperService] Checking visibility for HalfHingeLine2D: projPlane4/line2d9 (HHL_{9}) - visible: true
+[PaperService] Creating primitive for HalfHingeLine2D: projPlane4/line2d9 (HHL_{9})
+[PaperService] Created primitive: halfhingeline-projPlane4/line2d9 visible: true layer: 5
+
+stdout | tests/unit/services/paperService.spec.ts > PaperService > Point Primitive Generation > should apply highlight style when point is highlighted
+[PaperService] Checking visibility for HalfHingeLine2D: projPlane3/line2d8 (HHL_{8}) - visible: true
+[PaperService] Creating primitive for HalfHingeLine2D: projPlane3/line2d8 (HHL_{8})
+[PaperService] Created primitive: halfhingeline-projPlane3/line2d8 visible: true layer: 5
+[PaperService] Checking visibility for HalfHingeLine2D: projPlane4/line2d9 (HHL_{9}) - visible: true
+[PaperService] Creating primitive for HalfHingeLine2D: projPlane4/line2d9 (HHL_{9})
+[PaperService] Created primitive: halfhingeline-projPlane4/line2d9 visible: true layer: 5
+
+stdout | tests/unit/services/paperService.spec.ts > PaperService > Point Primitive Generation > should apply snap target style when point is active snap target
+[PaperService] Checking visibility for HalfHingeLine2D: projPlane3/line2d8 (HHL_{8}) - visible: true
+[PaperService] Creating primitive for HalfHingeLine2D: projPlane3/line2d8 (HHL_{8})
+[PaperService] Created primitive: halfhingeline-projPlane3/line2d8 visible: true layer: 5
+[PaperService] Checking visibility for HalfHingeLine2D: projPlane4/line2d9 (HHL_{9}) - visible: true
+[PaperService] Creating primitive for HalfHingeLine2D: projPlane4/line2d9 (HHL_{9})
+[PaperService] Created primitive: halfhingeline-projPlane4/line2d9 visible: true layer: 5
+
+stdout | tests/unit/services/paperService.spec.ts > PaperService > Point Primitive Generation > should handle multiple points on different planes
+[PaperService] Checking visibility for HalfHingeLine2D: projPlane3/line2d8 (HHL_{8}) - visible: true
+[PaperService] Creating primitive for HalfHingeLine2D: projPlane3/line2d8 (HHL_{8})
+[PaperService] Created primitive: halfhingeline-projPlane3/line2d8 visible: true layer: 5
+[PaperService] Checking visibility for HalfHingeLine2D: projPlane4/line2d9 (HHL_{9}) - visible: true
+[PaperService] Creating primitive for HalfHingeLine2D: projPlane4/line2d9 (HHL_{9})
+[PaperService] Created primitive: halfhingeline-projPlane4/line2d9 visible: true layer: 5
+
+stdout | tests/unit/services/paperService.spec.ts > PaperService > Coordinate Transformation > should correctly apply plane-to-paper transformation matrix
+[PaperService] Checking visibility for HalfHingeLine2D: projPlane3/line2d8 (HHL_{8}) - visible: true
+[PaperService] Creating primitive for HalfHingeLine2D: projPlane3/line2d8 (HHL_{8})
+[PaperService] Created primitive: halfhingeline-projPlane3/line2d8 visible: true layer: 5
+[PaperService] Checking visibility for HalfHingeLine2D: projPlane4/line2d9 (HHL_{9}) - visible: true
+[PaperService] Creating primitive for HalfHingeLine2D: projPlane4/line2d9 (HHL_{9})
+[PaperService] Created primitive: halfhingeline-projPlane4/line2d9 visible: true layer: 5
+
+stdout | tests/unit/services/paperService.spec.ts > PaperService > Coordinate Transformation > should handle negative plane coordinates
+[PaperService] Checking visibility for HalfHingeLine2D: projPlane3/line2d8 (HHL_{8}) - visible: true
+[PaperService] Creating primitive for HalfHingeLine2D: projPlane3/line2d8 (HHL_{8})
+[PaperService] Created primitive: halfhingeline-projPlane3/line2d8 visible: true layer: 5
+[PaperService] Checking visibility for HalfHingeLine2D: projPlane4/line2d9 (HHL_{9}) - visible: true
+[PaperService] Creating primitive for HalfHingeLine2D: projPlane4/line2d9 (HHL_{9})
+[PaperService] Created primitive: halfhingeline-projPlane4/line2d9 visible: true layer: 5
+
+stdout | tests/unit/services/paperService.spec.ts > PaperService > Style Resolution > should use different styles for free vs intersection points
+[PaperService] Checking visibility for HalfHingeLine2D: projPlane3/line2d8 (HHL_{8}) - visible: true
+[PaperService] Creating primitive for HalfHingeLine2D: projPlane3/line2d8 (HHL_{8})
+[PaperService] Created primitive: halfhingeline-projPlane3/line2d8 visible: true layer: 5
+[PaperService] Checking visibility for HalfHingeLine2D: projPlane4/line2d9 (HHL_{9}) - visible: true
+[PaperService] Creating primitive for HalfHingeLine2D: projPlane4/line2d9 (HHL_{9})
+[PaperService] Created primitive: halfhingeline-projPlane4/line2d9 visible: true layer: 5
+
+stdout | tests/unit/services/paperService.spec.ts > PaperService > Style Resolution > should apply different highlight styles for free vs intersection points
+[PaperService] Checking visibility for HalfHingeLine2D: projPlane3/line2d8 (HHL_{8}) - visible: true
+[PaperService] Creating primitive for HalfHingeLine2D: projPlane3/line2d8 (HHL_{8})
+[PaperService] Created primitive: halfhingeline-projPlane3/line2d8 visible: true layer: 5
+[PaperService] Checking visibility for HalfHingeLine2D: projPlane4/line2d9 (HHL_{9}) - visible: true
+[PaperService] Creating primitive for HalfHingeLine2D: projPlane4/line2d9 (HHL_{9})
+[PaperService] Created primitive: halfhingeline-projPlane4/line2d9 visible: true layer: 5
+
+stdout | tests/unit/services/paperService.spec.ts > PaperService > Paper Integration > should update paper with generated primitives
+[PaperService] Checking visibility for HalfHingeLine2D: projPlane3/line2d8 (HHL_{8}) - visible: true
+[PaperService] Creating primitive for HalfHingeLine2D: projPlane3/line2d8 (HHL_{8})
+[PaperService] Created primitive: halfhingeline-projPlane3/line2d8 visible: true layer: 5
+[PaperService] Checking visibility for HalfHingeLine2D: projPlane4/line2d9 (HHL_{9}) - visible: true
+[PaperService] Creating primitive for HalfHingeLine2D: projPlane4/line2d9 (HHL_{9})
+[PaperService] Created primitive: halfhingeline-projPlane4/line2d9 visible: true layer: 5
+
+stdout | tests/unit/services/paperService.spec.ts > PaperService > Paper Integration > should clear paper before updating
+[PaperService] Checking visibility for HalfHingeLine2D: projPlane3/line2d8 (HHL_{8}) - visible: true
+[PaperService] Creating primitive for HalfHingeLine2D: projPlane3/line2d8 (HHL_{8})
+[PaperService] Created primitive: halfhingeline-projPlane3/line2d8 visible: true layer: 5
+[PaperService] Checking visibility for HalfHingeLine2D: projPlane4/line2d9 (HHL_{9}) - visible: true
+[PaperService] Creating primitive for HalfHingeLine2D: projPlane4/line2d9 (HHL_{9})
+[PaperService] Created primitive: halfhingeline-projPlane4/line2d9 visible: true layer: 5
+
+stdout | tests/unit/services/paperService.spec.ts > PaperService > Paper Integration > should handle incremental entity update
+[PaperService] Checking visibility for HalfHingeLine2D: projPlane3/line2d8 (HHL_{8}) - visible: true
+[PaperService] Creating primitive for HalfHingeLine2D: projPlane3/line2d8 (HHL_{8})
+[PaperService] Created primitive: halfhingeline-projPlane3/line2d8 visible: true layer: 5
+[PaperService] Checking visibility for HalfHingeLine2D: projPlane4/line2d9 (HHL_{9}) - visible: true
+[PaperService] Creating primitive for HalfHingeLine2D: projPlane4/line2d9 (HHL_{9})
+[PaperService] Created primitive: halfhingeline-projPlane4/line2d9 visible: true layer: 5
+
+stdout | tests/unit/services/paperService.spec.ts > PaperService > Active Plane Opacity (FR-002) > should apply 100% opacity to elements on active plane
+[PaperService] Checking visibility for HalfHingeLine2D: projPlane3/line2d8 (HHL_{8}) - visible: true
+[PaperService] Creating primitive for HalfHingeLine2D: projPlane3/line2d8 (HHL_{8})
+[PaperService] Created primitive: halfhingeline-projPlane3/line2d8 visible: true layer: 5
+[PaperService] Checking visibility for HalfHingeLine2D: projPlane4/line2d9 (HHL_{9}) - visible: true
+[PaperService] Creating primitive for HalfHingeLine2D: projPlane4/line2d9 (HHL_{9})
+[PaperService] Created primitive: halfhingeline-projPlane4/line2d9 visible: true layer: 5
+
+stdout | tests/unit/services/paperService.spec.ts > PaperService > Active Plane Opacity (FR-002) > should apply 50% opacity to elements on inactive plane
+[PaperService] Checking visibility for HalfHingeLine2D: projPlane3/line2d8 (HHL_{8}) - visible: true
+[PaperService] Creating primitive for HalfHingeLine2D: projPlane3/line2d8 (HHL_{8})
+[PaperService] Created primitive: halfhingeline-projPlane3/line2d8 visible: true layer: 5
+[PaperService] Checking visibility for HalfHingeLine2D: projPlane4/line2d9 (HHL_{9}) - visible: true
+[PaperService] Creating primitive for HalfHingeLine2D: projPlane4/line2d9 (HHL_{9})
+[PaperService] Created primitive: halfhingeline-projPlane4/line2d9 visible: true layer: 5
+
+stdout | tests/unit/services/paperService.spec.ts > PaperService > Active Plane Opacity (FR-002) > should apply 100% opacity to hinge lines regardless of active plane
+[PaperService] Checking visibility for HalfHingeLine2D: projPlane3/line2d8 (HHL_{8}) - visible: true
+[PaperService] Creating primitive for HalfHingeLine2D: projPlane3/line2d8 (HHL_{8})
+[PaperService] Created primitive: halfhingeline-projPlane3/line2d8 visible: true layer: 5
+[PaperService] Checking visibility for HalfHingeLine2D: projPlane4/line2d9 (HHL_{9}) - visible: true
+[PaperService] Creating primitive for HalfHingeLine2D: projPlane4/line2d9 (HHL_{9})
+[PaperService] Created primitive: halfhingeline-projPlane4/line2d9 visible: true layer: 5
+
+stdout | tests/unit/services/paperService.spec.ts > PaperService > Active Plane Opacity (FR-002) > should maintain opacity when switching active planes
+[PaperService] Checking visibility for HalfHingeLine2D: projPlane3/line2d8 (HHL_{8}) - visible: true
+[PaperService] Creating primitive for HalfHingeLine2D: projPlane3/line2d8 (HHL_{8})
+[PaperService] Created primitive: halfhingeline-projPlane3/line2d8 visible: true layer: 5
+[PaperService] Checking visibility for HalfHingeLine2D: projPlane4/line2d9 (HHL_{9}) - visible: true
+[PaperService] Creating primitive for HalfHingeLine2D: projPlane4/line2d9 (HHL_{9})
+[PaperService] Created primitive: halfhingeline-projPlane4/line2d9 visible: true layer: 5
+[PaperService] Checking visibility for HalfHingeLine2D: projPlane3/line2d8 (HHL_{8}) - visible: true
+[PaperService] Creating primitive for HalfHingeLine2D: projPlane3/line2d8 (HHL_{8})
+[PaperService] Created primitive: halfhingeline-projPlane3/line2d8 visible: true layer: 5
+[PaperService] Checking visibility for HalfHingeLine2D: projPlane4/line2d9 (HHL_{9}) - visible: true
+[PaperService] Creating primitive for HalfHingeLine2D: projPlane4/line2d9 (HHL_{9})
+[PaperService] Created primitive: halfhingeline-projPlane4/line2d9 visible: true layer: 5
+
+ ✓ tests/unit/projectionPlane.spec.ts  (27 tests) 171ms
+ ✓ tests/unit/services/paperService.spec.ts  (18 tests) 206ms
+ ✓ tests/unit/domain/world.spec.ts  (49 tests | 9 skipped) 240ms
+ ✓ tests/unit/tools/CircleTool.spec.ts  (10 tests) 194ms
+stdout | tests/unit/tools/CircleTool.spec.ts > CircleTool > T989: Parametric Updates - Circumference Point Movement > should update circle when circumference point moves
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d11
+  projPlane3/point2d11 → invalidates 1 descendant(s):
+    • projPlane3/circle2d12
+=== CASCADE COMPLETE (2 elements invalidated) ===
+
+
+stdout | tests/unit/tools/CircleTool.spec.ts > CircleTool > T992: Regression - Center Point Movement > should still update circle when center point moves
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+  projPlane3/point2d10 → invalidates 1 descendant(s):
+    • projPlane3/circle2d12
+=== CASCADE COMPLETE (2 elements invalidated) ===
+
+
+ ✓ tests/unit/services/googleDriveService.spec.ts  (33 tests | 2 skipped) 303ms
+stdout | tests/unit/services/googleDriveService.spec.ts > GoogleDriveService > initialize > should initialize Google API client
+[GoogleDrive] Initializing with config: {
+  clientId: 'test-client-id...',
+  hasApiKey: true,
+  scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email'
+}
+[GoogleDrive] Initialization successful
+
+stdout | tests/unit/services/googleDriveService.spec.ts > GoogleDriveService > initialize > should only initialize once
+[GoogleDrive] Initializing with config: {
+  clientId: 'test-client-id...',
+  hasApiKey: true,
+  scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email'
+}
+[GoogleDrive] Initialization successful
+
+stdout | tests/unit/services/googleDriveService.spec.ts > GoogleDriveService > initialize > should throw error if initialization fails
+[GoogleDrive] Initializing with config: {
+  clientId: 'test-client-id...',
+  hasApiKey: true,
+  scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email'
+}
+
+---SPLIT---
+
+> diedrico-frontend@0.1.0 test
+> vitest run tests/unit/tools/GuideTool.test.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/tools/GuideTool.test.ts  (8 tests) 15ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  00:01:40
+   Duration  2.06s (transform 664ms, setup 0ms, collect 877ms, tests 15ms, environment 634ms, prepare 108ms)
+
+
+---SPLIT---
+# selected presentation/tool path prohibited refs
+frontend/src/components/workspace/SvgCanvas.vue:425:  commandStack: inject('commandStack'),
+# direct concrete operation imports in selected presentation/tools
+# Wave 006b deferred files changed in working tree
+
+---SPLIT---
+HTTP/1.1 200 OK
+Vary: Origin
+Content-Type: text/html
+Cache-Control: no-cache
+Etag: W/"2a2-jmzE7161kdnXI7JasQMw+v8+14s"
+Date: Tue, 26 May 2026 00:03:31 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+

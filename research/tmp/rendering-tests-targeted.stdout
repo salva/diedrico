@@ -1,0 +1,409 @@
+## frontend/tests/unit/services/paperService.spec.ts
+1:import { Vector3 } from 'three';
+7:import { describe, it, expect, beforeEach } from 'vitest';
+8:import { Matrix3 } from 'three';
+9:import { PaperService, type PrimitiveContext } from '../../../src/services/PaperService';
+10:import type { World } from '../../../src/domain/world/World';
+11:import { createTestWorld } from '../../helpers/worldHelpers';
+12:import { type Point2D, FreePoint2D, Point2DLineLineIntersection } from '../../../src/domain/world/Point';
+13:import { FixedProjectionPlane } from '../../../src/domain/world/projectionPlane/FixedProjectionPlane';
+14:import { RenderLayer, Paper, type PointPrimitive } from '../../../src/domain/presentation/Paper';
+16:describe('PaperService', () => {
+40:  describe('Point Primitive Generation', () => {
+41:    it('should generate PointPrimitive for free point on P_H', () => {
+48:      const context: PrimitiveContext = {
+53:      const primitives = paperService.generatePrimitives(context);
+83:    it('should generate PointPrimitive for intersection point on P_V', () => {
+99:      const context: PrimitiveContext = {
+104:      const primitives = paperService.generatePrimitives(context);
+124:    it('should apply highlight style when point is highlighted', () => {
+130:      const context: PrimitiveContext = {
+136:      const primitives = paperService.generatePrimitives(context);
+147:    it('should apply snap target style when point is active snap target', () => {
+153:      const context: PrimitiveContext = {
+159:      const primitives = paperService.generatePrimitives(context);
+170:    it('should handle multiple points on different planes', () => {
+181:      const context: PrimitiveContext = {
+186:      const primitives = paperService.generatePrimitives(context);
+205:    it('should skip points with missing plane transforms', () => {
+214:      const context: PrimitiveContext = {
+219:      const primitives = paperService.generatePrimitives(context);
+227:  describe('Coordinate Transformation', () => {
+228:    it('should correctly apply plane-to-paper transformation matrix', () => {
+234:      const context: PrimitiveContext = {
+239:      const primitives = paperService.generatePrimitives(context);
+250:    it('should handle negative plane coordinates', () => {
+255:      const context: PrimitiveContext = {
+260:      const primitives = paperService.generatePrimitives(context);
+272:  describe('Style Resolution', () => {
+273:    it('should use different styles for free vs intersection points', () => {
+293:      const context: PrimitiveContext = {
+298:      const primitives = paperService.generatePrimitives(context);
+311:    it('should apply different highlight styles for free vs intersection points', () => {
+329:      const context: PrimitiveContext = {
+335:      const primitives = paperService.generatePrimitives(context);
+346:  describe('Paper Integration', () => {
+347:    it('should update paper with generated primitives', () => {
+354:      const context: PrimitiveContext = {
+368:    it('should clear paper before updating', () => {
+396:      const context: PrimitiveContext = {
+411:    it('should handle incremental entity update', () => {
+423:      const context: PrimitiveContext = {
+460:  describe('Active Plane Opacity (FR-002)', () => {
+461:    it('should apply 100% opacity to elements on active plane', () => {
+466:      const context: PrimitiveContext = {
+472:      const primitives = paperService.generatePrimitives(context);
+479:    it('should apply 50% opacity to elements on inactive plane', () => {
+484:      const context: PrimitiveContext = {
+490:      const primitives = paperService.generatePrimitives(context);
+497:    it('should apply 100% opacity to guides regardless of active plane', () => {
+505:      const context: PrimitiveContext = {
+516:    it('should apply 100% opacity to hinge lines regardless of active plane', () => {
+517:      const context: PrimitiveContext = {
+523:      const primitives = paperService.generatePrimitives(context);
+534:    it('should maintain opacity when switching active planes', () => {
+545:      let context: PrimitiveContext = {
+551:      let primitives = paperService.generatePrimitives(context);
+565:      primitives = paperService.generatePrimitives(context);
+
+## frontend/tests/unit/services/renderService.spec.ts
+1:import { Vector3, Vector4 } from 'three';
+4: * Unit tests for RenderService
+14:import { describe, it, expect, beforeEach } from 'vitest';
+15:import { 
+21:} from '@/services/RenderService';
+22:import { Point2D, FreePoint2D, IntersectionPoint2D, Point2DRealization2D } from '@/domain/world/Point';
+23:import { Plane3D, Plane3DFixed } from "@/domain/world/Plane";
+24:import type { World } from '@/domain/world/World';
+25:import { createTestWorld } from '../../helpers/worldHelpers';
+27:describe('RenderService', () => {
+37:  describe('renderPoint', () => {
+38:    it('should render free point as SVG circle attributes', () => {
+53:    it('should render derived point with different styling', () => {
+72:    it('should handle negative coordinates', () => {
+83:    it('should handle custom canvas origin', () => {
+94:    it('should handle point without ID', () => {
+107:  describe('renderPlane', () => {
+108:    it.skip('should render P_H plane as SVG rectangle attributes', () => {
+114:    it.skip('should render P_V plane with different color', () => {
+119:    it.skip('should handle custom plane boundaries', () => {
+124:    it.skip('should work for any plane without special-case logic', () => {
+130:  describe('renderLine', () => {
+131:    it('should render line as SVG line attributes', () => {
+147:    it('should apply custom line styling', () => {
+163:    it('should handle negative coordinates', () => {
+175:    it('should render hinge line with dashed style', () => {
+191:    it('should work for any line without special cases', () => {
+205:  describe('applyHoverState', () => {
+206:    it('should apply hover styling to point attributes', () => {
+217:    it('should apply hover styling to plane attributes', () => {
+231:    it('should preserve other attributes', () => {
+245:  describe('applySelectionState', () => {
+246:    it('should apply selection styling to point attributes', () => {
+257:    it('should apply selection styling to line attributes', () => {
+268:    it('should distinguish from hover state', () => {
+284:  describe('Constitution Principle IV compliance', () => {
+285:    it('should render fixed elements using same logic as user elements', () => {
+300:    it.skip('should render P_H using same logic as auxiliary planes', () => {
+306:    it('should render hinge line using same logic as user lines', () => {
+
+## frontend/tests/unit/services/projectionDisplay.spec.ts
+4: * onto projection planes when showProjectedElements is enabled.
+7:import { describe, it, expect, beforeEach } from 'vitest';
+8:import { Vector3, Matrix3 } from 'three';
+9:import { PaperService, type PrimitiveContext } from '../../../src/services/PaperService';
+10:import type { World } from '../../../src/domain/world/World';
+11:import { createTestWorld } from '../../helpers/worldHelpers';
+12:import { Point3DFromProjections } from '../../../src/domain/world/Point3D';
+13:import { createVisualStyle } from '../../../src/domain/world/VisualStyle';
+14:import { AddFreePoint2DOp } from '../../../src/commands/operations/world/AddFreePointOp';
+15:import { AddLine2DByTwoPointsOp } from '../../../src/commands/operations/world/AddLineOp';
+16:import { Add3DLineOp } from '../../../src/commands/operations/world/Add3DLineOp';
+17:import { Command } from '../../../src/commands/Command';
+18:import type { PointPrimitive, LinePrimitive, SegmentPrimitive } from '../../../src/domain/presentation/Paper';
+20:describe('PaperService - 3D Element Projection Display (Phase 106)', () => {
+86:  describe('showProjectedElements toggle', () => {
+87:    it('should return empty array when showProjectedElements is false', () => {
+90:      const context: PrimitiveContext = {
+93:        showProjectedElements: false,
+96:      const primitives = paperService.generatePrimitives(context);
+97:      const projectedPrimitives = primitives.filter(p => p.id.startsWith('proj3d-'));
+101:    it('should return empty array when showProjectedElements is undefined', () => {
+104:      const context: PrimitiveContext = {
+109:      const primitives = paperService.generatePrimitives(context);
+110:      const projectedPrimitives = primitives.filter(p => p.id.startsWith('proj3d-'));
+115:  describe('3D Point projection', () => {
+116:    it('should produce point primitives for a 3D point projected onto both planes', () => {
+121:      const context: PrimitiveContext = {
+124:        showProjectedElements: true,
+127:      const primitives = paperService.generatePrimitives(context);
+129:        p => p.type === 'point' && p.id.startsWith('proj3d-')
+141:      // Verify IDs use proj3d- prefix
+142:      expect(onH!.id).toContain('proj3d-point-');
+143:      expect(onV!.id).toContain('proj3d-point-');
+150:    it('should use projected visual style (purple, transparent)', () => {
+153:      const context: PrimitiveContext = {
+156:        showProjectedElements: true,
+159:      const primitives = paperService.generatePrimitives(context);
+161:        p => p.type === 'point' && p.id.startsWith('proj3d-')
+172:  describe('3D Line projection', () => {
+173:    it('should produce line primitives for a 3D line projected onto both planes', () => {
+183:      cmd.commit();
+188:      const context: PrimitiveContext = {
+191:        showProjectedElements: true,
+194:      const primitives = paperService.generatePrimitives(context);
+196:        p => p.type === 'line' && p.id.startsWith('proj3d-')
+214:  describe('Infeasible element exclusion', () => {
+215:    it('should exclude infeasible 3D points from projection', () => {
+240:      const context: PrimitiveContext = {
+243:        showProjectedElements: true,
+246:      const primitives = paperService.generatePrimitives(context);
+247:      const projectedPrimitives = primitives.filter(p => p.id.startsWith('proj3d-'));
+
+## frontend/tests/unit/application/canvasToolControllers.spec.ts
+1:import { describe, expect, it, vi } from 'vitest';
+2:import svgCanvasSource from '@/components/workspace/SvgCanvas.vue?raw';
+3:import { Vector3 } from 'three';
+4:import { executeConstructionIntent } from '@/application/construction/ConstructionUseCases';
+5:import { CanvasPointMovementUseCase } from '@/application/canvas/CanvasPointMovementUseCase';
+6:import { CanvasStyleUseCase } from '@/application/canvas/CanvasStyleUseCase';
+7:import { CanvasToolController } from '@/application/tools/CanvasToolController';
+8:import { PointTool } from '@/tools/PointTool';
+9:import { IntersectionTool } from '@/tools/IntersectionTool';
+10:import { TangentLineToCircleThroughPointTool } from '@/tools/TangentLineToCircleThroughPointTool';
+11:import { TangentLineToCircleParallelToLineTool } from '@/tools/TangentLineToCircleParallelToLineTool';
+12:import { Paper } from '@/domain/presentation/Paper';
+13:import type { ToolContext } from '@/tools/ITool';
+14:import type { ToolCommandSink, ToolConstructionIntent } from '@/application/tools/ToolCommandIntents';
+15:import type { ArgumentValue } from '@/types/ToolArgumentCollector';
+16:import { createTestWorld, getHorizontalPlane, getHorizontalPlaneId } from '../../helpers/worldHelpers';
+27:    commandSink: overrides.commandSink!,
+39:describe('Wave 006a canvas/tool command controllers', () => {
+40:  it('executes construction intents and rolls failed construction back without stack pollution', () => {
+41:    const { world, commandStack } = createTestWorld();
+43:    const beforeUndoCount = commandStack.getUndoCount();
+47:      commandStack,
+58:    expect(commandStack.getUndoCount()).toBe(beforeUndoCount + 1);
+62:      commandStack,
+72:    expect(commandStack.getUndoCount()).toBe(beforeUndoCount + 1);
+76:  it('uses typed intersection metadata to choose the intended line-circle intersection', () => {
+77:    const { world, commandStack } = createTestWorld();
+89:      commandStack,
+109:  it('uses typed tangent metadata instead of defaulting tangent choices to index zero', () => {
+110:    const { world, commandStack } = createTestWorld();
+120:      commandStack,
+138:  it('previews, cancels, commits, and undoes free-point moves through the movement use case', () => {
+139:    const { world, commandStack } = createTestWorld();
+142:    const useCase = new CanvasPointMovementUseCase(world, commandStack);
+150:    const beforeUndoCount = commandStack.getUndoCount();
+153:    expect(committed.commit().success).toBe(true);
+154:    expect(commandStack.getUndoCount()).toBe(beforeUndoCount + 1);
+156:    commandStack.undo();
+160:  it('updates element styles through the style use case with undo support', () => {
+161:    const { world, commandStack } = createTestWorld();
+164:    const useCase = new CanvasStyleUseCase(world, commandStack);
+165:    const beforeUndoCount = commandStack.getUndoCount();
+174:    expect(commandStack.getUndoCount()).toBe(beforeUndoCount + 1);
+176:    commandStack.undo();
+180:  it('lets tools emit typed construction intents with ambiguous-choice metadata through the command sink', () => {
+210:    const base = { planeId: plane.id, world, paper, commandSink: sink };
+239:  it('keeps SvgCanvas on the controller boundary for movement and style delegation', () => {
+245:    expect(source).not.toContain("from '@/commands/Command'");
+251:  it('delegates through CanvasToolController rather than exposing command construction to tools', () => {
+252:    const { world, commandStack } = createTestWorld();
+254:    const controller = new CanvasToolController({ world, commandStack, toolStore: { setTool: vi.fn() } as any });
+261:      commandSink: controller
+
+## Paper detail
+4: * Paper provides a virtual drawing surface with primitives in a unified "paper coordinate system".
+6: * to the shared paper coordinates. Paper primitives only need viewport transformation (pan/zoom)
+14: *   const plane = world.projectionPlanes.get(activePlaneId);
+16: *     const realization = plane.realizePoint2D(point, world);
+79: * Base interface for all drawing primitives
+82:  id: string;                       // Unique ID for this primitive
+83:  sourceEntityId?: string;          // ID of domain entity that generated this primitive
+86:  visible: boolean;                 // Whether to render this primitive
+91: * Point primitive - rendered as a circle
+101: * Path primitive - rendered as polyline or polygon
+111: * Line primitive - infinite line in parametric form (clipped to viewport bounds)
+122: * Segment primitive - finite line segment between two points
+133: * Circle primitive
+144: * Arc primitive
+159: * Text primitive for labels
+172: * Union type of all drawing primitives
+199:  primitiveId: string;              // Primitive ID ("point-point_1")
+205: * Paper - Collection of drawing primitives in unified paper coordinate system
+207: * Paper contains primitives from all projection planes in a shared coordinate system.
+209: * its intrinsic <u,v> coordinates to paper coordinates when generating primitives.
+215:  private primitives: Map<string, Primitive>;
+222:    this.primitives = new Map();
+292:   * This triggers re-generation of primitives with hover styling
+294:  setHoveredElement(elementId: string | undefined): void {
+331:  hitTest(
+363:    const activePlane = activePlaneId ? world.projectionPlanes.get(activePlaneId) : null;
+379:        const realization = activePlane.realizePoint2D(point, world);
+392:            primitiveId: point.id,
+413:        const realization = activePlane.realizeLine2D(line, world);
+424:            primitiveId: line.id,
+441:        const realization = activePlane.realizeCircle2D(circle, world);
+450:            primitiveId: circle.id,
+491:   * Calculate distance from point to primitive in paper space
+493:  private distanceToPrimitive(paperPos: Vector3, primitive: Primitive): number {
+494:    switch (primitive.type) {
+496:        return this.distanceToPoint(paperPos, primitive as PointPrimitive);
+498:        return this.distanceToLine(paperPos, primitive as LinePrimitive);
+500:        return this.distanceToCircle(paperPos, primitive as CirclePrimitive);
+507:   * Distance from point to point primitive
+510:  private distanceToPoint(pos: Vector3, primitive: PointPrimitive): number {
+511:    return pos.distanceTo(primitive.position);
+519:  private distanceToLine(pos: Vector3, primitive: LinePrimitive): number {
+520:    const linePoint = primitive.point;
+521:    const lineDir = primitive.direction;
+540:  private distanceToCircle(pos: Vector3, primitive: CirclePrimitive): number {
+541:    const center = new Vector3(primitive.cx, primitive.cy, 1);
+543:    return Math.abs(distToCenter - primitive.radius);
+547:   * Get snap point for a primitive (where to snap to)
+550:  private getSnapPoint(primitive: Primitive, queryPos: Vector3): Vector3 {
+551:    switch (primitive.type) {
+554:        return (primitive as PointPrimitive).position.clone();
+558:        const line = primitive as LinePrimitive;
+574:        const circle = primitive as CirclePrimitive;
+599:   * Add or update a primitive
+601:  setPrimitive(primitive: Primitive): void {
+602:    this.primitives.set(primitive.id, primitive);
+603:    this.dirtyPrimitiveIds.add(primitive.id);
+607:   * Add or update multiple primitives
+609:  setPrimitives(primitives: Primitive[]): void {
+610:    for (const primitive of primitives) {
+611:      this.setPrimitive(primitive);
+616:   * Remove a primitive by ID
+619:    this.primitives.delete(id);
+624:   * Remove all primitives generated by a specific entity
+628:    for (const [id, primitive] of this.primitives) {
+629:      if (primitive.sourceEntityId === entityId) {
+639:   * Get a primitive by ID
+642:    return this.primitives.get(id);
+646:   * Get all primitives, optionally filtered by visibility and layer
+648:  getPrimitives(options?: {
+652:    let result = Array.from(this.primitives.values());
+675:   * Get primitives that need re-rendering
+680:      const primitive = this.primitives.get(id);
+681:      if (primitive) {
+682:        result.push(primitive);
+696:   * Clear all primitives
+699:    this.primitives.clear();
+704:   * Get count of primitives
+707:    return this.primitives.size;
+711:   * Check if paper has any dirty primitives
+## style detail
+     1	/**
+     2	 * Style Service - Element Visibility Resolution
+     3	 * 
+     4	 * Phase 83: Element Visibility Property
+     5	 * 
+     6	 * Provides utility functions for resolving element visual properties,
+     7	 * particularly visibility with subprocess inheritance support.
+     8	 * 
+     9	 * @see specs/001-dihedral-learning-mvp/data-model.md#phase-83-element-visibility-property
+    10	 */
+    11	
+    12	import type { Element } from './Element';
+    13	import type { World } from './World';
+    14	import { ProcessTree, type Subprocess, type ActionGroup, type ProcessNode } from '../processTree/ProcessTree';
+    15	
+    16	// Helper to get parents
+    17	function getPathToNode(tree: ProcessTree, targetId: string): ProcessNode[] | null {
+    18	  // Use existing method if available, or just reimplement straightforward DFS
+    19	  const path: ProcessNode[] = [];
+    20	  
+    21	  function find(node: ProcessNode): boolean {
+    22	    if (node.id === targetId) return true;
+    23	    
+    24	    if (node.type === 'subprocess') {
+    25	      const sp = node as Subprocess;
+    26	      path.push(sp);
+    27	      for (const child of sp.children) {
+    28	        if (find(child)) return true;
+    29	      }
+    30	      path.pop();
+    31	    } else if (node.type === 'actionGroup') {
+    32	      const ag = node as ActionGroup;
+    33	      path.push(ag);
+    34	      for (const child of ag.children) {
+    35	        if (child && find(child)) return true;
+    36	      }
+    37	      path.pop();
+    38	    }
+    39	    return false;
+    40	  }
+    41	  
+    42	  if (find(tree.root)) return path;
+    43	  return null;
+    44	}
+    45	
+    46	/**
+    47	 * Resolve effective visibility for an element
+    48	 * 
+    49	 * Resolution order:
+    50	 * 1. Element's own visualStyle.visible (if set to false, it is hidden)
+    51	 * 2. Ancestor Encapsulation (Black Box) check:
+    52	 *    - Strict Hierarchy Check:
+    53	 *      Traverse path from Root to Action.
+    54	 *      If we are in an encapsulated scope (Parent Subprocess showIntermediates=false),
+    55	 *      the IMMEDIATE next node in the path MUST be marked isOutput=true.
+    56	 *      Even if an Action is Output, if its container Subprocess is not an Output, it is hidden.
+    57	 */
+    58	export function resolveVisibility(element: Element, world: World): boolean {
+    59	  // Check element's own visualStyle - explicit hide overrides everything
+    60	  if (element.visualStyle?.visible === false) {
+    61	    return false;
+    62	  }
+    63	  
+    64	  // Phase 87: Encapsulation / Black Box Logic
+    65	  const tree = world.getProcessTree();
+    66	  const actions = tree.getActionsProducingElement(element.id);
+    67	  if (actions.length === 0) return true; // System elements visible by default
+    68	
+    69	  const creatingAction = actions[0];
+    70	  const path = getPathToNode(tree, creatingAction.id);
+    71	  
+    72	  if (!path) return true;
+    73	
+    74	  // Path contains: [Root, Subprocess1...SubprocessN, ActionGroup]
+    75	  // We should treat the creatingAction as the final node in the chain
+    76	  // Cast creatingAction to ActionNode (Action interface + type='action')
+    77	  // We approximate it because tree.getActionsProducingElement returns Action[]
+    78	  // but in the tree they are wrapped as ActionNode. Since Action is just data, 
+    79	  // we can treat it as the leaf node for logic purposes.
+    80	  const leafNode = creatingAction as unknown as ProcessNode; 
+    81	  // We filter out ActionGroups because they are structural containers that should be transparent
+    82	  // for visibility logic (as requested by user "Action Groups must be transparents in this regard").
+    83	  // This effectively connects Subprocess -> Subprocess or Subprocess -> Action directly.
+    84	  const fullChain: ProcessNode[] = [...path, leafNode].filter(node => node.type !== 'actionGroup');
+    85	
+    86	  // Iterate the chain to check permissions
+    87	  // At each step, if parent enforces encapsulation, child must have permission (isOutput)
+    88	  for (let i = 0; i < fullChain.length - 1; i++) {
+    89	    const parent = fullChain[i];
+    90	    const child = fullChain[i + 1];
+    91	
+    92	    if (parent.type === 'subprocess') {
+    93	      const sp = parent as Subprocess;
+    94	      if (!sp.showIntermediates) {
+    95	        // Encapsulation Active
+    96	        // Child MUST be an Output to be visible.
+    97	        
+    98	        let isChildExposed = false;
+    99	        if ('isOutput' in child && (child as any).isOutput) {
+   100	          isChildExposed = true;
+   101	        }
+   102	        
+   103	        if (!isChildExposed) {
+   104	          return false; // Hidden by encapsulation at this level
+   105	        }
+   106	      }
+   107	    }
+   108	  }
+   109	
+   110	  return true;
+   111	}

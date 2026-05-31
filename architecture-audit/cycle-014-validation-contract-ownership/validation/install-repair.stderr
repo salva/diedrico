@@ -1,0 +1,120 @@
+npm warn workspaces diedrico-frontend in filter set, but no workspace folder present
+npm warn cleanup Failed to remove some directories [
+npm warn cleanup   [
+npm warn cleanup     '/work/diedrico/node_modules/.birpc-3yJelKdr',
+npm warn cleanup     [Error: EACCES: permission denied, unlink '/work/diedrico/node_modules/.birpc-3yJelKdr/LICENSE'] {
+npm warn cleanup       errno: -13,
+npm warn cleanup       code: 'EACCES',
+npm warn cleanup       syscall: 'unlink',
+npm warn cleanup       path: '/work/diedrico/node_modules/.birpc-3yJelKdr/LICENSE'
+npm warn cleanup     }
+npm warn cleanup   ],
+npm warn cleanup   [
+npm warn cleanup     '/work/diedrico/node_modules/.copy-anything-MWMxXzWC',
+npm warn cleanup     [Error: EACCES: permission denied, unlink '/work/diedrico/node_modules/.copy-anything-MWMxXzWC/LICENSE'] {
+npm warn cleanup       errno: -13,
+npm warn cleanup       code: 'EACCES',
+npm warn cleanup       syscall: 'unlink',
+npm warn cleanup       path: '/work/diedrico/node_modules/.copy-anything-MWMxXzWC/LICENSE'
+npm warn cleanup     }
+npm warn cleanup   ],
+npm warn cleanup   [
+npm warn cleanup     '/work/diedrico/node_modules/.esbuild-F5sV7JTA',
+npm warn cleanup     [Error: EACCES: permission denied, unlink '/work/diedrico/node_modules/.esbuild-F5sV7JTA/LICENSE.md'] {
+npm warn cleanup       errno: -13,
+npm warn cleanup       code: 'EACCES',
+npm warn cleanup       syscall: 'unlink',
+npm warn cleanup       path: '/work/diedrico/node_modules/.esbuild-F5sV7JTA/LICENSE.md'
+npm warn cleanup     }
+npm warn cleanup   ],
+npm warn cleanup   [
+npm warn cleanup     '/work/diedrico/node_modules/.hookable-og30vO78',
+npm warn cleanup     [Error: EACCES: permission denied, unlink '/work/diedrico/node_modules/.hookable-og30vO78/LICENSE.md'] {
+npm warn cleanup       errno: -13,
+npm warn cleanup       code: 'EACCES',
+npm warn cleanup       syscall: 'unlink',
+npm warn cleanup       path: '/work/diedrico/node_modules/.hookable-og30vO78/LICENSE.md'
+npm warn cleanup     }
+npm warn cleanup   ],
+npm warn cleanup   [
+npm warn cleanup     '/work/diedrico/node_modules/.is-what-qNuf6vyd',
+npm warn cleanup     [Error: EACCES: permission denied, unlink '/work/diedrico/node_modules/.is-what-qNuf6vyd/LICENSE'] {
+npm warn cleanup       errno: -13,
+npm warn cleanup       code: 'EACCES',
+npm warn cleanup       syscall: 'unlink',
+npm warn cleanup       path: '/work/diedrico/node_modules/.is-what-qNuf6vyd/LICENSE'
+npm warn cleanup     }
+npm warn cleanup   ],
+npm warn cleanup   [
+npm warn cleanup     '/work/diedrico/node_modules/.mitt-UIObNF8s',
+npm warn cleanup     [Error: EACCES: permission denied, unlink '/work/diedrico/node_modules/.mitt-UIObNF8s/LICENSE'] {
+npm warn cleanup       errno: -13,
+npm warn cleanup       code: 'EACCES',
+npm warn cleanup       syscall: 'unlink',
+npm warn cleanup       path: '/work/diedrico/node_modules/.mitt-UIObNF8s/LICENSE'
+npm warn cleanup     }
+npm warn cleanup   ],
+npm warn cleanup   [
+npm warn cleanup     '/work/diedrico/node_modules/.perfect-debounce-6LnIFx16',
+npm warn cleanup     [Error: EACCES: permission denied, unlink '/work/diedrico/node_modules/.perfect-debounce-6LnIFx16/LICENSE'] {
+npm warn cleanup       errno: -13,
+npm warn cleanup       code: 'EACCES',
+npm warn cleanup       syscall: 'unlink',
+npm warn cleanup       path: '/work/diedrico/node_modules/.perfect-debounce-6LnIFx16/LICENSE'
+npm warn cleanup     }
+npm warn cleanup   ],
+npm warn cleanup   [
+npm warn cleanup     '/work/diedrico/node_modules/.rfdc-Ghg4NG6E',
+npm warn cleanup     [Error: EACCES: permission denied, rmdir '/work/diedrico/node_modules/.rfdc-Ghg4NG6E/.github'] {
+npm warn cleanup       errno: -13,
+npm warn cleanup       code: 'EACCES',
+npm warn cleanup       syscall: 'rmdir',
+npm warn cleanup       path: '/work/diedrico/node_modules/.rfdc-Ghg4NG6E/.github'
+npm warn cleanup     }
+npm warn cleanup   ],
+npm warn cleanup   [
+npm warn cleanup     '/work/diedrico/node_modules/.speakingurl-zOIaPc9q',
+npm warn cleanup     [Error: EACCES: permission denied, unlink '/work/diedrico/node_modules/.speakingurl-zOIaPc9q/.editorconfig'] {
+npm warn cleanup       errno: -13,
+npm warn cleanup       code: 'EACCES',
+npm warn cleanup       syscall: 'unlink',
+npm warn cleanup       path: '/work/diedrico/node_modules/.speakingurl-zOIaPc9q/.editorconfig'
+npm warn cleanup     }
+npm warn cleanup   ],
+npm warn cleanup   [
+npm warn cleanup     '/work/diedrico/node_modules/.superjson-Fsx6Bcjl',
+npm warn cleanup     [Error: EACCES: permission denied, unlink '/work/diedrico/node_modules/.superjson-Fsx6Bcjl/LICENSE'] {
+npm warn cleanup       errno: -13,
+npm warn cleanup       code: 'EACCES',
+npm warn cleanup       syscall: 'unlink',
+npm warn cleanup       path: '/work/diedrico/node_modules/.superjson-Fsx6Bcjl/LICENSE'
+npm warn cleanup     }
+npm warn cleanup   ],
+npm warn cleanup   [
+npm warn cleanup     '/work/diedrico/node_modules/@esbuild/.linux-x64-OzPfjxlA',
+npm warn cleanup     [Error: EACCES: permission denied, unlink '/work/diedrico/node_modules/@esbuild/.linux-x64-OzPfjxlA/README.md'] {
+npm warn cleanup       errno: -13,
+npm warn cleanup       code: 'EACCES',
+npm warn cleanup       syscall: 'unlink',
+npm warn cleanup       path: '/work/diedrico/node_modules/@esbuild/.linux-x64-OzPfjxlA/README.md'
+npm warn cleanup     }
+npm warn cleanup   ],
+npm warn cleanup   [
+npm warn cleanup     '/work/diedrico/node_modules/@vue/.devtools-kit-R17VDdtV',
+npm warn cleanup     [Error: EACCES: permission denied, unlink '/work/diedrico/node_modules/@vue/.devtools-kit-R17VDdtV/LICENSE'] {
+npm warn cleanup       errno: -13,
+npm warn cleanup       code: 'EACCES',
+npm warn cleanup       syscall: 'unlink',
+npm warn cleanup       path: '/work/diedrico/node_modules/@vue/.devtools-kit-R17VDdtV/LICENSE'
+npm warn cleanup     }
+npm warn cleanup   ],
+npm warn cleanup   [
+npm warn cleanup     '/work/diedrico/node_modules/@vue/.devtools-shared-wII4LQiM',
+npm warn cleanup     [Error: EACCES: permission denied, unlink '/work/diedrico/node_modules/@vue/.devtools-shared-wII4LQiM/LICENSE'] {
+npm warn cleanup       errno: -13,
+npm warn cleanup       code: 'EACCES',
+npm warn cleanup       syscall: 'unlink',
+npm warn cleanup       path: '/work/diedrico/node_modules/@vue/.devtools-shared-wII4LQiM/LICENSE'
+npm warn cleanup     }
+npm warn cleanup   ]
+npm warn cleanup ]

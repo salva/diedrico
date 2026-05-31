@@ -1,0 +1,61 @@
+   480	    
+   481	    this.hingeLines.set(id, hingeLine);
+   482	
+   483	    // Register with dependency service
+   484	    this.dependencyService.registerNode(id, hingeLine.getDependencies());
+   485	    
+   486	    return hingeLine;
+   487	  }
+   488	
+   489	  /**
+   490	   * Helper method to find which plane owns an element
+   491	   * @param elementId ID of element to find
+   492	   * @returns ProjectionPlane that owns the element, or undefined if not found
+   493	   */
+   494	  getPlaneForElement(elementId: string): ProjectionPlane | undefined {
+   495	    for (const plane of this.projectionPlanes.values()) {
+   496	      if (plane.getPoint(elementId) || plane.getLine(elementId) || plane.getCircle(elementId)) {
+   497	        return plane;
+   498	      }
+   499	    }
+   500	    return undefined;
+   501	  }
+   502	
+   503	  /**
+   504	   * Get a point by searching all planes
+   505	   * @param pointId ID of point to get
+   506	   * @returns Point if found, undefined otherwise
+   507	   */
+   508	  private getPoint2DFromPlanes(pointId: string): Point2D | undefined {
+   509	    for (const plane of this.projectionPlanes.values()) {
+   510	      const point = plane.getPoint(pointId);
+   511	      if (point) return point;
+   512	    }
+   513	    return undefined;
+   514	  }
+   515	
+   516	  /**
+   517	   * Get the 3D realization for a point (cached or computed on-demand)
+   518	   * Computes 3D position by transforming the 2D realization using the projection plane's 3D transform
+   519	   */
+   520	  getPoint3DRealization(pointId: string): Point3DRealization3D | undefined {
+   521	    // Check cache first
+   522	    let realization = this.pointRealizations3D.get(pointId);
+   523	    if (realization) {
+   524	      return realization;
+   525	    }
+   526	
+   527	    // Not cached - compute it
+   528	    const point = this.getPoint2DFromPlanes(pointId);
+   529	    if (!point) {
+   530	      return undefined;
+   531	    }
+   532	
+   533	    // Get the point's 2D realization (intrinsic plane coordinates)
+   534	    const realization2D = point.realize2D(this);
+   535	    if (!realization2D) {
+   536	      return undefined;
+   537	    }
+   538	
+   539	    // Get the projection plane's 3D transformation
+   540	    const planeRealization3D = this.getProjectionPlane3DRealization(point.planeId!);

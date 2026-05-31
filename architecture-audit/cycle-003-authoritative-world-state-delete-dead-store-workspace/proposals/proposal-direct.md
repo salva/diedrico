@@ -67,6 +67,7 @@ Run and capture all logs under `architecture-audit/cycle-003-authoritative-world
 - `test ! -e frontend/src/composables/useElementGeometry.ts && echo deleted`
 - `test ! -e frontend/src/types/ElementTypes.ts && echo deleted`
 - `grep -R "worldStore\|useWorldStore\|Workspace2D\|ElementRenderer\|ElementTypes\|useSnapping\|useElementGeometry" -n frontend/src frontend/tests || true` and review every remaining match.
+- `grep -n "getWorld\|worldStore\|useWorldStore" frontend/tests/e2e/*.spec.ts || true` and confirm zero matches after deleting `dynamic-planes.spec.ts` and removing debug-helper references.
 
 ### Focused Vitest
 

@@ -1,0 +1,335 @@
+=== SvgCanvas console.log anchors ===
+   385	onMounted(() => {
+   386	  // ProjectState runtime is already initialized by the app shell.
+   387	  // Just trigger initial render
+   388	  renderTick.value++;
+   389	
+   390	  // Set initial canvas dimensions
+   391	  updateCanvasDimensions();
+   392	
+   393	  // Update dimensions on window resize
+   394	  window.addEventListener('resize', resizeHandler);
+   395	
+   396	  const metadata = projectRuntime ? getProjectStateRuntimeMetadata(projectRuntime.state) : null;
+   397	  console.log('ProjectState runtime initialized');
+   398	  console.log('Elements in ProjectState:', metadata?.elementCount ?? 0);
+   399	});
+   400	
+   401	onUnmounted(() => {
+   402	  window.removeEventListener('resize', resizeHandler);
+   403	  window.removeEventListener('keydown', handleGlobalKeyDown);
+   404	});
+   405	
+   655	  const pt = svg.createSVGPoint();
+   656	  pt.x = event.clientX;
+   657	  pt.y = event.clientY;
+   658	  
+   659	  // Transform screen coordinates to SVG coordinates
+   660	  const ctm = svg.getScreenCTM();
+   661	  if (!ctm) return;
+   662	  
+   663	  const canvasPoint = pt.matrixTransform(ctm.inverse());
+   664	  
+   665	  console.log('[SvgCanvas] Click at canvas coords:', { x: canvasPoint.x, y: canvasPoint.y });
+   666	  
+   667	  // Step 2-3: Canvas → Paper → Plane using InputService
+   668	  const activePlaneId = activePlane.value;
+   669	  const planeTransforms = getPlaneTransformsForInput();
+   670	  const planeTransform = planeTransforms.get(activePlaneId);
+   671	  
+   672	  if (!planeTransform) {
+   673	    console.error('[SvgCanvas] No transform for active plane:', activePlaneId);
+   674	    return;
+   675	  }
+   676	  
+   677	  const planePos = inputService.canvasToPlaneCoordinates(
+   678	    canvasPoint.x,
+   679	    canvasPoint.y,
+   680	    planeTransform,
+   681	    viewport.value
+   682	  );
+   683	  
+   684	  if (!planePos) {
+   685	    console.error('[SvgCanvas] Failed to convert canvas to plane coordinates');
+   686	    return;
+   687	  }
+   688	  
+   689	  console.log('[SvgCanvas] Plane coords (u,v,w):', planePos);
+   690	  
+   691	  // Debug: Check what Paper.hitTestProjectState() would return for this click
+   692	  const canvasPos = new Vector3(canvasPoint.x, canvasPoint.y, 1);
+   693	  const paperToPlane = planeTransforms.get(activePlane.value);
+   694	  const hit = projectState.value ? paper.hitTestProjectState(canvasPos, 20, activePlane.value, paperToPlane, projectState.value) : null;  // FR-002: Hit test in plane space
+   695	  console.log('[SvgCanvas] Paper.hitTestProjectState() result:', hit);
+   696	  console.log('[SvgCanvas] Paper has', paper.size, 'primitives');
+   697	  
+   698	  // Phase 20: Handle selection mode when 'select' tool is active
+   699	  const activeToolName = toolStore.currentTool.value;
+   700	  
+   701	  if (activeToolName === 'select') {
+   702	    // Selection mode: click selects, Shift+click adds, empty click clears.
+   703	    // Click element: Select (Shift+click: add to selection)
+   704	    // Click empty: Deselect all
+   705	    
+   706	    const hit = projectState.value ? paper.hitTestProjectState(canvasPos, 20, activePlane.value, paperToPlane, projectState.value) : null;
+   707	    
+   708	    if (hit) {
+   709	      // Element clicked - handle selection
+   710	      if (event.shiftKey) {
+   711	        // Shift+click: Add to selection (multi-select)
+   712	        selectionStore.addToSelection(hit.elementId);
+   713	        console.log('[SvgCanvas] Added to selection:', hit.elementId);
+   714	      } else {
+   715	        // Regular click: Single selection (replaces current selection)
+   716	        selectionStore.selectSingle(hit.elementId);
+   717	        console.log('[SvgCanvas] Selected:', hit.elementId);
+   718	      }
+   719	    } else {
+   720	      // Clicked empty space - clear selection
+   721	      selectionStore.clearSelection();
+   722	      console.log('[SvgCanvas] Cleared selection');
+   723	    }
+   724	    return;
+   725	  }
+   726	  
+   727	  // Phase 6.5: Delegate to active tool through ProjectState reducer runtime
+   728	  const activeTool = tools[activeToolName];
+   729	  
+   730	  if (!activeTool) {
+   731	    console.warn(`[SvgCanvas] No tool implementation for: ${activeToolName}`);
+   732	    return;
+   733	  }
+   734	  
+   735	  // Delegate to tool with context including both canvas and plane coordinates
+   736	  const result = activeTool.createCommandIntent({
+   737	    planeId: activePlaneId,
+   738	    planeCoords: planePos,
+   739	    canvasCoords: { x: canvasPoint.x, y: canvasPoint.y },
+   740	    projectRuntime: projectRuntime!,
+   741	    projectState: projectState.value!,
+   742	    paper,
+   743	    paperToPlaneTransform: paperToPlane,
+   744	  });
+   745	  
+   746	  if (result.success && result.intent) {
+   747	    const execution = executeToolCommandIntent(result.intent, commandStack, toolStore);
+   748	    if (!execution.success) {
+   749	      console.error('[SvgCanvas] Tool command intent failed:', execution.error);
+   750	      return;
+   751	    }
+   752	    console.log('[SvgCanvas] Tool command intent executed:', result.message);
+   753	    window.dispatchEvent(new CustomEvent('diedrico-command-stack-changed'));
+   754	    renderTick.value++;
+   755	    return;
+   756	  }
+   757	
+   758	  if (result.success) {
+   759	    console.log('[SvgCanvas] Tool interaction progressed:', result.message);
+   760	    renderTick.value++;
+   761	  } else {
+   762	    console.error('[SvgCanvas] Tool interaction failed:', result.message);
+   763	  }
+   764	}
+   765	
+   880	  
+   881	  // Hit test to find element under cursor
+   882	  const hit = projectState.value ? paper.hitTestProjectState(canvasPos, 20, activePlane.value, paperToPlane, projectState.value) : null;
+   883	  
+   884	  if (hit) {
+   885	    // Element found - show properties dialog
+   886	    propertiesElementId.value = hit.elementId;
+   887	    showPropertiesDialog.value = true;
+   888	    console.log('[SvgCanvas] Opening properties dialog for:', hit.elementId);
+   889	  }
+   890	}
+   891	
+   892	/**
+   893	 * Handle property changes from the properties dialog
+   894	 * T193: Apply property changes and record as command
+   895	 */
+   896	function handleSaveProperties(changes: { elementId: string; visible?: boolean; label?: string }) {
+   897	  console.log('[SvgCanvas] Saving property changes:', changes);
+   898	
+   899	  if (!projectRuntime) {
+   900	    console.error('[SvgCanvas] ProjectState runtime not provided');
+   901	    return;
+   902	  }
+   903	
+   904	  try {
+   905	    const intent = createUpdateElementStyleIntent({
+   906	      projectRuntime,
+   907	      elementId: changes.elementId,
+   908	      visible: changes.visible,
+   909	      label: changes.label,
+   910	    });
+   911	
+   912	    if (executeCanvasCommandIntent(intent)) {
+   913	      console.log('[SvgCanvas] Style updated through command intent');
+   914	    }
+   915	  } catch (error) {
+   916	    console.error('[SvgCanvas] Style update intent failed:', error);
+   917	  }
+   918	}
+   919	
+   920	/**
+  1118	});
+  1119	
+  1120	/**
+  1121	 * Fit to View - Zoom and pan to show all elements (T274)
+  1122	 * 
+  1123	 * Calculates bounding box of all rendered elements and adjusts viewport
+  1124	 * to fit them with 10% padding on all sides.
+  1125	 */
+  1126	function fitToView() {
+  1127	  console.log('[SvgCanvas] fitToView called');
+  1128	  
+  1129	  // Get all rendered primitives
+  1130	  const allPrimitives = primitives.value;
+  1131	  
+  1132	  if (allPrimitives.length === 0) {
+  1133	    // No elements - reset to default view
+  1134	    console.log('[SvgCanvas] No elements to fit, resetting to default view');
+  1135	    viewStore.setZoom(1.0);
+  1136	    viewStore.setPan(0, 0);
+  1137	    return;
+  1138	  }
+  1139	  
+  1140	  // Calculate bounding box of all primitives in paper coordinates
+  1141	  let minX = Infinity;
+  1142	  let minY = Infinity;
+  1143	  let maxX = -Infinity;
+  1144	  let maxY = -Infinity;
+  1145	  
+  1146	  for (const prim of allPrimitives) {
+  1147	    if (prim.type === 'point') {
+  1148	      minX = Math.min(minX, prim.position.x);
+  1149	      minY = Math.min(minY, prim.position.y);
+  1150	      maxX = Math.max(maxX, prim.position.x);
+  1151	      maxY = Math.max(maxY, prim.position.y);
+  1152	    } else if (prim.type === 'segment') {
+  1153	      minX = Math.min(minX, prim.point1.x, prim.point2.x);
+  1154	      minY = Math.min(minY, prim.point1.y, prim.point2.y);
+  1155	      maxX = Math.max(maxX, prim.point1.x, prim.point2.x);
+  1156	      maxY = Math.max(maxY, prim.point1.y, prim.point2.y);
+  1157	    } else if (prim.type === 'line') {
+  1158	      minX = Math.min(minX, prim.point.x);
+  1159	      minY = Math.min(minY, prim.point.y);
+  1160	      maxX = Math.max(maxX, prim.point.x);
+  1161	      maxY = Math.max(maxY, prim.point.y);
+  1162	    } else if (prim.type === 'circle') {
+  1163	      minX = Math.min(minX, prim.cx - prim.radius);
+  1164	      minY = Math.min(minY, prim.cy - prim.radius);
+  1165	      maxX = Math.max(maxX, prim.cx + prim.radius);
+  1166	      maxY = Math.max(maxY, prim.cy + prim.radius);
+  1167	    }
+  1168	    // Note: Guides extend to infinity, so we skip them in bounding box calculation
+  1169	  }
+  1170	  
+  1171	  // Check if we found any valid bounds
+  1172	  if (!isFinite(minX) || !isFinite(minY) || !isFinite(maxX) || !isFinite(maxY)) {
+  1173	    console.log('[SvgCanvas] No valid bounds found, resetting to default view');
+  1174	    viewStore.setZoom(1.0);
+  1175	    viewStore.setPan(0, 0);
+  1176	    return;
+  1177	  }
+  1178	  
+  1179	  // Calculate bounding box dimensions
+  1180	  const boxWidth = maxX - minX;
+  1181	  const boxHeight = maxY - minY;
+  1182	  
+  1183	  // Add padding (10% on each side = 0.9 content fill factor)
+  1184	  const paddingFactor = 0.9;
+  1185	  
+  1186	  // Calculate zoom to fit both dimensions
+  1187	  const zoomX = (canvasWidth.value / boxWidth) * paddingFactor;
+  1188	  const zoomY = (canvasHeight.value / boxHeight) * paddingFactor;
+  1189	  const newZoom = Math.min(zoomX, zoomY, 4.0); // Cap at 4x zoom
+  1190	  
+  1191	  // Calculate pan to center the bounding box
+  1192	  const boxCenterX = (minX + maxX) / 2;
+  1193	  const boxCenterY = (minY + maxY) / 2;
+  1194	  const newPanX = (canvasWidth.value / (2 * newZoom)) - boxCenterX;
+  1195	  const newPanY = (canvasHeight.value / (2 * newZoom)) - boxCenterY;
+  1196	  
+  1197	  console.log('[SvgCanvas] Fit to view:', {
+  1198	    bounds: { minX, minY, maxX, maxY },
+  1199	    boxSize: { width: boxWidth, height: boxHeight },
+  1200	    viewport: { width: canvasWidth.value, height: canvasHeight.value },
+  1201	    newZoom,
+  1202	    newPan: { x: newPanX, y: newPanY },
+  1203	  });
+  1204	  
+  1205	  // Apply new viewport transform
+=== Tool debug/cast anchors ===
+--- frontend/src/tools/GuideTool.ts
+93:    93	      console.log('[GuideTool] Paper.hitTestProjectState() result for through-point:', hit);
+105:   105	      console.log('[GuideTool] Paper.hitTestProjectState() result for reference line:', hit);
+--- frontend/src/tools/IntersectionTool.ts
+78:    78	      console.log('[IntersectionTool] Paper.hitTestProjectState() result for first element:', hit);
+100:   100	      console.log('[IntersectionTool] Paper.hitTestProjectState() result for second element:', hit);
+338:   338	function asLineRealization(line: ReturnType<typeof materializeProjectStateLine2D> | undefined): any {
+345:   345	function asCircleRealization(circle: ReturnType<typeof materializeProjectStateCircle2D> | undefined): any {
+--- frontend/src/tools/SegmentTool.ts
+58:    58	    console.log('[SegmentTool] Paper.hitTestProjectState() result:', hit);
+--- frontend/src/tools/TangentLineToCircleParallelToLineTool.ts
+65:    65	    console.log('[TangentLineToCircleParallelToLineTool] Paper.hitTestProjectState() result:', hit);
+222:   222	   * - waiting-line: anyLine() - accepts all Line2D subtypes (line, segment, guide, half-hinge-line)
+--- frontend/src/tools/TangentLineToCircleThroughPointTool.ts
+60:    60	    console.log('[TangentLineToCircleThroughPointTool] Paper.hitTestProjectState() result:', hit);
+--- frontend/src/commands/factories/DeletionSequenceFactory.ts
+55:    55	    console.log('[DeletionSequenceFactory] Cascade deletion:', {
+--- frontend/src/commands/factories/GuideSequenceFactory.ts
+79:    79	        console.log(
+--- frontend/src/commands/factories/IntersectionSequenceFactory.ts
+132:   132	        console.log(
+=== GoogleDrive/Settings as-any/log anchors ===
+--- frontend/src/services/GoogleDriveService.ts
+56:    56	  private tokenClient: any = null;
+90:    90	          console.log('[GoogleDrive] Initializing with config:', {
+97:    97	          const initConfig: any = {
+108:   108	          this.tokenClient = (window as any).google.accounts.oauth2.initTokenClient({
+116:   116	          console.log('[GoogleDrive] Initialization successful');
+121:   121	        } catch (error: any) {
+139:   139	        console.log('[GoogleDrive] Session restored automatically');
+141:   141	        console.log('[GoogleDrive] Could not restore session:', error);
+167:   167	        this.tokenClient.callback = (response: any) => {
+186:   186	      } catch (error: any) {
+202:   202	        this.tokenClient.callback = (response: any) => {
+222:   222	          console.log('[GoogleDrive] Sign-in successful');
+228:   228	      } catch (error: any) {
+244:   244	        await (window as any).google.accounts.oauth2.revoke(this.accessToken);
+283:   283	    } catch (error: any) {
+351:   351	    } catch (error: any) {
+457:   457	    } catch (error: any) {
+504:   504	    } catch (error: any) {
+530:   530	      console.log('[GoogleDrive] generateDefaultProjectName - files found:', files.length);
+540:   540	          console.log(`[GoogleDrive] Found untitled file: ${file.name} -> number ${num}`);
+545:   545	      console.log('[GoogleDrive] Extracted numbers:', numbers);
+549:   549	        console.log('[GoogleDrive] No untitled files found, returning "untitled 1"');
+559:   559	          console.log(`[GoogleDrive] Found gap at ${i}, returning "untitled ${i}"`);
+566:   566	      console.log(`[GoogleDrive] No gaps, returning "untitled ${nextNum}"`);
+605:   605	      console.log(`[GoogleDriveService] File renamed to: ${fileName}`);
+606:   606	    } catch (error: any) {
+--- frontend/src/stores/settingsStore.ts
+95:    95	      console.log('[SettingsStore] Settings saved to localStorage');
+172:   172	  function updateSetting(path: string, value: any) {
+174:   174	    let target: any = settings.value;
+188:   188	    console.log('[SettingsStore] Settings reset to defaults');
+195:   195	    (settings.value as any)[category] = structuredClone((DEFAULT_SETTINGS as any)[category]);
+196:   196	    console.log(`[SettingsStore] ${category} settings reset to defaults`);
+--- frontend/src/composables/useAppCanvasSession.ts
+49:    49	    console.log('Highlight elements:', elementIds, 'temporary:', temporary);
+53:    53	    console.log('Clear highlights');
+--- frontend/src/stores/processStore.ts
+6:     6	  commandHistory: CommandStack;
+18:    18	    commandHistory: new CommandStack(),
+22:    22	    canUndo: (state): boolean => state.commandHistory.canUndo(),
+23:    23	    canRedo: (state): boolean => state.commandHistory.canRedo(),
+24:    24	    undoCount: (state): number => state.commandHistory.getUndoCount(),
+25:    25	    redoCount: (state): number => state.commandHistory.getRedoCount(),
+30:    30	      this.commandHistory.push(command);
+34:    34	      if (!this.commandHistory.canUndo()) return false;
+35:    35	      this.commandHistory.undo();
+40:    40	      if (!this.commandHistory.canRedo()) return false;
+41:    41	      this.commandHistory.redo();
+46:    46	      this.commandHistory.clear();

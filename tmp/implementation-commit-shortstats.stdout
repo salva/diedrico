@@ -1,0 +1,14 @@
+--- bcb3927 [tsk-t1-implement-wave-006a-direct] [t1-implement-wave-006a-direct] extract canvas tool command controllers
+ 34 files changed, 631 insertions(+), 2027 deletions(-)
+--- 4ec7d4c [tsk-t1-implement-panel-toolbar-intent-controllers] [t1-implement-panel-toolbar-intent-controllers] extract panel toolbar command intents
+ 9 files changed, 554 insertions(+), 208 deletions(-)
+--- 951230c [t1-implement-canvas-presentation-boundary] extract canvas presentation boundary
+ 29 files changed, 708 insertions(+), 4028 deletions(-)
+--- c0a7cab [tsk-t1-implement-wave-008-restructure] [t1-implement-wave-008-restructure] extract 3d scene adapters
+ 23 files changed, 840 insertions(+), 1562 deletions(-)
+--- 9adcff9 [tsk-t1-implement-app-shell-runtime] [t1-implement-app-shell-runtime] extract app shell runtime services
+ 12 files changed, 976 insertions(+), 1053 deletions(-)
+--- 47e99eb [tsk-t1-implement-wave-010-deletion-contract] [t1-implement-wave-010-deletion-contract] delete stale backend project contract
+ 15 files changed, 27 insertions(+), 1125 deletions(-)
+--- 241f9d6 [tsk-t1-implement-wave-011-restructure] [t1-implement-wave-011-restructure] tighten architecture validation gates
+ 10 files changed, 221 insertions(+), 698 deletions(-)

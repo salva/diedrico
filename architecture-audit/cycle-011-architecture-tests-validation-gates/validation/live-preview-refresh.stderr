@@ -1,0 +1,52 @@
+10:32:17 AM [vite] Pre-transform error: Transform failed with 1 error:
+/work/diedrico/frontend/src/commands/operations/world/RemoveElementOps.ts:468:6: ERROR: Unexpected "catch"
+10:32:17 AM [vite] Pre-transform error: Transform failed with 1 error:
+/work/diedrico/frontend/src/commands/operations/world/RemoveElementOps.ts:468:6: ERROR: Unexpected "catch"
+10:32:18 AM [vite] Internal server error: Transform failed with 1 error:
+/work/diedrico/frontend/src/commands/operations/world/RemoveElementOps.ts:468:6: ERROR: Unexpected "catch"
+  Plugin: vite:esbuild
+  File: /work/diedrico/frontend/src/commands/operations/world/RemoveElementOps.ts:468:6
+  
+  Unexpected "catch"
+  466|          outputs: this.outputs
+  467|        };
+  468|      } catch (error) {
+     |        ^
+  469|        return {
+  470|          success: false,
+  
+      at failureErrorWithLog (/work/diedrico/node_modules/vite/node_modules/esbuild/lib/main.js:1472:15)
+      at /work/diedrico/node_modules/vite/node_modules/esbuild/lib/main.js:755:50
+      at responseCallbacks.<computed> (/work/diedrico/node_modules/vite/node_modules/esbuild/lib/main.js:622:9)
+      at handleIncomingPacket (/work/diedrico/node_modules/vite/node_modules/esbuild/lib/main.js:677:12)
+      at Socket.readFromStdout (/work/diedrico/node_modules/vite/node_modules/esbuild/lib/main.js:600:7)
+      at Socket.emit (node:events:509:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)
+10:32:48 AM [vite] Pre-transform error: Transform failed with 1 error:
+/work/diedrico/frontend/src/commands/operations/world/RemoveElementOps.ts:468:6: ERROR: Unexpected "catch"
+10:32:49 AM [vite] Internal server error: Transform failed with 1 error:
+/work/diedrico/frontend/src/commands/operations/world/RemoveElementOps.ts:468:6: ERROR: Unexpected "catch"
+  Plugin: vite:esbuild
+  File: /work/diedrico/frontend/src/commands/operations/world/RemoveElementOps.ts:468:6
+  
+  Unexpected "catch"
+  466|          outputs: this.outputs
+  467|        };
+  468|      } catch (error) {
+     |        ^
+  469|        return {
+  470|          success: false,
+  
+      at failureErrorWithLog (/work/diedrico/node_modules/vite/node_modules/esbuild/lib/main.js:1472:15)
+      at /work/diedrico/node_modules/vite/node_modules/esbuild/lib/main.js:755:50
+      at responseCallbacks.<computed> (/work/diedrico/node_modules/vite/node_modules/esbuild/lib/main.js:622:9)
+      at handleIncomingPacket (/work/diedrico/node_modules/vite/node_modules/esbuild/lib/main.js:677:12)
+      at Socket.readFromStdout (/work/diedrico/node_modules/vite/node_modules/esbuild/lib/main.js:600:7)
+      at Socket.emit (node:events:509:28)
+      at addChunk (node:internal/streams/readable:563:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:514:3)
+      at Readable.push (node:internal/streams/readable:394:5)
+      at Pipe.onStreamRead (node:internal/stream_base_commons:189:23)

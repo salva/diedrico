@@ -1,0 +1,4 @@
+frontend/src/domain/processTree/ProcessTree.ts:352:  findAction(actionId: string): ActionNode | undefined {
+frontend/src/domain/processTree/ProcessTree.ts:366:  getActionsProducingElement(elementId: string): Action[] {
+frontend/src/domain/world/styleService.ts:65:  const actions = tree.getActionsProducingElement(element.id);
+frontend/src/domain/world/styleService.ts:76:  // We approximate it because tree.getActionsProducingElement returns Action[]

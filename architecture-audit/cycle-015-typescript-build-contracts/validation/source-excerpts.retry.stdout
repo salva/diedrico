@@ -1,0 +1,2007 @@
+--- frontend/src/components/panels/ActionItem.vue
+     1	<template>
+     2	  <div
+     3	    class="action-item"
+     4	    :class="{
+     5	      'infeasible': action.infeasible
+     6	    }"
+     7	    :title="action.infeasible ? `Infeasible: ${action.infeasibilityReason || 'Constraint violation'}` : ''"
+     8	  >
+     9	    <div class="action-header">
+    10	      <span class="action-type">{{ formatActionType(action.actionType) }}</span>
+    11	      <span class="timestamp">{{ formatTime(action.timestamp) }}</span>
+    12	    </div>
+    13	    <!-- Phase 92: Display elementId instead of outputs array -->
+    14	    <div v-if="action.elementId" class="action-outputs">
+    15	      <span class="label">Element:</span>
+    16	      <span class="outputs">{{ action.elementId }}</span>
+    17	    </div>
+    18	    <div class="action-description">
+    19	      <span class="description">{{ action.description }}</span>
+    20	    </div>
+    21	  </div>
+    22	</template>
+    23	
+    24	<script setup lang="ts">
+    25	import type { Action } from '../../domain/processTree/Action';
+    26	import { ActionType } from '../../domain/processTree/Action';
+    27	
+    28	interface Props {
+    29	  action: Action;
+    30	}
+    31	
+    32	const props = defineProps<Props>();
+    33	
+    34	/**
+    35	 * Format ActionType enum to readable string
+    36	 */
+    37	function formatActionType(actionType: ActionType): string {
+    38	  // Convert CamelCase to Title Case with spaces
+    39	  return actionType
+    40	    .replace(/([A-Z])/g, ' $1')
+    41	    .trim();
+    42	}
+    43	
+    44	/**
+    45	 * Format timestamp to time string
+    46	 */
+    47	function formatTime(date: Date): string {
+    48	  return date.toLocaleTimeString('en-US', {
+    49	    hour: '2-digit',
+    50	    minute: '2-digit',
+    51	    second: '2-digit'
+    52	  });
+    53	}
+    54	</script>
+    55	
+    56	<style scoped>
+    57	.action-item {
+    58	  padding: 6px 8px;
+    59	  background-color: var(--color-background);
+    60	  border: 1px solid var(--color-border);
+    61	  border-radius: 3px;
+    62	  margin-bottom: 2px;
+    63	  font-size: 12px;
+    64	  transition: background-color 0.2s ease;
+    65	}
+    66	
+    67	.action-item:hover {
+    68	  background-color: var(--color-background-soft);
+    69	}
+    70	
+    71	.action-item.infeasible {
+    72	  border-color: var(--color-error);
+    73	  background-color: rgba(255, 0, 0, 0.05);
+    74	}
+    75	
+    76	.action-header {
+    77	  display: flex;
+    78	  justify-content: space-between;
+    79	  align-items: center;
+    80	  margin-bottom: 4px;
+    81	}
+    82	
+    83	.action-type {
+    84	  font-weight: 600;
+    85	  color: var(--color-heading);
+    86	}
+    87	
+    88	.action-item.infeasible .action-type {
+    89	  color: var(--color-error);
+    90	}
+    91	
+    92	.timestamp {
+    93	  font-size: 11px;
+    94	  color: var(--color-text-muted);
+    95	  font-family: monospace;
+    96	}
+    97	
+    98	.action-outputs,
+    99	.action-inputs {
+   100	  display: flex;
+   101	  gap: 4px;
+   102	  font-size: 11px;
+   103	  margin-top: 2px;
+   104	}
+   105	
+   106	.label {
+   107	  color: var(--color-text-muted);
+   108	  font-weight: 500;
+   109	}
+   110	
+   111	.outputs,
+   112	.inputs {
+   113	  color: var(--color-text);
+   114	  font-family: monospace;
+   115	}
+   116	</style>
+--- frontend/src/components/panels/ActionGroupItem.vue
+     1	<template>
+     2	  <div class="action-group-item">
+     3	    <!-- Subprocess -->
+     4	    <div v-if="node.type === 'subprocess'" class="subprocess-item">
+     5	      <div class="subprocess-header" @click="toggleExpanded">
+     6	        <span class="expand-icon" :class="{ expanded: isExpanded }">▶</span>
+     7	        <span class="subprocess-name">{{ node.name }}</span>
+     8	        <span class="subprocess-count">({{ childCount }})</span>
+     9	      </div>
+    10	      <div v-if="isExpanded" class="subprocess-children">
+    11	        <ActionGroupItem
+    12	          v-for="child in node.children"
+    13	          :key="child.id"
+    14	          :node="child"
+    15	        />
+    16	      </div>
+    17	    </div>
+    18	
+    19	    <!-- Action Group -->
+    20	    <div v-else-if="node.type === 'actionGroup'" class="action-group">
+    21	      <div class="action-group-header" @click="toggleExpanded">
+    22	        <span class="expand-icon" :class="{ expanded: isExpanded }">▶</span>
+    23	        <span class="action-group-label">Group</span>
+    24	        <span class="action-count">({{ node.children.length }} actions)</span>
+    25	        <span class="timestamp">{{ formatTime(node.created) }}</span>
+    26	      </div>
+    27	      <div v-if="isExpanded" class="action-group-children">
+    28	        <ActionItem
+    29	          v-for="action in node.children"
+    30	          :key="action.id"
+    31	          :action="action"
+    32	        />
+    33	      </div>
+    34	    </div>
+    35	
+    36	    <!-- Single Action (if passed directly) -->
+    37	    <ActionItem
+    38	      v-else-if="node.type === 'action'"
+    39	      :action="node"
+    40	    />
+    41	  </div>
+    42	</template>
+    43	
+    44	<script setup lang="ts">
+    45	import { ref, computed } from 'vue';
+    46	import type { Subprocess } from '../../domain/processTree/Subprocess';
+    47	import type { ActionGroup } from '../../domain/processTree/ActionGroup';
+    48	import type { ConstructiveAction } from '../../domain/processTree/Action';
+    49	import ActionItem from './ActionItem.vue';
+    50	
+    51	// Allow recursive component
+    52	import ActionGroupItem from './ActionGroupItem.vue';
+    53	
+    54	interface Props {
+    55	  node: Subprocess | ActionGroup | ConstructiveAction;
+    56	}
+    57	
+    58	const props = defineProps<Props>();
+    59	
+    60	const isExpanded = ref(true);
+    61	
+    62	/**
+    63	 * Count children for subprocess
+    64	 */
+    65	const childCount = computed(() => {
+    66	  if (props.node.type === 'subprocess') {
+    67	    return props.node.children.length;
+    68	  }
+    69	  return 0;
+    70	});
+    71	
+    72	/**
+    73	 * Toggle expanded/collapsed state
+    74	 */
+    75	function toggleExpanded() {
+    76	  isExpanded.value = !isExpanded.value;
+    77	}
+    78	
+    79	/**
+    80	 * Format timestamp to time string
+    81	 */
+    82	function formatTime(date: Date): string {
+    83	  return date.toLocaleTimeString('en-US', {
+    84	    hour: '2-digit',
+    85	    minute: '2-digit',
+    86	    second: '2-digit'
+    87	  });
+    88	}
+    89	</script>
+    90	
+    91	<style scoped>
+    92	.action-group-item {
+    93	  width: 100%;
+    94	}
+    95	
+    96	/* Subprocess styling */
+    97	.subprocess-item {
+    98	  margin-bottom: 8px;
+    99	}
+   100	
+   101	.subprocess-header {
+   102	  display: flex;
+   103	  align-items: center;
+   104	  padding: 6px 8px;
+   105	  background-color: var(--color-background-soft);
+   106	  border: 1px solid var(--color-border);
+   107	  border-radius: 4px;
+   108	  cursor: pointer;
+   109	  user-select: none;
+   110	}
+   111	
+   112	.subprocess-header:hover {
+   113	  background-color: var(--color-background-mute);
+   114	}
+   115	
+   116	.subprocess-name {
+   117	  flex: 1;
+   118	  font-size: 13px;
+   119	  font-weight: 600;
+   120	  color: var(--color-heading);
+   121	}
+   122	
+   123	.subprocess-count {
+   124	  font-size: 12px;
+   125	  color: var(--color-text-muted);
+   126	  margin-left: 4px;
+   127	}
+   128	
+   129	.subprocess-children {
+   130	  margin-top: 4px;
+   131	  margin-left: 16px;
+   132	  padding-left: 8px;
+   133	  border-left: 2px solid var(--color-border);
+   134	}
+   135	
+   136	/* Action Group styling */
+   137	.action-group {
+   138	  margin-bottom: 4px;
+   139	}
+   140	
+   141	.action-group-header {
+   142	  display: flex;
+   143	  align-items: center;
+   144	  padding: 4px 8px;
+   145	  background-color: var(--color-background);
+   146	  border: 1px solid var(--color-border-hover);
+   147	  border-radius: 3px;
+   148	  cursor: pointer;
+   149	  user-select: none;
+   150	}
+   151	
+   152	.action-group-header:hover {
+   153	  background-color: var(--color-background-soft);
+   154	}
+   155	
+   156	.action-group-label {
+   157	  font-size: 12px;
+   158	  font-weight: 500;
+   159	  color: var(--color-text);
+   160	  margin-right: 4px;
+   161	}
+   162	
+   163	.action-count {
+   164	  font-size: 11px;
+   165	  color: var(--color-text-muted);
+   166	  margin-right: 8px;
+   167	}
+   168	
+   169	.timestamp {
+   170	  font-size: 11px;
+   171	  color: var(--color-text-muted);
+   172	  margin-left: auto;
+   173	  font-family: monospace;
+   174	}
+   175	
+   176	.action-group-children {
+   177	  margin-top: 2px;
+   178	  margin-left: 16px;
+   179	  padding-left: 8px;
+   180	  border-left: 1px solid var(--color-border-hover);
+   181	}
+   182	
+   183	/* Expand icon */
+   184	.expand-icon {
+   185	  display: inline-block;
+   186	  margin-right: 6px;
+   187	  font-size: 10px;
+   188	  transition: transform 0.2s ease;
+   189	  color: var(--color-text-muted);
+   190	}
+   191	
+   192	.expand-icon.expanded {
+   193	  transform: rotate(90deg);
+   194	}
+   195	</style>
+--- frontend/src/components/panels/ActionsPanel.vue
+     1	<template>
+     2	  <aside class="actions-panel">
+     3	    <header class="panel-header">
+     4	      <h2 class="panel-title">Construction History</h2>
+     5	      <div class="header-controls">
+     6	        <!-- Stack management buttons -->
+     7	        <div class="stack-controls">
+     8	          <button 
+     9	            class="stack-btn stack-pop-btn"
+    10	            :disabled="!canPop"
+    11	            @click="popSubprocess"
+    12	            :title="canPop ? 'Close current subprocess (Ctrl+Shift+[)' : 'Cannot close root'"
+    13	            aria-label="Pop subprocess from stack"
+    14	          >
+    15	            &lt;
+    16	          </button>
+    17	          <button 
+    18	            class="stack-btn stack-push-btn"
+    19	            @click="pushSubprocess"
+    20	            title="Create and enter new subprocess (Ctrl+Shift+])"
+    21	            aria-label="Push subprocess to stack"
+    22	          >
+    23	            &gt;
+    24	          </button>
+    25	        </div>
+    26	      </div>
+    27	    </header>
+    28	
+    29	    <!-- Process Tree -->
+    30	    <div class="process-tree" ref="treeContainer">
+    31	      <ProcessTreeNode
+    32	        v-if="processTree"
+    33	        :node="processTree.root"
+    34	        :world="world"
+    35	        :data-version="treeVersion"
+    36	        :selected-node-id="selectedNodeId"
+    37	        :active-subprocess-id="activeSubprocessId"
+    38	        :related-action-ids="relatedActionIds"
+    39	        @select-node="handleNodeSelect"
+    40	        @toggle-encapsulate="handleToggleEncapsulate"
+    41	        @toggle-output="handleToggleOutput"
+    42	        @highlight-elements="(...args) => emit('highlightElements', ...args)"
+    43	        @clear-highlight="emit('clearHighlight')"
+    44	        @rename-node="handleRenameNode"
+    45	      />
+    46	    </div>
+    47	  </aside>
+    48	</template>
+    49	
+    50	<script setup lang="ts">
+    51	import { ref, computed, inject, onMounted, onUnmounted, watch, nextTick } from 'vue';
+    52	import type { World } from '@/domain/world/World';
+    53	import type { ProcessTreeNode as ProcessTreeNodeType } from '@/domain/processTree/ProcessTreeNode';
+    54	import { createProcessHistoryController } from '@/application/processHistory/ProcessHistoryController';
+    55	import ProcessTreeNode from './ProcessTreeNode.vue';
+    56	import { useSelectionStore } from '@/stores/selectionStore';
+    57	import { useProcessTreeStore } from '@/stores/processTreeStore';
+    58	
+    59	// Emits
+    60	const emit = defineEmits<{
+    61	  highlightElements: [elementIds: string[], temporary: boolean];
+    62	  clearHighlight: [];
+    63	}>();
+    64	
+    65	// Injected dependencies
+    66	const world = inject<World>('world')!;
+    67	const processHistoryController = createProcessHistoryController({
+    68	  world,
+    69	  commandStack: inject<unknown>('commandStack')
+    70	});
+    71	
+    72	// Selection store
+    73	const selectionStore = useSelectionStore();
+    74	const processTreeStore = useProcessTreeStore();
+    75	
+    76	// Local state
+    77	const treeContainer = ref<HTMLElement | null>(null);
+    78	const selectedNodeId = ref<string | null>(null);
+    79	const relatedActionIds = ref<Set<string>>(new Set());
+    80	const stackVersion = ref(0); // Track stack changes
+    81	const lastNodeCount = ref(0); // Track number of nodes for auto-scroll
+    82	
+    83	// Get current ProcessTree - use reactive ref that we update when World changes
+    84	const processTree = ref(world.getProcessTree());
+    85	
+    86	// Stack management computed properties
+    87	const canPop = computed(() => {
+    88	  stackVersion.value; // Depend on stack changes
+    89	  return processHistoryController.getState().canPop;
+    90	});
+    91	const activeSubprocessId = computed(() => {
+    92	  stackVersion.value; // Depend on stack changes
+    93	  return processHistoryController.getState().activeSubprocessId;
+    94	});
+    95	
+    96	// Watch ProcessTree version for reactivity, triggered by stackVersion changes
+    97	const treeVersion = computed(() => {
+    98	  // Depend on stackVersion to trigger updates when push/pop occurs
+    99	  stackVersion.value;
+   100	  return processTree.value.getVersion();
+   101	});
+   102	
+   103	// Keyboard shortcuts for stack management
+   104	function handleKeyDown(event: KeyboardEvent) {
+   105	  if (event.ctrlKey && event.shiftKey) {
+   106	    if (event.key === '[') {
+   107	      event.preventDefault();
+   108	      popSubprocess();
+   109	    } else if (event.key === ']') {
+   110	      event.preventDefault();
+   111	      pushSubprocess();
+   112	    }
+   113	  }
+   114	}
+   115	
+   116	// Subscription cleanup
+   117	let unsubscribeTree: (() => void) | null = null;
+   118	let unsubscribeWorld: (() => void) | null = null;
+   119	
+   120	function scrollToBottom() {
+   121	  if (treeContainer.value) {
+   122	    treeContainer.value.scrollTop = treeContainer.value.scrollHeight;
+   123	  }
+   124	}
+   125	
+   126	function refreshAfterTreeChange(ensureExpandedForActiveSubprocess: boolean) {
+   127	  const currentCount = countNodes(processTree.value.root);
+   128	  const shouldScroll = currentCount > lastNodeCount.value;
+   129	  lastNodeCount.value = currentCount;
+   130	
+   131	  stackVersion.value++;
+   132	
+   133	  if (shouldScroll && ensureExpandedForActiveSubprocess) {
+   134	    processTreeStore.ensureExpanded(processTree.value.getCurrentSubprocess().id);
+   135	  }
+   136	
+   137	  if (shouldScroll) {
+   138	    nextTick(() => {
+   139	      scrollToBottom();
+   140	    });
+   141	  }
+   142	}
+   143	
+   144	function subscribeToCurrentProcessTree(ensureExpandedForActiveSubprocess: boolean) {
+   145	  unsubscribeTree = processTree.value.subscribe(() => {
+   146	    refreshAfterTreeChange(ensureExpandedForActiveSubprocess);
+   147	  });
+   148	}
+   149	
+   150	function handleWorldChange() {
+   151	  if (unsubscribeTree) {
+   152	    unsubscribeTree();
+   153	  }
+   154	
+   155	  processTree.value = world.getProcessTree();
+   156	  lastNodeCount.value = countNodes(processTree.value.root);
+   157	  subscribeToCurrentProcessTree(false);
+   158	  stackVersion.value++;
+   159	}
+   160	
+   161	onMounted(() => {
+   162	  // Register keyboard shortcuts
+   163	  window.addEventListener('keydown', handleKeyDown);
+   164	
+   165	  // Initialize node count
+   166	  lastNodeCount.value = countNodes(processTree.value.root);
+   167	
+   168	  // Subscribe to ProcessTree changes
+   169	  subscribeToCurrentProcessTree(true);
+   170	
+   171	  // Subscribe to World changes to detect when clear() creates new ProcessTree
+   172	  world.subscribeToChanges(handleWorldChange);
+   173	  unsubscribeWorld = () => world.unsubscribeFromChanges(handleWorldChange);
+   174	});
+   175	
+   176	onUnmounted(() => {
+   177	  window.removeEventListener('keydown', handleKeyDown);
+   178	  if (unsubscribeTree) {
+   179	    unsubscribeTree();
+   180	  }
+   181	  if (unsubscribeWorld) {
+   182	    unsubscribeWorld();
+   183	  }
+   184	});
+   185	
+   186	// Watch selection changes and find related actions
+   187	watch(
+   188	  () => selectionStore.selectedIdsArray,
+   189	  (selectedIds) => {
+   190	    if (selectedIds.length === 0) {
+   191	      // No selection, clear related actions
+   192	      relatedActionIds.value.clear();
+   193	    } else {
+   194	      // Find actions related to selected elements
+   195	      findRelatedActions(selectedIds);
+   196	    }
+   197	  },
+   198	  { immediate: true }
+   199	);
+   200	
+   201	/**
+   202	 * Find actions that have any of the selected element IDs in their inputs or outputs
+   203	 */
+   204	function findRelatedActions(selectedIds: string[]): void {
+   205	  const related = new Set<string>();
+   206	  const selectedIdSet = new Set(selectedIds);
+   207	
+   208	  // Get all actions from process tree
+   209	  const allActions = processTree.value.getAllActions();
+   210	
+   211	  // Check each action's elementId and dependencies (Phase 92)
+   212	  for (const action of allActions) {
+   213	    // Check if action produces any selected element
+   214	    const producesSelected = selectedIdSet.has(action.elementId);
+   215	
+   216	    // Check if action depends on any selected element
+   217	    // Dependencies are now in DependencyService, accessible via element
+   218	    const dependsOnSelected = world && world.dependencyService
+   219	      ? world.dependencyService.getDependencies(action.elementId).some(depId => selectedIdSet.has(depId))
+   220	      : false;
+   221	
+   222	    if (producesSelected || dependsOnSelected) {
+   223	      related.add(action.id);
+   224	    }
+   225	  }
+   226	
+   227	  relatedActionIds.value = related;
+   228	}
+   229	
+   230	/**
+   231	 * Recursively count total nodes in the tree
+   232	 */
+   233	function countNodes(node: ProcessTreeNodeType): number {
+   234	  let count = 1;
+   235	  if (node.children) {
+   236	    for (const child of node.children) {
+   237	      if (child) {
+   238	        count += countNodes(child);
+   239	      }
+   240	    }
+   241	  }
+   242	  return count;
+   243	}
+   244	
+   245	function refreshAfterIntent() {
+   246	  stackVersion.value++;
+   247	}
+   248	
+   249	// Stack management handlers
+   250	function pushSubprocess() {
+   251	  processHistoryController.pushSubprocess();
+   252	  refreshAfterIntent();
+   253	}
+   254	
+   255	function popSubprocess() {
+   256	  if (canPop.value) {
+   257	    processHistoryController.popSubprocess();
+   258	    refreshAfterIntent();
+   259	  }
+   260	}
+--- frontend/src/components/panels/ProcessTreeNode.vue
+     1	<template>
+     2	  <div class="tree-node">
+     3	    <!-- Subprocess Node -->
+     4	    <div
+     5	      v-if="node.type === 'subprocess'"
+     6	      class="subprocess-node"
+     7	      :class="{ 
+     8	        'node-selected': isSelected, 
+     9	        'subprocess-active': isActiveSubprocess,
+    10	        'faded': isFaded
+    11	      }"
+    12	    >
+    13	      <div class="subprocess-header">
+    14	        <span class="collapse-icon" @click.stop="toggleCollapse">{{ isCollapsed ? '▶' : '▼' }}</span>
+    15	        
+    16	        <span 
+    17	          v-if="!isEditing"
+    18	          class="subprocess-name" 
+    19	          @dblclick.stop="startEditing"
+    20	        >
+    21	          {{ node.name }}
+    22	        </span>
+    23	        <input
+    24	          v-else
+    25	          ref="nameInput"
+    26	          v-model="editName"
+    27	          class="subprocess-name-input"
+    28	          @blur="submitName"
+    29	          @keydown.enter="submitName"
+    30	          @keydown.esc="cancelEditing"
+    31	          @keydown.stop
+    32	          @click.stop
+    33	        />
+    34	        
+    35	        <span v-if="isActiveSubprocess" class="active-indicator" title="Current subprocess">●</span>
+    36	
+    37	        <!-- Right Side Controls Matrix -->
+    38	        <div class="node-controls">
+    39	          <!-- Show Intermediates Toggle (Triangle Down) -->
+    40	          <!-- Was Encapsulate Toggle + Internal Button. Consolidated here. -->
+    41	          <button
+    42	            class="icon-btn internal-btn"
+    43	            :class="{ 'active': node.showIntermediates }"
+    44	            @click.stop="emit('toggleEncapsulate', node.id)"
+    45	            title="Show Intermediates"
+    46	          >
+    47	            {{ node.showIntermediates ? '▼' : '▽' }}
+    48	          </button>
+    49	          
+    50	          <!-- Output Selection (Triangle Up) -->
+    51	          <button
+    52	            class="icon-btn output-btn"
+    53	            :class="{ 'active': node.isOutput }"
+    54	            @click.stop="emit('toggleOutput', node.id)"
+    55	            title="Mark as Output"
+    56	          >
+    57	            {{ node.isOutput ? '▲' : '△' }}
+    58	          </button>
+    59	        </div>
+    60	      </div>
+    61	
+    62	      <!-- Child nodes (when expanded) -->
+    63	      <div v-show="!isCollapsed" class="subprocess-children">
+    64	        <ProcessTreeNode
+    65	          v-for="child in allChildren"
+    66	          :key="child.id"
+    67	          :node="child"
+    68	          :world="world"
+    69	          :data-version="dataVersion"
+    70	          :selected-node-id="selectedNodeId"
+    71	          :active-subprocess-id="activeSubprocessId"
+    72	          :related-action-ids="relatedActionIds"
+    73	          :is-parent-encapsulated="isEffectivelyEncapsulated"
+    74	          @select-node="emit('selectNode', $event)"
+    75	          @toggle-encapsulate="emit('toggleEncapsulate', $event)"
+    76	          @toggle-output="emit('toggleOutput', $event)"
+    77	          @highlight-elements="(...args) => emit('highlightElements', ...args)"
+    78	          @clear-highlight="emit('clearHighlight')"
+    79	          @rename-node="(...args) => emit('renameNode', ...args)"
+    80	        />
+    81	        
+    82	        <!-- Insertion Point Cursor -->
+    83	        <div v-if="isActiveSubprocess" class="insertion-point" title="Next action will be added here">
+    84	          <span class="insertion-arrow">➤</span>
+    85	          <span class="insertion-line"></span>
+    86	        </div>
+    87	      </div>
+    88	    </div>
+    89	
+    90	    <!-- ActionGroup Node -->
+    91	    <div
+    92	      v-else-if="node.type === 'actionGroup' && allChildren.length > 0"
+    93	      class="actiongroup-node"
+    94	      :class="{ 
+    95	        'auxiliary': node.isAuxiliary,
+    96	        'faded': isFaded
+    97	      }"
+    98	    >
+    99	      <div class="actiongroup-header">
+   100	        <span v-if="node.isAuxiliary" class="auxiliary-icon" title="Auxiliary actions">⚙</span>
+   101	
+   102	        <!-- Right Side Controls Matrix - REMOVED for ActionGroup to avoid button duplication -->
+   103	        <!-- User sees group+action as one unit, so we only show controls on the action itself -->
+   104	      </div>
+   105	
+   106	      <!-- Child actions (always shown) -->
+   107	      <div class="actiongroup-children">
+   108	        <ProcessTreeNode
+   109	          v-for="child in allChildren"
+   110	          :key="child.id"
+   111	          :node="child"
+   112	          :world="world"
+   113	          :data-version="dataVersion"
+   114	          :selected-node-id="selectedNodeId"
+   115	          :active-subprocess-id="activeSubprocessId"
+   116	          :related-action-ids="relatedActionIds"
+   117	          :is-parent-encapsulated="isEffectivelyEncapsulated"
+   118	          @select-node="emit('selectNode', $event)"
+   119	          @toggle-encapsulate="emit('toggleEncapsulate', $event)"
+   120	          @toggle-output="emit('toggleOutput', $event)"
+   121	          @highlight-elements="(...args) => emit('highlightElements', ...args)"
+   122	          @clear-highlight="emit('clearHighlight')"
+   123	          @rename-node="(...args) => emit('renameNode', ...args)"
+   124	        />
+   125	      </div>
+   126	    </div>
+   127	
+   128	    <!-- Action Node (leaf) -->
+   129	    <div
+   130	      v-else-if="node.type === 'action' && descriptionParts.length > 0"
+   131	      class="action-node"
+   132	      :class="{ 
+   133	        'node-selected': isSelected,
+   134	        'action-infeasible': isInfeasible,
+   135	        'action-related': isRelated,
+   136	        'faded': isFaded
+   137	      }"
+   138	      @click="handleActionClick"
+   139	      @dblclick="toggleDescriptionExpand"
+   140	      @mouseenter="handleActionHover(true)"
+   141	      @mouseleave="handleActionHover(false)"
+   142	    >
+   143	      <div class="action-main">
+   144	        <span 
+   145	          class="action-description"
+   146	          :class="{ 'description-expanded': isDescriptionExpanded }"
+   147	          :title="isDescriptionExpanded ? '' : 'Double-click to expand'"
+   148	        >
+   149	          <template v-for="(part, index) in descriptionParts" :key="index">
+   150	            <span v-if="part.type === 'text'">{{ part.content }}</span>
+   151	            <span 
+   152	              v-else 
+   153	              class="label-clickable"
+   154	              :data-element-id="part.elementId"
+   155	              @click.stop="handleLabelClick(part.elementId, $event)"
+   156	              v-html="formatElementLabel(part.content)"
+   157	            ></span>
+   158	          </template>
+   159	        </span>
+   160	        <span v-if="isRelated && !isSelected" class="related-indicator" title="Related to selected elements">🔗</span>
+   161	
+   162	        <!-- Right Side Controls Matrix -->
+   163	        <div class="node-controls">
+   164	          <!-- Spacer for Show Intermediates (Down) column -->
+   165	          <div class="icon-spacer"></div>
+   166	
+   167	          <!-- Output Selection (Triangles) -->
+   168	          <button
+   169	            class="icon-btn output-btn"
+   170	            :class="{ 'active': node.isOutput }"
+   171	            @click.stop="emit('toggleOutput', node.id)"
+   172	            title="Toggle Output"
+   173	          >
+   174	            {{ node.isOutput ? '▲' : '△' }}
+   175	          </button>
+   176	        </div>
+   177	      </div>
+   178	
+   179	      <!-- Action Details (when selected) -->
+   180	      <div v-if="isSelected" class="action-details">
+   181	        <div v-if="node.inputs && node.inputs.length > 0" class="action-io">
+   182	          <strong>In:</strong> {{ node.inputs.join(', ') }}
+   183	        </div>
+   184	        <div v-if="node.outputs && node.outputs.length > 0" class="action-io">
+   185	          <strong>Out:</strong> {{ node.outputs.join(', ') }}
+   186	        </div>
+   187	      </div>
+   188	    </div>
+   189	  </div>
+   190	</template>
+   191	
+   192	<script setup lang="ts">
+   193	import { ref, computed, nextTick } from 'vue';
+   194	import type { ProcessNode } from '@/domain/processTree/ProcessTree';
+   195	import type { World } from '@/domain/world/World';
+   196	import { formatElementLabel } from '@/utils/formatUtils';
+   197	import { getActionDescriptionParts } from '@/domain/processTree/Action';
+   198	import { useSelectionStore } from '@/stores/selectionStore';
+   199	import { useProcessTreeStore } from '@/stores/processTreeStore';
+   200	import { Element2D } from '@/domain/world/Element2D';
+   201	
+   202	// Props
+   203	const props = withDefaults(defineProps<{
+   204	  node: ProcessNode;
+   205	  world: World;
+   206	  selectedNodeId: string | null;
+   207	  activeSubprocessId?: string;
+   208	  relatedActionIds?: Set<string>;
+   209	  isParentEncapsulated?: boolean;
+   210	  dataVersion?: number;
+   211	}>(), {
+   212	  isParentEncapsulated: false,
+   213	  dataVersion: 0
+   214	});
+   215	
+   216	// Emits
+   217	const emit = defineEmits<{
+   218	  selectNode: [nodeId: string];
+   219	  toggleEncapsulate: [nodeId: string];
+   220	  toggleOutput: [nodeId: string];
+   221	  highlightElements: [elementIds: string[], temporary: boolean];
+   222	  clearHighlight: [];
+   223	  renameNode: [nodeId: string, newName: string];
+   224	}>();
+   225	
+   226	// Local state
+   227	const processTreeStore = useProcessTreeStore();
+   228	const isCollapsed = computed(() =>
+   229	  props.node.type === 'subprocess'
+   230	    ? processTreeStore.isCollapsed(props.node.id, props.node.name)
+   231	    : false
+   232	);
+   233	const isEditing = ref(false);
+   234	const editName = ref('');
+   235	const nameInput = ref<HTMLInputElement | null>(null);
+   236	
+   237	// Computed
+   238	const isSelected = computed(() => props.selectedNodeId === props.node.id);
+   239	
+   240	const isActiveSubprocess = computed(() => {
+   241	  if (props.node.type !== 'subprocess') return false;
+   242	  return props.activeSubprocessId === props.node.id;
+   243	});
+   244	
+   245	const isRelated = computed(() => {
+   246	  if (props.node.type !== 'action') return false;
+   247	  if (!props.relatedActionIds) return false;
+   248	  return props.relatedActionIds.has(props.node.id);
+   249	});
+   250	
+   251	const isInfeasible = computed(() => {
+   252	  if (props.node.type !== 'action') return false;
+   253	  if (!props.node.elementId) return false;
+   254	  
+   255	  // Get element polymorphically - try different element types
+   256	  let element;
+   257	  try {
+   258	    // Try 2D element first (will throw if ID format is wrong)
+   259	    element = props.world.getElement2D(props.node.elementId);
+   260	  } catch {
+--- frontend/src/components/toolbars/MainToolbar.vue
+     1	<template>
+     2	  <div class="main-toolbar">
+     3	    <div class="toolbar-section">
+     4	      <h3 class="toolbar-title">Tools</h3>
+     5	      <div class="tool-buttons">
+     6	        <button
+     7	          v-for="tool in tools"
+     8	          :key="tool.id"
+     9	          :class="['tool-button', { active: isToolActive(tool.id) }]"
+    10	          :title="tool.name"
+    11	          @click="selectTool(tool.id)"
+    12	        >
+    13	          <span class="tool-icon">{{ tool.icon }}</span>
+    14	          <span class="tool-label">{{ tool.name }}</span>
+    15	        </button>
+    16	      </div>
+    17	    </div>
+    18	  </div>
+    19	</template>
+    20	
+    21	<script setup lang="ts">
+    22	import { useToolStore } from '@/stores/toolStore';
+    23	
+    24	const toolStore = useToolStore();
+    25	
+    26	interface Tool {
+    27	  id: string;
+    28	  name: string;
+    29	  icon: string;
+    30	  category: string;
+    31	}
+    32	
+    33	// Define available tools
+    34	const tools: Tool[] = [
+    35	  { id: 'select', name: 'Select', icon: '↖', category: 'basic' },
+    36	  { id: 'point-free', name: 'Point', icon: '●', category: 'point' },
+    37	  { id: 'point-on-element', name: 'Point on Element', icon: '◉', category: 'point' },
+    38	  { id: 'point-intersection', name: 'Intersection Point', icon: '⊗', category: 'point' },
+    39	  { id: 'segment', name: 'Segment', icon: '─', category: 'line' },
+    40	  { id: 'line', name: 'Line', icon: '↔', category: 'line' },
+    41	  { id: 'circle-center-radius', name: 'Circle', icon: '○', category: 'circle' },
+    42	];
+    43	
+    44	const isToolActive = (toolId: string) => {
+    45	  return toolStore.isToolActive(toolId);
+    46	};
+    47	
+    48	const selectTool = (toolId: string) => {
+    49	  if (toolStore.isToolActive(toolId)) {
+    50	    toolStore.clearTool();
+    51	  } else {
+    52	    toolStore.setActiveTool(toolId);
+    53	  }
+    54	};
+    55	</script>
+    56	
+    57	<style scoped>
+    58	.main-toolbar {
+    59	  background-color: #ffffff;
+    60	  border-right: 1px solid #ddd;
+    61	  padding: 16px;
+    62	  width: 200px;
+    63	  overflow-y: auto;
+    64	}
+    65	
+    66	.toolbar-section {
+    67	  margin-bottom: 24px;
+    68	}
+    69	
+    70	.toolbar-title {
+    71	  font-size: 14px;
+    72	  font-weight: 600;
+    73	  color: #666;
+    74	  text-transform: uppercase;
+    75	  margin: 0 0 12px 0;
+    76	  letter-spacing: 0.5px;
+    77	}
+    78	
+    79	.tool-buttons {
+    80	  display: flex;
+    81	  flex-direction: column;
+    82	  gap: 4px;
+    83	}
+    84	
+    85	.tool-button {
+    86	  display: flex;
+    87	  align-items: center;
+    88	  gap: 8px;
+    89	  padding: 10px 12px;
+    90	  background-color: #f5f5f5;
+    91	  border: 1px solid #e0e0e0;
+    92	  border-radius: 4px;
+    93	  cursor: pointer;
+    94	  transition: all 0.15s ease;
+    95	  font-size: 14px;
+    96	  color: #333;
+    97	  text-align: left;
+    98	}
+    99	
+   100	.tool-button:hover {
+   101	  background-color: #e8e8e8;
+   102	  border-color: #ccc;
+   103	}
+   104	
+   105	.tool-button.active {
+   106	  background-color: #2196f3;
+   107	  border-color: #2196f3;
+   108	  color: #ffffff;
+   109	}
+   110	
+   111	.tool-icon {
+   112	  font-size: 18px;
+   113	  width: 24px;
+   114	  text-align: center;
+   115	}
+   116	
+   117	.tool-label {
+   118	  flex: 1;
+   119	}
+   120	</style>
+--- frontend/src/components/workspace/SvgCanvas.vue
+     1	<template>
+     2	  <div class="svg-canvas-container">
+     3	    <svg
+     4	      ref="svgElement"
+     5	      class="svg-canvas"
+     6	      xmlns="http://www.w3.org/2000/svg"
+     7	      :viewBox="`0 0 ${canvasWidth} ${canvasHeight}`"
+     8	      preserveAspectRatio="xMidYMid meet"
+     9	      @mousedown="handleMouseDown"
+    10	      @click="handleCanvasClick"
+    11	      @dblclick="handleDoubleClick"
+    12	      @mousemove="handleMouseMove"
+    13	      @wheel.prevent="handleWheel"
+    14	    >
+    15	      <!-- Background grid (T275) - Zoom-adaptive grid display -->
+    16	      <g v-if="viewStore.gridVisible.value" class="background-grid">
+    17	        <line
+    18	          v-for="line in gridLines"
+    19	          :key="line.key"
+    20	          :x1="line.x1"
+    21	          :y1="line.y1"
+    22	          :x2="line.x2"
+    23	          :y2="line.y2"
+    24	          :stroke="line.major ? '#C0C0C0' : '#E0E0E0'"
+    25	          :stroke-width="line.major ? 1 : 0.5"
+    26	        />
+    27	      </g>
+    28	      
+    29	      <!-- Render all lines through canvas presentation model (including HL_HV projections) -->
+    30	      <line
+    31	        v-for="{ primitive, attrs } in renderedLines"
+    32	        :key="primitive.id"
+    33	        v-bind="attrs"
+    34	      />
+    35	      
+    36	      <!-- Render all segments through canvas presentation model -->
+    37	      <line
+    38	        v-for="{ primitive, attrs } in renderedSegments"
+    39	        :key="primitive.id"
+    40	        v-bind="attrs"
+    41	      />
+    42	      
+    43	      <!-- Render all guides through canvas presentation model -->
+    44	      <line
+    45	        v-for="{ primitive, attrs } in renderedGuides"
+    46	        :key="primitive.id"
+    47	        v-bind="attrs"
+    48	      />
+    49	      
+    50	      <!-- Render all circles through canvas presentation model -->
+    51	      <circle
+    52	        v-for="{ primitive, attrs } in renderedCircles"
+    53	        :key="primitive.id"
+    54	        v-bind="attrs"
+    55	      />
+    56	      
+    57	      <!-- Render all arcs through canvas presentation model -->
+    58	      <path
+    59	        v-for="{ primitive, attrs } in renderedArcs"
+    60	        :key="primitive.id"
+    61	        v-bind="attrs"
+    62	      />
+    63	      
+    64	      <!-- Render all points through canvas presentation model -->
+    65	      <circle
+    66	        v-for="{ primitive, attrs } in renderedPoints"
+    67	        :key="primitive.id"
+    68	        v-bind="attrs"
+    69	      />
+    70	      
+    71	      <!-- Snap preview indicator - orange glow around snap target point -->
+    72	      <circle
+    73	        v-if="snapTarget.pointId && snapTarget.position"
+    74	        :cx="snapTarget.position.x"
+    75	        :cy="snapTarget.position.y"
+    76	        :r="8"
+    77	        fill="none"
+    78	        stroke="#FF6B35"
+    79	        stroke-width="2"
+    80	        opacity="0.8"
+    81	        class="snap-indicator"
+    82	      />
+    83	      
+    84	      <!-- Grid coordinate labels (Phase 78) - Display u,v values at viewport borders -->
+    85	      <g v-if="viewStore.gridVisible.value" class="grid-labels">
+    86	        <!-- Top edge labels (U-coordinates) -->
+    87	        <text
+    88	          v-for="label in gridLabels.top"
+    89	          :key="label.key"
+    90	          :x="label.position"
+    91	          :y="12"
+    92	          class="grid-label"
+    93	          text-anchor="middle"
+    94	        >
+    95	          {{ label.value }}
+    96	        </text>
+    97	        
+    98	        <!-- Bottom edge labels (U-coordinates) -->
+    99	        <text
+   100	          v-for="label in gridLabels.bottom"
+   101	          :key="label.key"
+   102	          :x="label.position"
+   103	          :y="canvasHeight - 4"
+   104	          class="grid-label"
+   105	          text-anchor="middle"
+   106	        >
+   107	          {{ label.value }}
+   108	        </text>
+   109	        
+   110	        <!-- Left edge labels (V-coordinates) -->
+   111	        <text
+   112	          v-for="label in gridLabels.left"
+   113	          :key="label.key"
+   114	          :x="4"
+   115	          :y="label.position"
+   116	          class="grid-label"
+   117	          text-anchor="start"
+   118	          dominant-baseline="middle"
+   119	        >
+   120	          {{ label.value }}
+   121	        </text>
+   122	        
+   123	        <!-- Right edge labels (V-coordinates) -->
+   124	        <text
+   125	          v-for="label in gridLabels.right"
+   126	          :key="label.key"
+   127	          :x="canvasWidth - 4"
+   128	          :y="label.position"
+   129	          class="grid-label"
+   130	          text-anchor="end"
+   131	          dominant-baseline="middle"
+   132	        >
+   133	          {{ label.value }}
+   134	        </text>
+   135	      </g>
+   136	    </svg>
+   137	    
+   138	    <!-- Hover tooltip -->
+   139	    <div 
+   140	      v-if="hoverHighlight.isHovering.value && hoverHighlight.hoveredElementLabel.value && hoverHighlight.temporary && !hoverHighlight.temporary.value"
+   141	      class="hover-tooltip"
+   142	      :style="{ left: tooltipPosition.x + 'px', top: tooltipPosition.y + 'px' }"
+   143	    >
+   144	      {{ hoverHighlight.hoveredElementLabel.value }}
+   145	    </div>
+   146	    
+   147	    <!-- Properties Dialog -->
+   148	    <PropertiesDialog
+   149	      :is-open="showPropertiesDialog"
+   150	      :element-id="propertiesElementId"
+   151	      :world="world"
+   152	      @close="showPropertiesDialog = false"
+   153	      @save="handleSaveProperties"
+   154	    />
+   155	  </div>
+   156	</template>
+   157	
+   158	<script setup lang="ts">
+   159	/**
+   160	 * SvgCanvas.vue - Main 2D drawing canvas component
+   161	 * 
+   162	 * This is the primary workspace where all 2D geometric elements are rendered.
+   163	 * Uses SVG for crisp, scalable vector graphics per Constitution Principle IV.
+   164	 * 
+   165	 * Rendering Pipeline:
+   166	 * 1. World (domain objects + realizations) 
+   167	 * 2. → CanvasPresentationSelector (generates read-model primitives in paper coordinates)
+   168	 * 3. → SVGRenderer (applies viewport transform, generates SVG attributes)
+   169	 * 4. → SVG elements
+   170	 * 
+   171	 * Key requirements:
+   172	 * - SVG element, not HTML Canvas
+   173	 * - Rendering consumes the canvas presentation read model
+   174	 * - Generic rendering algorithms, with fixed elements represented by selectors
+   175	 * - Pan/zoom viewport transformations remain view state
+   176	 * - Element drawing policy comes from presentation selectors and SVGRenderer
+   177	 */
+   178	
+   179	import { ref, computed, watch, onMounted, onUnmounted, inject, provide } from 'vue';
+   180	import { Matrix3, Vector3 } from 'three';
+   181	import { World } from '@/domain/world/World';
+   182	import { SVGRenderer, type ViewportTransform } from '@/services/SVGRenderer';
+   183	import { InputService } from '@/services/InputService';
+   184	import { PointTool } from '@/tools/PointTool';
+   185	import { LineTool } from '@/tools/LineTool';
+   186	import { SegmentTool } from '@/tools/SegmentTool';
+   187	import { CircleTool } from '@/tools/CircleTool';
+   188	import { GuideTool } from '@/tools/GuideTool';
+   189	import { IntersectionTool } from '@/tools/IntersectionTool';
+   190	import { ParallelLineTool } from '@/tools/ParallelLineTool';
+   191	import { PerpendicularLineTool } from '@/tools/PerpendicularLineTool';
+   192	import { TangentLineToCircleThroughPointTool } from '@/tools/TangentLineToCircleThroughPointTool';
+   193	import { TangentLineToCircleParallelToLineTool } from '@/tools/TangentLineToCircleParallelToLineTool';
+   194	import { Create3DPointTool } from '@/tools/Create3DPointTool';
+   195	import { Create3DLineTool } from '@/tools/Create3DLineTool';
+   196	import { Create3DSegmentTool } from '@/tools/Create3DSegmentTool';
+   197	import { Create3DPlaneTool } from '@/tools/Create3DPlaneTool';
+   198	import { CreateProjectionPlaneTool } from '@/tools/CreateProjectionPlaneTool';
+   199	import { FreePoint2D } from '@/domain/world/Point';
+   200	import { useToolStore } from '@/stores/toolStore';
+   201	import { useViewStore } from '@/stores/viewStore';
+   202	import { useSelectionStore } from '@/stores/selectionStore';
+   203	import { useViewport } from '@/composables/useViewport';
+   204	import { useGlobalHoverHighlight } from '@/composables/useHoverHighlight';
+   205	import { screenTo3D } from '@/utils/coordinateTransform';
+   206	import PropertiesDialog from '@/components/dialogs/PropertiesDialog.vue';
+   207	import type { ITool } from '@/tools/ITool';
+   208	import { createCanvasToolController } from '@/application/tools/CanvasToolController';
+   209	import type { FreePointMoveSession } from '@/application/tools/ToolCommandIntents';
+   210	import { CanvasPresentationController } from '@/application/canvasPresentation/CanvasPresentationController';
+   211	import { CanvasInteractionQuery } from '@/application/canvasPresentation/CanvasInteractionQuery';
+   212	
+   213	// Define emits
+   214	const emit = defineEmits<{
+   215	  'update-3d-coordinates': [coords: { x: number; y: number; z: number } | null];
+   216	  'update-active-plane': [planeInfo: { id: string; name: string }];
+   217	}>();
+   218	
+   219	const svgElement = ref<SVGSVGElement | null>(null);
+   220	
+   221	// Track World version changes (World is not reactive by itself)
+   222	const worldVersion = ref(0);
+   223	let versionPollId: number | null = null;
+   224	let lastWorldVersion = 0;
+   225	
+   226	// Active plane - derived from World (managed by App.vue)
+   227	const activePlane = computed(() => {
+   228	  // Depend on worldVersion so plane switching triggers recomputation
+   229	  const _ = worldVersion.value;
+   230	  return world.getActivePlaneId();
+   231	});
+   232	
+   233	// Dynamic canvas dimensions - updated based on container size
+   234	const canvasWidth = ref(1600);
+   235	const canvasHeight = ref(1000);
+   236	
+   237	// Properties dialog state
+   238	const showPropertiesDialog = ref(false);
+   239	const propertiesElementId = ref<string | null>(null);
+   240	
+   241	// Viewport transformation (pan/zoom)
+   242	const viewStore = useViewStore();
+   243	const viewport = computed<ViewportTransform>(() => {
+   244	  const vp = viewStore.viewportState.value;
+   245	  return vp;
+   246	});
+   247	
+   248	// Setup viewport interactions (pan/zoom)
+   249	const viewportComposable = useViewport({ element: svgElement });
+   250	
+   251	// Services
+   252	const canvasPresentationController = new CanvasPresentationController();
+   253	const svgRenderer = new SVGRenderer();
+   254	const inputService = new InputService();
+   255	const toolStore = useToolStore();
+   256	const selectionStore = useSelectionStore();
+   257	const hoverHighlight = useGlobalHoverHighlight();
+   258	const hoveredElementId = ref<string | undefined>(undefined);
+   259	
+   260	// Tooltip position (offset from cursor)
+--- frontend/src/domain/world/Element2D.ts
+     1	import { World } from './World';
+     2	import { Point2DRealization2D } from './Point';
+     3	import { Line2DRealization2D } from './Line';
+     4	import { Circle2DRealization2D } from './Circle';
+     5	import { validateElementId } from './ElementId';
+     6	import { Element } from './Element';
+     7	
+     8	/**
+     9	 * Union type for all possible 2D element realizations
+    10	 */
+    11	export type Element2DRealization = Point2DRealization2D | Line2DRealization2D | Circle2DRealization2D;
+    12	
+    13	/**
+    14	 * Base class for all 2D geometric elements (points, lines, circles)
+    15	 * 
+    16	 * **Phase 44**: Originally introduced as standalone base class with id, planeId, label, visible, type properties.
+    17	 * 
+    18	 * **Phase 52 Refactoring**: Element2D now extends Element base class to share id and label properties
+    19	 * with 3D elements. Element2D adds 2D-specific properties: planeId, visible, type.
+    20	 * 
+    21	 * **Architectural Principle: DRY and Uniform Interface**
+    22	 * 
+    23	 * Before Element2D (Phase 44), Point2D, Line2D, and Circle2D were three separate hierarchies
+    24	 * with no common ancestor, despite sharing identical properties (id, planeId, label, visible).
+    25	 * This caused:
+    26	 * - Code duplication (same properties defined three times)
+    27	 * - No uniform handling (couldn't write generic functions for all elements)
+    28	 * - Inconsistent interfaces (each hierarchy evolved independently)
+    29	 * 
+    30	 * Element2D (Phase 44) provided:
+    31	 * - Common properties: id, planeId, label, visible, type
+    32	 * - Abstract methods: clone(), realize2D()
+    33	 * - Uniform type guard: isElement2D() works for all types
+    34	 * - Generic processing: Functions can work with Element2D regardless of specific type
+    35	 * 
+    36	 * Element2D (Phase 52) now extends Element:
+    37	 * - Inherits id and label from Element base class
+    38	 * - Adds 2D-specific properties: planeId, visible, type
+    39	 * - Enables uniform handling with 3D elements via Element base type
+    40	 * 
+    41	 * **Usage**:
+    42	 * ```typescript
+    43	 * // Type guard works for all 2D elements
+    44	 * function isElement2D(obj: any): obj is Element2D {
+    45	 *   return obj instanceof Element2D;
+    46	 * }
+    47	 * 
+    48	 * // Generic functions for 2D elements
+    49	 * function hideElement(element: Element2D, world: World): void {
+    50	 *   // Use resolveVisibility or modify visualStyle
+    51	 * }
+    52	 * 
+    53	 * // Filter by plane
+    54	 * function getElementsOnPlane(planeId: string, elements: Element2D[]): Element2D[] {
+    55	 *   return elements.filter(el => el.planeId === planeId);
+    56	 * }
+    57	 * 
+    58	 * // Generic functions for all elements (2D and 3D)
+    59	 * function getElementLabel(element: Element): string {
+    60	 *   return element.label || element.id;
+    61	 * }
+    62	 * ```
+    63	 * 
+    64	 * @sealed - Cannot be directly subclassed, only Point2D/Line2D/Circle2D extend it
+    65	 */
+    66	export abstract class Element2D extends Element {
+    67	  /** Which projection plane this element belongs to */
+    68	  readonly planeId: string;
+    69	  
+    70	  /**
+    71	   * Construct a 2D element
+    72	   * 
+    73	   * @param id Element ID in hierarchical format: '{planeId}/{localId}' (e.g., 'proj_plane_1/point2d_5')
+    74	   *           This ID must be generated by the containing plane's factory methods or ID generators.
+    75	   *           NEVER pass hardcoded non-hierarchical IDs like 'p1' or 'point2d_5' - they will fail validation.
+    76	   * @param planeId ID of the projection plane that contains this element
+    77	   * @param label Optional user-friendly label for UI display
+    78	   */
+    79	  constructor(
+    80	    id: string,
+    81	    planeId: string,
+    82	    label?: string
+    83	  ) {
+    84	    // Phase 52: Call Element base constructor with id and label
+    85	    super(id, label);
+    86	    
+    87	    // Phase 45: Validate hierarchical ID format
+    88	    // Ensure element ID starts with its container plane ID
+    89	    // Throws error if ID doesn't match format '{planeId}/{localId}'
+    90	    validateElementId(id, planeId);
+    91	    
+    92	    this.planeId = planeId;
+    93	  }
+    94	  
+    95	  /**
+    96	   * Clone this element
+    97	   * Must be implemented by concrete subclasses
+    98	   */
+    99	  abstract clone(): Element2D;
+   100	  
+   101	  /**
+   102	   * Calculate 2D realization (geometric position/shape) for this element
+   103	   * Returns realization in the projection plane's intrinsic coordinates
+   104	   * 
+   105	   * @param world World instance to query parent element realizations
+   106	   * @returns Element realization or null if computation fails
+   107	   */
+   108	  abstract realize2D(world: ProjectionPlaneElementRealizationContext): Element2DRealization | null;
+   109	}
+   110	
+   111	/**
+   112	 * Type guard to check if an object is an Element2D
+   113	 * 
+   114	 * @param obj Object to check
+   115	 * @returns true if obj is an Element2D (Point2D, Line2D, or Circle2D), false otherwise
+   116	 */
+   117	export function isElement2D(obj: any): obj is Element2D {
+   118	  return obj instanceof Element2D;
+   119	}
+--- frontend/src/domain/world/HingeLine.ts
+     1	/**
+     2	 * HingeLine - Intersection line shared by two projection planes
+     3	 * 
+     4	 * A hinge line represents the physical fold between two projection planes
+     5	 * (e.g., HL_HV between P_H and P_V). It is NOT used for broken hinge lines (BHLs),
+     6	 * which are intersections between arbitrary 3D planes.
+     7	 * 
+     8	 * The hinge line exists in 3D space and automatically realizes on both planes it connects.
+     9	 * Each plane gets a HingeLineRealization2D (the 2D view of the hinge line on that plane).
+    10	 * 
+    11	 * **Phase 52**: Refactored to extend Element3D, removing id and label properties
+    12	 * which are now inherited from Element base class. Replaces `name` with `label`.
+    13	 * 
+    14	 */
+    15	
+    16	import type { ProjectionPlaneElementRealizationContext } from './projectionPlane/ProjectionPlaneContext';
+    17	import { Vector3 } from 'three';
+    18	import { Line2D, Line2DRealization2D } from './Line';
+    19	import { Line3D } from './Line3D';
+    20	import { Line3DRealization3D } from './Element3DRealization3D';
+    21	import { HalfHingeLineRealization2D } from './HalfHingeLineRealization2D';
+    22	import { applyMatrix4x3, applyMatrix3x4 } from '@/utils/threeUtils';
+    23	
+    24	/**
+    25	 * HalfHingeLine2D - 2D representation of a hinge line on a specific projection plane
+    26	 * 
+    27	 * Each HingeLine has exactly 2 HalfHingeLine2D objects (one per plane).
+    28	 * This represents how the hinge line appears in the plane's (u,v) coordinate system.
+    29	 * 
+    30	 * **Phase 84**: NO geometry storage - computed on demand from canonical coordinates.
+    31	 * Hinge line is ALWAYS at v=0 along u-axis in plane intrinsic coordinates.
+    32	 * 
+    33	 * Design: HalfHingeLine2D extends Line2D so it can be used with all line operations.
+    34	 * It's a fixed line (cannot be deleted) that represents the fold between planes.
+    35	 * Guides reference HalfHingeLine2D (not HingeLine) because guides are perpendicular
+    36	 * to the 2D representation.
+    37	 * 
+    38	 */
+    39	export class HalfHingeLine2D extends Line2D {
+    40	  readonly hingeLineId: string;  // Parent HingeLine
+    41	  // Phase 84: NO geometry storage - computed via realize2D()
+    42	
+    43	  constructor(
+    44	    id: string,
+    45	    hingeLine: HingeLine,
+    46	    planeId: string,
+    47	    label?: string
+    48	  ) {
+    49	    // Create a friendly label like "HHL_{8}" from "projPlane3/line2d8"
+    50	    // Extract the line number after 'line2d' (not the plane number)
+    51	    const numericPart = id.match(/line2d(\d+)/)?.[1] || id.match(/\d+$/)?.[0] || id;
+    52	    super(id, planeId, label || `HHL_{${numericPart}}`);
+    53	    this.hingeLineId = hingeLine.id;
+    54	  }
+    55	
+    56	  clone(): HalfHingeLine2D {
+    57	    // Note: Cloning requires looking up hingeLine from world, which isn't available here
+    58	    // This is a limitation of the current clone() signature
+    59	    // For now, keep the ID-based approach for clone()
+    60	    return new HalfHingeLine2D(
+    61	      this.id,
+    62	      { id: this.hingeLineId } as HingeLine,  // Minimal object with just ID
+    63	      this.planeId
+    64	    );
+    65	  }
+    66	
+    67	  /**
+    68	   * Get dependencies for this half hinge line
+    69	   * 
+    70	   * Dependencies:
+    71	   * - Parent HingeLine (for 3D realization)
+    72	   * - Projection plane (for transformation matrix in realize2D)
+    73	   * 
+    74	   * Phase 85 FIX: Must include planeId because realize2D() for plane2 calls:
+    75	   *   world.getProjectionPlane3DRealization(this.planeId)
+    76	   * 
+    77	   * When projection plane transforms change (e.g., auxiliary plane's trace lines move),
+    78	   * this half hinge line's realization must be recomputed.
+    79	   */
+    80	  getDependencies(): string[] {
+    81	    // Depend on both the parent HingeLine AND the projection plane
+    82	    // The plane dependency is critical for plane2 half-hinge lines that project back
+    83	    return [this.hingeLineId, this.planeId];
+    84	  }
+    85	
+    86	  /**
+    87	   * Find the sibling HalfHingeLine2D in the other plane.
+    88	   * 
+    89	   * Static method for navigating from one HalfHingeLine2D to its sibling
+    90	   * in the paired projection plane. Used when creating sibling elements
+    91	   * (guides, intersection points, etc.)
+    92	   * 
+    93	   * Navigation: HalfHingeLine2D → HingeLine → getOtherPlane() → find matching HHL
+    94	   * 
+    95	   * @param world World instance to navigate
+    96	   * @param halfHingeLineId ID of the HalfHingeLine2D in the current plane
+    97	   * @param currentPlaneId ID of the current plane
+    98	   * @returns Object with siblingPlaneId and siblingHalfHingeLineId, or undefined if not a HHL
+    99	   */
+   100	  static getSiblingInfo(
+   101	    world: ProjectionPlaneElementRealizationContext,
+   102	    halfHingeLineId: string,
+   103	    currentPlaneId: string
+   104	  ): { siblingPlaneId: string; siblingHalfHingeLineId: string } | undefined {
+   105	    // Get current plane and HalfHingeLine2D
+   106	    const currentPlane = world.getProjectionPlaneById(currentPlaneId)!;
+   107	    const halfHingeLine = currentPlane.getLine(halfHingeLineId);
+   108	    
+   109	    if (!halfHingeLine || !(halfHingeLine instanceof HalfHingeLine2D)) {
+   110	      return undefined;
+   111	    }
+   112	
+   113	    // Get parent HingeLine and sibling plane
+   114	    const hingeLine = world.getHingeLineById(halfHingeLine.hingeLineId)!;
+   115	    const siblingPlaneId = hingeLine.getOtherPlane(currentPlaneId)!;
+   116	    const siblingPlane = world.getProjectionPlaneById(siblingPlaneId)!;
+   117	
+   118	    // Find HalfHingeLine2D with same hingeLineId in sibling plane
+   119	    const siblingHalfHingeLine = siblingPlane.getAllLines().find(
+   120	      (line): line is HalfHingeLine2D => line instanceof HalfHingeLine2D && line.hingeLineId === halfHingeLine.hingeLineId
+   121	    )!;
+   122	
+   123	    return {
+   124	      siblingPlaneId,
+   125	      siblingHalfHingeLineId: siblingHalfHingeLine.id
+   126	    };
+   127	  }
+   128	
+   129	  /**
+   130	   * Realize this half-hinge line using canonical coordinates (Phase 84)
+   131	   * 
+   132	   * Returns HalfHingeLineRealization2D with line geometry and guideVector.
+   133	   * guideVector is PERPENDICULAR to the hinge line (for regular hinge lines).
+   134	   * 
+   135	   * **Phase 84 Architecture**:
+   136	   * - Plane1: Returns canonical coordinates (0,0,1) and (1,0,0) directly
+   137	   * - Plane2: Projects 3D line back to plane2 using applyMatrix3x4()
+   138	   * 
+   139	   * **Phase 101**: Returns HalfHingeLineRealization2D with guideVector
+   140	   * - guideVector is perpendicular to hinge line direction
+   141	   * - Guide2D uses this vector to create guides
+   142	   * 
+   143	   * @param world World instance for accessing HingeLine and plane realizations
+   144	   */
+   145	  realize2D(world: ProjectionPlaneElementRealizationContext): HalfHingeLineRealization2D {
+   146	    const hingeLine = world.getHingeLineById(this.hingeLineId)!;
+   147	
+   148	    // Plane1: Return canonical coordinates directly
+   149	    if (this.planeId === hingeLine.plane1Id) {
+   150	      // Check feasibility of underlying Plane3D (if projection plane has one)
+   151	      const projPlane1 = world.getProjectionPlaneById(hingeLine.plane1Id)!;
+   152	      if (projPlane1.plane3DId) {
+   153	        const plane3DReal = world.get3DPlaneRealization(projPlane1.plane3DId)!;
+   154	        if (!plane3DReal.isFeasible()) {
+   155	          // Return infeasible realization instead of throwing
+   156	          return HalfHingeLineRealization2D.createInfeasible();
+   157	        }
+   158	      }
+   159	
+   160	      const hingeDirection = new Vector3(1, 0, 0);  // Canonical u-axis direction
+   161	      const guideVector = new Vector3(0, 1, 0);     // Perpendicular (v-axis direction)
+   162	
+   163	      return new HalfHingeLineRealization2D(
+   164	        new Vector3(0, 0, 1),    // Canonical origin
+   165	        hingeDirection,           // Hinge line direction
+   166	        guideVector,              // Perpendicular for guides
+   167	        true                      // feasible
+   168	      );
+   169	    }
+   170	
+   171	    // Plane2: Project 3D line back to plane2
+   172	    const line3D = hingeLine.realize3D(world);
+   173	    const plane2Real = world.getProjectionPlane3DRealization(this.planeId)!;
+   174	
+   175	    // Check feasibility of 3D line (depends on plane1)
+   176	    if (!line3D.isFeasible()) {
+   177	      // Return infeasible realization instead of throwing
+   178	      return HalfHingeLineRealization2D.createInfeasible();
+   179	    }
+   180	
+   181	    const origin2D = applyMatrix3x4(line3D.point, plane2Real.threeDToPlane);
+   182	    const direction2D = applyMatrix3x4(line3D.direction, plane2Real.threeDToPlane);
+   183	    
+   184	    // Compute perpendicular guide vector
+   185	    const guideVector = new Vector3(-direction2D.y, direction2D.x, 0).normalize();
+   186	    
+   187	    return new HalfHingeLineRealization2D(
+   188	      origin2D,
+   189	      direction2D,
+   190	      guideVector,
+   191	      true  // feasible
+   192	    );
+   193	  }
+   194	}
+   195	
+   196	/**
+   197	 * HingeLine - Physical fold between two projection planes
+   198	 * 
+   199	 * The hinge line is a 3D element that automatically appears on both planes it connects.
+   200	 * It cannot be deleted and is not stored as Line2D entities - it's a fixed element.
+   201	 * 
+   202	 * Each HingeLine has exactly 2 HalfHingeLine2D objects (one per plane) that represent
+   203	 * how the hinge line appears in each plane's (u,v) coordinate system. These HalfHingeLine2D
+   204	 * objects are owned by their respective ProjectionPlane objects.
+   205	 * 
+   206	 * **Phase 52**: Refactored to extend Element3D. Inherits id and label from Element.
+   207	 * **Phase 84**: NO geometry storage - computed on demand from canonical coordinates (0,0,1), (1,0,0).
+   208	 * Extends Line3D base class to share realization pattern with other 3D lines.
+   209	 */
+   210	export class HingeLine extends Line3D {
+   211	  readonly plane1Id: string;  // Reference plane (canonical coords source)
+   212	  readonly plane2Id: string;  // Second projection plane
+   213	
+   214	  constructor(
+   215	    id: string,
+   216	    label: string,
+   217	    plane1Id: string,
+   218	    plane2Id: string
+   219	  ) {
+   220	    // Phase 52: Call Element3D constructor with id and label
+   221	    super(id, label);
+   222	    
+   223	    if (plane1Id === plane2Id) {
+   224	      throw new Error('HingeLine: plane1 and plane2 must be distinct');
+   225	    }
+   226	
+   227	    this.plane1Id = plane1Id;
+   228	    this.plane2Id = plane2Id;
+   229	  }
+   230	
+   231	  /**
+   232	   * Compute 3D realization using canonical coordinates (Phase 84)
+   233	   * 
+   234	   * Transforms canonical coordinates (0,0,1) origin and (1,0,0) u-axis direction
+   235	   * from plane1 to 3D using applyMatrix4x3().
+   236	   * 
+   237	   * Returns Line3DRealization3D with point and direction in 3D domain coordinates (Vector4).
+   238	   */
+   239	  realize3D(world: ProjectionPlaneElementRealizationContext): Line3DRealization3D {
+   240	    const projPlane1 = world.getProjectionPlaneById(this.plane1Id);
+   241	    const projPlane2 = world.getProjectionPlaneById(this.plane2Id);
+   242	
+   243	    // Check that both planes exist (structural integrity)
+   244	    if (!projPlane1 || !projPlane2) {
+   245	      const errorInfo = {
+   246	        hingeLineId: this.id,
+   247	        hingeLineLabel: this.label,
+   248	        plane1Id: this.plane1Id,
+   249	        plane2Id: this.plane2Id,
+   250	        projPlane1Exists: !!projPlane1,
+   251	        projPlane2Exists: !!projPlane2,
+   252	        allProjectionPlanes: world.getAllProjectionPlanes().map(p => ({ id: p.id })),
+   253	        allHingeLines: world.getAllHingeLines().map(hl => ({ 
+   254	          id: hl.id, 
+   255	          label: hl.label, 
+   256	          plane1Id: hl.plane1Id, 
+   257	          plane2Id: hl.plane2Id 
+   258	        }))
+   259	      };
+   260	      console.error(`[HingeLine.realize3D] CRITICAL: HingeLine references non-existent projection plane(s)`, errorInfo);
+--- frontend/src/commands/operations/world/UpdateElementStyleOp.ts
+     1	/**
+     2	 * UpdateElementStyleOp - Operation to update visual style properties of an element
+     3	 * 
+     4	 * Updates style properties (color, lineWidth, lineStyle, visibility) of a geometric element.
+     5	 * Style changes are undoable by storing previous values.
+     6	 * 
+     7	 * Phase 83: Now actually updates element.visualStyle property
+     8	 * 
+     9	 */
+    10	
+    11	import type { IOperation, OperationResult } from '../IOperation';
+    12	import type { World } from '@/domain/world/World';
+    13	import type { VisualStyle } from '@/domain/world/VisualStyle';
+    14	import { createVisualStyle } from '@/domain/world/VisualStyle';
+    15	
+    16	/**
+    17	 * Style properties that can be updated
+    18	 */
+    19	interface StyleProperties {
+    20	  color?: string;
+    21	  lineWidth?: number;
+    22	  lineStyle?: 'solid' | 'dashed' | 'dotted';
+    23	  opacity?: number;
+    24	  visible?: boolean;
+    25	}
+    26	
+    27	/**
+    28	 * UpdateElementStyleOp - Updates element visual style
+    29	 * 
+    30	 * Per data-model.md Command Pattern: All logic belongs in Operations, not Command subclasses.
+    31	 * This operation implements the apply/undo pattern for style updates.
+    32	 */
+    33	export class UpdateElementStyleOp implements IOperation {
+    34	  readonly type = 'UpdateElementStyle';
+    35	  readonly parameters: Record<string, any>;
+    36	  outputs: Record<string, any> = {};
+    37	  
+    38	  private previousStyle: VisualStyle | undefined = undefined;
+    39	
+    40	  constructor(
+    41	    private elementId: string,
+    42	    private planeId: string,
+    43	    private newStyle: StyleProperties
+    44	  ) {
+    45	    this.parameters = { elementId, planeId, newStyle };
+    46	  }
+    47	
+    48	  apply(world: World): OperationResult {
+    49	    try {
+    50	      // Get the plane containing the element
+    51	      const plane = world.getProjectionPlaneById(this.planeId);
+    52	      if (!plane) {
+    53	        throw new Error(`Plane not found: ${this.planeId}`);
+    54	      }
+    55	
+    56	      // Try to find element (could be point, line, circle, etc.)
+    57	      let element = plane.getPoint(this.elementId);
+    58	      if (!element) {
+    59	        element = plane.getLine(this.elementId);
+    60	      }
+    61	      if (!element) {
+    62	        element = plane.getCircle(this.elementId);
+    63	      }
+    64	      
+    65	      if (!element) {
+    66	        throw new Error(`Element not found: ${this.elementId}`);
+    67	      }
+    68	
+    69	      // Store previous style for undo (clone it)
+    70	      this.previousStyle = element.visualStyle ? { ...element.visualStyle } : undefined;
+    71	      
+    72	      // Create or update visualStyle
+    73	      if (!element.visualStyle) {
+    74	        // Element has no style yet, create one with defaults
+    75	        element.visualStyle = createVisualStyle();
+    76	      }
+    77	      
+    78	      // Apply new style properties (only update provided properties)
+    79	      if (this.newStyle.color !== undefined) {
+    80	        element.visualStyle.color = this.newStyle.color;
+    81	      }
+    82	      if (this.newStyle.lineWidth !== undefined) {
+    83	        element.visualStyle.lineWidth = this.newStyle.lineWidth;
+    84	      }
+    85	      if (this.newStyle.lineStyle !== undefined) {
+    86	        element.visualStyle.lineStyle = this.newStyle.lineStyle;
+    87	      }
+    88	      if (this.newStyle.opacity !== undefined) {
+    89	        element.visualStyle.opacity = this.newStyle.opacity;
+    90	      }
+    91	      if (this.newStyle.visible !== undefined) {
+    92	        element.visualStyle.visible = this.newStyle.visible;
+    93	      }
+    94	      
+    95	      return {
+    96	        success: true,
+    97	        outputs: { elementId: this.elementId }
+    98	      };
+    99	    } catch (error) {
+   100	      return {
+   101	        success: false,
+   102	        outputs: {},
+   103	        error: error instanceof Error ? error.message : String(error)
+   104	      };
+   105	    }
+   106	  }
+   107	
+   108	  undo(world: World): void {
+   109	    try {
+   110	      // Get the plane and element
+   111	      const plane = world.getProjectionPlaneById(this.planeId);
+   112	      if (!plane) {
+   113	        console.error('[UpdateElementStyleOp] Cannot undo: Plane not found:', this.planeId);
+   114	        return;
+   115	      }
+   116	
+   117	      let element = plane.getPoint(this.elementId);
+   118	      if (!element) {
+   119	        element = plane.getLine(this.elementId);
+   120	      }
+   121	      if (!element) {
+   122	        element = plane.getCircle(this.elementId);
+   123	      }
+   124	      
+   125	      if (!element) {
+   126	        console.error('[UpdateElementStyleOp] Cannot undo: Element not found:', this.elementId);
+   127	        return;
+   128	      }
+   129	
+   130	      // Restore previous style
+   131	      element.visualStyle = this.previousStyle ? { ...this.previousStyle } : undefined;
+   132	      
+   133	    } catch (error) {
+   134	      console.error('[UpdateElementStyleOp] Undo failed:', error);
+   135	    }
+   136	  }
+   137	
+   138	  serialize() {
+   139	    return {
+   140	      opType: this.type,
+   141	      elementId: this.elementId,
+   142	      planeId: this.planeId,
+   143	      newStyle: this.newStyle,
+   144	      outputs: this.outputs
+   145	    };
+   146	  }
+   147	}
+--- frontend/src/commands/operations/world/AddLineOp.ts
+     1	/**
+     2	 * AddLine2DByTwoPointsOp - Operation to add a Line2DByTwoPoints using ProjectionPlane factory method
+     3	 * 
+     4	 * Wraps ProjectionPlane.addLine2DBetweenTwoPoints() in the Operation interface.
+     5	 */
+     6	
+     7	import type { IOperation, OperationResult } from '../IOperation';
+     8	import type { World } from '@/domain/world/World';
+     9	
+    10	export class AddLine2DByTwoPointsOp implements IOperation {
+    11	  readonly type = 'AddLine2DByTwoPoints';
+    12	  readonly parameters: Record<string, any>;
+    13	  outputs: Record<string, any> = {};
+    14	
+    15	  constructor(
+    16	    private planeId: string,
+    17	    private point1Id: string,
+    18	    private point2Id: string
+    19	  ) {
+    20	    this.parameters = { planeId, point1Id, point2Id };
+    21	  }
+    22	
+    23	  apply(world: World): OperationResult {
+    24	    try {
+    25	      const plane = world.getProjectionPlaneById(this.planeId);
+    26	      if (!plane) {
+    27	        throw new Error(`Plane not found: ${this.planeId}`);
+    28	      }
+    29	      
+    30	      // Pass stored ID if available (for redo), otherwise let plane generate new one
+    31	      const line = plane.addLine2DBetweenTwoPoints(
+    32	        this.point1Id,
+    33	        this.point2Id,
+    34	        world,
+    35	        this.outputs.lineId
+    36	      );
+    37	      this.outputs = { lineId: line.id };
+    38	      return {
+    39	        success: true,
+    40	        outputs: this.outputs
+    41	      };
+    42	    } catch (error) {
+    43	      return {
+    44	        success: false,
+    45	        outputs: {},
+    46	        error: error instanceof Error ? error.message : String(error)
+    47	      };
+    48	    }
+    49	  }
+    50	
+    51	  undo(world: World): void {
+    52	    if (this.outputs.lineId) {
+    53	      const plane = world.getProjectionPlaneById(this.planeId);
+    54	      if (plane) {
+    55	        plane.removeLine(this.outputs.lineId);
+    56	      }
+    57	    }
+    58	  }
+    59	
+    60	  serialize() {
+    61	    return {
+    62	      opType: this.type,
+    63	      planeId: this.planeId,
+    64	      point1Id: this.point1Id,
+    65	      point2Id: this.point2Id,
+    66	      lineId: this.outputs.lineId
+    67	    };
+    68	  }
+    69	}
+    70	
+    71	/**
+    72	 * AddLine2DParallelToLineOp - Operation to add a Line2DParallel using ProjectionPlane factory method
+    73	 * 
+    74	 * Wraps ProjectionPlane.addLine2DParallelToLine() in the Operation interface.
+    75	 */
+    76	export class AddLine2DParallelToLineOp implements IOperation {
+    77	  readonly type = 'AddLine2DParallelToLine';
+    78	  readonly parameters: Record<string, any>;
+    79	  outputs: Record<string, any> = {};
+    80	
+    81	  constructor(
+    82	    private planeId: string,
+    83	    private referenceLineId: string,
+    84	    private throughPointId: string
+    85	  ) {
+    86	    this.parameters = { planeId, referenceLineId, throughPointId };
+    87	  }
+    88	
+    89	  apply(world: World): OperationResult {
+    90	    try {
+    91	      const plane = world.getProjectionPlaneById(this.planeId);
+    92	      if (!plane) {
+    93	        throw new Error(`Plane not found: ${this.planeId}`);
+    94	      }
+    95	      
+    96	      // Pass stored ID if available (for redo), otherwise let plane generate new one
+    97	      const line = plane.addLine2DParallelToLine(
+    98	        this.referenceLineId,
+    99	        this.throughPointId,
+   100	        world,
+   101	        this.outputs.lineId
+   102	      );
+   103	      this.outputs = { lineId: line.id };
+   104	      return {
+   105	        success: true,
+   106	        outputs: this.outputs
+   107	      };
+   108	    } catch (error) {
+   109	      return {
+   110	        success: false,
+   111	        outputs: {},
+   112	        error: error instanceof Error ? error.message : String(error)
+   113	      };
+   114	    }
+   115	  }
+   116	
+   117	  undo(world: World): void {
+   118	    if (this.outputs.lineId) {
+   119	      const plane = world.getProjectionPlaneById(this.planeId);
+   120	      if (plane) {
+   121	        plane.removeLine(this.outputs.lineId);
+   122	      }
+   123	    }
+   124	  }
+   125	
+   126	  serialize() {
+   127	    return {
+   128	      opType: this.type,
+   129	      planeId: this.planeId,
+   130	      circleId: this.circleId,
+   131	      throughPointId: this.throughPointId,
+   132	      index: this.tangentIndex,
+   133	      lineId: this.outputs.lineId
+   134	    };
+   135	  }
+   136	}
+   137	
+   138	/**
+   139	 * AddLine2DPerpendicularToLineOp - Operation to add a Line2DPerpendicularToLine using ProjectionPlane factory method
+   140	 * 
+   141	 * Wraps ProjectionPlane.addLine2DPerpendicularToLine() in the Operation interface.
+   142	 */
+   143	export class AddLine2DPerpendicularToLineOp implements IOperation {
+   144	  readonly type = 'AddLine2DPerpendicularToLine';
+   145	  readonly parameters: Record<string, any>;
+   146	  outputs: Record<string, any> = {};
+   147	
+   148	  constructor(
+   149	    private planeId: string,
+   150	    private referenceLineId: string,
+   151	    private throughPointId: string
+   152	  ) {
+   153	    this.parameters = { planeId, referenceLineId, throughPointId };
+   154	  }
+   155	
+   156	  apply(world: World): OperationResult {
+   157	    try {
+   158	      const plane = world.getProjectionPlaneById(this.planeId);
+   159	      if (!plane) {
+   160	        throw new Error(`Plane not found: ${this.planeId}`);
+   161	      }
+   162	      
+   163	      // Pass stored ID if available (for redo), otherwise let plane generate new one
+   164	      const line = plane.addLine2DPerpendicularToLine(
+   165	        this.referenceLineId,
+   166	        this.throughPointId,
+   167	        world,
+   168	        this.outputs.lineId
+   169	      );
+   170	      this.outputs = { lineId: line.id };
+   171	      return {
+   172	        success: true,
+   173	        outputs: this.outputs
+   174	      };
+   175	    } catch (error) {
+   176	      return {
+   177	        success: false,
+   178	        outputs: {},
+   179	        error: error instanceof Error ? error.message : String(error)
+   180	      };
+   181	    }
+   182	  }
+   183	
+   184	  undo(world: World): void {
+   185	    if (this.outputs.lineId) {
+   186	      const plane = world.getProjectionPlaneById(this.planeId);
+   187	      if (plane) {
+   188	        plane.removeLine(this.outputs.lineId);
+   189	      }
+   190	    }
+   191	  }
+   192	
+   193	  serialize() {
+   194	    return {
+   195	      opType: this.type,
+   196	      planeId: this.planeId,
+   197	      circleId: this.circleId,
+   198	      throughPointId: this.throughPointId,
+   199	      index: this.tangentIndex,
+   200	      lineId: this.outputs.lineId
+   201	    };
+   202	  }
+   203	}
+   204	/**
+   205	 * AddLine2DTangentToCircleThroughPointOp - Operation to add a Line2DTangentToCircleThroughPoint using ProjectionPlane factory method
+   206	 * 
+   207	 * Phase 60: Tangent line to circle through external point
+   208	 * Wraps ProjectionPlane.addLine2DTangentToCircleThroughPoint() in the Operation interface.
+   209	 */
+   210	export class AddLine2DTangentToCircleThroughPointOp implements IOperation {
+   211	  readonly type = 'AddLine2DTangentToCircleThroughPoint';
+   212	  readonly parameters: Record<string, any>;
+   213	  outputs: Record<string, any> = {};
+   214	
+   215	  constructor(
+   216	    private planeId: string,
+   217	    private circleId: string,
+   218	    private throughPointId: string,
+   219	    private tangentIndex: 0 | 1
+   220	  ) {
+   221	    this.parameters = { planeId, circleId, throughPointId, tangentIndex };
+   222	  }
+   223	
+   224	  apply(world: World): OperationResult {
+   225	    try {
+   226	      const plane = world.getProjectionPlaneById(this.planeId);
+   227	      if (!plane) {
+   228	        throw new Error(`Plane not found: ${this.planeId}`);
+   229	      }
+   230	      
+   231	      // Pass stored ID if available (for redo), otherwise let plane generate new one
+   232	      const line = plane.addLine2DTangentToCircleThroughPoint(
+   233	        this.circleId,
+   234	        this.throughPointId,
+   235	        this.tangentIndex,
+   236	        world,
+   237	        this.outputs.lineId
+   238	      );
+   239	      this.outputs = { lineId: line.id };
+   240	      return {
+   241	        success: true,
+   242	        outputs: this.outputs
+   243	      };
+   244	    } catch (error) {
+   245	      return {
+   246	        success: false,
+   247	        outputs: {},
+   248	        error: error instanceof Error ? error.message : String(error)
+   249	      };
+   250	    }
+   251	  }
+   252	
+   253	  undo(world: World): void {
+   254	    if (this.outputs.lineId) {
+   255	      const plane = world.getProjectionPlaneById(this.planeId);
+   256	      if (plane) {
+   257	        plane.removeLine(this.outputs.lineId);
+   258	      }
+   259	    }
+   260	  }

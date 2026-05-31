@@ -7,3 +7,7 @@
 
   ➜  Local:   http://localhost:5173/
   ➜  Network: http://10.0.3.113:5173/
+12:46:50 AM [vite] page reload src/components/panels/ActionsPanel.vue
+12:47:19 AM [vite] page reload src/components/toolbars/Toolbar.vue
+12:54:25 AM [vite] page reload src/components/toolbars/Toolbar.vue
+1:01:05 AM [vite] page reload playwright-report/index.html

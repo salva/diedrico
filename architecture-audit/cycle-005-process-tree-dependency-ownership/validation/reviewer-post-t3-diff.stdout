@@ -1,0 +1,315 @@
+diff --git a/architecture-audit/cycle-005-process-tree-dependency-ownership/implementation-log.md b/architecture-audit/cycle-005-process-tree-dependency-ownership/implementation-log.md
+index 38a579f..facf095 100644
+--- a/architecture-audit/cycle-005-process-tree-dependency-ownership/implementation-log.md
++++ b/architecture-audit/cycle-005-process-tree-dependency-ownership/implementation-log.md
+@@ -18,0 +19,3 @@ Implemented `architecture-audit/cycle-005-process-tree-dependency-ownership/deci
++  - Correction `t3-correct-deletion-sequence-coverage`: fixed `getElementsInDeletionOrder()` to return leaf dependents before selected roots, matching its dependents-first contract and the deletion factory's referential-integrity requirement.
++- `frontend/src/commands/operations/world/RemoveElementOps.ts`
++  - Correction `t3-correct-deletion-sequence-coverage`: fixed `RemoveSegment2DOp` runtime subtype detection to use the concrete `Segment2DByPoints` constructor instead of the erased `Segment2D` type alias.
+@@ -33,2 +36,4 @@ Implemented `architecture-audit/cycle-005-process-tree-dependency-ownership/deci
+-  - Deleted the stale skipped cascade-deletion suite that preserved compatibility names and no-op rebuild calls.
+-  - Kept active tests that do not rely on removed compatibility APIs.
++  - Initial implementation over-deleted the stale skipped cascade suite and left only two minimal active tests; reviewer correction restored meaningful active factory coverage.
++  - Current coverage uses explicit `ActionGroup` + `addActionToGroup()` setup and real `DependencyService.registerNode(...)`; it does not call implicit process-tree insertion or deleted rebuild/action-dependency shims.
++  - Active scenarios now cover empty selection, single point deletion with process-action tombstoning, element-without-action deletion, dependency-driven point→line and point→circle cascades, multiple independent point deletion, undo/redo for cascade deletion, and segment deletion dispatch.
++  - The restored tests exposed and drove the narrow fixes to deletion ordering and segment subtype detection listed above.
+@@ -61,0 +67 @@ All stdout/stderr logs are under `architecture-audit/cycle-005-process-tree-depe
++- `t3-static-deleted-names.*` — reran deleted-name check after reviewer correction; exit 1/no matches in active source/tests.
+@@ -68 +74,3 @@ Passed:
+-- `focused-deletion-dependency-rerun.*`: `npm run test --workspace=frontend -- tests/unit/commands/factories/DeletionSequenceFactory.spec.ts tests/unit/commands/removeElementOps.spec.ts tests/integration/projectService.cascadeDeletion.spec.ts` — 15 passed.
++- `focused-deletion-dependency-rerun.*`: original implementation focused deletion/dependency rerun — 15 passed before reviewer correction, but with insufficient factory coverage.
++- `t3-focused-deletion-sequence-factory-rerun.*`: corrected `DeletionSequenceFactory.spec.ts` — 8 passed.
++- `t3-focused-deletion-dependency.*`: corrected deletion/dependency set (`DeletionSequenceFactory.spec.ts`, `removeElementOps.spec.ts`, `projectService.cascadeDeletion.spec.ts`) — 21 passed.
+@@ -71 +79,2 @@ Passed:
+-- `focused-dependency-graph.*`: `tests/unit/dependencyGraph.spec.ts` — 34 passed, proving real dependency registration/query behavior remains.
++- `focused-dependency-graph.*`: original dependency graph suite — 34 passed.
++- `t3-focused-dependency-graph.*`: reran dependency graph suite after deletion-order correction — 34 passed.
+@@ -74,0 +84,2 @@ A first deletion-focused run (`focused-deletion-dependency.*`) failed because th
++During reviewer correction, `t3-focused-deletion-sequence-factory.*` initially failed and identified two attributable defects: `DependencyService.getElementsInDeletionOrder()` returned selected roots before dependents despite its dependents-first contract, and `RemoveSegment2DOp` used an erased `Segment2D` type alias in an `instanceof` check. Both were corrected, then `t3-focused-deletion-sequence-factory-rerun.*`, `t3-focused-deletion-dependency.*`, and `t3-focused-dependency-graph.*` passed.
++
+@@ -95 +106 @@ A first deletion-focused run (`focused-deletion-dependency.*`) failed because th
+-- Deletion factory active coverage is intentionally narrower after deleting stale skipped compatibility tests; existing integration cascade deletion and remove-element focused tests cover real incremental dependency behavior without rebuild shims.
++- Deletion factory coverage now explicitly exercises representative cascade behavior without compatibility shims. Remaining breadth beyond these representative factory scenarios is covered by the focused remove-element and integration cascade-deletion suites.
+diff --git a/frontend/src/commands/operations/world/RemoveElementOps.ts b/frontend/src/commands/operations/world/RemoveElementOps.ts
+index 380f996..c34348e 100644
+--- a/frontend/src/commands/operations/world/RemoveElementOps.ts
++++ b/frontend/src/commands/operations/world/RemoveElementOps.ts
+@@ -14 +14 @@ import type { Line2D } from '@/domain/world/Line';
+-import type { Segment2D } from '@/domain/world/Segment';
++import { Segment2DByPoints, type Segment2D } from '@/domain/world/Segment';
+@@ -222 +222 @@ export class RemoveSegment2DOp implements IOperation {
+-      this.removedSegment = line instanceof Segment2D ? line : undefined;
++      this.removedSegment = line instanceof Segment2DByPoints ? line : undefined;
+diff --git a/frontend/src/domain/world/DependencyService.ts b/frontend/src/domain/world/DependencyService.ts
+index 3be2856..88b134a 100644
+--- a/frontend/src/domain/world/DependencyService.ts
++++ b/frontend/src/domain/world/DependencyService.ts
+@@ -225,2 +225,2 @@ export class DependencyService {
+-   * 1. Compute dependency depth for each element (max distance from leaves)
+-   * 2. Sort by depth descending (higher depth = more dependents = delete first)
++   * 1. Compute dependency depth for each element (max distance to dependent leaves)
++   * 2. Sort by depth ascending (leaf dependents before selected roots)
+@@ -282 +282 @@ export class DependencyService {
+-    // Sort by depth descending (higher depth = has more dependents = delete first)
++    // Sort by depth ascending: leaf dependents first, selected roots last.
+@@ -286 +286 @@ export class DependencyService {
+-      return depthB - depthA; // Descending order
++      return depthA - depthB;
+diff --git a/frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts b/frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts
+index 48f574a..dc3182d 100644
+--- a/frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts
++++ b/frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts
+@@ -4,3 +4,4 @@
+- * Wave 005 removed stale skipped cascade fixtures that relied on implicit
+- * process-tree action insertion and no-op dependency rebuild shortcuts. These remaining
+- * checks cover behavior that does not need process-tree compatibility setup.
++ * Covers cascade deletion behavior using Wave 005's explicit ownership model:
++ * - process history is created through explicit ActionGroup + addActionToGroup setup
++ * - dependency cascades are driven by DependencyService.registerNode()
++ * - no implicit process-tree addAction() or dependency rebuild shim is used
+@@ -11,0 +13,3 @@ import type { World } from '../../../../src/domain/world/World';
++import type { CommandStack } from '../../../../src/commands/CommandStack';
++import type { Action } from '../../../../src/domain/processTree/Action';
++import type { ActionGroup } from '../../../../src/domain/processTree/ProcessTree';
+@@ -15,0 +20,7 @@ import { AddFreePoint2DOp } from '../../../../src/commands/operations/world/AddF
++import { AddLine2DByTwoPointsOp } from '../../../../src/commands/operations/world/AddLineOp';
++import { AddCircle2DByCenterAndPointOp } from '../../../../src/commands/operations/world/AddCircleOp';
++import { AddSegment2DByPointsOp } from '../../../../src/commands/operations/world/AddSegmentOp';
++import { createPointAction } from '../../../../src/domain/processTree/actions/CreatePointAction';
++import { createLineAction } from '../../../../src/domain/processTree/actions/CreateLineAction';
++import { createCircleAction } from '../../../../src/domain/processTree/actions/CreateCircleAction';
++import { createSegmentAction } from '../../../../src/domain/processTree/actions/CreateSegmentAction';
+@@ -18,0 +30 @@ describe('DeletionSequenceFactory', () => {
++  let commandStack: CommandStack;
+@@ -22 +34 @@ describe('DeletionSequenceFactory', () => {
+-    const { world: w } = createTestWorld();
++    const { world: w, commandStack: cs } = createTestWorld();
+@@ -23,0 +36 @@ describe('DeletionSequenceFactory', () => {
++    commandStack = cs;
+@@ -26,0 +40,30 @@ describe('DeletionSequenceFactory', () => {
++  function addExplicitProcessAction(action: Action): string {
++    const processTree = world.getProcessTree();
++    const actionGroup: ActionGroup = {
++      id: `test-group-${action.elementId}`,
++      type: 'actionGroup',
++      children: [],
++      isAuxiliary: false,
++      isOutput: action.isOutput ?? true,
++      created: new Date()
++    };
++
++    processTree.addActionGroup(actionGroup);
++    const index = processTree.addActionToGroup(action, actionGroup.id);
++    const actionNode = actionGroup.children[index];
++
++    if (!actionNode) {
++      throw new Error(`Failed to insert process action for ${action.elementId}`);
++    }
++
++    return actionNode.id;
++  }
++
++  function expectActionRemoved(elementId: string): void {
++    expect(world.getProcessTree().getActionsProducingElement(elementId)).toHaveLength(0);
++  }
++
++  function expectActionPresent(elementId: string): void {
++    expect(world.getProcessTree().getActionsProducingElement(elementId)).toHaveLength(1);
++  }
++
+@@ -34,0 +78,22 @@ describe('DeletionSequenceFactory', () => {
++    it('should delete a single point and tombstone its explicit process-tree action', () => {
++      const setupCmd = new Command('Setup point', world);
++      const pointResult = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 200, 1)));
++      const pointId = pointResult.outputs.pointId!;
++      addExplicitProcessAction(createPointAction(pointId));
++      setupCmd.commit();
++
++      expectActionPresent(pointId);
++
++      const deleteCmd = new Command('Delete point', world);
++      DeletionSequenceFactory.createCascadeDeletion(deleteCmd, [pointId], world);
++      deleteCmd.commit();
++
++      const plane = world.getProjectionPlaneById(planeId)!;
++      expect(plane.getPoint(pointId)).toBeUndefined();
++      expectActionRemoved(pointId);
++      expect(deleteCmd.operations.map(op => op.type)).toEqual([
++        'RemovePoint2D',
++        'RemoveActionFromProcessTree'
++      ]);
++    });
++
+@@ -48,0 +114,172 @@ describe('DeletionSequenceFactory', () => {
++
++    it('should cascade delete a dependent line before deleting its defining point', () => {
++      const setupCmd = new Command('Setup line', world);
++      const p1Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 200, 1)));
++      const p2Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(300, 400, 1)));
++      const point1Id = p1Result.outputs.pointId!;
++      const point2Id = p2Result.outputs.pointId!;
++      const lineResult = setupCmd.addAndExecute(new AddLine2DByTwoPointsOp(planeId, point1Id, point2Id));
++      const lineId = lineResult.outputs.lineId!;
++
++      addExplicitProcessAction(createPointAction(point1Id));
++      addExplicitProcessAction(createPointAction(point2Id));
++      addExplicitProcessAction(createLineAction(lineId));
++      world.getDependencyService().registerNode(lineId, [point1Id, point2Id]);
++      setupCmd.commit();
++
++      const deleteCmd = new Command('Delete point with cascade', world);
++      DeletionSequenceFactory.createCascadeDeletion(deleteCmd, [point1Id], world);
++      deleteCmd.commit();
++
++      const plane = world.getProjectionPlaneById(planeId)!;
++      expect(plane.getLine(lineId)).toBeUndefined();
++      expect(plane.getPoint(point1Id)).toBeUndefined();
++      expect(plane.getPoint(point2Id)).toBeDefined();
++      expectActionRemoved(lineId);
++      expectActionRemoved(point1Id);
++      expectActionPresent(point2Id);
++
++      const operationTypes = deleteCmd.operations.map(op => op.type);
++      expect(operationTypes.indexOf('RemoveLine2D')).toBeLessThan(operationTypes.indexOf('RemovePoint2D'));
++      expect(operationTypes).toEqual([
++        'RemoveLine2D',
++        'RemovePoint2D',
++        'RemoveActionFromProcessTree',
++        'RemoveActionFromProcessTree'
++      ]);
++    });
++
++    it('should cascade delete a dependent circle through real dependency registration', () => {
++      const setupCmd = new Command('Setup circle', world);
++      const centerResult = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 200, 1)));
++      const circumferenceResult = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(300, 200, 1)));
++      const centerId = centerResult.outputs.pointId!;
++      const circumferenceId = circumferenceResult.outputs.pointId!;
++      const circleResult = setupCmd.addAndExecute(new AddCircle2DByCenterAndPointOp(planeId, centerId, circumferenceId));
++      const circleId = circleResult.outputs.circleId!;
++
++      addExplicitProcessAction(createPointAction(centerId));
++      addExplicitProcessAction(createPointAction(circumferenceId));
++      addExplicitProcessAction(createCircleAction(circleId));
++      world.getDependencyService().registerNode(circleId, [centerId, circumferenceId]);
++      setupCmd.commit();
++
++      const deleteCmd = new Command('Delete center with cascade', world);
++      DeletionSequenceFactory.createCascadeDeletion(deleteCmd, [centerId], world);
++      deleteCmd.commit();
++
++      const plane = world.getProjectionPlaneById(planeId)!;
++      expect(plane.getCircle(circleId)).toBeUndefined();
++      expect(plane.getPoint(centerId)).toBeUndefined();
++      expect(plane.getPoint(circumferenceId)).toBeDefined();
++      expectActionRemoved(circleId);
++      expectActionRemoved(centerId);
++      expectActionPresent(circumferenceId);
++      expect(deleteCmd.operations.map(op => op.type)).toEqual([
++        'RemoveCircle2D',
++        'RemovePoint2D',
++        'RemoveActionFromProcessTree',
++        'RemoveActionFromProcessTree'
++      ]);
++    });
++
++    it('should delete multiple independent points and their explicit process-tree actions', () => {
++      const setupCmd = new Command('Setup multiple points', world);
++      const p1Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 200, 1)));
++      const p2Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(300, 400, 1)));
++      const p3Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(500, 600, 1)));
++      const pointIds = [p1Result.outputs.pointId!, p2Result.outputs.pointId!, p3Result.outputs.pointId!];
++
++      pointIds.forEach(pointId => addExplicitProcessAction(createPointAction(pointId)));
++      setupCmd.commit();
++
++      const deleteCmd = new Command('Delete multiple points', world);
++      DeletionSequenceFactory.createCascadeDeletion(deleteCmd, pointIds, world);
++      deleteCmd.commit();
++
++      const plane = world.getProjectionPlaneById(planeId)!;
++      pointIds.forEach(pointId => {
++        expect(plane.getPoint(pointId)).toBeUndefined();
++        expectActionRemoved(pointId);
++      });
++      expect(deleteCmd.operations.map(op => op.type)).toEqual([
++        'RemovePoint2D',
++        'RemovePoint2D',
++        'RemovePoint2D',
++        'RemoveActionFromProcessTree',
++        'RemoveActionFromProcessTree',
++        'RemoveActionFromProcessTree'
++      ]);
++    });
++
++    it('should support undo and redo for dependency-driven cascade deletion', () => {
++      const setupCmd = new Command('Setup line', world);
++      const p1Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 200, 1)));
++      const p2Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(300, 400, 1)));
++      const point1Id = p1Result.outputs.pointId!;
++      const point2Id = p2Result.outputs.pointId!;
++      const lineResult = setupCmd.addAndExecute(new AddLine2DByTwoPointsOp(planeId, point1Id, point2Id));
++      const lineId = lineResult.outputs.lineId!;
++
++      addExplicitProcessAction(createPointAction(point1Id));
++      addExplicitProcessAction(createPointAction(point2Id));
++      addExplicitProcessAction(createLineAction(lineId));
++      world.getDependencyService().registerNode(lineId, [point1Id, point2Id]);
++      setupCmd.commit();
++      commandStack.push(setupCmd);
++
++      const deleteCmd = new Command('Delete point with cascade', world);
++      DeletionSequenceFactory.createCascadeDeletion(deleteCmd, [point1Id], world);
++      deleteCmd.commit();
++      commandStack.push(deleteCmd);
++
++      const plane = world.getProjectionPlaneById(planeId)!;
++      expect(plane.getPoint(point1Id)).toBeUndefined();
++      expect(plane.getLine(lineId)).toBeUndefined();
++      expectActionRemoved(point1Id);
++      expectActionRemoved(lineId);
++
++      commandStack.undo();
++      expect(plane.getPoint(point1Id)).toBeDefined();
++      expect(plane.getLine(lineId)).toBeDefined();
++      expectActionPresent(point1Id);
++      expectActionPresent(lineId);
++
++      commandStack.redo();
++      expect(plane.getPoint(point1Id)).toBeUndefined();
++      expect(plane.getLine(lineId)).toBeUndefined();
++      expectActionRemoved(point1Id);
++      expectActionRemoved(lineId);
++    });
++
++    it('should dispatch segment deletion to RemoveSegment2D without deleting defining points', () => {
++      const setupCmd = new Command('Setup segment', world);
++      const p1Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 200, 1)));
++      const p2Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(300, 400, 1)));
++      const point1Id = p1Result.outputs.pointId!;
++      const point2Id = p2Result.outputs.pointId!;
++      const segmentResult = setupCmd.addAndExecute(new AddSegment2DByPointsOp(planeId, point1Id, point2Id));
++      const segmentId = segmentResult.outputs.segmentId!;
++
++      addExplicitProcessAction(createPointAction(point1Id));
++      addExplicitProcessAction(createPointAction(point2Id));
++      addExplicitProcessAction(createSegmentAction(segmentId));
++      world.getDependencyService().registerNode(segmentId, [point1Id, point2Id]);
++      setupCmd.commit();
++
++      const deleteCmd = new Command('Delete segment', world);
++      DeletionSequenceFactory.createCascadeDeletion(deleteCmd, [segmentId], world);
++      deleteCmd.commit();
++
++      const plane = world.getProjectionPlaneById(planeId)!;
++      expect(plane.getLine(segmentId)).toBeUndefined();
++      expect(plane.getPoint(point1Id)).toBeDefined();
++      expect(plane.getPoint(point2Id)).toBeDefined();
++      expectActionRemoved(segmentId);
++      expectActionPresent(point1Id);
++      expectActionPresent(point2Id);
++      expect(deleteCmd.operations.map(op => op.type)).toEqual([
++        'RemoveSegment2D',
++        'RemoveActionFromProcessTree'
++      ]);
++    });

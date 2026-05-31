@@ -1,0 +1,18 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run --run tests/unit/services/GeometryService.spec.ts tests/unit/services/ProjectService.roundTrip.spec.ts tests/unit/services/ProjectService.selfContainment.spec.ts tests/unit/services/ProjectService.subprocess.spec.ts tests/unit/stores/viewStore.spec.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ✓ tests/unit/services/GeometryService.spec.ts  (2 tests) 11ms
+ ✓ tests/unit/stores/viewStore.spec.ts  (23 tests) 14ms
+ ✓ tests/unit/services/ProjectService.subprocess.spec.ts  (5 tests) 13ms
+ ✓ tests/unit/services/ProjectService.roundTrip.spec.ts  (18 tests) 23ms
+ ✓ tests/unit/services/ProjectService.selfContainment.spec.ts  (8 tests) 33ms
+
+ Test Files  5 passed (5)
+      Tests  56 passed (56)
+   Start at  18:53:05
+   Duration  3.17s (transform 1.44s, setup 0ms, collect 4.31s, tests 94ms, environment 5.42s, prepare 1.41s)
+

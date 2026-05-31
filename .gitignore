@@ -58,3 +58,6 @@ backend/data/projects/*.json
 *.temp
 .temp/
 .tmp/
+
+# Saivage v2 harness runtime — incompatible with v3, never commit
+.saivage/

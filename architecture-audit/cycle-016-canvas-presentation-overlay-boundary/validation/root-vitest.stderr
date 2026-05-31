@@ -1,0 +1,664 @@
+stderr | tests/unit/services/googleDriveService.spec.ts > GoogleDriveService > initialize > should throw error if initialization fails
+[GoogleDrive] Initialization failed: Error: Init failed
+    at /work/diedrico/frontend/tests/unit/services/googleDriveService.spec.ts:123:46
+    at file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:135:14
+    at file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:60:26
+    at runTest (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:781:17)
+    at runSuite (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runSuite (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runSuite (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runFiles (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:958:5)
+    at startTests (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:967:3)
+    at file:///work/diedrico/frontend/node_modules/vitest/dist/chunks/runtime-runBaseTests.oAvMKtQC.js:116:7
+[GoogleDrive] Error details: {}
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Line-Line Intersection > should return infeasible for parallel lines
+[Point2DLineLineIntersection] Lines do not intersect (parallel or coincident)
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Line-Segment Intersection > should return infeasible when intersection is outside segment bounds
+[Point2DLineLineIntersection] Intersection falls outside segment bounds (line2)
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Segment-Segment Intersection > should return infeasible when intersection is outside one segment
+[Point2DLineLineIntersection] Intersection falls outside segment bounds (line1)
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Segment-Segment Intersection > should return infeasible when intersection is outside both segments
+[Point2DLineLineIntersection] Intersection falls outside segment bounds (line1)
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Line-Circle Intersection > should return infeasible when line does not intersect circle
+[Point2DLineCircleIntersection] Line and circle do not intersect
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Segment-Circle Intersection > should return infeasible when intersection is outside segment bounds
+[Point2DLineCircleIntersection] Intersection falls outside segment bounds
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Segment-Circle Intersection > should handle segment partially intersecting circle
+[Point2DLineCircleIntersection] Intersection falls outside segment bounds
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Circle-Circle Intersection > should return infeasible when circles do not intersect
+[Point2DCircleCircleIntersection] Circles do not intersect
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Parent Infeasibility Propagation > should propagate infeasible line to line-line intersection
+[Point2DLineLineIntersection] Parent element is infeasible, marking this as infeasible
+
+stderr | tests/unit/domain/segmentIntersections.spec.ts > Intersection Correctness > Parent Infeasibility Propagation > should propagate infeasible circle to line-circle intersection
+Circle projPlane3/circle2d15: center and circumference point are coincident
+Circle projPlane3/circle2d15: center and circumference point are coincident
+[Point2DLineCircleIntersection] Parent element is infeasible, marking this as infeasible
+
+stderr | tests/unit/domain/world.spec.ts > ProjectionPlane Factory Methods > Factory Methods > addLineLineIntersection > should throw error for parallel lines
+[Point2DLineLineIntersection] Lines do not intersect (parallel or coincident)
+
+stderr | tests/unit/domain/Line3DReconstruction.test.ts > Line3D Reconstruction from Projections > should detect infeasible 3D line when lifted planes are parallel
+[Line3DFromProjections] Planes are parallel - no intersection
+
+stderr | tests/unit/commands/factories/DeletionSequenceFactory.spec.ts > DeletionSequenceFactory > createCascadeDeletion > should handle element without process tree action
+[DeletionSequenceFactory] Element projPlane3/point2d10 has no producing action - skipping
+
+stderr | tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Save behavior > should not save with validation errors
+[PropertiesDialog] Validation failed
+
+stderr | tests/unit/stores/authStore.spec.ts > authStore > restoreSession > should handle corrupted profile data
+[AuthStore] Failed to parse stored profile: SyntaxError: Unexpected token 'i', "invalid-json{" is not valid JSON
+    at JSON.parse (<anonymous>)
+    at Object.restoreSession (/work/diedrico/frontend/src/stores/authStore.ts:96:28)
+    at /work/diedrico/frontend/tests/unit/stores/authStore.spec.ts:166:34
+    at file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:135:14
+    at file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:60:26
+    at runTest (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:781:17)
+    at runSuite (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runSuite (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runSuite (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runFiles (file:///work/diedrico/frontend/node_modules/@vitest/runner/dist/index.js:958:5)
+
+stderr | tests/unit/domain/degenerateRealize2D.spec.ts > Degenerate Point Handling in realize2D > Line2DParallel > should return infeasible when through-point is infeasible
+[Point2DLineLineIntersection] Lines do not intersect (parallel or coincident)
+[Point2DLineLineIntersection] Lines do not intersect (parallel or coincident)
+
+stderr | tests/unit/domain/degenerateRealize2D.spec.ts > Degenerate Point Handling in realize2D > Circle2D > should return infeasible when center and circumference point coincide
+Circle projPlane3/circle2d12: center and circumference point are coincident
+
+stderr | tests/unit/domain/circle.spec.ts > Circle2D > Circle2DByCenterAndPoint > should return null for degenerate circle (center = circumference point)
+Circle projPlane3/circle2d15: center and circumference point are coincident
+
+stderr | tests/unit/domain/circle.spec.ts > Circle2D > Circle2DByThreePoints > should return null for collinear points
+Circle projPlane3/circle2d17: three points are collinear
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 38 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/tools/CircleTool.spec.ts > CircleTool > Two-Click Workflow > should require two clicks to create circle
+TypeError: readPort.getProjectionPlane2DTransform is not a function
+ ❯ CanvasPresentationSelector.select src/application/canvasPresentation/CanvasPresentationSelector.ts:28:34
+     26| 
+     27|     for (const plane of readPort.getAllProjectionPlanes()) {
+     28|       const transform = readPort.getProjectionPlane2DTransform(plane.i…
+       |                                  ^
+     29|       if (transform) planeTransforms.set(plane.id, transform);
+     30|     }
+ ❯ Object.hitTest tests/unit/tools/CircleTool.spec.ts:32:54
+ ❯ CircleTool.handleClick src/tools/ArgumentCollectorTool.ts:176:34
+ ❯ tests/unit/tools/CircleTool.spec.ts:91:32
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/38]⎯
+
+ FAIL  tests/unit/tools/CircleTool.spec.ts > CircleTool > T983: Both Points Snap (No Duplicates) > should snap to existing points for both center and circumference
+TypeError: readPort.getProjectionPlane2DTransform is not a function
+ ❯ CanvasPresentationSelector.select src/application/canvasPresentation/CanvasPresentationSelector.ts:28:34
+     26| 
+     27|     for (const plane of readPort.getAllProjectionPlanes()) {
+     28|       const transform = readPort.getProjectionPlane2DTransform(plane.i…
+       |                                  ^
+     29|       if (transform) planeTransforms.set(plane.id, transform);
+     30|     }
+ ❯ Object.hitTest tests/unit/tools/CircleTool.spec.ts:32:54
+ ❯ CircleTool.handleClick src/tools/ArgumentCollectorTool.ts:176:34
+ ❯ tests/unit/tools/CircleTool.spec.ts:153:32
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/38]⎯
+
+ FAIL  tests/unit/tools/CircleTool.spec.ts > CircleTool > T984: Require Both Points to Exist > should reject circle when circumference point does not exist
+TypeError: readPort.getProjectionPlane2DTransform is not a function
+ ❯ CanvasPresentationSelector.select src/application/canvasPresentation/CanvasPresentationSelector.ts:28:34
+     26| 
+     27|     for (const plane of readPort.getAllProjectionPlanes()) {
+     28|       const transform = readPort.getProjectionPlane2DTransform(plane.i…
+       |                                  ^
+     29|       if (transform) planeTransforms.set(plane.id, transform);
+     30|     }
+ ❯ Object.hitTest tests/unit/tools/CircleTool.spec.ts:32:54
+ ❯ CircleTool.handleClick src/tools/ArgumentCollectorTool.ts:176:34
+ ❯ tests/unit/tools/CircleTool.spec.ts:209:32
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/38]⎯
+
+ FAIL  tests/unit/tools/CircleTool.spec.ts > CircleTool > T985: Minimum Radius Validation with Snapped Points > should accept circle when snapped points meet minimum radius
+TypeError: readPort.getProjectionPlane2DTransform is not a function
+ ❯ CanvasPresentationSelector.select src/application/canvasPresentation/CanvasPresentationSelector.ts:28:34
+     26| 
+     27|     for (const plane of readPort.getAllProjectionPlanes()) {
+     28|       const transform = readPort.getProjectionPlane2DTransform(plane.i…
+       |                                  ^
+     29|       if (transform) planeTransforms.set(plane.id, transform);
+     30|     }
+ ❯ Object.hitTest tests/unit/tools/CircleTool.spec.ts:32:54
+ ❯ CircleTool.handleClick src/tools/ArgumentCollectorTool.ts:176:34
+ ❯ tests/unit/tools/CircleTool.spec.ts:267:32
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/38]⎯
+
+ FAIL  tests/unit/tools/CircleTool.spec.ts > CircleTool > Error Handling > should reject invalid plane
+TypeError: readPort.getProjectionPlane2DTransform is not a function
+ ❯ CanvasPresentationSelector.select src/application/canvasPresentation/CanvasPresentationSelector.ts:28:34
+     26| 
+     27|     for (const plane of readPort.getAllProjectionPlanes()) {
+     28|       const transform = readPort.getProjectionPlane2DTransform(plane.i…
+       |                                  ^
+     29|       if (transform) planeTransforms.set(plane.id, transform);
+     30|     }
+ ❯ Object.hitTest tests/unit/tools/CircleTool.spec.ts:32:54
+ ❯ CircleTool.handleClick src/tools/ArgumentCollectorTool.ts:176:34
+ ❯ tests/unit/tools/CircleTool.spec.ts:308:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/38]⎯
+
+ FAIL  tests/unit/tools/CircleTool.spec.ts > CircleTool > Error Handling > should reject invalid coordinates
+TypeError: readPort.getProjectionPlane2DTransform is not a function
+ ❯ CanvasPresentationSelector.select src/application/canvasPresentation/CanvasPresentationSelector.ts:28:34
+     26| 
+     27|     for (const plane of readPort.getAllProjectionPlanes()) {
+     28|       const transform = readPort.getProjectionPlane2DTransform(plane.i…
+       |                                  ^
+     29|       if (transform) planeTransforms.set(plane.id, transform);
+     30|     }
+ ❯ Object.hitTest tests/unit/tools/CircleTool.spec.ts:32:54
+ ❯ CircleTool.handleClick src/tools/ArgumentCollectorTool.ts:176:34
+ ❯ tests/unit/tools/CircleTool.spec.ts:326:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/38]⎯
+
+ FAIL  tests/unit/tools/CircleTool.spec.ts > CircleTool > Tool State Reset > should reset state after successful circle creation
+TypeError: readPort.getProjectionPlane2DTransform is not a function
+ ❯ CanvasPresentationSelector.select src/application/canvasPresentation/CanvasPresentationSelector.ts:28:34
+     26| 
+     27|     for (const plane of readPort.getAllProjectionPlanes()) {
+     28|       const transform = readPort.getProjectionPlane2DTransform(plane.i…
+       |                                  ^
+     29|       if (transform) planeTransforms.set(plane.id, transform);
+     30|     }
+ ❯ Object.hitTest tests/unit/tools/CircleTool.spec.ts:32:54
+ ❯ CircleTool.handleClick src/tools/ArgumentCollectorTool.ts:176:34
+ ❯ tests/unit/tools/CircleTool.spec.ts:355:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/38]⎯
+
+ FAIL  tests/unit/tools/CircleTool.spec.ts > CircleTool > T989: Parametric Updates - Circumference Point Movement > should update circle when circumference point moves
+TypeError: readPort.getProjectionPlane2DTransform is not a function
+ ❯ CanvasPresentationSelector.select src/application/canvasPresentation/CanvasPresentationSelector.ts:28:34
+     26| 
+     27|     for (const plane of readPort.getAllProjectionPlanes()) {
+     28|       const transform = readPort.getProjectionPlane2DTransform(plane.i…
+       |                                  ^
+     29|       if (transform) planeTransforms.set(plane.id, transform);
+     30|     }
+ ❯ Object.hitTest tests/unit/tools/CircleTool.spec.ts:32:54
+ ❯ CircleTool.handleClick src/tools/ArgumentCollectorTool.ts:176:34
+ ❯ tests/unit/tools/CircleTool.spec.ts:420:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/38]⎯
+
+ FAIL  tests/unit/tools/CircleTool.spec.ts > CircleTool > T992: Regression - Center Point Movement > should still update circle when center point moves
+TypeError: readPort.getProjectionPlane2DTransform is not a function
+ ❯ CanvasPresentationSelector.select src/application/canvasPresentation/CanvasPresentationSelector.ts:28:34
+     26| 
+     27|     for (const plane of readPort.getAllProjectionPlanes()) {
+     28|       const transform = readPort.getProjectionPlane2DTransform(plane.i…
+       |                                  ^
+     29|       if (transform) planeTransforms.set(plane.id, transform);
+     30|     }
+ ❯ Object.hitTest tests/unit/tools/CircleTool.spec.ts:32:54
+ ❯ CircleTool.handleClick src/tools/ArgumentCollectorTool.ts:176:34
+ ❯ tests/unit/tools/CircleTool.spec.ts:499:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/38]⎯
+
+ FAIL  tests/unit/tools/pointTool.spec.ts > PointTool > Click Handling > should create free point on valid click
+TypeError: readPort.getProjectionPlane2DTransform is not a function
+ ❯ CanvasPresentationSelector.select src/application/canvasPresentation/CanvasPresentationSelector.ts:28:34
+     26| 
+     27|     for (const plane of readPort.getAllProjectionPlanes()) {
+     28|       const transform = readPort.getProjectionPlane2DTransform(plane.i…
+       |                                  ^
+     29|       if (transform) planeTransforms.set(plane.id, transform);
+     30|     }
+ ❯ Object.hitTest tests/unit/tools/pointTool.spec.ts:27:54
+ ❯ PointTool.handleClick src/tools/ArgumentCollectorTool.ts:176:34
+ ❯ tests/unit/tools/pointTool.spec.ts:94:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/38]⎯
+
+ FAIL  tests/unit/tools/pointTool.spec.ts > PointTool > Click Handling > should add command to command stack
+TypeError: readPort.getProjectionPlane2DTransform is not a function
+ ❯ CanvasPresentationSelector.select src/application/canvasPresentation/CanvasPresentationSelector.ts:28:34
+     26| 
+     27|     for (const plane of readPort.getAllProjectionPlanes()) {
+     28|       const transform = readPort.getProjectionPlane2DTransform(plane.i…
+       |                                  ^
+     29|       if (transform) planeTransforms.set(plane.id, transform);
+     30|     }
+ ❯ Object.hitTest tests/unit/tools/pointTool.spec.ts:27:54
+ ❯ PointTool.handleClick src/tools/ArgumentCollectorTool.ts:176:34
+ ❯ tests/unit/tools/pointTool.spec.ts:117:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/38]⎯
+
+ FAIL  tests/unit/tools/pointTool.spec.ts > PointTool > Click Handling > should create point with correct coordinates
+TypeError: readPort.getProjectionPlane2DTransform is not a function
+ ❯ CanvasPresentationSelector.select src/application/canvasPresentation/CanvasPresentationSelector.ts:28:34
+     26| 
+     27|     for (const plane of readPort.getAllProjectionPlanes()) {
+     28|       const transform = readPort.getProjectionPlane2DTransform(plane.i…
+       |                                  ^
+     29|       if (transform) planeTransforms.set(plane.id, transform);
+     30|     }
+ ❯ Object.hitTest tests/unit/tools/pointTool.spec.ts:27:54
+ ❯ PointTool.handleClick src/tools/ArgumentCollectorTool.ts:176:34
+ ❯ tests/unit/tools/pointTool.spec.ts:126:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/38]⎯
+
+ FAIL  tests/unit/tools/pointTool.spec.ts > PointTool > Click Handling > should create point on correct plane
+TypeError: readPort.getProjectionPlane2DTransform is not a function
+ ❯ CanvasPresentationSelector.select src/application/canvasPresentation/CanvasPresentationSelector.ts:28:34
+     26| 
+     27|     for (const plane of readPort.getAllProjectionPlanes()) {
+     28|       const transform = readPort.getProjectionPlane2DTransform(plane.i…
+       |                                  ^
+     29|       if (transform) planeTransforms.set(plane.id, transform);
+     30|     }
+ ❯ Object.hitTest tests/unit/tools/pointTool.spec.ts:27:54
+ ❯ PointTool.handleClick src/tools/ArgumentCollectorTool.ts:176:34
+ ❯ tests/unit/tools/pointTool.spec.ts:149:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/38]⎯
+
+ FAIL  tests/unit/tools/pointTool.spec.ts > PointTool > Coordinate Validation > should accept valid Vector3 homogeneous coordinates
+TypeError: readPort.getProjectionPlane2DTransform is not a function
+ ❯ CanvasPresentationSelector.select src/application/canvasPresentation/CanvasPresentationSelector.ts:28:34
+     26| 
+     27|     for (const plane of readPort.getAllProjectionPlanes()) {
+     28|       const transform = readPort.getProjectionPlane2DTransform(plane.i…
+       |                                  ^
+     29|       if (transform) planeTransforms.set(plane.id, transform);
+     30|     }
+ ❯ Object.hitTest tests/unit/tools/pointTool.spec.ts:27:54
+ ❯ PointTool.handleClick src/tools/ArgumentCollectorTool.ts:176:34
+ ❯ tests/unit/tools/pointTool.spec.ts:168:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/38]⎯
+
+ FAIL  tests/unit/tools/pointTool.spec.ts > PointTool > Coordinate Validation > should reject NaN coordinates
+TypeError: readPort.getProjectionPlane2DTransform is not a function
+ ❯ CanvasPresentationSelector.select src/application/canvasPresentation/CanvasPresentationSelector.ts:28:34
+     26| 
+     27|     for (const plane of readPort.getAllProjectionPlanes()) {
+     28|       const transform = readPort.getProjectionPlane2DTransform(plane.i…
+       |                                  ^
+     29|       if (transform) planeTransforms.set(plane.id, transform);
+     30|     }
+ ❯ Object.hitTest tests/unit/tools/pointTool.spec.ts:27:54
+ ❯ PointTool.handleClick src/tools/ArgumentCollectorTool.ts:176:34
+ ❯ tests/unit/tools/pointTool.spec.ts:179:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/38]⎯
+
+ FAIL  tests/unit/tools/pointTool.spec.ts > PointTool > Coordinate Validation > should reject Infinity coordinates
+TypeError: readPort.getProjectionPlane2DTransform is not a function
+ ❯ CanvasPresentationSelector.select src/application/canvasPresentation/CanvasPresentationSelector.ts:28:34
+     26| 
+     27|     for (const plane of readPort.getAllProjectionPlanes()) {
+     28|       const transform = readPort.getProjectionPlane2DTransform(plane.i…
+       |                                  ^
+     29|       if (transform) planeTransforms.set(plane.id, transform);
+     30|     }
+ ❯ Object.hitTest tests/unit/tools/pointTool.spec.ts:27:54
+ ❯ PointTool.handleClick src/tools/ArgumentCollectorTool.ts:176:34
+ ❯ tests/unit/tools/pointTool.spec.ts:191:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/38]⎯
+
+ FAIL  tests/unit/tools/pointTool.spec.ts > PointTool > Plane Validation > should accept valid plane_H
+TypeError: readPort.getProjectionPlane2DTransform is not a function
+ ❯ CanvasPresentationSelector.select src/application/canvasPresentation/CanvasPresentationSelector.ts:28:34
+     26| 
+     27|     for (const plane of readPort.getAllProjectionPlanes()) {
+     28|       const transform = readPort.getProjectionPlane2DTransform(plane.i…
+       |                                  ^
+     29|       if (transform) planeTransforms.set(plane.id, transform);
+     30|     }
+ ❯ Object.hitTest tests/unit/tools/pointTool.spec.ts:27:54
+ ❯ PointTool.handleClick src/tools/ArgumentCollectorTool.ts:176:34
+ ❯ tests/unit/tools/pointTool.spec.ts:205:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/38]⎯
+
+ FAIL  tests/unit/tools/pointTool.spec.ts > PointTool > Plane Validation > should accept valid plane_V
+TypeError: readPort.getProjectionPlane2DTransform is not a function
+ ❯ CanvasPresentationSelector.select src/application/canvasPresentation/CanvasPresentationSelector.ts:28:34
+     26| 
+     27|     for (const plane of readPort.getAllProjectionPlanes()) {
+     28|       const transform = readPort.getProjectionPlane2DTransform(plane.i…
+       |                                  ^
+     29|       if (transform) planeTransforms.set(plane.id, transform);
+     30|     }
+ ❯ Object.hitTest tests/unit/tools/pointTool.spec.ts:27:54
+ ❯ PointTool.handleClick src/tools/ArgumentCollectorTool.ts:176:34
+ ❯ tests/unit/tools/pointTool.spec.ts:216:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/38]⎯
+
+ FAIL  tests/unit/tools/pointTool.spec.ts > PointTool > Plane Validation > should reject invalid plane ID
+TypeError: readPort.getProjectionPlane2DTransform is not a function
+ ❯ CanvasPresentationSelector.select src/application/canvasPresentation/CanvasPresentationSelector.ts:28:34
+     26| 
+     27|     for (const plane of readPort.getAllProjectionPlanes()) {
+     28|       const transform = readPort.getProjectionPlane2DTransform(plane.i…
+       |                                  ^
+     29|       if (transform) planeTransforms.set(plane.id, transform);
+     30|     }
+ ❯ Object.hitTest tests/unit/tools/pointTool.spec.ts:27:54
+ ❯ PointTool.handleClick src/tools/ArgumentCollectorTool.ts:176:34
+ ❯ tests/unit/tools/pointTool.spec.ts:227:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/38]⎯
+
+ FAIL  tests/unit/tools/pointTool.spec.ts > PointTool > Plane Validation > should not create point for invalid plane
+TypeError: readPort.getProjectionPlane2DTransform is not a function
+ ❯ CanvasPresentationSelector.select src/application/canvasPresentation/CanvasPresentationSelector.ts:28:34
+     26| 
+     27|     for (const plane of readPort.getAllProjectionPlanes()) {
+     28|       const transform = readPort.getProjectionPlane2DTransform(plane.i…
+       |                                  ^
+     29|       if (transform) planeTransforms.set(plane.id, transform);
+     30|     }
+ ❯ Object.hitTest tests/unit/tools/pointTool.spec.ts:27:54
+ ❯ PointTool.handleClick src/tools/ArgumentCollectorTool.ts:176:34
+ ❯ tests/unit/tools/pointTool.spec.ts:240:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/38]⎯
+
+ FAIL  tests/unit/tools/pointTool.spec.ts > PointTool > Error Handling > should return failure for invalid coordinates
+TypeError: readPort.getProjectionPlane2DTransform is not a function
+ ❯ CanvasPresentationSelector.select src/application/canvasPresentation/CanvasPresentationSelector.ts:28:34
+     26| 
+     27|     for (const plane of readPort.getAllProjectionPlanes()) {
+     28|       const transform = readPort.getProjectionPlane2DTransform(plane.i…
+       |                                  ^
+     29|       if (transform) planeTransforms.set(plane.id, transform);
+     30|     }
+ ❯ Object.hitTest tests/unit/tools/pointTool.spec.ts:27:54
+ ❯ PointTool.handleClick src/tools/ArgumentCollectorTool.ts:176:34
+ ❯ tests/unit/tools/pointTool.spec.ts:260:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/38]⎯
+
+ FAIL  tests/unit/tools/pointTool.spec.ts > PointTool > Error Handling > should handle command execution errors
+TypeError: readPort.getProjectionPlane2DTransform is not a function
+ ❯ CanvasPresentationSelector.select src/application/canvasPresentation/CanvasPresentationSelector.ts:28:34
+     26| 
+     27|     for (const plane of readPort.getAllProjectionPlanes()) {
+     28|       const transform = readPort.getProjectionPlane2DTransform(plane.i…
+       |                                  ^
+     29|       if (transform) planeTransforms.set(plane.id, transform);
+     30|     }
+ ❯ Object.hitTest tests/unit/tools/pointTool.spec.ts:27:54
+ ❯ PointTool.handleClick src/tools/ArgumentCollectorTool.ts:176:34
+ ❯ tests/unit/tools/pointTool.spec.ts:277:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/38]⎯
+
+ FAIL  tests/unit/tools/pointTool.spec.ts > PointTool > Error Handling > should not pollute command stack on validation failure
+TypeError: readPort.getProjectionPlane2DTransform is not a function
+ ❯ CanvasPresentationSelector.select src/application/canvasPresentation/CanvasPresentationSelector.ts:28:34
+     26| 
+     27|     for (const plane of readPort.getAllProjectionPlanes()) {
+     28|       const transform = readPort.getProjectionPlane2DTransform(plane.i…
+       |                                  ^
+     29|       if (transform) planeTransforms.set(plane.id, transform);
+     30|     }
+ ❯ Object.hitTest tests/unit/tools/pointTool.spec.ts:27:54
+ ❯ PointTool.handleClick src/tools/ArgumentCollectorTool.ts:176:34
+ ❯ tests/unit/tools/pointTool.spec.ts:292:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/38]⎯
+
+ FAIL  tests/unit/tools/pointTool.spec.ts > PointTool > Multiple Operations > should create multiple points in sequence
+TypeError: readPort.getProjectionPlane2DTransform is not a function
+ ❯ CanvasPresentationSelector.select src/application/canvasPresentation/CanvasPresentationSelector.ts:28:34
+     26| 
+     27|     for (const plane of readPort.getAllProjectionPlanes()) {
+     28|       const transform = readPort.getProjectionPlane2DTransform(plane.i…
+       |                                  ^
+     29|       if (transform) planeTransforms.set(plane.id, transform);
+     30|     }
+ ❯ Object.hitTest tests/unit/tools/pointTool.spec.ts:27:54
+ ❯ PointTool.handleClick src/tools/ArgumentCollectorTool.ts:176:34
+ ❯ tests/unit/tools/pointTool.spec.ts:320:29
+ ❯ tests/unit/tools/pointTool.spec.ts:318:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/38]⎯
+
+ FAIL  tests/unit/tools/pointTool.spec.ts > PointTool > Multiple Operations > should maintain command stack for multiple operations
+TypeError: readPort.getProjectionPlane2DTransform is not a function
+ ❯ CanvasPresentationSelector.select src/application/canvasPresentation/CanvasPresentationSelector.ts:28:34
+     26| 
+     27|     for (const plane of readPort.getAllProjectionPlanes()) {
+     28|       const transform = readPort.getProjectionPlane2DTransform(plane.i…
+       |                                  ^
+     29|       if (transform) planeTransforms.set(plane.id, transform);
+     30|     }
+ ❯ Object.hitTest tests/unit/tools/pointTool.spec.ts:27:54
+ ❯ PointTool.handleClick src/tools/ArgumentCollectorTool.ts:176:34
+ ❯ tests/unit/tools/pointTool.spec.ts:340:14
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/38]⎯
+
+ FAIL  tests/unit/tools/pointTool.spec.ts > PointTool > Success/Failure Messages > should return descriptive success message
+TypeError: readPort.getProjectionPlane2DTransform is not a function
+ ❯ CanvasPresentationSelector.select src/application/canvasPresentation/CanvasPresentationSelector.ts:28:34
+     26| 
+     27|     for (const plane of readPort.getAllProjectionPlanes()) {
+     28|       const transform = readPort.getProjectionPlane2DTransform(plane.i…
+       |                                  ^
+     29|       if (transform) planeTransforms.set(plane.id, transform);
+     30|     }
+ ❯ Object.hitTest tests/unit/tools/pointTool.spec.ts:27:54
+ ❯ PointTool.handleClick src/tools/ArgumentCollectorTool.ts:176:34
+ ❯ tests/unit/tools/pointTool.spec.ts:374:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/38]⎯
+
+ FAIL  tests/unit/tools/pointTool.spec.ts > PointTool > Success/Failure Messages > should return descriptive failure message for invalid coordinates
+TypeError: readPort.getProjectionPlane2DTransform is not a function
+ ❯ CanvasPresentationSelector.select src/application/canvasPresentation/CanvasPresentationSelector.ts:28:34
+     26| 
+     27|     for (const plane of readPort.getAllProjectionPlanes()) {
+     28|       const transform = readPort.getProjectionPlane2DTransform(plane.i…
+       |                                  ^
+     29|       if (transform) planeTransforms.set(plane.id, transform);
+     30|     }
+ ❯ Object.hitTest tests/unit/tools/pointTool.spec.ts:27:54
+ ❯ PointTool.handleClick src/tools/ArgumentCollectorTool.ts:176:34
+ ❯ tests/unit/tools/pointTool.spec.ts:387:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/38]⎯
+
+ FAIL  tests/unit/tools/pointTool.spec.ts > PointTool > Success/Failure Messages > should return descriptive failure message for invalid plane
+TypeError: readPort.getProjectionPlane2DTransform is not a function
+ ❯ CanvasPresentationSelector.select src/application/canvasPresentation/CanvasPresentationSelector.ts:28:34
+     26| 
+     27|     for (const plane of readPort.getAllProjectionPlanes()) {
+     28|       const transform = readPort.getProjectionPlane2DTransform(plane.i…
+       |                                  ^
+     29|       if (transform) planeTransforms.set(plane.id, transform);
+     30|     }
+ ❯ Object.hitTest tests/unit/tools/pointTool.spec.ts:27:54
+ ❯ PointTool.handleClick src/tools/ArgumentCollectorTool.ts:176:34
+ ❯ tests/unit/tools/pointTool.spec.ts:399:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/38]⎯
+
+ FAIL  tests/unit/tools/pointTool.spec.ts > PointTool > Integration with Command Pattern > should allow undo after point creation
+TypeError: readPort.getProjectionPlane2DTransform is not a function
+ ❯ CanvasPresentationSelector.select src/application/canvasPresentation/CanvasPresentationSelector.ts:28:34
+     26| 
+     27|     for (const plane of readPort.getAllProjectionPlanes()) {
+     28|       const transform = readPort.getProjectionPlane2DTransform(plane.i…
+       |                                  ^
+     29|       if (transform) planeTransforms.set(plane.id, transform);
+     30|     }
+ ❯ Object.hitTest tests/unit/tools/pointTool.spec.ts:27:54
+ ❯ PointTool.handleClick src/tools/ArgumentCollectorTool.ts:176:34
+ ❯ tests/unit/tools/pointTool.spec.ts:414:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/38]⎯
+
+ FAIL  tests/unit/tools/pointTool.spec.ts > PointTool > Integration with Command Pattern > should allow redo after undo
+TypeError: readPort.getProjectionPlane2DTransform is not a function
+ ❯ CanvasPresentationSelector.select src/application/canvasPresentation/CanvasPresentationSelector.ts:28:34
+     26| 
+     27|     for (const plane of readPort.getAllProjectionPlanes()) {
+     28|       const transform = readPort.getProjectionPlane2DTransform(plane.i…
+       |                                  ^
+     29|       if (transform) planeTransforms.set(plane.id, transform);
+     30|     }
+ ❯ Object.hitTest tests/unit/tools/pointTool.spec.ts:27:54
+ ❯ PointTool.handleClick src/tools/ArgumentCollectorTool.ts:176:34
+ ❯ tests/unit/tools/pointTool.spec.ts:443:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/38]⎯
+
+ FAIL  tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > LineTool > should reject selecting the same point twice
+TypeError: readPort.getProjectionPlane2DTransform is not a function
+ ❯ CanvasPresentationSelector.select src/application/canvasPresentation/CanvasPresentationSelector.ts:28:34
+     26| 
+     27|     for (const plane of readPort.getAllProjectionPlanes()) {
+     28|       const transform = readPort.getProjectionPlane2DTransform(plane.i…
+       |                                  ^
+     29|       if (transform) planeTransforms.set(plane.id, transform);
+     30|     }
+ ❯ Object.hitTest tests/unit/tools/toolValidation.spec.ts:38:54
+ ❯ LineTool.handleClick src/tools/ArgumentCollectorTool.ts:176:34
+ ❯ tests/unit/tools/toolValidation.spec.ts:89:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/38]⎯
+
+ FAIL  tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > LineTool > should accept two different points
+TypeError: readPort.getProjectionPlane2DTransform is not a function
+ ❯ CanvasPresentationSelector.select src/application/canvasPresentation/CanvasPresentationSelector.ts:28:34
+     26| 
+     27|     for (const plane of readPort.getAllProjectionPlanes()) {
+     28|       const transform = readPort.getProjectionPlane2DTransform(plane.i…
+       |                                  ^
+     29|       if (transform) planeTransforms.set(plane.id, transform);
+     30|     }
+ ❯ Object.hitTest tests/unit/tools/toolValidation.spec.ts:38:54
+ ❯ LineTool.handleClick src/tools/ArgumentCollectorTool.ts:176:34
+ ❯ tests/unit/tools/toolValidation.spec.ts:104:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/38]⎯
+
+ FAIL  tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > SegmentTool > should reject selecting the same point twice
+TypeError: readPort.getProjectionPlane2DTransform is not a function
+ ❯ CanvasPresentationSelector.select src/application/canvasPresentation/CanvasPresentationSelector.ts:28:34
+     26| 
+     27|     for (const plane of readPort.getAllProjectionPlanes()) {
+     28|       const transform = readPort.getProjectionPlane2DTransform(plane.i…
+       |                                  ^
+     29|       if (transform) planeTransforms.set(plane.id, transform);
+     30|     }
+ ❯ Object.hitTest tests/unit/tools/toolValidation.spec.ts:38:54
+ ❯ SegmentTool.handleClick src/tools/ArgumentCollectorTool.ts:176:34
+ ❯ tests/unit/tools/toolValidation.spec.ts:119:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/38]⎯
+
+ FAIL  tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > SegmentTool > should accept two different points
+TypeError: readPort.getProjectionPlane2DTransform is not a function
+ ❯ CanvasPresentationSelector.select src/application/canvasPresentation/CanvasPresentationSelector.ts:28:34
+     26| 
+     27|     for (const plane of readPort.getAllProjectionPlanes()) {
+     28|       const transform = readPort.getProjectionPlane2DTransform(plane.i…
+       |                                  ^
+     29|       if (transform) planeTransforms.set(plane.id, transform);
+     30|     }
+ ❯ Object.hitTest tests/unit/tools/toolValidation.spec.ts:38:54
+ ❯ SegmentTool.handleClick src/tools/ArgumentCollectorTool.ts:176:34
+ ❯ tests/unit/tools/toolValidation.spec.ts:134:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/38]⎯
+
+ FAIL  tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > CircleTool > should reject zero-radius circle (center == circumference)
+TypeError: readPort.getProjectionPlane2DTransform is not a function
+ ❯ CanvasPresentationSelector.select src/application/canvasPresentation/CanvasPresentationSelector.ts:28:34
+     26| 
+     27|     for (const plane of readPort.getAllProjectionPlanes()) {
+     28|       const transform = readPort.getProjectionPlane2DTransform(plane.i…
+       |                                  ^
+     29|       if (transform) planeTransforms.set(plane.id, transform);
+     30|     }
+ ❯ Object.hitTest tests/unit/tools/toolValidation.spec.ts:38:54
+ ❯ CircleTool.handleClick src/tools/ArgumentCollectorTool.ts:176:34
+ ❯ tests/unit/tools/toolValidation.spec.ts:149:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/38]⎯
+
+ FAIL  tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > CircleTool > should accept valid center and circumference point
+TypeError: readPort.getProjectionPlane2DTransform is not a function
+ ❯ CanvasPresentationSelector.select src/application/canvasPresentation/CanvasPresentationSelector.ts:28:34
+     26| 
+     27|     for (const plane of readPort.getAllProjectionPlanes()) {
+     28|       const transform = readPort.getProjectionPlane2DTransform(plane.i…
+       |                                  ^
+     29|       if (transform) planeTransforms.set(plane.id, transform);
+     30|     }
+ ❯ Object.hitTest tests/unit/tools/toolValidation.spec.ts:38:54
+ ❯ CircleTool.handleClick src/tools/ArgumentCollectorTool.ts:176:34
+ ❯ tests/unit/tools/toolValidation.spec.ts:162:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/38]⎯
+
+ FAIL  tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > ParallelLineTool > should accept valid reference line and create parallel
+TypeError: readPort.getProjectionPlane2DTransform is not a function
+ ❯ CanvasPresentationSelector.select src/application/canvasPresentation/CanvasPresentationSelector.ts:28:34
+     26| 
+     27|     for (const plane of readPort.getAllProjectionPlanes()) {
+     28|       const transform = readPort.getProjectionPlane2DTransform(plane.i…
+       |                                  ^
+     29|       if (transform) planeTransforms.set(plane.id, transform);
+     30|     }
+ ❯ Object.hitTest tests/unit/tools/toolValidation.spec.ts:38:54
+ ❯ ParallelLineTool.handleClick src/tools/ArgumentCollectorTool.ts:176:34
+ ❯ tests/unit/tools/toolValidation.spec.ts:185:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/38]⎯
+
+ FAIL  tests/unit/tools/toolValidation.spec.ts > Tool Argument Validation > PerpendicularLineTool > should accept valid reference line and create perpendicular
+TypeError: readPort.getProjectionPlane2DTransform is not a function
+ ❯ CanvasPresentationSelector.select src/application/canvasPresentation/CanvasPresentationSelector.ts:28:34
+     26| 
+     27|     for (const plane of readPort.getAllProjectionPlanes()) {
+     28|       const transform = readPort.getProjectionPlane2DTransform(plane.i…
+       |                                  ^
+     29|       if (transform) planeTransforms.set(plane.id, transform);
+     30|     }
+ ❯ Object.hitTest tests/unit/tools/toolValidation.spec.ts:38:54
+ ❯ PerpendicularLineTool.handleClick src/tools/ArgumentCollectorTool.ts:176:34
+ ❯ tests/unit/tools/toolValidation.spec.ts:205:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/38]⎯
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c vitest run

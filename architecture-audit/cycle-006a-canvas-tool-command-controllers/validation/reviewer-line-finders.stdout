@@ -1,0 +1,3 @@
+const canvasToolController = createCanvasToolController 423
+moveSession: canvasToolController.startFreePointMove 1370
+const result = canvasToolController.updateElementStyle 1430

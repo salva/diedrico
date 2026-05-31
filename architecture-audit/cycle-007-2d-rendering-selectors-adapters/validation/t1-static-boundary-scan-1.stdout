@@ -1,0 +1,41 @@
+--- deleted services ---
+RenderService deleted
+PaperService deleted
+--- forbidden SvgCanvas tokens ---
+388:    for (const plane of world.projectionPlanes.values()) {
+--- Paper raw domain imports/hitTest ---
+12: * Phase 22.5.4 - Direct ProjectionPlane Access:
+13: * Hit testing directly accesses the active ProjectionPlane to iterate elements:
+19: * This matches the rendering pattern in PaperService and eliminates World facade calls.
+--- renderer adapter domain imports ---
+--- PaperService/RenderService refs ---
+frontend/src/services/InputService.ts:10: * This service is separate from PaperService because:
+frontend/src/services/InputService.ts:11: * - PaperService works at the paper level (like a plotter)
+frontend/tests/unit/services/projectionDisplay.spec.ts:3: * Tests that PaperService generates projected primitives for 3D elements
+frontend/tests/unit/services/projectionDisplay.spec.ts:9:import { PaperService, type PrimitiveContext } from '../../../src/services/PaperService';
+frontend/tests/unit/services/projectionDisplay.spec.ts:20:describe('PaperService - 3D Element Projection Display (Phase 106)', () => {
+frontend/tests/unit/services/projectionDisplay.spec.ts:21:  let paperService: PaperService;
+frontend/tests/unit/services/projectionDisplay.spec.ts:28:    paperService = new PaperService();
+frontend/tests/unit/services/projectionDisplay.spec.ts:90:      const context: PrimitiveContext = {
+frontend/tests/unit/services/projectionDisplay.spec.ts:96:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/projectionDisplay.spec.ts:104:      const context: PrimitiveContext = {
+frontend/tests/unit/services/projectionDisplay.spec.ts:109:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/projectionDisplay.spec.ts:121:      const context: PrimitiveContext = {
+frontend/tests/unit/services/projectionDisplay.spec.ts:127:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/projectionDisplay.spec.ts:153:      const context: PrimitiveContext = {
+frontend/tests/unit/services/projectionDisplay.spec.ts:159:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/projectionDisplay.spec.ts:188:      const context: PrimitiveContext = {
+frontend/tests/unit/services/projectionDisplay.spec.ts:194:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/projectionDisplay.spec.ts:240:      const context: PrimitiveContext = {
+frontend/tests/unit/services/projectionDisplay.spec.ts:246:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/selectionMask.spec.ts:148:      const hit = paper.hitTest(queryPos, 20, planeId, paperToPlaneTransform, world, mask);
+frontend/tests/unit/selectionMask.spec.ts:163:      const hit = paper.hitTest(queryPos, 20, planeId, paperToPlaneTransform, world, mask);
+frontend/tests/unit/selectionMask.spec.ts:182:      const hit = paper.hitTest(queryPos, 20, planeId, paperToPlaneTransform, world, mask);
+frontend/tests/unit/selectionMask.spec.ts:202:      const hit = paper.hitTest(queryPos, 20, planeId, paperToPlaneTransform, world, mask);
+frontend/tests/unit/selectionMask.spec.ts:218:      const hit = paper.hitTest(queryPos, 20, planeId, paperToPlaneTransform, world, mask);
+frontend/tests/unit/selectionMask.spec.ts:233:      const hit = paper.hitTest(queryPos, 20, planeId, paperToPlaneTransform, world, mask);
+frontend/tests/unit/selectionMask.spec.ts:254:      const hit1 = paper.hitTest(queryPos, 20, planeId, paperToPlaneTransform, world, mask1);
+frontend/tests/unit/selectionMask.spec.ts:264:      const hit2 = paper.hitTest(queryPos, 20, planeId, paperToPlaneTransform, world, mask2);
+frontend/src/commands/operations/paper/README.md:12:All Paper operations modify the presentation layer (PaperService) without affecting the domain model.
+frontend/src/domain/presentation/Paper.ts:19: * This matches the rendering pattern in PaperService and eliminates World facade calls.
+--- ThreeView scope ---

@@ -1,0 +1,1 @@
+frontend/src/application/construction/ConstructionUseCases.ts(169,26): error TS18048: 'intent.metadata' is possibly 'undefined'.

@@ -1,0 +1,10 @@
+ M architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/scope-check.md
+?? .saivage/stages/cycle-017-implement-three-presentation-read-port-realization-boundary/tasks.json
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/reviews/
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/status-before-implementation.txt
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/manager-status-after-failed-coder.stderr
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/manager-status-after-failed-coder.stdout
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/manager-status-before-review.stderr
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/manager-status-before-review.stdout
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/retry-report-sha-update.stderr
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/retry-report-sha-update.stdout

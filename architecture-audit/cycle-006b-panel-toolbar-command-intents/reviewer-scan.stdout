@@ -1,0 +1,1597 @@
+frontend/src/components/panels/ActionsPanel.vue:54:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/components/panels/ActionsPanel.vue:73:const commandStack = inject<CommandStack>('commandStack')!;
+frontend/src/components/panels/ActionsPanel.vue:267:  const cmd = new Command('Push subprocess', world);
+frontend/src/components/panels/ActionsPanel.vue:276:    const cmd = new Command('Pop subprocess', world);
+frontend/src/components/panels/ActionsPanel.vue:291:  const cmd = new Command('Toggle subprocess encapsulation', world);
+frontend/src/components/panels/ActionsPanel.vue:300:  const cmd = new Command('Toggle output status', world);
+frontend/src/components/panels/ActionsPanel.vue:309:  const cmd = new Command('Rename subprocess', world);
+frontend/src/components/toolbars/Toolbar.vue:121:import { CommandStack } from '@/commands/CommandStack';
+frontend/src/components/toolbars/Toolbar.vue:123:import { Vector3 } from 'three';
+frontend/src/components/toolbars/Toolbar.vue:125:import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
+frontend/src/components/toolbars/Toolbar.vue:126:import { AddLine2DByTwoPointsOp } from '@/commands/operations/world/AddLineOp';
+frontend/src/components/toolbars/Toolbar.vue:164:const commandStack = inject<CommandStack>('commandStack')!;
+frontend/src/components/toolbars/Toolbar.vue:166:  throw new Error('CommandStack not provided');
+frontend/src/components/toolbars/Toolbar.vue:169:// Inject world for example setups
+frontend/src/components/toolbars/Toolbar.vue:175:// Reactive trigger for CommandStack updates (Phase 91)
+frontend/src/components/toolbars/Toolbar.vue:209: * Alt+E: Add projection plane example setup (for testing)
+frontend/src/components/toolbars/Toolbar.vue:218:  // Alt+E: Add projection plane example setup
+frontend/src/components/toolbars/Toolbar.vue:249: * Add projection plane example setup (Alt+E)
+frontend/src/components/toolbars/Toolbar.vue:263:    const cmd = new Command('Add projection plane example setup', world);
+frontend/src/components/toolbars/Toolbar.vue:266:    const t1_p1 = cmd.addAndExecute(new AddFreePoint2DOp(P_H.id, new Vector3(150, 0, 1)));
+frontend/src/components/toolbars/Toolbar.vue:267:    const t1_p2 = cmd.addAndExecute(new AddFreePoint2DOp(P_H.id, new Vector3(450, 0, 1)));
+frontend/src/components/toolbars/Toolbar.vue:268:    const t1 = cmd.addAndExecute(new AddLine2DByTwoPointsOp(
+frontend/src/components/toolbars/Toolbar.vue:277:    const t2_p1 = cmd.addAndExecute(new AddFreePoint2DOp(P_V.id, new Vector3(200, 0, 1)));
+frontend/src/components/toolbars/Toolbar.vue:278:    const t2_p2 = cmd.addAndExecute(new AddFreePoint2DOp(P_V.id, new Vector3(400, 150, 1)));
+frontend/src/components/toolbars/Toolbar.vue:279:    const t2 = cmd.addAndExecute(new AddLine2DByTwoPointsOp(
+frontend/src/components/toolbars/Toolbar.vue:288:    const t2p_p1 = cmd.addAndExecute(new AddFreePoint2DOp(P_H.id, new Vector3(200, 80, 1)));
+frontend/src/components/toolbars/Toolbar.vue:289:    const t2p_p2 = cmd.addAndExecute(new AddFreePoint2DOp(P_H.id, new Vector3(400, 120, 1)));
+frontend/src/components/toolbars/Toolbar.vue:290:    const t2p = cmd.addAndExecute(new AddLine2DByTwoPointsOp(
+frontend/src/components/toolbars/Toolbar.vue:301:    console.log('Added projection plane example setup (T1_H, T2_V, T2\'_H)');
+frontend/src/application/construction/QuickToolUseCases.ts:1:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/construction/QuickToolUseCases.ts:8:  commandStack: CommandStack;
+frontend/src/application/construction/QuickToolUseCases.ts:14:    message: `${intent.type} was removed from the active canvas tool registry in Wave 006a as example/debug construction flow`
+frontend/src/application/construction/ConstructionUseCases.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/construction/ConstructionUseCases.ts:32:  commandStack: CommandStack;
+frontend/src/application/construction/ConstructionUseCases.ts:36:  const cmd = new Command(intent.description, world);
+frontend/src/application/construction/ConstructionUseCases.ts:193:function lineCircleIndex(lineId: string, circleId: string, mousePos: THREE.Vector3, world: World): number | null {
+frontend/src/application/construction/ConstructionUseCases.ts:206:function circleCircleIndex(circle1Id: string, circle2Id: string, mousePos: THREE.Vector3, world: World): number | null {
+frontend/src/application/canvas/CanvasStyleUseCase.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/canvas/CanvasStyleUseCase.ts:8:  constructor(private readonly world: World, private readonly commandStack: CommandStack) {}
+frontend/src/application/canvas/CanvasStyleUseCase.ts:11:    const cmd = new Command(`Update style: ${request.elementId}`, this.world);
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:1:import type { Vector3 } from 'three';
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:3:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:9:  constructor(private readonly world: World, private readonly commandStack: CommandStack) {}
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:12:    const cmd = new Command(`Move point ${request.label ?? request.pointId}`, this.world);
+frontend/src/application/canvas/CanvasPointMovementUseCase.ts:16:      preview: (position: Vector3): ToolCommandResult => {
+frontend/src/application/world/initializeWorld.ts:2:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/world/initializeWorld.ts:19:export function initializeWorld(world: World, commandStack: CommandStack): void {
+frontend/src/application/world/initializeWorld.ts:22:  const initCmd = new Command('Initialize World', world);
+frontend/src/application/tools/CanvasToolController.ts:1:import type { CommandStack } from '@/commands/CommandStack';
+frontend/src/application/tools/CanvasToolController.ts:12:  commandStack: CommandStack;
+frontend/src/application/tools/CanvasToolController.ts:24:    throw new Error('CommandStack not provided');
+frontend/src/application/tools/CanvasToolController.ts:28:    commandStack: deps.commandStack as CommandStack,
+frontend/src/application/tools/ToolCommandIntents.ts:1:import type { Vector3 } from 'three';
+frontend/src/application/tools/ToolCommandIntents.ts:29:  selectionPoint: Vector3;
+frontend/src/application/tools/ToolCommandIntents.ts:33:  selectionPoint: Vector3;
+frontend/src/application/tools/ToolCommandIntents.ts:86:  preview(position: Vector3): ToolCommandResult;
+frontend/tests/helpers/worldHelpers.ts:18:import { CommandStack } from '../../src/commands/CommandStack';
+frontend/tests/helpers/worldHelpers.ts:31: * - CommandStack for executing commands
+frontend/tests/helpers/worldHelpers.ts:42:export function createTestWorld(): { world: World; commandStack: CommandStack } {
+frontend/tests/helpers/worldHelpers.ts:44:  const commandStack = new CommandStack();
+frontend/tests/helpers/worldHelpers.ts:57:  commandStack: CommandStack;
+frontend/tests/integration/worldInitialization.spec.ts:12:import { CommandStack } from '@/commands/CommandStack';
+frontend/tests/integration/worldInitialization.spec.ts:21:      const commandStack = new CommandStack();
+frontend/tests/integration/worldInitialization.spec.ts:50:      const commandStack = new CommandStack();
+frontend/tests/integration/worldInitialization.spec.ts:67:      const commandStack = new CommandStack();
+frontend/tests/integration/worldInitialization.spec.ts:82:      const commandStack = new CommandStack();
+frontend/tests/integration/worldInitialization.spec.ts:114:      const commandStack = new CommandStack();
+frontend/tests/integration/worldInitialization.spec.ts:149:      const commandStack = new CommandStack();
+frontend/tests/integration/worldInitialization.spec.ts:169:      const commandStack = new CommandStack();
+frontend/tests/integration/worldInitialization.spec.ts:184:      const commandStack = new CommandStack();
+frontend/tests/integration/worldInitialization.spec.ts:198:      const commandStack = new CommandStack();
+frontend/tests/integration/worldInitialization.spec.ts:221:      const commandStack = new CommandStack();
+frontend/tests/integration/worldInitialization.spec.ts:247:      const commandStack = new CommandStack();
+frontend/tests/integration/worldInitialization.spec.ts:260:      const commandStack = new CommandStack();
+frontend/tests/integration/pointCreation.spec.ts:24:import { CommandStack } from '@/commands/CommandStack';
+frontend/tests/integration/pointCreation.spec.ts:27:import { Vector3 } from 'three';
+frontend/tests/integration/pointCreation.spec.ts:32:  let commandStack: CommandStack;
+frontend/tests/integration/pointCreation.spec.ts:46:        planeCoords: new Vector3(100, 200, 1),
+frontend/tests/integration/pointCreation.spec.ts:78:        planeCoords: new Vector3(300, 400, 1),
+frontend/tests/integration/pointCreation.spec.ts:103:        planeCoords: new Vector3(100, 200, 1),
+frontend/tests/integration/pointCreation.spec.ts:127:        planeCoords: new Vector3(100, 200, 1),
+frontend/tests/integration/pointCreation.spec.ts:138:      // Undo via CommandStack
+frontend/tests/integration/pointCreation.spec.ts:149:        planeCoords: new Vector3(100, 200, 1),
+frontend/tests/integration/pointCreation.spec.ts:163:      // Redo via CommandStack
+frontend/tests/integration/pointCreation.spec.ts:176:        planeCoords: new Vector3(100, 200, 1),
+frontend/tests/integration/pointCreation.spec.ts:198:        new Vector3(100, 100, 1),
+frontend/tests/integration/pointCreation.spec.ts:199:        new Vector3(200, 200, 1),
+frontend/tests/integration/pointCreation.spec.ts:200:        new Vector3(300, 300, 1)
+frontend/tests/integration/pointCreation.spec.ts:250:        planeCoords: new Vector3(100, 200, 1),
+frontend/tests/integration/pointCreation.spec.ts:279:          planeCoords: new Vector3(100 * i, 100 * i, 1),
+frontend/tests/integration/pointCreation.spec.ts:312:        planeCoords: new Vector3(100, 200, 1),
+frontend/tests/integration/pointCreation.spec.ts:334:        planeCoords: new Vector3(NaN, 200, 1),
+frontend/tests/integration/pointCreation.spec.ts:355:        planeCoords: new Vector3(100, 200, 1),
+frontend/tests/integration/pointCreation.spec.ts:363:      // Command is encapsulated in CommandStack
+frontend/tests/integration/pointCreation.spec.ts:377:        planeCoords: new Vector3(100, 200, 1),
+frontend/tests/integration/pointCreation.spec.ts:387:      // (CommandStack holds command instances)
+frontend/tests/integration/pointCreation.spec.ts:401:      const originalCoords = new Vector3(123, 456, 1);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:3:import { Vector3 } from 'three';
+frontend/tests/unit/application/canvasToolControllers.spec.ts:25:    planeCoords: overrides.planeCoords ?? new Vector3(0, 0, 1),
+frontend/tests/unit/application/canvasToolControllers.spec.ts:35:function arg(element: any, planeCoords = new Vector3(0, 0, 1)): ArgumentValue {
+frontend/tests/unit/application/canvasToolControllers.spec.ts:52:        args: new Map([['position', arg(null, new Vector3(12, 34, 1))]])
+frontend/tests/unit/application/canvasToolControllers.spec.ts:67:        args: new Map([['position', arg(null, new Vector3(99, 99, 1))]])
+frontend/tests/unit/application/canvasToolControllers.spec.ts:80:    const center = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:81:    const radius = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:82:    const p1 = plane.addFreePoint2D(new Vector3(-10, 3, 1), world);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:83:    const p2 = plane.addFreePoint2D(new Vector3(10, 3, 1), world);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:96:          ['element2', arg(circle, new Vector3(-4, 3, 1))]
+frontend/tests/unit/application/canvasToolControllers.spec.ts:98:        metadata: { selectionPoint: new Vector3(-4, 3, 1) }
+frontend/tests/unit/application/canvasToolControllers.spec.ts:113:    const center = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:114:    const radius = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:115:    const throughPoint = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:127:          ['throughPoint', arg(throughPoint, new Vector3(10, -5, 1))]
+frontend/tests/unit/application/canvasToolControllers.spec.ts:129:        metadata: { tangentIndex: 1, selectionPoint: new Vector3(10, -5, 1) }
+frontend/tests/unit/application/canvasToolControllers.spec.ts:141:    const point = plane.addFreePoint2D(new Vector3(1, 2, 1), world);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:145:    expect(cancelled.preview(new Vector3(3, 4, 1)).success).toBe(true);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:152:    expect(committed.preview(new Vector3(7, 8, 1)).success).toBe(true);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:163:    const point = plane.addFreePoint2D(new Vector3(1, 2, 1), world);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:183:    const center = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:184:    const radius = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:185:    const external = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:186:    const l1p = plane.addFreePoint2D(new Vector3(-10, 3, 1), world);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:187:    const l2p = plane.addFreePoint2D(new Vector3(10, 3, 1), world);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:212:    throughTool.handleClick(makeToolContext({ ...base, planeCoords: new Vector3(0, 0, 1) }));
+frontend/tests/unit/application/canvasToolControllers.spec.ts:213:    throughTool.handleClick(makeToolContext({ ...base, planeCoords: new Vector3(10, -5, 1) }));
+frontend/tests/unit/application/canvasToolControllers.spec.ts:216:    parallelTool.handleClick(makeToolContext({ ...base, planeCoords: new Vector3(-10, 3, 1) }));
+frontend/tests/unit/application/canvasToolControllers.spec.ts:217:    parallelTool.handleClick(makeToolContext({ ...base, planeCoords: new Vector3(0, 0, 1) }));
+frontend/tests/unit/application/canvasToolControllers.spec.ts:220:    intersectionTool.handleClick(makeToolContext({ ...base, planeCoords: new Vector3(-10, 3, 1) }));
+frontend/tests/unit/application/canvasToolControllers.spec.ts:221:    intersectionTool.handleClick(makeToolContext({ ...base, planeCoords: new Vector3(-4, 3, 1) }));
+frontend/tests/unit/application/canvasToolControllers.spec.ts:248:    expect(source).not.toContain('new Command(');
+frontend/tests/unit/application/canvasToolControllers.spec.ts:258:      planeCoords: new Vector3(21, 22, 1),
+frontend/tests/integration/phase76-fail-fast.spec.ts:12:import { Vector3 } from 'three';
+frontend/tests/integration/phase76-fail-fast.spec.ts:75:      const p1 = planeH.addFreePoint2D(new Vector3(5, 5, 0), world);
+frontend/tests/integration/phase76-fail-fast.spec.ts:76:      const p2 = planeH.addFreePoint2D(new Vector3(5, 5, 0), world); // Same position
+frontend/tests/integration/guide-creation.test.ts:3:import type { CommandStack } from '../../src/commands/CommandStack';
+frontend/tests/integration/guide-creation.test.ts:5:import { AddFreePoint2DOp } from '../../src/commands/operations/AddFreePoint2DOp';
+frontend/tests/integration/guide-creation.test.ts:12:  let commandStack: CommandStack;
+frontend/tests/integration/guide-creation.test.ts:26:      const cmd = new Command('Setup test geometry', world);
+frontend/tests/integration/guide-creation.test.ts:29:        new AddFreePoint2DOp(planeId, [100, 100, 1])
+frontend/tests/integration/guide-creation.test.ts:34:        new AddFreePoint2DOp(planeId, [200, 100, 1])
+frontend/tests/integration/guide-creation.test.ts:45:        new AddFreePoint2DOp(planeId, [150, 150, 1])
+frontend/tests/integration/guide-creation.test.ts:53:      const guideCmd = new Command('Create guide on regular line', world);
+frontend/tests/integration/guide-creation.test.ts:92:      const cmd = new Command('Create test point', world);
+frontend/tests/integration/guide-creation.test.ts:94:        new AddFreePoint2DOp(projPlaneH, [100, 100, 1])
+frontend/tests/integration/guide-creation.test.ts:101:      const guideCmd = new Command('Create guide on hinge line', world);
+frontend/tests/integration/guide-creation.test.ts:152:      const cmd = new Command('Setup', world);
+frontend/tests/integration/guide-creation.test.ts:153:      const p1 = cmd.addAndExecute(new AddFreePoint2DOp(projPlaneH, [0, 0, 1]));
+frontend/tests/integration/guide-creation.test.ts:154:      const p2 = cmd.addAndExecute(new AddFreePoint2DOp(projPlaneH, [100, 0, 1]));
+frontend/tests/integration/guide-creation.test.ts:156:      const throughPoint = cmd.addAndExecute(new AddFreePoint2DOp(projPlaneH, [50, 50, 1]));
+frontend/tests/integration/guide-creation.test.ts:162:        const guideCmd = new Command('Create guide', world);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:19:import { CommandStack } from '@/commands/CommandStack';
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:22:import { Vector3 } from 'three';
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:23:import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:29:  let commandStack: CommandStack;
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:44:    const createCmd = new Command('Create points', world);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:45:    const p1Result = createCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 0, 1)));
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:46:    const p2Result = createCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 0, 1)));
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:54:    const deleteCmd = new Command('Delete point', world);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:87:    const createCmd = new Command('Create points', world);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:88:    const p1Result = createCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 0, 1)));
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:89:    const p2Result = createCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(50, 0, 1)));
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:90:    const p3Result = createCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 0, 1)));
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:99:    const delete1Cmd = new Command('Delete p1', world);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:105:    const delete3Cmd = new Command('Delete p3', world);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:135:    const createCmd = new Command('Create', world);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:136:    const pResult = createCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(50, 50, 1)));
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:142:    const deleteCmd = new Command('Delete', world);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:171:    const position = new Vector3(75, 75, 1);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:174:    const create1Cmd = new Command('Create 1', world);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:175:    const p1Result = create1Cmd.addAndExecute(new AddFreePoint2DOp(planeId, position));
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:181:    const deleteCmd = new Command('Delete', world);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:187:    const create2Cmd = new Command('Create 2', world);
+frontend/tests/integration/projectService.cascadeDeletion.spec.ts:188:    const p2Result = create2Cmd.addAndExecute(new AddFreePoint2DOp(planeId, position));
+frontend/tests/unit/selectionMask.spec.ts:13:import { Vector3, Matrix3 } from 'three';
+frontend/tests/unit/selectionMask.spec.ts:47:    return plane.addFreePoint2D(new Vector3(0, 0, 1), world, undefined, 'P');
+frontend/tests/unit/selectionMask.spec.ts:53:    const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world, undefined, 'P1');
+frontend/tests/unit/selectionMask.spec.ts:54:    const p2 = plane.addFreePoint2D(new Vector3(1, 0, 1), world, undefined, 'P2');
+frontend/tests/unit/selectionMask.spec.ts:60:    const center = plane.addFreePoint2D(new Vector3(0, 0, 1), world, undefined, 'C');
+frontend/tests/unit/selectionMask.spec.ts:61:    const circumferencePoint = plane.addFreePoint2D(new Vector3(1, 0, 1), world, undefined, 'CP');
+frontend/tests/unit/selectionMask.spec.ts:141:      const point = plane.addFreePoint2D(new Vector3(100, 100, 1), world);
+frontend/tests/unit/selectionMask.spec.ts:144:      const queryPos = new Vector3(100, 100, 1);
+frontend/tests/unit/selectionMask.spec.ts:156:      const point = plane.addFreePoint2D(new Vector3(100, 100, 1), world);
+frontend/tests/unit/selectionMask.spec.ts:159:      const queryPos = new Vector3(100, 100, 1);
+frontend/tests/unit/selectionMask.spec.ts:173:      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/selectionMask.spec.ts:174:      const p2 = plane.addFreePoint2D(new Vector3(200, 200, 1), world);
+frontend/tests/unit/selectionMask.spec.ts:178:      const queryPos = new Vector3(100, 100, 1); // On the line
+frontend/tests/unit/selectionMask.spec.ts:193:      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/selectionMask.spec.ts:194:      const p2 = plane.addFreePoint2D(new Vector3(200, 200, 1), world);
+frontend/tests/unit/selectionMask.spec.ts:198:      const queryPos = new Vector3(100, 100, 1); // On the line
+frontend/tests/unit/selectionMask.spec.ts:211:      const point = plane.addFreePoint2D(new Vector3(100, 100, 1), world);
+frontend/tests/unit/selectionMask.spec.ts:214:      const queryPos = new Vector3(100, 100, 1);
+frontend/tests/unit/selectionMask.spec.ts:226:      const point = plane.addFreePoint2D(new Vector3(100, 100, 1), world);
+frontend/tests/unit/selectionMask.spec.ts:229:      const queryPos = new Vector3(100, 100, 1);
+frontend/tests/unit/selectionMask.spec.ts:245:      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/selectionMask.spec.ts:246:      const p2 = plane.addFreePoint2D(new Vector3(200, 200, 1), world);
+frontend/tests/unit/selectionMask.spec.ts:249:      const queryPos = new Vector3(100, 100, 1);
+frontend/tests/integration/processTree-stack.test.ts:4:import { CommandStack } from '../../src/commands/CommandStack';
+frontend/tests/integration/processTree-stack.test.ts:13:  let commandStack: CommandStack;
+frontend/tests/integration/processTree-stack.test.ts:23:    const cmd = new Command('Push subprocess', world);
+frontend/tests/integration/processTree-stack.test.ts:30:    const cmd = new Command('Pop subprocess', world);
+frontend/tests/unit/projectionPlaneMatrix.test.ts:3:import { Vector3, Vector4 } from 'three';
+frontend/tests/unit/projectionPlaneMatrix.test.ts:15:    const u_3d = new Vector3(1, 0, 0);      // U along X axis
+frontend/tests/unit/projectionPlaneMatrix.test.ts:16:    const v_3d = new Vector3(0, 1, 0);      // V along Y axis
+frontend/tests/unit/projectionPlaneMatrix.test.ts:17:    const origin_3d = new Vector3(5, 10, 0); // Origin at (5, 10, 0)
+frontend/tests/unit/projectionPlaneMatrix.test.ts:29:    const point2D = new Vector3(1, 2, 1);
+frontend/tests/unit/projectionPlaneMatrix.test.ts:33:    const expected = new Vector3(
+frontend/tests/unit/projectionPlaneMatrix.test.ts:54:    const u_3d = new Vector3(1, 0, 0);
+frontend/tests/unit/projectionPlaneMatrix.test.ts:55:    const v_3d = new Vector3(0, 1, 0);
+frontend/tests/unit/projectionPlaneMatrix.test.ts:56:    const origin_3d = new Vector3(5, 10, 0);
+frontend/tests/unit/projectionPlaneMatrix.test.ts:68:    const point2D = new Vector3(-2, 3, 1);
+frontend/tests/unit/projectionPlaneMatrix.test.ts:72:    const expected = new Vector3(
+frontend/tests/unit/projectionPlaneMatrix.test.ts:93:    const u_3d = new Vector3(1, 0, 0);
+frontend/tests/unit/projectionPlaneMatrix.test.ts:94:    const v_3d = new Vector3(0, 1, 0);
+frontend/tests/unit/projectionPlaneMatrix.test.ts:95:    const origin_3d = new Vector3(5, 10, 0);
+frontend/tests/unit/projectionPlaneMatrix.test.ts:107:    const direction2D = new Vector3(1, 2, 0);
+frontend/tests/unit/projectionPlaneMatrix.test.ts:111:    const expected = new Vector3(
+frontend/tests/unit/projectionPlaneMatrix.test.ts:132:    const u_3d = new Vector3(0.894, -0.447, 0).normalize();
+frontend/tests/unit/projectionPlaneMatrix.test.ts:133:    const v_3d = new Vector3(0.183, 0.365, -0.913).normalize();
+frontend/tests/unit/projectionPlaneMatrix.test.ts:134:    const origin_3d = new Vector3(20, 0, 0);
+frontend/tests/unit/projectionPlaneMatrix.test.ts:146:    const point2D = new Vector3(1, 2, 1);
+frontend/tests/unit/projectionPlaneMatrix.test.ts:150:    const u_normalized = new Vector3(0.894, -0.447, 0).normalize();
+frontend/tests/unit/projectionPlaneMatrix.test.ts:151:    const v_normalized = new Vector3(0.183, 0.365, -0.913).normalize();
+frontend/tests/unit/projectionPlaneMatrix.test.ts:153:    const expected = new Vector3(
+frontend/tests/unit/projectionPlaneMatrix.test.ts:167:    const u_3d = new Vector3(0.894, -0.447, 0);
+frontend/tests/unit/projectionPlaneMatrix.test.ts:168:    const v_3d = new Vector3(0.183, 0.365, -0.913);
+frontend/tests/unit/projectionPlaneMatrix.test.ts:169:    const origin_3d = new Vector3(20, 0, 0);
+frontend/tests/integration/projectService.determinism.spec.ts:16:import { CommandStack } from '@/commands/CommandStack';
+frontend/tests/integration/projectService.determinism.spec.ts:19:import { Vector3 } from 'three';
+frontend/tests/integration/projectService.determinism.spec.ts:23:import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
+frontend/tests/integration/projectService.determinism.spec.ts:24:import { AddLine2DByTwoPointsOp } from '@/commands/operations/world/AddLineOp';
+frontend/tests/integration/projectService.determinism.spec.ts:40:    const cmd1 = new Command('Create points', world);
+frontend/tests/integration/projectService.determinism.spec.ts:41:    const p1Result = cmd1.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
+frontend/tests/integration/projectService.determinism.spec.ts:44:    const p2Result = cmd1.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 100, 1)));
+frontend/tests/integration/projectService.determinism.spec.ts:47:    const p3Result = cmd1.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(150, 200, 1)));
+frontend/tests/integration/projectService.determinism.spec.ts:53:    const cmd2 = new Command('Create lines', world);
+frontend/tests/integration/projectService.determinism.spec.ts:54:    const l1Result = cmd2.addAndExecute(new AddLine2DByTwoPointsOp(planeId, p1Id, p2Id));
+frontend/tests/integration/projectService.determinism.spec.ts:57:    const l2Result = cmd2.addAndExecute(new AddLine2DByTwoPointsOp(planeId, p2Id, p3Id));
+frontend/tests/integration/projectService.determinism.spec.ts:63:    const cmd3 = new Command('Create intersection', world);
+frontend/tests/integration/projectService.determinism.spec.ts:70:    const cmd4 = new Command('Create circle', world);
+frontend/tests/integration/projectService.determinism.spec.ts:78:      const cmd5 = new Command('Create guide', world);
+frontend/tests/integration/projectService.determinism.spec.ts:85:    const cmd6 = new Command('Delete point', world);
+frontend/tests/integration/projectService.determinism.spec.ts:141:    const cmd = new Command('Create elements', world);
+frontend/tests/integration/projectService.determinism.spec.ts:142:    cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(50, 50, 1)));
+frontend/tests/integration/projectService.determinism.spec.ts:143:    cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 50, 1)));
+frontend/tests/integration/projectService.determinism.spec.ts:144:    cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(75, 100, 1)));
+frontend/tests/integration/factories/AllFactories.spec.ts:4: * Tests end-to-end workflows with real World and CommandStack:
+frontend/tests/integration/factories/AllFactories.spec.ts:15:import type { CommandStack } from '@/commands/CommandStack';
+frontend/tests/integration/factories/AllFactories.spec.ts:20:import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
+frontend/tests/integration/factories/AllFactories.spec.ts:22:import { AddLine2DByTwoPointsOp } from '@/commands/operations/world/AddLineOp';
+frontend/tests/integration/factories/AllFactories.spec.ts:24:import { Vector3 } from 'three';
+frontend/tests/integration/factories/AllFactories.spec.ts:29:  let commandStack: CommandStack;
+frontend/tests/integration/factories/AllFactories.spec.ts:42:      const setupCmd = new Command('Setup', world);
+frontend/tests/integration/factories/AllFactories.spec.ts:48:      setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, 5, 1)));
+frontend/tests/integration/factories/AllFactories.spec.ts:60:      const guideCmd = new Command('Create guide', world);
+frontend/tests/integration/factories/AllFactories.spec.ts:99:      const setupCmd = new Command('Setup line', world);
+frontend/tests/integration/factories/AllFactories.spec.ts:101:      setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 0, 1)));
+frontend/tests/integration/factories/AllFactories.spec.ts:104:      setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(10, 0, 1)));
+frontend/tests/integration/factories/AllFactories.spec.ts:107:      setupCmd.addAndExecute(new AddLine2DByTwoPointsOp(planeId, point1Id, point2Id));
+frontend/tests/integration/factories/AllFactories.spec.ts:110:      setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, 5, 1)));
+frontend/tests/integration/factories/AllFactories.spec.ts:117:      const guideCmd = new Command('Create guide', world);
+frontend/tests/integration/factories/AllFactories.spec.ts:138:      const setupCmd = new Command('Setup', world);
+frontend/tests/integration/factories/AllFactories.spec.ts:140:      const p1Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 0, 1)));
+frontend/tests/integration/factories/AllFactories.spec.ts:143:      const p2Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(10, 0, 1)));
+frontend/tests/integration/factories/AllFactories.spec.ts:146:      const lineResult = setupCmd.addAndExecute(new AddLine2DByTwoPointsOp(planeId, point1Id, point2Id));
+frontend/tests/integration/factories/AllFactories.spec.ts:158:      const deleteCmd = new Command('Delete with cascade', world);
+frontend/tests/integration/factories/AllFactories.spec.ts:188:      const setupCmd = new Command('Setup', world);
+frontend/tests/integration/factories/AllFactories.spec.ts:190:      const centerResult = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, 0, 1)));
+frontend/tests/integration/factories/AllFactories.spec.ts:193:      const circumResult = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(10, 0, 1)));
+frontend/tests/integration/factories/AllFactories.spec.ts:208:      const deleteCmd = new Command('Delete with cascade', world);
+frontend/tests/integration/factories/AllFactories.spec.ts:224:      const setupCmd = new Command('Setup', world);
+frontend/tests/integration/factories/AllFactories.spec.ts:226:      const p1Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 0, 1)));
+frontend/tests/integration/factories/AllFactories.spec.ts:229:      const p2Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(10, 0, 1)));
+frontend/tests/integration/factories/AllFactories.spec.ts:232:      const p3Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(20, 0, 1)));
+frontend/tests/integration/factories/AllFactories.spec.ts:243:      const deleteCmd = new Command('Delete multiple', world);
+frontend/tests/unit/projectionPlane.spec.ts:8:import { Vector3 } from 'three';
+frontend/tests/unit/projectionPlane.spec.ts:26:      const planePos = new Vector3(0, 0, 1);
+frontend/tests/unit/projectionPlane.spec.ts:40:      const paperPos = new Vector3(900, 400, 1);
+frontend/tests/unit/projectionPlane.spec.ts:53:      const original = new Vector3(50, 75, 1);
+frontend/tests/unit/projectionPlane.spec.ts:67:      const original = new Vector3(200, 400, 1);
+frontend/tests/unit/projectionPlane.spec.ts:84:      const planePos = new Vector3(0, 0, 1);
+frontend/tests/unit/projectionPlane.spec.ts:98:      const paperPos = new Vector3(900, 600, 1);
+frontend/tests/unit/projectionPlane.spec.ts:111:      const original = new Vector3(50, 75, 1);
+frontend/tests/unit/projectionPlane.spec.ts:125:      const original = new Vector3(200, -400, 1);
+frontend/tests/unit/projectionPlane.spec.ts:194:      const point = planeH.addFreePoint2D(new Vector3(10, 20, 1), world);
+frontend/tests/unit/projectionPlane.spec.ts:205:      const p1 = planeH.addFreePoint2D(new Vector3(10, 20, 1), world);
+frontend/tests/unit/projectionPlane.spec.ts:206:      const p2 = planeH.addFreePoint2D(new Vector3(30, 40, 1), world);
+frontend/tests/unit/projectionPlane.spec.ts:215:      const point = planeH.addFreePoint2D(new Vector3(10, 20, 1), world);
+frontend/tests/unit/projectionPlane.spec.ts:225:      const point = planeH.addFreePoint2D(new Vector3(10, 20, 1), world);
+frontend/tests/unit/projectionPlane.spec.ts:227:      const realization = new Point2DRealization2D(new Vector3(10, 20, 1), true);
+frontend/tests/unit/projectionPlane.spec.ts:237:      const point = planeH.addFreePoint2D(new Vector3(10, 20, 1), world);
+frontend/tests/unit/projectionPlane.spec.ts:239:      const realization = new Point2DRealization2D(new Vector3(10, 20, 1), true);
+frontend/tests/unit/projectionPlane.spec.ts:248:      const point = planeH.addFreePoint2D(new Vector3(10, 20, 1), world);
+frontend/tests/unit/projectionPlane.spec.ts:250:      const realization = new Point2DRealization2D(new Vector3(10, 20, 1), true);
+frontend/tests/unit/projectionPlane.spec.ts:260:      const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/projectionPlane.spec.ts:261:      const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
+frontend/tests/unit/projectionPlane.spec.ts:273:      const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/projectionPlane.spec.ts:274:      const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
+frontend/tests/unit/projectionPlane.spec.ts:275:      const p3 = planeH.addFreePoint2D(new Vector3(20, 0, 1), world);
+frontend/tests/unit/projectionPlane.spec.ts:276:      const p4 = planeH.addFreePoint2D(new Vector3(30, 10, 1), world);
+frontend/tests/unit/projectionPlane.spec.ts:288:      const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/projectionPlane.spec.ts:289:      const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
+frontend/tests/unit/projectionPlane.spec.ts:300:      const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/projectionPlane.spec.ts:301:      const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
+frontend/tests/unit/projectionPlane.spec.ts:305:        new Vector3(0, 0, 1), 
+frontend/tests/unit/projectionPlane.spec.ts:306:        new Vector3(1, 0, 0),
+frontend/tests/unit/projectionPlane.spec.ts:320:      const center = planeH.addFreePoint2D(new Vector3(100, 100, 1), world);
+frontend/tests/unit/projectionPlane.spec.ts:321:      const edge = planeH.addFreePoint2D(new Vector3(150, 100, 1), world);
+frontend/tests/unit/projectionPlane.spec.ts:332:      const c1Center = planeH.addFreePoint2D(new Vector3(100, 100, 1), world);
+frontend/tests/unit/projectionPlane.spec.ts:333:      const c1Edge = planeH.addFreePoint2D(new Vector3(150, 100, 1), world);
+frontend/tests/unit/projectionPlane.spec.ts:334:      const c2Center = planeH.addFreePoint2D(new Vector3(200, 200, 1), world);
+frontend/tests/unit/projectionPlane.spec.ts:335:      const c2Edge = planeH.addFreePoint2D(new Vector3(250, 200, 1), world);
+frontend/tests/unit/projectionPlane.spec.ts:347:      const center = planeH.addFreePoint2D(new Vector3(100, 100, 1), world);
+frontend/tests/unit/projectionPlane.spec.ts:348:      const edge = planeH.addFreePoint2D(new Vector3(150, 100, 1), world);
+frontend/tests/unit/projectionPlane.spec.ts:359:      const center = planeH.addFreePoint2D(new Vector3(100, 100, 1), world);
+frontend/tests/unit/projectionPlane.spec.ts:360:      const edge = planeH.addFreePoint2D(new Vector3(150, 100, 1), world);
+frontend/tests/unit/projectionPlane.spec.ts:364:        new Vector3(100, 100, 1),
+frontend/tests/unit/projectionPlane.spec.ts:365:        new Vector3(50, 0, 0),  // Radius vector pointing right
+frontend/tests/unit/projectionPlane.spec.ts:384:      const pointH = planeH.addFreePoint2D(new Vector3(10, 20, 1), world);
+frontend/tests/unit/projectionPlane.spec.ts:385:      const pointV = planeV.addFreePoint2D(new Vector3(30, 40, 1), world);
+frontend/tests/unit/projectionPlane.spec.ts:399:      const p1H = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/projectionPlane.spec.ts:400:      const p2H = planeH.addFreePoint2D(new Vector3(10, 0, 1), world);
+frontend/tests/unit/projectionPlane.spec.ts:401:      const p1V = planeV.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/projectionPlane.spec.ts:402:      const p2V = planeV.addFreePoint2D(new Vector3(10, 0, 1), world);
+frontend/tests/unit/projectionPlane.spec.ts:407:      const realH = new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), true);
+frontend/tests/unit/projectionPlane.spec.ts:408:      const realV = new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(0, 1, 0), true);
+frontend/tests/unit/projectionPlane.spec.ts:425:      const p1 = planeH.addFreePoint2D(new Vector3(10, 20, 1), world);
+frontend/tests/unit/projectionPlane.spec.ts:426:      const p2 = planeH.addFreePoint2D(new Vector3(20, 30, 1), world);
+frontend/tests/unit/projectionPlane.spec.ts:427:      const pEdge = planeH.addFreePoint2D(new Vector3(60, 20, 1), world);
+frontend/tests/unit/processTree.spec.ts:15:import { Vector3 } from 'three';
+frontend/tests/unit/coordinateTransform.spec.ts:8:import { Vector3 } from 'three';
+frontend/tests/e2e/command-chaining.spec.ts:38: * const command = new Command();
+frontend/tests/e2e/command-chaining.spec.ts:41: * command.addAndExecute(new AddFreePoint2DOp({
+frontend/tests/e2e/command-chaining.spec.ts:49: * command.addAndExecute(new AddFreePoint2DOp({
+frontend/tests/unit/commands.spec.ts:53:    command = new Command('Test command', world);
+frontend/tests/unit/commandStack.spec.ts:2:import { CommandStack } from '../../src/commands/CommandStack';
+frontend/tests/unit/commandStack.spec.ts:34:describe('CommandStack', () => {
+frontend/tests/unit/commandStack.spec.ts:35:  let stack: CommandStack;
+frontend/tests/unit/commandStack.spec.ts:40:    stack = new CommandStack(5); // Small size for testing
+frontend/tests/unit/commandStack.spec.ts:45:      const cmd = new Command('Command 1', world);
+frontend/tests/unit/commandStack.spec.ts:56:      const cmd = new Command('Command 1', world);
+frontend/tests/unit/commandStack.spec.ts:64:      const cmd1 = new Command('Command 1', world);
+frontend/tests/unit/commandStack.spec.ts:69:      const cmd2 = new Command('Command 2', world);
+frontend/tests/unit/commandStack.spec.ts:77:      const cmd3 = new Command('Command 3', world);
+frontend/tests/unit/commandStack.spec.ts:87:      const cmd = new Command('Non-undoable', world);
+frontend/tests/unit/commandStack.spec.ts:102:      const cmd = new Command('Command 1', world);
+frontend/tests/unit/commandStack.spec.ts:114:      const cmd = new Command('Command 1', world);
+frontend/tests/unit/commandStack.spec.ts:127:      const cmd1 = new Command('Command 1', world);
+frontend/tests/unit/commandStack.spec.ts:132:      const cmd2 = new Command('Command 2', world);
+frontend/tests/unit/commandStack.spec.ts:137:      const cmd3 = new Command('Command 3', world);
+frontend/tests/unit/commandStack.spec.ts:153:      const cmd1 = new Command('Command 1', world);
+frontend/tests/unit/commandStack.spec.ts:158:      const cmd2 = new Command('Command 2', world);
+frontend/tests/unit/commandStack.spec.ts:189:      const cmd = new Command('Command 1', world);
+frontend/tests/unit/commandStack.spec.ts:199:      const cmd = new Command('Command 1', world);
+frontend/tests/unit/commandStack.spec.ts:212:      const cmd1 = new Command('Command 1', world);
+frontend/tests/unit/commandStack.spec.ts:217:      const cmd2 = new Command('Command 2', world);
+frontend/tests/unit/commandStack.spec.ts:232:      const cmd1 = new Command('Command 1', world);
+frontend/tests/unit/commandStack.spec.ts:237:      const cmd2 = new Command('Command 2', world);
+frontend/tests/unit/commands/operations/operationRegistry.spec.ts:3:import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
+frontend/tests/unit/commands/operations/operationRegistry.spec.ts:6:import { Vector3 } from 'three';
+frontend/tests/unit/commands/operations/operationRegistry.spec.ts:66:    const op = new AddFreePoint2DOp('projPlane3', new Vector3(1, 2, 1));
+frontend/tests/unit/services/renderService.spec.ts:1:import { Vector3, Vector4 } from 'three';
+frontend/tests/unit/services/renderService.spec.ts:39:      const point = projPlaneH.addFreePoint2D(new Vector3(100, 50, 1), world);
+frontend/tests/unit/services/renderService.spec.ts:40:      const realization = new Point2DRealization2D(new Vector3(100, 50, 1));
+frontend/tests/unit/services/renderService.spec.ts:55:      const line1Point1 = projPlaneH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/services/renderService.spec.ts:56:      const line1Point2 = projPlaneH.addFreePoint2D(new Vector3(100, 0, 1), world);
+frontend/tests/unit/services/renderService.spec.ts:59:      const line2Point1 = projPlaneH.addFreePoint2D(new Vector3(0, 100, 1), world);
+frontend/tests/unit/services/renderService.spec.ts:60:      const line2Point2 = projPlaneH.addFreePoint2D(new Vector3(100, 100, 1), world);
+frontend/tests/unit/services/renderService.spec.ts:64:      const realization = new Point2DRealization2D(new Vector3(0, 0, 1));
+frontend/tests/unit/services/renderService.spec.ts:73:      const point = projPlaneH.addFreePoint2D(new Vector3(-50, -30, 1), world);
+frontend/tests/unit/services/renderService.spec.ts:74:      const realization = new Point2DRealization2D(new Vector3(-50, -30, 1));
+frontend/tests/unit/services/renderService.spec.ts:84:      const point = projPlaneH.addFreePoint2D(new Vector3(10, 20, 1), world);
+frontend/tests/unit/services/renderService.spec.ts:85:      const realization = new Point2DRealization2D(new Vector3(10, 20, 1));
+frontend/tests/unit/services/renderService.spec.ts:95:      const point = projPlaneH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/services/renderService.spec.ts:96:      const realization = new Point2DRealization2D(new Vector3(0, 0, 1));
+frontend/tests/unit/services/renderService.spec.ts:207:      const point = projPlaneH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/services/renderService.spec.ts:208:      const realization = new Point2DRealization2D(new Vector3(0, 0, 1));
+frontend/tests/unit/services/renderService.spec.ts:232:      const point = projPlaneH.addFreePoint2D(new Vector3(50, 50, 1), world);
+frontend/tests/unit/services/renderService.spec.ts:233:      const realization = new Point2DRealization2D(new Vector3(50, 50, 1));
+frontend/tests/unit/services/renderService.spec.ts:247:      const point = projPlaneH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/services/renderService.spec.ts:248:      const realization = new Point2DRealization2D(new Vector3(0, 0, 1));
+frontend/tests/unit/services/renderService.spec.ts:269:      const point = projPlaneH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/services/renderService.spec.ts:270:      const realization = new Point2DRealization2D(new Vector3(0, 0, 1));
+frontend/tests/unit/services/renderService.spec.ts:287:      const originPoint = projPlaneH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/services/renderService.spec.ts:288:      const realization = new Point2DRealization2D(new Vector3(0, 0, 1));
+frontend/tests/unit/commands/createGuide.spec.ts:8:import { AddLine2DByTwoPointsOp } from '../../../src/commands/operations/world/AddLineOp';
+frontend/tests/unit/commands/createGuide.spec.ts:9:import { AddFreePoint2DOp } from '../../../src/commands/operations/world/AddFreePointOp';
+frontend/tests/unit/commands/createGuide.spec.ts:12:import { Vector3 } from 'three';
+frontend/tests/unit/commands/createGuide.spec.ts:26:      const cmd = new Command("Create guide", world);
+frontend/tests/unit/commands/createGuide.spec.ts:29:      const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 100, 1)));
+frontend/tests/unit/commands/createGuide.spec.ts:30:      const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 100, 1)));
+frontend/tests/unit/commands/createGuide.spec.ts:31:      const lineResult = cmd.addAndExecute(new AddLine2DByTwoPointsOp(
+frontend/tests/unit/commands/createGuide.spec.ts:38:      const throughPointResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 50, 1)));
+frontend/tests/unit/commands/createGuide.spec.ts:62:      const cmd = new Command("Create guide", world);
+frontend/tests/unit/commands/createGuide.spec.ts:64:      const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 100, 1)));
+frontend/tests/unit/commands/createGuide.spec.ts:65:      const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 100, 1)));
+frontend/tests/unit/commands/createGuide.spec.ts:66:      const lineResult = cmd.addAndExecute(new AddLine2DByTwoPointsOp(
+frontend/tests/unit/commands/createGuide.spec.ts:72:      const throughPointResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 50, 1)));
+frontend/tests/unit/commands/createGuide.spec.ts:88:      const cmd = new Command("Create guide", world);
+frontend/tests/unit/commands/createGuide.spec.ts:90:      const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 100, 1)));
+frontend/tests/unit/commands/createGuide.spec.ts:91:      const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 100, 1)));
+frontend/tests/unit/commands/createGuide.spec.ts:92:      const lineResult = cmd.addAndExecute(new AddLine2DByTwoPointsOp(
+frontend/tests/unit/commands/createGuide.spec.ts:98:      const throughPointResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 50, 1)));
+frontend/tests/unit/commands/createGuide.spec.ts:120:      const cmd = new Command("Create guide", world);
+frontend/tests/unit/commands/createGuide.spec.ts:122:      const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 100, 1)));
+frontend/tests/unit/commands/createGuide.spec.ts:123:      const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 100, 1)));
+frontend/tests/unit/commands/createGuide.spec.ts:124:      const lineResult = cmd.addAndExecute(new AddLine2DByTwoPointsOp(
+frontend/tests/unit/commands/createGuide.spec.ts:130:      const throughPointResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 50, 1)));
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:12:import { CommandStack } from '@/commands/CommandStack';
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:21:  let commandStack: CommandStack;
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:26:    commandStack = new CommandStack();
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:32:      const cmd = new Command('Initialize World', world);
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:38:      const cmd = new Command('Initialize World', world);
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:155:    it('initialization command should not be on CommandStack by default', () => {
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:157:      const commandStack = new CommandStack();
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:164:      const cmd = new Command('Test Command', world);
+frontend/tests/unit/commands/initializeWorldCommand.spec.ts:173:      const cmd = new Command('Initialize World', world);
+frontend/tests/unit/services/projectionDisplay.spec.ts:8:import { Vector3, Matrix3 } from 'three';
+frontend/tests/unit/services/projectionDisplay.spec.ts:14:import { AddFreePoint2DOp } from '../../../src/commands/operations/world/AddFreePointOp';
+frontend/tests/unit/services/projectionDisplay.spec.ts:15:import { AddLine2DByTwoPointsOp } from '../../../src/commands/operations/world/AddLineOp';
+frontend/tests/unit/services/projectionDisplay.spec.ts:52:    const pointH = projPlaneH.addFreePoint2D(new Vector3(hU, hV, 1), world);
+frontend/tests/unit/services/projectionDisplay.spec.ts:53:    const pointV = projPlaneV.addFreePoint2D(new Vector3(vU, vV, 1), world);
+frontend/tests/unit/services/projectionDisplay.spec.ts:73:    const addP1 = new AddFreePoint2DOp(planeId, new Vector3(x1, y1, 1));
+frontend/tests/unit/services/projectionDisplay.spec.ts:77:    const addP2 = new AddFreePoint2DOp(planeId, new Vector3(x2, y2, 1));
+frontend/tests/unit/services/projectionDisplay.spec.ts:81:    const addLine = new AddLine2DByTwoPointsOp(planeId, p1Id, p2Id);
+frontend/tests/unit/services/projectionDisplay.spec.ts:174:      const cmd = new Command('test-3d-line', world);
+frontend/tests/unit/services/projectionDisplay.spec.ts:221:      const pointH = projPlaneH.addFreePoint2D(new Vector3(10, 5, 1), world);
+frontend/tests/unit/services/projectionDisplay.spec.ts:222:      const pointV = projPlaneV.addFreePoint2D(new Vector3(20, 5, 1), world);
+frontend/tests/unit/commands/createFreePoint.spec.ts:2: * Tests for creating free points using Command + AddFreePoint2DOp
+frontend/tests/unit/commands/createFreePoint.spec.ts:6:import { AddFreePoint2DOp } from '../../../src/commands/operations/world/AddFreePointOp';
+frontend/tests/unit/commands/createFreePoint.spec.ts:9:import { Vector3 } from 'three';
+frontend/tests/unit/commands/createFreePoint.spec.ts:23:      const planePos = new Vector3(100, 200, 1);
+frontend/tests/unit/commands/createFreePoint.spec.ts:25:      const cmd = new Command("Create free point", world);
+frontend/tests/unit/commands/createFreePoint.spec.ts:26:      const result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, planePos));
+frontend/tests/unit/commands/createFreePoint.spec.ts:32:      // The AddFreePoint2DOp operation doesn't validate coordinates
+frontend/tests/unit/commands/createFreePoint.spec.ts:39:      const planePos = new Vector3(100, 200, 1);
+frontend/tests/unit/commands/createFreePoint.spec.ts:41:      const cmd = new Command("Create free point", world);
+frontend/tests/unit/commands/createFreePoint.spec.ts:42:      const result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, planePos));
+frontend/tests/unit/commands/createFreePoint.spec.ts:58:      const planePos = new Vector3(100, 200, 1);
+frontend/tests/unit/commands/createFreePoint.spec.ts:60:      const cmd = new Command("Create free point", world);
+frontend/tests/unit/commands/createFreePoint.spec.ts:61:      const result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, planePos));
+frontend/tests/unit/commands/createFreePoint.spec.ts:69:      const planePos = new Vector3(100, 200, 1);
+frontend/tests/unit/commands/createFreePoint.spec.ts:71:      const cmd = new Command("Create free point", world);
+frontend/tests/unit/commands/createFreePoint.spec.ts:74:        cmd.addAndExecute(new AddFreePoint2DOp('INVALID_PLANE', planePos));
+frontend/tests/unit/commands/createFreePoint.spec.ts:81:      const planePos = new Vector3(100, 200, 1);
+frontend/tests/unit/commands/createFreePoint.spec.ts:83:      const cmd = new Command("Create free point", world);
+frontend/tests/unit/commands/createFreePoint.spec.ts:84:      const result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, planePos));
+frontend/tests/unit/commands/createFreePoint.spec.ts:102:      const planePos = new Vector3(100, 200, 1);
+frontend/tests/unit/commands/createFreePoint.spec.ts:104:      const cmd = new Command("Create free point", world);
+frontend/tests/unit/commands/createFreePoint.spec.ts:105:      const result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, planePos));
+frontend/tests/unit/commands/createFreePoint.spec.ts:122:      const planePos = new Vector3(100, 200, 1);
+frontend/tests/unit/commands/createFreePoint.spec.ts:124:      const cmd = new Command("Create free point", world);
+frontend/tests/unit/commands/createFreePoint.spec.ts:125:      const result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, planePos));
+frontend/tests/unit/utils/projectionPlaneUtils.spec.ts:10:import { Vector3, Vector4 } from 'three';
+frontend/tests/unit/utils/projectionPlaneUtils.spec.ts:53:      const dir1 = new Vector3(1, 1, 0).normalize();
+frontend/tests/unit/commands/commandStack.spec.ts:2: * Unit Tests: CommandStack
+frontend/tests/unit/commands/commandStack.spec.ts:15:import { CommandStack } from '@/commands/CommandStack';
+frontend/tests/unit/commands/commandStack.spec.ts:30:describe('CommandStack (R018)', () => {
+frontend/tests/unit/commands/commandStack.spec.ts:31:  let commandStack: CommandStack;
+frontend/tests/unit/commands/commandStack.spec.ts:35:    // Create fresh World and CommandStack without initialization
+frontend/tests/unit/commands/commandStack.spec.ts:38:    commandStack = new CommandStack();
+frontend/tests/unit/commands/commandStack.spec.ts:50:  describe('push() - Primary API for new Command pattern', () => {
+frontend/tests/unit/commands/commandStack.spec.ts:52:      const command = new Command('Test Command', world);
+frontend/tests/unit/commands/commandStack.spec.ts:63:      const cmd1 = new Command('Command 1', world);
+frontend/tests/unit/commands/commandStack.spec.ts:67:      const cmd2 = new Command('Command 2', world);
+frontend/tests/unit/commands/commandStack.spec.ts:78:      const cmd1 = new Command('Command 1', world);
+frontend/tests/unit/commands/commandStack.spec.ts:88:      const cmd2 = new Command('Command 2', world);
+frontend/tests/unit/commands/commandStack.spec.ts:99:      const command = new Command('Uncommitted', world);
+frontend/tests/unit/commands/commandStack.spec.ts:109:      const command = new Command('Multi-op Command', world);
+frontend/tests/unit/commands/commandStack.spec.ts:124:      const command = new Command('Test Command', world);
+frontend/tests/unit/commands/commandStack.spec.ts:135:      const command = new Command('Test Command', world);
+frontend/tests/unit/commands/commandStack.spec.ts:152:      const cmd1 = new Command('Command 1', world);
+frontend/tests/unit/commands/commandStack.spec.ts:153:      const cmd2 = new Command('Command 2', world);
+frontend/tests/unit/commands/commandStack.spec.ts:154:      const cmd3 = new Command('Command 3', world);
+frontend/tests/unit/commands/commandStack.spec.ts:184:      const command = new Command('Test Command', world);
+frontend/tests/unit/commands/commandStack.spec.ts:196:      const command = new Command('Test Command', world);
+frontend/tests/unit/commands/commandStack.spec.ts:214:      const cmd1 = new Command('Command 1', world);
+frontend/tests/unit/commands/commandStack.spec.ts:215:      const cmd2 = new Command('Command 2', world);
+frontend/tests/unit/commands/commandStack.spec.ts:257:      const command = new Command('Test Command', world);
+frontend/tests/unit/commands/commandStack.spec.ts:266:      const command = new Command('Test Command', world);
+frontend/tests/unit/commands/commandStack.spec.ts:282:      const command = new Command('Test Command', world);
+frontend/tests/unit/commands/commandStack.spec.ts:292:      const command = new Command('Test Command', world);
+frontend/tests/unit/commands/commandStack.spec.ts:303:      const cmd1 = new Command('Command 1', world);
+frontend/tests/unit/commands/commandStack.spec.ts:311:      const cmd2 = new Command('Command 2', world);
+frontend/tests/unit/commands/commandStack.spec.ts:324:      const cmd1 = new Command('Command 1', world);
+frontend/tests/unit/commands/commandStack.spec.ts:330:      const cmd2 = new Command('Command 2', world);
+frontend/tests/unit/commands/commandStack.spec.ts:343:      const cmd1 = new Command('Command 1', world);
+frontend/tests/unit/commands/commandStack.spec.ts:350:      const cmd2 = new Command('Command 2', world);
+frontend/tests/unit/commands/commandStack.spec.ts:360:      const cmd1 = new Command('Command 1', world);
+frontend/tests/unit/commands/commandStack.spec.ts:365:      const cmd2 = new Command('Command 2', world);
+frontend/tests/unit/commands/commandStack.spec.ts:385:      const command = new Command('Test Command', world);
+frontend/tests/unit/commands/commandStack.spec.ts:411:        const cmd = new Command(`Command ${i}`, world);
+frontend/tests/unit/commands/commandStack.spec.ts:452:      const cmd = new Command('Building', world);
+frontend/tests/unit/commands/createCircle.spec.ts:11:import { AddFreePoint2DOp } from '../../../src/commands/operations/world/AddFreePointOp';
+frontend/tests/unit/commands/createCircle.spec.ts:14:import { Vector3 } from 'three';
+frontend/tests/unit/commands/createCircle.spec.ts:28:      const cmd = new Command("Create circle with two points", world);
+frontend/tests/unit/commands/createCircle.spec.ts:31:      const centerResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
+frontend/tests/unit/commands/createCircle.spec.ts:35:      const circumferenceResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(150, 100, 1)));
+frontend/tests/unit/commands/createCircle.spec.ts:61:      const cmd = new Command("Create circle", world);
+frontend/tests/unit/commands/createCircle.spec.ts:63:      const centerResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
+frontend/tests/unit/commands/createCircle.spec.ts:64:      const circumferenceResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(150, 150, 1)));
+frontend/tests/unit/commands/createCircle.spec.ts:80:      const cmd = new Command("Create circle", world);
+frontend/tests/unit/commands/createCircle.spec.ts:82:      const centerResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
+frontend/tests/unit/commands/createCircle.spec.ts:83:      const circumferenceResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(150, 100, 1)));
+frontend/tests/unit/commands/createCircle.spec.ts:104:      const cmd = new Command("Create circle", world);
+frontend/tests/unit/commands/createCircle.spec.ts:106:      const centerResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
+frontend/tests/unit/commands/createCircle.spec.ts:107:      const circumferenceResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(150, 100, 1)));
+frontend/tests/unit/services/paperService.spec.ts:1:import { Vector3 } from 'three';
+frontend/tests/unit/services/paperService.spec.ts:44:      const point = projPlaneH.addFreePoint2D(new Vector3(100, 50, 1), world);
+frontend/tests/unit/services/paperService.spec.ts:72:      // Note: PointPrimitive stores position as Vector3, not separate x/y
+frontend/tests/unit/services/paperService.spec.ts:87:      const line1Point1 = projPlaneV.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/services/paperService.spec.ts:88:      const line1Point2 = projPlaneV.addFreePoint2D(new Vector3(100, 0, 1), world);
+frontend/tests/unit/services/paperService.spec.ts:91:      const line2Point1 = projPlaneV.addFreePoint2D(new Vector3(0, 100, 1), world);
+frontend/tests/unit/services/paperService.spec.ts:92:      const line2Point2 = projPlaneV.addFreePoint2D(new Vector3(100, 100, 1), world);
+frontend/tests/unit/services/paperService.spec.ts:114:      // Primitives use position Vector3, not separate x/y
+frontend/tests/unit/services/paperService.spec.ts:126:      const point = projPlaneH.addFreePoint2D(new Vector3(50, 50, 1), world);
+frontend/tests/unit/services/paperService.spec.ts:149:      const point = projPlaneH.addFreePoint2D(new Vector3(75, 100, 1), world);
+frontend/tests/unit/services/paperService.spec.ts:173:      const pointH = projPlaneH.addFreePoint2D(new Vector3(10, 20, 1), world);
+frontend/tests/unit/services/paperService.spec.ts:178:      const pointV = projPlaneV.addFreePoint2D(new Vector3(30, 40, 1), world);
+frontend/tests/unit/services/paperService.spec.ts:195:      // Verify primitives have positions (use Vector3, not separate x/y)
+frontend/tests/unit/services/paperService.spec.ts:208:      const point = projPlaneH.addFreePoint2D(new Vector3(50, 50, 1), world);
+frontend/tests/unit/services/paperService.spec.ts:231:      const point = projPlaneH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/services/paperService.spec.ts:252:      const point = projPlaneH.addFreePoint2D(new Vector3(-50, -100, 1), world);
+frontend/tests/unit/services/paperService.spec.ts:277:      const freePoint = projPlaneH.addFreePoint2D(new Vector3(10, 10, 1), world);
+frontend/tests/unit/services/paperService.spec.ts:281:      const line1Point1 = projPlaneH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/services/paperService.spec.ts:282:      const line1Point2 = projPlaneH.addFreePoint2D(new Vector3(10, 0, 1), world);
+frontend/tests/unit/services/paperService.spec.ts:285:      const line2Point1 = projPlaneH.addFreePoint2D(new Vector3(0, 10, 1), world);
+frontend/tests/unit/services/paperService.spec.ts:286:      const line2Point2 = projPlaneH.addFreePoint2D(new Vector3(10, 10, 1), world);
+frontend/tests/unit/services/paperService.spec.ts:314:      const freePoint = projPlaneH.addFreePoint2D(new Vector3(10, 10, 1), world);
+frontend/tests/unit/services/paperService.spec.ts:318:      const line1Point1 = projPlaneH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/services/paperService.spec.ts:319:      const line1Point2 = projPlaneH.addFreePoint2D(new Vector3(10, 0, 1), world);
+frontend/tests/unit/services/paperService.spec.ts:322:      const line2Point1 = projPlaneH.addFreePoint2D(new Vector3(0, 10, 1), world);
+frontend/tests/unit/services/paperService.spec.ts:323:      const line2Point2 = projPlaneH.addFreePoint2D(new Vector3(10, 10, 1), world);
+frontend/tests/unit/services/paperService.spec.ts:351:      const point = projPlaneH.addFreePoint2D(new Vector3(50, 75, 1), world);
+frontend/tests/unit/services/paperService.spec.ts:393:      const point = projPlaneH.addFreePoint2D(new Vector3(10, 20, 1), world);
+frontend/tests/unit/services/paperService.spec.ts:417:      const point1 = projPlaneH.addFreePoint2D(new Vector3(10, 10, 1), world);
+frontend/tests/unit/services/paperService.spec.ts:420:      const point2 = projPlaneH.addFreePoint2D(new Vector3(20, 20, 1), world);
+frontend/tests/unit/services/paperService.spec.ts:442:        (point as FreePoint2D).position = new Vector3(30, 30, 1);
+frontend/tests/unit/services/paperService.spec.ts:463:      const point = projPlaneH.addFreePoint2D(new Vector3(100, 50, 1), world);
+frontend/tests/unit/services/paperService.spec.ts:481:      const point = projPlaneH.addFreePoint2D(new Vector3(100, 50, 1), world);
+frontend/tests/unit/services/paperService.spec.ts:538:      const pointH = projPlaneH.addFreePoint2D(new Vector3(100, 50, 1), world);
+frontend/tests/unit/services/paperService.spec.ts:541:      const pointV = projPlaneV.addFreePoint2D(new Vector3(80, 120, 1), world);
+frontend/tests/unit/commands/updateFreePoint2DPositionOp.spec.ts:6:import { Vector3 } from 'three';
+frontend/tests/unit/commands/updateFreePoint2DPositionOp.spec.ts:23:    const point = plane.addFreePoint2D(new Vector3(10, 20, 1), world);
+frontend/tests/unit/commands/updateFreePoint2DPositionOp.spec.ts:25:    const op = new UpdateFreePoint2DPositionOp(planeId, point.id, new Vector3(100, 200, 1));
+frontend/tests/unit/commands/updateFreePoint2DPositionOp.spec.ts:44:    const op = new UpdateFreePoint2DPositionOp(planeId, originId, new Vector3(1, 2, 1));
+frontend/tests/unit/commands/commandStackObserver.spec.ts:2: * Unit Tests: CommandStack Observer Pattern (Phase 91)
+frontend/tests/unit/commands/commandStackObserver.spec.ts:4: * Tests the observer pattern implementation in CommandStack:
+frontend/tests/unit/commands/commandStackObserver.spec.ts:11:import { CommandStack } from '@/commands/CommandStack';
+frontend/tests/unit/commands/commandStackObserver.spec.ts:26:describe('CommandStack Observer Pattern', () => {
+frontend/tests/unit/commands/commandStackObserver.spec.ts:27:  let commandStack: CommandStack;
+frontend/tests/unit/commands/commandStackObserver.spec.ts:40:    const command = new Command('Test Command', world);
+frontend/tests/unit/commands/commandStackObserver.spec.ts:50:    const command = new Command('Test Command', world);
+frontend/tests/unit/commands/commandStackObserver.spec.ts:64:    const command = new Command('Test Command', world);
+frontend/tests/unit/commands/commandStackObserver.spec.ts:82:    const command1 = new Command('Command 1', world);
+frontend/tests/unit/commands/commandStackObserver.spec.ts:91:    const command2 = new Command('Command 2', world);
+frontend/tests/unit/commands/commandStackObserver.spec.ts:106:    const command = new Command('Test Command', world);
+frontend/tests/unit/utils/coordinateTransform.spec.ts:12:import { Vector3, Vector4, Matrix3 } from 'three';
+frontend/tests/unit/utils/coordinateTransform.spec.ts:47:      expect(result).toBeInstanceOf(Vector3);
+frontend/tests/unit/utils/coordinateTransform.spec.ts:82:      const svgPoint = new Vector3(800, 500, 1);
+frontend/tests/unit/utils/coordinateTransform.spec.ts:93:      const svgPoint = new Vector3(1000, 600, 1);
+frontend/tests/unit/utils/coordinateTransform.spec.ts:112:      const svgPoint = new Vector3(1600, 1000, 1);
+frontend/tests/unit/utils/coordinateTransform.spec.ts:144:      const paperPoint = new Vector3(800, 500, 1);
+frontend/tests/unit/utils/coordinateTransform.spec.ts:160:      const paperPoint = new Vector3(800, 500, 1);
+frontend/tests/unit/utils/coordinateTransform.spec.ts:176:      const paperPoint = new Vector3(800, 500, 1);
+frontend/tests/unit/utils/coordinateTransform.spec.ts:197:      const planePoint = new Vector3(100, 50, 1);  // (u, v, 1)
+frontend/tests/unit/utils/coordinateTransform.spec.ts:213:      const planePoint = new Vector3(100, 50, 1);  // (u, v, 1)
+frontend/tests/unit/utils/coordinateTransform.spec.ts:229:      const planePoint = new Vector3(100, 50, 1);
+frontend/tests/unit/commands/removeElementOps.spec.ts:13:import { Vector3 } from 'three';
+frontend/tests/unit/commands/removeElementOps.spec.ts:18:import type { CommandStack } from '@/commands/CommandStack';
+frontend/tests/unit/commands/removeElementOps.spec.ts:26:  let commandStack: CommandStack;
+frontend/tests/unit/commands/removeElementOps.spec.ts:67:      const point = plane.addFreePoint2D(new Vector3(100, 200, 1), world);
+frontend/tests/unit/commands/removeElementOps.spec.ts:80:      const point = plane.addFreePoint2D(new Vector3(100, 200, 1), world);
+frontend/tests/unit/commands/removeElementOps.spec.ts:104:      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/commands/removeElementOps.spec.ts:105:      const p2 = plane.addFreePoint2D(new Vector3(100, 100, 1), world);
+frontend/tests/unit/commands/removeElementOps.spec.ts:120:      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/commands/removeElementOps.spec.ts:121:      const p2 = plane.addFreePoint2D(new Vector3(100, 100, 1), world);
+frontend/tests/unit/commands/removeElementOps.spec.ts:138:      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/commands/removeElementOps.spec.ts:139:      const p2 = plane.addFreePoint2D(new Vector3(100, 100, 1), world);
+frontend/tests/unit/commands/removeElementOps.spec.ts:150:      const deleteCmd = new Command('Delete point with cascade', world);
+frontend/tests/unit/commands/removeElementOps.spec.ts:172:      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/commands/removeElementOps.spec.ts:173:      const p2 = plane.addFreePoint2D(new Vector3(100, 100, 1), world);
+frontend/tests/unit/commands/removeElementOps.spec.ts:181:      const deleteCmd = new Command('Delete with cascade', world);
+frontend/tests/unit/commands/removeElementOps.spec.ts:202:      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/commands/removeElementOps.spec.ts:203:      const p2 = plane.addFreePoint2D(new Vector3(100, 100, 1), world);
+frontend/tests/unit/commands/removeElementOps.spec.ts:211:      const deleteCmd = new Command('Delete', world);
+frontend/tests/unit/commands/removeElementOps.spec.ts:234:      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/commands/removeElementOps.spec.ts:235:      const p2 = plane.addFreePoint2D(new Vector3(100, 100, 1), world);
+frontend/tests/unit/commands/removeElementOps.spec.ts:241:      const deleteCmd = new Command('Delete two points', world);
+frontend/tests/unit/utils/threeUtils.spec.ts:84:    it('should transform Vector3 to Vector4 using identity-like matrix', () => {
+frontend/tests/unit/utils/threeUtils.spec.ts:95:    it('should transform Vector3 to Vector4 with custom matrix', () => {
+frontend/tests/unit/utils/threeUtils.spec.ts:133:    it('should transform Vector4 to Vector3 using identity-like matrix', () => {
+frontend/tests/unit/utils/threeUtils.spec.ts:143:    it('should transform Vector4 to Vector3 with custom matrix', () => {
+frontend/tests/unit/commands/initializationOps.spec.ts:14:import { Vector3, Vector4, Matrix3 } from 'three';
+frontend/tests/unit/commands/initializationOps.spec.ts:254:      const position = new Vector3(0, 0, 1);
+frontend/tests/unit/commands/initializationOps.spec.ts:272:      const op = new AddOriginPoint2DOp('nonexistent_plane', new Vector3(0, 0, 1));
+frontend/tests/unit/commands/initializationOps.spec.ts:281:      const position = new Vector3(1, 2, 1);
+frontend/tests/unit/types/SelectionMask.spec.ts:22:import { Vector3 } from 'three';
+frontend/tests/unit/types/SelectionMask.spec.ts:28:  const point = new FreePoint2D(`${planeId}/point2d_1`, new Vector3(0, 0, 1), planeId);
+frontend/tests/unit/types/SelectionMask.spec.ts:31:  const guide = new Guide2D(`${planeId}/guide2d_1`, `${planeId}/point2d_1`, new Vector3(1, 0, 0), planeId);
+frontend/tests/unit/types/SelectionMask.spec.ts:181:      // Note: This is a contrived example since element types are mutually exclusive
+frontend/tests/unit/commands/createSegment.spec.ts:8:import { AddFreePoint2DOp } from '../../../src/commands/operations/world/AddFreePointOp';
+frontend/tests/unit/commands/createSegment.spec.ts:11:import { Vector3 } from 'three';
+frontend/tests/unit/commands/createSegment.spec.ts:24:      const cmd = new Command("Create segment with points", world);
+frontend/tests/unit/commands/createSegment.spec.ts:25:      const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
+frontend/tests/unit/commands/createSegment.spec.ts:26:      const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 200, 1)));
+frontend/tests/unit/commands/createSegment.spec.ts:47:      const cmd = new Command("Create segment", world);
+frontend/tests/unit/commands/createSegment.spec.ts:48:      const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
+frontend/tests/unit/commands/createSegment.spec.ts:49:      const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 200, 1)));
+frontend/tests/unit/commands/createSegment.spec.ts:65:      const cmd = new Command("Create segment", world);
+frontend/tests/unit/commands/createSegment.spec.ts:66:      const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
+frontend/tests/unit/commands/createSegment.spec.ts:67:      const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 200, 1)));
+frontend/tests/unit/commands/createSegment.spec.ts:88:      const cmd = new Command("Create segment", world);
+frontend/tests/unit/commands/createSegment.spec.ts:89:      const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
+frontend/tests/unit/commands/createSegment.spec.ts:90:      const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 200, 1)));
+frontend/tests/unit/tools/toolValidation.spec.ts:24:import type { CommandStack } from '@/commands/CommandStack';
+frontend/tests/unit/tools/toolValidation.spec.ts:27:import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
+frontend/tests/unit/tools/toolValidation.spec.ts:30:import { Vector3, Matrix3 } from 'three';
+frontend/tests/unit/tools/toolValidation.spec.ts:35:  let commandStack: CommandStack;
+frontend/tests/unit/tools/toolValidation.spec.ts:39:  function makeContext(coords: Vector3): ToolContext {
+frontend/tests/unit/tools/toolValidation.spec.ts:53:    const cmd = new Command('Add point', world);
+frontend/tests/unit/tools/toolValidation.spec.ts:54:    const op = new AddFreePoint2DOp(planeId, new Vector3(x, y, 1));
+frontend/tests/unit/tools/toolValidation.spec.ts:75:      const ctx = makeContext(new Vector3(100, 100, 1));
+frontend/tests/unit/tools/toolValidation.spec.ts:91:      const r1 = tool.handleClick(makeContext(new Vector3(100, 100, 1)));
+frontend/tests/unit/tools/toolValidation.spec.ts:94:      const r2 = tool.handleClick(makeContext(new Vector3(200, 100, 1)));
+frontend/tests/unit/tools/toolValidation.spec.ts:105:      const ctx = makeContext(new Vector3(100, 100, 1));
+frontend/tests/unit/tools/toolValidation.spec.ts:121:      const r1 = tool.handleClick(makeContext(new Vector3(100, 100, 1)));
+frontend/tests/unit/tools/toolValidation.spec.ts:124:      const r2 = tool.handleClick(makeContext(new Vector3(200, 200, 1)));
+frontend/tests/unit/tools/toolValidation.spec.ts:136:      const r1 = tool.handleClick(makeContext(new Vector3(100, 100, 1)));
+frontend/tests/unit/tools/toolValidation.spec.ts:139:      const r2 = tool.handleClick(makeContext(new Vector3(100.0001, 100.0001, 1)));
+frontend/tests/unit/tools/toolValidation.spec.ts:149:      const r1 = tool.handleClick(makeContext(new Vector3(100, 100, 1)));
+frontend/tests/unit/tools/toolValidation.spec.ts:152:      const r2 = tool.handleClick(makeContext(new Vector3(200, 100, 1)));
+frontend/tests/unit/tools/toolValidation.spec.ts:172:      const r1 = tool.handleClick(makeContext(new Vector3(150, 100, 1)));
+frontend/tests/unit/tools/toolValidation.spec.ts:175:      const r2 = tool.handleClick(makeContext(new Vector3(150, 200, 1)));
+frontend/tests/unit/tools/toolValidation.spec.ts:192:      const r1 = tool.handleClick(makeContext(new Vector3(150, 100, 1)));
+frontend/tests/unit/tools/toolValidation.spec.ts:195:      const r2 = tool.handleClick(makeContext(new Vector3(150, 200, 1)));
+frontend/tests/unit/commands/createLine.spec.ts:2: * Tests for creating lines using Command + AddLine2DByTwoPointsOp
+frontend/tests/unit/commands/createLine.spec.ts:7:import { AddLine2DByTwoPointsOp } from '../../../src/commands/operations/world/AddLineOp';
+frontend/tests/unit/commands/createLine.spec.ts:8:import { AddFreePoint2DOp } from '../../../src/commands/operations/world/AddFreePointOp';
+frontend/tests/unit/commands/createLine.spec.ts:11:import { Vector3 } from 'three';
+frontend/tests/unit/commands/createLine.spec.ts:26:      const cmd = new Command("Create line with points", world);
+frontend/tests/unit/commands/createLine.spec.ts:27:      const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
+frontend/tests/unit/commands/createLine.spec.ts:28:      const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 200, 1)));
+frontend/tests/unit/commands/createLine.spec.ts:34:      const lineResult = cmd.addAndExecute(new AddLine2DByTwoPointsOp(planeId, point1Id, point2Id));
+frontend/tests/unit/commands/createLine.spec.ts:52:      const cmd = new Command("Create line", world);
+frontend/tests/unit/commands/createLine.spec.ts:53:      const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
+frontend/tests/unit/commands/createLine.spec.ts:54:      const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 200, 1)));
+frontend/tests/unit/commands/createLine.spec.ts:56:      const lineResult = cmd.addAndExecute(new AddLine2DByTwoPointsOp(
+frontend/tests/unit/commands/createLine.spec.ts:70:      const cmd = new Command("Create line", world);
+frontend/tests/unit/commands/createLine.spec.ts:71:      const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
+frontend/tests/unit/commands/createLine.spec.ts:72:      const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 200, 1)));
+frontend/tests/unit/commands/createLine.spec.ts:73:      const lineResult = cmd.addAndExecute(new AddLine2DByTwoPointsOp(
+frontend/tests/unit/commands/createLine.spec.ts:95:      const cmd = new Command("Create line", world);
+frontend/tests/unit/commands/createLine.spec.ts:96:      const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
+frontend/tests/unit/commands/createLine.spec.ts:97:      const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 200, 1)));
+frontend/tests/unit/commands/createLine.spec.ts:98:      const lineResult = cmd.addAndExecute(new AddLine2DByTwoPointsOp(
+frontend/tests/unit/tools/pointTool.spec.ts:5: * - handleClick() builds generic Command with AddFreePoint2DOp
+frontend/tests/unit/tools/pointTool.spec.ts:6: * - Coordinate validation (Vector3 homogeneous)
+frontend/tests/unit/tools/pointTool.spec.ts:16:import type { CommandStack } from '@/commands/CommandStack';
+frontend/tests/unit/tools/pointTool.spec.ts:19:import { Vector3 } from 'three';
+frontend/tests/unit/tools/pointTool.spec.ts:27:  let commandStack: CommandStack;
+frontend/tests/unit/tools/pointTool.spec.ts:33:  const createToolContext = (planeId: string, planeCoords: Vector3, canvasCoords = { x: 100, y: 100 }): ToolContext => ({
+frontend/tests/unit/tools/pointTool.spec.ts:78:        new Vector3(100, 200, 1)
+frontend/tests/unit/tools/pointTool.spec.ts:101:        new Vector3(100, 200, 1)
+frontend/tests/unit/tools/pointTool.spec.ts:110:      const planeCoords = new Vector3(150, 250, 1);
+frontend/tests/unit/tools/pointTool.spec.ts:133:        new Vector3(100, 200, 1)
+frontend/tests/unit/tools/pointTool.spec.ts:149:    it('should accept valid Vector3 homogeneous coordinates', () => {
+frontend/tests/unit/tools/pointTool.spec.ts:152:        new Vector3(100, 200, 1)
+frontend/tests/unit/tools/pointTool.spec.ts:163:        new Vector3(NaN, 200, 1)
+frontend/tests/unit/tools/pointTool.spec.ts:175:        new Vector3(Infinity, 200, 1)
+frontend/tests/unit/tools/pointTool.spec.ts:189:        new Vector3(100, 200, 1)
+frontend/tests/unit/tools/pointTool.spec.ts:200:        new Vector3(100, 200, 1)
+frontend/tests/unit/tools/pointTool.spec.ts:211:        new Vector3(100, 200, 1)
+frontend/tests/unit/tools/pointTool.spec.ts:224:        new Vector3(100, 200, 1)
+frontend/tests/unit/tools/pointTool.spec.ts:244:        new Vector3(NaN, NaN, 1)
+frontend/tests/unit/tools/pointTool.spec.ts:261:        new Vector3(100, 200, 1)
+frontend/tests/unit/tools/pointTool.spec.ts:276:        new Vector3(100, 200, 1)
+frontend/tests/unit/tools/pointTool.spec.ts:300:        new Vector3(100, 100, 1),
+frontend/tests/unit/tools/pointTool.spec.ts:301:        new Vector3(200, 200, 1),
+frontend/tests/unit/tools/pointTool.spec.ts:302:        new Vector3(300, 300, 1)
+frontend/tests/unit/tools/pointTool.spec.ts:325:          new Vector3(100 * i, 100 * i, 1)
+frontend/tests/unit/tools/pointTool.spec.ts:358:        new Vector3(100, 200, 1)
+frontend/tests/unit/tools/pointTool.spec.ts:371:        new Vector3(NaN, 200, 1)
+frontend/tests/unit/tools/pointTool.spec.ts:383:        new Vector3(100, 200, 1)
+frontend/tests/unit/tools/pointTool.spec.ts:398:        new Vector3(100, 200, 1)
+frontend/tests/unit/tools/pointTool.spec.ts:427:        new Vector3(100, 200, 1)
+frontend/tests/unit/commands/createIntersectionPoint.spec.ts:8:import { AddLine2DByTwoPointsOp } from '../../../src/commands/operations/world/AddLineOp';
+frontend/tests/unit/commands/createIntersectionPoint.spec.ts:9:import { AddFreePoint2DOp } from '../../../src/commands/operations/world/AddFreePointOp';
+frontend/tests/unit/commands/createIntersectionPoint.spec.ts:12:import { Vector3 } from 'three';
+frontend/tests/unit/commands/createIntersectionPoint.spec.ts:25:      const cmd = new Command("Create intersection point", world);
+frontend/tests/unit/commands/createIntersectionPoint.spec.ts:28:      const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 100, 1)));
+frontend/tests/unit/commands/createIntersectionPoint.spec.ts:29:      const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 100, 1)));
+frontend/tests/unit/commands/createIntersectionPoint.spec.ts:30:      const line1Result = cmd.addAndExecute(new AddLine2DByTwoPointsOp(
+frontend/tests/unit/commands/createIntersectionPoint.spec.ts:37:      const p3Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 0, 1)));
+frontend/tests/unit/commands/createIntersectionPoint.spec.ts:38:      const p4Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 200, 1)));
+frontend/tests/unit/commands/createIntersectionPoint.spec.ts:39:      const line2Result = cmd.addAndExecute(new AddLine2DByTwoPointsOp(
+frontend/tests/unit/commands/createIntersectionPoint.spec.ts:67:      const cmd = new Command("Create intersection", world);
+frontend/tests/unit/commands/createIntersectionPoint.spec.ts:69:      const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 100, 1)));
+frontend/tests/unit/commands/createIntersectionPoint.spec.ts:70:      const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 100, 1)));
+frontend/tests/unit/commands/createIntersectionPoint.spec.ts:71:      const line1Result = cmd.addAndExecute(new AddLine2DByTwoPointsOp(
+frontend/tests/unit/commands/createIntersectionPoint.spec.ts:77:      const p3Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 0, 1)));
+frontend/tests/unit/commands/createIntersectionPoint.spec.ts:78:      const p4Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 200, 1)));
+frontend/tests/unit/commands/createIntersectionPoint.spec.ts:79:      const line2Result = cmd.addAndExecute(new AddLine2DByTwoPointsOp(
+frontend/tests/unit/commands/createIntersectionPoint.spec.ts:100:      const cmd = new Command("Create intersection", world);
+frontend/tests/unit/commands/createIntersectionPoint.spec.ts:102:      const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 100, 1)));
+frontend/tests/unit/commands/createIntersectionPoint.spec.ts:103:      const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 100, 1)));
+frontend/tests/unit/commands/createIntersectionPoint.spec.ts:104:      const line1Result = cmd.addAndExecute(new AddLine2DByTwoPointsOp(
+frontend/tests/unit/commands/createIntersectionPoint.spec.ts:110:      const p3Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 0, 1)));
+frontend/tests/unit/commands/createIntersectionPoint.spec.ts:111:      const p4Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 200, 1)));
+frontend/tests/unit/commands/createIntersectionPoint.spec.ts:112:      const line2Result = cmd.addAndExecute(new AddLine2DByTwoPointsOp(
+frontend/tests/unit/commands/createIntersectionPoint.spec.ts:139:      const cmd = new Command("Create intersection", world);
+frontend/tests/unit/commands/createIntersectionPoint.spec.ts:141:      const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 100, 1)));
+frontend/tests/unit/commands/createIntersectionPoint.spec.ts:142:      const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 100, 1)));
+frontend/tests/unit/commands/createIntersectionPoint.spec.ts:143:      const line1Result = cmd.addAndExecute(new AddLine2DByTwoPointsOp(
+frontend/tests/unit/commands/createIntersectionPoint.spec.ts:149:      const p3Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 0, 1)));
+frontend/tests/unit/commands/createIntersectionPoint.spec.ts:150:      const p4Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 200, 1)));
+frontend/tests/unit/commands/createIntersectionPoint.spec.ts:151:      const line2Result = cmd.addAndExecute(new AddLine2DByTwoPointsOp(
+frontend/tests/unit/architecture/noCommandSubclasses.spec.ts:11: * classes (AddFreePoint2DOp, AddLine2DOp, UpdateElementStyleOp, etc.) that implement
+frontend/tests/unit/architecture/noCommandSubclasses.spec.ts:87:          `   const cmd = new Command("My action", world);\n` +
+frontend/tests/unit/architecture/noCommandSubclasses.spec.ts:91:          `See UpdateElementStyleOp as an example of correct pattern.\n` +
+frontend/tests/unit/tools/GuideTool.test.ts:4:import type { CommandStack } from '../../../src/commands/CommandStack';
+frontend/tests/unit/tools/GuideTool.test.ts:9:  let commandStack: CommandStack;
+frontend/tests/unit/tools/CircleTool.spec.ts:17:import type { CommandStack } from '@/commands/CommandStack';
+frontend/tests/unit/tools/CircleTool.spec.ts:20:import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
+frontend/tests/unit/tools/CircleTool.spec.ts:24:import { Vector3, Matrix3 } from 'three';
+frontend/tests/unit/tools/CircleTool.spec.ts:30:  let commandStack: CommandStack;
+frontend/tests/unit/tools/CircleTool.spec.ts:54:      const setupCmd = new Command('Create test points', world);
+frontend/tests/unit/tools/CircleTool.spec.ts:55:      const centerOp = new AddFreePoint2DOp(horizontalPlaneId, new Vector3(100, 100, 1));
+frontend/tests/unit/tools/CircleTool.spec.ts:59:      const circumferenceOp = new AddFreePoint2DOp(horizontalPlaneId, new Vector3(200, 100, 1));
+frontend/tests/unit/tools/CircleTool.spec.ts:69:        planeCoords: new Vector3(100, 100, 1),
+frontend/tests/unit/tools/CircleTool.spec.ts:70:        canvasCoords: new Vector3(100, 100, 1),
+frontend/tests/unit/tools/CircleTool.spec.ts:85:        planeCoords: new Vector3(200, 100, 1),
+frontend/tests/unit/tools/CircleTool.spec.ts:86:        canvasCoords: new Vector3(200, 100, 1),
+frontend/tests/unit/tools/CircleTool.spec.ts:109:      const setupCmd = new Command('Setup test points', world);
+frontend/tests/unit/tools/CircleTool.spec.ts:111:      const centerOp = new AddFreePoint2DOp(horizontalPlaneId, new Vector3(100, 100, 1));
+frontend/tests/unit/tools/CircleTool.spec.ts:115:      const circumferenceOp = new AddFreePoint2DOp(horizontalPlaneId, new Vector3(200, 100, 1));
+frontend/tests/unit/tools/CircleTool.spec.ts:129:        planeCoords: new Vector3(100, 100, 1),
+frontend/tests/unit/tools/CircleTool.spec.ts:130:        canvasCoords: new Vector3(100, 100, 1),
+frontend/tests/unit/tools/CircleTool.spec.ts:145:        planeCoords: new Vector3(200, 100, 1),
+frontend/tests/unit/tools/CircleTool.spec.ts:146:        canvasCoords: new Vector3(200, 100, 1),
+frontend/tests/unit/tools/CircleTool.spec.ts:173:      const setupCmd = new Command('Setup center point', world);
+frontend/tests/unit/tools/CircleTool.spec.ts:174:      const centerOp = new AddFreePoint2DOp(horizontalPlaneId, new Vector3(100, 100, 1));
+frontend/tests/unit/tools/CircleTool.spec.ts:183:        planeCoords: new Vector3(100, 100, 1),
+frontend/tests/unit/tools/CircleTool.spec.ts:184:        canvasCoords: new Vector3(100, 100, 1),
+frontend/tests/unit/tools/CircleTool.spec.ts:198:        planeCoords: new Vector3(300, 300, 1),
+frontend/tests/unit/tools/CircleTool.spec.ts:199:        canvasCoords: new Vector3(400, 400, 1), // Far from any existing point
+frontend/tests/unit/tools/CircleTool.spec.ts:225:      const setupCmd = new Command('Setup acceptable points', world);
+frontend/tests/unit/tools/CircleTool.spec.ts:227:      const centerOp = new AddFreePoint2DOp(horizontalPlaneId, new Vector3(100, 100, 1));
+frontend/tests/unit/tools/CircleTool.spec.ts:230:      const validOp = new AddFreePoint2DOp(horizontalPlaneId, new Vector3(100.002, 100, 1)); // 0.002 units away
+frontend/tests/unit/tools/CircleTool.spec.ts:239:        planeCoords: new Vector3(100, 100, 1),
+frontend/tests/unit/tools/CircleTool.spec.ts:240:        canvasCoords: new Vector3(100, 100, 1),
+frontend/tests/unit/tools/CircleTool.spec.ts:254:        planeCoords: new Vector3(100.002, 100, 1),
+frontend/tests/unit/tools/CircleTool.spec.ts:255:        canvasCoords: new Vector3(100.002, 100, 1),
+frontend/tests/unit/tools/CircleTool.spec.ts:278:        planeCoords: new Vector3(100, 100, 1),
+frontend/tests/unit/tools/CircleTool.spec.ts:279:        canvasCoords: new Vector3(100, 100, 1),
+frontend/tests/unit/tools/CircleTool.spec.ts:295:        planeCoords: new Vector3(100, 100, 0), // Invalid homogeneous coordinate (w = 0)
+frontend/tests/unit/tools/CircleTool.spec.ts:296:        canvasCoords: new Vector3(100, 100, 1),
+frontend/tests/unit/tools/CircleTool.spec.ts:313:      const setupCmd = new Command('Setup points', world);
+frontend/tests/unit/tools/CircleTool.spec.ts:314:      const centerOp = new AddFreePoint2DOp(horizontalPlaneId, new Vector3(100, 100, 1));
+frontend/tests/unit/tools/CircleTool.spec.ts:316:      const circumferenceOp = new AddFreePoint2DOp(horizontalPlaneId, new Vector3(200, 100, 1));
+frontend/tests/unit/tools/CircleTool.spec.ts:324:        planeCoords: new Vector3(100, 100, 1),
+frontend/tests/unit/tools/CircleTool.spec.ts:325:        canvasCoords: new Vector3(100, 100, 1),
+frontend/tests/unit/tools/CircleTool.spec.ts:337:        planeCoords: new Vector3(200, 100, 1),
+frontend/tests/unit/tools/CircleTool.spec.ts:338:        canvasCoords: new Vector3(200, 100, 1),
+frontend/tests/unit/tools/CircleTool.spec.ts:351:        planeCoords: new Vector3(100, 100, 1),
+frontend/tests/unit/tools/CircleTool.spec.ts:352:        canvasCoords: new Vector3(100, 100, 1),
+frontend/tests/unit/tools/CircleTool.spec.ts:368:      const centerCmd = new Command('Create center', world);
+frontend/tests/unit/tools/CircleTool.spec.ts:369:      const centerOp = new AddFreePoint2DOp(horizontalPlaneId, new Vector3(100, 100, 1));
+frontend/tests/unit/tools/CircleTool.spec.ts:376:      const circumferenceCmd = new Command('Create circumference', world);
+frontend/tests/unit/tools/CircleTool.spec.ts:377:      const circumferenceOp = new AddFreePoint2DOp(horizontalPlaneId, new Vector3(150, 100, 1));
+frontend/tests/unit/tools/CircleTool.spec.ts:386:        planeCoords: new Vector3(100, 100, 1),
+frontend/tests/unit/tools/CircleTool.spec.ts:387:        canvasCoords: new Vector3(100, 100, 1),
+frontend/tests/unit/tools/CircleTool.spec.ts:399:        planeCoords: new Vector3(150, 100, 1),
+frontend/tests/unit/tools/CircleTool.spec.ts:400:        canvasCoords: new Vector3(150, 100, 1),
+frontend/tests/unit/tools/CircleTool.spec.ts:424:      const moveCmd = new Command('Move circumference point', world);
+frontend/tests/unit/tools/CircleTool.spec.ts:428:        new Vector3(150, 150, 1)
+frontend/tests/unit/tools/CircleTool.spec.ts:446:      const centerCmd = new Command('Create center', world);
+frontend/tests/unit/tools/CircleTool.spec.ts:447:      const centerOp = new AddFreePoint2DOp(horizontalPlaneId, new Vector3(100, 100, 1));
+frontend/tests/unit/tools/CircleTool.spec.ts:454:      const circumferenceCmd = new Command('Create circumference', world);
+frontend/tests/unit/tools/CircleTool.spec.ts:455:      const circumferenceOp = new AddFreePoint2DOp(horizontalPlaneId, new Vector3(150, 100, 1));
+frontend/tests/unit/tools/CircleTool.spec.ts:463:        planeCoords: new Vector3(100, 100, 1),
+frontend/tests/unit/tools/CircleTool.spec.ts:464:        canvasCoords: new Vector3(100, 100, 1),
+frontend/tests/unit/tools/CircleTool.spec.ts:475:        planeCoords: new Vector3(150, 100, 1),
+frontend/tests/unit/tools/CircleTool.spec.ts:476:        canvasCoords: new Vector3(150, 100, 1),
+frontend/tests/unit/tools/CircleTool.spec.ts:491:      const moveCmd = new Command('Move center point', world);
+frontend/tests/unit/tools/CircleTool.spec.ts:495:        new Vector3(200, 100, 1)
+frontend/tests/unit/calculations/intersections.spec.ts:18:import { Vector3 } from 'three';
+frontend/tests/unit/calculations/intersections.spec.ts:34:        new Vector3(0, 2, 1),  // point
+frontend/tests/unit/calculations/intersections.spec.ts:35:        new Vector3(1, 0, 0)   // direction (horizontal)
+frontend/tests/unit/calculations/intersections.spec.ts:41:        new Vector3(3, 0, 1),  // point
+frontend/tests/unit/calculations/intersections.spec.ts:42:        new Vector3(0, 1, 0)   // direction (vertical)
+frontend/tests/unit/calculations/intersections.spec.ts:57:        new Vector3(0, 0, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:58:        new Vector3(1, 1, 0).normalize()
+frontend/tests/unit/calculations/intersections.spec.ts:64:        new Vector3(0, 4, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:65:        new Vector3(1, -1, 0).normalize()
+frontend/tests/unit/calculations/intersections.spec.ts:81:        new Vector3(0, 2, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:82:        new Vector3(1, 0, 0)
+frontend/tests/unit/calculations/intersections.spec.ts:87:        new Vector3(0, 5, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:88:        new Vector3(1, 0, 0)
+frontend/tests/unit/calculations/intersections.spec.ts:99:        new Vector3(3, 0, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:100:        new Vector3(0, 1, 0)
+frontend/tests/unit/calculations/intersections.spec.ts:105:        new Vector3(-2, 0, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:106:        new Vector3(0, 1, 0)
+frontend/tests/unit/calculations/intersections.spec.ts:117:        new Vector3(0, 0, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:118:        new Vector3(1, 1, 0).normalize()
+frontend/tests/unit/calculations/intersections.spec.ts:123:        new Vector3(0, 3, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:124:        new Vector3(1, 1, 0).normalize()
+frontend/tests/unit/calculations/intersections.spec.ts:135:        new Vector3(0, 0, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:136:        new Vector3(1, 2, 0).normalize()
+frontend/tests/unit/calculations/intersections.spec.ts:141:        new Vector3(1, 2, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:142:        new Vector3(1, 2, 0).normalize()
+frontend/tests/unit/calculations/intersections.spec.ts:153:        new Vector3(0, 1, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:154:        new Vector3(2, 0, 0)  // Not normalized
+frontend/tests/unit/calculations/intersections.spec.ts:159:        new Vector3(4, 0, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:160:        new Vector3(0, 3, 0)  // Not normalized
+frontend/tests/unit/calculations/intersections.spec.ts:173:        new Vector3(0, 0, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:174:        new Vector3(1, 0, 0)
+frontend/tests/unit/calculations/intersections.spec.ts:178:        new Vector3(5, 5, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:179:        new Vector3(0, 1, 0)
+frontend/tests/unit/calculations/intersections.spec.ts:191:        new Vector3(0, 0, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:192:        new Vector3(1, 1, 0).normalize()
+frontend/tests/unit/calculations/intersections.spec.ts:197:        new Vector3(0, 0, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:198:        new Vector3(1, -1, 0).normalize()
+frontend/tests/unit/calculations/intersections.spec.ts:211:        new Vector3(0, -3, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:212:        new Vector3(1, 0, 0)
+frontend/tests/unit/calculations/intersections.spec.ts:217:        new Vector3(-5, 0, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:218:        new Vector3(0, 1, 0)
+frontend/tests/unit/calculations/intersections.spec.ts:232:        new Vector3(0, 1, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:233:        new Vector3(1, 0, 0)
+frontend/tests/unit/calculations/intersections.spec.ts:237:        new Vector3(0, 5, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:238:        new Vector3(1, 0, 0)
+frontend/tests/unit/calculations/intersections.spec.ts:246:        new Vector3(2, 0, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:247:        new Vector3(0, 1, 0)
+frontend/tests/unit/calculations/intersections.spec.ts:251:        new Vector3(-3, 0, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:252:        new Vector3(0, 1, 0)
+frontend/tests/unit/calculations/intersections.spec.ts:260:        new Vector3(0, 0, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:261:        new Vector3(1, 0, 0)
+frontend/tests/unit/calculations/intersections.spec.ts:265:        new Vector3(0, 0, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:266:        new Vector3(0, 1, 0)
+frontend/tests/unit/calculations/intersections.spec.ts:275:        new Vector3(0, 0, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:276:        new Vector3(1, 1, 0).normalize()
+frontend/tests/unit/calculations/intersections.spec.ts:281:        new Vector3(5, 5, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:282:        new Vector3(-1, -1, 0).normalize()
+frontend/tests/unit/calculations/intersections.spec.ts:292:      const circle = new Circle2DRealization2D(new Vector3(0, 0, 1), new Vector3(5, 0, 0));
+frontend/tests/unit/calculations/intersections.spec.ts:296:        new Vector3(0, 0, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:297:        new Vector3(1, 0, 0)
+frontend/tests/unit/calculations/intersections.spec.ts:315:      const circle = new Circle2DRealization2D(new Vector3(3, 2, 1), new Vector3(4, 0, 0));
+frontend/tests/unit/calculations/intersections.spec.ts:319:        new Vector3(3, 0, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:320:        new Vector3(0, 1, 0)
+frontend/tests/unit/calculations/intersections.spec.ts:338:      const circle = new Circle2DRealization2D(new Vector3(0, 0, 1), new Vector3(3, 0, 0));
+frontend/tests/unit/calculations/intersections.spec.ts:342:        new Vector3(0, 3, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:343:        new Vector3(1, 0, 0)
+frontend/tests/unit/calculations/intersections.spec.ts:356:      const circle = new Circle2DRealization2D(new Vector3(0, 0, 1), new Vector3(2, 0, 0));
+frontend/tests/unit/calculations/intersections.spec.ts:360:        new Vector3(0, 5, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:361:        new Vector3(1, 0, 0)
+frontend/tests/unit/calculations/intersections.spec.ts:371:      const circle = new Circle2DRealization2D(new Vector3(0, 0, 1), new Vector3(Math.sqrt(2), 0, 0));
+frontend/tests/unit/calculations/intersections.spec.ts:375:        new Vector3(0, 0, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:376:        new Vector3(1, 1, 0).normalize()
+frontend/tests/unit/calculations/intersections.spec.ts:394:      const circle = new Circle2DRealization2D(new Vector3(10, -5, 1), new Vector3(7, 0, 0));
+frontend/tests/unit/calculations/intersections.spec.ts:398:        new Vector3(10, 0, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:399:        new Vector3(0, 1, 0)
+frontend/tests/unit/calculations/intersections.spec.ts:414:      const circle = new Circle2DRealization2D(new Vector3(0, 0, 1), new Vector3(5, 0, 0));
+frontend/tests/unit/calculations/intersections.spec.ts:415:      const line = new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0));
+frontend/tests/unit/calculations/intersections.spec.ts:428:      const circle1 = new Circle2DRealization2D(new Vector3(-2, 0, 1), new Vector3(3, 0, 0));
+frontend/tests/unit/calculations/intersections.spec.ts:431:      const circle2 = new Circle2DRealization2D(new Vector3(2, 0, 1), new Vector3(3, 0, 0));
+frontend/tests/unit/calculations/intersections.spec.ts:455:      const circle1 = new Circle2DRealization2D(new Vector3(0, 0, 1), new Vector3(3, 0, 0));
+frontend/tests/unit/calculations/intersections.spec.ts:458:      const circle2 = new Circle2DRealization2D(new Vector3(6, 0, 1), new Vector3(3, 0, 0));
+frontend/tests/unit/calculations/intersections.spec.ts:469:      const circle1 = new Circle2DRealization2D(new Vector3(0, 0, 1), new Vector3(5, 0, 0));
+frontend/tests/unit/calculations/intersections.spec.ts:472:      const circle2 = new Circle2DRealization2D(new Vector3(3, 0, 1), new Vector3(2, 0, 0));
+frontend/tests/unit/calculations/intersections.spec.ts:483:      const circle1 = new Circle2DRealization2D(new Vector3(0, 0, 1), new Vector3(2, 0, 0));
+frontend/tests/unit/calculations/intersections.spec.ts:486:      const circle2 = new Circle2DRealization2D(new Vector3(10, 0, 1), new Vector3(3, 0, 0));
+frontend/tests/unit/calculations/intersections.spec.ts:495:      const circle1 = new Circle2DRealization2D(new Vector3(0, 0, 1), new Vector3(10, 0, 0));
+frontend/tests/unit/calculations/intersections.spec.ts:498:      const circle2 = new Circle2DRealization2D(new Vector3(2, 0, 1), new Vector3(3, 0, 0));
+frontend/tests/unit/calculations/intersections.spec.ts:507:      const circle1 = new Circle2DRealization2D(new Vector3(5, 3, 1), new Vector3(4, 0, 0));
+frontend/tests/unit/calculations/intersections.spec.ts:508:      const circle2 = new Circle2DRealization2D(new Vector3(5, 3, 1), new Vector3(4, 0, 0));
+frontend/tests/unit/calculations/intersections.spec.ts:517:      const circle1 = new Circle2DRealization2D(new Vector3(0, 0, 1), new Vector3(5, 0, 0));
+frontend/tests/unit/calculations/intersections.spec.ts:520:      const circle2 = new Circle2DRealization2D(new Vector3(4, 0, 1), new Vector3(3, 0, 0));
+frontend/tests/unit/calculations/intersections.spec.ts:537:      const circle1 = new Circle2DRealization2D(new Vector3(-3, 4, 1), new Vector3(2, 0, 0));
+frontend/tests/unit/calculations/intersections.spec.ts:540:      const circle2 = new Circle2DRealization2D(new Vector3(2, -1, 1), new Vector3(6, 0, 0));
+frontend/tests/unit/calculations/intersections.spec.ts:551:      const circle1 = new Circle2DRealization2D(new Vector3(0, 0, 1), new Vector3(3, 0, 0));
+frontend/tests/unit/calculations/intersections.spec.ts:552:      const circle2 = new Circle2DRealization2D(new Vector3(4, 0, 1), new Vector3(3, 0, 0));
+frontend/tests/unit/calculations/intersections.spec.ts:563:      const circle1 = new Circle2DRealization2D(new Vector3(0, 5, 1), new Vector3(3, 0, 0));
+frontend/tests/unit/calculations/intersections.spec.ts:566:      const circle2 = new Circle2DRealization2D(new Vector3(0, -5, 1), new Vector3(3, 0, 0));
+frontend/tests/unit/calculations/intersections.spec.ts:590:        point: Vector3,
+frontend/tests/unit/calculations/intersections.spec.ts:614:          new Vector3(0, 0, 1),   // center
+frontend/tests/unit/calculations/intersections.spec.ts:615:          new Vector3(3, 0, 0)    // radius vector
+frontend/tests/unit/calculations/intersections.spec.ts:620:          new Vector3(4, 0, 1),   // center
+frontend/tests/unit/calculations/intersections.spec.ts:621:          new Vector3(3, 0, 0)    // radius vector
+frontend/tests/unit/calculations/intersections.spec.ts:645:          new Vector3(0, 0, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:646:          new Vector3(2, 0, 0)
+frontend/tests/unit/calculations/intersections.spec.ts:651:          new Vector3(3, 0, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:652:          new Vector3(2.5, 0, 0)
+frontend/tests/unit/calculations/intersections.spec.ts:669:          new Vector3(0, 0, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:670:          new Vector3(3, 0, 0)
+frontend/tests/unit/calculations/intersections.spec.ts:675:          new Vector3(0, 4, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:676:          new Vector3(3, 0, 0)
+frontend/tests/unit/calculations/intersections.spec.ts:702:          new Vector3(0, 0, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:703:          new Vector3(3, 0, 0)
+frontend/tests/unit/calculations/intersections.spec.ts:708:          new Vector3(3, 3, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:709:          new Vector3(3, 0, 0)
+frontend/tests/unit/calculations/intersections.spec.ts:727:          new Vector3(0, 0, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:728:          new Vector3(0, -3, 0)   // 270°
+frontend/tests/unit/calculations/intersections.spec.ts:733:          new Vector3(4, 0, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:734:          new Vector3(-3, 0, 0)   // 180°
+frontend/tests/unit/calculations/intersections.spec.ts:752:          new Vector3(0, 0, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:753:          new Vector3(5, 0, 0)
+frontend/tests/unit/calculations/intersections.spec.ts:758:          new Vector3(2, 0.5, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:759:          new Vector3(5, 0, 0)
+frontend/tests/unit/calculations/intersections.spec.ts:777:          new Vector3(0, 0, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:778:          new Vector3(1.5, 0, 0)
+frontend/tests/unit/calculations/intersections.spec.ts:782:          new Vector3(2, 0, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:783:          new Vector3(1.5, 0, 0)
+frontend/tests/unit/calculations/intersections.spec.ts:803:        point: Vector3,
+frontend/tests/unit/calculations/intersections.spec.ts:818:      function computeRelativeAngle(point: Vector3, circle: Circle2DRealization2D): number {
+frontend/tests/unit/calculations/intersections.spec.ts:839:          new Vector3(0, 0, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:840:          new Vector3(3, 0, 0)
+frontend/tests/unit/calculations/intersections.spec.ts:845:          new Vector3(6, 0, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:846:          new Vector3(3, 0, 0)
+frontend/tests/unit/calculations/intersections.spec.ts:862:          new Vector3(0, 0, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:863:          new Vector3(3, 0, 0)    // Points directly at tangent point
+frontend/tests/unit/calculations/intersections.spec.ts:868:          new Vector3(6, 0, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:869:          new Vector3(3, 0, 0)
+frontend/tests/unit/calculations/intersections.spec.ts:884:          new Vector3(0, 0, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:885:          new Vector3(3, 0, 0)
+frontend/tests/unit/calculations/intersections.spec.ts:890:          new Vector3(4, 0, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:891:          new Vector3(0, 3, 0)    // perpendicular to circle1's radius
+frontend/tests/unit/calculations/intersections.spec.ts:907:          new Vector3(0, 0, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:908:          new Vector3(3, 0, 0)
+frontend/tests/unit/calculations/intersections.spec.ts:913:          new Vector3(0, 4, 1),   // Same x, different y
+frontend/tests/unit/calculations/intersections.spec.ts:914:          new Vector3(3, 0, 0)
+frontend/tests/unit/calculations/intersections.spec.ts:936:          new Vector3(0, 0, 1),
+frontend/tests/unit/calculations/intersections.spec.ts:937:          new Vector3(3, 0, 0)
+frontend/tests/unit/calculations/intersections.spec.ts:942:          new Vector3(4, 0, 1),   // Same y, different x
+frontend/tests/unit/calculations/intersections.spec.ts:943:          new Vector3(3, 0, 0)
+frontend/tests/unit/calculations/intersections.spec.ts:968:        point: Vector3,
+frontend/tests/unit/calculations/intersections.spec.ts:1017:          new Vector3(2, 3, 1),     // center
+frontend/tests/unit/calculations/intersections.spec.ts:1018:          new Vector3(5, 0, 0)      // radius vector (length 5, horizontal)
+frontend/tests/unit/calculations/intersections.spec.ts:1023:          new Vector3(8, 3, 1),     // center
+frontend/tests/unit/calculations/intersections.spec.ts:1024:          new Vector3(4, 0, 0)      // radius vector (length 4, horizontal)
+frontend/tests/unit/domain/world.spec.ts:1:import { Vector3 } from 'three';
+frontend/tests/unit/domain/world.spec.ts:44:        const position = new Vector3(10, 20, 1);
+frontend/tests/unit/domain/world.spec.ts:61:        const position = new Vector3(10, 20, 1);
+frontend/tests/unit/domain/world.spec.ts:85:        const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/world.spec.ts:86:        const p2 = planeH.addFreePoint2D(new Vector3(10, 0, 1), world);
+frontend/tests/unit/domain/world.spec.ts:87:        const p3 = planeH.addFreePoint2D(new Vector3(5, -5, 1), world);
+frontend/tests/unit/domain/world.spec.ts:88:        const p4 = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
+frontend/tests/unit/domain/world.spec.ts:105:        const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/world.spec.ts:106:        const p2 = planeH.addFreePoint2D(new Vector3(10, 0, 1), world);
+frontend/tests/unit/domain/world.spec.ts:107:        const p3 = planeH.addFreePoint2D(new Vector3(5, -5, 1), world);
+frontend/tests/unit/domain/world.spec.ts:108:        const p4 = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
+frontend/tests/unit/domain/world.spec.ts:132:        const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/world.spec.ts:133:        const p2 = planeH.addFreePoint2D(new Vector3(10, 0, 1), world);
+frontend/tests/unit/domain/world.spec.ts:134:        const p3 = planeH.addFreePoint2D(new Vector3(0, 5, 1), world);
+frontend/tests/unit/domain/world.spec.ts:135:        const p4 = planeH.addFreePoint2D(new Vector3(10, 5, 1), world);
+frontend/tests/unit/domain/world.spec.ts:154:        const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/world.spec.ts:155:        const p2 = planeH.addFreePoint2D(new Vector3(10, 0, 1), world);
+frontend/tests/unit/domain/world.spec.ts:156:        const p3 = planeH.addFreePoint2D(new Vector3(5, -5, 1), world);
+frontend/tests/unit/domain/world.spec.ts:157:        const p4 = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
+frontend/tests/unit/domain/world.spec.ts:179:        const p1 = planeH.addFreePoint2D(new Vector3(5, -5, 1), world);
+frontend/tests/unit/domain/world.spec.ts:180:        const p2 = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
+frontend/tests/unit/domain/world.spec.ts:203:        const p1 = planeV.addFreePoint2D(new Vector3(5, -5, 1), world);
+frontend/tests/unit/domain/world.spec.ts:204:        const p2 = planeV.addFreePoint2D(new Vector3(5, 5, 1), world);
+frontend/tests/unit/domain/world.spec.ts:224:        const p1 = planeH.addFreePoint2D(new Vector3(5, -5, 1), world);
+frontend/tests/unit/domain/world.spec.ts:225:        const p2 = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
+frontend/tests/unit/domain/world.spec.ts:245:        const p1 = planeH.addFreePoint2D(new Vector3(5, -5, 1), world);
+frontend/tests/unit/domain/world.spec.ts:246:        const p2 = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
+frontend/tests/unit/domain/world.spec.ts:265:        const p1 = planeH.addFreePoint2D(new Vector3(5, -5, 1), world);
+frontend/tests/unit/domain/world.spec.ts:266:        const p2 = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
+frontend/tests/unit/domain/world.spec.ts:291:        const p1 = planeH.addFreePoint2D(new Vector3(5, -5, 1), world);
+frontend/tests/unit/domain/world.spec.ts:292:        const p2 = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
+frontend/tests/unit/domain/world.spec.ts:308:        const p1 = planeV.addFreePoint2D(new Vector3(5, -5, 1), world);
+frontend/tests/unit/domain/world.spec.ts:309:        const p2 = planeV.addFreePoint2D(new Vector3(5, 5, 1), world);
+frontend/tests/unit/domain/world.spec.ts:325:        const p1 = planeH.addFreePoint2D(new Vector3(5, -5, 1), world);
+frontend/tests/unit/domain/world.spec.ts:326:        const p2 = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
+frontend/tests/unit/domain/world.spec.ts:344:        const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/world.spec.ts:345:        const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
+frontend/tests/unit/domain/world.spec.ts:355:        const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/world.spec.ts:356:        const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
+frontend/tests/unit/domain/world.spec.ts:365:        const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/world.spec.ts:381:        const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/world.spec.ts:382:        const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
+frontend/tests/unit/domain/world.spec.ts:392:        const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/world.spec.ts:393:        const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
+frontend/tests/unit/domain/world.spec.ts:402:        const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/world.spec.ts:412:        const center = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
+frontend/tests/unit/domain/world.spec.ts:413:        const circumPoint = planeH.addFreePoint2D(new Vector3(15, 5, 1), world);
+frontend/tests/unit/domain/world.spec.ts:422:        const center = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
+frontend/tests/unit/domain/world.spec.ts:423:        const circumPoint = planeH.addFreePoint2D(new Vector3(15, 5, 1), world);
+frontend/tests/unit/domain/world.spec.ts:432:        const circumPoint = planeH.addFreePoint2D(new Vector3(15, 5, 1), world);
+frontend/tests/unit/domain/world.spec.ts:442:        const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/world.spec.ts:443:        const p2 = planeH.addFreePoint2D(new Vector3(10, 0, 1), world);
+frontend/tests/unit/domain/world.spec.ts:444:        const throughPoint = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
+frontend/tests/unit/domain/world.spec.ts:454:        const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/world.spec.ts:455:        const p2 = planeH.addFreePoint2D(new Vector3(10, 0, 1), world);
+frontend/tests/unit/domain/world.spec.ts:456:        const throughPoint = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
+frontend/tests/unit/domain/world.spec.ts:466:        const point = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
+frontend/tests/unit/domain/world.spec.ts:474:        const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/world.spec.ts:475:        const p2 = planeH.addFreePoint2D(new Vector3(10, 0, 1), world);
+frontend/tests/unit/domain/world.spec.ts:486:        const point = planeH.addFreePoint2D(new Vector3(10, 20, 1), world);
+frontend/tests/unit/domain/world.spec.ts:496:        const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/world.spec.ts:497:        const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
+frontend/tests/unit/domain/world.spec.ts:507:        const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/world.spec.ts:508:        const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
+frontend/tests/unit/domain/world.spec.ts:518:        const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/world.spec.ts:519:        const p2 = planeH.addFreePoint2D(new Vector3(10, 0, 1), world);
+frontend/tests/unit/domain/world.spec.ts:520:        const throughPoint = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
+frontend/tests/unit/domain/world.spec.ts:539:        const point = planeH.addFreePoint2D(new Vector3(10, 20, 1), world);
+frontend/tests/unit/domain/world.spec.ts:549:        const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/world.spec.ts:550:        const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
+frontend/tests/unit/domain/world.spec.ts:559:        const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/world.spec.ts:560:        const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
+frontend/tests/unit/domain/world.spec.ts:607:        const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/world.spec.ts:608:        const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
+frontend/tests/unit/domain/world.spec.ts:625:        const p1 = planeH.addFreePoint2D(new Vector3(5, -5, 1), world);
+frontend/tests/unit/domain/world.spec.ts:626:        const p2 = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
+frontend/tests/unit/domain/world.spec.ts:644:        const p1 = planeV.addFreePoint2D(new Vector3(5, -5, 1), world);
+frontend/tests/unit/domain/world.spec.ts:645:        const p2 = planeV.addFreePoint2D(new Vector3(5, 5, 1), world);
+frontend/tests/unit/domain/world.spec.ts:658:        const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/world.spec.ts:659:        const p2 = planeH.addFreePoint2D(new Vector3(10, 0, 1), world);
+frontend/tests/unit/domain/world.spec.ts:660:        const p3 = planeH.addFreePoint2D(new Vector3(5, -5, 1), world);
+frontend/tests/unit/domain/world.spec.ts:661:        const p4 = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
+frontend/tests/unit/domain/world.spec.ts:681:        const center = planeH.addFreePoint2D(new Vector3(5, 3, 1), world);
+frontend/tests/unit/domain/world.spec.ts:682:        const radiusPoint = planeH.addFreePoint2D(new Vector3(5, 8, 1), world);
+frontend/tests/unit/domain/world.spec.ts:695:        const c1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/world.spec.ts:696:        const r1 = planeH.addFreePoint2D(new Vector3(5, 0, 1), world);
+frontend/tests/unit/domain/world.spec.ts:699:        const c2 = planeH.addFreePoint2D(new Vector3(8, 0, 1), world);
+frontend/tests/unit/domain/world.spec.ts:700:        const r2 = planeH.addFreePoint2D(new Vector3(13, 0, 1), world);
+frontend/tests/unit/domain/world.spec.ts:713:        const point = planeH.addFreePoint2D(new Vector3(10, 20, 1), world);
+frontend/tests/unit/domain/tangentLine.spec.ts:15:import { Vector3 } from 'three';
+frontend/tests/unit/domain/tangentLine.spec.ts:32:    linePoint: Vector3,
+frontend/tests/unit/domain/tangentLine.spec.ts:33:    lineDirection: Vector3,
+frontend/tests/unit/domain/tangentLine.spec.ts:34:    point: Vector3
+frontend/tests/unit/domain/tangentLine.spec.ts:39:    const pointToLinePoint = new Vector3(
+frontend/tests/unit/domain/tangentLine.spec.ts:58:    const center = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/tangentLine.spec.ts:59:    const edgePoint = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
+frontend/tests/unit/domain/tangentLine.spec.ts:63:    const externalPoint = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
+frontend/tests/unit/domain/tangentLine.spec.ts:97:    const center = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/tangentLine.spec.ts:98:    const edgePoint = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
+frontend/tests/unit/domain/tangentLine.spec.ts:101:    const externalPoint = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
+frontend/tests/unit/domain/tangentLine.spec.ts:129:    const center = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/tangentLine.spec.ts:130:    const edgePoint = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
+frontend/tests/unit/domain/tangentLine.spec.ts:134:    const externalPoint = plane.addFreePoint2D(new Vector3(10, 5, 1), world);
+frontend/tests/unit/domain/tangentLine.spec.ts:164:    const center = plane.addFreePoint2D(new Vector3(100, 200, 1), world);
+frontend/tests/unit/domain/tangentLine.spec.ts:165:    const edgePoint = plane.addFreePoint2D(new Vector3(130, 200, 1), world);
+frontend/tests/unit/domain/tangentLine.spec.ts:168:    const externalPoint = plane.addFreePoint2D(new Vector3(150, 200, 1), world);
+frontend/tests/unit/domain/tangentLine.spec.ts:196:    const center = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/tangentLine.spec.ts:197:    const edgePoint = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
+frontend/tests/unit/domain/tangentLine.spec.ts:201:    const insidePoint = plane.addFreePoint2D(new Vector3(2, 0, 1), world);
+frontend/tests/unit/domain/tangentLine.spec.ts:225:    linePoint: Vector3,
+frontend/tests/unit/domain/tangentLine.spec.ts:226:    lineDirection: Vector3,
+frontend/tests/unit/domain/tangentLine.spec.ts:227:    point: Vector3
+frontend/tests/unit/domain/tangentLine.spec.ts:232:    const pointToLinePoint = new Vector3(
+frontend/tests/unit/domain/tangentLine.spec.ts:249:    const center = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/tangentLine.spec.ts:250:    const edgePoint = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
+frontend/tests/unit/domain/tangentLine.spec.ts:254:    const refP1 = plane.addFreePoint2D(new Vector3(0, 10, 1), world);
+frontend/tests/unit/domain/tangentLine.spec.ts:255:    const refP2 = plane.addFreePoint2D(new Vector3(10, 10, 1), world);
+frontend/tests/unit/domain/tangentLine.spec.ts:287:    const center = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/tangentLine.spec.ts:288:    const edgePoint = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
+frontend/tests/unit/domain/tangentLine.spec.ts:291:    const refP1 = plane.addFreePoint2D(new Vector3(0, 10, 1), world);
+frontend/tests/unit/domain/tangentLine.spec.ts:292:    const refP2 = plane.addFreePoint2D(new Vector3(10, 10, 1), world);
+frontend/tests/unit/domain/tangentLine.spec.ts:322:    const center = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/tangentLine.spec.ts:323:    const edgePoint = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
+frontend/tests/unit/domain/tangentLine.spec.ts:327:    const refP1 = plane.addFreePoint2D(new Vector3(-10, 0, 1), world);
+frontend/tests/unit/domain/tangentLine.spec.ts:328:    const refP2 = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
+frontend/tests/unit/stores/authStore.spec.ts:16:    email: 'john@example.com',
+frontend/tests/unit/stores/authStore.spec.ts:17:    picture: 'https://example.com/avatar.jpg',
+frontend/tests/unit/domain/segmentIntersections.spec.ts:19:import { Vector3 } from 'three';
+frontend/tests/unit/domain/segmentIntersections.spec.ts:35:      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:36:      const p2 = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:40:      const p3 = plane.addFreePoint2D(new Vector3(5, -5, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:41:      const p4 = plane.addFreePoint2D(new Vector3(5, 5, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:55:      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:56:      const p2 = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:59:      const p3 = plane.addFreePoint2D(new Vector3(0, 5, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:60:      const p4 = plane.addFreePoint2D(new Vector3(10, 5, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:75:      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:76:      const p2 = plane.addFreePoint2D(new Vector3(10, 10, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:80:      const s1 = plane.addFreePoint2D(new Vector3(2, 5, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:81:      const s2 = plane.addFreePoint2D(new Vector3(8, 5, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:97:      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:98:      const p2 = plane.addFreePoint2D(new Vector3(1, 3, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:102:      const s1 = plane.addFreePoint2D(new Vector3(2, 5, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:103:      const s2 = plane.addFreePoint2D(new Vector3(4, 5, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:122:      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:123:      const p2 = plane.addFreePoint2D(new Vector3(10, 10, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:127:      const p3 = plane.addFreePoint2D(new Vector3(0, 10, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:128:      const p4 = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:143:      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:144:      const p2 = plane.addFreePoint2D(new Vector3(3, 3, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:148:      const p3 = plane.addFreePoint2D(new Vector3(0, 10, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:149:      const p4 = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:162:      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:163:      const p2 = plane.addFreePoint2D(new Vector3(2, 2, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:167:      const p3 = plane.addFreePoint2D(new Vector3(8, 10, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:168:      const p4 = plane.addFreePoint2D(new Vector3(10, 8, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:181:      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:182:      const p2 = plane.addFreePoint2D(new Vector3(5, 5, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:186:      const p3 = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:187:      const p4 = plane.addFreePoint2D(new Vector3(5, 10, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:204:      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:205:      const p2 = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:209:      const center = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:210:      const circPt = plane.addFreePoint2D(new Vector3(8, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:231:      const p1 = plane.addFreePoint2D(new Vector3(0, 10, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:232:      const p2 = plane.addFreePoint2D(new Vector3(10, 10, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:236:      const center = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:237:      const circPt = plane.addFreePoint2D(new Vector3(8, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:250:      const center = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:251:      const circPt = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:255:      const p1 = plane.addFreePoint2D(new Vector3(0, 5, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:256:      const p2 = plane.addFreePoint2D(new Vector3(10, 5, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:277:      const s1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:278:      const s2 = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:282:      const center = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:283:      const circPt = plane.addFreePoint2D(new Vector3(8, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:297:      const s1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:298:      const s2 = plane.addFreePoint2D(new Vector3(1, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:302:      const center = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:303:      const circPt = plane.addFreePoint2D(new Vector3(8, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:316:      const s1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:317:      const s2 = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:321:      const center = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:322:      const circPt = plane.addFreePoint2D(new Vector3(8, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:343:      const c1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:344:      const c1p = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:348:      const c2 = plane.addFreePoint2D(new Vector3(6, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:349:      const c2p = plane.addFreePoint2D(new Vector3(11, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:365:      expect(r0.position.distanceTo(new Vector3(0, 0, 1))).toBeCloseTo(5, 2);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:366:      expect(r0.position.distanceTo(new Vector3(6, 0, 1))).toBeCloseTo(5, 2);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:373:      const c1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:374:      const c1p = plane.addFreePoint2D(new Vector3(2, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:378:      const c2 = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:379:      const c2p = plane.addFreePoint2D(new Vector3(12, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:392:      const c1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:393:      const c1p = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:397:      const c2 = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:398:      const c2p = plane.addFreePoint2D(new Vector3(15, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:420:      const p1 = plane.addFreePoint2D(new Vector3(5, 5, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:421:      const p2 = plane.addFreePoint2D(new Vector3(5 + 1e-7, 5 + 1e-7, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:425:      const p3 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:426:      const p4 = plane.addFreePoint2D(new Vector3(10, 10, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:439:      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:440:      const p2 = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:444:      const center = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
+frontend/tests/unit/domain/segmentIntersections.spec.ts:445:      const circPt = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:13:import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:14:import { AddLine2DByTwoPointsOp } from '@/commands/operations/world/AddLineOp';
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:17:import { Vector3 } from 'three';
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:42:      const cmd = new Command('Setup', world);
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:57:      const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, -5, 1)));
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:60:      const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, 5, 1)));
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:63:      const lineResult = cmd.addAndExecute(new AddLine2DByTwoPointsOp(planeId, point1Id, point2Id));
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:69:      const intersectionCmd = new Command('Create HHL intersection', world);
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:113:      const cmd = new Command('Setup', world);
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:116:      const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 0, 1)));
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:117:      const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(10, 0, 1)));
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:118:      const line1Result = cmd.addAndExecute(new AddLine2DByTwoPointsOp(planeId, p1Result.outputs.pointId!, p2Result.outputs.pointId!));
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:121:      const p3Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, -5, 1)));
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:122:      const p4Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, 5, 1)));
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:123:      const line2Result = cmd.addAndExecute(new AddLine2DByTwoPointsOp(planeId, p3Result.outputs.pointId!, p4Result.outputs.pointId!));
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:128:      const intersectionCmd = new Command('Create regular intersection', world);
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:142:      const cmd = new Command('Setup', world);
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:157:      const centerResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 5, 1)));
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:158:      const circlePointResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 0, 1)));
+frontend/tests/unit/commands/factories/IntersectionSequenceFactory.spec.ts:168:      const intersectionCmd = new Command('Create HHL-circle intersection', world);
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:11:import { Vector3 } from 'three';
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:13:import type { CommandStack } from '../../../../src/commands/CommandStack';
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:19:import { AddFreePoint2DOp } from '../../../../src/commands/operations/world/AddFreePointOp';
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:20:import { AddLine2DByTwoPointsOp } from '../../../../src/commands/operations/world/AddLineOp';
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:30:  let commandStack: CommandStack;
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:72:      const deleteCmd = new Command('Delete nothing', world);
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:79:      const setupCmd = new Command('Setup point', world);
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:80:      const pointResult = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 200, 1)));
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:87:      const deleteCmd = new Command('Delete point', world);
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:101:      const setupCmd = new Command('Setup', world);
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:102:      const pointResult = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 200, 1)));
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:106:      const deleteCmd = new Command('Delete point', world);
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:116:      const setupCmd = new Command('Setup line', world);
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:117:      const p1Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 200, 1)));
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:118:      const p2Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(300, 400, 1)));
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:121:      const lineResult = setupCmd.addAndExecute(new AddLine2DByTwoPointsOp(planeId, point1Id, point2Id));
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:130:      const deleteCmd = new Command('Delete point with cascade', world);
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:153:      const setupCmd = new Command('Setup circle', world);
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:154:      const centerResult = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 200, 1)));
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:155:      const circumferenceResult = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(300, 200, 1)));
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:167:      const deleteCmd = new Command('Delete center with cascade', world);
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:187:      const setupCmd = new Command('Setup multiple points', world);
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:188:      const p1Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 200, 1)));
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:189:      const p2Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(300, 400, 1)));
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:190:      const p3Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(500, 600, 1)));
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:196:      const deleteCmd = new Command('Delete multiple points', world);
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:216:      const setupCmd = new Command('Setup line', world);
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:217:      const p1Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 200, 1)));
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:218:      const p2Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(300, 400, 1)));
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:221:      const lineResult = setupCmd.addAndExecute(new AddLine2DByTwoPointsOp(planeId, point1Id, point2Id));
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:231:      const deleteCmd = new Command('Delete point with cascade', world);
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:256:      const setupCmd = new Command('Setup segment', world);
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:257:      const p1Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 200, 1)));
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:258:      const p2Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(300, 400, 1)));
+frontend/tests/unit/commands/factories/DeletionSequenceFactory.spec.ts:270:      const deleteCmd = new Command('Delete segment', world);
+frontend/tests/unit/commands/command.spec.ts:20:import { Vector3 } from 'three';
+frontend/tests/unit/commands/command.spec.ts:21:import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
+frontend/tests/unit/commands/command.spec.ts:106:    command = new Command('Test Command', world);
+frontend/tests/unit/commands/command.spec.ts:111:      const cmd = new Command('Direct instantiation', world);
+frontend/tests/unit/commands/command.spec.ts:117:      const cmd = new Command('No execute needed', world);
+frontend/tests/unit/commands/command.spec.ts:129:      const command2 = new Command('Another Command', world);
+frontend/tests/unit/commands/command.spec.ts:565:      const op = new AddFreePoint2DOp('projPlaneH', new Vector3(1, 2, 1));
+frontend/tests/unit/domain/segment3DRealization.spec.ts:11:import { Vector3, Vector4 } from 'three';
+frontend/tests/unit/domain/segment3DRealization.spec.ts:16:import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
+frontend/tests/unit/domain/segment3DRealization.spec.ts:38:    const posH = new Vector3(0, 0, 1);  // (0,0) on PH → x=0, y=0
+frontend/tests/unit/domain/segment3DRealization.spec.ts:39:    const posV = new Vector3(0, 0, 1);  // (0,0) on PV → x=0, z=0
+frontend/tests/unit/domain/segment3DRealization.spec.ts:51:    const posH = new Vector3(5, 10, 1);
+frontend/tests/unit/domain/segment3DRealization.spec.ts:53:    const posV = new Vector3(5, 15, 1);
+frontend/tests/unit/domain/segment3DRealization.spec.ts:65:    const posH = new Vector3(5, 10, 1);
+frontend/tests/unit/domain/segment3DRealization.spec.ts:66:    const posV = new Vector3(10, 15, 1);
+frontend/tests/unit/domain/segment3DRealization.spec.ts:75:    const posH = new Vector3(-3, -7, 1);
+frontend/tests/unit/domain/segment3DRealization.spec.ts:76:    const posV = new Vector3(-3, 4, 1);
+frontend/tests/unit/domain/segment3DRealization.spec.ts:100:    const p1 = plane.addFreePoint2D(new Vector3(x1, y1, 1), world);
+frontend/tests/unit/domain/segment3DRealization.spec.ts:101:    const p2 = plane.addFreePoint2D(new Vector3(x2, y2, 1), world);
+frontend/tests/unit/domain/segment3DRealization.spec.ts:228:    command = new Command('test-cmd', world);
+frontend/tests/unit/domain/segment3DRealization.spec.ts:232:    const addP1 = new AddFreePoint2DOp(planeId, new Vector3(x1, y1, 1));
+frontend/tests/unit/domain/segment3DRealization.spec.ts:236:    const addP2 = new AddFreePoint2DOp(planeId, new Vector3(x2, y2, 1));
+frontend/tests/integration/world/defaultLabels.integration.test.ts:11:import { Vector3 } from 'three';
+frontend/tests/integration/world/defaultLabels.integration.test.ts:27:      const point1 = plane.addFreePoint2D(new Vector3(0.1, 0.2, 1), world);
+frontend/tests/integration/world/defaultLabels.integration.test.ts:28:      const point2 = plane.addFreePoint2D(new Vector3(0.3, 0.4, 1), world);
+frontend/tests/integration/world/defaultLabels.integration.test.ts:29:      const point3 = plane.addFreePoint2D(new Vector3(0.5, 0.6, 1), world);
+frontend/tests/integration/world/defaultLabels.integration.test.ts:46:      const point = plane.addFreePoint2D(new Vector3(0.1, 0.2, 1), world, undefined, 'Custom');
+frontend/tests/integration/world/defaultLabels.integration.test.ts:57:      const point1 = plane.addFreePoint2D(new Vector3(0.1, 0.2, 1), world);
+frontend/tests/integration/world/defaultLabels.integration.test.ts:58:      const point2 = plane.addFreePoint2D(new Vector3(0.3, 0.4, 1), world);
+frontend/tests/integration/world/defaultLabels.integration.test.ts:59:      const point3 = plane.addFreePoint2D(new Vector3(0.5, 0.6, 1), world);
+frontend/tests/integration/world/defaultLabels.integration.test.ts:76:      const p1 = plane.addFreePoint2D(new Vector3(0.1, 0.2, 1), world);
+frontend/tests/integration/world/defaultLabels.integration.test.ts:77:      const p2 = plane.addFreePoint2D(new Vector3(0.3, 0.4, 1), world);
+frontend/tests/integration/world/defaultLabels.integration.test.ts:89:      const center = plane.addFreePoint2D(new Vector3(0.5, 0.5, 1), world);
+frontend/tests/integration/world/defaultLabels.integration.test.ts:90:      const circumferencePoint = plane.addFreePoint2D(new Vector3(0.6, 0.5, 1), world);
+frontend/tests/integration/world/defaultLabels.integration.test.ts:104:      const p1 = plane.addFreePoint2D(new Vector3(0.1, 0.2, 1), world);
+frontend/tests/integration/world/defaultLabels.integration.test.ts:105:      const p2 = plane.addFreePoint2D(new Vector3(0.3, 0.4, 1), world);
+frontend/tests/integration/world/defaultLabels.integration.test.ts:106:      const p3 = plane.addFreePoint2D(new Vector3(0.5, 0.6, 1), world);
+frontend/tests/integration/world/defaultLabels.integration.test.ts:119:      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/integration/world/defaultLabels.integration.test.ts:120:      const p2 = plane.addFreePoint2D(new Vector3(1, 0, 1), world);
+frontend/tests/integration/world/defaultLabels.integration.test.ts:121:      const p3 = plane.addFreePoint2D(new Vector3(0, 1, 1), world);
+frontend/tests/integration/world/defaultLabels.integration.test.ts:122:      const p4 = plane.addFreePoint2D(new Vector3(1, 1, 1), world);
+frontend/tests/integration/world/defaultLabels.integration.test.ts:141:        const point = plane.addFreePoint2D(new Vector3(i * 0.1, 0.5, 1), world);
+frontend/tests/integration/world/defaultLabels.integration.test.ts:151:      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/integration/world/defaultLabels.integration.test.ts:152:      const p2 = plane.addFreePoint2D(new Vector3(1, 0, 1), world);
+frontend/tests/integration/world/defaultLabels.integration.test.ts:153:      const p3 = plane.addFreePoint2D(new Vector3(2, 0, 1), world);
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:9:import { AddLine2DByTwoPointsOp } from '../../../../src/commands/operations/world/AddLineOp';
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:10:import { AddFreePoint2DOp } from '../../../../src/commands/operations/world/AddFreePointOp';
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:12:import { Vector3 } from 'three';
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:31:      const cmd = new Command('Test', world);
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:34:      const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(horizontalPlaneId, new Vector3(0, 100, 1)));
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:35:      const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(horizontalPlaneId, new Vector3(200, 100, 1)));
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:36:      const lineResult = cmd.addAndExecute(new AddLine2DByTwoPointsOp(
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:43:      const throughResult = cmd.addAndExecute(new AddFreePoint2DOp(horizontalPlaneId, new Vector3(100, 50, 1)));
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:73:      const cmd = new Command('Test', world);
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:81:      const throughResult = cmd.addAndExecute(new AddFreePoint2DOp(horizontalPlaneId, new Vector3(100, 50, 1)));
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:124:      const cmd = new Command('Test', world);
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:127:      const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(horizontalPlaneId, new Vector3(0, 100, 1)));
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:128:      const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(horizontalPlaneId, new Vector3(200, 100, 1)));
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:129:      const lineResult = cmd.addAndExecute(new AddLine2DByTwoPointsOp(
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:135:      const throughResult = cmd.addAndExecute(new AddFreePoint2DOp(horizontalPlaneId, new Vector3(100, 50, 1)));
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:155:      const cmd = new Command('Test', world);
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:158:      const throughResult = cmd.addAndExecute(new AddFreePoint2DOp(horizontalPlaneId, new Vector3(100, 50, 1)));
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:173:      const cmd = new Command('Test', world);
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:176:      const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(horizontalPlaneId, new Vector3(0, 100, 1)));
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:177:      const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(horizontalPlaneId, new Vector3(200, 100, 1)));
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:178:      const lineResult = cmd.addAndExecute(new AddLine2DByTwoPointsOp(
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:197:      const cmd = new Command('Create guide with sibling', world);
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:205:      const throughResult = cmd.addAndExecute(new AddFreePoint2DOp(horizontalPlaneId, new Vector3(100, 50, 1)));
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:230:      const cmd = new Command('Create multiple guides', world);
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:237:      const through1 = cmd.addAndExecute(new AddFreePoint2DOp(horizontalPlaneId, new Vector3(100, 50, 1)));
+frontend/tests/unit/commands/factories/GuideSequenceFactory.spec.ts:246:      const through2 = cmd.addAndExecute(new AddFreePoint2DOp(horizontalPlaneId, new Vector3(150, 75, 1)));
+frontend/tests/unit/services/googleDriveService.spec.ts:533:        email: 'john@example.com',
+frontend/tests/unit/services/googleDriveService.spec.ts:534:        picture: 'https://example.com/avatar.jpg',
+frontend/tests/unit/services/googleDriveService.spec.ts:555:        email: 'john@example.com',
+frontend/tests/unit/services/googleDriveService.spec.ts:556:        picture: 'https://example.com/avatar.jpg',
+frontend/tests/unit/services/googleDriveService.spec.ts:564:        email: 'john@example.com',
+frontend/tests/unit/services/googleDriveService.spec.ts:565:        picture: 'https://example.com/avatar.jpg',
+frontend/tests/unit/services/googleDriveService.spec.ts:576:      expect(profile.name).toBe('john@example.com');
+frontend/tests/unit/domain/realizationCache.spec.ts:9:import { Vector3 } from 'three';
+frontend/tests/unit/domain/realizationCache.spec.ts:30:      const p = planeH.addFreePoint2D(new Vector3(3, 4, 1), world);
+frontend/tests/unit/domain/realizationCache.spec.ts:40:      const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/realizationCache.spec.ts:41:      const p2 = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
+frontend/tests/unit/domain/realizationCache.spec.ts:52:      const center = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/realizationCache.spec.ts:53:      const circumPt = planeH.addFreePoint2D(new Vector3(5, 0, 1), world);
+frontend/tests/unit/domain/realizationCache.spec.ts:64:      const p = planeH.addFreePoint2D(new Vector3(1, 2, 1), world);
+frontend/tests/unit/domain/realizationCache.spec.ts:76:      const p = planeH.addFreePoint2D(new Vector3(7, 8, 1), world);
+frontend/tests/unit/domain/realizationCache.spec.ts:89:      const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/realizationCache.spec.ts:90:      const p2 = planeH.addFreePoint2D(new Vector3(10, 0, 1), world);
+frontend/tests/unit/domain/realizationCache.spec.ts:102:      const center = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/realizationCache.spec.ts:103:      const circumPt = planeH.addFreePoint2D(new Vector3(3, 0, 1), world);
+frontend/tests/unit/domain/realizationCache.spec.ts:118:      const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/realizationCache.spec.ts:119:      const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
+frontend/tests/unit/domain/realizationCache.spec.ts:140:      const center = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/realizationCache.spec.ts:141:      const circPt = planeH.addFreePoint2D(new Vector3(4, 0, 1), world);
+frontend/tests/unit/domain/realizationCache.spec.ts:157:      const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/realizationCache.spec.ts:158:      const p2 = planeH.addFreePoint2D(new Vector3(10, 0, 1), world);
+frontend/tests/unit/domain/realizationCache.spec.ts:159:      const p3 = planeH.addFreePoint2D(new Vector3(5, -5, 1), world);
+frontend/tests/unit/domain/realizationCache.spec.ts:160:      const p4 = planeH.addFreePoint2D(new Vector3(5,  5, 1), world);
+frontend/tests/unit/domain/realizationCache.spec.ts:194:      const pH = planeH.addFreePoint2D(new Vector3(2, 3, 1), world);
+frontend/tests/unit/domain/realizationCache.spec.ts:195:      const pV = planeV.addFreePoint2D(new Vector3(7, 8, 1), world);
+frontend/tests/unit/domain/realizationCache.spec.ts:209:      const pA = planeH.addFreePoint2D(new Vector3(1, 1, 1), world);
+frontend/tests/unit/domain/realizationCache.spec.ts:210:      const pB = planeH.addFreePoint2D(new Vector3(5, 1, 1), world);
+frontend/tests/unit/domain/realizationCache.spec.ts:211:      const pC = planeV.addFreePoint2D(new Vector3(2, 2, 1), world);
+frontend/tests/unit/domain/realizationCache.spec.ts:212:      const pD = planeV.addFreePoint2D(new Vector3(8, 2, 1), world);
+frontend/tests/unit/domain/realizationCache.spec.ts:242:      const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/realizationCache.spec.ts:243:      const p2 = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
+frontend/tests/unit/domain/realizationCache.spec.ts:267:      const pH = planeH.addFreePoint2D(new Vector3(1, 1, 1), world);
+frontend/tests/unit/domain/realizationCache.spec.ts:268:      const pV = planeV.addFreePoint2D(new Vector3(2, 2, 1), world);
+frontend/tests/unit/domain/segment.spec.ts:12:import { Vector3 } from 'three';
+frontend/tests/unit/domain/segment.spec.ts:31:    const point1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/segment.spec.ts:32:    const point2 = planeH.addFreePoint2D(new Vector3(100, 50, 1), world);
+frontend/tests/unit/domain/segment.spec.ts:73:      const point3 = planeH.addFreePoint2D(new Vector3(50, 50, 1), world);
+frontend/tests/unit/domain/segment.spec.ts:74:      const point4 = planeH.addFreePoint2D(new Vector3(50, 50, 1), world);
+frontend/tests/unit/domain/segment.spec.ts:88:        new Vector3(0, 0, 1),
+frontend/tests/unit/domain/segment.spec.ts:89:        new Vector3(3, 4, 1)
+frontend/tests/unit/domain/segment.spec.ts:98:        new Vector3(0, 0, 1),
+frontend/tests/unit/domain/segment.spec.ts:99:        new Vector3(10, 0, 1)
+frontend/tests/unit/domain/segment.spec.ts:107:        new Vector3(0, 0, 1),
+frontend/tests/unit/domain/segment.spec.ts:108:        new Vector3(0, 7, 1)
+frontend/tests/unit/domain/segment.spec.ts:116:        new Vector3(0, 0, 1),
+frontend/tests/unit/domain/segment.spec.ts:117:        new Vector3(1, 1, 1)
+frontend/tests/unit/domain/segment.spec.ts:126:        new Vector3(5, 5, 1),
+frontend/tests/unit/domain/segment.spec.ts:127:        new Vector3(5, 5, 1)
+frontend/tests/unit/domain/segment.spec.ts:134:      const point1 = new Vector3(10, 20, 1);
+frontend/tests/unit/domain/segment.spec.ts:135:      const point2 = new Vector3(30, 40, 1);
+frontend/tests/unit/services/ProjectService.subprocess.spec.ts:9:import type { CommandStack } from '@/commands/CommandStack';
+frontend/tests/unit/services/ProjectService.subprocess.spec.ts:23:  let commandStack: CommandStack;
+frontend/tests/unit/services/ProjectService.subprocess.spec.ts:85:function roundTripOperation(op: any, world: World, commandStack: CommandStack): any {
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:10:import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:11:import { AddLine2DByTwoPointsOp } from '@/commands/operations/world/AddLineOp';
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:14:import { Vector3, Vector4 } from 'three';
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:24:    command = new Command('test-command', world);
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:38:    const addP1 = new AddFreePoint2DOp(planeId, new Vector3(x1, y1, 1));
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:43:    const addP2 = new AddFreePoint2DOp(planeId, new Vector3(x2, y2, 1));
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:48:    const addLine = new AddLine2DByTwoPointsOp(planeId, p1Id, p2Id);
+frontend/tests/unit/domain/Line3DReconstruction.test.ts:290:    command = new Command('test-command-2', world);
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:16:import { Vector3 } from 'three';
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:18:import type { CommandStack } from '@/commands/CommandStack';
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:25:import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:26:import { AddLine2DByTwoPointsOp } from '@/commands/operations/world/AddLineOp';
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:39:  let commandStack: CommandStack;
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:47:  it('AddFreePoint2DOp survives round-trip', () => {
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:48:    const op = new AddFreePoint2DOp('projPlaneH', new Vector3(5, 10, 1));
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:58:    const op = new AddLine2DByTwoPointsOp('projPlaneH', 'point1', 'point2');
+frontend/tests/unit/services/ProjectService.roundTrip.spec.ts:248:function roundTripOperation(op: any, world: World, commandStack: CommandStack): any {
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:5: * contain ALL needed data and they don't depend on World/CommandStack state.
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:18:import type { CommandStack } from '@/commands/CommandStack';
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:21:import { Vector3 } from 'three';
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:24:  AddFreePoint2DOp 
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:27:  AddLine2DByTwoPointsOp 
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:47:  let commandStack: CommandStack;
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:63:   * Test that AddFreePoint2DOp is self-contained
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:65:  it('AddFreePoint2DOp should be self-contained', () => {
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:67:    const cmd = new Command('Test', world);
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:68:    cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:95:    const cmd = new Command('Test', world);
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:96:    const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 0, 1)));
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:97:    const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 0, 1)));
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:98:    cmd.addAndExecute(new AddLine2DByTwoPointsOp(planeId, p1Result.outputs.pointId, p2Result.outputs.pointId));
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:117:    const cmd = new Command('Test', world);
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:118:    const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 0, 1)));
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:119:    const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 0, 1)));
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:136:    const cmd = new Command('Test', world);
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:137:    const centerResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(50, 50, 1)));
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:138:    const radiusResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 50, 1)));
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:158:    const cmd = new Command('Test', world);
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:159:    const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 0, 1)));
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:160:    const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 0, 1)));
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:161:    const lineResult = cmd.addAndExecute(new AddLine2DByTwoPointsOp(planeId, p1Result.outputs.pointId, p2Result.outputs.pointId));
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:162:    const pointOnGuideResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(50, 50, 1)));
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:183:    const cmd = new Command('Test', world);
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:184:    const pointResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:206:    const cmd1 = new Command('Create', world);
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:207:    const pointResult = cmd1.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:211:    const cmd2 = new Command('Remove', world);
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:233:    const cmd = new Command('Complex', world);
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:236:    const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 0, 1)));
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:237:    const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 0, 1)));
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:238:    const p3Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(50, 50, 1)));
+frontend/tests/unit/services/ProjectService.selfContainment.spec.ts:241:    const lineResult = cmd.addAndExecute(new AddLine2DByTwoPointsOp(planeId, p1Result.outputs.pointId, p2Result.outputs.pointId));
+frontend/tests/unit/domain/element2dRealization.spec.ts:9:import { Vector3 } from 'three';
+frontend/tests/unit/domain/element2dRealization.spec.ts:18:      const realization = new Point2DRealization2D(new Vector3(1, 2, 1), true);
+frontend/tests/unit/domain/element2dRealization.spec.ts:23:      const realization = new Point2DRealization2D(new Vector3(1, 2, 1), true);
+frontend/tests/unit/domain/element2dRealization.spec.ts:29:      const realization = new Point2DRealization2D(new Vector3(0, 0, 1), false);
+frontend/tests/unit/domain/element2dRealization.spec.ts:35:      const realization = new Point2DRealization2D(new Vector3(1, 2, 1));
+frontend/tests/unit/domain/element2dRealization.spec.ts:43:      const p1 = new Vector3(0, 0, 1);
+frontend/tests/unit/domain/element2dRealization.spec.ts:44:      const p2 = new Vector3(1, 0, 0); // Direction vector
+frontend/tests/unit/domain/element2dRealization.spec.ts:50:      const p1 = new Vector3(0, 0, 1);
+frontend/tests/unit/domain/element2dRealization.spec.ts:51:      const p2 = new Vector3(1, 0, 0);
+frontend/tests/unit/domain/element2dRealization.spec.ts:58:      const p1 = new Vector3(0, 0, 1);
+frontend/tests/unit/domain/element2dRealization.spec.ts:59:      const p2 = new Vector3(0, 0, 1); // Degenerate line (two coincident points)
+frontend/tests/unit/domain/element2dRealization.spec.ts:66:      const p1 = new Vector3(0, 0, 1);
+frontend/tests/unit/domain/element2dRealization.spec.ts:67:      const p2 = new Vector3(1, 0, 0);
+frontend/tests/unit/domain/element2dRealization.spec.ts:76:      const center = new Vector3(5, 5, 1);
+frontend/tests/unit/domain/element2dRealization.spec.ts:77:      const radiusVector = new Vector3(3, 0, 0);
+frontend/tests/unit/domain/element2dRealization.spec.ts:83:      const center = new Vector3(5, 5, 1);
+frontend/tests/unit/domain/element2dRealization.spec.ts:84:      const radiusVector = new Vector3(3, 0, 0);
+frontend/tests/unit/domain/element2dRealization.spec.ts:91:      const center = new Vector3(5, 5, 1);
+frontend/tests/unit/domain/element2dRealization.spec.ts:92:      const radiusVector = new Vector3(0, 0, 0); // Zero radius
+frontend/tests/unit/domain/element2dRealization.spec.ts:99:      const center = new Vector3(5, 5, 1);
+frontend/tests/unit/domain/element2dRealization.spec.ts:100:      const radiusVector = new Vector3(3, 0, 0);
+frontend/tests/unit/domain/element2dRealization.spec.ts:110:        new Point2DRealization2D(new Vector3(1, 2, 1), true),
+frontend/tests/unit/domain/element2dRealization.spec.ts:111:        new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), true),
+frontend/tests/unit/domain/element2dRealization.spec.ts:112:        new Circle2DRealization2D(new Vector3(5, 5, 1), new Vector3(3, 0, 0), true),
+frontend/tests/unit/domain/element2dRealization.spec.ts:123:        new Point2DRealization2D(new Vector3(1, 2, 1), true),
+frontend/tests/unit/domain/element2dRealization.spec.ts:124:        new Point2DRealization2D(new Vector3(0, 0, 1), false), // Infeasible
+frontend/tests/unit/domain/element2dRealization.spec.ts:125:        new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), true),
+frontend/tests/unit/domain/element2dRealization.spec.ts:126:        new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(0, 0, 1), false), // Infeasible
+frontend/tests/unit/domain/element2dRealization.spec.ts:127:        new Circle2DRealization2D(new Vector3(5, 5, 1), new Vector3(3, 0, 0), true),
+frontend/tests/unit/domain/element2dRealization.spec.ts:128:        new Circle2DRealization2D(new Vector3(5, 5, 1), new Vector3(0, 0, 0), false), // Infeasible
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:13:import { Vector3 } from 'three';
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:48:      new Vector3(1, 1, 1),  // (u, v, w) homogeneous
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:56:      new Vector3(1, 3, 1),  // (u, v, w) homogeneous
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:104:      new Vector3(2, 3, 1),
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:112:      new Vector3(2, 5, 1),
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:150:    const pointV = planeV.addFreePoint2D(new Vector3(0, 0, 1), world, undefined, 'V0');
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:151:    const pointH = planeH.addFreePoint2D(new Vector3(0, 0, 1), world, undefined, 'H0');
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:183:    const pointV = planeV.addFreePoint2D(new Vector3(-2, -3, 1), world, undefined, 'Vneg');
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:184:    const pointH = planeH.addFreePoint2D(new Vector3(-2, -5, 1), world, undefined, 'Hneg');
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:219:    const pointV = planeV.addFreePoint2D(new Vector3(1, 2, 1), world, undefined, 'Vmis');
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:220:    const pointH = planeH.addFreePoint2D(new Vector3(3, 4, 1), world, undefined, 'Hmis');
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:249:    const pointV = planeV.addFreePoint2D(new Vector3(5, 7, 1), world, undefined, 'Vord');
+frontend/tests/unit/domain/Point3DReconstruction.test.ts:250:    const pointH = planeH.addFreePoint2D(new Vector3(5, 9, 1), world, undefined, 'Hord');
+frontend/tests/unit/domain/circle.spec.ts:13:import { Vector3 } from 'three';
+frontend/tests/unit/domain/circle.spec.ts:38:    const centerPoint = new FreePoint2D(plane.generatePoint2DId(world), new Vector3(0, 0, 1), planeId);
+frontend/tests/unit/domain/circle.spec.ts:39:    const point1 = new FreePoint2D(plane.generatePoint2DId(world), new Vector3(50, 0, 1), planeId);
+frontend/tests/unit/domain/circle.spec.ts:40:    const point2 = new FreePoint2D(plane.generatePoint2DId(world), new Vector3(0, 50, 1), planeId);
+frontend/tests/unit/domain/circle.spec.ts:41:    const point3 = new FreePoint2D(plane.generatePoint2DId(world), new Vector3(-50, 0, 1), planeId);
+frontend/tests/unit/domain/circle.spec.ts:86:      const coincident = new FreePoint2D(plane.generatePoint2DId(world), new Vector3(0, 0, 1), planeId);
+frontend/tests/unit/domain/circle.spec.ts:129:      const collinear1 = new FreePoint2D(plane.generatePoint2DId(world), new Vector3(0, 0, 1), planeId);
+frontend/tests/unit/domain/circle.spec.ts:130:      const collinear2 = new FreePoint2D(plane.generatePoint2DId(world), new Vector3(10, 0, 1), planeId);
+frontend/tests/unit/domain/circle.spec.ts:131:      const collinear3 = new FreePoint2D(plane.generatePoint2DId(world), new Vector3(20, 0, 1), planeId);
+frontend/tests/unit/domain/circle.spec.ts:149:      const center = new Vector3(25, 30, 1);
+frontend/tests/unit/domain/circle.spec.ts:150:      const realization = new Circle2DRealization2D(center, new Vector3(15, 0, 0));
+frontend/tests/unit/domain/circle.spec.ts:158:      const realization = new Circle2DRealization2D(new Vector3(0, 0, 1), new Vector3(42, 0, 0));
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:15:import { Vector3 } from 'three';
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:59:      new Vector3(10, 5, 1),
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:66:      new Vector3(20, -5, 1),
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:111:      new Vector3(15, 10, 1),
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:170:      new Vector3(5, 0, 1),  // On hinge line: v=0
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:177:      new Vector3(5, 0, 1),  // On hinge line: v=0
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:185:      new Vector3(15, 20, 1),
+frontend/tests/unit/domain/Plane3DFromTraces.test.ts:193:      new Vector3(15, -5, 1),
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:9:import { Vector3 } from 'three';
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:17:      const p1 = plane.addFreePoint2D(new Vector3(5, 5, 1), world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:18:      const p2 = plane.addFreePoint2D(new Vector3(5, 5, 1), world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:30:      const p1 = plane.addFreePoint2D(new Vector3(5, 5, 1), world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:31:      const p2 = plane.addFreePoint2D(new Vector3(5 + 1e-7, 5 + 1e-7, 1), world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:43:      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:44:      const p2 = plane.addFreePoint2D(new Vector3(1, 0, 1), world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:60:      const p1 = plane.addFreePoint2D(new Vector3(5, 5, 1), world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:61:      const p2 = plane.addFreePoint2D(new Vector3(5 + 1e-7, 5 + 1e-7, 1), world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:68:      const throughPoint = plane.addFreePoint2D(new Vector3(10, 10, 1), world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:82:      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:83:      const p2 = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:86:      const throughPoint = plane.addFreePoint2D(new Vector3(5, 5, 1), world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:102:      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:103:      const p2 = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:107:      const p3 = plane.addFreePoint2D(new Vector3(0, 5, 1), world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:108:      const p4 = plane.addFreePoint2D(new Vector3(10, 5, 1), world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:129:      const p1 = plane.addFreePoint2D(new Vector3(5, 5, 1), world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:130:      const p2 = plane.addFreePoint2D(new Vector3(5, 5, 1), world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:142:      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:143:      const p2 = plane.addFreePoint2D(new Vector3(10, 5, 1), world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:157:      const center = plane.addFreePoint2D(new Vector3(5, 5, 1), world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:158:      const circPt = plane.addFreePoint2D(new Vector3(5, 5, 1), world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:170:      const center = plane.addFreePoint2D(new Vector3(5, 5, 1), world);
+frontend/tests/unit/domain/degenerateRealize2D.spec.ts:171:      const circPt = plane.addFreePoint2D(new Vector3(10, 5, 1), world);
+frontend/tests/unit/domain/guide.spec.ts:16:import { Vector3 } from 'three';
+frontend/tests/unit/domain/guide.spec.ts:38:    const p1 = new FreePoint2D(plane.generatePoint2DId(world), new Vector3(0, 0, 1), planeId);
+frontend/tests/unit/domain/guide.spec.ts:39:    const p2 = new FreePoint2D(plane.generatePoint2DId(world), new Vector3(100, 0, 1), planeId);
+frontend/tests/unit/domain/guide.spec.ts:47:    const throughPoint = new FreePoint2D(plane.generatePoint2DId(world), new Vector3(50, 30, 1), planeId);
+frontend/tests/unit/domain/guide.spec.ts:110:      const p3 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/guide.spec.ts:111:      const p4 = plane.addFreePoint2D(new Vector3(0, 100, 1), world);
+frontend/tests/unit/domain/guide.spec.ts:116:      const throughPoint2 = plane.addFreePoint2D(new Vector3(30, 50, 1), world);
+frontend/tests/unit/domain/guide.spec.ts:141:      const p3 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/guide.spec.ts:142:      const p4 = plane.addFreePoint2D(new Vector3(100, 100, 1), world);
+frontend/tests/unit/domain/guide.spec.ts:147:      const throughPoint2 = plane.addFreePoint2D(new Vector3(50, 50, 1), world);
+frontend/tests/unit/domain/guide.spec.ts:256:      const throughPoint = planeH.addFreePoint2D(new Vector3(50, 30, 1), world);
+frontend/tests/unit/domain/line.spec.ts:14:import { Vector3 } from 'three';
+frontend/tests/unit/domain/line.spec.ts:23:    const point1 = new Vector3(1, 2, 1);
+frontend/tests/unit/domain/line.spec.ts:24:    const point2 = new Vector3(3, 4, 0);  // Direction vector (z=0)
+frontend/tests/unit/domain/line.spec.ts:89:    const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/line.spec.ts:90:    const p2 = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
+frontend/tests/unit/domain/line.spec.ts:110:    const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/line.spec.ts:111:    const p2 = plane.addFreePoint2D(new Vector3(3, 4, 1), world);
+frontend/tests/unit/domain/line.spec.ts:128:    const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/line.spec.ts:129:    const p2 = plane.addFreePoint2D(new Vector3(0.0000001, 0.0000001, 1), world);
+frontend/tests/unit/domain/line.spec.ts:143:    const p1 = plane.addFreePoint2D(new Vector3(-10, -5, 1), world);
+frontend/tests/unit/domain/line.spec.ts:144:    const p2 = plane.addFreePoint2D(new Vector3(5, 10, 1), world);
+frontend/tests/unit/domain/line.spec.ts:162:    const p1 = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
+frontend/tests/unit/domain/line.spec.ts:163:    const p2 = plane.addFreePoint2D(new Vector3(5, 10, 1), world);
+frontend/tests/unit/domain/line.spec.ts:180:    const p1 = plane.addFreePoint2D(new Vector3(0, 7, 1), world);
+frontend/tests/unit/domain/line.spec.ts:181:    const p2 = plane.addFreePoint2D(new Vector3(20, 7, 1), world);
+frontend/tests/unit/domain/lineHierarchy.spec.ts:14:import { Vector3 } from 'three';
+frontend/tests/unit/domain/lineHierarchy.spec.ts:35:    const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/lineHierarchy.spec.ts:36:    const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
+frontend/tests/unit/domain/lineHierarchy.spec.ts:83:      const point1 = new Vector3(5, 5, 1);  // w=1 for finite point
+frontend/tests/unit/domain/lineHierarchy.spec.ts:84:      const point2 = new Vector3(1, 0, 0);  // w=0 for direction vector
+frontend/tests/unit/domain/lineHierarchy.spec.ts:96:      const point1 = new Vector3(0, 0, 1);   // Start point (z=1)
+frontend/tests/unit/domain/lineHierarchy.spec.ts:97:      const point2 = new Vector3(10, 10, 1); // End point (z=1)
+frontend/tests/unit/domain/lineHierarchy.spec.ts:111:        new Vector3(0, 0, 1),    // point1: finite
+frontend/tests/unit/domain/lineHierarchy.spec.ts:112:        new Vector3(1, 0, 0)     // point2: direction (z=0)
+frontend/tests/unit/domain/lineHierarchy.spec.ts:118:        new Vector3(0, 0, 1),    // point1: start
+frontend/tests/unit/domain/lineHierarchy.spec.ts:119:        new Vector3(10, 0, 1)    // point2: end (z=1)
+frontend/tests/unit/domain/lineHierarchy.spec.ts:125:      const point1 = new Vector3(0, 0, 1);
+frontend/tests/unit/domain/lineHierarchy.spec.ts:126:      const point2 = new Vector3(10, 0, 1);
+frontend/tests/unit/domain/lineHierarchy.spec.ts:134:      const point1 = new Vector3(0, 0, 1);      // Finite point
+frontend/tests/unit/domain/lineHierarchy.spec.ts:135:      const point2 = new Vector3(1, 0, 0);      // Direction (z=0)
+frontend/tests/unit/domain/lineHierarchy.spec.ts:143:      const point1 = new Vector3(0, 0, 1);
+frontend/tests/unit/domain/lineHierarchy.spec.ts:144:      const point2 = new Vector3(3, 4, 1);
+frontend/tests/unit/domain/lineHierarchy.spec.ts:154:        new Vector3(0, 0, 1),
+frontend/tests/unit/domain/lineHierarchy.spec.ts:155:        new Vector3(1, 0, 0)  // Horizontal direction
+frontend/tests/unit/domain/lineHierarchy.spec.ts:164:        new Vector3(0, 0, 1),
+frontend/tests/unit/domain/lineHierarchy.spec.ts:165:        new Vector3(10, 0, 1)
+frontend/tests/unit/domain/plane.spec.ts:16:import { Vector3, Vector4 } from 'three';
+frontend/tests/unit/domain/plane.spec.ts:482:                  point1: new Vector3(0, 0, 1),    // Origin in 2D (homogeneous)
+frontend/tests/unit/domain/plane.spec.ts:483:                  point2: new Vector3(1, 0, 1),    // Along X in 2D
+frontend/tests/unit/domain/plane.spec.ts:491:                  point1: new Vector3(0, 0, 1),    // Origin in 2D (homogeneous)
+frontend/tests/unit/domain/plane.spec.ts:492:                  point2: new Vector3(0, 1, 1),    // Along Y (which maps to Z) in 2D
+frontend/tests/unit/domain/point.spec.ts:11:import { Vector3, Vector4 } from 'three';
+frontend/tests/unit/domain/point.spec.ts:27:      const point = new FreePoint2D('plane_H/test-point-1', new Vector3(10, 20, 1), "plane_H");
+frontend/tests/unit/domain/point.spec.ts:44:      const point = new FreePoint2D('plane_H/test-point-3', new Vector3(10, 20, 1), "plane_H");
+frontend/tests/unit/domain/point.spec.ts:50:      const point = new FreePoint2D('plane_H/test-point-4', new Vector3(10, 20, 1), "plane_H", 'Point A');
+frontend/tests/unit/domain/point.spec.ts:56:      const point = new FreePoint2D('plane_H/test-point-5', new Vector3(10, 20, 1), "plane_H");
+frontend/tests/unit/domain/point.spec.ts:62:      const point = new FreePoint2D('plane_H/test-point-6', new Vector3(10, 20, 1), "plane_H");
+frontend/tests/unit/domain/point.spec.ts:69:    it('should store position as Vector3', () => {
+frontend/tests/unit/domain/point.spec.ts:70:      const point = new FreePoint2D('plane_H/test-point-7', new Vector3(10, 20, 1), "plane_H");
+frontend/tests/unit/domain/point.spec.ts:78:      const point = new FreePoint2D('plane_H/test-point-8', new Vector3(-5, -15, 1), "plane_H");
+frontend/tests/unit/domain/point.spec.ts:86:      const point = new FreePoint2D('plane_H/test-point-9', new Vector3(0, 0, 1), "plane_H");
+frontend/tests/unit/domain/point.spec.ts:94:      const point = new FreePoint2D('plane_H/test-point-10', new Vector3(10.5, 20.75, 1), "plane_H");
+frontend/tests/unit/domain/point.spec.ts:104:      const point = new FreePoint2D('plane_H/test-point-11', new Vector3(10, 20, 1), "plane_H");
+frontend/tests/unit/domain/point.spec.ts:106:      point.position = new Vector3(30, 40, 1);
+frontend/tests/unit/domain/point.spec.ts:114:      const point = new FreePoint2D('plane_H/point_1', new Vector3(10, 20, 1), "plane_H", 'Point A');
+frontend/tests/unit/domain/point.spec.ts:116:      point.position = new Vector3(30, 40, 1);
+frontend/tests/unit/domain/point.spec.ts:127:      const original = new FreePoint2D('plane_H/point_1', new Vector3(10, 20, 1), "plane_H", 'Point A');
+frontend/tests/unit/domain/point.spec.ts:132:      expect(clone.position).not.toBe(original.position);  // Different Vector3 instances
+frontend/tests/unit/domain/point.spec.ts:143:      const original = new FreePoint2D('plane_H/test-point-12', new Vector3(10, 20, 1), "plane_H");
+frontend/tests/unit/domain/point.spec.ts:153:      const original = new FreePoint2D('plane_H/test-point-13', new Vector3(10, 20, 1), "plane_H");
+frontend/tests/unit/domain/point.spec.ts:156:      clone.position = new Vector3(30, 40, 1);
+frontend/tests/unit/domain/point.spec.ts:166:    it('should store position as Vector3 homogeneous coordinates (u, v, 1)', () => {
+frontend/tests/unit/domain/point.spec.ts:169:      const point = new FreePoint2D('plane_H/test-point-14', new Vector3(100, 200, 1), "plane_H");
+frontend/tests/unit/domain/point.spec.ts:171:      expect(point.position).toBeInstanceOf(Vector3);
+frontend/tests/unit/domain/point.spec.ts:193:      const freePoint = planeH.addFreePoint2D(new Vector3(50, 0, 1), world);
+frontend/tests/unit/domain/point.spec.ts:302:        const primaryPoint = new FreePoint2D(primaryPointId, new Vector3(75, 0, 1), planeHId);
+frontend/tests/unit/domain/point.spec.ts:335:        const primary = planeH.addFreePoint2D(new Vector3(100, 0, 1), world);
+frontend/tests/unit/domain/element2d.spec.ts:12:import { Vector3 } from 'three';
+frontend/tests/unit/domain/element2d.spec.ts:35:      const point = new FreePoint2D(pointId, new Vector3(1, 2, 1), planeId, 'Point A');
+frontend/tests/unit/domain/element2d.spec.ts:77:      const point = new FreePoint2D(pointId, new Vector3(1, 2, 1), planeId);
+frontend/tests/unit/domain/element2d.spec.ts:104:      const point = new FreePoint2D(pointId, new Vector3(1, 2, 1), planeId);
+frontend/tests/unit/domain/element2d.spec.ts:140:      const original = new FreePoint2D(pointId, new Vector3(1, 2, 1), planeId, 'Point A');
+frontend/tests/unit/domain/element2d.spec.ts:185:      const point = new FreePoint2D(pointId, new Vector3(1, 2, 1), planeId);
+frontend/tests/unit/domain/element2d.spec.ts:196:      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/element2d.spec.ts:197:      const p2 = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
+frontend/tests/unit/domain/element2d.spec.ts:209:      const center = plane.addFreePoint2D(new Vector3(5, 5, 1), world);
+frontend/tests/unit/domain/element2d.spec.ts:210:      const edge = plane.addFreePoint2D(new Vector3(8, 5, 1), world);
+frontend/tests/unit/domain/element2d.spec.ts:233:        new FreePoint2D(pointId, new Vector3(1, 2, 1), planeId),
+frontend/tests/unit/domain/element2d.spec.ts:276:        new FreePoint2D(p1Id, new Vector3(1, 2, 1), planeHId),
+frontend/tests/unit/domain/element2d.spec.ts:277:        new FreePoint2D(p2Id, new Vector3(3, 4, 1), planeVId),
+frontend/tests/unit/domain/element2d.spec.ts:300:        new FreePoint2D(p1Id, new Vector3(1, 2, 1), planeId),
+frontend/tests/unit/domain/element2d.spec.ts:326:        new FreePoint2D(p1Id, new Vector3(1, 2, 1), planeId),
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:12:import { Vector3 } from 'three';
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:31:    const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:32:    const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:135:      const p2 = planeH.addFreePoint2D(new Vector3(5, 0, 1), world);
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:167:      const p1H = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
+frontend/tests/unit/domain/projectionPlaneRealization.spec.ts:168:      const p1V = planeV.addFreePoint2D(new Vector3(5, 5, 1), world);
+frontend/tests/unit/components/propertiesDialog.spec.ts:16:import { Vector3 } from 'three';
+frontend/tests/unit/components/propertiesDialog.spec.ts:29:    const point = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+frontend/tests/unit/components/propertiesDialog.spec.ts:103:      const position = new Vector3(0, 0, 1);
+frontend/tests/unit/components/propertiesDialog.spec.ts:120:      const position = new Vector3(0, 0, 1);
+frontend/tests/unit/components/propertiesDialog.spec.ts:184:      const pos1 = new Vector3(0, 0, 1);
+frontend/tests/unit/components/propertiesDialog.spec.ts:185:      const pos2 = new Vector3(10, 10, 1);
+frontend/tests/unit/components/propertiesDialog.spec.ts:215:      const pos1 = new Vector3(0, 0, 1);
+frontend/tests/unit/components/propertiesDialog.spec.ts:216:      const pos2 = new Vector3(10, 10, 1);
+frontend/tests/unit/components/propertiesDialog.spec.ts:270:      const position = new Vector3(0, 0, 1);
+frontend/tests/unit/components/propertiesDialog.spec.ts:303:      const position = new Vector3(0, 0, 1);
+frontend/tests/unit/domain/paperHitTesting.spec.ts:12:import { Vector3, Matrix3 } from 'three';
+frontend/tests/unit/domain/paperHitTesting.spec.ts:54:      const point = plane.addFreePoint2D(new Vector3(20, 20, 1), world);
+frontend/tests/unit/domain/paperHitTesting.spec.ts:58:      const pointB = plane.addFreePoint2D(new Vector3(30, 20, 1), world);
+frontend/tests/unit/domain/paperHitTesting.spec.ts:66:      const canvasPos = new Vector3(23, 20, 1);
+frontend/tests/unit/domain/paperHitTesting.spec.ts:88:      const point = plane.addFreePoint2D(new Vector3(50, 50, 1), world);
+frontend/tests/unit/domain/paperHitTesting.spec.ts:92:      const pointB = plane.addFreePoint2D(new Vector3(20, 30, 1), world);
+frontend/tests/unit/domain/paperHitTesting.spec.ts:94:      const pointC = plane.addFreePoint2D(new Vector3(80, 30, 1), world);
+frontend/tests/unit/domain/paperHitTesting.spec.ts:103:      const canvasPos = new Vector3(50, 31, 1);
+frontend/tests/unit/domain/paperHitTesting.spec.ts:127:      const point = plane.addFreePoint2D(new Vector3(7, 0, 1), world);
+frontend/tests/unit/domain/paperHitTesting.spec.ts:131:      const pointB = plane.addFreePoint2D(new Vector3(0, 6, 1), world);
+frontend/tests/unit/domain/paperHitTesting.spec.ts:133:      const pointC = plane.addFreePoint2D(new Vector3(10, 6, 1), world);
+frontend/tests/unit/domain/paperHitTesting.spec.ts:141:      const canvasPos = new Vector3(4, 3, 1);
+frontend/tests/unit/domain/paperHitTesting.spec.ts:163:      const pointA = plane.addFreePoint2D(new Vector3(20, 20, 1), world);
+frontend/tests/unit/domain/paperHitTesting.spec.ts:165:      const pointB = plane.addFreePoint2D(new Vector3(30, 20, 1), world);
+frontend/tests/unit/domain/paperHitTesting.spec.ts:172:      const canvasPos = new Vector3(22, 20, 1);
+frontend/tests/unit/domain/paperHitTesting.spec.ts:196:      const point = plane.addFreePoint2D(new Vector3(20, 20, 1), world);
+frontend/tests/unit/domain/paperHitTesting.spec.ts:200:      const pointB = plane.addFreePoint2D(new Vector3(30, 20, 1), world);
+frontend/tests/unit/domain/paperHitTesting.spec.ts:205:      const canvasPos = new Vector3(20, 20, 1);
+frontend/tests/unit/domain/paperHitTesting.spec.ts:234:      const point = plane.addFreePoint2D(new Vector3(20, 20, 1), world);
+frontend/tests/unit/domain/paperHitTesting.spec.ts:239:      const canvasPos = new Vector3(25, 20, 1);
+frontend/tests/unit/domain/paperHitTesting.spec.ts:258:      const point = plane.addFreePoint2D(new Vector3(20, 20, 1), world);
+frontend/tests/unit/domain/paperHitTesting.spec.ts:263:      const canvasPos = new Vector3(22, 20, 1);

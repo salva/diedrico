@@ -1,0 +1,13 @@
+ D frontend/tests/e2e/active-plane-shortcuts.spec.ts
+ D frontend/tests/e2e/selection-mask.spec.ts
+?? .saivage/stages/cycle-024-implement-command-producer-runtime-ports-for-canvas-construction-and-process-history/git-state-after-coder.stderr
+?? .saivage/stages/cycle-024-implement-command-producer-runtime-ports-for-canvas-construction-and-process-history/git-state-after-coder.stdout
+?? .saivage/stages/cycle-024-implement-command-producer-runtime-ports-for-canvas-construction-and-process-history/post-coder-inspect.stderr
+?? .saivage/stages/cycle-024-implement-command-producer-runtime-ports-for-canvas-construction-and-process-history/post-coder-inspect.stdout
+?? .saivage/stages/cycle-024-implement-command-producer-runtime-ports-for-canvas-construction-and-process-history/pre-status-diffstat.stderr
+?? .saivage/stages/cycle-024-implement-command-producer-runtime-ports-for-canvas-construction-and-process-history/pre-status-diffstat.stdout
+?? .saivage/stages/cycle-024-implement-command-producer-runtime-ports-for-canvas-construction-and-process-history/tasks.json
+?? architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/critique/
+?? architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/reviews/
+?? architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/reviewer-scoped-status.stderr
+?? architecture-audit/cycle-024-command-producer-runtime-ports-for-canvas-construction-and-process-history/validation/reviewer-scoped-status.stdout

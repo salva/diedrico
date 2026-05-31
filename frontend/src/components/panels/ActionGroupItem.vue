@@ -26,7 +26,7 @@
       </div>
       <div v-if="isExpanded" class="action-group-children">
         <ActionItem
-          v-for="action in node.children"
+          v-for="action in actionChildren"
           :key="action.id"
           :action="action"
         />
@@ -43,16 +43,14 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import type { Subprocess } from '../../domain/processTree/Subprocess';
-import type { ActionGroup } from '../../domain/processTree/ActionGroup';
-import type { ConstructiveAction } from '../../domain/processTree/Action';
+import type { Subprocess, ActionGroup, ActionNode } from '../../domain/processTree/ProcessTree';
 import ActionItem from './ActionItem.vue';
 
 // Allow recursive component
 import ActionGroupItem from './ActionGroupItem.vue';
 
 interface Props {
-  node: Subprocess | ActionGroup | ConstructiveAction;
+  node: Subprocess | ActionGroup | ActionNode;
 }
 
 const props = defineProps<Props>();
@@ -67,6 +65,13 @@ const childCount = computed(() => {
     return props.node.children.length;
   }
   return 0;
+});
+
+const actionChildren = computed<ActionNode[]>(() => {
+  if (props.node.type !== 'actionGroup') {
+    return [];
+  }
+  return props.node.children.filter((action): action is ActionNode => action !== null);
 });
 
 /**

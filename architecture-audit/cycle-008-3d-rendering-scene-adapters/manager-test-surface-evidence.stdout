@@ -1,0 +1,1780 @@
+--- package scripts ---
+     1	{
+     2	  "name": "diedrico",
+     3	  "version": "0.1.0",
+     4	  "description": "Educational web application for teaching dihedral/orthographic projection",
+     5	  "private": true,
+     6	  "license": "GPL-3.0-or-later",
+     7	  "workspaces": [
+     8	    "frontend",
+     9	    "backend"
+    10	  ],
+    11	  "scripts": {
+    12	    "dev": "npm run dev:frontend",
+    13	    "dev:frontend": "npm run dev --workspace=frontend",
+    14	    "build": "npm run build --workspace=frontend",
+    15	    "test": "npm run test --workspace=frontend",
+    16	    "test:frontend": "npm run test --workspace=frontend",
+    17	    "lint": "npm run lint --workspace=frontend",
+    18	    "docs:dev": "vitepress dev docs",
+    19	    "docs:build": "vitepress build docs",
+    20	    "docs:preview": "vitepress preview docs"
+    21	  },
+    22	  "devDependencies": {
+    23	    "concurrently": "^8.2.2",
+    24	    "vitepress": "^1.6.4"
+    25	  },
+    26	  "engines": {
+    27	    "node": ">=18.0.0",
+    28	    "npm": ">=9.0.0"
+    29	  }
+    30	}
+--- frontend package scripts ---
+     1	{
+     2	  "name": "diedrico-frontend",
+     3	  "version": "0.1.0",
+     4	  "type": "module",
+     5	  "license": "GPL-3.0-or-later",
+     6	  "scripts": {
+     7	    "dev": "vite",
+     8	    "build": "vue-tsc && vite build",
+     9	    "preview": "vite preview",
+    10	    "test": "vitest run",
+    11	    "test:watch": "vitest",
+    12	    "test:ui": "vitest --ui",
+    13	    "test:e2e": "playwright test",
+    14	    "test:e2e:headed": "playwright test --headed",
+    15	    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore"
+    16	  },
+    17	  "dependencies": {
+    18	    "@types/katex": "^0.16.8",
+    19	    "d3": "^7.8.5",
+    20	    "katex": "^0.16.28",
+    21	    "pinia": "^2.1.7",
+    22	    "three": "^0.160.0",
+    23	    "vue": "^3.4.0"
+    24	  },
+    25	  "devDependencies": {
+    26	    "@playwright/test": "^1.40.0",
+    27	    "@types/d3": "^7.4.3",
+    28	    "@types/gapi": "^0.0.47",
+    29	    "@types/gapi.client.drive-v3": "^0.0.5",
+    30	    "@types/three": "^0.160.0",
+    31	    "@vitejs/plugin-vue": "^5.0.0",
+    32	    "@vitest/ui": "^1.0.0",
+    33	    "@vue/test-utils": "^2.4.6",
+    34	    "@vue/tsconfig": "^0.5.0",
+    35	    "jsdom": "^27.3.0",
+    36	    "typescript": "^5.3.0",
+    37	    "vite": "^5.0.0",
+    38	    "vitest": "^1.0.0",
+    39	    "vue-tsc": "^1.8.0"
+    40	  }
+    41	}
+--- 3D/domain test files ---
+--- frontend/tests/unit/domain/Line3DReconstruction.test.ts ---
+     1	/**
+     2	 * Line3DReconstruction.test.ts
+     3	 * 
+     4	 * Tests for 3D line reconstruction from 2D projections.
+     5	 * Uses operations to properly build World state, then checks 3D realizations.
+     6	 */
+     7	
+     8	import { describe, it, expect, beforeEach } from 'vitest';
+     9	import type { World } from '@/domain/world/World';
+    10	import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
+    11	import { AddLine2DByTwoPointsOp } from '@/commands/operations/world/AddLineOp';
+    12	import { Add3DLineOp } from '@/commands/operations/world/Add3DLineOp';
+    13	import { Command } from '@/commands/Command';
+    14	import { Vector3, Vector4 } from 'three';
+    15	import { createTestWorld } from '../../helpers/worldHelpers';
+    16	
+    17	describe('Line3D Reconstruction from Projections', () => {
+    18	  let world: World;
+    19	  let command: Command;
+    20	
+    21	  beforeEach(() => {
+    22	    const { world: w } = createTestWorld();
+    23	    world = w;
+    24	    command = new Command('test-command', world);
+    25	  });
+    26	
+    27	  /**
+    28	   * Helper: Create a 2D line on a projection plane using operations
+    29	   * Returns the line ID
+    30	   */
+    31	  function createLine2D(
+    32	    planeId: string,
+    33	    x1: number, y1: number,
+    34	    x2: number, y2: number,
+    35	    label: string
+    36	  ): string {
+    37	    // Add first point
+    38	    const addP1 = new AddFreePoint2DOp(planeId, new Vector3(x1, y1, 1));
+    39	    const result1 = command.addAndExecute(addP1);
+    40	    const p1Id = result1.outputs.pointId!;
+    41	
+    42	    // Add second point
+    43	    const addP2 = new AddFreePoint2DOp(planeId, new Vector3(x2, y2, 1));
+    44	    const result2 = command.addAndExecute(addP2);
+    45	    const p2Id = result2.outputs.pointId!;
+    46	
+    47	    // Add line between points
+    48	    const addLine = new AddLine2DByTwoPointsOp(planeId, p1Id, p2Id);
+    49	    const result3 = command.addAndExecute(addLine);
+    50	    return result3.outputs.lineId!;
+    51	  }
+    52	
+    53	  /**
+    54	   * Helper: Create a 3D line from two 2D projections using operations
+    55	   * Returns the line3D ID
+    56	   */
+    57	  function create3DLine(
+    58	    line1Id: string, plane1Id: string,
+    59	    line2Id: string, plane2Id: string,
+    60	    label: string
+    61	  ): string {
+    62	    const addLine3D = new Add3DLineOp(line1Id, line2Id, plane1Id, plane2Id, label);
+    63	    const result = command.addAndExecute(addLine3D);
+    64	    return result.outputs.lineId!;
+    65	  }
+    66	
+    67	  /**
+    68	   * Helper: Normalize a direction vector
+    69	   */
+    70	  function normalize(v: Vector4): Vector4 {
+    71	    const len = Math.sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+    72	    return new Vector4(v.x / len, v.y / len, v.z / len, 0);
+    73	  }
+    74	
+    75	  /**
+    76	   * Helper: Check if two direction vectors are parallel (same or opposite)
+    77	   */
+    78	  function areParallel(v1: Vector4, v2: Vector4, tolerance = 1e-6): boolean {
+    79	    const n1 = normalize(v1);
+    80	    const n2 = normalize(v2);
+--- frontend/tests/unit/domain/Plane3DFromTraces.test.ts ---
+     1	/**
+     2	 * Plane3DFromTraces.test.ts
+     3	 * 
+     4	 * Tests for 3D plane reconstruction from trace lines.
+     5	 * Verifies that Plane3DFromTraces correctly reconstructs 3D planes
+     6	 * when trace lines intersect via hinge line points.
+     7	 */
+     8	
+     9	import { describe, it, expect, beforeEach } from 'vitest';
+    10	import type { World } from '../../../src/domain/world/World';
+    11	import { Plane3DFromTraces } from '../../../src/domain/world/Plane';
+    12	import { FreePoint2D, Point2DLineLineIntersection } from '../../../src/domain/world/Point';
+    13	import { Line2DByTwoPoints } from '../../../src/domain/world/Line';
+    14	import { HalfHingeLine2D } from '../../../src/domain/world/HingeLine';
+    15	import { Vector3 } from 'three';
+    16	import { createTestWorld } from '../../helpers/worldHelpers';
+    17	
+    18	describe('Plane3DFromTraces - Intersecting via Hinge Line', () => {
+    19	  let world: World;
+    20	
+    21	  beforeEach(() => {
+    22	    const { world: w } = createTestWorld();
+    23	    world = w;
+    24	  });
+    25	
+    26	  /**
+    27	   * Test Case: User's actual scenario
+    28	   * 
+    29	   * 1. Initialize world
+    30	   * 2. Create two points A and B in P_H
+    31	   * 3. Create line L passing through A and B
+    32	   * 4. Create C as intersection of L with HL_HV
+    33	   * 5. Create point D in P_V
+    34	   * 6. Create line M between D and C' (C' is sibling of C)
+    35	   * 7. Define plane P with traces L and M
+    36	   * 
+    37	   * Expected: The 3D plane should be feasible since both lines share
+    38	   * point C on the hinge line (C and C' map to the same 3D point).
+    39	   */
+    40	  it('should create feasible 3D plane from user scenario', () => {
+    41	    const planeH = world.getProjectionPlaneById('projPlane3'); // P_H
+    42	    const planeV = world.getProjectionPlaneById('projPlane4'); // P_V
+    43	    
+    44	    expect(planeH).toBeDefined();
+    45	    expect(planeV).toBeDefined();
+    46	    
+    47	    if (!planeH || !planeV) throw new Error('Base planes not found');
+    48	
+    49	    // Find the hinge line on P_H
+    50	    const hingeLineH = planeH.getAllLines().find(line => 
+    51	      line instanceof HalfHingeLine2D && line.hingeLineId === 'hingeLine7'
+    52	    );
+    53	    expect(hingeLineH).toBeDefined();
+    54	    if (!hingeLineH) throw new Error('Hinge line not found on P_H');
+    55	
+    56	    // 2. Create two points A and B in P_H
+    57	    const pointA = new FreePoint2D(
+    58	      'projPlane3/point_A',
+    59	      new Vector3(10, 5, 1),
+    60	      'projPlane3'
+    61	    );
+    62	    planeH.addPoint(pointA);
+    63	
+    64	    const pointB = new FreePoint2D(
+    65	      'projPlane3/point_B',
+    66	      new Vector3(20, -5, 1),
+    67	      'projPlane3'
+    68	    );
+    69	    planeH.addPoint(pointB);
+    70	
+    71	    // 3. Create line L passing through A and B
+    72	    const lineL = new Line2DByTwoPoints(
+    73	      'projPlane3/line_L',
+    74	      'projPlane3/point_A',
+    75	      'projPlane3/point_B',
+    76	      'projPlane3'
+    77	    );
+    78	    planeH.addLine(lineL);
+    79	
+    80	    // 4. Create C as intersection of L with HL_HV
+--- frontend/tests/unit/domain/Point3DReconstruction.test.ts ---
+     1	/**
+     2	 * Point3DReconstruction.test.ts
+     3	 * 
+     4	 * Tests for 3D point reconstruction from 2D projections.
+     5	 * Verifies that Point3DFromProjections correctly reconstructs 3D coordinates
+     6	 * from horizontal and vertical plane projections.
+     7	 */
+     8	
+     9	import { describe, it, expect, beforeEach } from 'vitest';
+    10	import type { World } from '../../../src/domain/world/World';
+    11	import { Point3DFromProjections } from '@/domain/world/Point3D';
+    12	import { FreePoint2D } from '@/domain/world/Point';
+    13	import { Vector3 } from 'three';
+    14	import { createVisualStyle } from '../../../src/domain/world/VisualStyle';
+    15	import { createTestWorld } from '../../helpers/worldHelpers';
+    16	
+    17	describe('Point3DFromProjections - Coordinate Reconstruction', () => {
+    18	  let world: World;
+    19	
+    20	  beforeEach(() => {
+    21	    const { world: w } = createTestWorld();
+    22	    world = w;
+    23	  });
+    24	
+    25	  /**
+    26	   * Test Case from User Request:
+    27	   * - P_V projection: (x=1, z=1) → in plane coords (u=1, v=1)
+    28	   * - P_H projection: (x=1, y=3) → in plane coords (u=1, v=3)
+    29	   * - Expected 3D point: (x=1, y=3, z=1)
+    30	   * 
+    31	   * Note: User mentioned y=2, but based on the coordinate system:
+    32	   * - P_H: (u,v) → (x,y,z) = (u, v, 0)
+    33	   * - P_V: (u,v) → (x,y,z) = (u, 0, v)
+    34	   * The y-coordinate should come from P_H's v-coordinate (y=3)
+    35	   */
+    36	  it('should reconstruct 3D point from H and V projections - user test case', () => {
+    37	    // Get projection planes
+    38	    const planeH = world.getProjectionPlaneByLabel('P_H');
+    39	    const planeV = world.getProjectionPlaneByLabel('P_V');
+    40	    
+    41	    expect(planeH).toBeDefined();
+    42	    expect(planeV).toBeDefined();
+    43	    
+    44	    if (!planeH || !planeV) throw new Error('Base planes not found');
+    45	
+    46	    // Create point on P_V at (u=1, v=1) → corresponds to 3D (x=1, y=0, z=1)
+    47	    const pointV = planeV.addFreePoint2D(
+    48	      new Vector3(1, 1, 1),  // (u, v, w) homogeneous
+    49	      world,
+    50	      undefined,
+    51	      'V'
+    52	    );
+    53	
+    54	    // Create point on P_H at (u=1, v=3) → corresponds to 3D (x=1, y=3, z=0)
+    55	    const pointH = planeH.addFreePoint2D(
+    56	      new Vector3(1, 3, 1),  // (u, v, w) homogeneous
+    57	      world,
+    58	      undefined,
+    59	      'H'
+    60	    );
+    61	
+    62	    // Create 3D point from projections
+    63	    const point3D = new Point3DFromProjections(
+    64	      'world/point3d_1',
+    65	      'P',
+    66	      pointV.id,
+    67	      pointH.id,
+    68	      planeV.id!,
+    69	      planeH.id!,
+    70	      createVisualStyle()
+    71	    );
+    72	
+    73	    // Realize the 3D point
+    74	    const realization = point3D.realize3D(world);
+    75	
+    76	    // Check feasibility
+    77	    expect(realization.isFeasible()).toBe(true);
+    78	
+    79	    // Get Cartesian coordinates
+    80	    const [x, y, z] = realization.getCartesian();
+--- frontend/tests/unit/domain/segment3DRealization.spec.ts ---
+     1	/**
+     2	 * Unit tests for Phase 107: 3D Segment Realization
+     3	 * 
+     4	 * Tests:
+     5	 * 1. reconstruct3DPointFromProjections() shared utility
+     6	 * 2. Segment3DFromProjections.realize3D() with endpoint pairing
+     7	 * 3. Add3DSegmentOp compatibility validation
+     8	 */
+     9	
+    10	import { describe, it, expect, beforeEach } from 'vitest';
+    11	import { Vector3, Vector4 } from 'three';
+    12	import { reconstruct3DPointFromProjections, Matrix3x4 } from '@/utils/threeUtils';
+    13	import { Segment3DFromProjections } from '@/domain/world/Segment3D';
+    14	import { createVisualStyle } from '@/domain/world/VisualStyle';
+    15	import { createTestWorld } from '../../helpers/worldHelpers';
+    16	import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
+    17	import { AddSegment2DByPointsOp } from '@/commands/operations/world/AddSegmentOp';
+    18	import { Add3DSegmentOp } from '@/commands/operations/world/Add3DSegmentOp';
+    19	import { Command } from '@/commands/Command';
+    20	import type { World } from '@/domain/world/World';
+    21	
+    22	describe('reconstruct3DPointFromProjections', () => {
+    23	  // Standard PH: threeDToPlane projects (x,y,z,1) → (x,y,1)
+    24	  const threeDToPlaneH = new Matrix3x4().set(
+    25	    1, 0, 0, 0,
+    26	    0, 1, 0, 0,
+    27	    0, 0, 0, 1
+    28	  );
+    29	
+    30	  // Standard PV: threeDToPlane projects (x,y,z,1) → (x,z,1)
+    31	  const threeDToPlaneV = new Matrix3x4().set(
+    32	    1, 0, 0, 0,
+    33	    0, 0, 1, 0,
+    34	    0, 0, 0, 1
+    35	  );
+    36	
+    37	  it('should reconstruct a point at origin', () => {
+    38	    const posH = new Vector3(0, 0, 1);  // (0,0) on PH → x=0, y=0
+    39	    const posV = new Vector3(0, 0, 1);  // (0,0) on PV → x=0, z=0
+    40	    
+    41	    const result = reconstruct3DPointFromProjections(posH, posV, threeDToPlaneH, threeDToPlaneV);
+    42	    
+    43	    expect(result.feasible).toBe(true);
+    44	    expect(result.point.x).toBeCloseTo(0);
+    45	    expect(result.point.y).toBeCloseTo(0);
+    46	    expect(result.point.z).toBeCloseTo(0);
+    47	  });
+    48	
+    49	  it('should reconstruct a point at (5, 10, 15)', () => {
+    50	    // PH projection: (x,y) = (5,10)
+    51	    const posH = new Vector3(5, 10, 1);
+    52	    // PV projection: (x,z) = (5,15)
+    53	    const posV = new Vector3(5, 15, 1);
+    54	    
+    55	    const result = reconstruct3DPointFromProjections(posH, posV, threeDToPlaneH, threeDToPlaneV);
+    56	    
+    57	    expect(result.feasible).toBe(true);
+    58	    expect(result.point.x).toBeCloseTo(5);
+    59	    expect(result.point.y).toBeCloseTo(10);
+    60	    expect(result.point.z).toBeCloseTo(15);
+    61	  });
+    62	
+    63	  it('should return infeasible for inconsistent projections', () => {
+    64	    // PH says x=5, PV says x=10 — inconsistent!
+    65	    const posH = new Vector3(5, 10, 1);
+    66	    const posV = new Vector3(10, 15, 1);
+    67	    
+    68	    const result = reconstruct3DPointFromProjections(posH, posV, threeDToPlaneH, threeDToPlaneV);
+    69	    
+    70	    expect(result.feasible).toBe(false);
+    71	    expect(result.error).toBeGreaterThan(1e-6);
+    72	  });
+    73	
+    74	  it('should handle negative coordinates', () => {
+    75	    const posH = new Vector3(-3, -7, 1);
+    76	    const posV = new Vector3(-3, 4, 1);
+    77	    
+    78	    const result = reconstruct3DPointFromProjections(posH, posV, threeDToPlaneH, threeDToPlaneV);
+    79	    
+    80	    expect(result.feasible).toBe(true);
+--- frontend/tests/unit/utils/threeUtils.spec.ts ---
+     1	import { describe, it, expect } from 'vitest';
+     2	import { 
+     3	  Matrix4x3, 
+     4	  Matrix3x4, 
+     5	  mat4x3, 
+     6	  mat3x4,
+     7	  applyMatrix4x3,
+     8	  applyMatrix3x4,
+     9	  vec3,
+    10	  vec4
+    11	} from '../../../src/utils/threeUtils';
+    12	
+    13	describe('threeUtils', () => {
+    14	  describe('Matrix4x3', () => {
+    15	    it('should create identity-like 4x3 matrix', () => {
+    16	      const m = new Matrix4x3();
+    17	      expect(m.elements).toEqual([
+    18	        1, 0, 0,
+    19	        0, 1, 0,
+    20	        0, 0, 1,
+    21	        0, 0, 0
+    22	      ]);
+    23	    });
+    24	
+    25	    it('should set elements', () => {
+    26	      const m = new Matrix4x3().set(
+    27	        1, 2, 3,
+    28	        4, 5, 6,
+    29	        7, 8, 9,
+    30	        10, 11, 12
+    31	      );
+    32	      expect(m.elements).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+    33	    });
+    34	
+    35	    it('should clone correctly', () => {
+    36	      const m1 = mat4x3(
+    37	        1, 2, 3,
+    38	        4, 5, 6,
+    39	        7, 8, 9,
+    40	        10, 11, 12
+    41	      );
+    42	      const m2 = m1.clone();
+    43	      
+    44	      expect(m2.elements).toEqual(m1.elements);
+    45	      expect(m2).not.toBe(m1);
+    46	      expect(m2.elements).not.toBe(m1.elements);
+    47	    });
+    48	  });
+    49	
+    50	  describe('Matrix3x4', () => {
+    51	    it('should create identity-like 3x4 matrix', () => {
+    52	      const m = new Matrix3x4();
+    53	      expect(m.elements).toEqual([
+    54	        1, 0, 0, 0,
+    55	        0, 1, 0, 0,
+    56	        0, 0, 1, 0
+    57	      ]);
+    58	    });
+    59	
+    60	    it('should set elements', () => {
+    61	      const m = new Matrix3x4().set(
+    62	        1, 2, 3, 4,
+    63	        5, 6, 7, 8,
+    64	        9, 10, 11, 12
+    65	      );
+    66	      expect(m.elements).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+    67	    });
+    68	
+    69	    it('should clone correctly', () => {
+    70	      const m1 = mat3x4(
+    71	        1, 2, 3, 4,
+    72	        5, 6, 7, 8,
+    73	        9, 10, 11, 12
+    74	      );
+    75	      const m2 = m1.clone();
+    76	      
+    77	      expect(m2.elements).toEqual(m1.elements);
+    78	      expect(m2).not.toBe(m1);
+    79	      expect(m2.elements).not.toBe(m1.elements);
+    80	    });
+--- e2e file names ---
+frontend/tests/e2e/active-plane-emphasis.spec.ts
+frontend/tests/e2e/active-plane-shortcuts.spec.ts
+frontend/tests/e2e/basic-construction.spec.ts
+frontend/tests/e2e/circle-tool-snapping.spec.ts
+frontend/tests/e2e/command-chaining.spec.ts
+frontend/tests/e2e/coordinate-display.spec.ts
+frontend/tests/e2e/create-circle.spec.ts
+frontend/tests/e2e/create-point.spec.ts
+frontend/tests/e2e/create-segment.spec.ts
+frontend/tests/e2e/debug.spec.ts
+frontend/tests/e2e/dependencies.spec.ts
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts
+frontend/tests/e2e/distance-transport.spec.ts
+frontend/tests/e2e/guide-creation.spec.ts
+frontend/tests/e2e/hhl-intersection.spec.ts
+frontend/tests/e2e/hover.spec.ts
+frontend/tests/e2e/infeasibility.spec.ts
+frontend/tests/e2e/intersection-creation.spec.ts
+frontend/tests/e2e/keyboard-shortcuts.spec.ts
+frontend/tests/e2e/line-creation.spec.ts
+frontend/tests/e2e/navigation.spec.ts
+frontend/tests/e2e/parametric-update.spec.ts
+frontend/tests/e2e/point-transport.spec.ts
+frontend/tests/e2e/properties.spec.ts
+frontend/tests/e2e/selection-mask.spec.ts
+frontend/tests/e2e/selection.spec.ts
+frontend/tests/e2e/undo-redo-fix.spec.ts
+frontend/tests/e2e/undo-redo.spec.ts
+--- e2e titles/imports relevant scan ---
+frontend/tests/e2e/create-circle.spec.ts:9: * 5. Test undo/redo
+frontend/tests/e2e/create-circle.spec.ts:19:    await page.waitForSelector('.svg-canvas', { timeout: 5000 });
+frontend/tests/e2e/create-circle.spec.ts:25:    await page.click('.svg-canvas', { position: { x: 300, y: 300 } });
+frontend/tests/e2e/create-circle.spec.ts:35:    await page.click('.svg-canvas', { position: { x: 300, y: 300 } });
+frontend/tests/e2e/create-circle.spec.ts:38:    await page.click('.svg-canvas', { position: { x: 400, y: 300 } });
+frontend/tests/e2e/create-circle.spec.ts:50:  test('should undo circle creation', async ({ page }) => {
+frontend/tests/e2e/create-circle.spec.ts:53:    await page.click('.svg-canvas', { position: { x: 300, y: 300 } });
+frontend/tests/e2e/create-circle.spec.ts:57:    await page.click('.svg-canvas', { position: { x: 300, y: 300 } });
+frontend/tests/e2e/create-circle.spec.ts:58:    await page.click('.svg-canvas', { position: { x: 400, y: 300 } });
+frontend/tests/e2e/create-circle.spec.ts:75:    await page.click('.svg-canvas', { position: { x: 300, y: 300 } });
+frontend/tests/e2e/create-circle.spec.ts:78:    await page.click('.svg-canvas', { position: { x: 300, y: 300 } });
+frontend/tests/e2e/create-circle.spec.ts:79:    await page.click('.svg-canvas', { position: { x: 400, y: 300 } });
+frontend/tests/e2e/create-circle.spec.ts:96:  test('should use keyboard shortcut for undo', async ({ page }) => {
+frontend/tests/e2e/create-circle.spec.ts:99:    await page.click('.svg-canvas', { position: { x: 300, y: 300 } });
+frontend/tests/e2e/create-circle.spec.ts:102:    await page.click('.svg-canvas', { position: { x: 300, y: 300 } });
+frontend/tests/e2e/create-circle.spec.ts:103:    await page.click('.svg-canvas', { position: { x: 400, y: 300 } });
+frontend/tests/e2e/create-circle.spec.ts:114:    // Create three points
+frontend/tests/e2e/create-circle.spec.ts:116:    await page.click('.svg-canvas', { position: { x: 200, y: 200 } });
+frontend/tests/e2e/create-circle.spec.ts:119:    await page.click('.svg-canvas', { position: { x: 400, y: 200 } });
+frontend/tests/e2e/create-circle.spec.ts:122:    await page.click('.svg-canvas', { position: { x: 300, y: 350 } });
+frontend/tests/e2e/create-circle.spec.ts:126:    await page.click('.svg-canvas', { position: { x: 200, y: 200 } });
+frontend/tests/e2e/create-circle.spec.ts:127:    await page.click('.svg-canvas', { position: { x: 250, y: 200 } });
+frontend/tests/e2e/create-circle.spec.ts:131:    await page.click('.svg-canvas', { position: { x: 400, y: 200 } });
+frontend/tests/e2e/create-circle.spec.ts:132:    await page.click('.svg-canvas', { position: { x: 450, y: 200 } });
+frontend/tests/e2e/create-circle.spec.ts:136:    await page.click('.svg-canvas', { position: { x: 300, y: 350 } });
+frontend/tests/e2e/create-circle.spec.ts:137:    await page.click('.svg-canvas', { position: { x: 350, y: 350 } });
+frontend/tests/e2e/create-circle.spec.ts:139:    // Verify three circles rendered
+frontend/tests/e2e/create-circle.spec.ts:144:  test('should create circles on different planes', async ({ page }) => {
+frontend/tests/e2e/create-circle.spec.ts:145:    // Create point on horizontal plane
+frontend/tests/e2e/create-circle.spec.ts:147:    await page.click('.svg-canvas', { position: { x: 300, y: 200 } });
+frontend/tests/e2e/create-circle.spec.ts:149:    // Create circle on horizontal plane
+frontend/tests/e2e/create-circle.spec.ts:151:    await page.click('.svg-canvas', { position: { x: 300, y: 200 } });
+frontend/tests/e2e/create-circle.spec.ts:152:    await page.click('.svg-canvas', { position: { x: 350, y: 200 } });
+frontend/tests/e2e/create-circle.spec.ts:154:    // Switch to vertical plane
+frontend/tests/e2e/create-circle.spec.ts:157:    // Create point on vertical plane
+frontend/tests/e2e/create-circle.spec.ts:159:    await page.click('.svg-canvas', { position: { x: 300, y: 600 } });
+frontend/tests/e2e/create-circle.spec.ts:161:    // Create circle on vertical plane
+frontend/tests/e2e/create-circle.spec.ts:163:    await page.click('.svg-canvas', { position: { x: 300, y: 600 } });
+frontend/tests/e2e/create-circle.spec.ts:164:    await page.click('.svg-canvas', { position: { x: 350, y: 600 } });
+frontend/tests/e2e/create-circle.spec.ts:174:    await page.click('.svg-canvas', { position: { x: 300, y: 300 } });
+frontend/tests/e2e/create-circle.spec.ts:178:    await page.click('.svg-canvas', { position: { x: 300, y: 300 } });
+frontend/tests/e2e/create-circle.spec.ts:179:    await page.click('.svg-canvas', { position: { x: 300, y: 300 } });
+frontend/tests/e2e/create-circle.spec.ts:189:    await page.click('.svg-canvas', { position: { x: 300, y: 300 } });
+frontend/tests/e2e/create-circle.spec.ts:193:    await page.click('.svg-canvas', { position: { x: 300, y: 300 } });
+frontend/tests/e2e/create-circle.spec.ts:194:    await page.click('.svg-canvas', { position: { x: 325, y: 300 } });
+frontend/tests/e2e/create-circle.spec.ts:198:    await page.click('.svg-canvas', { position: { x: 300, y: 300 } });
+frontend/tests/e2e/create-circle.spec.ts:199:    await page.click('.svg-canvas', { position: { x: 350, y: 300 } });
+frontend/tests/e2e/create-circle.spec.ts:203:    await page.click('.svg-canvas', { position: { x: 300, y: 300 } });
+frontend/tests/e2e/create-circle.spec.ts:204:    await page.click('.svg-canvas', { position: { x: 400, y: 300 } });
+frontend/tests/e2e/create-circle.spec.ts:206:    // Verify three circles with different radii
+frontend/tests/e2e/create-circle.spec.ts:222:    await page.click('.svg-canvas', { position: { x: 300, y: 300 } });
+frontend/tests/e2e/create-circle.spec.ts:225:    await page.click('.svg-canvas', { position: { x: 300, y: 300 } });
+frontend/tests/e2e/create-circle.spec.ts:226:    await page.click('.svg-canvas', { position: { x: 400, y: 300 } });
+frontend/tests/e2e/create-circle.spec.ts:242:    await page.click('.svg-canvas', { position: { x: 300, y: 300 } });
+frontend/tests/e2e/create-circle.spec.ts:246:    await page.click('.svg-canvas', { position: { x: 400, y: 300 } });
+frontend/tests/e2e/undo-redo.spec.ts:4: * Verifies that undo/redo works correctly for construction actions:
+frontend/tests/e2e/undo-redo.spec.ts:7: * - Redo button enabled after undo
+frontend/tests/e2e/undo-redo.spec.ts:20:    await page.waitForSelector('svg.svg-canvas');
+frontend/tests/e2e/undo-redo.spec.ts:23:  test('undo button should be disabled initially', async ({ page }) => {
+frontend/tests/e2e/undo-redo.spec.ts:24:    const undoButton = page.getByRole('button', { name: /undo/i });
+frontend/tests/e2e/undo-redo.spec.ts:25:    await expect(undoButton).toBeDisabled();
+frontend/tests/e2e/undo-redo.spec.ts:33:  test('should enable undo after creating a point', async ({ page }) => {
+frontend/tests/e2e/undo-redo.spec.ts:37:    // Click on canvas to create point
+frontend/tests/e2e/undo-redo.spec.ts:38:    const canvas = page.locator('svg.svg-canvas');
+frontend/tests/e2e/undo-redo.spec.ts:39:    await canvas.click({ force: true, position: { x: 400, y: 300 } });
+frontend/tests/e2e/undo-redo.spec.ts:45:    const undoButton = page.getByRole('button', { name: /undo/i });
+frontend/tests/e2e/undo-redo.spec.ts:46:    await expect(undoButton).toBeEnabled();
+frontend/tests/e2e/undo-redo.spec.ts:49:  test('should undo point creation via button', async ({ page }) => {
+frontend/tests/e2e/undo-redo.spec.ts:52:    const canvas = page.locator('svg.svg-canvas');
+frontend/tests/e2e/undo-redo.spec.ts:53:    await canvas.click({ force: true, position: { x: 400, y: 300 } });
+frontend/tests/e2e/undo-redo.spec.ts:60:    // Click undo button
+frontend/tests/e2e/undo-redo.spec.ts:61:    await page.getByRole('button', { name: /undo/i }).click();
+frontend/tests/e2e/undo-redo.spec.ts:69:  test('should undo point creation via keyboard (Ctrl+Z)', async ({ page }) => {
+frontend/tests/e2e/undo-redo.spec.ts:72:    const canvas = page.locator('svg.svg-canvas');
+frontend/tests/e2e/undo-redo.spec.ts:73:    await canvas.click({ force: true, position: { x: 400, y: 300 } });
+frontend/tests/e2e/undo-redo.spec.ts:87:  test('should enable redo after undo', async ({ page }) => {
+frontend/tests/e2e/undo-redo.spec.ts:88:    // Create and undo a point
+frontend/tests/e2e/undo-redo.spec.ts:90:    const canvas = page.locator('svg.svg-canvas');
+frontend/tests/e2e/undo-redo.spec.ts:91:    await canvas.click({ force: true, position: { x: 400, y: 300 } });
+frontend/tests/e2e/undo-redo.spec.ts:94:    await page.getByRole('button', { name: /undo/i }).click();
+frontend/tests/e2e/undo-redo.spec.ts:103:    // Create, undo, then redo a point
+frontend/tests/e2e/undo-redo.spec.ts:105:    const canvas = page.locator('svg.svg-canvas');
+frontend/tests/e2e/undo-redo.spec.ts:106:    await canvas.click({ force: true, position: { x: 400, y: 300 } });
+frontend/tests/e2e/undo-redo.spec.ts:112:    await page.getByRole('button', { name: /undo/i }).click();
+frontend/tests/e2e/undo-redo.spec.ts:125:    // Create, undo, then redo with Ctrl+Y
+frontend/tests/e2e/undo-redo.spec.ts:127:    const canvas = page.locator('svg.svg-canvas');
+frontend/tests/e2e/undo-redo.spec.ts:128:    await canvas.click({ force: true, position: { x: 400, y: 300 } });
+frontend/tests/e2e/undo-redo.spec.ts:147:    const canvas = page.locator('svg.svg-canvas');
+frontend/tests/e2e/undo-redo.spec.ts:148:    await canvas.click({ force: true, position: { x: 400, y: 300 } });
+frontend/tests/e2e/undo-redo.spec.ts:150:    await canvas.click({ force: true, position: { x: 500, y: 350 } });
+frontend/tests/e2e/undo-redo.spec.ts:154:    await page.getByRole('button', { name: /undo/i }).click();
+frontend/tests/e2e/undo-redo.spec.ts:162:    await canvas.click({ force: true, position: { x: 600, y: 400 } });
+frontend/tests/e2e/undo-redo.spec.ts:169:  test('should undo/redo multiple actions in correct order', async ({ page }) => {
+frontend/tests/e2e/undo-redo.spec.ts:170:    // Create three points
+frontend/tests/e2e/undo-redo.spec.ts:172:    const canvas = page.locator('svg.svg-canvas');
+frontend/tests/e2e/undo-redo.spec.ts:174:    await canvas.click({ force: true, position: { x: 400, y: 300 } });
+frontend/tests/e2e/undo-redo.spec.ts:176:    await canvas.click({ force: true, position: { x: 500, y: 350 } });
+frontend/tests/e2e/undo-redo.spec.ts:178:    await canvas.click({ force: true, position: { x: 600, y: 400 } });
+frontend/tests/e2e/undo-redo.spec.ts:183:    // Undo all three
+frontend/tests/e2e/undo-redo.spec.ts:194:    // Redo all three
+frontend/tests/e2e/undo-redo.spec.ts:206:  test('should undo/redo line creation', async ({ page }) => {
+frontend/tests/e2e/undo-redo.spec.ts:209:    const canvas = page.locator('svg.svg-canvas');
+frontend/tests/e2e/undo-redo.spec.ts:210:    await canvas.click({ force: true, position: { x: 400, y: 300 } });
+frontend/tests/e2e/undo-redo.spec.ts:212:    await canvas.click({ force: true, position: { x: 500, y: 350 } });
+frontend/tests/e2e/infeasibility.spec.ts:214: * - Infeasibility during undo/redo
+frontend/tests/e2e/coordinate-display.spec.ts:2: * E2E Test: 3D Coordinate Display
+frontend/tests/e2e/coordinate-display.spec.ts:4: * Tests the real-time 3D coordinate display feature that shows the 3D
+frontend/tests/e2e/coordinate-display.spec.ts:5: * interpretation of cursor position on projection planes.
+frontend/tests/e2e/coordinate-display.spec.ts:7: * This feature is pedagogically critical for understanding dihedral projection.
+frontend/tests/e2e/coordinate-display.spec.ts:11: * - Correct transformation pipeline (screen → SVG → paper → plane → 3D)
+frontend/tests/e2e/coordinate-display.spec.ts:14: * - Out-of-plane handling (shows "---")
+frontend/tests/e2e/coordinate-display.spec.ts:21:test.describe('3D Coordinate Display', () => {
+frontend/tests/e2e/coordinate-display.spec.ts:25:    await page.waitForSelector('.svg-canvas-container');
+frontend/tests/e2e/coordinate-display.spec.ts:29:    // Get the SVG canvas element
+frontend/tests/e2e/coordinate-display.spec.ts:30:    const canvas = await page.locator('.svg-canvas-container svg');
+frontend/tests/e2e/coordinate-display.spec.ts:33:    const canvasBox = await canvas.boundingBox();
+frontend/tests/e2e/coordinate-display.spec.ts:34:    if (!canvasBox) throw new Error('Canvas not found');
+frontend/tests/e2e/coordinate-display.spec.ts:37:    await page.mouse.move(canvasBox.x + 800, canvasBox.y + 500);
+frontend/tests/e2e/coordinate-display.spec.ts:57:  test('displays "---" when cursor is outside active plane', async ({ page }) => {
+frontend/tests/e2e/coordinate-display.spec.ts:58:    const canvas = await page.locator('.svg-canvas-container svg');
+frontend/tests/e2e/coordinate-display.spec.ts:59:    const canvasBox = await canvas.boundingBox();
+frontend/tests/e2e/coordinate-display.spec.ts:60:    if (!canvasBox) throw new Error('Canvas not found');
+frontend/tests/e2e/coordinate-display.spec.ts:62:    // Move cursor far outside the canvas area
+frontend/tests/e2e/coordinate-display.spec.ts:63:    await page.mouse.move(canvasBox.x - 100, canvasBox.y - 100);
+frontend/tests/e2e/coordinate-display.spec.ts:77:    const canvas = await page.locator('.svg-canvas-container svg');
+frontend/tests/e2e/coordinate-display.spec.ts:78:    const canvasBox = await canvas.boundingBox();
+frontend/tests/e2e/coordinate-display.spec.ts:79:    if (!canvasBox) throw new Error('Canvas not found');
+frontend/tests/e2e/coordinate-display.spec.ts:84:    await page.mouse.move(canvasBox.x + 700, canvasBox.y + 400);
+frontend/tests/e2e/coordinate-display.spec.ts:91:    await page.mouse.move(canvasBox.x + 900, canvasBox.y + 600);
+frontend/tests/e2e/coordinate-display.spec.ts:105:  test('shows active plane name in status bar', async ({ page }) => {
+frontend/tests/e2e/coordinate-display.spec.ts:109:    // Check that plane info is displayed
+frontend/tests/e2e/coordinate-display.spec.ts:110:    const planeInfo = await page.locator('.status-bar .status-item .status-value').first();
+frontend/tests/e2e/coordinate-display.spec.ts:111:    await expect(planeInfo).toBeVisible();
+frontend/tests/e2e/coordinate-display.spec.ts:113:    const planeText = await planeInfo.textContent();
+frontend/tests/e2e/coordinate-display.spec.ts:115:    // Should show one of the plane names (P_H or P_V)
+frontend/tests/e2e/coordinate-display.spec.ts:116:    expect(planeText).toMatch(/(P_H|P_V)/);
+frontend/tests/e2e/coordinate-display.spec.ts:119:  test('shows active tool name in status bar', async ({ page }) => {
+frontend/tests/e2e/coordinate-display.spec.ts:133:  test('coordinates update when switching planes', async ({ page }) => {
+frontend/tests/e2e/coordinate-display.spec.ts:134:    const canvas = await page.locator('.svg-canvas-container svg');
+frontend/tests/e2e/coordinate-display.spec.ts:135:    const canvasBox = await canvas.boundingBox();
+frontend/tests/e2e/coordinate-display.spec.ts:136:    if (!canvasBox) throw new Error('Canvas not found');
+frontend/tests/e2e/coordinate-display.spec.ts:139:    const planeInfo = await page.locator('.status-bar .status-item .status-value').first();
+frontend/tests/e2e/coordinate-display.spec.ts:141:    // Get initial plane
+frontend/tests/e2e/coordinate-display.spec.ts:142:    const initialPlane = await planeInfo.textContent();
+frontend/tests/e2e/coordinate-display.spec.ts:145:    await page.mouse.move(canvasBox.x + 800, canvasBox.y + 500);
+frontend/tests/e2e/coordinate-display.spec.ts:150:    // Click the plane area to potentially switch (if there's a switching mechanism)
+frontend/tests/e2e/coordinate-display.spec.ts:152:    // In a full implementation, we would click a button to switch planes
+frontend/tests/e2e/coordinate-display.spec.ts:159:    const canvas = await page.locator('.svg-canvas-container svg');
+frontend/tests/e2e/coordinate-display.spec.ts:160:    const canvasBox = await canvas.boundingBox();
+frontend/tests/e2e/coordinate-display.spec.ts:161:    if (!canvasBox) throw new Error('Canvas not found');
+frontend/tests/e2e/coordinate-display.spec.ts:164:    await page.mouse.move(canvasBox.x + 850, canvasBox.y + 525);
+frontend/tests/e2e/coordinate-display.spec.ts:188:    const canvas = await page.locator('.svg-canvas-container svg');
+frontend/tests/e2e/coordinate-display.spec.ts:189:    const canvasBox = await canvas.boundingBox();
+frontend/tests/e2e/coordinate-display.spec.ts:190:    if (!canvasBox) throw new Error('Canvas not found');
+frontend/tests/e2e/coordinate-display.spec.ts:197:        canvasBox.x + 800 + i * 10,
+frontend/tests/e2e/coordinate-display.spec.ts:198:        canvasBox.y + 500 + i * 10
+frontend/tests/e2e/coordinate-display.spec.ts:220:    const canvas = await page.locator('.svg-canvas-container svg');
+frontend/tests/e2e/coordinate-display.spec.ts:221:    const canvasBox = await canvas.boundingBox();
+frontend/tests/e2e/coordinate-display.spec.ts:222:    if (!canvasBox) throw new Error('Canvas not found');
+frontend/tests/e2e/coordinate-display.spec.ts:226:    await page.mouse.move(canvasBox.x + 800, canvasBox.y + 500);
+frontend/tests/e2e/undo-redo-fix.spec.ts:4: * Verifies that undo/redo works correctly for construction actions:
+frontend/tests/e2e/undo-redo-fix.spec.ts:7: * - Redo button enabled after undo
+frontend/tests/e2e/undo-redo-fix.spec.ts:20:    await page.waitForSelector('svg.svg-canvas');
+frontend/tests/e2e/undo-redo-fix.spec.ts:23:  test('undo button should be disabled initially', async ({ page }) => {
+frontend/tests/e2e/undo-redo-fix.spec.ts:24:    const undoButton = page.getByRole('button', { name: /undo/i });
+frontend/tests/e2e/undo-redo-fix.spec.ts:25:    await expect(undoButton).toBeDisabled();
+frontend/tests/e2e/undo-redo-fix.spec.ts:33:  test('should enable undo after creating a point', async ({ page }) => {
+frontend/tests/e2e/undo-redo-fix.spec.ts:37:    // Click on canvas to create point
+frontend/tests/e2e/undo-redo-fix.spec.ts:38:    const canvas = page.locator('svg.svg-canvas');
+frontend/tests/e2e/undo-redo-fix.spec.ts:39:    await canvas.click({ force: true, position: { x: 400, y: 300 } });
+frontend/tests/e2e/undo-redo-fix.spec.ts:45:    const undoButton = page.getByRole('button', { name: /undo/i });
+frontend/tests/e2e/undo-redo-fix.spec.ts:46:    await expect(undoButton).toBeEnabled();
+frontend/tests/e2e/undo-redo-fix.spec.ts:49:  test('should undo point creation via button', async ({ page }) => {
+frontend/tests/e2e/undo-redo-fix.spec.ts:52:    const canvas = page.locator('svg.svg-canvas');
+frontend/tests/e2e/undo-redo-fix.spec.ts:53:    await canvas.click({ force: true, position: { x: 400, y: 300 } });
+frontend/tests/e2e/undo-redo-fix.spec.ts:60:    // Click undo button
+frontend/tests/e2e/undo-redo-fix.spec.ts:61:    await page.getByRole('button', { name: /undo/i }).click();
+frontend/tests/e2e/undo-redo-fix.spec.ts:69:  test('should undo point creation via keyboard (Ctrl+Z)', async ({ page }) => {
+frontend/tests/e2e/undo-redo-fix.spec.ts:72:    const canvas = page.locator('svg.svg-canvas');
+frontend/tests/e2e/undo-redo-fix.spec.ts:73:    await canvas.click({ force: true, position: { x: 400, y: 300 } });
+frontend/tests/e2e/undo-redo-fix.spec.ts:87:  test('should enable redo after undo', async ({ page }) => {
+frontend/tests/e2e/undo-redo-fix.spec.ts:88:    // Create and undo a point
+frontend/tests/e2e/undo-redo-fix.spec.ts:90:    const canvas = page.locator('svg.svg-canvas');
+frontend/tests/e2e/undo-redo-fix.spec.ts:91:    await canvas.click({ force: true, position: { x: 400, y: 300 } });
+frontend/tests/e2e/undo-redo-fix.spec.ts:94:    await page.getByRole('button', { name: /undo/i }).click();
+frontend/tests/e2e/undo-redo-fix.spec.ts:103:    // Create, undo, then redo a point
+frontend/tests/e2e/undo-redo-fix.spec.ts:105:    const canvas = page.locator('svg.svg-canvas');
+frontend/tests/e2e/undo-redo-fix.spec.ts:106:    await canvas.click({ force: true, position: { x: 400, y: 300 } });
+frontend/tests/e2e/undo-redo-fix.spec.ts:112:    await page.getByRole('button', { name: /undo/i }).click();
+frontend/tests/e2e/undo-redo-fix.spec.ts:125:    // Create, undo, then redo with Ctrl+Y
+frontend/tests/e2e/undo-redo-fix.spec.ts:127:    const canvas = page.locator('svg.svg-canvas');
+frontend/tests/e2e/undo-redo-fix.spec.ts:128:    await canvas.click({ force: true, position: { x: 400, y: 300 } });
+frontend/tests/e2e/undo-redo-fix.spec.ts:147:    const canvas = page.locator('svg.svg-canvas');
+frontend/tests/e2e/undo-redo-fix.spec.ts:148:    await canvas.click({ force: true, position: { x: 400, y: 300 } });
+frontend/tests/e2e/undo-redo-fix.spec.ts:150:    await canvas.click({ force: true, position: { x: 500, y: 350 } });
+frontend/tests/e2e/undo-redo-fix.spec.ts:154:    await page.getByRole('button', { name: /undo/i }).click();
+frontend/tests/e2e/undo-redo-fix.spec.ts:162:    await canvas.click({ force: true, position: { x: 600, y: 400 } });
+frontend/tests/e2e/undo-redo-fix.spec.ts:169:  test('should undo/redo multiple actions in correct order', async ({ page }) => {
+frontend/tests/e2e/undo-redo-fix.spec.ts:170:    // Create three points
+frontend/tests/e2e/undo-redo-fix.spec.ts:172:    const canvas = page.locator('svg.svg-canvas');
+frontend/tests/e2e/undo-redo-fix.spec.ts:174:    await canvas.click({ force: true, position: { x: 400, y: 300 } });
+frontend/tests/e2e/undo-redo-fix.spec.ts:176:    await canvas.click({ force: true, position: { x: 500, y: 350 } });
+frontend/tests/e2e/undo-redo-fix.spec.ts:178:    await canvas.click({ force: true, position: { x: 600, y: 400 } });
+frontend/tests/e2e/undo-redo-fix.spec.ts:183:    // Undo all three
+frontend/tests/e2e/undo-redo-fix.spec.ts:194:    // Redo all three
+frontend/tests/e2e/undo-redo-fix.spec.ts:206:  test('should undo/redo line creation', async ({ page }) => {
+frontend/tests/e2e/undo-redo-fix.spec.ts:209:    const canvas = page.locator('svg.svg-canvas');
+frontend/tests/e2e/undo-redo-fix.spec.ts:210:    await canvas.click({ force: true, position: { x: 400, y: 300 } });
+frontend/tests/e2e/undo-redo-fix.spec.ts:212:    await canvas.click({ force: true, position: { x: 500, y: 350 } });
+frontend/tests/e2e/command-chaining.spec.ts:15: * **E2E COVERAGE**: Existing E2E tests cover atomic undo/redo behavior:
+frontend/tests/e2e/command-chaining.spec.ts:16: * - frontend/tests/e2e/undo-redo.spec.ts (comprehensive undo/redo tests)
+frontend/tests/e2e/command-chaining.spec.ts:42: *   plane: 'H',
+frontend/tests/e2e/command-chaining.spec.ts:50: *   plane: 'H',
+frontend/tests/e2e/command-chaining.spec.ts:62: *   plane: 'H'
+frontend/tests/e2e/command-chaining.spec.ts:71: * 1. **Atomic Undo**: Single undo removes all 3 elements (segment + 2 points)
+frontend/tests/e2e/command-chaining.spec.ts:75: * 5. **Single History Entry**: User sees one logical action, not three separate ones
+frontend/tests/e2e/command-chaining.spec.ts:83: * - Undo calls `operation.undo()` in reverse order
+frontend/tests/e2e/command-chaining.spec.ts:89: * - "ID stability across undo/redo" test suite (2 tests)
+frontend/tests/e2e/command-chaining.spec.ts:98: *   await page.click('.svg-canvas', { position: { x: 100, y: 100 } });
+frontend/tests/e2e/command-chaining.spec.ts:99: *   await page.click('.svg-canvas', { position: { x: 200, y: 200 } });
+frontend/tests/e2e/command-chaining.spec.ts:102: *   await expect(page.locator('.svg-canvas circle')).toHaveCount(2);
+frontend/tests/e2e/command-chaining.spec.ts:107: *   await expect(page.locator('.svg-canvas circle')).toHaveCount(0);
+frontend/tests/e2e/hover.spec.ts:12:    await page.locator('.svg-canvas').click({ position: { x: 300, y: 300 } });
+frontend/tests/e2e/hover.spec.ts:18:    await page.locator('.svg-canvas circle[data-testid]').first().hover();
+frontend/tests/e2e/hover.spec.ts:36:    await page.locator('.svg-canvas').click({ position: { x: 300, y: 300 } });
+frontend/tests/e2e/hover.spec.ts:40:    const point = page.locator('.svg-canvas circle[data-testid]').first();
+frontend/tests/e2e/hover.spec.ts:49:    await page.locator('.svg-canvas').hover({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/hover.spec.ts:59:    await page.locator('.svg-canvas').click({ position: { x: 200, y: 200 } });
+frontend/tests/e2e/hover.spec.ts:60:    await page.locator('.svg-canvas').click({ position: { x: 400, y: 200 } });
+frontend/tests/e2e/hover.spec.ts:65:    await page.locator('.svg-canvas circle[data-testid]').first().click();
+frontend/tests/e2e/hover.spec.ts:66:    await page.locator('.svg-canvas circle[data-testid]').last().click();
+frontend/tests/e2e/hover.spec.ts:70:    const line = page.locator('.svg-canvas line[data-testid]').first();
+frontend/tests/e2e/hover.spec.ts:86:  test('should distinguish hover from selection highlight', async ({ page }) => {
+frontend/tests/e2e/hover.spec.ts:89:    await page.locator('.svg-canvas').click({ position: { x: 300, y: 300 } });
+frontend/tests/e2e/hover.spec.ts:92:    const point = page.locator('.svg-canvas circle[data-testid]').first();
+frontend/tests/e2e/hover.spec.ts:103:    // Get selection stroke color
+frontend/tests/e2e/hover.spec.ts:104:    const selectionStroke = await point.getAttribute('stroke');
+frontend/tests/e2e/hover.spec.ts:108:    expect(selectionStroke).not.toBe(hoverStroke);
+frontend/tests/e2e/hover.spec.ts:115:    await page.locator('.svg-canvas').click({ position: { x: 200, y: 200 } });
+frontend/tests/e2e/hover.spec.ts:119:    await page.locator('.svg-canvas').click({ position: { x: 400, y: 200 } });
+frontend/tests/e2e/hover.spec.ts:124:    const points = page.locator('.svg-canvas circle[data-testid]');
+frontend/tests/e2e/hover.spec.ts:130:    const line = page.locator('.svg-canvas line[data-testid]').first();
+frontend/tests/e2e/hover.spec.ts:147:  test('selection highlight should take precedence over hover', async ({ page }) => {
+frontend/tests/e2e/hover.spec.ts:150:    await page.locator('.svg-canvas').click({ position: { x: 300, y: 300 } });
+frontend/tests/e2e/hover.spec.ts:153:    const point = page.locator('.svg-canvas circle[data-testid]').first();
+frontend/tests/e2e/hover.spec.ts:162:    // Hover over the selected point (both states active)
+frontend/tests/e2e/hover.spec.ts:166:    // Stroke should still be selection color (selection takes precedence)
+frontend/tests/e2e/hover.spec.ts:170:    // Should be selection blue (#0066CC) not hover blue (#4A90E2)
+frontend/tests/e2e/selection.spec.ts:6: * 2. Shift+click to add elements to selection (multi-select)
+frontend/tests/e2e/selection.spec.ts:7: * 3. Click empty space to clear selection
+frontend/tests/e2e/selection.spec.ts:9: * 5. Selection sync between canvas and ElementsPanel
+frontend/tests/e2e/selection.spec.ts:21:    await page.waitForSelector('svg.diedrico-canvas');
+frontend/tests/e2e/selection.spec.ts:23:    // Setup: Create some geometric objects to test selection
+frontend/tests/e2e/selection.spec.ts:26:    const canvas = page.locator('svg.diedrico-canvas');
+frontend/tests/e2e/selection.spec.ts:27:    await canvas.click({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/selection.spec.ts:28:    await canvas.click({ position: { x: 200, y: 100 } });
+frontend/tests/e2e/selection.spec.ts:29:    await canvas.click({ position: { x: 300, y: 100 } });
+frontend/tests/e2e/selection.spec.ts:33:    await canvas.click({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/selection.spec.ts:34:    await canvas.click({ position: { x: 200, y: 100 } });
+frontend/tests/e2e/selection.spec.ts:38:    await canvas.click({ position: { x: 200, y: 100 } });
+frontend/tests/e2e/selection.spec.ts:39:    await canvas.click({ position: { x: 300, y: 100 } });
+frontend/tests/e2e/selection.spec.ts:46:    const canvas = page.locator('svg.diedrico-canvas');
+frontend/tests/e2e/selection.spec.ts:49:    await canvas.click({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/selection.spec.ts:51:    // Wait for selection state to update
+frontend/tests/e2e/selection.spec.ts:55:    const selectedElements = page.locator('svg.diedrico-canvas [data-selected="true"]');
+frontend/tests/e2e/selection.spec.ts:58:    // Verify selection is reflected in selectionStore (via data attributes or classes)
+frontend/tests/e2e/selection.spec.ts:63:  test('should replace selection when clicking different element', async ({ page }) => {
+frontend/tests/e2e/selection.spec.ts:64:    const canvas = page.locator('svg.diedrico-canvas');
+frontend/tests/e2e/selection.spec.ts:67:    await canvas.click({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/selection.spec.ts:71:    await canvas.click({ position: { x: 200, y: 100 } });
+frontend/tests/e2e/selection.spec.ts:75:    const selectedElements = page.locator('svg.diedrico-canvas [data-selected="true"]');
+frontend/tests/e2e/selection.spec.ts:79:  test('should add to selection with Shift+click (multi-select)', async ({ page }) => {
+frontend/tests/e2e/selection.spec.ts:80:    const canvas = page.locator('svg.diedrico-canvas');
+frontend/tests/e2e/selection.spec.ts:83:    await canvas.click({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/selection.spec.ts:86:    // Shift+click second element to add to selection
+frontend/tests/e2e/selection.spec.ts:87:    await canvas.click({ 
+frontend/tests/e2e/selection.spec.ts:94:    const selectedElements = page.locator('svg.diedrico-canvas [data-selected="true"]');
+frontend/tests/e2e/selection.spec.ts:98:  test('should add multiple elements to selection with repeated Shift+click', async ({ page }) => {
+frontend/tests/e2e/selection.spec.ts:99:    const canvas = page.locator('svg.diedrico-canvas');
+frontend/tests/e2e/selection.spec.ts:102:    await canvas.click({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/selection.spec.ts:106:    await canvas.click({ 
+frontend/tests/e2e/selection.spec.ts:113:    await canvas.click({ 
+frontend/tests/e2e/selection.spec.ts:120:    const selectedElements = page.locator('svg.diedrico-canvas [data-selected="true"]');
+frontend/tests/e2e/selection.spec.ts:124:  test('should clear selection when clicking empty space', async ({ page }) => {
+frontend/tests/e2e/selection.spec.ts:125:    const canvas = page.locator('svg.diedrico-canvas');
+frontend/tests/e2e/selection.spec.ts:128:    await canvas.click({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/selection.spec.ts:132:    let selectedElements = page.locator('svg.diedrico-canvas [data-selected="true"]');
+frontend/tests/e2e/selection.spec.ts:136:    await canvas.click({ position: { x: 400, y: 400 } });
+frontend/tests/e2e/selection.spec.ts:140:    selectedElements = page.locator('svg.diedrico-canvas [data-selected="true"]');
+frontend/tests/e2e/selection.spec.ts:144:  test('should show selection highlighting (visual feedback)', async ({ page }) => {
+frontend/tests/e2e/selection.spec.ts:145:    const canvas = page.locator('svg.diedrico-canvas');
+frontend/tests/e2e/selection.spec.ts:148:    await canvas.click({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/selection.spec.ts:154:    // Check for selection highlight class
+frontend/tests/e2e/selection.spec.ts:156:      // Check for selection-related classes
+frontend/tests/e2e/selection.spec.ts:158:             el.classList.contains('selection') ||
+frontend/tests/e2e/selection.spec.ts:164:    // Verify selection style is different from non-selected elements
+frontend/tests/e2e/selection.spec.ts:173:  test.skip('should sync selection between canvas and ElementsPanel (canvas -> panel)', async ({ page }) => {
+frontend/tests/e2e/selection.spec.ts:180:    // Select element on canvas
+frontend/tests/e2e/selection.spec.ts:181:    await page.click('[data-testid="svg-canvas"]', { position: { x: 100, y: 100 } });
+frontend/tests/e2e/selection.spec.ts:189:  test.skip('should sync selection between ElementsPanel and canvas (panel -> canvas)', async ({ page }) => {
+frontend/tests/e2e/selection.spec.ts:201:    // Check if canvas shows selection
+frontend/tests/e2e/selection.spec.ts:202:    const selectedOnCanvas = page.locator('[data-testid="svg-canvas"] [data-selected="true"]');
+frontend/tests/e2e/selection.spec.ts:206:  test.skip('should maintain multi-select when switching between canvas and panel', async ({ page }) => {
+frontend/tests/e2e/selection.spec.ts:213:    // Multi-select on canvas
+frontend/tests/e2e/selection.spec.ts:214:    await page.click('[data-testid="svg-canvas"]', { position: { x: 100, y: 100 } });
+frontend/tests/e2e/selection.spec.ts:216:    await page.click('[data-testid="svg-canvas"]', { 
+frontend/tests/e2e/selection.spec.ts:222:    // Verify both canvas and panel show 2 selected items
+frontend/tests/e2e/selection.spec.ts:223:    const selectedOnCanvas = page.locator('[data-testid="svg-canvas"] [data-selected="true"]');
+frontend/tests/e2e/selection.spec.ts:231:    const canvas = page.locator('svg.diedrico-canvas');
+frontend/tests/e2e/selection.spec.ts:234:    await canvas.click({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/selection.spec.ts:236:    await canvas.click({ 
+frontend/tests/e2e/selection.spec.ts:243:    let selectedElements = page.locator('svg.diedrico-canvas [data-selected="true"]');
+frontend/tests/e2e/selection.spec.ts:247:    await canvas.click({ 
+frontend/tests/e2e/selection.spec.ts:254:    selectedElements = page.locator('svg.diedrico-canvas [data-selected="true"]');
+frontend/tests/e2e/selection.spec.ts:260:    await page.click('[data-testid="svg-canvas"]', { position: { x: 100, y: 100 } });
+frontend/tests/e2e/selection.spec.ts:266:    // Select line (replacing previous selection)
+frontend/tests/e2e/selection.spec.ts:267:    await page.click('[data-testid="svg-canvas"]', { position: { x: 150, y: 100 } }); // Middle of line
+frontend/tests/e2e/selection.spec.ts:278:    await page.click('[data-testid="svg-canvas"]', { position: { x: 250, y: 100 } }); // Middle of segment
+frontend/tests/e2e/selection.spec.ts:289:    const canvas = page.locator('svg.diedrico-canvas');
+frontend/tests/e2e/selection.spec.ts:292:    await canvas.click({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/selection.spec.ts:295:    // No selection should exist (Point tool doesn't trigger selection)
+frontend/tests/e2e/selection.spec.ts:296:    const selectedElements = page.locator('svg.diedrico-canvas [data-selected="true"]');
+frontend/tests/e2e/selection.spec.ts:300:  test('should clear selection when switching tools', async ({ page }) => {
+frontend/tests/e2e/selection.spec.ts:301:    const canvas = page.locator('svg.diedrico-canvas');
+frontend/tests/e2e/selection.spec.ts:304:    await canvas.click({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/selection.spec.ts:307:    // Verify selection exists
+frontend/tests/e2e/selection.spec.ts:308:    let selectedElements = page.locator('svg.diedrico-canvas [data-selected="true"]');
+frontend/tests/e2e/selection.spec.ts:316:    selectedElements = page.locator('svg.diedrico-canvas [data-selected="true"]');
+frontend/tests/e2e/selection.spec.ts:320:  test('should handle rapid selection changes', async ({ page }) => {
+frontend/tests/e2e/selection.spec.ts:321:    const canvas = page.locator('svg.diedrico-canvas');
+frontend/tests/e2e/selection.spec.ts:324:    await canvas.click({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/selection.spec.ts:325:    await canvas.click({ position: { x: 200, y: 100 } });
+frontend/tests/e2e/selection.spec.ts:326:    await canvas.click({ position: { x: 300, y: 100 } });
+frontend/tests/e2e/selection.spec.ts:330:    const selectedElements = page.locator('svg.diedrico-canvas [data-selected="true"]');
+frontend/tests/e2e/selection.spec.ts:334:  test.skip('should persist selection across plane switches', async ({ page }) => {
+frontend/tests/e2e/selection.spec.ts:335:    // Select element on current plane
+frontend/tests/e2e/selection.spec.ts:336:    await page.click('[data-testid="svg-canvas"]', { position: { x: 100, y: 100 } });
+frontend/tests/e2e/selection.spec.ts:339:    // Switch plane
+frontend/tests/e2e/selection.spec.ts:340:    const planeButton = page.locator('[data-testid="plane-toggle"]');
+frontend/tests/e2e/selection.spec.ts:341:    if (await planeButton.isVisible()) {
+frontend/tests/e2e/selection.spec.ts:342:      await planeButton.click();
+frontend/tests/e2e/selection.spec.ts:348:    const selectedElements = page.locator('[data-testid="svg-canvas"] [data-selected="true"]');
+frontend/tests/e2e/selection.spec.ts:350:    // Option A: Selection persists across planes
+frontend/tests/e2e/selection.spec.ts:352:    // Option B: Selection clears when switching planes
+frontend/tests/e2e/circle-tool-snapping.spec.ts:22:    await page.waitForSelector('svg.diedrico-canvas');
+frontend/tests/e2e/circle-tool-snapping.spec.ts:26:    const canvas = page.locator('svg.diedrico-canvas');
+frontend/tests/e2e/circle-tool-snapping.spec.ts:30:    await canvas.click({ position: { x: 150, y: 150 } });
+frontend/tests/e2e/circle-tool-snapping.spec.ts:33:    await canvas.click({ position: { x: 250, y: 150 } });
+frontend/tests/e2e/circle-tool-snapping.spec.ts:42:    await canvas.click({ position: { x: 150, y: 150 } });
+frontend/tests/e2e/circle-tool-snapping.spec.ts:49:    await canvas.click({ position: { x: 250, y: 150 } });
+frontend/tests/e2e/circle-tool-snapping.spec.ts:65:    const canvas = page.locator('svg.diedrico-canvas');
+frontend/tests/e2e/circle-tool-snapping.spec.ts:69:    await canvas.click({ position: { x: 200, y: 200 } });
+frontend/tests/e2e/circle-tool-snapping.spec.ts:78:    await canvas.click({ position: { x: 200, y: 200 } });
+frontend/tests/e2e/circle-tool-snapping.spec.ts:81:    await canvas.click({ position: { x: 350, y: 200 } });
+frontend/tests/e2e/circle-tool-snapping.spec.ts:98:    const canvas = page.locator('svg.diedrico-canvas');
+frontend/tests/e2e/circle-tool-snapping.spec.ts:102:    await canvas.click({ position: { x: 180, y: 180 } });
+frontend/tests/e2e/circle-tool-snapping.spec.ts:103:    await canvas.click({ position: { x: 280, y: 180 } });
+frontend/tests/e2e/circle-tool-snapping.spec.ts:109:    await canvas.hover({ position: { x: 180, y: 180 } });
+frontend/tests/e2e/circle-tool-snapping.spec.ts:117:    await canvas.click({ position: { x: 180, y: 180 } });
+frontend/tests/e2e/circle-tool-snapping.spec.ts:120:    await canvas.hover({ position: { x: 280, y: 180 } });
+frontend/tests/e2e/circle-tool-snapping.spec.ts:127:    await canvas.click({ position: { x: 280, y: 180 } });
+frontend/tests/e2e/circle-tool-snapping.spec.ts:135:    const canvas = page.locator('svg.diedrico-canvas');
+frontend/tests/e2e/circle-tool-snapping.spec.ts:139:    await canvas.click({ position: { x: 150, y: 150 } }); // Top-left
+frontend/tests/e2e/circle-tool-snapping.spec.ts:140:    await canvas.click({ position: { x: 250, y: 150 } }); // Top-right
+frontend/tests/e2e/circle-tool-snapping.spec.ts:141:    await canvas.click({ position: { x: 150, y: 250 } }); // Bottom-left
+frontend/tests/e2e/circle-tool-snapping.spec.ts:142:    await canvas.click({ position: { x: 250, y: 250 } }); // Bottom-right
+frontend/tests/e2e/circle-tool-snapping.spec.ts:149:    await canvas.click({ position: { x: 150, y: 150 } });
+frontend/tests/e2e/circle-tool-snapping.spec.ts:150:    await canvas.click({ position: { x: 250, y: 150 } });
+frontend/tests/e2e/circle-tool-snapping.spec.ts:153:    await canvas.click({ position: { x: 150, y: 250 } });
+frontend/tests/e2e/circle-tool-snapping.spec.ts:154:    await canvas.click({ position: { x: 250, y: 250 } });
+frontend/tests/e2e/circle-tool-snapping.spec.ts:157:    await canvas.click({ position: { x: 150, y: 150 } });
+frontend/tests/e2e/circle-tool-snapping.spec.ts:158:    await canvas.click({ position: { x: 150, y: 250 } });
+frontend/tests/e2e/circle-tool-snapping.spec.ts:170:    const canvas = page.locator('svg.diedrico-canvas');
+frontend/tests/e2e/circle-tool-snapping.spec.ts:174:    await canvas.click({ position: { x: 200, y: 200 } });
+frontend/tests/e2e/circle-tool-snapping.spec.ts:175:    await canvas.click({ position: { x: 201, y: 200 } }); // Only 1px apart
+frontend/tests/e2e/circle-tool-snapping.spec.ts:179:    await canvas.click({ position: { x: 200, y: 200 } });
+frontend/tests/e2e/circle-tool-snapping.spec.ts:180:    await canvas.click({ position: { x: 201, y: 200 } });
+frontend/tests/e2e/circle-tool-snapping.spec.ts:192:    const canvas = page.locator('svg.diedrico-canvas');
+frontend/tests/e2e/circle-tool-snapping.spec.ts:196:    await canvas.click({ position: { x: 170, y: 170 } });
+frontend/tests/e2e/circle-tool-snapping.spec.ts:200:    await canvas.click({ position: { x: 210, y: 170 } }); // 40px to the right
+frontend/tests/e2e/circle-tool-snapping.spec.ts:207:    await canvas.click({ position: { x: 195, y: 170 } }); // ~25px from center, within snap radius
+frontend/tests/e2e/circle-tool-snapping.spec.ts:220:    const canvas = page.locator('svg.diedrico-canvas');
+frontend/tests/e2e/circle-tool-snapping.spec.ts:224:    await canvas.click({ position: { x: 160, y: 160 } });
+frontend/tests/e2e/circle-tool-snapping.spec.ts:228:    await canvas.click({ position: { x: 160, y: 160 } }); // Select center
+frontend/tests/e2e/circle-tool-snapping.spec.ts:242:    await canvas.click({ position: { x: 260, y: 160 } });
+frontend/tests/e2e/circle-tool-snapping.spec.ts:249:  test('T986: Consistent snapping across plane switches', async ({ page }) => {
+frontend/tests/e2e/circle-tool-snapping.spec.ts:250:    const canvas = page.locator('svg.diedrico-canvas');
+frontend/tests/e2e/circle-tool-snapping.spec.ts:252:    // Get horizontal plane ID from the toolbar/selector
+frontend/tests/e2e/circle-tool-snapping.spec.ts:253:    const planeSelector = page.locator('[data-testid="plane-selector"], .plane-selector');
+frontend/tests/e2e/circle-tool-snapping.spec.ts:255:    // Verify we're on horizontal plane (P_H)
+frontend/tests/e2e/circle-tool-snapping.spec.ts:256:    // This test assumes plane switching is implemented
+frontend/tests/e2e/circle-tool-snapping.spec.ts:258:    // Create point on horizontal plane
+frontend/tests/e2e/circle-tool-snapping.spec.ts:260:    await canvas.click({ position: { x: 190, y: 190 } });
+frontend/tests/e2e/circle-tool-snapping.spec.ts:264:    await canvas.click({ position: { x: 190, y: 190 } }); // Snap to center
+frontend/tests/e2e/circle-tool-snapping.spec.ts:265:    await canvas.click({ position: { x: 290, y: 190 } }); // Create circumference
+frontend/tests/e2e/circle-tool-snapping.spec.ts:271:    // Switch to vertical plane (if UI supports it)
+frontend/tests/e2e/circle-tool-snapping.spec.ts:272:    // await planeSelector.selectOption('P_V');
+frontend/tests/e2e/circle-tool-snapping.spec.ts:274:    // Create another point on vertical plane
+frontend/tests/e2e/circle-tool-snapping.spec.ts:276:    await canvas.click({ position: { x: 220, y: 220 } });
+frontend/tests/e2e/circle-tool-snapping.spec.ts:278:    // Create circle on vertical plane with snapping
+frontend/tests/e2e/circle-tool-snapping.spec.ts:280:    await canvas.click({ position: { x: 220, y: 220 } }); // Snap
+frontend/tests/e2e/circle-tool-snapping.spec.ts:281:    await canvas.click({ position: { x: 320, y: 220 } }); // Create
+frontend/tests/e2e/circle-tool-snapping.spec.ts:283:    // Verify second circle created (snapping works on different plane)
+frontend/tests/e2e/hhl-intersection.spec.ts:2: * E2E tests for HalfHingeLine2D intersection with sibling point creation
+frontend/tests/e2e/hhl-intersection.spec.ts:5: * - Creating intersection with HingeLine automatically creates sibling on other plane
+frontend/tests/e2e/hhl-intersection.spec.ts:9: * @see specs/001-dihedral-learning-mvp/tasks.md#phase-88-halfhingeline2d-intersection-sibling-points
+frontend/tests/e2e/hhl-intersection.spec.ts:10: * @see specs/001-dihedral-learning-mvp/data-model.md#halfhingeline2d-intersection-sibling-behavior
+frontend/tests/e2e/hhl-intersection.spec.ts:18:    await page.waitForSelector('svg#canvas');
+frontend/tests/e2e/hhl-intersection.spec.ts:23:    const initialPoints = await page.locator('svg#canvas circle.point').count();
+frontend/tests/e2e/hhl-intersection.spec.ts:25:    // Create a vertical line on horizontal plane that intersects the hinge line
+frontend/tests/e2e/hhl-intersection.spec.ts:30:    await page.click('svg#canvas', { position: { x: 200, y: 100 } });  // Top point
+frontend/tests/e2e/hhl-intersection.spec.ts:31:    await page.click('svg#canvas', { position: { x: 200, y: 300 } });  // Bottom point
+frontend/tests/e2e/hhl-intersection.spec.ts:34:    let currentPoints = await page.locator('svg#canvas circle.point').count();
+frontend/tests/e2e/hhl-intersection.spec.ts:37:    // Activate intersection tool
+frontend/tests/e2e/hhl-intersection.spec.ts:41:    await page.click('svg#canvas', { position: { x: 200, y: 200 } });
+frontend/tests/e2e/hhl-intersection.spec.ts:45:    await page.click('svg#canvas', { position: { x: 300, y: 240 } });
+frontend/tests/e2e/hhl-intersection.spec.ts:48:    // - Primary intersection point on horizontal plane
+frontend/tests/e2e/hhl-intersection.spec.ts:49:    // - Sibling intersection point on vertical plane
+frontend/tests/e2e/hhl-intersection.spec.ts:50:    currentPoints = await page.locator('svg#canvas circle.point').count();
+frontend/tests/e2e/hhl-intersection.spec.ts:53:    // Verify both planes have the intersection point
+frontend/tests/e2e/hhl-intersection.spec.ts:54:    // Switch to vertical plane to see if sibling is there
+frontend/tests/e2e/hhl-intersection.spec.ts:57:    // Should still see points (sibling is on vertical plane)
+frontend/tests/e2e/hhl-intersection.spec.ts:58:    const verticalPlanePoints = await page.locator('svg#canvas circle.point').count();
+frontend/tests/e2e/hhl-intersection.spec.ts:64:    const initialPoints = await page.locator('svg#canvas circle.point').count();
+frontend/tests/e2e/hhl-intersection.spec.ts:68:    await page.click('svg#canvas', { position: { x: 200, y: 100 } });
+frontend/tests/e2e/hhl-intersection.spec.ts:69:    await page.click('svg#canvas', { position: { x: 200, y: 300 } });
+frontend/tests/e2e/hhl-intersection.spec.ts:71:    // Create intersection
+frontend/tests/e2e/hhl-intersection.spec.ts:73:    await page.click('svg#canvas', { position: { x: 200, y: 200 } });
+frontend/tests/e2e/hhl-intersection.spec.ts:74:    await page.click('svg#canvas', { position: { x: 300, y: 240 } });
+frontend/tests/e2e/hhl-intersection.spec.ts:76:    // Verify points were created (+4: 2 endpoints + 2 intersection siblings)
+frontend/tests/e2e/hhl-intersection.spec.ts:77:    let currentPoints = await page.locator('svg#canvas circle.point').count();
+frontend/tests/e2e/hhl-intersection.spec.ts:80:    // Select the intersection point (last point created)
+frontend/tests/e2e/hhl-intersection.spec.ts:81:    const points = await page.locator('svg#canvas circle.point').all();
+frontend/tests/e2e/hhl-intersection.spec.ts:89:    currentPoints = await page.locator('svg#canvas circle.point').count();
+frontend/tests/e2e/hhl-intersection.spec.ts:92:    // Switch to vertical plane and verify sibling is also gone
+frontend/tests/e2e/hhl-intersection.spec.ts:94:    const verticalPoints = await page.locator('svg#canvas circle.point').count();
+frontend/tests/e2e/hhl-intersection.spec.ts:96:    // Should only have initial points on vertical plane (no sibling)
+frontend/tests/e2e/hhl-intersection.spec.ts:97:    // Note: Exact count depends on what initial points exist on vertical plane
+frontend/tests/e2e/hhl-intersection.spec.ts:101:  test('should undo intersection creation with both siblings', async ({ page }) => {
+frontend/tests/e2e/hhl-intersection.spec.ts:102:    const initialPoints = await page.locator('svg#canvas circle.point').count();
+frontend/tests/e2e/hhl-intersection.spec.ts:106:    await page.click('svg#canvas', { position: { x: 200, y: 100 } });
+frontend/tests/e2e/hhl-intersection.spec.ts:107:    await page.click('svg#canvas', { position: { x: 200, y: 300 } });
+frontend/tests/e2e/hhl-intersection.spec.ts:109:    // Create intersection
+frontend/tests/e2e/hhl-intersection.spec.ts:111:    await page.click('svg#canvas', { position: { x: 200, y: 200 } });
+frontend/tests/e2e/hhl-intersection.spec.ts:112:    await page.click('svg#canvas', { position: { x: 300, y: 240 } });
+frontend/tests/e2e/hhl-intersection.spec.ts:115:    let currentPoints = await page.locator('svg#canvas circle.point').count();
+frontend/tests/e2e/hhl-intersection.spec.ts:118:    // Undo intersection creation
+frontend/tests/e2e/hhl-intersection.spec.ts:122:    currentPoints = await page.locator('svg#canvas circle.point').count();
+frontend/tests/e2e/hhl-intersection.spec.ts:125:    // Redo intersection creation
+frontend/tests/e2e/hhl-intersection.spec.ts:129:    currentPoints = await page.locator('svg#canvas circle.point').count();
+frontend/tests/e2e/hhl-intersection.spec.ts:133:  test('should create sibling on correct plane (H ↔ V mapping)', async ({ page }) => {
+frontend/tests/e2e/hhl-intersection.spec.ts:134:    // Test 1: Create intersection on horizontal plane
+frontend/tests/e2e/hhl-intersection.spec.ts:136:    await page.click('svg#canvas', { position: { x: 200, y: 100 } });
+frontend/tests/e2e/hhl-intersection.spec.ts:137:    await page.click('svg#canvas', { position: { x: 200, y: 300 } });
+frontend/tests/e2e/hhl-intersection.spec.ts:140:    await page.click('svg#canvas', { position: { x: 200, y: 200 } });
+frontend/tests/e2e/hhl-intersection.spec.ts:141:    await page.click('svg#canvas', { position: { x: 300, y: 240 } });
+frontend/tests/e2e/hhl-intersection.spec.ts:143:    // Get point count on horizontal plane
+frontend/tests/e2e/hhl-intersection.spec.ts:144:    const horizontalPoints = await page.locator('svg#canvas circle.point').count();
+frontend/tests/e2e/hhl-intersection.spec.ts:146:    // Switch to vertical plane
+frontend/tests/e2e/hhl-intersection.spec.ts:149:    // Verify sibling exists on vertical plane
+frontend/tests/e2e/hhl-intersection.spec.ts:150:    const verticalPoints = await page.locator('svg#canvas circle.point').count();
+frontend/tests/e2e/hhl-intersection.spec.ts:152:    // Vertical plane should have at least one point (the sibling)
+frontend/tests/e2e/hhl-intersection.spec.ts:159:    const backToHorizontal = await page.locator('svg#canvas circle.point').count();
+frontend/tests/e2e/hhl-intersection.spec.ts:164:    // For HalfHingeLine2D intersections, sibling coordinates should match primary
+frontend/tests/e2e/hhl-intersection.spec.ts:169:    await page.click('svg#canvas', { position: { x: 200, y: 100 } });
+frontend/tests/e2e/hhl-intersection.spec.ts:170:    await page.click('svg#canvas', { position: { x: 200, y: 300 } });
+frontend/tests/e2e/hhl-intersection.spec.ts:172:    // Create intersection
+frontend/tests/e2e/hhl-intersection.spec.ts:174:    await page.click('svg#canvas', { position: { x: 200, y: 200 } });
+frontend/tests/e2e/hhl-intersection.spec.ts:175:    await page.click('svg#canvas', { position: { x: 300, y: 240 } });
+frontend/tests/e2e/hhl-intersection.spec.ts:177:    // Get the intersection point position on horizontal plane
+frontend/tests/e2e/hhl-intersection.spec.ts:178:    const points = await page.locator('svg#canvas circle.point').all();
+frontend/tests/e2e/hhl-intersection.spec.ts:182:    // Switch to vertical plane
+frontend/tests/e2e/hhl-intersection.spec.ts:186:    const verticalPoints = await page.locator('svg#canvas circle.point').all();
+frontend/tests/e2e/selection-mask.spec.ts:5: * - Only valid elements highlight on hover based on active tool
+frontend/tests/e2e/selection-mask.spec.ts:18:    await page.waitForSelector('[data-testid="svg-canvas"]', { timeout: 5000 });
+frontend/tests/e2e/selection-mask.spec.ts:26:    await page.click('[data-testid="svg-canvas"]', { position: { x: 100, y: 100 } });
+frontend/tests/e2e/selection-mask.spec.ts:44:    await page.click('[data-testid="svg-canvas"]', { position: { x: 100, y: 100 } });
+frontend/tests/e2e/selection-mask.spec.ts:45:    await page.click('[data-testid="svg-canvas"]', { position: { x: 200, y: 100 } });
+frontend/tests/e2e/selection-mask.spec.ts:48:    await page.click('[data-testid="svg-canvas"]', { position: { x: 100, y: 100 } });
+frontend/tests/e2e/selection-mask.spec.ts:49:    await page.click('[data-testid="svg-canvas"]', { position: { x: 200, y: 100 } });
+frontend/tests/e2e/selection-mask.spec.ts:75:  test('GuideTool: dynamic mask changes after first selection', async ({ page }) => {
+frontend/tests/e2e/selection-mask.spec.ts:78:    await page.click('[data-testid="svg-canvas"]', { position: { x: 100, y: 300 } }); // Hinge point 1
+frontend/tests/e2e/selection-mask.spec.ts:79:    await page.click('[data-testid="svg-canvas"]', { position: { x: 400, y: 300 } }); // Hinge point 2
+frontend/tests/e2e/selection-mask.spec.ts:80:    await page.click('[data-testid="svg-canvas"]', { position: { x: 200, y: 100 } }); // Regular point
+frontend/tests/e2e/selection-mask.spec.ts:82:    // Activate guide tool
+frontend/tests/e2e/selection-mask.spec.ts:83:    await page.click('[data-testid="tool-guide"]');
+frontend/tests/e2e/selection-mask.spec.ts:97:    await page.click('[data-testid="svg-canvas"]', { position: { x: 250, y: 300 } });
+frontend/tests/e2e/selection-mask.spec.ts:123:    await page.click('[data-testid="svg-canvas"]', { position: { x: 100, y: 100 } });
+frontend/tests/e2e/selection-mask.spec.ts:124:    await page.click('[data-testid="svg-canvas"]', { position: { x: 200, y: 200 } });
+frontend/tests/e2e/selection-mask.spec.ts:125:    await page.click('[data-testid="svg-canvas"]', { position: { x: 100, y: 200 } });
+frontend/tests/e2e/selection-mask.spec.ts:126:    await page.click('[data-testid="svg-canvas"]', { position: { x: 200, y: 100 } });
+frontend/tests/e2e/selection-mask.spec.ts:130:    await page.click('[data-testid="svg-canvas"]', { position: { x: 100, y: 100 } });
+frontend/tests/e2e/selection-mask.spec.ts:131:    await page.click('[data-testid="svg-canvas"]', { position: { x: 200, y: 200 } });
+frontend/tests/e2e/selection-mask.spec.ts:132:    await page.click('[data-testid="svg-canvas"]', { position: { x: 100, y: 200 } });
+frontend/tests/e2e/selection-mask.spec.ts:133:    await page.click('[data-testid="svg-canvas"]', { position: { x: 200, y: 100 } });
+frontend/tests/e2e/selection-mask.spec.ts:135:    // Activate intersection tool
+frontend/tests/e2e/selection-mask.spec.ts:136:    await page.click('[data-testid="tool-intersection"]');
+frontend/tests/e2e/selection-mask.spec.ts:167:    await page.click('[data-testid="svg-canvas"]', { position: { x: 100, y: 100 } });
+frontend/tests/e2e/selection-mask.spec.ts:169:    // After selecting point: only guides should highlight
+frontend/tests/e2e/selection-mask.spec.ts:170:    // Hover over guide - should highlight
+frontend/tests/e2e/selection-mask.spec.ts:171:    await page.mouse.move(200, 150); // Near guide line
+frontend/tests/e2e/selection-mask.spec.ts:174:    const guideElement = page.locator('[data-element-type="guide"]').first();
+frontend/tests/e2e/selection-mask.spec.ts:175:    const guideHasHover = await guideElement.evaluate(el => 
+frontend/tests/e2e/selection-mask.spec.ts:178:    expect(guideHasHover).toBe(true);
+frontend/tests/e2e/selection-mask.spec.ts:193:    await page.click('[data-testid="svg-canvas"]', { position: { x: 100, y: 100 } });
+frontend/tests/e2e/selection-mask.spec.ts:194:    await page.click('[data-testid="svg-canvas"]', { position: { x: 200, y: 100 } });
+frontend/tests/e2e/selection-mask.spec.ts:198:    await page.click('[data-testid="svg-canvas"]', { position: { x: 100, y: 100 } });
+frontend/tests/e2e/selection-mask.spec.ts:199:    await page.click('[data-testid="svg-canvas"]', { position: { x: 200, y: 100 } });
+frontend/tests/e2e/selection-mask.spec.ts:228:    await page.click('[data-testid="svg-canvas"]', { position: { x: 100, y: 100 } });
+frontend/tests/e2e/selection-mask.spec.ts:229:    await page.click('[data-testid="svg-canvas"]', { position: { x: 200, y: 100 } });
+frontend/tests/e2e/selection-mask.spec.ts:233:    await page.click('[data-testid="svg-canvas"]', { position: { x: 100, y: 100 } }); // Center
+frontend/tests/e2e/selection-mask.spec.ts:234:    await page.click('[data-testid="svg-canvas"]', { position: { x: 200, y: 100 } }); // Radius point
+frontend/tests/e2e/basic-construction.spec.ts:7: * 1. Create free points in canvas
+frontend/tests/e2e/basic-construction.spec.ts:33:    // 2. Click on canvas at position (100, 100) to create first point
+frontend/tests/e2e/basic-construction.spec.ts:34:    // const canvas = await page.locator('[data-testid="workspace-canvas"]');
+frontend/tests/e2e/basic-construction.spec.ts:35:    // await canvas.click({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/basic-construction.spec.ts:37:    // 3. Click on canvas at position (200, 150) to create second point
+frontend/tests/e2e/basic-construction.spec.ts:38:    // await canvas.click({ position: { x: 200, y: 150 } });
+frontend/tests/e2e/basic-construction.spec.ts:46:    // const point1 = await canvas.locator('[data-element-id^="P"]').first();
+frontend/tests/e2e/basic-construction.spec.ts:133: * - Use consistent element IDs for reliable selection
+frontend/tests/e2e/navigation.spec.ts:10: * 4. Verify navigation doesn't cancel active tools
+frontend/tests/e2e/navigation.spec.ts:24:  test('should pan viewport without canceling active tool', async ({ page }) => {
+frontend/tests/e2e/navigation.spec.ts:31:    // const canvas = await page.locator('[data-testid="workspace-canvas"]');
+frontend/tests/e2e/navigation.spec.ts:32:    // await canvas.click({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/navigation.spec.ts:37:    // 4. Verify tool is still active (Point tool)
+frontend/tests/e2e/navigation.spec.ts:38:    // const toolIndicator = await page.locator('[data-testid="active-tool"]');
+frontend/tests/e2e/navigation.spec.ts:42:    // await canvas.click({ position: { x: 200, y: 100 } });
+frontend/tests/e2e/navigation.spec.ts:51:  test('should zoom viewport without canceling active tool', async ({ page }) => {
+frontend/tests/e2e/navigation.spec.ts:63:    // 4. Verify tool is still active and first point is still selected
+frontend/tests/e2e/navigation.spec.ts:64:    // const toolIndicator = await page.locator('[data-testid="active-tool"]');
+frontend/tests/e2e/navigation.spec.ts:203:    // 5. Pan viewport while preview is active
+frontend/tests/e2e/navigation.spec.ts:238:    // await page.tap('[data-testid="workspace-canvas"]', { position: { x: 200, y: 200 } });
+frontend/tests/e2e/navigation.spec.ts:281: * - Navigation with tool preview active
+frontend/tests/e2e/properties.spec.ts:19:    // Wait for canvas to be ready
+frontend/tests/e2e/properties.spec.ts:20:    await page.waitForSelector('.svg-canvas');
+frontend/tests/e2e/properties.spec.ts:26:    await page.click('.svg-canvas', { position: { x: 200, y: 200 } });
+frontend/tests/e2e/properties.spec.ts:32:    await page.dblclick('.svg-canvas', { position: { x: 200, y: 200 } });
+frontend/tests/e2e/properties.spec.ts:42:    await page.click('.svg-canvas', { position: { x: 300, y: 300 } });
+frontend/tests/e2e/properties.spec.ts:46:    await page.dblclick('.svg-canvas', { position: { x: 300, y: 300 } });
+frontend/tests/e2e/properties.spec.ts:52:    // Should show plane ID
+frontend/tests/e2e/properties.spec.ts:54:    await expect(page.locator('text=proj_plane_H')).toBeVisible();
+frontend/tests/e2e/properties.spec.ts:60:    await page.click('.svg-canvas', { position: { x: 400, y: 400 } });
+frontend/tests/e2e/properties.spec.ts:64:    await page.dblclick('.svg-canvas', { position: { x: 400, y: 400 } });
+frontend/tests/e2e/properties.spec.ts:84:    await page.click('.svg-canvas', { position: { x: 100, y: 100 } });
+frontend/tests/e2e/properties.spec.ts:88:    await page.dblclick('.svg-canvas', { position: { x: 100, y: 100 } });
+frontend/tests/e2e/properties.spec.ts:110:    await page.click('.svg-canvas', { position: { x: 100, y: 100 } });
+frontend/tests/e2e/properties.spec.ts:112:    await page.click('.svg-canvas', { position: { x: 300, y: 100 } });
+frontend/tests/e2e/properties.spec.ts:117:    const canvas = page.locator('.svg-canvas');
+frontend/tests/e2e/properties.spec.ts:118:    await canvas.click({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/properties.spec.ts:119:    await canvas.click({ position: { x: 300, y: 100 } });
+frontend/tests/e2e/properties.spec.ts:123:    await page.dblclick('.svg-canvas', { position: { x: 200, y: 100 } });
+frontend/tests/e2e/properties.spec.ts:141:    await page.click('.svg-canvas', { position: { x: 250, y: 250 } });
+frontend/tests/e2e/properties.spec.ts:145:    await page.dblclick('.svg-canvas', { position: { x: 250, y: 250 } });
+frontend/tests/e2e/properties.spec.ts:167:    await page.click('.svg-canvas', { position: { x: 350, y: 350 } });
+frontend/tests/e2e/properties.spec.ts:171:    await page.dblclick('.svg-canvas', { position: { x: 350, y: 350 } });
+frontend/tests/e2e/properties.spec.ts:190:    await page.click('.svg-canvas', { position: { x: 150, y: 150 } });
+frontend/tests/e2e/properties.spec.ts:194:    await page.dblclick('.svg-canvas', { position: { x: 150, y: 150 } });
+frontend/tests/e2e/properties.spec.ts:207:    await page.click('.svg-canvas', { position: { x: 100, y: 200 } });
+frontend/tests/e2e/properties.spec.ts:211:    await page.dblclick('.svg-canvas', { position: { x: 100, y: 200 } });
+frontend/tests/e2e/properties.spec.ts:221:    const canvas = page.locator('.svg-canvas');
+frontend/tests/e2e/properties.spec.ts:223:    await canvas.click({ position: { x: 100, y: 200 } });
+frontend/tests/e2e/properties.spec.ts:225:    await canvas.click({ position: { x: 150, y: 200 } });
+frontend/tests/e2e/properties.spec.ts:229:    await page.dblclick('.svg-canvas', { position: { x: 125, y: 200 } });
+frontend/tests/e2e/properties.spec.ts:238:    await page.click('.svg-canvas', { position: { x: 100, y: 300 } });
+frontend/tests/e2e/properties.spec.ts:240:    await page.click('.svg-canvas', { position: { x: 300, y: 300 } });
+frontend/tests/e2e/properties.spec.ts:245:    const canvas = page.locator('.svg-canvas');
+frontend/tests/e2e/properties.spec.ts:246:    await canvas.click({ position: { x: 100, y: 300 } });
+frontend/tests/e2e/properties.spec.ts:247:    await canvas.click({ position: { x: 300, y: 300 } });
+frontend/tests/e2e/properties.spec.ts:251:    await page.dblclick('.svg-canvas', { position: { x: 200, y: 300 } });
+frontend/tests/e2e/guide-creation.spec.ts:2: * E2E tests for guide creation workflow
+frontend/tests/e2e/guide-creation.spec.ts:5: * 1. Select guide tool
+frontend/tests/e2e/guide-creation.spec.ts:8: * 4. Verify guide rendered as dashed line
+frontend/tests/e2e/guide-creation.spec.ts:9: * 5. Test undo/redo
+frontend/tests/e2e/guide-creation.spec.ts:19:    await page.waitForSelector('.svg-canvas', { timeout: 5000 });
+frontend/tests/e2e/guide-creation.spec.ts:22:  test('should create guide perpendicular to line through point', async ({ page }) => {
+frontend/tests/e2e/guide-creation.spec.ts:25:    await page.click('.svg-canvas', { position: { x: 200, y: 300 } });
+frontend/tests/e2e/guide-creation.spec.ts:28:    await page.click('.svg-canvas', { position: { x: 400, y: 300 } });
+frontend/tests/e2e/guide-creation.spec.ts:32:    await page.click('.svg-canvas', { position: { x: 200, y: 300 } });
+frontend/tests/e2e/guide-creation.spec.ts:33:    await page.click('.svg-canvas', { position: { x: 400, y: 300 } });
+frontend/tests/e2e/guide-creation.spec.ts:41:    await page.click('.svg-canvas', { position: { x: 300, y: 250 } });
+frontend/tests/e2e/guide-creation.spec.ts:43:    // 4. Select guide tool
+frontend/tests/e2e/guide-creation.spec.ts:47:    await page.click('.svg-canvas', { position: { x: 300, y: 300 } });
+frontend/tests/e2e/guide-creation.spec.ts:50:    await page.click('.svg-canvas', { position: { x: 300, y: 250 } });
+frontend/tests/e2e/guide-creation.spec.ts:52:    // 7. Verify guide rendered (guides are also rendered as line elements but with different styling)
+frontend/tests/e2e/guide-creation.spec.ts:58:  test('should render guide with dashed stroke style', async ({ page }) => {
+frontend/tests/e2e/guide-creation.spec.ts:61:    await page.click('.svg-canvas', { position: { x: 200, y: 300 } });
+frontend/tests/e2e/guide-creation.spec.ts:64:    await page.click('.svg-canvas', { position: { x: 400, y: 300 } });
+frontend/tests/e2e/guide-creation.spec.ts:67:    await page.click('.svg-canvas', { position: { x: 200, y: 300 } });
+frontend/tests/e2e/guide-creation.spec.ts:68:    await page.click('.svg-canvas', { position: { x: 400, y: 300 } });
+frontend/tests/e2e/guide-creation.spec.ts:71:    await page.click('.svg-canvas', { position: { x: 300, y: 250 } });
+frontend/tests/e2e/guide-creation.spec.ts:73:    // Create guide
+frontend/tests/e2e/guide-creation.spec.ts:75:    await page.click('.svg-canvas', { position: { x: 300, y: 300 } });
+frontend/tests/e2e/guide-creation.spec.ts:76:    await page.click('.svg-canvas', { position: { x: 300, y: 250 } });
+frontend/tests/e2e/guide-creation.spec.ts:78:    // Find the guide line element (last line added)
+frontend/tests/e2e/guide-creation.spec.ts:82:    // Check that at least one line has dashed stroke (guides have stroke-dasharray)
+frontend/tests/e2e/guide-creation.spec.ts:94:  test('should undo guide creation', async ({ page }) => {
+frontend/tests/e2e/guide-creation.spec.ts:97:    await page.click('.svg-canvas', { position: { x: 200, y: 300 } });
+frontend/tests/e2e/guide-creation.spec.ts:100:    await page.click('.svg-canvas', { position: { x: 400, y: 300 } });
+frontend/tests/e2e/guide-creation.spec.ts:103:    await page.click('.svg-canvas', { position: { x: 200, y: 300 } });
+frontend/tests/e2e/guide-creation.spec.ts:104:    await page.click('.svg-canvas', { position: { x: 400, y: 300 } });
+frontend/tests/e2e/guide-creation.spec.ts:110:    await page.click('.svg-canvas', { position: { x: 300, y: 250 } });
+frontend/tests/e2e/guide-creation.spec.ts:112:    // Create guide
+frontend/tests/e2e/guide-creation.spec.ts:114:    await page.click('.svg-canvas', { position: { x: 300, y: 300 } });
+frontend/tests/e2e/guide-creation.spec.ts:115:    await page.click('.svg-canvas', { position: { x: 300, y: 250 } });
+frontend/tests/e2e/guide-creation.spec.ts:117:    // Verify guide exists
+frontend/tests/e2e/guide-creation.spec.ts:121:    // Undo guide creation
+frontend/tests/e2e/guide-creation.spec.ts:124:    // Verify guide removed (line count should go back to reference line count)
+frontend/tests/e2e/guide-creation.spec.ts:129:  test('should redo guide creation', async ({ page }) => {
+frontend/tests/e2e/guide-creation.spec.ts:132:    await page.click('.svg-canvas', { position: { x: 200, y: 300 } });
+frontend/tests/e2e/guide-creation.spec.ts:135:    await page.click('.svg-canvas', { position: { x: 400, y: 300 } });
+frontend/tests/e2e/guide-creation.spec.ts:138:    await page.click('.svg-canvas', { position: { x: 200, y: 300 } });
+frontend/tests/e2e/guide-creation.spec.ts:139:    await page.click('.svg-canvas', { position: { x: 400, y: 300 } });
+frontend/tests/e2e/guide-creation.spec.ts:144:    await page.click('.svg-canvas', { position: { x: 300, y: 250 } });
+frontend/tests/e2e/guide-creation.spec.ts:146:    // Create guide
+frontend/tests/e2e/guide-creation.spec.ts:148:    await page.click('.svg-canvas', { position: { x: 300, y: 300 } });
+frontend/tests/e2e/guide-creation.spec.ts:149:    await page.click('.svg-canvas', { position: { x: 300, y: 250 } });
+frontend/tests/e2e/guide-creation.spec.ts:154:    // Verify guide removed
+frontend/tests/e2e/guide-creation.spec.ts:161:    // Verify guide restored
+frontend/tests/e2e/guide-creation.spec.ts:166:  test('should use keyboard shortcut for undo', async ({ page }) => {
+frontend/tests/e2e/guide-creation.spec.ts:167:    // Create reference line and guide
+frontend/tests/e2e/guide-creation.spec.ts:169:    await page.click('.svg-canvas', { position: { x: 200, y: 300 } });
+frontend/tests/e2e/guide-creation.spec.ts:172:    await page.click('.svg-canvas', { position: { x: 400, y: 300 } });
+frontend/tests/e2e/guide-creation.spec.ts:175:    await page.click('.svg-canvas', { position: { x: 200, y: 300 } });
+frontend/tests/e2e/guide-creation.spec.ts:176:    await page.click('.svg-canvas', { position: { x: 400, y: 300 } });
+frontend/tests/e2e/guide-creation.spec.ts:181:    await page.click('.svg-canvas', { position: { x: 300, y: 250 } });
+frontend/tests/e2e/guide-creation.spec.ts:184:    await page.click('.svg-canvas', { position: { x: 300, y: 300 } });
+frontend/tests/e2e/guide-creation.spec.ts:185:    await page.click('.svg-canvas', { position: { x: 300, y: 250 } });
+frontend/tests/e2e/guide-creation.spec.ts:190:    // Verify guide removed
+frontend/tests/e2e/guide-creation.spec.ts:195:  test('should create multiple guides on same reference line', async ({ page }) => {
+frontend/tests/e2e/guide-creation.spec.ts:198:    await page.click('.svg-canvas', { position: { x: 200, y: 300 } });
+frontend/tests/e2e/guide-creation.spec.ts:201:    await page.click('.svg-canvas', { position: { x: 400, y: 300 } });
+frontend/tests/e2e/guide-creation.spec.ts:204:    await page.click('.svg-canvas', { position: { x: 200, y: 300 } });
+frontend/tests/e2e/guide-creation.spec.ts:205:    await page.click('.svg-canvas', { position: { x: 400, y: 300 } });
+frontend/tests/e2e/guide-creation.spec.ts:209:    // Create three through-points at different positions
+frontend/tests/e2e/guide-creation.spec.ts:211:    await page.click('.svg-canvas', { position: { x: 250, y: 250 } });
+frontend/tests/e2e/guide-creation.spec.ts:214:    await page.click('.svg-canvas', { position: { x: 300, y: 250 } });
+frontend/tests/e2e/guide-creation.spec.ts:217:    await page.click('.svg-canvas', { position: { x: 350, y: 250 } });
+frontend/tests/e2e/guide-creation.spec.ts:219:    // Create first guide
+frontend/tests/e2e/guide-creation.spec.ts:221:    await page.click('.svg-canvas', { position: { x: 300, y: 300 } });
+frontend/tests/e2e/guide-creation.spec.ts:222:    await page.click('.svg-canvas', { position: { x: 250, y: 250 } });
+frontend/tests/e2e/guide-creation.spec.ts:224:    // Create second guide
+frontend/tests/e2e/guide-creation.spec.ts:226:    await page.click('.svg-canvas', { position: { x: 300, y: 300 } });
+frontend/tests/e2e/guide-creation.spec.ts:227:    await page.click('.svg-canvas', { position: { x: 300, y: 250 } });
+frontend/tests/e2e/guide-creation.spec.ts:229:    // Create third guide
+frontend/tests/e2e/guide-creation.spec.ts:231:    await page.click('.svg-canvas', { position: { x: 300, y: 300 } });
+frontend/tests/e2e/guide-creation.spec.ts:232:    await page.click('.svg-canvas', { position: { x: 350, y: 250 } });
+frontend/tests/e2e/guide-creation.spec.ts:234:    // Verify three guides created (3 more lines than reference line)
+frontend/tests/e2e/guide-creation.spec.ts:239:  test('should create guide perpendicular to vertical line', async ({ page }) => {
+frontend/tests/e2e/guide-creation.spec.ts:242:    await page.click('.svg-canvas', { position: { x: 300, y: 200 } });
+frontend/tests/e2e/guide-creation.spec.ts:245:    await page.click('.svg-canvas', { position: { x: 300, y: 400 } });
+frontend/tests/e2e/guide-creation.spec.ts:248:    await page.click('.svg-canvas', { position: { x: 300, y: 200 } });
+frontend/tests/e2e/guide-creation.spec.ts:249:    await page.click('.svg-canvas', { position: { x: 300, y: 400 } });
+frontend/tests/e2e/guide-creation.spec.ts:253:    await page.click('.svg-canvas', { position: { x: 350, y: 300 } });
+frontend/tests/e2e/guide-creation.spec.ts:255:    // Create guide perpendicular to vertical line
+frontend/tests/e2e/guide-creation.spec.ts:257:    await page.click('.svg-canvas', { position: { x: 300, y: 300 } });
+frontend/tests/e2e/guide-creation.spec.ts:258:    await page.click('.svg-canvas', { position: { x: 350, y: 300 } });
+frontend/tests/e2e/guide-creation.spec.ts:260:    // Verify guide created (should be horizontal, perpendicular to vertical reference)
+frontend/tests/e2e/guide-creation.spec.ts:262:    expect(lines).toBe(2); // Reference line + guide
+frontend/tests/e2e/guide-creation.spec.ts:266:    // Try to create guide without reference line
+frontend/tests/e2e/guide-creation.spec.ts:268:    await page.click('.svg-canvas', { position: { x: 300, y: 300 } });
+frontend/tests/e2e/guide-creation.spec.ts:273:    await page.click('.svg-canvas', { position: { x: 300, y: 300 } });
+frontend/tests/e2e/guide-creation.spec.ts:275:    // Verify no guide created
+frontend/tests/e2e/active-plane-shortcuts.spec.ts:6:    await page.waitForSelector('svg.diedrico-canvas');
+frontend/tests/e2e/active-plane-shortcuts.spec.ts:9:  test('should cycle active plane with Tab and Shift+Tab', async ({ page }) => {
+frontend/tests/e2e/active-plane-shortcuts.spec.ts:10:    // Locate the plane selector dropdown
+frontend/tests/e2e/active-plane-shortcuts.spec.ts:11:    const planeSelect = page.locator('.plane-select');
+frontend/tests/e2e/active-plane-shortcuts.spec.ts:14:    // By default, World initializes with plane_H and plane_V
+frontend/tests/e2e/active-plane-shortcuts.spec.ts:15:    // plane_H is usually the first one? Or active one?
+frontend/tests/e2e/active-plane-shortcuts.spec.ts:17:    // InitializationOps usually sets plane_H as active or first created is active?
+frontend/tests/e2e/active-plane-shortcuts.spec.ts:20:    const initialValue = await planeSelect.inputValue();
+frontend/tests/e2e/active-plane-shortcuts.spec.ts:27:    const secondValue = await planeSelect.inputValue();
+frontend/tests/e2e/active-plane-shortcuts.spec.ts:34:    await expect(planeSelect).toHaveValue(initialValue);
+frontend/tests/e2e/active-plane-shortcuts.spec.ts:38:    expect(await planeSelect.inputValue()).toBe(secondValue);
+frontend/tests/e2e/point-transport.spec.ts:4: * Tests the complete user journey for transporting points between planes:
+frontend/tests/e2e/point-transport.spec.ts:5: * 1. Create source point on one plane
+frontend/tests/e2e/point-transport.spec.ts:6: * 2. Create guide perpendicular to hinge line
+frontend/tests/e2e/point-transport.spec.ts:9: * 5. Select guide
+frontend/tests/e2e/point-transport.spec.ts:10: * 6. Verify transported point appears on opposite plane
+frontend/tests/e2e/point-transport.spec.ts:11: * 7. Test undo/redo
+frontend/tests/e2e/point-transport.spec.ts:21:    await page.waitForSelector('.svg-canvas', { timeout: 5000 });
+frontend/tests/e2e/point-transport.spec.ts:24:  test('should transport point between planes via guide', async ({ page }) => {
+frontend/tests/e2e/point-transport.spec.ts:26:    // 1. A hinge line (HL) connecting the two planes
+frontend/tests/e2e/point-transport.spec.ts:27:    // 2. A guide perpendicular to the HL
+frontend/tests/e2e/point-transport.spec.ts:28:    // 3. A source point on one plane
+frontend/tests/e2e/point-transport.spec.ts:29:    // 4. Transport operation to create point on opposite plane
+frontend/tests/e2e/point-transport.spec.ts:39:    // Verify tool becomes active (button should have 'active' class)
+frontend/tests/e2e/point-transport.spec.ts:40:    await expect(transportButton).toHaveClass(/active/);
+frontend/tests/e2e/point-transport.spec.ts:43:  test('should handle invalid transport selection gracefully', async ({ page }) => {
+frontend/tests/e2e/point-transport.spec.ts:46:    // - Selecting non-guide element in second step
+frontend/tests/e2e/point-transport.spec.ts:52:    await expect(transportButton).toHaveClass(/active/);
+frontend/tests/e2e/point-transport.spec.ts:55:  test('should undo transport operation', async ({ page }) => {
+frontend/tests/e2e/point-transport.spec.ts:56:    // TODO: Test undo functionality:
+frontend/tests/e2e/point-transport.spec.ts:58:    // - Click undo
+frontend/tests/e2e/point-transport.spec.ts:63:    // Placeholder: verify undo button exists
+frontend/tests/e2e/point-transport.spec.ts:64:    const undoButton = page.locator('button:has-text("Undo")');
+frontend/tests/e2e/point-transport.spec.ts:65:    await expect(undoButton).toBeVisible();
+frontend/tests/e2e/parametric-update.spec.ts:6: * Tests the parametric dependency system:
+frontend/tests/e2e/parametric-update.spec.ts:134:    // 2. Drag point rapidly across canvas
+frontend/tests/e2e/parametric-update.spec.ts:178: * - Moving element while tool is active
+frontend/tests/e2e/line-creation.spec.ts:21:    await page.waitForSelector('.svg-canvas');
+frontend/tests/e2e/line-creation.spec.ts:29:    const canvas = page.locator('.svg-canvas');
+frontend/tests/e2e/line-creation.spec.ts:32:    await canvas.click({ position: { x: 200, y: 150 } });
+frontend/tests/e2e/line-creation.spec.ts:35:    await canvas.click({ position: { x: 400, y: 300 } });
+frontend/tests/e2e/line-creation.spec.ts:38:    await expect(page.locator('.svg-canvas circle')).toHaveCount(2);
+frontend/tests/e2e/line-creation.spec.ts:45:    // Verify tool is active
+frontend/tests/e2e/line-creation.spec.ts:46:    await expect(lineToolButton).toHaveClass(/active/);
+frontend/tests/e2e/line-creation.spec.ts:49:    await canvas.click({ position: { x: 200, y: 150 } });
+frontend/tests/e2e/line-creation.spec.ts:52:    await canvas.click({ position: { x: 400, y: 300 } });
+frontend/tests/e2e/line-creation.spec.ts:54:    // Step 5: Verify line appears on canvas
+frontend/tests/e2e/line-creation.spec.ts:56:    const lines = page.locator('.svg-canvas line[data-entity-id^="line_"]');
+frontend/tests/e2e/line-creation.spec.ts:67:    const canvas = page.locator('.svg-canvas');
+frontend/tests/e2e/line-creation.spec.ts:68:    await canvas.click({ position: { x: 200, y: 150 } });
+frontend/tests/e2e/line-creation.spec.ts:69:    await canvas.click({ position: { x: 400, y: 300 } });
+frontend/tests/e2e/line-creation.spec.ts:75:    await canvas.click({ position: { x: 205, y: 155 } });
+frontend/tests/e2e/line-creation.spec.ts:78:    await canvas.click({ position: { x: 395, y: 295 } });
+frontend/tests/e2e/line-creation.spec.ts:81:    const lines = page.locator('.svg-canvas line[data-entity-id^="line_"]');
+frontend/tests/e2e/line-creation.spec.ts:86:    // Create three points
+frontend/tests/e2e/line-creation.spec.ts:88:    const canvas = page.locator('.svg-canvas');
+frontend/tests/e2e/line-creation.spec.ts:89:    await canvas.click({ position: { x: 200, y: 150 } });
+frontend/tests/e2e/line-creation.spec.ts:90:    await canvas.click({ position: { x: 400, y: 300 } });
+frontend/tests/e2e/line-creation.spec.ts:91:    await canvas.click({ position: { x: 600, y: 200 } });
+frontend/tests/e2e/line-creation.spec.ts:93:    await expect(page.locator('.svg-canvas circle')).toHaveCount(3);
+frontend/tests/e2e/line-creation.spec.ts:99:    await canvas.click({ position: { x: 200, y: 150 } });
+frontend/tests/e2e/line-creation.spec.ts:100:    await canvas.click({ position: { x: 400, y: 300 } });
+frontend/tests/e2e/line-creation.spec.ts:103:    await canvas.click({ position: { x: 400, y: 300 } });
+frontend/tests/e2e/line-creation.spec.ts:104:    await canvas.click({ position: { x: 600, y: 200 } });
+frontend/tests/e2e/line-creation.spec.ts:107:    const lines = page.locator('.svg-canvas line[data-entity-id^="line_"]');
+frontend/tests/e2e/line-creation.spec.ts:114:    const canvas = page.locator('.svg-canvas');
+frontend/tests/e2e/line-creation.spec.ts:115:    await canvas.click({ position: { x: 200, y: 150 } });
+frontend/tests/e2e/line-creation.spec.ts:116:    await canvas.click({ position: { x: 400, y: 300 } });
+frontend/tests/e2e/line-creation.spec.ts:122:    await canvas.hover({ position: { x: 200, y: 150 } });
+frontend/tests/e2e/line-creation.spec.ts:128:    const points = page.locator('.svg-canvas circle');
+frontend/tests/e2e/line-creation.spec.ts:140:    await expect(pointToolButton).toHaveClass(/active/);
+frontend/tests/e2e/line-creation.spec.ts:146:    // Point tool should no longer be active
+frontend/tests/e2e/line-creation.spec.ts:147:    await expect(pointToolButton).not.toHaveClass(/active/);
+frontend/tests/e2e/line-creation.spec.ts:149:    // Line tool should be active
+frontend/tests/e2e/line-creation.spec.ts:150:    await expect(lineToolButton).toHaveClass(/active/);
+frontend/tests/e2e/distance-transport.spec.ts:6: * Tests the complete workflow of transporting distances (segments) between projection planes:
+frontend/tests/e2e/distance-transport.spec.ts:7: * 1. Create a guide perpendicular to HL_HV
+frontend/tests/e2e/distance-transport.spec.ts:8: * 2. Create two points and a segment on one plane (e.g., P_H)
+frontend/tests/e2e/distance-transport.spec.ts:9: * 3. Transport the segment along the guide to the other plane (P_V)
+frontend/tests/e2e/distance-transport.spec.ts:32:    // 1. Create a guide
+frontend/tests/e2e/distance-transport.spec.ts:34:    // await page.locator('[data-testid="workspace-canvas-P_H"]').click({ position: { x: 150, y: 100 } });
+frontend/tests/e2e/distance-transport.spec.ts:35:    // await page.click('[data-testid="guide-tool"]');
+frontend/tests/e2e/distance-transport.spec.ts:41:    // await page.locator('[data-testid="workspace-canvas-P_H"]').click({ position: { x: 100, y: 80 } });
+frontend/tests/e2e/distance-transport.spec.ts:42:    // await page.locator('[data-testid="workspace-canvas-P_H"]').click({ position: { x: 200, y: 80 } });
+frontend/tests/e2e/distance-transport.spec.ts:52:    // 5. Click guide
+frontend/tests/e2e/distance-transport.spec.ts:59:    // const canvasV = await page.locator('[data-testid="workspace-canvas-P_V"]');
+frontend/tests/e2e/distance-transport.spec.ts:60:    // const transportedSegment = await canvasV.locator('[data-element-kind="Segment2DByPoints"]');
+frontend/tests/e2e/distance-transport.spec.ts:62:    // const transportedPoints = await canvasV.locator('[data-element-kind="Point2DDerived"]');
+frontend/tests/e2e/distance-transport.spec.ts:112:    // TODO: Once parametric update is implemented:
+frontend/tests/e2e/distance-transport.spec.ts:114:    // 1. Create guide and transport segment S001 to create s1
+frontend/tests/e2e/distance-transport.spec.ts:146:    // 4. Verify action shows inputs (guide + source segment) and outputs (transported segment + 2 points)
+frontend/tests/e2e/create-segment.spec.ts:9: * 5. Test undo/redo
+frontend/tests/e2e/create-segment.spec.ts:19:    await page.waitForSelector('.svg-canvas', { timeout: 5000 });
+frontend/tests/e2e/create-segment.spec.ts:25:    await page.click('.svg-canvas', { position: { x: 200, y: 200 } });
+frontend/tests/e2e/create-segment.spec.ts:33:    await page.click('.svg-canvas', { position: { x: 400, y: 300 } });
+frontend/tests/e2e/create-segment.spec.ts:43:    await page.click('.svg-canvas', { position: { x: 200, y: 200 } });
+frontend/tests/e2e/create-segment.spec.ts:46:    await page.click('.svg-canvas', { position: { x: 400, y: 300 } });
+frontend/tests/e2e/create-segment.spec.ts:66:  test('should undo segment creation', async ({ page }) => {
+frontend/tests/e2e/create-segment.spec.ts:69:    await page.click('.svg-canvas', { position: { x: 200, y: 200 } });
+frontend/tests/e2e/create-segment.spec.ts:72:    await page.click('.svg-canvas', { position: { x: 400, y: 300 } });
+frontend/tests/e2e/create-segment.spec.ts:76:    await page.click('.svg-canvas', { position: { x: 200, y: 200 } });
+frontend/tests/e2e/create-segment.spec.ts:77:    await page.click('.svg-canvas', { position: { x: 400, y: 300 } });
+frontend/tests/e2e/create-segment.spec.ts:94:    await page.click('.svg-canvas', { position: { x: 200, y: 200 } });
+frontend/tests/e2e/create-segment.spec.ts:97:    await page.click('.svg-canvas', { position: { x: 400, y: 300 } });
+frontend/tests/e2e/create-segment.spec.ts:101:    await page.click('.svg-canvas', { position: { x: 200, y: 200 } });
+frontend/tests/e2e/create-segment.spec.ts:102:    await page.click('.svg-canvas', { position: { x: 400, y: 300 } });
+frontend/tests/e2e/create-segment.spec.ts:119:  test('should use keyboard shortcut for undo', async ({ page }) => {
+frontend/tests/e2e/create-segment.spec.ts:122:    await page.click('.svg-canvas', { position: { x: 200, y: 200 } });
+frontend/tests/e2e/create-segment.spec.ts:125:    await page.click('.svg-canvas', { position: { x: 400, y: 300 } });
+frontend/tests/e2e/create-segment.spec.ts:128:    await page.click('.svg-canvas', { position: { x: 200, y: 200 } });
+frontend/tests/e2e/create-segment.spec.ts:129:    await page.click('.svg-canvas', { position: { x: 400, y: 300 } });
+frontend/tests/e2e/create-segment.spec.ts:140:    // Create three points
+frontend/tests/e2e/create-segment.spec.ts:142:    await page.click('.svg-canvas', { position: { x: 200, y: 200 } });
+frontend/tests/e2e/create-segment.spec.ts:145:    await page.click('.svg-canvas', { position: { x: 400, y: 200 } });
+frontend/tests/e2e/create-segment.spec.ts:148:    await page.click('.svg-canvas', { position: { x: 300, y: 350 } });
+frontend/tests/e2e/create-segment.spec.ts:152:    await page.click('.svg-canvas', { position: { x: 200, y: 200 } });
+frontend/tests/e2e/create-segment.spec.ts:153:    await page.click('.svg-canvas', { position: { x: 400, y: 200 } });
+frontend/tests/e2e/create-segment.spec.ts:157:    await page.click('.svg-canvas', { position: { x: 400, y: 200 } });
+frontend/tests/e2e/create-segment.spec.ts:158:    await page.click('.svg-canvas', { position: { x: 300, y: 350 } });
+frontend/tests/e2e/create-segment.spec.ts:162:    await page.click('.svg-canvas', { position: { x: 300, y: 350 } });
+frontend/tests/e2e/create-segment.spec.ts:163:    await page.click('.svg-canvas', { position: { x: 200, y: 200 } });
+frontend/tests/e2e/create-segment.spec.ts:165:    // Verify three segments rendered
+frontend/tests/e2e/create-segment.spec.ts:170:  test('should create segments on different planes', async ({ page }) => {
+frontend/tests/e2e/create-segment.spec.ts:171:    // Create two points on horizontal plane
+frontend/tests/e2e/create-segment.spec.ts:173:    await page.click('.svg-canvas', { position: { x: 200, y: 200 } });
+frontend/tests/e2e/create-segment.spec.ts:176:    await page.click('.svg-canvas', { position: { x: 400, y: 200 } });
+frontend/tests/e2e/create-segment.spec.ts:178:    // Create segment on horizontal plane
+frontend/tests/e2e/create-segment.spec.ts:180:    await page.click('.svg-canvas', { position: { x: 200, y: 200 } });
+frontend/tests/e2e/create-segment.spec.ts:181:    await page.click('.svg-canvas', { position: { x: 400, y: 200 } });
+frontend/tests/e2e/create-segment.spec.ts:183:    // Switch to vertical plane
+frontend/tests/e2e/create-segment.spec.ts:186:    // Create two points on vertical plane
+frontend/tests/e2e/create-segment.spec.ts:188:    await page.click('.svg-canvas', { position: { x: 200, y: 600 } });
+frontend/tests/e2e/create-segment.spec.ts:191:    await page.click('.svg-canvas', { position: { x: 400, y: 600 } });
+frontend/tests/e2e/create-segment.spec.ts:193:    // Create segment on vertical plane
+frontend/tests/e2e/create-segment.spec.ts:195:    await page.click('.svg-canvas', { position: { x: 200, y: 600 } });
+frontend/tests/e2e/create-segment.spec.ts:196:    await page.click('.svg-canvas', { position: { x: 400, y: 600 } });
+frontend/tests/e2e/create-segment.spec.ts:206:    await page.click('.svg-canvas', { position: { x: 200, y: 200 } });
+frontend/tests/e2e/create-segment.spec.ts:210:    await page.click('.svg-canvas', { position: { x: 200, y: 200 } });
+frontend/tests/e2e/create-segment.spec.ts:211:    await page.click('.svg-canvas', { position: { x: 200, y: 200 } });
+frontend/tests/e2e/create-segment.spec.ts:221:    await page.click('.svg-canvas', { position: { x: 200, y: 200 } });
+frontend/tests/e2e/create-segment.spec.ts:224:    await page.click('.svg-canvas', { position: { x: 400, y: 300 } });
+frontend/tests/e2e/create-segment.spec.ts:228:    await page.click('.svg-canvas', { position: { x: 200, y: 200 } });
+frontend/tests/e2e/create-segment.spec.ts:229:    await page.click('.svg-canvas', { position: { x: 400, y: 300 } });
+frontend/tests/e2e/active-plane-emphasis.spec.ts:4: * Tests that active plane elements are visually emphasized (100% opacity)
+frontend/tests/e2e/active-plane-emphasis.spec.ts:5: * while inactive plane elements are de-emphasized (50% opacity).
+frontend/tests/e2e/active-plane-emphasis.spec.ts:18:  test('should display active plane elements with full opacity', async ({ page }) => {
+frontend/tests/e2e/active-plane-emphasis.spec.ts:22:    // Create a point on P_H (active by default)
+frontend/tests/e2e/active-plane-emphasis.spec.ts:27:    // Click on P_H plane area (upper region)
+frontend/tests/e2e/active-plane-emphasis.spec.ts:40:    // Check opacity of point on active plane
+frontend/tests/e2e/active-plane-emphasis.spec.ts:46:    // Active plane elements should have 100% opacity
+frontend/tests/e2e/active-plane-emphasis.spec.ts:50:  test('should reduce opacity of inactive plane elements when switching planes', async ({ page }) => {
+frontend/tests/e2e/active-plane-emphasis.spec.ts:54:    // Create a point on P_H (active by default)
+frontend/tests/e2e/active-plane-emphasis.spec.ts:72:    // Switch to P_V plane by clicking on it or using plane selector
+frontend/tests/e2e/active-plane-emphasis.spec.ts:73:    // (Assuming there's a plane selector in the UI)
+frontend/tests/e2e/active-plane-emphasis.spec.ts:74:    const planeSelector = page.locator('[data-testid="plane-selector"]');
+frontend/tests/e2e/active-plane-emphasis.spec.ts:75:    if (await planeSelector.count() > 0) {
+frontend/tests/e2e/active-plane-emphasis.spec.ts:76:      await planeSelector.click();
+frontend/tests/e2e/active-plane-emphasis.spec.ts:80:      // Alternative: click on P_V plane area
+frontend/tests/e2e/active-plane-emphasis.spec.ts:87:    // Check opacity of point now on inactive plane
+frontend/tests/e2e/active-plane-emphasis.spec.ts:90:    // Inactive plane elements should have 50% opacity
+frontend/tests/e2e/active-plane-emphasis.spec.ts:94:  test('should maintain full opacity for guides regardless of active plane', async ({ page }) => {
+frontend/tests/e2e/active-plane-emphasis.spec.ts:96:    const guideTool = page.locator('[data-testid="tool-guide"]');
+frontend/tests/e2e/active-plane-emphasis.spec.ts:98:    if (await guideTool.count() === 0) {
+frontend/tests/e2e/active-plane-emphasis.spec.ts:103:    await guideTool.click();
+frontend/tests/e2e/active-plane-emphasis.spec.ts:105:    // Create a guide
+frontend/tests/e2e/active-plane-emphasis.spec.ts:114:    // Click to define guide through-point
+frontend/tests/e2e/active-plane-emphasis.spec.ts:118:    // Get guide elements
+frontend/tests/e2e/active-plane-emphasis.spec.ts:119:    const guides = page.locator('line[data-layer="guides"]');
+frontend/tests/e2e/active-plane-emphasis.spec.ts:120:    if (await guides.count() > 0) {
+frontend/tests/e2e/active-plane-emphasis.spec.ts:121:      const guide = guides.first();
+frontend/tests/e2e/active-plane-emphasis.spec.ts:122:      const opacity = await guide.evaluate(el => window.getComputedStyle(el).opacity);
+frontend/tests/e2e/active-plane-emphasis.spec.ts:127:      // Switch active plane and verify guide still has 100% opacity
+frontend/tests/e2e/active-plane-emphasis.spec.ts:128:      await page.click('[data-testid="plane-selector"]');
+frontend/tests/e2e/active-plane-emphasis.spec.ts:132:      const opacityAfter = await guide.evaluate(el => window.getComputedStyle(el).opacity);
+frontend/tests/e2e/active-plane-emphasis.spec.ts:137:  test('should maintain full opacity for hinge lines regardless of active plane', async ({ page }) => {
+frontend/tests/e2e/active-plane-emphasis.spec.ts:148:    // Check opacity with P_H active
+frontend/tests/e2e/active-plane-emphasis.spec.ts:162:    // Check opacity with P_V active
+frontend/tests/e2e/active-plane-emphasis.spec.ts:167:  test('should apply smooth opacity transitions when switching planes', async ({ page }) => {
+frontend/tests/e2e/active-plane-emphasis.spec.ts:171:    // Create points on both planes
+frontend/tests/e2e/active-plane-emphasis.spec.ts:183:    // Record initial time and switch plane
+frontend/tests/e2e/active-plane-emphasis.spec.ts:207:  test('should not allow clicking elements on inactive plane', async ({ page }) => {
+frontend/tests/e2e/active-plane-emphasis.spec.ts:222:    // Switch to P_V (make P_H inactive)
+frontend/tests/e2e/active-plane-emphasis.spec.ts:226:    // Try to create a line using the points on P_H (now inactive)
+frontend/tests/e2e/active-plane-emphasis.spec.ts:229:    // Try clicking on a point on inactive P_H
+frontend/tests/e2e/active-plane-emphasis.spec.ts:233:    // Check for error message or no selection
+frontend/tests/e2e/create-point.spec.ts:6: * 2. User clicks on canvas
+frontend/tests/e2e/create-point.spec.ts:19:    await page.waitForSelector('.svg-canvas');
+frontend/tests/e2e/create-point.spec.ts:22:  test('should create point when Point tool is active and canvas is clicked', async ({ page }) => {
+frontend/tests/e2e/create-point.spec.ts:28:    // Verify tool is active (button should have active class)
+frontend/tests/e2e/create-point.spec.ts:29:    await expect(pointToolButton).toHaveClass(/active/);
+frontend/tests/e2e/create-point.spec.ts:31:    // Step 2: Click on canvas
+frontend/tests/e2e/create-point.spec.ts:32:    const canvas = page.locator('.svg-canvas');
+frontend/tests/e2e/create-point.spec.ts:33:    await canvas.click({
+frontend/tests/e2e/create-point.spec.ts:37:    // Step 3: Verify point appears on canvas
+frontend/tests/e2e/create-point.spec.ts:39:    const points = page.locator('.svg-canvas circle');
+frontend/tests/e2e/create-point.spec.ts:51:    const canvas = page.locator('.svg-canvas');
+frontend/tests/e2e/create-point.spec.ts:54:    await canvas.click({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/create-point.spec.ts:55:    await canvas.click({ position: { x: 200, y: 150 } });
+frontend/tests/e2e/create-point.spec.ts:56:    await canvas.click({ position: { x: 300, y: 200 } });
+frontend/tests/e2e/create-point.spec.ts:59:    const points = page.locator('.svg-canvas circle');
+frontend/tests/e2e/create-point.spec.ts:63:  test('should create points on horizontal plane (P_H)', async ({ page }) => {
+frontend/tests/e2e/create-point.spec.ts:64:    // Select P_H plane
+frontend/tests/e2e/create-point.spec.ts:67:    await expect(phButton).toHaveClass(/active/);
+frontend/tests/e2e/create-point.spec.ts:71:    const canvas = page.locator('.svg-canvas');
+frontend/tests/e2e/create-point.spec.ts:72:    await canvas.click({ position: { x: 150, y: 250 } });
+frontend/tests/e2e/create-point.spec.ts:75:    const points = page.locator('.svg-canvas circle');
+frontend/tests/e2e/create-point.spec.ts:79:  test('should create points on vertical plane (P_V)', async ({ page }) => {
+frontend/tests/e2e/create-point.spec.ts:80:    // Select P_V plane
+frontend/tests/e2e/create-point.spec.ts:83:    await expect(pvButton).toHaveClass(/active/);
+frontend/tests/e2e/create-point.spec.ts:87:    const canvas = page.locator('.svg-canvas');
+frontend/tests/e2e/create-point.spec.ts:88:    await canvas.click({ position: { x: 150, y: 250 } });
+frontend/tests/e2e/create-point.spec.ts:91:    const points = page.locator('.svg-canvas circle');
+frontend/tests/e2e/create-point.spec.ts:95:  test('should not create points when Point tool is not active', async ({ page }) => {
+frontend/tests/e2e/create-point.spec.ts:97:    const canvas = page.locator('.svg-canvas');
+frontend/tests/e2e/create-point.spec.ts:99:    // Click canvas
+frontend/tests/e2e/create-point.spec.ts:100:    await canvas.click({ position: { x: 200, y: 150 } });
+frontend/tests/e2e/create-point.spec.ts:104:    const initialCount = await page.locator('.svg-canvas circle').count();
+frontend/tests/e2e/create-point.spec.ts:107:    await canvas.click({ position: { x: 300, y: 200 } });
+frontend/tests/e2e/create-point.spec.ts:110:    const finalCount = await page.locator('.svg-canvas circle').count();
+frontend/tests/e2e/create-point.spec.ts:118:    await expect(pointTool).toHaveClass(/active/);
+frontend/tests/e2e/create-point.spec.ts:124:    // Tool should no longer be active
+frontend/tests/e2e/create-point.spec.ts:128:  test('should show visual feedback when hovering over canvas with Point tool active', async ({ page }) => {
+frontend/tests/e2e/create-point.spec.ts:132:    const canvas = page.locator('.svg-canvas');
+frontend/tests/e2e/create-point.spec.ts:134:    // Hover over canvas
+frontend/tests/e2e/create-point.spec.ts:135:    await canvas.hover({ position: { x: 200, y: 150 } });
+frontend/tests/e2e/dependencies.spec.ts:2: * E2E tests for dependency tracking and parametric updates
+frontend/tests/e2e/dependencies.spec.ts:15:  test('intersection point updates when base line moves', async ({ page }) => {
+frontend/tests/e2e/dependencies.spec.ts:16:    const canvas = page.locator('canvas').first();
+frontend/tests/e2e/dependencies.spec.ts:18:    // Switch to P_H plane
+frontend/tests/e2e/dependencies.spec.ts:19:    await page.click('[data-testid="plane-selector-P_H"]');
+frontend/tests/e2e/dependencies.spec.ts:23:    await canvas.click({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/dependencies.spec.ts:24:    await canvas.click({ position: { x: 300, y: 100 } });
+frontend/tests/e2e/dependencies.spec.ts:27:    await canvas.click({ position: { x: 200, y: 50 } });
+frontend/tests/e2e/dependencies.spec.ts:28:    await canvas.click({ position: { x: 200, y: 150 } });
+frontend/tests/e2e/dependencies.spec.ts:30:    // Create intersection point
+frontend/tests/e2e/dependencies.spec.ts:31:    await page.click('[data-testid="tool-intersection"]');
+frontend/tests/e2e/dependencies.spec.ts:33:    await canvas.click({ position: { x: 200, y: 100 } });
+frontend/tests/e2e/dependencies.spec.ts:35:    await canvas.click({ position: { x: 200, y: 100 } });
+frontend/tests/e2e/dependencies.spec.ts:37:    // Verify intersection point was created (should be at approximately 200, 100)
+frontend/tests/e2e/dependencies.spec.ts:38:    // Note: Actual verification would require accessing canvas rendering or World state
+frontend/tests/e2e/dependencies.spec.ts:40:    // TODO: Move one of the base points and verify intersection point updates
+frontend/tests/e2e/dependencies.spec.ts:43:    // For now, verify that the intersection tool can be activated
+frontend/tests/e2e/dependencies.spec.ts:44:    // and that clicking creates an intersection
+frontend/tests/e2e/dependencies.spec.ts:50:    const canvas = page.locator('canvas').first();
+frontend/tests/e2e/dependencies.spec.ts:52:    // Switch to P_H plane
+frontend/tests/e2e/dependencies.spec.ts:53:    await page.click('[data-testid="plane-selector-P_H"]');
+frontend/tests/e2e/dependencies.spec.ts:57:    await canvas.click({ position: { x: 200, y: 200 } });
+frontend/tests/e2e/dependencies.spec.ts:61:    await canvas.click({ position: { x: 200, y: 200 } }); // center
+frontend/tests/e2e/dependencies.spec.ts:62:    await canvas.click({ position: { x: 250, y: 200 } }); // radius point
+frontend/tests/e2e/dependencies.spec.ts:73:    const canvas = page.locator('canvas').first();
+frontend/tests/e2e/dependencies.spec.ts:75:    // Switch to P_H plane
+frontend/tests/e2e/dependencies.spec.ts:76:    await page.click('[data-testid="plane-selector-P_H"]');
+frontend/tests/e2e/dependencies.spec.ts:80:    await canvas.click({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/dependencies.spec.ts:81:    await canvas.click({ position: { x: 300, y: 100 } });
+frontend/tests/e2e/dependencies.spec.ts:85:    await canvas.click({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/dependencies.spec.ts:86:    await canvas.click({ position: { x: 300, y: 100 } });
+frontend/tests/e2e/dependencies.spec.ts:97:    const canvas = page.locator('canvas').first();
+frontend/tests/e2e/dependencies.spec.ts:99:    // Switch to P_H plane
+frontend/tests/e2e/dependencies.spec.ts:100:    await page.click('[data-testid="plane-selector-P_H"]');
+frontend/tests/e2e/dependencies.spec.ts:104:    await canvas.click({ position: { x: 100, y: 100 } }); // point1
+frontend/tests/e2e/dependencies.spec.ts:105:    await canvas.click({ position: { x: 300, y: 100 } }); // point2
+frontend/tests/e2e/dependencies.spec.ts:106:    await canvas.click({ position: { x: 200, y: 50 } });  // point3
+frontend/tests/e2e/dependencies.spec.ts:107:    await canvas.click({ position: { x: 200, y: 150 } }); // point4
+frontend/tests/e2e/dependencies.spec.ts:111:    await canvas.click({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/dependencies.spec.ts:112:    await canvas.click({ position: { x: 300, y: 100 } }); // line1 from point1-point2
+frontend/tests/e2e/dependencies.spec.ts:114:    await canvas.click({ position: { x: 200, y: 50 } });
+frontend/tests/e2e/dependencies.spec.ts:115:    await canvas.click({ position: { x: 200, y: 150 } });  // line2 from point3-point4
+frontend/tests/e2e/dependencies.spec.ts:117:    // Create intersection point (depends on line1 and line2)
+frontend/tests/e2e/dependencies.spec.ts:118:    await page.click('[data-testid="tool-intersection"]');
+frontend/tests/e2e/dependencies.spec.ts:119:    await canvas.click({ position: { x: 200, y: 100 } }); // click on line1
+frontend/tests/e2e/dependencies.spec.ts:120:    await canvas.click({ position: { x: 200, y: 100 } }); // click on line2
+frontend/tests/e2e/dependencies.spec.ts:122:    // Create circle with intersection as center (depends on intersection point)
+frontend/tests/e2e/dependencies.spec.ts:124:    await canvas.click({ position: { x: 200, y: 100 } }); // intersection as center
+frontend/tests/e2e/dependencies.spec.ts:125:    await canvas.click({ position: { x: 250, y: 100 } }); // radius point
+frontend/tests/e2e/dependencies.spec.ts:133:    // Dependency chain: point1 -> line1 -> intersection -> circle
+frontend/tests/e2e/dependencies.spec.ts:134:    // TODO: Move point1 and verify that line1, intersection, and circle all update
+frontend/tests/e2e/dependencies.spec.ts:139:    const canvas = page.locator('canvas').first();
+frontend/tests/e2e/dependencies.spec.ts:141:    // Switch to P_H plane
+frontend/tests/e2e/dependencies.spec.ts:142:    await page.click('[data-testid="plane-selector-P_H"]');
+frontend/tests/e2e/dependencies.spec.ts:146:    await canvas.click({ position: { x: 200, y: 200 } });
+frontend/tests/e2e/dependencies.spec.ts:152:    await canvas.click({ position: { x: 200, y: 200 } }); // center
+frontend/tests/e2e/dependencies.spec.ts:153:    await canvas.click({ position: { x: 250, y: 200 } }); // radius
+frontend/tests/e2e/dependencies.spec.ts:156:    await canvas.click({ position: { x: 200, y: 200 } }); // same center
+frontend/tests/e2e/dependencies.spec.ts:157:    await canvas.click({ position: { x: 270, y: 200 } }); // different radius
+frontend/tests/e2e/dependencies.spec.ts:160:    await canvas.click({ position: { x: 200, y: 200 } }); // same center
+frontend/tests/e2e/dependencies.spec.ts:161:    await canvas.click({ position: { x: 230, y: 200 } }); // different radius
+frontend/tests/e2e/dependencies.spec.ts:168:    // TODO: Move the shared center point and verify all three circles move together
+frontend/tests/e2e/dependencies.spec.ts:173:    const canvas = page.locator('canvas').first();
+frontend/tests/e2e/dependencies.spec.ts:175:    // Switch to P_H plane
+frontend/tests/e2e/dependencies.spec.ts:176:    await page.click('[data-testid="plane-selector-P_H"]');
+frontend/tests/e2e/dependencies.spec.ts:180:    await canvas.click({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/dependencies.spec.ts:181:    await canvas.click({ position: { x: 300, y: 100 } });
+frontend/tests/e2e/dependencies.spec.ts:184:    await canvas.click({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/dependencies.spec.ts:185:    await canvas.click({ position: { x: 300, y: 100 } });
+frontend/tests/e2e/dependencies.spec.ts:204:    const canvas = page.locator('canvas').first();
+frontend/tests/e2e/dependencies.spec.ts:206:    // Switch to P_H plane
+frontend/tests/e2e/dependencies.spec.ts:207:    await page.click('[data-testid="plane-selector-P_H"]');
+frontend/tests/e2e/dependencies.spec.ts:211:    await canvas.click({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/dependencies.spec.ts:214:    await canvas.click({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/dependencies.spec.ts:215:    await canvas.click({ position: { x: 300, y: 100 } });
+frontend/tests/e2e/dependencies.spec.ts:238:    const canvas = page.locator('canvas').first();
+frontend/tests/e2e/dependencies.spec.ts:240:    // Switch to P_H plane
+frontend/tests/e2e/dependencies.spec.ts:241:    await page.click('[data-testid="plane-selector-P_H"]');
+frontend/tests/e2e/dependencies.spec.ts:245:    await canvas.click({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/dependencies.spec.ts:246:    await canvas.click({ position: { x: 300, y: 100 } });
+frontend/tests/e2e/dependencies.spec.ts:249:    await canvas.click({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/dependencies.spec.ts:250:    await canvas.click({ position: { x: 300, y: 100 } });
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:19:    await page.waitForSelector('svg.diedrico-canvas');
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:23:    const canvas = page.locator('svg.diedrico-canvas');
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:27:    await canvas.click({ position: { x: 150, y: 150 } });
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:30:    await canvas.click({ position: { x: 300, y: 150 } });
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:34:    await canvas.click({ position: { x: 150, y: 150 } }); // First point (on existing)
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:35:    await canvas.click({ position: { x: 300, y: 150 } }); // Second point
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:40:    await canvas.hover({ position: { x: 150, y: 150 } });
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:54:    const canvas = page.locator('svg.diedrico-canvas');
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:58:    await canvas.click({ position: { x: 200, y: 200 } });
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:61:    await canvas.click({ position: { x: 350, y: 200 } });
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:65:    await canvas.click({ position: { x: 200, y: 200 } }); // Uses existing point
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:66:    await canvas.click({ position: { x: 350, y: 200 } }); // Uses existing point
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:68:    // Switch to selection tool
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:72:    await canvas.click({ position: { x: 200, y: 200 } });
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:79:    // Verify selection count is 1 (only the point)
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:80:    const selectedElements = page.locator('svg.diedrico-canvas [data-selected="true"]');
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:85:    const canvas = page.locator('svg.diedrico-canvas');
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:89:    await canvas.click({ position: { x: 100, y: 150 } });
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:92:    await canvas.click({ position: { x: 300, y: 150 } });
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:96:    await canvas.click({ position: { x: 100, y: 150 } }); // Point A
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:97:    await canvas.click({ position: { x: 300, y: 150 } }); // Point B
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:101:    await canvas.click({ position: { x: 200, y: 150 } });
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:109:    await canvas.click({ position: { x: 100, y: 150 } });
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:116:    await canvas.click({ position: { x: 200, y: 150 } });
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:123:    const lines = page.locator('svg.diedrico-canvas line.line-element');
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:132:    const canvas = page.locator('svg.diedrico-canvas');
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:136:    await canvas.click({ position: { x: 150, y: 200 } }); // Point A
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:137:    await canvas.click({ position: { x: 350, y: 200 } }); // Point B (for line)
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:140:    await canvas.click({ position: { x: 150, y: 200 } }); // Create line through A
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:141:    await canvas.click({ position: { x: 350, y: 200 } }); // and B
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:145:    await canvas.click({ position: { x: 250, y: 200 } }); // Point C on line
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:151:    await canvas.click({ position: { x: 150, y: 200 } });
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:155:    await canvas.click({ position: { x: 250, y: 200 } });
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:159:    const segments = page.locator('svg.diedrico-canvas line.segment-element');
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:167:    const canvas = page.locator('svg.diedrico-canvas');
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:171:    await canvas.click({ position: { x: 300, y: 150 } }); // Point far right
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:174:    await canvas.click({ position: { x: 100, y: 200 } }); // Point for line
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:175:    await canvas.click({ position: { x: 300, y: 200 } }); // Second point
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:178:    await canvas.click({ position: { x: 100, y: 200 } });
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:179:    await canvas.click({ position: { x: 300, y: 200 } });
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:181:    // Switch to selection tool
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:189:    await canvas.click({ position: { x: 200, y: 200 } });
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:202:    const canvas = page.locator('svg.diedrico-canvas');
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:206:    await canvas.click({ position: { x: 200, y: 250 } }); // Point A
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:207:    await canvas.click({ position: { x: 400, y: 250 } }); // Point B for line
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:210:    await canvas.click({ position: { x: 200, y: 250 } });
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:211:    await canvas.click({ position: { x: 400, y: 250 } });
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:217:    await canvas.hover({ position: { x: 203, y: 250 } });
+frontend/tests/e2e/distance-adjusted-hit-testing.spec.ts:227:    await canvas.hover({ position: { x: 300, y: 250 } });
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:267:});  });    await expect(cascadeWarning).toContainText('2 elements will be cascade deleted');    await expect(cascadeWarning).toBeVisible();    const cascadeWarning = statusBar.locator('.cascade-warning');    const statusBar = page.locator('.status-bar');    // Verify cascade warning shows both lines will be deleted        await page.waitForTimeout(100);    await page.keyboard.up('Shift');    await canvas.click({ position: { x: 200, y: 100 } });    await page.keyboard.down('Shift');    await canvas.click({ position: { x: 100, y: 100 } });    await page.getByRole('button', { name: /select/i }).click();    // Select point 1 with Shift+click on point 2 to multi-select        await page.waitForTimeout(300);        await canvas.click({ position: { x: 150, y: 50 } });    await canvas.click({ position: { x: 100, y: 100 } }); // Line 1-3    await canvas.click({ position: { x: 200, y: 100 } });    await canvas.click({ position: { x: 100, y: 100 } }); // Line 1-2    await page.keyboard.press('l');        await canvas.click({ position: { x: 150, y: 50 } });  // Point 3    await canvas.click({ position: { x: 200, y: 100 } }); // Point 2    await canvas.click({ position: { x: 100, y: 100 } }); // Point 1    await page.keyboard.press('p');    // Create: 3 points + 2 lines forming a triangle        const canvas = page.locator('svg.diedrico-canvas');  test('should show correct cascade count for multiple selected elements', async ({ page }) => {  });    await expect(cascadeWarning).not.toBeVisible();    // Verify cascade warning is gone        await page.waitForTimeout(100);    await page.keyboard.press('Escape');    // Press Escape to clear selection        await expect(cascadeWarning).toBeVisible();    const cascadeWarning = statusBar.locator('.cascade-warning');    const statusBar = page.locator('.status-bar');    // Verify cascade warning is shown        await page.waitForTimeout(100);    await canvas.click({ position: { x: 100, y: 100 } });    await page.getByRole('button', { name: /select/i }).click();    // Select point to show cascade preview        await page.waitForTimeout(300);        await canvas.click({ position: { x: 200, y: 100 } });    await canvas.click({ position: { x: 100, y: 100 } });    await page.keyboard.press('l');        await canvas.click({ position: { x: 200, y: 100 } });    await canvas.click({ position: { x: 100, y: 100 } });    await page.keyboard.press('p');    // Create point and line        const canvas = page.locator('svg.diedrico-canvas');  test('should clear cascade preview when selection is cleared', async ({ page }) => {  });    expect(lines).toBe(1);  // Only line 2 remains    expect(points).toBe(3); // Points 2, 3, 4 remain    lines = await page.locator('line[id^="line-"]').count();    points = await page.locator('circle.point-marker').count();    // Verify cascade: point 1 and line 1 deleted, but line 2 and points 3,4 remain        await page.waitForTimeout(300);    await page.keyboard.press('Delete');        await page.waitForTimeout(100);    await canvas.click({ position: { x: 100, y: 100 } });    await page.getByRole('button', { name: /select/i }).click();    // Delete point 1 (should cascade delete line 1)        expect(lines).toBe(2);    expect(points).toBe(4);    let lines = await page.locator('line[id^="line-"]').count();    let points = await page.locator('circle.point-marker').count();        // For now, just verify we have the base construction    // This would be at (150, 100) where the two lines cross    // Create intersection point (if tool exists)        await page.waitForTimeout(300);        await canvas.click({ position: { x: 150, y: 150 } });    await canvas.click({ position: { x: 150, y: 50 } });    // Create line 2 (vertical through points 3-4)        await canvas.click({ position: { x: 200, y: 100 } });    await canvas.click({ position: { x: 100, y: 100 } });    // Create line 1 (horizontal through points 1-2)    await page.keyboard.press('l');        await canvas.click({ position: { x: 150, y: 150 } }); // Point 4    await canvas.click({ position: { x: 150, y: 50 } });  // Point 3    await canvas.click({ position: { x: 200, y: 100 } }); // Point 2    await canvas.click({ position: { x: 100, y: 100 } }); // Point 1    await page.keyboard.press('p');        // When Point 1 is deleted, everything should cascade    // Create chain: Point 1 → Line → Intersection Point → Circle        const canvas = page.locator('svg.diedrico-canvas');  test('should delete multiple levels of dependencies', async ({ page }) => {  });    expect(circles).toBe(0);    expect(lines).toBe(0);    circles = await page.locator('circle[id^="circle-"]').count();    lines = await page.locator('line[id^="line-"]').count();    // Verify cascade deletion again        await page.waitForTimeout(300);    await page.keyboard.press('Control+y');    // Redo deletion        expect(circles).toBe(1); // Circle restored    expect(lines).toBe(1);   // Line restored    expect(points).toBeGreaterThanOrEqual(2);    circles = await page.locator('circle[id^="circle-"]').count();    lines = await page.locator('line[id^="line-"]').count();    points = await page.locator('circle.point-marker').count();    // Verify all elements restored        await page.waitForTimeout(300);    await page.keyboard.press('Control+z');    // Undo deletion        expect(circles).toBe(0); // Circle deleted    expect(lines).toBe(0);   // Line deleted    circles = await page.locator('circle[id^="circle-"]').count();    lines = await page.locator('line[id^="line-"]').count();    // Verify cascade deletion        await page.waitForTimeout(300);    await page.keyboard.press('Delete');        await page.waitForTimeout(100);    await canvas.click({ position: { x: 100, y: 100 } });    await page.getByRole('button', { name: /select/i }).click();    // Delete point 1 (should cascade delete line and circle)        expect(circles).toBe(1);    expect(lines).toBe(1);    expect(points).toBeGreaterThanOrEqual(2); // At least 2 points (may have more from circle)    let circles = await page.locator('circle[id^="circle-"]').count();    let lines = await page.locator('line[id^="line-"]').count();    let points = await page.locator('circle.point-marker').count();    // Verify initial state        await page.waitForTimeout(300);        await canvas.click({ position: { x: 150, y: 100 } }); // Radius point    await canvas.click({ position: { x: 100, y: 100 } }); // Circle center at point 1    await page.keyboard.press('c');        await canvas.click({ position: { x: 200, y: 100 } }); // to point 2    await canvas.click({ position: { x: 100, y: 100 } }); // Line from point 1    await page.keyboard.press('l');        await canvas.click({ position: { x: 200, y: 100 } }); // Point 2    await canvas.click({ position: { x: 100, y: 100 } }); // Point 1    await page.keyboard.press('p');    // Create: 2 points + line + circle on first point        const canvas = page.locator('svg.diedrico-canvas');  test('should undo cascade deletion and restore all elements (T291, T292)', async ({ page }) => {  });    expect(lines).toBe(0);  // Line deleted due to cascade    expect(points).toBe(1); // Only point 2 remains    lines = await page.locator('line[id^="line-"]').count();    points = await page.locator('circle.point-marker').count();    // Verify cascade deletion: both line and point are deleted        await page.waitForTimeout(300);    await page.keyboard.press('Delete');        await page.waitForTimeout(100);    await canvas.click({ position: { x: 100, y: 100 } });    await page.getByRole('button', { name: /select/i }).click();    // Select and delete point 1        expect(lines).toBe(1);    expect(points).toBe(2);    let lines = await page.locator('line[id^="line-"]').count();    let points = await page.locator('circle.point-marker').count();    // Verify initial state        await page.waitForTimeout(300);        await canvas.click({ position: { x: 200, y: 100 } }); // Click point 2    await canvas.click({ position: { x: 100, y: 100 } }); // Click point 1    await page.keyboard.press('l');        await canvas.click({ position: { x: 200, y: 100 } }); // Point 2    await canvas.click({ position: { x: 100, y: 100 } }); // Point 1    await page.keyboard.press('p');    // Create construction: 2 points + 1 line between them        const canvas = page.locator('svg.diedrico-canvas');  test('should delete dependents when deleting a point (T288, T292)', async ({ page }) => {  });    // For now we verify the warning message which confirms cascade detection works    // Note: This would require checking SVG element styles, which is complex in Playwright    // Verify cascade highlighted elements have orange color        await expect(cascadeWarning).toContainText('1 element will be cascade deleted');    // Verify it shows the correct count (1 line will be cascade deleted)        await expect(cascadeWarning).toBeVisible();    const cascadeWarning = statusBar.locator('.cascade-warning');    const statusBar = page.locator('.status-bar');    // Verify cascade warning appears in status bar        await page.waitForTimeout(300);        await canvas.click({ position: { x: 100, y: 100 } });    await page.getByRole('button', { name: /select/i }).click();    // Switch to select tool and select point 1        await page.waitForTimeout(300);        await canvas.click({ position: { x: 200, y: 100 } }); // Click point 2 to create line    await canvas.click({ position: { x: 100, y: 100 } }); // Click point 1    await page.keyboard.press('l');        await canvas.click({ position: { x: 200, y: 100 } }); // Point 2    await canvas.click({ position: { x: 100, y: 100 } }); // Point 1    await page.keyboard.press('p');    // Create a point and a line that depends on it        const canvas = page.locator('svg.diedrico-canvas');  test('should show cascade preview when selecting element with dependents (T289)', async ({ page }) => {  });    await page.waitForSelector('svg.diedrico-canvas');    // Wait for app to load    await page.goto('/');  test.beforeEach(async ({ page }) => {test.describe('Cascade Deletion', () => {import { test, expect } from '@playwright/test'; */ * Reference: specs/001-dihedral-learning-mvp/data-model.md - Deletion and Dependency Cascading * Reference: specs/001-dihedral-learning-mvp/tasks.md - Phase 30: T285-T292 *  * - Dependency tracking and cascade computation * - Undo/redo support for cascade deletion * - Proper deletion order (dependents before dependencies) * - Status bar message showing count of cascade elements * - Visual feedback showing which elements will be cascade deleted (orange highlight) * Tests the cascade deletion functionality implemented in Phase 30: *  * 
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:270: * - Ctrl+A: Select all elements in active plane
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:286:    await page.waitForSelector('svg.diedrico-canvas');
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:297:      // Verify Point tool is active (check button state or tool indicator)
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:299:      await expect(pointButton).toHaveClass(/active|selected/);
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:307:      await expect(lineButton).toHaveClass(/active|selected/);
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:315:      await expect(segmentButton).toHaveClass(/active|selected/);
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:323:      await expect(circleButton).toHaveClass(/active|selected/);
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:330:      const guideButton = page.getByRole('button', { name: /guide/i });
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:331:      await expect(guideButton).toHaveClass(/active|selected/);
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:348:        // Verify Point tool is still active (not changed)
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:350:        await expect(pointButton).toHaveClass(/active|selected/);
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:356:    test('Esc should cancel active tool and clear selection', async ({ page }) => {
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:357:      const canvas = page.locator('svg.diedrico-canvas');
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:361:      await canvas.click({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:365:      await canvas.click({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:367:      // Wait for selection
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:371:      const selectedElements = page.locator('svg.diedrico-canvas [data-selected="true"]');
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:378:      // Verify selection is cleared
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:381:      // Verify Select tool is active
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:383:      await expect(selectButton).toHaveClass(/active|selected/);
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:387:      const canvas = page.locator('svg.diedrico-canvas');
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:391:      await canvas.click({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:397:      // Verify Select tool is active
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:399:      await expect(selectButton).toHaveClass(/active|selected/);
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:405:      const canvas = page.locator('svg.diedrico-canvas');
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:409:      await canvas.click({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:410:      await canvas.click({ position: { x: 200, y: 100 } });
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:414:      await canvas.click({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:432:      const canvas = page.locator('svg.diedrico-canvas');
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:436:      await canvas.click({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:445:      await canvas.click({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:473:      const canvas = page.locator('svg.diedrico-canvas');
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:477:      await canvas.click({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:481:      await canvas.click({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:509:    test('Ctrl+A should select all elements in active plane', async ({ page }) => {
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:510:      const canvas = page.locator('svg.diedrico-canvas');
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:514:      await canvas.click({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:515:      await canvas.click({ position: { x: 200, y: 100 } });
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:516:      await canvas.click({ position: { x: 300, y: 100 } });
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:520:      await canvas.click({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:521:      await canvas.click({ position: { x: 200, y: 100 } });
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:531:      const selectedElements = page.locator('svg.diedrico-canvas [data-selected="true"]');
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:544:      const canvas = page.locator('svg.diedrico-canvas');
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:545:      await expect(canvas).toBeVisible();
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:551:      const canvas = page.locator('svg.diedrico-canvas');
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:555:      await canvas.click({ position: { x: 50, y: 50 } });
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:556:      await canvas.click({ position: { x: 500, y: 500 } });
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:572:      const canvas = page.locator('svg.diedrico-canvas');
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:576:      await canvas.click({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:592:    test('Ctrl+Z should undo last action', async ({ page }) => {
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:593:      const canvas = page.locator('svg.diedrico-canvas');
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:597:      await canvas.click({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:614:    test('Ctrl+Y should redo last undone action', async ({ page }) => {
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:615:      const canvas = page.locator('svg.diedrico-canvas');
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:619:      await canvas.click({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:641:      const canvas = page.locator('svg.diedrico-canvas');
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:645:      await canvas.click({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:665:      const canvas = page.locator('svg.diedrico-canvas');
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:669:      await canvas.click({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:670:      await canvas.click({ position: { x: 200, y: 100 } });
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:673:      await canvas.click({ position: { x: 100, y: 100 } });
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:674:      await canvas.click({ position: { x: 200, y: 100 } });
+frontend/tests/e2e/keyboard-shortcuts.spec.ts:682:      const selectedElements = page.locator('svg.diedrico-canvas [data-selected="true"]');
+frontend/tests/e2e/intersection-creation.spec.ts:2: * E2E tests for intersection point creation
+frontend/tests/e2e/intersection-creation.spec.ts:4: * Tests the complete workflow for creating intersection points between geometric elements:
+frontend/tests/e2e/intersection-creation.spec.ts:5: * - Line-line intersections (perpendicular, diagonal, parallel handling)
+frontend/tests/e2e/intersection-creation.spec.ts:6: * - Line-circle intersections (secant, tangent, no intersection cases)
+frontend/tests/e2e/intersection-creation.spec.ts:7: * - Circle-circle intersections (secant, tangent, nearest-point selection)
+frontend/tests/e2e/intersection-creation.spec.ts:10: * - Nearest-intersection-to-mouse selection for multiple solutions
+frontend/tests/e2e/intersection-creation.spec.ts:14: * @see specs/001-dihedral-learning-mvp/tasks.md#phase-17-more-intersection-types
+frontend/tests/e2e/intersection-creation.spec.ts:22:    await page.waitForSelector('svg#canvas');
+frontend/tests/e2e/intersection-creation.spec.ts:25:  test('should create intersection point between two lines', async ({ page }) => {
+frontend/tests/e2e/intersection-creation.spec.ts:28:    await page.click('svg#canvas', { position: { x: 100, y: 200 } });
+frontend/tests/e2e/intersection-creation.spec.ts:29:    await page.click('svg#canvas', { position: { x: 400, y: 200 } });
+frontend/tests/e2e/intersection-creation.spec.ts:32:    await page.click('svg#canvas', { position: { x: 250, y: 100 } });
+frontend/tests/e2e/intersection-creation.spec.ts:33:    await page.click('svg#canvas', { position: { x: 250, y: 300 } });
+frontend/tests/e2e/intersection-creation.spec.ts:36:    let lines = await page.locator('svg#canvas line.line').count();
+frontend/tests/e2e/intersection-creation.spec.ts:37:    let points = await page.locator('svg#canvas circle.point').count();
+frontend/tests/e2e/intersection-creation.spec.ts:41:    // Activate intersection tool
+frontend/tests/e2e/intersection-creation.spec.ts:45:    await page.click('svg#canvas', { position: { x: 250, y: 200 } });
+frontend/tests/e2e/intersection-creation.spec.ts:48:    await page.click('svg#canvas', { position: { x: 250, y: 200 } });
+frontend/tests/e2e/intersection-creation.spec.ts:50:    // Should now have 3 lines (2 original + potentially highlight), 5 points (4 endpoints + 1 intersection)
+frontend/tests/e2e/intersection-creation.spec.ts:51:    points = await page.locator('svg#canvas circle.point').count();
+frontend/tests/e2e/intersection-creation.spec.ts:54:    // Verify intersection point is at expected location (approximately 250, 200)
+frontend/tests/e2e/intersection-creation.spec.ts:55:    const intersectionPoint = await page.locator('svg#canvas circle.point').nth(4);
+frontend/tests/e2e/intersection-creation.spec.ts:56:    const cx = await intersectionPoint.getAttribute('cx');
+frontend/tests/e2e/intersection-creation.spec.ts:57:    const cy = await intersectionPoint.getAttribute('cy');
+frontend/tests/e2e/intersection-creation.spec.ts:70:    await page.click('svg#canvas', { position: { x: 100, y: 200 } });
+frontend/tests/e2e/intersection-creation.spec.ts:71:    await page.click('svg#canvas', { position: { x: 400, y: 200 } });
+frontend/tests/e2e/intersection-creation.spec.ts:74:    await page.click('svg#canvas', { position: { x: 100, y: 300 } });
+frontend/tests/e2e/intersection-creation.spec.ts:75:    await page.click('svg#canvas', { position: { x: 400, y: 300 } });
+frontend/tests/e2e/intersection-creation.spec.ts:77:    // Activate intersection tool
+frontend/tests/e2e/intersection-creation.spec.ts:81:    await page.click('svg#canvas', { position: { x: 250, y: 200 } });
+frontend/tests/e2e/intersection-creation.spec.ts:84:    await page.click('svg#canvas', { position: { x: 250, y: 300 } });
+frontend/tests/e2e/intersection-creation.spec.ts:86:    // Should NOT create intersection point
+frontend/tests/e2e/intersection-creation.spec.ts:88:    const points = await page.locator('svg#canvas circle.point').count();
+frontend/tests/e2e/intersection-creation.spec.ts:95:  test('should undo intersection point creation', async ({ page }) => {
+frontend/tests/e2e/intersection-creation.spec.ts:98:    await page.click('svg#canvas', { position: { x: 100, y: 200 } });
+frontend/tests/e2e/intersection-creation.spec.ts:99:    await page.click('svg#canvas', { position: { x: 400, y: 200 } });
+frontend/tests/e2e/intersection-creation.spec.ts:100:    await page.click('svg#canvas', { position: { x: 250, y: 100 } });
+frontend/tests/e2e/intersection-creation.spec.ts:101:    await page.click('svg#canvas', { position: { x: 250, y: 300 } });
+frontend/tests/e2e/intersection-creation.spec.ts:103:    // Create intersection point
+frontend/tests/e2e/intersection-creation.spec.ts:105:    await page.click('svg#canvas', { position: { x: 250, y: 200 } });
+frontend/tests/e2e/intersection-creation.spec.ts:106:    await page.click('svg#canvas', { position: { x: 250, y: 200 } });
+frontend/tests/e2e/intersection-creation.spec.ts:108:    // Verify intersection point exists
+frontend/tests/e2e/intersection-creation.spec.ts:109:    let points = await page.locator('svg#canvas circle.point').count();
+frontend/tests/e2e/intersection-creation.spec.ts:116:    points = await page.locator('svg#canvas circle.point').count();
+frontend/tests/e2e/intersection-creation.spec.ts:120:  test('should redo intersection point creation', async ({ page }) => {
+frontend/tests/e2e/intersection-creation.spec.ts:123:    await page.click('svg#canvas', { position: { x: 100, y: 200 } });
+frontend/tests/e2e/intersection-creation.spec.ts:124:    await page.click('svg#canvas', { position: { x: 400, y: 200 } });
+frontend/tests/e2e/intersection-creation.spec.ts:125:    await page.click('svg#canvas', { position: { x: 250, y: 100 } });
+frontend/tests/e2e/intersection-creation.spec.ts:126:    await page.click('svg#canvas', { position: { x: 250, y: 300 } });
+frontend/tests/e2e/intersection-creation.spec.ts:128:    // Create intersection point
+frontend/tests/e2e/intersection-creation.spec.ts:130:    await page.click('svg#canvas', { position: { x: 250, y: 200 } });
+frontend/tests/e2e/intersection-creation.spec.ts:131:    await page.click('svg#canvas', { position: { x: 250, y: 200 } });
+frontend/tests/e2e/intersection-creation.spec.ts:140:    const points = await page.locator('svg#canvas circle.point').count();
+frontend/tests/e2e/intersection-creation.spec.ts:144:  test('should support keyboard shortcut for undo (Ctrl+Z)', async ({ page }) => {
+frontend/tests/e2e/intersection-creation.spec.ts:145:    // Create two lines and intersection
+frontend/tests/e2e/intersection-creation.spec.ts:147:    await page.click('svg#canvas', { position: { x: 100, y: 200 } });
+frontend/tests/e2e/intersection-creation.spec.ts:148:    await page.click('svg#canvas', { position: { x: 400, y: 200 } });
+frontend/tests/e2e/intersection-creation.spec.ts:149:    await page.click('svg#canvas', { position: { x: 250, y: 100 } });
+frontend/tests/e2e/intersection-creation.spec.ts:150:    await page.click('svg#canvas', { position: { x: 250, y: 300 } });
+frontend/tests/e2e/intersection-creation.spec.ts:153:    await page.click('svg#canvas', { position: { x: 250, y: 200 } });
+frontend/tests/e2e/intersection-creation.spec.ts:154:    await page.click('svg#canvas', { position: { x: 250, y: 200 } });
+frontend/tests/e2e/intersection-creation.spec.ts:157:    let points = await page.locator('svg#canvas circle.point').count();
+frontend/tests/e2e/intersection-creation.spec.ts:163:    points = await page.locator('svg#canvas circle.point').count();
+frontend/tests/e2e/intersection-creation.spec.ts:168:    // Create two lines and intersection
+frontend/tests/e2e/intersection-creation.spec.ts:170:    await page.click('svg#canvas', { position: { x: 100, y: 200 } });
+frontend/tests/e2e/intersection-creation.spec.ts:171:    await page.click('svg#canvas', { position: { x: 400, y: 200 } });
+frontend/tests/e2e/intersection-creation.spec.ts:172:    await page.click('svg#canvas', { position: { x: 250, y: 100 } });
+frontend/tests/e2e/intersection-creation.spec.ts:173:    await page.click('svg#canvas', { position: { x: 250, y: 300 } });
+frontend/tests/e2e/intersection-creation.spec.ts:176:    await page.click('svg#canvas', { position: { x: 250, y: 200 } });
+frontend/tests/e2e/intersection-creation.spec.ts:177:    await page.click('svg#canvas', { position: { x: 250, y: 200 } });
+frontend/tests/e2e/intersection-creation.spec.ts:185:    const points = await page.locator('svg#canvas circle.point').count();
+frontend/tests/e2e/intersection-creation.spec.ts:189:  test('should create multiple intersections on different line pairs', async ({ page }) => {
+frontend/tests/e2e/intersection-creation.spec.ts:194:    await page.click('svg#canvas', { position: { x: 100, y: 200 } });
+frontend/tests/e2e/intersection-creation.spec.ts:195:    await page.click('svg#canvas', { position: { x: 400, y: 200 } });
+frontend/tests/e2e/intersection-creation.spec.ts:198:    await page.click('svg#canvas', { position: { x: 100, y: 300 } });
+frontend/tests/e2e/intersection-creation.spec.ts:199:    await page.click('svg#canvas', { position: { x: 400, y: 300 } });
+frontend/tests/e2e/intersection-creation.spec.ts:202:    await page.click('svg#canvas', { position: { x: 200, y: 150 } });
+frontend/tests/e2e/intersection-creation.spec.ts:203:    await page.click('svg#canvas', { position: { x: 200, y: 350 } });
+frontend/tests/e2e/intersection-creation.spec.ts:206:    await page.click('svg#canvas', { position: { x: 300, y: 150 } });
+frontend/tests/e2e/intersection-creation.spec.ts:207:    await page.click('svg#canvas', { position: { x: 300, y: 350 } });
+frontend/tests/e2e/intersection-creation.spec.ts:209:    // Create intersections
+frontend/tests/e2e/intersection-creation.spec.ts:213:    await page.click('svg#canvas', { position: { x: 200, y: 200 } });
+frontend/tests/e2e/intersection-creation.spec.ts:214:    await page.click('svg#canvas', { position: { x: 200, y: 200 } });
+frontend/tests/e2e/intersection-creation.spec.ts:217:    await page.click('svg#canvas', { position: { x: 300, y: 200 } });
+frontend/tests/e2e/intersection-creation.spec.ts:218:    await page.click('svg#canvas', { position: { x: 300, y: 200 } });
+frontend/tests/e2e/intersection-creation.spec.ts:220:    // Should have 8 endpoints + 2 intersections = 10 points
+frontend/tests/e2e/intersection-creation.spec.ts:221:    const points = await page.locator('svg#canvas circle.point').count();
+frontend/tests/e2e/intersection-creation.spec.ts:228:    await page.click('svg#canvas', { position: { x: 100, y: 200 } });
+frontend/tests/e2e/intersection-creation.spec.ts:229:    await page.click('svg#canvas', { position: { x: 400, y: 200 } });
+frontend/tests/e2e/intersection-creation.spec.ts:231:    // Activate intersection tool
+frontend/tests/e2e/intersection-creation.spec.ts:235:    await page.click('svg#canvas', { position: { x: 250, y: 200 } });
+frontend/tests/e2e/intersection-creation.spec.ts:236:    await page.click('svg#canvas', { position: { x: 260, y: 200 } }); // Slightly different position but same line
+frontend/tests/e2e/intersection-creation.spec.ts:238:    // Should NOT create intersection point (line cannot intersect with itself)
+frontend/tests/e2e/intersection-creation.spec.ts:239:    const points = await page.locator('svg#canvas circle.point').count();
+frontend/tests/e2e/intersection-creation.spec.ts:246:    await page.click('svg#canvas', { position: { x: 100, y: 200 } });
+frontend/tests/e2e/intersection-creation.spec.ts:247:    await page.click('svg#canvas', { position: { x: 400, y: 200 } });
+frontend/tests/e2e/intersection-creation.spec.ts:248:    await page.click('svg#canvas', { position: { x: 250, y: 100 } });
+frontend/tests/e2e/intersection-creation.spec.ts:249:    await page.click('svg#canvas', { position: { x: 250, y: 300 } });
+frontend/tests/e2e/intersection-creation.spec.ts:251:    // Activate intersection tool
+frontend/tests/e2e/intersection-creation.spec.ts:255:    await page.click('svg#canvas', { position: { x: 250, y: 200 } });
+frontend/tests/e2e/intersection-creation.spec.ts:262:    await page.click('svg#canvas', { position: { x: 250, y: 200 } });
+frontend/tests/e2e/intersection-creation.spec.ts:264:    const points = await page.locator('svg#canvas circle.point').count();
+frontend/tests/e2e/intersection-creation.spec.ts:271:    await page.click('svg#canvas', { position: { x: 100, y: 200 } });
+frontend/tests/e2e/intersection-creation.spec.ts:272:    await page.click('svg#canvas', { position: { x: 400, y: 200 } });
+frontend/tests/e2e/intersection-creation.spec.ts:274:    // Activate intersection tool
+frontend/tests/e2e/intersection-creation.spec.ts:278:    await page.hover('svg#canvas', { position: { x: 250, y: 200 } });
+frontend/tests/e2e/intersection-creation.spec.ts:281:    const canvas = await page.locator('svg#canvas');
+frontend/tests/e2e/intersection-creation.spec.ts:282:    const cursor = await canvas.evaluate(el => window.getComputedStyle(el).cursor);
+frontend/tests/e2e/intersection-creation.spec.ts:289:  test('should create intersection point between line and circle - secant', async ({ page }) => {
+frontend/tests/e2e/intersection-creation.spec.ts:292:    await page.click('svg#canvas', { position: { x: 100, y: 250 } });
+frontend/tests/e2e/intersection-creation.spec.ts:293:    await page.click('svg#canvas', { position: { x: 400, y: 250 } });
+frontend/tests/e2e/intersection-creation.spec.ts:297:    await page.click('svg#canvas', { position: { x: 250, y: 250 } }); // center
+frontend/tests/e2e/intersection-creation.spec.ts:298:    await page.click('svg#canvas', { position: { x: 250, y: 150 } }); // radius point (100 units up)
+frontend/tests/e2e/intersection-creation.spec.ts:301:    let lines = await page.locator('svg#canvas line.line').count();
+frontend/tests/e2e/intersection-creation.spec.ts:302:    let circles = await page.locator('svg#canvas circle.circle-shape').count();
+frontend/tests/e2e/intersection-creation.spec.ts:303:    let points = await page.locator('svg#canvas circle.point').count();
+frontend/tests/e2e/intersection-creation.spec.ts:308:    // Activate intersection tool
+frontend/tests/e2e/intersection-creation.spec.ts:312:    await page.click('svg#canvas', { position: { x: 200, y: 250 } });
+frontend/tests/e2e/intersection-creation.spec.ts:314:    // Click the circle (near right intersection point)
+frontend/tests/e2e/intersection-creation.spec.ts:317:    // Click near right intersection
+frontend/tests/e2e/intersection-creation.spec.ts:318:    await page.click('svg#canvas', { position: { x: 320, y: 250 } });
+frontend/tests/e2e/intersection-creation.spec.ts:320:    // Should now have 4 points (3 original + 1 new intersection)
+frontend/tests/e2e/intersection-creation.spec.ts:321:    points = await page.locator('svg#canvas circle.point').count();
+frontend/tests/e2e/intersection-creation.spec.ts:324:    // Verify the intersection point is on the right side (nearest to click)
+frontend/tests/e2e/intersection-creation.spec.ts:325:    const intersectionPoint = await page.locator('svg#canvas circle.point').nth(3);
+frontend/tests/e2e/intersection-creation.spec.ts:326:    const cx = await intersectionPoint.getAttribute('cx');
+frontend/tests/e2e/intersection-creation.spec.ts:329:    // Should be near 350 (right intersection), not 150 (left intersection)
+frontend/tests/e2e/intersection-creation.spec.ts:333:  test('should create intersection point between line and circle - tangent', async ({ page }) => {
+frontend/tests/e2e/intersection-creation.spec.ts:336:    await page.click('svg#canvas', { position: { x: 250, y: 200 } }); // center
+frontend/tests/e2e/intersection-creation.spec.ts:337:    await page.click('svg#canvas', { position: { x: 250, y: 100 } }); // radius = 100
+frontend/tests/e2e/intersection-creation.spec.ts:341:    await page.click('svg#canvas', { position: { x: 100, y: 100 } });
+frontend/tests/e2e/intersection-creation.spec.ts:342:    await page.click('svg#canvas', { position: { x: 400, y: 100 } });
+frontend/tests/e2e/intersection-creation.spec.ts:344:    // Activate intersection tool
+frontend/tests/e2e/intersection-creation.spec.ts:348:    await page.click('svg#canvas', { position: { x: 250, y: 100 } });
+frontend/tests/e2e/intersection-creation.spec.ts:351:    await page.click('svg#canvas', { position: { x: 250, y: 150 } });
+frontend/tests/e2e/intersection-creation.spec.ts:353:    // Should create tangent intersection point
+frontend/tests/e2e/intersection-creation.spec.ts:354:    const points = await page.locator('svg#canvas circle.point').count();
+frontend/tests/e2e/intersection-creation.spec.ts:355:    expect(points).toBe(4); // 2 line endpoints + 1 circle center + 1 tangent intersection
+frontend/tests/e2e/intersection-creation.spec.ts:358:  test('should select nearest intersection when multiple exist (circle-circle)', async ({ page }) => {
+frontend/tests/e2e/intersection-creation.spec.ts:361:    await page.click('svg#canvas', { position: { x: 200, y: 250 } }); // center
+frontend/tests/e2e/intersection-creation.spec.ts:362:    await page.click('svg#canvas', { position: { x: 200, y: 150 } }); // radius = 100
+frontend/tests/e2e/intersection-creation.spec.ts:365:    await page.click('svg#canvas', { position: { x: 300, y: 250 } }); // center (100 units right)
+frontend/tests/e2e/intersection-creation.spec.ts:366:    await page.click('svg#canvas', { position: { x: 300, y: 150 } }); // radius = 100
+frontend/tests/e2e/intersection-creation.spec.ts:369:    let circles = await page.locator('svg#canvas circle.circle-shape').count();
+frontend/tests/e2e/intersection-creation.spec.ts:370:    let points = await page.locator('svg#canvas circle.point').count();
+frontend/tests/e2e/intersection-creation.spec.ts:374:    // Activate intersection tool
+frontend/tests/e2e/intersection-creation.spec.ts:378:    await page.click('svg#canvas', { position: { x: 200, y: 200 } });
+frontend/tests/e2e/intersection-creation.spec.ts:380:    // Click second circle near TOP intersection point
+frontend/tests/e2e/intersection-creation.spec.ts:383:    await page.click('svg#canvas', { position: { x: 250, y: 180 } });
+frontend/tests/e2e/intersection-creation.spec.ts:385:    // Should create the TOP intersection point (nearest to click)
+frontend/tests/e2e/intersection-creation.spec.ts:386:    points = await page.locator('svg#canvas circle.point').count();
+frontend/tests/e2e/intersection-creation.spec.ts:387:    expect(points).toBe(3); // 2 centers + 1 intersection
+frontend/tests/e2e/intersection-creation.spec.ts:389:    const intersectionPoint = await page.locator('svg#canvas circle.point').nth(2);
+frontend/tests/e2e/intersection-creation.spec.ts:390:    const cy = await intersectionPoint.getAttribute('cy');
+frontend/tests/e2e/intersection-creation.spec.ts:393:    // Should be near top intersection (~164), not bottom (~336)
+frontend/tests/e2e/intersection-creation.spec.ts:397:  test('should create intersection between two circles - secant', async ({ page }) => {
+frontend/tests/e2e/intersection-creation.spec.ts:400:    await page.click('svg#canvas', { position: { x: 200, y: 250 } }); // center
+frontend/tests/e2e/intersection-creation.spec.ts:401:    await page.click('svg#canvas', { position: { x: 200, y: 200 } }); // radius = 50
+frontend/tests/e2e/intersection-creation.spec.ts:404:    await page.click('svg#canvas', { position: { x: 270, y: 250 } }); // center (70 units right)
+frontend/tests/e2e/intersection-creation.spec.ts:405:    await page.click('svg#canvas', { position: { x: 270, y: 200 } }); // radius = 50
+frontend/tests/e2e/intersection-creation.spec.ts:407:    // Activate intersection tool
+frontend/tests/e2e/intersection-creation.spec.ts:411:    await page.click('svg#canvas', { position: { x: 180, y: 250 } });
+frontend/tests/e2e/intersection-creation.spec.ts:414:    await page.click('svg#canvas', { position: { x: 290, y: 250 } });
+frontend/tests/e2e/intersection-creation.spec.ts:416:    // Should create intersection point
+frontend/tests/e2e/intersection-creation.spec.ts:417:    const points = await page.locator('svg#canvas circle.point').count();
+frontend/tests/e2e/intersection-creation.spec.ts:418:    expect(points).toBe(3); // 2 centers + 1 intersection
+frontend/tests/e2e/intersection-creation.spec.ts:421:  test('should undo line-circle intersection creation', async ({ page }) => {
+frontend/tests/e2e/intersection-creation.spec.ts:424:    await page.click('svg#canvas', { position: { x: 100, y: 250 } });
+frontend/tests/e2e/intersection-creation.spec.ts:425:    await page.click('svg#canvas', { position: { x: 400, y: 250 } });
+frontend/tests/e2e/intersection-creation.spec.ts:428:    await page.click('svg#canvas', { position: { x: 250, y: 250 } });
+frontend/tests/e2e/intersection-creation.spec.ts:429:    await page.click('svg#canvas', { position: { x: 250, y: 150 } });
+frontend/tests/e2e/intersection-creation.spec.ts:431:    // Create intersection
+frontend/tests/e2e/intersection-creation.spec.ts:433:    await page.click('svg#canvas', { position: { x: 200, y: 250 } });
+frontend/tests/e2e/intersection-creation.spec.ts:434:    await page.click('svg#canvas', { position: { x: 250, y: 200 } });
+frontend/tests/e2e/intersection-creation.spec.ts:436:    let points = await page.locator('svg#canvas circle.point').count();
+frontend/tests/e2e/intersection-creation.spec.ts:437:    expect(points).toBe(4); // 2 line endpoints + 1 circle center + 1 intersection
+frontend/tests/e2e/intersection-creation.spec.ts:442:    points = await page.locator('svg#canvas circle.point').count();
+frontend/tests/e2e/intersection-creation.spec.ts:446:  test('should handle no intersection case (line too far from circle)', async ({ page }) => {
+frontend/tests/e2e/intersection-creation.spec.ts:449:    await page.click('svg#canvas', { position: { x: 250, y: 250 } });
+frontend/tests/e2e/intersection-creation.spec.ts:450:    await page.click('svg#canvas', { position: { x: 250, y: 200 } }); // radius = 50
+frontend/tests/e2e/intersection-creation.spec.ts:452:    // Create line far away (no intersection)
+frontend/tests/e2e/intersection-creation.spec.ts:454:    await page.click('svg#canvas', { position: { x: 100, y: 400 } });
+frontend/tests/e2e/intersection-creation.spec.ts:455:    await page.click('svg#canvas', { position: { x: 400, y: 400 } });
+frontend/tests/e2e/intersection-creation.spec.ts:457:    // Try to create intersection
+frontend/tests/e2e/intersection-creation.spec.ts:459:    await page.click('svg#canvas', { position: { x: 250, y: 250 } }); // click circle
+frontend/tests/e2e/intersection-creation.spec.ts:460:    await page.click('svg#canvas', { position: { x: 250, y: 400 } }); // click line
+frontend/tests/e2e/intersection-creation.spec.ts:462:    // Should NOT create intersection point
+frontend/tests/e2e/intersection-creation.spec.ts:463:    const points = await page.locator('svg#canvas circle.point').count();
+--- absence scans ---

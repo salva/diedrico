@@ -6,7 +6,7 @@
 
 This plan extension re-read the Wave 028 decision and closure evidence, the current wave-plan tail, path-scoped source candidates, and path-scoped git evidence before selecting Wave 029. It does not implement source changes.
 
-Protected unrelated dirty files are documented but intentionally not used as premises: path-scoped status shows `frontend/src/domain/calculations/Intersections.ts` and `frontend/src/domain/processTree/ActionGroup.ts` are modified outside this stage (`architecture-audit/cycle-029-wave-plan-extension/evidence/scoped-status-and-diff.log`). Their contents were not read for architectural selection, reverted, staged, or incorporated.
+Protected unrelated dirty files are documented but intentionally not used as premises: path-scoped status shows `frontend/src/domain/calculations/Intersections.ts` and `frontend/src/domain/processTree/ActionGroup.ts` are modified outside this stage (`architecture-audit/cycle-029-wave-plan-extension/evidence/scoped-status-and-diff.txt`). Their contents were not read for architectural selection, reverted, staged, or incorporated.
 
 ## Evidence read
 

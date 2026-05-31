@@ -1,0 +1,136 @@
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should find intersection of perpendicular lines
+AssertionError: expected undefined to be close to 3, received difference is NaN, but expected 5e-7
+ ❯ tests/unit/calculations/intersections.spec.ts:48:25
+     46|       
+     47|       expect(result).not.toBeNull();
+     48|       expect(result!.x).toBeCloseTo(3, 6);
+       |                         ^
+     49|       expect(result!.y).toBeCloseTo(2, 6);
+     50|       expect(result!.z).toBe(1); // homogeneous coordinate
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should find intersection of diagonal lines
+AssertionError: expected undefined to be close to 2, received difference is NaN, but expected 5e-7
+ ❯ tests/unit/calculations/intersections.spec.ts:73:25
+     71|       // x = -x + 4 => 2x = 4 => x = 2, y = 2
+     72|       expect(result).not.toBeNull();
+     73|       expect(result!.x).toBeCloseTo(2, 6);
+       |                         ^
+     74|       expect(result!.y).toBeCloseTo(2, 6);
+     75|       expect(result!.z).toBe(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should detect parallel horizontal lines
+AssertionError: expected Point2DRealization2D{ …(2) } to be null
+ ❯ tests/unit/calculations/intersections.spec.ts:93:22
+     91|       const result = intersectLineLine(line1, line2);
+     92|       
+     93|       expect(result).toBeNull();
+       |                      ^
+     94|     });
+     95|     
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should detect parallel vertical lines
+AssertionError: expected Point2DRealization2D{ …(2) } to be null
+ ❯ tests/unit/calculations/intersections.spec.ts:111:22
+    109|       const result = intersectLineLine(line1, line2);
+    110|       
+    111|       expect(result).toBeNull();
+       |                      ^
+    112|     });
+    113|     
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should detect parallel diagonal lines
+AssertionError: expected Point2DRealization2D{ …(2) } to be null
+ ❯ tests/unit/calculations/intersections.spec.ts:129:22
+    127|       const result = intersectLineLine(line1, line2);
+    128|       
+    129|       expect(result).toBeNull();
+       |                      ^
+    130|     });
+    131|     
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should detect coincident lines
+AssertionError: expected Point2DRealization2D{ …(2) } to be null
+ ❯ tests/unit/calculations/intersections.spec.ts:147:22
+    145|       const result = intersectLineLine(line1, line2);
+    146|       
+    147|       expect(result).toBeNull();
+       |                      ^
+    148|     });
+    149|     
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should handle lines with non-unit direction vectors
+AssertionError: expected undefined to be close to 4, received difference is NaN, but expected 5e-7
+ ❯ tests/unit/calculations/intersections.spec.ts:167:25
+    165|       // Should still find correct intersection at (4, 1)
+    166|       expect(result).not.toBeNull();
+    167|       expect(result!.x).toBeCloseTo(4, 6);
+       |                         ^
+    168|       expect(result!.y).toBeCloseTo(1, 6);
+    169|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should produce homogeneous points with z=1
+AssertionError: expected undefined to be 1 // Object.is equality
+
+- Expected: 
+1
+
++ Received: 
+undefined
+
+ ❯ tests/unit/calculations/intersections.spec.ts:185:25
+    183|       
+    184|       expect(result).not.toBeNull();
+    185|       expect(result!.z).toBe(1); // Homogeneous coordinate
+       |                         ^
+    186|     });
+    187|     
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should handle intersection at origin
+AssertionError: expected undefined to be close to +0, received difference is NaN, but expected 5e-7
+ ❯ tests/unit/calculations/intersections.spec.ts:204:25
+    202|       
+    203|       expect(result).not.toBeNull();
+    204|       expect(result!.x).toBeCloseTo(0, 6);
+       |                         ^
+    205|       expect(result!.y).toBeCloseTo(0, 6);
+    206|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  tests/unit/calculations/intersections.spec.ts > Intersections > intersectLineLine > should handle intersection with negative coordinates
+AssertionError: expected undefined to be close to -5, received difference is NaN, but expected 5e-7
+ ❯ tests/unit/calculations/intersections.spec.ts:224:25
+    222|       
+    223|       expect(result).not.toBeNull();
+    224|       expect(result!.x).toBeCloseTo(-5, 6);
+       |                         ^
+    225|       expect(result!.y).toBeCloseTo(-3, 6);
+    226|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c vitest run tests/unit/calculations/intersections.spec.ts

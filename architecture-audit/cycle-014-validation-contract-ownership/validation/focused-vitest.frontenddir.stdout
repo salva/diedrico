@@ -1,0 +1,51 @@
+frontend/node_modules/.bin:
+total 64
+drwxr-xr-x 1 salva salva  248 May 26 14:04 .
+drwxr-xr-x 1 salva salva 1008 May 26 14:04 ..
+lrwxrwxrwx 1 salva salva   25 May 26 14:04 csv2json -> ../d3-dsv/bin/dsv2json.js
+lrwxrwxrwx 1 salva salva   24 May 26 14:04 csv2tsv -> ../d3-dsv/bin/dsv2dsv.js
+lrwxrwxrwx 1 salva salva   24 May 26 14:04 dsv2dsv -> ../d3-dsv/bin/dsv2dsv.js
+lrwxrwxrwx 1 salva salva   25 May 26 14:04 dsv2json -> ../d3-dsv/bin/dsv2json.js
+lrwxrwxrwx 1 salva salva   25 May 26 14:04 json2csv -> ../d3-dsv/bin/json2dsv.js
+lrwxrwxrwx 1 salva salva   25 May 26 14:04 json2dsv -> ../d3-dsv/bin/json2dsv.js
+lrwxrwxrwx 1 salva salva   25 May 26 14:04 json2tsv -> ../d3-dsv/bin/json2dsv.js
+lrwxrwxrwx 1 salva salva   15 May 26 14:04 katex -> ../katex/cli.js
+lrwxrwxrwx 1 salva salva   24 May 26 14:04 nanoid -> ../nanoid/bin/nanoid.cjs
+lrwxrwxrwx 1 salva salva   36 May 26 14:04 parser -> ../@babel/parser/bin/babel-parser.js
+lrwxrwxrwx 1 salva salva   21 May 26 14:04 tsc -> ../typescript/bin/tsc
+lrwxrwxrwx 1 salva salva   26 May 26 14:04 tsserver -> ../typescript/bin/tsserver
+lrwxrwxrwx 1 salva salva   24 May 26 14:04 tsv2csv -> ../d3-dsv/bin/dsv2dsv.js
+lrwxrwxrwx 1 salva salva   25 May 26 14:04 tsv2json -> ../d3-dsv/bin/dsv2json.js
+lrwxrwxrwx 1 salva salva   31 May 26 14:04 vue-demi-fix -> ../vue-demi/bin/vue-demi-fix.js
+lrwxrwxrwx 1 salva salva   34 May 26 14:04 vue-demi-switch -> ../vue-demi/bin/vue-demi-switch.js
+
+node_modules/.bin:
+total 88
+drwxr-xr-x 1 salva salva   330 May 26 14:03 .
+drwxr-xr-x 1 salva salva 11048 May 26 14:03 ..
+lrwxrwxrwx 1 root  root     40 May 25 08:35 conc -> ../concurrently/dist/bin/concurrently.js
+lrwxrwxrwx 1 root  root     40 May 25 08:35 concurrently -> ../concurrently/dist/bin/concurrently.js
+lrwxrwxrwx 1 salva salva    25 May 23 09:10 csv2json -> ../d3-dsv/bin/dsv2json.js
+lrwxrwxrwx 1 salva salva    24 May 23 09:10 csv2tsv -> ../d3-dsv/bin/dsv2dsv.js
+lrwxrwxrwx 1 salva salva    24 May 23 09:10 dsv2dsv -> ../d3-dsv/bin/dsv2dsv.js
+lrwxrwxrwx 1 salva salva    25 May 23 09:10 dsv2json -> ../d3-dsv/bin/dsv2json.js
+lrwxrwxrwx 1 salva salva    25 May 23 09:10 json2csv -> ../d3-dsv/bin/json2dsv.js
+lrwxrwxrwx 1 salva salva    25 May 23 09:10 json2dsv -> ../d3-dsv/bin/json2dsv.js
+lrwxrwxrwx 1 salva salva    25 May 23 09:10 json2tsv -> ../d3-dsv/bin/json2dsv.js
+lrwxrwxrwx 1 salva salva    15 May 26 14:03 katex -> ../katex/cli.js
+lrwxrwxrwx 1 salva salva    14 May 23 09:10 mime -> ../mime/cli.js
+lrwxrwxrwx 1 salva salva    24 May 26 14:03 nanoid -> ../nanoid/bin/nanoid.cjs
+lrwxrwxrwx 1 salva salva    36 May 26 14:03 parser -> ../@babel/parser/bin/babel-parser.js
+lrwxrwxrwx 1 root  root     19 May 25 08:35 tree-kill -> ../tree-kill/cli.js
+lrwxrwxrwx 1 salva salva    21 May 23 09:10 tsc -> ../typescript/bin/tsc
+lrwxrwxrwx 1 salva salva    26 May 23 09:10 tsserver -> ../typescript/bin/tsserver
+lrwxrwxrwx 1 salva salva    24 May 23 09:10 tsv2csv -> ../d3-dsv/bin/dsv2dsv.js
+lrwxrwxrwx 1 salva salva    25 May 23 09:10 tsv2json -> ../d3-dsv/bin/dsv2json.js
+lrwxrwxrwx 1 root  root     19 May 25 08:35 tsx -> ../tsx/dist/cli.mjs
+lrwxrwxrwx 1 root  root     29 May 25 08:35 vitepress -> ../vitepress/bin/vitepress.js
+lrwxrwxrwx 1 salva salva    31 May 23 09:10 vue-demi-fix -> ../vue-demi/bin/vue-demi-fix.js
+lrwxrwxrwx 1 salva salva    34 May 23 09:10 vue-demi-switch -> ../vue-demi/bin/vue-demi-switch.js
+
+> diedrico-frontend@0.1.0 test
+> vitest run tests/unit/calculations/intersections.spec.ts tests/unit/components/propertiesDialog.spec.ts tests/integration/guide-creation.test.ts
+

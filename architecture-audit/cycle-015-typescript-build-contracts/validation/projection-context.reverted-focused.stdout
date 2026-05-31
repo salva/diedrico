@@ -1,0 +1,7 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run --run frontend/tests/unit/domain/projectionPlaneRealization.spec.ts frontend/tests/unit/projectionPlane.spec.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+

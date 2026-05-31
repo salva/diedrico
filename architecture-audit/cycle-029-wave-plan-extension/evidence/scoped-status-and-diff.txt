@@ -1,0 +1,7 @@
+## scoped status
+ M frontend/src/domain/calculations/Intersections.ts
+ M frontend/src/domain/processTree/ActionGroup.ts
+## scoped diff stat
+## unrelated dirty metadata only
+ M frontend/src/domain/calculations/Intersections.ts
+ M frontend/src/domain/processTree/ActionGroup.ts

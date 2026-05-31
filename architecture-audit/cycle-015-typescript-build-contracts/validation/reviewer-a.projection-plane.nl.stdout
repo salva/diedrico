@@ -1,0 +1,881 @@
+   240	  }
+   241	
+   242	  // ==================== Realization Computation Methods ====================
+   243	  // Phase 22.5: Realization computation moved from World to ProjectionPlane
+   244	  // These methods compute realizations and manage the plane-level cache
+   245	
+   246	  /**
+   247	   * Compute and cache 2D realization for a point
+   248	   * @param point Point to realize
+   249	   * @param world World context for querying dependencies
+   250	   * @returns Point2DRealization2D if computation succeeds, undefined otherwise
+   251	   */
+   252	  realizePoint2D(point: Point2D, world: ProjectionPlaneMutationContext): Point2DRealization2D | undefined {
+   253	    // Check cache first
+   254	    const cached = this.elementStore.getPointRealization2D(point.id);
+   255	    if (cached) {
+   256	      return cached;
+   257	    }
+   258	
+   259	    // Compute realization - point will query world for parent element realizations
+   260	    const realization = point.realize2D(world);
+   261	    if (!realization) {
+   262	      return undefined;  // Cannot compute (e.g., missing dependencies)
+   263	    }
+   264	
+   265	    // Cache the result
+   266	    this.elementStore.setPointRealization2D(point.id, realization);
+   267	    return realization;
+   268	  }
+   269	
+   270	  /**
+   271	   * Compute and cache 2D realization for a line
+   272	   * @param line Line to realize (includes segments, guides, hinge lines - all Line2D subtypes)
+   273	   * @param world World context for querying dependencies
+   274	   * @returns Line2DRealization2D if computation succeeds, undefined otherwise
+   275	   */
+   276	  realizeLine2D(line: Line2D, world: ProjectionPlaneMutationContext): Line2DRealization2D | undefined {
+   277	    // Check cache first
+   278	    const cached = this.elementStore.getLineRealization2D(line.id);
+   279	    if (cached) {
+   280	      return cached;
+   281	    }
+   282	
+   283	    // Compute realization - line will query world for parent point realizations
+   284	    const realization = line.realize2D(world);
+   285	    if (!realization) {
+   286	      return undefined;  // Cannot compute (e.g., missing dependency points)
+   287	    }
+   288	
+   289	    // Cache the result
+   290	    this.elementStore.setLineRealization2D(line.id, realization);
+   291	    return realization;
+   292	  }
+   293	
+   294	  /**
+   295	   * Compute and cache 2D realization for a circle
+   296	   * @param circle Circle to realize
+   297	   * @param world World context for querying dependencies
+   298	   * @returns Circle2DRealization2D if computation succeeds, undefined otherwise
+   299	   */
+   300	  realizeCircle2D(circle: Circle2D, world: ProjectionPlaneMutationContext): Circle2DRealization2D | undefined {
+   301	    // Check cache first
+   302	    const cached = this.elementStore.getCircleRealization2D(circle.id);
+   303	    if (cached) {
+   304	      return cached;
+   305	    }
+   306	
+   307	    // Compute realization - circle will query world for parent element realizations
+   308	    const realization = circle.realize2D(world);
+   309	    if (!realization) {
+   310	      return undefined;  // Cannot compute (e.g., missing dependencies)
+   311	    }
+   312	
+   313	    // Cache the result
+   314	    this.elementStore.setCircleRealization2D(circle.id, realization);
+   315	    return realization;
+   316	  }
+   317	
+   318	  // ==================== Factory Methods ====================
+   319	  // Phase 22.5: Factory methods moved from World to ProjectionPlane
+   320	  // These methods create and add 2D elements to this plane
+   321	
+   322	  /**
+   323	   * Phase 95: Generate unique Point2D ID (camelCase format)
+   324	   */
+   325	  generatePoint2DId(world: ProjectionPlaneMutationContext): string {
+   326	    const localId = `point2d${world.getNextId()}`;
+   327	    return buildElementId(this.id, localId);
+   328	  }
+   329	
+   330	  /**
+   331	   * Phase 95: Generate unique Line2D ID (camelCase format)
+   332	   */
+   333	  generateLine2DId(world: ProjectionPlaneMutationContext): string {
+   334	    const localId = `line2d${world.getNextId()}`;
+   335	    return buildElementId(this.id, localId);
+   336	  }
+   337	
+   338	  /**
+   339	   * Phase 95: Generate unique Segment2D ID (camelCase format)
+   340	   */
+   341	  generateSegment2DId(world: ProjectionPlaneMutationContext): string {
+   342	    const localId = `segment2d${world.getNextId()}`;
+   343	    return buildElementId(this.id, localId);
+   344	  }
+   345	
+   346	  /**
+   347	   * Phase 95: Generate unique Circle2D ID (camelCase format)
+   348	   */
+   349	  generateCircle2DId(world: ProjectionPlaneMutationContext): string {
+   350	    const localId = `circle2d${world.getNextId()}`;
+   351	    return buildElementId(this.id, localId);
+   352	  }
+   353	
+   354	  /**
+   355	   * Phase 95: Generate unique Guide2D ID (camelCase format)
+   356	   */
+   357	  generateGuide2DId(world: ProjectionPlaneMutationContext): string {
+   358	    const localId = `guide2d${world.getNextId()}`;
+   359	    return buildElementId(this.id, localId);
+   360	  }
+   361	
+   362	  /**
+   363	   * Factory method: Create and add a FreePoint2D to this plane
+   364	   * 
+   365	   * @param position Position vector in intrinsic plane coordinates
+   366	   * @param world World instance for ID generation
+   367	   * @param id Optional ID - ONLY pass this for redo operations that need to recreate
+   368	   *           an element with its previous ID. All other callers (tests, tools, normal
+   369	   *           operations) should omit this parameter to get an auto-generated hierarchical ID.
+   370	   *           
+   371	   *           Tests must pass null/undefined and capture the returned element's ID:
+   372	   *           ```typescript
+   373	   *           const p1 = plane.addFreePoint2D(pos, world);  // Auto-generates ID
+   374	   *           const p2 = plane.addFreePoint2D(pos2, world);
+   375	   *           const line = plane.addLineByTwoPoints(p1.id, p2.id, world);
+   376	   *           ```
+   377	   * @returns The created FreePoint2D
+   378	   */
+   379	  addFreePoint2D(
+   380	    position: Vector3,
+   381	    world: ProjectionPlaneMutationContext,
+   382	    id?: string,
+   383	    label?: string
+   384	  ): FreePoint2D {
+   385	    if (!this.id) {
+   386	      throw new Error('Cannot add point to plane without ID');
+   387	    }
+   388	
+   389	    // Generate unique ID if not provided
+   390	    if (!id) {
+   391	      id = this.generatePoint2DId(world);
+   392	    }
+   393	
+   394	    // Phase 97: Generate default label if not provided
+   395	    if (!label) {
+   396	      label = world.generateDefaultLabel(id, 'Point2D');
+   397	    }
+   398	
+   399	    const point = new FreePoint2D(id, position, this.id, label);
+   400	    
+   401	    this.addPoint(point, world);
+   402	    return point;
+   403	  }
+   404	
+   405	  /**
+   406	   * Factory method: Create and add a Point2DLineLineIntersection to this plane
+   407	   * 
+   408	   * @param line1Id ID of first line
+   409	   * @param line2Id ID of second line
+   410	   * @param world World context for validation and ID generation
+   411	   * @param id Optional ID - ONLY for redo operations. Tests and normal operations should
+   412	   *           omit this to get auto-generated IDs. See addFreePoint2D() for test pattern.
+   413	   * @returns The created Point2DLineLineIntersection
+   414	   */
+   415	  addLineLineIntersection(
+   416	    line1Id: string,
+   417	    line2Id: string,
+   418	    world: ProjectionPlaneMutationContext,
+   419	    id?: string
+   420	  ): Point2DLineLineIntersection {
+   421	    if (!this.id) {
+   422	      throw new Error('Cannot add point to plane without ID');
+   423	    }
+   424	
+   425	    // Validate lines exist
+   426	    const l1 = this.getLine(line1Id) || world.getLine2D(line1Id);
+   427	    const l2 = this.getLine(line2Id) || world.getLine2D(line2Id);
+   428	    const line1 = l1.realize2D(world);
+   429	    const line2 = l2.realize2D(world);
+   430	    
+   431	    if (!line1) {
+   432	      throw new Error(`Invalid line1Id: ${line1Id}. Line does not exist.`);
+   433	    }
+   434	    if (!line2) {
+   435	      throw new Error(`Invalid line2Id: ${line2Id}. Line does not exist.`);
+   436	    }
+   437	
+   438	    // Generate unique ID if not provided
+   439	    if (!id) {
+   440	      id = this.generatePoint2DId(world);
+   441	    }
+   442	
+   443	    // Phase 97: Generate default label if not provided
+   444	    const label = world.generateDefaultLabel(id, 'Point2D');
+   445	
+   446	    const point = new Point2DLineLineIntersection(id, line1Id, line2Id, this.id, label);
+   447	    
+   448	    this.addPoint(point, world);
+   449	    return point;
+   450	  }
+   451	
+   452	  /**
+   453	   * Factory method: Create and add a Point2DLineCircleIntersection to this plane
+   454	   * @param lineId ID of the line
+   455	   * @param circleId ID of the circle
+   456	   * @param index Intersection index (0 or 1)
+   457	   * @param world World context for validation and ID generation
+   458	   * @param id Optional ID for redo operations
+   459	   * @returns The created Point2DLineCircleIntersection
+   460	   */
+   461	  addLineCircleIntersection(
+   462	    lineId: string,
+   463	    circleId: string,
+   464	    index: number,
+   465	    world: ProjectionPlaneMutationContext,
+   466	    id?: string
+   467	  ): Point2DLineCircleIntersection {
+   468	    if (!this.id) {
+   469	      throw new Error('Cannot add point to plane without ID');
+   470	    }
+   471	
+   472	    // Validate elements exist
+   473	    const lineElement = this.getLine(lineId);
+   474	    const circleElement = this.getCircle(circleId);
+   475	    const line = lineElement.realize2D(world);
+   476	    const circle = circleElement.realize2D(world);
+   477	    
+   478	    if (!line) {
+   479	      throw new Error(`Invalid lineId: ${lineId}. Line does not exist.`);
+   480	    }
+   481	    if (!circle) {
+   482	      throw new Error(`Invalid circleId: ${circleId}. Circle does not exist.`);
+   483	    }
+   484	
+   485	    // Validate index
+   486	    if (index !== 0 && index !== 1) {
+   487	      throw new Error(`Invalid index: ${index}. Must be 0 or 1.`);
+   488	    }
+   489	
+   490	    // Generate unique ID if not provided
+   491	    if (!id) {
+   492	      id = this.generatePoint2DId(world);
+   493	    }
+   494	
+   495	    // Phase 97: Generate default label if not provided
+   496	    const label = world.generateDefaultLabel(id, 'Point2D');
+   497	
+   498	    const point = new Point2DLineCircleIntersection(id, lineId, circleId, index, this.id, label);
+   499	    
+   500	    this.addPoint(point, world);
+   501	    return point;
+   502	  }
+   503	
+   504	  /**
+   505	   * Factory method: Create and add a Point2DCircleCircleIntersection to this plane
+   506	   * @param circle1Id ID of first circle
+   507	   * @param circle2Id ID of second circle
+   508	   * @param index Intersection index (0 or 1)
+   509	   * @param world World context for validation and ID generation
+   510	   * @param id Optional ID for redo operations
+   511	   * @returns The created Point2DCircleCircleIntersection
+   512	   */
+   513	  addCircleCircleIntersection(
+   514	    circle1Id: string,
+   515	    circle2Id: string,
+   516	    index: number,
+   517	    world: ProjectionPlaneMutationContext,
+   518	    id?: string
+   519	  ): Point2DCircleCircleIntersection {
+   520	    if (!this.id) {
+   521	      throw new Error('Cannot add point to plane without ID');
+   522	    }
+   523	
+   524	    // Validate circles exist
+   525	    const circle1Element = this.getCircle(circle1Id);
+   526	    const circle2Element = this.getCircle(circle2Id);
+   527	    const circle1 = circle1Element.realize2D(world);
+   528	    const circle2 = circle2Element.realize2D(world);
+   529	    
+   530	    if (!circle1) {
+   531	      throw new Error(`Invalid circle1Id: ${circle1Id}. Circle does not exist.`);
+   532	    }
+   533	    if (!circle2) {
+   534	      throw new Error(`Invalid circle2Id: ${circle2Id}. Circle does not exist.`);
+   535	    }
+   536	
+   537	    // Validate index
+   538	    if (index !== 0 && index !== 1) {
+   539	      throw new Error(`Invalid index: ${index}. Must be 0 or 1.`);
+   540	    }
+   541	
+   542	    // Generate unique ID if not provided
+   543	    if (!id) {
+   544	      id = this.generatePoint2DId(world);
+   545	    }
+   546	
+   547	    // Phase 97: Generate default label if not provided
+   548	    const label = world.generateDefaultLabel(id, 'Point2D');
+   549	
+   550	    const point = new Point2DCircleCircleIntersection(id, circle1Id, circle2Id, index, this.id, label);
+   551	    
+   552	    this.addPoint(point, world);
+   553	    return point;
+   554	  }
+   555	
+   556	  /**
+   557	   * Factory method: Create and add a Line2DByTwoPoints to this plane
+   558	   * 
+   559	   * @param point1Id ID of first point
+   560	   * @param point2Id ID of second point
+   561	   * @param world World context for validation and ID generation
+   562	   * @param id Optional ID - ONLY for redo operations. Tests and normal operations should
+   563	   *           omit this to get auto-generated IDs. See addFreePoint2D() for test pattern.
+   564	   * @returns The created Line2DByTwoPoints
+   565	   */
+   566	  addLine2DBetweenTwoPoints(
+   567	    point1Id: string,
+   568	    point2Id: string,
+   569	    world: ProjectionPlaneMutationContext,
+   570	    id?: string
+   571	  ): Line2DByTwoPoints {
+   572	    if (!this.id) {
+   573	      throw new Error('Cannot add line to plane without ID');
+   574	    }
+   575	
+   576	    // Validate points exist
+   577	    const point1 = this.getPoint(point1Id);
+   578	    const point2 = this.getPoint(point2Id);
+   579	    
+   580	    if (!point1) {
+   581	      throw new Error(`Invalid point1Id: ${point1Id}. Point does not exist on this plane.`);
+   582	    }
+   583	    if (!point2) {
+   584	      throw new Error(`Invalid point2Id: ${point2Id}. Point does not exist on this plane.`);
+   585	    }
+   586	
+   587	    // Validate points are distinct
+   588	    if (point1Id === point2Id) {
+   589	      throw new Error(`Cannot create line from a point to itself. point1Id and point2Id must be different.`);
+   590	    }
+   591	
+   592	    // Validate points have distinct positions
+   593	    const point1Realization = point1.realize2D(world);
+   594	    const point2Realization = point2.realize2D(world);
+   595	    
+   596	    if (!point1Realization || !point2Realization) {
+   597	      throw new Error(`Cannot compute point realizations. Points may depend on missing elements.`);
+   598	    }
+   599	
+   600	    const distance = point1Realization.position.distanceTo(point2Realization.position);
+   601	    if (distance < 1e-10) {
+   602	      throw new Error(`Points ${point1Id} and ${point2Id} are too close (distance: ${distance}). Cannot create line.`);
+   603	    }
+   604	
+   605	    // Generate unique ID if not provided
+   606	    if (!id) {
+   607	      id = this.generateLine2DId(world);
+   608	    }
+   609	
+   610	    // Phase 97: Generate default label if not provided
+   611	    const label = world.generateDefaultLabel(id, 'Line2D');
+   612	
+   613	    const line = new Line2DByTwoPoints(id, point1Id, point2Id, this.id, label);
+   614	    
+   615	    this.addLine(line, world);
+   616	    return line;
+   617	  }
+   618	
+   619	  /**
+   620	   * Factory method: Create and add a Line2DParallel to this plane
+   621	   * 
+   622	   * @param referenceLineId ID of line to be parallel to
+   623	   * @param throughPointId ID of point the new line passes through
+   624	   * @param world World context for validation and ID generation
+   625	   * @param id Optional ID - ONLY for redo operations. Tests and normal operations should
+   626	   *           omit this to get auto-generated IDs. See addFreePoint2D() for test pattern.
+   627	   * @returns The created Line2DParallel
+   628	   */
+   629	  addLine2DParallelToLine(
+   630	    referenceLineId: string,
+   631	    throughPointId: string,
+   632	    world: ProjectionPlaneMutationContext,
+   633	    id?: string
+   634	  ): Line2DParallel {
+   635	    if (!this.id) {
+   636	      throw new Error('Cannot add line to plane without ID');
+   637	    }
+   638	
+   639	    // Validate through-point exists on this plane
+   640	    const throughPoint = this.getPoint(throughPointId);
+   641	    if (!throughPoint) {
+   642	      throw new Error(`Invalid throughPointId: ${throughPointId}. Point does not exist on this plane.`);
+   643	    }
+   644	
+   645	    // Validate reference line exists (could be on any plane)
+   646	    const refLineElement = world.getLine2D(referenceLineId);
+   647	    const referenceLine = refLineElement.realize2D(world);
+   648	    if (!referenceLine) {
+   649	      throw new Error(`Invalid referenceLineId: ${referenceLineId}. Line does not exist.`);
+   650	    }
+   651	
+   652	    // Generate unique ID if not provided
+   653	    if (!id) {
+   654	      id = this.generateLine2DId(world);
+   655	    }
+   656	
+   657	    // Phase 97: Generate default label if not provided
+   658	    const label = world.generateDefaultLabel(id, 'Line2D');
+   659	
+   660	    const line = new Line2DParallel(id, referenceLineId, throughPointId, this.id, label);
+   661	    
+   662	    this.addLine(line, world);
+   663	    return line;
+   664	  }
+   665	
+   666	  /**
+   667	   * Add a line perpendicular to a reference line, passing through a point
+   668	   * 
+   669	   * @param referenceLineId The reference line to be perpendicular to (90° angle)
+   670	   * @param throughPointId The point the perpendicular line passes through
+   671	   * @param world World instance for validation
+   672	   * @param id Optional explicit ID for redo operations. Usually you should
+   673	   *           omit this to get auto-generated IDs.
+   674	   * @returns The created Line2DPerpendicularToLine
+   675	   */
+   676	  addLine2DPerpendicularToLine(
+   677	    referenceLineId: string,
+   678	    throughPointId: string,
+   679	    world: ProjectionPlaneMutationContext,
+   680	    id?: string
+   681	  ): Line2DPerpendicularToLine {
+   682	    if (!this.id) {
+   683	      throw new Error('Cannot add line to plane without ID');
+   684	    }
+   685	
+   686	    // Validate through-point exists on this plane
+   687	    const throughPoint = this.getPoint(throughPointId);
+   688	    if (!throughPoint) {
+   689	      throw new Error(`Invalid throughPointId: ${throughPointId}. Point does not exist on this plane.`);
+   690	    }
+   691	
+   692	    // Validate reference line exists (could be on any plane)
+   693	    const refLineElement = world.getLine2D(referenceLineId);
+   694	    const referenceLine = refLineElement.realize2D(world);
+   695	    if (!referenceLine) {
+   696	      throw new Error(`Invalid referenceLineId: ${referenceLineId}. Line does not exist.`);
+   697	    }
+   698	
+   699	    // Generate unique ID if not provided
+   700	    if (!id) {
+   701	      id = this.generateLine2DId(world);
+   702	    }
+   703	
+   704	    // Phase 97: Generate default label if not provided
+   705	    const label = world.generateDefaultLabel(id, 'Line2D');
+   706	
+   707	    const line = new Line2DPerpendicularToLine(id, referenceLineId, throughPointId, this.id, label);
+   708	    
+   709	    this.addLine(line, world);
+   710	    return line;
+   711	  }
+   712	
+   713	  /**
+   714	   * Factory method: Create and add Line2DTangentToCircleThroughPoint to this plane
+   715	   * 
+   716	   * Phase 60: Tangent line to circle passing through external point
+   717	   * 
+   718	   * @param circleId ID of circle to be tangent to
+   719	   * @param throughPointId ID of external point line passes through
+   720	   * @param tangentIndex Index (0 or 1) to disambiguate which tangent line (angle-based)
+   721	   * @param world World context for validation and ID generation
+   722	   * @param id Optional ID - ONLY for redo operations
+   723	   * @returns The created Line2DTangentToCircleThroughPoint
+   724	   */
+   725	  addLine2DTangentToCircleThroughPoint(
+   726	    circleId: string,
+   727	    throughPointId: string,
+   728	    tangentIndex: 0 | 1,
+   729	    world: ProjectionPlaneMutationContext,
+   730	    id?: string
+   731	  ): Line2DTangentToCircleThroughPoint {
+   732	    if (!this.id) {
+   733	      throw new Error('Cannot add line to plane without ID');
+   734	    }
+   735	
+   736	    // Validate circle exists on this plane
+   737	    const circle = this.getCircle(circleId);
+   738	    if (!circle) {
+   739	      throw new Error(`Invalid circleId: ${circleId}. Circle does not exist on this plane.`);
+   740	    }
+   741	
+   742	    // Validate through-point exists on this plane
+   743	    const throughPoint = this.getPoint(throughPointId);
+   744	    if (!throughPoint) {
+   745	      throw new Error(`Invalid throughPointId: ${throughPointId}. Point does not exist on this plane.`);
+   746	    }
+   747	
+   748	    // Validate tangent index
+   749	    if (tangentIndex !== 0 && tangentIndex !== 1) {
+   750	      throw new Error(`Invalid tangentIndex: ${tangentIndex}. Must be 0 or 1.`);
+   751	    }
+   752	
+   753	    // Generate unique ID if not provided
+   754	    if (!id) {
+   755	      id = this.generateLine2DId(world);
+   756	    }
+   757	
+   758	    // Phase 97: Generate default label if not provided
+   759	    const label = world.generateDefaultLabel(id, 'Line2D');
+   760	
+   761	    const line = new Line2DTangentToCircleThroughPoint(
+   762	      id,
+   763	      circleId,
+   764	      throughPointId,
+   765	      tangentIndex,
+   766	      this.id,
+   767	      label
+   768	    );
+   769	    
+   770	    this.addLine(line, world);
+   771	    return line;
+   772	  }
+   773	
+   774	  /**
+   775	   * Factory method: Create and add Line2DTangentToCircleParallelToLine to this plane
+   776	   * 
+   777	   * Phase 61: Tangent line to circle parallel to reference line
+   778	   * 
+   779	   * @param circleId ID of circle to be tangent to
+   780	   * @param referenceLineId ID of line to be parallel to (can be on any plane)
+   781	   * @param tangentIndex Index (0 or 1) to disambiguate which tangent line (angle-based)
+   782	   * @param world World context for validation and ID generation
+   783	   * @param id Optional ID - ONLY for redo operations
+   784	   * @returns The created Line2DTangentToCircleParallelToLine
+   785	   */
+   786	  addLine2DTangentToCircleParallelToLine(
+   787	    circleId: string,
+   788	    referenceLineId: string,
+   789	    tangentIndex: 0 | 1,
+   790	    world: ProjectionPlaneMutationContext,
+   791	    id?: string
+   792	  ): Line2DTangentToCircleParallelToLine {
+   793	    if (!this.id) {
+   794	      throw new Error('Cannot add line to plane without ID');
+   795	    }
+   796	
+   797	    // Validate circle exists on this plane
+   798	    const circle = this.getCircle(circleId);
+   799	    if (!circle) {
+   800	      throw new Error(`Invalid circleId: ${circleId}. Circle does not exist on this plane.`);
+   801	    }
+   802	
+   803	    // Validate reference line exists (could be on any plane)
+   804	    const refLineElement = world.getLine2D(referenceLineId);
+   805	    const referenceLine = refLineElement.realize2D(world);
+   806	    if (!referenceLine) {
+   807	      throw new Error(`Invalid referenceLineId: ${referenceLineId}. Line does not exist.`);
+   808	    }
+   809	
+   810	    // Validate tangent index
+   811	    if (tangentIndex !== 0 && tangentIndex !== 1) {
+   812	      throw new Error(`Invalid tangentIndex: ${tangentIndex}. Must be 0 or 1.`);
+   813	    }
+   814	
+   815	    // Generate unique ID if not provided
+   816	    if (!id) {
+   817	      id = this.generateLine2DId(world);
+   818	    }
+   819	
+   820	    // Phase 97: Generate default label if not provided
+   821	    const label = world.generateDefaultLabel(id, 'Line2D');
+   822	
+   823	    const line = new Line2DTangentToCircleParallelToLine(
+   824	      id,
+   825	      circleId,
+   826	      referenceLineId,
+   827	      tangentIndex,
+   828	      this.id,
+   829	      label
+   830	    );
+   831	    
+   832	    this.addLine(line, world);
+   833	    return line;
+   834	  }
+   835	
+   836	  /**
+   837	   * Factory method: Create and add a Segment2DByPoints to this plane
+   838	   * 
+   839	   * @param point1Id ID of first endpoint
+   840	   * @param point2Id ID of second endpoint
+   841	   * @param world World context for validation and ID generation
+   842	   * @param id Optional ID - ONLY for redo operations. Tests and normal operations should
+   843	   *           omit this to get auto-generated IDs. See addFreePoint2D() for test pattern.
+   844	   * @returns The created Segment2DByPoints
+   845	   */
+   846	  addSegment2DBetweenPoints(
+   847	    point1Id: string,
+   848	    point2Id: string,
+   849	    world: ProjectionPlaneMutationContext,
+   850	    id?: string
+   851	  ): Segment2DByPoints {
+   852	    if (!this.id) {
+   853	      throw new Error('Cannot add segment to plane without ID');
+   854	    }
+   855	
+   856	    // Validate points exist
+   857	    const point1 = this.getPoint(point1Id);
+   858	    const point2 = this.getPoint(point2Id);
+   859	    
+   860	    if (!point1) {
+   861	      throw new Error(`Invalid point1Id: ${point1Id}. Point does not exist on this plane.`);
+   862	    }
+   863	    if (!point2) {
+   864	      throw new Error(`Invalid point2Id: ${point2Id}. Point does not exist on this plane.`);
+   865	    }
+   866	
+   867	    // Validate points are distinct
+   868	    if (point1Id === point2Id) {
+   869	      throw new Error(`Cannot create segment from a point to itself. point1Id and point2Id must be different.`);
+   870	    }
+   871	
+   872	    // Generate unique ID if not provided
+   873	    if (!id) {
+   874	      id = this.generateSegment2DId(world);
+   875	    }
+   876	
+   877	    // Phase 97: Generate default label if not provided
+   878	    const label = world.generateDefaultLabel(id, 'Segment2D');
+   879	
+   880	    const segment = new Segment2DByPoints(id, point1Id, point2Id, this.id, label);
+   881	    
+   882	    this.addLine(segment, world);  // Segments are stored as lines
+   883	    return segment;
+   884	  }
+   885	
+   886	  /**
+   887	   * Factory method: Create and add a Circle2DByCenterAndPoint to this plane
+   888	   * 
+   889	   * @param centerPointId ID of center point
+   890	   * @param circumferencePointId ID of point on circumference
+   891	   * @param world World context for validation and ID generation
+   892	   * @param id Optional ID - ONLY for redo operations. Tests and normal operations should
+   893	   *           omit this to get auto-generated IDs. See addFreePoint2D() for test pattern.
+   894	   * @returns The created Circle2DByCenterAndPoint
+   895	   */
+   896	  addCircle2DByCenterAndPoint(
+   897	    centerPointId: string,
+   898	    circumferencePointId: string,
+   899	    world: ProjectionPlaneMutationContext,
+   900	    id?: string
+   901	  ): Circle2DByCenterAndPoint {
+   902	    if (!this.id) {
+   903	      throw new Error('Cannot add circle to plane without ID');
+   904	    }
+   905	
+   906	    // Validate points exist
+   907	    const centerPoint = this.getPoint(centerPointId);
+   908	    const circumferencePoint = this.getPoint(circumferencePointId);
+   909	    
+   910	    if (!centerPoint) {
+   911	      throw new Error(`Invalid centerPointId: ${centerPointId}. Point does not exist on this plane.`);
+   912	    }
+   913	    if (!circumferencePoint) {
+   914	      throw new Error(`Invalid circumferencePointId: ${circumferencePointId}. Point does not exist on this plane.`);
+   915	    }
+   916	
+   917	    // Validate points are distinct
+   918	    if (centerPointId === circumferencePointId) {
+   919	      throw new Error(`Cannot create circle with center and circumference point being the same point.`);
+   920	    }
+   921	
+   922	    // Generate unique ID if not provided
+   923	    if (!id) {
+   924	      id = this.generateCircle2DId(world);
+   925	    }
+   926	
+   927	    // Phase 97: Generate default label if not provided
+   928	    const label = world.generateDefaultLabel(id, 'Circle2D');
+   929	
+   930	    const circle = new Circle2DByCenterAndPoint(id, centerPointId, circumferencePointId, this.id, label);
+   931	    
+   932	    this.addCircle(circle, world);
+   933	    return circle;
+   934	  }
+   935	
+   936	  /**
+   937	   * Factory method: Create and add a Guide2D to this plane
+   938	   * 
+   939	   * @param referenceLineId ID of line to be perpendicular to
+   940	   * @param throughPointId ID of point the guide passes through
+   941	   * @param world World context for validation and ID generation
+   942	   * @param id Optional ID - ONLY for redo operations. Tests and normal operations should
+   943	   *           omit this to get auto-generated IDs. See addFreePoint2D() for test pattern.
+   944	   * @returns The created Guide2D
+   945	   */
+   946	  addGuide2D(
+   947	    referenceLineId: string,
+   948	    throughPointId: string,
+   949	    world: ProjectionPlaneMutationContext,
+   950	    id?: string
+   951	  ): Guide2D {
+   952	    if (!this.id) {
+   953	      throw new Error('Cannot add guide to plane without ID');
+   954	    }
+   955	
+   956	    // Validate through point exists on this plane
+   957	    const throughPoint = this.getPoint(throughPointId);
+   958	    if (!throughPoint) {
+   959	      throw new Error(`Invalid throughPointId: ${throughPointId}. Point does not exist on this plane.`);
+   960	    }
+   961	
+   962	    // Validate reference line exists (could be on any plane for perpendicular construction)
+   963	    const refLineElement = world.getLine2D(referenceLineId);
+   964	    if (!refLineElement) {
+   965	      throw new Error(`Invalid referenceLineId: ${referenceLineId}. Line does not exist.`);
+   966	    }
+   967	    
+   968	    const referenceLine = refLineElement.realize2D(world);
+   969	    if (!referenceLine) {
+   970	      throw new Error(`Invalid referenceLineId: ${referenceLineId}. Line cannot be realized.`);
+   971	    }
+   972	
+   973	    // Generate unique ID if not provided
+   974	    if (!id) {
+   975	      id = this.generateGuide2DId(world);
+   976	    }
+   977	
+   978	    // Phase 97: Generate default label if not provided
+   979	    const label = world.generateDefaultLabel(id, 'Guide2D');
+   980	
+   981	    const guide = new Guide2D(id, referenceLineId, throughPointId, this.id, label);
+   982	    
+   983	    this.addLine(guide, world);  // Guides are stored as lines
+   984	    return guide;
+   985	  }
+   986	
+   987	  /**
+   988	   * Add a sibling guide to this plane
+   989	   * 
+   990	   * Sibling guides are automatically created when a primary Guide2D is created.
+   991	   * They maintain the same geometric relationship (perpendicular to HalfHingeLine2D)
+   992	   * but in the paired projection plane.
+   993	   * 
+   994	   * @param primaryGuideId ID of the primary guide that spawned this sibling
+   995	   * @param referenceLineId ID of the HalfHingeLine2D in this (sibling) plane
+   996	   * @param world World instance for validation
+   997	   * @param id Optional ID for the sibling guide (generated if not provided)
+   998	   * @returns The created SiblingGuide2D
+   999	   * @throws Error if validation fails
+  1000	   */
+  1001	  addSiblingGuide2D(
+  1002	    primaryGuideId: string,
+  1003	    referenceLineId: string,
+  1004	    world: ProjectionPlaneMutationContext,
+  1005	    id?: string
+  1006	  ): SiblingGuide2D {
+  1007	    if (!this.id) {
+  1008	      throw new Error('Cannot add sibling guide to plane without ID');
+  1009	    }
+  1010	
+  1011	    // Validate reference line exists in world
+  1012	    const refLineElement = world.getLine2D(referenceLineId);
+  1013	    if (!refLineElement) {
+  1014	      throw new Error(`Invalid referenceLineId: ${referenceLineId}. Line does not exist.`);
+  1015	    }
+  1016	    
+  1017	    const referenceLine = refLineElement.realize2D(world);
+  1018	    if (!referenceLine) {
+  1019	      throw new Error(`Invalid referenceLineId: ${referenceLineId}. Line cannot be realized.`);
+  1020	    }
+  1021	
+  1022	    // Validate primary guide exists
+  1023	    const primaryGuide = world.getLine2D(primaryGuideId);
+  1024	    if (!primaryGuide) {
+  1025	      throw new Error(`Invalid primaryGuideId: ${primaryGuideId}. Primary guide does not exist.`);
+  1026	    }
+  1027	
+  1028	    // Generate unique ID if not provided
+  1029	    if (!id) {
+  1030	      id = this.generateGuide2DId(world);
+  1031	    }
+  1032	
+  1033	    // Get label from primary guide
+  1034	    const label = primaryGuide.label;
+  1035	    
+  1036	    const siblingGuide = new SiblingGuide2D(
+  1037	      id,
+  1038	      referenceLineId,
+  1039	      this.id,
+  1040	      primaryGuideId,
+  1041	      label
+  1042	    );
+  1043	    
+  1044	    this.addLine(siblingGuide, world);  // Sibling guides are stored as lines
+  1045	    return siblingGuide;
+  1046	  }
+  1047	
+  1048	  /**
+  1049	   * Factory method: Create and add a sibling intersection point to this plane
+  1050	   * 
+  1051	   * When an element intersects with a HalfHingeLine2D, the intersection represents
+  1052	   * a 3D point that projects onto both planes. This method creates the sibling
+  1053	   * intersection point on the paired projection plane.
+  1054	   * 
+  1055	   * Architecture note: Follows the same pattern as addSiblingGuide2D (Phase 36).
+  1056	   * The sibling point uses SiblingIntersectionPoint2D which realizes by cloning
+  1057	   * the primary point's coordinates (valid when HHL parametric consistency holds).
+  1058	   * 
+  1059	   * @param primaryIntersectionId ID of the primary intersection point
+  1060	   * @param world World context for validation and ID generation
+  1061	   * @param id Optional ID for redo support
+  1062	   * @returns The created SiblingIntersectionPoint2D
+  1063	   * @throws Error if plane has no ID or primary intersection doesn't exist
+  1064	   */
+  1065	  addSiblingIntersectionPoint(
+  1066	    primaryIntersectionId: string,
+  1067	    world: ProjectionPlaneMutationContext,
+  1068	    id?: string
+  1069	  ): SiblingIntersectionPoint2D {
+  1070	    if (!this.id) {
+  1071	      throw new Error('Cannot add sibling intersection point to plane without ID');
+  1072	    }
+  1073	
+  1074	    // Validate primary intersection exists
+  1075	    const primaryPlane = world.getPlaneForElement(primaryIntersectionId);
+  1076	    if (!primaryPlane) {
+  1077	      throw new Error(`Primary intersection point not found: ${primaryIntersectionId}`);
+  1078	    }
+  1079	
+  1080	    const primaryPoint = primaryPlane.getPoint(primaryIntersectionId);
+  1081	    if (!primaryPoint) {
+  1082	      throw new Error(`Primary intersection point not found: ${primaryIntersectionId}`);
+  1083	    }
+  1084	
+  1085	    // Validate primary is an intersection type using instanceof
+  1086	    const isIntersection = primaryPoint instanceof Point2DLineLineIntersection ||
+  1087	                           primaryPoint instanceof Point2DLineCircleIntersection ||
+  1088	                           primaryPoint instanceof Point2DCircleCircleIntersection;
+  1089	    
+  1090	    if (!isIntersection) {
+  1091	      throw new Error(`Primary point must be an intersection type, got: ${primaryPoint.constructor.name}`);
+  1092	    }
+  1093	
+  1094	    // Generate unique ID if not provided
+  1095	    if (!id) {
+  1096	      id = this.generatePoint2DId(world);
+  1097	    }
+  1098	
+  1099	    // Get label from primary point
+  1100	    const label = primaryPoint.label;
+  1101	    
+  1102	    const siblingPoint = new SiblingIntersectionPoint2D(
+  1103	      id,
+  1104	      primaryIntersectionId,
+  1105	      this.id,
+  1106	      label
+  1107	    );
+  1108	    
+  1109	    // Link bidirectionally
+  1110	    (primaryPoint as any).siblingPointId = siblingPoint.id;
+  1111	    
+  1112	    this.addPoint(siblingPoint, world);
+  1113	    return siblingPoint;
+  1114	  }
+  1115	
+  1116	  /**
+  1117	   * Element factory: Add origin point to projection plane
+  1118	   * 
+  1119	   * Creates a locked origin point at the specified position.
+  1120	   * Origin points cannot be moved or deleted by user actions.

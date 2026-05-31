@@ -1,0 +1,9 @@
+frontend/src/commands/operations/IOperation.ts
+frontend/src/commands/operations/OperationReducers.ts
+frontend/src/commands/operations/processTree/ProcessTreeOperations.ts
+frontend/src/composables/useProjectStateRuntimeSnapshot.ts
+frontend/src/domain/world/ProjectStateActions.ts
+frontend/src/domain/world/ProjectStateProcessReducers.ts
+frontend/src/domain/world/ProjectStateRuntime.ts
+frontend/src/domain/world/ProjectStateSelectors.ts
+frontend/src/domain/world/ProjectState.ts

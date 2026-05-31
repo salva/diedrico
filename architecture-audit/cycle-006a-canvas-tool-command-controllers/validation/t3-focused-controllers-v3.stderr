@@ -1,0 +1,21 @@
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/application/canvasToolControllers.spec.ts > Wave 006a canvas/tool command controllers > keeps SvgCanvas on the controller boundary for movement and style delegation
+TypeError: resolvePath is not a function
+ ❯ tests/unit/application/canvasToolControllers.spec.ts:241:33
+    239| 
+    240|   it('keeps SvgCanvas on the controller boundary for movement and styl…
+    241|     const source = readFileSync(resolvePath(__dirname, '../../../src/c…
+       |                                 ^
+    242| 
+    243|     expect(source).toContain('createCanvasToolController');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c vitest run tests/unit/application/canvasToolControllers.spec.ts

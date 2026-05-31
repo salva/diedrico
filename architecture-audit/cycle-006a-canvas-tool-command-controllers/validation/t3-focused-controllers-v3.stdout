@@ -1,0 +1,71 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run tests/unit/application/canvasToolControllers.spec.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+stdout | tests/unit/application/canvasToolControllers.spec.ts > Wave 006a canvas/tool command controllers > uses typed tangent metadata instead of defaulting tangent choices to index zero
+[TangentLine] Through Point: {
+  center: { x: 0, y: 0 },
+  radius: 5,
+  externalPoint: { x: 10, y: 0 },
+  distance: 10,
+  angleCP: 0,
+  angleBeta: 60.00000000000001,
+  tangentAngle: -60.00000000000001,
+  tangentPoint: { x: 2.4999999999999996, y: -4.330127018922194 },
+  direction: { x: -7.5, y: -4.330127018922194 },
+  index: 1
+}
+[TangentLine] Through Point: {
+  center: { x: 0, y: 0 },
+  radius: 5,
+  externalPoint: { x: 10, y: 0 },
+  distance: 10,
+  angleCP: 0,
+  angleBeta: 60.00000000000001,
+  tangentAngle: -60.00000000000001,
+  tangentPoint: { x: 2.4999999999999996, y: -4.330127018922194 },
+  direction: { x: -7.5, y: -4.330127018922194 },
+  index: 1
+}
+
+stdout | tests/unit/application/canvasToolControllers.spec.ts > Wave 006a canvas/tool command controllers > previews, cancels, commits, and undoes free-point moves through the movement use case
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+=== CASCADE INVALIDATION START ===
+Root element: projPlane3/point2d10
+=== CASCADE COMPLETE (1 elements invalidated) ===
+
+
+stdout | tests/unit/application/canvasToolControllers.spec.ts > Wave 006a canvas/tool command controllers > updates element styles through the style use case with undo support
+[UpdateElementStyleOp] Applied style to: projPlane3/point2d10 {
+  color: '#ff0000',
+  lineWidth: 2,
+  lineStyle: 'dashed',
+  opacity: 0.5,
+  visible: true,
+  inherited: true
+}
+[UpdateElementStyleOp] Restored style for: projPlane3/point2d10 undefined
+
+ ❯ tests/unit/application/canvasToolControllers.spec.ts  (8 tests | 1 failed) 32ms
+   ❯ tests/unit/application/canvasToolControllers.spec.ts > Wave 006a canvas/tool command controllers > keeps SvgCanvas on the controller boundary for movement and style delegation
+     → resolvePath is not a function
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  23:46:15
+   Duration  1.85s (transform 661ms, setup 1ms, collect 897ms, tests 32ms, environment 505ms, prepare 86ms)
+

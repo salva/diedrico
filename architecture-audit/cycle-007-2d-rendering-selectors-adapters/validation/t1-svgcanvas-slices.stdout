@@ -1,0 +1,613 @@
+--- 1-140 ---
+1: <template>
+2:   <div class="svg-canvas-container">
+3:     <svg
+4:       ref="svgElement"
+5:       class="svg-canvas"
+6:       xmlns="http://www.w3.org/2000/svg"
+7:       :viewBox="`0 0 ${canvasWidth} ${canvasHeight}`"
+8:       preserveAspectRatio="xMidYMid meet"
+9:       @mousedown="handleMouseDown"
+10:       @click="handleCanvasClick"
+11:       @dblclick="handleDoubleClick"
+12:       @mousemove="handleMouseMove"
+13:       @wheel.prevent="handleWheel"
+14:     >
+15:       <!-- Background grid (T275) - Zoom-adaptive grid display -->
+16:       <g v-if="viewStore.gridVisible.value" class="background-grid">
+17:         <line
+18:           v-for="line in gridLines"
+19:           :key="line.key"
+20:           :x1="line.x1"
+21:           :y1="line.y1"
+22:           :x2="line.x2"
+23:           :y2="line.y2"
+24:           :stroke="line.major ? '#C0C0C0' : '#E0E0E0'"
+25:           :stroke-width="line.major ? 1 : 0.5"
+26:         />
+27:       </g>
+28:       
+29:       <!-- Render all lines through Paper pipeline (including HL_HV projections) -->
+30:       <line
+31:         v-for="{ primitive, attrs } in renderedLines"
+32:         :key="primitive.id"
+33:         v-bind="attrs"
+34:       />
+35:       
+36:       <!-- Render all segments through Paper pipeline -->
+37:       <line
+38:         v-for="{ primitive, attrs } in renderedSegments"
+39:         :key="primitive.id"
+40:         v-bind="attrs"
+41:       />
+42:       
+43:       <!-- Render all guides through Paper pipeline -->
+44:       <line
+45:         v-for="{ primitive, attrs } in renderedGuides"
+46:         :key="primitive.id"
+47:         v-bind="attrs"
+48:       />
+49:       
+50:       <!-- Render all circles through Paper pipeline -->
+51:       <circle
+52:         v-for="{ primitive, attrs } in renderedCircles"
+53:         :key="primitive.id"
+54:         v-bind="attrs"
+55:       />
+56:       
+57:       <!-- Render all arcs through Paper pipeline -->
+58:       <path
+59:         v-for="{ primitive, attrs } in renderedArcs"
+60:         :key="primitive.id"
+61:         v-bind="attrs"
+62:       />
+63:       
+64:       <!-- Render all points through Paper pipeline -->
+65:       <circle
+66:         v-for="{ primitive, attrs } in renderedPoints"
+67:         :key="primitive.id"
+68:         v-bind="attrs"
+69:       />
+70:       
+71:       <!-- Snap preview indicator - orange glow around snap target point -->
+72:       <circle
+73:         v-if="snapTarget.pointId && snapTarget.position"
+74:         :cx="snapTarget.position.x"
+75:         :cy="snapTarget.position.y"
+76:         :r="8"
+77:         fill="none"
+78:         stroke="#FF6B35"
+79:         stroke-width="2"
+80:         opacity="0.8"
+81:         class="snap-indicator"
+82:       />
+83:       
+84:       <!-- Grid coordinate labels (Phase 78) - Display u,v values at viewport borders -->
+85:       <g v-if="viewStore.gridVisible.value" class="grid-labels">
+86:         <!-- Top edge labels (U-coordinates) -->
+87:         <text
+88:           v-for="label in gridLabels.top"
+89:           :key="label.key"
+90:           :x="label.position"
+91:           :y="12"
+92:           class="grid-label"
+93:           text-anchor="middle"
+94:         >
+95:           {{ label.value }}
+96:         </text>
+97:         
+98:         <!-- Bottom edge labels (U-coordinates) -->
+99:         <text
+100:           v-for="label in gridLabels.bottom"
+101:           :key="label.key"
+102:           :x="label.position"
+103:           :y="canvasHeight - 4"
+104:           class="grid-label"
+105:           text-anchor="middle"
+106:         >
+107:           {{ label.value }}
+108:         </text>
+109:         
+110:         <!-- Left edge labels (V-coordinates) -->
+111:         <text
+112:           v-for="label in gridLabels.left"
+113:           :key="label.key"
+114:           :x="4"
+115:           :y="label.position"
+116:           class="grid-label"
+117:           text-anchor="start"
+118:           dominant-baseline="middle"
+119:         >
+120:           {{ label.value }}
+121:         </text>
+122:         
+123:         <!-- Right edge labels (V-coordinates) -->
+124:         <text
+125:           v-for="label in gridLabels.right"
+126:           :key="label.key"
+127:           :x="canvasWidth - 4"
+128:           :y="label.position"
+129:           class="grid-label"
+130:           text-anchor="end"
+131:           dominant-baseline="middle"
+132:         >
+133:           {{ label.value }}
+134:         </text>
+135:       </g>
+136:     </svg>
+137:     
+138:     <!-- Hover tooltip -->
+139:     <div 
+140:       v-if="hoverHighlight.isHovering.value && hoverHighlight.hoveredElementLabel.value && hoverHighlight.temporary && !hoverHighlight.temporary.value"
+--- 620-730 ---
+620:  * - Power of 10 chosen based on zoom level to keep reasonable density
+621:  * 
+622:  * Subdivisions (2, 5, or 10):
+623:  * - Minor lines divide each major interval by 2, 5, or 10
+624:  * - Subdivision chosen to keep minor cells >= minimum pixel threshold (15px)
+625:  * - Preference: smallest subdivision that meets threshold (10 > 5 > 2)
+626:  * 
+627:  * Algorithm:
+628:  * - Calculate minimum spacing in plane units: minSpacing = minPixelsPerCell / zoom
+629:  * - Find smallest value from sequence: 10^n/10, 10^n/5, 10^n/2 that is >= minSpacing
+630:  * - This determines both minor spacing and major spacing (10^n)
+631:  * - Example at zoom=1.0: minSpacing=15, chooses 20 (=100/5), major=100, subdivision=5
+632:  * - Example at zoom=0.1: minSpacing=150, chooses 200 (=1000/5), major=1000, subdivision=5
+633:  */
+634: 
+635: /**
+636:  * Compute adaptive grid parameters based on zoom level
+637:  * Major lines at powers of 10, subdivisions are 2, 5, or 10
+638:  */
+639: function computeAdaptiveGridParams(zoom: number): {
+640:   spacing: number;
+641:   subdivision: number;
+642:   majorSpacing: number;
+643: } {
+644:   const minPixelsPerCell = 15; // Minimum pixels per minor grid cell
+645:   const minSpacing = minPixelsPerCell / zoom; // Minimum spacing in plane units
+646:   
+647:   // Find the smallest spacing from sequence: ..., 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, ...
+648:   // These are 10^n/10, 10^n/5, 10^n/2 for integer n
+649:   
+650:   const logMin = Math.log10(minSpacing);
+651:   const basePower = Math.floor(logMin);
+652:   
+653:   // Try powers of 10 starting from basePower
+654:   for (let n = basePower; n < basePower + 3; n++) {
+655:     const base = Math.pow(10, n);
+656:     
+657:     // Try subdivisions in order of preference (10 > 5 > 2 gives smallest cells)
+658:     for (const subdivision of [10, 5, 2]) {
+659:       const spacing = base / subdivision; // Minor line spacing
+660:       if (spacing >= minSpacing) {
+661:         return {
+662:           spacing,           // Minor line spacing (spacing between all lines)
+663:           subdivision,       // Number of minor intervals per major interval
+664:           majorSpacing: base // Major line spacing (10^n)
+665:         };
+666:       }
+667:     }
+668:   }
+669:   
+670:   // Fallback (shouldn't reach here)
+671:   return { spacing: 1, subdivision: 10, majorSpacing: 10 };
+672: }
+673: 
+674: const gridLines = computed(() => {
+675:   if (!viewStore.gridVisible.value) return [];
+676: 
+677:   // Depend on worldVersion to trigger recomputation when active plane changes
+678:   const _ = worldVersion.value;
+679:   
+680:   const activePlaneId = world.getActivePlaneId();
+681:   const plane = world.getProjectionPlaneById(activePlaneId);
+682:   if (!plane) return [];
+683: 
+684:   // Get plane realization which contains transformation matrices
+685:   const planeRealization = plane.realize2D(world);
+686: 
+687:   const zoom = viewport.value.zoom;
+688:   const { spacing, subdivision, majorSpacing } = computeAdaptiveGridParams(zoom);
+689: 
+690:   const lines: Array<{
+691:     key: string;
+692:     x1: number;
+693:     y1: number;
+694:     x2: number;
+695:     y2: number;
+696:     major: boolean;
+697:   }> = [];
+698: 
+699:   // Phase 82.2: Transform intrinsic basis to paper space
+700:   // This approach works for both base planes (identity-like) and auxiliary planes (rotated)
+701:   const origin_paper = new Vector3(0, 0, 1).applyMatrix3(planeRealization.planeToPaper2D);
+702:   const u_paper = new Vector3(1, 0, 0).applyMatrix3(planeRealization.planeToPaper2D);
+703:   const v_paper = new Vector3(0, 1, 0).applyMatrix3(planeRealization.planeToPaper2D);
+704: 
+705:   // DEBUG: Log the transformed basis vectors and viewport state
+706:   // console.log('[gridLines] origin_paper:', origin_paper);
+707:   // console.log('[gridLines] u_paper:', u_paper);
+708:   // console.log('[gridLines] v_paper:', v_paper);
+709:   // console.log('[gridLines] viewport.panX:', viewport.value.panX, 'panY:', viewport.value.panY);
+710:   // console.log('[gridLines] viewport.zoom:', viewport.value.zoom);
+711:   // console.log('[gridLines] canvasWidth:', canvasWidth.value, 'canvasHeight:', canvasHeight.value);
+712: 
+713:   // Calculate viewport bounds in paper coordinates
+714:   const viewportWidth = canvasWidth.value / zoom;
+715:   const viewportHeight = canvasHeight.value / zoom;
+716:   const offsetX = -viewport.value.panX;
+717:   const offsetY = -viewport.value.panY;
+718:   
+719:   // console.log('[gridLines] viewportWidth:', viewportWidth, 'viewportHeight:', viewportHeight);
+720:   // console.log('[gridLines] offsetX:', offsetX, 'offsetY:', offsetY);
+721:   // console.log('[gridLines] viewport top-left corner in paper:', offsetX, offsetY);
+722:   // console.log('[gridLines] viewport center in paper:', offsetX + viewportWidth/2, offsetY + viewportHeight/2);
+723: 
+724:   // Viewport corners in paper coordinates
+725:   const viewport_corners_paper = [
+726:     new Vector3(offsetX, offsetY, 1),
+727:     new Vector3(offsetX + viewportWidth, offsetY, 1),
+728:     new Vector3(offsetX, offsetY + viewportHeight, 1),
+729:     new Vector3(offsetX + viewportWidth, offsetY + viewportHeight, 1)
+730:   ];
+--- 800-880 ---
+800:     const screenY2 = (p2_paper.y + viewport.value.panY) * zoom;
+801: 
+802:     lines.push({
+803:       key: `v-${v}`,
+804:       x1: screenX1,
+805:       y1: screenY1,
+806:       x2: screenX2,
+807:       y2: screenY2,
+808:       major: isMajor,
+809:     });
+810:   }
+811: 
+812:   return lines;
+813: });
+814: 
+815: /**
+816:  * Phase 78: Grid Coordinate Labels (Updated for Phase 79 plane-based grid)
+817:  * GridLabel interface for coordinate label display at viewport borders
+818:  */
+819: interface GridLabel {
+820:   key: string;
+821:   value: number;
+822:   position: number;
+823:   edge: 'top' | 'bottom' | 'left' | 'right';
+824: }
+825: 
+826: /**
+827:  * Computed property: Grid coordinate labels for all four viewport edges
+828:  * Displays plane-local (u,v) coordinates aligned with the plane-based grid
+829:  * Labels are placed along major grid lines only
+830:  */
+831: const gridLabels = computed(() => {
+832:   if (!viewStore.gridVisible.value) {
+833:     return { top: [], bottom: [], left: [], right: [] };
+834:   }
+835: 
+836:   // Depend on worldVersion to trigger recomputation when active plane changes
+837:   const _ = worldVersion.value;
+838:   
+839:   const activePlaneId = world.getActivePlaneId();
+840:   const plane = world.getProjectionPlaneById(activePlaneId);
+841:   if (!plane) {
+842:     return { top: [], bottom: [], left: [], right: [] };
+843:   }
+844: 
+845:   // Get plane realization which contains transformation matrices
+846:   const planeRealization = plane.realize2D(world);
+847: 
+848:   const zoom = viewport.value.zoom;
+849:   const { majorSpacing } = computeAdaptiveGridParams(zoom);
+850: 
+851:   // Phase 82.2: Transform intrinsic basis to paper space
+852:   const origin_paper = new Vector3(0, 0, 1).applyMatrix3(planeRealization.planeToPaper2D);
+853:   const u_paper = new Vector3(1, 0, 0).applyMatrix3(planeRealization.planeToPaper2D);
+854:   const v_paper = new Vector3(0, 1, 0).applyMatrix3(planeRealization.planeToPaper2D);
+855: 
+856:   // Step 1: Determine which coordinate is more aligned with horizontal/vertical
+857:   // If |u_paper.x| / |u_paper.y| > 1, u is more horizontal
+858:   const uHorizontalRatio = Math.abs(u_paper.x) / (Math.abs(u_paper.y) + 1e-10);
+859:   const uIsHorizontal = uHorizontalRatio > 1;
+860:   
+861:   // Helper: Convert screen coordinates to paper coordinates
+862:   const screenToPaper = (screenX: number, screenY: number): Vector3 => {
+863:     return new Vector3(
+864:       screenX / zoom - viewport.value.panX,
+865:       screenY / zoom - viewport.value.panY,
+866:       1
+867:     );
+868:   };
+869:   
+870:   // Helper: Project paper point onto (u,v) basis
+871:   const paperToUV = (p_paper: Vector3): { u: number; v: number } => {
+872:     const offset = new Vector3().subVectors(p_paper, origin_paper);
+873:     return {
+874:       u: offset.dot(u_paper) / u_paper.lengthSq(),
+875:       v: offset.dot(v_paper) / v_paper.lengthSq()
+876:     };
+877:   };
+878:   
+879:   // Helper: Find where grid line with constant u intersects a horizontal line (y_paper = constant)
+880:   // Returns screen x position
+--- 1120-1240 ---
+1120: 
+1121: const renderedCircles = computed(() => {
+1122:   return primitives.value
+1123:     .filter(p => p.type === 'circle')
+1124:     .map(p => {
+1125:       const result = svgRenderer.renderPrimitive(p, viewport.value);
+1126:       // console.log('Rendering circle primitive:', p, '→ SVG attrs:', result.attributes);
+1127:       return {
+1128:         primitive: p,
+1129:         attrs: result.attributes
+1130:       };
+1131:     });
+1132: });
+1133: 
+1134: const renderedGuides = computed(() => {
+1135:   return primitives.value
+1136:     .filter(p => p.type === 'line' && p.id.startsWith('guide-'))
+1137:     .map(p => {
+1138:       const result = svgRenderer.renderPrimitive(p, viewport.value);
+1139:       return {
+1140:         primitive: p,
+1141:         attrs: result.attributes
+1142:       };
+1143:     });
+1144: });
+1145: 
+1146: const renderedArcs = computed(() => {
+1147:   return primitives.value
+1148:     .filter(p => p.type === 'arc')
+1149:     .map(p => {
+1150:       const result = svgRenderer.renderPrimitive(p, viewport.value);
+1151:       return {
+1152:         primitive: p,
+1153:         attrs: result.attributes
+1154:       };
+1155:     });
+1156: });
+1157: 
+1158: /**
+1159:  * Handle canvas click - delegate to active tool
+1160:  * Phase 6.5: Unified tool delegation for all tools (point, line, circle, etc.)
+1161:  */
+1162: function handleCanvasClick(event: MouseEvent) {
+1163:   if (ignoreNextClick) {
+1164:     ignoreNextClick = false;
+1165:     return;
+1166:   }
+1167: 
+1168:   // Get SVG element for coordinate conversion
+1169:   if (!svgElement.value) return;
+1170:   
+1171:   // T030: Transform coordinates: Screen → Canvas using SVG's native methods
+1172:   // Use SVG's built-in coordinate transformation
+1173:   const svg = svgElement.value;
+1174:   const pt = svg.createSVGPoint();
+1175:   pt.x = event.clientX;
+1176:   pt.y = event.clientY;
+1177:   
+1178:   // Transform screen coordinates to SVG coordinates
+1179:   const ctm = svg.getScreenCTM();
+1180:   if (!ctm) return;
+1181:   
+1182:   const canvasPoint = pt.matrixTransform(ctm.inverse());
+1183:   
+1184:   // console.log('[SvgCanvas] Click at canvas coords:', { x: canvasPoint.x, y: canvasPoint.y });
+1185:   
+1186:   // Step 2-3: Canvas → Paper → Plane using InputService
+1187:   const activePlaneId = activePlane.value;
+1188:   const planeTransforms = getPlaneTransformsForInput();
+1189:   const planeTransform = planeTransforms.get(activePlaneId);
+1190:   
+1191:   if (!planeTransform) {
+1192:     console.error('[SvgCanvas] No transform for active plane:', activePlaneId);
+1193:     return;
+1194:   }
+1195:   
+1196:   const planePos = inputService.canvasToPlaneCoordinates(
+1197:     canvasPoint.x,
+1198:     canvasPoint.y,
+1199:     planeTransform,
+1200:     viewport.value
+1201:   );
+1202:   
+1203:   if (!planePos) {
+1204:     console.error('[SvgCanvas] Failed to convert canvas to plane coordinates');
+1205:     return;
+1206:   }
+1207:   
+1208:   // console.log('[SvgCanvas] Plane coords (u,v,w):', planePos);
+1209:   
+1210:   // Debug: Check what Paper.hitTest() would return for this click
+1211:   const canvasPos = new Vector3(canvasPoint.x, canvasPoint.y, 1);
+1212:   const paperToPlane = planeTransforms.get(activePlane.value);
+1213:   const hit = paper.hitTest(canvasPos, 20, activePlane.value, paperToPlane, world);  // FR-002: Hit test in plane space
+1214:   // console.log('[SvgCanvas] Paper.hitTest() result:', hit);
+1215:   // console.log('[SvgCanvas] Paper has', paper.size, 'primitives');
+1216:   
+1217:   // Phase 20: Handle selection mode when 'select' tool is active
+1218:   const activeToolName = toolStore.currentTool.value;
+1219:   
+1220:   if (activeToolName === 'select') {
+1221:     // Selection mode per ui-spec.md §Element Interaction
+1222:     // Click element: Select (Shift+click: add to selection)
+1223:     // Click empty: Deselect all
+1224:     
+1225:     const hit = paper.hitTest(canvasPos, 20, activePlane.value, paperToPlane, world);
+1226:     
+1227:     if (hit) {
+1228:       // Element clicked - handle selection
+1229:       if (event.shiftKey) {
+1230:         // Shift+click: Add to selection (multi-select)
+1231:         selectionStore.addToSelection(hit.elementId);
+1232:         // console.log('[SvgCanvas] Added to selection:', hit.elementId);
+1233:       } else {
+1234:         // Regular click: Single selection (replaces current selection)
+1235:         selectionStore.selectSingle(hit.elementId);
+1236:         // console.log('[SvgCanvas] Selected:', hit.elementId);
+1237:       }
+1238:     } else {
+1239:       // Clicked empty space - clear selection
+1240:       selectionStore.clearSelection();
+--- 1320-1370 ---
+1320:     pan: { x: newViewport.panX, y: newViewport.panY },
+1321:     delta: delta
+1322:   });
+1323: }
+1324: 
+1325: /**
+1326:  * Handle mouse down for select-mode drag-to-move of free points.
+1327:  * T954: Check if clicking on movable point, start drag if so
+1328:  * T965: Otherwise, prepare for viewport pan
+1329:  */
+1330: function handleMouseDown(event: MouseEvent) {
+1331:   if (!svgElement.value) return;
+1332: 
+1333:   const activeToolName = toolStore.currentTool.value;
+1334:   if (activeToolName !== 'select') return;
+1335: 
+1336:   // Only left button drag, no modifiers (Shift is handled by useViewport)
+1337:   if (event.button !== 0) return;
+1338:   if (event.shiftKey || event.altKey || event.metaKey || event.ctrlKey) return;
+1339: 
+1340:   const svg = svgElement.value;
+1341:   const pt = svg.createSVGPoint();
+1342:   pt.x = event.clientX;
+1343:   pt.y = event.clientY;
+1344: 
+1345:   const ctm = svg.getScreenCTM();
+1346:   if (!ctm) return;
+1347:   const canvasPoint = pt.matrixTransform(ctm.inverse());
+1348: 
+1349:   const planeTransforms = getPlaneTransformsForInput();
+1350:   const paperToPlane = planeTransforms.get(activePlane.value);
+1351:   if (!paperToPlane) return;
+1352: 
+1353:   const canvasPos = new Vector3(canvasPoint.x, canvasPoint.y, 1);
+1354:   const hit = paper.hitTest(canvasPos, 20, activePlane.value, paperToPlane, world);
+1355:   
+1356:   // Check if we hit a movable point
+1357:   if (hit && hit.elementType === 'point') {
+1358:     const plane = world.getProjectionPlaneById(activePlane.value);
+1359:     if (!plane) throw new Error(`Active plane not found: ${activePlane.value}`);
+1360:     const point = plane.getPoint(hit.elementId);
+1361:     
+1362:     if (point && isMovableFreePoint(point)) {
+1363:       // Start point drag (T954)
+1364:       selectionStore.selectSingle(hit.elementId);
+1365: 
+1366:       pointDrag.value = {
+1367:         active: true,
+1368:         planeId: activePlane.value,
+1369:         pointId: hit.elementId,
+1370:         moveSession: canvasToolController.startFreePointMove({ planeId: activePlane.value, pointId: hit.elementId, label: point.label ?? hit.elementId }),
+--- 1400-1435 ---
+1400:   pt.x = event.clientX;
+1401:   pt.y = event.clientY;
+1402:   
+1403:   const ctm = svg.getScreenCTM();
+1404:   if (!ctm) return;
+1405:   
+1406:   const canvasPoint = pt.matrixTransform(ctm.inverse());
+1407:   const canvasPos = new Vector3(canvasPoint.x, canvasPoint.y, 1);
+1408:   
+1409:   // Get plane transform for hit testing
+1410:   const planeTransforms = getPlaneTransformsForInput();
+1411:   const paperToPlane = planeTransforms.get(activePlane.value);
+1412:   
+1413:   // Hit test to find element under cursor
+1414:   const hit = paper.hitTest(canvasPos, 20, activePlane.value, paperToPlane, world);
+1415:   
+1416:   if (hit) {
+1417:     // Element found - show properties dialog
+1418:     propertiesElementId.value = hit.elementId;
+1419:     showPropertiesDialog.value = true;
+1420:     console.log('[SvgCanvas] Opening properties dialog for:', hit.elementId);
+1421:   }
+1422: }
+1423: 
+1424: /**
+1425:  * Handle property changes from the properties dialog
+1426:  * T193: Apply property changes and record as command
+1427:  */
+1428: function handleSaveProperties(changes: any) {
+1429:   console.log('[SvgCanvas] Saving property changes:', changes);
+1430:   const result = canvasToolController.updateElementStyle({
+1431:     elementId: changes.elementId,
+1432:     planeId: activePlane.value,
+1433:     style: {
+1434:       color: changes.color,
+1435:       lineWidth: changes.lineWidth,
+--- 1500-1565 ---
+1500:       viewport.value
+1501:     );
+1502:     if (!planePos) return;
+1503: 
+1504:     // Preview update delegated to application use-case.
+1505:     const result = pointDrag.value.moveSession.preview(planePos);
+1506:     if (!result.success) {
+1507:       console.error('[SvgCanvas] Point move preview failed:', result.message);
+1508:       return;
+1509:     }
+1510:     renderTick.value++;
+1511:     return;
+1512:   }
+1513:   
+1514:   // Update tooltip position (offset from cursor)
+1515:   tooltipPosition.value = {
+1516:     x: event.clientX + 15,
+1517:     y: event.clientY + 15
+1518:   };
+1519:   
+1520:   // Get canvas position (in SVG user space)
+1521:   const svg = svgElement.value;
+1522:   const pt = svg.createSVGPoint();
+1523:   pt.x = event.clientX;
+1524:   pt.y = event.clientY;
+1525:   
+1526:   const ctm = svg.getScreenCTM();
+1527:   if (!ctm) return;
+1528:   
+1529:   const canvasPoint = pt.matrixTransform(ctm.inverse());
+1530:   
+1531:   // Get paperToPlane transform for active plane
+1532:   const planeTransformsInput = getPlaneTransformsForInput();
+1533:   const paperToPlane = planeTransformsInput.get(activePlane.value);
+1534:   
+1535:   // Get active tool's selection mask
+1536:   const activeToolName = toolStore.currentTool.value;
+1537:   const activeTool = currentToolInstance.value;
+1538:   // 'select' is a special mode (not a tool), allow hover on all elements
+1539:   const selectionMask = activeTool ? activeTool.getSelectionMask() : undefined;
+1540:   
+1541:   // Use Paper.hitTest() to find element near cursor (filtered by selection mask)
+1542:   const canvasPos = new Vector3(canvasPoint.x, canvasPoint.y, 1);
+1543:   const hit = paper.hitTest(canvasPos, 20, activePlane.value, paperToPlane, world, selectionMask); // FR-002: Hit test in plane space
+1544:   
+1545:   // Update snap target if hovering over a point within snap radius
+1546:   // Per ui-spec.md: "Point Snap: When cursor within snap radius of existing point: bright outline or glow"
+1547:   if (hit && hit.elementType === 'point') {
+1548:     // Point is within snap radius - show snap preview indicator
+1549:     snapTarget.value = {
+1550:       pointId: hit.elementId,
+1551:       position: { x: canvasPoint.x, y: canvasPoint.y }
+1552:     };
+1553:   } else {
+1554:     // No point nearby - clear snap indicator
+1555:     snapTarget.value = {
+1556:       pointId: null,
+1557:       position: null
+1558:     };
+1559:   }
+1560:   
+1561:   // Update hover state in Paper only if it changed
+1562:   const previousHovered = paper.getHoveredElement();
+1563:   const newHovered = hit ? hit.elementId : undefined;
+1564:   
+1565:   if (previousHovered !== newHovered) {

@@ -92,6 +92,14 @@ Forbidden:
 
 Expansion stop rule: if any category requires conceptual redesign beyond honest closure of the current `vue-tsc` errors and direct owner dependencies, stop implementation and write a reviewed delta/mini-cycle proposal before continuing.
 
+
+
+## Prior-wave repaired surface constraint: ActionsPanel
+
+The current build log directly cites `frontend/src/components/panels/ActionsPanel.vue(218,46)`, `(219,15)`, and `(223,26)`. That file belongs to a previously repaired process-tree/dependency-ownership surface, so implementation may reopen it only for those current type-contract failures and direct owner dependencies.
+
+Implementation must preserve earlier process-tree/dependency behavior and must not use Wave 015 to redesign `ActionsPanel.vue`, reopen dependency-service architecture, normalize panel workflows, or perform command-controller cleanup. If the cited errors cannot be fixed without such broader Wave 005-area redesign, stop for a reviewed delta/mini-cycle.
+
 ## Wave 014 repair protection
 
 Preserve these committed Wave 014 repairs unless a specific current build error is causally traced to the file and documented:

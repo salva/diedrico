@@ -1,0 +1,93 @@
+--- 1-45 ---
+1: import { describe, expect, it, vi } from 'vitest';
+2: import svgCanvasSource from '@/components/workspace/SvgCanvas.vue?raw';
+3: import { Vector3 } from 'three';
+4: import { executeConstructionIntent } from '@/application/construction/ConstructionUseCases';
+5: import { CanvasPointMovementUseCase } from '@/application/canvas/CanvasPointMovementUseCase';
+6: import { CanvasStyleUseCase } from '@/application/canvas/CanvasStyleUseCase';
+7: import { CanvasToolController } from '@/application/tools/CanvasToolController';
+8: import { PointTool } from '@/tools/PointTool';
+9: import { IntersectionTool } from '@/tools/IntersectionTool';
+10: import { TangentLineToCircleThroughPointTool } from '@/tools/TangentLineToCircleThroughPointTool';
+11: import { TangentLineToCircleParallelToLineTool } from '@/tools/TangentLineToCircleParallelToLineTool';
+12: import { CanvasPresentationSelector } from '@/application/canvasPresentation/CanvasPresentationSelector';
+13: import { CanvasInteractionQuery } from '@/application/canvasPresentation/CanvasInteractionQuery';
+14: import type { ToolContext } from '@/tools/ITool';
+15: import type { ToolCommandSink, ToolConstructionIntent } from '@/application/tools/ToolCommandIntents';
+16: import type { ArgumentValue } from '@/types/ToolArgumentCollector';
+17: import { createTestWorld, getHorizontalPlane, getHorizontalPlaneId } from '../../helpers/worldHelpers';
+18: 
+19: function userPoints(world: any, planeId: string) {
+20:   return world.getProjectionPlaneById(planeId).getAllPoints().filter((point: any) => !point.locked);
+21: }
+22: 
+23: function makeToolContext(overrides: Partial<ToolContext>): ToolContext {
+24:   return {
+25:     planeId: overrides.planeId!,
+26:     planeCoords: overrides.planeCoords ?? new Vector3(0, 0, 1),
+27:     canvasCoords: overrides.canvasCoords ?? { x: 0, y: 0 },
+28:     commandSink: overrides.commandSink!,
+29:     world: overrides.world!,
+30:     interactionQuery: overrides.paper ?? new CanvasInteractionQuery([]) as any,
+31:     paperToPlaneTransform: undefined,
+32:     toolStore: {} as any,
+33:   };
+34: }
+35: 
+36: function arg(element: any, planeCoords = new Vector3(0, 0, 1)): ArgumentValue {
+37:   return { element, planeCoords };
+38: }
+39: 
+40: describe('Wave 006a canvas/tool command controllers', () => {
+41:   it('executes construction intents and rolls failed construction back without stack pollution', () => {
+42:     const { world, commandStack } = createTestWorld();
+43:     const planeId = getHorizontalPlaneId(world);
+44:     const beforeUndoCount = commandStack.getUndoCount();
+45: 
+--- 190-215 ---
+190:     const circle = plane.addCircle2DByCenterAndPoint(center.id, radius.id, world);
+191: 
+192:     const intents: ToolConstructionIntent[] = [];
+193:     const sink: ToolCommandSink = {
+194:       executeConstructionIntent: vi.fn((intent: ToolConstructionIntent) => {
+195:         intents.push(intent);
+196:         return { success: true };
+197:       }),
+198:       executeQuickIntent: vi.fn(() => ({ success: true })),
+199:       startFreePointMove: vi.fn(() => ({ preview: vi.fn(() => ({ success: true })), commit: vi.fn(() => ({ success: true })), cancel: vi.fn() })),
+200:       updateElementStyle: vi.fn(() => ({ success: true }))
+201:     };
+202:     const interactionQuery = new CanvasInteractionQuery([]);
+203:     vi.spyOn(interactionQuery,
+204:       viewport: { zoom: 1, panX: 0, panY: 0 }, 'hitTest')
+205:       .mockReturnValueOnce({ elementId: circle.id } as any)
+206:       .mockReturnValueOnce({ elementId: external.id } as any)
+207:       .mockReturnValueOnce({ elementId: refLine.id } as any)
+208:       .mockReturnValueOnce({ elementId: circle.id } as any)
+209:       .mockReturnValueOnce({ elementId: refLine.id } as any)
+210:       .mockReturnValueOnce({ elementId: circle.id } as any);
+211: 
+212:     const base = { planeId: plane.id, world, interactionQuery,
+213:       viewport: { zoom: 1, panX: 0, panY: 0 }, commandSink: sink };
+214:     const throughTool = new TangentLineToCircleThroughPointTool();
+215:     throughTool.handleClick(makeToolContext({ ...base, planeCoords: new Vector3(0, 0, 1) }));
+--- 250-268 ---
+250:     expect(source).not.toContain('UpdateElementStyleOp');
+251:     expect(source).not.toContain('new Command(');
+252:   });
+253: 
+254:   it('delegates through CanvasToolController rather than exposing command construction to tools', () => {
+255:     const { world, commandStack } = createTestWorld();
+256:     const planeId = getHorizontalPlaneId(world);
+257:     const controller = new CanvasToolController({ world, commandStack, toolStore: { setTool: vi.fn() } as any });
+258:     const pointTool = new PointTool();
+259:     const result = pointTool.handleClick(makeToolContext({
+260:       planeId,
+261:       planeCoords: new Vector3(21, 22, 1),
+262:       world,
+263:       interactionQuery: new CanvasInteractionQuery([]) as any,
+264:       commandSink: controller
+265:     }));
+266: 
+267:     expect(result.success).toBe(true);
+268:     expect(userPoints(world, planeId)).toHaveLength(1);

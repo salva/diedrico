@@ -41,6 +41,9 @@ export class PointSequenceFactory {
     // Execute operation to create free point
     const result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, position));
     const pointId = result.outputs.pointId;
+    if (!pointId) {
+      throw new Error('pointId missing from operation output');
+    }
     
     // Create ProcessTree action for dependency tracking (Phase 92: minimal signature)
     const action = createPointAction(pointId);

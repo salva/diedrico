@@ -141,3 +141,10 @@ The persistent preview server remains bound for external access via the frontend
 `architecture-audit/wave-plan.md` was re-read through the current Wave 019 entry. The plan currently lists Waves 001–019 only, and Wave 019 is now complete. Wave 019 did not invalidate remaining planned premises because there are no later wave entries in the current plan. The next canonical action should therefore be a reviewed wave-plan extension / fresh scout stage (for example, `cycle-020-wave-plan-extension` or `cycle-020-fresh-scout-proposals` only after a new Wave 020 entry exists) to inspect the current post-Wave-019 codebase, identify the next most central architectural risk, and append the next ordered wave before any implementation begins.
 
 No corrective implementation stage is needed for Cycle 019.
+
+### Closure review correction — source-control artifact reconciliation
+
+Reviewer recheck found that the Manager's initial scoped status for this closure stage (`.saivage/stages/cycle-019-validation-and-preview-refresh/initial-scoped-status.stdout`) also listed an untracked upstream implementation-stage artifact: `.saivage/stages/cycle-019-implement-three-scene-host-lifecycle-renderer-platform/summary.json`. This is a Saivage stage summary artifact from the preceding implementation stage, not a production source, test, package/tooling, validation-gate, or next-wave implementation file. It does not change Wave 019 runtime behavior or validation results.
+
+The discrepancy is now explicitly reconciled by `validation/closure-review-correction-scoped-status.stdout` and `validation/closure-review-correction-scoped-diff-names.stdout`: tracked scoped diffs remain empty for the authorized source/test paths, while untracked entries are stage/audit evidence artifacts including this closure stage's task/review files and the implementation-stage summary. Therefore the earlier phrase "only closure-stage report/evidence artifacts" should be read as "only Saivage stage/audit report/evidence artifacts, with the implementation-stage summary explicitly included as an upstream stage artifact." No source-control blocker remains for Wave 019 closure.
+

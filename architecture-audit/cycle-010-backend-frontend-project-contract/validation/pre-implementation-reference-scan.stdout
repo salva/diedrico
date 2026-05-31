@@ -1,9 +1,3 @@
-./.specify/templates/tasks-template.md:30:- **Web app** (DIEDRICO DEFAULT): `backend/src/`, `frontend/src/`
-./.specify/templates/tasks-template.md:77:- [ ] T010 Setup API routing structure in backend/src/routes/
-./.specify/templates/tasks-template.md:110:- [ ] T020 [P] [US1] Create [Entity] schema in backend/src/models/[entity].ts
-./.specify/templates/tasks-template.md:111:- [ ] T021 [P] [US1] Create [Command] handler in backend/src/commands/[command].ts (Principle II)
-./.specify/templates/tasks-template.md:112:- [ ] T022 [US1] Implement storage service in backend/src/storage/[entity]-storage.ts
-./.specify/templates/tasks-template.md:113:- [ ] T023 [US1] Create API route in backend/src/routes/[resource].ts
 ./backend/src/api/projects.ts:8: * GET /api/projects
 ./backend/src/api/projects.ts:22: * POST /api/projects
 ./backend/src/api/projects.ts:42: * GET /api/projects/:id
@@ -948,12 +942,6 @@
 ./architecture-audit/cycle-010-backend-frontend-project-contract/validation/pre-implementation-static-scan.stdout.log:51:specs/001-dihedral-learning-mvp/research.md:1289:DELETE /api/projects/:id
 ./architecture-audit/cycle-010-backend-frontend-project-contract/validation/pre-implementation-static-scan.stdout.log:52:specs/001-dihedral-learning-mvp/research.md:1297:    await fetch(`/api/projects/${project.id}`, {
 ./architecture-audit/cycle-010-backend-frontend-project-contract/validation/pre-implementation-static-scan.stdout.log:53:specs/001-dihedral-learning-mvp/research.md:1304:    const response = await fetch(`/api/projects/${id}`);
-./architecture-audit/cycle-010-backend-frontend-project-contract/validation/pre-implementation-reference-scan.stdout:1:./.specify/templates/tasks-template.md:30:- **Web app** (DIEDRICO DEFAULT): `backend/src/`, `frontend/src/`
-./architecture-audit/cycle-010-backend-frontend-project-contract/validation/pre-implementation-reference-scan.stdout:2:./.specify/templates/tasks-template.md:77:- [ ] T010 Setup API routing structure in backend/src/routes/
-./architecture-audit/cycle-010-backend-frontend-project-contract/validation/pre-implementation-reference-scan.stdout:3:./.specify/templates/tasks-template.md:110:- [ ] T020 [P] [US1] Create [Entity] schema in backend/src/models/[entity].ts
-./architecture-audit/cycle-010-backend-frontend-project-contract/validation/pre-implementation-reference-scan.stdout:4:./.specify/templates/tasks-template.md:111:- [ ] T021 [P] [US1] Create [Command] handler in backend/src/commands/[command].ts (Principle II)
-./architecture-audit/cycle-010-backend-frontend-project-contract/validation/pre-implementation-reference-scan.stdout:5:./.specify/templates/tasks-template.md:112:- [ ] T022 [US1] Implement storage service in backend/src/storage/[entity]-storage.ts
-./architecture-audit/cycle-010-backend-frontend-project-contract/validation/pre-implementation-reference-scan.stdout:6:./.specify/templates/tasks-template.md:113:- [ ] T023 [US1] Create API route in backend/src/routes/[resource].ts
 ./architecture-audit/cycle-010-backend-frontend-project-contract/validation/pre-implementation-reference-scan.stdout:7:./backend/src/api/projects.ts:8: * GET /api/projects
 ./architecture-audit/cycle-010-backend-frontend-project-contract/validation/pre-implementation-reference-scan.stdout:8:./backend/src/api/projects.ts:22: * POST /api/projects
 ./architecture-audit/cycle-010-backend-frontend-project-contract/validation/pre-implementation-reference-scan.stdout:9:./backend/src/api/projects.ts:42: * GET /api/projects/:id

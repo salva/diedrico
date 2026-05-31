@@ -1,0 +1,335 @@
+     1	import type { ActionRecord, ElementRecord, GuideRecord, JsonObject, ProjectStateRecord, Vector3Record } from '@/domain/world/ProjectState';
+     2	import { createElementRecord, createProjectStateRecord, emptyProjectState } from '@/domain/world/ProjectState';
+     3	import type { OperationResult } from './IOperation';
+     4	
+     5	export { emptyProjectState };
+     6	
+     7	export function ok(state: ProjectStateRecord, outputs: Record<string, any>): OperationResult {
+     8	  return { success: true, state, outputs };
+     9	}
+    10	
+    11	export function fail(state: ProjectStateRecord, error: string): OperationResult {
+    12	  return { success: false, state, outputs: {}, error };
+    13	}
+    14	
+    15	export function addElement(
+    16	  state: ProjectStateRecord,
+    17	  planeId: string,
+    18	  kind: ElementRecord['kind'],
+    19	  constructionType: string,
+    20	  definition: JsonObject,
+    21	  dependencyIds: readonly string[],
+    22	  outputKey: string,
+    23	  existingId?: string,
+    24	): OperationResult {
+    25	  const plane = state.projectionPlanes[planeId];
+    26	  if (!plane) return fail(state, `Plane not found: ${planeId}`);
+    27	
+    28	  const id = existingId ?? `${planeId}/${kind}_${state.idCounters.elements + 1}`;
+    29	  if (state.elements[id]) return ok(state, { [outputKey]: id });
+    30	
+    31	  const actionId = nextProcessActionId(state);
+    32	  const element = createElementRecord({
+    33	    id,
+    34	    planeId,
+    35	    kind,
+    36	    constructionType,
+    37	    visible: true,
+    38	    definition,
+    39	    dependencyIds,
+    40	    producedByActionId: actionId,
+    41	  });
+    42	  const action = constructionActionRecord(actionId, kind, constructionType, dependencyIds, [id], definition);
+    43	  const nextProcessTree = appendRootProcessAction(state, action);
+    44	
+    45	  const next = createProjectStateRecord({
+    46	    ...state,
+    47	    projectionPlanes: {
+    48	      ...state.projectionPlanes,
+    49	      [planeId]: {
+    50	        ...plane,
+    51	        elementIds: [...plane.elementIds, id],
+    52	      },
+    53	    },
+    54	    elements: {
+    55	      ...state.elements,
+    56	      [id]: element,
+    57	    },
+    58	    processTree: nextProcessTree,
+    59	    dependencyGraph: {
+    60	      nodes: {
+    61	        ...state.dependencyGraph.nodes,
+    62	        [actionId]: { id: actionId, kind: 'action', infeasible: false },
+    63	        [id]: { id, kind: 'element', infeasible: false },
+    64	      },
+    65	      edges: [
+    66	        ...state.dependencyGraph.edges,
+    67	        ...dependencyIds.map(fromId => ({ fromId, toId: id })),
+    68	        ...dependencyIds.map(fromId => ({ fromId, toId: actionId })),
+    69	        { fromId: actionId, toId: id },
+    70	      ],
+    71	    },
+    72	    idCounters: {
+    73	      ...state.idCounters,
+    74	      elements: existingId ? state.idCounters.elements : state.idCounters.elements + 1,
+    75	      actions: state.idCounters.actions + 1,
+    76	      processNodes: state.idCounters.processNodes + 1,
+    77	    },
+    78	  });
+    79	
+    80	  return ok(next, { [outputKey]: id, actionId });
+    81	}
+    82	
+    83	export function removeElement(state: ProjectStateRecord, planeId: string, elementId: string, outputKey: string): OperationResult {
+    84	  if (!state.elements[elementId]) return fail(state, `Element not found: ${elementId}`);
+    85	  const plane = state.projectionPlanes[planeId];
+    86	  if (!plane) return fail(state, `Plane not found: ${planeId}`);
+    87	  const { [elementId]: _removed, ...elements } = state.elements;
+    88	  const removedActionIds = getProcessActionIdsForOutputs(state, [elementId]);
+    89	  const nextProcessTree = removeProcessActions(state, removedActionIds);
+    90	  const removedIds = new Set([elementId, ...removedActionIds]);
+    91	  return ok(createProjectStateRecord({
+    92	    ...state,
+    93	    projectionPlanes: {
+    94	      ...state.projectionPlanes,
+    95	      [planeId]: {
+    96	        ...plane,
+    97	        elementIds: plane.elementIds.filter(id => id !== elementId),
+    98	      },
+    99	    },
+   100	    elements,
+   101	    processTree: nextProcessTree,
+   102	    dependencyGraph: {
+   103	      nodes: Object.fromEntries(Object.entries(state.dependencyGraph.nodes).filter(([id]) => !removedIds.has(id))),
+   104	      edges: state.dependencyGraph.edges.filter(edge => !removedIds.has(edge.fromId) && !removedIds.has(edge.toId)),
+   105	    },
+   106	  }), { [outputKey]: elementId, removedActionIds });
+   107	}
+   108	
+   109	export function removeGuide(state: ProjectStateRecord, planeId: string, guideId: string, outputKey: string): OperationResult {
+   110	  if (!state.guides[guideId]) return fail(state, `Guide not found: ${guideId}`);
+   111	  const plane = state.projectionPlanes[planeId];
+   112	  if (!plane) return fail(state, `Plane not found: ${planeId}`);
+   113	  const { [guideId]: _removed, ...guides } = state.guides;
+   114	  const removedActionIds = getProcessActionIdsForOutputs(state, [guideId]);
+   115	  const nextProcessTree = removeProcessActions(state, removedActionIds);
+   116	  const removedIds = new Set([guideId, ...removedActionIds]);
+   117	  return ok(createProjectStateRecord({
+   118	    ...state,
+   119	    projectionPlanes: {
+   120	      ...state.projectionPlanes,
+   121	      [planeId]: {
+   122	        ...plane,
+   123	        guideIds: plane.guideIds.filter(id => id !== guideId),
+   124	      },
+   125	    },
+   126	    guides,
+   127	    processTree: nextProcessTree,
+   128	    dependencyGraph: {
+   129	      nodes: Object.fromEntries(Object.entries(state.dependencyGraph.nodes).filter(([id]) => !removedIds.has(id))),
+   130	      edges: state.dependencyGraph.edges.filter(edge => !removedIds.has(edge.fromId) && !removedIds.has(edge.toId)),
+   131	    },
+   132	  }), { [outputKey]: guideId, removedActionIds });
+   133	}
+   134	
+   135	
+   136	
+   137	export function toggleElementOrGuideVisibility(state: ProjectStateRecord, entityId: string): OperationResult {
+   138	  const element = state.elements[entityId];
+   139	  if (element) {
+   140	    return ok(createProjectStateRecord({
+   141	      ...state,
+   142	      elements: {
+   143	        ...state.elements,
+   144	        [entityId]: createElementRecord({ ...element, visible: !element.visible }),
+   145	      },
+   146	    }), { entityId, visible: !element.visible });
+   147	  }
+   148	
+   149	  const guide = state.guides[entityId];
+   150	  if (guide) {
+   151	    return ok(createProjectStateRecord({
+   152	      ...state,
+   153	      guides: {
+   154	        ...state.guides,
+   155	        [entityId]: { ...guide, visible: !guide.visible },
+   156	      },
+   157	    }), { entityId, visible: !guide.visible });
+   158	  }
+   159	
+   160	  return fail(state, `Element or guide not found: ${entityId}`);
+   161	}
+   162	
+   163	export function updateFreePointPosition(
+   164	  state: ProjectStateRecord,
+   165	  planeId: string,
+   166	  pointId: string,
+   167	  position: Vector3Record,
+   168	): OperationResult {
+   169	  const existing = state.elements[pointId];
+   170	  if (!existing) return fail(state, `Point not found: ${pointId}`);
+   171	  if (existing.planeId !== planeId) return fail(state, `Point ${pointId} is not on plane ${planeId}`);
+   172	  if (existing.kind !== 'point' || existing.constructionType !== 'free') {
+   173	    return fail(state, `Cannot move non-free point: ${pointId}`);
+   174	  }
+   175	  const nextElement = createElementRecord({
+   176	    ...existing,
+   177	    definition: { ...existing.definition, position: { x: position.x, y: position.y, z: position.z } },
+   178	  });
+   179	  return ok(createProjectStateRecord({
+   180	    ...state,
+   181	    elements: { ...state.elements, [pointId]: nextElement },
+   182	  }), { pointId });
+   183	}
+   184	
+   185	export function addGuide(
+   186	  state: ProjectStateRecord,
+   187	  planeId: string,
+   188	  kind: GuideRecord['kind'],
+   189	  constructionType: string,
+   190	  definition: JsonObject,
+   191	  dependencyIds: readonly string[],
+   192	  outputKey: string,
+   193	  existingId?: string,
+   194	): OperationResult {
+   195	  const plane = state.projectionPlanes[planeId];
+   196	  if (!plane) return fail(state, `Plane not found: ${planeId}`);
+   197	  const id = existingId ?? `${planeId}/guide_${state.idCounters.guides + 1}`;
+   198	  const actionId = nextProcessActionId(state);
+   199	  const guide: GuideRecord = { id, planeId, kind, constructionType, visible: true, definition, dependencyIds, producedByActionId: actionId };
+   200	  const action = constructionActionRecord(actionId, kind, constructionType, dependencyIds, [id], definition);
+   201	  const nextProcessTree = appendRootProcessAction(state, action);
+   202	  return ok(createProjectStateRecord({
+   203	    ...state,
+   204	    projectionPlanes: {
+   205	      ...state.projectionPlanes,
+   206	      [planeId]: { ...plane, guideIds: [...plane.guideIds.filter(value => value !== id), id] },
+   207	    },
+   208	    guides: { ...state.guides, [id]: guide },
+   209	    processTree: nextProcessTree,
+   210	    dependencyGraph: {
+   211	      nodes: {
+   212	        ...state.dependencyGraph.nodes,
+   213	        [actionId]: { id: actionId, kind: 'action', infeasible: false },
+   214	        [id]: { id, kind: 'element', infeasible: false },
+   215	      },
+   216	      edges: [
+   217	        ...state.dependencyGraph.edges,
+   218	        ...dependencyIds.map(fromId => ({ fromId, toId: id })),
+   219	        ...dependencyIds.map(fromId => ({ fromId, toId: actionId })),
+   220	        { fromId: actionId, toId: id },
+   221	      ],
+   222	    },
+   223	    idCounters: {
+   224	      ...state.idCounters,
+   225	      guides: existingId ? state.idCounters.guides : state.idCounters.guides + 1,
+   226	      actions: state.idCounters.actions + 1,
+   227	      processNodes: state.idCounters.processNodes + 1,
+   228	    },
+   229	  }), { [outputKey]: id, actionId });
+   230	}
+   231	
+   232	
+   233	function nextProcessActionId(state: ProjectStateRecord): string {
+   234	  return `action_${state.idCounters.actions + 1}`;
+   235	}
+   236	
+   237	function constructionActionRecord(
+   238	  id: string,
+   239	  kind: ElementRecord['kind'] | GuideRecord['kind'],
+   240	  constructionType: string,
+   241	  inputIds: readonly string[],
+   242	  outputIds: readonly string[],
+   243	  parameters: JsonObject,
+   244	): ActionRecord {
+   245	  const actionType = `${kind}:${constructionType}`;
+   246	  return {
+   247	    id,
+   248	    kind: 'action',
+   249	    actionType,
+   250	    inputIds,
+   251	    outputIds,
+   252	    parameters,
+   253	    description: describeConstruction(kind, constructionType),
+   254	    createdAt: '1970-01-01T00:00:00.000Z',
+   255	  };
+   256	}
+   257	
+   258	function describeConstruction(kind: ElementRecord['kind'] | GuideRecord['kind'], constructionType: string): string {
+   259	  return `Create ${kind} (${constructionType})`;
+   260	}
+--- actions
+     1	import { createProjectStateRecord, emptyProjectState, type ProjectStateRecord } from './ProjectState';
+     2	
+     3	export function createInitialProjectState(): ProjectStateRecord {
+     4	  return emptyProjectState();
+     5	}
+     6	
+     7	export function setActiveProjectionPlane(
+     8	  state: ProjectStateRecord,
+     9	  planeId: string,
+    10	): ProjectStateRecord {
+    11	  if (!state.projectionPlanes[planeId]) {
+    12	    throw new Error(`Projection plane not found: ${planeId}`);
+    13	  }
+    14	
+    15	  const nextProjectionPlanes = Object.fromEntries(
+    16	    Object.entries(state.projectionPlanes).map(([id, plane]) => [
+    17	      id,
+    18	      {
+    19	        ...plane,
+    20	        metadata: {
+    21	          ...plane.metadata,
+    22	          ...(id === planeId ? { active: true } : { active: false }),
+    23	        },
+    24	      },
+    25	    ]),
+    26	  );
+    27	
+    28	  return createProjectStateRecord({
+    29	    ...state,
+    30	    projectionPlanes: nextProjectionPlanes,
+    31	  });
+    32	}
+    33	
+    34	export function resetProjectState(): ProjectStateRecord {
+    35	  return createInitialProjectState();
+    36	}
+--- process reducers
+     1	import { createProjectStateRecord } from './ProjectState';
+     2	import type {
+     3	  ActionRecord,
+     4	  ProjectStateRecord,
+     5	} from './ProjectState';
+     6	
+     7	export function toggleProcessSubprocessVisibility(
+     8	  state: ProjectStateRecord,
+     9	  subprocessId: string,
+    10	): ProjectStateRecord {
+    11	  const node = state.processTree.nodes[subprocessId];
+    12	  if (!node) throw new Error(`Subprocess not found: ${subprocessId}`);
+    13	  if (node.kind !== 'subprocess') throw new Error(`Process node is not a subprocess: ${subprocessId}`);
+    14	
+    15	  return createProjectStateRecord({
+    16	    ...state,
+    17	    processTree: {
+    18	      ...state.processTree,
+    19	      nodes: {
+    20	        ...state.processTree.nodes,
+    21	        [subprocessId]: { ...node, visible: !node.visible },
+    22	      },
+    23	      version: state.processTree.version + 1,
+    24	    },
+    25	  });
+    26	}
+    27	
+    28	export function getProcessActionIdsForOutputs(
+    29	  state: ProjectStateRecord,
+    30	  outputIds: readonly string[],
+    31	): string[] {
+    32	  const outputSet = new Set(outputIds);
+    33	  return Object.values(state.processTree.nodes)
+    34	    .filter((node): node is ActionRecord => node.kind === 'action')
+    35	    .filter(action => action.outputIds.some(outputId => outputSet.has(outputId)))
+    36	    .map(action => action.id);
+    37	}

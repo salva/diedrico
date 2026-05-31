@@ -12,9 +12,9 @@ Addressed in both `proposals/proposal-direct.md` and `proposals/proposal-restruc
 - `frontend/src/App.vue:157`, `frontend/src/App.vue:323`, `frontend/src/App.vue:384`, `frontend/src/App.vue:439`
 - `frontend/tests/integration/worldInitialization.spec.ts:21`, `:50`, `:67`, `:82`, `:114`, `:124`, `:149`, `:151`, `:169`, `:184`, `:198`, `:221`, `:247`, `:260`
 - `frontend/tests/unit/commands/initializeWorldCommand.spec.ts:26`
-- `frontend/tests/helpers/worldHelpers.ts:42`, `:44`
+- `frontend/tests/helpers/worldHelpers.ts:43`, `:44`
 
-Both proposals now require updating `createTestWorld()` to call the new application initializer while continuing to return `{ world, commandStack }`, so downstream helper users avoid broad churn.
+Both proposals now require updating `createTestWorld()` to call the new application initializer while continuing to return `{ world, commandStack }`, so downstream helper users avoid broad churn. Both proposals also now inventory `frontend/tests/unit/commands/commandStack.spec.ts:38` for stale constructor-argument cleanup.
 
 ## B2 — `ProjectRuntime` lifecycle gap
 

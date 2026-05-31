@@ -1,0 +1,68 @@
+{
+  "task_id": "t2-review-plan-extension",
+  "stage_id": "cycle-018-wave-plan-extension",
+  "status": "completed",
+  "summary": "Reviewed the Cycle 018 wave-plan extension against the stage objective, acceptance criteria, current source evidence, Wave 016/017 completion artifacts, and source-control/secret-safety constraints. The new Wave 018 entry is well grounded, planning-only, and includes the required per-wave fields, and the plan-extension note provides current evidence and ranking rationale. However, the stage objective and acceptance criteria require ordered post-Wave-017 wave entries (plural / one or more), and the edit only appends a single Wave 018 entry without extending the plan beyond it. Because the current plan still stops at Wave 018 instead of re-ranking the remaining central residual work after Wave 018, the stage should not be accepted yet.",
+  "issues_found": [
+    {
+      "severity": "error",
+      "description": "The wave-plan extension adds only Wave 018 and does not add any further ordered post-Wave-017 wave entries, so the stage does not fully satisfy the requirement to extend and re-rank the plan beyond the current endpoint while central residual work remains.",
+      "file": "architecture-audit/wave-plan.md",
+      "line": 939,
+      "root_cause": "The edit focused on capturing the immediate next wave candidate but did not continue the ordered wave list past Wave 018, even though the stage objective explicitly calls for adding one or more post-Wave-017 wave entries and re-ranking remaining central work after Wave 017.",
+      "suggestion": "Append at least one additional ordered post-Wave-018 wave entry (or more, if current evidence supports it) covering the next central residual architecture risk after the realization-context wave, with the same required fields as other waves, and update the plan-extension note to explain that ordering."
+    }
+  ],
+  "files_checked": [
+    "architecture-audit/wave-plan.md",
+    "architecture-audit/cycle-018-wave-plan-extension/plan-extension-note.md",
+    "architecture-audit/cycle-016-canvas-presentation-overlay-boundary/implementation-log.md",
+    "architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/implementation-log.md",
+    ".saivage/stages/cycle-017-validation-and-preview-refresh/summary.json",
+    "architecture-audit/baseline/risk-register.md",
+    "architecture-audit/baseline/architecture-map.md",
+    "architecture-audit/cycle-018-wave-plan-extension/source-canvas-read-port.stdout",
+    "architecture-audit/cycle-018-wave-plan-extension/source-three-read-port.stdout",
+    "architecture-audit/cycle-018-wave-plan-extension/source-domain-realization-context.stdout",
+    "architecture-audit/cycle-018-wave-plan-extension/static-realization-world-scan.stdout",
+    ".saivage/stages/cycle-018-wave-plan-extension/reports/t1-extend-rerank-wave-plan.json"
+  ],
+  "evidence": [
+    "Wave 018 entry exists and includes scope, scope guard, grounding, target outcome, delete list, success criteria, dependencies, validation requirements, risks, and no-backcompat rationale.",
+    "plan-extension-note.md records current evidence, hygiene constraints, ranking rationale, and recommends a dedicated review stage before Cycle 018 scout/proposals.",
+    "The evidence logs support the claimed residual risk around full-World / any realization seams in CanvasWorldReadPort, ThreeWorldReadPort, Element3D, and related domain realization APIs.",
+    "No production source implementation or secret/config access was evidenced in the inspected planning artifacts."
+  ],
+  "acceptance_criteria_assessment": [
+    {
+      "criterion": "wave-plan.md contains at least one explicit post-Wave-017 wave entry with all required wave-plan fields and a recommended Wave 018 ordering.",
+      "status": "passed",
+      "evidence": "Wave 018 — Domain realization context boundary is present with the required fields."
+    },
+    {
+      "criterion": "The plan-extension note cites current artifact/source evidence and centrality rationale.",
+      "status": "passed",
+      "evidence": "architecture-audit/cycle-018-wave-plan-extension/plan-extension-note.md cites Wave 016/017 logs, the Cycle 017 summary, baseline risks, and bounded source scans."
+    },
+    {
+      "criterion": "The added/re-ranked entries do not pull peripheral docs/debug cleanup ahead of central architecture risks unless justified by dependencies.",
+      "status": "passed",
+      "evidence": "Wave 018 is ranked ahead of peripheral cleanup and is justified by active source seams in read-port/domain realization boundaries."
+    },
+    {
+      "criterion": "Manager summary recommends cycle-018-wave-plan-extension-review and does not claim implementation progress.",
+      "status": "passed",
+      "evidence": "Both the note and coder report recommend review before Cycle 018 scout/proposals or implementation, and no implementation progress is claimed."
+    },
+    {
+      "criterion": "No production source refactor or forbidden secret/config access occurs.",
+      "status": "passed",
+      "evidence": "Inspected artifacts are planning/audit only; no production refactor or forbidden secret/config reads were evidenced."
+    }
+  ],
+  "review_notes": "Non-blocking strengths: the new Wave 018 is tightly scoped, grounded in current code and completion logs, and correctly keeps the change planning-only. Blocking gap: the plan still ends too soon; this stage was specifically to extend and re-rank the plan because central residual work remains after Wave 017, and adding only Wave 018 does not yet give the project an ordered next step beyond that wave.",
+  "next_action": "Dispatch a correction to extend architecture-audit/wave-plan.md beyond Wave 018 with at least one subsequent central wave entry and update the plan-extension note with the rationale for that ordering, then request re-review.",
+  "artifacts_created": [
+    ".saivage/stages/cycle-018-wave-plan-extension/reports/t2-review-plan-extension.json"
+  ]
+}

@@ -1,0 +1,614 @@
+diff --git a/architecture-audit/cycle-018-domain-realization-context-boundary/validation/closure-live-preview-server.stdout b/architecture-audit/cycle-018-domain-realization-context-boundary/validation/closure-live-preview-server.stdout
+index e54b52d..39da677 100644
+--- a/architecture-audit/cycle-018-domain-realization-context-boundary/validation/closure-live-preview-server.stdout
++++ b/architecture-audit/cycle-018-domain-realization-context-boundary/validation/closure-live-preview-server.stdout
+@@ -8,3 +8,5 @@ Port 5173 is in use, trying another one...
+ 
+   ➜  Local:   http://localhost:5174/
+   ➜  Network: http://10.0.3.113:5174/
++1:34:37 AM [vite] page reload playwright-report/index.html
++1:34:49 AM [vite] page reload playwright-report/index.html
+diff --git a/architecture-audit/cycle-018-domain-realization-context-boundary/validation/live-preview-server.stdout b/architecture-audit/cycle-018-domain-realization-context-boundary/validation/live-preview-server.stdout
+index f6b513a..f4833da 100644
+--- a/architecture-audit/cycle-018-domain-realization-context-boundary/validation/live-preview-server.stdout
++++ b/architecture-audit/cycle-018-domain-realization-context-boundary/validation/live-preview-server.stdout
+@@ -7,3 +7,11 @@
+ 
+   ➜  Local:   http://localhost:5173/
+   ➜  Network: http://10.0.3.113:5173/
++12:47:32 AM [vite] page reload playwright-report/index.html
++12:47:53 AM [vite] page reload playwright-report/index.html
++1:30:21 AM [vite] page reload src/rendering/threeView/ThreeViewRuntime.ts
++1:30:50 AM [vite] page reload src/rendering/threeView/ThreeSceneHost.ts
++1:30:59 AM [vite] page reload src/rendering/threeView/ThreeObjectRegistry.ts
++1:34:37 AM [vite] page reload playwright-report/index.html
++1:34:37 AM [vite] page reload playwright-report/index.html
++1:34:49 AM [vite] page reload playwright-report/index.html
+diff --git a/frontend/src/commands/Command.ts b/frontend/src/commands/Command.ts
+index ad73c0d..166cc27 100644
+--- a/frontend/src/commands/Command.ts
++++ b/frontend/src/commands/Command.ts
+@@ -66,7 +66,7 @@
+  * @sealed - This class must NOT be extended. All domain logic belongs in Operation classes.
+  */
+ 
+-import type { IOperation, OperationResult, OperationDescriptor } from './operations/IOperation';
++import type { IOperation, OperationDescriptor } from './operations/IOperation';
+ import { serializeOperation } from './operations/OperationRegistry';
+ import type { World } from '@/domain/world/World';
+ 
+@@ -157,7 +157,7 @@ export class Command {
+    * Add and immediately execute an operation
+    * This is the core of incremental execution
+    */
+-  addAndExecute(operation: IOperation): OperationResult {
++  addAndExecute<TOperation extends IOperation>(operation: TOperation): ReturnType<TOperation['apply']> {
+     if (this._status !== CommandStatus.Building) {
+       throw new Error('Cannot add operations to non-building command');
+     }
+@@ -180,7 +180,7 @@ export class Command {
+       // not waiting for the entire command to be committed
+       this.world.markDirty();
+       
+-      return result;
++      return result as ReturnType<TOperation['apply']>;
+     } catch (error) {
+       // Operation failed, rollback entire command
+       this.rollback();
+diff --git a/frontend/src/commands/factories/DeletionSequenceFactory.ts b/frontend/src/commands/factories/DeletionSequenceFactory.ts
+index 25199ff..d86a5f2 100644
+--- a/frontend/src/commands/factories/DeletionSequenceFactory.ts
++++ b/frontend/src/commands/factories/DeletionSequenceFactory.ts
+@@ -133,7 +133,7 @@ export class DeletionSequenceFactory {
+     }
+     
+     // Step 4: Remove actions from ProcessTree (creates tombstones for undo)
+-    for (const [actionId, _] of actionsToDelete) {
++    for (const [actionId] of actionsToDelete) {
+       cmd.addAndExecute(new RemoveActionFromProcessTreeOp(actionId));
+     }
+   }
+diff --git a/frontend/src/commands/factories/PointSequenceFactory.ts b/frontend/src/commands/factories/PointSequenceFactory.ts
+index 497819a..27fbbac 100644
+--- a/frontend/src/commands/factories/PointSequenceFactory.ts
++++ b/frontend/src/commands/factories/PointSequenceFactory.ts
+@@ -41,6 +41,9 @@ export class PointSequenceFactory {
+     // Execute operation to create free point
+     const result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, position));
+     const pointId = result.outputs.pointId;
++    if (!pointId) {
++      throw new Error('pointId missing from operation output');
++    }
+     
+     // Create ProcessTree action for dependency tracking (Phase 92: minimal signature)
+     const action = createPointAction(pointId);
+diff --git a/frontend/src/commands/operations/IOperation.ts b/frontend/src/commands/operations/IOperation.ts
+index 31b34a9..05c1dd9 100644
+--- a/frontend/src/commands/operations/IOperation.ts
++++ b/frontend/src/commands/operations/IOperation.ts
+@@ -27,10 +27,13 @@ export interface OperationDescriptor<TType extends string = string, TPayload ext
+ 
+ export type SerializedOperation = OperationDescriptor;
+ 
+-export interface IOperation<TDescriptor extends OperationDescriptor = OperationDescriptor> {
++export interface IOperation<
++  TDescriptor extends OperationDescriptor = OperationDescriptor,
++  TOutputs extends JsonObject = JsonObject
++> {
+   type: TDescriptor['opType'];
+-  apply(world: World): OperationResult;
++  apply(world: World): OperationResult<TOutputs>;
+   undo(world: World): void;
+   serialize?(): TDescriptor;
+-  outputs: JsonObject;
++  outputs: TOutputs;
+ }
+diff --git a/frontend/src/commands/operations/world/AddCircleCircleIntersectionPoint2DOp.ts b/frontend/src/commands/operations/world/AddCircleCircleIntersectionPoint2DOp.ts
+index 17caaf3..58dc64f 100644
+--- a/frontend/src/commands/operations/world/AddCircleCircleIntersectionPoint2DOp.ts
++++ b/frontend/src/commands/operations/world/AddCircleCircleIntersectionPoint2DOp.ts
+@@ -7,13 +7,17 @@
+  * by the domain logic, not by this operation.
+  */
+ 
+-import type { IOperation, OperationResult } from '../IOperation';
++import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
+ import type { World } from '@/domain/world/World';
+ 
+-export class AddCircleCircleIntersectionPoint2DOp implements IOperation {
++interface CircleCircleIntersectionOutput extends JsonObject {
++  pointId?: string;
++}
++
++export class AddCircleCircleIntersectionPoint2DOp implements IOperation<OperationDescriptor, CircleCircleIntersectionOutput> {
+   readonly type = 'AddCircleCircleIntersectionPoint2D';
+   readonly parameters: Record<string, any>;
+-  outputs: Record<string, any> = {};
++  outputs: CircleCircleIntersectionOutput = {};
+ 
+   constructor(
+     private planeId: string,
+@@ -24,7 +28,7 @@ export class AddCircleCircleIntersectionPoint2DOp implements IOperation {
+     this.parameters = { planeId, circle1Id, circle2Id, index };
+   }
+ 
+-  apply(world: World): OperationResult {
++  apply(world: World): OperationResult<CircleCircleIntersectionOutput> {
+     try {
+       const plane = world.getProjectionPlaneById(this.planeId);
+       if (!plane) {
+diff --git a/frontend/src/commands/operations/world/AddFreePointOp.ts b/frontend/src/commands/operations/world/AddFreePointOp.ts
+index d56a4f1..1319b78 100644
+--- a/frontend/src/commands/operations/world/AddFreePointOp.ts
++++ b/frontend/src/commands/operations/world/AddFreePointOp.ts
+@@ -5,13 +5,17 @@
+  */
+ 
+ import type { Vector3 } from 'three';
+-import type { IOperation, OperationResult } from '../IOperation';
++import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
+ import type { World } from '@/domain/world/World';
+ 
+-export class AddFreePoint2DOp implements IOperation {
++interface AddFreePoint2DOutput extends JsonObject {
++  pointId?: string;
++}
++
++export class AddFreePoint2DOp implements IOperation<OperationDescriptor, AddFreePoint2DOutput> {
+   readonly type = 'AddFreePoint2D';
+   readonly parameters: Record<string, any>;
+-  outputs: Record<string, any> = {};
++  outputs: AddFreePoint2DOutput = {};
+ 
+   constructor(
+     private planeId: string,
+@@ -20,7 +24,7 @@ export class AddFreePoint2DOp implements IOperation {
+     this.parameters = { planeId, position };
+   }
+ 
+-  apply(world: World): OperationResult {
++  apply(world: World): OperationResult<AddFreePoint2DOutput> {
+     try {
+       // Get the projection plane
+       const plane = world.getProjectionPlaneById(this.planeId);
+diff --git a/frontend/src/commands/operations/world/AddLineCircleIntersectionPoint2DOp.ts b/frontend/src/commands/operations/world/AddLineCircleIntersectionPoint2DOp.ts
+index 6daa890..619d289 100644
+--- a/frontend/src/commands/operations/world/AddLineCircleIntersectionPoint2DOp.ts
++++ b/frontend/src/commands/operations/world/AddLineCircleIntersectionPoint2DOp.ts
+@@ -7,13 +7,17 @@
+  * by the domain logic, not by this operation.
+  */
+ 
+-import type { IOperation, OperationResult } from '../IOperation';
++import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
+ import type { World } from '@/domain/world/World';
+ 
+-export class AddLineCircleIntersectionPoint2DOp implements IOperation {
++interface LineCircleIntersectionOutput extends JsonObject {
++  pointId?: string;
++}
++
++export class AddLineCircleIntersectionPoint2DOp implements IOperation<OperationDescriptor, LineCircleIntersectionOutput> {
+   readonly type = 'AddLineCircleIntersectionPoint2D';
+   readonly parameters: Record<string, any>;
+-  outputs: Record<string, any> = {};
++  outputs: LineCircleIntersectionOutput = {};
+ 
+   constructor(
+     private planeId: string,
+@@ -24,7 +28,7 @@ export class AddLineCircleIntersectionPoint2DOp implements IOperation {
+     this.parameters = { planeId, lineId, circleId, index };
+   }
+ 
+-  apply(world: World): OperationResult {
++  apply(world: World): OperationResult<LineCircleIntersectionOutput> {
+     try {
+       const plane = world.getProjectionPlaneById(this.planeId);
+       if (!plane) {
+diff --git a/frontend/src/commands/operations/world/AddLineLineIntersectionPoint2DOp.ts b/frontend/src/commands/operations/world/AddLineLineIntersectionPoint2DOp.ts
+index 69415af..357296a 100644
+--- a/frontend/src/commands/operations/world/AddLineLineIntersectionPoint2DOp.ts
++++ b/frontend/src/commands/operations/world/AddLineLineIntersectionPoint2DOp.ts
+@@ -7,13 +7,17 @@
+  * by the domain logic, not by this operation.
+  */
+ 
+-import type { IOperation, OperationResult } from '../IOperation';
++import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
+ import type { World } from '@/domain/world/World';
+ 
+-export class AddLineLineIntersectionPoint2DOp implements IOperation {
++interface LineLineIntersectionOutput extends JsonObject {
++  pointId?: string;
++}
++
++export class AddLineLineIntersectionPoint2DOp implements IOperation<OperationDescriptor, LineLineIntersectionOutput> {
+   readonly type = 'AddLineLineIntersectionPoint2D';
+   readonly parameters: Record<string, any>;
+-  outputs: Record<string, any> = {};
++  outputs: LineLineIntersectionOutput = {};
+ 
+   constructor(
+     private planeId: string,
+@@ -23,7 +27,7 @@ export class AddLineLineIntersectionPoint2DOp implements IOperation {
+     this.parameters = { planeId, line1Id, line2Id };
+   }
+ 
+-  apply(world: World): OperationResult {
++  apply(world: World): OperationResult<LineLineIntersectionOutput> {
+     try {
+       const plane = world.getProjectionPlaneById(this.planeId);
+       if (!plane) {
+diff --git a/frontend/src/commands/operations/world/AddSiblingIntersectionPoint2DOp.ts b/frontend/src/commands/operations/world/AddSiblingIntersectionPoint2DOp.ts
+index ff8b64c..6e92ac9 100644
+--- a/frontend/src/commands/operations/world/AddSiblingIntersectionPoint2DOp.ts
++++ b/frontend/src/commands/operations/world/AddSiblingIntersectionPoint2DOp.ts
+@@ -1,4 +1,4 @@
+-import type { IOperation, OperationResult } from '../IOperation';
++import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
+ import type { World } from '@/domain/world/World';
+ 
+ /**
+@@ -17,10 +17,14 @@ import type { World } from '@/domain/world/World';
+  * @see SiblingIntersectionPoint2D for the domain class
+  * @see data-model.md §HalfHingeLine2D Intersection Sibling Behavior for architecture details
+  */
+-export class AddSiblingIntersectionPoint2DOp implements IOperation {
++interface SiblingIntersectionOutput extends JsonObject {
++  pointId?: string;
++}
++
++export class AddSiblingIntersectionPoint2DOp implements IOperation<OperationDescriptor, SiblingIntersectionOutput> {
+   readonly type = 'AddSiblingIntersectionPoint2D';
+   readonly parameters: Record<string, any>;
+-  outputs: Record<string, any> = {};
++  outputs: SiblingIntersectionOutput = {};
+ 
+   constructor(
+     private planeId: string,
+@@ -29,7 +33,7 @@ export class AddSiblingIntersectionPoint2DOp implements IOperation {
+     this.parameters = { planeId, primaryIntersectionId };
+   }
+ 
+-  apply(world: World): OperationResult {
++  apply(world: World): OperationResult<SiblingIntersectionOutput> {
+     try {
+       const plane = world.getProjectionPlaneById(this.planeId);
+       if (!plane) {
+diff --git a/frontend/src/components/panels/ActionGroupItem.vue b/frontend/src/components/panels/ActionGroupItem.vue
+index 291c351..48d6774 100644
+--- a/frontend/src/components/panels/ActionGroupItem.vue
++++ b/frontend/src/components/panels/ActionGroupItem.vue
+@@ -26,7 +26,7 @@
+       </div>
+       <div v-if="isExpanded" class="action-group-children">
+         <ActionItem
+-          v-for="action in node.children"
++          v-for="action in actionChildren"
+           :key="action.id"
+           :action="action"
+         />
+@@ -43,16 +43,14 @@
+ 
+ <script setup lang="ts">
+ import { ref, computed } from 'vue';
+-import type { Subprocess } from '../../domain/processTree/Subprocess';
+-import type { ActionGroup } from '../../domain/processTree/ActionGroup';
+-import type { ConstructiveAction } from '../../domain/processTree/Action';
++import type { Subprocess, ActionGroup, ActionNode } from '../../domain/processTree/ProcessTree';
+ import ActionItem from './ActionItem.vue';
+ 
+ // Allow recursive component
+ import ActionGroupItem from './ActionGroupItem.vue';
+ 
+ interface Props {
+-  node: Subprocess | ActionGroup | ConstructiveAction;
++  node: Subprocess | ActionGroup | ActionNode;
+ }
+ 
+ const props = defineProps<Props>();
+@@ -69,6 +67,13 @@ const childCount = computed(() => {
+   return 0;
+ });
+ 
++const actionChildren = computed<ActionNode[]>(() => {
++  if (props.node.type !== 'actionGroup') {
++    return [];
++  }
++  return props.node.children.filter((action): action is ActionNode => action !== null);
++});
++
+ /**
+  * Toggle expanded/collapsed state
+  */
+diff --git a/frontend/src/components/panels/ActionItem.vue b/frontend/src/components/panels/ActionItem.vue
+index 0ef9c46..459699e 100644
+--- a/frontend/src/components/panels/ActionItem.vue
++++ b/frontend/src/components/panels/ActionItem.vue
+@@ -1,15 +1,8 @@
+ <template>
+   <div
+     class="action-item"
+-    :class="{
+-      'infeasible': action.infeasible
+-    }"
+-    :title="action.infeasible ? `Infeasible: ${action.infeasibilityReason || 'Constraint violation'}` : ''"
++
+   >
+-    <div class="action-header">
+-      <span class="action-type">{{ formatActionType(action.actionType) }}</span>
+-      <span class="timestamp">{{ formatTime(action.timestamp) }}</span>
+-    </div>
+     <!-- Phase 92: Display elementId instead of outputs array -->
+     <div v-if="action.elementId" class="action-outputs">
+       <span class="label">Element:</span>
+@@ -23,34 +16,13 @@
+ 
+ <script setup lang="ts">
+ import type { Action } from '../../domain/processTree/Action';
+-import { ActionType } from '../../domain/processTree/Action';
+ 
+ interface Props {
+   action: Action;
+ }
+ 
+-const props = defineProps<Props>();
++defineProps<Props>();
+ 
+-/**
+- * Format ActionType enum to readable string
+- */
+-function formatActionType(actionType: ActionType): string {
+-  // Convert CamelCase to Title Case with spaces
+-  return actionType
+-    .replace(/([A-Z])/g, ' $1')
+-    .trim();
+-}
+-
+-/**
+- * Format timestamp to time string
+- */
+-function formatTime(date: Date): string {
+-  return date.toLocaleTimeString('en-US', {
+-    hour: '2-digit',
+-    minute: '2-digit',
+-    second: '2-digit'
+-  });
+-}
+ </script>
+ 
+ <style scoped>
+diff --git a/frontend/src/components/panels/ElementTypeGroup.vue b/frontend/src/components/panels/ElementTypeGroup.vue
+index de4850e..d722c8a 100644
+--- a/frontend/src/components/panels/ElementTypeGroup.vue
++++ b/frontend/src/components/panels/ElementTypeGroup.vue
+@@ -44,7 +44,7 @@ interface Element {
+ 
+ defineProps<{
+   title: string;
+-  elements: Element[];
++  elements: readonly Element[];
+   selectedId?: string | null; // Deprecated: use selectionStore instead
+ }>();
+ 
+diff --git a/frontend/src/components/toolbars/MainToolbar.vue b/frontend/src/components/toolbars/MainToolbar.vue
+index 8486280..b55718e 100644
+--- a/frontend/src/components/toolbars/MainToolbar.vue
++++ b/frontend/src/components/toolbars/MainToolbar.vue
+@@ -19,12 +19,12 @@
+ </template>
+ 
+ <script setup lang="ts">
+-import { useToolStore } from '@/stores/toolStore';
++import { TOOL_TYPE, useToolStore, type ToolType } from '@/stores/toolStore';
+ 
+ const toolStore = useToolStore();
+ 
+ interface Tool {
+-  id: string;
++  id: ToolType;
+   name: string;
+   icon: string;
+   category: string;
+@@ -32,25 +32,20 @@ interface Tool {
+ 
+ // Define available tools
+ const tools: Tool[] = [
+-  { id: 'select', name: 'Select', icon: '↖', category: 'basic' },
+-  { id: 'point-free', name: 'Point', icon: '●', category: 'point' },
+-  { id: 'point-on-element', name: 'Point on Element', icon: '◉', category: 'point' },
+-  { id: 'point-intersection', name: 'Intersection Point', icon: '⊗', category: 'point' },
+-  { id: 'segment', name: 'Segment', icon: '─', category: 'line' },
+-  { id: 'line', name: 'Line', icon: '↔', category: 'line' },
+-  { id: 'circle-center-radius', name: 'Circle', icon: '○', category: 'circle' },
++  { id: TOOL_TYPE.SELECT, name: 'Select', icon: '↖', category: 'basic' },
++  { id: TOOL_TYPE.POINT, name: 'Point', icon: '●', category: 'point' },
++  { id: TOOL_TYPE.INTERSECTION, name: 'Intersection Point', icon: '⊗', category: 'point' },
++  { id: TOOL_TYPE.SEGMENT, name: 'Segment', icon: '─', category: 'line' },
++  { id: TOOL_TYPE.LINE, name: 'Line', icon: '↔', category: 'line' },
++  { id: TOOL_TYPE.CIRCLE, name: 'Circle', icon: '○', category: 'circle' },
+ ];
+ 
+-const isToolActive = (toolId: string) => {
++const isToolActive = (toolId: ToolType) => {
+   return toolStore.isToolActive(toolId);
+ };
+ 
+-const selectTool = (toolId: string) => {
+-  if (toolStore.isToolActive(toolId)) {
+-    toolStore.clearTool();
+-  } else {
+-    toolStore.setActiveTool(toolId);
+-  }
++const selectTool = (toolId: ToolType) => {
++  toolStore.setTool(toolStore.isToolActive(toolId) ? TOOL_TYPE.SELECT : toolId);
+ };
+ </script>
+ 
+diff --git a/frontend/src/composables/useHoverHighlight.ts b/frontend/src/composables/useHoverHighlight.ts
+index b4d614c..abb1013 100644
+--- a/frontend/src/composables/useHoverHighlight.ts
++++ b/frontend/src/composables/useHoverHighlight.ts
+@@ -12,7 +12,7 @@
+  * 
+  */
+ 
+-import { ref, computed, type Ref } from 'vue';
++import { ref, computed } from 'vue';
+ 
+ export interface HoverState {
+   elementId: string | null;
+diff --git a/frontend/src/domain/calculations/Intersections.ts b/frontend/src/domain/calculations/Intersections.ts
+index 841fb6c..fd9b8b3 100644
+--- a/frontend/src/domain/calculations/Intersections.ts
++++ b/frontend/src/domain/calculations/Intersections.ts
+@@ -4,7 +4,7 @@
+  * This module provides functions for calculating intersections between geometric
+  * primitives using homogeneous coordinate representation.
+  * 
+- * All calculations follow constitution.md Principle V:
++ * All calculations follow the project's homogeneous-coordinate geometry policy:
+  * - Use homogeneous coordinates throughout
+  * - Convert parametric forms to implicit forms when needed
+  * - Use cross products for line-line intersections
+@@ -13,9 +13,6 @@
+  * Line representation:
+  * - Parametric form: P(t) = point + t * direction (storage format)
+  * - Implicit form: ax + by + c = 0 (computation format for intersections)
+- * 
+- * Reference:
+- * - .specify/memory/constitution.md#v-homogeneous-coordinate-system
+  */
+ 
+ import { Vector3 } from 'three';
+diff --git a/frontend/src/domain/processTree/ActionGroup.ts b/frontend/src/domain/processTree/ActionGroup.ts
+index c3581c1..6aacbff 100644
+--- a/frontend/src/domain/processTree/ActionGroup.ts
++++ b/frontend/src/domain/processTree/ActionGroup.ts
+@@ -1,31 +1,21 @@
+ /**
+- * ActionGroup - groups one or more actions together
+- * Can be user-created or auto-created (auxiliary)
++ * Authoritative ActionGroup contract lives in ProcessTree.
+  */
+ 
+-import type { ConstructiveAction } from './Action';
++import type { ActionNode, ActionGroup as ProcessTreeActionGroup } from './ProcessTree';
+ 
+-export interface ActionGroup {
+-  id: string;
+-  type: 'actionGroup';
+-  children: (ConstructiveAction | null)[];  // One or more actions (or null tombstones)
+-  isOutput: boolean;               // Phase 87: Output flag
+-  isAuxiliary?: boolean;           // Helper steps
+-  created: Date;
+-}
++export type ActionGroup = ProcessTreeActionGroup;
+ 
+-/**
+- * Factory function to create an action group
+- */
+ export function createActionGroup(
+   id: string,
+-  children: ConstructiveAction[] = []
++  children: ActionNode[] = []
+ ): ActionGroup {
+   return {
+     id,
+     type: 'actionGroup',
+     children,
+-    isOutput: true, // Default to true
++    isOutput: true,
++    isAuxiliary: false,
+     created: new Date()
+   };
+ }
+diff --git a/frontend/src/stores/processStore.ts b/frontend/src/stores/processStore.ts
+index 4cf46dd..8e760cd 100644
+--- a/frontend/src/stores/processStore.ts
++++ b/frontend/src/stores/processStore.ts
+@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
+ import type { Process } from '../domain/processTree/Process';
+ import type { Subprocess } from '../domain/processTree/Subprocess';
+ import type { ActionGroup } from '../domain/processTree/ActionGroup';
+-import type { ConstructiveAction } from '../domain/processTree/Action';
++import type { ActionNode } from '../domain/processTree/ProcessTree';
+ import { createProcess } from '../domain/processTree/Process';
+ import { CommandStack } from '../commands/CommandStack';
+ 
+@@ -21,7 +21,7 @@ export const useProcessStore = defineStore('process', {
+     /**
+      * Get node by path (e.g., "/subprocess/sp1/actionGroup/ag1")
+      */
+-    getNodeByPath: (state) => (path: string): Subprocess | ActionGroup | ConstructiveAction | null => {
++    getNodeByPath: (state) => (path: string): Subprocess | ActionGroup | ActionNode | null => {
+       const parts = path.split('/').filter(Boolean);
+       let current: any = state.root;
+ 
+@@ -51,7 +51,7 @@ export const useProcessStore = defineStore('process', {
+       const traverse = (subprocess: Subprocess) => {
+         result.push(subprocess);
+         subprocess.children.forEach(child => {
+-          if (child.type === 'subprocess') {
++          if (child?.type === 'subprocess') {
+             traverse(child as Subprocess);
+           }
+         });
+@@ -68,12 +68,12 @@ export const useProcessStore = defineStore('process', {
+      * Get all actions (flat array)
+      */
+     allActions: (state) => {
+-      const result: ConstructiveAction[] = [];
++      const result: ActionNode[] = [];
+       const traverse = (node: Subprocess | ActionGroup) => {
+         node.children.forEach(child => {
+-          if ('type' in child && child.type === 'action') {
+-            result.push(child as ConstructiveAction);
+-          } else if ('children' in child) {
++          if (child && 'type' in child && child.type === 'action') {
++            result.push(child as ActionNode);
++          } else if (child && 'children' in child) {
+             traverse(child as Subprocess | ActionGroup);
+           }
+         });
+@@ -114,7 +114,7 @@ export const useProcessStore = defineStore('process', {
+     /**
+      * Add action to action group
+      */
+-    addAction(actionGroupPath: string, action: ConstructiveAction): void {
++    addAction(actionGroupPath: string, action: ActionNode): void {
+       const actionGroup = this.getNodeByPath(actionGroupPath) as ActionGroup;
+       if (actionGroup && 'children' in actionGroup) {
+         actionGroup.children.push(action);
+@@ -162,7 +162,7 @@ export const useProcessStore = defineStore('process', {
+     /**
+      * Remove action by path
+      */
+-    removeAction(actionPath: string): ConstructiveAction | null {
++    removeAction(actionPath: string): ActionNode | null {
+       const parts = actionPath.split('/').filter(Boolean);
+       const id = parts[parts.length - 1];
+       const parentPath = '/' + parts.slice(0, -2).join('/');
+@@ -172,7 +172,7 @@ export const useProcessStore = defineStore('process', {
+         const index = parent.children.findIndex((c: any) => c.id === id);
+         if (index !== -1) {
+           const removed = parent.children.splice(index, 1)[0];
+-          return removed as ConstructiveAction;
++          return removed as ActionNode;
+         }
+       }
+       return null;
+diff --git a/frontend/src/stores/viewStore.ts b/frontend/src/stores/viewStore.ts
+index 0782685..6a815e5 100644
+--- a/frontend/src/stores/viewStore.ts
++++ b/frontend/src/stores/viewStore.ts
+@@ -59,7 +59,8 @@ function loadThreeViewOptions(): ThreeViewDisplayOptions {
+     showPlanes: true,
+     show2DElementsOnPlanes: false,
+     showLinkingVisuals: false,
+-    showGrid: true
++    showGrid: true,
++    showReferenceAxes: true
+   };
+ }
+ 

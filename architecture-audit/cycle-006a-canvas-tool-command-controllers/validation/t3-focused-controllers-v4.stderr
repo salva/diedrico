@@ -1,0 +1,21 @@
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/unit/application/canvasToolControllers.spec.ts > Wave 006a canvas/tool command controllers > keeps SvgCanvas on the controller boundary for movement and style delegation
+TypeError: readFileSync is not a function
+ ❯ tests/unit/application/canvasToolControllers.spec.ts:240:20
+    238| 
+    239|   it('keeps SvgCanvas on the controller boundary for movement and styl…
+    240|     const source = readFileSync('../frontend/src/components/workspace/…
+       |                    ^
+    241| 
+    242|     expect(source).toContain('createCanvasToolController');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /work/diedrico/frontend
+npm error workspace diedrico-frontend@0.1.0
+npm error location /work/diedrico/frontend
+npm error command failed
+npm error command sh -c vitest run tests/unit/application/canvasToolControllers.spec.ts

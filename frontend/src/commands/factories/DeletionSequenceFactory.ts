@@ -133,7 +133,7 @@ export class DeletionSequenceFactory {
     }
     
     // Step 4: Remove actions from ProcessTree (creates tombstones for undo)
-    for (const [actionId, _] of actionsToDelete) {
+    for (const [actionId] of actionsToDelete) {
       cmd.addAndExecute(new RemoveActionFromProcessTreeOp(actionId));
     }
   }

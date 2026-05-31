@@ -1,0 +1,10 @@
+
+> diedrico-frontend@0.1.0 test:e2e
+> playwright test tests/e2e/keyboard-shortcuts.spec.ts tests/e2e/selection-mask.spec.ts --list
+
+Listing tests:
+  [chromium] › keyboard-shortcuts.spec.ts:9:3 › Keyboard shortcuts › tool shortcut keys activate current tool buttons
+  [chromium] › keyboard-shortcuts.spec.ts:24:3 › Keyboard shortcuts › Escape returns to select tool after starting a point workflow
+  [chromium] › selection-mask.spec.ts:9:3 › Selection mask system › line tool exposes point-only target flow after point creation
+  [chromium] › selection-mask.spec.ts:20:3 › Selection mask system › intersection tool can be selected for line-selection masks
+Total: 4 tests in 2 files

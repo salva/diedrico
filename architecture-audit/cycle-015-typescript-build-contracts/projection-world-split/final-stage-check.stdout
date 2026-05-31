@@ -1,0 +1,20 @@
+Artifacts:
+architecture-audit/cycle-015-typescript-build-contracts/projection-world-split/current-diff.stderr
+architecture-audit/cycle-015-typescript-build-contracts/projection-world-split/current-diff.stdout
+architecture-audit/cycle-015-typescript-build-contracts/projection-world-split/final-stage-check.stderr
+architecture-audit/cycle-015-typescript-build-contracts/projection-world-split/final-stage-check.stdout
+architecture-audit/cycle-015-typescript-build-contracts/projection-world-split/proposals/proposal-direct.md
+architecture-audit/cycle-015-typescript-build-contracts/projection-world-split/proposals/proposal-restructure.md
+architecture-audit/cycle-015-typescript-build-contracts/projection-world-split/scope-check.md
+architecture-audit/cycle-015-typescript-build-contracts/projection-world-split/source-evidence.stderr
+architecture-audit/cycle-015-typescript-build-contracts/projection-world-split/source-evidence.stdout
+
+Scoped source diff names:
+frontend/src/domain/world/Circle.ts
+frontend/src/domain/world/Element2D.ts
+frontend/src/domain/world/Guide.ts
+frontend/src/domain/world/HingeLine.ts
+frontend/src/domain/world/Line.ts
+frontend/src/domain/world/Segment.ts
+frontend/src/domain/world/World.ts
+frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts

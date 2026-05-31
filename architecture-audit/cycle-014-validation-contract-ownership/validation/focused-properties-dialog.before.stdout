@@ -1,0 +1,24 @@
+
+> diedrico-frontend@0.1.0 test
+> vitest run tests/unit/components/propertiesDialog.spec.ts
+
+
+ RUN  v1.6.1 /work/diedrico/frontend
+
+ ❯ tests/unit/components/propertiesDialog.spec.ts  (18 tests | 5 failed) 142ms
+   ❯ tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Dialog visibility > should emit close event when close button clicked
+     → expected undefined to be truthy
+   ❯ tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Dialog visibility > should emit close event when overlay clicked
+     → expected undefined to be truthy
+   ❯ tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Dialog visibility > should emit close event when cancel button clicked
+     → expected undefined to be truthy
+   ❯ tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Save behavior > should emit save event with valid changes
+     → expected undefined to be truthy
+   ❯ tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Save behavior > should only include overridden properties in save event
+     → Cannot read properties of undefined (reading 'color')
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 13 passed (18)
+   Start at  14:02:27
+   Duration  1.98s (transform 855ms, setup 0ms, collect 1.08s, tests 142ms, environment 426ms, prepare 76ms)
+

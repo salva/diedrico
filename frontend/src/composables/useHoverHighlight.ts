@@ -12,7 +12,7 @@
  * 
  */
 
-import { ref, computed, type Ref } from 'vue';
+import { ref, computed } from 'vue';
 
 export interface HoverState {
   elementId: string | null;

@@ -66,7 +66,7 @@
  * @sealed - This class must NOT be extended. All domain logic belongs in Operation classes.
  */
 
-import type { IOperation, OperationResult, OperationDescriptor } from './operations/IOperation';
+import type { IOperation, OperationDescriptor } from './operations/IOperation';
 import { serializeOperation } from './operations/OperationRegistry';
 import type { World } from '@/domain/world/World';
 
@@ -157,7 +157,7 @@ export class Command {
    * Add and immediately execute an operation
    * This is the core of incremental execution
    */
-  addAndExecute(operation: IOperation): OperationResult {
+  addAndExecute<TOperation extends IOperation>(operation: TOperation): ReturnType<TOperation['apply']> {
     if (this._status !== CommandStatus.Building) {
       throw new Error('Cannot add operations to non-building command');
     }
@@ -180,7 +180,7 @@ export class Command {
       // not waiting for the entire command to be committed
       this.world.markDirty();
       
-      return result;
+      return result as ReturnType<TOperation['apply']>;
     } catch (error) {
       // Operation failed, rollback entire command
       this.rollback();

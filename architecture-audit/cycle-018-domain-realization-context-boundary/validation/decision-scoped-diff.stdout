@@ -1,0 +1,65 @@
+diff --git a/frontend/src/domain/calculations/Intersections.ts b/frontend/src/domain/calculations/Intersections.ts
+index 841fb6c..fd9b8b3 100644
+--- a/frontend/src/domain/calculations/Intersections.ts
++++ b/frontend/src/domain/calculations/Intersections.ts
+@@ -4,7 +4,7 @@
+  * This module provides functions for calculating intersections between geometric
+  * primitives using homogeneous coordinate representation.
+  * 
+- * All calculations follow constitution.md Principle V:
++ * All calculations follow the project's homogeneous-coordinate geometry policy:
+  * - Use homogeneous coordinates throughout
+  * - Convert parametric forms to implicit forms when needed
+  * - Use cross products for line-line intersections
+@@ -13,9 +13,6 @@
+  * Line representation:
+  * - Parametric form: P(t) = point + t * direction (storage format)
+  * - Implicit form: ax + by + c = 0 (computation format for intersections)
+- * 
+- * Reference:
+- * - .specify/memory/constitution.md#v-homogeneous-coordinate-system
+  */
+ 
+ import { Vector3 } from 'three';
+diff --git a/frontend/src/domain/processTree/ActionGroup.ts b/frontend/src/domain/processTree/ActionGroup.ts
+index c3581c1..6aacbff 100644
+--- a/frontend/src/domain/processTree/ActionGroup.ts
++++ b/frontend/src/domain/processTree/ActionGroup.ts
+@@ -1,31 +1,21 @@
+ /**
+- * ActionGroup - groups one or more actions together
+- * Can be user-created or auto-created (auxiliary)
++ * Authoritative ActionGroup contract lives in ProcessTree.
+  */
+ 
+-import type { ConstructiveAction } from './Action';
++import type { ActionNode, ActionGroup as ProcessTreeActionGroup } from './ProcessTree';
+ 
+-export interface ActionGroup {
+-  id: string;
+-  type: 'actionGroup';
+-  children: (ConstructiveAction | null)[];  // One or more actions (or null tombstones)
+-  isOutput: boolean;               // Phase 87: Output flag
+-  isAuxiliary?: boolean;           // Helper steps
+-  created: Date;
+-}
++export type ActionGroup = ProcessTreeActionGroup;
+ 
+-/**
+- * Factory function to create an action group
+- */
+ export function createActionGroup(
+   id: string,
+-  children: ConstructiveAction[] = []
++  children: ActionNode[] = []
+ ): ActionGroup {
+   return {
+     id,
+     type: 'actionGroup',
+     children,
+-    isOutput: true, // Default to true
++    isOutput: true,
++    isAuxiliary: false,
+     created: new Date()
+   };
+ }

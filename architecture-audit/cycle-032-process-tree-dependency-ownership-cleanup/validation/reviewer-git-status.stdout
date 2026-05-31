@@ -1,0 +1,6 @@
+ M frontend/src/domain/processTree/ActionGroup.ts
+ M frontend/src/stores/viewStore.ts
+?? .saivage/stages/cycle-032-implement-process-tree-dependency-ownership-cleanup/tasks.json
+?? architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/reviews/
+?? architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/reviewer-git-status.stderr
+?? architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/reviewer-git-status.stdout

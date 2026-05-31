@@ -1,0 +1,4 @@
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:82:    expect(appShellPorts).not.toMatch(/PersistedProjectSession/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:118:      expect(content).not.toMatch(/PersistedProjectSession/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:119:      expect(content).not.toMatch(/as unknown as PersistedProjectSession/);
+frontend/tests/unit/application/appShell/AppShellBoundary.test.ts:120:      expect(content).not.toMatch(/as unknown as ProjectData/);

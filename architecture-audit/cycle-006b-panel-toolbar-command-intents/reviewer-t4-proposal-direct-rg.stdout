@@ -1,0 +1,26 @@
+1:# Proposal Direct — Panel/toolbar intent controllers with minimal application use-cases
+5:Extract the current `ActionsPanel.vue` process-history mutations plus the `Toolbar.vue` command-stack execution leaks (undo/redo) and Alt+E/example command leak into small application-owned use-cases/controllers. Leave the completed Wave 006a canvas/tool controller path intact. Vue components keep render state, keyboard/button wiring, tool selection, and emitted file/auth/view events; they no longer construct concrete commands, operations, or directly execute command-stack actions.
+9:- `ActionsPanel.vue` renders process history and emits/delegates typed process-history intents.
+10:- `Toolbar.vue` renders toolbar state and delegates undo/redo read/actions plus retained setup behavior through typed application use-cases/controllers.
+11:- Application modules own `Command` construction, process-tree operation instantiation, validation/guard checks, commit/rollback, `CommandStack.push()`, and `CommandStack.undo()` / `CommandStack.redo()` execution.
+25:- `frontend/src/application/toolbar/ToolbarHistoryIntents.ts`
+26:  - Define typed toolbar history requests/results such as `UndoToolbarIntent`, `RedoToolbarIntent`, `ToolbarHistoryState`, and `ToolbarHistoryResult` without exposing `CommandStack` to Vue.
+27:- `frontend/src/application/toolbar/ToolbarHistoryUseCases.ts`
+28:  - Own `commandStack.canUndo()` / `canRedo()` read state and `commandStack.undo()` / `redo()` execution for toolbar history actions.
+29:- `frontend/src/application/toolbar/ToolbarHistoryController.ts`
+39:  - Keep `world`/process-tree read model as needed for rendering, but inject/create a `ProcessHistoryController` instead of directly injecting `CommandStack` for command construction.
+43:- `frontend/src/components/toolbars/Toolbar.vue`
+44:  - Delete imports of `Command`, concrete world operations, and `Vector3` used only for Alt+E (`frontend/src/components/toolbars/Toolbar.vue:122-126`).
+45:  - Prefer deleting the Alt+E shortcut and `addProjectionPlaneSetup()` because current comments label it “for testing” (`frontend/src/components/toolbars/Toolbar.vue:205-223`, `248-305`).
+47:  - Replace direct undo/redo read/actions (`frontend/src/components/toolbars/Toolbar.vue:327-339`) with typed toolbar-history controller calls. This is mandatory Wave 006b scope; direct `CommandStack` execution/read ownership in `Toolbar.vue` is not an acceptable residual for Wave 009. Keep broader App-shell orchestration out of scope by limiting the controller to toolbar history state and undo/redo intents.
+58:- Delete `Toolbar.vue` imports/injection paths that expose `CommandStack` for direct undo/redo read or execution; replace them with a toolbar-history controller/use-case dependency.
+61:- Delete panel/toolbar tests that assert concrete command or operation classes are used from Vue components.
+69:- Undo/redo availability and effects from toolbar buttons should remain equivalent, but `Toolbar.vue` should now express typed history intents while application use-cases/controllers own `CommandStack` reads and execution.
+70:- Undo/redo stack effects should remain equivalent for retained process-history mutations and any retained setup use-case.
+77:- Moving toolbar undo/redo reads behind a controller can stale button disabled state if the component does not refresh after stack changes; implementation should expose a narrow history-state query/subscription or reuse the current reactive trigger without leaking `CommandStack` execution into Vue.
+83:  - assert no `Command`, concrete `frontend/src/commands/operations/**`, world operation, `CommandStack`, or `Vector3` construction imports remain in `ActionsPanel.vue` / `Toolbar.vue` for command construction or command-stack execution;
+84:  - assert no `new Command`, `.addAndExecute(new ...Op`, `commandStack.push(cmd)`, `commandStack.undo()`, or `commandStack.redo()` remain in the two components.
+86:  - new `frontend/tests/unit/application/processHistoryUseCases.spec.ts` covering all five process-history mutations, rollback on thrown op/application error, stack push count, and undo/redo effects;
+88:  - toolbar-history use-case/controller tests for `canUndo` / `canRedo`, undo/redo execution, and no-op/error behavior;
+89:  - toolbar tests for tool selection, typed undo/redo intent delegation, undo/redo availability/actions, grid/projection toggles, and Alt+E deletion or retained setup use-case.
+95:  - `npm run test:e2e --workspace=frontend` / Playwright for process-tree panel, toolbar, undo/redo, and retained/deleted Alt+E behavior;

@@ -1,0 +1,6 @@
+--- last commit ---
+8e42c36 [tsk-t1-scope-and-proposals] [t1-scope-and-proposals] revise wave 018 realization context proposals
+--- scoped status design/report files ---
+--- protected unrelated production status ---
+ M frontend/src/domain/calculations/Intersections.ts
+ M frontend/src/domain/processTree/ActionGroup.ts

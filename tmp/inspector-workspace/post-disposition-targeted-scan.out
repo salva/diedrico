@@ -1,0 +1,150 @@
+=== deleted legacy authority files ===
+absent frontend/src/domain/world/World.ts
+absent frontend/src/domain/world/ProjectionPlane.ts
+absent frontend/src/domain/processTree/ProcessTree.ts
+absent frontend/src/services/DependencyService.ts
+absent frontend/src/stores/worldStore.ts
+absent frontend/src/composables/useSnapping.ts
+absent frontend/src/commands/operations/viewState/ViewStateOperations.ts
+absent pre-spec.md
+absent pre-plan.md
+absent pre-spec-ui.md
+absent pre-spec-ui-tool.md
+absent specs/001-dihedral-learning-mvp/spec.md
+=== forbidden legacy DTO/runtime tokens in live source (excluding tests/audit/docs/rejection lists not separable by grep) ===
+frontend/src/commands/factories/DeletionSequenceFactory.ts:13:import { getDependencyDeletionOrder } from '@/domain/world/DependencyGraph';
+frontend/src/commands/factories/DeletionSequenceFactory.ts:55:    console.log('[DeletionSequenceFactory] Cascade deletion:', {
+frontend/src/commands/factories/GuideSequenceFactory.ts:79:        console.log(
+frontend/src/commands/factories/IntersectionSequenceFactory.ts:132:        console.log(
+frontend/src/commands/factories/README.md:48:- Do not add legacy world-application hooks, no-argument execution, inverse
+frontend/src/commands/operations/world/README.md:13:World operations are reducer operations over ProjectStateRecord data. The legacy mutable World/ProjectionPlane authority is not part of the command contract.
+frontend/src/components/LoginStatusWidget.vue:35:      <div v-else class="user-avatar-placeholder">
+frontend/src/components/LoginStatusWidget.vue:98: * Get initials from name for avatar placeholder
+frontend/src/components/LoginStatusWidget.vue:191:.user-avatar-placeholder {
+frontend/src/components/dialogs/ElementPropertiesDialog.vue:23:              placeholder="Element name..."
+frontend/src/components/dialogs/ElementPropertiesDialog.vue:45:                placeholder="#000000"
+frontend/src/components/dialogs/NewProjectDialog.vue:13:            placeholder="Enter project name..."
+frontend/src/components/dialogs/PropertiesDialog.vue:62:                placeholder="#000000"
+frontend/src/components/dialogs/PropertiesDialog.vue:253:  // TODO: Load current element properties from world
+frontend/src/components/panels/ElementTypeGroup.vue:64:  // TODO: Emit highlight event
+frontend/src/components/panels/ElementTypeGroup.vue:68:  // TODO: Clear highlight
+frontend/src/components/workspace/SvgCanvas.vue:397:  console.log('ProjectState runtime initialized');
+frontend/src/components/workspace/SvgCanvas.vue:398:  console.log('Elements in ProjectState:', metadata?.elementCount ?? 0);
+frontend/src/components/workspace/SvgCanvas.vue:467:  // console.log('Generated primitives:', prims.length, prims);
+frontend/src/components/workspace/SvgCanvas.vue:568:      // console.log('Rendering point primitive:', p, '→ SVG attrs:', result.attributes);
+frontend/src/components/workspace/SvgCanvas.vue:581:      // console.log('Rendering line primitive:', p, '→ SVG attrs:', result.attributes);
+frontend/src/components/workspace/SvgCanvas.vue:594:      // console.log('Rendering segment primitive:', p, '→ SVG attrs:', result.attributes);
+frontend/src/components/workspace/SvgCanvas.vue:607:      // console.log('Rendering circle primitive:', p, '→ SVG attrs:', result.attributes);
+frontend/src/components/workspace/SvgCanvas.vue:665:  console.log('[SvgCanvas] Click at canvas coords:', { x: canvasPoint.x, y: canvasPoint.y });
+frontend/src/components/workspace/SvgCanvas.vue:689:  console.log('[SvgCanvas] Plane coords (u,v,w):', planePos);
+frontend/src/components/workspace/SvgCanvas.vue:695:  console.log('[SvgCanvas] Paper.hitTestProjectState() result:', hit);
+frontend/src/components/workspace/SvgCanvas.vue:696:  console.log('[SvgCanvas] Paper has', paper.size, 'primitives');
+frontend/src/components/workspace/SvgCanvas.vue:713:        console.log('[SvgCanvas] Added to selection:', hit.elementId);
+frontend/src/components/workspace/SvgCanvas.vue:717:        console.log('[SvgCanvas] Selected:', hit.elementId);
+frontend/src/components/workspace/SvgCanvas.vue:722:      console.log('[SvgCanvas] Cleared selection');
+frontend/src/components/workspace/SvgCanvas.vue:752:    console.log('[SvgCanvas] Tool command intent executed:', result.message);
+frontend/src/components/workspace/SvgCanvas.vue:759:    console.log('[SvgCanvas] Tool interaction progressed:', result.message);
+frontend/src/components/workspace/SvgCanvas.vue:888:    console.log('[SvgCanvas] Opening properties dialog for:', hit.elementId);
+frontend/src/components/workspace/SvgCanvas.vue:897:  console.log('[SvgCanvas] Saving property changes:', changes);
+frontend/src/components/workspace/SvgCanvas.vue:913:      console.log('[SvgCanvas] Style updated through command intent');
+frontend/src/components/workspace/SvgCanvas.vue:1127:  console.log('[SvgCanvas] fitToView called');
+frontend/src/components/workspace/SvgCanvas.vue:1134:    console.log('[SvgCanvas] No elements to fit, resetting to default view');
+frontend/src/components/workspace/SvgCanvas.vue:1173:    console.log('[SvgCanvas] No valid bounds found, resetting to default view');
+frontend/src/components/workspace/SvgCanvas.vue:1197:  console.log('[SvgCanvas] Fit to view:', {
+frontend/src/composables/useAppCanvasSession.ts:49:    console.log('Highlight elements:', elementIds, 'temporary:', temporary);
+frontend/src/composables/useAppCanvasSession.ts:53:    console.log('Clear highlights');
+frontend/src/domain/world/Element2DUtils.ts:23: *   console.log(`Element ${obj.id} on plane ${obj.planeId}`);
+frontend/src/domain/world/Element2DUtils.ts:53: *   console.log(obj.id, obj.planeId);
+frontend/src/domain/world/Element2DUtils.ts:83: * console.log(`Found ${planeH.length} elements on horizontal plane`);
+frontend/src/domain/world/Element2DUtils.ts:101: * console.log(point.visible); // false
+frontend/src/domain/world/Element2DUtils.ts:120: * console.log(line.visible); // true
+frontend/src/domain/world/Element2DUtils.ts:139: * console.log(getElementLabel(labeled)); // "Point A"
+frontend/src/domain/world/Element2DUtils.ts:142: * console.log(getElementLabel(unlabeled)); // "p2"
+frontend/src/domain/world/Element2DUtils.ts:202: * console.log(`Plane H: ${counts.get('proj_plane_H')} elements`);
+frontend/src/domain/world/Element2DUtils.ts:203: * console.log(`Plane V: ${counts.get('proj_plane_V')} elements`);
+frontend/src/domain/world/Line.ts:187: * TODO: Implement in later phase when parallel line tool is added
+frontend/src/domain/world/Line.ts:227: * TODO: Implement in later phase when perpendicular line tool is added
+frontend/src/services/GoogleDriveService.ts:90:          console.log('[GoogleDrive] Initializing with config:', {
+frontend/src/services/GoogleDriveService.ts:108:          this.tokenClient = (window as any).google.accounts.oauth2.initTokenClient({
+frontend/src/services/GoogleDriveService.ts:116:          console.log('[GoogleDrive] Initialization successful');
+frontend/src/services/GoogleDriveService.ts:139:        console.log('[GoogleDrive] Session restored automatically');
+frontend/src/services/GoogleDriveService.ts:141:        console.log('[GoogleDrive] Could not restore session:', error);
+frontend/src/services/GoogleDriveService.ts:222:          console.log('[GoogleDrive] Sign-in successful');
+frontend/src/services/GoogleDriveService.ts:244:        await (window as any).google.accounts.oauth2.revoke(this.accessToken);
+frontend/src/services/GoogleDriveService.ts:530:      console.log('[GoogleDrive] generateDefaultProjectName - files found:', files.length);
+frontend/src/services/GoogleDriveService.ts:540:          console.log(`[GoogleDrive] Found untitled file: ${file.name} -> number ${num}`);
+frontend/src/services/GoogleDriveService.ts:545:      console.log('[GoogleDrive] Extracted numbers:', numbers);
+frontend/src/services/GoogleDriveService.ts:549:        console.log('[GoogleDrive] No untitled files found, returning "untitled 1"');
+frontend/src/services/GoogleDriveService.ts:559:          console.log(`[GoogleDrive] Found gap at ${i}, returning "untitled ${i}"`);
+frontend/src/services/GoogleDriveService.ts:566:      console.log(`[GoogleDrive] No gaps, returning "untitled ${nextNum}"`);
+frontend/src/services/GoogleDriveService.ts:605:      console.log(`[GoogleDriveService] File renamed to: ${fileName}`);
+frontend/src/services/ProjectService.ts:36:  'commandHistory',
+frontend/src/services/ProjectService.ts:39:  'SerializedCommand',
+frontend/src/services/ProjectService.ts:40:  'SerializedOperation',
+frontend/src/services/ValidationService.ts:17:    // This is a placeholder - actual validation depends on element type
+frontend/src/stores/processStore.ts:6:  commandHistory: CommandStack;
+frontend/src/stores/processStore.ts:18:    commandHistory: new CommandStack(),
+frontend/src/stores/processStore.ts:22:    canUndo: (state): boolean => state.commandHistory.canUndo(),
+frontend/src/stores/processStore.ts:23:    canRedo: (state): boolean => state.commandHistory.canRedo(),
+frontend/src/stores/processStore.ts:24:    undoCount: (state): number => state.commandHistory.getUndoCount(),
+frontend/src/stores/processStore.ts:25:    redoCount: (state): number => state.commandHistory.getRedoCount(),
+frontend/src/stores/processStore.ts:30:      this.commandHistory.push(command);
+frontend/src/stores/processStore.ts:34:      if (!this.commandHistory.canUndo()) return false;
+frontend/src/stores/processStore.ts:35:      this.commandHistory.undo();
+frontend/src/stores/processStore.ts:40:      if (!this.commandHistory.canRedo()) return false;
+frontend/src/stores/processStore.ts:41:      this.commandHistory.redo();
+frontend/src/stores/processStore.ts:46:      this.commandHistory.clear();
+frontend/src/stores/settingsStore.ts:95:      console.log('[SettingsStore] Settings saved to localStorage');
+frontend/src/stores/settingsStore.ts:188:    console.log('[SettingsStore] Settings reset to defaults');
+frontend/src/stores/settingsStore.ts:195:    (settings.value as any)[category] = structuredClone((DEFAULT_SETTINGS as any)[category]);
+frontend/src/stores/settingsStore.ts:196:    console.log(`[SettingsStore] ${category} settings reset to defaults`);
+frontend/src/tools/GuideTool.ts:93:      console.log('[GuideTool] Paper.hitTestProjectState() result for through-point:', hit);
+frontend/src/tools/GuideTool.ts:105:      console.log('[GuideTool] Paper.hitTestProjectState() result for reference line:', hit);
+frontend/src/tools/IntersectionTool.ts:78:      console.log('[IntersectionTool] Paper.hitTestProjectState() result for first element:', hit);
+frontend/src/tools/IntersectionTool.ts:100:      console.log('[IntersectionTool] Paper.hitTestProjectState() result for second element:', hit);
+frontend/src/tools/SegmentTool.ts:58:    console.log('[SegmentTool] Paper.hitTestProjectState() result:', hit);
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts:65:    console.log('[TangentLineToCircleParallelToLineTool] Paper.hitTestProjectState() result:', hit);
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts:60:    console.log('[TangentLineToCircleThroughPointTool] Paper.hitTestProjectState() result:', hit);
+backend/src/api/projects.ts:24:  'commandHistory',
+backend/src/api/projects.ts:27:  'SerializedCommand',
+backend/src/api/projects.ts:28:  'SerializedOperation',
+backend/src/api/projects.ts:29:  'elements2D',
+backend/src/api/projects.ts:30:  'elements3D',
+backend/src/api/projects.ts:187:      throw new ApiError(400, 'INVALID_PROJECT_DOMAIN', 'Project domain must not contain legacy projection-plane arrays');
+backend/src/api/projects.ts:236:      throw new ApiError(400, 'INVALID_PROJECT_PAYLOAD', `Unsupported legacy project field: ${key}`);
+backend/src/server.ts:68:    console.log(`Backend server running on http://localhost:${PORT}`);
+=== toolbar specific ===
+=== backend dto acceptance related ===
+backend/src/api/projects.ts:7:const CURRENT_SCHEMA_VERSION = '4.0.0';
+backend/src/api/projects.ts:8:const CURRENT_CONTRACT = 'current-snapshot';
+backend/src/api/projects.ts:23:  'commands',
+backend/src/api/projects.ts:24:  'commandHistory',
+backend/src/api/projects.ts:25:  'undoStack',
+backend/src/api/projects.ts:26:  'redoStack',
+backend/src/api/projects.ts:29:  'elements2D',
+backend/src/api/projects.ts:30:  'elements3D',
+backend/src/api/projects.ts:119:  if (project.schemaVersion !== CURRENT_SCHEMA_VERSION) {
+backend/src/api/projects.ts:133:    schemaVersion: CURRENT_SCHEMA_VERSION,
+backend/src/api/projects.ts:145:  if (provenance.app !== 'diedrico' || provenance.contract !== CURRENT_CONTRACT) {
+backend/src/api/projects.ts:160:  if (domain.schemaVersion !== CURRENT_SCHEMA_VERSION) {
+backend/src/api/projects.ts:187:      throw new ApiError(400, 'INVALID_PROJECT_DOMAIN', 'Project domain must not contain legacy projection-plane arrays');
+backend/src/api/projects.ts:236:      throw new ApiError(400, 'INVALID_PROJECT_PAYLOAD', `Unsupported legacy project field: ${key}`);
+backend/src/server.ts:16:  const body: ApiErrorBody = { code, message, status };
+backend/tests/integration/projects.spec.ts:32:  expect(project).not.toHaveProperty('commands');
+backend/tests/integration/projects.spec.ts:33:  expect(project).not.toHaveProperty('commandHistory');
+backend/tests/integration/projects.spec.ts:34:  expect(project).not.toHaveProperty('elements2D');
+backend/tests/integration/projects.spec.ts:35:  expect(project).not.toHaveProperty('elements3D');
+backend/tests/integration/projects.spec.ts:150:        { payload: { name: 'Legacy', commands: [] }, label: 'legacy extra field' },
+backend/tests/integration/projects.spec.ts:279:    it('rejects partial, legacy, unknown, schema, and provenance-mismatched payloads', async () => {
+backend/tests/integration/projects.spec.ts:291:          payload: setPath(project, ['provenance'], { ...project.provenance, contract: 'legacy-snapshot' }),
+backend/tests/integration/projects.spec.ts:295:          payload: setPath(project, ['provenance'], { ...project.provenance, app: 'legacy-diedrico' }),
+backend/tests/integration/projects.spec.ts:307:          payload: setPath(project, ['domain'], { ...project.domain, legacyDomain: true }),
+backend/tests/integration/projects.spec.ts:353:    it('rejects legacy command-stream fields at top level and nested positions without migration aliases', async () => {
+backend/tests/integration/projects.spec.ts:355:      const legacyFields = [
+backend/tests/integration/projects.spec.ts:356:        'commands',
+backend/tests/integration/projects.spec.ts:357:        'commandHistory',
+backend/tests/integration/projects.spec.ts:358:        'undoStack',
+backend/tests/integration/projects.spec.ts:359:        'redoStack',
+backend/tests/integration/projects.spec.ts:362:        'elements2D',
+backend/tests/integration/projects.spec.ts:363:        'elements3D',
+backend/tests/integration/projects.spec.ts:366:      for (const field of legacyFields) {

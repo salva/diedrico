@@ -1,0 +1,6 @@
+
+> diedrico-frontend@0.1.0 test:e2e
+> playwright test tests/e2e/keyboard-shortcuts.spec.ts tests/e2e/selection-mask.spec.ts --list
+
+Listing tests:
+Total: 0 tests in 0 files

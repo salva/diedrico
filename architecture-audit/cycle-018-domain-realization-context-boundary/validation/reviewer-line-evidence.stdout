@@ -1,0 +1,376 @@
+     1	import type { Circle2D, Circle2DRealization2D } from '@/domain/world/Circle';
+     2	import type { Line2D, Line2DRealization2D } from '@/domain/world/Line';
+     3	import type { Point2D, Point2DRealization2D } from '@/domain/world/Point';
+     4	import type { Point3D } from '@/domain/world/Point3D';
+     5	import type { Line3D } from '@/domain/world/Line3D';
+     6	import type { Segment3D } from '@/domain/world/Segment3D';
+     7	import type { ProjectionPlane } from '@/domain/world/projectionPlane/ProjectionPlane';
+     8	import type { ProjectionPlaneRealization3D } from '@/domain/world/projectionPlane/ProjectionPlaneRealization';
+     9	import type { Point3DRealization3D, Line3DRealization3D, Segment3DRealization3D } from '@/domain/world/Element3DRealization3D';
+    10	import type { ProcessTree } from '@/domain/processTree/ProcessTree';
+    11	import type { ProjectionElementRealizationContext, Element3DRealizationContext } from '@/domain/world/projectionPlane/ProjectionPlaneContext';
+    12	import type { World } from '@/domain/world/World';
+    13	import type { CanvasPlaneTransformModel } from './CanvasPresentationModel';
+    14	
+    15	export interface CanvasWorldReadPort {
+    16	  getAllProjectionPlanes(): ProjectionPlane[];
+    17	  getProjectionPlane2DTransform(planeId: string): CanvasPlaneTransformModel | undefined;
+    18	  getProjectionPlane3DRealization(planeId: string): ProjectionPlaneRealization3D | undefined;
+    19	  getAll3DPoints(): Point3D[];
+    20	  getAll3DLines(): Line3D[];
+    21	  getAll3DSegments(): Segment3D[];
+    22	  realizePoint2D(plane: ProjectionPlane, point: Point2D): Point2DRealization2D | undefined;
+    23	  realizeLine2D(plane: ProjectionPlane, line: Line2D): Line2DRealization2D | undefined;
+    24	  realizeCircle2D(plane: ProjectionPlane, circle: Circle2D): Circle2DRealization2D | undefined | null;
+    25	  realizePoint3D(point: Point3D): Point3DRealization3D;
+    26	  realizeLine3D(line: Line3D): Line3DRealization3D;
+    27	  realizeSegment3D(segment: Segment3D): Segment3DRealization3D;
+    28	  getProcessTree(): ProcessTree;
+    29	}
+    30	
+    31	function createCanvasRealizationContext(world: World): ProjectionElementRealizationContext & Element3DRealizationContext {
+    32	  return {
+    33	    getProjectionPlaneById: id => world.getProjectionPlaneById(id),
+    34	    getPoint2D: id => world.getPoint2D(id),
+    35	    getLine2D: id => world.getLine2D(id),
+    36	    getCircle2D: id => world.getCircle2D(id),
+    37	    getProjectionPlane2DRealization: id => world.getProjectionPlane2DRealization(id),
+    38	    getProjectionPlane3DRealization: id => world.getProjectionPlane3DRealization(id),
+    39	    get3DPlaneRealization: id => world.get3DPlaneRealization(id),
+    40	    getHingeLineById: id => world.getHingeLineById(id),
+    41	    getAllProjectionPlanes: () => world.getAllProjectionPlanes(),
+    42	    getAllHingeLines: () => world.getAllHingeLines(),
+    43	  };
+    44	}
+    45	
+    46	export function createCanvasWorldReadPort(world: World): CanvasWorldReadPort {
+    47	  const realizationContext = createCanvasRealizationContext(world);
+    48	  return {
+    49	    getAllProjectionPlanes: () => world.getAllProjectionPlanes(),
+    50	    getProjectionPlane2DTransform: (planeId: string) => {
+    51	      const realization = world.getProjectionPlane2DRealization(planeId);
+    52	      if (!realization) return undefined;
+    53	      return {
+    54	        planeId,
+    55	        planeToPaper: realization.planeToPaper2D,
+    56	        paperToPlane: realization.paperToPlane2D,
+    57	      };
+    58	    },
+    59	    getProjectionPlane3DRealization: (planeId: string) => world.getProjectionPlane3DRealization(planeId),
+    60	    getAll3DPoints: () => world.getAll3DPoints(),
+    61	    getAll3DLines: () => world.getAll3DLines(),
+    62	    getAll3DSegments: () => world.getAll3DSegments(),
+    63	    realizePoint2D: (plane, point) => plane.realizePoint2D(point, realizationContext),
+    64	    realizeLine2D: (plane, line) => plane.realizeLine2D(line, realizationContext),
+    65	    realizeCircle2D: (plane, circle) => plane.realizeCircle2D(circle, realizationContext),
+    66	    realizePoint3D: point => point.realize3D(realizationContext),
+    67	    realizeLine3D: line => line.realize3D(realizationContext),
+    68	    realizeSegment3D: segment => segment.realize3D(realizationContext),
+    69	    getProcessTree: () => world.getProcessTree(),
+    70	  };
+    71	}
+    72	
+    73	export type CanvasPlaneTransformMap = Map<string, CanvasPlaneTransformModel>;
+
+---
+     1	import type { Vector4 } from 'three';
+     2	import type { Circle2DRealization2D } from '@/domain/world/Circle';
+     3	import type { Line2DRealization2D } from '@/domain/world/Line';
+     4	import type { Point2DRealization2D } from '@/domain/world/Point';
+     5	import type { Point3DRealization3D, Line3DRealization3D, Segment3DRealization3D, Plane3DRealization3D } from '@/domain/world/Element3DRealization3D';
+     6	import { AuxiliaryProjectionPlane } from '@/domain/world/projectionPlane/AuxiliaryProjectionPlane';
+     7	import type { ProjectionPlaneRealization3D } from '@/domain/world/projectionPlane/ProjectionPlaneRealization';
+     8	import type { VisualStyle } from '@/domain/world/VisualStyle';
+     9	import type { ProjectionElementRealizationContext, Element3DRealizationContext } from '@/domain/world/projectionPlane/ProjectionPlaneContext';
+    10	import type { World } from '@/domain/world/World';
+    11	import { isGuide2D, isSiblingGuide2D } from '@/domain/world/Guide';
+    12	import { Segment2DByPoints } from '@/domain/world/Segment';
+    13	
+    14	export interface ThreeEntityPresentationData { id: string; visualStyle?: VisualStyle }
+    15	
+    16	export interface ThreeProjectionPlaneReadModel {
+    17	  id: string;
+    18	  kind: 'fixed' | 'auxiliary';
+    19	  plane3DId: string | undefined;
+    20	  realization: ProjectionPlaneRealization3D | undefined;
+    21	}
+    22	
+    23	export interface ThreePlanarPointReadModel extends ThreeEntityPresentationData { realization: Point2DRealization2D | undefined }
+    24	export interface ThreePlanarLineReadModel extends ThreeEntityPresentationData { realization: Line2DRealization2D | undefined; isSegment: boolean }
+    25	export interface ThreePlanarCircleReadModel extends ThreeEntityPresentationData { realization: Circle2DRealization2D | undefined | null }
+    26	
+    27	export interface ThreePlanarPlaneReadModel {
+    28	  id: string;
+    29	  realization: ProjectionPlaneRealization3D | undefined;
+    30	  points: ThreePlanarPointReadModel[];
+    31	  lines: ThreePlanarLineReadModel[];
+    32	  circles: ThreePlanarCircleReadModel[];
+    33	}
+    34	
+    35	export interface ThreeReconstructedReadModel {
+    36	  points: Array<ThreeEntityPresentationData & { realization: Point3DRealization3D | undefined }>;
+    37	  lines: Array<ThreeEntityPresentationData & { realization: Line3DRealization3D | undefined }>;
+    38	  segments: Array<ThreeEntityPresentationData & { realization: Segment3DRealization3D | undefined }>;
+    39	  planes: Array<ThreeEntityPresentationData & { realization: Plane3DRealization3D | undefined }>;
+    40	}
+    41	
+    42	export interface ThreeGuideReadModel extends ThreeEntityPresentationData {
+    43	  planeId: string;
+    44	  planeRealization: ProjectionPlaneRealization3D | undefined;
+    45	  realization: Line2DRealization2D | undefined;
+    46	}
+    47	
+    48	export interface ThreeGuideIntersectionReadModel {
+    49	  points: Array<ThreeEntityPresentationData & { cartesian: [number, number, number] | undefined }>;
+    50	  lines: Array<ThreeEntityPresentationData & { point: Vector4 | undefined; direction: Vector4 | undefined }>;
+    51	  segments: Array<ThreeEntityPresentationData & { startPoint: Vector4 | undefined; endPoint: Vector4 | undefined }>;
+    52	}
+    53	
+    54	export interface ThreeHingeReadModel extends ThreeEntityPresentationData { realization: Line3DRealization3D | undefined }
+    55	
+    56	export interface ThreeWorldReadPort {
+    57	  getProjectionPlaneModels(): ThreeProjectionPlaneReadModel[];
+    58	  getProjectionPlaneGridSource(planeId: string): { plane3DRealization: Plane3DRealization3D | undefined; projectionRealization: ProjectionPlaneRealization3D | undefined };
+    59	  getPlanarPlaneModels(): ThreePlanarPlaneReadModel[];
+    60	  getReconstructedModels(): ThreeReconstructedReadModel;
+    61	  getSelectedGuideModels(selectedIds: readonly string[]): ThreeGuideReadModel[];
+    62	  getGuideIntersectionModels(): ThreeGuideIntersectionReadModel;
+    63	  getHingeModels(): ThreeHingeReadModel[];
+    64	}
+    65	
+    66	function createThreeRealizationContext(world: World): ProjectionElementRealizationContext & Element3DRealizationContext {
+    67	  return {
+    68	    getProjectionPlaneById: id => world.getProjectionPlaneById(id),
+    69	    getPoint2D: id => world.getPoint2D(id),
+    70	    getLine2D: id => world.getLine2D(id),
+    71	    getCircle2D: id => world.getCircle2D(id),
+    72	    getProjectionPlane2DRealization: id => world.getProjectionPlane2DRealization(id),
+    73	    getProjectionPlane3DRealization: id => world.getProjectionPlane3DRealization(id),
+    74	    get3DPlaneRealization: id => world.get3DPlaneRealization(id),
+    75	    getHingeLineById: id => world.getHingeLineById(id),
+    76	    getAllProjectionPlanes: () => world.getAllProjectionPlanes(),
+    77	    getAllHingeLines: () => world.getAllHingeLines(),
+    78	  };
+    79	}
+    80	
+    81	export function createThreeWorldReadPort(world: World): ThreeWorldReadPort {
+    82	  const realizationContext = createThreeRealizationContext(world);
+    83	  return {
+    84	    getProjectionPlaneModels: () => world.getAllProjectionPlanes().map(plane => ({
+    85	      id: plane.id,
+    86	      kind: plane instanceof AuxiliaryProjectionPlane ? 'auxiliary' : 'fixed',
+    87	      plane3DId: plane instanceof AuxiliaryProjectionPlane ? plane.plane3DId : plane.id,
+    88	      realization: world.getProjectionPlane3DRealization(plane.id),
+    89	    })),
+    90	    getProjectionPlaneGridSource: (planeId: string) => {
+    91	      const plane = world.getProjectionPlaneById(planeId);
+    92	      const plane3DId = plane instanceof AuxiliaryProjectionPlane ? plane.plane3DId : plane?.id;
+    93	      return {
+    94	        plane3DRealization: plane3DId ? world.get3DPlaneRealization(plane3DId) : undefined,
+    95	        projectionRealization: world.getProjectionPlane3DRealization(planeId),
+    96	      };
+    97	    },
+    98	    getPlanarPlaneModels: () => world.getAllProjectionPlanes().map(plane => ({
+    99	      id: plane.id,
+   100	      realization: world.getProjectionPlane3DRealization(plane.id),
+   101	      points: plane.getAllPoints().map(point => ({ id: point.id, visualStyle: point.visualStyle, realization: point.realize2D(realizationContext) })),
+   102	      lines: plane.getAllLines().map(line => ({ id: line.id, visualStyle: line.visualStyle, realization: line.realize2D(realizationContext), isSegment: line instanceof Segment2DByPoints })),
+   103	      circles: plane.getAllCircles().map(circle => ({ id: circle.id, visualStyle: circle.visualStyle, realization: circle.realize2D(realizationContext) })),
+   104	    })),
+   105	    getReconstructedModels: () => ({
+   106	      points: world.getAll3DPoints().map(point => ({ id: point.id!, visualStyle: point.visualStyle, realization: world.get3DPointRealization(point.id!) })),
+   107	      lines: world.getAll3DLines().map(line => ({ id: line.id!, visualStyle: line.visualStyle, realization: world.get3DLineRealization(line.id!) })),
+   108	      segments: world.getAll3DSegments().map(segment => ({ id: segment.id!, visualStyle: segment.visualStyle, realization: world.get3DSegmentRealization(segment.id!) })),
+   109	      planes: world.getAllPlanes().map(plane => ({ id: plane.id!, visualStyle: plane.visualStyle, realization: world.get3DPlaneRealization(plane.id!) })),
+   110	    }),
+   111	    getSelectedGuideModels: (selectedIds: readonly string[]) => selectedIds.flatMap(selectedId => {
+   112	      try {
+   113	        const line = world.getLine2D(selectedId);
+   114	        if (!line || (!isGuide2D(line) && !isSiblingGuide2D(line))) return [];
+   115	        return [{ id: line.id, visualStyle: line.visualStyle, planeId: line.planeId, planeRealization: world.getProjectionPlane3DRealization(line.planeId), realization: line.realize2D(realizationContext) }];
+   116	      } catch {
+   117	        return [];
+   118	      }
+   119	    }),
+   120	    getGuideIntersectionModels: () => ({
+   121	      points: world.getAll3DPoints().map(point => {
+   122	        const realization = world.get3DPointRealization(point.id!);
+   123	        return { id: point.id!, visualStyle: point.visualStyle, cartesian: realization?.isFeasible() ? realization.getCartesian() : undefined };
+   124	      }),
+   125	      lines: world.getAll3DLines().map(line => {
+   126	        const realization = world.get3DLineRealization(line.id!);
+   127	        return { id: line.id!, visualStyle: line.visualStyle, point: realization?.isFeasible() ? realization.point : undefined, direction: realization?.isFeasible() ? realization.getDirection() : undefined };
+   128	      }),
+   129	      segments: world.getAll3DSegments().map(segment => {
+   130	        const realization = world.get3DSegmentRealization(segment.id!);
+   131	        return { id: segment.id!, visualStyle: segment.visualStyle, startPoint: realization?.isFeasible() ? realization.startPoint : undefined, endPoint: realization?.isFeasible() ? realization.endPoint : undefined };
+   132	      }),
+   133	    }),
+   134	    getHingeModels: () => world.getAllHingeLines().map(hingeLine => ({ id: hingeLine.id, visualStyle: hingeLine.visualStyle, realization: hingeLine.realize3D(realizationContext) })),
+   135	  };
+   136	}
+
+---
+   210	    return this.elementStore.getAllCircles();
+   211	  }
+   212	
+   213	  /**
+   214	   * Remove a circle from this plane
+   215	   */
+   216	  removeCircle(id: string, context?: ProjectionPlaneMutationContext): boolean {
+   217	    return this.elementStore.removeCircle(id, context);
+   218	  }
+   219	
+   220	  /**
+   221	   * Get circle realization (cached 2D geometry)
+   222	   * Phase 22.5: Consistent naming - all 2D realization methods end with "2D"
+   223	   */
+   224	  getCircleRealization2D(id: string): Circle2DRealization2D | undefined {
+   225	    return this.elementStore.getCircleRealization2D(id);
+   226	  }
+   227	
+   228	  /**
+   229	   * Set/cache circle realization
+   230	   */
+   231	  setCircleRealization2D(id: string, realization: Circle2DRealization2D): void {
+   232	    this.elementStore.setCircleRealization2D(id, realization);
+   233	  }
+   234	
+   235	  /**
+   236	   * Clear circle realization cache
+   237	   */
+   238	  clearCircleRealization2D(id: string): void {
+   239	    this.elementStore.clearCircleRealization2D(id);
+   240	  }
+   241	
+   242	  // ==================== Realization Computation Methods ====================
+   243	  // Phase 22.5: Realization computation moved from World to ProjectionPlane
+   244	  // These methods compute realizations and manage the plane-level cache
+   245	
+   246	  /**
+   247	   * Compute and cache 2D realization for a point
+   248	   * @param point Point to realize
+   249	   * @param context Typed realization context for querying dependencies
+   250	   * @returns Point2DRealization2D if computation succeeds, undefined otherwise
+   251	   */
+   252	  realizePoint2D(point: Point2D, context: ProjectionElementRealizationContext): Point2DRealization2D | undefined {
+   253	    // Check cache first
+   254	    const cached = this.elementStore.getPointRealization2D(point.id);
+   255	    if (cached) {
+   256	      return cached;
+   257	    }
+   258	
+   259	    // Compute realization - point will query context for parent element realizations
+   260	    const realization = point.realize2D(context);
+   261	    if (!realization) {
+   262	      return undefined;  // Cannot compute (e.g., missing dependencies)
+   263	    }
+   264	
+   265	    // Cache the result
+   266	    this.elementStore.setPointRealization2D(point.id, realization);
+   267	    return realization;
+   268	  }
+   269	
+   270	  /**
+   271	   * Compute and cache 2D realization for a line
+   272	   * @param line Line to realize (includes segments, guides, hinge lines - all Line2D subtypes)
+   273	   * @param context Typed realization context for querying dependencies
+   274	   * @returns Line2DRealization2D if computation succeeds, undefined otherwise
+   275	   */
+   276	  realizeLine2D(line: Line2D, context: ProjectionElementRealizationContext): Line2DRealization2D | undefined {
+   277	    // Check cache first
+   278	    const cached = this.elementStore.getLineRealization2D(line.id);
+   279	    if (cached) {
+   280	      return cached;
+   281	    }
+   282	
+   283	    // Compute realization - line will query context for parent point realizations
+   284	    const realization = line.realize2D(context);
+   285	    if (!realization) {
+   286	      return undefined;  // Cannot compute (e.g., missing dependency points)
+   287	    }
+   288	
+   289	    // Cache the result
+   290	    this.elementStore.setLineRealization2D(line.id, realization);
+   291	    return realization;
+   292	  }
+   293	
+   294	  /**
+   295	   * Compute and cache 2D realization for a circle
+   296	   * @param circle Circle to realize
+   297	   * @param context Typed realization context for querying dependencies
+   298	   * @returns Circle2DRealization2D if computation succeeds, undefined otherwise
+   299	   */
+   300	  realizeCircle2D(circle: Circle2D, context: ProjectionElementRealizationContext): Circle2DRealization2D | undefined {
+   301	    // Check cache first
+   302	    const cached = this.elementStore.getCircleRealization2D(circle.id);
+   303	    if (cached) {
+   304	      return cached;
+   305	    }
+   306	
+   307	    // Compute realization - circle will query context for parent element realizations
+   308	    const realization = circle.realize2D(context);
+   309	    if (!realization) {
+   310	      return undefined;  // Cannot compute (e.g., missing dependencies)
+
+---
+     1	/**
+     2	 * Line3D - 3D line classes (domain layer - definitions)
+     3	 * 
+     4	 * Contains high-level definitions and relationships (IDs of source 2D elements).
+     5	 * NO numeric coordinates - those are computed and stored in Line3DRealization3D.
+     6	 * 
+     7	 * Types:
+     8	 * - HingeLine: System line representing fold between projection planes (Phase 84)
+     9	 * - Line3DFromProjections: User-created line from two 2D line projections (Phase 78)
+    10	 * 
+    11	 * Architecture:
+    12	 * - Element3D classes store WHAT the element is (definition/rules)
+    13	 * - realize3D() computes numeric geometry → Line3DRealization3D
+    14	 * - Lazy evaluation with caching in World.lineRealizations3D
+    15	 * 
+    16	 */
+    17	import { Vector4 } from 'three';
+    18	import { Element3D } from './Element3D';
+    19	import { Line3DRealization3D } from './Element3DRealization3D';
+    20	import type { Element3DRealizationContext } from './projectionPlane/ProjectionPlaneContext';
+    21	import type { VisualStyle } from './VisualStyle';
+    22	import { createVisualStyle } from './VisualStyle';
+    23	
+    24	/**
+    25	 * Line3D - Abstract base class for all 3D line types
+    26	 * 
+    27	 * All 3D lines must implement realize3D() to compute their geometric realization.
+    28	 * Subclasses store only defining relationships (IDs), never numeric coordinates.
+    29	 */
+    30	export abstract class Line3D extends Element3D {
+    31	  /**
+    32	   * Compute 3D geometric realization of this line
+    33	   * @param context Typed realization context for accessing related elements
+    34	   * @returns Line3DRealization3D with point and direction in 3D space
+    35	   */
+    36	  abstract realize3D(context: Element3DRealizationContext): Line3DRealization3D;
+    37	}
+    38	
+    39	/**
+    40	 * Line3DFromProjections - Line derived from two 2D line projections
+    41	 * User-created element (Phase 78)
+    42	 * 
+    43	 * Stores ONLY IDs of defining elements, no numeric data.
+    44	 * realize3D() reconstructs 3D line from 2D projection coordinates.
+    45	 */
+    46	export class Line3DFromProjections extends Line3D {
+    47	  readonly kind = 'Line3DFromProjections';
+    48	  label: string;
+    49	  
+    50	  // Defining relations (ONLY IDs, no numeric data)
+    51	  projection1: string;  // Line2D ID on first plane
+    52	  projection2: string;  // Line2D ID on second plane (must be different)
+    53	  plane1Id: string;     // Which plane projection1 is on
+    54	  plane2Id: string;     // Which plane projection2 is on (must be different)
+    55	
+    56	  constructor(
+    57	    id: string,
+    58	    label: string,
+    59	    projection1: string,
+    60	    projection2: string,

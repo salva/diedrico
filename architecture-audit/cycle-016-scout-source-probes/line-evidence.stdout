@@ -1,0 +1,132 @@
+## frontend/src/components/workspace/SvgCanvas.vue
+frontend/src/components/workspace/SvgCanvas.vue:6:       data-testid="svg-canvas"
+frontend/src/components/workspace/SvgCanvas.vue:152:       :world="world"
+frontend/src/components/workspace/SvgCanvas.vue:169:  * 3. → SVGRenderer (applies viewport transform, generates SVG attributes)
+frontend/src/components/workspace/SvgCanvas.vue:177:  * - Element drawing policy comes from presentation selectors and SVGRenderer
+frontend/src/components/workspace/SvgCanvas.vue:182: import { World } from '@/domain/world/World';
+frontend/src/components/workspace/SvgCanvas.vue:183: import { SVGRenderer, type ViewportTransform } from '@/services/SVGRenderer';
+frontend/src/components/workspace/SvgCanvas.vue:200: import { FreePoint2D } from '@/domain/world/Point';
+frontend/src/components/workspace/SvgCanvas.vue:210: import type { FreePointMoveSession } from '@/application/tools/ToolCommandIntents';
+frontend/src/components/workspace/SvgCanvas.vue:223: const worldVersion = ref(0);
+frontend/src/components/workspace/SvgCanvas.vue:229:   // Depend on worldVersion so plane switching triggers recomputation
+frontend/src/components/workspace/SvgCanvas.vue:230:   worldVersion.value;
+frontend/src/components/workspace/SvgCanvas.vue:231:   return world.getActivePlaneId();
+frontend/src/components/workspace/SvgCanvas.vue:254: const svgRenderer = new SVGRenderer();
+frontend/src/components/workspace/SvgCanvas.vue:369:     const plane = world.getProjectionPlaneById(planeId);
+frontend/src/components/workspace/SvgCanvas.vue:388:     for (const plane of world.getAllProjectionPlanes()) {
+frontend/src/components/workspace/SvgCanvas.vue:411: const world = inject<World>('world')!;
+frontend/src/components/workspace/SvgCanvas.vue:412: if (!world) {
+frontend/src/components/workspace/SvgCanvas.vue:417:   world,
+frontend/src/components/workspace/SvgCanvas.vue:447: // Reactivity trigger - increment this to force re-render when non-reactive world/read-model state changes
+frontend/src/components/workspace/SvgCanvas.vue:479:   lastWorldVersion = world.getVersion();
+frontend/src/components/workspace/SvgCanvas.vue:480:   worldVersion.value = lastWorldVersion;
+frontend/src/components/workspace/SvgCanvas.vue:482:     const current = world.getVersion();
+frontend/src/components/workspace/SvgCanvas.vue:485:       worldVersion.value = current;
+frontend/src/components/workspace/SvgCanvas.vue:491:   const allPlanes = world.getAllProjectionPlanes();
+frontend/src/components/workspace/SvgCanvas.vue:493:   console.log('Points in world:', totalPoints);
+frontend/src/components/workspace/SvgCanvas.vue:534:   for (const plane of world.getAllProjectionPlanes()) {
+frontend/src/components/workspace/SvgCanvas.vue:535:     const realization = world.getProjectionPlane2DRealization(plane.id);
+frontend/src/components/workspace/SvgCanvas.vue:544: // Canvas presentation read model derived from one world/view snapshot.
+frontend/src/components/workspace/SvgCanvas.vue:550:   return canvasPresentationController.buildModel(
+frontend/src/components/workspace/SvgCanvas.vue:551:     world,
+frontend/src/components/workspace/SvgCanvas.vue:574:       const result = svgRenderer.renderPrimitive(p, viewport.value, { width: canvasWidth.value, height: canvasHeight.value });
+frontend/src/components/workspace/SvgCanvas.vue:584:   const linePrimitives = primitives.value.filter(p => p.type === 'line');
+frontend/src/components/workspace/SvgCanvas.vue:585:   return linePrimitives.map(p => {
+frontend/src/components/workspace/SvgCanvas.vue:586:       const result = svgRenderer.renderPrimitive(p, viewport.value, { width: canvasWidth.value, height: canvasHeight.value });
+frontend/src/components/workspace/SvgCanvas.vue:598:       const result = svgRenderer.renderPrimitive(p, viewport.value, { width: canvasWidth.value, height: canvasHeight.value });
+frontend/src/components/workspace/SvgCanvas.vue:611:       const result = svgRenderer.renderPrimitive(p, viewport.value, { width: canvasWidth.value, height: canvasHeight.value });
+frontend/src/components/workspace/SvgCanvas.vue:624:       const result = svgRenderer.renderPrimitive(p, viewport.value, { width: canvasWidth.value, height: canvasHeight.value });
+frontend/src/components/workspace/SvgCanvas.vue:636:       const result = svgRenderer.renderPrimitive(p, viewport.value, { width: canvasWidth.value, height: canvasHeight.value });
+frontend/src/components/workspace/SvgCanvas.vue:747:     world,
+frontend/src/components/workspace/SvgCanvas.vue:848:     const plane = world.getProjectionPlaneById(activePlaneId);
+frontend/src/components/workspace/SvgCanvas.vue:963:     // Adjust pan by dividing by zoom - at high zoom, screen pixels translate to smaller world movement
+frontend/src/components/workspace/SvgCanvas.vue:1110:     world
+frontend/src/components/workspace/SvgCanvas.vue:1168:   const allPrimitives = primitives.value;
+frontend/src/components/workspace/SvgCanvas.vue:1170:   if (allPrimitives.length === 0) {
+frontend/src/components/workspace/SvgCanvas.vue:1184:   for (const prim of allPrimitives) {
+
+MISSING frontend/src/services/PaperService.ts
+MISSING frontend/src/services/RenderService.ts
+## frontend/src/components/panels/ThreeView.vue
+frontend/src/components/panels/ThreeView.vue:29: import type { World } from '@/domain/world/World';
+frontend/src/components/panels/ThreeView.vue:32: import { ThreeViewRuntime } from '@/rendering/threeView/ThreeViewRuntime';
+frontend/src/components/panels/ThreeView.vue:41: const world = inject<World>('world')!;
+frontend/src/components/panels/ThreeView.vue:42: const runtime = new ThreeViewRuntime();
+frontend/src/components/panels/ThreeView.vue:46: function refreshThreeView(): void { runtime.refresh({ world, displayOptions: displayOptions.value, selectedIds: selectedIds() }); }
+frontend/src/components/panels/ThreeView.vue:47: function handleDisplayChange(): void { refreshThreeView(); }
+frontend/src/components/panels/ThreeView.vue:53:   refreshThreeView();
+frontend/src/components/panels/ThreeView.vue:57:   world.subscribeToChanges(handleWorldChange);
+frontend/src/components/panels/ThreeView.vue:58:   unsubscribeWorldChanges = () => world.unsubscribeFromChanges(handleWorldChange);
+frontend/src/components/panels/ThreeView.vue:60:   watch(renderTick, refreshThreeView);
+frontend/src/components/panels/ThreeView.vue:61:   watch(() => selectionStore.selectedIdsArray, refreshThreeView);
+frontend/src/components/panels/ThreeView.vue:62:   watch(displayOptions, refreshThreeView, { deep: true });
+
+## frontend/src/App.vue
+frontend/src/App.vue:18:     <!-- Header: Top toolbar area -->
+frontend/src/App.vue:30:         @sign-in="runtime.actions.toolbarSignIn"
+frontend/src/App.vue:31:         @sign-out="runtime.actions.toolbarSignOut"
+frontend/src/App.vue:71:           <ThreeView />
+frontend/src/App.vue:94: import Toolbar from './components/toolbars/Toolbar.vue';
+frontend/src/App.vue:95: import StatusBar from './components/toolbars/StatusBar.vue';
+frontend/src/App.vue:98: import ThreeView from './components/panels/ThreeView.vue';
+frontend/src/App.vue:142: provide('world', runtime.world);
+
+MISSING frontend/src/components/dialogs/OpenProjectDialog.vue
+## frontend/src/components/panels/ActionsPanel.vue
+frontend/src/components/panels/ActionsPanel.vue:34:         :world="world"
+frontend/src/components/panels/ActionsPanel.vue:52: import type { World } from '@/domain/world/World';
+frontend/src/components/panels/ActionsPanel.vue:66: const world = inject<World>('world')!;
+frontend/src/components/panels/ActionsPanel.vue:68:   world,
+frontend/src/components/panels/ActionsPanel.vue:84: const processTree = ref(world.getProcessTree());
+frontend/src/components/panels/ActionsPanel.vue:155:   processTree.value = world.getProcessTree();
+frontend/src/components/panels/ActionsPanel.vue:172:   world.subscribeToChanges(handleWorldChange);
+frontend/src/components/panels/ActionsPanel.vue:173:   unsubscribeWorld = () => world.unsubscribeFromChanges(handleWorldChange);
+frontend/src/components/panels/ActionsPanel.vue:218:     const dependsOnSelected = world
+
+## frontend/src/components/toolbars/Toolbar.vue
+frontend/src/components/toolbars/Toolbar.vue:2:   <div class="toolbar">
+frontend/src/components/toolbars/Toolbar.vue:10:         data-testid="toolbar-new-project"
+frontend/src/components/toolbars/Toolbar.vue:20:         data-testid="toolbar-open-project"
+frontend/src/components/toolbars/Toolbar.vue:26:     <div class="toolbar-separator"></div>
+frontend/src/components/toolbars/Toolbar.vue:36:         data-testid="toolbar-undo"
+frontend/src/components/toolbars/Toolbar.vue:47:         data-testid="toolbar-redo"
+frontend/src/components/toolbars/Toolbar.vue:53:     <div class="toolbar-separator"></div>
+frontend/src/components/toolbars/Toolbar.vue:58:     <div class="toolbar-separator"></div>
+frontend/src/components/toolbars/Toolbar.vue:68:         data-testid="toolbar-toggle-grid"
+frontend/src/components/toolbars/Toolbar.vue:79:         data-testid="toolbar-toggle-projections"
+frontend/src/components/toolbars/Toolbar.vue:89:         data-testid="toolbar-fit-to-view"
+frontend/src/components/toolbars/Toolbar.vue:95:     <div class="toolbar-separator"></div>
+frontend/src/components/toolbars/Toolbar.vue:105:       data-testid="tool-select"
+frontend/src/components/toolbars/Toolbar.vue:129: import { createToolbarHistoryController } from '@/application/toolbar/ToolbarHistoryController';
+frontend/src/components/toolbars/Toolbar.vue:131: import PlaneSelector from '@/components/toolbars/PlaneSelector.vue';
+frontend/src/components/toolbars/Toolbar.vue:132: import ToolFamilyButton from '@/components/toolbars/ToolFamilyButton.vue';
+frontend/src/components/toolbars/Toolbar.vue:134: import SelectionToolIcon from '@/components/icons/toolbar/SelectionToolIcon.vue';
+frontend/src/components/toolbars/Toolbar.vue:135: import NewFileIcon from '@/components/icons/toolbar/NewFileIcon.vue';
+frontend/src/components/toolbars/Toolbar.vue:136: import OpenFileIcon from '@/components/icons/toolbar/OpenFileIcon.vue';
+frontend/src/components/toolbars/Toolbar.vue:137: import UndoIcon from '@/components/icons/toolbar/UndoIcon.vue';
+frontend/src/components/toolbars/Toolbar.vue:138: import RedoIcon from '@/components/icons/toolbar/RedoIcon.vue';
+frontend/src/components/toolbars/Toolbar.vue:139: import GridIcon from '@/components/icons/toolbar/GridIcon.vue';
+frontend/src/components/toolbars/Toolbar.vue:140: import ProjectionIcon from '@/components/icons/toolbar/ProjectionIcon.vue';
+frontend/src/components/toolbars/Toolbar.vue:141: import ZoomFitIcon from '@/components/icons/toolbar/ZoomFitIcon.vue';
+frontend/src/components/toolbars/Toolbar.vue:144:  * Toolbar.vue - Tool selection toolbar
+frontend/src/components/toolbars/Toolbar.vue:164: const toolbarHistoryController = createToolbarHistoryController({
+frontend/src/components/toolbars/Toolbar.vue:175:   return toolbarHistoryController.getState().canUndo;
+frontend/src/components/toolbars/Toolbar.vue:180:   return toolbarHistoryController.getState().canRedo;
+frontend/src/components/toolbars/Toolbar.vue:198:   unsubscribeHistory = toolbarHistoryController.subscribe(() => {
+frontend/src/components/toolbars/Toolbar.vue:213:   toolbarHistoryController.undo();
+frontend/src/components/toolbars/Toolbar.vue:221:   toolbarHistoryController.redo();
+frontend/src/components/toolbars/Toolbar.vue:276: .toolbar {
+frontend/src/components/toolbars/Toolbar.vue:319: .toolbar-separator {
+
+## package.json
+package.json:13:     "build": "npm run build --workspace=frontend",
+package.json:16:     "lint": "npm run lint --workspace=frontend",
+package.json:18:     "docs:build": "vitepress build docs",
+package.json:21:     "test:e2e": "npm run test:e2e --workspace=frontend"
+
+## frontend/package.json
+frontend/package.json:8:     "build": "vue-tsc && vite build",
+frontend/package.json:14:     "test:e2e": "playwright test",
+frontend/package.json:15:     "test:e2e:headed": "playwright test --headed",
+frontend/package.json:16:     "lint": "npm run test:architecture"
+

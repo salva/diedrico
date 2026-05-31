@@ -1,0 +1,18 @@
+The following paths are ignored by one of your .gitignore files:
+architecture-audit/cycle-008-3d-rendering-scene-adapters/validation/t3-frontend-build.stderr.log
+architecture-audit/cycle-008-3d-rendering-scene-adapters/validation/t3-frontend-build.stdout.log
+architecture-audit/cycle-008-3d-rendering-scene-adapters/validation/t3-frontend-e2e.stderr.log
+architecture-audit/cycle-008-3d-rendering-scene-adapters/validation/t3-frontend-e2e.stdout.log
+architecture-audit/cycle-008-3d-rendering-scene-adapters/validation/t3-frontend-lint.stderr.log
+architecture-audit/cycle-008-3d-rendering-scene-adapters/validation/t3-frontend-lint.stdout.log
+architecture-audit/cycle-008-3d-rendering-scene-adapters/validation/t3-frontend-test.stderr.log
+architecture-audit/cycle-008-3d-rendering-scene-adapters/validation/t3-frontend-test.stdout.log
+architecture-audit/cycle-008-3d-rendering-scene-adapters/validation/t3-root-build.stderr.log
+architecture-audit/cycle-008-3d-rendering-scene-adapters/validation/t3-root-build.stdout.log
+architecture-audit/cycle-008-3d-rendering-scene-adapters/validation/t3-root-lint.stderr.log
+architecture-audit/cycle-008-3d-rendering-scene-adapters/validation/t3-root-lint.stdout.log
+architecture-audit/cycle-008-3d-rendering-scene-adapters/validation/t3-root-test.stderr.log
+architecture-audit/cycle-008-3d-rendering-scene-adapters/validation/t3-root-test.stdout.log
+hint: Use -f if you really want to add them.
+hint: Turn this message off by running
+hint: "git config advice.addIgnoredFile false"

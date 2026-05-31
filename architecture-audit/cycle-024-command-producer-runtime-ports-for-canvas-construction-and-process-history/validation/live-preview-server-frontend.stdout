@@ -7,3 +7,23 @@
 
   ➜  Local:   http://localhost:5173/
   ➜  Network: http://10.0.3.113:5173/
+5:17:03 AM [vite] page reload src/application/threePresentation/ThreeStylePolicy.ts
+5:17:34 AM [vite] page reload src/application/threePresentation/ThreeProjectionPlaneReadPort.ts
+5:17:56 AM [vite] page reload src/application/threePresentation/ProjectionPlane3DSelector.ts
+5:18:05 AM [vite] page reload src/application/threePresentation/ThreeProjectionPlaneReadPort.ts
+5:18:30 AM [vite] page reload src/application/threePresentation/ThreePlanarElementReadPort.ts
+5:18:40 AM [vite] page reload src/application/threePresentation/PlanarElement3DSelector.ts
+5:18:59 AM [vite] page reload src/application/threePresentation/ThreeReconstructedElementReadPort.ts
+5:19:10 AM [vite] page reload src/application/threePresentation/ReconstructedElement3DSelector.ts
+5:19:36 AM [vite] page reload src/application/threePresentation/ThreeGuideReadPort.ts
+5:19:42 AM [vite] page reload src/application/threePresentation/ThreeGuideReadPort.ts
+5:20:05 AM [vite] page reload src/application/threePresentation/Guide3DSelector.ts
+5:20:23 AM [vite] page reload src/application/threePresentation/ThreeHingeReadPort.ts
+5:20:30 AM [vite] page reload src/application/threePresentation/Hinge3DSelector.ts
+5:20:45 AM [vite] page reload src/application/threePresentation/ThreeWorldReadPort.ts
+5:24:07 AM [vite] page reload src/application/threePresentation/ProjectionPlane3DSelector.ts
+5:24:07 AM [vite] page reload src/application/threePresentation/ThreeProjectionPlaneReadPort.ts
+5:24:18 AM [vite] page reload src/application/threePresentation/PlanarElement3DSelector.ts
+5:24:42 AM [vite] page reload src/application/threePresentation/ThreePlanarElementReadPort.ts
+5:28:04 AM [vite] page reload playwright-report/index.html
+5:28:26 AM [vite] page reload playwright-report/index.html

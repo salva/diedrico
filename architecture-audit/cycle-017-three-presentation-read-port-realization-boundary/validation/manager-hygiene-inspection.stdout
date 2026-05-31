@@ -1,0 +1,132 @@
+diff --git a/architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/scope-check.md b/architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/scope-check.md
+index 75f0f54..b7e59bb 100644
+--- a/architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/scope-check.md
++++ b/architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/scope-check.md
+@@ -1,64 +1,60 @@
+ # Cycle 017 Scope Check — Three presentation read ports and realization boundary
+ 
+-## Status and source-control hygiene
++## Stage status
+ 
+-This scout inspected current status/diff before writing proposals. The workspace is heavily dirty from pre-existing unrelated work: `git status --short` produced 1,219 entries in the targeted status log (`.saivage/tmp/command-logs/cycle017-status-head.stdout`), including unrelated `.saivage/*` plan/stage files, older audit artifacts, source changes under command/process/UI files, deleted e2e files, and forbidden secret/config paths listed as untracked. Those unrelated files were not read or reverted. A targeted diff stat over `architecture-audit`, `frontend/src`, `frontend/tests`, packages, backend, docs, and specs showed 50 dirty paths before this scout wrote Cycle 017 artifacts (`.saivage/tmp/command-logs/cycle017-diff-stat.stdout`).
++This is a scout/proposal stage only. No production source, package metadata, tests, or tooling were refactored. `architecture-audit/wave-plan.md` already contains a proposed Wave 017 entry, **Three presentation read ports and realization boundary**; Cycle 017 artifacts align to that existing entry and should proceed to `cycle-017-review-round-01` before implementation.
+ 
+-This task made no production source changes, package/tooling changes, validation-run changes, backend changes, docs/spec changes, or secret/config reads. It only writes Cycle 017 audit artifacts and appends a proposed Wave 017 entry to `architecture-audit/wave-plan.md` because the current plan ends at Wave 016.
++## First inspections and workspace hygiene
+ 
+-## Current plan and Wave 016 completion evidence
++- Current status was inspected first and captured in `architecture-audit/cycle-017-status-prep.stdout`. The workspace has many pre-existing unrelated modified/deleted/untracked paths, including forbidden `.saivage` config/secret-looking files listed only by path. They were not read or reverted.
++- Wave 016 completion was inspected. Its implementation log marks **WAVE 016 COMPLETE** and says the selected direct path completed with green validation and preview evidence (`architecture-audit/cycle-016-canvas-presentation-overlay-boundary/implementation-log.md:3-5`).
++- Wave 016 protected-surface and residual notes were inspected: no package/backend/command/persistence broadening occurred, and `SvgCanvas.vue` still uses `World` outside the presentation read-port scope (`architecture-audit/cycle-016-canvas-presentation-overlay-boundary/implementation-log.md:38-40`).
++- The current wave-plan tail already contains Wave 017. Its scope names three-presentation selectors/controllers, a new narrow 3D presentation read port or reviewed shared read context, and limited alignment with `CanvasWorldReadPort` (`architecture-audit/wave-plan.md:944-966`). Its target outcome is that three-presentation consumes explicit read ports/DTOs instead of full mutable `World`, while realization dependencies become named and typed (`architecture-audit/wave-plan.md:989-993`).
+ 
+-Wave 016 is explicitly complete: `architecture-audit/cycle-016-canvas-presentation-overlay-boundary/implementation-log.md` begins with `WAVE 016 COMPLETE`, says the selected direct path was implemented, lists green root/frontend lint, focused Vitest, full root/frontend Vitest, root/frontend build, root/frontend e2e, preview refresh, and focused live overlay/canvas browser evidence, and records no Wave 017 implementation was started. The same log names residual candidates in order: remaining concrete-`World` realization delegation inside `CanvasWorldReadPort`, typed interaction-query/test fixtures, and 3D scene interaction ownership.
++## Candidate centrality re-rank after Wave 016
+ 
+-The current `architecture-audit/wave-plan.md` tail contains Wave 016 as the final authored wave and has no Wave 017 entry (`.saivage/tmp/command-logs/cycle017-wave-plan-tail.stdout`). Therefore Cycle 017 must add a reviewed plan entry before any implementation can occur; this scope check/proposal set is the proposed plan edit plus implementation proposal set for review, not implementation.
++1. **Selected — three presentation read ports and realization boundary.** The existing Wave 017 entry is central because it extends the just-completed canvas presentation boundary to the remaining 3D presentation/full-`World` seam. Wave 016 explicitly recommends evaluating the concrete-`World` realization delegation and 3D scene interaction residuals next (`architecture-audit/cycle-016-canvas-presentation-overlay-boundary/implementation-log.md:91-103`). Current `CanvasWorldReadPort` still delegates realization through concrete `World` (`frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:46-51`).
++2. **Remaining command/use-case leaks.** `CanvasStyleUseCase` still casts `UpdateElementStyleOp` as `any` when adding it to a command (`frontend/src/application/canvas/CanvasStyleUseCase.ts:10-15`), and construction use-cases still realize elements directly through full `World` (`frontend/src/application/construction/ConstructionUseCases.ts:166-187`). These are important but should not displace the presentation/read-port boundary selected by the current wave-plan.
++3. **Typed interaction-query/test-helper seams.** Wave 016 recorded local `any` helper parameters in tool tests as residuals (`architecture-audit/cycle-016-canvas-presentation-overlay-boundary/implementation-log.md:91-95`). Current source also has `ToolContext.paperToPlaneTransform: any` and `ITool.getState(): Record<string, any>` (`frontend/src/tools/ITool.ts:19-29`, `frontend/src/tools/ITool.ts:42-49`). This remains a candidate later wave because it is tool/test typing rather than the next presentation read boundary.
++4. **3D transform/realization typing inside the selected wave.** Three-presentation selectors still use `matrix: any` helper seams (`frontend/src/application/threePresentation/ProjectionPlane3DSelector.ts:59-63`, `frontend/src/application/threePresentation/PlanarElement3DSelector.ts:57-65`). These fit Wave 017 because they are part of 3D presentation read/realization ownership.
++5. **App-shell services, backend stance, validation gates, placeholders/debug surfaces, docs/spec drift.** These were considered but are less central now: Wave 016 explicitly says app-shell/backend/package/persistence were protected surfaces (`architecture-audit/cycle-016-canvas-presentation-overlay-boundary/implementation-log.md:38-40`), and wave-plan ordering keeps docs/debug cleanup after structural boundaries.
+ 
+-## Re-ranked remaining risks after Wave 016
++## Selected scope
+ 
+-1. **Most central: 3D presentation/read-port and domain realization boundary.** Wave 016 put the 2D canvas presentation selector behind `CanvasWorldReadPort`, but 3D presentation still accepts the full mutable `World` and every 3D selector receives it. `ThreePresentationInput` is `{ world: World; displayOptions; selectedIds }` (`frontend/src/application/threePresentation/ThreePresentationModel.ts:1`, `frontend/src/application/threePresentation/ThreePresentationModel.ts:10`), and `ThreePresentationSelector` passes that full `World` into projection-plane, planar-element, reconstructed-element, guide, and hinge selectors (`frontend/src/application/threePresentation/ThreePresentationSelector.ts:17`, `frontend/src/application/threePresentation/ThreePresentationSelector.ts:20`, `frontend/src/application/threePresentation/ThreePresentationSelector.ts:21`, `frontend/src/application/threePresentation/ThreePresentationSelector.ts:22`, `frontend/src/application/threePresentation/ThreePresentationSelector.ts:23`, `frontend/src/application/threePresentation/ThreePresentationSelector.ts:24`). This is the closest remaining rendering/read-model analogue to Wave 016 and directly affects active user-visible 3D rendering.
+-2. **Still central and coupled to #1: duplicated realization read adapters.** `CanvasWorldReadPort` now exposes 2D/3D realization methods but its adapter still calls concrete runtime `World` through entity realization methods (`frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:14`, `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:21`, `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:24`, `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:46`, `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:49`, `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:50`, `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:51`). A domain-owned realization context already exists for projection-plane elements (`frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:9`, `frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:14`, `frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:15`, `frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:16`, `frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:17`, `frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:18`, `frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:19`), but presentation adapters do not yet share a clear read-context boundary.
+-3. **Important but less central for the next wave: `styleService`/visibility cast.** `CanvasVisibilityPolicy` narrows the input to `Pick<World, 'getProcessTree'>` but immediately casts it back to `World` for `resolveVisibility` (`frontend/src/application/canvasPresentation/CanvasVisibilityPolicy.ts:1`, `frontend/src/application/canvasPresentation/CanvasVisibilityPolicy.ts:5`, `frontend/src/application/canvasPresentation/CanvasVisibilityPolicy.ts:7`, `frontend/src/application/canvasPresentation/CanvasVisibilityPolicy.ts:8`). This should be addressed only if it falls naturally out of the presentation read-context boundary; otherwise it risks broadening into process/style ownership.
+-4. **Deferred: 3D scene host interaction ownership.** `ThreeSceneHost` still owns `OrbitControls`, camera, renderer, labels, lights, animation, and registry access in one host (`frontend/src/rendering/threeView/ThreeSceneHost.ts:9`, `frontend/src/rendering/threeView/ThreeSceneHost.ts:10`, `frontend/src/rendering/threeView/ThreeSceneHost.ts:11`, `frontend/src/rendering/threeView/ThreeSceneHost.ts:12`, `frontend/src/rendering/threeView/ThreeSceneHost.ts:15`, `frontend/src/rendering/threeView/ThreeSceneHost.ts:37`, `frontend/src/rendering/threeView/ThreeSceneHost.ts:70`). However Wave 016 already made overlay pointer ownership explicit, and scene interaction is less central than removing full-`World` dependencies from 3D presentation selectors.
+-5. **Deferred: test-helper `any` seams.** Existing three-presentation tests inject selector spies using `as any` and local `any` helpers (`frontend/tests/unit/application/threePresentation/threePresentationSelector.spec.ts:12`, `frontend/tests/unit/application/threePresentation/threePresentationSelector.spec.ts:15`, `frontend/tests/unit/application/threePresentation/threePresentationSelector.spec.ts:18`). These should be fixed where touched by the 3D read-port boundary, not as a standalone test-cleanup wave.
++Cycle 017 should execute the existing plan entry: **Wave 017 — Three presentation read ports and realization boundary**. The future implementation should define a narrow three-presentation read port or reviewed shared presentation read context so 3D presentation selectors no longer consume full mutable `World`, while aligning with `CanvasWorldReadPort` only where needed to avoid duplicate realization/read-context ownership.
+ 
+-## Selected Wave 017 scope
++## Current-code evidence
+ 
+-**Selected title:** Three presentation read ports and realization boundary.
++- `CanvasWorldReadPort` exposes realization methods but its adapter delegates by passing the full `World` into plane and element realization (`frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:14-28`, `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:30-54`).
++- Wave 016 documented this exact delegation as an accepted residual and next-wave candidate (`architecture-audit/cycle-016-canvas-presentation-overlay-boundary/implementation-log.md:91-103`).
++- The existing Wave 017 entry scopes three-presentation selectors/controllers and allows a narrow read-port/shared context plus limited `CanvasWorldReadPort` alignment (`architecture-audit/wave-plan.md:944-966`).
++- The existing Wave 017 entry forbids broad rendering, scene-host/OrbitControls, app-shell, command/undo, persistence, backend, docs/spec, package/tooling, validation-platform, and Drive/local project architecture changes (`architecture-audit/wave-plan.md:968-973`).
++- Three-presentation selectors still contain transform helper `any` seams (`frontend/src/application/threePresentation/ProjectionPlane3DSelector.ts:59-63`, `frontend/src/application/threePresentation/PlanarElement3DSelector.ts:57-65`).
+ 
+-**Scope:** active 3D presentation selectors/controllers/runtime and the minimum canvas read-port/domain realization context surface needed to avoid inventing a second full-World presentation adapter. The wave should align canvas and 3D presentation around explicit read ports/realization contexts while preserving existing rendering behavior.
++## Premises
+ 
+-**Why this is next by centrality:** It directly continues the central rendering/application boundary created in Wave 016. Leaving 3D presentation on full mutable `World` while 2D canvas uses a read port creates parallel presentation boundaries and preserves broad domain access in active selectors. Fixing this now gives later scene-host interaction and style/visibility cleanup a stable read model rather than another raw `World` path.
++- Wave 016 closed the canvas presentation selector/controller full-`World` API but deliberately left realization delegation and 3D presentation read ownership as bounded residuals.
++- The existing Wave 017 entry is the authoritative next wave; no new plan edit is required beyond the proposals written here.
++- A narrow 3D read port or shared presentation read context can improve the presentation/domain boundary without changing user-visible geometry behavior.
+ 
+-## Current-code premises
++## Invalidated assumptions
+ 
+-- `ThreeView.vue` is now a small shell and passes full `world` into `ThreeViewRuntime.refresh` (`frontend/src/components/panels/ThreeView.vue:28`, `frontend/src/components/panels/ThreeView.vue:41`, `frontend/src/components/panels/ThreeView.vue:42`, `frontend/src/components/panels/ThreeView.vue:46`).
+-- `ThreeViewRuntime.refresh` accepts `ThreePresentationInput` and delegates model building to `ThreePresentationController` before replacing scene groups (`frontend/src/rendering/threeView/ThreeViewRuntime.ts:1`, `frontend/src/rendering/threeView/ThreeViewRuntime.ts:10`, `frontend/src/rendering/threeView/ThreeViewRuntime.ts:21`, `frontend/src/rendering/threeView/ThreeViewRuntime.ts:22`, `frontend/src/rendering/threeView/ThreeViewRuntime.ts:23`, `frontend/src/rendering/threeView/ThreeViewRuntime.ts:27`).
+-- `ThreePresentationModel.ts` imports `World` and embeds it in `ThreePresentationInput` (`frontend/src/application/threePresentation/ThreePresentationModel.ts:1`, `frontend/src/application/threePresentation/ThreePresentationModel.ts:10`).
+-- `ProjectionPlane3DSelector`, `PlanarElement3DSelector`, and `ReconstructedElement3DSelector` currently import `World` and call broad world/domain methods directly (`frontend/src/application/threePresentation/ProjectionPlane3DSelector.ts:2`, `frontend/src/application/threePresentation/ProjectionPlane3DSelector.ts:11`, `frontend/src/application/threePresentation/ProjectionPlane3DSelector.ts:15`, `frontend/src/application/threePresentation/PlanarElement3DSelector.ts:2`, `frontend/src/application/threePresentation/PlanarElement3DSelector.ts:8`, `frontend/src/application/threePresentation/ReconstructedElement3DSelector.ts:2`, `frontend/src/application/threePresentation/ReconstructedElement3DSelector.ts:8`).
+-- Existing projection realization context interfaces already describe the read capabilities needed by many 2D realization methods, but presentation read ports still couple to concrete runtime `World` for adapter realization (`frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:9`, `frontend/src/domain/world/projectionPlane/ProjectionPlaneContext.ts:20`, `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:46`, `frontend/src/application/canvasPresentation/CanvasWorldReadPort.ts:51`).
+-
+-## Invalidated assumptions from older plan entries
+-
+-The old baseline risks remain directionally useful, but the literal old Wave 007/008/009 premises are already invalidated by Waves 015–016: the active 2D presentation path is already `canvasPresentation/*`, `ThreeView.vue` is already a shell over `ThreeViewRuntime`, and the current next risk is not another broad rendering extraction. Wave 017 must not revive obsolete assumptions about `PaperService`, a 1,200-line `ThreeView.vue`, or `App.vue` as the next central god-module.
++- The initial manager/coder scout assumption that `wave-plan.md` ended at Wave 016 was invalid for the current on-disk file. The current file already has a Wave 017 entry, so this stage aligns proposals to it and does not require a wave-plan edit.
++- Old broad rendering/app-shell premises are not the next central issue because Wave 016 says those areas were protected and current Wave 017 explicitly guards them out of scope.
+ 
+ ## Explicit out of scope
+ 
+-- No source implementation in this scout stage.
+-- No command/undo/persistence, backend, docs/spec, package/tooling, validation-platform, Drive/local project, or app-shell redesign.
+-- No broad scene-host/OrbitControls redesign except recording it as a residual.
+-- No broad process-tree/style-service redesign unless the selected reviewed proposal explicitly narrows `CanvasVisibilityPolicy`/visibility port as a tiny deletion with focused tests.
+-- No sweeping `any` cleanup outside touched presentation tests/selectors.
+-- No deletion/rewrite of unrelated dirty files or forbidden `.saivage` secret/config reads.
+-
+-## Validation requirements for the future implementation stage
+-
+-- Pre-edit static scans for full-`World` imports/API in `frontend/src/application/threePresentation`, remaining concrete realization delegation in `CanvasWorldReadPort`, presentation `as any` seams, and 3D scene interaction residuals.
+-- Focused Vitest for three-presentation selectors/controller/runtime boundary and canvas read-port/realization-context behavior if touched.
+-- Root and frontend lint where defined.
+-- Full root and frontend Vitest.
+-- Root and frontend build.
+-- Root/frontend Playwright e2e because active 3D/canvas rendering is user-observable.
+-- Live preview refresh on `0.0.0.0:5173`, HTTP 200 probe, and focused live browser evidence for 3D view rendering plus 2D canvas still rendering projected/planar objects.
++- No implementation during this scout/proposal stage.
++- No broad command/undo/persistence redesign, backend stance decision, app-shell service extraction, package/tooling change, validation-platform work, docs/spec cleanup, or debug placeholder deletion.
++- No broad 3D scene/OrbitControls redesign unless a reviewed later cycle selects it.
++- Do not touch forbidden secret/config files.
+ 
+-## Wave-plan edit status
++## Validation requirements for the future implementation wave
+ 
+-A Wave 017 entry is appended to `architecture-audit/wave-plan.md` in this scout task because the current plan ends at Wave 016. That edit is a proposal and requires canonical review in `cycle-017-review-round-01` before any implementation.
++- Static scans before/after for full-`World` three-presentation inputs, canvas read-port realization delegation, presentation `any` seams, and direct `World` realization calls in touched selectors.
++- Focused Vitest for three-presentation selector/controller/read-port, `CanvasWorldReadPort` alignment, and any touched transform/realization helpers.
++- Root/frontend lint where defined.
++- Full root/frontend Vitest.
++- Root/frontend build.
++- E2e and live/browser smoke only if user-visible rendering/construction behavior changes; otherwise document the no-behavior-change rationale.
++- Live preview refresh on `0.0.0.0:5173` with HTTP probe at implementation closure.
+
+--- status ---
+ M architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/scope-check.md
+?? .saivage/stages/cycle-017-implement-three-presentation-read-port-realization-boundary/reports/t2-review-implementation-retry-01.json
+?? .saivage/stages/cycle-017-implement-three-presentation-read-port-realization-boundary/reports/t2-review-implementation.json
+?? .saivage/stages/cycle-017-implement-three-presentation-read-port-realization-boundary/reviews/
+?? .saivage/stages/cycle-017-implement-three-presentation-read-port-realization-boundary/tasks.json
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/reviews/
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/status-before-implementation.txt
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/manager-hygiene-inspection.stderr
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/manager-hygiene-inspection.stdout
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/manager-status-after-failed-coder.stderr
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/manager-status-after-failed-coder.stdout
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/manager-status-before-review.stderr
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/manager-status-before-review.stdout
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/retry-report-sha-update.stderr
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/retry-report-sha-update.stdout
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/reviewer-path-status.stderr
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/reviewer-path-status.stdout
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/reviewer-retry-status.stderr
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/reviewer-retry-status.stdout
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/reviewer-static-scan.stderr
+?? architecture-audit/cycle-017-three-presentation-read-port-realization-boundary/validation/reviewer-static-scan.stdout

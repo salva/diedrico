@@ -1,0 +1,83 @@
+frontend/src/components/workspace/SvgCanvas.vue:425:  commandStack: inject('commandStack'),
+frontend/src/components/panels/ActionsPanel.vue:31:      <ProcessTreeNode
+frontend/src/components/panels/ActionsPanel.vue:53:import type { ProcessTreeNode as ProcessTreeNodeType } from '@/domain/processTree/ProcessTreeNode';
+frontend/src/components/panels/ActionsPanel.vue:55:import { Command } from '@/commands/Command';
+frontend/src/components/panels/ActionsPanel.vue:61:import ProcessTreeNode from './ProcessTreeNode.vue';
+frontend/src/components/panels/ActionsPanel.vue:63:import { useProcessTreeStore } from '@/stores/processTreeStore';
+frontend/src/components/panels/ActionsPanel.vue:73:const commandStack = inject<CommandStack>('commandStack')!;
+frontend/src/components/panels/ActionsPanel.vue:77:const processTreeStore = useProcessTreeStore();
+frontend/src/components/panels/ActionsPanel.vue:86:// Get current ProcessTree - use reactive ref that we update when World changes
+frontend/src/components/panels/ActionsPanel.vue:87:const initialTree = world.getProcessTree();
+frontend/src/components/panels/ActionsPanel.vue:101:// Watch ProcessTree version for reactivity, triggered by stackVersion changes
+frontend/src/components/panels/ActionsPanel.vue:141:  // Subscribe to ProcessTree changes
+frontend/src/components/panels/ActionsPanel.vue:143:    console.log('[ActionsPanel] ProcessTree changed! New root children:', processTree.value.root.children.length);
+frontend/src/components/panels/ActionsPanel.vue:165:  // Subscribe to World changes to detect when clear() creates new ProcessTree
+frontend/src/components/panels/ActionsPanel.vue:167:    console.log('[ActionsPanel] World changed, re-fetching ProcessTree');
+frontend/src/components/panels/ActionsPanel.vue:174:    // Update ref to point to new ProcessTree instance
+frontend/src/components/panels/ActionsPanel.vue:175:    processTree.value = world.getProcessTree();
+frontend/src/components/panels/ActionsPanel.vue:180:      console.log('[ActionsPanel] ProcessTree changed! New root children:', processTree.value.root.children.length);
+frontend/src/components/panels/ActionsPanel.vue:252:function countNodes(node: ProcessTreeNodeType): number {
+frontend/src/components/panels/ActionsPanel.vue:267:  const cmd = new Command('Push subprocess', world);
+frontend/src/components/panels/ActionsPanel.vue:270:  commandStack.push(cmd);
+frontend/src/components/panels/ActionsPanel.vue:276:    const cmd = new Command('Pop subprocess', world);
+frontend/src/components/panels/ActionsPanel.vue:279:    commandStack.push(cmd);
+frontend/src/components/panels/ActionsPanel.vue:291:  const cmd = new Command('Toggle subprocess encapsulation', world);
+frontend/src/components/panels/ActionsPanel.vue:294:  commandStack.push(cmd);
+frontend/src/components/panels/ActionsPanel.vue:300:  const cmd = new Command('Toggle output status', world);
+frontend/src/components/panels/ActionsPanel.vue:303:  commandStack.push(cmd);
+frontend/src/components/panels/ActionsPanel.vue:309:  const cmd = new Command('Rename subprocess', world);
+frontend/src/components/panels/ActionsPanel.vue:312:  commandStack.push(cmd);
+frontend/src/components/toolbars/Toolbar.vue:122:import { Command } from '@/commands/Command';
+frontend/src/components/toolbars/Toolbar.vue:164:const commandStack = inject<CommandStack>('commandStack')!;
+frontend/src/components/toolbars/Toolbar.vue:165:if (!commandStack) {
+frontend/src/components/toolbars/Toolbar.vue:182:  return commandStack.canUndo();
+frontend/src/components/toolbars/Toolbar.vue:187:  return commandStack.canRedo();
+frontend/src/components/toolbars/Toolbar.vue:263:    const cmd = new Command('Add projection plane example setup', world);
+frontend/src/components/toolbars/Toolbar.vue:299:    commandStack.push(cmd);
+frontend/src/components/toolbars/Toolbar.vue:311:  unsubscribeStack = commandStack.subscribe(() => {
+frontend/src/components/toolbars/Toolbar.vue:328:  if (commandStack.canUndo()) {
+frontend/src/components/toolbars/Toolbar.vue:329:    commandStack.undo();
+frontend/src/components/toolbars/Toolbar.vue:337:  if (commandStack.canRedo()) {
+frontend/src/components/toolbars/Toolbar.vue:338:    commandStack.redo();
+frontend/tests/unit/application/canvasToolControllers.spec.ts:41:    const { world, commandStack } = createTestWorld();
+frontend/tests/unit/application/canvasToolControllers.spec.ts:43:    const beforeUndoCount = commandStack.getUndoCount();
+frontend/tests/unit/application/canvasToolControllers.spec.ts:47:      commandStack,
+frontend/tests/unit/application/canvasToolControllers.spec.ts:58:    expect(commandStack.getUndoCount()).toBe(beforeUndoCount + 1);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:62:      commandStack,
+frontend/tests/unit/application/canvasToolControllers.spec.ts:72:    expect(commandStack.getUndoCount()).toBe(beforeUndoCount + 1);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:77:    const { world, commandStack } = createTestWorld();
+frontend/tests/unit/application/canvasToolControllers.spec.ts:89:      commandStack,
+frontend/tests/unit/application/canvasToolControllers.spec.ts:98:        metadata: { selectionPoint: new Vector3(-4, 3, 1) }
+frontend/tests/unit/application/canvasToolControllers.spec.ts:110:    const { world, commandStack } = createTestWorld();
+frontend/tests/unit/application/canvasToolControllers.spec.ts:120:      commandStack,
+frontend/tests/unit/application/canvasToolControllers.spec.ts:129:        metadata: { tangentIndex: 1, selectionPoint: new Vector3(10, -5, 1) }
+frontend/tests/unit/application/canvasToolControllers.spec.ts:139:    const { world, commandStack } = createTestWorld();
+frontend/tests/unit/application/canvasToolControllers.spec.ts:142:    const useCase = new CanvasPointMovementUseCase(world, commandStack);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:150:    const beforeUndoCount = commandStack.getUndoCount();
+frontend/tests/unit/application/canvasToolControllers.spec.ts:154:    expect(commandStack.getUndoCount()).toBe(beforeUndoCount + 1);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:156:    commandStack.undo();
+frontend/tests/unit/application/canvasToolControllers.spec.ts:161:    const { world, commandStack } = createTestWorld();
+frontend/tests/unit/application/canvasToolControllers.spec.ts:164:    const useCase = new CanvasStyleUseCase(world, commandStack);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:165:    const beforeUndoCount = commandStack.getUndoCount();
+frontend/tests/unit/application/canvasToolControllers.spec.ts:174:    expect(commandStack.getUndoCount()).toBe(beforeUndoCount + 1);
+frontend/tests/unit/application/canvasToolControllers.spec.ts:176:    commandStack.undo();
+frontend/tests/unit/application/canvasToolControllers.spec.ts:245:    expect(source).not.toContain("from '@/commands/Command'");
+frontend/tests/unit/application/canvasToolControllers.spec.ts:246:    expect(source).not.toContain('UpdateFreePoint2DPositionOp');
+frontend/tests/unit/application/canvasToolControllers.spec.ts:247:    expect(source).not.toContain('UpdateElementStyleOp');
+frontend/tests/unit/application/canvasToolControllers.spec.ts:248:    expect(source).not.toContain('new Command(');
+frontend/tests/unit/application/canvasToolControllers.spec.ts:252:    const { world, commandStack } = createTestWorld();
+frontend/tests/unit/application/canvasToolControllers.spec.ts:254:    const controller = new CanvasToolController({ world, commandStack, toolStore: { setTool: vi.fn() } as any });
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts:78:  protected buildConstructionIntent(
+frontend/src/tools/TangentLineToCircleThroughPointTool.ts:88:      metadata: {
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts:74:  protected buildConstructionIntent(
+frontend/src/tools/TangentLineToCircleParallelToLineTool.ts:85:      metadata: {
+frontend/src/tools/IntersectionTool.ts:73:  protected buildConstructionIntent(
+frontend/src/tools/IntersectionTool.ts:83:      metadata: { selectionPoint }
+frontend/src/tools/CreateProjectionPlaneTool.ts:13: * - ProcessTree action
+frontend/src/tools/GuideTool.ts:17: * - Registers TWO ProcessTree actions (primary + sibling)
+frontend/src/tools/GuideTool.ts:40: * - Creates TWO guides (primary + sibling) via GuideSequenceFactory
+frontend/src/tools/GuideTool.ts:41: * - Registers TWO ProcessTree actions
+frontend/src/tools/GuideTool.ts:76:   * - Sibling guide on paired plane (automatically via GuideSequenceFactory)
+frontend/src/tools/GuideTool.ts:78:   * Records TWO ProcessTree actions:
+frontend/src/tools/ArgumentCollectorTool.ts:96:  protected buildConstructionIntent(
+frontend/src/tools/ArgumentCollectorTool.ts:137:      this.buildConstructionIntent(args, context)

@@ -1,0 +1,179 @@
+     1	import { createProjectStateRecord, emptyProjectState, type ProjectStateRecord } from './ProjectState';
+     2	
+     3	export type ProjectStateRuntimeListener = (snapshot: ProjectStateRuntimeSnapshot) => void;
+     4	
+     5	export interface ProjectStateRuntimeSnapshot {
+     6	  readonly state: ProjectStateRecord;
+     7	  readonly version: number;
+     8	}
+     9	
+    10	export interface ProjectStateRuntimeHolderOptions {
+    11	  readonly initialState?: ProjectStateRecord;
+    12	}
+    13	
+    14	/**
+    15	 * Live runtime owner for reducer ProjectStateRecord data.
+    16	 *
+    17	 * This holder intentionally stores only the immutable ProjectStateRecord plus
+    18	 * runtime metadata needed by the app shell. It must not retain mutable geometry,
+    19	 * construction-history, dependency-service, or adapter instances.
+    20	 */
+    21	export class ProjectStateRuntimeHolder {
+    22	  #state: ProjectStateRecord;
+    23	  #version = 0;
+    24	  #listeners = new Set<ProjectStateRuntimeListener>();
+    25	
+    26	  constructor(options: ProjectStateRuntimeHolderOptions = {}) {
+    27	    this.#state = options.initialState
+    28	      ? createProjectStateRecord(cloneProjectStateRecord(options.initialState))
+    29	      : emptyProjectState();
+    30	  }
+    31	
+    32	  get state(): ProjectStateRecord {
+    33	    return this.#state;
+    34	  }
+    35	
+    36	  get version(): number {
+    37	    return this.#version;
+    38	  }
+    39	
+    40	  snapshot(): ProjectStateRuntimeSnapshot {
+    41	    return { state: this.#state, version: this.#version };
+    42	  }
+    43	
+    44	  commit(nextState: ProjectStateRecord): ProjectStateRecord {
+    45	    const committedState = createProjectStateRecord(cloneProjectStateRecord(nextState));
+    46	    if (committedState === this.#state) return this.#state;
+    47	
+    48	    this.#state = committedState;
+    49	    this.#version += 1;
+    50	    this.#emit();
+    51	    return this.#state;
+    52	  }
+    53	
+    54	  reset(nextState: ProjectStateRecord = emptyProjectState()): ProjectStateRecord {
+    55	    return this.commit(nextState);
+    56	  }
+    57	
+    58	  subscribe(listener: ProjectStateRuntimeListener): () => void {
+    59	    this.#listeners.add(listener);
+    60	    return () => {
+    61	      this.#listeners.delete(listener);
+    62	    };
+    63	  }
+    64	
+    65	  #emit(): void {
+    66	    const snapshot = this.snapshot();
+    67	    for (const listener of this.#listeners) {
+    68	      listener(snapshot);
+    69	    }
+    70	  }
+    71	}
+    72	
+    73	function cloneProjectStateRecord(state: ProjectStateRecord): ProjectStateRecord {
+    74	  return JSON.parse(JSON.stringify(state)) as ProjectStateRecord;
+    75	}
+--- reducer
+--- selectors metadata reads
+   660	    : 'line';
+   661	  return {
+   662	    id: `${candidateType}-${element.id}`,
+   663	    sourceEntityId: element.id,
+   664	    planeId: element.planeId,
+   665	    type: candidateType,
+   666	    constructionType: element.constructionType,
+   667	    visible: element.visible,
+   668	    label: element.label ?? element.id,
+   669	    point1: asVector2(element.definition.point1),
+   670	    point2: asVector2(element.definition.point2),
+   671	    position: asVector2(element.definition.position),
+   672	    direction: asVector2(element.definition.direction),
+   673	    dependencyIds: element.dependencyIds,
+   674	  };
+   675	}
+   676	
+   677	function matrixDtoFromProjectionPlaneRecord(plane: ProjectionPlaneRecord): ProjectStateMatrix3Dto {
+   678	  const translationX = readNumberMetadata(plane.metadata.paperOffsetX, 800);
+   679	  const translationY = readNumberMetadata(plane.metadata.paperOffsetY, 500);
+   680	  const yScale = plane.id === 'P_H' || plane.sourcePlaneId === 'P_H' ? -1 : 1;
+   681	  return [
+   682	    1, 0, 0,
+   683	    0, yScale, 0,
+   684	    translationX, translationY, 1,
+   685	  ];
+   686	}
+   687	
+   688	function invertProjectionPlaneMatrixDto(matrix: ProjectStateMatrix3Dto): ProjectStateMatrix3Dto {
+   689	  const yScale = matrix[4];
+   690	  const translationX = matrix[6];
+   691	  const translationY = matrix[7];
+   692	  return [
+   693	    1, 0, 0,
+   694	    0, yScale, 0,
+   695	    -translationX, -yScale * translationY, 1,
+   696	  ];
+   697	}
+   698	
+   699	function readNumberMetadata(value: unknown, fallback: number): number {
+   700	  return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+   701	}
+   702	
+   703	function asVector2(value: unknown): ProjectStateVector2Dto | undefined {
+   704	  if (typeof value !== 'object' || value === null) return undefined;
+   705	  const vector = value as { readonly x?: unknown; readonly y?: unknown; readonly z?: unknown };
+   706	  if (typeof vector.x !== 'number' || typeof vector.y !== 'number') return undefined;
+   707	  return { x: vector.x, y: vector.y, z: typeof vector.z === 'number' ? vector.z : 1 };
+   708	}
+   709	
+   710	
+   711	export interface ProjectStatePoint2DMaterializationDto {
+   712	  readonly id: string;
+   713	  readonly position: ProjectStateVector2Dto;
+   714	}
+   715	
+   716	export interface ProjectStateLine2DMaterializationDto {
+   717	  readonly id: string;
+   718	  readonly point: ProjectStateVector2Dto;
+   719	  readonly direction: ProjectStateVector2Dto;
+   720	}
+   960	  if (!circle || circle.kind !== 'circle') return undefined;
+   961	  const center = asVector2(circle.definition.center) ?? materializeEndpoint(state, circle.definition.centerPointId, undefined, nextSeen);
+   962	  const circumference = asVector2(circle.definition.circumferencePoint) ?? materializeEndpoint(state, circle.definition.circumferencePointId, undefined, nextSeen);
+   963	  if (!center) return undefined;
+   964	  const radius = typeof circle.definition.radius === 'number' ? circle.definition.radius : undefined;
+   965	  const radiusVector = circumference
+   966	    ? { x: circumference.x - center.x, y: circumference.y - center.y, z: 0 }
+   967	    : { x: radius ?? 0, y: 0, z: 0 };
+   968	  return { id: circle.id, center, radiusVector, feasible: Math.hypot(radiusVector.x, radiusVector.y) > 1e-10 };
+   969	}
+   970	
+   971	function materializeEndpoint(state: ProjectStateRecord, idValue: unknown, inlineValue: unknown, seen: ReadonlySet<string>): ProjectStateVector2Dto | undefined {
+   972	  const inline = asVector2(inlineValue);
+   973	  if (inline) return inline;
+   974	  const id = readString(idValue);
+   975	  return id ? materializeProjectStatePointRealization2D(state, id, seen)?.position : undefined;
+   976	}
+   977	
+   978	function infeasiblePoint(id: string): ProjectStateRealizedPoint2D { return { id, position: { x: 0, y: 0, z: 1 }, feasible: false }; }
+   979	function infeasibleLine(id: string): ProjectStateRealizedLine2D { return { id, point1: { x: 0, y: 0, z: 1 }, point2: { x: 1, y: 0, z: 0 }, feasible: false }; }
+   980	function infeasibleCircle(id: string): ProjectStateRealizedCircle2D { return { id, center: { x: 0, y: 0, z: 1 }, radiusVector: { x: 1, y: 0, z: 0 }, feasible: false }; }
+   981	function readString(value: unknown): string | undefined { return typeof value === 'string' ? value : undefined; }
+   982	function readNumber(value: unknown, fallback: number): number { return typeof value === 'number' ? value : fallback; }
+   983	function lineDirection(line: ProjectStateRealizedLine2D): ProjectStateVector2Dto { return line.point2.z === 0 ? line.point2 : { x: line.point2.x - line.point1.x, y: line.point2.y - line.point1.y, z: 0 }; }
+   984	function circleRadius(circle: ProjectStateRealizedCircle2D): number { return Math.hypot(circle.radiusVector.x, circle.radiusVector.y); }
+   985	function intersectRecordLines(a: ProjectStateRealizedLine2D, b: ProjectStateRealizedLine2D): ProjectStateVector2Dto | undefined {
+   986	  const ad = lineDirection(a); const bd = lineDirection(b); const dx = b.point1.x - a.point1.x; const dy = b.point1.y - a.point1.y; const det = ad.x * bd.y - ad.y * bd.x;
+   987	  if (Math.abs(det) < 1e-10) return undefined;
+   988	  const t = (dx * bd.y - dy * bd.x) / det;
+   989	  return { x: a.point1.x + t * ad.x, y: a.point1.y + t * ad.y, z: 1 };
+   990	}
+   991	function intersectRecordLineCircle(line: ProjectStateRealizedLine2D, circle: ProjectStateRealizedCircle2D): ProjectStateVector2Dto[] {
+   992	  const d = lineDirection(line); const fx = line.point1.x - circle.center.x; const fy = line.point1.y - circle.center.y; const r = circleRadius(circle);
+   993	  const A = d.x*d.x + d.y*d.y; const B = 2*(fx*d.x + fy*d.y); const C = fx*fx + fy*fy - r*r; const disc = B*B - 4*A*C;
+   994	  if (A < 1e-10 || disc < -1e-10) return []; const root = Math.sqrt(Math.max(0, disc));
+   995	  return [(-B-root)/(2*A), (-B+root)/(2*A)].map(t => ({ x: line.point1.x + t*d.x, y: line.point1.y + t*d.y, z: 1 }));
+   996	}
+   997	function intersectRecordCircles(a: ProjectStateRealizedCircle2D, b: ProjectStateRealizedCircle2D): ProjectStateVector2Dto[] {
+   998	  const r0 = circleRadius(a); const r1 = circleRadius(b); const dx = b.center.x-a.center.x; const dy = b.center.y-a.center.y; const d = Math.hypot(dx, dy);
+   999	  if (d < 1e-10 || d > r0+r1 || d < Math.abs(r0-r1)) return []; const x = (r0*r0-r1*r1+d*d)/(2*d); const h2 = r0*r0-x*x; if (h2 < -1e-10) return []; const h = Math.sqrt(Math.max(0,h2));
+  1000	  const xm = a.center.x + x*dx/d; const ym = a.center.y + x*dy/d; const rx = -dy*(h/d); const ry = dx*(h/d);

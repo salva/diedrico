@@ -1,0 +1,93 @@
+commit 0048f4672cc96ce5c639f07434bfafb7f4600287
+Author: Saivage Coder <saivage-coder@example.invalid>
+Date:   Sun May 31 07:42:42 2026 +0000
+
+    [tsk-t1-implement-direct-cleanup] [t1-implement-direct-cleanup] implement process tree ownership cleanup
+
+ .../reports/t1-implement-direct-cleanup.json       | 131 +++
+ .../implementation-log.md                          | 114 +++
+ .../validation/00-pre-status-diffstat.stderr       |   0
+ .../validation/00-pre-status-diffstat.stdout       |   0
+ .../validation/01-pre-static-scans.stderr          |   0
+ .../validation/01-pre-static-scans.stdout          |   0
+ .../validation/02-edit-script.stderr               |   0
+ .../validation/02-edit-script.stdout               |   0
+ .../validation/03-post-static-scans.stderr         |   0
+ .../validation/03-post-static-scans.stdout         |   0
+ .../validation/10-focused-vitest.stderr            |   0
+ .../validation/10-focused-vitest.stdout            |  18 +
+ .../validation/20-root-lint.stderr                 |   0
+ .../validation/20-root-lint.stdout                 |  25 +
+ .../validation/21-frontend-lint.stderr             |   0
+ .../validation/21-frontend-lint.stdout             |  21 +
+ .../validation/30-root-vitest.stderr               | 162 ++++
+ .../validation/30-root-vitest.stdout               | 990 +++++++++++++++++++++
+ .../validation/31-frontend-vitest.stderr           | 162 ++++
+ .../validation/31-frontend-vitest.stdout           | 986 ++++++++++++++++++++
+ .../validation/40-root-build.stderr                |   5 +
+ .../validation/40-root-build.stdout                |  76 ++
+ .../validation/41-frontend-build.stderr            |   5 +
+ .../validation/41-frontend-build.stdout            |  72 ++
+ .../validation/50-root-e2e.stderr                  |   0
+ .../validation/50-root-e2e.stdout                  |  35 +
+ .../validation/51-frontend-e2e.stderr              |   0
+ .../validation/51-frontend-e2e.stdout              |  30 +
+ .../validation/60-live-preview-server.stderr       |   0
+ .../validation/60-live-preview-server.stdout       |   9 +
+ .../validation/60-live-preview.pid                 |   1 +
+ .../validation/60-preview-refresh-probe.stderr     |   6 +
+ .../validation/60-preview-refresh-probe.stdout     |  41 +
+ .../validation/90-post-status-diffstat.stderr      |   0
+ .../validation/90-post-status-diffstat.stdout      |   0
+ .../validation/91-protected-surface-scans.stderr   |   0
+ .../validation/91-protected-surface-scans.stdout   |   0
+ .../validation/92-validation-file-list.stderr      |   0
+ .../validation/92-validation-file-list.stdout      |  44 +
+ .../processTree/ProcessTreeOperations.ts           |  77 --
+ .../src/commands/operations/processTree/README.md  |   9 +-
+ .../registerProcessTreeOperationDescriptors.ts     |   4 +-
+ frontend/src/domain/processTree/Action.ts          |  31 +-
+ frontend/src/domain/processTree/ProcessTree.ts     |  29 +-
+ frontend/src/stores/processStore.ts                | 189 ----
+ .../unit/services/ProjectService.roundTrip.spec.ts |  20 +-
+ 46 files changed, 2952 insertions(+), 340 deletions(-)
+ create mode 100644 .saivage/stages/cycle-032-implement-process-tree-dependency-ownership-cleanup/reports/t1-implement-direct-cleanup.json
+ create mode 100644 architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/implementation-log.md
+ create mode 100644 architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/00-pre-status-diffstat.stderr
+ create mode 100644 architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/00-pre-status-diffstat.stdout
+ create mode 100644 architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/01-pre-static-scans.stderr
+ create mode 100644 architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/01-pre-static-scans.stdout
+ create mode 100644 architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/02-edit-script.stderr
+ create mode 100644 architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/02-edit-script.stdout
+ create mode 100644 architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/03-post-static-scans.stderr
+ create mode 100644 architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/03-post-static-scans.stdout
+ create mode 100644 architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/10-focused-vitest.stderr
+ create mode 100644 architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/10-focused-vitest.stdout
+ create mode 100644 architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/20-root-lint.stderr
+ create mode 100644 architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/20-root-lint.stdout
+ create mode 100644 architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/21-frontend-lint.stderr
+ create mode 100644 architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/21-frontend-lint.stdout
+ create mode 100644 architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/30-root-vitest.stderr
+ create mode 100644 architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/30-root-vitest.stdout
+ create mode 100644 architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/31-frontend-vitest.stderr
+ create mode 100644 architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/31-frontend-vitest.stdout
+ create mode 100644 architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/40-root-build.stderr
+ create mode 100644 architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/40-root-build.stdout
+ create mode 100644 architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/41-frontend-build.stderr
+ create mode 100644 architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/41-frontend-build.stdout
+ create mode 100644 architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/50-root-e2e.stderr
+ create mode 100644 architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/50-root-e2e.stdout
+ create mode 100644 architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/51-frontend-e2e.stderr
+ create mode 100644 architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/51-frontend-e2e.stdout
+ create mode 100644 architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/60-live-preview-server.stderr
+ create mode 100644 architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/60-live-preview-server.stdout
+ create mode 100644 architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/60-live-preview.pid
+ create mode 100644 architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/60-preview-refresh-probe.stderr
+ create mode 100644 architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/60-preview-refresh-probe.stdout
+ create mode 100644 architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/90-post-status-diffstat.stderr
+ create mode 100644 architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/90-post-status-diffstat.stdout
+ create mode 100644 architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/91-protected-surface-scans.stderr
+ create mode 100644 architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/91-protected-surface-scans.stdout
+ create mode 100644 architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/92-validation-file-list.stderr
+ create mode 100644 architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/92-validation-file-list.stdout
+ delete mode 100644 frontend/src/stores/processStore.ts

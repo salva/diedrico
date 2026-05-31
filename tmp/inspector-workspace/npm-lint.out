@@ -1,0 +1,12 @@
+
+> diedrico@0.1.0 lint
+> npm run lint --workspace=frontend; frontend_status=$?; npm run lint --workspace=backend; backend_status=$?; exit $((frontend_status || backend_status))
+
+
+> diedrico-frontend@0.1.0 lint
+> vue-tsc --noEmit
+
+
+> diedrico-backend@0.1.0 lint
+> tsc --noEmit
+

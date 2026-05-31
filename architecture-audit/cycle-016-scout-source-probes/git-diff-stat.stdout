@@ -1,0 +1,4 @@
+ frontend/src/App.vue                              |  2 +-
+ frontend/tests/e2e/active-plane-shortcuts.spec.ts | 26 -----------------------
+ frontend/tests/e2e/selection-mask.spec.ts         | 25 ----------------------
+ 3 files changed, 1 insertion(+), 52 deletions(-)

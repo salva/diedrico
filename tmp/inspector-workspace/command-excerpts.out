@@ -1,0 +1,284 @@
+     1	/**
+     2	 * Command - sealed generic container for pure reducer operations. MUST NOT be subclassed.
+     3	 *
+     4	 * Commands represent complete user actions that can be executed, undone, and
+     5	 * redone by recording deterministic ProjectStateRecord transitions. Domain
+     6	 * logic belongs in IOperation reducers. All domain logic belongs in Operation classes
+     7	 * implementing the reducer contract; Command owns lifecycle state and never
+     8	 * mutates World or calls operation undo hooks.
+     9	 *
+    10	 * Current contracts: frontend/src/commands/operations/IOperation.ts and
+    11	 * frontend/src/domain/world/ProjectState.ts.
+    12	 *
+    13	 * @sealed - This class must NOT be extended. All domain logic belongs in Operation reducers.
+    14	 */
+    15	
+    16	import type { IOperation, OperationResult } from './operations/IOperation';
+    17	import type { ProjectStateRecord } from '@/domain/world/ProjectState';
+    18	
+    19	export enum CommandStatus {
+    20	  Building = 'building',
+    21	  Committed = 'committed',
+    22	  Undone = 'undone'
+    23	}
+    24	
+    25	type StateCommitter = (state: ProjectStateRecord) => void;
+    26	
+    27	interface RecordedTransition {
+    28	  previousState: ProjectStateRecord;
+    29	  afterState: ProjectStateRecord;
+    30	}
+    31	
+    32	/**
+    33	 * Command - Generic container for reducer operations.
+    34	 *
+    35	 * @sealed DO NOT SUBCLASS - All logic belongs in Operation reducers.
+    36	 */
+    37	export class Command {
+    38	  readonly id: string;
+    39	  readonly timestamp: Date;
+    40	  readonly description: string;
+    41	  protected operations: IOperation[] = [];
+    42	  protected transitions: RecordedTransition[] = [];
+    43	  protected _status: CommandStatus = CommandStatus.Building;
+    44	  protected currentState: ProjectStateRecord;
+    45	  protected commitState: StateCommitter;
+    46	
+    47	  constructor(description: string, initialState: ProjectStateRecord, commitState: StateCommitter = () => {}) {
+    48	    this.id = this.generateId();
+    49	    this.timestamp = new Date();
+    50	    this.description = description;
+    51	    this.currentState = initialState;
+    52	    this.commitState = commitState;
+    53	  }
+    54	
+    55	  get status(): CommandStatus {
+    56	    return this._status;
+    57	  }
+    58	
+    59	  get state(): ProjectStateRecord {
+    60	    return this.currentState;
+    61	  }
+    62	
+    63	  addAndExecute(operation: IOperation): OperationResult {
+    64	    if (this._status !== CommandStatus.Building) {
+    65	      throw new Error('Cannot add operations to non-building command');
+    66	    }
+    67	
+    68	    const previousState = this.currentState;
+    69	
+    70	    try {
+    71	      const result = operation.execute(previousState);
+    72	
+    73	      if (!result.success) {
+    74	        this.discard();
+    75	        throw new Error(result.error || 'Operation failed');
+    76	      }
+    77	
+    78	      operation.outputs = result.outputs;
+    79	      this.operations.push(operation);
+    80	      this.transitions.push({ previousState, afterState: result.state });
+    81	      this.currentState = result.state;
+    82	      this.commitState(this.currentState);
+    83	
+    84	      return result;
+    85	    } catch (error) {
+    86	      this.discard();
+    87	      throw error;
+    88	    }
+    89	  }
+    90	
+    91	  canUndo(): boolean {
+    92	    return true;
+    93	  }
+    94	
+    95	  commit(): void {
+    96	    if (this.operations.length === 0) {
+    97	      throw new Error('Cannot commit empty command');
+    98	    }
+    99	    this._status = CommandStatus.Committed;
+   100	    this.commitState(this.currentState);
+   101	  }
+   102	
+   103	  discard(): void {
+   104	    if (this.transitions.length > 0) {
+   105	      this.currentState = this.transitions[0].previousState;
+   106	      this.commitState(this.currentState);
+   107	    }
+   108	    this.operations = [];
+   109	    this.transitions = [];
+   110	    this._status = CommandStatus.Building;
+   111	  }
+   112	
+   113	  undo(): void {
+   114	    if (this._status !== CommandStatus.Committed) {
+   115	      throw new Error('Can only undo committed commands');
+   116	    }
+   117	
+   118	    if (this.transitions.length > 0) {
+   119	      this.currentState = this.transitions[0].previousState;
+   120	      this.commitState(this.currentState);
+   121	    }
+   122	
+   123	    this._status = CommandStatus.Undone;
+   124	  }
+   125	
+   126	  redo(): void {
+   127	    if (this._status !== CommandStatus.Undone) {
+   128	      throw new Error('Can only redo undone commands');
+   129	    }
+   130	
+   131	    if (this.transitions.length > 0) {
+   132	      this.currentState = this.transitions[this.transitions.length - 1].afterState;
+   133	      this.commitState(this.currentState);
+   134	    }
+   135	
+   136	    this._status = CommandStatus.Committed;
+   137	  }
+   138	
+   139	  private generateId(): string {
+   140	    return `cmd_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+   141	  }
+   142	}
+--- stack
+     1	/**
+     2	 * CommandStack - Manages runtime-only undo/redo history
+     3	 *
+     4	 * Maintains two private runtime stacks. Project persistence must not serialize or
+     5	 * restore these arrays; saved files contain domain snapshots instead.
+     6	 */
+     7	
+     8	import { Command } from './Command';
+     9	
+    10	export class CommandStack {
+    11	  #undoStack: Command[] = [];
+    12	  #redoStack: Command[] = [];
+    13	
+    14	  /**
+    15	   * Push a pre-built and committed command to the undo stack
+    16	   * Clears the redo stack (can't redo after new action)
+    17	   * 
+    18	   * Phase 47: Non-undoable commands (canUndo() === false) are not added to the stack.
+    19	   * This allows world initialization and other non-undoable commands to execute
+    20	   * without appearing in undo history.
+    21	   * 
+    22	   * Note: Commands should be built, executed, and committed by tools before pushing
+    23	   */
+    24	  push(command: Command): void {
+    25	    // Verify command is committed (not building)
+    26	    if (command.status !== 'committed') {
+    27	      throw new Error('Can only push committed commands to stack');
+    28	    }
+    29	    
+    30	    // Phase 47: Skip non-undoable commands
+    31	    if (!command.canUndo()) {
+    32	      return;
+    33	    }
+    34	    
+    35	    // Add to undo stack
+    36	    this.#undoStack.push(command);
+    37	    
+    38	    // Clear redo stack (new action invalidates redo history)
+    39	    this.#redoStack = [];
+    40	  }
+    41	
+    42	  /**
+    43	   * Undo the most recent command
+    44	   * Moves command from undo stack to redo stack
+    45	   */
+    46	  undo(): void {
+    47	    if (this.#undoStack.length === 0) {
+    48	      throw new Error('Nothing to undo');
+    49	    }
+    50	    
+    51	    const command = this.#undoStack.pop()!;
+    52	    command.undo();
+    53	    this.#redoStack.push(command);
+    54	  }
+    55	
+    56	  /**
+    57	   * Redo the most recently undone command
+    58	   * Moves command from redo stack back to undo stack
+    59	   */
+    60	  redo(): void {
+    61	    if (this.#redoStack.length === 0) {
+    62	      throw new Error('Nothing to redo');
+    63	    }
+    64	    
+    65	    const command = this.#redoStack.pop()!;
+    66	    command.redo();
+    67	    this.#undoStack.push(command);
+    68	  }
+    69	
+    70	  /**
+    71	   * Check if undo is available
+    72	   */
+    73	  canUndo(): boolean {
+    74	    return this.#undoStack.length > 0;
+    75	  }
+    76	
+    77	  /**
+    78	   * Check if redo is available
+    79	   */
+    80	  canRedo(): boolean {
+    81	    return this.#redoStack.length > 0;
+    82	  }
+    83	
+    84	  /**
+    85	   * Get number of commands in undo stack
+    86	   */
+    87	  getUndoCount(): number {
+    88	    return this.#undoStack.length;
+    89	  }
+    90	
+    91	  /**
+    92	   * Get number of commands in redo stack
+    93	   */
+    94	  getRedoCount(): number {
+    95	    return this.#redoStack.length;
+    96	  }
+    97	
+    98	  /**
+    99	   * Clear all runtime history
+   100	   */
+   101	  clear(): void {
+   102	    this.#undoStack = [];
+   103	    this.#redoStack = [];
+   104	  }
+   105	}
+--- operation
+     1	/**
+     2	 * IOperation - pure reducer contract for atomic command state transitions.
+     3	 *
+     4	 * Operations are runtime-only reducers over ProjectStateRecord. They receive the
+     5	 * current immutable project state and return either the next immutable state plus
+     6	 * named outputs, or a failure. Undo/redo is owned by Command through recorded
+     7	 * previous/next ProjectStateRecord snapshots; operations do not mutate World and
+     8	 * do not expose a separate undo path.
+     9	 */
+    10	
+    11	import type { ProjectStateRecord } from '@/domain/world/ProjectState';
+    12	
+    13	/**
+    14	 * Result of executing an operation reducer.
+    15	 */
+    16	export interface OperationResult {
+    17	  success: boolean;
+    18	  state: ProjectStateRecord;
+    19	  outputs: Record<string, any>;
+    20	  error?: string;
+    21	}
+    22	
+    23	/**
+    24	 * Base interface for all command operations.
+    25	 */
+    26	export interface IOperation {
+    27	  type: string;
+    28	  parameters: Record<string, any>;
+    29	  outputs: Record<string, any>;
+    30	
+    31	  /**
+    32	   * Reduce the current project state to the next project state.
+    33	   */
+    34	  execute(state: ProjectStateRecord): OperationResult;
+    35	}

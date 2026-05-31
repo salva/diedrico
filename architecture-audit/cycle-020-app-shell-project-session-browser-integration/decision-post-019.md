@@ -26,9 +26,9 @@ Reviewed Wave 020 artifacts:
 
 Decision-stage source-control evidence was captured before writing this file:
 
-- `.saivage/stages/cycle-020-decision-post-019/design-notes/pre-decision-scoped-status.stdout`
-- `.saivage/stages/cycle-020-decision-post-019/design-notes/pre-decision-scoped-diff-names.stdout`
-- `.saivage/stages/cycle-020-decision-post-019/design-notes/wave-020-plan-entry.stdout`
+- `.saivage/stages/cycle-020-decision-post-019/logs/path-scoped-status.stdout`
+- `.saivage/stages/cycle-020-decision-post-019/logs/path-scoped-diff-names.stdout`
+- `.saivage/stages/cycle-020-decision-post-019/logs/wave020-grep.stdout`
 
 The scoped status/diff confirms that no Wave 020 app-shell source path was dirty before this decision draft. The only scoped dirty production files observed were unrelated and protected from this wave:
 

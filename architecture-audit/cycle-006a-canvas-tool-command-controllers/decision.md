@@ -3,6 +3,7 @@
 **Cycle:** `cycle-006a-canvas-tool-command-controllers`  
 **Decision stage:** `cycle-006a-decision`  
 **Source-code changes in this stage:** none.  
+**Decision-stage verification:** updated in `cycle-006a-decision`; no `frontend/`, `backend/`, or `specs/` source changes are part of this decision stage.  
 **Review convergence:** complete after round 01.  
 **Selected implementation proposal:** `proposals/proposal-direct.md`.  
 **Rejected/deferred alternative:** `proposals/proposal-restructure.md`.

@@ -1,0 +1,1263 @@
+--- SvgCanvas rendering refs ---
+     1	<template>
+     2	  <div class="svg-canvas-container">
+     3	    <svg
+     4	      ref="svgElement"
+     5	      class="svg-canvas"
+     6	      xmlns="http://www.w3.org/2000/svg"
+     7	      :viewBox="`0 0 ${canvasWidth} ${canvasHeight}`"
+     8	      preserveAspectRatio="xMidYMid meet"
+     9	      @mousedown="handleMouseDown"
+    10	      @click="handleCanvasClick"
+    11	      @dblclick="handleDoubleClick"
+    12	      @mousemove="handleMouseMove"
+    13	      @wheel.prevent="handleWheel"
+    14	    >
+    15	      <!-- Background grid (T275) - Zoom-adaptive grid display -->
+    16	      <g v-if="viewStore.gridVisible.value" class="background-grid">
+    17	        <line
+    18	          v-for="line in gridLines"
+    19	          :key="line.key"
+    20	          :x1="line.x1"
+    21	          :y1="line.y1"
+    22	          :x2="line.x2"
+    23	          :y2="line.y2"
+    24	          :stroke="line.major ? '#C0C0C0' : '#E0E0E0'"
+    25	          :stroke-width="line.major ? 1 : 0.5"
+    26	        />
+    27	      </g>
+    28	      
+    29	      <!-- Render all lines through Paper pipeline (including HL_HV projections) -->
+    30	      <line
+    31	        v-for="{ primitive, attrs } in renderedLines"
+    32	        :key="primitive.id"
+    33	        v-bind="attrs"
+    34	      />
+    35	      
+    36	      <!-- Render all segments through Paper pipeline -->
+    37	      <line
+    38	        v-for="{ primitive, attrs } in renderedSegments"
+    39	        :key="primitive.id"
+    40	        v-bind="attrs"
+    41	      />
+    42	      
+    43	      <!-- Render all guides through Paper pipeline -->
+    44	      <line
+    45	        v-for="{ primitive, attrs } in renderedGuides"
+    46	        :key="primitive.id"
+    47	        v-bind="attrs"
+    48	      />
+    49	      
+    50	      <!-- Render all circles through Paper pipeline -->
+    51	      <circle
+    52	        v-for="{ primitive, attrs } in renderedCircles"
+    53	        :key="primitive.id"
+    54	        v-bind="attrs"
+    55	      />
+    56	      
+    57	      <!-- Render all arcs through Paper pipeline -->
+    58	      <path
+    59	        v-for="{ primitive, attrs } in renderedArcs"
+    60	        :key="primitive.id"
+    61	        v-bind="attrs"
+    62	      />
+    63	      
+    64	      <!-- Render all points through Paper pipeline -->
+    65	      <circle
+    66	        v-for="{ primitive, attrs } in renderedPoints"
+    67	        :key="primitive.id"
+    68	        v-bind="attrs"
+    69	      />
+    70	      
+    71	      <!-- Snap preview indicator - orange glow around snap target point -->
+    72	      <circle
+    73	        v-if="snapTarget.pointId && snapTarget.position"
+    74	        :cx="snapTarget.position.x"
+    75	        :cy="snapTarget.position.y"
+    76	        :r="8"
+    77	        fill="none"
+    78	        stroke="#FF6B35"
+    79	        stroke-width="2"
+    80	        opacity="0.8"
+    81	        class="snap-indicator"
+    82	      />
+    83	      
+    84	      <!-- Grid coordinate labels (Phase 78) - Display u,v values at viewport borders -->
+    85	      <g v-if="viewStore.gridVisible.value" class="grid-labels">
+    86	        <!-- Top edge labels (U-coordinates) -->
+    87	        <text
+    88	          v-for="label in gridLabels.top"
+    89	          :key="label.key"
+    90	          :x="label.position"
+    91	          :y="12"
+    92	          class="grid-label"
+    93	          text-anchor="middle"
+    94	        >
+    95	          {{ label.value }}
+    96	        </text>
+    97	        
+    98	        <!-- Bottom edge labels (U-coordinates) -->
+    99	        <text
+   100	          v-for="label in gridLabels.bottom"
+   101	          :key="label.key"
+   102	          :x="label.position"
+   103	          :y="canvasHeight - 4"
+   104	          class="grid-label"
+   105	          text-anchor="middle"
+   106	        >
+   107	          {{ label.value }}
+   108	        </text>
+   109	        
+   110	        <!-- Left edge labels (V-coordinates) -->
+   111	        <text
+   112	          v-for="label in gridLabels.left"
+   113	          :key="label.key"
+   114	          :x="4"
+   115	          :y="label.position"
+   116	          class="grid-label"
+   117	          text-anchor="start"
+   118	          dominant-baseline="middle"
+   119	        >
+   120	          {{ label.value }}
+   121	        </text>
+   122	        
+   123	        <!-- Right edge labels (V-coordinates) -->
+   124	        <text
+   125	          v-for="label in gridLabels.right"
+   126	          :key="label.key"
+   127	          :x="canvasWidth - 4"
+   128	          :y="label.position"
+   129	          class="grid-label"
+   130	          text-anchor="end"
+   131	          dominant-baseline="middle"
+   132	        >
+   133	          {{ label.value }}
+   134	        </text>
+   135	      </g>
+   136	    </svg>
+   137	    
+   138	    <!-- Hover tooltip -->
+   139	    <div 
+   140	      v-if="hoverHighlight.isHovering.value && hoverHighlight.hoveredElementLabel.value && hoverHighlight.temporary && !hoverHighlight.temporary.value"
+   141	      class="hover-tooltip"
+   142	      :style="{ left: tooltipPosition.x + 'px', top: tooltipPosition.y + 'px' }"
+   143	    >
+   144	      {{ hoverHighlight.hoveredElementLabel.value }}
+   145	    </div>
+   146	    
+   147	    <!-- Properties Dialog -->
+   148	    <PropertiesDialog
+   149	      :is-open="showPropertiesDialog"
+   150	      :element-id="propertiesElementId"
+   151	      :world="world"
+   152	      @close="showPropertiesDialog = false"
+   153	      @save="handleSaveProperties"
+   154	    />
+   155	  </div>
+   156	</template>
+   157	
+   158	<script setup lang="ts">
+   159	/**
+   160	 * SvgCanvas.vue - Main 2D drawing canvas component
+   161	 * 
+   162	 * This is the primary workspace where all 2D geometric elements are rendered.
+   163	 * Uses SVG for crisp, scalable vector graphics per Constitution Principle IV.
+   164	 * 
+   165	 * Rendering Pipeline:
+   166	 * 1. World (domain objects + realizations) 
+   167	 * 2. → PaperService (generates Paper primitives in paper coordinates)
+   168	 * 3. → SVGRenderer (applies viewport transform, generates SVG attributes)
+   169	 * 4. → SVG elements
+   170	 * 
+   171	 * Key requirements:
+   172	 * - SVG element (not HTML Canvas) per ui-spec.md
+   173	 * - All rendering goes through Paper abstraction layer
+   174	 * - Generic rendering algorithms (no special cases for fixed elements)
+   175	 * - Will support pan/zoom viewport transformations in Phase 6
+   176	 * - Elements rendered using principle-based algorithms (Constitution Principle IV)
+   177	 * 
+   178	 * @see specs/001-dihedral-learning-mvp/ui-spec.md#canvas-component
+   179	 */
+   180	
+   181	import { ref, computed, watch, onMounted, onUnmounted, inject, provide } from 'vue';
+   182	import { Matrix3, Vector3 } from 'three';
+   183	import { World } from '@/domain/world/World';
+   184	import { Paper } from '@/domain/presentation/Paper';
+   185	import { PaperService, type PrimitiveContext } from '@/services/PaperService';
+   186	import { SVGRenderer, type ViewportTransform } from '@/services/SVGRenderer';
+   187	import { InputService } from '@/services/InputService';
+   188	import { PointTool } from '@/tools/PointTool';
+   189	import { LineTool } from '@/tools/LineTool';
+   190	import { SegmentTool } from '@/tools/SegmentTool';
+   191	import { CircleTool } from '@/tools/CircleTool';
+   192	import { GuideTool } from '@/tools/GuideTool';
+   193	import { IntersectionTool } from '@/tools/IntersectionTool';
+   194	import { ParallelLineTool } from '@/tools/ParallelLineTool';
+   195	import { PerpendicularLineTool } from '@/tools/PerpendicularLineTool';
+   196	import { TangentLineToCircleThroughPointTool } from '@/tools/TangentLineToCircleThroughPointTool';
+   197	import { TangentLineToCircleParallelToLineTool } from '@/tools/TangentLineToCircleParallelToLineTool';
+   198	import { Create3DPointTool } from '@/tools/Create3DPointTool';
+   199	import { Create3DLineTool } from '@/tools/Create3DLineTool';
+   200	import { Create3DSegmentTool } from '@/tools/Create3DSegmentTool';
+   201	import { Create3DPlaneTool } from '@/tools/Create3DPlaneTool';
+   202	import { CreateProjectionPlaneTool } from '@/tools/CreateProjectionPlaneTool';
+   203	import { FreePoint2D } from '@/domain/world/Point';
+   204	import { useToolStore } from '@/stores/toolStore';
+   205	import { useViewStore } from '@/stores/viewStore';
+   206	import { useSelectionStore } from '@/stores/selectionStore';
+   207	import { useViewport } from '@/composables/useViewport';
+   208	import { useGlobalHoverHighlight } from '@/composables/useHoverHighlight';
+   209	import { screenTo3D } from '@/utils/coordinateTransform';
+   210	import PropertiesDialog from '@/components/dialogs/PropertiesDialog.vue';
+   211	import type { ITool } from '@/tools/ITool';
+   212	import { createCanvasToolController } from '@/application/tools/CanvasToolController';
+   213	import type { FreePointMoveSession } from '@/application/tools/ToolCommandIntents';
+   214	
+   215	// Define emits
+   216	const emit = defineEmits<{
+   217	  'update-3d-coordinates': [coords: { x: number; y: number; z: number } | null];
+   218	  'update-active-plane': [planeInfo: { id: string; name: string }];
+   219	}>();
+   220	
+   221	const svgElement = ref<SVGSVGElement | null>(null);
+   222	
+   223	// Track World version changes (World is not reactive by itself)
+   224	const worldVersion = ref(0);
+   225	let versionPollId: number | null = null;
+   226	let lastWorldVersion = 0;
+   227	
+   228	// Active plane - derived from World (managed by App.vue)
+   229	const activePlane = computed(() => {
+   230	  // Depend on worldVersion so plane switching triggers recomputation
+   231	  const _ = worldVersion.value;
+   232	  return world.getActivePlaneId();
+   233	});
+   234	
+   235	// Dynamic canvas dimensions - updated based on container size
+   236	const canvasWidth = ref(1600);
+   237	const canvasHeight = ref(1000);
+   238	
+   239	// Properties dialog state
+   240	const showPropertiesDialog = ref(false);
+   241	const propertiesElementId = ref<string | null>(null);
+   242	
+   243	// Viewport transformation (pan/zoom)
+   244	const viewStore = useViewStore();
+   245	const viewport = computed<ViewportTransform>(() => {
+   246	  const vp = viewStore.viewportState.value;
+   247	  // Update Paper's viewport transform when it changes
+   248	  paper.setViewportTransform(vp);
+   249	  return vp;
+   250	});
+   251	
+   252	// Setup viewport interactions (pan/zoom)
+   253	const viewportComposable = useViewport({ element: svgElement });
+   254	
+   255	// Services
+   256	const paperService = new PaperService();
+   257	const svgRenderer = new SVGRenderer();
+   258	const inputService = new InputService();
+   259	const toolStore = useToolStore();
+   260	const selectionStore = useSelectionStore();
+--- SvgCanvas mid rendering refs ---
+   260	const selectionStore = useSelectionStore();
+   261	const hoverHighlight = useGlobalHoverHighlight();
+   262	
+   263	// Tooltip position (offset from cursor)
+   264	const tooltipPosition = ref({ x: 0, y: 0 });
+   265	
+   266	// Snap target tracking - shows visual indicator when hovering near a point
+   267	const snapTarget = ref<{ pointId: string | null; position: { x: number; y: number } | null }>({
+   268	  pointId: null,
+   269	  position: null
+   270	});
+   271	
+   272	// Drag-to-move (Select mode)
+   273	const pointDrag = ref<{
+   274	  active: boolean;
+   275	  planeId: string | null;
+   276	  pointId: string | null;
+   277	  moveSession: FreePointMoveSession | null;
+   278	  startClientX: number;
+   279	  startClientY: number;
+   280	  moved: boolean;
+   281	}>({
+   282	  active: false,
+   283	  planeId: null,
+   284	  pointId: null,
+   285	  moveSession: null,
+   286	  startClientX: 0,
+   287	  startClientY: 0,
+   288	  moved: false
+   289	});
+   290	
+   291	// Viewport pan in select mode (T965: drag empty space pans)
+   292	const viewportPan = ref<{
+   293	  active: boolean;
+   294	  startX: number;
+   295	  startY: number;
+   296	}>({
+   297	  active: false,
+   298	  startX: 0,
+   299	  startY: 0
+   300	});
+   301	
+   302	let ignoreNextClick = false;
+   303	
+   304	function isMovableFreePoint(point: any): point is FreePoint2D {
+   305	  return point instanceof FreePoint2D && !point.locked;
+   306	}
+   307	
+   308	function endPointDrag(commit: boolean): void {
+   309	  if (!pointDrag.value.active) return;
+   310	
+   311	  const moveSession = pointDrag.value.moveSession;
+   312	
+   313	  try {
+   314	    if (moveSession) {
+   315	      if (commit) {
+   316	        const result = moveSession.commit();
+   317	        if (!result.success) console.error('[SvgCanvas] Point move commit failed:', result.message);
+   318	      } else {
+   319	        moveSession.cancel();
+   320	      }
+   321	    }
+   322	  } finally {
+   323	    pointDrag.value = {
+   324	      active: false,
+   325	      planeId: null,
+   326	      pointId: null,
+   327	      moveSession: null,
+   328	      startClientX: 0,
+   329	      startClientY: 0,
+   330	      moved: false
+   331	    };
+   332	    renderTick.value++;
+   333	  }
+   334	}
+   335	
+   336	function handleGlobalKeyDown(event: KeyboardEvent) {
+   337	  if (event.key === 'Escape') {
+   338	    // T956: Cancel viewport pan on Esc
+   339	    if (viewportPan.value.active) {
+   340	      viewportPan.value = {
+   341	        active: false,
+   342	        startX: 0,
+   343	        startY: 0
+   344	      };
+   345	      return;
+   346	    }
+   347	    
+   348	    // T956: Cancel point drag on Esc
+   349	    if (pointDrag.value.active) {
+   350	      ignoreNextClick = true;
+   351	      endPointDrag(false);
+   352	    }
+   353	  }
+   354	}
+   355	
+   356	/**
+   357	 * Get display label for an element
+   358	 * @param elementId - ID of the element
+   359	 * @param elementType - Type of the element (point, line, segment, etc.)
+   360	 * @param planeId - ID of the plane containing the element (optional, will search all planes if not provided)
+   361	 */
+   362	function getElementLabel(elementId: string, elementType: string, planeId?: string): string {
+   363	  let element: any;
+   364	  
+   365	  // If planeId is provided, only search that plane
+   366	  if (planeId) {
+   367	    const plane = world.getProjectionPlaneById(planeId);
+   368	    if (plane) {
+   369	      switch (elementType) {
+   370	        case 'point':
+   371	          element = plane.getPoint(elementId);
+   372	          break;
+   373	        case 'line':
+   374	        case 'half-hinge-line':
+   375	        case 'segment':  // Segments are Line2D objects, use getLine
+   376	        case 'guide':  // Guides are Line2D objects, use getLine
+   377	          element = plane.getLine(elementId);
+   378	          break;
+   379	        case 'circle':
+   380	          element = plane.getCircle(elementId);
+   381	          break;
+   382	        case 'arc':
+   383	          element = plane.getArc(elementId);
+   384	          break;
+   385	      }
+   386	    }
+   387	  } else {
+   388	    // Search all planes if no planeId provided
+   389	    for (const plane of world.projectionPlanes.values()) {
+   390	      switch (elementType) {
+   391	        case 'point':
+   392	          element = plane.getPoint(elementId);
+   393	          break;
+   394	        case 'line':
+   395	        case 'half-hinge-line':
+   396	        case 'segment':  // Segments are Line2D objects, use getLine
+   397	        case 'guide':  // Guides are Line2D objects, use getLine
+   398	          element = plane.getLine(elementId);
+   399	          break;
+   400	        case 'circle':
+   401	          element = plane.getCircle(elementId);
+   402	          break;
+   403	        case 'arc':
+   404	          element = plane.getArc(elementId);
+   405	          break;
+   406	      }
+   407	      if (element) break; // Found it
+   408	    }
+   409	  }
+   410	  
+   411	  return element ? element.label || elementId : elementId;
+   412	}
+   413	
+   414	// World instance - injected from App.vue
+   415	const world = inject<World>('world')!;
+   416	if (!world) {
+   417	  throw new Error('World not provided');
+   418	}
+   419	
+   420	// Paper instance for spatial queries and rendering
+   421	const paper = new Paper();
+   422	
+   423	const canvasToolController = createCanvasToolController({
+   424	  world,
+   425	  commandStack: inject('commandStack'),
+   426	  toolStore
+   427	});
+   428	
+   429	// Tool factory registry - map tool names to factory functions
+   430	// Creates new instances instead of reusing singletons to avoid state leakage
+   431	const toolFactories: Record<string, () => ITool> = {
+   432	  'point': () => new PointTool(),
+   433	  'line': () => new LineTool(),
+   434	  'segment': () => new SegmentTool(),
+   435	  'circle': () => new CircleTool(),
+   436	  'guide': () => new GuideTool(),
+   437	  'intersection': () => new IntersectionTool(),
+   438	  'parallel-line': () => new ParallelLineTool(),
+   439	  'perpendicular-line': () => new PerpendicularLineTool(),
+   440	  'tangent-line-to-circle-through-point': () => new TangentLineToCircleThroughPointTool(),
+   441	  'tangent-line-to-circle-parallel': () => new TangentLineToCircleParallelToLineTool(),
+   442	  // Phase 78: 3D Element Creation Tools
+   443	  'create3dpoint': () => new Create3DPointTool(),
+   444	  'create3dline': () => new Create3DLineTool(),
+   445	  'create3dsegment': () => new Create3DSegmentTool(),
+   446	  'create3dplane': () => new Create3DPlaneTool(),
+   447	  // Phase 82: Auxiliary Projection Plane Tool
+   448	  'createprojectionplane': () => new CreateProjectionPlaneTool(),
+   449	};
+   450	
+   451	// Current tool instance - created fresh when tool is selected
+   452	const currentToolInstance = ref<ITool | null>(null);
+   453	
+   454	// Reactivity trigger - increment this to force re-render when non-reactive state changes (e.g. Paper hover)
+   455	const renderTick = ref(0);
+   456	
+   457	// Throttle for coordinate updates (limits update frequency)
+   458	let lastCoordinateUpdate = 0;
+   459	const COORDINATE_UPDATE_THROTTLE_MS = 50; // 20fps for coordinate updates
+   460	
+   461	// Update canvas dimensions based on container size
+   462	function updateCanvasDimensions() {
+   463	  if (!svgElement.value) return;
+   464	  
+   465	  const rect = svgElement.value.getBoundingClientRect();
+   466	  // Use container dimensions as logical coordinates (1:1 mapping)
+   467	  canvasWidth.value = rect.width;
+   468	  canvasHeight.value = rect.height;
+   469	}
+   470	
+   471	// Initialize canvas on mount
+   472	const resizeHandler = () => updateCanvasDimensions();
+   473	
+   474	onMounted(() => {
+   475	  // World is already initialized by initialization factory in constructor
+   476	  // Just trigger initial render
+   477	  renderTick.value++;
+   478	
+   479	  // Set initial canvas dimensions
+   480	  updateCanvasDimensions();
+   481	
+   482	  // Update dimensions on window resize
+   483	  window.addEventListener('resize', resizeHandler);
+   484	
+   485	  // Poll World version so UI reacts to domain changes (e.g. active plane switching)
+   486	  lastWorldVersion = world.getVersion();
+   487	  worldVersion.value = lastWorldVersion;
+   488	  versionPollId = window.setInterval(() => {
+   489	    const current = world.getVersion();
+   490	    if (current !== lastWorldVersion) {
+   491	      lastWorldVersion = current;
+   492	      worldVersion.value = current;
+   493	      renderTick.value++;
+   494	    }
+   495	  }, 100);
+   496	
+   497	  console.log('World initialized');
+   498	  const allPlanes = world.getAllProjectionPlanes();
+   499	  const totalPoints = allPlanes.reduce((sum, plane) => sum + plane.getAllPoints().length, 0);
+   500	  console.log('Points in world:', totalPoints);
+   501	});
+   502	
+   503	onUnmounted(() => {
+   504	  window.removeEventListener('resize', resizeHandler);
+   505	  window.removeEventListener('keydown', handleGlobalKeyDown);
+   506	  if (versionPollId !== null) {
+   507	    clearInterval(versionPollId);
+   508	  }
+   509	});
+   510	
+   511	// Global key handling (Esc cancels point-drag)
+   512	onMounted(() => {
+   513	  window.addEventListener('keydown', handleGlobalKeyDown);
+   514	});
+   515	
+   516	// Watch for tool changes and create new tool instance
+   517	// This prevents state leakage by creating fresh instances instead of reusing singletons
+   518	watch(() => toolStore.currentTool.value, (newTool) => {
+   519	  const factory = toolFactories[newTool];
+   520	  if (factory) {
+   521	    currentToolInstance.value = factory();
+   522	    console.log(`[SvgCanvas] Created new tool instance: ${newTool}`);
+   523	    // Show initial tool feedback (e.g. "Creating line: pick point1, point2")
+   524	    if (currentToolInstance.value && 'getStatusMessage' in currentToolInstance.value) {
+   525	      const msg = (currentToolInstance.value as any).getStatusMessage();
+   526	      if (msg) toolStore.setToolStepMessage(msg);
+   527	    }
+   528	  } else {
+   529	    currentToolInstance.value = null;
+   530	    if (newTool !== 'select') {
+   531	      console.warn(`[SvgCanvas] No tool factory for: ${newTool}`);
+   532	    }
+   533	  }
+   534	}, { immediate: true }); // Create initial tool instance
+   535	
+   536	// Get plane transforms for INPUT (canvas click → plane coordinates)
+   537	function getPlaneTransformsForInput(): Map<string, Matrix3> {
+   538	  const transforms = new Map<string, Matrix3>();
+   539	  
+   540	  // Get all projection planes dynamically
+   541	  for (const plane of world.getAllProjectionPlanes()) {
+   542	    const realization = world.getProjectionPlane2DRealization(plane.id);
+   543	    if (realization) {
+   544	      transforms.set(plane.id, realization.paperToPlane2D);
+   545	    }
+   546	  }
+   547	  
+   548	  return transforms;
+   549	}
+   550	
+   551	// Get plane transforms for RENDERING (plane coordinates → paper coordinates)
+   552	function getPlaneTransformsForRendering(): Map<string, Matrix3> {
+   553	  const transforms = new Map<string, Matrix3>();
+   554	  
+   555	  // Get all projection planes dynamically
+   556	  for (const plane of world.getAllProjectionPlanes()) {
+   557	    const realization = world.getProjectionPlane2DRealization(plane.id);
+   558	    if (realization) {
+   559	      transforms.set(plane.id, realization.planeToPaper2D);
+   560	    }
+   561	  }
+   562	  
+   563	  return transforms;
+   564	}
+   565	
+   566	// Generate primitives from World using PaperService
+   567	const primitives = computed(() => {
+   568	  // Access renderTick to make this computed reactive to non-reactive sources (World + Paper)
+   569	  renderTick.value;
+   570	  
+   571	  // PaperService uses plane-to-paper transforms for rendering
+   572	  const planeTransforms = getPlaneTransformsForRendering();
+   573	  
+   574	  // Get hovered and selected elements for visual highlighting
+   575	  // Per ui-spec.md: Hover = #4A90E2 (lighter), Selection = #0066CC (bold)
+   576	  const hoveredId = paper.getHoveredElement();
+   577	  const hoveredIds = hoveredId ? new Set([hoveredId]) : undefined;
+   578	  
+   579	  const selectedIds = selectionStore.selectedIdsArray;
+   580	  const selectedIdsSet = selectedIds.length > 0 ? new Set(selectedIds) : undefined;
+   581	  
+   582	  const cascadeHighlightIds = selectionStore.cascadeHighlightIdsArray;
+   583	  const cascadeHighlightIdsSet = cascadeHighlightIds.length > 0 ? new Set(cascadeHighlightIds) : undefined;
+   584	  
+   585	  const context: PrimitiveContext = {
+   586	    world,
+   587	    planeTransforms,
+   588	    hoveredIds,              // Hover state (lighter highlight)
+   589	    selectedIds: selectedIdsSet,  // Selection state (bold highlight)
+   590	    cascadeHighlightIds: cascadeHighlightIdsSet,  // Cascade delete preview (orange warning)
+   591	    activePlaneId: activePlane.value,  // FR-002: Active plane visual emphasis
+   592	    showProjectedElements: viewStore.showProjectedElements.value,  // Phase 106: 3D element projection display
+   593	  };
+   594	  
+   595	  const prims = paperService.generatePrimitives(context);
+   596	  // console.log('Generated primitives:', prims.length, prims);
+   597	  
+   598	  // Sort primitives by layer first, then z-index (same as Paper.getPrimitives())
+   599	  prims.sort((a, b) => {
+   600	    if (a.layer !== b.layer) {
+   601	      return a.layer - b.layer;
+   602	    }
+   603	    return a.style.zIndex - b.style.zIndex;
+   604	  });
+   605	  
+   606	  // Update Paper with primitives for spatial queries (hit testing)
+   607	  paper.setPrimitives(prims);
+   608	  
+   609	  return prims;
+   610	});
+   611	
+   612	/**
+   613	 * Phase 79: Plane-Based Grid with Adaptive Spacing/Subdivisions
+   614	 * 
+   615	 * Grid uses the active projection plane's intrinsic (u,v) coordinate system
+   616	 * Transformation pipeline: Plane (u,v) → Paper (x,y) → Screen (pixels)
+   617	 * 
+   618	 * Major Grid Lines (Powers of 10):
+   619	 * - Major lines always at multiples of 10^n (e.g., 0.1, 1, 10, 100, 1000)
+   620	 * - Power of 10 chosen based on zoom level to keep reasonable density
+--- Paper model ---
+     1	/**
+     2	 * Paper - Intermediate drawing representation and spatial query engine
+     3	 * 
+     4	 * Paper provides a virtual drawing surface with primitives in a unified "paper coordinate system".
+     5	 * Each projection plane has a transformation matrix that converts from its intrinsic <u,v> space
+     6	 * to the shared paper coordinates. Paper primitives only need viewport transformation (pan/zoom)
+     7	 * to generate final SVG.
+     8	 * 
+     9	 * Architecture:
+    10	 * Domain (rules) → Realization (<u,v> geometry) → Plane transform → Paper (paper coords) → Viewport transform → SVG
+    11	 * 
+    12	 * Phase 22.5.4 - Direct ProjectionPlane Access:
+    13	 * Hit testing directly accesses the active ProjectionPlane to iterate elements:
+    14	 *   const plane = world.projectionPlanes.get(activePlaneId);
+    15	 *   for (const point of plane.getAllPoints()) {
+    16	 *     const realization = plane.realizePoint2D(point, world);
+    17	 *     // Hit test logic...
+    18	 *   }
+    19	 * This matches the rendering pattern in PaperService and eliminates World facade calls.
+    20	 * 
+    21	 * IMPORTANT: All coordinates are stored as Vector3 (homogeneous) throughout the pipeline.
+    22	 * Only SVGRenderer extracts .x and .y components when generating final SVG attributes.
+    23	 * 
+    24	 * Coordinate Systems (all homogeneous):
+    25	 * - Plane intrinsic: Vector3(u, v, 1) in each plane's local basis
+    26	 * - Paper: Vector3(x, y, 1) in unified 2D coordinate system where all planes are laid out
+    27	 * - Canvas: Vector3(x, y, 1) in paper coordinates after viewport transformation (pan/zoom)
+    28	 * - Screen: Final pixel coordinates for SVG rendering
+    29	 * 
+    30	 * Spatial Query Services:
+    31	 * - Hit testing: Find elements near click position with proper coordinate transforms
+    32	 * - Hover detection: Track which element is under cursor for visual feedback
+    33	 * 
+    34	 * Benefits:
+    35	 * - Multiple planes can coexist on same paper
+    36	 * - Geometry computation separate from layout and viewport
+    37	 * - Primitives cached and reused across renders
+    38	 * - Easy culling and optimization
+    39	 * - Centralized spatial queries with correct coordinate space handling
+    40	 * 
+    41	 * @see specs/001-dihedral-learning-mvp/data-model.md#presentation-layer
+    42	 * @see specs/001-dihedral-learning-mvp/data-model.md#paper-layer-spatial-query-engine
+    43	 */
+    44	
+    45	import { Vector3, Matrix3 } from 'three';
+    46	import type { World } from '../world/World';
+    47	import type { Line2DRealization2D } from '../world/Line';
+    48	import type { Circle2DRealization2D } from '../world/Circle';
+    49	import type { Element2D } from '../world/Element2D';
+    50	import type { SelectionMask, SelectableElementType } from '@/types/SelectionMask';
+    51	import { getSelectableType } from '@/types/SelectionMask';
+    52	
+    53	/**
+    54	 * Visual style attributes resolved and ready for rendering
+    55	 */
+    56	export interface ResolvedStyle {
+    57	  stroke: string;                   // Hex color for strokes
+    58	  strokeWidth: number;              // Line width in pixels
+    59	  strokeStyle: 'solid' | 'dashed' | 'dotted';
+    60	  fill: string;                     // Hex color for fills ('none' for no fill)
+    61	  opacity: number;                  // 0.0 - 1.0
+    62	  zIndex: number;                   // Within layer
+    63	}
+    64	
+    65	/**
+    66	 * Render layer for z-ordering
+    67	 */
+    68	export enum RenderLayer {
+    69	  Grid = 0,           // Background grid
+    70	  HingeLines = 5,     // Fixed hinge lines between projection planes
+    71	  Guides = 10,        // Construction guides
+    72	  Elements = 20,      // Main geometric elements
+    73	  Highlights = 30,    // Hover/selection highlights
+    74	  Handles = 40,       // Control handles
+    75	  Labels = 50,        // Text labels
+    76	}
+    77	
+    78	/**
+    79	 * Base interface for all drawing primitives
+    80	 */
+    81	export interface DrawingPrimitive {
+    82	  id: string;                       // Unique ID for this primitive
+    83	  sourceEntityId?: string;          // ID of domain entity that generated this primitive
+    84	  planeId?: string;                 // Plane this element belongs to (for hit testing filter)
+    85	  layer: RenderLayer;               // Z-ordering layer
+    86	  visible: boolean;                 // Whether to render this primitive
+    87	  style: ResolvedStyle;             // Fully resolved visual attributes
+    88	}
+    89	
+    90	/**
+    91	 * Point primitive - rendered as a circle
+    92	 * Coordinates in paper coordinate system
+    93	 */
+    94	export interface PointPrimitive extends DrawingPrimitive {
+    95	  type: 'point';
+    96	  position: Vector3;                // Position in paper space (homogeneous coordinates)
+    97	  radius: number;                   // Display radius in pixels
+    98	}
+    99	
+   100	/**
+   101	 * Path primitive - rendered as polyline or polygon
+   102	 * All coordinates in paper coordinate system
+   103	 */
+   104	export interface PathPrimitive extends DrawingPrimitive {
+   105	  type: 'path';
+   106	  points: Array<[number, number]>; // Array of [x, y] coordinates in paper space
+   107	  closed: boolean;                  // Connect last to first point?
+   108	}
+   109	
+   110	/**
+   111	 * Line primitive - infinite line in parametric form (clipped to viewport bounds)
+   112	 * Parametric form: P(t) = point + t * direction
+   113	 * All coordinates in paper coordinate system
+   114	 */
+   115	export interface LinePrimitive extends DrawingPrimitive {
+   116	  type: 'line';
+   117	  point: Vector3;                     // Point on the line (paper coords, homogeneous)
+   118	  direction: Vector3;                 // Direction vector (paper coords, homogeneous)
+   119	}
+   120	
+   121	/**
+   122	 * Segment primitive - finite line segment between two points
+   123	 * Endpoints are stored as Vector3 for compatibility with Three.js
+   124	 * Coordinates in paper coordinate system
+   125	 */
+   126	export interface SegmentPrimitive extends DrawingPrimitive {
+   127	  type: 'segment';
+   128	  point1: Vector3;                    // First endpoint in paper space (homogeneous coordinates)
+   129	  point2: Vector3;                    // Second endpoint in paper space (homogeneous coordinates)
+   130	}
+   131	
+   132	/**
+   133	 * Circle primitive
+   134	 * Coordinates in paper coordinate system
+   135	 */
+   136	export interface CirclePrimitive extends DrawingPrimitive {
+   137	  type: 'circle';
+   138	  cx: number;                       // Center X coordinate in paper space
+   139	  cy: number;                       // Center Y coordinate in paper space
+   140	  radius: number;                   // Radius in paper space units
+   141	}
+   142	
+   143	/**
+   144	 * Arc primitive
+   145	 * Coordinates in paper coordinate system
+   146	 */
+   147	export interface ArcPrimitive extends DrawingPrimitive {
+   148	  type: 'arc';
+   149	  cx: number;                       // Center X coordinate in paper space
+   150	  cy: number;                       // Center Y coordinate in paper space
+   151	  radius: number;                   // Radius in paper space units
+   152	  startAngle: number;               // Start angle in radians
+   153	  endAngle: number;                 // End angle in radians
+   154	  largeArc: boolean;                // SVG large-arc-flag
+   155	  sweep: boolean;                   // SVG sweep-flag (clockwise)
+   156	}
+   157	
+   158	/**
+   159	 * Text primitive for labels
+   160	 * Coordinates in paper coordinate system
+   161	 */
+   162	export interface TextPrimitive extends DrawingPrimitive {
+   163	  type: 'text';
+   164	  x: number;                        // X coordinate in paper space
+   165	  y: number;                        // Y coordinate in paper space
+   166	  text: string;                     // Text content
+   167	  fontSize: number;                 // Font size in pixels
+   168	  anchor: 'start' | 'middle' | 'end'; // Text alignment
+   169	}
+   170	
+   171	/**
+   172	 * Union type of all drawing primitives
+   173	 */
+   174	export type Primitive = 
+   175	  | PointPrimitive 
+   176	  | PathPrimitive
+   177	  | LinePrimitive
+   178	  | SegmentPrimitive
+   179	  | CirclePrimitive 
+   180	  | ArcPrimitive 
+   181	  | TextPrimitive;
+   182	
+   183	/**
+   184	 * Viewport transformation parameters for canvas rendering
+   185	 */
+   186	export interface ViewportTransform {
+   187	  zoom: number;                     // Zoom level (1.0 = 100%)
+   188	  panX: number;                     // Pan offset X in paper space
+   189	  panY: number;                     // Pan offset Y in paper space
+   190	}
+   191	
+   192	/**
+   193	 * Result of a hit test query
+   194	 * Contains element identification and distance information
+   195	 */
+   196	export interface HitResult {
+   197	  elementId: string;                // Source domain element ID ("point_1", "line_2")
+   198	  elementType: string;              // "point" | "line" | "circle" | "segment"
+   199	  primitiveId: string;              // Primitive ID ("point-point_1")
+   200	  distance: number;                 // Distance in canvas pixels (for UI feedback)
+   201	  snapPoint: Vector3;               // Exact snap position (paper coordinates, homogeneous)
+   202	}
+   203	
+   204	/**
+   205	 * Paper - Collection of drawing primitives in unified paper coordinate system
+   206	 * 
+   207	 * Paper contains primitives from all projection planes in a shared coordinate system.
+   208	 * Each plane has a transformation matrix (stored elsewhere) that converts from
+   209	 * its intrinsic <u,v> coordinates to paper coordinates when generating primitives.
+   210	 * 
+   211	 * Paper also serves as the spatial query engine for hit testing and hover detection,
+   212	 * applying correct coordinate transforms to handle snap radius and element proximity.
+   213	 */
+   214	export class Paper {
+   215	  private primitives: Map<string, Primitive>;
+   216	  private dirtyPrimitiveIds: Set<string>;
+   217	  private hoveredElementId?: string;
+   218	  private viewportTransform: ViewportTransform;
+   219	  private canvasToPaperMatrix: Matrix3;  // Cached inverse viewport transform matrix
+   220	
+   221	  constructor() {
+   222	    this.primitives = new Map();
+   223	    this.dirtyPrimitiveIds = new Set();
+   224	    this.viewportTransform = { zoom: 1.0, panX: 0, panY: 0 };
+   225	    this.canvasToPaperMatrix = new Matrix3(); // Identity
+   226	    this.updateTransformMatrix();
+   227	  }
+   228	
+   229	  /**
+   230	   * Update viewport transform for coordinate conversions
+   231	   * Must be called when viewport changes (pan/zoom)
+   232	   */
+   233	  setViewportTransform(viewport: ViewportTransform): void {
+   234	    this.viewportTransform = viewport;
+   235	    this.updateTransformMatrix();
+   236	  }
+   237	
+   238	  /**
+   239	   * Build the inverse viewport transformation matrix
+   240	   * 
+   241	   * Forward transform (paper → canvas):
+   242	   *   canvas = zoom * (paper + pan)
+   243	   *   Matrices: S(zoom) * T(pan) where T applies first
+   244	   * 
+   245	   * Inverse transform (canvas → paper):
+   246	   *   paper = (canvas / zoom) - pan
+   247	   *   Matrices: T(-pan) * S(1/zoom) = (S * T)^-1
+   248	   * 
+   249	   * Result in homogeneous 2D:
+   250	   * | 1/zoom    0      -panX |
+   251	   * |   0     1/zoom  -panY |
+   252	   * |   0       0        1   |
+   253	   * 
+   254	   * CRITICAL: Three.js Matrix3.set() argument order
+   255	   * ================================================
+   256	   * Three.js stores matrices in COLUMN-MAJOR order internally (OpenGL style),
+   257	   * but set() takes arguments in ROW-MAJOR order for convenience:
+   258	   * 
+   259	   *   set(n11, n12, n13,   ← row 1
+   260	   *       n21, n22, n23,   ← row 2  
+--- styleService ---
+     1	/**
+     2	 * Style Service - Element Visibility Resolution
+     3	 * 
+     4	 * Phase 83: Element Visibility Property
+     5	 * 
+     6	 * Provides utility functions for resolving element visual properties,
+     7	 * particularly visibility with subprocess inheritance support.
+     8	 * 
+     9	 * @see specs/001-dihedral-learning-mvp/data-model.md#phase-83-element-visibility-property
+    10	 */
+    11	
+    12	import type { Element } from './Element';
+    13	import type { World } from './World';
+    14	import { ProcessTree, type Subprocess, type ActionGroup, type ProcessNode } from '../processTree/ProcessTree';
+    15	
+    16	// Helper to get parents
+    17	function getPathToNode(tree: ProcessTree, targetId: string): ProcessNode[] | null {
+    18	  // Use existing method if available, or just reimplement straightforward DFS
+    19	  const path: ProcessNode[] = [];
+    20	  
+    21	  function find(node: ProcessNode): boolean {
+    22	    if (node.id === targetId) return true;
+    23	    
+    24	    if (node.type === 'subprocess') {
+    25	      const sp = node as Subprocess;
+    26	      path.push(sp);
+    27	      for (const child of sp.children) {
+    28	        if (find(child)) return true;
+    29	      }
+    30	      path.pop();
+    31	    } else if (node.type === 'actionGroup') {
+    32	      const ag = node as ActionGroup;
+    33	      path.push(ag);
+    34	      for (const child of ag.children) {
+    35	        if (child && find(child)) return true;
+    36	      }
+    37	      path.pop();
+    38	    }
+    39	    return false;
+    40	  }
+    41	  
+    42	  if (find(tree.root)) return path;
+    43	  return null;
+    44	}
+    45	
+    46	/**
+    47	 * Resolve effective visibility for an element
+    48	 * 
+    49	 * Resolution order:
+    50	 * 1. Element's own visualStyle.visible (if set to false, it is hidden)
+    51	 * 2. Ancestor Encapsulation (Black Box) check:
+    52	 *    - Strict Hierarchy Check:
+    53	 *      Traverse path from Root to Action.
+    54	 *      If we are in an encapsulated scope (Parent Subprocess showIntermediates=false),
+    55	 *      the IMMEDIATE next node in the path MUST be marked isOutput=true.
+    56	 *      Even if an Action is Output, if its container Subprocess is not an Output, it is hidden.
+    57	 */
+    58	export function resolveVisibility(element: Element, world: World): boolean {
+    59	  // Check element's own visualStyle - explicit hide overrides everything
+    60	  if (element.visualStyle?.visible === false) {
+    61	    return false;
+    62	  }
+    63	  
+    64	  // Phase 87: Encapsulation / Black Box Logic
+    65	  const tree = world.getProcessTree();
+    66	  const actions = tree.getActionsProducingElement(element.id);
+    67	  if (actions.length === 0) return true; // System elements visible by default
+    68	
+    69	  const creatingAction = actions[0];
+    70	  const path = getPathToNode(tree, creatingAction.id);
+    71	  
+    72	  if (!path) return true;
+    73	
+    74	  // Path contains: [Root, Subprocess1...SubprocessN, ActionGroup]
+    75	  // We should treat the creatingAction as the final node in the chain
+    76	  // Cast creatingAction to ActionNode (Action interface + type='action')
+    77	  // We approximate it because tree.getActionsProducingElement returns Action[]
+    78	  // but in the tree they are wrapped as ActionNode. Since Action is just data, 
+    79	  // we can treat it as the leaf node for logic purposes.
+    80	  const leafNode = creatingAction as unknown as ProcessNode; 
+    81	  // We filter out ActionGroups because they are structural containers that should be transparent
+    82	  // for visibility logic (as requested by user "Action Groups must be transparents in this regard").
+    83	  // This effectively connects Subprocess -> Subprocess or Subprocess -> Action directly.
+    84	  const fullChain: ProcessNode[] = [...path, leafNode].filter(node => node.type !== 'actionGroup');
+    85	
+    86	  // Iterate the chain to check permissions
+    87	  // At each step, if parent enforces encapsulation, child must have permission (isOutput)
+    88	  for (let i = 0; i < fullChain.length - 1; i++) {
+    89	    const parent = fullChain[i];
+    90	    const child = fullChain[i + 1];
+    91	
+    92	    if (parent.type === 'subprocess') {
+    93	      const sp = parent as Subprocess;
+    94	      if (!sp.showIntermediates) {
+    95	        // Encapsulation Active
+    96	        // Child MUST be an Output to be visible.
+    97	        
+    98	        let isChildExposed = false;
+    99	        if ('isOutput' in child && (child as any).isOutput) {
+   100	          isChildExposed = true;
+   101	        }
+   102	        
+   103	        if (!isChildExposed) {
+   104	          return false; // Hidden by encapsulation at this level
+   105	        }
+   106	      }
+   107	    }
+   108	  }
+   109	
+   110	  return true;
+   111	}
+--- render tests files ---
+frontend/tests/unit/application/canvasToolControllers.spec.ts
+frontend/tests/unit/components/SvgCanvas.gridLabels.spec.ts
+frontend/tests/unit/domain/paperHitTesting.spec.ts
+frontend/tests/unit/services/paperService.spec.ts
+frontend/tests/unit/services/renderService.spec.ts
+--- grep rendering imports/tests ---
+frontend/tests/unit/services/paperService.spec.ts:3: * Unit tests for PaperService
+frontend/tests/unit/services/paperService.spec.ts:9:import { PaperService, type PrimitiveContext } from '../../../src/services/PaperService';
+frontend/tests/unit/services/paperService.spec.ts:14:import { RenderLayer, Paper, type PointPrimitive } from '../../../src/domain/presentation/Paper';
+frontend/tests/unit/services/paperService.spec.ts:16:describe('PaperService', () => {
+frontend/tests/unit/services/paperService.spec.ts:17:  let paperService: PaperService;
+frontend/tests/unit/services/paperService.spec.ts:22:    paperService = new PaperService();
+frontend/tests/unit/services/paperService.spec.ts:40:  describe('Point Primitive Generation', () => {
+frontend/tests/unit/services/paperService.spec.ts:41:    it('should generate PointPrimitive for free point on P_H', () => {
+frontend/tests/unit/services/paperService.spec.ts:48:      const context: PrimitiveContext = {
+frontend/tests/unit/services/paperService.spec.ts:53:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/paperService.spec.ts:61:      const pointPrimitives = primitives.filter(p => p.type === 'point');
+frontend/tests/unit/services/paperService.spec.ts:62:      const ourPoint = pointPrimitives.find(p => p.sourceEntityId === point.id);
+frontend/tests/unit/services/paperService.spec.ts:65:      const pointPrimitive = ourPoint as any;
+frontend/tests/unit/services/paperService.spec.ts:66:      expect(pointPrimitive.id).toBe(`point-${point.id}`);
+frontend/tests/unit/services/paperService.spec.ts:67:      expect(pointPrimitive.sourceEntityId).toBe(point.id);
+frontend/tests/unit/services/paperService.spec.ts:68:      expect(pointPrimitive.visible).toBe(true);
+frontend/tests/unit/services/paperService.spec.ts:69:      expect(pointPrimitive.layer).toBe(RenderLayer.Elements);
+frontend/tests/unit/services/paperService.spec.ts:72:      // Note: PointPrimitive stores position as Vector3, not separate x/y
+frontend/tests/unit/services/paperService.spec.ts:73:      expect(pointPrimitive.position).toBeDefined();
+frontend/tests/unit/services/paperService.spec.ts:74:      expect(pointPrimitive.position.x).toBeDefined();
+frontend/tests/unit/services/paperService.spec.ts:75:      expect(pointPrimitive.position.y).toBeDefined();
+frontend/tests/unit/services/paperService.spec.ts:78:      expect(pointPrimitive.style.fill).toBe('#4A90E2'); // Free point blue
+frontend/tests/unit/services/paperService.spec.ts:79:      expect(pointPrimitive.style.stroke).toBe('#333333');
+frontend/tests/unit/services/paperService.spec.ts:80:      expect(pointPrimitive.radius).toBe(5); // Free points have radius 5
+frontend/tests/unit/services/paperService.spec.ts:83:    it('should generate PointPrimitive for intersection point on P_V', () => {
+frontend/tests/unit/services/paperService.spec.ts:99:      const context: PrimitiveContext = {
+frontend/tests/unit/services/paperService.spec.ts:104:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/paperService.spec.ts:107:      const pointPrimitives = primitives.filter(p => p.type === 'point');
+frontend/tests/unit/services/paperService.spec.ts:108:      const ourPoint = pointPrimitives.find(p => p.sourceEntityId === point.id);
+frontend/tests/unit/services/paperService.spec.ts:111:      const pointPrimitive = ourPoint as any;
+frontend/tests/unit/services/paperService.spec.ts:114:      // Primitives use position Vector3, not separate x/y
+frontend/tests/unit/services/paperService.spec.ts:115:      expect(pointPrimitive.position).toBeDefined();
+frontend/tests/unit/services/paperService.spec.ts:116:      expect(pointPrimitive.position.x).toBeDefined();
+frontend/tests/unit/services/paperService.spec.ts:117:      expect(pointPrimitive.position.y).toBeDefined();
+frontend/tests/unit/services/paperService.spec.ts:120:      expect(pointPrimitive.style.fill).toBe('#E94E77'); // Derived point pink
+frontend/tests/unit/services/paperService.spec.ts:121:      expect(pointPrimitive.radius).toBe(4); // Derived points have radius 4
+frontend/tests/unit/services/paperService.spec.ts:130:      const context: PrimitiveContext = {
+frontend/tests/unit/services/paperService.spec.ts:136:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/paperService.spec.ts:137:      const pointPrimitives = primitives.filter(p => p.type === 'point');
+frontend/tests/unit/services/paperService.spec.ts:138:      const ourPoint = pointPrimitives.find(p => p.sourceEntityId === point.id);
+frontend/tests/unit/services/paperService.spec.ts:139:      const pointPrimitive = ourPoint as any;
+frontend/tests/unit/services/paperService.spec.ts:141:      // Verify hover style (per PaperService implementation)
+frontend/tests/unit/services/paperService.spec.ts:142:      expect(pointPrimitive.style.fill).toBe('#6BB6FF'); // Hover blue for free
+frontend/tests/unit/services/paperService.spec.ts:143:      expect(pointPrimitive.style.stroke).toBe('#4A90E2');
+frontend/tests/unit/services/paperService.spec.ts:144:      expect(pointPrimitive.style.strokeWidth).toBe(1.5);
+frontend/tests/unit/services/paperService.spec.ts:153:      const context: PrimitiveContext = {
+frontend/tests/unit/services/paperService.spec.ts:159:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/paperService.spec.ts:160:      const pointPrimitives = primitives.filter(p => p.type === 'point');
+frontend/tests/unit/services/paperService.spec.ts:161:      const ourPoint = pointPrimitives.find(p => p.sourceEntityId === point.id);
+frontend/tests/unit/services/paperService.spec.ts:162:      const pointPrimitive = ourPoint as any;
+frontend/tests/unit/services/paperService.spec.ts:165:      expect(pointPrimitive.style.fill).toBe('#FFA500'); // Orange
+frontend/tests/unit/services/paperService.spec.ts:166:      expect(pointPrimitive.style.stroke).toBe('#FF8C00');
+frontend/tests/unit/services/paperService.spec.ts:167:      expect(pointPrimitive.layer).toBe(RenderLayer.Highlights);
+frontend/tests/unit/services/paperService.spec.ts:181:      const context: PrimitiveContext = {
+frontend/tests/unit/services/paperService.spec.ts:186:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/paperService.spec.ts:214:      const context: PrimitiveContext = {
+frontend/tests/unit/services/paperService.spec.ts:219:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/paperService.spec.ts:234:      const context: PrimitiveContext = {
+frontend/tests/unit/services/paperService.spec.ts:239:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/paperService.spec.ts:240:      const pointPrimitives = primitives.filter(p => p.type === 'point');
+frontend/tests/unit/services/paperService.spec.ts:241:      const ourPoint = pointPrimitives.find(p => p.sourceEntityId === point.id);
+frontend/tests/unit/services/paperService.spec.ts:255:      const context: PrimitiveContext = {
+frontend/tests/unit/services/paperService.spec.ts:260:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/paperService.spec.ts:261:      const pointPrimitives = primitives.filter(p => p.type === 'point');
+frontend/tests/unit/services/paperService.spec.ts:262:      const ourPoint = pointPrimitives.find(p => p.sourceEntityId === point.id);
+frontend/tests/unit/services/paperService.spec.ts:293:      const context: PrimitiveContext = {
+frontend/tests/unit/services/paperService.spec.ts:298:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/paperService.spec.ts:299:      const freePrimitive = primitives.find(p => p.sourceEntityId === freePoint.id) as any;
+frontend/tests/unit/services/paperService.spec.ts:300:      const intersectionPrimitive = primitives.find(p => p.sourceEntityId === intersectionPoint.id) as any;
+frontend/tests/unit/services/paperService.spec.ts:303:      expect(freePrimitive.style.fill).toBe('#4A90E2');
+frontend/tests/unit/services/paperService.spec.ts:304:      expect(freePrimitive.radius).toBe(5);
+frontend/tests/unit/services/paperService.spec.ts:307:      expect(intersectionPrimitive.style.fill).toBe('#E94E77');
+frontend/tests/unit/services/paperService.spec.ts:308:      expect(intersectionPrimitive.radius).toBe(4);
+frontend/tests/unit/services/paperService.spec.ts:329:      const context: PrimitiveContext = {
+frontend/tests/unit/services/paperService.spec.ts:335:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/paperService.spec.ts:336:      const freePrimitive = primitives.find(p => p.sourceEntityId === freePoint.id) as any;
+frontend/tests/unit/services/paperService.spec.ts:337:      const intersectionPrimitive = primitives.find(p => p.sourceEntityId === intersectionPoint.id) as any;
+frontend/tests/unit/services/paperService.spec.ts:341:      expect(freePrimitive.style.fill).toBe('#4A90E2'); // Normal free point blue
+frontend/tests/unit/services/paperService.spec.ts:342:      expect(intersectionPrimitive.style.fill).toBe('#E94E77'); // Normal derived point pink
+frontend/tests/unit/services/paperService.spec.ts:354:      const context: PrimitiveContext = {
+frontend/tests/unit/services/paperService.spec.ts:361:      const primitives = paper.getPrimitives();
+frontend/tests/unit/services/paperService.spec.ts:372:      const oldPrimitive: PointPrimitive = {
+frontend/tests/unit/services/paperService.spec.ts:390:      paper.setPrimitive(oldPrimitive);
+frontend/tests/unit/services/paperService.spec.ts:396:      const context: PrimitiveContext = {
+frontend/tests/unit/services/paperService.spec.ts:403:      const primitives = paper.getPrimitives();
+frontend/tests/unit/services/paperService.spec.ts:423:      const context: PrimitiveContext = {
+frontend/tests/unit/services/paperService.spec.ts:430:      const initialPrimitives = paper.getPrimitives();
+frontend/tests/unit/services/paperService.spec.ts:431:      const point1Initial = initialPrimitives.find(p => p.sourceEntityId === point1.id);
+frontend/tests/unit/services/paperService.spec.ts:432:      const point2Initial = initialPrimitives.find(p => p.sourceEntityId === point2.id);
+frontend/tests/unit/services/paperService.spec.ts:448:      const primitives = paper.getPrimitives();
+frontend/tests/unit/services/paperService.spec.ts:466:      const context: PrimitiveContext = {
+frontend/tests/unit/services/paperService.spec.ts:472:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/paperService.spec.ts:473:      const pointPrimitive = primitives[0] as any;
+frontend/tests/unit/services/paperService.spec.ts:476:      expect(pointPrimitive.style.opacity).toBe(1.0);
+frontend/tests/unit/services/paperService.spec.ts:484:      const context: PrimitiveContext = {
+frontend/tests/unit/services/paperService.spec.ts:490:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/paperService.spec.ts:491:      const pointPrimitive = primitives[0] as any;
+frontend/tests/unit/services/paperService.spec.ts:494:      expect(pointPrimitive.style.opacity).toBe(0.5);
+frontend/tests/unit/services/paperService.spec.ts:505:      const context: PrimitiveContext = {
+frontend/tests/unit/services/paperService.spec.ts:517:      const context: PrimitiveContext = {
+frontend/tests/unit/services/paperService.spec.ts:523:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/paperService.spec.ts:526:      const hingeLinePrimitive = primitives.find(p => p.type === 'line' && p.sourceEntityId === 'HL_HV');
+frontend/tests/unit/services/paperService.spec.ts:528:      if (hingeLinePrimitive) {
+frontend/tests/unit/services/paperService.spec.ts:530:        expect((hingeLinePrimitive as any).style.opacity).toBe(1.0);
+frontend/tests/unit/services/paperService.spec.ts:545:      let context: PrimitiveContext = {
+frontend/tests/unit/services/paperService.spec.ts:551:      let primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/paperService.spec.ts:552:      let pointHPrimitive = primitives.find(p => p.sourceEntityId === pointH.id) as any;
+frontend/tests/unit/services/paperService.spec.ts:553:      let pointVPrimitive = primitives.find(p => p.sourceEntityId === pointV.id) as any;
+frontend/tests/unit/services/paperService.spec.ts:555:      expect(pointHPrimitive.style.opacity).toBe(1.0); // Active plane
+frontend/tests/unit/services/paperService.spec.ts:556:      expect(pointVPrimitive.style.opacity).toBe(0.5); // Inactive plane
+frontend/tests/unit/services/paperService.spec.ts:565:      primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/paperService.spec.ts:566:      pointHPrimitive = primitives.find(p => p.sourceEntityId === pointH.id) as any;
+frontend/tests/unit/services/paperService.spec.ts:567:      pointVPrimitive = primitives.find(p => p.sourceEntityId === pointV.id) as any;
+frontend/tests/unit/services/paperService.spec.ts:569:      expect(pointHPrimitive.style.opacity).toBe(0.5); // Now inactive
+frontend/tests/unit/services/paperService.spec.ts:570:      expect(pointVPrimitive.style.opacity).toBe(1.0); // Now active
+frontend/tests/unit/services/projectionDisplay.spec.ts:3: * Tests that PaperService generates projected primitives for 3D elements
+frontend/tests/unit/services/projectionDisplay.spec.ts:9:import { PaperService, type PrimitiveContext } from '../../../src/services/PaperService';
+frontend/tests/unit/services/projectionDisplay.spec.ts:18:import type { PointPrimitive, LinePrimitive, SegmentPrimitive } from '../../../src/domain/presentation/Paper';
+frontend/tests/unit/services/projectionDisplay.spec.ts:20:describe('PaperService - 3D Element Projection Display (Phase 106)', () => {
+frontend/tests/unit/services/projectionDisplay.spec.ts:21:  let paperService: PaperService;
+frontend/tests/unit/services/projectionDisplay.spec.ts:28:    paperService = new PaperService();
+frontend/tests/unit/services/projectionDisplay.spec.ts:90:      const context: PrimitiveContext = {
+frontend/tests/unit/services/projectionDisplay.spec.ts:96:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/projectionDisplay.spec.ts:97:      const projectedPrimitives = primitives.filter(p => p.id.startsWith('proj3d-'));
+frontend/tests/unit/services/projectionDisplay.spec.ts:98:      expect(projectedPrimitives).toHaveLength(0);
+frontend/tests/unit/services/projectionDisplay.spec.ts:104:      const context: PrimitiveContext = {
+frontend/tests/unit/services/projectionDisplay.spec.ts:109:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/projectionDisplay.spec.ts:110:      const projectedPrimitives = primitives.filter(p => p.id.startsWith('proj3d-'));
+frontend/tests/unit/services/projectionDisplay.spec.ts:111:      expect(projectedPrimitives).toHaveLength(0);
+frontend/tests/unit/services/projectionDisplay.spec.ts:121:      const context: PrimitiveContext = {
+frontend/tests/unit/services/projectionDisplay.spec.ts:127:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/projectionDisplay.spec.ts:130:      ) as PointPrimitive[];
+frontend/tests/unit/services/projectionDisplay.spec.ts:153:      const context: PrimitiveContext = {
+frontend/tests/unit/services/projectionDisplay.spec.ts:159:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/projectionDisplay.spec.ts:162:      ) as PointPrimitive[];
+frontend/tests/unit/services/projectionDisplay.spec.ts:188:      const context: PrimitiveContext = {
+frontend/tests/unit/services/projectionDisplay.spec.ts:194:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/projectionDisplay.spec.ts:197:      ) as LinePrimitive[];
+frontend/tests/unit/services/projectionDisplay.spec.ts:240:      const context: PrimitiveContext = {
+frontend/tests/unit/services/projectionDisplay.spec.ts:246:      const primitives = paperService.generatePrimitives(context);
+frontend/tests/unit/services/projectionDisplay.spec.ts:247:      const projectedPrimitives = primitives.filter(p => p.id.startsWith('proj3d-'));
+frontend/tests/unit/services/projectionDisplay.spec.ts:248:      expect(projectedPrimitives).toHaveLength(0);
+frontend/tests/unit/services/renderService.spec.ts:4: * Unit tests for RenderService
+frontend/tests/unit/services/renderService.spec.ts:21:} from '@/services/RenderService';
+frontend/tests/unit/services/renderService.spec.ts:27:describe('RenderService', () => {
+frontend/src/commands/operations/paper/README.md:12:All Paper operations modify the presentation layer (PaperService) without affecting the domain model.
+frontend/src/commands/operations/IOperation.ts:11:export type JsonPrimitive = string | number | boolean | null;
+frontend/src/commands/operations/IOperation.ts:12:export type JsonValue = JsonPrimitive | JsonValue[] | JsonObject;
+frontend/src/components/workspace/SvgCanvas.vue:167: * 2. → PaperService (generates Paper primitives in paper coordinates)
+frontend/src/components/workspace/SvgCanvas.vue:168: * 3. → SVGRenderer (applies viewport transform, generates SVG attributes)
+frontend/src/components/workspace/SvgCanvas.vue:185:import { PaperService, type PrimitiveContext } from '@/services/PaperService';
+frontend/src/components/workspace/SvgCanvas.vue:186:import { SVGRenderer, type ViewportTransform } from '@/services/SVGRenderer';
+frontend/src/components/workspace/SvgCanvas.vue:256:const paperService = new PaperService();
+frontend/src/components/workspace/SvgCanvas.vue:257:const svgRenderer = new SVGRenderer();
+frontend/src/components/workspace/SvgCanvas.vue:566:// Generate primitives from World using PaperService
+frontend/src/components/workspace/SvgCanvas.vue:571:  // PaperService uses plane-to-paper transforms for rendering
+frontend/src/components/workspace/SvgCanvas.vue:585:  const context: PrimitiveContext = {
+frontend/src/components/workspace/SvgCanvas.vue:595:  const prims = paperService.generatePrimitives(context);
+frontend/src/components/workspace/SvgCanvas.vue:598:  // Sort primitives by layer first, then z-index (same as Paper.getPrimitives())
+frontend/src/components/workspace/SvgCanvas.vue:607:  paper.setPrimitives(prims);
+frontend/src/components/workspace/SvgCanvas.vue:1081:      const result = svgRenderer.renderPrimitive(p, viewport.value);
+frontend/src/components/workspace/SvgCanvas.vue:1091:  const linePrimitives = primitives.value.filter(p => p.type === 'line');
+frontend/src/components/workspace/SvgCanvas.vue:1092:  const bhhlPrimitives = linePrimitives.filter(p => p.id.includes('line2d34') || p.id.includes('line2d35'));
+frontend/src/components/workspace/SvgCanvas.vue:1093:  if (bhhlPrimitives.length > 0) {
+frontend/src/components/workspace/SvgCanvas.vue:1094:    console.log('[SvgCanvas] BHHL primitives in renderedLines:', bhhlPrimitives.map(p => `${p.id} (plane: ${p.planeId})`));
+frontend/src/components/workspace/SvgCanvas.vue:1096:  return linePrimitives.map(p => {
+frontend/src/components/workspace/SvgCanvas.vue:1097:      const result = svgRenderer.renderPrimitive(p, viewport.value);
+frontend/src/components/workspace/SvgCanvas.vue:1112:      const result = svgRenderer.renderPrimitive(p, viewport.value);
+frontend/src/components/workspace/SvgCanvas.vue:1125:      const result = svgRenderer.renderPrimitive(p, viewport.value);
+frontend/src/components/workspace/SvgCanvas.vue:1138:      const result = svgRenderer.renderPrimitive(p, viewport.value);
+frontend/src/components/workspace/SvgCanvas.vue:1150:      const result = svgRenderer.renderPrimitive(p, viewport.value);
+frontend/src/components/workspace/SvgCanvas.vue:1670:  const allPrimitives = primitives.value;
+frontend/src/components/workspace/SvgCanvas.vue:1672:  if (allPrimitives.length === 0) {
+frontend/src/components/workspace/SvgCanvas.vue:1686:  for (const prim of allPrimitives) {
+frontend/src/domain/presentation/Paper.ts:19: * This matches the rendering pattern in PaperService and eliminates World facade calls.
+frontend/src/domain/presentation/Paper.ts:22: * Only SVGRenderer extracts .x and .y components when generating final SVG attributes.
+frontend/src/domain/presentation/Paper.ts:37: * - Primitives cached and reused across renders
+frontend/src/domain/presentation/Paper.ts:81:export interface DrawingPrimitive {
+frontend/src/domain/presentation/Paper.ts:94:export interface PointPrimitive extends DrawingPrimitive {
+frontend/src/domain/presentation/Paper.ts:104:export interface PathPrimitive extends DrawingPrimitive {
+frontend/src/domain/presentation/Paper.ts:115:export interface LinePrimitive extends DrawingPrimitive {
+frontend/src/domain/presentation/Paper.ts:126:export interface SegmentPrimitive extends DrawingPrimitive {
+frontend/src/domain/presentation/Paper.ts:136:export interface CirclePrimitive extends DrawingPrimitive {
+frontend/src/domain/presentation/Paper.ts:147:export interface ArcPrimitive extends DrawingPrimitive {
+frontend/src/domain/presentation/Paper.ts:162:export interface TextPrimitive extends DrawingPrimitive {
+frontend/src/domain/presentation/Paper.ts:174:export type Primitive = 
+frontend/src/domain/presentation/Paper.ts:175:  | PointPrimitive 
+frontend/src/domain/presentation/Paper.ts:176:  | PathPrimitive
+frontend/src/domain/presentation/Paper.ts:177:  | LinePrimitive
+frontend/src/domain/presentation/Paper.ts:178:  | SegmentPrimitive
+frontend/src/domain/presentation/Paper.ts:179:  | CirclePrimitive 
+frontend/src/domain/presentation/Paper.ts:180:  | ArcPrimitive 
+frontend/src/domain/presentation/Paper.ts:181:  | TextPrimitive;
+frontend/src/domain/presentation/Paper.ts:199:  primitiveId: string;              // Primitive ID ("point-point_1")
+frontend/src/domain/presentation/Paper.ts:215:  private primitives: Map<string, Primitive>;
+frontend/src/domain/presentation/Paper.ts:216:  private dirtyPrimitiveIds: Set<string>;
+frontend/src/domain/presentation/Paper.ts:223:    this.dirtyPrimitiveIds = new Set();
+frontend/src/domain/presentation/Paper.ts:493:  private distanceToPrimitive(paperPos: Vector3, primitive: Primitive): number {
+frontend/src/domain/presentation/Paper.ts:496:        return this.distanceToPoint(paperPos, primitive as PointPrimitive);
+frontend/src/domain/presentation/Paper.ts:498:        return this.distanceToLine(paperPos, primitive as LinePrimitive);
+frontend/src/domain/presentation/Paper.ts:500:        return this.distanceToCircle(paperPos, primitive as CirclePrimitive);
+frontend/src/domain/presentation/Paper.ts:510:  private distanceToPoint(pos: Vector3, primitive: PointPrimitive): number {
+frontend/src/domain/presentation/Paper.ts:519:  private distanceToLine(pos: Vector3, primitive: LinePrimitive): number {
+frontend/src/domain/presentation/Paper.ts:540:  private distanceToCircle(pos: Vector3, primitive: CirclePrimitive): number {
+frontend/src/domain/presentation/Paper.ts:550:  private getSnapPoint(primitive: Primitive, queryPos: Vector3): Vector3 {
+frontend/src/domain/presentation/Paper.ts:554:        return (primitive as PointPrimitive).position.clone();
+frontend/src/domain/presentation/Paper.ts:558:        const line = primitive as LinePrimitive;
+frontend/src/domain/presentation/Paper.ts:574:        const circle = primitive as CirclePrimitive;
+frontend/src/domain/presentation/Paper.ts:601:  setPrimitive(primitive: Primitive): void {
+frontend/src/domain/presentation/Paper.ts:603:    this.dirtyPrimitiveIds.add(primitive.id);
+frontend/src/domain/presentation/Paper.ts:609:  setPrimitives(primitives: Primitive[]): void {
+frontend/src/domain/presentation/Paper.ts:611:      this.setPrimitive(primitive);
+frontend/src/domain/presentation/Paper.ts:618:  removePrimitive(id: string): void {
+frontend/src/domain/presentation/Paper.ts:620:    this.dirtyPrimitiveIds.delete(id);
+frontend/src/domain/presentation/Paper.ts:626:  removePrimitivesByEntity(entityId: string): void {
+frontend/src/domain/presentation/Paper.ts:634:      this.removePrimitive(id);
+frontend/src/domain/presentation/Paper.ts:641:  getPrimitive(id: string): Primitive | undefined {
+frontend/src/domain/presentation/Paper.ts:648:  getPrimitives(options?: {
+frontend/src/domain/presentation/Paper.ts:651:  }): Primitive[] {
+frontend/src/domain/presentation/Paper.ts:677:  getDirtyPrimitives(): Primitive[] {
+frontend/src/domain/presentation/Paper.ts:678:    const result: Primitive[] = [];
+frontend/src/domain/presentation/Paper.ts:679:    for (const id of this.dirtyPrimitiveIds) {
+frontend/src/domain/presentation/Paper.ts:692:    this.dirtyPrimitiveIds.clear();
+frontend/src/domain/presentation/Paper.ts:700:    this.dirtyPrimitiveIds.clear();
+frontend/src/domain/presentation/Paper.ts:714:    return this.dirtyPrimitiveIds.size > 0;
+frontend/src/domain/world/Element2D.ts:50: *   // Use resolveVisibility or modify visualStyle
+frontend/src/domain/world/styleService.ts:58:export function resolveVisibility(element: Element, world: World): boolean {
+frontend/src/services/Element2DRenderer3D.ts:29:import { resolveVisibility } from '../domain/world/styleService';
+frontend/src/services/Element2DRenderer3D.ts:89:      if (!resolveVisibility(point, world)) continue;
+frontend/src/services/Element2DRenderer3D.ts:96:      if (!resolveVisibility(line, world)) continue;
+frontend/src/services/Element2DRenderer3D.ts:110:      if (!resolveVisibility(circle, world)) continue;
+frontend/src/services/InputService.ts:10: * This service is separate from PaperService because:
+frontend/src/services/InputService.ts:11: * - PaperService works at the paper level (like a plotter)
+frontend/src/services/PaperService.ts:2: * PaperService - Converts domain entities and realizations to Paper primitives
+frontend/src/services/PaperService.ts:19: * Primitives contain all resolved visual attributes and are ready for viewport
+frontend/src/services/PaperService.ts:46:  type Primitive,
+frontend/src/services/PaperService.ts:47:  type PointPrimitive,
+frontend/src/services/PaperService.ts:48:  type LinePrimitive,
+frontend/src/services/PaperService.ts:49:  type SegmentPrimitive,
+frontend/src/services/PaperService.ts:50:  type CirclePrimitive,
+frontend/src/services/PaperService.ts:51:  type PathPrimitive,
+frontend/src/services/PaperService.ts:59:export interface PrimitiveContext {
+frontend/src/services/PaperService.ts:71:import { resolveVisibility } from '../domain/world/styleService';
+frontend/src/services/PaperService.ts:108:export class PaperService {
+frontend/src/services/PaperService.ts:117:  generatePrimitives(context: PrimitiveContext): Primitive[] {
+frontend/src/services/PaperService.ts:118:    const primitives: Primitive[] = [];
+frontend/src/services/PaperService.ts:128:        if (!resolveVisibility(point, context.world)) continue;
+frontend/src/services/PaperService.ts:135:          const primitive = this.pointToPrimitive(point, realization, transform, context);
+frontend/src/services/PaperService.ts:144:        const isVisible = resolveVisibility(line, context.world);
+frontend/src/services/PaperService.ts:146:          console.log(`[PaperService] Checking visibility for ${line.constructor.name}: ${line.id} (${line.label}) - visible: ${isVisible}`);
+frontend/src/services/PaperService.ts:156:            console.log(`[PaperService] Creating primitive for ${line.constructor.name}: ${line.id} (${line.label})`);
+frontend/src/services/PaperService.ts:157:            const primitive = this.halfHingeLineToPrimitive(line, realization, transform, line.planeId!, context);
+frontend/src/services/PaperService.ts:158:            console.log(`[PaperService] Created primitive:`, primitive.id, 'visible:', primitive.visible, 'layer:', primitive.layer);
+frontend/src/services/PaperService.ts:162:            const primitive = this.segmentToPrimitive(line, realization, transform, context);
+frontend/src/services/PaperService.ts:166:            const primitive = this.guideToPrimitive(line as Guide2D | SiblingGuide2D, realization, transform, context);
+frontend/src/services/PaperService.ts:171:              const arcPrimitive = this.arcGeometryToPrimitive(line.id!, (line as any).arcGeometry, context);
+frontend/src/services/PaperService.ts:172:              if (arcPrimitive) {
+frontend/src/services/PaperService.ts:173:                primitives.push(arcPrimitive);
+frontend/src/services/PaperService.ts:178:            const primitive = this.lineToPrimitive(line, realization, transform, context);
+frontend/src/services/PaperService.ts:182:          // console.warn('[PaperService] Skipping line - missing realization');

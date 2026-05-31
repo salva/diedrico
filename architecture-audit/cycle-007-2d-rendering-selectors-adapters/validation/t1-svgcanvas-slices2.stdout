@@ -1,0 +1,456 @@
+--- 300-620 ---
+300: });
+301: 
+302: let ignoreNextClick = false;
+303: 
+304: function isMovableFreePoint(point: any): point is FreePoint2D {
+305:   return point instanceof FreePoint2D && !point.locked;
+306: }
+307: 
+308: function endPointDrag(commit: boolean): void {
+309:   if (!pointDrag.value.active) return;
+310: 
+311:   const moveSession = pointDrag.value.moveSession;
+312: 
+313:   try {
+314:     if (moveSession) {
+315:       if (commit) {
+316:         const result = moveSession.commit();
+317:         if (!result.success) console.error('[SvgCanvas] Point move commit failed:', result.message);
+318:       } else {
+319:         moveSession.cancel();
+320:       }
+321:     }
+322:   } finally {
+323:     pointDrag.value = {
+324:       active: false,
+325:       planeId: null,
+326:       pointId: null,
+327:       moveSession: null,
+328:       startClientX: 0,
+329:       startClientY: 0,
+330:       moved: false
+331:     };
+332:     renderTick.value++;
+333:   }
+334: }
+335: 
+336: function handleGlobalKeyDown(event: KeyboardEvent) {
+337:   if (event.key === 'Escape') {
+338:     // T956: Cancel viewport pan on Esc
+339:     if (viewportPan.value.active) {
+340:       viewportPan.value = {
+341:         active: false,
+342:         startX: 0,
+343:         startY: 0
+344:       };
+345:       return;
+346:     }
+347:     
+348:     // T956: Cancel point drag on Esc
+349:     if (pointDrag.value.active) {
+350:       ignoreNextClick = true;
+351:       endPointDrag(false);
+352:     }
+353:   }
+354: }
+355: 
+356: /**
+357:  * Get display label for an element
+358:  * @param elementId - ID of the element
+359:  * @param elementType - Type of the element (point, line, segment, etc.)
+360:  * @param planeId - ID of the plane containing the element (optional, will search all planes if not provided)
+361:  */
+362: function getElementLabel(elementId: string, elementType: string, planeId?: string): string {
+363:   let element: any;
+364:   
+365:   // If planeId is provided, only search that plane
+366:   if (planeId) {
+367:     const plane = world.getProjectionPlaneById(planeId);
+368:     if (plane) {
+369:       switch (elementType) {
+370:         case 'point':
+371:           element = plane.getPoint(elementId);
+372:           break;
+373:         case 'line':
+374:         case 'half-hinge-line':
+375:         case 'segment':  // Segments are Line2D objects, use getLine
+376:         case 'guide':  // Guides are Line2D objects, use getLine
+377:           element = plane.getLine(elementId);
+378:           break;
+379:         case 'circle':
+380:           element = plane.getCircle(elementId);
+381:           break;
+382:         case 'arc':
+383:           element = plane.getArc(elementId);
+384:           break;
+385:       }
+386:     }
+387:   } else {
+388:     // Search all planes if no planeId provided
+389:     for (const plane of world.projectionPlanes.values()) {
+390:       switch (elementType) {
+391:         case 'point':
+392:           element = plane.getPoint(elementId);
+393:           break;
+394:         case 'line':
+395:         case 'half-hinge-line':
+396:         case 'segment':  // Segments are Line2D objects, use getLine
+397:         case 'guide':  // Guides are Line2D objects, use getLine
+398:           element = plane.getLine(elementId);
+399:           break;
+400:         case 'circle':
+401:           element = plane.getCircle(elementId);
+402:           break;
+403:         case 'arc':
+404:           element = plane.getArc(elementId);
+405:           break;
+406:       }
+407:       if (element) break; // Found it
+408:     }
+409:   }
+410:   
+411:   return element ? element.label || elementId : elementId;
+412: }
+413: 
+414: // World instance - injected from App.vue
+415: const world = inject<World>('world')!;
+416: if (!world) {
+417:   throw new Error('World not provided');
+418: }
+419: 
+420: // Paper instance for spatial queries and rendering
+421: const paper = new Paper();
+422: 
+423: const canvasToolController = createCanvasToolController({
+424:   world,
+425:   commandStack: inject('commandStack'),
+426:   toolStore
+427: });
+428: 
+429: // Tool factory registry - map tool names to factory functions
+430: // Creates new instances instead of reusing singletons to avoid state leakage
+431: const toolFactories: Record<string, () => ITool> = {
+432:   'point': () => new PointTool(),
+433:   'line': () => new LineTool(),
+434:   'segment': () => new SegmentTool(),
+435:   'circle': () => new CircleTool(),
+436:   'guide': () => new GuideTool(),
+437:   'intersection': () => new IntersectionTool(),
+438:   'parallel-line': () => new ParallelLineTool(),
+439:   'perpendicular-line': () => new PerpendicularLineTool(),
+440:   'tangent-line-to-circle-through-point': () => new TangentLineToCircleThroughPointTool(),
+441:   'tangent-line-to-circle-parallel': () => new TangentLineToCircleParallelToLineTool(),
+442:   // Phase 78: 3D Element Creation Tools
+443:   'create3dpoint': () => new Create3DPointTool(),
+444:   'create3dline': () => new Create3DLineTool(),
+445:   'create3dsegment': () => new Create3DSegmentTool(),
+446:   'create3dplane': () => new Create3DPlaneTool(),
+447:   // Phase 82: Auxiliary Projection Plane Tool
+448:   'createprojectionplane': () => new CreateProjectionPlaneTool(),
+449: };
+450: 
+451: // Current tool instance - created fresh when tool is selected
+452: const currentToolInstance = ref<ITool | null>(null);
+453: 
+454: // Reactivity trigger - increment this to force re-render when non-reactive state changes (e.g. Paper hover)
+455: const renderTick = ref(0);
+456: 
+457: // Throttle for coordinate updates (limits update frequency)
+458: let lastCoordinateUpdate = 0;
+459: const COORDINATE_UPDATE_THROTTLE_MS = 50; // 20fps for coordinate updates
+460: 
+461: // Update canvas dimensions based on container size
+462: function updateCanvasDimensions() {
+463:   if (!svgElement.value) return;
+464:   
+465:   const rect = svgElement.value.getBoundingClientRect();
+466:   // Use container dimensions as logical coordinates (1:1 mapping)
+467:   canvasWidth.value = rect.width;
+468:   canvasHeight.value = rect.height;
+469: }
+470: 
+471: // Initialize canvas on mount
+472: const resizeHandler = () => updateCanvasDimensions();
+473: 
+474: onMounted(() => {
+475:   // World is already initialized by initialization factory in constructor
+476:   // Just trigger initial render
+477:   renderTick.value++;
+478: 
+479:   // Set initial canvas dimensions
+480:   updateCanvasDimensions();
+481: 
+482:   // Update dimensions on window resize
+483:   window.addEventListener('resize', resizeHandler);
+484: 
+485:   // Poll World version so UI reacts to domain changes (e.g. active plane switching)
+486:   lastWorldVersion = world.getVersion();
+487:   worldVersion.value = lastWorldVersion;
+488:   versionPollId = window.setInterval(() => {
+489:     const current = world.getVersion();
+490:     if (current !== lastWorldVersion) {
+491:       lastWorldVersion = current;
+492:       worldVersion.value = current;
+493:       renderTick.value++;
+494:     }
+495:   }, 100);
+496: 
+497:   console.log('World initialized');
+498:   const allPlanes = world.getAllProjectionPlanes();
+499:   const totalPoints = allPlanes.reduce((sum, plane) => sum + plane.getAllPoints().length, 0);
+500:   console.log('Points in world:', totalPoints);
+501: });
+502: 
+503: onUnmounted(() => {
+504:   window.removeEventListener('resize', resizeHandler);
+505:   window.removeEventListener('keydown', handleGlobalKeyDown);
+506:   if (versionPollId !== null) {
+507:     clearInterval(versionPollId);
+508:   }
+509: });
+510: 
+511: // Global key handling (Esc cancels point-drag)
+512: onMounted(() => {
+513:   window.addEventListener('keydown', handleGlobalKeyDown);
+514: });
+515: 
+516: // Watch for tool changes and create new tool instance
+517: // This prevents state leakage by creating fresh instances instead of reusing singletons
+518: watch(() => toolStore.currentTool.value, (newTool) => {
+519:   const factory = toolFactories[newTool];
+520:   if (factory) {
+521:     currentToolInstance.value = factory();
+522:     console.log(`[SvgCanvas] Created new tool instance: ${newTool}`);
+523:     // Show initial tool feedback (e.g. "Creating line: pick point1, point2")
+524:     if (currentToolInstance.value && 'getStatusMessage' in currentToolInstance.value) {
+525:       const msg = (currentToolInstance.value as any).getStatusMessage();
+526:       if (msg) toolStore.setToolStepMessage(msg);
+527:     }
+528:   } else {
+529:     currentToolInstance.value = null;
+530:     if (newTool !== 'select') {
+531:       console.warn(`[SvgCanvas] No tool factory for: ${newTool}`);
+532:     }
+533:   }
+534: }, { immediate: true }); // Create initial tool instance
+535: 
+536: // Get plane transforms for INPUT (canvas click → plane coordinates)
+537: function getPlaneTransformsForInput(): Map<string, Matrix3> {
+538:   const transforms = new Map<string, Matrix3>();
+539:   
+540:   // Get all projection planes dynamically
+541:   for (const plane of world.getAllProjectionPlanes()) {
+542:     const realization = world.getProjectionPlane2DRealization(plane.id);
+543:     if (realization) {
+544:       transforms.set(plane.id, realization.paperToPlane2D);
+545:     }
+546:   }
+547:   
+548:   return transforms;
+549: }
+550: 
+551: // Get plane transforms for RENDERING (plane coordinates → paper coordinates)
+552: function getPlaneTransformsForRendering(): Map<string, Matrix3> {
+553:   const transforms = new Map<string, Matrix3>();
+554:   
+555:   // Get all projection planes dynamically
+556:   for (const plane of world.getAllProjectionPlanes()) {
+557:     const realization = world.getProjectionPlane2DRealization(plane.id);
+558:     if (realization) {
+559:       transforms.set(plane.id, realization.planeToPaper2D);
+560:     }
+561:   }
+562:   
+563:   return transforms;
+564: }
+565: 
+566: // Generate primitives from World using PaperService
+567: const primitives = computed(() => {
+568:   // Access renderTick to make this computed reactive to non-reactive sources (World + Paper)
+569:   renderTick.value;
+570:   
+571:   // PaperService uses plane-to-paper transforms for rendering
+572:   const planeTransforms = getPlaneTransformsForRendering();
+573:   
+574:   // Get hovered and selected elements for visual highlighting
+575:   // Per ui-spec.md: Hover = #4A90E2 (lighter), Selection = #0066CC (bold)
+576:   const hoveredId = paper.getHoveredElement();
+577:   const hoveredIds = hoveredId ? new Set([hoveredId]) : undefined;
+578:   
+579:   const selectedIds = selectionStore.selectedIdsArray;
+580:   const selectedIdsSet = selectedIds.length > 0 ? new Set(selectedIds) : undefined;
+581:   
+582:   const cascadeHighlightIds = selectionStore.cascadeHighlightIdsArray;
+583:   const cascadeHighlightIdsSet = cascadeHighlightIds.length > 0 ? new Set(cascadeHighlightIds) : undefined;
+584:   
+585:   const context: PrimitiveContext = {
+586:     world,
+587:     planeTransforms,
+588:     hoveredIds,              // Hover state (lighter highlight)
+589:     selectedIds: selectedIdsSet,  // Selection state (bold highlight)
+590:     cascadeHighlightIds: cascadeHighlightIdsSet,  // Cascade delete preview (orange warning)
+591:     activePlaneId: activePlane.value,  // FR-002: Active plane visual emphasis
+592:     showProjectedElements: viewStore.showProjectedElements.value,  // Phase 106: 3D element projection display
+593:   };
+594:   
+595:   const prims = paperService.generatePrimitives(context);
+596:   // console.log('Generated primitives:', prims.length, prims);
+597:   
+598:   // Sort primitives by layer first, then z-index (same as Paper.getPrimitives())
+599:   prims.sort((a, b) => {
+600:     if (a.layer !== b.layer) {
+601:       return a.layer - b.layer;
+602:     }
+603:     return a.style.zIndex - b.style.zIndex;
+604:   });
+605:   
+606:   // Update Paper with primitives for spatial queries (hit testing)
+607:   paper.setPrimitives(prims);
+608:   
+609:   return prims;
+610: });
+611: 
+612: /**
+613:  * Phase 79: Plane-Based Grid with Adaptive Spacing/Subdivisions
+614:  * 
+615:  * Grid uses the active projection plane's intrinsic (u,v) coordinate system
+616:  * Transformation pipeline: Plane (u,v) → Paper (x,y) → Screen (pixels)
+617:  * 
+618:  * Major Grid Lines (Powers of 10):
+619:  * - Major lines always at multiples of 10^n (e.g., 0.1, 1, 10, 100, 1000)
+620:  * - Power of 10 chosen based on zoom level to keep reasonable density
+--- 1040-1125 ---
+1040:     const uStart_left = Math.floor(uMin_left / majorSpacing) * majorSpacing;
+1041:     const uEnd_left = Math.ceil(uMax_left / majorSpacing) * majorSpacing;
+1042:     
+1043:     for (let u = uStart_left; u <= uEnd_left; u += majorSpacing) {
+1044:       const screenY = findULineIntersectionWithVertical(u, x_paper_left);
+1045:       if (screenY !== null && screenY >= -10 && screenY <= canvasHeight.value + 10) {
+1046:         leftLabels.push({ key: `left-${u}`, value: u, position: screenY, edge: 'left' });
+1047:       }
+1048:     }
+1049:     
+1050:     // RIGHT EDGE
+1051:     const x_paper_right = canvasWidth.value / zoom - viewport.value.panX;
+1052:     const rightTop_uv = paperToUV(screenToPaper(canvasWidth.value, 0));
+1053:     const rightBottom_uv = paperToUV(screenToPaper(canvasWidth.value, canvasHeight.value));
+1054:     const uMin_right = Math.min(rightTop_uv.u, rightBottom_uv.u);
+1055:     const uMax_right = Math.max(rightTop_uv.u, rightBottom_uv.u);
+1056:     const uStart_right = Math.floor(uMin_right / majorSpacing) * majorSpacing;
+1057:     const uEnd_right = Math.ceil(uMax_right / majorSpacing) * majorSpacing;
+1058:     
+1059:     for (let u = uStart_right; u <= uEnd_right; u += majorSpacing) {
+1060:       const screenY = findULineIntersectionWithVertical(u, x_paper_right);
+1061:       if (screenY !== null && screenY >= -10 && screenY <= canvasHeight.value + 10) {
+1062:         rightLabels.push({ key: `right-${u}`, value: u, position: screenY, edge: 'right' });
+1063:       }
+1064:     }
+1065:   }
+1066: 
+1067:   return {
+1068:     top: topLabels,
+1069:     bottom: bottomLabels,
+1070:     left: leftLabels,
+1071:     right: rightLabels,
+1072:   };
+1073: });
+1074: 
+1075: 
+1076: // Render primitives to SVG attributes
+1077: const renderedPoints = computed(() => {
+1078:   return primitives.value
+1079:     .filter(p => p.type === 'point')
+1080:     .map(p => {
+1081:       const result = svgRenderer.renderPrimitive(p, viewport.value);
+1082:       // console.log('Rendering point primitive:', p, '→ SVG attrs:', result.attributes);
+1083:       return {
+1084:         primitive: p,
+1085:         attrs: result.attributes
+1086:       };
+1087:     });
+1088: });
+1089: 
+1090: const renderedLines = computed(() => {
+1091:   const linePrimitives = primitives.value.filter(p => p.type === 'line');
+1092:   const bhhlPrimitives = linePrimitives.filter(p => p.id.includes('line2d34') || p.id.includes('line2d35'));
+1093:   if (bhhlPrimitives.length > 0) {
+1094:     console.log('[SvgCanvas] BHHL primitives in renderedLines:', bhhlPrimitives.map(p => `${p.id} (plane: ${p.planeId})`));
+1095:   }
+1096:   return linePrimitives.map(p => {
+1097:       const result = svgRenderer.renderPrimitive(p, viewport.value);
+1098:       if (p.id.includes('line2d34') || p.id.includes('line2d35')) {
+1099:         console.log(`[SvgCanvas] Rendered ${p.id}:`, result.attributes);
+1100:       }
+1101:       return {
+1102:         primitive: p,
+1103:         attrs: result.attributes
+1104:       };
+1105:     });
+1106: });
+1107: 
+1108: const renderedSegments = computed(() => {
+1109:   return primitives.value
+1110:     .filter(p => p.type === 'segment')
+1111:     .map(p => {
+1112:       const result = svgRenderer.renderPrimitive(p, viewport.value);
+1113:       // console.log('Rendering segment primitive:', p, '→ SVG attrs:', result.attributes);
+1114:       return {
+1115:         primitive: p,
+1116:         attrs: result.attributes
+1117:       };
+1118:     });
+1119: });
+1120: 
+1121: const renderedCircles = computed(() => {
+1122:   return primitives.value
+1123:     .filter(p => p.type === 'circle')
+1124:     .map(p => {
+1125:       const result = svgRenderer.renderPrimitive(p, viewport.value);
+--- 1560-1605 ---
+1560:   
+1561:   // Update hover state in Paper only if it changed
+1562:   const previousHovered = paper.getHoveredElement();
+1563:   const newHovered = hit ? hit.elementId : undefined;
+1564:   
+1565:   if (previousHovered !== newHovered) {
+1566:     paper.setHoveredElement(newHovered);
+1567:     
+1568:     // Update global hover state for UI feedback
+1569:     if (newHovered && hit) {
+1570:       const label = getElementLabel(newHovered, hit.elementType, activePlane.value);
+1571:       hoverHighlight.setHoveredElement(
+1572:         newHovered,
+1573:         hit.elementType,
+1574:         label,
+1575:         false // Not temporary - show tooltip
+1576:       );
+1577:     } else {
+1578:       hoverHighlight.clearHover();
+1579:     }
+1580:     
+1581:     // Trigger re-render only when hover state actually changes
+1582:     renderTick.value++;
+1583:   }
+1584:   
+1585:   // Compute 3D coordinates with throttling (limits update frequency)
+1586:   const now = Date.now();
+1587:   if (now - lastCoordinateUpdate < COORDINATE_UPDATE_THROTTLE_MS) {
+1588:     return; // Skip this update, too soon since last one
+1589:   }
+1590:   lastCoordinateUpdate = now;
+1591:   
+1592:   // Get viewport transform matrix
+1593:   const viewportState = viewport.value;
+1594:   
+1595:   // Convert ViewportTransform to Matrix3
+1596:   const s = 1 / viewportState.zoom;
+1597:   const tx = -viewportState.panX;
+1598:   const ty = -viewportState.panY;
+1599:   const viewportMatrix = new Matrix3().set(
+1600:     s,  0,  tx,
+1601:     0,  s,  ty,
+1602:     0,  0,  1
+1603:   );
+1604:   
+1605:   // Compute 3D coordinates through full transformation pipeline

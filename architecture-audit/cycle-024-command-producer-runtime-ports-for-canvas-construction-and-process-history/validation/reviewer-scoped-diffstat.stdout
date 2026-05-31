@@ -1,0 +1,3 @@
+ frontend/tests/e2e/active-plane-shortcuts.spec.ts | 26 -----------------------
+ frontend/tests/e2e/selection-mask.spec.ts         | 25 ----------------------
+ 2 files changed, 51 deletions(-)

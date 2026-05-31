@@ -4,7 +4,7 @@
  * This module provides functions for calculating intersections between geometric
  * primitives using homogeneous coordinate representation.
  * 
- * All calculations follow constitution.md Principle V:
+ * All calculations follow the project's homogeneous-coordinate geometry policy:
  * - Use homogeneous coordinates throughout
  * - Convert parametric forms to implicit forms when needed
  * - Use cross products for line-line intersections
@@ -13,9 +13,6 @@
  * Line representation:
  * - Parametric form: P(t) = point + t * direction (storage format)
  * - Implicit form: ax + by + c = 0 (computation format for intersections)
- * 
- * Reference:
- * - .specify/memory/constitution.md#v-homogeneous-coordinate-system
  */
 
 import { Vector3 } from 'three';

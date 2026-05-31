@@ -1,0 +1,37 @@
+stderr | tests/unit/services/googleDriveService.spec.ts > GoogleDriveService > initialize > should throw error if initialization fails
+[GoogleDrive] Initialization failed: Error: Init failed
+    at /work/diedrico/frontend/tests/unit/services/googleDriveService.spec.ts:91:46
+    at file:///work/diedrico/node_modules/@vitest/runner/dist/index.js:135:14
+    at file:///work/diedrico/node_modules/@vitest/runner/dist/index.js:60:26
+    at runTest (file:///work/diedrico/node_modules/@vitest/runner/dist/index.js:781:17)
+    at runSuite (file:///work/diedrico/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runSuite (file:///work/diedrico/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runSuite (file:///work/diedrico/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runFiles (file:///work/diedrico/node_modules/@vitest/runner/dist/index.js:958:5)
+    at startTests (file:///work/diedrico/node_modules/@vitest/runner/dist/index.js:967:3)
+    at file:///work/diedrico/node_modules/vitest/dist/chunks/runtime-runBaseTests.oAvMKtQC.js:116:7
+[GoogleDrive] Error details: {}
+
+stderr | tests/unit/stores/authStore.spec.ts > authStore > restoreSession > should handle corrupted profile data
+[AuthStore] Failed to parse stored profile: SyntaxError: Unexpected token 'i', "invalid-json{" is not valid JSON
+    at JSON.parse (<anonymous>)
+    at Object.restoreSession (/work/diedrico/frontend/src/stores/authStore.ts:97:28)
+    at /work/diedrico/frontend/tests/unit/stores/authStore.spec.ts:166:34
+    at file:///work/diedrico/node_modules/@vitest/runner/dist/index.js:135:14
+    at file:///work/diedrico/node_modules/@vitest/runner/dist/index.js:60:26
+    at runTest (file:///work/diedrico/node_modules/@vitest/runner/dist/index.js:781:17)
+    at runSuite (file:///work/diedrico/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runSuite (file:///work/diedrico/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runSuite (file:///work/diedrico/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runFiles (file:///work/diedrico/node_modules/@vitest/runner/dist/index.js:958:5)
+
+stderr | tests/unit/components/propertiesDialog.spec.ts > PropertiesDialog > Save behavior > does not save with validation errors
+[PropertiesDialog] Validation failed
+
+stderr | tests/integration/projects.spec.ts > Projects API Integration Tests > GET /api/projects > skips invalid project filenames and malformed JSON without leaking stored domain data
+Failed to read project project_1234567890000_abcdefghi.json: Error: Failed to read file
+    at FileStorage.readJSON (/work/diedrico/backend/src/storage/FileStorage.ts:38:13)
+    at ProjectRepository.list (/work/diedrico/backend/src/storage/ProjectRepository.ts:54:25)
+    at /work/diedrico/backend/src/api/projects.ts:277:22
+    at /work/diedrico/backend/src/api/projects.ts:56:7
+

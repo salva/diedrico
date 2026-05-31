@@ -7,3 +7,20 @@
 
   ➜  Local:   http://localhost:5173/
   ➜  Network: http://10.0.3.113:5173/
+10:32:16 AM [vite] page reload src/services/GoogleDriveService.ts
+10:32:16 AM [vite] page reload src/utils/projectionPlaneUtils.ts
+10:32:16 AM [vite] page reload src/domain/world/Guide.ts
+10:32:16 AM [vite] page reload src/commands/operations/world/UpdateElementStyleOp.ts
+10:32:16 AM [vite] page reload src/commands/operations/world/RemoveElementOps.ts
+10:32:16 AM [vite] page reload src/commands/operations/processTree/ToggleOutputOp.ts
+10:32:16 AM [vite] page reload src/commands/operations/processTree/ToggleEncapsulationOp.ts
+10:32:16 AM [vite] page reload src/utils/rectangleGrid.ts
+10:32:16 AM [vite] page reload src/domain/world/HingeLine.ts
+10:32:47 AM [vite] page reload src/services/GoogleDriveService.ts
+10:32:47 AM [vite] page reload src/utils/rectangleGrid.ts
+10:32:47 AM [vite] page reload src/utils/projectionPlaneUtils.ts
+10:34:29 AM [vite] page reload src/commands/operations/world/RemoveElementOps.ts
+10:37:18 AM [vite] page reload playwright-report/index.html
+10:38:43 AM [vite] page reload playwright-report/index.html
+10:38:43 AM [vite] page reload playwright-report/index.html
+10:40:01 AM [vite] page reload playwright-report/index.html
