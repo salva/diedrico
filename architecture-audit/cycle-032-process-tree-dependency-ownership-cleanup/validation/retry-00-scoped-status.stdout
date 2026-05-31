@@ -1,0 +1,17 @@
+?? .saivage/stages/cycle-032-correct-initializationops-validation-gate/reports/
+?? architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/retry-00-scoped-status.stderr
+?? architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/retry-00-scoped-status.stdout
+?? architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/reviewer-commit-diff.stderr
+?? architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/reviewer-commit-diff.stdout
+?? architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/reviewer-commit-show.stderr
+?? architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/reviewer-commit-show.stdout
+?? architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/reviewer-git-diff.stderr
+?? architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/reviewer-git-diff.stdout
+?? architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/reviewer-git-status.stderr
+?? architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/reviewer-git-status.stdout
+?? architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/reviewer-processStore-check.stderr
+?? architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/reviewer-processStore-check.stdout
+?? architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/reviewer-static-scan.stderr
+?? architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/reviewer-static-scan.stdout
+?? architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/reviewer-vitest-failure-scan.stderr
+?? architecture-audit/cycle-032-process-tree-dependency-ownership-cleanup/validation/reviewer-vitest-failure-scan.stdout
