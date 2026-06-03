@@ -1,7 +1,10 @@
-import type { Matrix3, Vector3 } from 'three';
-import { InputService, type ViewportTransform } from './InputService';
+import { Vector3, type Matrix3 } from 'three';
 
-const inputService = new InputService();
+export interface ViewportTransform {
+  zoom: number;
+  panX: number;
+  panY: number;
+}
 
 export interface CanvasPoint {
   readonly x: number;
@@ -25,12 +28,8 @@ export function canvasToPlaneCoordinates(
   paperToPlaneTransform: Matrix3,
   viewport: ViewportTransform,
 ): Vector3 | null {
-  return inputService.canvasToPlaneCoordinates(
-    canvasPoint.x,
-    canvasPoint.y,
-    paperToPlaneTransform,
-    viewport,
-  );
-}
+  const paperX = canvasPoint.x / viewport.zoom - viewport.panX;
+  const paperY = canvasPoint.y / viewport.zoom - viewport.panY;
 
-export type { ViewportTransform };
+  return new Vector3(paperX, paperY, 1).applyMatrix3(paperToPlaneTransform);
+}

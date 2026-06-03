@@ -1,5 +1,5 @@
 import { Vector3 } from 'three';
-import type { ThreePresentationAdapter } from './ThreePresentationAdapter';
+import type { ThreeHingeAdapter } from './ThreePresentationAdapter';
 import { domainDirectionToThreeJS, domainToThreeJS } from '@/utils/threeUtils';
 import type { ThreeHingeSourceDto } from './ThreePresentationReadModel';
 import { THREE_STYLE, visibleFromDomain } from './ThreeStylePolicy';
@@ -11,7 +11,7 @@ export interface ThreeHingeReadPort {
   getHingeModels(): ThreeHingeSourceDto[];
 }
 
-export function createThreeHingeReadPort(adapter: ThreePresentationAdapter): ThreeHingeReadPort {
+export function createThreeHingeReadPort(adapter: ThreeHingeAdapter): ThreeHingeReadPort {
   const getHingeLines = () => adapter.getHingeLines();
   const realizationContext = adapter.realizationContext;
   return {

@@ -1,5 +1,5 @@
 import { Quaternion, Vector3 } from 'three';
-import type { ThreePresentationAdapter } from './ThreePresentationAdapter';
+import type { ThreeGuideAdapter } from './ThreePresentationAdapter';
 import { isGuide2D, isSiblingGuide2D } from '@/domain/world/Guide';
 import { getPlaneMeshSize } from '@/config/rendering3D';
 import { applyMatrix4x3, domainDirectionToThreeJS, domainToThreeJS } from '@/utils/threeUtils';
@@ -14,7 +14,7 @@ export interface ThreeGuideReadPort {
   getGuideIntersectionModels(): ThreeGuideIntersectionReadModel;
 }
 
-export function createThreeGuideReadPort(adapter: ThreePresentationAdapter): ThreeGuideReadPort {
+export function createThreeGuideReadPort(adapter: ThreeGuideAdapter): ThreeGuideReadPort {
   const realizationContext = adapter.realizationContext;
   return {
     getSelectedGuideModels: (selectedIds: readonly string[]) => selectedIds.flatMap(selectedId => {
@@ -78,4 +78,3 @@ function directionFromPlane(direction2D: Vector3, matrix: number[]): Vector3 {
 
 function projectionPlaneNormal(e: number[]): Vector3 { return new Vector3().crossVectors(new Vector3(e[0], e[3], e[6]), new Vector3(e[1], e[4], e[7])).normalize(); }
 function v(vector: { x: number; y: number; z: number }): Vec3 { return { x: vector.x, y: vector.y, z: vector.z }; }
-

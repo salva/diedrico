@@ -1,5 +1,5 @@
 import { Quaternion, Vector3, Vector4 } from 'three';
-import type { ThreePresentationAdapter } from './ThreePresentationAdapter';
+import type { ThreeReconstructedElementAdapter } from './ThreePresentationAdapter';
 import { getPlaneMeshSize } from '@/config/rendering3D';
 import { domainDirectionToThreeJS, domainToThreeJS } from '@/utils/threeUtils';
 import type { ThreeReconstructedReadModel } from './ThreePresentationReadModel';
@@ -12,7 +12,7 @@ export interface ThreeReconstructedElementReadPort {
   getReconstructedModels(): ThreeReconstructedReadModel;
 }
 
-export function createThreeReconstructedElementReadPort(adapter: ThreePresentationAdapter): ThreeReconstructedElementReadPort {
+export function createThreeReconstructedElementReadPort(adapter: ThreeReconstructedElementAdapter): ThreeReconstructedElementReadPort {
   return {
     getReconstructedModels: () => ({
       points: adapter.get3DPoints().flatMap(point => {

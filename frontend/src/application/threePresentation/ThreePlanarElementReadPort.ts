@@ -1,5 +1,5 @@
 import { Vector3 } from 'three';
-import type { ThreePresentationAdapter } from './ThreePresentationAdapter';
+import type { ThreePlanarElementAdapter } from './ThreePresentationAdapter';
 import { Segment2DByPoints } from '@/domain/world/Segment';
 import { applyMatrix4x3, domainToThreeJS, type Matrix4x3 } from '@/utils/threeUtils';
 import type { ThreePlanarElementSourceDto, ThreePlanarPlaneReadModel } from './ThreePresentationReadModel';
@@ -12,7 +12,7 @@ export interface ThreePlanarElementReadPort {
   getPlanarPlaneModels(): ThreePlanarPlaneReadModel[];
 }
 
-export function createThreePlanarElementReadPort(adapter: ThreePresentationAdapter): ThreePlanarElementReadPort {
+export function createThreePlanarElementReadPort(adapter: ThreePlanarElementAdapter): ThreePlanarElementReadPort {
   const getProjectionPlanes = () => adapter.getProjectionPlanes();
   const realizationContext = adapter.realizationContext;
   return {

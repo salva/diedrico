@@ -2,7 +2,7 @@ import { Vector3, Vector4 } from 'three';
 import { AuxiliaryProjectionPlane } from '@/domain/world/projectionPlane/AuxiliaryProjectionPlane';
 import type { ProjectionPlaneRealization3D } from '@/domain/world/projectionPlane/ProjectionPlaneRealization';
 import type { Plane3DRealization3D } from '@/domain/world/Element3DRealization3D';
-import type { ThreePresentationAdapter } from './ThreePresentationAdapter';
+import type { ThreeProjectionPlaneAdapter } from './ThreePresentationAdapter';
 import { getPlaneMeshSize, PLANE_RENDERING_CONFIG } from '@/config/rendering3D';
 import { applyMatrix4x3, domainDirectionToThreeJS, domainToThreeJS, type Matrix4x3 } from '@/utils/threeUtils';
 import { convertPlaneRectangleTo2D, generateClippedGrid, type Segment2D } from '@/utils/rectangleGrid';
@@ -15,7 +15,7 @@ export interface ThreeProjectionPlaneReadPort {
   getProjectionPlaneModels(): ThreeProjectionPlaneReadModel[];
 }
 
-export function createThreeProjectionPlaneReadPort(adapter: ThreePresentationAdapter): ThreeProjectionPlaneReadPort {
+export function createThreeProjectionPlaneReadPort(adapter: ThreeProjectionPlaneAdapter): ThreeProjectionPlaneReadPort {
   return {
     getProjectionPlaneModels: () => adapter.getProjectionPlanes().flatMap(plane => {
       const projectionRealization = adapter.getProjectionPlane3DRealization(plane.id);
@@ -69,4 +69,3 @@ function planeBasis(e: number[]) {
 }
 
 function v(vector: { x: number; y: number; z: number }): Vec3 { return { x: vector.x, y: vector.y, z: vector.z }; }
-

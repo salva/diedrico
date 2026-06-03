@@ -8,10 +8,9 @@ import { describe, it, expect } from 'vitest';
 import { Vector3 } from 'three';
 import { FixedProjectionPlane } from '@/domain/world/projectionPlane/FixedProjectionPlane';
 import { createTestWorld } from '../helpers/worldHelpers';
-import { InputService, type ViewportTransform } from '@/application/canvas/InputService';
+import { canvasToPlaneCoordinates, type ViewportTransform } from '@/application/canvas/CanvasCoordinateConverter';
 
 describe('Coordinate Transformation Round-Trips', () => {
-  const inputService = new InputService();
   const { world } = createTestWorld(); // Initialize world with planes
   
   describe('P_H (Horizontal Plane)', () => {
@@ -31,9 +30,8 @@ describe('Coordinate Transformation Round-Trips', () => {
       const canvasX = screenX;
       const canvasY = screenY;
       
-      const planePos = inputService.canvasToPlaneCoordinates(
-        canvasX,
-        canvasY,
+      const planePos = canvasToPlaneCoordinates(
+        { x: canvasX, y: canvasY },
         realization.paperToPlane2D,
         viewport
       );
@@ -68,8 +66,8 @@ describe('Coordinate Transformation Round-Trips', () => {
       ];
       
       testCases.forEach(({ x, y }) => {
-        const planePos = inputService.canvasToPlaneCoordinates(
-          x, y,
+        const planePos = canvasToPlaneCoordinates(
+          { x, y },
           realization.paperToPlane2D,
           viewport
         );
@@ -98,9 +96,8 @@ describe('Coordinate Transformation Round-Trips', () => {
       const screenX = 200;
       const screenY = 300;
       
-      const planePos = inputService.canvasToPlaneCoordinates(
-        screenX,
-        screenY,
+      const planePos = canvasToPlaneCoordinates(
+        { x: screenX, y: screenY },
         realization.paperToPlane2D,
         viewport
       );
@@ -126,9 +123,8 @@ describe('Coordinate Transformation Round-Trips', () => {
       const testPoint = { x: 150, y: 250 };
       
       viewports.forEach(viewport => {
-        const planePos = inputService.canvasToPlaneCoordinates(
-          testPoint.x,
-          testPoint.y,
+        const planePos = canvasToPlaneCoordinates(
+          testPoint,
           realization.paperToPlane2D,
           viewport
         );
@@ -158,9 +154,8 @@ describe('Coordinate Transformation Round-Trips', () => {
       const canvasY = 150;
       
       // Forward transform
-      const planePos = inputService.canvasToPlaneCoordinates(
-        canvasX,
-        canvasY,
+      const planePos = canvasToPlaneCoordinates(
+        { x: canvasX, y: canvasY },
         realization.paperToPlane2D,
         viewport
       );
@@ -188,8 +183,8 @@ describe('Coordinate Transformation Round-Trips', () => {
       
       // Perform 10 round-trips
       for (let i = 0; i < 10; i++) {
-        const planePos = inputService.canvasToPlaneCoordinates(
-          x, y,
+        const planePos = canvasToPlaneCoordinates(
+          { x, y },
           realization.paperToPlane2D,
           viewport
         );
