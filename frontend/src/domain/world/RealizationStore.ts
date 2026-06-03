@@ -93,6 +93,11 @@ export class RealizationStore {
     this.projectionPlane3D.clear();
   }
 
+  clear(): void {
+    this.clearProjectionPlanes();
+    this.clear3DElementCaches();
+  }
+
   clear3DElementCaches(): void {
     this.point3D.clear();
     this.line3D.clear();

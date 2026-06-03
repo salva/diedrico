@@ -168,16 +168,24 @@ export class World {
    * Resets world to initial state with only fixed elements
    */
   clear(): void {
-    // Phase 22.5.3: Clear plane storage instead of World storage
     for (const plane of this.projectionPlanes.values()) {
       plane.clear();
     }
     
-    this.hingeLines.clear();
+    this.points3D.clear();
+    this.lines3D.clear();
+    this.segments3D.clear();
     this.planes3D.clear();
     this.projectionPlanes.clear();
-    this.realizations.clearProjectionPlanes();
+    this.hingeLines.clear();
+    this.realizations.clear();
     this.idAllocator.restore(1);
+    this.labelGenerator.reset();
+    this.point3DCounter = 0;
+    this.line3DCounter = 0;
+    this.segment3DCounter = 0;
+    this.plane3DUserCounter = 0;
+    this.originPoint = undefined;
     this.processTree = new ProcessTree();
     this.dependencyService = new DependencyService();
     
@@ -600,6 +608,17 @@ export class World {
     return this.projectionPlanes.get(id);
   }
 
+  removeProjectionPlaneByIdForUndo(id: string): void {
+    const plane = this.projectionPlanes.get(id);
+    if (plane) {
+      plane.clear();
+    }
+    this.projectionPlanes.delete(id);
+    this.realizations.clearProjectionPlane2D(id);
+    this.realizations.clearProjectionPlane3D(id);
+    this.dependencyService.unregisterNode(id);
+  }
+
   /**
    * Get projection plane by label (semantic access)
    * 
@@ -787,6 +806,11 @@ export class World {
    */
   removeHingeLine(id: string): void {
     this.hingeLines.delete(id);
+  }
+
+  removeHingeLineByIdForUndo(id: string): void {
+    this.hingeLines.delete(id);
+    this.dependencyService.unregisterNode(id);
   }
 
   /**
@@ -1081,6 +1105,10 @@ export class World {
     this.realizations.clearPlane3D(id);
     this.dependencyService.unregisterNode(id);
     
+  }
+
+  removePlane3DByIdForUndo(id: string): void {
+    this.remove3DPlane(id);
   }
 
   /**

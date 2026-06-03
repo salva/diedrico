@@ -54,7 +54,7 @@ export class UpdateFreePoint2DPositionOp implements IOperation {
       }
 
       if (!this.previousPosition) {
-        this.previousPosition = toVector3((freePoint as any).position);
+        this.previousPosition = toVector3(freePoint.position);
         this.previousLabel = freePoint.label;
         this.previousLocked = freePoint.locked;
       }

@@ -57,8 +57,8 @@ export function constructProjectionPlaneSetup(
 
   // Get the HalfHingeLine2D on P_H for intersection operations
   const halfHingeLineH = P_H.getAllLines().find(
-    line => line instanceof HalfHingeLine2D && (line as any).hingeLineId === hingeLineId
-  ) as any;
+    (line): line is HalfHingeLine2D => line instanceof HalfHingeLine2D && line.hingeLineId === hingeLineId
+  );
   if (!halfHingeLineH) {
     throw new Error('Half hinge line on P_H not found');
   }
@@ -102,8 +102,8 @@ export function constructProjectionPlaneSetup(
   // L4 is perpendicular to HL_HV (which is horizontal), so it's vertical
   // Find half hinge line on P_V
   const halfHingeLineV = P_V.getAllLines().find(
-    line => line instanceof HalfHingeLine2D && (line as any).hingeLineId === hingeLineId
-  ) as any;
+    (line): line is HalfHingeLine2D => line instanceof HalfHingeLine2D && line.hingeLineId === hingeLineId
+  );
   if (!halfHingeLineV) {
     throw new Error('Half hinge line on P_V not found');
   }
