@@ -760,13 +760,6 @@ export class World {
     return this.processTree;
   }
 
-  /**
-   * Get the dependency service
-   */
-  getDependencyService(): DependencyService {
-    return this.dependencyService;
-  }
-
   getDependencyQuery(): DependencyQueryPort {
     return this.dependencyService;
   }

@@ -326,82 +326,21 @@ export class DependencyService implements DependencyRegistrarPort, DependencyQue
     // Invalidate the changed element
     invalidateCallback(elementId);
     
-    // Invalidate each dependent with depth tracking
+    // Invalidate each dependent
     const visited = new Set<string>([elementId]);
-    const queue: { id: string; depth: number }[] = [{ id: elementId, depth: 0 }];
+    const queue: string[] = [elementId];
     
     while (queue.length > 0) {
-      const { id, depth } = queue.shift()!;
+      const id = queue.shift()!;
       const directDependents = Array.from(this.dependentsMap.get(id) || []);
-      void depth;
       
       for (const dependentId of directDependents) {
         if (!visited.has(dependentId)) {
           visited.add(dependentId);
           invalidateCallback(dependentId);
-          queue.push({ id: dependentId, depth: depth + 1 });
+          queue.push(dependentId);
         }
       }
-    }
-  }
-
-  /**
-   * Trace invalidation propagation from a changed element
-   * Shows the cascading invalidation path through the dependency graph
-   * 
-   * @param elementId - Element that changed
-   * @returns Array of invalidation layers showing the propagation order
-   */
-  traceInvalidation(elementId: string): { elementId: string; depth: number }[] {
-    
-    const trace: { elementId: string; depth: number }[] = [];
-    const visited = new Set<string>();
-    const queue: { id: string; depth: number }[] = [{ id: elementId, depth: 0 }];
-    
-    while (queue.length > 0) {
-      const { id, depth } = queue.shift()!;
-      
-      if (visited.has(id)) continue;
-      visited.add(id);
-      
-      const dependents = Array.from(this.dependentsMap.get(id) || []);
-      
-      trace.push({ elementId: id, depth });
-      
-      // Add dependents to queue for next level
-      for (const depId of dependents) {
-        if (!visited.has(depId)) {
-          queue.push({ id: depId, depth: depth + 1 });
-        }
-      }
-    }
-    
-    return trace;
-  }
-
-  /**
-   * Dump the full dependency graph to console
-   * Useful for debugging dependency tracking issues
-   * 
-   * @param filterPrefix - Optional prefix to filter element IDs (e.g., "proj_plane_" to see only projection planes)
-   */
-  dumpDependencyGraph(filterPrefix?: string): void {
-    
-    // Sort element IDs for consistent output
-    const allElementIds = Array.from(new Set([
-      ...this.dependenciesMap.keys(),
-      ...this.dependentsMap.keys()
-    ])).sort();
-    
-    const filtered = filterPrefix 
-      ? allElementIds.filter(id => id.startsWith(filterPrefix))
-      : allElementIds;
-    
-    for (const elementId of filtered) {
-      const dependencies = Array.from(this.dependenciesMap.get(elementId) || []).sort();
-      const dependents = Array.from(this.dependentsMap.get(elementId) || []).sort();
-      void dependencies;
-      void dependents;
     }
   }
 }

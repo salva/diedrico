@@ -4,6 +4,7 @@ import type { Line2D } from '../Line';
 import type { Circle2D } from '../Circle';
 import type { Point2D } from '../Point';
 import type { ProjectionPlane } from '@/domain/world/projectionPlane/ProjectionPlane';
+import type { DependencyRegistrarPort } from '@/domain/world/DependencyPorts';
 import type { ProjectionPlaneRealization2D, ProjectionPlaneRealization3D } from './ProjectionPlaneRealization';
 
 export interface ProjectionElementLookupContext {
@@ -51,14 +52,9 @@ export interface ProjectionOwnerPlaneQuery {
   getPlaneForElement(id: string): ProjectionPlane | undefined;
 }
 
-export interface ProjectionPlaneDependencyRegistrar {
-  registerNode(id: string, dependencies: string[]): void;
-  unregisterNode(id: string): void;
-}
-
 export interface ProjectionPlaneMutationContext extends ProjectionPlaneRealizationContext, ProjectionOwnerPlaneQuery {
   getNextId(): number;
   generateDefaultLabel(elementId: string, elementType: string): string;
-  getDependencyRegistrar(): ProjectionPlaneDependencyRegistrar;
+  getDependencyRegistrar(): DependencyRegistrarPort;
   getSiblingPlaneForIntersection?(point: Point2D): string | undefined;
 }

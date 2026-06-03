@@ -144,7 +144,7 @@ describe('RemoveElement Operations (T286, T290)', () => {
       const actionNode2 = addTestAction(p2.id);
       const actionNode3 = addTestAction(line.id);
       
-      world.getDependencyService().registerNode(line.id, [p1.id, p2.id]);
+      world.getDependencyRegistrar().registerNode(line.id, [p1.id, p2.id]);
       
       // Build delete command with cascade
       const deleteCmd = new Command('Delete point with cascade', world);

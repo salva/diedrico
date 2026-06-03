@@ -1,10 +1,10 @@
 import type { Circle2D, Circle2DRealization2D } from '../Circle';
+import type { DependencyRegistrarPort } from '../DependencyPorts';
 import type { Line2D, Line2DRealization2D } from '../Line';
 import type { Point2D, Point2DRealization2D } from '../Point';
-import type { ProjectionPlaneDependencyRegistrar } from './ProjectionPlaneContext';
 
 export interface ProjectionPlaneStoreMutationContext {
-  getDependencyRegistrar(): ProjectionPlaneDependencyRegistrar;
+  getDependencyRegistrar(): DependencyRegistrarPort;
 }
 
 export class ProjectionPlaneElementStore {

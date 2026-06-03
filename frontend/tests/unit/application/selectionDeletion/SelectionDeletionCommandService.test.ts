@@ -56,7 +56,7 @@ function createDependentLineFixture() {
   addExplicitProcessAction(world, createPointAction(p1));
   addExplicitProcessAction(world, createPointAction(p2));
   addExplicitProcessAction(world, createLineAction(lineId));
-  world.getDependencyService().registerNode(lineId, [p1, p2]);
+  world.getDependencyRegistrar().registerNode(lineId, [p1, p2]);
   setupCmd.commit();
   commandStack.push(setupCmd);
   return { world, commandStack, planeId, selectedPointId: p1, retainedPointId: p2, lineId };

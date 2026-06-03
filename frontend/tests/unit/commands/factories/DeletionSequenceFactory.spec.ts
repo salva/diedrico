@@ -124,7 +124,7 @@ describe('DeletionSequenceFactory', () => {
       addExplicitProcessAction(createPointAction(point1Id));
       addExplicitProcessAction(createPointAction(point2Id));
       addExplicitProcessAction(createLineAction(lineId));
-      world.getDependencyService().registerNode(lineId, [point1Id, point2Id]);
+      world.getDependencyRegistrar().registerNode(lineId, [point1Id, point2Id]);
       setupCmd.commit();
 
       const deleteCmd = new Command('Delete point with cascade', world);
@@ -161,7 +161,7 @@ describe('DeletionSequenceFactory', () => {
       addExplicitProcessAction(createPointAction(centerId));
       addExplicitProcessAction(createPointAction(circumferenceId));
       addExplicitProcessAction(createCircleAction(circleId));
-      world.getDependencyService().registerNode(circleId, [centerId, circumferenceId]);
+      world.getDependencyRegistrar().registerNode(circleId, [centerId, circumferenceId]);
       setupCmd.commit();
 
       const deleteCmd = new Command('Delete center with cascade', world);
@@ -224,7 +224,7 @@ describe('DeletionSequenceFactory', () => {
       addExplicitProcessAction(createPointAction(point1Id));
       addExplicitProcessAction(createPointAction(point2Id));
       addExplicitProcessAction(createLineAction(lineId));
-      world.getDependencyService().registerNode(lineId, [point1Id, point2Id]);
+      world.getDependencyRegistrar().registerNode(lineId, [point1Id, point2Id]);
       setupCmd.commit();
       commandStack.push(setupCmd);
 
@@ -264,7 +264,7 @@ describe('DeletionSequenceFactory', () => {
       addExplicitProcessAction(createPointAction(point1Id));
       addExplicitProcessAction(createPointAction(point2Id));
       addExplicitProcessAction(createSegmentAction(segmentId));
-      world.getDependencyService().registerNode(segmentId, [point1Id, point2Id]);
+      world.getDependencyRegistrar().registerNode(segmentId, [point1Id, point2Id]);
       setupCmd.commit();
 
       const deleteCmd = new Command('Delete segment', world);
