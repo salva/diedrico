@@ -19,7 +19,7 @@ import type { CommandStack } from '@/commands/CommandStack';
 import { Command } from '@/commands/Command';
 import { ProjectService } from '@/application/appShell/ProjectService';
 import { Vector3 } from 'three';
-import { createTestWorld } from '../../helpers/worldHelpers';
+import { createTestWorld } from '../../../helpers/worldHelpers';
 import { 
   AddFreePoint2DOp 
 } from '@/commands/operations/world/AddFreePointOp';

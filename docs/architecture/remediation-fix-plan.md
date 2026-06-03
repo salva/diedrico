@@ -8,6 +8,8 @@ Gap review: [`remediation-fix-plan-review.md`](./remediation-fix-plan-review.md)
 
 Primary objective: remove compatibility shims, stale bridges, and overfitted helper code while preserving the cleaner boundaries established by the remediation work.
 
+Execution status: Phases 0 through 7 are complete for the current remediation batch as of 2026-06-04. Phase 7 updated architecture docs, moved stale service-directory tests to layer-owned folders, and enabled the valid Google Drive skipped tests.
+
 Non-goals:
 
 - Do not add compatibility wrappers for old APIs.
@@ -868,6 +870,8 @@ npm test --workspace=frontend
 ```
 
 ## Phase 7: Documentation Update
+
+Status: Complete as of 2026-06-04. `overview.md`, `rendering.md`, and `remediation-plan.md` now reflect the current boundaries; historical review docs remain provenance. Stale tests were moved from `frontend/tests/unit/services/` into application, infrastructure, and rendering test folders. The Google Drive skipped tests were still valid and are now enabled.
 
 Purpose: make docs reflect the cleaned architecture rather than the remediation journey.
 

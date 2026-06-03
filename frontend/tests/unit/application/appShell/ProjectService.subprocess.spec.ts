@@ -10,7 +10,7 @@ import type { CommandStack } from '@/commands/CommandStack';
 import { ProjectService } from '@/application/appShell/ProjectService';
 import { deserializeOperation } from '@/commands/operations/OperationRegistry';
 import { Command } from '@/commands/Command';
-import { createTestWorld } from '../../helpers/worldHelpers';
+import { createTestWorld } from '../../../helpers/worldHelpers';
 
 import { PushSubprocessOp } from '@/commands/operations/processTree/PushSubprocessOp';
 import { PopSubprocessOp } from '@/commands/operations/processTree/PopSubprocessOp';

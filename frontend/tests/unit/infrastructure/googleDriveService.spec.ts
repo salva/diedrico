@@ -278,11 +278,8 @@ describe('GoogleDriveService', () => {
       await expect(service.listFiles()).rejects.toThrow('User not signed in');
     });
 
-    it.skip('should handle authentication expired error', async () => {
-      // Note: This test is skipped because folderId caching makes it complex to test
-      // The error handling is verified through manual testing
-      // Reset and setup mocks for this test
-      vi.clearAllMocks();
+    it('should handle authentication expired error', async () => {
+      mockGapi.client.drive.files.list.mockReset();
       mockGapi.client.getToken.mockReturnValue({ access_token: 'test-token' });
       
       // First call succeeds (folder lookup), second call fails (list files)
@@ -336,10 +333,7 @@ describe('GoogleDriveService', () => {
       );
     });
 
-    it.skip('should add .diedrico extension if missing', async () => {
-      // Note: This test is skipped due to folder ID caching complexity
-      // The extension logic is simple and verified through other tests
-      // Mock folder lookup
+    it('should add .diedrico extension if missing', async () => {
       mockGapi.client.drive.files.list.mockResolvedValue({
         result: {
           files: [{ id: 'folder-123', name: 'diedrico' }],
