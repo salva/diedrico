@@ -45,6 +45,17 @@ describe('ProcessTree', () => {
   });
 
   describe('explicit action-group insertion', () => {
+    it('assigns deterministic action node IDs', () => {
+      const action1 = createPointAction('point_1');
+      const action2 = createPointAction('point_2');
+
+      const group1 = addActionInExplicitGroup(action1);
+      const group2 = addActionInExplicitGroup(action2);
+
+      expect(group1.children[0]?.id).toBe('node1');
+      expect(group2.children[0]?.id).toBe('node2');
+    });
+
     it('should add a point action to an explicit group', () => {
       const action = createPointAction('point_1');
       const group = addActionInExplicitGroup(action);
@@ -78,6 +89,15 @@ describe('ProcessTree', () => {
   });
 
   describe('addSubprocess', () => {
+    it('reserves explicit subprocess IDs before generating later node IDs', () => {
+      tree.pushSubprocess('Loaded subprocess', 'node7');
+      tree.popSubprocess();
+
+      const subprocess = tree.addSubprocess('Later subprocess');
+
+      expect(subprocess.id).toBe('node8');
+    });
+
     it('should add a subprocess to the root', () => {
       const subprocess = tree.addSubprocess('Construction Phase 1');
 

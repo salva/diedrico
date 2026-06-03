@@ -89,15 +89,13 @@ describe('Architecture: domain world boundary', () => {
     expect(processTreeFile.content).not.toMatch(/subscribe\(/);
   });
 
-  it('keeps ProcessTree ID allocation delegated to ProcessTreeIdAllocator', () => {
-    const files = scanTextFiles(['src/domain/processTree']);
-    const [processTreeFile] = files.filter(file => file.projectPath === 'src/domain/processTree/ProcessTree.ts');
-    const [allocatorFile] = files.filter(file => file.projectPath === 'src/domain/processTree/ProcessTreeIdAllocator.ts');
+  it('keeps ProcessTree generated IDs deterministic and local to the domain model', () => {
+    const [processTreeFile] = scanTextFiles(['src/domain/processTree'])
+      .filter(file => file.projectPath === 'src/domain/processTree/ProcessTree.ts');
 
-    expect(allocatorFile).toBeDefined();
-    expect(processTreeFile.content).toMatch(/new ProcessTreeIdAllocator\(\)/);
-    expect(processTreeFile.content).not.toMatch(/Date\.now\(\)|Math\.random\(\)|generateId\(/);
-    expect(allocatorFile.content).toMatch(/nextNodeId\(\): string/);
+    expect(processTreeFile.content).toMatch(/nextNodeCounter/);
+    expect(processTreeFile.content).toMatch(/reserveNodeId/);
+    expect(processTreeFile.content).not.toMatch(/Date\.now\(\)|Math\.random\(\)/);
   });
 
   it('keeps dependency access narrowed to query and registrar ports outside World', () => {
@@ -108,18 +106,6 @@ describe('Architecture: domain world boundary', () => {
       .map(file => file.projectPath);
 
     expect(offenders).toEqual([]);
-  });
-
-  it('keeps concrete World entity construction in WorldEntityFactory', () => {
-    const files = scanTextFiles(['src/domain/world']);
-    const [worldFile] = files.filter(file => file.projectPath === 'src/domain/world/World.ts');
-    const [factoryFile] = files.filter(file => file.projectPath === 'src/domain/world/WorldEntityFactory.ts');
-
-    expect(factoryFile).toBeDefined();
-    expect(worldFile.content).not.toMatch(/new (Plane3DFixed|FixedProjectionPlane|HingeLine)\(/);
-    expect(worldFile.content).toMatch(/createFixed3DPlane/);
-    expect(worldFile.content).toMatch(/createFixedProjectionPlane/);
-    expect(worldFile.content).toMatch(/createHingeLineEntity/);
   });
 
   it('keeps domain code free of console side effects', () => {

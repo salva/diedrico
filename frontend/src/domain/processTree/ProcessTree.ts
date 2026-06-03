@@ -7,7 +7,6 @@
  */
 
 import type { Action } from './Action';
-import { ProcessTreeIdAllocator } from './ProcessTreeIdAllocator';
 
 export const PROCESS_NODE_TYPE = {
   SUBPROCESS: 'subprocess',
@@ -46,7 +45,7 @@ export type ProcessNode = Subprocess | ActionGroup | ActionNode;
 
 export class ProcessTree {
   root: Subprocess;
-  private readonly idAllocator = new ProcessTreeIdAllocator();
+  private nextNodeCounter = 1;
   private subprocessStack: Subprocess[] = [];
 
   constructor() {
@@ -77,8 +76,12 @@ export class ProcessTree {
    * @param id - Optional ID to use (for deserialization), otherwise generates new ID
    */
   pushSubprocess(name: string, id?: string): Subprocess {
+    if (id) {
+      this.reserveNodeId(id);
+    }
+
     const subprocess: Subprocess = {
-      id: id || this.idAllocator.nextNodeId(),
+      id: id || this.nextNodeId(),
       type: 'subprocess',
       name,
       children: [],
@@ -124,7 +127,7 @@ export class ProcessTree {
    */
   addSubprocess(name: string, parent?: Subprocess): Subprocess {
     const subprocess: Subprocess = {
-      id: this.idAllocator.nextNodeId(),
+      id: this.nextNodeId(),
       type: 'subprocess',
       name,
       children: [],
@@ -170,7 +173,7 @@ export class ProcessTree {
 
     const actionNode: ActionNode = {
       ...action,
-      id: this.idAllocator.nextNodeId(),
+      id: this.nextNodeId(),
       type: 'action',
       isOutput: action.isOutput !== undefined ? action.isOutput : true,
       created: new Date()
@@ -250,6 +253,17 @@ export class ProcessTree {
       node.children.forEach(child => {
         if (child) this.traverseAllNodes(child, callback);
       });
+    }
+  }
+
+  private nextNodeId(): string {
+    return `node${this.nextNodeCounter++}`;
+  }
+
+  private reserveNodeId(id: string): void {
+    const match = /^node(\d+)$/.exec(id);
+    if (match) {
+      this.nextNodeCounter = Math.max(this.nextNodeCounter, Number(match[1]) + 1);
     }
   }
 

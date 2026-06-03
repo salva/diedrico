@@ -87,8 +87,9 @@ import { Segment2D, Segment2DByPoints } from './Segment';
 import { Circle2D } from './Circle';
 import { Guide2D } from './Guide';
 import { HingeLine, HalfHingeLine2D } from './HingeLine';
-import { Plane3D, type Plane3DFixed } from './Plane';
+import { Plane3D, Plane3DFixed } from './Plane';
 import { ProjectionPlane } from './projectionPlane/ProjectionPlane';
+import { FixedProjectionPlane } from './projectionPlane/FixedProjectionPlane';
 import { ProjectionPlaneRealization2D, ProjectionPlaneRealization3D } from './projectionPlane/ProjectionPlaneRealization';
 import { ProcessTree } from '../processTree/ProcessTree';
 import { DependencyService } from './DependencyService';
@@ -106,7 +107,6 @@ import { getContainerIdFromElementId } from './ElementId';
 import { LabelGenerator } from './LabelGenerator';
 import { RealizationStore } from './RealizationStore';
 import { WorldIdAllocator } from './WorldIdAllocator';
-import { createFixed3DPlane, createFixedProjectionPlane, createHingeLineEntity } from './WorldEntityFactory';
 
 export class World {
   // Phase 22.5.3: Element storage removed - now stored in ProjectionPlane only
@@ -289,7 +289,7 @@ export class World {
   addPlane3DFixed(point: Vector4, normal: Vector4, planeId?: string, label?: string): Plane3DFixed {
     const id = planeId || this.generatePlaneId();
     
-    const plane = createFixed3DPlane({ id, point, normal, label });
+    const plane = new Plane3DFixed(id, point, normal, label);
     this.planes3D.set(id, plane);
 
     // Register with dependency service (no dependencies for fixed plane)
@@ -325,13 +325,16 @@ export class World {
     const id = projPlaneId || this.generateProjPlaneId();
     const label = name || this.generateDefaultLabel(id, 'ProjectionPlane');
     
-    const projPlane = createFixedProjectionPlane({
+    const projPlane = new FixedProjectionPlane(
       id,
       label,
       planeToPaper2D,
       planeTo3D,
+      false,
+      true,
+      '#808080',
       plane3DId,
-    });
+    );
     
     this.projectionPlanes.set(id, projPlane);
 
@@ -361,12 +364,7 @@ export class World {
     const id = hingeLineId || this.generateHingeLineId();
     const label = this.generateDefaultLabel(id, 'HingeLine');
     
-    const hingeLine = createHingeLineEntity({
-      id,
-      label,
-      horizontalPlaneId,
-      verticalPlaneId,
-    });
+    const hingeLine = new HingeLine(id, label, horizontalPlaneId, verticalPlaneId);
     
     this.hingeLines.set(id, hingeLine);
 

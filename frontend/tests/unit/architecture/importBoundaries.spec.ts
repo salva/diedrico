@@ -168,6 +168,12 @@ describe('Architecture: import boundaries', () => {
     expect(findContentMatches(files, /console\.(log|debug|info)\s*\(/g)).toEqual([]);
   });
 
+  it('keeps active source free of compatibility and test-only implementation comments', () => {
+    const files = scanTextFiles(['src']);
+
+    expect(findContentMatches(files, /backward compatibility|FOR TESTS ONLY/gi)).toEqual([]);
+  });
+
   it('keeps runtime view ports free of store, concrete-tool, and rendering implementation imports', () => {
     const runtimeViewPortFiles = scanTextFiles(['src/application/appShell'])
       .filter(file => file.projectPath === 'src/application/appShell/RuntimeViewPorts.ts');
