@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { buildElementsPanelReadModel } from '@/application/appShell/readModels/ElementsPanelReadModel';
 import { toggleElementVisibility } from '@/application/appShell/readModels/ElementVisibilityIntent';
 import { countProcessNodeViewModels } from '@/application/appShell/readModels/ProcessTreeReadModel';
@@ -35,25 +35,20 @@ describe('Cycle 027 runtime read-model extractors', () => {
     expect(model).not.toHaveProperty('toggleVisibility');
   });
 
-  it('keeps element visibility as an adjacent intent that preserves dirty semantics', () => {
-    const markDirty = vi.fn();
+  it('keeps element visibility as an adjacent pure intent', () => {
     const element: { visualStyle?: { visible?: boolean; color?: string; lineWidth?: number; lineStyle?: string; opacity?: number; inherited?: boolean } } = {};
 
     toggleElementVisibility('P_H/point1', {
       findElement: id => id === 'P_H/point1' ? element : undefined,
-      markDirty,
     });
 
     expect(element.visualStyle?.visible).toBe(false);
-    expect(markDirty).toHaveBeenCalledTimes(1);
 
     toggleElementVisibility('P_H/point1', {
       findElement: () => element,
-      markDirty,
     });
 
     expect(element.visualStyle?.visible).toBe(true);
-    expect(markDirty).toHaveBeenCalledTimes(2);
   });
 
   it('counts recursive process-node DTOs outside RuntimeSession', () => {

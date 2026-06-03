@@ -1,6 +1,6 @@
 import { UpdateElementStyleOp } from '@/commands/operations/world/UpdateElementStyleOp';
 import type { ToolCommandExecutionPort } from '@/application/commandProduction/CommandProductionPorts';
-import type { StyleUpdateRequest, ToolCommandResult } from '@/application/tools/ToolCommandIntents';
+import type { StyleUpdateRequest, ToolCommandResult } from '@/tools/ToolCommandIntents';
 
 export class CanvasStyleUseCase {
   constructor(private readonly commands: ToolCommandExecutionPort) {}

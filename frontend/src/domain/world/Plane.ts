@@ -270,13 +270,10 @@ export class Plane3DFromTraces extends Plane3D {
   getPlaneEquation(context: PlaneEquationRealizationContext): Vector4 | null {
     // Reconstruct plane equation from two trace lines on different projection planes
     
-    console.log('[Plane3DFromTraces] getPlaneEquation called for plane:', this.id, 'trace1:', this.trace1, 'trace2:', this.trace2);
-    
     // Get all realizations (let it fail hard if structure is wrong)
     const t1Line = context.getLine2D(this.trace1);
     const t2Line = context.getLine2D(this.trace2);
     if (!t1Line || !t2Line) {
-      console.warn('[Plane3DFromTraces] Missing trace line', { t1Line, t2Line });
       return null;
     }
     const t1InP1 = t1Line.realize2D(context);
@@ -286,7 +283,6 @@ export class Plane3DFromTraces extends Plane3D {
     const plane2 = context.getProjectionPlaneById(t2Line.planeId);
     
     if (!plane1 || !plane2) {
-      console.warn('[Plane3DFromTraces] Missing projection plane', { plane1, plane2 });
       return null;
     }
     
@@ -295,28 +291,16 @@ export class Plane3DFromTraces extends Plane3D {
     
     // Check feasibility of all realizations
     if (!p1 || !p2 || !t1InP1.feasible || !t2InP2.feasible || !p1.feasible || !p2.feasible) {
-      console.warn('[Plane3DFromTraces] Infeasible realizations', { 
-        t1Feasible: t1InP1.feasible, 
-        t2Feasible: t2InP2.feasible,
-        p1Feasible: p1?.feasible,
-        p2Feasible: p2?.feasible
-      });
       return null;
     }
-    
-    console.log('[Plane3DFromTraces] All realizations feasible - computing plane');
     
     // Transform t1 from 2D to 3D
     const t1PointIn3D = applyMatrix4x3(t1InP1.point1, p1.planeTo3D);
     const t1DirIn3D = applyMatrix4x3(t1InP1.point2, p1.planeTo3D);
     
-    console.log('[Plane3DFromTraces] t1 in 3D: t1PointIn3D:', t1PointIn3D, 't1DirIn3D:', t1DirIn3D);
-    
     // Transform t2 from 2D to 3D
     const t2PointIn3D = applyMatrix4x3(t2InP2.point1, p2.planeTo3D);
     const t2DirIn3D = applyMatrix4x3(t2InP2.point2, p2.planeTo3D);
-    
-    console.log('[Plane3DFromTraces] t2 in 3D: t2PointIn3D:', t2PointIn3D, 't2DirIn3D:', t2DirIn3D);
     
     // Check if traces intersect (they must for a valid plane)
     const intersection = computeLineLineIntersection3D(
@@ -327,11 +311,8 @@ export class Plane3DFromTraces extends Plane3D {
     );
     
     if (!intersection.feasible) {
-      console.warn('[Plane3DFromTraces] Traces do not intersect (parallel or skew lines)');
       return null;
     }
-    
-    console.log('[Plane3DFromTraces] Traces intersect at:', intersection.position);
     
     // Normal = t1Dir × t2Dir (cross product of line directions, already normalized)
     const normal = crossVector3Homogeneous(t1DirIn3D, t2DirIn3D).normalize();
@@ -339,12 +320,8 @@ export class Plane3DFromTraces extends Plane3D {
     const b = normal.y;
     const c = normal.z;
     
-    console.log('[Plane3DFromTraces] Normalized normal:', [a, b, c]);
-    
     // Compute d from plane equation: ax + by + cz + d = 0
     const d = -(a * t1PointIn3D.x + b * t1PointIn3D.y + c * t1PointIn3D.z);
-    
-    console.log('[Plane3DFromTraces] Plane equation: a=', a, 'b=', b, 'c=', c, 'd=', d);
     
     return new Vector4(a, b, c, d);
   }

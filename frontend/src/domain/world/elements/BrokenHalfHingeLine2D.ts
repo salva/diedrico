@@ -91,14 +91,12 @@ export class BrokenHalfHingeLine2D extends HalfHingeLine2D {
     // Get the BrokenHingeLine parent
     const bhl = world.getHingeLineById(this.hingeLineId);
     if (!(bhl instanceof BrokenHingeLine)) {
-      console.error(`[BrokenHalfHingeLine2D] Not a BrokenHingeLine: ${this.hingeLineId}`);
       return HalfHingeLineRealization2D.createInfeasible();
     }
 
     // Get auxiliary plane to find the correct T2/T2' trace
     const auxPlane = world.getProjectionPlaneById(bhl.auxiliaryPlaneId);
     if (!(auxPlane instanceof AuxiliaryProjectionPlane)) {
-      console.error(`[BHHL ${this.label}] Auxiliary plane not found: ${bhl.auxiliaryPlaneId}`);
       return HalfHingeLineRealization2D.createInfeasible();
     }
 
@@ -109,23 +107,19 @@ export class BrokenHalfHingeLine2D extends HalfHingeLine2D {
     const t2TraceId = isOnAuxiliaryPlane
       ? auxPlane.t2PrimeLineId   // T2' on hinge plane
       : auxPlane.t2OtherTraceId; // T2 on other plane
-    const traceName = isOnAuxiliaryPlane ? "T2'" : 'T2';
 
     if (!t2TraceId) {
-      console.error(`[BHHL ${this.label}] No ${traceName} trace on auxiliary plane ${bhl.auxiliaryPlaneId}`);
       return HalfHingeLineRealization2D.createInfeasible();
     }
 
     // Get T2/T2' line and realize it in its source plane's local coords
     const t2Line = world.getLine2D(t2TraceId);
     if (!t2Line) {
-      console.error(`[BHHL ${this.label}] ${traceName} line not found: ${t2TraceId}`);
       return HalfHingeLineRealization2D.createInfeasible();
     }
 
     const t2Real2D = t2Line.realize2D(world);
     if (!t2Real2D.feasible) {
-      console.error(`[BHHL ${this.label}] ${traceName} realization infeasible`);
       return HalfHingeLineRealization2D.createInfeasible();
     }
 
@@ -146,28 +140,21 @@ export class BrokenHalfHingeLine2D extends HalfHingeLine2D {
     const dirInPaper = t2Real2D.getDirection().clone().applyMatrix3(sourcePlaneReal2D.planeToPaper2D);
     const direction2D = dirInPaper.applyMatrix3(targetPlaneReal2D.paperToPlane2D);
 
-    console.log(`[BHHL ${this.label}] ${traceName} (${t2TraceId}) on ${t2Line.planeId}: point=(${t2Real2D.point1.x.toFixed(2)}, ${t2Real2D.point1.y.toFixed(2)})`);
-    console.log(`[BHHL ${this.label}] origin2D: (${origin2D.x.toFixed(2)}, ${origin2D.y.toFixed(2)}, z=${origin2D.z.toFixed(2)}) on plane ${this.planeId}`);
-
     // Get T1's direction on THIS plane for parallel guides
     const mainHinge = world.getHingeLineById(bhl.mainHingeId);
     if (!mainHinge) {
-      console.error(`[BHHL ${this.label}] Main hinge not found: ${bhl.mainHingeId}`);
       return HalfHingeLineRealization2D.createInfeasible();
     }
 
     // Find T1's trace on THIS plane
     const thisPlane = world.getProjectionPlaneById(this.planeId);
     if (!thisPlane) {
-      console.error(`[BHHL ${this.label}] Plane not found: ${this.planeId}`);
       return HalfHingeLineRealization2D.createInfeasible();
     }
 
     // Find hinge line connecting this plane to mainHinge.plane1Id
-    console.log(`[BHHL ${this.label}] Looking for T1 hinge between ${this.planeId} and ${mainHinge.plane1Id}`);
     requireProjectionRealizationCollections(world, 'BrokenHalfHingeLine2D.realize2D');
     const allHingeLines = world.getAllHingeLines();
-    console.log(`[BHHL ${this.label}] Available hinge lines:`, allHingeLines.map(hl => `${hl.id}(${hl.plane1Id}-${hl.plane2Id})`));
     
     const t1HingeLine = allHingeLines.find(hl => 
       (hl.plane1Id === this.planeId && hl.plane2Id === mainHinge.plane1Id) ||
@@ -175,15 +162,11 @@ export class BrokenHalfHingeLine2D extends HalfHingeLine2D {
     );
 
     if (!t1HingeLine) {
-      console.error(`[BHHL ${this.label}] T1 hinge not found between ${this.planeId} and ${mainHinge.plane1Id}`);
       return HalfHingeLineRealization2D.createInfeasible();
     }
 
-    console.log(`[BHHL ${this.label}] Found T1 hinge: ${t1HingeLine.id}`);
-
     // Get T1's HalfHingeLine2D on THIS plane
     const allLinesOnPlane = thisPlane.getAllLines();
-    console.log(`[BHHL ${this.label}] Lines on plane ${this.planeId}:`, allLinesOnPlane.map(l => `${l.id}(${l.constructor.name})`));
     
     const t1HalfHinge = allLinesOnPlane.find(
       (line): line is HalfHingeLine2D => 
@@ -192,25 +175,16 @@ export class BrokenHalfHingeLine2D extends HalfHingeLine2D {
     );
 
     if (!t1HalfHinge) {
-      console.error(`[BHHL ${this.label}] T1 trace not found on plane ${this.planeId}`);
       return HalfHingeLineRealization2D.createInfeasible();
     }
-
-    console.log(`[BHHL ${this.label}] Found T1 trace: ${t1HalfHinge.id} (${t1HalfHinge.label})`);
 
     const t1Realization = t1HalfHinge.realize2D(world);
     if (!t1Realization.isFeasible()) {
-      console.error(`[BHHL ${this.label}] T1 realization infeasible`);
       return HalfHingeLineRealization2D.createInfeasible();
     }
 
-    console.log(`[BHHL ${this.label}] T1 realization feasible`);
-
     // Guide vector is parallel to T1
     const guideVector = t1Realization.getDirection().clone().normalize();
-
-    console.log(`[BHHL ${this.label}] Guide vector parallel to T1: (${guideVector.x.toFixed(2)}, ${guideVector.y.toFixed(2)})`);
-    console.log(`[BHHL ${this.label}] ✅ REALIZATION COMPLETE - returning feasible result`);
 
     // Return realization with BHHL at T2/T2' and guides parallel to T1
     return new HalfHingeLineRealization2D(
@@ -258,7 +232,6 @@ export class BrokenHalfHingeLine2D extends HalfHingeLine2D {
     // Get sibling BHHL using direct reference
     const siblingBHHL = world.getLine2D(bhhl.siblingBHHLId);
     if (!siblingBHHL || !(siblingBHHL instanceof BrokenHalfHingeLine2D)) {
-      console.warn(`BrokenHalfHingeLine2D.getSiblingInfo: sibling BHHL ${bhhl.siblingBHHLId} not found`);
       return undefined;
     }
 

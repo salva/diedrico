@@ -125,8 +125,7 @@
 
 <script setup lang="ts">
 import { ref, computed, inject, onMounted, onUnmounted } from 'vue';
-import { ElementsPanelInjectionKey } from '@/application/appShell/RuntimeInjectionKeys';
-import { useSelectionStore } from '@/stores/selectionStore';
+import { ElementsPanelInjectionKey, SelectionActionsInjectionKey } from '@/application/appShell/RuntimeInjectionKeys';
 import ElementTypeGroup from './ElementTypeGroup.vue';
 import { formatElementLabel } from '@/utils/formatUtils';
 
@@ -143,8 +142,11 @@ if (!elementsPanelPort) {
 }
 
 const elementsPanelPortRequired = elementsPanelPort;
-// Selection store for bidirectional sync
-const selectionStore = useSelectionStore();
+const selectionActions = inject(SelectionActionsInjectionKey);
+if (!selectionActions) {
+  throw new Error('Selection action port not provided');
+}
+const selectionActionsRequired = selectionActions;
 
 // Local state
 const is2DSectionCollapsed = ref(false);
@@ -207,9 +209,8 @@ function togglePlane(planeId: string) {
 }
 
 function handleElementSelect(elementId: string) {
-  // Sync with selectionStore for bidirectional selection
-  selectionStore.selectSingle(elementId);
-  
+  selectionActionsRequired.selectElement(elementId);
+   
   // Emit for highlighting on canvas
   emit('highlightElements', [elementId], false);
 }

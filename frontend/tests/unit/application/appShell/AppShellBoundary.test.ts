@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import appVue from '@/App.vue?raw';
 import toolbarVue from '@/components/toolbars/Toolbar.vue?raw';
 import startupDialogVue from '@/components/dialogs/StartupDialog.vue?raw';
+import svgCanvasVue from '@/components/workspace/SvgCanvas.vue?raw';
+import elementsPanelVue from '@/components/panels/ElementsPanel.vue?raw';
+import processTreeNodeVue from '@/components/panels/ProcessTreeNode.vue?raw';
 import appShellRuntime from '@/application/appShell/AppShellRuntime.ts?raw';
 import appShellProductionRuntime from '@/application/appShell/AppShellProductionRuntime.ts?raw';
 import appShellPorts from '@/application/appShell/AppShellPorts.ts?raw';
@@ -69,13 +72,21 @@ describe('Cycle 020 app-shell production boundary', () => {
     expect(selectionDeletionService).toMatch(/\.commit\(/);
     expect(appShellRuntime).toMatch(/session\.selectionDeletionCommandPort\(\)/);
   });
+
+  it('keeps migrated components from directly mutating application selection state', () => {
+    const forbiddenSelectionMutations = /selectionStore\.(selectSingle|addToSelection|clearSelection|selectMultiple|setCascadeHighlight|clearCascadeHighlight)\(/;
+    for (const content of [svgCanvasVue, elementsPanelVue, processTreeNodeVue]) {
+      expect(content).not.toMatch(forbiddenSelectionMutations);
+      expect(content).toMatch(/SelectionActionsInjectionKey/);
+    }
+  });
 });
 
 
 describe('Cycle 022 runtime session persistence boundary', () => {
   it('keeps app-shell ports free of concrete runtime handles while naming the current persistence DTO contract', () => {
     expect(appShellPorts).not.toMatch(/@\/commands\/CommandStack|@\/domain\/world\/World/);
-    expect(appShellPorts).toMatch(/import type \{ ProjectData \} from '@\/services\/ProjectService'/);
+    expect(appShellPorts).toMatch(/import type \{ ProjectData \} from '\.\/ProjectService'/);
     expect(appShellPorts).toMatch(/export type ProjectSessionPersistencePayload = ProjectData/);
     expect(appShellPorts).not.toMatch(/SerializedProjectSession|schemaVersion|commands:|created:|modified:/);
     expect(appShellPorts).toMatch(/OpenedProjectSession/);
@@ -105,9 +116,10 @@ describe('Cycle 022 runtime session persistence boundary', () => {
     for (const content of runtimeOrchestrationSources) {
       expect(content).not.toMatch(/@\/services\/ProjectService/);
     }
-    expect(appShellPorts).toMatch(/import type \{ ProjectData \} from '@\/services\/ProjectService'/);
+    expect(appShellPorts).toMatch(/import type \{ ProjectData \} from '\.\/ProjectService'/);
     expect(appShellPorts).not.toMatch(/new ProjectService|ProjectService\./);
-    expect(projectSessionPersistenceAdapter).toMatch(/@\/services\/ProjectService/);
+    expect(projectSessionPersistenceAdapter).toMatch(/import \{ ProjectService \} from '\.\/ProjectService'/);
+    expect(projectSessionPersistenceAdapter).not.toMatch(/@\/services\/ProjectService/);
   });
 });
 
@@ -124,7 +136,7 @@ describe('Cycle 030 app-shell persistence DTO contract', () => {
 
     expect(appShellPorts).toMatch(/ProjectSessionPersistencePayload/);
     expect(projectSessionPersistenceAdapter).toMatch(/snapshotCurrentSession\([^)]*\): ProjectSessionPersistencePayload/);
-    expect(projectSessionPersistenceAdapter).toMatch(/ProjectService\.deserializeCommands\(data, target\.world, target\.commandStack\)/);
+    expect(projectSessionPersistenceAdapter).toMatch(/ProjectService\.deserializeCommands\(data, target\.world, target\.commandStack, target\.notifier\)/);
     expect(projectSessionPersistenceAdapter).not.toMatch(/payload: .* as/);
   });
 });
@@ -219,7 +231,7 @@ describe('Cycle 024 command-producer runtime ports', () => {
   });
 
   it('wires canvas and process-history controllers with runtime-owned command producers', () => {
-    expect(runtimeSession).toMatch(/new RuntimeCommandProducer\(this\.world, this\.commandStack\)/);
+    expect(runtimeSession).toMatch(/new RuntimeCommandProducer\(this\.world, this\.commandStack, this\.changes\)/);
     expect(runtimeSession).toMatch(/commands: this\.commandProducer/);
     expect(canvasToolController).toMatch(/CanvasCommandProductionPort/);
     expect(processHistoryController).toMatch(/ProcessCommandExecutionPort/);

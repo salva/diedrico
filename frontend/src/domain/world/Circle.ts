@@ -155,7 +155,6 @@ export class Circle2DByCenterAndPoint extends Circle2D {
 
     // Check if parent points are infeasible - propagate infeasibility
     if (!centerRealization.feasible || !circumferenceRealization.feasible) {
-      console.warn('[Circle2DByCenterAndPoint] Parent point is infeasible, marking circle as infeasible');
       // Return infeasible circle with dummy radius vector
       return new Circle2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
     }
@@ -166,7 +165,6 @@ export class Circle2DByCenterAndPoint extends Circle2D {
 
     // Check for degenerate circle (center coincides with circumference point)
     if (radiusVector.lengthSq() < 1e-20) {  // Use squared length - cheaper than length
-      console.warn(`Circle ${this.id}: center and circumference point are coincident`);
       return new Circle2DRealization2D(
         centerRealization.position.clone(),
         new Vector3(1, 0, 0),  // Fallback radius vector
@@ -259,7 +257,6 @@ export class Circle2DByThreePoints extends Circle2D {
 
     // Check if parent points are infeasible - propagate infeasibility
     if (!p1Realization.feasible || !p2Realization.feasible || !p3Realization.feasible) {
-      console.warn('[Circle2DByThreePoints] Parent point is infeasible, marking circle as infeasible');
       return new Circle2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
     }
 
@@ -275,7 +272,6 @@ export class Circle2DByThreePoints extends Circle2D {
     // In 2D, cross product magnitude is |x1*y2 - x2*y1|
     const crossMag = Math.abs(v12.x * v13.y - v12.y * v13.x);
     if (crossMag < 1e-10) {
-      console.warn(`Circle ${this.id}: three points are collinear`);
       return new Circle2DRealization2D(p1.clone(), new Vector3(1, 0, 0), false);  // Infeasible circle
     }
 
@@ -308,7 +304,6 @@ export class Circle2DByThreePoints extends Circle2D {
     
     if (Math.abs(det) < 1e-10) {
       // Lines are parallel (should not happen if points are not collinear)
-      console.warn(`Circle ${this.id}: perpendicular bisectors are parallel`);
       return new Circle2DRealization2D(p1.clone(), new Vector3(1, 0, 0), false);
     }
     

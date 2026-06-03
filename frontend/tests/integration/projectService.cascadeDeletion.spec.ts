@@ -18,7 +18,7 @@ import type { World } from '@/domain/world/World';
 import { createTestWorld } from '../helpers/worldHelpers';
 import { CommandStack } from '@/commands/CommandStack';
 import { Command } from '@/commands/Command';
-import { ProjectService } from '@/services/ProjectService';
+import { ProjectService } from '@/application/appShell/ProjectService';
 import { Vector3 } from 'three';
 import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
 import { RemovePoint2DOp } from '@/commands/operations/world/RemoveElementOps';

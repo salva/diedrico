@@ -92,8 +92,7 @@ export class AuxiliaryProjectionPlane extends ProjectionPlane {
         true
       );
       
-    } catch (error) {
-      console.error('[AuxiliaryProjectionPlane] Failed to compute realization:', error);
+    } catch {
       // Return infeasible realization with fallback identity matrices
       return new ProjectionPlaneRealization3D(
         this.id,
@@ -147,8 +146,7 @@ export class AuxiliaryProjectionPlane extends ProjectionPlane {
         feasible
       );
       
-    } catch (error) {
-      console.error('[AuxiliaryProjectionPlane] Failed to compute 2D realization:', error);
+    } catch {
       // Return fallback identity matrices
       const identityMatrix = new Matrix3();
       identityMatrix.identity();

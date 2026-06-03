@@ -5,7 +5,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { useAuthStore } from '../../../src/stores/authStore';
-import type { GoogleUserProfile } from '../../../src/services/GoogleDriveService';
+import type { GoogleUserProfile } from '../../../src/application/appShell/DrivePortTypes';
 
 describe('authStore', () => {
   let authStore: ReturnType<typeof useAuthStore>;

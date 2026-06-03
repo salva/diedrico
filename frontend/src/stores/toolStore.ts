@@ -12,6 +12,7 @@
  */
 
 import { ref, computed } from 'vue';
+import type { ToolType } from '@/application/tools/ToolTypes';
 import type { ToolFamilyConfig, ToolConfig } from '../types/ToolConfig';
 
 export const TOOL_TYPE = {
@@ -37,37 +38,13 @@ export const TOOL_TYPE = {
   QUICK3DLINE: 'quick3dline',
   QUICK3DSEGMENT: 'quick3dsegment',
 } as const;
-export type ToolType = typeof TOOL_TYPE[keyof typeof TOOL_TYPE];
 
-const STORAGE_KEY = 'diedrico-tool-last-used';
+export const TOOL_PREFERENCE_KEY = 'diedrico-tool-last-used';
 
 const activeTool = ref<ToolType>('select');
 const lastUsedByFamily = ref<Record<string, string>>({});
 const toolStepMessage = ref<string>('');
 let toolFamilies: ToolFamilyConfig[] = [];
-
-// Load last-used preferences from localStorage on module initialization
-function loadFromLocalStorage(): Record<string, string> {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? JSON.parse(stored) : {};
-  } catch (error) {
-    console.warn('Failed to load last-used tool preferences:', error);
-    return {};
-  }
-}
-
-// Save last-used preferences to localStorage
-function saveToLocalStorage(lastUsed: Record<string, string>): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(lastUsed));
-  } catch (error) {
-    console.warn('Failed to save last-used tool preferences:', error);
-  }
-}
-
-// Initialize lastUsedByFamily from localStorage
-lastUsedByFamily.value = loadFromLocalStorage();
 
 export function useToolStore() {
   /**
@@ -89,6 +66,7 @@ export function useToolStore() {
    * Get the current active tool
    */
   const currentTool = computed(() => activeTool.value);
+  const lastUsedTools = computed(() => lastUsedByFamily.value);
 
   /**
    * Initialize tool families configuration
@@ -145,11 +123,7 @@ export function useToolStore() {
    * Select a specific sub-tool and update last-used memory
    */
   function selectSubTool(familyId: string, toolId: string): void {
-    // Update last-used for this family
     lastUsedByFamily.value[familyId] = toolId;
-    saveToLocalStorage(lastUsedByFamily.value);
-    
-    // Activate the tool
     setTool(toolId as ToolType);
   }
 
@@ -167,6 +141,25 @@ export function useToolStore() {
     toolStepMessage.value = message;
   }
 
+  function initFromStorage(): void {
+    try {
+      const stored = localStorage.getItem(TOOL_PREFERENCE_KEY);
+      if (stored) {
+        lastUsedByFamily.value = JSON.parse(stored);
+      }
+    } catch (error) {
+      console.warn('Failed to load tool preferences:', error);
+    }
+  }
+
+  function saveToStorage(): void {
+    try {
+      localStorage.setItem(TOOL_PREFERENCE_KEY, JSON.stringify(lastUsedByFamily.value));
+    } catch (error) {
+      console.warn('Failed to save tool preferences:', error);
+    }
+  }
+
   /**
    * Get reactive tool step message
    */
@@ -174,6 +167,7 @@ export function useToolStore() {
 
   return {
     currentTool,
+    lastUsedTools,
     currentToolStepMessage,
     setTool,
     setToolStepMessage,
@@ -184,6 +178,8 @@ export function useToolStore() {
     getCompletionBehavior,
     activateToolFamily,
     selectSubTool,
-    getLastUsedTool
+    getLastUsedTool,
+    initFromStorage,
+    saveToStorage,
   };
 }

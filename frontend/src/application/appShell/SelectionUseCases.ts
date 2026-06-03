@@ -1,8 +1,8 @@
 import { watch, type WatchStopHandle } from 'vue';
 import type { SelectionDeletionCommandPort } from '@/application/selectionDeletion/SelectionDeletionPorts';
-import type { SelectionReadPort, SelectionStorePort } from './AppShellPorts';
+import type { SelectionActionPort, SelectionReadPort, SelectionStorePort } from './AppShellPorts';
 
-export class SelectionUseCases {
+export class SelectionUseCases implements SelectionActionPort {
   private stopSelectionWatch: WatchStopHandle | null = null;
 
   constructor(
@@ -36,6 +36,14 @@ export class SelectionUseCases {
 
   clearSelection(): void {
     this.selectionStore.clearSelection();
+  }
+
+  selectElement(id: string): void {
+    this.selectionStore.selectSingle(id);
+  }
+
+  addElementToSelection(id: string): void {
+    this.selectionStore.addToSelection(id);
   }
 
   selectAllInActivePlane(): void {

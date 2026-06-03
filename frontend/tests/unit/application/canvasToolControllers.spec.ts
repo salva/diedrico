@@ -12,7 +12,7 @@ import { TangentLineToCircleThroughPointTool } from '@/tools/TangentLineToCircle
 import { TangentLineToCircleParallelToLineTool } from '@/tools/TangentLineToCircleParallelToLineTool';
 import { CanvasInteractionQuery } from '@/application/canvasPresentation/CanvasInteractionQuery';
 import type { ToolContext } from '@/tools/ITool';
-import type { ToolCommandSink, ToolConstructionIntent } from '@/application/tools/ToolCommandIntents';
+import type { ToolCommandSink, ToolConstructionIntent } from '@/tools/ToolCommandIntents';
 import type { ArgumentValue } from '@/types/ToolArgumentCollector';
 import { createTestWorld, getHorizontalPlane, getHorizontalPlaneId } from '../../helpers/worldHelpers';
 import { createToolInteractionReadPort } from '@/application/tools/ToolInteractionReadPort';

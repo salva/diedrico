@@ -130,6 +130,8 @@ function runtimePorts(overrides: Partial<AppShellRuntimePorts> = {}) {
     },
     selectionStore: {
       selectedIdsArray: [],
+      selectSingle: vi.fn(),
+      addToSelection: vi.fn(),
       clearSelection: vi.fn(),
       selectMultiple: vi.fn(),
       setCascadeHighlight: vi.fn(),
@@ -380,6 +382,8 @@ describe('SelectionUseCases', () => {
     const selected = ref<string[]>(['selected']);
     const selectionStore = reactive({
       get selectedIdsArray() { return selected.value; },
+      selectSingle: vi.fn(),
+      addToSelection: vi.fn(),
       clearSelection: vi.fn(),
       selectMultiple: vi.fn(),
       setCascadeHighlight: vi.fn(),
@@ -409,6 +413,8 @@ describe('SelectionUseCases', () => {
   it('selects every element on the active plane through the selection store', () => {
     const selectionStore = {
       selectedIdsArray: [],
+      selectSingle: vi.fn(),
+      addToSelection: vi.fn(),
       clearSelection: vi.fn(),
       selectMultiple: vi.fn(),
       setCascadeHighlight: vi.fn(),
@@ -429,6 +435,8 @@ describe('SelectionUseCases', () => {
   it('clears selection only after the delete command boundary succeeds', () => {
     const selectionStore = {
       selectedIdsArray: ['p1'],
+      selectSingle: vi.fn(),
+      addToSelection: vi.fn(),
       clearSelection: vi.fn(),
       selectMultiple: vi.fn(),
       setCascadeHighlight: vi.fn(),
@@ -451,6 +459,8 @@ describe('SelectionUseCases', () => {
   it('preserves selection when delete command boundary fails', () => {
     const selectionStore = {
       selectedIdsArray: ['p1'],
+      selectSingle: vi.fn(),
+      addToSelection: vi.fn(),
       clearSelection: vi.fn(),
       selectMultiple: vi.fn(),
       setCascadeHighlight: vi.fn(),
@@ -471,6 +481,8 @@ describe('SelectionUseCases', () => {
   it('keeps empty selection as a no-op without invoking the delete command boundary', () => {
     const selectionStore = {
       selectedIdsArray: [],
+      selectSingle: vi.fn(),
+      addToSelection: vi.fn(),
       clearSelection: vi.fn(),
       selectMultiple: vi.fn(),
       setCascadeHighlight: vi.fn(),
@@ -488,6 +500,32 @@ describe('SelectionUseCases', () => {
 
     expect(deleteSelectionCommand.execute).not.toHaveBeenCalled();
     expect(selectionStore.clearSelection).not.toHaveBeenCalled();
+  });
+
+  it('exposes select and extend actions through the app-shell selection port', () => {
+    const selectionStore = {
+      selectedIdsArray: [],
+      selectSingle: vi.fn(),
+      addToSelection: vi.fn(),
+      clearSelection: vi.fn(),
+      selectMultiple: vi.fn(),
+      setCascadeHighlight: vi.fn(),
+      clearCascadeHighlight: vi.fn(),
+    };
+    const useCases = new SelectionUseCases(
+      { getSelectableIdsInPlane: vi.fn(() => []), getCascadePreviewIds: vi.fn(() => []) },
+      { execute: vi.fn() },
+      selectionStore,
+      () => 'plane-a',
+    );
+
+    useCases.selectElement('p1');
+    useCases.addElementToSelection('p2');
+    useCases.clearSelection();
+
+    expect(selectionStore.selectSingle).toHaveBeenCalledWith('p1');
+    expect(selectionStore.addToSelection).toHaveBeenCalledWith('p2');
+    expect(selectionStore.clearSelection).toHaveBeenCalledTimes(1);
   });
 
 });

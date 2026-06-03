@@ -242,22 +242,6 @@ export class HingeLine extends Line3D {
     // Check that both planes exist (structural integrity)
     if (!projPlane1 || !projPlane2) {
       requireProjectionRealizationCollections(world, 'HingeLine.realize3D');
-      const errorInfo = {
-        hingeLineId: this.id,
-        hingeLineLabel: this.label,
-        plane1Id: this.plane1Id,
-        plane2Id: this.plane2Id,
-        projPlane1Exists: !!projPlane1,
-        projPlane2Exists: !!projPlane2,
-        allProjectionPlanes: world.getAllProjectionPlanes().map(p => ({ id: p.id })),
-        allHingeLines: world.getAllHingeLines().map(hl => ({ 
-          id: hl.id, 
-          label: hl.label, 
-          plane1Id: hl.plane1Id, 
-          plane2Id: hl.plane2Id 
-        }))
-      };
-      console.error(`[HingeLine.realize3D] CRITICAL: HingeLine references non-existent projection plane(s)`, errorInfo);
       throw new Error(`HingeLine.realize3D: HingeLine ${this.id} references invalid plane(s) - plane1: ${projPlane1 ? 'exists' : 'MISSING'}, plane2: ${projPlane2 ? 'exists' : 'MISSING'}`);
     }
 
@@ -268,7 +252,6 @@ export class HingeLine extends Line3D {
       const plane3DReal = world.get3DPlaneRealization(projPlane1.plane3DId);
       if (!plane3DReal) {
         // Plane3D not realized yet - return infeasible
-        console.warn(`[HingeLine] Plane3D ${projPlane1.plane3DId} not realized yet for hinge line ${this.id}`);
         return Line3DRealization3D.createInfeasible();
       }
       if (!plane3DReal.isFeasible()) {

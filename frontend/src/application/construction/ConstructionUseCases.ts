@@ -1,6 +1,6 @@
 import type { CommandOperationBuilder, ToolCommandExecutionPort } from '@/application/commandProduction/CommandProductionPorts';
 import type { World } from '@/domain/world/World';
-import type { ToolConstructionIntent, ToolCommandResult } from '@/application/tools/ToolCommandIntents';
+import type { ToolConstructionIntent, ToolCommandResult } from '@/tools/ToolCommandIntents';
 import type { Point2D } from '@/domain/world/Point';
 import { Line2D } from '@/domain/world/Line';
 import { Circle2D } from '@/domain/world/Circle';
@@ -9,7 +9,7 @@ import { LineSequenceFactory } from '@/commands/factories/LineSequenceFactory';
 import { CircleSequenceFactory } from '@/commands/factories/CircleSequenceFactory';
 import { GuideSequenceFactory } from '@/commands/factories/GuideSequenceFactory';
 import { IntersectionSequenceFactory } from '@/commands/factories/IntersectionSequenceFactory';
-import { PlaneSequenceFactory } from '@/services/factories/PlaneSequenceFactory';
+import { PlaneSequenceFactory } from '@/commands/factories/PlaneSequenceFactory';
 import { AddSegment2DByPointsOp } from '@/commands/operations/world/AddSegmentOp';
 import { Add3DPointOp } from '@/commands/operations/world/Add3DPointOp';
 import { Add3DLineOp } from '@/commands/operations/world/Add3DLineOp';

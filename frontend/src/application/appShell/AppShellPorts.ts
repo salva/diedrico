@@ -1,7 +1,7 @@
 import type { Ref } from 'vue';
-import type { GoogleDriveFile, GoogleUserProfile } from '@/services/GoogleDriveService';
-import type { ProjectData } from '@/services/ProjectService';
-import type { ToolType } from '@/stores/toolStore';
+import type { ToolType } from '@/application/tools/ToolTypes';
+import type { GoogleDriveFile, GoogleUserProfile } from './DrivePortTypes';
+import type { ProjectData } from './ProjectService';
 import type { KeyboardShortcutRouterTarget } from './KeyboardShortcutRouter';
 
 export type SaveStatus = 'idle' | 'saving' | 'saved';
@@ -96,10 +96,19 @@ export interface AuthStorePort {
 
 export interface SelectionStorePort {
   selectedIdsArray: string[];
+  selectSingle(id: string): void;
+  addToSelection(id: string): void;
   clearSelection(): void;
   selectMultiple(ids: string[]): void;
   setCascadeHighlight(ids: string[]): void;
   clearCascadeHighlight(): void;
+}
+
+export interface SelectionActionPort {
+  selectElement(id: string): void;
+  addElementToSelection(id: string): void;
+  clearSelection(): void;
+  selectAllInActivePlane(): void;
 }
 
 export interface ToolStorePort {

@@ -13,7 +13,7 @@
  */
 
 import { ref, computed } from 'vue';
-import type { ThreeViewDisplayOptions } from '../types/ThreeViewDisplayOptions';
+import { defaultThreeViewDisplayOptions, type ThreeViewDisplayOptions } from '../types/ThreeViewDisplayOptions';
 
 export interface ViewportState {
   zoom: number;
@@ -29,50 +29,12 @@ const panX = ref(0);
 const panY = ref(0);
 const gridVisible = ref(true); // Grid visible by default
 
-// Phase 106: 3D element projection display toggle with localStorage persistence
-const PROJECTION_STORAGE_KEY = 'diedrico-show-projected-elements';
+export const PROJECTION_DISPLAY_KEY = 'diedrico-show-projected-elements';
+export const THREE_VIEW_OPTIONS_KEY = 'diedrico-threeview-options';
 
-function loadShowProjectedElements(): boolean {
-  try {
-    return localStorage.getItem(PROJECTION_STORAGE_KEY) === 'true';
-  } catch {
-    return false;
-  }
-}
+const showProjectedElements = ref(false);
 
-const showProjectedElements = ref(loadShowProjectedElements());
-
-// 3D view display options with localStorage persistence
-const STORAGE_KEY = 'diedrico-threeview-options';
-
-function loadThreeViewOptions(): ThreeViewDisplayOptions {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-  } catch (e) {
-    console.warn('Failed to load 3D view options from localStorage:', e);
-  }
-  // Default options
-  return {
-    showPlanes: true,
-    show2DElementsOnPlanes: false,
-    showLinkingVisuals: false,
-    showGrid: true,
-    showReferenceAxes: true
-  };
-}
-
-function saveThreeViewOptions(options: ThreeViewDisplayOptions) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(options));
-  } catch (e) {
-    console.warn('Failed to save 3D view options to localStorage:', e);
-  }
-}
-
-const threeViewOptions = ref<ThreeViewDisplayOptions>(loadThreeViewOptions());
+const threeViewOptions = ref<ThreeViewDisplayOptions>({ ...defaultThreeViewDisplayOptions });
 
 export function useViewStore() {
   /**
@@ -160,11 +122,6 @@ export function useViewStore() {
    */
   function toggleProjectedElements() {
     showProjectedElements.value = !showProjectedElements.value;
-    try {
-      localStorage.setItem(PROJECTION_STORAGE_KEY, String(showProjectedElements.value));
-    } catch (e) {
-      console.warn('Failed to save projection display state to localStorage:', e);
-    }
   }
 
   /**
@@ -173,7 +130,6 @@ export function useViewStore() {
    */
   function setThreeViewOptions(options: ThreeViewDisplayOptions) {
     threeViewOptions.value = { ...options };
-    saveThreeViewOptions(options);
   }
 
   /**
@@ -186,7 +142,39 @@ export function useViewStore() {
     value: ThreeViewDisplayOptions[K]
   ) {
     threeViewOptions.value[key] = value;
-    saveThreeViewOptions(threeViewOptions.value);
+  }
+
+  function initFromStorage(): void {
+    try {
+      const storedProjection = localStorage.getItem(PROJECTION_DISPLAY_KEY);
+      if (storedProjection !== null) {
+        showProjectedElements.value = storedProjection === 'true';
+      }
+    } catch {
+      // Keep default value
+    }
+    try {
+      const storedOptions = localStorage.getItem(THREE_VIEW_OPTIONS_KEY);
+      if (storedOptions) {
+        const parsed = JSON.parse(storedOptions);
+        threeViewOptions.value = { ...defaultThreeViewDisplayOptions, ...parsed };
+      }
+    } catch (e) {
+      console.warn('Failed to load 3D view options from localStorage:', e);
+    }
+  }
+
+  function saveToStorage(): void {
+    try {
+      localStorage.setItem(PROJECTION_DISPLAY_KEY, String(showProjectedElements.value));
+    } catch {
+      // Silent: persistence failure should not break UI
+    }
+    try {
+      localStorage.setItem(THREE_VIEW_OPTIONS_KEY, JSON.stringify(threeViewOptions.value));
+    } catch {
+      // Silent: persistence failure should not break UI
+    }
   }
 
   /**
@@ -220,6 +208,8 @@ export function useViewStore() {
     setGridVisible,
     toggleProjectedElements,
     setThreeViewOptions,
-    updateThreeViewOption
+    updateThreeViewOption,
+    initFromStorage,
+    saveToStorage,
   };
 }

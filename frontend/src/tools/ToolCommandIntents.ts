@@ -33,26 +33,26 @@ export type IntersectionChoiceMetadata = {
   selectionPoint: Vector3;
 };
 
+export type ToolConstructionMetadata = TangentChoiceMetadata | IntersectionChoiceMetadata;
+
+export type MetadataConstructionIntentType =
+  | 'intersection'
+  | 'tangent-line-to-circle-through-point'
+  | 'tangent-line-to-circle-parallel';
+
+export type BasicConstructionIntentType = Exclude<ConstructionIntentType, MetadataConstructionIntentType>;
+
 interface BaseToolConstructionIntent {
-  type: ConstructionIntentType;
   description: string;
   planeId: string;
   args: Map<string, ArgumentValue>;
 }
 
 export type ToolConstructionIntent =
-  | (BaseToolConstructionIntent & {
-      type: 'tangent-line-to-circle-through-point' | 'tangent-line-to-circle-parallel';
-      metadata: TangentChoiceMetadata;
-    })
-  | (BaseToolConstructionIntent & {
-      type: 'intersection';
-      metadata: IntersectionChoiceMetadata;
-    })
-  | (BaseToolConstructionIntent & {
-      type: Exclude<ConstructionIntentType, 'tangent-line-to-circle-through-point' | 'tangent-line-to-circle-parallel' | 'intersection'>;
-      metadata?: never;
-    });
+  | (BaseToolConstructionIntent & { type: BasicConstructionIntentType; metadata?: undefined })
+  | (BaseToolConstructionIntent & { type: 'intersection'; metadata: IntersectionChoiceMetadata })
+  | (BaseToolConstructionIntent & { type: 'tangent-line-to-circle-through-point'; metadata: TangentChoiceMetadata })
+  | (BaseToolConstructionIntent & { type: 'tangent-line-to-circle-parallel'; metadata: TangentChoiceMetadata });
 
 export interface QuickToolIntent {
   type: QuickToolIntentType;

@@ -110,7 +110,6 @@ export class Guide2D extends Line2DPerpendicularToLine {
 
     // Check if reference line is infeasible - propagate infeasibility
     if (!referenceLine.feasible) {
-      console.warn('[Guide2DPerpendicularToLine] Reference line is infeasible, marking guide as infeasible');
       return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
     }
 
@@ -125,7 +124,6 @@ export class Guide2D extends Line2DPerpendicularToLine {
 
     // Check if through-point is infeasible - propagate infeasibility
     if (!throughPointRealization.feasible) {
-      console.warn('[Guide2DPerpendicularToLine] Through-point is infeasible, marking guide as infeasible');
       return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
     }
 
@@ -150,7 +148,6 @@ export class Guide2D extends Line2DPerpendicularToLine {
 
     // Check for degenerate case (shouldn't happen if reference line is valid)
     if (guideDirection.lengthSq() < 1e-10) {
-      console.warn(`Guide ${this.id}: computed guide direction has zero length`);
       return new Line2DRealization2D(throughPointRealization.position.clone(), new Vector3(1, 0, 0), false);
     }
 
@@ -277,7 +274,6 @@ export class SiblingGuide2D extends Line2D {
     const primaryGuideRealization = primaryGuide.realize2D(world);
     // Check if primary guide is infeasible - propagate infeasibility
     if (!primaryGuideRealization.feasible) {
-      console.warn('[SiblingGuide2D] Primary guide is infeasible, marking sibling guide as infeasible');
       return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
     }
 
@@ -289,7 +285,6 @@ export class SiblingGuide2D extends Line2D {
     
     // Check if intersection is feasible (lines not parallel)
     if (!intersectionPointReal.feasible) {
-      console.warn('[SiblingGuide2D] Primary guide is parallel to its HalfHingeLine - no intersection');
       return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
     }
     
@@ -315,7 +310,6 @@ export class SiblingGuide2D extends Line2D {
       const siblingPlaneReal3D = world.getProjectionPlane3DRealization(this.planeId);
 
       if (!primaryPlaneReal3D?.feasible || !siblingPlaneReal3D?.feasible) {
-        console.warn('[SiblingGuide2D] 3D plane realization infeasible for BHHL round-trip');
         return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
       }
 
@@ -339,7 +333,6 @@ export class SiblingGuide2D extends Line2D {
       } else if (Math.abs(D.y) > 1e-10) {
         d = (R.y - Q.y) / D.y;
       } else {
-        console.warn(`[SiblingGuide2D] Primary HalfHingeLine has degenerate direction`);
         return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
       }
 
@@ -357,7 +350,6 @@ export class SiblingGuide2D extends Line2D {
 
     // Check if sibling HalfHingeLine is infeasible - propagate infeasibility
     if (!siblingHalfHingeLineRealization.feasible) {
-      console.warn('[SiblingGuide2D] Sibling HalfHingeLine is infeasible, marking sibling guide as infeasible');
       return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
     }
 
@@ -370,7 +362,6 @@ export class SiblingGuide2D extends Line2D {
 
     // Check for degenerate case (shouldn't happen if HalfHingeLine is valid)
     if (guideDirection.lengthSq() < 1e-10) {
-      console.warn(`SiblingGuide2D ${this.id}: sibling HalfHingeLine has zero direction`);
       return new Line2DRealization2D(twinPosition, new Vector3(1, 0, 0), false);
     }
 

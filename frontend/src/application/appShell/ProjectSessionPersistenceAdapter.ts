@@ -1,4 +1,4 @@
-import { ProjectService } from '@/services/ProjectService';
+import { ProjectService } from './ProjectService';
 import type { OpenedProjectSession, ProjectSessionPersistencePayload, ProjectSessionPersistencePort } from './AppShellPorts';
 import type { RuntimeSessionPersistenceRestoreHandle, RuntimeSessionPersistenceSnapshotHandle } from './ProjectSessionPersistenceTargets';
 
@@ -16,6 +16,6 @@ export class ProjectSessionPersistenceAdapter implements ProjectSessionPersisten
   }
 
   restoreSession(data: ProjectSessionPersistencePayload, target: RuntimeSessionPersistenceRestoreHandle): void {
-    ProjectService.deserializeCommands(data, target.world, target.commandStack);
+    ProjectService.deserializeCommands(data, target.world, target.commandStack, target.notifier);
   }
 }

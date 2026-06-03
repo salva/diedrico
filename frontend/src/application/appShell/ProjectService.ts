@@ -7,6 +7,7 @@ import type { CommandStack } from '@/commands/CommandStack';
 import { Command, type CommandSnapshot } from '@/commands/Command';
 import type { OperationDescriptor } from '@/commands/operations/IOperation';
 import { assertOperationDescriptor, assertRestorableOperationDescriptor, deserializeOperation } from '@/commands/operations/OperationRegistry';
+import type { ChangeNotifier } from '@/application/appShell/RuntimeChangePublisher';
 
 export interface ProjectData {
   id: string;
@@ -42,7 +43,7 @@ export class ProjectService {
     };
   }
 
-  static deserializeCommands(data: ProjectData, world: World, commandStack: CommandStack): void {
+  static deserializeCommands(data: ProjectData, world: World, commandStack: CommandStack, notifier: ChangeNotifier): void {
     this.validateProjectData(data);
     commandStack.clear();
     world.restoreNextId(data.nextElementId);
@@ -61,20 +62,11 @@ export class ProjectService {
         timestamp: serializedCommand.timestamp,
         description: serializedCommand.description,
         operations
-      }, world));
+      }, world, notifier));
     }
 
     commandStack.restoreCommittedCommands(restoredCommands);
 
-    if (!world.getActivePlaneId()) {
-      const planes = world.getAllProjectionPlanes();
-      const ph = planes.find(p => p.id === 'projPlaneH' || p.name === 'P_H');
-      if (ph) {
-        world.setActivePlaneId(ph.id);
-      } else if (planes.length > 0) {
-        world.setActivePlaneId(planes[0].id);
-      }
-    }
   }
 
   static validateProjectData(data: unknown): asserts data is ProjectData {

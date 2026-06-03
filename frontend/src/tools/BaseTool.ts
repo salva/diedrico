@@ -10,7 +10,6 @@
  */
 
 import type { ToolContext, ToolResult } from './ITool';
-import type { useToolStore } from '@/stores/toolStore';
 
 export abstract class BaseTool {
   abstract readonly name: string;
@@ -31,11 +30,11 @@ export abstract class BaseTool {
    * Handle tool completion: switch tool or stay active based on completionBehavior
    * Should be called after successful operation, before returning success result
    * 
-   * @param toolStore Tool store for switching active tool
+   * @param completeTool Callback for completing return-to-selection tools
    */
-  protected handleCompletion(toolStore: ReturnType<typeof useToolStore>): void {
+  protected handleCompletion(completeTool?: () => void): void {
     if (this.completionBehavior === 'return-to-selection') {
-      toolStore.setTool('select');
+      completeTool?.();
     }
     // If 'stay-active', do nothing - tool already called reset() to prepare for next operation
   }

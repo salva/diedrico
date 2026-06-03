@@ -233,10 +233,6 @@ export class IntersectionSequenceFactory {
           throw new Error('pointId missing from sibling intersection operation output');
         }
         
-        console.log(
-          `[IntersectionSequenceFactory] Created sibling intersection ${siblingPointId} ` +
-          `in plane ${siblingPlaneId} for primary ${pointId}`
-        );
       }
     } catch (siblingError) {
       // Sibling creation failed - log but don't fail the entire operation

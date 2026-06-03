@@ -89,7 +89,7 @@
 </template>
 
 <script setup lang="ts">
-import { provide, ref, onMounted, onUnmounted } from 'vue';
+import { provide, ref, watch, onMounted, onUnmounted } from 'vue';
 import SvgCanvas from './components/workspace/SvgCanvas.vue';
 import Toolbar from './components/toolbars/Toolbar.vue';
 import StatusBar from './components/toolbars/StatusBar.vue';
@@ -113,7 +113,10 @@ import {
   ElementsPanelInjectionKey,
   ProcessHistoryCommandInjectionKey,
   ProcessTreeReadInjectionKey,
+  SelectionActionsInjectionKey,
   ThreePresentationInjectionKey,
+  ToolInteractionReadInjectionKey,
+  ToolRuntimeInjectionKey,
 } from './application/appShell/RuntimeInjectionKeys';
 
 const GOOGLE_CONFIG = {
@@ -125,10 +128,18 @@ const hasGoogleCredentials = Boolean(GOOGLE_CONFIG.clientId);
 
 const toolStore = useToolStore();
 toolStore.setToolFamilies(TOOL_FAMILIES);
+toolStore.initFromStorage();
 const selectionStore = useSelectionStore();
-useSettingsStore();
+const settingsStore = useSettingsStore();
+settingsStore.initFromStorage();
 const authStore = useAuthStore();
 const viewStore = useViewStore();
+viewStore.initFromStorage();
+
+watch(() => toolStore.lastUsedTools.value, () => toolStore.saveToStorage(), { deep: true });
+watch(() => settingsStore.settings, () => settingsStore.saveToStorage(), { deep: true });
+watch(() => viewStore.showProjectedElements.value, () => viewStore.saveToStorage());
+watch(() => viewStore.threeViewOptions.value, () => viewStore.saveToStorage(), { deep: true });
 
 const svgCanvasRef = ref<InstanceType<typeof SvgCanvas> | null>(null);
 const projectNameDisplayRef = ref<InstanceType<typeof ProjectNameDisplay> | null>(null);
@@ -155,8 +166,15 @@ provide(ElementsPanelInjectionKey, runtime.elementsPanelPort);
 provide(ThreePresentationInjectionKey, runtime.threePresentationPort);
 provide(ActivePlaneSelectorInjectionKey, runtime.activePlaneSelectorPort);
 provide(CanvasCommandProducerInjectionKey, runtime.canvasCommandProducerPort);
+provide(ToolInteractionReadInjectionKey, runtime.toolInteractionReadPort);
+provide(ToolRuntimeInjectionKey, {
+  currentTool: toolStore.currentTool,
+  completeTool: () => toolStore.setTool('select'),
+  setToolStepMessage: message => toolStore.setToolStepMessage(message),
+});
 provide(ProcessHistoryCommandInjectionKey, runtime.processHistoryCommandPort);
 provide(CommandHistoryInjectionKey, runtime.commandHistory);
+provide(SelectionActionsInjectionKey, runtime.selectionActions);
 
 const activeTool = toolStore.currentTool;
 const activePlaneId = runtime.state.activePlaneId;

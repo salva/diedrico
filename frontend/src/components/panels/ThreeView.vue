@@ -4,19 +4,19 @@
     <div class="three-controls">
       <div class="control-group">
         <label class="control-label" title="Show or hide projection plane surfaces in 3D view">
-          <input type="checkbox" v-model="displayOptions.showPlanes" @change="handleDisplayChange" />
+          <input type="checkbox" :checked="displayOptions.showPlanes" @change="onToggleOption('showPlanes')" />
           Show Planes
         </label>
         <label class="control-label" title="Display 2D geometric elements (points, lines, circles) positioned on their planes in 3D space">
-          <input type="checkbox" v-model="displayOptions.show2DElementsOnPlanes" @change="handleDisplayChange" />
+          <input type="checkbox" :checked="displayOptions.show2DElementsOnPlanes" @change="onToggleOption('show2DElementsOnPlanes')" />
           Show 2D Elements on Planes
         </label>
         <label class="control-label" title="Show coordinate grid on each projection plane for spatial reference">
-          <input type="checkbox" v-model="displayOptions.showGrid" @change="handleDisplayChange" />
+          <input type="checkbox" :checked="displayOptions.showGrid" @change="onToggleOption('showGrid')" />
           Show Grid
         </label>
         <label class="control-label" title="Show coordinate axes (X/Y/Z) at origin for spatial reference and debugging">
-          <input type="checkbox" v-model="displayOptions.showReferenceAxes" @change="handleDisplayChange" />
+          <input type="checkbox" :checked="displayOptions.showReferenceAxes" @change="onToggleOption('showReferenceAxes')" />
           Show Reference Axes
         </label>
       </div>
@@ -29,6 +29,7 @@ import { inject, onMounted, onUnmounted, ref, watch } from 'vue';
 import { ThreePresentationInjectionKey } from '@/application/appShell/RuntimeInjectionKeys';
 import { useSelectionStore } from '@/stores/selectionStore';
 import { useViewStore } from '@/stores/viewStore';
+import type { ThreeViewDisplayOptions } from '@/types/ThreeViewDisplayOptions';
 import { ThreeViewRuntime } from '@/rendering/threeView/ThreeViewRuntime';
 
 const containerRef = ref<HTMLDivElement>();
@@ -48,7 +49,9 @@ let unsubscribeWorldChanges: (() => void) | undefined;
 
 function selectedIds(): string[] { return [...selectionStore.selectedIdsArray]; }
 function refreshThreeView(): void { runtime.refresh({ readPorts, displayOptions: displayOptions.value, selectedIds: selectedIds() }); }
-function handleDisplayChange(): void { refreshThreeView(); }
+function onToggleOption(key: keyof ThreeViewDisplayOptions): void {
+  viewStore.updateThreeViewOption(key, !displayOptions.value[key]);
+}
 function handleResize(): void { runtime.resize(); }
 
 onMounted(() => {

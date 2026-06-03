@@ -7,7 +7,7 @@
  */
 
 import { ref, computed } from 'vue';
-import type { GoogleUserProfile } from '../services/GoogleDriveService';
+import type { GoogleUserProfile } from '@/application/appShell/DrivePortTypes';
 
 export interface AuthState {
   isAuthenticated: boolean;

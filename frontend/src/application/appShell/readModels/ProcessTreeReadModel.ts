@@ -1,18 +1,21 @@
-import { getActionDescriptionParts } from '@/domain/processTree/Action';
 import type { ProcessNode } from '@/domain/processTree/ProcessTree';
 import { Element2D } from '@/domain/world/Element2D';
 import type { World } from '@/domain/world/World';
+import type { DependencyQueryPort } from '@/domain/world/DependencyPorts';
+import { DescriptorRegistry } from '@/domain/world/descriptors/DescriptorRegistry';
+import type { DescriptionPart } from '@/domain/world/descriptors/DescriptionPart';
+import type { Action } from '@/domain/processTree/Action';
 import { mapDescriptionParts, type ProcessNodeViewModel, type ProcessTreeReadModel } from '../RuntimeViewPorts';
 
 export interface ProcessTreeReadModelContext {
   readonly world: World;
+  readonly dependencyQuery: DependencyQueryPort;
 }
 
 export function buildProcessTreeReadModel(context: ProcessTreeReadModelContext): ProcessTreeReadModel {
   const tree = context.world.getProcessTree();
   return {
     root: createProcessNodeViewModel(tree.root, context),
-    version: tree.getVersion(),
     activeSubprocessId: tree.getCurrentSubprocess().id,
   };
 }
@@ -22,7 +25,7 @@ export function getRelatedActionIds(selectedIds: readonly string[], context: Pro
   const selectedIdSet = new Set(selectedIds);
   for (const action of context.world.getProcessTree().getAllActions()) {
     const producesSelected = selectedIdSet.has(action.elementId);
-    const dependsOnSelected = context.world.getDependencyService().getDependencies(action.elementId).some(depId => selectedIdSet.has(depId));
+    const dependsOnSelected = context.dependencyQuery.getDependencies(action.elementId).some(depId => selectedIdSet.has(depId));
     if (producesSelected || dependsOnSelected) related.add(action.id);
   }
   return related;
@@ -71,4 +74,56 @@ function isActionInfeasible(elementId: string, context: ProcessTreeReadModelCont
     return realization ? !realization.isFeasible() : false;
   }
   return false;
+}
+
+function getActionDescriptionParts(action: Action, world: World): DescriptionPart[] {
+  if (!action.elementId.includes('/')) {
+    const plane = world.getProjectionPlaneById(action.elementId);
+    if (plane) {
+      const descriptor = DescriptorRegistry.get(plane);
+      const typeName = descriptor.getTypeName(plane).toLowerCase();
+      const label = plane.label || plane.name;
+      const constructionParts = descriptor.getConstructionDescription(plane, world);
+      
+      return [
+        { type: 'label', content: label, elementId: action.elementId },
+        { type: 'text', content: `: ${typeName} ` },
+        ...constructionParts
+      ];
+    }
+  }
+  
+  try {
+    const element = world.getElement2D(action.elementId);
+    if (element) {
+      const descriptor = DescriptorRegistry.get(element);
+      const typeName = descriptor.getTypeName(element).toLowerCase();
+      const label = element.label || action.elementId;
+      const constructionParts = descriptor.getConstructionDescription(element, world);
+      
+      return [
+        { type: 'label', content: label, elementId: action.elementId },
+        { type: 'text', content: `: ${typeName} ` },
+        ...constructionParts
+      ];
+    }
+  } catch {
+    // Not a 2D element, continue to 3D
+  }
+  
+  const element3d = world.getElement3DById(action.elementId);
+  if (element3d) {
+    const descriptor = DescriptorRegistry.get(element3d);
+    const typeName = descriptor.getTypeName(element3d).toLowerCase();
+    const label = element3d.label || action.elementId;
+    const constructionParts = descriptor.getConstructionDescription(element3d, world);
+    
+    return [
+      { type: 'label', content: label, elementId: action.elementId },
+      { type: 'text', content: `: ${typeName} ` },
+      ...constructionParts
+    ];
+  }
+  
+  return [];
 }

@@ -21,21 +21,23 @@ import { buildPropertiesDialogViewModel } from './readModels/PropertiesDialogRea
 import { buildProcessTreeReadModel, countProcessNodeViewModels, getRelatedActionIds } from './readModels/ProcessTreeReadModel';
 import { buildElementsPanelReadModel } from './readModels/ElementsPanelReadModel';
 import { toggleElementVisibility } from './readModels/ElementVisibilityIntent';
+import { RuntimeChangePublisher, type ChangeNotifier } from './RuntimeChangePublisher';
 
 export class RuntimeSession implements ProjectSessionKernel {
   private readonly world = new World();
+  private readonly changes = new RuntimeChangePublisher();
   private readonly commandStack = new CommandStack();
-  private readonly commandProducer = new RuntimeCommandProducer(this.world, this.commandStack);
+  private readonly commandProducer = new RuntimeCommandProducer(this.world, this.commandStack, this.changes);
+  private activePlaneId?: string;
 
 
   canvasViewPort(): CanvasViewPort {
     const canvasReadPort = createCanvasWorldReadPort(this.world);
-    const toolReadPort = createToolInteractionReadPort(this.world);
     const canvasPresentationController = new CanvasPresentationController();
     return {
-      subscribeToChanges: (listener) => this.world.subscribeToChanges(listener),
-      unsubscribeFromChanges: (listener) => this.world.unsubscribeFromChanges(listener),
-      getActivePlaneId: () => this.world.getActivePlaneId(),
+      subscribeToChanges: (listener) => this.changes.subscribeToChanges(listener),
+      unsubscribeFromChanges: (listener) => this.changes.unsubscribeFromChanges(listener),
+      getActivePlaneId: () => this.getActivePlaneId(),
       getPlaneTransformsForInput: () => new Map(canvasReadPort.getCanvasPlaneTransforms().map(transform => [transform.planeId, transform.paperToPlane])),
       buildPresentationModel: (viewport, options) => canvasPresentationController.buildModel(
         canvasReadPort,
@@ -56,55 +58,59 @@ export class RuntimeSession implements ProjectSessionKernel {
         if (!(point instanceof FreePoint2D) || point.locked) return null;
         return commandSink.startFreePointMove({ planeId, pointId, label: point.label ?? pointId });
       },
-      invokeToolClick: (tool, context) => tool.handleClick({ ...context, readPort: toolReadPort }),
       screenTo3D: ({ clientX, clientY, svg, viewportMatrix, activePlaneId }) => screenTo3D(clientX, clientY, svg, viewportMatrix, activePlaneId, this.world),
       getPropertiesDialogViewModel: (elementId) => this.getPropertiesDialogViewModel(elementId),
     };
   }
 
+  toolInteractionReadPort() {
+    return createToolInteractionReadPort(this.world);
+  }
+
   processTreeReadPort(): ProcessTreeReadPort {
     return {
-      subscribeToChanges: (listener) => this.world.subscribeToChanges(listener),
-      unsubscribeFromChanges: (listener) => this.world.unsubscribeFromChanges(listener),
-      subscribeToTree: (listener) => this.world.getProcessTree().subscribe(listener),
-      getTree: () => buildProcessTreeReadModel({ world: this.world }),
-      getRelatedActionIds: (selectedIds) => getRelatedActionIds(selectedIds, { world: this.world }),
+      subscribeToChanges: (listener) => this.changes.subscribeToChanges(listener),
+      unsubscribeFromChanges: (listener) => this.changes.unsubscribeFromChanges(listener),
+      getTree: () => buildProcessTreeReadModel({ world: this.world, dependencyQuery: this.world.getDependencyQuery() }),
+      getRelatedActionIds: (selectedIds) => getRelatedActionIds(selectedIds, { world: this.world, dependencyQuery: this.world.getDependencyQuery() }),
       countNodes: (node) => countProcessNodeViewModels(node),
     };
   }
 
   elementsPanelPort(): ElementsPanelPort {
     return {
-      subscribeToChanges: (listener) => this.world.subscribeToChanges(listener),
-      unsubscribeFromChanges: (listener) => this.world.unsubscribeFromChanges(listener),
+      subscribeToChanges: (listener) => this.changes.subscribeToChanges(listener),
+      unsubscribeFromChanges: (listener) => this.changes.unsubscribeFromChanges(listener),
       getReadModel: () => buildElementsPanelReadModel({ world: this.world }),
-      toggleVisibility: (elementId) => toggleElementVisibility(elementId, {
-        findElement: (id) => this.findVisibleElement(id),
-        markDirty: () => this.world.markDirty(),
-      }),
+      toggleVisibility: (elementId) => {
+        toggleElementVisibility(elementId, {
+          findElement: (id) => this.findVisibleElement(id),
+        });
+        this.changes.markDirty();
+      },
     };
   }
 
   threePresentationPort(): ThreePresentationPort {
     const readPorts = createThreePresentationReadPorts(this.world);
     return {
-      subscribeToChanges: (listener) => this.world.subscribeToChanges(listener),
-      unsubscribeFromChanges: (listener) => this.world.unsubscribeFromChanges(listener),
+      subscribeToChanges: (listener) => this.changes.subscribeToChanges(listener),
+      unsubscribeFromChanges: (listener) => this.changes.unsubscribeFromChanges(listener),
       getReadPorts: () => readPorts,
     };
   }
 
   activePlaneSelectorPort(): ActivePlaneSelectorPort {
     return {
-      subscribeToChanges: (listener) => this.world.subscribeToChanges(listener),
-      unsubscribeFromChanges: (listener) => this.world.unsubscribeFromChanges(listener),
+      subscribeToChanges: (listener) => this.changes.subscribeToChanges(listener),
+      unsubscribeFromChanges: (listener) => this.changes.unsubscribeFromChanges(listener),
       getPlaneOptions: () => this.world.getAllProjectionPlanes().filter(p => typeof p.id === 'string' && p.id.length > 0).map(p => ({ id: p.id, label: p.name || p.id })),
-      getActivePlaneId: () => this.world.getActivePlaneId(),
+      getActivePlaneId: () => this.getActivePlaneId(),
       getActivePlaneLabel: () => {
-        const planeId = this.world.getActivePlaneId();
+        const planeId = this.getActivePlaneId();
         return planeId ? (this.world.getProjectionPlaneById(planeId)?.name || planeId) : undefined;
       },
-      setActivePlaneId: (id) => this.world.setActivePlaneId(id),
+      setActivePlaneId: (id) => this.setActivePlaneId(id),
     };
   }
 
@@ -125,10 +131,10 @@ export class RuntimeSession implements ProjectSessionKernel {
 
   activePlanePort(): ActivePlanePort {
     return {
-      subscribeToChanges: (listener) => this.world.subscribeToChanges(listener),
-      unsubscribeFromChanges: (listener) => this.world.unsubscribeFromChanges(listener),
-      getActivePlaneId: () => this.world.getActivePlaneId(),
-      setActivePlaneId: (id) => this.world.setActivePlaneId(id),
+      subscribeToChanges: (listener) => this.changes.subscribeToChanges(listener),
+      unsubscribeFromChanges: (listener) => this.changes.unsubscribeFromChanges(listener),
+      getActivePlaneId: () => this.getActivePlaneId(),
+      setActivePlaneId: (id) => this.setActivePlaneId(id),
       getProjectionPlaneSummaries: () => this.world.getAllProjectionPlanes().map((plane) => ({ id: plane.id, name: plane.name })),
       getProjectionPlaneName: (id) => this.world.getProjectionPlaneById(id)?.name,
     };
@@ -146,7 +152,7 @@ export class RuntimeSession implements ProjectSessionKernel {
         ];
       },
       getCascadePreviewIds: (selectedIds) => {
-        const deletionOrder = this.world.getDependencyService().getElementsInDeletionOrder([...selectedIds]);
+        const deletionOrder = this.world.getDependencyQuery().getElementsInDeletionOrder([...selectedIds]);
         return deletionOrder.filter((id) => !selectedIds.includes(id));
       },
     };
@@ -163,11 +169,12 @@ export class RuntimeSession implements ProjectSessionKernel {
   }
 
   selectionDeletionCommandPort(): SelectionDeletionCommandPort {
-    return new SelectionDeletionCommandService(this.world, this.commandStack);
+    return new SelectionDeletionCommandService(this.world, this.commandStack, this.changes);
   }
 
   initializeDefaultWorldIfNeeded(): void {
-    initializeWorld(this.world, this.commandStack);
+    initializeWorld(this.world, this.commandStack, this.changes);
+    this.ensureActivePlane();
   }
 
   resetToEmptyInitializedWorld(): void {
@@ -179,10 +186,11 @@ export class RuntimeSession implements ProjectSessionKernel {
   clear(): void {
     this.world.clear();
     this.commandStack.clear();
+    this.activePlaneId = undefined;
   }
 
   getVersion(): number {
-    return this.world.getVersion();
+    return this.changes.getVersion();
   }
 
   snapshot(projectName: string, persistence: ProjectSessionPersistencePort): ProjectSessionPersistencePayload {
@@ -196,15 +204,17 @@ export class RuntimeSession implements ProjectSessionKernel {
   restoreValidatedProject(openedSession: OpenedProjectSession, persistence: ProjectSessionPersistencePort): void {
     const candidateWorld = new World();
     const candidateCommandStack = new CommandStack();
-    persistence.restoreSession(openedSession.payload, { world: candidateWorld, commandStack: candidateCommandStack });
-    if (candidateWorld.getAllProjectionPlanes().length === 0) initializeWorld(candidateWorld, candidateCommandStack);
-    candidateWorld.markDirty();
+    const validationNotifier: ChangeNotifier = { notifyChange: () => {} };
+    persistence.restoreSession(openedSession.payload, { world: candidateWorld, commandStack: candidateCommandStack, notifier: validationNotifier });
+    if (candidateWorld.getAllProjectionPlanes().length === 0) initializeWorld(candidateWorld, candidateCommandStack, validationNotifier);
 
     this.world.clear();
     this.commandStack.clear();
+    this.activePlaneId = undefined;
     persistence.restoreSession(openedSession.payload, this.restoreTarget());
     if (this.world.getAllProjectionPlanes().length === 0) this.initializeDefaultWorldIfNeeded();
-    this.world.markDirty();
+    this.ensureActivePlane();
+    this.changes.markDirty();
   }
 
 
@@ -238,6 +248,26 @@ export class RuntimeSession implements ProjectSessionKernel {
       || this.world.getProjectionPlaneById(elementId);
   }
 
+  private getActivePlaneId(): string | undefined {
+    return this.ensureActivePlane();
+  }
+
+  private setActivePlaneId(id: string): void {
+    this.activePlaneId = id;
+    this.changes.markDirty();
+  }
+
+  private ensureActivePlane(): string | undefined {
+    if (this.activePlaneId && this.world.getProjectionPlaneById(this.activePlaneId)) {
+      return this.activePlaneId;
+    }
+
+    const planes = this.world.getAllProjectionPlanes();
+    const defaultPlane = planes.find(plane => plane.id === 'projPlaneH' || plane.name === 'P_H') ?? planes[0];
+    this.activePlaneId = defaultPlane?.id;
+    return this.activePlaneId;
+  }
+
   private snapshotHandle(): RuntimeSessionPersistenceSnapshotHandle {
     return {
       commandStack: this.commandStack,
@@ -249,6 +279,7 @@ export class RuntimeSession implements ProjectSessionKernel {
     return {
       world: this.world,
       commandStack: this.commandStack,
+      notifier: this.changes,
     };
   }
 }

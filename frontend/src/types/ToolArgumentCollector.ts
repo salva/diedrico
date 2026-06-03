@@ -17,7 +17,7 @@ import type { SelectionMask } from './SelectionMask';
 import type { Element2D } from '@/domain/world/Element2D';
 import type { ProjectionPlane } from '@/domain/world/projectionPlane/ProjectionPlane';
 import type { Vector3 } from 'three';
-import type { ToolInteractionReadPort } from '@/application/tools/ToolInteractionReadPort';
+import type { ToolInteractionReadPort } from '@/tools/ToolInteractionReadPort';
 
 /**
  * Value of a collected argument: element + position where user clicked

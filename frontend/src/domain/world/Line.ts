@@ -632,20 +632,6 @@ export class Line2DTangentToCircleThroughPoint extends Line2D {
       0  // Direction vector
     );
     
-    // DEBUG: Log tangent line calculation
-    console.log('[TangentLine] Through Point:', {
-      center: { x: center.x, y: center.y },
-      radius,
-      externalPoint: { x: externalPoint.x, y: externalPoint.y },
-      distance,
-      angleCP: angleCP * 180 / Math.PI,
-      angleBeta: angleBeta * 180 / Math.PI,
-      tangentAngle: tangentAngle * 180 / Math.PI,
-      tangentPoint: { x: tangentPoint.x, y: tangentPoint.y },
-      direction: { x: direction.x, y: direction.y },
-      index: this.tangentIndex
-    });
-    
     // Return infinite line through external point with tangent direction
     return new Line2DRealization2D(
       externalPoint.clone(),
@@ -827,16 +813,6 @@ export class Line2DTangentToCircleParallelToLine extends Line2D {
           1  // Finite point
         );
     }
-    
-    // DEBUG: Log parallel tangent calculation
-    console.log('[TangentLine] Parallel to Line:', {
-      center: { x: center.x, y: center.y },
-      radius,
-      refDirection: { x: refDirection.x, y: refDirection.y },
-      perpDirection: { x: perpDirection.x, y: perpDirection.y },
-      tangentPoint: { x: tangentPoint.x, y: tangentPoint.y },
-      index: this.tangentIndex
-    });
     
     // Step 10: Return infinite line through tangent point with reference direction
     // Tangent line is parallel to reference, so same direction

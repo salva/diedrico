@@ -47,11 +47,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, inject, onMounted, onUnmounted, watch, nextTick } from 'vue';
+import { ref, computed, inject, onMounted, onUnmounted, watch } from 'vue';
 import { ProcessHistoryCommandInjectionKey, ProcessTreeReadInjectionKey } from '@/application/appShell/RuntimeInjectionKeys';
 import ProcessTreeNode from './ProcessTreeNode.vue';
 import { useSelectionStore } from '@/stores/selectionStore';
-import { useProcessTreeStore } from '@/stores/processTreeStore';
 
 // Emits
 const emit = defineEmits<{
@@ -73,14 +72,12 @@ const processHistoryController = injectedProcessHistoryController;
 
 // Selection store
 const selectionStore = useSelectionStore();
-const processTreeStore = useProcessTreeStore();
 
 // Local state
-const treeContainer = ref<HTMLElement | null>(null);
 const selectedNodeId = ref<string | null>(null);
 const relatedActionIds = ref<Set<string>>(new Set());
-const stackVersion = ref(0); // Track stack changes
-const lastNodeCount = ref(0); // Track number of nodes for auto-scroll
+const stackVersion = ref(0);
+const lastNodeCount = ref(0);
 
 // Get current ProcessTree - use reactive ref that we update when World changes
 const processTree = ref(processTreeReadPortRequired.getTree());
@@ -95,12 +92,8 @@ const activeSubprocessId = computed(() => {
   return processHistoryController.getState().activeSubprocessId;
 });
 
-// Watch ProcessTree version for reactivity, triggered by stackVersion changes
-const treeVersion = computed(() => {
-  // Depend on stackVersion to trigger updates when push/pop occurs
-  stackVersion.value;
-  return processTree.value.version;
-});
+// Reactive change counter for ProcessTreeNode re-rendering
+const treeVersion = computed(() => stackVersion.value);
 
 // Keyboard shortcuts for stack management
 function handleKeyDown(event: KeyboardEvent) {
@@ -116,47 +109,11 @@ function handleKeyDown(event: KeyboardEvent) {
 }
 
 // Subscription cleanup
-let unsubscribeTree: (() => void) | null = null;
 let unsubscribeWorld: (() => void) | null = null;
 
-function scrollToBottom() {
-  if (treeContainer.value) {
-    treeContainer.value.scrollTop = treeContainer.value.scrollHeight;
-  }
-}
-
-function refreshAfterTreeChange(ensureExpandedForActiveSubprocess: boolean) {
-  const currentCount = processTreeReadPortRequired.countNodes(processTree.value.root);
-  const shouldScroll = currentCount > lastNodeCount.value;
-  lastNodeCount.value = currentCount;
-
-  stackVersion.value++;
-
-  if (shouldScroll && ensureExpandedForActiveSubprocess) {
-    processTreeStore.ensureExpanded(processTree.value.activeSubprocessId);
-  }
-
-  if (shouldScroll) {
-    nextTick(() => {
-      scrollToBottom();
-    });
-  }
-}
-
-function subscribeToCurrentProcessTree(ensureExpandedForActiveSubprocess: boolean) {
-  unsubscribeTree = processTreeReadPortRequired.subscribeToTree(() => {
-    refreshAfterTreeChange(ensureExpandedForActiveSubprocess);
-  });
-}
-
 function handleWorldChange() {
-  if (unsubscribeTree) {
-    unsubscribeTree();
-  }
-
   processTree.value = processTreeReadPortRequired.getTree();
   lastNodeCount.value = processTreeReadPortRequired.countNodes(processTree.value.root);
-  subscribeToCurrentProcessTree(false);
   stackVersion.value++;
 }
 
@@ -167,19 +124,13 @@ onMounted(() => {
   // Initialize node count
   lastNodeCount.value = processTreeReadPortRequired.countNodes(processTree.value.root);
 
-  // Subscribe to ProcessTree changes
-  subscribeToCurrentProcessTree(true);
-
-  // Subscribe to World changes to detect when clear() creates new ProcessTree
+  // Subscribe to World changes to detect when state changes (undo/redo, new actions, etc.)
   processTreeReadPortRequired.subscribeToChanges(handleWorldChange);
   unsubscribeWorld = () => processTreeReadPortRequired.unsubscribeFromChanges(handleWorldChange);
 });
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
-  if (unsubscribeTree) {
-    unsubscribeTree();
-  }
   if (unsubscribeWorld) {
     unsubscribeWorld();
   }

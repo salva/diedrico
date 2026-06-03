@@ -9,7 +9,6 @@ import { describe, it, expect } from 'vitest';
 import { SelectionMask } from '@/types/SelectionMask';
 import { 
   isTypeMask, 
-  isHierarchyMask, 
   isUnionMask, 
   isIntersectionMask 
 } from '@/types/SelectionMask';
@@ -65,7 +64,6 @@ describe('SelectionMask - Phase 63 Class-Based Architecture', () => {
       const mask = SelectionMask.point();
       
       expect(isTypeMask(mask)).toBe(true);
-      expect(isHierarchyMask(mask)).toBe(false);
       expect(isUnionMask(mask)).toBe(false);
       expect(isIntersectionMask(mask)).toBe(false);
     });
@@ -77,7 +75,7 @@ describe('SelectionMask - Phase 63 Class-Based Architecture', () => {
     });
   });
 
-  describe('HierarchyMask - Type + Subtypes Matching', () => {
+  describe('anyLine - Line Type Matching', () => {
     it('T1070.1: anyLine() should match all Line2D subtypes', () => {
       const mask = SelectionMask.anyLine();
       
@@ -92,20 +90,16 @@ describe('SelectionMask - Phase 63 Class-Based Architecture', () => {
       expect(mask.matches(circle)).toBe(false);
     });
 
-    it('T1070.2: Type guards should identify HierarchyMask', () => {
+    it('T1070.2: Type guards should identify anyLine as TypeMask', () => {
       const mask = SelectionMask.anyLine();
       
-      expect(isHierarchyMask(mask)).toBe(true);
-      expect(isTypeMask(mask)).toBe(false);
+      expect(isTypeMask(mask)).toBe(true);
       expect(isUnionMask(mask)).toBe(false);
     });
 
-    it('T1070.3: toString() should indicate hierarchical matching', () => {
+    it('T1070.3: toString() should indicate line matching', () => {
       const str = SelectionMask.anyLine().toString();
       expect(str).toContain('line');
-      expect(str).toContain('segment');
-      expect(str).toContain('guide');
-      expect(str).toContain('half-hinge-line');
     });
   });
 
@@ -218,32 +212,11 @@ describe('SelectionMask - Phase 63 Class-Based Architecture', () => {
     });
   });
 
-  describe('Phase 62 Compatibility - anyLine Hierarchical Matching', () => {
-    it('T1071.1: anyLine() replaces Phase 62 "any-line" string', () => {
-      // Phase 62: selectionMask = ['point', 'any-line']
-      // Phase 63: SelectionMask.union(SelectionMask.point(), SelectionMask.anyLine())
-      
-      const mask = SelectionMask.union(
-        SelectionMask.point(),
-        SelectionMask.anyLine()
-      );
-      
-      // Same behavior as Phase 62 'any-line'
-      expect(mask.matches(point)).toBe(true);
-      expect(mask.matches(line)).toBe(true);
-      expect(mask.matches(segment)).toBe(true);
-      expect(mask.matches(guide)).toBe(true);
-      expect(mask.matches(halfHingeLine)).toBe(true);
-      expect(mask.matches(circle)).toBe(false);
-    });
-  });
-
   describe('Factory Methods', () => {
     it('T1070.14: All factory methods should create proper masks', () => {
       expect(SelectionMask.point()).toBeDefined();
       expect(SelectionMask.line()).toBeDefined();
       expect(SelectionMask.segment()).toBeDefined();
-      expect(SelectionMask.guide()).toBeDefined();
       expect(SelectionMask.circle()).toBeDefined();
       expect(SelectionMask.halfHingeLine()).toBeDefined();
       expect(SelectionMask.anyLine()).toBeDefined();
@@ -252,7 +225,7 @@ describe('SelectionMask - Phase 63 Class-Based Architecture', () => {
     it('T1070.15: Factory methods should return correct types', () => {
       expect(isTypeMask(SelectionMask.point())).toBe(true);
       expect(isTypeMask(SelectionMask.line())).toBe(true);
-      expect(isHierarchyMask(SelectionMask.anyLine())).toBe(true);
+      expect(isTypeMask(SelectionMask.anyLine())).toBe(true);
     });
   });
 });

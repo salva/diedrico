@@ -116,12 +116,10 @@ export class AddBrokenHingeLineOp implements IOperation {
       plane2.addLine(bhhl2);
 
       // Register dependencies
-      world.getDependencyService().registerNode(bhlId, brokenHingeLine.getDependencies());
-      world.getDependencyService().registerNode(bhhl1Id, bhhl1.getDependencies());
-      world.getDependencyService().registerNode(bhhl2Id, bhhl2.getDependencies());
-
-      // Mark World as dirty (triggers reactivity)
-      world.markDirty();
+      const dependencyRegistrar = world.getDependencyRegistrar();
+      dependencyRegistrar.registerNode(bhlId, brokenHingeLine.getDependencies());
+      dependencyRegistrar.registerNode(bhhl1Id, bhhl1.getDependencies());
+      dependencyRegistrar.registerNode(bhhl2Id, bhhl2.getDependencies());
 
       // Store outputs for undo
       this.outputs = {
@@ -153,9 +151,10 @@ export class AddBrokenHingeLineOp implements IOperation {
   undo(world: World): void {
     if (this.outputs.brokenHingeLineId && this.outputs.bhhl1Id && this.outputs.bhhl2Id) {
       // Unregister from dependency service
-      world.getDependencyService().unregisterNode(this.outputs.brokenHingeLineId);
-      world.getDependencyService().unregisterNode(this.outputs.bhhl1Id);
-      world.getDependencyService().unregisterNode(this.outputs.bhhl2Id);
+      const dependencyRegistrar = world.getDependencyRegistrar();
+      dependencyRegistrar.unregisterNode(this.outputs.brokenHingeLineId);
+      dependencyRegistrar.unregisterNode(this.outputs.bhhl1Id);
+      dependencyRegistrar.unregisterNode(this.outputs.bhhl2Id);
 
       // Remove from World storage
       world.removeHingeLine(this.outputs.brokenHingeLineId);
@@ -165,8 +164,6 @@ export class AddBrokenHingeLineOp implements IOperation {
       const plane2 = world.getProjectionPlaneById(this.outputs.plane2Id);
       if (plane1) plane1.removeLine(this.outputs.bhhl1Id);
       if (plane2) plane2.removeLine(this.outputs.bhhl2Id);
-
-      world.markDirty();
     }
   }
 

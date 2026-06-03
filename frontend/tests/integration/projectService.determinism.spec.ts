@@ -14,7 +14,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import type { World } from '@/domain/world/World';
 import { createTestWorld } from '../helpers/worldHelpers';
 import { CommandStack } from '@/commands/CommandStack';
-import { ProjectService } from '@/services/ProjectService';
+import { ProjectService } from '@/application/appShell/ProjectService';
 import { Command } from '@/commands/Command';
 import { Vector3 } from 'three';
 import { getHorizontalPlaneId } from '../helpers/worldHelpers';

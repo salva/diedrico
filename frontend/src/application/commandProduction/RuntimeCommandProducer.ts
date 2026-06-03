@@ -2,7 +2,8 @@ import { Command } from '@/commands/Command';
 import type { CommandStack } from '@/commands/CommandStack';
 import type { IOperation } from '@/commands/operations/IOperation';
 import type { World } from '@/domain/world/World';
-import type { ToolCommandResult } from '@/application/tools/ToolCommandIntents';
+import type { ChangeNotifier } from '@/application/appShell/RuntimeChangePublisher';
+import type { ToolCommandResult } from '@/tools/ToolCommandIntents';
 import type { ProcessHistoryResult, ProcessHistoryState } from '@/application/processHistory/ProcessHistoryIntents';
 import type {
   CanvasCommandProductionPort,
@@ -12,14 +13,17 @@ import type {
   ToolCommandExecutionPort
 } from './CommandProductionPorts';
 
+const noopChangeNotifier: ChangeNotifier = { notifyChange: () => {} };
+
 export class RuntimeCommandProducer implements CanvasCommandProductionPort, ProcessCommandExecutionPort, ToolCommandExecutionPort {
   constructor(
     private readonly world: World,
-    private readonly commandStack: CommandStack
+    private readonly commandStack: CommandStack,
+    private readonly notifier: ChangeNotifier = noopChangeNotifier
   ) {}
 
   executeToolCommand(description: string, build: (command: CommandOperationBuilder) => void): ToolCommandResult {
-    const command = new Command(description, this.world);
+    const command = new Command(description, this.world, this.notifier);
 
     try {
       build(command);
@@ -33,7 +37,7 @@ export class RuntimeCommandProducer implements CanvasCommandProductionPort, Proc
   }
 
   startPreviewCommand(description: string): PreviewCommandSession {
-    const command = new Command(description, this.world);
+    const command = new Command(description, this.world, this.notifier);
     let hasPreview = false;
 
     return {
@@ -73,7 +77,7 @@ export class RuntimeCommandProducer implements CanvasCommandProductionPort, Proc
     operation: IOperation,
     getState: () => ProcessHistoryState
   ): ProcessHistoryResult {
-    const command = new Command(description, this.world);
+    const command = new Command(description, this.world, this.notifier);
 
     try {
       command.addAndExecute(operation);

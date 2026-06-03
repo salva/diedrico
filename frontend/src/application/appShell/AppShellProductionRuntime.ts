@@ -1,4 +1,5 @@
-import { GoogleDriveService, type GoogleDriveConfig } from '@/services/GoogleDriveService';
+import type { GoogleDriveConfig } from './DrivePortTypes';
+import { GoogleDriveService } from '@/infrastructure/googleDrive/GoogleDriveService';
 import { createAppShellRuntime } from './AppShellRuntime';
 import type { AppShellCallbacks, AuthStorePort, SelectionStorePort, ToolStorePort, ViewStorePort } from './AppShellPorts';
 import { createBrowserScheduler } from './AppShellPorts';

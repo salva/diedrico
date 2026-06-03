@@ -7,6 +7,7 @@
  */
 
 import type { Action } from './Action';
+import { ProcessTreeIdAllocator } from './ProcessTreeIdAllocator';
 
 export const PROCESS_NODE_TYPE = {
   SUBPROCESS: 'subprocess',
@@ -43,13 +44,10 @@ export interface ActionNode extends ProcessNodeBase, Action {
 
 export type ProcessNode = Subprocess | ActionGroup | ActionNode;
 
-type ChangeListener = (version: number) => void;
-
 export class ProcessTree {
   root: Subprocess;
-  private _version: number = 0;
+  private readonly idAllocator = new ProcessTreeIdAllocator();
   private subprocessStack: Subprocess[] = [];
-  private listeners: ChangeListener[] = [];
 
   constructor() {
     // Initialize with root subprocess
@@ -67,28 +65,6 @@ export class ProcessTree {
   }
 
   /**
-   * Get current version for reactivity tracking
-   */
-  getVersion(): number {
-    return this._version;
-  }
-
-  subscribe(listener: ChangeListener): () => void {
-    this.listeners.push(listener);
-    return () => {
-      this.listeners = this.listeners.filter(l => l !== listener);
-    };
-  }
-
-  /**
-   * Increment version to notify of changes
-   */
-  private notifyChange(): void {
-    this._version++;
-    this.listeners.forEach(l => l(this._version));
-  }
-
-  /**
    * Get the current active subprocess (top of stack)
    */
   getCurrentSubprocess(): Subprocess {
@@ -102,7 +78,7 @@ export class ProcessTree {
    */
   pushSubprocess(name: string, id?: string): Subprocess {
     const subprocess: Subprocess = {
-      id: id || this.generateId(),
+      id: id || this.idAllocator.nextNodeId(),
       type: 'subprocess',
       name,
       children: [],
@@ -117,7 +93,6 @@ export class ProcessTree {
     
     // Push onto stack
     this.subprocessStack.push(subprocess);
-    this.notifyChange();
 
     return subprocess;
   }
@@ -132,7 +107,6 @@ export class ProcessTree {
       throw new Error('Cannot pop root subprocess');
     }
     this.subprocessStack.pop();
-    this.notifyChange();
   }
 
   findSubprocessById(subprocessId: string): Subprocess | undefined {
@@ -150,7 +124,7 @@ export class ProcessTree {
    */
   addSubprocess(name: string, parent?: Subprocess): Subprocess {
     const subprocess: Subprocess = {
-      id: this.generateId(),
+      id: this.idAllocator.nextNodeId(),
       type: 'subprocess',
       name,
       children: [],
@@ -161,7 +135,6 @@ export class ProcessTree {
 
     const targetParent = parent || this.root;
     targetParent.children.push(subprocess);
-    this.notifyChange();
 
     return subprocess;
   }
@@ -171,9 +144,8 @@ export class ProcessTree {
    * Adds to the current subprocess on top of the stack.
    */
   addActionGroup(group: ActionGroup): void {
-     const currentSubprocess = this.getCurrentSubprocess();
-     currentSubprocess.children.push(group);
-     this.notifyChange();
+    const currentSubprocess = this.getCurrentSubprocess();
+    currentSubprocess.children.push(group);
   }
 
   /**
@@ -198,14 +170,13 @@ export class ProcessTree {
 
     const actionNode: ActionNode = {
       ...action,
-      id: this.generateId(),
+      id: this.idAllocator.nextNodeId(),
       type: 'action',
       isOutput: action.isOutput !== undefined ? action.isOutput : true,
       created: new Date()
     };
     
     const index = groupFound.children.push(actionNode) - 1;
-    this.notifyChange();
     return index;
   }
 
@@ -216,7 +187,6 @@ export class ProcessTree {
     const subprocess = this.findSubprocessById(subprocessId);
     if (subprocess) {
       subprocess.name = newName;
-      this.notifyChange();
     } else {
       throw new Error(`Subprocess not found: ${subprocessId}`);
     }
@@ -229,7 +199,6 @@ export class ProcessTree {
     this.traverseSubprocesses(this.root, (subprocess) => {
       if (subprocess.id === subprocessId) {
         subprocess.showIntermediates = !subprocess.showIntermediates;
-        this.notifyChange();
       }
     });
   }
@@ -249,7 +218,6 @@ export class ProcessTree {
     });
 
     if (handled) {
-      this.notifyChange();
       return;
     }
 
@@ -272,10 +240,6 @@ export class ProcessTree {
         handled = true;
       }
     });
-    
-    if (handled) {
-      this.notifyChange();
-    }
   }
 
   private traverseAllNodes(node: ProcessNode, callback: (node: ProcessNode) => void): void {
@@ -373,7 +337,6 @@ export class ProcessTree {
         const action = group.children[index]!;
         group.children[index] = null;  // Create tombstone
         result = { action, groupId: group.id, index };
-        this.notifyChange();
       }
     });
     
@@ -395,7 +358,6 @@ export class ProcessTree {
         const action = group.children[index]!;
         group.children[index] = null;  // Create tombstone
         result = { action, groupId: group.id, index };
-        this.notifyChange();
       }
     });
     
@@ -412,7 +374,6 @@ export class ProcessTree {
       const index = parentSubprocess.children.findIndex(child => child.id === groupId);
       if (index !== -1) {
         parentSubprocess.children.splice(index, 1);
-        this.notifyChange();
         return true;
       }
     }
@@ -459,7 +420,6 @@ export class ProcessTree {
         }
         group.children[index] = action;  // Fill tombstone
         restored = true;
-        this.notifyChange();
       }
     });
     
@@ -518,7 +478,6 @@ export class ProcessTree {
     
     // Push to stack
     this.subprocessStack.push(subprocess);
-    this.notifyChange();
   }
 
   /**
@@ -550,12 +509,5 @@ export class ProcessTree {
 
     // Action nodes are not traversed directly here as we look for groups or subprocesses
     return null;
-  }
-
-  /**
-   * Generate unique node ID (camelCase format).
-   */
-  private generateId(): string {
-    return `node${Date.now()}${Math.random().toString(36).substr(2, 9)}`;
   }
 }

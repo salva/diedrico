@@ -7,7 +7,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import type { World } from '@/domain/world/World';
 import type { CommandStack } from '@/commands/CommandStack';
-import { ProjectService } from '@/services/ProjectService';
+import { ProjectService } from '@/application/appShell/ProjectService';
 import { deserializeOperation } from '@/commands/operations/OperationRegistry';
 import { Command } from '@/commands/Command';
 import { createTestWorld } from '../../helpers/worldHelpers';

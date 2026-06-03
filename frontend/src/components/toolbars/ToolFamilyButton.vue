@@ -94,14 +94,9 @@ function activateLastUsed() {
 
 function toggleDropdown() {
   isDropdownOpen.value = !isDropdownOpen.value;
-  if (isDropdownOpen.value) {
-    console.log('[ToolFamilyButton] Dropdown opened for family:', props.family.id);
-    console.log('[ToolFamilyButton] Tools in family:', props.family.tools);
-  }
 }
 
 function selectTool(toolId: string) {
-  console.log('[ToolFamilyButton] Selecting tool:', toolId);
   toolStore.selectSubTool(props.family.id, toolId);
   isDropdownOpen.value = false;
 }

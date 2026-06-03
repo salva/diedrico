@@ -71,7 +71,6 @@ export class BrokenHingeLine extends HingeLine {
     // Get auxiliary plane to derive T2 trace ID
     const auxPlane = realizationContext.getProjectionPlaneById(this.auxiliaryPlaneId);
     if (!(auxPlane instanceof AuxiliaryProjectionPlane)) {
-      console.error(`[BrokenHingeLine] Auxiliary plane not found or wrong type: ${this.auxiliaryPlaneId}`);
       return Line3DRealization3D.createInfeasible();
     }
 
@@ -83,17 +82,13 @@ export class BrokenHingeLine extends HingeLine {
       ? auxPlane.t2PrimeLineId   // T2' on hinge plane (e.g., projPlane3)
       : auxPlane.t2OtherTraceId; // T2 on other plane (e.g., projPlane4)
     
-    const traceName = isAuxiliaryPlane ? 'T2\'' : 'T2';
-    
     if (!t2TraceId) {
-      console.error(`[BrokenHingeLine] Auxiliary plane ${this.auxiliaryPlaneId} has no ${traceName} trace`);
       return Line3DRealization3D.createInfeasible();
     }
 
     // Get T2/T2' line and realize it in 2D
     const t2Line = realizationContext.getLine2D(t2TraceId);
     if (!t2Line) {
-      console.error(`[BrokenHingeLine] ${traceName} line not found: ${t2TraceId}`);
       return Line3DRealization3D.createInfeasible();
     }
 
@@ -114,9 +109,6 @@ export class BrokenHingeLine extends HingeLine {
     // applyMatrix4x3 transforms Vector3 → Vector4 (homogeneous 3D coordinates)
     const point3D = applyMatrix4x3(t2Real2D.point1, sourcePlaneReal3D.planeTo3D);
     const direction3D = applyMatrix4x3(t2Real2D.point2, sourcePlaneReal3D.planeTo3D);
-
-    console.log(`[BHL ${this.label}] ${traceName} on ${t2Line.planeId}: (${t2Real2D.point1.x.toFixed(2)}, ${t2Real2D.point1.y.toFixed(2)})`);
-    console.log(`[BHL ${this.label}] 3D point: (${point3D.x.toFixed(2)}, ${point3D.y.toFixed(2)}, ${point3D.z.toFixed(2)}, ${point3D.w.toFixed(2)})`);
 
     return new Line3DRealization3D(point3D, direction3D, true);
   }

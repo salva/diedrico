@@ -3,7 +3,7 @@ import { Vector3 } from 'three';
 import { RuntimeSession } from '@/application/appShell/RuntimeSession';
 import { createToolInteractionReadPort } from '@/application/tools/ToolInteractionReadPort';
 import type { ITool, ToolContext } from '@/tools/ITool';
-import type { ToolCommandSink } from '@/application/tools/ToolCommandIntents';
+import type { ToolCommandSink } from '@/tools/ToolCommandIntents';
 import { createTestWorld, getHorizontalOrigin, getHorizontalOriginId, getHorizontalPlaneId, getVerticalPlaneId } from '../../../helpers/worldHelpers';
 
 describe('ToolInteractionReadPort', () => {
@@ -41,10 +41,11 @@ describe('ToolInteractionReadPort', () => {
 });
 
 describe('RuntimeSession tool invocation read context', () => {
-  it('invokes active tools with readPort and commandSink but without raw World', () => {
+  it('exposes a tool read port for controller-owned tool invocation without raw World', () => {
     const session = new RuntimeSession();
     session.initializeDefaultWorldIfNeeded();
     const canvasViewPort = session.canvasViewPort();
+    const readPort = session.toolInteractionReadPort();
     const commandSink = fakeCommandSink();
     let capturedContext: ToolContext | undefined;
     const tool: ITool = {
@@ -55,15 +56,16 @@ describe('RuntimeSession tool invocation read context', () => {
       }),
     };
 
-    const result = canvasViewPort.invokeToolClick(tool, {
+    const result = tool.handleClick({
       planeId: canvasViewPort.getActivePlaneId()!,
       planeCoords: new Vector3(1, 2, 1),
       canvasCoords: { x: 10, y: 20 },
       commandSink,
+      readPort,
       interactionQuery: { hitTest: vi.fn(() => null) },
       paperToPlaneTransform: undefined,
       viewport: { zoom: 1, panX: 0, panY: 0 },
-      toolStore: { completeToolAction: vi.fn() } as any,
+      completeTool: vi.fn(),
     });
 
     expect(result).toEqual({ success: true });

@@ -28,6 +28,7 @@ import { Line2D } from '@/domain/world/Line';
  */
 export class ParallelLineTool extends ArgumentCollectorTool {
   readonly name = 'parallel-line';
+  protected readonly constructionIntentType = 'parallel-line';
   readonly completionBehavior = 'stay-active' as const; // Phase 69: All tools stay active
 
   /**
@@ -71,4 +72,3 @@ export class ParallelLineTool extends ArgumentCollectorTool {
     return "Create parallel line";
   }
 }
-

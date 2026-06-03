@@ -67,7 +67,6 @@ export class UpdateFreePoint2DPositionOp implements IOperation {
       plane.addPoint(updated);
 
       world.invalidateRealization(this.pointId);
-      world.markDirty();
 
       return { success: true, outputs: this.outputs };
     } catch (error) {
@@ -96,7 +95,6 @@ export class UpdateFreePoint2DPositionOp implements IOperation {
     plane.addPoint(restored);
 
     world.invalidateRealization(this.pointId);
-    world.markDirty();
   }
 
   serialize() {

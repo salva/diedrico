@@ -66,7 +66,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import type { GoogleDriveFile } from '../../services/GoogleDriveService';
+import type { GoogleDriveFile } from '@/application/appShell/DrivePortTypes';
 
 interface Props {
   show: boolean;

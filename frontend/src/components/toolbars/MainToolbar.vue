@@ -19,7 +19,8 @@
 </template>
 
 <script setup lang="ts">
-import { TOOL_TYPE, useToolStore, type ToolType } from '@/stores/toolStore';
+import { TOOL_TYPE, useToolStore } from '@/stores/toolStore';
+import type { ToolType } from '@/application/tools/ToolTypes';
 
 const toolStore = useToolStore();
 

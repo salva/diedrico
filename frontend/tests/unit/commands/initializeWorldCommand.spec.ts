@@ -177,7 +177,7 @@ describe('InitializeWorldCommand', () => {
       const group = createActionGroup(groupId);
       cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
       
-      buildWorldInitialization(world, cmd, groupId);
+      buildWorldInitialization(cmd, groupId);
       
       const operations = cmd.getOperations();
 

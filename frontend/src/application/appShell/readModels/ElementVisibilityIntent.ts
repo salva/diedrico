@@ -4,7 +4,6 @@ type VisibilityElement = { visualStyle?: VisualStyle };
 
 export interface ElementVisibilityIntentContext {
   readonly findElement: (elementId: string) => VisibilityElement | undefined;
-  readonly markDirty: () => void;
 }
 
 export function toggleElementVisibility(elementId: string, context: ElementVisibilityIntentContext): void {
@@ -15,5 +14,4 @@ export function toggleElementVisibility(elementId: string, context: ElementVisib
   } else {
     element.visualStyle.visible = !element.visualStyle.visible;
   }
-  context.markDirty();
 }

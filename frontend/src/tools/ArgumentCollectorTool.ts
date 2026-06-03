@@ -39,7 +39,7 @@
 import { Vector3 } from 'three';
 import { BaseTool } from './BaseTool';
 import type { ToolContext, ToolResult, ITool } from './ITool';
-import type { ToolConstructionIntent } from '@/application/tools/ToolCommandIntents';
+import type { BasicConstructionIntentType, ToolConstructionIntent } from './ToolCommandIntents';
 import { SelectionMask, NoneMask } from '@/types/SelectionMask';
 import type { 
   ToolArgumentSpec, 
@@ -64,6 +64,8 @@ export type { ArgumentValue } from '@/types/ToolArgumentCollector';
  * - cancel(): Abort collection and reset
  */
 export abstract class ArgumentCollectorTool extends BaseTool implements ITool {
+  protected readonly constructionIntentType?: BasicConstructionIntentType;
+
   /** Map of collected arguments (argument name → {element, position}) */
   private collected: Map<string, ArgumentValue> = new Map();
   
@@ -96,8 +98,10 @@ export abstract class ArgumentCollectorTool extends BaseTool implements ITool {
     args: Map<string, ArgumentValue>,
     context: ToolContext
   ): ToolConstructionIntent {
+    if (!this.constructionIntentType) throw new Error(`Tool ${this.name} must declare a construction intent type or override buildConstructionIntent`);
+
     return {
-      type: this.name as Exclude<import('@/application/tools/ToolCommandIntents').ConstructionIntentType, 'intersection' | 'tangent-line-to-circle-through-point' | 'tangent-line-to-circle-parallel'>,
+      type: this.constructionIntentType,
       description: this.getCommandDescription(),
       planeId: context.planeId,
       args
@@ -140,7 +144,7 @@ export abstract class ArgumentCollectorTool extends BaseTool implements ITool {
       throw new Error(result.message || `Failed to ${this.getCommandDescription().toLowerCase()}`);
     }
 
-    this.handleCompletion(context.toolStore);
+    this.handleCompletion(context.completeTool);
   }
 
   

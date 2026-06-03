@@ -27,6 +27,7 @@ import { SelectionMask } from '@/types/SelectionMask';
  */
 export class PointTool extends ArgumentCollectorTool {
   readonly name = 'point';
+  protected readonly constructionIntentType = 'point';
   readonly completionBehavior = 'stay-active' as const;
 
   /**

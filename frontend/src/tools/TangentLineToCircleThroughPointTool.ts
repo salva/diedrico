@@ -15,7 +15,7 @@
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
 import type { ToolArgumentSet, CollectionContext, ArgumentValue } from '@/types/ToolArgumentCollector';
 import type { ToolContext } from './ITool';
-import type { ToolConstructionIntent } from '@/application/tools/ToolCommandIntents';
+import type { ToolConstructionIntent } from './ToolCommandIntents';
 import { SelectionMask } from '@/types/SelectionMask';
 import { Vector3 } from 'three';
 

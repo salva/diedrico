@@ -17,6 +17,8 @@
 
 
 
+import type { DependencyRegistrarPort, DependencyQueryPort } from './DependencyPorts';
+
 /**
  * Dependency graph edge representing input-output relationship
  */
@@ -37,7 +39,7 @@ export interface ElementDependencies {
 /**
  * Service for managing element dependencies
  */
-export class DependencyService {
+export class DependencyService implements DependencyRegistrarPort, DependencyQueryPort {
   // Cached dependency maps for fast lookup
   private dependentsMap: Map<string, Set<string>> = new Map();  // elementId -> set of elements that depend on it
   private dependenciesMap: Map<string, Set<string>> = new Map(); // elementId -> set of elements it depends on
@@ -55,12 +57,25 @@ export class DependencyService {
    * @param inputIds - The IDs of the elements it depends on (dependencies)
    */
   registerNode(outputId: string, inputIds: string[]): void {
+    // Clean up stale reverse edges from any previous registration
+    const oldDeps = this.dependenciesMap.get(outputId);
+    if (oldDeps) {
+      for (const oldInputId of oldDeps) {
+        const oldDependents = this.dependentsMap.get(oldInputId);
+        if (oldDependents) {
+          oldDependents.delete(outputId);
+          if (oldDependents.size === 0) {
+            this.dependentsMap.delete(oldInputId);
+          }
+        }
+      }
+    }
+
     // 1. Record dependencies (what outputId depends on)
     if (!this.dependenciesMap.has(outputId)) {
       this.dependenciesMap.set(outputId, new Set());
     }
     const deps = this.dependenciesMap.get(outputId)!;
-    // Clear existing to ensure clean state if re-registering
     deps.clear();
     for (const inputId of inputIds) {
       deps.add(inputId);
@@ -307,8 +322,6 @@ export class DependencyService {
    * @param invalidateCallback - Function to invalidate realization cache for each element
    */
   invalidateCascade(elementId: string, invalidateCallback: (id: string) => void): void {
-    console.log('=== CASCADE INVALIDATION START ===');
-    console.log(`Root element: ${elementId}`);
     
     // Invalidate the changed element
     invalidateCallback(elementId);
@@ -320,14 +333,7 @@ export class DependencyService {
     while (queue.length > 0) {
       const { id, depth } = queue.shift()!;
       const directDependents = Array.from(this.dependentsMap.get(id) || []);
-      
-      if (directDependents.length > 0) {
-        const indent = '  '.repeat(depth + 1);
-        console.log(`${indent}${id} → invalidates ${directDependents.length} descendant(s):`);
-        directDependents.forEach(depId => {
-          console.log(`${indent}  • ${depId}`);
-        });
-      }
+      void depth;
       
       for (const dependentId of directDependents) {
         if (!visited.has(dependentId)) {
@@ -337,8 +343,6 @@ export class DependencyService {
         }
       }
     }
-    
-    console.log(`=== CASCADE COMPLETE (${visited.size} elements invalidated) ===\n`);
   }
 
   /**
@@ -349,9 +353,6 @@ export class DependencyService {
    * @returns Array of invalidation layers showing the propagation order
    */
   traceInvalidation(elementId: string): { elementId: string; depth: number }[] {
-    console.log('=== INVALIDATION PROPAGATION TRACE ===');
-    console.log(`Starting from: ${elementId}`);
-    console.log('');
     
     const trace: { elementId: string; depth: number }[] = [];
     const visited = new Set<string>();
@@ -363,18 +364,7 @@ export class DependencyService {
       if (visited.has(id)) continue;
       visited.add(id);
       
-      const indent = '  '.repeat(depth);
       const dependents = Array.from(this.dependentsMap.get(id) || []);
-      
-      console.log(`${indent}[Depth ${depth}] ${id}`);
-      if (dependents.length > 0) {
-        console.log(`${indent}  → Invalidates ${dependents.length} dependent(s):`);
-        dependents.forEach(depId => {
-          console.log(`${indent}    • ${depId}`);
-        });
-      } else {
-        console.log(`${indent}  → (leaf element - no dependents)`);
-      }
       
       trace.push({ elementId: id, depth });
       
@@ -386,10 +376,6 @@ export class DependencyService {
       }
     }
     
-    console.log('');
-    console.log(`Total elements invalidated: ${trace.length}`);
-    console.log('=== END INVALIDATION TRACE ===');
-    
     return trace;
   }
 
@@ -400,9 +386,6 @@ export class DependencyService {
    * @param filterPrefix - Optional prefix to filter element IDs (e.g., "proj_plane_" to see only projection planes)
    */
   dumpDependencyGraph(filterPrefix?: string): void {
-    console.log('=== DEPENDENCY GRAPH ===');
-    console.log(`Total elements tracked: ${this.dependenciesMap.size}`);
-    console.log('');
     
     // Sort element IDs for consistent output
     const allElementIds = Array.from(new Set([
@@ -417,25 +400,8 @@ export class DependencyService {
     for (const elementId of filtered) {
       const dependencies = Array.from(this.dependenciesMap.get(elementId) || []).sort();
       const dependents = Array.from(this.dependentsMap.get(elementId) || []).sort();
-      
-      console.log(`Element: ${elementId}`);
-      if (dependencies.length > 0) {
-        console.log(`  Depends on (${dependencies.length}):`);
-        dependencies.forEach(dep => console.log(`    <- ${dep}`));
-      } else {
-        console.log(`  Depends on: (none - base element)`);
-      }
-      
-      if (dependents.length > 0) {
-        console.log(`  Depended on by (${dependents.length}):`);
-        dependents.forEach(dep => console.log(`    -> ${dep}`));
-      } else {
-        console.log(`  Depended on by: (none - leaf element)`);
-      }
-      console.log('');
+      void dependencies;
+      void dependents;
     }
-    
-    console.log('=== END DEPENDENCY GRAPH ===');
   }
 }
-

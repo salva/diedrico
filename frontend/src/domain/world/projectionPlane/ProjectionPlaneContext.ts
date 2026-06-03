@@ -59,7 +59,6 @@ export interface ProjectionPlaneDependencyRegistrar {
 export interface ProjectionPlaneMutationContext extends ProjectionPlaneRealizationContext, ProjectionOwnerPlaneQuery {
   getNextId(): number;
   generateDefaultLabel(elementId: string, elementType: string): string;
-  getDependencyService(): ProjectionPlaneDependencyRegistrar;
-  markDirty(): void;
+  getDependencyRegistrar(): ProjectionPlaneDependencyRegistrar;
   getSiblingPlaneForIntersection?(point: Point2D): string | undefined;
 }

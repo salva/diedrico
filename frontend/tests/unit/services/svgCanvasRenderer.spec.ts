@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Vector3 } from 'three';
-import { SVGRenderer } from '@/services/SVGRenderer';
+import { SVGRenderer } from '@/rendering/svg/SVGRenderer';
 import { RenderLayer, type LinePrimitive } from '@/domain/presentation/Paper';
 
 describe('SVGRenderer canvas DTO adapter', () => {

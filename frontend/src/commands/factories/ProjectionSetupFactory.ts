@@ -16,7 +16,7 @@ import { HalfHingeLine2D } from '@/domain/world/HingeLine';
 import { IntersectionSequenceFactory } from './IntersectionSequenceFactory';
 import { LineSequenceFactory } from './LineSequenceFactory';
 import { CircleSequenceFactory } from './CircleSequenceFactory';
-import { PlaneSequenceFactory } from '@/services/factories/PlaneSequenceFactory';
+import { PlaneSequenceFactory } from '@/commands/factories/PlaneSequenceFactory';
 
 /**
  * Construct complete projection plane setup following the 14-step procedure

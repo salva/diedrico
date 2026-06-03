@@ -22,7 +22,8 @@ describe('Cycle 027 runtime read-model ownership boundaries', () => {
   it('keeps visibility intent separate from elements read model DTO construction', () => {
     expect(elementsPanelReadModel).not.toMatch(/toggleElementVisibility|markDirty\(|visualStyle\.visible =/);
     expect(elementVisibilityIntent).toMatch(/toggleElementVisibility/);
-    expect(elementVisibilityIntent).toMatch(/markDirty\(\)/);
+    expect(elementVisibilityIntent).not.toMatch(/markDirty\(\)/);
+    expect(runtimeSession).toMatch(/toggleElementVisibility[\s\S]*this\.changes\.markDirty\(\)/);
   });
 
   it('keeps canvas visibility process-tree seam deleted and Cycle 028 raw collection seams out of the public canvas port', () => {

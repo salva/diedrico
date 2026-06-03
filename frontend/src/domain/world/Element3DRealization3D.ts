@@ -258,7 +258,6 @@ export class Plane3DRealization3D extends Element3DRealization3D {
    */
   getRectangleCorners(planeSize: number = 375): Vector4[] {
     if (!this.quaternion || !this.originPoint) {
-      console.error('[Plane3DRealization3D] Cannot compute corners: missing quaternion or originPoint');
       return [];
     }
 

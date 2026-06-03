@@ -11,7 +11,7 @@
  * Architecture:
  * - Element3D classes store WHAT the element is (definition/rules)
  * - realize3D() computes numeric geometry → Point3DRealization3D
- * - Lazy evaluation with caching in World.pointRealizations3D
+ * - Lazy evaluation with caching owned by World's RealizationStore
  * 
  */
 import { Vector4 } from 'three';
@@ -149,8 +149,7 @@ export class Point3DFromProjections extends Element3D {
       }
 
       return new Point3DRealization3D(result.point);
-    } catch (error) {
-      console.error('[Point3DFromProjections] realize3D failed:', error);
+    } catch {
       return new Point3DRealization3D(new Vector4(0, 0, 0, 1), false);
     }
   }

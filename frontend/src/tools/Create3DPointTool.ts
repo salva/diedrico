@@ -30,6 +30,7 @@ import { SelectionMask } from '@/types/SelectionMask';
  */
 export class Create3DPointTool extends ArgumentCollectorTool {
   readonly name = 'create3dpoint';
+  protected readonly constructionIntentType = 'create3dpoint';
   readonly completionBehavior = 'stay-active' as const;
 
   /**

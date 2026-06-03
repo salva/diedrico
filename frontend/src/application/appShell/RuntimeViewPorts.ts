@@ -1,11 +1,7 @@
-import type { Matrix3, Vector3 } from 'three';
-import type { ViewportTransform } from '@/services/SVGRenderer';
-import type { CanvasInteractionQuery } from '@/application/canvasPresentation/CanvasInteractionQuery';
+import type { Matrix3 } from 'three';
 import type { CanvasPresentationModel } from '@/application/canvasPresentation/CanvasPresentationModel';
 import type { ThreePresentationReadPorts } from '@/application/threePresentation/ThreeWorldReadPort';
-import type { ITool, ToolResult } from '@/tools/ITool';
-import type { useToolStore } from '@/stores/toolStore';
-import type { FreePointMoveSession, ToolCommandSink } from '@/application/tools/ToolCommandIntents';
+import type { FreePointMoveSession, ToolCommandSink } from '@/tools/ToolCommandIntents';
 import type { DescriptionPart } from '@/domain/world/descriptors/DescriptionPart';
 import type { ProcessNodeType } from '@/domain/processTree/ProcessTree';
 
@@ -23,15 +19,12 @@ export interface CanvasPresentationOptions {
   readonly gridVisible: boolean;
 }
 
-export interface CanvasToolInvocationContext {
-  readonly planeId: string;
-  readonly planeCoords: Vector3;
-  readonly canvasCoords: { x: number; y: number };
-  readonly commandSink: ToolCommandSink;
-  readonly interactionQuery: CanvasInteractionQuery;
-  readonly paperToPlaneTransform: Matrix3 | undefined;
-  readonly viewport: { zoom: number; panX: number; panY: number };
-  readonly toolStore: ReturnType<typeof useToolStore>;
+export interface CanvasViewport {
+  readonly zoom: number;
+  readonly panX: number;
+  readonly panY: number;
+  readonly width: number;
+  readonly height: number;
 }
 
 export interface PropertiesDialogViewModel {
@@ -53,10 +46,9 @@ export interface PropertiesDialogViewModel {
 export interface CanvasViewPort extends RuntimeChangeSubscriptionPort {
   getActivePlaneId(): string | undefined;
   getPlaneTransformsForInput(): Map<string, Matrix3>;
-  buildPresentationModel(viewport: ViewportTransform & { width: number; height: number }, options: CanvasPresentationOptions): CanvasPresentationModel;
+  buildPresentationModel(viewport: CanvasViewport, options: CanvasPresentationOptions): CanvasPresentationModel;
   getElementLabel(elementId: string, elementType: string, planeId?: string): string;
   getMovableFreePointMoveSession(args: { planeId: string; pointId: string; commandSink: ToolCommandSink }): FreePointMoveSession | null;
-  invokeToolClick(tool: ITool, context: CanvasToolInvocationContext): ToolResult;
   screenTo3D(args: { clientX: number; clientY: number; svg: SVGSVGElement; viewportMatrix: Matrix3; activePlaneId: string }): { success: boolean; coordinates?: { x: number; y: number; z: number } };
   getPropertiesDialogViewModel(elementId: string | null): PropertiesDialogViewModel | null;
 }
@@ -81,13 +73,11 @@ export interface ProcessNodeViewModel {
 
 export interface ProcessTreeReadModel {
   readonly root: ProcessNodeViewModel;
-  readonly version: number;
   readonly activeSubprocessId: string;
 }
 
 export interface ProcessTreeReadPort extends RuntimeChangeSubscriptionPort {
   getTree(): ProcessTreeReadModel;
-  subscribeToTree(listener: () => void): () => void;
   getRelatedActionIds(selectedIds: readonly string[]): Set<string>;
   countNodes(node: ProcessNodeViewModel): number;
 }

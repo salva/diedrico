@@ -18,7 +18,7 @@
  */
 
 import { Vector3 } from 'three';
-import { vec3 } from '../utils/threeUtils';
+import { vec3 } from '@/utils/threeUtils';
 
 import type {
   Primitive,
@@ -29,7 +29,7 @@ import type {
   CirclePrimitive,
   ArcPrimitive,
   TextPrimitive,
-} from '../domain/presentation/Paper';
+} from '@/domain/presentation/Paper';
 
 /**
  * SVG element attributes ready for rendering

@@ -4,8 +4,7 @@ import type { Point2D, Point2DRealization2D } from '../Point';
 import type { ProjectionPlaneDependencyRegistrar } from './ProjectionPlaneContext';
 
 export interface ProjectionPlaneStoreMutationContext {
-  getDependencyService(): ProjectionPlaneDependencyRegistrar;
-  markDirty(): void;
+  getDependencyRegistrar(): ProjectionPlaneDependencyRegistrar;
 }
 
 export class ProjectionPlaneElementStore {
@@ -28,8 +27,7 @@ export class ProjectionPlaneElementStore {
   addPoint(point: Point2D, context?: ProjectionPlaneStoreMutationContext): void {
     if (!point.id) throw new Error('Cannot add point without ID');
     this.points.set(point.id, point);
-    context?.getDependencyService().registerNode(point.id, point.getDependencies());
-    context?.markDirty();
+    context?.getDependencyRegistrar().registerNode(point.id, point.getDependencies());
   }
 
   getPoint(id: string): Point2D | undefined { return this.points.get(id); }
@@ -38,8 +36,7 @@ export class ProjectionPlaneElementStore {
     this.pointRealizations.delete(id);
     const removed = this.points.delete(id);
     if (removed && context) {
-      context.getDependencyService().unregisterNode(id);
-      context.markDirty();
+      context.getDependencyRegistrar().unregisterNode(id);
     }
     return removed;
   }
@@ -50,8 +47,7 @@ export class ProjectionPlaneElementStore {
   addLine(line: Line2D, context?: ProjectionPlaneStoreMutationContext): void {
     if (!line.id) throw new Error('Cannot add line without ID');
     this.lines.set(line.id, line);
-    context?.getDependencyService().registerNode(line.id, line.getDependencies());
-    context?.markDirty();
+    context?.getDependencyRegistrar().registerNode(line.id, line.getDependencies());
   }
   getLine(id: string): Line2D | undefined { return this.lines.get(id); }
   getAllLines(): Line2D[] { return Array.from(this.lines.values()); }
@@ -59,8 +55,7 @@ export class ProjectionPlaneElementStore {
     this.lineRealizations.delete(id);
     const removed = this.lines.delete(id);
     if (removed && context) {
-      context.getDependencyService().unregisterNode(id);
-      context.markDirty();
+      context.getDependencyRegistrar().unregisterNode(id);
     }
     return removed;
   }
@@ -71,8 +66,7 @@ export class ProjectionPlaneElementStore {
   addCircle(circle: Circle2D, context?: ProjectionPlaneStoreMutationContext): void {
     if (!circle.id) throw new Error('Cannot add circle without ID');
     this.circles.set(circle.id, circle);
-    context?.getDependencyService().registerNode(circle.id, circle.getDependencies());
-    context?.markDirty();
+    context?.getDependencyRegistrar().registerNode(circle.id, circle.getDependencies());
   }
   getCircle(id: string): Circle2D | undefined { return this.circles.get(id); }
   getAllCircles(): Circle2D[] { return Array.from(this.circles.values()); }
@@ -80,8 +74,7 @@ export class ProjectionPlaneElementStore {
     this.circleRealizations.delete(id);
     const removed = this.circles.delete(id);
     if (removed && context) {
-      context.getDependencyService().unregisterNode(id);
-      context.markDirty();
+      context.getDependencyRegistrar().unregisterNode(id);
     }
     return removed;
   }

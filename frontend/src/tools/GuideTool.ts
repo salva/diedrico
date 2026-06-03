@@ -41,6 +41,7 @@ import { SelectionMask } from '@/types/SelectionMask';
  */
 export class GuideTool extends ArgumentCollectorTool {
   readonly name = 'guide';
+  protected readonly constructionIntentType = 'guide';
   readonly completionBehavior = 'stay-active' as const;
 
   /**

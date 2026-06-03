@@ -21,6 +21,7 @@ import { SelectionMask } from '@/types/SelectionMask';
  */
 export class Create3DLineTool extends ArgumentCollectorTool {
   readonly name = 'create3dline';
+  protected readonly constructionIntentType = 'create3dline';
   readonly completionBehavior = 'stay-active' as const;
 
   protected getArgumentSets(): ToolArgumentSet[] {

@@ -1,6 +1,6 @@
 import type { CanvasCommandProductionPort } from '@/application/commandProduction/CommandProductionPorts';
 import type { World } from '@/domain/world/World';
-import type { ToolCommandSink, ToolConstructionIntent, QuickToolIntent, MoveFreePointRequest, FreePointMoveSession, StyleUpdateRequest, ToolCommandResult } from './ToolCommandIntents';
+import type { ToolCommandSink, ToolConstructionIntent, QuickToolIntent, MoveFreePointRequest, FreePointMoveSession, StyleUpdateRequest, ToolCommandResult } from '@/tools/ToolCommandIntents';
 import { executeConstructionIntent } from '@/application/construction/ConstructionUseCases';
 import { executeQuickToolIntent } from '@/application/construction/QuickToolUseCases';
 import { CanvasPointMovementUseCase } from '@/application/canvas/CanvasPointMovementUseCase';

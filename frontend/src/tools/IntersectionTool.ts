@@ -19,7 +19,7 @@
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
 import type { ToolArgumentSet, CollectionContext, ArgumentValue } from '@/types/ToolArgumentCollector';
 import type { ToolContext } from './ITool';
-import type { ToolConstructionIntent } from '@/application/tools/ToolCommandIntents';
+import type { ToolConstructionIntent } from './ToolCommandIntents';
 import type { Element2D } from '@/domain/world/Element2D';
 import { SelectionMask } from '@/types/SelectionMask';
 

@@ -13,7 +13,7 @@
     "test:architecture": "vitest run tests/unit/architecture",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
-    "lint": "npm run test:architecture"
+    "lint": "eslint \"src/**/*.{ts,vue}\" \"tests/**/*.ts\""
   },
   "dependencies": {
     "@types/katex": "^0.16.8",

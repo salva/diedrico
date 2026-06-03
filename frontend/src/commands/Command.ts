@@ -69,6 +69,9 @@
 import type { IOperation, OperationDescriptor } from './operations/IOperation';
 import { serializeOperation } from './operations/OperationRegistry';
 import type { World } from '@/domain/world/World';
+import type { ChangeNotifier } from '@/application/appShell/RuntimeChangePublisher';
+
+const noopChangeNotifier: ChangeNotifier = { notifyChange: () => {} };
 
 export interface CommandSnapshot {
   id: string;
@@ -103,22 +106,24 @@ export class Command {
   protected operations: IOperation[] = [];
   protected _status: CommandStatus = CommandStatus.Building;
   protected world: World;
+  protected notifier: ChangeNotifier;
 
-  constructor(description: string, world: World) {
+  constructor(description: string, world: World, notifier: ChangeNotifier = noopChangeNotifier) {
     this.id = this.generateId();
     this.timestamp = new Date();
     this.description = description;
     this.world = world;
+    this.notifier = notifier;
   }
 
-  static restore(input: RestoredCommandInput, world: World): Command {
+  static restore(input: RestoredCommandInput, world: World, notifier: ChangeNotifier = noopChangeNotifier): Command {
     if (!input.id || !input.description) {
-      throw new Error('Cannot restore command without id and description');
+      throw new Error('Cannot restore command without id or description');
     }
     if (input.operations.length === 0) {
       throw new Error(`Cannot restore empty command: ${input.id}`);
     }
-    const command = new Command(input.description, world);
+    const command = new Command(input.description, world, notifier);
     Object.defineProperty(command, 'id', { value: input.id, configurable: false });
     Object.defineProperty(command, 'timestamp', { value: input.timestamp instanceof Date ? input.timestamp : new Date(input.timestamp), configurable: false });
     command.operations = [...input.operations];
@@ -178,7 +183,7 @@ export class Command {
       // Notify world that changes have been made (for immediate reactive UI updates)
       // This ensures 3D view and other reactive components update as each operation executes,
       // not waiting for the entire command to be committed
-      this.world.markDirty();
+      this.notifier.notifyChange();
       
       return result as ReturnType<TOperation['apply']>;
     } catch (error) {
@@ -216,12 +221,16 @@ export class Command {
    * Returns command to building state with no operations
    */
   rollback(): void {
+    const hadOperations = this.operations.length > 0;
     // Undo in reverse order
     for (let i = this.operations.length - 1; i >= 0; i--) {
       this.operations[i].undo(this.world);
     }
     this.operations = [];
     this._status = CommandStatus.Building;
+    if (hadOperations) {
+      this.notifier.notifyChange();
+    }
   }
 
   /**
@@ -241,7 +250,7 @@ export class Command {
     this._status = CommandStatus.Undone;
     
     // Notify world that changes have been made (for reactive UI updates)
-    this.world.markDirty();
+    this.notifier.notifyChange();
   }
 
   /**
@@ -264,7 +273,7 @@ export class Command {
     this._status = CommandStatus.Committed;
     
     // Notify world that changes have been made (for reactive UI updates)
-    this.world.markDirty();
+    this.notifier.notifyChange();
   }
 
   /**

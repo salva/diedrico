@@ -14,24 +14,7 @@
 /// <reference types="gapi" />
 /// <reference types="gapi.client.drive-v3" />
 
-export interface GoogleDriveFile {
-  id: string;
-  name: string;
-  modifiedTime: string;
-}
-
-export interface GoogleDriveConfig {
-  clientId: string;
-  apiKey?: string;  // Optional: recommended for quota tracking but not required for OAuth
-  appId: string;
-}
-
-export interface GoogleUserProfile {
-  name: string;       // Display name (e.g., "John Doe")
-  email: string;      // Email address
-  picture?: string;   // Avatar URL (if available)
-  sub: string;        // Google user ID (unique identifier)
-}
+import type { GoogleDriveConfig, GoogleDriveFile, GoogleUserProfile } from '@/application/appShell/DrivePortTypes';
 
 interface GoogleIdentityServices {
   accounts: {

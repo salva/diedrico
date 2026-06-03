@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { GoogleDriveService } from '../../../src/services/GoogleDriveService';
+import { GoogleDriveService } from '../../../src/infrastructure/googleDrive/GoogleDriveService';
 
 // Mock token client for Google Identity Services
 const mockTokenClient = {

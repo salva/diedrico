@@ -1,7 +1,7 @@
 import type { Vector3 } from 'three';
 import { UpdateFreePoint2DPositionOp } from '@/commands/operations/world/UpdateFreePoint2DPositionOp';
 import type { PreviewCommandSessionFactory } from '@/application/commandProduction/CommandProductionPorts';
-import type { MoveFreePointRequest, FreePointMoveSession, ToolCommandResult } from '@/application/tools/ToolCommandIntents';
+import type { MoveFreePointRequest, FreePointMoveSession, ToolCommandResult } from '@/tools/ToolCommandIntents';
 
 export class CanvasPointMovementUseCase {
   constructor(private readonly commandSessions: PreviewCommandSessionFactory) {}

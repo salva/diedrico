@@ -13,13 +13,14 @@
  * Reference: specs/001-dihedral-learning-mvp/tasks.md - R017
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Command, CommandStatus } from '@/commands/Command';
 import type { IOperation, OperationResult } from '@/commands/operations/IOperation';
 import type { World } from '@/domain/world/World';
 import { Vector3 } from 'three';
 import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
 import { createTestWorld } from '../../helpers/worldHelpers';
+import { RuntimeChangePublisher } from '@/application/appShell/RuntimeChangePublisher';
 
 // Mock operation for testing
 class MockOperation implements IOperation {
@@ -99,11 +100,13 @@ class DependentMockOperation implements IOperation {
 describe('Generic Command Class (R017)', () => {
   let world: World;
   let command: Command;
+  let notifier: RuntimeChangePublisher;
 
   beforeEach(() => {
     const { world: w } = createTestWorld();
     world = w;
-    command = new Command('Test Command', world);
+    notifier = new RuntimeChangePublisher();
+    command = new Command('Test Command', world, notifier);
   });
 
   describe('Concrete Command (no subclass needed)', () => {
@@ -189,6 +192,31 @@ describe('Generic Command Class (R017)', () => {
       // Command should have no operations after rollback
       expect(command['operations']).toHaveLength(0);
       expect(command.status).toBe(CommandStatus.Building);
+    });
+
+    it('should notify subscribers when rollback undoes applied operations', () => {
+      const listener = vi.fn();
+      notifier.subscribeToChanges(listener);
+      const op1 = new MockOperation();
+      const op2 = new MockOperation();
+      op2.shouldFail = true;
+
+      command.addAndExecute(op1);
+      expect(listener).toHaveBeenCalledTimes(1);
+
+      expect(() => command.addAndExecute(op2)).toThrow('Mock operation failed');
+
+      expect(op1.undoCalled).toBe(true);
+      expect(listener).toHaveBeenCalledTimes(2);
+    });
+
+    it('should not notify subscribers when rollback has nothing to undo', () => {
+      const listener = vi.fn();
+      notifier.subscribeToChanges(listener);
+
+      command.rollback();
+
+      expect(listener).not.toHaveBeenCalled();
     });
 
     it('should not allow adding operations after commit', () => {

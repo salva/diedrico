@@ -10,7 +10,7 @@
  * Architecture:
  * - Element3D classes store WHAT the element is (definition/rules)
  * - realize3D() computes numeric geometry → Segment3DRealization3D
- * - Lazy evaluation with caching in World.segmentRealizations3D
+ * - Lazy evaluation with caching owned by World's RealizationStore
  * 
  */
 import { Vector4 } from 'three';
@@ -151,8 +151,7 @@ export class Segment3DFromProjections extends Element3D {
           false
         );
       }
-    } catch (error) {
-      console.error('[Segment3DFromProjections] realize3D failed:', error);
+    } catch {
       return new Segment3DRealization3D(
         new Vector4(0, 0, 0, 1),
         new Vector4(1, 0, 0, 1),

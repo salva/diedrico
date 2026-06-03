@@ -57,17 +57,8 @@ export class DeletionSequenceFactory {
     world: World
   ): void {
     // Step 1: Compute cascade and get elements in proper deletion order
-    const dependencyService = world.getDependencyService();
-    const allElementsToDelete = dependencyService.getElementsInDeletionOrder(selectedIds);
-    
-    const cascadedElements = allElementsToDelete.filter(id => !selectedIds.includes(id));
-    
-    console.log('[DeletionSequenceFactory] Cascade deletion:', {
-      direct: selectedIds,
-      cascaded: cascadedElements,
-      total: allElementsToDelete,
-      order: 'dependents-first (proper deletion order)'
-    });
+    const dependencyQuery = world.getDependencyQuery();
+    const allElementsToDelete = dependencyQuery.getElementsInDeletionOrder(selectedIds);
     
     // Step 2: Find all actions that produce these elements
     const processTree = world.getProcessTree();

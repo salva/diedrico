@@ -28,6 +28,7 @@ import { Line2D } from '@/domain/world/Line';
  */
 export class PerpendicularLineTool extends ArgumentCollectorTool {
   readonly name = 'perpendicular-line';
+  protected readonly constructionIntentType = 'perpendicular-line';
   readonly completionBehavior = 'stay-active' as const; // Phase 69: All tools stay active
 
   /**

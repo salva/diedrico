@@ -41,11 +41,9 @@ export type Vector3D = [number, number, number, number];
  * the geometric relationship between plane coordinates and canvas.
  * This makes the transformation independent of plane labels/names.
  * 
- * For backward compatibility with tests, also accepts string plane names.
- * 
  * @param u Plane3D intrinsic u coordinate
  * @param v Plane3D intrinsic v coordinate
- * @param planeToPaper2DOrName The plane's transformation matrix OR plane name (for tests only!)
+ * @param planeToPaper2D The plane's transformation matrix
  * @param canvasOriginX Canvas origin X (default 400)
  * @param canvasOriginY Canvas origin Y (default 400)
  * @returns [x_canvas, y_canvas]
@@ -53,25 +51,14 @@ export type Vector3D = [number, number, number, number];
 export function planeToCanvas(
   u: number,
   v: number,
-  planeToPaper2DOrName: { elements: number[] } | Float32Array | number[] | string,
-  canvasOriginX: number = 400,
-  canvasOriginY: number = 400
+  planeToPaper2D: { elements: number[] } | Float32Array | number[],
+  _canvasOriginX: number = 400,
+  _canvasOriginY: number = 400
 ): [number, number] {
-  // Backward compat: if string, use old logic (FOR TESTS ONLY!)
-  if (typeof planeToPaper2DOrName === 'string') {
-    // WARNING: Using plane name for logic - only for test compatibility
-    // Production code should pass transformation matrix
-    if (planeToPaper2DOrName === 'P_H') {
-      return [canvasOriginX + u, canvasOriginY + v];
-    } else {
-      return [canvasOriginX + u, canvasOriginY - v];
-    }
-  }
-  
   // Extract matrix elements
-  const m = Array.isArray(planeToPaper2DOrName) ? planeToPaper2DOrName : 
-           'elements' in planeToPaper2DOrName ? planeToPaper2DOrName.elements : 
-           Array.from(planeToPaper2DOrName as Float32Array);
+  const m = Array.isArray(planeToPaper2D) ? planeToPaper2D : 
+           'elements' in planeToPaper2D ? planeToPaper2D.elements : 
+           Array.from(planeToPaper2D as Float32Array);
   
   // Apply 2D homogeneous transformation: [x, y, 1] = M × [u, v, 1]
   // Matrix layout: [m0, m3, m6]
@@ -91,11 +78,9 @@ export function planeToCanvas(
  * Uses the plane's paperToPlane2D transformation matrix (inverse of planeToPaper2D)
  * which encodes the geometric relationship. Independent of plane labels.
  * 
- * For backward compatibility with tests, also accepts string plane names.
- * 
  * @param x Canvas X coordinate
  * @param y Canvas Y coordinate
- * @param paperToPlane2DOrName The plane's inverse transformation matrix OR plane name (for tests only!)
+ * @param paperToPlane2D The plane's inverse transformation matrix
  * @param canvasOriginX Canvas origin X (default 400)
  * @param canvasOriginY Canvas origin Y (default 400)
  * @returns [u, v] in plane intrinsic coordinates
@@ -103,25 +88,14 @@ export function planeToCanvas(
 export function canvasToPlane(
   x: number,
   y: number,
-  paperToPlane2DOrName: { elements: number[] } | Float32Array | number[] | string,
-  canvasOriginX: number = 400,
-  canvasOriginY: number = 400
+  paperToPlane2D: { elements: number[] } | Float32Array | number[],
+  _canvasOriginX: number = 400,
+  _canvasOriginY: number = 400
 ): [number, number] {
-  // Backward compat: if string, use old logic (FOR TESTS ONLY!)
-  if (typeof paperToPlane2DOrName === 'string') {
-    // WARNING: Using plane name for logic - only for test compatibility
-    // Production code should pass transformation matrix
-    if (paperToPlane2DOrName === 'P_H') {
-      return [x - canvasOriginX, y - canvasOriginY];
-    } else {
-      return [x - canvasOriginX, -(y - canvasOriginY)];
-    }
-  }
-  
   // Extract matrix elements
-  const m = Array.isArray(paperToPlane2DOrName) ? paperToPlane2DOrName : 
-           'elements' in paperToPlane2DOrName ? paperToPlane2DOrName.elements : 
-           Array.from(paperToPlane2DOrName as Float32Array);
+  const m = Array.isArray(paperToPlane2D) ? paperToPlane2D : 
+           'elements' in paperToPlane2D ? paperToPlane2D.elements : 
+           Array.from(paperToPlane2D as Float32Array);
   
   // Apply 2D homogeneous transformation: [u, v, 1] = M × [x, y, 1]
   const u = m[0] * x + m[3] * y + m[6];

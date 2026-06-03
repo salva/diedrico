@@ -104,10 +104,7 @@ export class AddAuxiliaryProjectionPlaneOp implements IOperation {
       
       // Register with dependency service (CRITICAL for parametric updates)
       // When trace lines move, the dependency service will find this plane and invalidate it
-      world.getDependencyService().registerNode(projPlaneId, plane.getDependencies());
-      
-      // Mark World as dirty (triggers reactivity)
-      world.markDirty();
+      world.getDependencyRegistrar().registerNode(projPlaneId, plane.getDependencies());
       
       // Store outputs for undo
       this.outputs = { projPlaneId };
@@ -128,10 +125,9 @@ export class AddAuxiliaryProjectionPlaneOp implements IOperation {
   undo(world: World): void {
     if (this.outputs.projPlaneId) {
       // Unregister from dependency service
-      world.getDependencyService().unregisterNode(this.outputs.projPlaneId);
+      world.getDependencyRegistrar().unregisterNode(this.outputs.projPlaneId);
       
       world.projectionPlanes.delete(this.outputs.projPlaneId);
-      world.markDirty();
     }
   }
 

@@ -1,4 +1,3 @@
-import type { World } from '../../domain/world/World';
 import type { Command } from '../Command';
 import {
   AddPlane3DFixedOp,
@@ -32,11 +31,10 @@ import { buildHingeLineWithHalves } from './HingeLineSequenceFactory';
  * CRITICAL: This factory does NOT generate element IDs. Operations call World/ProjectionPlane
  * factory methods which auto-generate IDs. Operations store generated IDs in outputs for redo support.
  * 
- * @param world World instance (used for active plane state)
  * @param cmd Open Command to which operations will be added
  * @param groupId The ID of the action group to attach operations to
  */
-export function buildWorldInitialization(world: World, cmd: Command, groupId: string): void {
+export function buildWorldInitialization(cmd: Command, groupId: string): void {
   // Step 2-3: Create 3D planes
   // P_H: horizontal plane (z=0), normal=(0,0,1)
   const planeHOp = new AddPlane3DFixedOp(
@@ -137,8 +135,4 @@ export function buildWorldInitialization(world: World, cmd: Command, groupId: st
   // Phase 84: No geometry arguments - computed from canonical coordinates
   buildHingeLineWithHalves(projPlaneHId, projPlaneVId, cmd, groupId);
   
-  // Step 11: Set active plane
-  // Default to horizontal plane as the active drawing surface
-  // Phase 89: Direct state mutation (Active Plane is UI state, not Operation)
-  world.setActivePlaneId(projPlaneHId);
 }

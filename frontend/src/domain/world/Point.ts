@@ -23,16 +23,6 @@ import { BrokenHalfHingeLine2D } from './elements/BrokenHalfHingeLine2D';
 import { applyMatrix4x3, applyMatrix3x4 } from '@/utils/threeUtils';
 import { assert } from '@/utils/assert';
 
-export const POINT_2D_TYPE = {
-  FREE: 'free',
-  INTERSECTION: 'intersection',  // Kept temporarily for backward compatibility
-  LINE_LINE_INTERSECTION: 'line-line-intersection',
-  LINE_CIRCLE_INTERSECTION: 'line-circle-intersection',
-  CIRCLE_CIRCLE_INTERSECTION: 'circle-circle-intersection',
-  SIBLING_INTERSECTION: 'sibling-intersection',
-} as const;
-export type Point2DType = typeof POINT_2D_TYPE[keyof typeof POINT_2D_TYPE];
-
 /**
  * Point2DRealization2D - Stores computed 2D position for a Point2D
  * 
@@ -251,14 +241,12 @@ export class Point2DLineLineIntersection extends IntersectionPoint2D {
     
     // Check if parent elements are infeasible - propagate infeasibility
     if (!line1.feasible || !line2.feasible) {
-      console.warn('[Point2DLineLineIntersection] Parent element is infeasible, marking this as infeasible');
       return new Point2DRealization2D(new Vector3(0, 0, 1), false);
     }
     
     const intersectionPointReal = intersectLineLine(line1, line2);
     
     if (!intersectionPointReal.feasible) {
-      console.warn('[Point2DLineLineIntersection] Lines do not intersect (parallel or coincident)');
       return new Point2DRealization2D(new Vector3(0, 0, 1), false);
     }
     
@@ -276,7 +264,6 @@ export class Point2DLineLineIntersection extends IntersectionPoint2D {
     if (line1Domain && line1Domain.isBounded() && line1.point2.z === 1) {
       // Segment: check if intersection is between point1 and point2
       if (!this.isPointOnSegment(intersectionPoint, line1)) {
-        console.warn('[Point2DLineLineIntersection] Intersection falls outside segment bounds (line1)');
         return new Point2DRealization2D(intersectionPoint, false);
       }
     }
@@ -285,7 +272,6 @@ export class Point2DLineLineIntersection extends IntersectionPoint2D {
     if (line2Domain && line2Domain.isBounded() && line2.point2.z === 1) {
       // Segment: check if intersection is between point1 and point2
       if (!this.isPointOnSegment(intersectionPoint, line2)) {
-        console.warn('[Point2DLineLineIntersection] Intersection falls outside segment bounds (line2)');
         return new Point2DRealization2D(intersectionPoint, false);
       }
     }
@@ -394,14 +380,12 @@ export class Point2DLineCircleIntersection extends IntersectionPoint2D {
     
     // Check if parent elements are infeasible - propagate infeasibility
     if (!line.feasible || !circle.feasible) {
-      console.warn('[Point2DLineCircleIntersection] Parent element is infeasible, marking this as infeasible');
       return new Point2DRealization2D(new Vector3(0, 0, 1), false);
     }
     
     const intersectionPoints = intersectLineCircle(line, circle);
     
     if (intersectionPoints.length === 0) {
-      console.warn('[Point2DLineCircleIntersection] Line and circle do not intersect');
       return new Point2DRealization2D(new Vector3(0, 0, 1), false);
     }
     
@@ -413,7 +397,6 @@ export class Point2DLineCircleIntersection extends IntersectionPoint2D {
     if (lineDomain && lineDomain.isBounded() && line.point2.z === 1) {
       // Segment: check if intersection is between point1 and point2
       if (!this.isPointOnSegment(point, line)) {
-        console.warn('[Point2DLineCircleIntersection] Intersection falls outside segment bounds');
         return new Point2DRealization2D(point, false);
       }
     }
@@ -522,14 +505,12 @@ export class Point2DCircleCircleIntersection extends IntersectionPoint2D {
     
     // Check if parent elements are infeasible - propagate infeasibility
     if (!circle1.feasible || !circle2.feasible) {
-      console.warn('[Point2DCircleCircleIntersection] Parent element is infeasible, marking this as infeasible');
       return new Point2DRealization2D(new Vector3(0, 0, 1), false);
     }
     
     const intersectionPoints = intersectCircleCircle(circle1, circle2);
     
     if (intersectionPoints.length === 0) {
-      console.warn('[Point2DCircleCircleIntersection] Circles do not intersect');
       return new Point2DRealization2D(new Vector3(0, 0, 1), false);
     }
     
@@ -636,7 +617,6 @@ export class SiblingIntersectionPoint2D extends Point2D {
         const siblingPlaneReal3D = world.getProjectionPlane3DRealization(this.planeId);
 
         if (!primaryPlaneReal3D?.feasible || !siblingPlaneReal3D?.feasible) {
-          console.warn('[SiblingIntersectionPoint2D] 3D plane realization infeasible for BHHL round-trip');
           return new Point2DRealization2D(new Vector3(0, 0, 1), false);
         }
 
@@ -644,8 +624,6 @@ export class SiblingIntersectionPoint2D extends Point2D {
         const R_3D = applyMatrix4x3(R, primaryPlaneReal3D.planeTo3D);
         // Project back to sibling plane 2D (Vector4 → Vector3 homogeneous)
         const R_prime = applyMatrix3x4(R_3D, siblingPlaneReal3D.threeDToPlane);
-
-        console.log(`[SiblingIntersectionPoint2D] BHHL 3D round-trip: R=(${R.x.toFixed(2)},${R.y.toFixed(2)}) → 3D=(${R_3D.x.toFixed(2)},${R_3D.y.toFixed(2)},${R_3D.z.toFixed(2)}) → R'=(${R_prime.x.toFixed(2)},${R_prime.y.toFixed(2)})`);
         return new Point2DRealization2D(new Vector3(R_prime.x, R_prime.y, 1), true);
       }
     }

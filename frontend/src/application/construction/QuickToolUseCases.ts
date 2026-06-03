@@ -1,4 +1,4 @@
-import type { QuickToolIntent, ToolCommandResult } from '@/application/tools/ToolCommandIntents';
+import type { QuickToolIntent, ToolCommandResult } from '@/tools/ToolCommandIntents';
 
 export interface ExecuteQuickToolParams {
   intent: QuickToolIntent;

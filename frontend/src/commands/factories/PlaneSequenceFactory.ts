@@ -136,10 +136,7 @@ export class PlaneSequenceFactory {
     
     // Create ProcessTree action for dependency tracking
     const projPlaneAction = createProjectionPlaneAction(projPlaneId);
-
-    console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] About to add ProcessTree action for projPlane:', projPlaneId, 'groupId:', groupId);
     cmd.addAndExecute(new AddProcessTreeActionOp(projPlaneAction, groupId));
-    console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] ProcessTree action added for projPlane');
     
     // Create hinge line connecting the new auxiliary plane to the hinge trace's plane
     // IMPORTANT: plane1 = new auxiliary plane (canonical coords source), plane2 = existing plane
@@ -148,32 +145,25 @@ export class PlaneSequenceFactory {
       hingeTracePlaneId   // plane2Id (existing plane containing T1)
     ));
     const hingeLineId = requireStringOutput(hingeLineResult.outputs.hingeLineId, 'hingeLineId');
-    
-    console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] About to add ProcessTree action for hingeLine:', hingeLineId);
     cmd.addAndExecute(new AddProcessTreeActionOp(
       createInitializeHingeLineAction(hingeLineId),
       groupId
     ));
-    console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] ProcessTree action added for hingeLine');
     
     // Create HalfHingeLine2D on both planes (order matches HingeLine plane order)
     const hhl1Op = new AddHalfHingeLine2DOp(projPlaneId, hingeLineId);
     cmd.addAndExecute(hhl1Op);
-    console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] About to add ProcessTree action for HHL #1:', hhl1Op.outputs.lineId, 'groupId:', groupId);
     cmd.addAndExecute(new AddProcessTreeActionOp(
       createInitializeHalfHingeLine2DAction(hhl1Op.outputs.lineId),
       groupId
     ));
-    console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] ProcessTree action added for HHL #1');
 
     const hhl2Op = new AddHalfHingeLine2DOp(hingeTracePlaneId, hingeLineId);
     cmd.addAndExecute(hhl2Op);
-    console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] About to add ProcessTree action for HHL #2:', hhl2Op.outputs.lineId, 'groupId:', groupId);
     cmd.addAndExecute(new AddProcessTreeActionOp(
       createInitializeHalfHingeLine2DAction(hhl2Op.outputs.lineId),
       groupId
     ));
-    console.log('[PlaneSequenceFactory.createAuxiliaryProjectionPlane] ProcessTree action added for HHL #2');
     
     // Hide T1 trace line (now that it's become a hinge line), unless it's already a HalfHingeLine2D
     const hingePlane = world.getProjectionPlaneById(hingeTracePlaneId);
@@ -235,27 +225,18 @@ export class PlaneSequenceFactory {
     const bhhl2Id = requireStringOutput(result.outputs.bhhl2Id, 'bhhl2Id');
     
     // Create ProcessTree actions for dependency tracking
-    console.log('[PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane] About to add ProcessTree action for BrokenHingeLine:', brokenHingeLineId, 'groupId:', groupId);
     cmd.addAndExecute(new AddProcessTreeActionOp(
       createInitializeBrokenHingeLineAction(brokenHingeLineId),
       groupId
     ));
-    console.log('[PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane] ProcessTree action added for BrokenHingeLine');
-    
-    console.log('[PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane] About to add ProcessTree action for BHHL #1:', bhhl1Id, 'groupId:', groupId);
     cmd.addAndExecute(new AddProcessTreeActionOp(
       createInitializeBrokenHalfHingeLine2DAction(bhhl1Id),
       groupId
     ));
-    console.log('[PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane] ProcessTree action added for BHHL #1');
-    console.log('[PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane] ProcessTree action added for BHHL #1');
-    
-    console.log('[PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane] About to add ProcessTree action for BHHL #2:', bhhl2Id, 'groupId:', groupId);
     cmd.addAndExecute(new AddProcessTreeActionOp(
       createInitializeBrokenHalfHingeLine2DAction(bhhl2Id),
       groupId
     ));
-    console.log('[PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane] ProcessTree action added for BHHL #2');
     
     return { brokenHingeLineId, bhhl1Id, bhhl2Id };
   }

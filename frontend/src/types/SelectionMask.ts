@@ -22,7 +22,7 @@ import { BrokenHalfHingeLine2D } from '@/domain/world/elements/BrokenHalfHingeLi
  */
 export type SelectableElementType = 
   | 'point'           // Any Point2D (free, intersection, on-element)
-  | 'line'            // Regular lines only (excludes segments/guides/half-hinge-lines)
+  | 'line'            // Line2D and all subclasses
   | 'segment'         // Specifically Segment2DByPoints only
   | 'guide'           // Specifically Guide2D/SiblingGuide2D only
   | 'half-hinge-line' // Specifically HalfHingeLine2D only
@@ -55,8 +55,6 @@ export function getSelectableType(element: Element2D): SelectableElementType {
     return 'circle';
   }
   
-  // Fallback (should never reach here with valid Element2D)
-  console.warn('[getSelectableType] Unknown element type:', element.constructor.name);
   return 'point';
 }
 
@@ -117,15 +115,6 @@ export abstract class SelectionMask {
   }
   
   /**
-   * Create mask matching guides
-   * Guides are lines, so this returns a line mask
-   * @deprecated Use SelectionMask.line() instead
-   */
-  static guide(): TypeMask {
-    return new TypeMask('line');
-  }
-  
-  /**
    * Create mask matching only circles
    */
   static circle(): TypeMask {
@@ -153,8 +142,8 @@ export abstract class SelectionMask {
    * Phase 63: All Line2D subclasses (perpendicular, parallel, by-two-points) map to 'line',
    * plus specialized line types (segment, guide, half-hinge-line)
    */
-  static anyLine(): HierarchyMask {
-    return new HierarchyMask('line', ['segment', 'guide', 'half-hinge-line']);
+  static anyLine(): TypeMask {
+    return new TypeMask('line');
   }
   
   /**
@@ -256,56 +245,12 @@ export class TypeMask extends SelectionMask {
 }
 
 /**
- * Matches type and all its subtypes using instanceof checks
- * Note: With proper instanceof usage, this is largely redundant with TypeMask
- * since instanceof automatically handles inheritance
- * 
- * Kept for backward compatibility and explicit subtype specification
- */
-export class HierarchyMask extends SelectionMask {
-  private readonly baseMask: TypeMask;
-  private readonly subtypeMasks: TypeMask[];
-
-  constructor(
-    private readonly baseType: SelectableElementType,
-    private readonly subtypes: SelectableElementType[]
-  ) {
-    super();
-    this.baseMask = new TypeMask(baseType);
-    this.subtypeMasks = subtypes.map(t => new TypeMask(t));
-  }
-
-  matches(element: Element2D): boolean {
-    if (this.baseMask.matches(element)) return true;
-    return this.subtypeMasks.some(mask => mask.matches(element));
-  }
-
-  toString(): string {
-    return `Hierarchy(${this.baseType} + [${this.subtypes.join(', ')}])`;
-  }
-
-  /**
-   * Get the base type of this hierarchy
-   */
-  getBaseType(): SelectableElementType {
-    return this.baseType;
-  }
-
-  /**
-   * Get the subtypes included in this hierarchy
-   */
-  getSubtypes(): readonly SelectableElementType[] {
-    return this.subtypes;
-  }
-}
-
-/**
  * Matches if ANY child mask matches (logical OR)
  * Replaces string arrays: ['point', 'line'] → UnionMask([TypeMask('point'), TypeMask('line')])
  * 
  * Enables complex queries:
  * - "point or any line": union(point(), anyLine())
- * - "segment or guide": union(segment(), guide())
+ * - "segment or circle": union(segment(), circle())
  */
 export class UnionMask extends SelectionMask {
   constructor(private readonly masks: SelectionMask[]) {
@@ -378,13 +323,6 @@ export function isTypeMask(mask: SelectionMask): mask is TypeMask {
 }
 
 /**
- * Check if mask is a HierarchyMask
- */
-export function isHierarchyMask(mask: SelectionMask): mask is HierarchyMask {
-  return mask instanceof HierarchyMask;
-}
-
-/**
  * Check if mask is a UnionMask
  */
 export function isUnionMask(mask: SelectionMask): mask is UnionMask {
@@ -397,4 +335,3 @@ export function isUnionMask(mask: SelectionMask): mask is UnionMask {
 export function isIntersectionMask(mask: SelectionMask): mask is IntersectionMask {
   return mask instanceof IntersectionMask;
 }
-

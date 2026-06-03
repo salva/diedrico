@@ -21,6 +21,7 @@ export function createAppShellRuntime(options: AppShellRuntimeOptions) {
   const elementsPanelPort = session.elementsPanelPort();
   const threePresentationPort = session.threePresentationPort();
   const activePlaneSelectorPort = session.activePlaneSelectorPort();
+  const toolInteractionReadPort = session.toolInteractionReadPort();
   const ports = options.ports;
   const drive = ports.drive;
 
@@ -111,8 +112,10 @@ export function createAppShellRuntime(options: AppShellRuntimeOptions) {
     threePresentationPort,
     activePlaneSelectorPort,
     canvasCommandProducerPort,
+    toolInteractionReadPort,
     processHistoryCommandPort,
     commandHistory,
+    selectionActions: selection,
     state: {
       activePlaneId,
       activePlaneName,

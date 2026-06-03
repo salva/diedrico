@@ -8,8 +8,7 @@ import { describe, it, expect } from 'vitest';
 import { Vector3 } from 'three';
 import { FixedProjectionPlane } from '@/domain/world/projectionPlane/FixedProjectionPlane';
 import { createTestWorld } from '../helpers/worldHelpers';
-import { InputService } from '@/services/InputService';
-import type { ViewportTransform } from '@/services/InputService';
+import { InputService, type ViewportTransform } from '@/application/canvas/InputService';
 
 describe('Coordinate Transformation Round-Trips', () => {
   const inputService = new InputService();

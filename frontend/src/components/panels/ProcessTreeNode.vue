@@ -179,11 +179,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick } from 'vue';
+import { ref, computed, nextTick, inject } from 'vue';
 import type { ProcessNodeViewModel } from '@/application/appShell/RuntimeViewPorts';
 import { formatElementLabel } from '@/utils/formatUtils';
-import { useSelectionStore } from '@/stores/selectionStore';
 import { useProcessTreeStore } from '@/stores/processTreeStore';
+import { SelectionActionsInjectionKey } from '@/application/appShell/RuntimeInjectionKeys';
 
 // Props
 const props = withDefaults(defineProps<{
@@ -309,8 +309,11 @@ const allChildren = computed(() => {
   return props.node.children ?? [];
 });
 
-// Selection store
-const selectionStore = useSelectionStore();
+const selectionActions = inject(SelectionActionsInjectionKey);
+if (!selectionActions) {
+  throw new Error('Selection action port not provided');
+}
+const selectionActionsRequired = selectionActions;
 
 // Methods
 function toggleCollapse() {
@@ -324,10 +327,10 @@ function handleLabelClick(elementId: string | undefined, event: MouseEvent) {
   
   if (event.shiftKey) {
     // Multi-select: add to selection
-    selectionStore.addToSelection(elementId);
+    selectionActionsRequired.addElementToSelection(elementId);
   } else {
     // Single select: replace selection
-    selectionStore.selectSingle(elementId);
+    selectionActionsRequired.selectElement(elementId);
   }
 }
 

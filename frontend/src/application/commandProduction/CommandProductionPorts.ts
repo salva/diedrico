@@ -1,6 +1,6 @@
 import type { Command } from '@/commands/Command';
 import type { IOperation } from '@/commands/operations/IOperation';
-import type { ToolCommandResult } from '@/application/tools/ToolCommandIntents';
+import type { ToolCommandResult } from '@/tools/ToolCommandIntents';
 import type { ProcessHistoryResult, ProcessHistoryState } from '@/application/processHistory/ProcessHistoryIntents';
 
 export type CommandOperationBuilder = Command;

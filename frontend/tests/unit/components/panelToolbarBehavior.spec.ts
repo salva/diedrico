@@ -45,15 +45,15 @@ const iconStub = {
 
 
 function createProcessTreeReadPort(world: any) {
+  const listeners = new Set<() => void>();
   const node = (raw: any): any => raw.type === 'action'
     ? { id: raw.id, type: raw.type, isOutput: raw.isOutput, elementId: raw.elementId, descriptionParts: [], isInfeasible: false, hideBecauseElementMissing: false }
     : { id: raw.id, type: raw.type, name: raw.name, children: raw.children.filter((child: any) => child !== null).map(node), showIntermediates: raw.showIntermediates, isOutput: raw.isOutput, isAuxiliary: raw.isAuxiliary, descriptionParts: [], isInfeasible: false, hideBecauseElementMissing: false };
-  const read = () => ({ root: node(world.getProcessTree().root), version: world.getProcessTree().getVersion(), activeSubprocessId: world.getProcessTree().getCurrentSubprocess().id });
+  const read = () => ({ root: node(world.getProcessTree().root), activeSubprocessId: world.getProcessTree().getCurrentSubprocess().id });
   const count = (n: any): number => 1 + (n.children?.reduce((sum: number, child: any) => sum + count(child), 0) ?? 0);
   return {
-    subscribeToChanges: (listener: () => void) => world.subscribeToChanges(listener),
-    unsubscribeFromChanges: (listener: () => void) => world.unsubscribeFromChanges(listener),
-    subscribeToTree: (listener: () => void) => world.getProcessTree().subscribe(listener),
+    subscribeToChanges: (listener: () => void) => { listeners.add(listener); },
+    unsubscribeFromChanges: (listener: () => void) => { listeners.delete(listener); },
     getTree: read,
     getRelatedActionIds: () => new Set<string>(),
     countNodes: count,
