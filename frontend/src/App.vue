@@ -39,10 +39,7 @@
         <div class="panel-stack">
           <!-- Elements Panel (top) -->
           <div class="stacked-panel">
-            <ElementsPanel 
-              @highlight-elements="handleHighlightElements"
-              @clear-highlight="handleClearHighlight"
-            />
+            <ElementsPanel />
           </div>
           
           <!-- Resizer -->
@@ -50,10 +47,7 @@
           
           <!-- Actions Panel (bottom) -->
           <div class="stacked-panel">
-            <ActionsPanel 
-              @highlight-elements="handleHighlightElements"
-              @clear-highlight="handleClearHighlight"
-            />
+            <ActionsPanel />
           </div>
         </div>
       </aside>
@@ -63,7 +57,6 @@
         <SvgCanvas 
           ref="svgCanvasRef"
           @update-3d-coordinates="runtime.actions.updateCoordinates"
-          @update-active-plane="runtime.actions.updateActivePlane"
         />
         
         <!-- 3D View Overlay (Phase 25) -->
@@ -190,13 +183,6 @@ const startupFiles = runtime.state.startupFiles;
 const startupLoading = runtime.state.startupLoading;
 const startupLoadingFiles = runtime.state.startupLoadingFiles;
 const startupError = runtime.state.startupError;
-
-function handleHighlightElements(elementIds: string[], temporary: boolean) {
-  void elementIds;
-  void temporary;
-}
-
-function handleClearHighlight() {}
 
 function handleFitToView() {
   svgCanvasRef.value?.fitToView();

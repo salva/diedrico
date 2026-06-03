@@ -87,6 +87,7 @@ export interface ViewportPanState {
   readonly active: boolean;
   readonly startX: number;
   readonly startY: number;
+  readonly moved: boolean;
 }
 
 interface MutableFreePointDragState extends FreePointDragState {
@@ -107,7 +108,7 @@ export class CanvasInteractionController {
   private currentTool: CanvasTool | null = null;
   private currentToolName: ToolType = 'select';
   private pointDrag: MutableFreePointDragState = CanvasInteractionController.emptyDragState();
-  private viewportPan: ViewportPanState = { active: false, startX: 0, startY: 0 };
+  private viewportPan: ViewportPanState = CanvasInteractionController.emptyPanState();
   private snapTargetPointId: string | null = null;
 
   constructor(deps: {
@@ -288,7 +289,7 @@ export class CanvasInteractionController {
   // --- Viewport pan ---
 
   startViewportPan(startX: number, startY: number): void {
-    this.viewportPan = { active: true, startX, startY };
+    this.viewportPan = { active: true, startX, startY, moved: false };
   }
 
   updateViewportPan(currentX: number, currentY: number, zoom: number): void {
@@ -296,13 +297,19 @@ export class CanvasInteractionController {
     const dx = currentX - this.viewportPan.startX;
     const dy = currentY - this.viewportPan.startY;
     this.viewport.adjustPan(dx / zoom, dy / zoom);
-    this.viewportPan = { active: true, startX: currentX, startY: currentY };
+    this.viewportPan = {
+      active: true,
+      startX: currentX,
+      startY: currentY,
+      moved: this.viewportPan.moved || dx !== 0 || dy !== 0,
+    };
   }
 
-  endViewportPan(): boolean {
-    if (!this.viewportPan.active) return false;
-    this.viewportPan = { active: false, startX: 0, startY: 0 };
-    return true;
+  endViewportPan(): { active: boolean; moved: boolean } {
+    if (!this.viewportPan.active) return { active: false, moved: false };
+    const moved = this.viewportPan.moved;
+    this.viewportPan = CanvasInteractionController.emptyPanState();
+    return { active: true, moved };
   }
 
   isViewportPanning(): boolean {
@@ -314,7 +321,7 @@ export class CanvasInteractionController {
   }
 
   cancelViewportPan(): void {
-    this.viewportPan = { active: false, startX: 0, startY: 0 };
+    this.viewportPan = CanvasInteractionController.emptyPanState();
   }
 
   // --- Hover/snap ---
@@ -443,5 +450,9 @@ export class CanvasInteractionController {
       startClientY: 0,
       moved: false,
     };
+  }
+
+  private static emptyPanState(): ViewportPanState {
+    return { active: false, startX: 0, startY: 0, moved: false };
   }
 }

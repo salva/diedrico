@@ -31,15 +31,13 @@
       <ProcessTreeNode
         v-if="processTree"
         :node="processTree.root"
-        :data-version="treeVersion"
+        :data-version="stackVersion"
         :selected-node-id="selectedNodeId"
         :active-subprocess-id="activeSubprocessId"
         :related-action-ids="relatedActionIds"
         @select-node="handleNodeSelect"
         @toggle-encapsulate="handleToggleEncapsulate"
         @toggle-output="handleToggleOutput"
-        @highlight-elements="(...args) => emit('highlightElements', ...args)"
-        @clear-highlight="emit('clearHighlight')"
         @rename-node="handleRenameNode"
       />
     </div>
@@ -51,12 +49,6 @@ import { ref, computed, inject, onMounted, onUnmounted, watch } from 'vue';
 import { ProcessHistoryCommandInjectionKey, ProcessTreeReadInjectionKey } from '@/application/appShell/RuntimeInjectionKeys';
 import ProcessTreeNode from './ProcessTreeNode.vue';
 import { useSelectionStore } from '@/stores/selectionStore';
-
-// Emits
-const emit = defineEmits<{
-  highlightElements: [elementIds: string[], temporary: boolean];
-  clearHighlight: [];
-}>();
 
 // Injected dependencies
 const processTreeReadPort = inject(ProcessTreeReadInjectionKey);
@@ -77,7 +69,6 @@ const selectionStore = useSelectionStore();
 const selectedNodeId = ref<string | null>(null);
 const relatedActionIds = ref<Set<string>>(new Set());
 const stackVersion = ref(0);
-const lastNodeCount = ref(0);
 
 // Get current ProcessTree - use reactive ref that we update when World changes
 const processTree = ref(processTreeReadPortRequired.getTree());
@@ -91,9 +82,6 @@ const activeSubprocessId = computed(() => {
   stackVersion.value; // Depend on stack changes
   return processHistoryController.getState().activeSubprocessId;
 });
-
-// Reactive change counter for ProcessTreeNode re-rendering
-const treeVersion = computed(() => stackVersion.value);
 
 // Keyboard shortcuts for stack management
 function handleKeyDown(event: KeyboardEvent) {
@@ -113,16 +101,12 @@ let unsubscribeWorld: (() => void) | null = null;
 
 function handleWorldChange() {
   processTree.value = processTreeReadPortRequired.getTree();
-  lastNodeCount.value = processTreeReadPortRequired.countNodes(processTree.value.root);
   stackVersion.value++;
 }
 
 onMounted(() => {
   // Register keyboard shortcuts
   window.addEventListener('keydown', handleKeyDown);
-
-  // Initialize node count
-  lastNodeCount.value = processTreeReadPortRequired.countNodes(processTree.value.root);
 
   // Subscribe to World changes to detect when state changes (undo/redo, new actions, etc.)
   processTreeReadPortRequired.subscribeToChanges(handleWorldChange);
@@ -155,20 +139,14 @@ function findRelatedActions(selectedIds: string[]): void {
   relatedActionIds.value = processTreeReadPortRequired.getRelatedActionIds(selectedIds);
 }
 
-function refreshAfterIntent() {
-  stackVersion.value++;
-}
-
 // Stack management handlers
 function pushSubprocess() {
   processHistoryController.pushSubprocess();
-  refreshAfterIntent();
 }
 
 function popSubprocess() {
   if (canPop.value) {
     processHistoryController.popSubprocess();
-    refreshAfterIntent();
   }
 }
 
@@ -180,19 +158,16 @@ function handleNodeSelect(nodeId: string) {
 // Handle encapsulation toggle
 function handleToggleEncapsulate(nodeId: string) {
   processHistoryController.toggleEncapsulation({ nodeId });
-  refreshAfterIntent();
 }
 
 // Handle output toggle
 function handleToggleOutput(nodeId: string) {
   processHistoryController.toggleOutput({ nodeId });
-  refreshAfterIntent();
 }
 
 // Handle subprocess rename
 function handleRenameNode(nodeId: string, newName: string) {
   processHistoryController.renameSubprocess({ nodeId, newName });
-  refreshAfterIntent();
 }
 </script>
 

@@ -73,8 +73,6 @@
           @select-node="emit('selectNode', $event)"
           @toggle-encapsulate="emit('toggleEncapsulate', $event)"
           @toggle-output="emit('toggleOutput', $event)"
-          @highlight-elements="(...args) => emit('highlightElements', ...args)"
-          @clear-highlight="emit('clearHighlight')"
           @rename-node="(...args) => emit('renameNode', ...args)"
         />
         
@@ -116,8 +114,6 @@
           @select-node="emit('selectNode', $event)"
           @toggle-encapsulate="emit('toggleEncapsulate', $event)"
           @toggle-output="emit('toggleOutput', $event)"
-          @highlight-elements="(...args) => emit('highlightElements', ...args)"
-          @clear-highlight="emit('clearHighlight')"
           @rename-node="(...args) => emit('renameNode', ...args)"
         />
       </div>
@@ -135,8 +131,6 @@
       }"
       @click="handleActionClick"
       @dblclick="toggleDescriptionExpand"
-      @mouseenter="handleActionHover(true)"
-      @mouseleave="handleActionHover(false)"
     >
       <div class="action-main">
         <span 
@@ -203,8 +197,6 @@ const emit = defineEmits<{
   selectNode: [nodeId: string];
   toggleEncapsulate: [nodeId: string];
   toggleOutput: [nodeId: string];
-  highlightElements: [elementIds: string[], temporary: boolean];
-  clearHighlight: [];
   renameNode: [nodeId: string, newName: string];
 }>();
 
@@ -336,29 +328,7 @@ function handleLabelClick(elementId: string | undefined, event: MouseEvent) {
 
 function handleActionClick() {
   if (props.node.type !== 'action') return;
-  
   emit('selectNode', props.node.id);
-  
-  // Phase 93: Actions only have elementId (single output element)
-  // For inputs, we'd need to query DependencyService (future enhancement)
-  const elementId = props.node.elementId;
-  if (elementId) {
-    emit('highlightElements', [elementId], false);
-  }
-}
-
-function handleActionHover(isHovering: boolean) {
-  if (props.node.type !== 'action') return;
-  
-  if (isHovering && !isSelected.value) {
-    // Phase 93: Actions only have elementId (single output element)
-    const elementId = props.node.elementId;
-    if (elementId) {
-      emit('highlightElements', [elementId], true);
-    }
-  } else if (!isHovering && !isSelected.value) {
-    emit('clearHighlight');
-  }
 }
 
 async function startEditing() {

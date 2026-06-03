@@ -16,7 +16,7 @@ vi.mock('@/components/panels/ProcessTreeNode.vue', () => ({
   default: {
     name: 'ProcessTreeNode',
     props: ['node', 'dataVersion', 'selectedNodeId', 'activeSubprocessId', 'relatedActionIds'],
-    emits: ['toggle-encapsulate', 'toggle-output', 'rename-node', 'select-node', 'highlight-elements', 'clear-highlight'],
+    emits: ['toggle-encapsulate', 'toggle-output', 'rename-node', 'select-node'],
     template: `
       <div class="process-tree-node-stub">
         <button class="stub-toggle-encapsulate" @click="$emit('toggle-encapsulate', activeSubprocessId)">toggle encapsulate</button>
@@ -54,6 +54,7 @@ function createProcessTreeReadPort(world: any) {
   return {
     subscribeToChanges: (listener: () => void) => { listeners.add(listener); },
     unsubscribeFromChanges: (listener: () => void) => { listeners.delete(listener); },
+    notifyChange: () => { listeners.forEach(listener => listener()); },
     getTree: read,
     getRelatedActionIds: () => new Set<string>(),
     countNodes: count,
@@ -87,10 +88,11 @@ describe('Wave 006b ActionsPanel component behavior', () => {
   it('delegates stack button and keyboard subprocess intents through the application controller', async () => {
     const { world, commandStack } = createTestWorld();
     commandStack.clear();
+    const processTreeReadPort = createProcessTreeReadPort(world);
 
     const wrapper = mount(ActionsPanel, {
       global: {
-        provide: { [ProcessTreeReadInjectionKey as symbol]: createProcessTreeReadPort(world), [ProcessHistoryCommandInjectionKey as symbol]: new ProcessHistoryController({ world, commands: new RuntimeCommandProducer(world, commandStack) }) },
+        provide: { [ProcessTreeReadInjectionKey as symbol]: processTreeReadPort, [ProcessHistoryCommandInjectionKey as symbol]: new ProcessHistoryController({ world, commands: new RuntimeCommandProducer(world, commandStack, processTreeReadPort) }) },
         stubs: {
           ProcessTreeNode: {
             template: '<div class="process-tree-node-stub" />',
@@ -127,10 +129,11 @@ describe('Wave 006b ActionsPanel component behavior', () => {
   it('delegates process-tree child toggle and rename events without direct command assembly in the component', async () => {
     const { world, commandStack } = createTestWorld();
     commandStack.clear();
+    const processTreeReadPort = createProcessTreeReadPort(world);
 
     const wrapper = mount(ActionsPanel, {
       global: {
-        provide: { [ProcessTreeReadInjectionKey as symbol]: createProcessTreeReadPort(world), [ProcessHistoryCommandInjectionKey as symbol]: new ProcessHistoryController({ world, commands: new RuntimeCommandProducer(world, commandStack) }) },
+        provide: { [ProcessTreeReadInjectionKey as symbol]: processTreeReadPort, [ProcessHistoryCommandInjectionKey as symbol]: new ProcessHistoryController({ world, commands: new RuntimeCommandProducer(world, commandStack, processTreeReadPort) }) },
         stubs: {
           ProcessTreeNode: {
             name: 'ProcessTreeNode',

@@ -145,7 +145,6 @@ export function createAppShellRuntime(options: AppShellRuntimeOptions) {
       renameProject: (name: string) => projectSession.renameProject(name),
       requestFiles: () => projectSession.requestFiles(),
       updateCoordinates: (coords: { x: number; y: number; z: number } | null) => { coordinates3D.value = coords; },
-      updateActivePlane: (planeInfo: { id: string; name: string }) => activePlane.updateActivePlane(planeInfo),
     },
     internals: { session, keyboard, activePlane, autoSave, selection, selectionDeletion, projectSession },
   };

@@ -24,12 +24,6 @@ export class ActivePlaneUseCases {
     this.updateHandler = null;
   }
 
-  updateActivePlane(planeInfo: { id: string; name: string }): void {
-    if (this.activePlane.getActivePlaneId() !== planeInfo.id) {
-      this.activePlane.setActivePlaneId(planeInfo.id);
-    }
-  }
-
   cycle(direction: number): void {
     const planes = this.activePlane.getProjectionPlaneSummaries();
     if (planes.length < 2) return;

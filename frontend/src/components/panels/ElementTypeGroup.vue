@@ -12,8 +12,6 @@
         class="element-item"
         :class="{ 'element-selected': selectionStore.isSelected(element.id), 'element-hidden': !element.visible }"
         @click="emit('select', element.id)"
-        @mouseenter="handleMouseEnter(element.id)"
-        @mouseleave="handleMouseLeave()"
       >
         <button
           class="visibility-btn"
@@ -57,14 +55,6 @@ const isCollapsed = ref(false);
 
 function toggleCollapse() {
   isCollapsed.value = !isCollapsed.value;
-}
-
-function handleMouseEnter(_elementId: string) {
-  // TODO: Emit highlight event
-}
-
-function handleMouseLeave() {
-  // TODO: Clear highlight
 }
 </script>
 

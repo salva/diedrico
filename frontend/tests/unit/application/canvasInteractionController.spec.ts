@@ -220,12 +220,13 @@ describe('CanvasInteractionController', () => {
 
     controller.startViewportPan(10, 20);
     expect(controller.isViewportPanning()).toBe(true);
-    expect(controller.getViewportPanState()).toEqual({ active: true, startX: 10, startY: 20 });
+    expect(controller.getViewportPanState()).toEqual({ active: true, startX: 10, startY: 20, moved: false });
 
     controller.updateViewportPan(15, 25, 1.0);
     expect(noopViewport.adjustPan).toHaveBeenCalledWith(5, 5);
+    expect(controller.getViewportPanState()).toEqual({ active: true, startX: 15, startY: 25, moved: true });
 
-    controller.endViewportPan();
+    expect(controller.endViewportPan()).toEqual({ active: true, moved: true });
     expect(controller.isViewportPanning()).toBe(false);
 
     controller.cancelViewportPan();

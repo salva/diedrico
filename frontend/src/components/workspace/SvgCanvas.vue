@@ -163,7 +163,6 @@ import { CanvasInteractionController } from '@/application/canvas/CanvasInteract
 import { renderCanvasPrimitive } from '@/application/canvas/CanvasSvgRendering';
 import { useViewStore } from '@/stores/viewStore';
 import { useSelectionStore } from '@/stores/selectionStore';
-import { useViewport } from '@/composables/useViewport';
 import { useGlobalHoverHighlight } from '@/composables/useHoverHighlight';
 import PropertiesDialog from '@/components/dialogs/PropertiesDialog.vue';
 import { CanvasCommandProducerInjectionKey, CanvasViewInjectionKey, SelectionActionsInjectionKey, ToolInteractionReadInjectionKey, ToolRuntimeInjectionKey } from '@/application/appShell/RuntimeInjectionKeys';
@@ -171,7 +170,6 @@ import { CanvasInteractionQuery } from '@/application/canvasPresentation/CanvasI
 
 const emit = defineEmits<{
   'update-3d-coordinates': [coords: { x: number; y: number; z: number } | null];
-  'update-active-plane': [planeInfo: { id: string; name: string }];
 }>();
 
 const svgElement = ref<SVGSVGElement | null>(null);
@@ -202,8 +200,6 @@ if (!toolRuntime) throw new Error('Tool runtime port not provided');
 
 const toolInteractionReadPort = inject(ToolInteractionReadInjectionKey);
 if (!toolInteractionReadPort) throw new Error('Tool interaction read port not provided');
-
-const viewportComposable = useViewport({ element: svgElement });
 
 // Canvas interaction controller - owns tool lifecycle, selection, point drag, viewport pan, hover
 const controller = new CanvasInteractionController({
@@ -592,11 +588,9 @@ function handleMouseMove(event: MouseEvent) {
 }
 
 function handleGlobalMouseUp() {
-  if (viewportComposable.isPanning.value) {
-    ignoreNextClick = true;
-  }
-
-  if (controller.endViewportPan()) {
+  const panEnd = controller.endViewportPan();
+  if (panEnd.active) {
+    if (panEnd.moved) ignoreNextClick = true;
     return;
   }
 

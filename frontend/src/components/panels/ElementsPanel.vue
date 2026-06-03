@@ -129,12 +129,6 @@ import { ElementsPanelInjectionKey, SelectionActionsInjectionKey } from '@/appli
 import ElementTypeGroup from './ElementTypeGroup.vue';
 import { formatElementLabel } from '@/utils/formatUtils';
 
-// Emits
-const emit = defineEmits<{
-  highlightElements: [elementIds: string[], temporary: boolean];
-  clearHighlight: [];
-}>();
-
 // Injected dependencies
 const elementsPanelPort = inject(ElementsPanelInjectionKey);
 if (!elementsPanelPort) {
@@ -210,9 +204,6 @@ function togglePlane(planeId: string) {
 
 function handleElementSelect(elementId: string) {
   selectionActionsRequired.selectElement(elementId);
-   
-  // Emit for highlighting on canvas
-  emit('highlightElements', [elementId], false);
 }
 
 function handleVisibilityToggle(elementId: string) {
