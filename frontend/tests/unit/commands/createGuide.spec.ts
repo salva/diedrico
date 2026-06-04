@@ -7,6 +7,7 @@ import { Command } from '../../../src/commands/Command';
 import { AddGuide2DPerpendicularToLineOp } from '../../../src/commands/operations/world/AddGuideOp';
 import { AddLine2DByTwoPointsOp } from '../../../src/commands/operations/world/AddLineOp';
 import { AddFreePoint2DOp } from '../../../src/commands/operations/world/AddFreePointOp';
+import { Guide2D } from '../../../src/domain/world/Guide';
 import type { World } from '../../../src/domain/world/World';
 import { createTestWorld, getHorizontalPlane, getHorizontalPlaneId } from '../../helpers/worldHelpers';
 import { Vector3 } from 'three';
@@ -55,7 +56,7 @@ describe('Create Guide Command', () => {
       
       expect(guide).toBeDefined();
       expect(guide?.id).toBe(guideId);
-      expect(guide?.type).toBe('guide');
+      expect(guide).toBeInstanceOf(Guide2D);
     });
 
     it('should return guideId in outputs', () => {
