@@ -5,7 +5,7 @@ import { RenderLayer, type LinePrimitive, type PointPrimitive, type SegmentPrimi
 import { applyMatrix3x4 } from '@/utils/threeUtils';
 import type { CanvasPlaneTransformModel, CanvasRenderItem } from './CanvasPresentationModel';
 import { PROJECTED_LINE_STYLE, PROJECTED_POINT_STYLE, PROJECTED_SEGMENT_STYLE } from './CanvasStylePolicy';
-import { canvasRenderItem } from './CanvasPresentationSelector';
+import { canvasRenderItem } from './CanvasRenderItemFactory';
 
 export interface Projected3DCanvasPlaneSource {
   id: string;

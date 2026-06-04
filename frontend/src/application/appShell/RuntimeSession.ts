@@ -10,8 +10,7 @@ import { ProcessHistoryController } from '@/application/processHistory/ProcessHi
 import type { CommandHistoryPort, OpenedProjectSession, ProjectSessionPersistencePayload, ProjectSessionPersistencePort, SelectionReadPort } from './AppShellPorts';
 import type { ProjectSessionKernel } from './ProjectSessionKernel';
 import type { RuntimeSessionPersistenceRestoreHandle, RuntimeSessionPersistenceSnapshotHandle } from './ProjectSessionPersistenceTargets';
-import { createCanvasPresentationContext } from '@/application/canvasPresentation/CanvasPresentationContext';
-import { CanvasPresentationSelector } from '@/application/canvasPresentation/CanvasPresentationSelector';
+import { buildCanvasPresentationModel } from '@/application/canvasPresentation/CanvasPresentationSelector';
 import { createThreePresentationReadPorts } from '@/application/threePresentation/ThreeWorldReadPort';
 import { ThreePresentationSelector } from '@/application/threePresentation/ThreePresentationSelector';
 import { screenTo3D } from '@/utils/coordinateTransform';
@@ -32,15 +31,12 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
 
 
   canvasViewPort(): CanvasViewPort {
-    const canvasContext = createCanvasPresentationContext(this.world);
-    const canvasPresentationSelector = new CanvasPresentationSelector();
     return {
       subscribeToChanges: (listener) => this.changes.subscribeToChanges(listener),
       unsubscribeFromChanges: (listener) => this.changes.unsubscribeFromChanges(listener),
       getActivePlaneId: () => this.activePlaneId,
-      getPlaneTransformsForInput: () => new Map(canvasContext.getCanvasPlaneTransforms().map(transform => [transform.planeId, transform.paperToPlane])),
-      buildPresentationModel: (viewport, options) => canvasPresentationSelector.select(
-        canvasContext,
+      buildPresentationModel: (viewport, options) => buildCanvasPresentationModel(
+        this.world,
         viewport,
         {
           hoveredIds: options.hoveredElementId ? new Set([options.hoveredElementId]) : undefined,

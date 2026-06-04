@@ -2,8 +2,11 @@ import { Guide2D, SiblingGuide2D } from '@/domain/world/Guide';
 import { HalfHingeLine2D } from '@/domain/world/HingeLine';
 import { Segment2DByPoints } from '@/domain/world/Segment';
 import type { ProjectionElementRealizationContext } from '@/domain/world/projectionPlane/ProjectionPlaneContext';
+import type { ProjectionPlane } from '@/domain/world/projectionPlane/ProjectionPlane';
+import type { Element } from '@/domain/world/Element';
 import type { World } from '@/domain/world/World';
 import type { CanvasPlaneCanvasItems, CanvasPlaneItem, CanvasPlaneLineItem, CanvasPlaneTransformModel } from './CanvasPresentationModel';
+import type { CanvasPresentationState } from './CanvasPresentationModel';
 import { resolveVisibility } from '@/domain/world/styleService';
 import { Projected3DCanvasSelector } from './Projected3DCanvasSelector';
 import { createProjected3DCanvasReadPort } from './Projected3DCanvasReadPort';
@@ -13,16 +16,17 @@ export function createCanvasPresentationContext(world: World) {
   const realizationContext = createWorldRealizationContext(world);
   const projected3DSelector = new Projected3DCanvasSelector();
   return {
-    getCanvasPlaneTransforms: () => getCanvasPlaneTransforms(world),
-    getPlaneCanvasItems: () => getPlaneCanvasItems(world, realizationContext),
     getProjected3DCanvasItems: (planeTransforms: CanvasPlaneTransformMap) => projected3DSelector.selectWorldProjection(createProjected3DCanvasReadPort(world, realizationContext), planeTransforms),
+    realizationContext,
+    isVisible: (element: Element) => resolveVisibility(element, world),
   };
 }
 
-export type CanvasPresentationContext = ReturnType<typeof createCanvasPresentationContext>;
 export type CanvasPlaneTransformMap = Map<string, CanvasPlaneTransformModel>;
 
-function getCanvasPlaneTransforms(world: World): CanvasPlaneTransformModel[] {
+export type CanvasPresentationContext = ReturnType<typeof createCanvasPresentationContext>;
+
+export function getCanvasPlaneTransforms(world: World): CanvasPlaneTransformModel[] {
   return world.getAllProjectionPlanes().flatMap((plane) => {
     const realization = world.getProjectionPlane2DRealization(plane.id);
     if (!realization) return [];
@@ -30,66 +34,81 @@ function getCanvasPlaneTransforms(world: World): CanvasPlaneTransformModel[] {
   });
 }
 
-function getPlaneCanvasItems(world: World, context: ProjectionElementRealizationContext): CanvasPlaneCanvasItems[] {
+export function getCanvasPlaneCanvasItems(world: World, planeTransforms: CanvasPlaneTransformMap, state: CanvasPresentationState): CanvasPlaneCanvasItems[] {
+  const context = createCanvasPresentationContext(world);
+  const itemState = { ...state, realizationContext: context.realizationContext, isVisible: context.isVisible };
   return world.getAllProjectionPlanes().flatMap((plane) => {
-    const transform = getCanvasPlaneTransforms(world).find(item => item.planeId === plane.id);
+    const transform = planeTransforms.get(plane.id);
     if (!transform) return [];
-    const items: CanvasPlaneItem[] = [];
-
-    for (const point of plane.getAllPoints()) {
-      if (!resolveVisibility(point, world)) continue;
-      const realization = plane.realizePoint2D(point, context);
-      if (!realization) continue;
-      items.push({
-        kind: 'point',
-        elementId: point.id,
-        planeId: point.planeId,
-        position: realization.position.clone(),
-        pointRole: point.constructor.name === 'FreePoint2D' ? 'free' : 'dependent',
-      });
-    }
-
-    for (const line of plane.getAllLines()) {
-      if (!resolveVisibility(line, world)) continue;
-      const realization = plane.realizeLine2D(line, context);
-      if (!realization) continue;
-      const kind: CanvasPlaneLineItem['kind'] = line instanceof HalfHingeLine2D
-        ? 'half-hinge-line'
-        : line instanceof Segment2DByPoints
-          ? 'finite-segment'
-          : line instanceof SiblingGuide2D
-            ? 'sibling-guide'
-            : line instanceof Guide2D
-              ? 'guide'
-              : 'infinite-line';
-      items.push({
-        kind,
-        elementId: line.id,
-        planeId: line.planeId,
-        point: realization.point1.clone(),
-        direction: realization.getDirection(),
-        point1: kind === 'finite-segment' ? realization.point1.clone() : undefined,
-        point2: kind === 'finite-segment' ? realization.point2.clone() : undefined,
-        arcGeometry: optionalArcGeometry(line),
-      });
-    }
-
-    for (const circle of plane.getAllCircles()) {
-      if (!resolveVisibility(circle, world)) continue;
-      const realization = plane.realizeCircle2D(circle, context);
-      if (!realization) continue;
-      items.push({
-        kind: 'circle',
-        elementId: circle.id,
-        planeId: circle.planeId,
-        center: realization.center.clone(),
-        radius: realization.getRadius(),
-        radiusVector: realization.radiusVector.clone(),
-      });
-    }
-
-    return [{ planeId: plane.id, transform, items }];
+    return [{ planeId: plane.id, transform, items: getPlaneCanvasItems(plane, transform, itemState) }];
   });
+}
+
+interface PlaneItemBuildState extends CanvasPresentationState {
+  realizationContext?: ProjectionElementRealizationContext;
+  isVisible?: (element: Element) => boolean;
+}
+
+export function getPlaneCanvasItems(plane: ProjectionPlane, transform: CanvasPlaneTransformModel, state: CanvasPresentationState): CanvasPlaneItem[] {
+  if (transform.planeId !== plane.id) return [];
+  const itemState = state as PlaneItemBuildState;
+  const context = itemState.realizationContext;
+  if (!context) return [];
+  const items: CanvasPlaneItem[] = [];
+
+  for (const point of plane.getAllPoints()) {
+    if (itemState.isVisible && !itemState.isVisible(point)) continue;
+    const realization = plane.realizePoint2D(point, context);
+    if (!realization) continue;
+    items.push({
+      kind: 'point',
+      elementId: point.id,
+      planeId: point.planeId,
+      position: realization.position.clone(),
+      pointRole: point.constructor.name === 'FreePoint2D' ? 'free' : 'dependent',
+    });
+  }
+
+  for (const line of plane.getAllLines()) {
+    if (itemState.isVisible && !itemState.isVisible(line)) continue;
+    const realization = plane.realizeLine2D(line, context);
+    if (!realization) continue;
+    const kind: CanvasPlaneLineItem['kind'] = line instanceof HalfHingeLine2D
+      ? 'half-hinge-line'
+      : line instanceof Segment2DByPoints
+        ? 'finite-segment'
+        : line instanceof SiblingGuide2D
+          ? 'sibling-guide'
+          : line instanceof Guide2D
+            ? 'guide'
+            : 'infinite-line';
+    items.push({
+      kind,
+      elementId: line.id,
+      planeId: line.planeId,
+      point: realization.point1.clone(),
+      direction: realization.getDirection(),
+      point1: kind === 'finite-segment' ? realization.point1.clone() : undefined,
+      point2: kind === 'finite-segment' ? realization.point2.clone() : undefined,
+      arcGeometry: optionalArcGeometry(line),
+    });
+  }
+
+  for (const circle of plane.getAllCircles()) {
+    if (itemState.isVisible && !itemState.isVisible(circle)) continue;
+    const realization = plane.realizeCircle2D(circle, context);
+    if (!realization) continue;
+    items.push({
+      kind: 'circle',
+      elementId: circle.id,
+      planeId: circle.planeId,
+      center: realization.center.clone(),
+      radius: realization.getRadius(),
+      radiusVector: realization.radiusVector.clone(),
+    });
+  }
+
+  return items;
 }
 
 function optionalArcGeometry(line: object): CanvasPlaneLineItem['arcGeometry'] | undefined {

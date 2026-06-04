@@ -47,7 +47,6 @@ export interface PropertiesDialogViewModel {
 
 export interface CanvasViewPort extends RuntimeChangeSubscriptionPort {
   getActivePlaneId(): string | undefined;
-  getPlaneTransformsForInput(): Map<string, Matrix3>;
   buildPresentationModel(viewport: CanvasViewport, options: CanvasPresentationOptions): CanvasPresentationModel;
   getElementLabel(elementId: string, elementType: string, planeId?: string): string;
   getMovableFreePointMoveSession(args: { planeId: string; pointId: string; commandSink: ToolCommandSink }): FreePointMoveSession | null;

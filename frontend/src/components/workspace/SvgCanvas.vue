@@ -335,6 +335,9 @@ const interactionQuery = computed(() => new CanvasInteractionQuery(canvasPresent
 const primitives = computed(() => canvasPresentation.value.renderItems.map(item => item.primitive));
 const gridLines = computed(() => canvasPresentation.value.gridLines);
 const gridLabels = computed(() => canvasPresentation.value.gridLabels);
+const paperToPlaneTransforms = computed(() => new Map(
+  Array.from(canvasPresentation.value.planeTransforms.entries()).map(([planeId, transform]) => [planeId, transform.paperToPlane]),
+));
 
 // Render primitives to SVG attributes
 const renderedPoints = computed(() => {
@@ -385,7 +388,7 @@ function handleCanvasClick(event: MouseEvent) {
 
   const activePlaneId = activePlane.value;
   if (!activePlaneId) return;
-  const planeTransforms = canvasViewPortRequired.getPlaneTransformsForInput();
+  const planeTransforms = paperToPlaneTransforms.value;
   const planeTransform = planeTransforms.get(activePlaneId);
   if (!planeTransform) return;
 
@@ -439,7 +442,7 @@ function handleMouseDown(event: MouseEvent) {
   const canvasPoint = screenToCanvasPoint(svgElement.value, event.clientX, event.clientY);
   if (!canvasPoint) return;
 
-  const planeTransforms = canvasViewPortRequired.getPlaneTransformsForInput();
+  const planeTransforms = paperToPlaneTransforms.value;
   const activePlaneId = activePlane.value;
   if (!activePlaneId) return;
 
@@ -472,7 +475,7 @@ function handleDoubleClick(event: MouseEvent) {
 
   const activePlaneId = activePlane.value;
   if (!activePlaneId) return;
-  const planeTransforms = canvasViewPortRequired.getPlaneTransformsForInput();
+  const planeTransforms = paperToPlaneTransforms.value;
   const paperToPlane = planeTransforms.get(activePlaneId);
 
   const hit = interactionQuery.value.hitTest(canvasPos, 20, { viewport: viewport.value, activePlaneId, paperToPlaneTransform: paperToPlane });
@@ -513,7 +516,7 @@ function handleMouseMove(event: MouseEvent) {
     const canvasPoint = screenToCanvasPoint(svgElement.value, event.clientX, event.clientY);
     if (!canvasPoint) return;
 
-    const planeTransforms = canvasViewPortRequired.getPlaneTransformsForInput();
+    const planeTransforms = paperToPlaneTransforms.value;
     const paperToPlane = planeTransforms.get(pointDrag.planeId);
     if (!paperToPlane) return;
 
@@ -534,7 +537,7 @@ function handleMouseMove(event: MouseEvent) {
   const canvasPoint = screenToCanvasPoint(svg, event.clientX, event.clientY);
   if (!canvasPoint) return;
 
-  const planeTransformsInput = canvasViewPortRequired.getPlaneTransformsForInput();
+  const planeTransformsInput = paperToPlaneTransforms.value;
   const currentActivePlaneId = activePlane.value;
   if (!currentActivePlaneId) return;
   const paperToPlane = planeTransformsInput.get(currentActivePlaneId);

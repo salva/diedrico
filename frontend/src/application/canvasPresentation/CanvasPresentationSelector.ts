@@ -1,27 +1,31 @@
-import { RenderLayer, type LinePrimitive, type PointPrimitive, type SegmentPrimitive, type CirclePrimitive, type PathPrimitive, type Primitive, type ResolvedStyle } from '@/domain/presentation/Paper';
-import type { CanvasElementKind, CanvasPlaneItem, CanvasPresentationModel, CanvasPresentationState, CanvasQueryItem, CanvasRenderItem, CanvasViewportModel } from './CanvasPresentationModel';
+import { RenderLayer, type LinePrimitive, type PointPrimitive, type SegmentPrimitive, type CirclePrimitive, type PathPrimitive, type ResolvedStyle } from '@/domain/presentation/Paper';
+import type { World } from '@/domain/world/World';
+import type { CanvasPlaneItem, CanvasPresentationModel, CanvasPresentationState, CanvasQueryItem, CanvasRenderItem, CanvasViewportModel } from './CanvasPresentationModel';
 import { selectCanvasGrid } from './CanvasGridSelector';
 import { circleStyle, guideStyle, hingeStyle, lineStyle, segmentStyle } from './CanvasStylePolicy';
-import type { CanvasPlaneTransformMap, CanvasPresentationContext } from './CanvasPresentationContext';
+import { createCanvasPresentationContext, getCanvasPlaneCanvasItems, getCanvasPlaneTransforms, type CanvasPlaneTransformMap } from './CanvasPresentationContext';
+import { canvasRenderItem } from './CanvasRenderItemFactory';
+
+export function buildCanvasPresentationModel(world: World, viewport: CanvasViewportModel, state: CanvasPresentationState): CanvasPresentationModel {
+  return new CanvasPresentationSelector().select(world, viewport, state);
+}
 
 export class CanvasPresentationSelector {
-  select(readPort: CanvasPresentationContext, viewport: CanvasViewportModel, state: CanvasPresentationState): CanvasPresentationModel {
+  select(world: World, viewport: CanvasViewportModel, state: CanvasPresentationState): CanvasPresentationModel {
+    const context = createCanvasPresentationContext(world);
     const renderItems: CanvasRenderItem[] = [];
     const queryItems: CanvasQueryItem[] = [];
     const planeTransforms: CanvasPlaneTransformMap = new Map();
 
-    for (const transform of readPort.getCanvasPlaneTransforms()) {
+    for (const transform of getCanvasPlaneTransforms(world)) {
       planeTransforms.set(transform.planeId, transform);
     }
 
-    for (const planeItems of readPort.getPlaneCanvasItems()) {
-      const transform = planeItems.transform.planeToPaper;
-      for (const item of planeItems.items) {
-        appendPlaneItem(item, transform, state, renderItems, queryItems);
-      }
+    for (const planeItems of getCanvasPlaneCanvasItems(world, planeTransforms, state)) {
+      for (const item of planeItems.items) appendPlaneItem(item, planeItems.transform.planeToPaper, state, renderItems, queryItems);
     }
 
-    if (state.showProjectedElements) renderItems.push(...readPort.getProjected3DCanvasItems(planeTransforms));
+    if (state.showProjectedElements) renderItems.push(...context.getProjected3DCanvasItems(planeTransforms));
     renderItems.sort((a, b) => a.primitive.layer === b.primitive.layer ? a.style.zIndex - b.style.zIndex : a.primitive.layer - b.primitive.layer);
     const activeTransform = state.activePlaneId ? planeTransforms.get(state.activePlaneId)?.planeToPaper : undefined;
     const grid = state.gridVisible === false ? { lines: [], labels: { top: [], bottom: [], left: [], right: [] } } : selectCanvasGrid(activeTransform, viewport);
@@ -93,6 +97,4 @@ function pointDtoStyle(pointRole: 'free' | 'dependent', planeId: string, ctx: Re
   return { layer: ctx.snapTarget ? RenderLayer.Highlights : RenderLayer.Elements, radius: pointRole === 'free' ? 5 : 4, style: { stroke, strokeWidth, strokeStyle: 'solid', fill, opacity, zIndex: 10 + zBoost } };
 }
 
-export function canvasRenderItem<TPrimitive extends Primitive>(primitive: TPrimitive, kind: CanvasElementKind): CanvasRenderItem {
-  return { id: primitive.id, kind, sourceEntityId: primitive.sourceEntityId, planeId: primitive.planeId, primitive, visible: primitive.visible, style: primitive.style };
-}
+export { canvasRenderItem };
