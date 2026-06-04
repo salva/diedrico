@@ -16,9 +16,7 @@ import projectSession from '@/application/appShell/ProjectSessionUseCases.ts?raw
 import selection from '@/application/appShell/SelectionUseCases.ts?raw';
 import selectionDeletionService from '@/application/selectionDeletion/SelectionDeletionCommandService.ts?raw';
 import runtimeSession from '@/application/appShell/RuntimeSession.ts?raw';
-import projectSessionPersistenceAdapter from '@/application/appShell/ProjectSessionPersistenceAdapter.ts?raw';
 import projectSessionKernel from '@/application/appShell/ProjectSessionKernel.ts?raw';
-import projectSessionPersistenceTargets from '@/application/appShell/ProjectSessionPersistenceTargets.ts?raw';
 
 describe('Wave 009 app-shell boundaries', () => {
   it('keeps App.vue free of moved shell orchestration imports and browser bridges', () => {
@@ -46,12 +44,11 @@ describe('Cycle 020 app-shell production boundary', () => {
 
   it('centralizes production browser/service defaults in the production composition module', () => {
     expect(appShellProductionRuntime).toMatch(/new GoogleDriveService/);
-    expect(appShellProductionRuntime).toMatch(/new ProjectSessionPersistenceAdapter\(\)/);
     expect(appShellProductionRuntime).toMatch(/new BrowserLastProjectRepository\(window\.localStorage\)/);
     expect(appShellProductionRuntime).toMatch(/createBrowserScheduler\(\)/);
     expect(appShellProductionRuntime).toMatch(/keyboardTarget: window/);
     expect(appVue).toMatch(/createProductionAppShellRuntime/);
-    expect(appVue).not.toMatch(/createBrowserScheduler|new BrowserLastProjectRepository|new ProjectSessionPersistenceAdapter|new GoogleDriveService/);
+    expect(appVue).not.toMatch(/createBrowserScheduler|new BrowserLastProjectRepository|ProjectSessionPersistenceAdapter|new GoogleDriveService/);
   });
 
   it('makes the browser last-project repository the only owner of storage-key literals', () => {
@@ -97,7 +94,7 @@ describe('Cycle 022 runtime session persistence boundary', () => {
     expect(appShellPorts).toMatch(/loadFile\(fileId: string\): Promise<unknown>/);
     expect(projectSessionKernel).toMatch(/ProjectSessionKernel/);
     expect(projectSessionKernel).not.toMatch(/@\/commands\/CommandStack|@\/domain\/world\/World|@\/services\/ProjectService/);
-    expect(projectSessionKernel).toMatch(/snapshot\(projectName: string, persistence: ProjectSessionPersistencePort\): ProjectSessionPersistencePayload/);
+    expect(projectSessionKernel).toMatch(/snapshot\(projectName: string\): ProjectSessionPersistencePayload/);
   });
 
   it('removes raw runtime-pair persistence calls from project-session and autosave use cases', () => {
@@ -110,22 +107,46 @@ describe('Cycle 022 runtime session persistence boundary', () => {
     expect(autoSave).not.toMatch(/snapshotCurrentSession\(\{[\s\S]*commandStack[\s\S]*world/);
   });
 
-  it('keeps ProjectService awareness inside the app-shell persistence adapter', () => {
-    const runtimeOrchestrationSources = [appShellRuntime, autoSave, keyboard, projectSession, selection, runtimeSession];
-    for (const content of runtimeOrchestrationSources) {
+  it('keeps ProjectService awareness inside RuntimeSession persistence methods', () => {
+    const orchestrationSources = [appShellRuntime, autoSave, keyboard, projectSession, selection];
+    for (const content of orchestrationSources) {
+      expect(content).not.toMatch(/ProjectService/);
       expect(content).not.toMatch(/@\/services\/ProjectService/);
     }
+    expect(runtimeSession).toMatch(/import \{ ProjectService \} from '\.\/ProjectService'/);
+    expect(runtimeSession).toMatch(/ProjectService\.serializeCommands\(this\.commandStack, this\.world\.peekNextId\(\), projectName\)/);
+    expect(runtimeSession).toMatch(/ProjectService\.validateProjectData\(data\)/);
+    expect(runtimeSession).toMatch(/ProjectService\.deserializeCommands\(openedSession\.payload, this\.world, this\.commandStack, this\.changes\)/);
+    expect(runtimeSession).not.toMatch(/@\/services\/ProjectService/);
     expect(appShellPorts).toMatch(/import type \{ ProjectData \} from '\.\/ProjectService'/);
-    expect(appShellPorts).not.toMatch(/new ProjectService|ProjectService\./);
-    expect(projectSessionPersistenceAdapter).toMatch(/import \{ ProjectService \} from '\.\/ProjectService'/);
-    expect(projectSessionPersistenceAdapter).not.toMatch(/@\/services\/ProjectService/);
+    expect(appShellPorts).not.toMatch(/new ProjectService|ProjectService\.|ProjectSessionPersistencePort/);
+  });
+
+  it('removes the app-shell persistence adapter from production wiring and tests', () => {
+    const sources = [appShellRuntime, appShellProductionRuntime, appShellPorts, autoSave, keyboard, projectSession, selection, runtimeSession, projectSessionKernel];
+    for (const content of sources) {
+      expect(content).not.toMatch(/ProjectSessionPersistenceAdapter|ProjectSessionPersistenceTargets/);
+    }
+    expect(appShellProductionRuntime).not.toMatch(/persistence:/);
+    expect(appShellPorts).not.toMatch(/ProjectSessionPersistencePort|persistence: ProjectSessionPersistencePort/);
+  });
+
+  it('keeps project-session and autosave use cases on session persistence methods', () => {
+    const runtimeOrchestrationSources = [autoSave, projectSession];
+    for (const content of runtimeOrchestrationSources) {
+      expect(content).not.toMatch(/ProjectService|ProjectSessionPersistencePort|persistence:/);
+    }
+    expect(autoSave).toMatch(/session\.snapshot\(currentProjectName\.value\)/);
+    expect(projectSession).toMatch(/session\.snapshot\(projectName\)/);
+    expect(projectSession).toMatch(/session\.validateProjectData\(loadedProject\)/);
+    expect(projectSession).toMatch(/session\.restoreValidatedProject\(openedSession\)/);
   });
 });
 
 
 describe('Cycle 030 app-shell persistence DTO contract', () => {
   it('deletes cast-only persisted-session markers and object snapshot seams', () => {
-    for (const content of [appShellPorts, projectSessionPersistenceAdapter, projectSessionKernel, runtimeSession]) {
+    for (const content of [appShellPorts, projectSessionKernel, runtimeSession]) {
       expect(content).not.toMatch(/PersistedProjectSession/);
       expect(content).not.toMatch(/as unknown as PersistedProjectSession/);
       expect(content).not.toMatch(/as unknown as ProjectData/);
@@ -134,9 +155,9 @@ describe('Cycle 030 app-shell persistence DTO contract', () => {
     }
 
     expect(appShellPorts).toMatch(/ProjectSessionPersistencePayload/);
-    expect(projectSessionPersistenceAdapter).toMatch(/snapshotCurrentSession\([^)]*\): ProjectSessionPersistencePayload/);
-    expect(projectSessionPersistenceAdapter).toMatch(/ProjectService\.deserializeCommands\(data, target\.world, target\.commandStack, target\.notifier\)/);
-    expect(projectSessionPersistenceAdapter).not.toMatch(/payload: .* as/);
+    expect(runtimeSession).toMatch(/snapshot\(projectName: string\): ProjectSessionPersistencePayload/);
+    expect(runtimeSession).toMatch(/ProjectService\.deserializeCommands/);
+    expect(runtimeSession).not.toMatch(/payload: .* as/);
   });
 });
 
@@ -183,16 +204,11 @@ describe('Cycle 023 runtime-session consumer ports and command-history boundary'
     expect(toolbarVue).not.toMatch(/commandStack/);
   });
 
-  it('keeps persistence concrete handles adapter-local instead of general app-shell ports', () => {
+  it('removes persistence concrete handles instead of exposing them through app-shell ports', () => {
     expect(appShellPorts).not.toMatch(/RuntimeSessionPersistenceSnapshotHandle|RuntimeSessionPersistenceRestoreHandle/);
     expect(runtimeSession).not.toMatch(/export interface RuntimeSessionPersistenceSnapshotHandle|export interface RuntimeSessionPersistenceRestoreHandle/);
-    expect(projectSessionPersistenceAdapter).not.toMatch(/from '\.\/RuntimeSession'/);
-    expect(projectSessionPersistenceAdapter).toMatch(/from '\.\/ProjectSessionPersistenceTargets'/);
-    expect(projectSessionPersistenceAdapter).toMatch(/RuntimeSessionPersistenceSnapshotHandle/);
-    expect(projectSessionPersistenceAdapter).toMatch(/RuntimeSessionPersistenceRestoreHandle/);
-    expect(projectSessionPersistenceAdapter).not.toMatch(/ as RuntimeSessionPersistence/);
-    expect(projectSessionPersistenceTargets).toMatch(/@\/commands\/CommandStack/);
-    expect(projectSessionPersistenceTargets).toMatch(/@\/domain\/world\/World/);
+    expect(runtimeSession).not.toMatch(/snapshotHandle\(|restoreTarget\(|RuntimeSessionPersistence/);
+    expect(appShellPorts).not.toMatch(/ProjectSessionPersistencePort/);
   });
 });
 

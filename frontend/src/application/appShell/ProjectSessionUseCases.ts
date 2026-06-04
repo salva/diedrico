@@ -1,6 +1,6 @@
 import type { Ref } from 'vue';
 import type { AutoSaveUseCases } from './AutoSaveUseCases';
-import type { AuthStorePort, DrivePort, LastProjectRepositoryPort, ProjectSessionPersistencePort, SaveStatus, StartupDialogState } from './AppShellPorts';
+import type { AuthStorePort, DrivePort, LastProjectRepositoryPort, SaveStatus, StartupDialogState } from './AppShellPorts';
 import { describeUnknownError } from './AppShellErrorClassifier';
 import type { ProjectSessionKernel } from './ProjectSessionKernel';
 
@@ -20,7 +20,6 @@ export class ProjectSessionUseCases {
       drive: DrivePort | null;
       authStore: AuthStorePort;
       lastProjectRepository: LastProjectRepositoryPort;
-      persistence: ProjectSessionPersistencePort;
     },
   ) {}
 
@@ -94,7 +93,7 @@ export class ProjectSessionUseCases {
     const drive = this.requireDrive();
     try {
       this.deps.session.resetToEmptyInitializedWorld();
-      const projectData = this.deps.session.snapshot(projectName, this.deps.persistence);
+      const projectData = this.deps.session.snapshot(projectName);
       const fileId = await drive.createFile(projectName, projectData);
       this.setCurrentProject(projectName, fileId);
       this.deps.showStartupDialog.value = false;
@@ -110,8 +109,8 @@ export class ProjectSessionUseCases {
     const drive = this.requireDrive();
     try {
       const loadedProject = await drive.loadFile(fileId);
-      const openedSession = this.deps.session.validateProjectData(loadedProject, this.deps.persistence);
-      this.deps.session.restoreValidatedProject(openedSession, this.deps.persistence);
+      const openedSession = this.deps.session.validateProjectData(loadedProject);
+      this.deps.session.restoreValidatedProject(openedSession);
       this.setCurrentProject(openedSession.projectName, fileId);
       this.deps.showStartupDialog.value = false;
       this.deps.autoSave.start();

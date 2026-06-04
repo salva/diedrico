@@ -1,5 +1,5 @@
 import type { Ref } from 'vue';
-import type { DrivePort, IntervalHandle, LastProjectRepositoryPort, ProjectSessionPersistencePort, SaveStatus, SchedulerPort, TimeoutHandle } from './AppShellPorts';
+import type { DrivePort, IntervalHandle, LastProjectRepositoryPort, SaveStatus, SchedulerPort, TimeoutHandle } from './AppShellPorts';
 import type { SnapshotCapableProjectSessionKernel } from './ProjectSessionKernel';
 import { isAuthenticationError, isMissingRemoteFileError, isQuotaError } from './AppShellErrorClassifier';
 
@@ -13,7 +13,6 @@ export class AutoSaveUseCases {
     private readonly deps: {
       session: SnapshotCapableProjectSessionKernel;
       drive: DrivePort | null;
-      persistence: ProjectSessionPersistencePort;
       lastProjectRepository: LastProjectRepositoryPort;
       scheduler: SchedulerPort;
       currentFileId: Ref<string | null>;
@@ -50,7 +49,7 @@ export class AutoSaveUseCases {
     const { drive, currentFileId, currentProjectName } = this.deps;
     if (!drive || !currentFileId.value || !currentProjectName.value) return;
     try {
-      const projectData = this.deps.session.snapshot(currentProjectName.value, this.deps.persistence);
+      const projectData = this.deps.session.snapshot(currentProjectName.value);
       await drive.updateFile(currentFileId.value, projectData);
       this.markSavedThenIdle();
     } catch (error: unknown) {
@@ -89,7 +88,7 @@ export class AutoSaveUseCases {
     if (isMissingRemoteFileError(error)) {
       try {
         if (!this.deps.drive || !this.deps.currentProjectName.value) throw new Error('No project name');
-        const projectData = this.deps.session.snapshot(this.deps.currentProjectName.value, this.deps.persistence);
+        const projectData = this.deps.session.snapshot(this.deps.currentProjectName.value);
         const newFileId = await this.deps.drive.createFile(this.deps.currentProjectName.value, projectData);
         this.deps.currentFileId.value = newFileId;
         this.deps.lastProjectRepository.setLastProject({ id: newFileId, name: this.deps.currentProjectName.value });

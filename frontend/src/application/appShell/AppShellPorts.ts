@@ -40,12 +40,6 @@ export interface CommandHistoryPort {
   subscribe(listener: () => void): () => void;
 }
 
-export interface ProjectSessionPersistencePort {
-  snapshotCurrentSession(session: { readonly nextElementId: number }, projectName: string): ProjectSessionPersistencePayload;
-  validateProjectData(data: unknown): OpenedProjectSession;
-  restoreSession(session: ProjectSessionPersistencePayload, target: unknown): void;
-}
-
 export interface LastProjectRecord {
   id: string;
   name: string;
@@ -115,7 +109,6 @@ export interface StartupDialogState {
 
 export interface AppShellRuntimePorts {
   drive: DrivePort | null;
-  persistence: ProjectSessionPersistencePort;
   lastProjectRepository: LastProjectRepositoryPort;
   scheduler: SchedulerPort;
   keyboardTarget: KeyboardShortcutRouterTarget;

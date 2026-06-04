@@ -46,7 +46,6 @@ export function createAppShellRuntime(options: AppShellRuntimeOptions) {
   const autoSave = new AutoSaveUseCases({
     session,
     drive,
-    persistence: ports.persistence,
     lastProjectRepository: ports.lastProjectRepository,
     scheduler: ports.scheduler,
     currentFileId,
@@ -70,7 +69,6 @@ export function createAppShellRuntime(options: AppShellRuntimeOptions) {
     drive,
     authStore: ports.authStore,
     lastProjectRepository: ports.lastProjectRepository,
-    persistence: ports.persistence,
   });
   const keyboard = new KeyboardShortcutRouter({
     commandHistory,

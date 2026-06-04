@@ -4,7 +4,6 @@ import { createAppShellRuntime } from './AppShellRuntime';
 import type { AppShellCallbacks, AuthStorePort, SelectionStorePort, ToolStorePort, ViewStorePort } from './AppShellPorts';
 import { createBrowserScheduler } from './AppShellPorts';
 import { BrowserLastProjectRepository } from './BrowserLastProjectRepository';
-import { ProjectSessionPersistenceAdapter } from './ProjectSessionPersistenceAdapter';
 
 export interface ProductionAppShellRuntimeOptions {
   googleConfig: GoogleDriveConfig;
@@ -22,7 +21,6 @@ export function createProductionAppShellRuntime(options: ProductionAppShellRunti
   return createAppShellRuntime({
     ports: {
       drive: options.hasGoogleCredentials ? new GoogleDriveService(options.googleConfig) : null,
-      persistence: new ProjectSessionPersistenceAdapter(),
       lastProjectRepository: new BrowserLastProjectRepository(window.localStorage),
       scheduler: createBrowserScheduler(),
       keyboardTarget: window,

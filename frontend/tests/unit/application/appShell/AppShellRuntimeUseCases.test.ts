@@ -8,7 +8,8 @@ import { ProjectSessionUseCases } from '@/application/appShell/ProjectSessionUse
 import { RuntimeSession } from '@/application/appShell/RuntimeSession';
 import type { ProjectSessionKernel, SnapshotCapableProjectSessionKernel } from '@/application/appShell/ProjectSessionKernel';
 import { SelectionUseCases } from '@/application/appShell/SelectionUseCases';
-import type { AppShellRuntimePorts, DrivePort, LastProjectRepositoryPort, ProjectSessionPersistencePayload, ProjectSessionPersistencePort, SchedulerPort, SelectionStorePort } from '@/application/appShell/AppShellPorts';
+import type { AppShellRuntimePorts, DrivePort, LastProjectRepositoryPort, ProjectSessionPersistencePayload, SchedulerPort, SelectionStorePort } from '@/application/appShell/AppShellPorts';
+import { ProjectService } from '@/application/appShell/ProjectService';
 
 function scheduler() {
   let nextHandle = 1;
@@ -68,17 +69,6 @@ function drive(overrides: Partial<DrivePort> = {}): DrivePort {
   } as DrivePort;
 }
 
-function persistence(): ProjectSessionPersistencePort {
-  return {
-    snapshotCurrentSession: vi.fn((session, projectName) => projectPayload(projectName, session.nextElementId)),
-    validateProjectData: vi.fn((data: unknown) => {
-      const payload = data as ProjectSessionPersistencePayload;
-      return { projectName: payload.name, payload };
-    }),
-    restoreSession: vi.fn(),
-  };
-}
-
 function lastProjectRepository(): LastProjectRepositoryPort & { records: { set: unknown[]; cleared: number } } {
   let current: { id: string; name: string } | null = null;
   const repository = {
@@ -100,7 +90,7 @@ function lastProjectRepository(): LastProjectRepositoryPort & { records: { set: 
 function autoSaveSession(versionSource: () => number = () => 1): SnapshotCapableProjectSessionKernel {
   return {
     getVersion: versionSource,
-    snapshot: (projectName, port) => port.snapshotCurrentSession({ nextElementId: 10 }, projectName),
+    snapshot: (projectName) => projectPayload(projectName, 10),
   };
 }
 
@@ -117,7 +107,6 @@ function runtimePorts(overrides: Partial<AppShellRuntimePorts> = {}) {
   const keyboardTarget = { addEventListener: vi.fn(), removeEventListener: vi.fn() };
   return {
     drive: drive(),
-    persistence: persistence(),
     lastProjectRepository: lastProjectRepository(),
     scheduler: scheduler().port,
     keyboardTarget,
@@ -236,7 +225,6 @@ describe('AutoSaveUseCases', () => {
     const autoSave = new AutoSaveUseCases({
       session: autoSaveSession(() => version),
       drive: fakeDrive,
-      persistence: persistence(),
       lastProjectRepository: lastProjectRepository(),
       scheduler: fakeScheduler.port,
       currentFileId,
@@ -274,7 +262,6 @@ describe('AutoSaveUseCases', () => {
     const autoSave = new AutoSaveUseCases({
       session: autoSaveSession(),
       drive: drive({ updateFile: vi.fn().mockRejectedValue(new Error('401 authentication expired')) }),
-      persistence: persistence(),
       lastProjectRepository: lastProjectRepository(),
       scheduler: fakeScheduler.port,
       currentFileId: ref('file-1'),
@@ -306,7 +293,6 @@ describe('AutoSaveUseCases', () => {
     const autoSave = new AutoSaveUseCases({
       session: autoSaveSession(),
       drive: fakeDrive,
-      persistence: persistence(),
       lastProjectRepository: repository,
       scheduler: fakeScheduler.port,
       currentFileId,
@@ -542,7 +528,6 @@ describe('ProjectSessionUseCases startup and project flows', () => {
       drive: ports.drive,
       authStore: ports.authStore,
       lastProjectRepository: ports.lastProjectRepository,
-      persistence: ports.persistence,
       ...depsOverrides,
     };
   }
@@ -577,10 +562,6 @@ describe('ProjectSessionUseCases startup and project flows', () => {
   it('keeps the active session intact when openProject rejects invalid project data', async () => {
     const ports = runtimePorts({
       drive: drive({ loadFile: vi.fn().mockResolvedValue({ bad: 'payload' }) }),
-      persistence: {
-        ...persistence(),
-        validateProjectData: vi.fn(() => { throw new Error('invalid payload'); }),
-      },
     });
     const deps = projectSessionDeps({ ports });
     deps.session.initializeDefaultWorldIfNeeded();
@@ -591,7 +572,7 @@ describe('ProjectSessionUseCases startup and project flows', () => {
     const preOpenCanUndo = preOpenCommandHistory.canUndo();
     const useCases = new ProjectSessionUseCases(deps);
 
-    await expect(useCases.openProject('bad-file')).rejects.toThrow('invalid payload');
+    await expect(useCases.openProject('bad-file')).rejects.toThrow('Unsupported project schema version');
 
     expect(deps.session.planeOptions).toHaveLength(preOpenPlaneCount);
     expect(deps.session.canUndo()).toBe(preOpenCanUndo);
@@ -604,12 +585,8 @@ describe('ProjectSessionUseCases startup and project flows', () => {
 
   it('restores into isolation before clearing active state when deserialization fails', async () => {
     const restoreError = new Error('restore exploded');
-    const ports = runtimePorts({
-      persistence: {
-        ...persistence(),
-        restoreSession: vi.fn(() => { throw restoreError; }),
-      },
-    });
+    const deserializeSpy = vi.spyOn(ProjectService, 'deserializeCommands').mockImplementation(() => { throw restoreError; });
+    const ports = runtimePorts();
     const deps = projectSessionDeps({ ports });
     deps.session.initializeDefaultWorldIfNeeded();
     deps.currentProjectName.value = 'Existing';
@@ -621,8 +598,8 @@ describe('ProjectSessionUseCases startup and project flows', () => {
 
     await expect(useCases.openProject('file-opened')).rejects.toThrow('restore exploded');
 
-    expect(ports.persistence.restoreSession).toHaveBeenCalledTimes(1);
-    expect(ports.persistence.restoreSession).toHaveBeenCalledTimes(1);
+    expect(deserializeSpy).toHaveBeenCalledTimes(1);
+    deserializeSpy.mockRestore();
     expect(deps.session.planeOptions).toHaveLength(preOpenPlaneCount);
     expect(deps.session.canUndo()).toBe(preOpenCanUndo);
     expect(preOpenCommandHistory.canUndo()).toBe(preOpenCanUndo);
@@ -638,7 +615,6 @@ describe('ProjectSessionUseCases startup and project flows', () => {
     const autoSave = new AutoSaveUseCases({
       session: { getVersion: () => 1, snapshot: () => { throw new Error('snapshot failed'); } } satisfies SnapshotCapableProjectSessionKernel,
       drive: drive(),
-      persistence: persistence(),
       lastProjectRepository: lastProjectRepository(),
       scheduler: fakeScheduler.port,
       currentFileId: ref('file-1'),
@@ -666,13 +642,12 @@ describe('ProjectSessionUseCases startup and project flows', () => {
     expect(deps.currentFileId.value).toBe('file-created');
     expect(deps.autoSave.start).toHaveBeenCalled();
     expect(deps.lastProjectRepository.setLastProject).toHaveBeenCalledWith({ id: 'file-created', name: 'Created' });
-    expect(deps.drive?.createFile).toHaveBeenCalledWith('Created', expect.objectContaining({ name: 'Created', schemaVersion: '6.0.0', commands: [] }));
+    expect(deps.drive?.createFile).toHaveBeenCalledWith('Created', expect.objectContaining({ name: 'Created', schemaVersion: '6.0.0', commands: expect.any(Array) }));
 
     await useCases.openProject('file-opened');
     expect(deps.currentProjectName.value).toBe('Loaded project');
     expect(deps.currentFileId.value).toBe('file-opened');
-    expect(deps.persistence.validateProjectData).toHaveBeenCalledWith(projectPayload('Loaded project'));
-    expect(deps.persistence.restoreSession).toHaveBeenCalledWith(projectPayload('Loaded project'), expect.any(Object));
+    expect(deps.session.planeOptions.length).toBeGreaterThan(0);
 
     await useCases.renameProject('Renamed');
     expect(deps.currentProjectName.value).toBe('Renamed');

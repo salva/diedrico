@@ -7,9 +7,9 @@ import type { SelectionDeletionCommandPort } from '@/application/selectionDeleti
 import { CanvasToolController } from '@/application/tools/CanvasToolController';
 import { createToolInteractionReadPort } from '@/application/tools/ToolInteractionReadPort';
 import { ProcessHistoryController } from '@/application/processHistory/ProcessHistoryController';
-import type { CommandHistoryPort, OpenedProjectSession, ProjectSessionPersistencePayload, ProjectSessionPersistencePort, SelectionReadPort } from './AppShellPorts';
+import type { CommandHistoryPort, OpenedProjectSession, ProjectSessionPersistencePayload, SelectionReadPort } from './AppShellPorts';
 import type { ProjectSessionKernel } from './ProjectSessionKernel';
-import type { RuntimeSessionPersistenceRestoreHandle, RuntimeSessionPersistenceSnapshotHandle } from './ProjectSessionPersistenceTargets';
+import { ProjectService } from './ProjectService';
 import { buildCanvasPresentationModel } from '@/application/canvasPresentation/CanvasPresentationSelector';
 import { createThreePresentationReadPorts } from '@/application/threePresentation/ThreeWorldReadPort';
 import { ThreePresentationSelector } from '@/application/threePresentation/ThreePresentationSelector';
@@ -214,25 +214,29 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
     return this.changes.getVersion();
   }
 
-  snapshot(projectName: string, persistence: ProjectSessionPersistencePort): ProjectSessionPersistencePayload {
-    return persistence.snapshotCurrentSession(this.snapshotHandle(), projectName);
+  snapshot(projectName: string): ProjectSessionPersistencePayload {
+    return ProjectService.serializeCommands(this.commandStack, this.world.peekNextId(), projectName);
   }
 
-  validateProjectData(data: unknown, persistence: ProjectSessionPersistencePort): OpenedProjectSession {
-    return persistence.validateProjectData(data);
+  validateProjectData(data: unknown): OpenedProjectSession {
+    ProjectService.validateProjectData(data);
+    return {
+      projectName: data.name,
+      payload: data,
+    };
   }
 
-  restoreValidatedProject(openedSession: OpenedProjectSession, persistence: ProjectSessionPersistencePort): void {
+  restoreValidatedProject(openedSession: OpenedProjectSession): void {
     const candidateWorld = new World();
     const candidateCommandStack = new CommandStack();
     const validationNotifier: ChangeNotifier = { notifyChange: () => {} };
-    persistence.restoreSession(openedSession.payload, { world: candidateWorld, commandStack: candidateCommandStack, notifier: validationNotifier });
+    ProjectService.deserializeCommands(openedSession.payload, candidateWorld, candidateCommandStack, validationNotifier);
     if (candidateWorld.getAllProjectionPlanes().length === 0) initializeWorld(candidateWorld, candidateCommandStack, validationNotifier);
 
     this.world.clear();
     this.commandStack.clear();
     this.activePlaneIdValue = undefined;
-    persistence.restoreSession(openedSession.payload, this.restoreTarget());
+    ProjectService.deserializeCommands(openedSession.payload, this.world, this.commandStack, this.changes);
     if (this.world.getAllProjectionPlanes().length === 0) this.initializeDefaultWorldIfNeeded();
     this.ensureActivePlane();
     this.changes.markDirty();
@@ -280,18 +284,4 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
     return this.activePlaneIdValue;
   }
 
-  private snapshotHandle(): RuntimeSessionPersistenceSnapshotHandle {
-    return {
-      commandStack: this.commandStack,
-      nextElementId: this.world.peekNextId(),
-    };
-  }
-
-  private restoreTarget(): RuntimeSessionPersistenceRestoreHandle {
-    return {
-      world: this.world,
-      commandStack: this.commandStack,
-      notifier: this.changes,
-    };
-  }
 }

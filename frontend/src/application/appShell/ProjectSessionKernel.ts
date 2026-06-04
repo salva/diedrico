@@ -1,14 +1,14 @@
-import type { OpenedProjectSession, ProjectSessionPersistencePayload, ProjectSessionPersistencePort } from './AppShellPorts';
+import type { OpenedProjectSession, ProjectSessionPersistencePayload } from './AppShellPorts';
 
 export interface SnapshotCapableProjectSessionKernel {
   getVersion(): number;
-  snapshot(projectName: string, persistence: ProjectSessionPersistencePort): ProjectSessionPersistencePayload;
+  snapshot(projectName: string): ProjectSessionPersistencePayload;
 }
 
 export interface ProjectSessionKernel extends SnapshotCapableProjectSessionKernel {
   initializeDefaultWorldIfNeeded(): void;
   resetToEmptyInitializedWorld(): void;
   clear(): void;
-  validateProjectData(data: unknown, persistence: ProjectSessionPersistencePort): OpenedProjectSession;
-  restoreValidatedProject(openedSession: OpenedProjectSession, persistence: ProjectSessionPersistencePort): void;
+  validateProjectData(data: unknown): OpenedProjectSession;
+  restoreValidatedProject(openedSession: OpenedProjectSession): void;
 }
