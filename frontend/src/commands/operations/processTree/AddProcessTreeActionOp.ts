@@ -10,6 +10,7 @@
 import type { IOperation, JsonObject, OperationOutputBag, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 import type { Action } from '@/domain/processTree/Action';
+import { operationSuccess } from '../operationResultHelpers';
 
 export class AddProcessTreeActionOp implements IOperation {
   readonly type = 'AddProcessTreeActionOp';
@@ -32,10 +33,7 @@ export class AddProcessTreeActionOp implements IOperation {
       index: index
     };
     
-    return {
-      success: true,
-      outputs: this.outputs
-    };
+    return operationSuccess(this.outputs);
   }
 
   undo(world: World): void {

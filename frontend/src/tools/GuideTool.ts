@@ -22,6 +22,7 @@
  */
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
+import { lineThroughPointArgumentSet } from './toolArgumentSpecs';
 import type { ToolArgumentSet } from '@/tools/ToolArgumentCollector';
 import { SelectionMask } from '@/types/SelectionMask';
 
@@ -49,20 +50,12 @@ export class GuideTool extends ArgumentCollectorTool {
    */
   protected getArgumentSets(): ToolArgumentSet[] {
     return [
-      {
-        // ArgumentCollectorTool automatically supports any-order collection!
-        // User can select line→point OR point→line
-        arguments: [
-          { 
-            name: 'referenceLine', 
-            mask: SelectionMask.halfHingeLine()
-          },
-          { 
-            name: 'throughPoint', 
-            mask: SelectionMask.point()
-          }
-        ]
-      }
+      lineThroughPointArgumentSet(
+        'referenceLine',
+        'throughPoint',
+        undefined,
+        SelectionMask.halfHingeLine()
+      )
     ];
   }
 

@@ -13,7 +13,7 @@
  */
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
-import { validateDistinctProjectionPlanes } from './toolValidators';
+import { projectionPairArgumentSet } from './toolArgumentSpecs';
 import type { ToolArgumentSet } from '@/tools/ToolArgumentCollector';
 import { SelectionMask } from '@/types/SelectionMask';
 
@@ -39,25 +39,12 @@ export class Create3DPointTool extends ArgumentCollectorTool {
    */
   protected getArgumentSets(): ToolArgumentSet[] {
     return [
-      {
-        arguments: [
-          { 
-            name: 'projection1', 
-            mask: SelectionMask.point()
-          },
-          { 
-            name: 'projection2', 
-            mask: SelectionMask.point()
-          }
-        ],
-        setValidator: (args, context) => validateDistinctProjectionPlanes(
-          args,
-          context,
-          'projection1',
-          'projection2',
-          'Cannot create 3D point: both projections must be on DIFFERENT planes',
-        )
-      }
+      projectionPairArgumentSet(
+        'projection1',
+        'projection2',
+        SelectionMask.point(),
+        'Cannot create 3D point: both projections must be on DIFFERENT planes'
+      )
     ];
   }
 

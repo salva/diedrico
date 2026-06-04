@@ -6,6 +6,8 @@
 
 import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
+import { operationFailure, operationSuccess } from '../operationResultHelpers';
+import { requireProjectionPlane } from './operationHelpers';
 
 export class AddLine2DByTwoPointsOp implements IOperation {
   readonly type = 'AddLine2DByTwoPoints';
@@ -20,10 +22,7 @@ export class AddLine2DByTwoPointsOp implements IOperation {
 
   apply(world: World): OperationResult {
     try {
-      const plane = world.getProjectionPlaneById(this.planeId);
-      if (!plane) {
-        throw new Error(`Plane not found: ${this.planeId}`);
-      }
+      const plane = requireProjectionPlane(world, this.planeId);
       
       // Pass stored ID if available (for redo), otherwise let plane generate new one
       const line = plane.addLine2DBetweenTwoPoints(
@@ -33,16 +32,9 @@ export class AddLine2DByTwoPointsOp implements IOperation {
         this.outputs.lineId
       );
       this.outputs = { lineId: line.id };
-      return {
-        success: true,
-        outputs: this.outputs
-      };
+      return operationSuccess(this.outputs);
     } catch (error) {
-      return {
-        success: false,
-        outputs: {},
-        error: error instanceof Error ? error.message : String(error)
-      };
+      return operationFailure(error);
     }
   }
 
@@ -84,10 +76,7 @@ export class AddLine2DParallelToLineOp implements IOperation {
 
   apply(world: World): OperationResult {
     try {
-      const plane = world.getProjectionPlaneById(this.planeId);
-      if (!plane) {
-        throw new Error(`Plane not found: ${this.planeId}`);
-      }
+      const plane = requireProjectionPlane(world, this.planeId);
       
       // Pass stored ID if available (for redo), otherwise let plane generate new one
       const line = plane.addLine2DParallelToLine(
@@ -97,16 +86,9 @@ export class AddLine2DParallelToLineOp implements IOperation {
         this.outputs.lineId
       );
       this.outputs = { lineId: line.id };
-      return {
-        success: true,
-        outputs: this.outputs
-      };
+      return operationSuccess(this.outputs);
     } catch (error) {
-      return {
-        success: false,
-        outputs: {},
-        error: error instanceof Error ? error.message : String(error)
-      };
+      return operationFailure(error);
     }
   }
 
@@ -148,10 +130,7 @@ export class AddLine2DPerpendicularToLineOp implements IOperation {
 
   apply(world: World): OperationResult {
     try {
-      const plane = world.getProjectionPlaneById(this.planeId);
-      if (!plane) {
-        throw new Error(`Plane not found: ${this.planeId}`);
-      }
+      const plane = requireProjectionPlane(world, this.planeId);
       
       // Pass stored ID if available (for redo), otherwise let plane generate new one
       const line = plane.addLine2DPerpendicularToLine(
@@ -161,16 +140,9 @@ export class AddLine2DPerpendicularToLineOp implements IOperation {
         this.outputs.lineId
       );
       this.outputs = { lineId: line.id };
-      return {
-        success: true,
-        outputs: this.outputs
-      };
+      return operationSuccess(this.outputs);
     } catch (error) {
-      return {
-        success: false,
-        outputs: {},
-        error: error instanceof Error ? error.message : String(error)
-      };
+      return operationFailure(error);
     }
   }
 
@@ -213,10 +185,7 @@ export class AddLine2DTangentToCircleThroughPointOp implements IOperation {
 
   apply(world: World): OperationResult {
     try {
-      const plane = world.getProjectionPlaneById(this.planeId);
-      if (!plane) {
-        throw new Error(`Plane not found: ${this.planeId}`);
-      }
+      const plane = requireProjectionPlane(world, this.planeId);
       
       // Pass stored ID if available (for redo), otherwise let plane generate new one
       const line = plane.addLine2DTangentToCircleThroughPoint(
@@ -227,16 +196,9 @@ export class AddLine2DTangentToCircleThroughPointOp implements IOperation {
         this.outputs.lineId
       );
       this.outputs = { lineId: line.id };
-      return {
-        success: true,
-        outputs: this.outputs
-      };
+      return operationSuccess(this.outputs);
     } catch (error) {
-      return {
-        success: false,
-        outputs: {},
-        error: error instanceof Error ? error.message : String(error)
-      };
+      return operationFailure(error);
     }
   }
 
@@ -280,10 +242,7 @@ export class AddLine2DTangentToCircleParallelToLineOp implements IOperation {
 
   apply(world: World): OperationResult {
     try {
-      const plane = world.getProjectionPlaneById(this.planeId);
-      if (!plane) {
-        throw new Error(`Plane not found: ${this.planeId}`);
-      }
+      const plane = requireProjectionPlane(world, this.planeId);
       
       // Pass stored ID if available (for redo), otherwise let plane generate new one
       const line = plane.addLine2DTangentToCircleParallelToLine(
@@ -294,16 +253,9 @@ export class AddLine2DTangentToCircleParallelToLineOp implements IOperation {
         this.outputs.lineId
       );
       this.outputs = { lineId: line.id };
-      return {
-        success: true,
-        outputs: this.outputs
-      };
+      return operationSuccess(this.outputs);
     } catch (error) {
-      return {
-        success: false,
-        outputs: {},
-        error: error instanceof Error ? error.message : String(error)
-      };
+      return operationFailure(error);
     }
   }
 

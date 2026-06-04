@@ -13,9 +13,8 @@
  */
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
-import type { ToolArgumentSet, CollectionContext } from '@/tools/ToolArgumentCollector';
-import type { Element2D } from '@/domain/world/Element2D';
-import { SelectionMask } from '@/types/SelectionMask';
+import { twoPointArgumentSet } from './toolArgumentSpecs';
+import type { ToolArgumentSet } from '@/tools/ToolArgumentCollector';
 
 /**
  * LineTool using ArgumentCollectorTool framework
@@ -36,29 +35,7 @@ export class LineTool extends ArgumentCollectorTool {
    */
   protected getArgumentSets(): ToolArgumentSet[] {
     return [
-      {
-        arguments: [
-          { 
-            name: 'point1', 
-            mask: SelectionMask.point() 
-          },
-          { 
-            name: 'point2', 
-            mask: SelectionMask.point(),
-            // Argument-level validator: Ensure different from point1
-            validator: (element: Element2D, context: CollectionContext) => {
-              const point1 = context.collected.get('point1');
-              if (point1 && element.id === point1.element!.id) {
-                return {
-                  valid: false,
-                  error: 'Cannot create line: must select two different points'
-                };
-              }
-              return { valid: true };
-            }
-          }
-        ]
-      }
+      twoPointArgumentSet('point1', 'point2', 'Cannot create line: must select two different points')
     ];
   }
 

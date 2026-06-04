@@ -15,7 +15,7 @@
 
 import type { Command } from '../Command';
 import { AddCircle2DByCenterAndPointOp } from '../operations/world/AddCircleOp';
-import { AddProcessTreeActionOp } from '../operations/processTree/AddProcessTreeActionOp';
+import { recordProcessTreeAction, requireStringOutput } from './sequenceFactoryHelpers';
 import { createCircleAction } from '@/domain/processTree/actions/CreateCircleAction';
 
 /**
@@ -48,17 +48,12 @@ export class CircleSequenceFactory {
   ): CircleResult {
     const operation = new AddCircle2DByCenterAndPointOp(planeId, centerPointId, circumferencePointId);
     const result = cmd.addAndExecute(operation);
-    
-    if (!result.success || !result.outputs.circleId) {
-      throw new Error(result.error || 'Failed to create circle');
-    }
-    
-    const circleId = result.outputs.circleId as string;
+    const circleId = requireStringOutput(result, 'circleId', 'Failed to create circle');
     
     // Record ProcessTree action for dependency tracking (Phase 92: minimal signature)
     const action = createCircleAction(circleId);
     
-    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
+    recordProcessTreeAction(cmd, action, groupId);
     
     return { circleId };
   }

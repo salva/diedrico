@@ -13,9 +13,8 @@
  */
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
-import type { ToolArgumentSet, CollectionContext } from '@/tools/ToolArgumentCollector';
-import { SelectionMask } from '@/types/SelectionMask';
-import { Line2D } from '@/domain/world/Line';
+import { lineThroughPointArgumentSet } from './toolArgumentSpecs';
+import type { ToolArgumentSet } from '@/tools/ToolArgumentCollector';
 
 /**
  * PerpendicularLineTool using ArgumentCollectorTool framework
@@ -36,29 +35,11 @@ export class PerpendicularLineTool extends ArgumentCollectorTool {
    */
   protected getArgumentSets(): ToolArgumentSet[] {
     return [
-      {
-        arguments: [
-          { 
-            name: 'referenceLine', 
-            mask: SelectionMask.line() // Accepts lines, segments, guides, half-hinge-lines
-          },
-          { 
-            name: 'throughPoint', 
-            mask: SelectionMask.point() 
-          }
-        ],
-        // Phase 113: Validate reference line produces a feasible realization
-        setValidator: (args, context: CollectionContext) => {
-          const refLine = args.get('referenceLine')?.element as Line2D | undefined;
-          if (refLine) {
-            const realization = context.readPort.realizeLine2D(refLine);
-            if (realization && !realization.feasible) {
-              return { valid: false, error: 'Cannot create perpendicular line: reference line is infeasible' };
-            }
-          }
-          return { valid: true };
-        }
-      }
+      lineThroughPointArgumentSet(
+        'referenceLine',
+        'throughPoint',
+        'Cannot create perpendicular line: reference line is infeasible'
+      )
     ];
   }
 

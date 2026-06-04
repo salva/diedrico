@@ -13,7 +13,7 @@
  */
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
-import { validateDistinctProjectionPlanes } from './toolValidators';
+import { projectionPairArgumentSet } from './toolArgumentSpecs';
 import type { ToolArgumentSet } from '@/tools/ToolArgumentCollector';
 import { SelectionMask } from '@/types/SelectionMask';
 
@@ -26,25 +26,12 @@ export class Create3DPlaneTool extends ArgumentCollectorTool {
 
   protected getArgumentSets(): ToolArgumentSet[] {
     return [
-      {
-        arguments: [
-          { 
-            name: 'trace1', 
-            mask: SelectionMask.line()
-          },
-          { 
-            name: 'trace2', 
-            mask: SelectionMask.line()
-          }
-        ],
-        setValidator: (args, context) => validateDistinctProjectionPlanes(
-          args,
-          context,
-          'trace1',
-          'trace2',
-          'Cannot create 3D plane: both traces must be on DIFFERENT planes',
-        )
-      }
+      projectionPairArgumentSet(
+        'trace1',
+        'trace2',
+        SelectionMask.line(),
+        'Cannot create 3D plane: both traces must be on DIFFERENT planes'
+      )
     ];
   }
 

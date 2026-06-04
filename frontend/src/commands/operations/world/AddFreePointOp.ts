@@ -7,6 +7,7 @@
 import type { Vector3 } from 'three';
 import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
+import { operationFailure, operationSuccess } from '../operationResultHelpers';
 import { requireProjectionPlane } from './operationHelpers';
 
 interface AddFreePoint2DOutput extends JsonObject {
@@ -30,16 +31,9 @@ export class AddFreePoint2DOp implements IOperation<OperationDescriptor, AddFree
       // Pass stored ID if available (for redo), otherwise let plane generate new one
       const point = plane.addFreePoint2D(this.position, world, this.outputs.pointId);
       this.outputs = { pointId: point.id };
-      return {
-        success: true,
-        outputs: this.outputs
-      };
+      return operationSuccess(this.outputs);
     } catch (error) {
-      return {
-        success: false,
-        outputs: {},
-        error: error instanceof Error ? error.message : String(error)
-      };
+      return operationFailure(error);
     }
   }
 

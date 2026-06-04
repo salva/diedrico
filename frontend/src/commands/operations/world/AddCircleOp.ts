@@ -7,6 +7,8 @@
 
 import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
+import { operationFailure, operationSuccess } from '../operationResultHelpers';
+import { requireProjectionPlane } from './operationHelpers';
 
 export class AddCircle2DByCenterAndPointOp implements IOperation {
   readonly type = 'AddCircle2DByCenterAndPoint';
@@ -21,10 +23,7 @@ export class AddCircle2DByCenterAndPointOp implements IOperation {
 
   apply(world: World): OperationResult {
     try {
-      const plane = world.getProjectionPlaneById(this.planeId);
-      if (!plane) {
-        throw new Error(`Plane not found: ${this.planeId}`);
-      }
+      const plane = requireProjectionPlane(world, this.planeId);
       
       // Pass stored ID if available (for redo), otherwise let plane generate new one
       const circle = plane.addCircle2DByCenterAndPoint(
@@ -34,16 +33,9 @@ export class AddCircle2DByCenterAndPointOp implements IOperation {
         this.outputs.circleId
       );
       this.outputs = { circleId: circle.id };
-      return {
-        success: true,
-        outputs: this.outputs
-      };
+      return operationSuccess(this.outputs);
     } catch (error) {
-      return {
-        success: false,
-        outputs: {},
-        error: error instanceof Error ? error.message : String(error)
-      };
+      return operationFailure(error);
     }
   }
 

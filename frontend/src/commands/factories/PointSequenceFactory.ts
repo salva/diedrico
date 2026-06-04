@@ -15,7 +15,7 @@
 import type { Vector3 } from 'three';
 import type { Command } from '@/commands/Command';
 import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
-import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
+import { recordProcessTreeAction, requireStringOutput } from './sequenceFactoryHelpers';
 import { createPointAction } from '@/domain/processTree/actions/CreatePointAction';
 
 export class PointSequenceFactory {
@@ -40,15 +40,12 @@ export class PointSequenceFactory {
   ): { pointId: string } {
     // Execute operation to create free point
     const result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, position));
-    const pointId = result.outputs.pointId;
-    if (!pointId) {
-      throw new Error('pointId missing from operation output');
-    }
+    const pointId = requireStringOutput(result, 'pointId');
     
     // Create ProcessTree action for dependency tracking (Phase 92: minimal signature)
     const action = createPointAction(pointId);
     
-    cmd.addAndExecute(new AddProcessTreeActionOp(action, groupId));
+    recordProcessTreeAction(cmd, action, groupId);
     
     return { pointId };
   }
