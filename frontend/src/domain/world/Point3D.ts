@@ -27,6 +27,7 @@ import { reconstruct3DPointFromProjections } from '@/utils/threeUtils';
  * System element with fixed position (e.g., origin O)
  */
 export class Point3DByCoordinates extends Element3D {
+  /** Serialization/DTO discriminator only; runtime dispatch uses instanceof. */
   readonly kind = 'Point3DByCoordinates';
   name: string;
   coordinates: Vector4;  // Position [x, y, z, 1] - stored as Vector4
@@ -77,6 +78,7 @@ export class Point3DByCoordinates extends Element3D {
  * realize3D() reconstructs 3D position from 2D projection coordinates.
  */
 export class Point3DFromProjections extends Element3D {
+  /** Serialization/DTO discriminator only; runtime dispatch uses instanceof. */
   readonly kind = 'Point3DFromProjections';
   label: string;
   

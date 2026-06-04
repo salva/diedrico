@@ -44,6 +44,7 @@ export abstract class Line3D extends Element3D {
  * realize3D() reconstructs 3D line from 2D projection coordinates.
  */
 export class Line3DFromProjections extends Line3D {
+  /** Serialization/DTO discriminator only; runtime dispatch uses instanceof. */
   readonly kind = 'Line3DFromProjections';
   label: string;
   

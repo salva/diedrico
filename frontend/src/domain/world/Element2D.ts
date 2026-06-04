@@ -13,10 +13,10 @@ export type Element2DRealization = Point2DRealization2D | Line2DRealization2D | 
 /**
  * Base class for all 2D geometric elements (points, lines, circles)
  * 
- * **Phase 44**: Originally introduced as standalone base class with id, planeId, label, visible, type properties.
+ * **Phase 44**: Originally introduced as standalone base class with shared 2D element properties.
  * 
  * **Phase 52 Refactoring**: Element2D now extends Element base class to share id and label properties
- * with 3D elements. Element2D adds 2D-specific properties: planeId, visible, type.
+ * with 3D elements. Element2D adds the 2D-specific planeId property.
  * 
  * **Architectural Principle: DRY and Uniform Interface**
  * 
@@ -28,15 +28,19 @@ export type Element2DRealization = Point2DRealization2D | Line2DRealization2D | 
  * - Inconsistent interfaces (each hierarchy evolved independently)
  * 
  * Element2D (Phase 44) provided:
- * - Common properties: id, planeId, label, visible, type
+ * - Common properties: id, planeId, label, visible
  * - Abstract methods: clone(), realize2D()
  * - Uniform type guard: isElement2D() works for all types
  * - Generic processing: Functions can work with Element2D regardless of specific type
  * 
  * Element2D (Phase 52) now extends Element:
  * - Inherits id and label from Element base class
- * - Adds 2D-specific properties: planeId, visible, type
+ * - Adds 2D-specific properties: planeId
  * - Enables uniform handling with 3D elements via Element base type
+ *
+ * Runtime dispatch policy: concrete 2D element classes are discriminated with
+ * instanceof. Do not add broad kind/type fields to 2D elements unless a
+ * serialization boundary explicitly requires them.
  * 
  * **Usage**:
  * ```typescript

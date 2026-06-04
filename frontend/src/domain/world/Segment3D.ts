@@ -29,6 +29,7 @@ import { reconstruct3DPointFromProjections } from '@/utils/threeUtils';
  * realize3D() reconstructs 3D segment from 2D projection coordinates.
  */
 export class Segment3DFromProjections extends Element3D {
+  /** Serialization/DTO discriminator only; runtime dispatch uses instanceof. */
   readonly kind = 'Segment3DFromProjections';
   label: string;
   

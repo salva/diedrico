@@ -242,6 +242,7 @@ export class Plane3DFixed extends Plane3D {
  * realize3D() reconstructs plane equation from trace coordinates.
  */
 export class Plane3DFromTraces extends Plane3D {
+  /** Serialization/DTO discriminator only; runtime dispatch uses instanceof. */
   readonly kind = 'Plane3DFromTraces';
   label: string;
   

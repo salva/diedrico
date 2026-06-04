@@ -12,6 +12,10 @@ import type { Element3DRealizationContext } from './projectionPlane/ProjectionPl
  * Current concrete 3D element types are Point3DByCoordinates,
  * Point3DFromProjections, Line3DFromProjections, Segment3DFromProjections,
  * Plane3DFixed, Plane3DFromTraces, and HingeLine.
+ *
+ * Runtime dispatch policy: concrete element classes are discriminated with
+ * instanceof. Existing 3D kind fields are serialization/DTO discriminators
+ * only; domain behavior should not switch on them.
  */
 export abstract class Element3D extends Element {
   /**
