@@ -1,9 +1,17 @@
-import type { ThreePresentationInput, ThreePresentationModel } from './ThreePresentationModel';
+import type { ThreePresentationModel } from './ThreePresentationModel';
+import type { ThreePresentationReadPorts } from './ThreeWorldReadPort';
 import { ProjectionPlane3DSelector } from './ProjectionPlane3DSelector';
 import { PlanarElement3DSelector } from './PlanarElement3DSelector';
 import { ReconstructedElement3DSelector } from './ReconstructedElement3DSelector';
 import { Guide3DSelector } from './Guide3DSelector';
 import { Hinge3DSelector } from './Hinge3DSelector';
+import type { ThreeViewDisplayOptions } from '@/types/ThreeViewDisplayOptions';
+
+interface ThreePresentationSelectionInput {
+  readPorts: ThreePresentationReadPorts;
+  displayOptions: ThreeViewDisplayOptions;
+  selectedIds: readonly string[];
+}
 
 export class ThreePresentationSelector {
   constructor(
@@ -14,7 +22,7 @@ export class ThreePresentationSelector {
     private readonly hinges = new Hinge3DSelector(),
   ) {}
 
-  select(input: ThreePresentationInput): ThreePresentationModel {
+  select(input: ThreePresentationSelectionInput): ThreePresentationModel {
     const { readPorts, displayOptions, selectedIds } = input;
     return {
       projectionPlanes: this.projectionPlanes.select(readPorts.projectionPlanes, displayOptions.showPlanes, displayOptions.showGrid, displayOptions.showReferenceAxes),

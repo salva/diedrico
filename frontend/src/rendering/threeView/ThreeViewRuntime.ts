@@ -5,10 +5,8 @@ import type {
   PlanarElementPresentationDto,
   ProjectionPlanePresentationDto,
   ReconstructedElementPresentationDto,
-  ThreePresentationInput,
   ThreePresentationModel,
 } from '@/application/threePresentation/ThreePresentationModel';
-import { ThreePresentationSelector } from '@/application/threePresentation/ThreePresentationSelector';
 import { ThreeSceneHost, type ThreeSceneHostMount } from './ThreeSceneHost';
 import { ProjectionPlaneSceneAdapter } from './ProjectionPlaneSceneAdapter';
 import { PlanarElementSceneAdapter } from './PlanarElementSceneAdapter';
@@ -27,10 +25,6 @@ export interface ThreeViewRuntimeHost {
   dispose(): void;
 }
 
-export interface ThreeViewPresentationController {
-  select(input: ThreePresentationInput): ThreePresentationModel;
-}
-
 export interface ThreeViewSceneAdapter<TDto> {
   createObjects(dtos: TDto[]): THREE.Object3D[];
 }
@@ -47,18 +41,15 @@ export interface ThreeViewRuntimeAdapters {
 
 export interface ThreeViewRuntimeOptions {
   host?: ThreeViewRuntimeHost;
-  controller?: ThreeViewPresentationController;
   adapters?: Partial<ThreeViewRuntimeAdapters>;
 }
 
 export class ThreeViewRuntime {
   private readonly host: ThreeViewRuntimeHost;
-  private readonly controller: ThreeViewPresentationController;
   private readonly adapters: ThreeViewRuntimeAdapters;
 
   constructor(options: ThreeViewRuntimeOptions = {}) {
     this.host = options.host ?? new ThreeSceneHost();
-    this.controller = options.controller ?? new ThreePresentationSelector();
     this.adapters = {
       projectionPlanes: options.adapters?.projectionPlanes ?? new ProjectionPlaneSceneAdapter(),
       planarElements: options.adapters?.planarElements ?? new PlanarElementSceneAdapter(),
@@ -70,8 +61,7 @@ export class ThreeViewRuntime {
 
   mount(mount: ThreeSceneHostMount): void { this.host.mount(mount); }
 
-  refresh(input: ThreePresentationInput): void {
-    const model = this.controller.select(input);
+  refresh(model: ThreePresentationModel): void {
     this.replaceGroup('projectionPlanes', this.adapters.projectionPlanes.createObjects(model.projectionPlanes));
     this.replaceGroup('planarElements', this.adapters.planarElements.createObjects(model.planarElements));
     this.replaceGroup('reconstructedElements', this.adapters.reconstructedElements.createObjects(model.reconstructedElements));

@@ -39,16 +39,16 @@ const renderTick = ref(0);
 const viewStore = useViewStore();
 const displayOptions = viewStore.threeViewOptions;
 const selectionStore = useSelectionStore();
-const threePresentationPort = inject(ThreePresentationInjectionKey);
-if (!threePresentationPort) {
+const injectedThreePresentationPort = inject(ThreePresentationInjectionKey);
+if (!injectedThreePresentationPort) {
   throw new Error('Three presentation port not provided');
 }
-const readPorts = threePresentationPort.getReadPorts();
+const threePresentationPort = injectedThreePresentationPort;
 const runtime = new ThreeViewRuntime();
 let unsubscribeWorldChanges: (() => void) | undefined;
 
 function selectedIds(): string[] { return [...selectionStore.selectedIdsArray]; }
-function refreshThreeView(): void { runtime.refresh({ readPorts, displayOptions: displayOptions.value, selectedIds: selectedIds() }); }
+function refreshThreeView(): void { runtime.refresh(threePresentationPort.buildThreePresentationModel(displayOptions.value, selectedIds())); }
 function onToggleOption(key: keyof ThreeViewDisplayOptions): void {
   viewStore.updateThreeViewOption(key, !displayOptions.value[key]);
 }

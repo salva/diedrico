@@ -76,6 +76,7 @@ describe('three presentation architecture boundary', () => {
 
   it('keeps production Vue components free of concrete World imports and injection', () => {
     expect(threeViewSource).not.toMatch(new RegExp(['@/domain/world/World', 'WorldInjectionKey', 'get' + 'World\\s*\\('].join('|')));
-    expect(threeViewSource).toContain('getReadPorts()');
+    expect(threeViewSource).toContain('buildThreePresentationModel(displayOptions.value, selectedIds())');
+    expect(threeViewSource).not.toContain('getReadPorts()');
   });
 });

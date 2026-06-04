@@ -1,13 +1,8 @@
-import type { ThreePresentationReadPorts } from './ThreeWorldReadPort';
-import type { ThreeViewDisplayOptions } from '@/types/ThreeViewDisplayOptions';
-
 export type Vec3 = { x: number; y: number; z: number };
 export type QuaternionDto = { x: number; y: number; z: number; w: number };
 export type ThreeRenderGroup = 'projectionPlanes' | 'planarElements' | 'reconstructedElements' | 'guides' | 'hinges' | 'axes' | 'labels';
 
 export interface ThreeStyleDto { color: number | string; opacity?: number; lineWidth?: number; radius?: number; transparent?: boolean; dashSize?: number; gapSize?: number }
-
-export interface ThreePresentationInput { readPorts: ThreePresentationReadPorts; displayOptions: ThreeViewDisplayOptions; selectedIds: readonly string[] }
 
 interface BaseDto { id: string; sourceEntityId?: string; planeId?: string; visible: boolean; style: ThreeStyleDto; renderGroup: ThreeRenderGroup }
 export interface SegmentGeometryDto { start: Vec3; end: Vec3 }

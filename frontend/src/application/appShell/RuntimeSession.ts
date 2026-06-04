@@ -13,6 +13,7 @@ import type { RuntimeSessionPersistenceRestoreHandle, RuntimeSessionPersistenceS
 import { createCanvasPresentationContext } from '@/application/canvasPresentation/CanvasPresentationContext';
 import { CanvasPresentationSelector } from '@/application/canvasPresentation/CanvasPresentationSelector';
 import { createThreePresentationReadPorts } from '@/application/threePresentation/ThreeWorldReadPort';
+import { ThreePresentationSelector } from '@/application/threePresentation/ThreePresentationSelector';
 import { screenTo3D } from '@/utils/coordinateTransform';
 import { FreePoint2D } from '@/domain/world/Point';
 import type { CanvasViewPort, ProcessTreeReadPort, ElementsPanelPort, PlaneOption, ThreePresentationPort } from './RuntimeViewPorts';
@@ -92,10 +93,11 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
 
   threePresentationPort(): ThreePresentationPort {
     const readPorts = createThreePresentationReadPorts(this.world);
+    const selector = new ThreePresentationSelector();
     return {
       subscribeToChanges: (listener) => this.changes.subscribeToChanges(listener),
       unsubscribeFromChanges: (listener) => this.changes.unsubscribeFromChanges(listener),
-      getReadPorts: () => readPorts,
+      buildThreePresentationModel: (displayOptions, selectedIds) => selector.select({ readPorts, displayOptions, selectedIds }),
     };
   }
 

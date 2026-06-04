@@ -8,7 +8,7 @@ function adapter<TDto>(object: THREE.Object3D): ThreeViewSceneAdapter<TDto> {
 }
 
 describe('ThreeViewRuntime', () => {
-  it('builds the presentation model once and replaces the owned scene groups with adapter output', () => {
+  it('replaces the owned scene groups from the final presentation model with adapter output', () => {
     const model: ThreePresentationModel = {
       projectionPlanes: [{ id: 'projection-plane', kind: 'projection-plane-grid', visible: true, style: { color: 0 }, renderGroup: 'projectionPlanes', segments: [] }],
       planarElements: [{ id: 'planar-point', kind: 'planar-point', visible: true, style: { color: 0 }, renderGroup: 'planarElements', position: { x: 0, y: 0, z: 0 } }],
@@ -16,7 +16,6 @@ describe('ThreeViewRuntime', () => {
       guides: [{ id: 'guide', kind: 'guide-intersection-marker', visible: true, style: { color: 0 }, renderGroup: 'guides', position: { x: 0, y: 0, z: 0 } }],
       hinges: [{ id: 'hinge', kind: 'hinge-line', visible: true, style: { color: 0 }, renderGroup: 'hinges', start: { x: 0, y: 0, z: 0 }, end: { x: 1, y: 0, z: 0 } }],
     };
-    const controller = { select: vi.fn(() => model) };
     const replaced: Array<{ group: ThreeViewRuntimeGroup; objects: THREE.Object3D[] }> = [];
     const host: ThreeViewRuntimeHost = {
       registry: { replaceGroup: vi.fn((group, objects) => replaced.push({ group, objects })) },
@@ -38,12 +37,9 @@ describe('ThreeViewRuntime', () => {
       guides: adapter<typeof model.guides[number]>(objects.guides),
       hinges: adapter<typeof model.hinges[number]>(objects.hinges),
     };
-    const input = { readPort: {} as never, displayOptions: {} as never, selectedIds: ['selected'] };
 
-    new ThreeViewRuntime({ host, controller, adapters }).refresh(input);
+    new ThreeViewRuntime({ host, adapters }).refresh(model);
 
-    expect(controller.select).toHaveBeenCalledOnce();
-    expect(controller.select).toHaveBeenCalledWith(input);
     expect(adapters.projectionPlanes.createObjects).toHaveBeenCalledWith(model.projectionPlanes);
     expect(adapters.planarElements.createObjects).toHaveBeenCalledWith(model.planarElements);
     expect(adapters.reconstructedElements.createObjects).toHaveBeenCalledWith(model.reconstructedElements);
@@ -65,7 +61,7 @@ describe('ThreeViewRuntime', () => {
       resize: vi.fn(),
       dispose: vi.fn(),
     };
-    const runtime = new ThreeViewRuntime({ host, controller: { select: vi.fn() as never } });
+    const runtime = new ThreeViewRuntime({ host });
     const mount = { container: document.createElement('div'), canvas: document.createElement('canvas') };
 
     runtime.mount(mount);

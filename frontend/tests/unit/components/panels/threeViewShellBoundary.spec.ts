@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest';
 import source from '../../../../src/components/panels/ThreeView.vue?raw';
 
 describe('ThreeView shell boundary', () => {
-  it('delegates scene construction to ThreeViewRuntime through the three-presentation read ports and avoids low-level Three.js/rendering imports', () => {
+  it('delegates scene construction to ThreeViewRuntime through the three-presentation model and avoids low-level Three.js/rendering imports', () => {
     expect(source).toContain("import { ThreeViewRuntime } from '@/rendering/threeView/ThreeViewRuntime'");
     expect(source).toContain("ThreePresentationInjectionKey");
-    expect(source).toContain('const readPorts = threePresentationPort.getReadPorts();');
+    expect(source).not.toContain('getReadPorts()');
     expect(source).toContain('runtime.mount');
-    expect(source).toContain('runtime.refresh({ readPorts, displayOptions: displayOptions.value, selectedIds: selectedIds() })');
+    expect(source).toContain('runtime.refresh(threePresentationPort.buildThreePresentationModel(displayOptions.value, selectedIds()))');
     expect(source).toContain('runtime.resize');
     expect(source).toContain('runtime.dispose');
 

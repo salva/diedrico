@@ -1,10 +1,11 @@
 import type { Ref } from 'vue';
 import type { Matrix3 } from 'three';
 import type { CanvasPresentationModel } from '@/application/canvasPresentation/CanvasPresentationModel';
-import type { ThreePresentationReadPorts } from '@/application/threePresentation/ThreeWorldReadPort';
+import type { ThreePresentationModel } from '@/application/threePresentation/ThreePresentationModel';
 import type { FreePointMoveSession, ToolCommandSink } from '@/tools/ToolCommandIntents';
 import type { DescriptionPart } from '@/domain/world/descriptors/DescriptionPart';
 import type { ProcessNodeType } from '@/domain/processTree/ProcessTree';
+import type { ThreeViewDisplayOptions } from '@/types/ThreeViewDisplayOptions';
 
 export interface RuntimeChangeSubscriptionPort {
   subscribeToChanges(listener: () => void): void;
@@ -122,7 +123,7 @@ export interface ElementsPanelPort extends RuntimeChangeSubscriptionPort {
 }
 
 export interface ThreePresentationPort extends RuntimeChangeSubscriptionPort {
-  getReadPorts(): ThreePresentationReadPorts;
+  buildThreePresentationModel(displayOptions: ThreeViewDisplayOptions, selectedIds: readonly string[]): ThreePresentationModel;
 }
 
 export interface PlaneOption {
