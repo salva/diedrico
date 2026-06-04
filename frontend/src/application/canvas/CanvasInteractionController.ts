@@ -29,6 +29,15 @@ export interface HoverPort {
   clearHover(): void;
 }
 
+export interface CanvasInteractionDependencies {
+  selection: CanvasSelectionPort;
+  toolLifecycle: ToolLifecyclePort;
+  toolReadPort: ToolInteractionReadPort;
+  viewport: ViewportPort;
+  hover: HoverPort;
+  getElementLabel(elementId: string, elementType: string, planeId?: string): string;
+}
+
 export interface SelectClickRequest {
   canvasPos: Vector3;
   activePlaneId: string;
@@ -97,12 +106,7 @@ interface MutableFreePointDragState extends FreePointDragState {
 }
 
 export class CanvasInteractionController {
-  private readonly selection: CanvasSelectionPort;
-  private readonly toolLifecycle: ToolLifecyclePort;
-  private readonly toolReadPort: ToolInteractionReadPort;
-  private readonly viewport: ViewportPort;
-  private readonly hover: HoverPort;
-  private readonly getElementLabel: (elementId: string, elementType: string, planeId?: string) => string;
+  private readonly deps: CanvasInteractionDependencies;
 
   private currentTool: CanvasTool | null = null;
   private currentToolName: ToolType = 'select';
@@ -110,20 +114,8 @@ export class CanvasInteractionController {
   private viewportPan: ViewportPanState = CanvasInteractionController.emptyPanState();
   private snapTargetPointId: string | null = null;
 
-  constructor(deps: {
-    selection: CanvasSelectionPort;
-    toolLifecycle: ToolLifecyclePort;
-    toolReadPort: ToolInteractionReadPort;
-    viewport: ViewportPort;
-    hover: HoverPort;
-    getElementLabel: (elementId: string, elementType: string, planeId?: string) => string;
-  }) {
-    this.selection = deps.selection;
-    this.toolLifecycle = deps.toolLifecycle;
-    this.toolReadPort = deps.toolReadPort;
-    this.viewport = deps.viewport;
-    this.hover = deps.hover;
-    this.getElementLabel = deps.getElementLabel;
+  constructor(deps: CanvasInteractionDependencies) {
+    this.deps = deps;
   }
 
   // --- Tool lifecycle ---
@@ -135,7 +127,7 @@ export class CanvasInteractionController {
       this.currentTool = tool;
       if ('getStatusMessage' in tool && typeof tool.getStatusMessage === 'function') {
         const msg = tool.getStatusMessage();
-        if (msg) this.toolLifecycle.setToolStepMessage(msg);
+        if (msg) this.deps.toolLifecycle.setToolStepMessage(msg);
       }
     } else {
       this.currentTool = null;
@@ -177,13 +169,13 @@ export class CanvasInteractionController {
       planeCoords: request.planePos,
       canvasCoords: request.canvasPoint,
       commandSink: request.commandSink,
-      readPort: this.toolReadPort,
+      readPort: this.deps.toolReadPort,
       interactionQuery: request.interactionQuery,
       paperToPlaneTransform: request.paperToPlaneTransform,
       viewport: request.viewport,
     });
 
-    this.toolLifecycle.setToolStepMessage(result.message || '');
+    this.deps.toolLifecycle.setToolStepMessage(result.message || '');
     return result;
   }
 
@@ -210,14 +202,14 @@ export class CanvasInteractionController {
     );
 
     if (!hit) {
-      this.selection.clearSelection();
+      this.deps.selection.clearSelection();
       return;
     }
 
     if (request.shiftKey) {
-      this.selection.addToSelection(hit.elementId);
+      this.deps.selection.addToSelection(hit.elementId);
     } else {
-      this.selection.selectSingle(hit.elementId);
+      this.deps.selection.selectSingle(hit.elementId);
     }
   }
 
@@ -241,7 +233,7 @@ export class CanvasInteractionController {
     });
     if (!moveSession) return false;
 
-    this.selection.selectSingle(hit.elementId);
+    this.deps.selection.selectSingle(hit.elementId);
     this.pointDrag = {
       active: true,
       planeId: request.activePlaneId,
@@ -294,7 +286,7 @@ export class CanvasInteractionController {
     if (!this.viewportPan.active) return;
     const dx = currentX - this.viewportPan.startX;
     const dy = currentY - this.viewportPan.startY;
-    this.viewport.adjustPan(dx / zoom, dy / zoom);
+    this.deps.viewport.adjustPan(dx / zoom, dy / zoom);
     this.viewportPan = {
       active: true,
       startX: currentX,
@@ -348,10 +340,10 @@ export class CanvasInteractionController {
     }
 
     if (hit) {
-      const label = this.getElementLabel(hit.elementId, hit.elementType, activePlaneId);
-      this.hover.setHoveredElement(hit.elementId, hit.elementType, label, false);
+      const label = this.deps.getElementLabel(hit.elementId, hit.elementType, activePlaneId);
+      this.deps.hover.setHoveredElement(hit.elementId, hit.elementType, label, false);
     } else {
-      this.hover.clearHover();
+      this.deps.hover.clearHover();
     }
 
     const snapChanged = previousSnapPointId !== this.snapTargetPointId;
@@ -359,7 +351,7 @@ export class CanvasInteractionController {
     return {
       hitElementId: hit?.elementId,
       hitElementType: hit?.elementType,
-      hitLabel: hit ? this.getElementLabel(hit.elementId, hit.elementType, activePlaneId) : undefined,
+      hitLabel: hit ? this.deps.getElementLabel(hit.elementId, hit.elementType, activePlaneId) : undefined,
       isSnapPoint: hit?.elementType === 'point',
       snapChanged,
     };
@@ -370,14 +362,14 @@ export class CanvasInteractionController {
   }
 
   clearHover(): void {
-    this.hover.clearHover();
+    this.deps.hover.clearHover();
     this.snapTargetPointId = null;
   }
 
   // --- Wheel zoom ---
 
   handleWheelZoom(delta: number, focusX: number, focusY: number): void {
-    this.viewport.adjustZoom(delta, focusX, focusY);
+    this.deps.viewport.adjustZoom(delta, focusX, focusY);
   }
 
   // --- Fit to view ---
@@ -388,8 +380,8 @@ export class CanvasInteractionController {
     canvasHeight: number,
   ): void {
     if (primitives.length === 0) {
-      this.viewport.setZoom(1.0);
-      this.viewport.setPan(0, 0);
+      this.deps.viewport.setZoom(1.0);
+      this.deps.viewport.setPan(0, 0);
       return;
     }
 
@@ -418,8 +410,8 @@ export class CanvasInteractionController {
     }
 
     if (!isFinite(minX) || !isFinite(minY) || !isFinite(maxX) || !isFinite(maxY)) {
-      this.viewport.setZoom(1.0);
-      this.viewport.setPan(0, 0);
+      this.deps.viewport.setZoom(1.0);
+      this.deps.viewport.setPan(0, 0);
       return;
     }
 
@@ -434,8 +426,8 @@ export class CanvasInteractionController {
     const newPanX = canvasWidth / (2 * newZoom) - boxCenterX;
     const newPanY = canvasHeight / (2 * newZoom) - boxCenterY;
 
-    this.viewport.setZoom(newZoom);
-    this.viewport.setPan(newPanX, newPanY);
+    this.deps.viewport.setZoom(newZoom);
+    this.deps.viewport.setPan(newPanX, newPanY);
   }
 
   private static emptyDragState(): MutableFreePointDragState {

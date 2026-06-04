@@ -7,9 +7,7 @@
  * 
  * Usage:
  * - Canvas: Call setHoveredElement() on mouseover, clearHover() on mouseout
- * - Panels: Call setHoveredElement() on mouse enter, clearHover() on mouse leave
  * - Components: Watch hoveredElementId to apply visual feedback
- * 
  */
 
 import { ref, computed } from 'vue';
@@ -113,15 +111,6 @@ function createHoverHighlightState() {
  */
 type HoverHighlightState = ReturnType<typeof createHoverHighlightState>;
 
-let globalHoverInstance: HoverHighlightState | null = null;
-
-/**
- * Get or create global hover highlight instance
- * Use this when you need shared hover state across components
- */
-export function useGlobalHoverHighlight(): HoverHighlightState {
-  if (!globalHoverInstance) {
-    globalHoverInstance = createHoverHighlightState();
-  }
-  return globalHoverInstance;
+export function useHoverHighlight(): HoverHighlightState {
+  return createHoverHighlightState();
 }

@@ -163,7 +163,7 @@ import { CanvasInteractionController } from '@/application/canvas/CanvasInteract
 import { renderCanvasPrimitive } from '@/application/canvas/CanvasSvgRendering';
 import { useViewStore } from '@/stores/viewStore';
 import { useSelectionStore } from '@/stores/selectionStore';
-import { useGlobalHoverHighlight } from '@/composables/useHoverHighlight';
+import { useHoverHighlight } from '@/composables/useHoverHighlight';
 import PropertiesDialog from '@/components/dialogs/PropertiesDialog.vue';
 import { CanvasCommandProducerInjectionKey, CanvasViewInjectionKey, SelectionActionsInjectionKey, ToolInteractionReadInjectionKey, ToolRuntimeInjectionKey } from '@/application/appShell/RuntimeInjectionKeys';
 import { CanvasInteractionQuery } from '@/application/canvasPresentation/CanvasInteractionQuery';
@@ -177,7 +177,7 @@ const svgElement = ref<SVGSVGElement | null>(null);
 // Stores (read-only for presentation model; viewport mutations delegated to controller)
 const viewStore = useViewStore();
 const selectionStore = useSelectionStore();
-const hoverHighlight = useGlobalHoverHighlight();
+const hoverHighlight = useHoverHighlight();
 
 // Active plane - derived from runtime view port.
 const renderTick = ref(0);
@@ -347,7 +347,7 @@ const renderedPoints = computed(() => {
 });
 
 const renderedLines = computed(() => {
-  return primitives.value.filter(p => p.type === 'line').map(p => {
+  return primitives.value.filter(p => p.type === 'line' && !p.id.startsWith('guide-')).map(p => {
     return renderCanvasPrimitive(p, viewport.value, { width: canvasWidth.value, height: canvasHeight.value });
   });
 });
