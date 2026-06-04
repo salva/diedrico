@@ -1,7 +1,7 @@
 /**
  * Phase 98: Dynamic Action Descriptions - Descriptor Registration
  * 
- * Registers all element descriptors at application startup.
+ * Populates an element descriptor registry for a runtime/test session.
  * Like loading a CSS stylesheet - maps element types to their presentation rules.
  */
 
@@ -64,57 +64,61 @@ import { BrokenHingeLine } from '../BrokenHingeLine';
 import { BrokenHalfHingeLine2D } from '../elements/BrokenHalfHingeLine2D';
 
 /**
- * Register all descriptors with the registry.
- * Call this once at application startup (in main.ts).
+ * Register all descriptors with the supplied registry, or create and return a
+ * new populated registry when none is supplied.
  * 
  * Like loading a CSS stylesheet - establishes the mapping between
  * element types (HTML tags) and their presentation rules (CSS).
  */
-export function registerAllDescriptors(): void {
+export function registerAllDescriptors(registry = new DescriptorRegistry()): DescriptorRegistry {
   // 2D Points
-  DescriptorRegistry.register(FreePoint2D, new FreePoint2DDescriptor());
-  DescriptorRegistry.register(Point2DLineLineIntersection, new Point2DLineLineIntersectionDescriptor());
-  DescriptorRegistry.register(Point2DLineCircleIntersection, new Point2DLineCircleIntersectionDescriptor());
-  DescriptorRegistry.register(Point2DCircleCircleIntersection, new Point2DCircleCircleIntersectionDescriptor());
-  DescriptorRegistry.register(SiblingIntersectionPoint2D, new SiblingIntersectionPoint2DDescriptor());
+  registry.register(FreePoint2D, new FreePoint2DDescriptor());
+  registry.register(Point2DLineLineIntersection, new Point2DLineLineIntersectionDescriptor());
+  registry.register(Point2DLineCircleIntersection, new Point2DLineCircleIntersectionDescriptor());
+  registry.register(Point2DCircleCircleIntersection, new Point2DCircleCircleIntersectionDescriptor());
+  registry.register(SiblingIntersectionPoint2D, new SiblingIntersectionPoint2DDescriptor());
   
   // 2D Lines
-  DescriptorRegistry.register(Line2DByTwoPoints, new Line2DByTwoPointsDescriptor());
-  DescriptorRegistry.register(Line2DParallel, new Line2DParallelDescriptor());
-  DescriptorRegistry.register(Line2DPerpendicularToLine, new Line2DPerpendicularToLineDescriptor());
-  DescriptorRegistry.register(Line2DTangentToCircleThroughPoint, new Line2DTangentToCircleThroughPointDescriptor());
-  DescriptorRegistry.register(Line2DTangentToCircleParallelToLine, new Line2DTangentToCircleParallelToLineDescriptor());
-  DescriptorRegistry.register(HalfHingeLine2D, new HalfHingeLine2DDescriptor());
-  DescriptorRegistry.register(BrokenHalfHingeLine2D, new BrokenHalfHingeLine2DDescriptor());
+  registry.register(Line2DByTwoPoints, new Line2DByTwoPointsDescriptor());
+  registry.register(Line2DParallel, new Line2DParallelDescriptor());
+  registry.register(Line2DPerpendicularToLine, new Line2DPerpendicularToLineDescriptor());
+  registry.register(Line2DTangentToCircleThroughPoint, new Line2DTangentToCircleThroughPointDescriptor());
+  registry.register(Line2DTangentToCircleParallelToLine, new Line2DTangentToCircleParallelToLineDescriptor());
+  registry.register(HalfHingeLine2D, new HalfHingeLine2DDescriptor());
+  registry.register(BrokenHalfHingeLine2D, new BrokenHalfHingeLine2DDescriptor());
   
   // 2D Circles
-  DescriptorRegistry.register(Circle2DByCenterAndPoint, new Circle2DByCenterAndPointDescriptor());
-  DescriptorRegistry.register(Circle2DByThreePoints, new Circle2DByThreePointsDescriptor());
+  registry.register(Circle2DByCenterAndPoint, new Circle2DByCenterAndPointDescriptor());
+  registry.register(Circle2DByThreePoints, new Circle2DByThreePointsDescriptor());
   
   // 2D Segments
-  DescriptorRegistry.register(Segment2D, new Segment2DDescriptor());
+  registry.register(Segment2D, new Segment2DDescriptor());
   
   // 2D Guides
-  DescriptorRegistry.register(Guide2D, new Guide2DDescriptor());
-  DescriptorRegistry.register(SiblingGuide2D, new SiblingGuide2DDescriptor());
+  registry.register(Guide2D, new Guide2DDescriptor());
+  registry.register(SiblingGuide2D, new SiblingGuide2DDescriptor());
   
   // 3D Points
-  DescriptorRegistry.register(Point3DByCoordinates, new Point3DByCoordinatesDescriptor());
-  DescriptorRegistry.register(Point3DFromProjections, new Point3DFromProjectionsDescriptor());
+  registry.register(Point3DByCoordinates, new Point3DByCoordinatesDescriptor());
+  registry.register(Point3DFromProjections, new Point3DFromProjectionsDescriptor());
   
   // 3D Lines
-  DescriptorRegistry.register(Line3DFromProjections, new Line3DFromProjectionsDescriptor());
-  DescriptorRegistry.register(HingeLine, new HingeLineDescriptor());
-  DescriptorRegistry.register(BrokenHingeLine, new BrokenHingeLineDescriptor());
+  registry.register(Line3DFromProjections, new Line3DFromProjectionsDescriptor());
+  registry.register(HingeLine, new HingeLineDescriptor());
+  registry.register(BrokenHingeLine, new BrokenHingeLineDescriptor());
   
   // 3D Segments
-  DescriptorRegistry.register(Segment3DFromProjections, new Segment3DFromProjectionsDescriptor());
+  registry.register(Segment3DFromProjections, new Segment3DFromProjectionsDescriptor());
   
   // 3D Planes
-  DescriptorRegistry.register(Plane3DFixed, new Plane3DFixedDescriptor());
-  DescriptorRegistry.register(Plane3DFromTraces, new Plane3DFromTracesDescriptor());
+  registry.register(Plane3DFixed, new Plane3DFixedDescriptor());
+  registry.register(Plane3DFromTraces, new Plane3DFromTracesDescriptor());
   
   // Projection Planes
-  DescriptorRegistry.register(FixedProjectionPlane, new FixedProjectionPlaneDescriptor());
-  DescriptorRegistry.register(AuxiliaryProjectionPlane, new AuxiliaryProjectionPlaneDescriptor());
+  registry.register(FixedProjectionPlane, new FixedProjectionPlaneDescriptor());
+  registry.register(AuxiliaryProjectionPlane, new AuxiliaryProjectionPlaneDescriptor());
+
+  return registry;
 }
+
+export const createRegisteredDescriptorRegistry = registerAllDescriptors;

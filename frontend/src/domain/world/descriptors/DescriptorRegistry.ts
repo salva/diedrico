@@ -15,12 +15,12 @@ import type { ElementDescriptor } from './ElementDescriptor';
  * this registry maps Element classes to their description logic.
  * 
  * Usage:
- * 1. Register descriptors at app startup: DescriptorRegistry.register(FreePoint2D, new FreePoint2DDescriptor())
- * 2. Get descriptor for an element: const descriptor = DescriptorRegistry.get(element)
+ * 1. Create a registry for the runtime session: const registry = registerAllDescriptors()
+ * 2. Get descriptor for an element: const descriptor = registry.get(element)
  * 3. Use descriptor: descriptor.getConstructionDescription(element, world)
  */
 export class DescriptorRegistry {
-  private static descriptors = new Map<Function, ElementDescriptor>();
+  private readonly descriptors = new Map<Function, ElementDescriptor>();
   
   /**
    * Register a descriptor for an element type
@@ -30,7 +30,7 @@ export class DescriptorRegistry {
    * @param elementClass Element constructor function
    * @param descriptor Descriptor instance for this element type
    */
-  static register<T extends Element>(
+  register<T extends Element>(
     elementClass: new (...args: any[]) => T,
     descriptor: ElementDescriptor<T>
   ): void {
@@ -44,12 +44,12 @@ export class DescriptorRegistry {
    * @returns Descriptor for this element type
    * @throws Error if no descriptor registered for this element type
    */
-  static get(element: Element): ElementDescriptor {
+  get(element: Element): ElementDescriptor {
     const descriptor = this.descriptors.get(element.constructor);
     if (!descriptor) {
       throw new Error(
         `No descriptor registered for ${element.constructor.name}. ` +
-        `Did you forget to call registerAllDescriptors()?`
+        `Did you forget to populate this DescriptorRegistry?`
       );
     }
     return descriptor;
@@ -61,21 +61,47 @@ export class DescriptorRegistry {
    * @param elementClass Element constructor function
    * @returns True if descriptor is registered
    */
-  static has(elementClass: Function): boolean {
+  has(elementClass: Function): boolean {
     return this.descriptors.has(elementClass);
   }
   
   /**
    * Clear all registered descriptors (mainly for testing)
    */
-  static clear(): void {
+  clear(): void {
     this.descriptors.clear();
   }
   
   /**
    * Get number of registered descriptors (mainly for testing)
    */
-  static size(): number {
+  size(): number {
     return this.descriptors.size;
   }
 }
+
+const legacyGlobalRegistry = new DescriptorRegistry();
+
+/**
+ * Explicit legacy compatibility facade for isolated callers that have not been
+ * moved to runtime-owned registry injection yet. Production runtime code should
+ * own a DescriptorRegistry instance instead of using this singleton.
+ * TODO: Remove after any remaining legacy tests/callers use injected registries.
+ */
+export const LegacyDescriptorRegistry = {
+  register<T extends Element>(elementClass: new (...args: any[]) => T, descriptor: ElementDescriptor<T>): void {
+    legacyGlobalRegistry.register(elementClass, descriptor);
+  },
+  get(element: Element): ElementDescriptor {
+    return legacyGlobalRegistry.get(element);
+  },
+  has(elementClass: Function): boolean {
+    return legacyGlobalRegistry.has(elementClass);
+  },
+  clear(): void {
+    legacyGlobalRegistry.clear();
+  },
+  size(): number {
+    return legacyGlobalRegistry.size();
+  },
+};

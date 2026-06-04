@@ -2,7 +2,7 @@ import type { ProcessNode } from '@/domain/processTree/ProcessTree';
 import { Element2D } from '@/domain/world/Element2D';
 import type { World } from '@/domain/world/World';
 import type { DependencyQueryPort } from '@/domain/world/DependencyPorts';
-import { DescriptorRegistry } from '@/domain/world/descriptors/DescriptorRegistry';
+import type { DescriptorRegistry } from '@/domain/world/descriptors/DescriptorRegistry';
 import type { DescriptionPart } from '@/domain/world/descriptors/DescriptionPart';
 import type { Action } from '@/domain/processTree/Action';
 import { mapDescriptionParts, type ProcessNodeViewModel, type ProcessTreeReadModel } from '../RuntimeViewPorts';
@@ -10,6 +10,7 @@ import { mapDescriptionParts, type ProcessNodeViewModel, type ProcessTreeReadMod
 export interface ProcessTreeReadModelContext {
   readonly world: World;
   readonly dependencyQuery: DependencyQueryPort;
+  readonly descriptorRegistry: DescriptorRegistry;
 }
 
 export function buildProcessTreeReadModel(context: ProcessTreeReadModelContext): ProcessTreeReadModel {
@@ -37,7 +38,7 @@ export function countProcessNodeViewModels(node: ProcessNodeViewModel): number {
 
 function createProcessNodeViewModel(node: ProcessNode, context: ProcessTreeReadModelContext): ProcessNodeViewModel {
   if (node.type === 'action') {
-    const descriptionParts = mapDescriptionParts(getActionDescriptionParts(node, context.world));
+    const descriptionParts = mapDescriptionParts(getActionDescriptionParts(node, context));
     return {
       id: node.id,
       type: node.type,
@@ -76,11 +77,12 @@ function isActionInfeasible(elementId: string, context: ProcessTreeReadModelCont
   return false;
 }
 
-function getActionDescriptionParts(action: Action, world: World): DescriptionPart[] {
+function getActionDescriptionParts(action: Action, context: ProcessTreeReadModelContext): DescriptionPart[] {
+  const { descriptorRegistry, world } = context;
   if (!action.elementId.includes('/')) {
     const plane = world.getProjectionPlaneById(action.elementId);
     if (plane) {
-      const descriptor = DescriptorRegistry.get(plane);
+      const descriptor = descriptorRegistry.get(plane);
       const typeName = descriptor.getTypeName(plane).toLowerCase();
       const label = plane.label || plane.name;
       const constructionParts = descriptor.getConstructionDescription(plane, world);
@@ -96,7 +98,7 @@ function getActionDescriptionParts(action: Action, world: World): DescriptionPar
   try {
     const element = world.getElement2D(action.elementId);
     if (element) {
-      const descriptor = DescriptorRegistry.get(element);
+      const descriptor = descriptorRegistry.get(element);
       const typeName = descriptor.getTypeName(element).toLowerCase();
       const label = element.label || action.elementId;
       const constructionParts = descriptor.getConstructionDescription(element, world);
@@ -113,7 +115,7 @@ function getActionDescriptionParts(action: Action, world: World): DescriptionPar
   
   const element3d = world.getElement3DById(action.elementId);
   if (element3d) {
-    const descriptor = DescriptorRegistry.get(element3d);
+    const descriptor = descriptorRegistry.get(element3d);
     const typeName = descriptor.getTypeName(element3d).toLowerCase();
     const label = element3d.label || action.elementId;
     const constructionParts = descriptor.getConstructionDescription(element3d, world);

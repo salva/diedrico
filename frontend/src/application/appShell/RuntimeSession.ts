@@ -21,11 +21,13 @@ import { buildProcessTreeReadModel, countProcessNodeViewModels, getRelatedAction
 import { buildElementsPanelReadModel } from './readModels/ElementsPanelReadModel';
 import { toggleElementVisibility } from './readModels/ElementVisibilityIntent';
 import { RuntimeChangePublisher, type ChangeNotifier } from './RuntimeChangePublisher';
+import { registerAllDescriptors } from '@/domain/world/descriptors/registerDescriptors';
 
 export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort {
   private readonly world = new World();
   private readonly changes = new RuntimeChangePublisher();
   private readonly commandStack = new CommandStack();
+  private readonly descriptorRegistry = registerAllDescriptors();
   private readonly commandProducer = new RuntimeCommandProducer(this.world, this.commandStack, this.changes);
   private activePlaneIdValue?: string;
 
@@ -67,8 +69,8 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
     return {
       subscribeToChanges: (listener) => this.changes.subscribeToChanges(listener),
       unsubscribeFromChanges: (listener) => this.changes.unsubscribeFromChanges(listener),
-      getTree: () => buildProcessTreeReadModel({ world: this.world, dependencyQuery: this.world.getDependencyQuery() }),
-      getRelatedActionIds: (selectedIds) => getRelatedActionIds(selectedIds, { world: this.world, dependencyQuery: this.world.getDependencyQuery() }),
+      getTree: () => buildProcessTreeReadModel({ world: this.world, dependencyQuery: this.world.getDependencyQuery(), descriptorRegistry: this.descriptorRegistry }),
+      getRelatedActionIds: (selectedIds) => getRelatedActionIds(selectedIds, { world: this.world, dependencyQuery: this.world.getDependencyQuery(), descriptorRegistry: this.descriptorRegistry }),
       countNodes: (node) => countProcessNodeViewModels(node),
     };
   }
