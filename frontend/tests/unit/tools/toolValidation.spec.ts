@@ -56,12 +56,11 @@ describe('Tool Argument Validation', () => {
       planeId,
       planeCoords: coords.clone(),
       canvasCoords: coords.clone(),
-      commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, commandStack), toolStore: {} as any }),
+      commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, commandStack) }),
       readPort: createToolInteractionReadPort(world),
       interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 },
       paperToPlaneTransform: new Matrix3().identity(),
-        toolStore: {} as any,
     };
   }
 

@@ -5,14 +5,9 @@ import { executeConstructionIntent } from '@/application/construction/Constructi
 import { CanvasPointMovementUseCase } from '@/application/canvas/CanvasPointMovementUseCase';
 import { CanvasStyleUseCase } from '@/application/canvas/CanvasStyleUseCase';
 
-export interface CanvasToolControllerToolStore {
-  setTool(tool: 'select'): void;
-}
-
 export interface CanvasToolControllerDependencies {
   world: World;
   commands: CanvasCommandProductionPort;
-  toolStore: CanvasToolControllerToolStore;
 }
 
 export class CanvasToolController implements ToolCommandSink {

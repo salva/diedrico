@@ -14,7 +14,7 @@ export interface AppShellRuntimeOptions {
 export function createAppShellRuntime(options: AppShellRuntimeOptions) {
   const session = new RuntimeSession();
   const commandHistory: CommandHistoryPort = session;
-  const canvasCommandProducerPort = session.canvasCommandProducerPort(options.ports.toolStore);
+  const canvasCommandProducerPort = session.canvasCommandProducerPort();
   const processHistoryCommandPort = session.processHistoryCommandPort();
   const canvasViewPort = session.canvasViewPort();
   const processTreeReadPort = session.processTreeReadPort();

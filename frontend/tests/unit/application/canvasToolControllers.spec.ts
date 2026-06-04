@@ -31,7 +31,6 @@ function makeToolContext(overrides: Partial<ToolContext>): ToolContext {
     interactionQuery: overrides.interactionQuery ?? new CanvasInteractionQuery([]),
     paperToPlaneTransform: overrides.paperToPlaneTransform,
     viewport: overrides.viewport ?? { zoom: 1, panX: 0, panY: 0 },
-    toolStore: {} as any,
   };
 }
 
@@ -255,7 +254,7 @@ describe('Wave 006a canvas/tool command controllers', () => {
   it('delegates through CanvasToolController rather than exposing command construction to tools', () => {
     const { world, commandStack } = createTestWorld();
     const planeId = getHorizontalPlaneId(world);
-    const controller = new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, commandStack), toolStore: { setTool: vi.fn() } as any });
+    const controller = new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, commandStack) });
     const pointTool = new PointTool();
     const result = pointTool.handleClick(makeToolContext({
       planeId,

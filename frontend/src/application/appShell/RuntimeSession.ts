@@ -6,7 +6,6 @@ import { SelectionDeletionCommandService } from '@/application/selectionDeletion
 import type { SelectionDeletionCommandPort } from '@/application/selectionDeletion/SelectionDeletionPorts';
 import { CanvasToolController } from '@/application/tools/CanvasToolController';
 import { createToolInteractionReadPort } from '@/application/tools/ToolInteractionReadPort';
-import type { CanvasToolControllerToolStore } from '@/application/tools/CanvasToolController';
 import { ProcessHistoryController } from '@/application/processHistory/ProcessHistoryController';
 import type { ActivePlanePort, CommandHistoryPort, OpenedProjectSession, ProjectSessionPersistencePayload, ProjectSessionPersistencePort, SelectionReadPort } from './AppShellPorts';
 import type { ProjectSessionKernel } from './ProjectSessionKernel';
@@ -114,11 +113,10 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
     };
   }
 
-  canvasCommandProducerPort(toolStore: CanvasToolControllerToolStore): CanvasToolController {
+  canvasCommandProducerPort(): CanvasToolController {
     return new CanvasToolController({
       world: this.world,
       commands: this.commandProducer,
-      toolStore,
     });
   }
 

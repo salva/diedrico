@@ -49,12 +49,11 @@ describe('PointTool', () => {
     planeId,
     planeCoords,
     canvasCoords,
-    commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, commandStack), toolStore: {} as any }),
+    commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, commandStack) }),
     readPort: createToolInteractionReadPort(world),
     interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 },
-    paperToPlaneTransform: undefined,
-    toolStore: {} as any, // Mock tool store
+    paperToPlaneTransform: undefined, // Mock tool store
   });
 
   let initialUndoDepth: number;
