@@ -97,9 +97,9 @@ describe('Segment3DFromProjections.realize3D()', () => {
    */
   function createSegment2D(planeId: string, x1: number, y1: number, x2: number, y2: number): string {
     const plane = world.getProjectionPlaneById(planeId);
-    const p1 = plane.addFreePoint2D(new Vector3(x1, y1, 1), world);
-    const p2 = plane.addFreePoint2D(new Vector3(x2, y2, 1), world);
-    const seg = plane.addSegment2DBetweenPoints(p1.id, p2.id, world);
+    const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(x1, y1, 1));
+    const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(x2, y2, 1));
+    const seg = world.getConstructionService().addSegment2DBetweenPoints(plane, p1.id, p2.id);
     return seg.id;
   }
 

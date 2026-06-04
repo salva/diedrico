@@ -9,10 +9,10 @@ describe('CanvasPresentationSelector', () => {
   it('builds render/query DTOs and grid labels from one world/view snapshot', () => {
     const { world } = createTestWorld();
     const plane = world.getProjectionPlaneByLabel('P_H');
-    const a = plane.addFreePoint2D(new Vector3(0, 0, 1), world as any);
-    const b = plane.addFreePoint2D(new Vector3(10, 0, 1), world as any);
-    const segment = plane.addSegment2DBetweenPoints(a.id!, b.id!, world as any);
-    const circle = plane.addCircle2DByCenterAndPoint(a.id!, b.id!, world as any);
+    const a = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
+    const b = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 0, 1));
+    const segment = world.getConstructionService().addSegment2DBetweenPoints(plane, a.id!, b.id!);
+    const circle = world.getConstructionService().addCircle2DByCenterAndPoint(plane, a.id!, b.id!);
     const model = buildCanvasPresentationModel(world, { zoom: 1, panX: 0, panY: 0, width: 400, height: 300 }, { activePlaneId: plane.id, selectedIds: new Set([segment.id!]), hoveredIds: new Set([circle.id!]), gridVisible: true });
     expect(model.renderItems.some(item => item.kind === 'point')).toBe(true);
     expect(model.renderItems.some(item => item.kind === 'finite-segment')).toBe(true);
@@ -25,12 +25,12 @@ describe('CanvasPresentationSelector', () => {
   it('creates query items for selectable plane-backed render items', () => {
     const { world } = createTestWorld();
     const plane = world.getProjectionPlaneByLabel('P_H');
-    const a = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-    const b = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
-    const line = plane.addLine2DBetweenTwoPoints(a.id, b.id, world);
-    const segment = plane.addSegment2DBetweenPoints(a.id, b.id, world);
-    const circle = plane.addCircle2DByCenterAndPoint(a.id, b.id, world);
-    const guide = plane.addGuide2D(line.id, a.id, world);
+    const a = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
+    const b = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 0, 1));
+    const line = world.getConstructionService().addLine2DBetweenTwoPoints(plane, a.id, b.id);
+    const segment = world.getConstructionService().addSegment2DBetweenPoints(plane, a.id, b.id);
+    const circle = world.getConstructionService().addCircle2DByCenterAndPoint(plane, a.id, b.id);
+    const guide = world.getConstructionService().addGuide2D(plane, line.id, a.id);
 
     const model = buildCanvasPresentationModel(world, { zoom: 1, panX: 0, panY: 0, width: 400, height: 300 }, { activePlaneId: plane.id, gridVisible: false });
     const expectedElementIds = new Set([a.id, line.id, segment.id, circle.id, guide.id]);
@@ -45,10 +45,10 @@ describe('CanvasPresentationSelector', () => {
   it('keeps decorative arcs and projected 3D overlays out of query items', () => {
     const { world } = createTestWorld();
     const plane = world.getProjectionPlaneByLabel('P_H');
-    const a = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-    const b = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
-    const line = plane.addLine2DBetweenTwoPoints(a.id, b.id, world);
-    const guide = plane.addGuide2D(line.id, a.id, world);
+    const a = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
+    const b = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 0, 1));
+    const line = world.getConstructionService().addLine2DBetweenTwoPoints(plane, a.id, b.id);
+    const guide = world.getConstructionService().addGuide2D(plane, line.id, a.id);
     guide.arcGeometry = {
       startPoint: { x: 0, y: 0 },
       endPoint: { x: 10, y: 0 },

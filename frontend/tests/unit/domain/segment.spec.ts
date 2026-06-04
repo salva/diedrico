@@ -28,8 +28,8 @@ describe('Segment2D', () => {
     planeH = world.getProjectionPlaneByLabel('P_H')!;
     
     // Create two test points using factory method (let IDs auto-generate)
-    const point1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
-    const point2 = planeH.addFreePoint2D(new Vector3(100, 50, 1), world);
+    const point1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
+    const point2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(100, 50, 1));
     
     point1Id = point1.id;
     point2Id = point2.id;
@@ -58,7 +58,7 @@ describe('Segment2D', () => {
     });
 
     it('should realize segment with valid points', () => {
-      const segment = planeH.addSegment2DBetweenPoints(point1Id, point2Id, world);
+      const segment = world.getConstructionService().addSegment2DBetweenPoints(planeH, point1Id, point2Id);
       const realization = segment.realize2D(world);
       
       expect(realization).toBeDefined();
@@ -70,8 +70,8 @@ describe('Segment2D', () => {
 
     it('should detect degenerate segment (coincident points)', () => {
       // Create two coincident points using factory method
-      const point3 = planeH.addFreePoint2D(new Vector3(50, 50, 1), world);
-      const point4 = planeH.addFreePoint2D(new Vector3(50, 50, 1), world);
+      const point3 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(50, 50, 1));
+      const point4 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(50, 50, 1));
       
       const segment = new Segment2D(planeH.id + '/seg1', point3.id, point4.id, planeH.id);
       const realization = segment.realize2D(world);

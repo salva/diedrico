@@ -55,20 +55,15 @@ describe('Line2DTangentToCircleThroughPoint - Geometric Correctness', () => {
     const plane = world.getProjectionPlaneByLabel('P_H')!;
     
     // Add circle
-    const center = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-    const edgePoint = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
-    const circle = plane.addCircle2DByCenterAndPoint(center.id, edgePoint.id, world);
+    const center = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
+    const edgePoint = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 0, 1));
+    const circle = world.getConstructionService().addCircle2DByCenterAndPoint(plane, center.id, edgePoint.id);
     
     // Add external point
-    const externalPoint = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
+    const externalPoint = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 0, 1));
     
     // Create tangent line (index 0)
-    const tangentLine = plane.addLine2DTangentToCircleThroughPoint(
-      circle.id,
-      externalPoint.id,
-      0,
-      world
-    );
+    const tangentLine = world.getConstructionService().addLine2DTangentToCircleThroughPoint(plane, circle.id, externalPoint.id, 0);
     
     // Realize the line
     const lineRealization = tangentLine.realize2D(world);
@@ -94,19 +89,14 @@ describe('Line2DTangentToCircleThroughPoint - Geometric Correctness', () => {
     // Setup: Same circle, test other tangent
     const plane = world.getProjectionPlaneByLabel('P_H')!;
     
-    const center = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-    const edgePoint = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
-    const circle = plane.addCircle2DByCenterAndPoint(center.id, edgePoint.id, world);
+    const center = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
+    const edgePoint = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 0, 1));
+    const circle = world.getConstructionService().addCircle2DByCenterAndPoint(plane, center.id, edgePoint.id);
     
-    const externalPoint = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
+    const externalPoint = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 0, 1));
     
     // Create tangent line (index 1)
-    const tangentLine = plane.addLine2DTangentToCircleThroughPoint(
-      circle.id,
-      externalPoint.id,
-      1,
-      world
-    );
+    const tangentLine = world.getConstructionService().addLine2DTangentToCircleThroughPoint(plane, circle.id, externalPoint.id, 1);
     
     const lineRealization = tangentLine.realize2D(world);
     const circleRealization = circle.realize2D(world);
@@ -126,21 +116,16 @@ describe('Line2DTangentToCircleThroughPoint - Geometric Correctness', () => {
     // Test with external point not on axis
     const plane = world.getProjectionPlaneByLabel('P_H')!;
     
-    const center = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-    const edgePoint = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
-    const circle = plane.addCircle2DByCenterAndPoint(center.id, edgePoint.id, world);
+    const center = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
+    const edgePoint = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 0, 1));
+    const circle = world.getConstructionService().addCircle2DByCenterAndPoint(plane, center.id, edgePoint.id);
     
     // External point at (10, 5)
-    const externalPoint = plane.addFreePoint2D(new Vector3(10, 5, 1), world);
+    const externalPoint = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 5, 1));
     
     // Test both tangents
     for (const index of [0, 1] as const) {
-      const tangentLine = plane.addLine2DTangentToCircleThroughPoint(
-        circle.id,
-        externalPoint.id,
-        index,
-        world
-      );
+      const tangentLine = world.getConstructionService().addLine2DTangentToCircleThroughPoint(plane, circle.id, externalPoint.id, index);
       
       const lineRealization = tangentLine.realize2D(world);
       const circleRealization = circle.realize2D(world);
@@ -161,19 +146,14 @@ describe('Line2DTangentToCircleThroughPoint - Geometric Correctness', () => {
     // Test with circle not at origin
     const plane = world.getProjectionPlaneByLabel('P_H')!;
     
-    const center = plane.addFreePoint2D(new Vector3(100, 200, 1), world);
-    const edgePoint = plane.addFreePoint2D(new Vector3(130, 200, 1), world);
-    const circle = plane.addCircle2DByCenterAndPoint(center.id, edgePoint.id, world);
+    const center = world.getConstructionService().addFreePoint2D(plane, new Vector3(100, 200, 1));
+    const edgePoint = world.getConstructionService().addFreePoint2D(plane, new Vector3(130, 200, 1));
+    const circle = world.getConstructionService().addCircle2DByCenterAndPoint(plane, center.id, edgePoint.id);
     
-    const externalPoint = plane.addFreePoint2D(new Vector3(150, 200, 1), world);
+    const externalPoint = world.getConstructionService().addFreePoint2D(plane, new Vector3(150, 200, 1));
     
     for (const index of [0, 1] as const) {
-      const tangentLine = plane.addLine2DTangentToCircleThroughPoint(
-        circle.id,
-        externalPoint.id,
-        index,
-        world
-      );
+      const tangentLine = world.getConstructionService().addLine2DTangentToCircleThroughPoint(plane, circle.id, externalPoint.id, index);
       
       const lineRealization = tangentLine.realize2D(world);
       const circleRealization = circle.realize2D(world);
@@ -193,19 +173,14 @@ describe('Line2DTangentToCircleThroughPoint - Geometric Correctness', () => {
   it('should be infeasible when point is inside circle', () => {
     const plane = world.getProjectionPlaneByLabel('P_H')!;
     
-    const center = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-    const edgePoint = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
-    const circle = plane.addCircle2DByCenterAndPoint(center.id, edgePoint.id, world);
+    const center = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
+    const edgePoint = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 0, 1));
+    const circle = world.getConstructionService().addCircle2DByCenterAndPoint(plane, center.id, edgePoint.id);
     
     // Point inside circle
-    const insidePoint = plane.addFreePoint2D(new Vector3(2, 0, 1), world);
+    const insidePoint = world.getConstructionService().addFreePoint2D(plane, new Vector3(2, 0, 1));
     
-    const tangentLine = plane.addLine2DTangentToCircleThroughPoint(
-      circle.id,
-      insidePoint.id,
-      0,
-      world
-    );
+    const tangentLine = world.getConstructionService().addLine2DTangentToCircleThroughPoint(plane, circle.id, insidePoint.id, 0);
     
     const lineRealization = tangentLine.realize2D(world);
     expect(lineRealization).not.toBeNull();
@@ -246,22 +221,17 @@ describe('Line2DTangentToCircleParallelToLine - Geometric Correctness', () => {
     const plane = world.getProjectionPlaneByLabel('P_H')!;
     
     // Circle at origin with radius 5
-    const center = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-    const edgePoint = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
-    const circle = plane.addCircle2DByCenterAndPoint(center.id, edgePoint.id, world);
+    const center = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
+    const edgePoint = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 0, 1));
+    const circle = world.getConstructionService().addCircle2DByCenterAndPoint(plane, center.id, edgePoint.id);
     
     // Reference line (horizontal, above circle)
-    const refP1 = plane.addFreePoint2D(new Vector3(0, 10, 1), world);
-    const refP2 = plane.addFreePoint2D(new Vector3(10, 10, 1), world);
-    const refLine = plane.addLine2DBetweenTwoPoints(refP1.id, refP2.id, world);
+    const refP1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 10, 1));
+    const refP2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 10, 1));
+    const refLine = world.getConstructionService().addLine2DBetweenTwoPoints(plane, refP1.id, refP2.id);
     
     // Create tangent parallel line (index 0)
-    const tangentLine = plane.addLine2DTangentToCircleParallelToLine(
-      circle.id,
-      refLine.id,
-      0,
-      world
-    );
+    const tangentLine = world.getConstructionService().addLine2DTangentToCircleParallelToLine(plane, circle.id, refLine.id, 0);
     
     const lineRealization = tangentLine.realize2D(world);
     expect(lineRealization).not.toBeNull();
@@ -284,22 +254,17 @@ describe('Line2DTangentToCircleParallelToLine - Geometric Correctness', () => {
   it('should create parallel tangents on both sides of circle', () => {
     const plane = world.getProjectionPlaneByLabel('P_H')!;
     
-    const center = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-    const edgePoint = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
-    const circle = plane.addCircle2DByCenterAndPoint(center.id, edgePoint.id, world);
+    const center = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
+    const edgePoint = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 0, 1));
+    const circle = world.getConstructionService().addCircle2DByCenterAndPoint(plane, center.id, edgePoint.id);
     
-    const refP1 = plane.addFreePoint2D(new Vector3(0, 10, 1), world);
-    const refP2 = plane.addFreePoint2D(new Vector3(10, 10, 1), world);
-    const refLine = plane.addLine2DBetweenTwoPoints(refP1.id, refP2.id, world);
+    const refP1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 10, 1));
+    const refP2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 10, 1));
+    const refLine = world.getConstructionService().addLine2DBetweenTwoPoints(plane, refP1.id, refP2.id);
     
     // Test both indices
     for (const index of [0, 1] as const) {
-      const tangentLine = plane.addLine2DTangentToCircleParallelToLine(
-        circle.id,
-        refLine.id,
-        index,
-        world
-      );
+      const tangentLine = world.getConstructionService().addLine2DTangentToCircleParallelToLine(plane, circle.id, refLine.id, index);
       
       const lineRealization = tangentLine.realize2D(world);
       const circleRealization = circle.realize2D(world);
@@ -319,21 +284,16 @@ describe('Line2DTangentToCircleParallelToLine - Geometric Correctness', () => {
   it('should be infeasible when reference line intersects circle', () => {
     const plane = world.getProjectionPlaneByLabel('P_H')!;
     
-    const center = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-    const edgePoint = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
-    const circle = plane.addCircle2DByCenterAndPoint(center.id, edgePoint.id, world);
+    const center = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
+    const edgePoint = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 0, 1));
+    const circle = world.getConstructionService().addCircle2DByCenterAndPoint(plane, center.id, edgePoint.id);
     
     // Reference line passes through circle
-    const refP1 = plane.addFreePoint2D(new Vector3(-10, 0, 1), world);
-    const refP2 = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
-    const refLine = plane.addLine2DBetweenTwoPoints(refP1.id, refP2.id, world);
+    const refP1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(-10, 0, 1));
+    const refP2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 0, 1));
+    const refLine = world.getConstructionService().addLine2DBetweenTwoPoints(plane, refP1.id, refP2.id);
     
-    const tangentLine = plane.addLine2DTangentToCircleParallelToLine(
-      circle.id,
-      refLine.id,
-      0,
-      world
-    );
+    const tangentLine = world.getConstructionService().addLine2DTangentToCircleParallelToLine(plane, circle.id, refLine.id, 0);
     
     const lineRealization = tangentLine.realize2D(world);
     expect(lineRealization).not.toBeNull();

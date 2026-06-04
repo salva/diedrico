@@ -190,7 +190,7 @@ describe('Point2D', () => {
       // Create a primary intersection point using a free point for simplicity
       // (In real usage it would be from line intersection, but for testing we just need
       // a point with known coordinates that the sibling can reference)
-      const freePoint = planeH.addFreePoint2D(new Vector3(50, 0, 1), world);
+      const freePoint = world.getConstructionService().addFreePoint2D(planeH, new Vector3(50, 0, 1));
       primaryPointId = freePoint.id;
     });
 
@@ -331,7 +331,7 @@ describe('Point2D', () => {
         
         // Create primary point with specific coordinates
         const planeH = world.getProjectionPlaneByLabel('P_H')!;
-        const primary = planeH.addFreePoint2D(new Vector3(100, 0, 1), world);
+        const primary = world.getConstructionService().addFreePoint2D(planeH, new Vector3(100, 0, 1));
         
         const sibling = new SiblingIntersectionPoint2D(
           planeVId + '/sibling-point',

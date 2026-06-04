@@ -10,9 +10,9 @@ describe('CanvasPresentationContext boundary', () => {
   it('builds canvas presentation directly from world while returning transforms for rendering and input', () => {
     const { world } = createTestWorld();
     const plane = world.getProjectionPlaneByLabel('P_H');
-    const a = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-    const b = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
-    const segment = plane.addSegment2DBetweenPoints(a.id, b.id, world);
+    const a = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
+    const b = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 0, 1));
+    const segment = world.getConstructionService().addSegment2DBetweenPoints(plane, a.id, b.id);
 
     const model = buildCanvasPresentationModel(world, { zoom: 1, panX: 0, panY: 0, width: 400, height: 300 }, { activePlaneId: plane.id, selectedIds: new Set([segment.id]), gridVisible: true });
 

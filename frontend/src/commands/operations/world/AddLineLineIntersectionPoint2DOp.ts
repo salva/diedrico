@@ -1,7 +1,7 @@
 /**
  * AddLineLineIntersectionPoint2DOp - Operation to add a Point2DLineLineIntersection
  * 
- * Wraps ProjectionPlane.addLineLineIntersection() in the Operation interface.
+ * Wraps ConstructionService.addLineLineIntersection() in the Operation interface.
  * 
  * Note: Sibling point creation for HalfHingeLine2D intersections is handled automatically
  * by the domain logic, not by this operation.
@@ -9,7 +9,7 @@
 
 import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
-import { requireProjectionPlane } from './operationHelpers';
+import { removePointFromPlane, requireProjectionPlane } from './operationHelpers';
 
 export interface AddLineLineIntersectionPoint2DDescriptor extends OperationDescriptor<'AddLineLineIntersectionPoint2D'> {
   planeId: string;
@@ -37,11 +37,10 @@ export class AddLineLineIntersectionPoint2DOp implements IOperation<AddLineLineI
     try {
       const plane = requireProjectionPlane(world, this.planeId);
       
-      // Pass stored ID if available (for redo), otherwise let plane generate new one
-      const point = plane.addLineLineIntersection(
+      const point = world.getConstructionService().addLineLineIntersection(
+        plane,
         this.line1Id,
         this.line2Id,
-        world,
         this.outputs.pointId
       );
       
@@ -63,7 +62,8 @@ export class AddLineLineIntersectionPoint2DOp implements IOperation<AddLineLineI
   undo(world: World): void {
     // Remove primary point
     if (this.outputs.pointId) {
-      world.getProjectionPlaneById(this.planeId)?.removePoint(this.outputs.pointId);
+      const plane = world.getProjectionPlaneById(this.planeId);
+      if (plane) removePointFromPlane(world, plane, this.outputs.pointId);
     }
     
     // Note: If sibling points exist, they should be removed by domain logic

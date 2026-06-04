@@ -14,11 +14,11 @@ describe('Degenerate Point Handling in realize2D', () => {
     it('should throw when creating line from coincident points', () => {
       const { world } = createTestWorld();
       const plane = world.getProjectionPlaneByLabel('P_H')!;
-      const p1 = plane.addFreePoint2D(new Vector3(5, 5, 1), world);
-      const p2 = plane.addFreePoint2D(new Vector3(5, 5, 1), world);
+      const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 5, 1));
+      const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 5, 1));
 
       expect(() => {
-        plane.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+        world.getConstructionService().addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
       }).toThrow();
     });
 
@@ -27,10 +27,10 @@ describe('Degenerate Point Handling in realize2D', () => {
       const plane = world.getProjectionPlaneByLabel('P_H')!;
       // Points 1e-7 apart: distance = ~1.4e-7, above 1e-10 factory threshold
       // But direction lengthSq = ~2e-14, below 1e-10 realize2D threshold
-      const p1 = plane.addFreePoint2D(new Vector3(5, 5, 1), world);
-      const p2 = plane.addFreePoint2D(new Vector3(5 + 1e-7, 5 + 1e-7, 1), world);
+      const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 5, 1));
+      const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(5 + 1e-7, 5 + 1e-7, 1));
 
-      const line = plane.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+      const line = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
       const realization = line.realize2D(world);
 
       expect(realization).not.toBeNull();
@@ -40,10 +40,10 @@ describe('Degenerate Point Handling in realize2D', () => {
     it('should return feasible when points are sufficiently separated', () => {
       const { world } = createTestWorld();
       const plane = world.getProjectionPlaneByLabel('P_H')!;
-      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const p2 = plane.addFreePoint2D(new Vector3(1, 0, 1), world);
+      const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(1, 0, 1));
 
-      const line = plane.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+      const line = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
       const realization = line.realize2D(world);
 
       expect(realization).not.toBeNull();
@@ -57,18 +57,18 @@ describe('Degenerate Point Handling in realize2D', () => {
       const plane = world.getProjectionPlaneByLabel('P_H')!;
 
       // Create a nearly degenerate reference line (close points pass factory, fail realize2D)
-      const p1 = plane.addFreePoint2D(new Vector3(5, 5, 1), world);
-      const p2 = plane.addFreePoint2D(new Vector3(5 + 1e-7, 5 + 1e-7, 1), world);
-      const refLine = plane.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+      const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 5, 1));
+      const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(5 + 1e-7, 5 + 1e-7, 1));
+      const refLine = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
 
       // Confirm reference line is infeasible
       expect(refLine.realize2D(world)!.feasible).toBe(false);
 
       // Create a point for the parallel line to pass through
-      const throughPoint = plane.addFreePoint2D(new Vector3(10, 10, 1), world);
+      const throughPoint = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 10, 1));
 
       // Parallel line through throughPoint parallel to degenerate line
-      const parallelLine = plane.addLine2DParallelToLine(refLine.id, throughPoint.id, world);
+      const parallelLine = world.getConstructionService().addLine2DParallelToLine(plane, refLine.id, throughPoint.id);
       const realization = parallelLine.realize2D(world);
 
       expect(realization).not.toBeNull();
@@ -79,12 +79,12 @@ describe('Degenerate Point Handling in realize2D', () => {
       const { world } = createTestWorld();
       const plane = world.getProjectionPlaneByLabel('P_H')!;
 
-      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const p2 = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
-      const refLine = plane.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+      const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 0, 1));
+      const refLine = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
 
-      const throughPoint = plane.addFreePoint2D(new Vector3(5, 5, 1), world);
-      const parallelLine = plane.addLine2DParallelToLine(refLine.id, throughPoint.id, world);
+      const throughPoint = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 5, 1));
+      const parallelLine = world.getConstructionService().addLine2DParallelToLine(plane, refLine.id, throughPoint.id);
       const realization = parallelLine.realize2D(world);
 
       expect(realization).not.toBeNull();
@@ -99,22 +99,22 @@ describe('Degenerate Point Handling in realize2D', () => {
       const plane = world.getProjectionPlaneByLabel('P_H')!;
 
       // Create valid reference line
-      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const p2 = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
-      const refLine = plane.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+      const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 0, 1));
+      const refLine = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
 
       // Create two parallel lines that won't intersect (same direction, different offsets)
-      const p3 = plane.addFreePoint2D(new Vector3(0, 5, 1), world);
-      const p4 = plane.addFreePoint2D(new Vector3(10, 5, 1), world);
-      const line2 = plane.addLine2DBetweenTwoPoints(p3.id, p4.id, world);
+      const p3 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 5, 1));
+      const p4 = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 5, 1));
+      const line2 = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p3.id, p4.id);
 
       // Intersection of two parallel lines = infeasible point
-      const infeasiblePoint = plane.addLineLineIntersection(refLine.id, line2.id, world);
+      const infeasiblePoint = world.getConstructionService().addLineLineIntersection(plane, refLine.id, line2.id);
       const pointRealization = infeasiblePoint.realize2D(world);
       expect(pointRealization!.feasible).toBe(false);
 
       // Parallel line through an infeasible point should also be infeasible
-      const parallelLine = plane.addLine2DParallelToLine(refLine.id, infeasiblePoint.id, world);
+      const parallelLine = world.getConstructionService().addLine2DParallelToLine(plane, refLine.id, infeasiblePoint.id);
       const realization = parallelLine.realize2D(world);
 
       expect(realization).not.toBeNull();
@@ -126,10 +126,10 @@ describe('Degenerate Point Handling in realize2D', () => {
     it('should return infeasible when endpoints are coincident', () => {
       const { world } = createTestWorld();
       const plane = world.getProjectionPlaneByLabel('P_H')!;
-      const p1 = plane.addFreePoint2D(new Vector3(5, 5, 1), world);
-      const p2 = plane.addFreePoint2D(new Vector3(5, 5, 1), world);
+      const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 5, 1));
+      const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 5, 1));
 
-      const segment = plane.addSegment2DBetweenPoints(p1.id, p2.id, world);
+      const segment = world.getConstructionService().addSegment2DBetweenPoints(plane, p1.id, p2.id);
       const realization = segment.realize2D(world);
 
       expect(realization).not.toBeNull();
@@ -139,10 +139,10 @@ describe('Degenerate Point Handling in realize2D', () => {
     it('should return feasible when endpoints are separated', () => {
       const { world } = createTestWorld();
       const plane = world.getProjectionPlaneByLabel('P_H')!;
-      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const p2 = plane.addFreePoint2D(new Vector3(10, 5, 1), world);
+      const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 5, 1));
 
-      const segment = plane.addSegment2DBetweenPoints(p1.id, p2.id, world);
+      const segment = world.getConstructionService().addSegment2DBetweenPoints(plane, p1.id, p2.id);
       const realization = segment.realize2D(world);
 
       expect(realization).not.toBeNull();
@@ -154,10 +154,10 @@ describe('Degenerate Point Handling in realize2D', () => {
     it('should return infeasible when center and circumference point coincide', () => {
       const { world } = createTestWorld();
       const plane = world.getProjectionPlaneByLabel('P_H')!;
-      const center = plane.addFreePoint2D(new Vector3(5, 5, 1), world);
-      const circPt = plane.addFreePoint2D(new Vector3(5, 5, 1), world);
+      const center = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 5, 1));
+      const circPt = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 5, 1));
 
-      const circle = plane.addCircle2DByCenterAndPoint(center.id, circPt.id, world);
+      const circle = world.getConstructionService().addCircle2DByCenterAndPoint(plane, center.id, circPt.id);
       const realization = circle.realize2D(world);
 
       expect(realization).not.toBeNull();
@@ -167,10 +167,10 @@ describe('Degenerate Point Handling in realize2D', () => {
     it('should return feasible when center and circumference point are separated', () => {
       const { world } = createTestWorld();
       const plane = world.getProjectionPlaneByLabel('P_H')!;
-      const center = plane.addFreePoint2D(new Vector3(5, 5, 1), world);
-      const circPt = plane.addFreePoint2D(new Vector3(10, 5, 1), world);
+      const center = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 5, 1));
+      const circPt = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 5, 1));
 
-      const circle = plane.addCircle2DByCenterAndPoint(center.id, circPt.id, world);
+      const circle = world.getConstructionService().addCircle2DByCenterAndPoint(plane, center.id, circPt.id);
       const realization = circle.realize2D(world);
 
       expect(realization).not.toBeNull();

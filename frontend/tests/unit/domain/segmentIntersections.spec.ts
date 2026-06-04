@@ -32,16 +32,16 @@ describe('Intersection Correctness', () => {
       const { world, plane } = setup();
 
       // Horizontal line through (0,0)-(10,0)
-      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const p2 = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
-      const line1 = plane.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+      const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 0, 1));
+      const line1 = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
 
       // Vertical line through (5,-5)-(5,5)
-      const p3 = plane.addFreePoint2D(new Vector3(5, -5, 1), world);
-      const p4 = plane.addFreePoint2D(new Vector3(5, 5, 1), world);
-      const line2 = plane.addLine2DBetweenTwoPoints(p3.id, p4.id, world);
+      const p3 = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, -5, 1));
+      const p4 = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 5, 1));
+      const line2 = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p3.id, p4.id);
 
-      const intersection = plane.addLineLineIntersection(line1.id, line2.id, world);
+      const intersection = world.getConstructionService().addLineLineIntersection(plane, line1.id, line2.id);
       const r = intersection.realize2D(world);
 
       expect(r.feasible).toBe(true);
@@ -52,15 +52,15 @@ describe('Intersection Correctness', () => {
     it('should return infeasible for parallel lines', () => {
       const { world, plane } = setup();
 
-      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const p2 = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
-      const line1 = plane.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+      const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 0, 1));
+      const line1 = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
 
-      const p3 = plane.addFreePoint2D(new Vector3(0, 5, 1), world);
-      const p4 = plane.addFreePoint2D(new Vector3(10, 5, 1), world);
-      const line2 = plane.addLine2DBetweenTwoPoints(p3.id, p4.id, world);
+      const p3 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 5, 1));
+      const p4 = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 5, 1));
+      const line2 = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p3.id, p4.id);
 
-      const intersection = plane.addLineLineIntersection(line1.id, line2.id, world);
+      const intersection = world.getConstructionService().addLineLineIntersection(plane, line1.id, line2.id);
       const r = intersection.realize2D(world);
 
       expect(r.feasible).toBe(false);
@@ -72,17 +72,17 @@ describe('Intersection Correctness', () => {
       const { world, plane } = setup();
 
       // Infinite diagonal line
-      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const p2 = plane.addFreePoint2D(new Vector3(10, 10, 1), world);
-      const line = plane.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+      const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 10, 1));
+      const line = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
 
       // Horizontal segment from (2, 5) to (8, 5)
-      const s1 = plane.addFreePoint2D(new Vector3(2, 5, 1), world);
-      const s2 = plane.addFreePoint2D(new Vector3(8, 5, 1), world);
-      const segment = plane.addSegment2DBetweenPoints(s1.id, s2.id, world);
+      const s1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(2, 5, 1));
+      const s2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(8, 5, 1));
+      const segment = world.getConstructionService().addSegment2DBetweenPoints(plane, s1.id, s2.id);
 
       // Line y=x intersects segment y=5 at x=5 → (5,5) which is within [2,8]
-      const intersection = plane.addLineLineIntersection(line.id, segment.id, world);
+      const intersection = world.getConstructionService().addLineLineIntersection(plane, line.id, segment.id);
       const r = intersection.realize2D(world);
 
       expect(r.feasible).toBe(true);
@@ -94,17 +94,17 @@ describe('Intersection Correctness', () => {
       const { world, plane } = setup();
 
       // Steep line through origin: y = 3x
-      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const p2 = plane.addFreePoint2D(new Vector3(1, 3, 1), world);
-      const line = plane.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+      const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(1, 3, 1));
+      const line = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
 
       // Horizontal segment from (2, 5) to (4, 5) — extends from x=2 to x=4
-      const s1 = plane.addFreePoint2D(new Vector3(2, 5, 1), world);
-      const s2 = plane.addFreePoint2D(new Vector3(4, 5, 1), world);
-      const segment = plane.addSegment2DBetweenPoints(s1.id, s2.id, world);
+      const s1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(2, 5, 1));
+      const s2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(4, 5, 1));
+      const segment = world.getConstructionService().addSegment2DBetweenPoints(plane, s1.id, s2.id);
 
       // y=3x intersects y=5 at x=5/3 ≈ 1.67, which is OUTSIDE segment [2,4]
-      const intersection = plane.addLineLineIntersection(line.id, segment.id, world);
+      const intersection = world.getConstructionService().addLineLineIntersection(plane, line.id, segment.id);
       const r = intersection.realize2D(world);
 
       expect(r.feasible).toBe(false);
@@ -119,16 +119,16 @@ describe('Intersection Correctness', () => {
       const { world, plane } = setup();
 
       // Segment from (0,0) to (10,10)
-      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const p2 = plane.addFreePoint2D(new Vector3(10, 10, 1), world);
-      const seg1 = plane.addSegment2DBetweenPoints(p1.id, p2.id, world);
+      const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 10, 1));
+      const seg1 = world.getConstructionService().addSegment2DBetweenPoints(plane, p1.id, p2.id);
 
       // Segment from (0,10) to (10,0) — crosses at (5,5)
-      const p3 = plane.addFreePoint2D(new Vector3(0, 10, 1), world);
-      const p4 = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
-      const seg2 = plane.addSegment2DBetweenPoints(p3.id, p4.id, world);
+      const p3 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 10, 1));
+      const p4 = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 0, 1));
+      const seg2 = world.getConstructionService().addSegment2DBetweenPoints(plane, p3.id, p4.id);
 
-      const intersection = plane.addLineLineIntersection(seg1.id, seg2.id, world);
+      const intersection = world.getConstructionService().addLineLineIntersection(plane, seg1.id, seg2.id);
       const r = intersection.realize2D(world);
 
       expect(r.feasible).toBe(true);
@@ -140,16 +140,16 @@ describe('Intersection Correctness', () => {
       const { world, plane } = setup();
 
       // Short segment from (0,0) to (3,3)
-      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const p2 = plane.addFreePoint2D(new Vector3(3, 3, 1), world);
-      const seg1 = plane.addSegment2DBetweenPoints(p1.id, p2.id, world);
+      const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(3, 3, 1));
+      const seg1 = world.getConstructionService().addSegment2DBetweenPoints(plane, p1.id, p2.id);
 
       // Segment from (0,10) to (10,0) — would intersect diagonal at (5,5), outside seg1 [0,3]
-      const p3 = plane.addFreePoint2D(new Vector3(0, 10, 1), world);
-      const p4 = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
-      const seg2 = plane.addSegment2DBetweenPoints(p3.id, p4.id, world);
+      const p3 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 10, 1));
+      const p4 = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 0, 1));
+      const seg2 = world.getConstructionService().addSegment2DBetweenPoints(plane, p3.id, p4.id);
 
-      const intersection = plane.addLineLineIntersection(seg1.id, seg2.id, world);
+      const intersection = world.getConstructionService().addLineLineIntersection(plane, seg1.id, seg2.id);
       const r = intersection.realize2D(world);
 
       expect(r.feasible).toBe(false);
@@ -159,16 +159,16 @@ describe('Intersection Correctness', () => {
       const { world, plane } = setup();
 
       // Short segment from (0,0) to (2,2)
-      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const p2 = plane.addFreePoint2D(new Vector3(2, 2, 1), world);
-      const seg1 = plane.addSegment2DBetweenPoints(p1.id, p2.id, world);
+      const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(2, 2, 1));
+      const seg1 = world.getConstructionService().addSegment2DBetweenPoints(plane, p1.id, p2.id);
 
       // Short segment from (8,10) to (10,8) — extension would cross seg1's extension at (5,5)
-      const p3 = plane.addFreePoint2D(new Vector3(8, 10, 1), world);
-      const p4 = plane.addFreePoint2D(new Vector3(10, 8, 1), world);
-      const seg2 = plane.addSegment2DBetweenPoints(p3.id, p4.id, world);
+      const p3 = world.getConstructionService().addFreePoint2D(plane, new Vector3(8, 10, 1));
+      const p4 = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 8, 1));
+      const seg2 = world.getConstructionService().addSegment2DBetweenPoints(plane, p3.id, p4.id);
 
-      const intersection = plane.addLineLineIntersection(seg1.id, seg2.id, world);
+      const intersection = world.getConstructionService().addLineLineIntersection(plane, seg1.id, seg2.id);
       const r = intersection.realize2D(world);
 
       expect(r.feasible).toBe(false);
@@ -178,16 +178,16 @@ describe('Intersection Correctness', () => {
       const { world, plane } = setup();
 
       // Segment from (0,0) to (5,5)
-      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const p2 = plane.addFreePoint2D(new Vector3(5, 5, 1), world);
-      const seg1 = plane.addSegment2DBetweenPoints(p1.id, p2.id, world);
+      const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 5, 1));
+      const seg1 = world.getConstructionService().addSegment2DBetweenPoints(plane, p1.id, p2.id);
 
       // Segment from (5,0) to (5,10) — crosses first segment at endpoint (5,5)
-      const p3 = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
-      const p4 = plane.addFreePoint2D(new Vector3(5, 10, 1), world);
-      const seg2 = plane.addSegment2DBetweenPoints(p3.id, p4.id, world);
+      const p3 = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 0, 1));
+      const p4 = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 10, 1));
+      const seg2 = world.getConstructionService().addSegment2DBetweenPoints(plane, p3.id, p4.id);
 
-      const intersection = plane.addLineLineIntersection(seg1.id, seg2.id, world);
+      const intersection = world.getConstructionService().addLineLineIntersection(plane, seg1.id, seg2.id);
       const r = intersection.realize2D(world);
 
       expect(r.feasible).toBe(true);
@@ -201,17 +201,17 @@ describe('Intersection Correctness', () => {
       const { world, plane } = setup();
 
       // Horizontal line through y=0
-      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const p2 = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
-      const line = plane.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+      const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 0, 1));
+      const line = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
 
       // Circle centered at (5,0) with radius 3
-      const center = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
-      const circPt = plane.addFreePoint2D(new Vector3(8, 0, 1), world);
-      const circle = plane.addCircle2DByCenterAndPoint(center.id, circPt.id, world);
+      const center = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 0, 1));
+      const circPt = world.getConstructionService().addFreePoint2D(plane, new Vector3(8, 0, 1));
+      const circle = world.getConstructionService().addCircle2DByCenterAndPoint(plane, center.id, circPt.id);
 
-      const int0 = plane.addLineCircleIntersection(line.id, circle.id, 0, world);
-      const int1 = plane.addLineCircleIntersection(line.id, circle.id, 1, world);
+      const int0 = world.getConstructionService().addLineCircleIntersection(plane, line.id, circle.id, 0);
+      const int1 = world.getConstructionService().addLineCircleIntersection(plane, line.id, circle.id, 1);
       const r0 = int0.realize2D(world);
       const r1 = int1.realize2D(world);
 
@@ -228,16 +228,16 @@ describe('Intersection Correctness', () => {
       const { world, plane } = setup();
 
       // Line at y=10
-      const p1 = plane.addFreePoint2D(new Vector3(0, 10, 1), world);
-      const p2 = plane.addFreePoint2D(new Vector3(10, 10, 1), world);
-      const line = plane.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+      const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 10, 1));
+      const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 10, 1));
+      const line = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
 
       // Circle centered at (5,0) with radius 3
-      const center = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
-      const circPt = plane.addFreePoint2D(new Vector3(8, 0, 1), world);
-      const circle = plane.addCircle2DByCenterAndPoint(center.id, circPt.id, world);
+      const center = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 0, 1));
+      const circPt = world.getConstructionService().addFreePoint2D(plane, new Vector3(8, 0, 1));
+      const circle = world.getConstructionService().addCircle2DByCenterAndPoint(plane, center.id, circPt.id);
 
-      const int0 = plane.addLineCircleIntersection(line.id, circle.id, 0, world);
+      const int0 = world.getConstructionService().addLineCircleIntersection(plane, line.id, circle.id, 0);
       const r0 = int0.realize2D(world);
 
       expect(r0.feasible).toBe(false);
@@ -247,17 +247,17 @@ describe('Intersection Correctness', () => {
       const { world, plane } = setup();
 
       // Circle centered at (5,0) with radius 5
-      const center = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
-      const circPt = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
-      const circle = plane.addCircle2DByCenterAndPoint(center.id, circPt.id, world);
+      const center = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 0, 1));
+      const circPt = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 0, 1));
+      const circle = world.getConstructionService().addCircle2DByCenterAndPoint(plane, center.id, circPt.id);
 
       // Tangent line y=5 (tangent at (5,5))
-      const p1 = plane.addFreePoint2D(new Vector3(0, 5, 1), world);
-      const p2 = plane.addFreePoint2D(new Vector3(10, 5, 1), world);
-      const tangent = plane.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+      const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 5, 1));
+      const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 5, 1));
+      const tangent = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
 
-      const int0 = plane.addLineCircleIntersection(tangent.id, circle.id, 0, world);
-      const int1 = plane.addLineCircleIntersection(tangent.id, circle.id, 1, world);
+      const int0 = world.getConstructionService().addLineCircleIntersection(plane, tangent.id, circle.id, 0);
+      const int1 = world.getConstructionService().addLineCircleIntersection(plane, tangent.id, circle.id, 1);
       const r0 = int0.realize2D(world);
       const r1 = int1.realize2D(world);
 
@@ -274,17 +274,17 @@ describe('Intersection Correctness', () => {
       const { world, plane } = setup();
 
       // Segment from (0,0) to (10,0) — horizontal, passes through circle
-      const s1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const s2 = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
-      const segment = plane.addSegment2DBetweenPoints(s1.id, s2.id, world);
+      const s1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const s2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 0, 1));
+      const segment = world.getConstructionService().addSegment2DBetweenPoints(plane, s1.id, s2.id);
 
       // Circle centered at (5,0) with radius 3
-      const center = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
-      const circPt = plane.addFreePoint2D(new Vector3(8, 0, 1), world);
-      const circle = plane.addCircle2DByCenterAndPoint(center.id, circPt.id, world);
+      const center = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 0, 1));
+      const circPt = world.getConstructionService().addFreePoint2D(plane, new Vector3(8, 0, 1));
+      const circle = world.getConstructionService().addCircle2DByCenterAndPoint(plane, center.id, circPt.id);
 
       // Both intersections at x=2 and x=8 are within segment [0,10]
-      const int0 = plane.addLineCircleIntersection(segment.id, circle.id, 0, world);
+      const int0 = world.getConstructionService().addLineCircleIntersection(plane, segment.id, circle.id, 0);
       const r0 = int0.realize2D(world);
 
       expect(r0.feasible).toBe(true);
@@ -294,16 +294,16 @@ describe('Intersection Correctness', () => {
       const { world, plane } = setup();
 
       // Short segment from (0,0) to (1,0) — far from circle intersection
-      const s1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const s2 = plane.addFreePoint2D(new Vector3(1, 0, 1), world);
-      const segment = plane.addSegment2DBetweenPoints(s1.id, s2.id, world);
+      const s1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const s2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(1, 0, 1));
+      const segment = world.getConstructionService().addSegment2DBetweenPoints(plane, s1.id, s2.id);
 
       // Circle centered at (5,0) with radius 3 — intersections at x=2 and x=8
-      const center = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
-      const circPt = plane.addFreePoint2D(new Vector3(8, 0, 1), world);
-      const circle = plane.addCircle2DByCenterAndPoint(center.id, circPt.id, world);
+      const center = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 0, 1));
+      const circPt = world.getConstructionService().addFreePoint2D(plane, new Vector3(8, 0, 1));
+      const circle = world.getConstructionService().addCircle2DByCenterAndPoint(plane, center.id, circPt.id);
 
-      const int0 = plane.addLineCircleIntersection(segment.id, circle.id, 0, world);
+      const int0 = world.getConstructionService().addLineCircleIntersection(plane, segment.id, circle.id, 0);
       const r0 = int0.realize2D(world);
 
       expect(r0.feasible).toBe(false);
@@ -313,17 +313,17 @@ describe('Intersection Correctness', () => {
       const { world, plane } = setup();
 
       // Segment from (0,0) to (5,0) — one intersection in bounds, one outside
-      const s1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const s2 = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
-      const segment = plane.addSegment2DBetweenPoints(s1.id, s2.id, world);
+      const s1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const s2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 0, 1));
+      const segment = world.getConstructionService().addSegment2DBetweenPoints(plane, s1.id, s2.id);
 
       // Circle centered at (5,0) with radius 3 — intersections at x=2 and x=8
-      const center = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
-      const circPt = plane.addFreePoint2D(new Vector3(8, 0, 1), world);
-      const circle = plane.addCircle2DByCenterAndPoint(center.id, circPt.id, world);
+      const center = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 0, 1));
+      const circPt = world.getConstructionService().addFreePoint2D(plane, new Vector3(8, 0, 1));
+      const circle = world.getConstructionService().addCircle2DByCenterAndPoint(plane, center.id, circPt.id);
 
-      const int0 = plane.addLineCircleIntersection(segment.id, circle.id, 0, world);
-      const int1 = plane.addLineCircleIntersection(segment.id, circle.id, 1, world);
+      const int0 = world.getConstructionService().addLineCircleIntersection(plane, segment.id, circle.id, 0);
+      const int1 = world.getConstructionService().addLineCircleIntersection(plane, segment.id, circle.id, 1);
       const r0 = int0.realize2D(world);
       const r1 = int1.realize2D(world);
 
@@ -340,17 +340,17 @@ describe('Intersection Correctness', () => {
       const { world, plane } = setup();
 
       // Circle 1 at (0,0) radius 5
-      const c1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const c1p = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
-      const circle1 = plane.addCircle2DByCenterAndPoint(c1.id, c1p.id, world);
+      const c1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const c1p = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 0, 1));
+      const circle1 = world.getConstructionService().addCircle2DByCenterAndPoint(plane, c1.id, c1p.id);
 
       // Circle 2 at (6,0) radius 5
-      const c2 = plane.addFreePoint2D(new Vector3(6, 0, 1), world);
-      const c2p = plane.addFreePoint2D(new Vector3(11, 0, 1), world);
-      const circle2 = plane.addCircle2DByCenterAndPoint(c2.id, c2p.id, world);
+      const c2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(6, 0, 1));
+      const c2p = world.getConstructionService().addFreePoint2D(plane, new Vector3(11, 0, 1));
+      const circle2 = world.getConstructionService().addCircle2DByCenterAndPoint(plane, c2.id, c2p.id);
 
-      const int0 = plane.addCircleCircleIntersection(circle1.id, circle2.id, 0, world);
-      const int1 = plane.addCircleCircleIntersection(circle1.id, circle2.id, 1, world);
+      const int0 = world.getConstructionService().addCircleCircleIntersection(plane, circle1.id, circle2.id, 0);
+      const int1 = world.getConstructionService().addCircleCircleIntersection(plane, circle1.id, circle2.id, 1);
       const r0 = int0.realize2D(world);
       const r1 = int1.realize2D(world);
 
@@ -370,16 +370,16 @@ describe('Intersection Correctness', () => {
       const { world, plane } = setup();
 
       // Circle 1 at (0,0) radius 2
-      const c1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const c1p = plane.addFreePoint2D(new Vector3(2, 0, 1), world);
-      const circle1 = plane.addCircle2DByCenterAndPoint(c1.id, c1p.id, world);
+      const c1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const c1p = world.getConstructionService().addFreePoint2D(plane, new Vector3(2, 0, 1));
+      const circle1 = world.getConstructionService().addCircle2DByCenterAndPoint(plane, c1.id, c1p.id);
 
       // Circle 2 at (10,0) radius 2 — too far apart
-      const c2 = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
-      const c2p = plane.addFreePoint2D(new Vector3(12, 0, 1), world);
-      const circle2 = plane.addCircle2DByCenterAndPoint(c2.id, c2p.id, world);
+      const c2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 0, 1));
+      const c2p = world.getConstructionService().addFreePoint2D(plane, new Vector3(12, 0, 1));
+      const circle2 = world.getConstructionService().addCircle2DByCenterAndPoint(plane, c2.id, c2p.id);
 
-      const int0 = plane.addCircleCircleIntersection(circle1.id, circle2.id, 0, world);
+      const int0 = world.getConstructionService().addCircleCircleIntersection(plane, circle1.id, circle2.id, 0);
       const r0 = int0.realize2D(world);
 
       expect(r0.feasible).toBe(false);
@@ -389,17 +389,17 @@ describe('Intersection Correctness', () => {
       const { world, plane } = setup();
 
       // Circle 1 at (0,0) radius 5
-      const c1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const c1p = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
-      const circle1 = plane.addCircle2DByCenterAndPoint(c1.id, c1p.id, world);
+      const c1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const c1p = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 0, 1));
+      const circle1 = world.getConstructionService().addCircle2DByCenterAndPoint(plane, c1.id, c1p.id);
 
       // Circle 2 at (10,0) radius 5 — tangent at (5,0)
-      const c2 = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
-      const c2p = plane.addFreePoint2D(new Vector3(15, 0, 1), world);
-      const circle2 = plane.addCircle2DByCenterAndPoint(c2.id, c2p.id, world);
+      const c2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 0, 1));
+      const c2p = world.getConstructionService().addFreePoint2D(plane, new Vector3(15, 0, 1));
+      const circle2 = world.getConstructionService().addCircle2DByCenterAndPoint(plane, c2.id, c2p.id);
 
-      const int0 = plane.addCircleCircleIntersection(circle1.id, circle2.id, 0, world);
-      const int1 = plane.addCircleCircleIntersection(circle1.id, circle2.id, 1, world);
+      const int0 = world.getConstructionService().addCircleCircleIntersection(plane, circle1.id, circle2.id, 0);
+      const int1 = world.getConstructionService().addCircleCircleIntersection(plane, circle1.id, circle2.id, 1);
       const r0 = int0.realize2D(world);
       const r1 = int1.realize2D(world);
 
@@ -417,16 +417,16 @@ describe('Intersection Correctness', () => {
       const { world, plane } = setup();
 
       // Degenerate line (near-coincident points)
-      const p1 = plane.addFreePoint2D(new Vector3(5, 5, 1), world);
-      const p2 = plane.addFreePoint2D(new Vector3(5 + 1e-7, 5 + 1e-7, 1), world);
-      const degLine = plane.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+      const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 5, 1));
+      const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(5 + 1e-7, 5 + 1e-7, 1));
+      const degLine = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
 
       // Normal line
-      const p3 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const p4 = plane.addFreePoint2D(new Vector3(10, 10, 1), world);
-      const normalLine = plane.addLine2DBetweenTwoPoints(p3.id, p4.id, world);
+      const p3 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const p4 = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 10, 1));
+      const normalLine = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p3.id, p4.id);
 
-      const intersection = plane.addLineLineIntersection(degLine.id, normalLine.id, world);
+      const intersection = world.getConstructionService().addLineLineIntersection(plane, degLine.id, normalLine.id);
       const r = intersection.realize2D(world);
 
       expect(r.feasible).toBe(false);
@@ -436,16 +436,16 @@ describe('Intersection Correctness', () => {
       const { world, plane } = setup();
 
       // Normal line
-      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const p2 = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
-      const line = plane.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+      const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 0, 1));
+      const line = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
 
       // Degenerate circle (coincident center + circumference point → radius 0)
-      const center = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
-      const circPt = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
-      const circle = plane.addCircle2DByCenterAndPoint(center.id, circPt.id, world);
+      const center = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 0, 1));
+      const circPt = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 0, 1));
+      const circle = world.getConstructionService().addCircle2DByCenterAndPoint(plane, center.id, circPt.id);
 
-      const int0 = plane.addLineCircleIntersection(line.id, circle.id, 0, world);
+      const int0 = world.getConstructionService().addLineCircleIntersection(plane, line.id, circle.id, 0);
       const r0 = int0.realize2D(world);
 
       expect(r0.feasible).toBe(false);

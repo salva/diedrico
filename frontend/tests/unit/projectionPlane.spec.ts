@@ -191,7 +191,7 @@ describe('ProjectionPlane Element Storage (Phase 22.5.1)', () => {
 
   describe('Point Storage', () => {
     it('should add and retrieve a point', () => {
-      const point = planeH.addFreePoint2D(new Vector3(10, 20, 1), world);
+      const point = world.getConstructionService().addFreePoint2D(planeH, new Vector3(10, 20, 1));
       
       const retrieved = planeH.getPoint(point.id);
       
@@ -202,8 +202,8 @@ describe('ProjectionPlane Element Storage (Phase 22.5.1)', () => {
 
     it('should retrieve all points', () => {
       const initialCount = planeH.getAllPoints().length;
-      const p1 = planeH.addFreePoint2D(new Vector3(10, 20, 1), world);
-      const p2 = planeH.addFreePoint2D(new Vector3(30, 40, 1), world);
+      const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(10, 20, 1));
+      const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(30, 40, 1));
       
       const allPoints = planeH.getAllPoints();
       expect(allPoints).toHaveLength(initialCount + 2);
@@ -212,7 +212,7 @@ describe('ProjectionPlane Element Storage (Phase 22.5.1)', () => {
     });
 
     it('should remove a point', () => {
-      const point = planeH.addFreePoint2D(new Vector3(10, 20, 1), world);
+      const point = world.getConstructionService().addFreePoint2D(planeH, new Vector3(10, 20, 1));
       
       expect(planeH.getPoint(point.id)).toBeDefined();
       
@@ -225,9 +225,9 @@ describe('ProjectionPlane Element Storage (Phase 22.5.1)', () => {
 
   describe('Line Storage', () => {
     it('should add and retrieve a line', () => {
-      const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
-      const line = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+      const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
+      const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(10, 10, 1));
+      const line = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p1.id, p2.id);
       
       const retrieved = planeH.getLine(line.id);
       
@@ -238,13 +238,13 @@ describe('ProjectionPlane Element Storage (Phase 22.5.1)', () => {
 
     it('should retrieve all lines', () => {
       const initialLineCount = planeH.getAllLines().length;
-      const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
-      const p3 = planeH.addFreePoint2D(new Vector3(20, 0, 1), world);
-      const p4 = planeH.addFreePoint2D(new Vector3(30, 10, 1), world);
+      const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
+      const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(10, 10, 1));
+      const p3 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(20, 0, 1));
+      const p4 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(30, 10, 1));
       
-      const l1 = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
-      const l2 = planeH.addLine2DBetweenTwoPoints(p3.id, p4.id, world);
+      const l1 = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p1.id, p2.id);
+      const l2 = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p3.id, p4.id);
       
       const allLines = planeH.getAllLines();
       expect(allLines).toHaveLength(initialLineCount + 2);
@@ -253,9 +253,9 @@ describe('ProjectionPlane Element Storage (Phase 22.5.1)', () => {
     });
 
     it('should remove a line', () => {
-      const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
-      const line = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+      const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
+      const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(10, 10, 1));
+      const line = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p1.id, p2.id);
       
       expect(planeH.getLine(line.id)).toBeDefined();
       
@@ -268,9 +268,9 @@ describe('ProjectionPlane Element Storage (Phase 22.5.1)', () => {
 
   describe('Circle Storage', () => {
     it('should add and retrieve a circle', () => {
-      const center = planeH.addFreePoint2D(new Vector3(100, 100, 1), world);
-      const edge = planeH.addFreePoint2D(new Vector3(150, 100, 1), world);
-      const circle = planeH.addCircle2DByCenterAndPoint(center.id, edge.id, world);
+      const center = world.getConstructionService().addFreePoint2D(planeH, new Vector3(100, 100, 1));
+      const edge = world.getConstructionService().addFreePoint2D(planeH, new Vector3(150, 100, 1));
+      const circle = world.getConstructionService().addCircle2DByCenterAndPoint(planeH, center.id, edge.id);
       
       const retrieved = planeH.getCircle(circle.id);
       
@@ -280,13 +280,13 @@ describe('ProjectionPlane Element Storage (Phase 22.5.1)', () => {
     });
 
     it('should retrieve all circles', () => {
-      const c1Center = planeH.addFreePoint2D(new Vector3(100, 100, 1), world);
-      const c1Edge = planeH.addFreePoint2D(new Vector3(150, 100, 1), world);
-      const c2Center = planeH.addFreePoint2D(new Vector3(200, 200, 1), world);
-      const c2Edge = planeH.addFreePoint2D(new Vector3(250, 200, 1), world);
+      const c1Center = world.getConstructionService().addFreePoint2D(planeH, new Vector3(100, 100, 1));
+      const c1Edge = world.getConstructionService().addFreePoint2D(planeH, new Vector3(150, 100, 1));
+      const c2Center = world.getConstructionService().addFreePoint2D(planeH, new Vector3(200, 200, 1));
+      const c2Edge = world.getConstructionService().addFreePoint2D(planeH, new Vector3(250, 200, 1));
       
-      const c1 = planeH.addCircle2DByCenterAndPoint(c1Center.id, c1Edge.id, world);
-      const c2 = planeH.addCircle2DByCenterAndPoint(c2Center.id, c2Edge.id, world);
+      const c1 = world.getConstructionService().addCircle2DByCenterAndPoint(planeH, c1Center.id, c1Edge.id);
+      const c2 = world.getConstructionService().addCircle2DByCenterAndPoint(planeH, c2Center.id, c2Edge.id);
       
       const allCircles = planeH.getAllCircles();
       expect(allCircles).toHaveLength(2);
@@ -295,9 +295,9 @@ describe('ProjectionPlane Element Storage (Phase 22.5.1)', () => {
     });
 
     it('should remove a circle', () => {
-      const center = planeH.addFreePoint2D(new Vector3(100, 100, 1), world);
-      const edge = planeH.addFreePoint2D(new Vector3(150, 100, 1), world);
-      const circle = planeH.addCircle2DByCenterAndPoint(center.id, edge.id, world);
+      const center = world.getConstructionService().addFreePoint2D(planeH, new Vector3(100, 100, 1));
+      const edge = world.getConstructionService().addFreePoint2D(planeH, new Vector3(150, 100, 1));
+      const circle = world.getConstructionService().addCircle2DByCenterAndPoint(planeH, center.id, edge.id);
       
       expect(planeH.getCircle(circle.id)).toBeDefined();
       
@@ -313,8 +313,8 @@ describe('ProjectionPlane Element Storage (Phase 22.5.1)', () => {
       const initialHCount = planeH.getAllPoints().length;
       const initialVCount = planeV.getAllPoints().length;
       
-      const pointH = planeH.addFreePoint2D(new Vector3(10, 20, 1), world);
-      const pointV = planeV.addFreePoint2D(new Vector3(30, 40, 1), world);
+      const pointH = world.getConstructionService().addFreePoint2D(planeH, new Vector3(10, 20, 1));
+      const pointV = world.getConstructionService().addFreePoint2D(planeV, new Vector3(30, 40, 1));
       
       // P_H should have initialHCount + pointH
       expect(planeH.getAllPoints()).toHaveLength(initialHCount + 1);
@@ -328,13 +328,13 @@ describe('ProjectionPlane Element Storage (Phase 22.5.1)', () => {
     });
 
     it('should keep line storage isolated between planes', () => {
-      const p1H = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const p2H = planeH.addFreePoint2D(new Vector3(10, 0, 1), world);
-      const p1V = planeV.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const p2V = planeV.addFreePoint2D(new Vector3(10, 0, 1), world);
+      const p1H = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
+      const p2H = world.getConstructionService().addFreePoint2D(planeH, new Vector3(10, 0, 1));
+      const p1V = world.getConstructionService().addFreePoint2D(planeV, new Vector3(0, 0, 1));
+      const p2V = world.getConstructionService().addFreePoint2D(planeV, new Vector3(10, 0, 1));
       
-      const lineH = planeH.addLine2DBetweenTwoPoints(p1H.id, p2H.id, world);
-      const lineV = planeV.addLine2DBetweenTwoPoints(p1V.id, p2V.id, world);
+      const lineH = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p1H.id, p2H.id);
+      const lineV = world.getConstructionService().addLine2DBetweenTwoPoints(planeV, p1V.id, p2V.id);
 
       expect(planeH.getLine(lineH.id)).toBe(lineH);
       expect(planeH.getLine(lineV.id)).toBeUndefined();
@@ -348,12 +348,12 @@ describe('ProjectionPlane Element Storage (Phase 22.5.1)', () => {
       const initialPointCount = planeH.getAllPoints().length;  // Hinge points may exist
       const initialLineCount = planeH.getAllLines().length;  // Hinge lines may exist
       
-      const p1 = planeH.addFreePoint2D(new Vector3(10, 20, 1), world);
-      const p2 = planeH.addFreePoint2D(new Vector3(20, 30, 1), world);
-      const pEdge = planeH.addFreePoint2D(new Vector3(60, 20, 1), world);
+      const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(10, 20, 1));
+      const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(20, 30, 1));
+      const pEdge = world.getConstructionService().addFreePoint2D(planeH, new Vector3(60, 20, 1));
       
-      const line = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
-      const circle = planeH.addCircle2DByCenterAndPoint(p1.id, pEdge.id, world);
+      const line = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p1.id, p2.id);
+      const circle = world.getConstructionService().addCircle2DByCenterAndPoint(planeH, p1.id, pEdge.id);
       
       expect(planeH.getAllPoints()).toHaveLength(initialPointCount + 3);
       expect(planeH.getAllLines()).toHaveLength(initialLineCount + 1);
@@ -378,7 +378,7 @@ describe('ProjectionPlane owner-plane guard paths', () => {
   });
 
   it('throws an explicit missing-owner error when adding a sibling intersection for an unknown primary point', () => {
-    expect(() => planeV.addSiblingIntersectionPoint('missing-primary-intersection', world)).toThrow(
+    expect(() => world.getConstructionService().addSiblingIntersectionPoint(planeV, 'missing-primary-intersection')).toThrow(
       'Primary intersection point not found: missing-primary-intersection'
     );
   });

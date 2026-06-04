@@ -106,6 +106,7 @@ import { Point3DRealization3D, Line3DRealization3D, Segment3DRealization3D, Plan
 import { getContainerIdFromElementId } from './ElementId';
 import { LabelGenerator } from './LabelGenerator';
 import { RealizationService } from './RealizationService';
+import { ConstructionService } from './ConstructionService';
 import { WorldIdAllocator } from './WorldIdAllocator';
 import type { ProjectionElementRealizationContext } from './projectionPlane/ProjectionPlaneContext';
 
@@ -127,6 +128,7 @@ export class World {
   private dependencyService: DependencyService;
   
   private realizationService: RealizationService;
+  private constructionService: ConstructionService;
   
   private idAllocator: WorldIdAllocator;
 
@@ -154,6 +156,7 @@ export class World {
     this.segments3D = new Map();
     
     this.realizationService = new RealizationService();
+    this.constructionService = new ConstructionService(this);
     
     this.idAllocator = new WorldIdAllocator();
     this.processTree = new ProcessTree();
@@ -466,7 +469,10 @@ export class World {
     if (plane) {
       const circle = plane.getCircle(circleId);
       this.invalidateRealization(circleId);
-      plane.removeCircle(circleId);
+      const removed = plane.removeCircle(circleId);
+      if (removed) {
+        this.dependencyService.unregisterNode(circleId);
+      }
       return circle;
     }
     return undefined;
@@ -678,8 +684,11 @@ export class World {
   }
 
   getDependencyRegistrar(): DependencyRegistrarPort {
-    // Projection-plane storage uses this narrow port to register dependencies.
     return this.dependencyService;
+  }
+
+  getConstructionService(): ConstructionService {
+    return this.constructionService;
   }
 
   // ========================================

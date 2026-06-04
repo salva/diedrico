@@ -24,9 +24,9 @@ describe('Phase 116: Default Label Generation Integration', () => {
       const plane = world.getProjectionPlaneByLabel('P_H');
       if (!plane) throw new Error('P_H not found');
       
-      const point1 = plane.addFreePoint2D(new Vector3(0.1, 0.2, 1), world);
-      const point2 = plane.addFreePoint2D(new Vector3(0.3, 0.4, 1), world);
-      const point3 = plane.addFreePoint2D(new Vector3(0.5, 0.6, 1), world);
+      const point1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0.1, 0.2, 1));
+      const point2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0.3, 0.4, 1));
+      const point3 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0.5, 0.6, 1));
       
       // Labels are sequential from the world's label generator
       // The exact first letter depends on how many points were created during init
@@ -43,7 +43,7 @@ describe('Phase 116: Default Label Generation Integration', () => {
       const plane = world.getProjectionPlaneByLabel('P_H');
       if (!plane) throw new Error('P_H not found');
       
-      const point = plane.addFreePoint2D(new Vector3(0.1, 0.2, 1), world, undefined, 'Custom');
+      const point = world.getConstructionService().addFreePoint2D(plane, new Vector3(0.1, 0.2, 1), undefined, 'Custom');
       
       expect(point.label).toBe('Custom');
     });
@@ -54,12 +54,12 @@ describe('Phase 116: Default Label Generation Integration', () => {
       const plane = world.getProjectionPlaneByLabel('P_H');
       if (!plane) throw new Error('P_H not found');
       
-      const point1 = plane.addFreePoint2D(new Vector3(0.1, 0.2, 1), world);
-      const point2 = plane.addFreePoint2D(new Vector3(0.3, 0.4, 1), world);
-      const point3 = plane.addFreePoint2D(new Vector3(0.5, 0.6, 1), world);
+      const point1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0.1, 0.2, 1));
+      const point2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0.3, 0.4, 1));
+      const point3 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0.5, 0.6, 1));
       
-      const line1 = plane.addLine2DBetweenTwoPoints(point1.id, point2.id, world);
-      const line2 = plane.addLine2DBetweenTwoPoints(point2.id, point3.id, world);
+      const line1 = world.getConstructionService().addLine2DBetweenTwoPoints(plane, point1.id, point2.id);
+      const line2 = world.getConstructionService().addLine2DBetweenTwoPoints(plane, point2.id, point3.id);
       
       // Lines should get labels from the line sequence (r, s, t, ...)
       expect(line1.label).toBeTruthy();
@@ -73,10 +73,10 @@ describe('Phase 116: Default Label Generation Integration', () => {
       const plane = world.getProjectionPlaneByLabel('P_H');
       if (!plane) throw new Error('P_H not found');
       
-      const p1 = plane.addFreePoint2D(new Vector3(0.1, 0.2, 1), world);
-      const p2 = plane.addFreePoint2D(new Vector3(0.3, 0.4, 1), world);
+      const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0.1, 0.2, 1));
+      const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0.3, 0.4, 1));
       
-      const segment = plane.addSegment2DBetweenPoints(p1.id, p2.id, world);
+      const segment = world.getConstructionService().addSegment2DBetweenPoints(plane, p1.id, p2.id);
       
       // Segment shares sequence with lines
       expect(segment.label).toBeTruthy();
@@ -86,10 +86,10 @@ describe('Phase 116: Default Label Generation Integration', () => {
       const plane = world.getProjectionPlaneByLabel('P_H');
       if (!plane) throw new Error('P_H not found');
       
-      const center = plane.addFreePoint2D(new Vector3(0.5, 0.5, 1), world);
-      const circumferencePoint = plane.addFreePoint2D(new Vector3(0.6, 0.5, 1), world);
+      const center = world.getConstructionService().addFreePoint2D(plane, new Vector3(0.5, 0.5, 1));
+      const circumferencePoint = world.getConstructionService().addFreePoint2D(plane, new Vector3(0.6, 0.5, 1));
       
-      const circle = plane.addCircle2DByCenterAndPoint(center.id, circumferencePoint.id, world);
+      const circle = world.getConstructionService().addCircle2DByCenterAndPoint(plane, center.id, circumferencePoint.id);
       
       // Circle should get a Greek letter label
       expect(circle.label).toBeTruthy();
@@ -101,12 +101,12 @@ describe('Phase 116: Default Label Generation Integration', () => {
       const plane = world.getProjectionPlaneByLabel('P_H');
       if (!plane) throw new Error('P_H not found');
       
-      const p1 = plane.addFreePoint2D(new Vector3(0.1, 0.2, 1), world);
-      const p2 = plane.addFreePoint2D(new Vector3(0.3, 0.4, 1), world);
-      const p3 = plane.addFreePoint2D(new Vector3(0.5, 0.6, 1), world);
+      const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0.1, 0.2, 1));
+      const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0.3, 0.4, 1));
+      const p3 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0.5, 0.6, 1));
       
-      const line = plane.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
-      const guide = plane.addGuide2D(line.id, p3.id, world);
+      const line = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
+      const guide = world.getConstructionService().addGuide2D(plane, line.id, p3.id);
       
       // Guide labels start with g_ prefix
       expect(guide.label).toMatch(/^g_\d/);
@@ -116,15 +116,15 @@ describe('Phase 116: Default Label Generation Integration', () => {
       const plane = world.getProjectionPlaneByLabel('P_H');
       if (!plane) throw new Error('P_H not found');
       
-      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const p2 = plane.addFreePoint2D(new Vector3(1, 0, 1), world);
-      const p3 = plane.addFreePoint2D(new Vector3(0, 1, 1), world);
-      const p4 = plane.addFreePoint2D(new Vector3(1, 1, 1), world);
+      const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(1, 0, 1));
+      const p3 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 1, 1));
+      const p4 = world.getConstructionService().addFreePoint2D(plane, new Vector3(1, 1, 1));
       
-      const line1 = plane.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
-      const line2 = plane.addLine2DBetweenTwoPoints(p3.id, p4.id, world);
+      const line1 = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
+      const line2 = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p3.id, p4.id);
       
-      const intersection = plane.addLineLineIntersection(line1.id, line2.id, world);
+      const intersection = world.getConstructionService().addLineLineIntersection(plane, line1.id, line2.id);
       
       // Intersection points are in the point sequence
       expect(intersection.label).toBeTruthy();
@@ -138,7 +138,7 @@ describe('Phase 116: Default Label Generation Integration', () => {
       
       const labels = new Set<string>();
       for (let i = 0; i < 10; i++) {
-        const point = plane.addFreePoint2D(new Vector3(i * 0.1, 0.5, 1), world);
+        const point = world.getConstructionService().addFreePoint2D(plane, new Vector3(i * 0.1, 0.5, 1));
         expect(labels.has(point.label!)).toBe(false);
         labels.add(point.label!);
       }
@@ -148,12 +148,12 @@ describe('Phase 116: Default Label Generation Integration', () => {
       const plane = world.getProjectionPlaneByLabel('P_H');
       if (!plane) throw new Error('P_H not found');
       
-      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const p2 = plane.addFreePoint2D(new Vector3(1, 0, 1), world);
-      const p3 = plane.addFreePoint2D(new Vector3(2, 0, 1), world);
+      const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(1, 0, 1));
+      const p3 = world.getConstructionService().addFreePoint2D(plane, new Vector3(2, 0, 1));
       
-      const line = plane.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
-      const segment = plane.addSegment2DBetweenPoints(p2.id, p3.id, world);
+      const line = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
+      const segment = world.getConstructionService().addSegment2DBetweenPoints(plane, p2.id, p3.id);
       
       // Lines and segments share a counter, so labels must differ
       expect(line.label).not.toBe(segment.label);

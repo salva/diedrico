@@ -79,12 +79,12 @@ describe('Wave 006a canvas/tool command controllers', () => {
     const { world, commandStack } = createTestWorld();
     const plane = getHorizontalPlane(world);
     const planeId = plane.id;
-    const center = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-    const radius = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
-    const p1 = plane.addFreePoint2D(new Vector3(-10, 3, 1), world);
-    const p2 = plane.addFreePoint2D(new Vector3(10, 3, 1), world);
-    const line = plane.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
-    const circle = plane.addCircle2DByCenterAndPoint(center.id, radius.id, world);
+    const center = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
+    const radius = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 0, 1));
+    const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(-10, 3, 1));
+    const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 3, 1));
+    const line = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
+    const circle = world.getConstructionService().addCircle2DByCenterAndPoint(plane, center.id, radius.id);
 
     const result = executeConstructionIntent({
       world,
@@ -112,10 +112,10 @@ describe('Wave 006a canvas/tool command controllers', () => {
     const { world, commandStack } = createTestWorld();
     const plane = getHorizontalPlane(world);
     const planeId = plane.id;
-    const center = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-    const radius = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
-    const throughPoint = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
-    const circle = plane.addCircle2DByCenterAndPoint(center.id, radius.id, world);
+    const center = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
+    const radius = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 0, 1));
+    const throughPoint = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 0, 1));
+    const circle = world.getConstructionService().addCircle2DByCenterAndPoint(plane, center.id, radius.id);
 
     const result = executeConstructionIntent({
       world,
@@ -140,7 +140,7 @@ describe('Wave 006a canvas/tool command controllers', () => {
   it('previews, cancels, commits, and undoes free-point moves through the movement use case', () => {
     const { world, commandStack } = createTestWorld();
     const plane = getHorizontalPlane(world);
-    const point = plane.addFreePoint2D(new Vector3(1, 2, 1), world);
+    const point = world.getConstructionService().addFreePoint2D(plane, new Vector3(1, 2, 1));
     const useCase = new CanvasPointMovementUseCase(new RuntimeCommandProducer(world, commandStack));
 
     const cancelled = useCase.start({ planeId: plane.id, pointId: point.id, label: point.label });
@@ -162,7 +162,7 @@ describe('Wave 006a canvas/tool command controllers', () => {
   it('updates element styles through the style use case with undo support', () => {
     const { world, commandStack } = createTestWorld();
     const plane = getHorizontalPlane(world);
-    const point = plane.addFreePoint2D(new Vector3(1, 2, 1), world);
+    const point = world.getConstructionService().addFreePoint2D(plane, new Vector3(1, 2, 1));
     const useCase = new CanvasStyleUseCase(new RuntimeCommandProducer(world, commandStack));
     const beforeUndoCount = commandStack.getUndoCount();
 
@@ -182,13 +182,13 @@ describe('Wave 006a canvas/tool command controllers', () => {
   it('lets tools emit typed construction intents with ambiguous-choice metadata through the command sink', () => {
     const { world } = createTestWorld();
     const plane = getHorizontalPlane(world);
-    const center = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-    const radius = plane.addFreePoint2D(new Vector3(5, 0, 1), world);
-    const external = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
-    const l1p = plane.addFreePoint2D(new Vector3(-10, 3, 1), world);
-    const l2p = plane.addFreePoint2D(new Vector3(10, 3, 1), world);
-    const refLine = plane.addLine2DBetweenTwoPoints(l1p.id, l2p.id, world);
-    const circle = plane.addCircle2DByCenterAndPoint(center.id, radius.id, world);
+    const center = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
+    const radius = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 0, 1));
+    const external = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 0, 1));
+    const l1p = world.getConstructionService().addFreePoint2D(plane, new Vector3(-10, 3, 1));
+    const l2p = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 3, 1));
+    const refLine = world.getConstructionService().addLine2DBetweenTwoPoints(plane, l1p.id, l2p.id);
+    const circle = world.getConstructionService().addCircle2DByCenterAndPoint(plane, center.id, radius.id);
 
     const intents: ToolConstructionIntent[] = [];
     const sink: ToolCommandSink = {

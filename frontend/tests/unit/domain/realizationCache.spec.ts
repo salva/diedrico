@@ -27,7 +27,7 @@ describe('Per-Plane Realization Cache (Phase 119)', () => {
 
   describe('Cache hit (T1913)', () => {
     it('realizePoint2D returns same instance on second call', () => {
-      const p = planeH.addFreePoint2D(new Vector3(3, 4, 1), world);
+      const p = world.getConstructionService().addFreePoint2D(planeH, new Vector3(3, 4, 1));
 
       const first = world.realizePoint2D(p, world);
       const second = world.realizePoint2D(p, world);
@@ -37,9 +37,9 @@ describe('Per-Plane Realization Cache (Phase 119)', () => {
     });
 
     it('realizeLine2D returns same instance on second call', () => {
-      const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const p2 = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
-      const line = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+      const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
+      const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, 5, 1));
+      const line = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p1.id, p2.id);
 
       const first = world.realizeLine2D(line, world);
       const second = world.realizeLine2D(line, world);
@@ -49,9 +49,9 @@ describe('Per-Plane Realization Cache (Phase 119)', () => {
     });
 
     it('realizeCircle2D returns same instance on second call', () => {
-      const center = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const circumPt = planeH.addFreePoint2D(new Vector3(5, 0, 1), world);
-      const circle = planeH.addCircle2DByCenterAndPoint(center.id, circumPt.id, world);
+      const center = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
+      const circumPt = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, 0, 1));
+      const circle = world.getConstructionService().addCircle2DByCenterAndPoint(planeH, center.id, circumPt.id);
 
       const first = world.realizeCircle2D(circle, world);
       const second = world.realizeCircle2D(circle, world);
@@ -61,7 +61,7 @@ describe('Per-Plane Realization Cache (Phase 119)', () => {
     });
 
     it('subsequent facade calls return the exact cached realization', () => {
-      const p = planeH.addFreePoint2D(new Vector3(1, 2, 1), world);
+      const p = world.getConstructionService().addFreePoint2D(planeH, new Vector3(1, 2, 1));
 
       const realized = world.realizePoint2D(p, world);
       expect(world.realizePoint2D(p, world)).toBe(realized);
@@ -72,7 +72,7 @@ describe('Per-Plane Realization Cache (Phase 119)', () => {
 
   describe('Cache invalidation (T1914)', () => {
     it('invalidateRealization clears point cache; next call returns fresh object', () => {
-      const p = planeH.addFreePoint2D(new Vector3(7, 8, 1), world);
+      const p = world.getConstructionService().addFreePoint2D(planeH, new Vector3(7, 8, 1));
       const first = world.realizePoint2D(p, world);
 
       world.invalidateRealization(p.id);
@@ -83,9 +83,9 @@ describe('Per-Plane Realization Cache (Phase 119)', () => {
     });
 
     it('invalidateRealization clears line cache for the same element', () => {
-      const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const p2 = planeH.addFreePoint2D(new Vector3(10, 0, 1), world);
-      const line = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+      const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
+      const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(10, 0, 1));
+      const line = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p1.id, p2.id);
 
       const first = world.realizeLine2D(line, world);
 
@@ -95,9 +95,9 @@ describe('Per-Plane Realization Cache (Phase 119)', () => {
     });
 
     it('invalidateRealization clears circle cache when center point invalidated', () => {
-      const center = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const circumPt = planeH.addFreePoint2D(new Vector3(3, 0, 1), world);
-      const circle = planeH.addCircle2DByCenterAndPoint(center.id, circumPt.id, world);
+      const center = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
+      const circumPt = world.getConstructionService().addFreePoint2D(planeH, new Vector3(3, 0, 1));
+      const circle = world.getConstructionService().addCircle2DByCenterAndPoint(planeH, center.id, circumPt.id);
 
       const first = world.realizeCircle2D(circle, world);
 
@@ -110,9 +110,9 @@ describe('Per-Plane Realization Cache (Phase 119)', () => {
 
   describe('Dependency propagation (T1915)', () => {
     it('invalidating a point clears dependent line on same plane', () => {
-      const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
-      const line = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+      const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
+      const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(10, 10, 1));
+      const line = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p1.id, p2.id);
 
       // Populate all caches
       const pReal = world.realizePoint2D(p1, world);
@@ -132,9 +132,9 @@ describe('Per-Plane Realization Cache (Phase 119)', () => {
     });
 
     it('invalidating a point clears dependent circle on same plane', () => {
-      const center = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const circPt = planeH.addFreePoint2D(new Vector3(4, 0, 1), world);
-      const circle = planeH.addCircle2DByCenterAndPoint(center.id, circPt.id, world);
+      const center = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
+      const circPt = world.getConstructionService().addFreePoint2D(planeH, new Vector3(4, 0, 1));
+      const circle = world.getConstructionService().addCircle2DByCenterAndPoint(planeH, center.id, circPt.id);
 
       world.realizePoint2D(center, world);
       const circPtRealization = world.realizePoint2D(circPt, world);
@@ -149,14 +149,14 @@ describe('Per-Plane Realization Cache (Phase 119)', () => {
 
     it('two-level cascade: point → line → intersection point', () => {
       // p1, p2 define line1; p3, p4 define line2; they intersect
-      const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const p2 = planeH.addFreePoint2D(new Vector3(10, 0, 1), world);
-      const p3 = planeH.addFreePoint2D(new Vector3(5, -5, 1), world);
-      const p4 = planeH.addFreePoint2D(new Vector3(5,  5, 1), world);
-      const line1 = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
-      const line2 = planeH.addLine2DBetweenTwoPoints(p3.id, p4.id, world);
+      const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
+      const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(10, 0, 1));
+      const p3 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, -5, 1));
+      const p4 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5,  5, 1));
+      const line1 = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p1.id, p2.id);
+      const line2 = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p3.id, p4.id);
 
-      const intPt = planeH.addLineLineIntersection(line1.id, line2.id, world);
+      const intPt = world.getConstructionService().addLineLineIntersection(planeH, line1.id, line2.id);
 
       // Realize everything
       const p1Realization = world.realizePoint2D(p1, world);
@@ -186,8 +186,8 @@ describe('Per-Plane Realization Cache (Phase 119)', () => {
   describe('Cross-plane propagation (T1916)', () => {
     it('invalidateRealization clears caches across ALL planes', () => {
       // Add a point to P_H and a different point to P_V
-      const pH = planeH.addFreePoint2D(new Vector3(2, 3, 1), world);
-      const pV = planeV.addFreePoint2D(new Vector3(7, 8, 1), world);
+      const pH = world.getConstructionService().addFreePoint2D(planeH, new Vector3(2, 3, 1));
+      const pV = world.getConstructionService().addFreePoint2D(planeV, new Vector3(7, 8, 1));
 
       const firstH = world.realizePoint2D(pH, world);
       const firstV = world.realizePoint2D(pV, world);
@@ -201,13 +201,13 @@ describe('Per-Plane Realization Cache (Phase 119)', () => {
     });
 
     it('invalidation on one plane does not clear unrelated caches on other plane', () => {
-      const pA = planeH.addFreePoint2D(new Vector3(1, 1, 1), world);
-      const pB = planeH.addFreePoint2D(new Vector3(5, 1, 1), world);
-      const pC = planeV.addFreePoint2D(new Vector3(2, 2, 1), world);
-      const pD = planeV.addFreePoint2D(new Vector3(8, 2, 1), world);
+      const pA = world.getConstructionService().addFreePoint2D(planeH, new Vector3(1, 1, 1));
+      const pB = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, 1, 1));
+      const pC = world.getConstructionService().addFreePoint2D(planeV, new Vector3(2, 2, 1));
+      const pD = world.getConstructionService().addFreePoint2D(planeV, new Vector3(8, 2, 1));
 
-      const lineH = planeH.addLine2DBetweenTwoPoints(pA.id, pB.id, world);
-      const lineV = planeV.addLine2DBetweenTwoPoints(pC.id, pD.id, world);
+      const lineH = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, pA.id, pB.id);
+      const lineV = world.getConstructionService().addLine2DBetweenTwoPoints(planeV, pC.id, pD.id);
 
       // Realize everything
       const pARealization = world.realizePoint2D(pA, world);
@@ -234,8 +234,8 @@ describe('Per-Plane Realization Cache (Phase 119)', () => {
 
   describe('Full cache clear (T1917)', () => {
     it('World.clear() empties all point, line, and circle realization caches', () => {
-      const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const p2 = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
+      const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
+      const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, 5, 1));
       const p1Realization = world.realizePoint2D(p1, world);
       const p2Realization = world.realizePoint2D(p2, world);
 
@@ -246,8 +246,8 @@ describe('Per-Plane Realization Cache (Phase 119)', () => {
     });
 
     it('targeted invalidation does not affect unrelated other-plane entries', () => {
-      const pH = planeH.addFreePoint2D(new Vector3(1, 1, 1), world);
-      const pV = planeV.addFreePoint2D(new Vector3(2, 2, 1), world);
+      const pH = world.getConstructionService().addFreePoint2D(planeH, new Vector3(1, 1, 1));
+      const pV = world.getConstructionService().addFreePoint2D(planeV, new Vector3(2, 2, 1));
 
       const firstH = world.realizePoint2D(pH, world);
       const firstV = world.realizePoint2D(pV, world);

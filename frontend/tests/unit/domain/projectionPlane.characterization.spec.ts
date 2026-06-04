@@ -10,11 +10,11 @@ function matrix3Elements(matrix: Matrix3): number[] {
 }
 
 function createLineCircleFixture(plane: ProjectionPlane, world: ReturnType<typeof createTestWorld>['world']) {
-  const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-  const p2 = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
-  const p3 = plane.addFreePoint2D(new Vector3(0, 10, 1), world);
-  const line = plane.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
-  const circle = plane.addCircle2DByCenterAndPoint(p1.id, p3.id, world);
+  const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
+  const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 0, 1));
+  const p3 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 10, 1));
+  const line = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
+  const circle = world.getConstructionService().addCircle2DByCenterAndPoint(plane, p1.id, p3.id);
 
   return { p1, p2, p3, line, circle };
 }
@@ -24,7 +24,7 @@ describe('ProjectionPlane characterization before responsibility extraction', ()
     const { world } = createTestWorld();
     const plane = getHorizontalPlane(world);
     const { p1, p2, p3, line, circle } = createLineCircleFixture(plane, world);
-    const intersection = plane.addLineCircleIntersection(line.id, circle.id, 0, world);
+    const intersection = world.getConstructionService().addLineCircleIntersection(plane, line.id, circle.id, 0);
     const dependencyQuery = world.getDependencyQuery();
 
     expect(dependencyQuery.getDependencies(p1.id)).toEqual([]);
@@ -102,10 +102,10 @@ describe('ProjectionPlane characterization before responsibility extraction', ()
     const initialPointCount = plane.getAllPoints().length;
     const initialLineCount = plane.getAllLines().length;
 
-    const p1 = plane.addFreePoint2D(new Vector3(1, 1, 1), world);
-    const p2 = plane.addFreePoint2D(new Vector3(5, 1, 1), world);
-    const line = plane.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
-    const circle = plane.addCircle2DByCenterAndPoint(p1.id, p2.id, world);
+    const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(1, 1, 1));
+    const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 1, 1));
+    const line = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
+    const circle = world.getConstructionService().addCircle2DByCenterAndPoint(plane, p1.id, p2.id);
 
     expect(plane.getPoint(p1.id)).toBe(p1);
     expect(plane.getLine(line.id)).toBe(line);

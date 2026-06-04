@@ -20,6 +20,7 @@ import { Vector3, Vector4, Matrix3 } from 'three';
 import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 import { Matrix4x3 } from '@/utils/threeUtils';
+import { removeLineFromPlane, removePointFromPlane } from './operationHelpers';
 
 /**
  * AddPlane3DFixedOp - Create a fixed 3D plane
@@ -184,11 +185,9 @@ export class AddOriginPoint2DOp implements IOperation {
         };
       }
       
-      // Call element factory method - it handles ID generation and locking
-      // Use pointId from constructor (for deserialization), outputs (for redo), or let it generate
-      const originPoint = projPlane.addOriginPoint2D(
+      const originPoint = world.getConstructionService().addOriginPoint2D(
+        projPlane,
         this.position, 
-        world, 
         this.pointId || this.outputs.pointId,
         this.label
       );
@@ -220,7 +219,7 @@ export class AddOriginPoint2DOp implements IOperation {
       const points = projPlane.getAllPoints();
       if (points.length > 0) {
         const pointId = points[0].id;
-        projPlane.removePoint(pointId);
+        removePointFromPlane(world, projPlane, pointId);
         
         // Phase 53: No longer storing origin IDs in World - use label-based access instead
       }
@@ -326,11 +325,9 @@ export class AddHalfHingeLine2DOp implements IOperation {
         };
       }
       
-      // Phase 84: Call element factory method without geometry - it handles ID generation
-      // Use lineId from constructor (for deserialization), outputs (for redo), or let it generate
-      const halfHingeLine = projPlane.addHalfHingeLine2D(
+      const halfHingeLine = world.getConstructionService().addHalfHingeLine2D(
+        projPlane,
         this.hingeLineId,
-        world,
         this.lineId || this.outputs.lineId
       );
       
@@ -358,7 +355,7 @@ export class AddHalfHingeLine2DOp implements IOperation {
       // Get half hinge line (should be the first line added to plane)
       const lines = projPlane.getAllLines();
       if (lines.length > 0) {
-        projPlane.removeLine(lines[0].id);
+        removeLineFromPlane(world, projPlane, lines[0].id);
       }
     }
   }

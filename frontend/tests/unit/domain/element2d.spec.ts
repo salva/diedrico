@@ -31,7 +31,7 @@ describe('Element2D base class', () => {
   describe('Common properties inherited by all element types', () => {
     it('FreePoint2D has Element2D properties', () => {
       const plane = getHorizontalPlane(world);
-      const pointId = plane.generatePoint2DId(world);
+      const pointId = world.getConstructionService().generatePoint2DId(plane);
       const point = new FreePoint2D(pointId, new Vector3(1, 2, 1), planeId, 'Point A');
 
       // Element2D properties
@@ -43,9 +43,9 @@ describe('Element2D base class', () => {
 
     it('Line2DByTwoPoints has Element2D properties', () => {
       const plane = getHorizontalPlane(world);
-      const p1Id = plane.generatePoint2DId(world);
-      const p2Id = plane.generatePoint2DId(world);
-      const lineId = plane.generateLine2DId(world);
+      const p1Id = world.getConstructionService().generatePoint2DId(plane);
+      const p2Id = world.getConstructionService().generatePoint2DId(plane);
+      const lineId = world.getConstructionService().generateLine2DId(plane);
       const line = new Line2DByTwoPoints(lineId, p1Id, p2Id, planeId, 'Line AB');
 
       // Element2D properties
@@ -57,9 +57,9 @@ describe('Element2D base class', () => {
 
     it('Circle2DByCenterAndPoint has Element2D properties', () => {
       const plane = getHorizontalPlane(world);
-      const centerId = plane.generatePoint2DId(world);
-      const edgeId = plane.generatePoint2DId(world);
-      const circleId = plane.generateCircle2DId(world);
+      const centerId = world.getConstructionService().generatePoint2DId(plane);
+      const edgeId = world.getConstructionService().generatePoint2DId(plane);
+      const circleId = world.getConstructionService().generateCircle2DId(plane);
       const circle = new Circle2DByCenterAndPoint(circleId, centerId, edgeId, planeId, 'Circle C');
 
       // Element2D properties
@@ -73,25 +73,25 @@ describe('Element2D base class', () => {
   describe('instanceof Element2D works for all element types', () => {
     it('FreePoint2D instanceof Element2D', () => {
       const plane = getHorizontalPlane(world);
-      const pointId = plane.generatePoint2DId(world);
+      const pointId = world.getConstructionService().generatePoint2DId(plane);
       const point = new FreePoint2D(pointId, new Vector3(1, 2, 1), planeId);
       expect(point).toBeInstanceOf(Element2D);
     });
 
     it('Line2DByTwoPoints instanceof Element2D', () => {
       const plane = getHorizontalPlane(world);
-      const p1Id = plane.generatePoint2DId(world);
-      const p2Id = plane.generatePoint2DId(world);
-      const lineId = plane.generateLine2DId(world);
+      const p1Id = world.getConstructionService().generatePoint2DId(plane);
+      const p2Id = world.getConstructionService().generatePoint2DId(plane);
+      const lineId = world.getConstructionService().generateLine2DId(plane);
       const line = new Line2DByTwoPoints(lineId, p1Id, p2Id, planeId);
       expect(line).toBeInstanceOf(Element2D);
     });
 
     it('Circle2DByCenterAndPoint instanceof Element2D', () => {
       const plane = getHorizontalPlane(world);
-      const centerId = plane.generatePoint2DId(world);
-      const edgeId = plane.generatePoint2DId(world);
-      const circleId = plane.generateCircle2DId(world);
+      const centerId = world.getConstructionService().generatePoint2DId(plane);
+      const edgeId = world.getConstructionService().generatePoint2DId(plane);
+      const circleId = world.getConstructionService().generateCircle2DId(plane);
       const circle = new Circle2DByCenterAndPoint(circleId, centerId, edgeId, planeId);
       expect(circle).toBeInstanceOf(Element2D);
     });
@@ -100,7 +100,7 @@ describe('Element2D base class', () => {
   describe('visible property can be modified', () => {
     it('should allow hiding a point', () => {
       const plane = getHorizontalPlane(world);
-      const pointId = plane.generatePoint2DId(world);
+      const pointId = world.getConstructionService().generatePoint2DId(plane);
       const point = new FreePoint2D(pointId, new Vector3(1, 2, 1), planeId);
       expect(point.visualStyle?.visible !== false).toBe(true);
       
@@ -110,9 +110,9 @@ describe('Element2D base class', () => {
 
     it('should allow hiding a line', () => {
       const plane = getHorizontalPlane(world);
-      const p1Id = plane.generatePoint2DId(world);
-      const p2Id = plane.generatePoint2DId(world);
-      const lineId = plane.generateLine2DId(world);
+      const p1Id = world.getConstructionService().generatePoint2DId(plane);
+      const p2Id = world.getConstructionService().generatePoint2DId(plane);
+      const lineId = world.getConstructionService().generateLine2DId(plane);
       const line = new Line2DByTwoPoints(lineId, p1Id, p2Id, planeId);
       expect(line.visualStyle?.visible !== false).toBe(true);
       
@@ -122,9 +122,9 @@ describe('Element2D base class', () => {
 
     it('should allow hiding a circle', () => {
       const plane = getHorizontalPlane(world);
-      const centerId = plane.generatePoint2DId(world);
-      const edgeId = plane.generatePoint2DId(world);
-      const circleId = plane.generateCircle2DId(world);
+      const centerId = world.getConstructionService().generatePoint2DId(plane);
+      const edgeId = world.getConstructionService().generatePoint2DId(plane);
+      const circleId = world.getConstructionService().generateCircle2DId(plane);
       const circle = new Circle2DByCenterAndPoint(circleId, centerId, edgeId, planeId);
       expect(circle.visualStyle?.visible !== false).toBe(true);
       
@@ -136,7 +136,7 @@ describe('Element2D base class', () => {
   describe('clone() preserves Element2D properties', () => {
     it('cloned point has same Element2D properties', () => {
       const plane = getHorizontalPlane(world);
-      const pointId = plane.generatePoint2DId(world);
+      const pointId = world.getConstructionService().generatePoint2DId(plane);
       const original = new FreePoint2D(pointId, new Vector3(1, 2, 1), planeId, 'Point A');
 
       const cloned = original.clone();
@@ -149,9 +149,9 @@ describe('Element2D base class', () => {
 
     it('cloned line has same Element2D properties', () => {
       const plane = getHorizontalPlane(world);
-      const p1Id = plane.generatePoint2DId(world);
-      const p2Id = plane.generatePoint2DId(world);
-      const lineId = plane.generateLine2DId(world);
+      const p1Id = world.getConstructionService().generatePoint2DId(plane);
+      const p2Id = world.getConstructionService().generatePoint2DId(plane);
+      const lineId = world.getConstructionService().generateLine2DId(plane);
       const original = new Line2DByTwoPoints(lineId, p1Id, p2Id, planeId, 'Line AB');
 
       const cloned = original.clone();
@@ -164,9 +164,9 @@ describe('Element2D base class', () => {
 
     it('cloned circle has same Element2D properties', () => {
       const plane = getHorizontalPlane(world);
-      const centerId = plane.generatePoint2DId(world);
-      const edgeId = plane.generatePoint2DId(world);
-      const circleId = plane.generateCircle2DId(world);
+      const centerId = world.getConstructionService().generatePoint2DId(plane);
+      const edgeId = world.getConstructionService().generatePoint2DId(plane);
+      const circleId = world.getConstructionService().generateCircle2DId(plane);
       const original = new Circle2DByCenterAndPoint(circleId, centerId, edgeId, planeId, 'Circle C');
 
       const cloned = original.clone();
@@ -181,7 +181,7 @@ describe('Element2D base class', () => {
   describe('realize2D() returns correct realization type', () => {
     it('point realize2D() returns Point2DRealization2D', () => {
       const plane = getHorizontalPlane(world);
-      const pointId = plane.generatePoint2DId(world);
+      const pointId = world.getConstructionService().generatePoint2DId(plane);
       const point = new FreePoint2D(pointId, new Vector3(1, 2, 1), planeId);
       const realization = point.realize2D(world);
       
@@ -193,9 +193,9 @@ describe('Element2D base class', () => {
 
     it('line realize2D() returns Line2DRealization2D when points exist', () => {
       const plane = getHorizontalPlane(world);
-      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const p2 = plane.addFreePoint2D(new Vector3(10, 0, 1), world);
-      const line = plane.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+      const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 0, 1));
+      const line = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
       
       const realization = line.realize2D(world);
       
@@ -206,9 +206,9 @@ describe('Element2D base class', () => {
 
     it('circle realize2D() returns Circle2DRealization2D when points exist', () => {
       const plane = getHorizontalPlane(world);
-      const center = plane.addFreePoint2D(new Vector3(5, 5, 1), world);
-      const edge = plane.addFreePoint2D(new Vector3(8, 5, 1), world);
-      const circle = plane.addCircle2DByCenterAndPoint(center.id, edge.id, world);
+      const center = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 5, 1));
+      const edge = world.getConstructionService().addFreePoint2D(plane, new Vector3(8, 5, 1));
+      const circle = world.getConstructionService().addCircle2DByCenterAndPoint(plane, center.id, edge.id);
       
       const realization = circle.realize2D(world);
       
@@ -221,13 +221,13 @@ describe('Element2D base class', () => {
   describe('Type narrowing with Element2D', () => {
     it('should allow type-specific operations after narrowing', () => {
       const plane = getHorizontalPlane(world);
-      const pointId = plane.generatePoint2DId(world);
-      const p1Id = plane.generatePoint2DId(world);
-      const p2Id = plane.generatePoint2DId(world);
-      const lineId = plane.generateLine2DId(world);
-      const centerId = plane.generatePoint2DId(world);
-      const edgeId = plane.generatePoint2DId(world);
-      const circleId = plane.generateCircle2DId(world);
+      const pointId = world.getConstructionService().generatePoint2DId(plane);
+      const p1Id = world.getConstructionService().generatePoint2DId(plane);
+      const p2Id = world.getConstructionService().generatePoint2DId(plane);
+      const lineId = world.getConstructionService().generateLine2DId(plane);
+      const centerId = world.getConstructionService().generatePoint2DId(plane);
+      const edgeId = world.getConstructionService().generatePoint2DId(plane);
+      const circleId = world.getConstructionService().generateCircle2DId(plane);
       
       const elements: Element2D[] = [
         new FreePoint2D(pointId, new Vector3(1, 2, 1), planeId),
@@ -263,14 +263,14 @@ describe('Element2D base class', () => {
       const planeV = world.getProjectionPlaneByLabel('P_V');
       const planeVId = planeV.id!;
       
-      const p1Id = planeH.generatePoint2DId(world);
-      const p2Id = planeV.generatePoint2DId(world);
-      const p3Id = planeH.generatePoint2DId(world);
-      const p4Id = planeH.generatePoint2DId(world);
-      const p5Id = planeV.generatePoint2DId(world);
-      const p6Id = planeV.generatePoint2DId(world);
-      const l1Id = planeH.generateLine2DId(world);
-      const c1Id = planeV.generateCircle2DId(world);
+      const p1Id = world.getConstructionService().generatePoint2DId(planeH);
+      const p2Id = world.getConstructionService().generatePoint2DId(planeV);
+      const p3Id = world.getConstructionService().generatePoint2DId(planeH);
+      const p4Id = world.getConstructionService().generatePoint2DId(planeH);
+      const p5Id = world.getConstructionService().generatePoint2DId(planeV);
+      const p6Id = world.getConstructionService().generatePoint2DId(planeV);
+      const l1Id = world.getConstructionService().generateLine2DId(planeH);
+      const c1Id = world.getConstructionService().generateCircle2DId(planeV);
       
       const elements: Element2D[] = [
         new FreePoint2D(p1Id, new Vector3(1, 2, 1), planeHId),
@@ -288,13 +288,13 @@ describe('Element2D base class', () => {
 
     it('should hide all elements generically', () => {
       const plane = getHorizontalPlane(world);
-      const p1Id = plane.generatePoint2DId(world);
-      const p2Id = plane.generatePoint2DId(world);
-      const p3Id = plane.generatePoint2DId(world);
-      const lineId = plane.generateLine2DId(world);
-      const centerId = plane.generatePoint2DId(world);
-      const edgeId = plane.generatePoint2DId(world);
-      const circleId = plane.generateCircle2DId(world);
+      const p1Id = world.getConstructionService().generatePoint2DId(plane);
+      const p2Id = world.getConstructionService().generatePoint2DId(plane);
+      const p3Id = world.getConstructionService().generatePoint2DId(plane);
+      const lineId = world.getConstructionService().generateLine2DId(plane);
+      const centerId = world.getConstructionService().generatePoint2DId(plane);
+      const edgeId = world.getConstructionService().generatePoint2DId(plane);
+      const circleId = world.getConstructionService().generateCircle2DId(plane);
       
       const elements: Element2D[] = [
         new FreePoint2D(p1Id, new Vector3(1, 2, 1), planeId),
@@ -314,13 +314,13 @@ describe('Element2D base class', () => {
 
     it('should filter visible elements', () => {
       const plane = getHorizontalPlane(world);
-      const p1Id = plane.generatePoint2DId(world);
-      const p2Id = plane.generatePoint2DId(world);
-      const p3Id = plane.generatePoint2DId(world);
-      const lineId = plane.generateLine2DId(world);
-      const centerId = plane.generatePoint2DId(world);
-      const edgeId = plane.generatePoint2DId(world);
-      const circleId = plane.generateCircle2DId(world);
+      const p1Id = world.getConstructionService().generatePoint2DId(plane);
+      const p2Id = world.getConstructionService().generatePoint2DId(plane);
+      const p3Id = world.getConstructionService().generatePoint2DId(plane);
+      const lineId = world.getConstructionService().generateLine2DId(plane);
+      const centerId = world.getConstructionService().generatePoint2DId(plane);
+      const edgeId = world.getConstructionService().generatePoint2DId(plane);
+      const circleId = world.getConstructionService().generateCircle2DId(plane);
       
       const elements: Element2D[] = [
         new FreePoint2D(p1Id, new Vector3(1, 2, 1), planeId),

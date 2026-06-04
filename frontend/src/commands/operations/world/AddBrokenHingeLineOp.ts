@@ -22,6 +22,7 @@ import type { IOperation, OperationOutputBag, OperationResult } from '../IOperat
 import type { World } from '@/domain/world/World';
 import { BrokenHingeLine } from '@/domain/world/BrokenHingeLine';
 import { BrokenHalfHingeLine2D } from '@/domain/world/elements/BrokenHalfHingeLine2D';
+import { removeLineFromPlane } from './operationHelpers';
 
 export class AddBrokenHingeLineOp implements IOperation {
   readonly type = 'AddBrokenHingeLine';
@@ -59,8 +60,9 @@ export class AddBrokenHingeLineOp implements IOperation {
 
       // Generate IDs (use existing for redo, or generate new)
       const bhlId = this.brokenHingeLineId || this.outputs.brokenHingeLineId || world.generateHingeLineId();
-      const bhhl1Id = this.bhhl1Id || this.outputs.bhhl1Id || plane1!.generateLine2DId(world);
-      const bhhl2Id = this.bhhl2Id || this.outputs.bhhl2Id || plane2!.generateLine2DId(world);
+      const constructionService = world.getConstructionService();
+      const bhhl1Id = this.bhhl1Id || this.outputs.bhhl1Id || constructionService.generateLine2DId(plane1!);
+      const bhhl2Id = this.bhhl2Id || this.outputs.bhhl2Id || constructionService.generateLine2DId(plane2!);
 
       // Validation: Ensure IDs match their intended planes
       if (bhhl1Id && !bhhl1Id.startsWith(this.plane1Id + '/')) {
@@ -150,20 +152,14 @@ export class AddBrokenHingeLineOp implements IOperation {
 
   undo(world: World): void {
     if (this.outputs.brokenHingeLineId && this.outputs.bhhl1Id && this.outputs.bhhl2Id) {
-      // Unregister from dependency service
-      const dependencyRegistrar = world.getDependencyRegistrar();
-      dependencyRegistrar.unregisterNode(this.outputs.brokenHingeLineId);
-      dependencyRegistrar.unregisterNode(this.outputs.bhhl1Id);
-      dependencyRegistrar.unregisterNode(this.outputs.bhhl2Id);
-
-      // Remove from World storage
-      world.removeHingeLine(this.outputs.brokenHingeLineId);
-
-      // Remove from projection planes
       const plane1 = world.getProjectionPlaneById(this.outputs.plane1Id);
       const plane2 = world.getProjectionPlaneById(this.outputs.plane2Id);
-      if (plane1) plane1.removeLine(this.outputs.bhhl1Id);
-      if (plane2) plane2.removeLine(this.outputs.bhhl2Id);
+      if (plane1) removeLineFromPlane(world, plane1, this.outputs.bhhl1Id);
+      if (plane2) removeLineFromPlane(world, plane2, this.outputs.bhhl2Id);
+
+      world.invalidateRealization(this.outputs.brokenHingeLineId);
+      world.removeHingeLine(this.outputs.brokenHingeLineId);
+      world.getDependencyRegistrar().unregisterNode(this.outputs.brokenHingeLineId);
     }
   }
 

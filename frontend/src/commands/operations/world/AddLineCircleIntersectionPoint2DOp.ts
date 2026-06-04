@@ -1,7 +1,7 @@
 /**
  * AddLineCircleIntersectionPoint2DOp - Operation to add a Point2DLineCircleIntersection
  * 
- * Wraps ProjectionPlane.addLineCircleIntersection() in the Operation interface.
+ * Wraps ConstructionService.addLineCircleIntersection() in the Operation interface.
  * 
  * Note: Sibling point creation for HalfHingeLine2D intersections is handled automatically
  * by the domain logic, not by this operation.
@@ -9,6 +9,7 @@
 
 import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
+import { removePointFromPlane } from './operationHelpers';
 
 export interface AddLineCircleIntersectionPoint2DDescriptor extends OperationDescriptor<'AddLineCircleIntersectionPoint2D'> {
   planeId: string;
@@ -41,12 +42,11 @@ export class AddLineCircleIntersectionPoint2DOp implements IOperation<AddLineCir
         throw new Error(`Plane not found: ${this.planeId}`);
       }
       
-      // Pass stored ID if available (for redo), otherwise let plane generate new one
-      const point = plane.addLineCircleIntersection(
+      const point = world.getConstructionService().addLineCircleIntersection(
+        plane,
         this.lineId,
         this.circleId,
         this.index,
-        world,
         this.outputs.pointId
       );
       
@@ -70,7 +70,7 @@ export class AddLineCircleIntersectionPoint2DOp implements IOperation<AddLineCir
     if (this.outputs.pointId) {
       const plane = world.getProjectionPlaneById(this.planeId);
       if (plane) {
-        plane.removePoint(this.outputs.pointId);
+        removePointFromPlane(world, plane, this.outputs.pointId);
       }
     }
     

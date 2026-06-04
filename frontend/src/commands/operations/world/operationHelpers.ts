@@ -18,6 +18,33 @@ export function requireProjectionPlane(world: World, planeId: string): Projectio
   return plane;
 }
 
+export function removePointFromPlane(world: World, plane: ProjectionPlane, pointId: string): boolean {
+  world.invalidateRealization(pointId);
+  const removed = plane.removePoint(pointId);
+  if (removed) {
+    world.getDependencyRegistrar().unregisterNode(pointId);
+  }
+  return removed;
+}
+
+export function removeLineFromPlane(world: World, plane: ProjectionPlane, lineId: string): boolean {
+  world.invalidateRealization(lineId);
+  const removed = plane.removeLine(lineId);
+  if (removed) {
+    world.getDependencyRegistrar().unregisterNode(lineId);
+  }
+  return removed;
+}
+
+export function removeCircleFromPlane(world: World, plane: ProjectionPlane, circleId: string): boolean {
+  world.invalidateRealization(circleId);
+  const removed = plane.removeCircle(circleId);
+  if (removed) {
+    world.getDependencyRegistrar().unregisterNode(circleId);
+  }
+  return removed;
+}
+
 export function requireDistinctProjectionPlanes(
   world: World,
   plane1Id: string,

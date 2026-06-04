@@ -177,7 +177,7 @@ describe('Tool Argument Validation', () => {
       const p1Id = addPoint(50, 100);
       const p2Id = addPoint(250, 100);
       const plane = world.getProjectionPlaneById(planeId);
-      const line = plane.addLine2DBetweenTwoPoints(p1Id, p2Id, world);
+      const line = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p1Id, p2Id);
 
       // Create through-point
       const p3Id = addPoint(150, 200);
@@ -199,7 +199,7 @@ describe('Tool Argument Validation', () => {
       const p1Id = addPoint(50, 100);
       const p2Id = addPoint(250, 100);
       const plane = world.getProjectionPlaneById(planeId);
-      const line = plane.addLine2DBetweenTwoPoints(p1Id, p2Id, world);
+      const line = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p1Id, p2Id);
 
       const p3Id = addPoint(150, 200);
 

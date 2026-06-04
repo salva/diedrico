@@ -44,17 +44,17 @@ describe('Point3DFromProjections - Coordinate Reconstruction', () => {
     if (!planeH || !planeV) throw new Error('Base planes not found');
 
     // Create point on P_V at (u=1, v=1) → corresponds to 3D (x=1, y=0, z=1)
-    const pointV = planeV.addFreePoint2D(
+    const pointV = world.getConstructionService().addFreePoint2D(
+      planeV,
       new Vector3(1, 1, 1),  // (u, v, w) homogeneous
-      world,
       undefined,
       'V'
     );
 
     // Create point on P_H at (u=1, v=3) → corresponds to 3D (x=1, y=3, z=0)
-    const pointH = planeH.addFreePoint2D(
+    const pointH = world.getConstructionService().addFreePoint2D(
+      planeH,
       new Vector3(1, 3, 1),  // (u, v, w) homogeneous
-      world,
       undefined,
       'H'
     );
@@ -100,20 +100,10 @@ describe('Point3DFromProjections - Coordinate Reconstruction', () => {
     if (!planeH || !planeV) throw new Error('Base planes not found');
 
     // P_V: (u=2, v=3) → 3D projection (x=2, y=0, z=3)
-    const pointV = planeV.addFreePoint2D(
-      new Vector3(2, 3, 1),
-      world,
-      undefined,
-      'V1'
-    );
+    const pointV = world.getConstructionService().addFreePoint2D(planeV, new Vector3(2, 3, 1), undefined, 'V1');
 
     // P_H: (u=2, v=5) → 3D projection (x=2, y=5, z=0)
-    const pointH = planeH.addFreePoint2D(
-      new Vector3(2, 5, 1),
-      world,
-      undefined,
-      'H1'
-    );
+    const pointH = world.getConstructionService().addFreePoint2D(planeH, new Vector3(2, 5, 1), undefined, 'H1');
 
     const point3D = new Point3DFromProjections(
       'world/point3d_2',
@@ -147,8 +137,8 @@ describe('Point3DFromProjections - Coordinate Reconstruction', () => {
     
     if (!planeH || !planeV) throw new Error('Base planes not found');
 
-    const pointV = planeV.addFreePoint2D(new Vector3(0, 0, 1), world, undefined, 'V0');
-    const pointH = planeH.addFreePoint2D(new Vector3(0, 0, 1), world, undefined, 'H0');
+    const pointV = world.getConstructionService().addFreePoint2D(planeV, new Vector3(0, 0, 1), undefined, 'V0');
+    const pointH = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1), undefined, 'H0');
 
     const point3D = new Point3DFromProjections(
       'world/point3d_3',
@@ -180,8 +170,8 @@ describe('Point3DFromProjections - Coordinate Reconstruction', () => {
     
     if (!planeH || !planeV) throw new Error('Base planes not found');
 
-    const pointV = planeV.addFreePoint2D(new Vector3(-2, -3, 1), world, undefined, 'Vneg');
-    const pointH = planeH.addFreePoint2D(new Vector3(-2, -5, 1), world, undefined, 'Hneg');
+    const pointV = world.getConstructionService().addFreePoint2D(planeV, new Vector3(-2, -3, 1), undefined, 'Vneg');
+    const pointH = world.getConstructionService().addFreePoint2D(planeH, new Vector3(-2, -5, 1), undefined, 'Hneg');
 
     const point3D = new Point3DFromProjections(
       'world/point3d_4',
@@ -216,8 +206,8 @@ describe('Point3DFromProjections - Coordinate Reconstruction', () => {
 
     // Different x-coordinates: P_V has x=1, P_H has x=3
     // For P_H and P_V, equation 4 will fail: v₂ should equal z from equation system
-    const pointV = planeV.addFreePoint2D(new Vector3(1, 2, 1), world, undefined, 'Vmis');
-    const pointH = planeH.addFreePoint2D(new Vector3(3, 4, 1), world, undefined, 'Hmis');
+    const pointV = world.getConstructionService().addFreePoint2D(planeV, new Vector3(1, 2, 1), undefined, 'Vmis');
+    const pointH = world.getConstructionService().addFreePoint2D(planeH, new Vector3(3, 4, 1), undefined, 'Hmis');
 
     const point3D = new Point3DFromProjections(
       'world/point3d_5',
@@ -246,8 +236,8 @@ describe('Point3DFromProjections - Coordinate Reconstruction', () => {
     
     if (!planeH || !planeV) throw new Error('Base planes not found');
 
-    const pointV = planeV.addFreePoint2D(new Vector3(5, 7, 1), world, undefined, 'Vord');
-    const pointH = planeH.addFreePoint2D(new Vector3(5, 9, 1), world, undefined, 'Hord');
+    const pointV = world.getConstructionService().addFreePoint2D(planeV, new Vector3(5, 7, 1), undefined, 'Vord');
+    const pointH = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, 9, 1), undefined, 'Hord');
 
     // Order 1: V first, H second
     const point3D_VH = new Point3DFromProjections(

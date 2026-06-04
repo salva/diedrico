@@ -1,11 +1,12 @@
 /**
- * AddGuide2DPerpendicularToLineOp - Operation to add a Guide2DPerpendicularToLine using ProjectionPlane factory method
+ * AddGuide2DPerpendicularToLineOp - Operation to add a Guide2DPerpendicularToLine using ConstructionService
  *
- * Wraps ProjectionPlane.addGuide2D() in the Operation interface.
+ * Wraps ConstructionService.addGuide2D() in the Operation interface.
  */
 
 import type { IOperation, JsonObject, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
+import { removeLineFromPlane } from './operationHelpers';
 
 interface AddGuideOutput extends JsonObject {
   guideId?: string;
@@ -33,10 +34,10 @@ export class AddGuide2DPerpendicularToLineOp implements IOperation {
         throw new Error(`Plane not found: ${this.planeId}`);
       }
 
-      const guide = plane.addGuide2D(
+      const guide = world.getConstructionService().addGuide2D(
+        plane,
         this.referenceLineId,
         this.throughPointId,
-        world,
         this.restoredGuideId ?? this.outputs.guideId
       );
       this.outputs = { guideId: guide.id };
@@ -57,7 +58,7 @@ export class AddGuide2DPerpendicularToLineOp implements IOperation {
     if (this.outputs.guideId) {
       const plane = world.getProjectionPlaneById(this.planeId);
       if (plane) {
-        plane.removeLine(this.outputs.guideId);
+        removeLineFromPlane(world, plane, this.outputs.guideId);
       }
     }
   }
@@ -77,7 +78,7 @@ export class AddGuide2DPerpendicularToLineOp implements IOperation {
  * AddSiblingGuide2DOp - Operation to add a sibling guide in the paired projection plane
  *
  * Sibling guides are automatically created when a primary Guide2D is created.
- * This operation wraps ProjectionPlane.addSiblingGuide2D().
+ * This operation wraps ConstructionService.addSiblingGuide2D().
  *
  * Architecture note: Sibling creation must be done at command level using specific ops,
  * not embedded in the world layer (as per architecture requirements).
@@ -100,10 +101,10 @@ export class AddSiblingGuide2DOp implements IOperation {
         throw new Error(`Plane not found: ${this.planeId}`);
       }
 
-      const siblingGuide = plane.addSiblingGuide2D(
+      const siblingGuide = world.getConstructionService().addSiblingGuide2D(
+        plane,
         this.primaryGuideId,
         this.referenceLineId,
-        world,
         this.restoredSiblingGuideId ?? this.outputs.siblingGuideId
       );
       this.outputs = { siblingGuideId: siblingGuide.id };
@@ -124,7 +125,7 @@ export class AddSiblingGuide2DOp implements IOperation {
     if (this.outputs.siblingGuideId) {
       const plane = world.getProjectionPlaneById(this.planeId);
       if (plane) {
-        plane.removeLine(this.outputs.siblingGuideId);
+        removeLineFromPlane(world, plane, this.outputs.siblingGuideId);
       }
     }
   }

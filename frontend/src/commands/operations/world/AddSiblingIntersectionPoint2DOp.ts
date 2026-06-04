@@ -1,6 +1,7 @@
 import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 import { IntersectionPoint2D } from '@/domain/world/Point';
+import { removePointFromPlane } from './operationHelpers';
 
 /**
  * AddSiblingIntersectionPoint2DOp - Operation to add a sibling intersection point in the paired projection plane
@@ -45,10 +46,9 @@ export class AddSiblingIntersectionPoint2DOp implements IOperation<AddSiblingInt
         throw new Error(`Plane not found: ${this.planeId}`);
       }
       
-      // Pass stored ID if available (for redo), otherwise let plane generate new one
-      const siblingPoint = plane.addSiblingIntersectionPoint(
+      const siblingPoint = world.getConstructionService().addSiblingIntersectionPoint(
+        plane,
         this.primaryIntersectionId,
-        world,
         this.outputs.pointId
       );
       this.outputs = { pointId: siblingPoint.id };
@@ -69,8 +69,7 @@ export class AddSiblingIntersectionPoint2DOp implements IOperation<AddSiblingInt
     if (this.outputs.pointId) {
       const plane = world.getProjectionPlaneById(this.planeId);
       if (plane) {
-        // Remove sibling point
-        plane.removePoint(this.outputs.pointId);
+        removePointFromPlane(world, plane, this.outputs.pointId);
         
         // Unlink from primary - traverse all planes to find primary
         for (const projPlane of world.getAllProjectionPlanes()) {

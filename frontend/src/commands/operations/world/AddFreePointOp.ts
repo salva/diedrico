@@ -1,14 +1,14 @@
 /**
- * AddFreePoint2DOp - Operation to add a FreePoint2D using ProjectionPlane factory method
+ * AddFreePoint2DOp - Operation to add a FreePoint2D using ConstructionService
  * 
- * Wraps ProjectionPlane.addFreePoint2D() in the Operation interface.
+ * Wraps ConstructionService.addFreePoint2D() in the Operation interface.
  */
 
 import type { Vector3 } from 'three';
 import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 import { operationFailure, operationSuccess } from '../operationResultHelpers';
-import { requireProjectionPlane } from './operationHelpers';
+import { removePointFromPlane, requireProjectionPlane } from './operationHelpers';
 
 export interface AddFreePoint2DDescriptor extends OperationDescriptor<'AddFreePoint2D'> {
   planeId: string;
@@ -34,8 +34,7 @@ export class AddFreePoint2DOp implements IOperation<AddFreePoint2DDescriptor, Ad
     try {
       const plane = requireProjectionPlane(world, this.planeId);
       
-      // Pass stored ID if available (for redo), otherwise let plane generate new one
-      const point = plane.addFreePoint2D(this.position, world, this.outputs.pointId);
+      const point = world.getConstructionService().addFreePoint2D(plane, this.position, this.outputs.pointId);
       this.outputs = { pointId: point.id };
       return operationSuccess(this.outputs);
     } catch (error) {
@@ -45,7 +44,8 @@ export class AddFreePoint2DOp implements IOperation<AddFreePoint2DDescriptor, Ad
 
   undo(world: World): void {
     if (this.outputs.pointId) {
-      world.getProjectionPlaneById(this.planeId)?.removePoint(this.outputs.pointId);
+      const plane = world.getProjectionPlaneById(this.planeId);
+      if (plane) removePointFromPlane(world, plane, this.outputs.pointId);
     }
   }
 

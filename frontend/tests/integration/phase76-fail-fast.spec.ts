@@ -72,12 +72,12 @@ describe('Phase 76: Fail-Fast Error Handling', () => {
   describe('Geometric Realization - Legitimate Failures', () => {
     it('should not allow creation of degenerate geometries via factory methods', () => {
       const planeH = world.getProjectionPlaneByLabel('P_H')!;
-      const p1 = planeH.addFreePoint2D(new Vector3(5, 5, 0), world);
-      const p2 = planeH.addFreePoint2D(new Vector3(5, 5, 0), world); // Same position
+      const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, 5, 0));
+      const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, 5, 0)); // Same position
       
       // Factory methods should throw for degenerate cases (fail early)
       expect(() => {
-        planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+        world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p1.id, p2.id);
       }).toThrow();  // Expected: points too close
     });
   });

@@ -1,14 +1,14 @@
 /**
- * AddCircle2DByCenterAndPointOp - Operation to add a Circle2DByCenterAndPoint using ProjectionPlane factory method
+ * AddCircle2DByCenterAndPointOp - Operation to add a Circle2DByCenterAndPoint using ConstructionService
  * 
  * This is the standard circle construction that defines both radius magnitude and angular reference.
- * Wraps ProjectionPlane.addCircle2DByCenterAndPoint() in the Operation interface.
+ * Wraps ConstructionService.addCircle2DByCenterAndPoint() in the Operation interface.
  */
 
 import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 import { operationFailure, operationSuccess } from '../operationResultHelpers';
-import { requireProjectionPlane } from './operationHelpers';
+import { removeCircleFromPlane, requireProjectionPlane } from './operationHelpers';
 
 export interface AddCircle2DByCenterAndPointDescriptor extends OperationDescriptor<'AddCircle2DByCenterAndPoint'> {
   planeId: string;
@@ -36,11 +36,10 @@ export class AddCircle2DByCenterAndPointOp implements IOperation<AddCircle2DByCe
     try {
       const plane = requireProjectionPlane(world, this.planeId);
       
-      // Pass stored ID if available (for redo), otherwise let plane generate new one
-      const circle = plane.addCircle2DByCenterAndPoint(
+      const circle = world.getConstructionService().addCircle2DByCenterAndPoint(
+        plane,
         this.centerPointId,
         this.circumferencePointId,
-        world,
         this.outputs.circleId
       );
       this.outputs = { circleId: circle.id };
@@ -54,7 +53,7 @@ export class AddCircle2DByCenterAndPointOp implements IOperation<AddCircle2DByCe
     if (this.outputs.circleId) {
       const plane = world.getProjectionPlaneById(this.planeId);
       if (plane) {
-        plane.removeCircle(this.outputs.circleId);
+        removeCircleFromPlane(world, plane, this.outputs.circleId);
       }
     }
   }

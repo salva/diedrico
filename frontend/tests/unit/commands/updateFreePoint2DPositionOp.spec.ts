@@ -20,7 +20,7 @@ describe('UpdateFreePoint2DPositionOp', () => {
     const plane = getHorizontalPlane(world);
     const planeId = getHorizontalPlaneId(world);
 
-    const point = plane.addFreePoint2D(new Vector3(10, 20, 1), world);
+    const point = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 20, 1));
 
     const op = new UpdateFreePoint2DPositionOp(planeId, point.id, new Vector3(100, 200, 1));
     const result = op.apply(world);

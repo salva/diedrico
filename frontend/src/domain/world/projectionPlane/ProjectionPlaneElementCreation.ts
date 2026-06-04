@@ -1,7 +1,7 @@
 import type { Circle2D } from '../Circle';
+import type { ConstructionContext } from '../ConstructionService';
 import type { Line2D } from '../Line';
 import type { Point2D } from '../Point';
-import type { ProjectionPlaneMutationContext } from './ProjectionPlaneContext';
 
 export interface ProjectionPlaneElementLookup {
   readonly id: string;
@@ -29,7 +29,7 @@ export function resolveDefaultLabel(
   label: string | undefined,
   id: string,
   elementType: string,
-  world: ProjectionPlaneMutationContext
+  world: ConstructionContext
 ): string {
   return label || world.generateDefaultLabel(id, elementType);
 }
@@ -60,7 +60,7 @@ export function requireLocalCircle(
 }
 
 export function requireWorldLine(
-  world: ProjectionPlaneMutationContext,
+  world: ConstructionContext,
   lineId: string,
   fieldName: string
 ): Line2D {
@@ -73,7 +73,7 @@ export function requireWorldLine(
 
 export function requireLocalOrWorldLine(
   plane: ProjectionPlaneElementLookup,
-  world: ProjectionPlaneMutationContext,
+  world: ConstructionContext,
   lineId: string,
   fieldName: string
 ): Line2D {
@@ -100,7 +100,7 @@ export function requireRealizedLine(
   line: Line2D,
   lineId: string,
   fieldName: string,
-  world: ProjectionPlaneMutationContext,
+  world: ConstructionContext,
   missingMessage: string = 'Line does not exist.'
 ): void {
   const realization = line.realize2D(world);
@@ -113,7 +113,7 @@ export function requireRealizedCircle(
   circle: Circle2D,
   circleId: string,
   fieldName: string,
-  world: ProjectionPlaneMutationContext
+  world: ConstructionContext
 ): void {
   const realization = circle.realize2D(world);
   if (!realization) {
@@ -142,7 +142,7 @@ export function requireDistinctRealizedPointsForLine(
   point2: Point2D,
   point1Id: string,
   point2Id: string,
-  world: ProjectionPlaneMutationContext
+  world: ConstructionContext
 ): void {
   const point1Realization = point1.realize2D(world);
   const point2Realization = point2.realize2D(world);
@@ -159,7 +159,7 @@ export function requireDistinctRealizedPointsForLine(
 
 export function requirePrimaryIntersectionPoint(
   primaryIntersectionId: string,
-  world: ProjectionPlaneMutationContext
+  world: ConstructionContext
 ): Point2D {
   const primaryPlane = world.getPlaneForElement(primaryIntersectionId);
   if (!primaryPlane) {

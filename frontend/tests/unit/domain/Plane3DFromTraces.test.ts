@@ -87,7 +87,7 @@ describe('Plane3DFromTraces - Intersecting via Hinge Line', () => {
     planeH.addPoint(pointC);
 
     // 5. Create sibling point C' on P_V (manual creation since we're in test)
-    const pointCPrime = planeV.addSiblingIntersectionPoint(pointC.id, world, 'projPlane4/point_C_prime');
+    const pointCPrime = world.getConstructionService().addSiblingIntersectionPoint(planeV, pointC.id, 'projPlane4/point_C_prime');
     
     // Verify sibling relationship
     expect(pointC.siblingPointId).toBe(pointCPrime.id);

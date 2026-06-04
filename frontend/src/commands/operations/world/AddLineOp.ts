@@ -1,13 +1,13 @@
 /**
- * AddLine2DByTwoPointsOp - Operation to add a Line2DByTwoPoints using ProjectionPlane factory method
+ * AddLine2DByTwoPointsOp - Operation to add a Line2DByTwoPoints using ConstructionService
  * 
- * Wraps ProjectionPlane.addLine2DBetweenTwoPoints() in the Operation interface.
+ * Wraps ConstructionService.addLine2DBetweenTwoPoints() in the Operation interface.
  */
 
 import type { IOperation, JsonObject, OperationDescriptor, OperationOutputBag, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 import { operationFailure, operationSuccess } from '../operationResultHelpers';
-import { requireProjectionPlane } from './operationHelpers';
+import { removeLineFromPlane, requireProjectionPlane } from './operationHelpers';
 
 export interface AddLine2DByTwoPointsDescriptor extends OperationDescriptor<'AddLine2DByTwoPoints'> {
   planeId: string;
@@ -35,11 +35,10 @@ export class AddLine2DByTwoPointsOp implements IOperation<AddLine2DByTwoPointsDe
     try {
       const plane = requireProjectionPlane(world, this.planeId);
       
-      // Pass stored ID if available (for redo), otherwise let plane generate new one
-      const line = plane.addLine2DBetweenTwoPoints(
+      const line = world.getConstructionService().addLine2DBetweenTwoPoints(
+        plane,
         this.point1Id,
         this.point2Id,
-        world,
         this.outputs.lineId
       );
       this.outputs = { lineId: line.id };
@@ -53,7 +52,7 @@ export class AddLine2DByTwoPointsOp implements IOperation<AddLine2DByTwoPointsDe
     if (this.outputs.lineId) {
       const plane = world.getProjectionPlaneById(this.planeId);
       if (plane) {
-        plane.removeLine(this.outputs.lineId);
+        removeLineFromPlane(world, plane, this.outputs.lineId);
       }
     }
   }
@@ -70,9 +69,9 @@ export class AddLine2DByTwoPointsOp implements IOperation<AddLine2DByTwoPointsDe
 }
 
 /**
- * AddLine2DParallelToLineOp - Operation to add a Line2DParallel using ProjectionPlane factory method
+ * AddLine2DParallelToLineOp - Operation to add a Line2DParallel using ConstructionService
  * 
- * Wraps ProjectionPlane.addLine2DParallelToLine() in the Operation interface.
+ * Wraps ConstructionService.addLine2DParallelToLine() in the Operation interface.
  */
 export interface AddLine2DParallelToLineDescriptor extends OperationDescriptor<'AddLine2DParallelToLine'> {
   planeId: string;
@@ -100,11 +99,10 @@ export class AddLine2DParallelToLineOp implements IOperation<AddLine2DParallelTo
     try {
       const plane = requireProjectionPlane(world, this.planeId);
       
-      // Pass stored ID if available (for redo), otherwise let plane generate new one
-      const line = plane.addLine2DParallelToLine(
+      const line = world.getConstructionService().addLine2DParallelToLine(
+        plane,
         this.referenceLineId,
         this.throughPointId,
-        world,
         this.outputs.lineId
       );
       this.outputs = { lineId: line.id };
@@ -118,7 +116,7 @@ export class AddLine2DParallelToLineOp implements IOperation<AddLine2DParallelTo
     if (this.outputs.lineId) {
       const plane = world.getProjectionPlaneById(this.planeId);
       if (plane) {
-        plane.removeLine(this.outputs.lineId);
+        removeLineFromPlane(world, plane, this.outputs.lineId);
       }
     }
   }
@@ -135,9 +133,9 @@ export class AddLine2DParallelToLineOp implements IOperation<AddLine2DParallelTo
 }
 
 /**
- * AddLine2DPerpendicularToLineOp - Operation to add a Line2DPerpendicularToLine using ProjectionPlane factory method
+ * AddLine2DPerpendicularToLineOp - Operation to add a Line2DPerpendicularToLine using ConstructionService
  * 
- * Wraps ProjectionPlane.addLine2DPerpendicularToLine() in the Operation interface.
+ * Wraps ConstructionService.addLine2DPerpendicularToLine() in the Operation interface.
  */
 export interface AddLine2DPerpendicularToLineDescriptor extends OperationDescriptor<'AddLine2DPerpendicularToLine'> {
   planeId: string;
@@ -165,11 +163,10 @@ export class AddLine2DPerpendicularToLineOp implements IOperation<AddLine2DPerpe
     try {
       const plane = requireProjectionPlane(world, this.planeId);
       
-      // Pass stored ID if available (for redo), otherwise let plane generate new one
-      const line = plane.addLine2DPerpendicularToLine(
+      const line = world.getConstructionService().addLine2DPerpendicularToLine(
+        plane,
         this.referenceLineId,
         this.throughPointId,
-        world,
         this.outputs.lineId
       );
       this.outputs = { lineId: line.id };
@@ -183,7 +180,7 @@ export class AddLine2DPerpendicularToLineOp implements IOperation<AddLine2DPerpe
     if (this.outputs.lineId) {
       const plane = world.getProjectionPlaneById(this.planeId);
       if (plane) {
-        plane.removeLine(this.outputs.lineId);
+        removeLineFromPlane(world, plane, this.outputs.lineId);
       }
     }
   }
@@ -199,10 +196,10 @@ export class AddLine2DPerpendicularToLineOp implements IOperation<AddLine2DPerpe
   }
 }
 /**
- * AddLine2DTangentToCircleThroughPointOp - Operation to add a Line2DTangentToCircleThroughPoint using ProjectionPlane factory method
+ * AddLine2DTangentToCircleThroughPointOp - Operation to add a Line2DTangentToCircleThroughPoint using ConstructionService
  * 
  * Phase 60: Tangent line to circle through external point
- * Wraps ProjectionPlane.addLine2DTangentToCircleThroughPoint() in the Operation interface.
+ * Wraps ConstructionService.addLine2DTangentToCircleThroughPoint() in the Operation interface.
  */
 export class AddLine2DTangentToCircleThroughPointOp implements IOperation {
   readonly type = 'AddLine2DTangentToCircleThroughPoint';
@@ -220,12 +217,11 @@ export class AddLine2DTangentToCircleThroughPointOp implements IOperation {
     try {
       const plane = requireProjectionPlane(world, this.planeId);
       
-      // Pass stored ID if available (for redo), otherwise let plane generate new one
-      const line = plane.addLine2DTangentToCircleThroughPoint(
+      const line = world.getConstructionService().addLine2DTangentToCircleThroughPoint(
+        plane,
         this.circleId,
         this.throughPointId,
         this.tangentIndex,
-        world,
         this.outputs.lineId
       );
       this.outputs = { lineId: line.id };
@@ -239,7 +235,7 @@ export class AddLine2DTangentToCircleThroughPointOp implements IOperation {
     if (this.outputs.lineId) {
       const plane = world.getProjectionPlaneById(this.planeId);
       if (plane) {
-        plane.removeLine(this.outputs.lineId);
+        removeLineFromPlane(world, plane, this.outputs.lineId);
       }
     }
   }
@@ -256,10 +252,10 @@ export class AddLine2DTangentToCircleThroughPointOp implements IOperation {
 }
 
 /**
- * AddLine2DTangentToCircleParallelToLineOp - Operation to add a Line2DTangentToCircleParallelToLine using ProjectionPlane factory method
+ * AddLine2DTangentToCircleParallelToLineOp - Operation to add a Line2DTangentToCircleParallelToLine using ConstructionService
  * 
  * Phase 61: Tangent line to circle parallel to reference line
- * Wraps ProjectionPlane.addLine2DTangentToCircleParallelToLine() in the Operation interface.
+ * Wraps ConstructionService.addLine2DTangentToCircleParallelToLine() in the Operation interface.
  */
 export class AddLine2DTangentToCircleParallelToLineOp implements IOperation {
   readonly type = 'AddLine2DTangentToCircleParallelToLine';
@@ -277,12 +273,11 @@ export class AddLine2DTangentToCircleParallelToLineOp implements IOperation {
     try {
       const plane = requireProjectionPlane(world, this.planeId);
       
-      // Pass stored ID if available (for redo), otherwise let plane generate new one
-      const line = plane.addLine2DTangentToCircleParallelToLine(
+      const line = world.getConstructionService().addLine2DTangentToCircleParallelToLine(
+        plane,
         this.circleId,
         this.referenceLineId,
         this.tangentIndex,
-        world,
         this.outputs.lineId
       );
       this.outputs = { lineId: line.id };
@@ -296,7 +291,7 @@ export class AddLine2DTangentToCircleParallelToLineOp implements IOperation {
     if (this.outputs.lineId) {
       const plane = world.getProjectionPlaneById(this.planeId);
       if (plane) {
-        plane.removeLine(this.outputs.lineId);
+        removeLineFromPlane(world, plane, this.outputs.lineId);
       }
     }
   }

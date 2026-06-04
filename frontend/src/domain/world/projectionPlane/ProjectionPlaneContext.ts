@@ -7,7 +7,6 @@ import type { Circle2DRealization2D } from '../Circle';
 import type { Line2DRealization2D } from '../Line';
 import type { Point2DRealization2D } from '../Point';
 import type { ProjectionPlane } from '@/domain/world/projectionPlane/ProjectionPlane';
-import type { DependencyRegistrarPort } from '@/domain/world/DependencyPorts';
 import type { ProjectionPlaneRealization2D, ProjectionPlaneRealization3D } from './ProjectionPlaneRealization';
 
 export interface ProjectionElementLookupContext {
@@ -61,11 +60,4 @@ export interface PlaneEquationRealizationContext extends ProjectionElementLookup
 
 export interface ProjectionOwnerPlaneQuery {
   getPlaneForElement(id: string): ProjectionPlane | undefined;
-}
-
-export interface ProjectionPlaneMutationContext extends ProjectionPlaneRealizationContext, ProjectionOwnerPlaneQuery {
-  getNextId(): number;
-  generateDefaultLabel(elementId: string, elementType: string): string;
-  getDependencyRegistrar(): DependencyRegistrarPort;
-  getSiblingPlaneForIntersection?(point: Point2D): string | undefined;
 }

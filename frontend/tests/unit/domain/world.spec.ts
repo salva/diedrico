@@ -42,7 +42,7 @@ describe('ProjectionPlane Factory Methods', () => {
     describe('addFreePoint2D', () => {
       it('should create and add a free point with generated ID', () => {
         const position = new Vector3(10, 20, 1);
-        const point = planeH.addFreePoint2D(position, world);
+        const point = world.getConstructionService().addFreePoint2D(planeH, position);
 
         expect(point.id).toMatch(/^projPlane\d+\/point2d\d+$/);
         expect(point.position).toEqual(position);
@@ -59,7 +59,7 @@ describe('ProjectionPlane Factory Methods', () => {
 
       it('should create point with auto-generated ID', () => {
         const position = new Vector3(10, 20, 1);
-        const point = planeH.addFreePoint2D(position, world);
+        const point = world.getConstructionService().addFreePoint2D(planeH, position);
 
         expect(point.id).toMatch(/^projPlane\d+\/point2d\d+$/);  // Verify hierarchical format
         
@@ -82,19 +82,15 @@ describe('ProjectionPlane Factory Methods', () => {
 
     describe('addLineLineIntersection', () => {
       it('should create intersection point between two lines', () => {
-        const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
-        const p2 = planeH.addFreePoint2D(new Vector3(10, 0, 1), world);
-        const p3 = planeH.addFreePoint2D(new Vector3(5, -5, 1), world);
-        const p4 = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
+        const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
+        const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(10, 0, 1));
+        const p3 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, -5, 1));
+        const p4 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, 5, 1));
 
-        const line1 = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
-        const line2 = planeH.addLine2DBetweenTwoPoints(p3.id, p4.id, world);
+        const line1 = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p1.id, p2.id);
+        const line2 = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p3.id, p4.id);
 
-        const intersection = planeH.addLineLineIntersection(
-          line1.id,
-          line2.id,
-          world
-        );
+        const intersection = world.getConstructionService().addLineLineIntersection(planeH, line1.id, line2.id);
 
         expect(intersection.id).toMatch(/^projPlane\d+\/point2d\d+$/);
         expect(intersection.planeId).toBe(planeH.id);
@@ -102,43 +98,38 @@ describe('ProjectionPlane Factory Methods', () => {
       });
 
       it('should use provided ID when given', () => {
-        const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
-        const p2 = planeH.addFreePoint2D(new Vector3(10, 0, 1), world);
-        const p3 = planeH.addFreePoint2D(new Vector3(5, -5, 1), world);
-        const p4 = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
+        const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
+        const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(10, 0, 1));
+        const p3 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, -5, 1));
+        const p4 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, 5, 1));
 
-        const line1 = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
-        const line2 = planeH.addLine2DBetweenTwoPoints(p3.id, p4.id, world);
+        const line1 = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p1.id, p2.id);
+        const line2 = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p3.id, p4.id);
 
         const customId = planeH.id + '/custom_intersection';
-        const intersection = planeH.addLineLineIntersection(
-          line1.id,
-          line2.id,
-          world,
-          customId
-        );
+        const intersection = world.getConstructionService().addLineLineIntersection(planeH, line1.id, line2.id, customId);
 
         expect(intersection.id).toBe(customId);
       });
 
       it('should throw error for non-existent lines', () => {
         expect(() => {
-          planeH.addLineLineIntersection('invalid_line1', 'invalid_line2', world);
+          world.getConstructionService().addLineLineIntersection(planeH, 'invalid_line1', 'invalid_line2');
         }).toThrow();
       });
 
       it('should throw error for parallel lines', () => {
         // Create two horizontal parallel lines
-        const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
-        const p2 = planeH.addFreePoint2D(new Vector3(10, 0, 1), world);
-        const p3 = planeH.addFreePoint2D(new Vector3(0, 5, 1), world);
-        const p4 = planeH.addFreePoint2D(new Vector3(10, 5, 1), world);
+        const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
+        const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(10, 0, 1));
+        const p3 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 5, 1));
+        const p4 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(10, 5, 1));
 
-        const line1 = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
-        const line2 = planeH.addLine2DBetweenTwoPoints(p3.id, p4.id, world); // Parallel to line1
+        const line1 = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p1.id, p2.id);
+        const line2 = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p3.id, p4.id); // Parallel to line1
 
         // After Phase 23, parallel lines create infeasible intersection point instead of throwing
-        const point = planeH.addLineLineIntersection(line1.id, line2.id, world);
+        const point = world.getConstructionService().addLineLineIntersection(planeH, line1.id, line2.id);
         const realization = point.realize2D(world);
         expect(realization).toBeDefined();
         expect(realization!.feasible).toBe(false);
@@ -151,13 +142,13 @@ describe('ProjectionPlane Factory Methods', () => {
     describe.skip('addIntersectionPoint2DWithSibling', () => {
       it('should create only primary point when neither element is HHL', () => {
         // Create two regular lines
-        const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
-        const p2 = planeH.addFreePoint2D(new Vector3(10, 0, 1), world);
-        const p3 = planeH.addFreePoint2D(new Vector3(5, -5, 1), world);
-        const p4 = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
+        const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
+        const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(10, 0, 1));
+        const p3 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, -5, 1));
+        const p4 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, 5, 1));
 
-        const line1 = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
-        const line2 = planeH.addLine2DBetweenTwoPoints(p3.id, p4.id, world);
+        const line1 = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p1.id, p2.id);
+        const line2 = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p3.id, p4.id);
 
         const result = planeH.addIntersectionPoint2DWithSibling(
           line1.id,
@@ -176,9 +167,9 @@ describe('ProjectionPlane Factory Methods', () => {
         const hhlId = 'half_HL_HV_on_PH';
 
         // Create a regular line that intersects the HHL
-        const p1 = planeH.addFreePoint2D(new Vector3(5, -5, 1), world);
-        const p2 = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
-        const verticalLine = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+        const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, -5, 1));
+        const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, 5, 1));
+        const verticalLine = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p1.id, p2.id);
 
         const result = planeH.addIntersectionPoint2DWithSibling(
           hhlId,
@@ -200,9 +191,9 @@ describe('ProjectionPlane Factory Methods', () => {
         const hhlId = 'half_HL_HV_on_PV';
 
         // Create a regular line that intersects the HHL
-        const p1 = planeV.addFreePoint2D(new Vector3(5, -5, 1), world);
-        const p2 = planeV.addFreePoint2D(new Vector3(5, 5, 1), world);
-        const verticalLine = planeV.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+        const p1 = world.getConstructionService().addFreePoint2D(planeV, new Vector3(5, -5, 1));
+        const p2 = world.getConstructionService().addFreePoint2D(planeV, new Vector3(5, 5, 1));
+        const verticalLine = world.getConstructionService().addLine2DBetweenTwoPoints(planeV, p1.id, p2.id);
 
         const result = planeV.addIntersectionPoint2DWithSibling(
           verticalLine.id,
@@ -221,9 +212,9 @@ describe('ProjectionPlane Factory Methods', () => {
       it('should establish bidirectional link between primary and sibling', () => {
         const hhlId = 'half_HL_HV_on_PH';
 
-        const p1 = planeH.addFreePoint2D(new Vector3(5, -5, 1), world);
-        const p2 = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
-        const verticalLine = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+        const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, -5, 1));
+        const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, 5, 1));
+        const verticalLine = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p1.id, p2.id);
 
         const result = planeH.addIntersectionPoint2DWithSibling(
           hhlId,
@@ -242,9 +233,9 @@ describe('ProjectionPlane Factory Methods', () => {
       it('should use provided IDs for redo operations', () => {
         const hhlId = 'half_HL_HV_on_PH';
 
-        const p1 = planeH.addFreePoint2D(new Vector3(5, -5, 1), world);
-        const p2 = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
-        const verticalLine = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+        const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, -5, 1));
+        const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, 5, 1));
+        const verticalLine = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p1.id, p2.id);
 
         const result = planeH.addIntersectionPoint2DWithSibling(
           hhlId,
@@ -262,9 +253,9 @@ describe('ProjectionPlane Factory Methods', () => {
       it('should copy label from primary to sibling', () => {
         const hhlId = 'half_HL_HV_on_PH';
 
-        const p1 = planeH.addFreePoint2D(new Vector3(5, -5, 1), world);
-        const p2 = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
-        const verticalLine = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+        const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, -5, 1));
+        const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, 5, 1));
+        const verticalLine = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p1.id, p2.id);
 
         // Create intersection - primary has no label yet
         const result = planeH.addIntersectionPoint2DWithSibling(
@@ -288,9 +279,9 @@ describe('ProjectionPlane Factory Methods', () => {
       it('should determine correct sibling plane for proj_plane_H', () => {
         const hhlId = 'half_HL_HV_on_PH';
 
-        const p1 = planeH.addFreePoint2D(new Vector3(5, -5, 1), world);
-        const p2 = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
-        const verticalLine = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+        const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, -5, 1));
+        const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, 5, 1));
+        const verticalLine = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p1.id, p2.id);
 
         const result = planeH.addIntersectionPoint2DWithSibling(
           hhlId,
@@ -305,9 +296,9 @@ describe('ProjectionPlane Factory Methods', () => {
       it('should determine correct sibling plane for proj_plane_V', () => {
         const hhlId = 'half_HL_HV_on_PV';
 
-        const p1 = planeV.addFreePoint2D(new Vector3(5, -5, 1), world);
-        const p2 = planeV.addFreePoint2D(new Vector3(5, 5, 1), world);
-        const verticalLine = planeV.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+        const p1 = world.getConstructionService().addFreePoint2D(planeV, new Vector3(5, -5, 1));
+        const p2 = world.getConstructionService().addFreePoint2D(planeV, new Vector3(5, 5, 1));
+        const verticalLine = world.getConstructionService().addLine2DBetweenTwoPoints(planeV, p1.id, p2.id);
 
         const result = planeV.addIntersectionPoint2DWithSibling(
           verticalLine.id,
@@ -322,9 +313,9 @@ describe('ProjectionPlane Factory Methods', () => {
       it('should add sibling to world storage', () => {
         const hhlId = 'half_HL_HV_on_PH';
 
-        const p1 = planeH.addFreePoint2D(new Vector3(5, -5, 1), world);
-        const p2 = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
-        const verticalLine = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+        const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, -5, 1));
+        const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, 5, 1));
+        const verticalLine = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p1.id, p2.id);
 
         const result = planeH.addIntersectionPoint2DWithSibling(
           hhlId,
@@ -341,10 +332,10 @@ describe('ProjectionPlane Factory Methods', () => {
 
     describe('addLine2DBetweenTwoPoints', () => {
       it('should create line between two points', () => {
-        const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
-        const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
+        const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
+        const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(10, 10, 1));
 
-        const line = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+        const line = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p1.id, p2.id);
 
         expect(line.id).toMatch(/^projPlane\d+\/line2d\d+$/);
         expect(line.planeId).toBe(planeH.id);
@@ -352,36 +343,36 @@ describe('ProjectionPlane Factory Methods', () => {
       });
 
       it('should use provided ID', () => {
-        const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
-        const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
+        const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
+        const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(10, 10, 1));
 
         const customId = planeH.id + '/custom_line';
-        const line = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world, customId);
+        const line = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p1.id, p2.id, customId);
 
         expect(line.id).toBe(customId);
       });
 
       it('should throw error for identical points', () => {
-        const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+        const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
 
         expect(() => {
-          planeH.addLine2DBetweenTwoPoints(p1.id, p1.id, world);
+          world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p1.id, p1.id);
         }).toThrow(/point|distinct/i);
       });
 
       it('should throw error for non-existent points', () => {
         expect(() => {
-          planeH.addLine2DBetweenTwoPoints('invalid_p1', 'invalid_p2', world);
+          world.getConstructionService().addLine2DBetweenTwoPoints(planeH, 'invalid_p1', 'invalid_p2');
         }).toThrow();
       });
     });
 
     describe('addSegment2DBetweenPoints', () => {
       it('should create segment between two points', () => {
-        const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
-        const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
+        const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
+        const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(10, 10, 1));
 
-        const segment = planeH.addSegment2DBetweenPoints(p1.id, p2.id, world);
+        const segment = world.getConstructionService().addSegment2DBetweenPoints(planeH, p1.id, p2.id);
 
         expect(segment.id).toMatch(/^projPlane\d+\/segment2d\d+$/);
         expect(segment.planeId).toBe(planeH.id);
@@ -389,101 +380,101 @@ describe('ProjectionPlane Factory Methods', () => {
       });
 
       it('should use provided ID', () => {
-        const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
-        const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
+        const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
+        const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(10, 10, 1));
 
         const customId = planeH.id + '/custom_segment';
-        const segment = planeH.addSegment2DBetweenPoints(p1.id, p2.id, world, customId);
+        const segment = world.getConstructionService().addSegment2DBetweenPoints(planeH, p1.id, p2.id, customId);
 
         expect(segment.id).toBe(customId);
       });
 
       it('should throw error for identical points', () => {
-        const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
+        const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
 
         expect(() => {
-          planeH.addSegment2DBetweenPoints(p1.id, p1.id, world);
+          world.getConstructionService().addSegment2DBetweenPoints(planeH, p1.id, p1.id);
         }).toThrow(/point|segment/i);
       });
     });
 
     describe('addCircle2DByCenterAndPoint', () => {
       it('should create circle with center and circumference point', () => {
-        const center = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
-        const circumPoint = planeH.addFreePoint2D(new Vector3(15, 5, 1), world);
+        const center = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, 5, 1));
+        const circumPoint = world.getConstructionService().addFreePoint2D(planeH, new Vector3(15, 5, 1));
 
-        const circle = planeH.addCircle2DByCenterAndPoint(center.id, circumPoint.id, world);
+        const circle = world.getConstructionService().addCircle2DByCenterAndPoint(planeH, center.id, circumPoint.id);
 
         expect(circle.id).toMatch(/^projPlane\d+\/circle2d\d+$/);
         expect(planeH.getCircle(circle.id)).toBe(circle);
       });
 
       it('should use provided ID', () => {
-        const center = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
-        const circumPoint = planeH.addFreePoint2D(new Vector3(15, 5, 1), world);
+        const center = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, 5, 1));
+        const circumPoint = world.getConstructionService().addFreePoint2D(planeH, new Vector3(15, 5, 1));
 
         const customId = planeH.id + '/custom_circle';
-        const circle = planeH.addCircle2DByCenterAndPoint(center.id, circumPoint.id, world, customId);
+        const circle = world.getConstructionService().addCircle2DByCenterAndPoint(planeH, center.id, circumPoint.id, customId);
 
         expect(circle.id).toBe(customId);
       });
 
       it('should throw error for non-existent center point', () => {
-        const circumPoint = planeH.addFreePoint2D(new Vector3(15, 5, 1), world);
+        const circumPoint = world.getConstructionService().addFreePoint2D(planeH, new Vector3(15, 5, 1));
 
         expect(() => {
-          planeH.addCircle2DByCenterAndPoint('invalid', circumPoint.id, world);
+          world.getConstructionService().addCircle2DByCenterAndPoint(planeH, 'invalid', circumPoint.id);
         }).toThrow(/point/i);
       });
     });
 
     describe('addGuide2D', () => {
       it('should create guide perpendicular to reference line through point', () => {
-        const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
-        const p2 = planeH.addFreePoint2D(new Vector3(10, 0, 1), world);
-        const throughPoint = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
+        const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
+        const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(10, 0, 1));
+        const throughPoint = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, 5, 1));
         
-        const referenceLine = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
-        const guide = planeH.addGuide2D(referenceLine.id, throughPoint.id, world);
+        const referenceLine = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p1.id, p2.id);
+        const guide = world.getConstructionService().addGuide2D(planeH, referenceLine.id, throughPoint.id);
 
         expect(guide.id).toMatch(/^projPlane\d+\/guide2d\d+$/);
         expect(planeH.getLine(guide.id)).toBe(guide);
       });
 
       it('should use provided ID', () => {
-        const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
-        const p2 = planeH.addFreePoint2D(new Vector3(10, 0, 1), world);
-        const throughPoint = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
+        const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
+        const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(10, 0, 1));
+        const throughPoint = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, 5, 1));
         
-        const referenceLine = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+        const referenceLine = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p1.id, p2.id);
         const customId = planeH.id + '/custom_guide';
-        const guide = planeH.addGuide2D(referenceLine.id, throughPoint.id, world, customId);
+        const guide = world.getConstructionService().addGuide2D(planeH, referenceLine.id, throughPoint.id, customId);
 
         expect(guide.id).toBe(customId);
       });
 
       it('should throw error for non-existent reference line', () => {
-        const point = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
+        const point = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, 5, 1));
         
         expect(() => {
-          planeH.addGuide2D('invalid_line', point.id, world);
+          world.getConstructionService().addGuide2D(planeH, 'invalid_line', point.id);
         }).toThrow(/line/i);
       });
 
       it('should throw error for non-existent through point', () => {
-        const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
-        const p2 = planeH.addFreePoint2D(new Vector3(10, 0, 1), world);
-        const referenceLine = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+        const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
+        const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(10, 0, 1));
+        const referenceLine = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p1.id, p2.id);
         
         expect(() => {
-          planeH.addGuide2D(referenceLine.id, 'invalid_point', world);
+          world.getConstructionService().addGuide2D(planeH, referenceLine.id, 'invalid_point');
         }).toThrow(/point/i);
       });
     });
 
     describe('Removal Methods', () => {
       it('should remove point and return success', () => {
-        const point = planeH.addFreePoint2D(new Vector3(10, 20, 1), world);
+        const point = world.getConstructionService().addFreePoint2D(planeH, new Vector3(10, 20, 1));
         const pointId = point.id;
 
         const removed = planeH.removePoint(pointId);
@@ -493,9 +484,9 @@ describe('ProjectionPlane Factory Methods', () => {
       });
 
       it('should remove line and return success', () => {
-        const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
-        const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
-        const line = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+        const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
+        const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(10, 10, 1));
+        const line = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p1.id, p2.id);
 
         const removed = planeH.removeLine(line.id);
 
@@ -504,9 +495,9 @@ describe('ProjectionPlane Factory Methods', () => {
       });
 
       it('should remove segment and return success', () => {
-        const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
-        const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
-        const segment = planeH.addSegment2DBetweenPoints(p1.id, p2.id, world);
+        const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
+        const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(10, 10, 1));
+        const segment = world.getConstructionService().addSegment2DBetweenPoints(planeH, p1.id, p2.id);
 
         const removed = planeH.removeLine(segment.id); // Segments are Line2D
 
@@ -515,11 +506,11 @@ describe('ProjectionPlane Factory Methods', () => {
       });
 
       it('should remove guide and return success', () => {
-        const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
-        const p2 = planeH.addFreePoint2D(new Vector3(10, 0, 1), world);
-        const throughPoint = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
-        const referenceLine = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
-        const guide = planeH.addGuide2D(referenceLine.id, throughPoint.id, world);
+        const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
+        const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(10, 0, 1));
+        const throughPoint = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, 5, 1));
+        const referenceLine = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p1.id, p2.id);
+        const guide = world.getConstructionService().addGuide2D(planeH, referenceLine.id, throughPoint.id);
 
         const removed = planeH.removeLine(guide.id); // Guides are Line2D
 
@@ -536,7 +527,7 @@ describe('ProjectionPlane Factory Methods', () => {
 
     describe('Realization Cache Updates', () => {
       it('should update realizations when point added', () => {
-        const point = planeH.addFreePoint2D(new Vector3(10, 20, 1), world);
+        const point = world.getConstructionService().addFreePoint2D(planeH, new Vector3(10, 20, 1));
 
         const realization = point.realize2D(world);
 
@@ -546,9 +537,9 @@ describe('ProjectionPlane Factory Methods', () => {
       });
 
       it('should update realizations when line added', () => {
-        const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
-        const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
-        const line = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+        const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
+        const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(10, 10, 1));
+        const line = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p1.id, p2.id);
 
         const realization = line.realize2D(world);
 
@@ -556,9 +547,9 @@ describe('ProjectionPlane Factory Methods', () => {
       });
 
       it('should update realizations when segment added', () => {
-        const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
-        const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
-        const segment = planeH.addSegment2DBetweenPoints(p1.id, p2.id, world);
+        const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
+        const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(10, 10, 1));
+        const segment = world.getConstructionService().addSegment2DBetweenPoints(planeH, p1.id, p2.id);
 
         // Phase 22.5: Segments are Line2D, use realize2D
         const realization = segment.realize2D(world);
@@ -604,9 +595,9 @@ describe('ProjectionPlane Factory Methods', () => {
 
       it('should return undefined for non-HalfHingeLine element', () => {
         // Create a regular line
-        const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
-        const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
-        const line = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+        const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
+        const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(10, 10, 1));
+        const line = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p1.id, p2.id);
 
         const hingeLine = world.getHingeLineFromHalfHingeLine(line.id);
 
@@ -622,12 +613,12 @@ describe('ProjectionPlane Factory Methods', () => {
         const hhlId = halfHLs[0].id;
 
         // Create a regular line
-        const p1 = planeH.addFreePoint2D(new Vector3(5, -5, 1), world);
-        const p2 = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
-        const line = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+        const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, -5, 1));
+        const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, 5, 1));
+        const line = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p1.id, p2.id);
 
         // Create intersection point
-        const intersection = planeH.addLineLineIntersection(hhlId, line.id, world);
+        const intersection = world.getConstructionService().addLineLineIntersection(planeH, hhlId, line.id);
 
         const siblingPlaneId = world.getSiblingPlaneForIntersection(intersection);
 
@@ -641,12 +632,12 @@ describe('ProjectionPlane Factory Methods', () => {
         const hhlId = halfHLs[0].id;
 
         // Create a regular line
-        const p1 = planeV.addFreePoint2D(new Vector3(5, -5, 1), world);
-        const p2 = planeV.addFreePoint2D(new Vector3(5, 5, 1), world);
-        const line = planeV.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+        const p1 = world.getConstructionService().addFreePoint2D(planeV, new Vector3(5, -5, 1));
+        const p2 = world.getConstructionService().addFreePoint2D(planeV, new Vector3(5, 5, 1));
+        const line = world.getConstructionService().addLine2DBetweenTwoPoints(planeV, p1.id, p2.id);
 
         // Create intersection point
-        const intersection = planeV.addLineLineIntersection(line.id, hhlId, world);
+        const intersection = world.getConstructionService().addLineLineIntersection(planeV, line.id, hhlId);
 
         const siblingPlaneId = world.getSiblingPlaneForIntersection(intersection);
 
@@ -655,16 +646,16 @@ describe('ProjectionPlane Factory Methods', () => {
 
       it('should return undefined for regular line-line intersection (no HHL)', () => {
         // Create two regular lines
-        const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
-        const p2 = planeH.addFreePoint2D(new Vector3(10, 0, 1), world);
-        const p3 = planeH.addFreePoint2D(new Vector3(5, -5, 1), world);
-        const p4 = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
+        const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
+        const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(10, 0, 1));
+        const p3 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, -5, 1));
+        const p4 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, 5, 1));
 
-        const line1 = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
-        const line2 = planeH.addLine2DBetweenTwoPoints(p3.id, p4.id, world);
+        const line1 = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p1.id, p2.id);
+        const line2 = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p3.id, p4.id);
 
         // Create intersection point
-        const intersection = planeH.addLineLineIntersection(line1.id, line2.id, world);
+        const intersection = world.getConstructionService().addLineLineIntersection(planeH, line1.id, line2.id);
 
         const siblingPlaneId = world.getSiblingPlaneForIntersection(intersection);
 
@@ -678,12 +669,12 @@ describe('ProjectionPlane Factory Methods', () => {
         const hhlId = halfHLs[0].id;
 
         // Create a circle that intersects the HHL
-        const center = planeH.addFreePoint2D(new Vector3(5, 3, 1), world);
-        const radiusPoint = planeH.addFreePoint2D(new Vector3(5, 8, 1), world);
-        const circle = planeH.addCircle2DByCenterAndPoint(center.id, radiusPoint.id, world);
+        const center = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, 3, 1));
+        const radiusPoint = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, 8, 1));
+        const circle = world.getConstructionService().addCircle2DByCenterAndPoint(planeH, center.id, radiusPoint.id);
 
         // Create intersection point (circle-line)
-        const intersection = planeH.addLineCircleIntersection(hhlId, circle.id, 0, world);
+        const intersection = world.getConstructionService().addLineCircleIntersection(planeH, hhlId, circle.id, 0);
 
         const siblingPlaneId = world.getSiblingPlaneForIntersection(intersection);
 
@@ -692,16 +683,16 @@ describe('ProjectionPlane Factory Methods', () => {
 
       it('should return undefined for circle-circle intersection (no HHL)', () => {
         // Create two circles
-        const c1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
-        const r1 = planeH.addFreePoint2D(new Vector3(5, 0, 1), world);
-        const circle1 = planeH.addCircle2DByCenterAndPoint(c1.id, r1.id, world);
+        const c1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
+        const r1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, 0, 1));
+        const circle1 = world.getConstructionService().addCircle2DByCenterAndPoint(planeH, c1.id, r1.id);
 
-        const c2 = planeH.addFreePoint2D(new Vector3(8, 0, 1), world);
-        const r2 = planeH.addFreePoint2D(new Vector3(13, 0, 1), world);
-        const circle2 = planeH.addCircle2DByCenterAndPoint(c2.id, r2.id, world);
+        const c2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(8, 0, 1));
+        const r2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(13, 0, 1));
+        const circle2 = world.getConstructionService().addCircle2DByCenterAndPoint(planeH, c2.id, r2.id);
 
         // Create intersection point
-        const intersection = planeH.addCircleCircleIntersection(circle1.id, circle2.id, 0, world);
+        const intersection = world.getConstructionService().addCircleCircleIntersection(planeH, circle1.id, circle2.id, 0);
 
         const siblingPlaneId = world.getSiblingPlaneForIntersection(intersection);
 
@@ -710,7 +701,7 @@ describe('ProjectionPlane Factory Methods', () => {
 
       it('should return undefined for non-intersection point', () => {
         // Create a free point
-        const point = planeH.addFreePoint2D(new Vector3(10, 20, 1), world);
+        const point = world.getConstructionService().addFreePoint2D(planeH, new Vector3(10, 20, 1));
 
         const siblingPlaneId = world.getSiblingPlaneForIntersection(point);
 

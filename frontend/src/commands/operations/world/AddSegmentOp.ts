@@ -1,11 +1,12 @@
 /**
- * AddSegment2DByPointsOp - Operation to add a Segment2D using ProjectionPlane factory method
+ * AddSegment2DByPointsOp - Operation to add a Segment2D using ConstructionService
  * 
- * Wraps ProjectionPlane.addSegment2DBetweenPoints() in the Operation interface.
+ * Wraps ConstructionService.addSegment2DBetweenPoints() in the Operation interface.
  */
 
 import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
+import { removeLineFromPlane } from './operationHelpers';
 
 export interface AddSegment2DByPointsDescriptor extends OperationDescriptor<'AddSegment2DByPoints'> {
   planeId: string;
@@ -36,11 +37,10 @@ export class AddSegment2DByPointsOp implements IOperation<AddSegment2DByPointsDe
         throw new Error(`Plane not found: ${this.planeId}`);
       }
       
-      // Pass stored ID if available (for redo), otherwise let plane generate new one
-      const segment = plane.addSegment2DBetweenPoints(
+      const segment = world.getConstructionService().addSegment2DBetweenPoints(
+        plane,
         this.point1Id,
         this.point2Id,
-        world,
         this.outputs.segmentId
       );
       this.outputs = { segmentId: segment.id };
@@ -61,8 +61,7 @@ export class AddSegment2DByPointsOp implements IOperation<AddSegment2DByPointsDe
     if (this.outputs.segmentId) {
       const plane = world.getProjectionPlaneById(this.planeId);
       if (plane) {
-        // Segments are stored in the lines Map
-        plane.removeLine(this.outputs.segmentId);
+        removeLineFromPlane(world, plane, this.outputs.segmentId);
       }
     }
   }

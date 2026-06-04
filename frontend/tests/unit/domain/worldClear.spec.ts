@@ -46,16 +46,16 @@ describe('World clear', () => {
     const planeH = world.addProjectionPlane(planeH3D.id, planeToPaper(), horizontalPlaneTo3D(), undefined, 'P_H');
     const planeV = world.addProjectionPlane(planeV3D.id, planeToPaper(), verticalPlaneTo3D(), undefined, 'P_V');
     const hingeLine = world.addHingeLine(planeH.id, planeV.id);
-    const halfHingeLine = planeH.addHalfHingeLine2D(hingeLine.id, world);
+    const halfHingeLine = world.getConstructionService().addHalfHingeLine2D(planeH, hingeLine.id);
 
-    const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
-    const p2 = planeH.addFreePoint2D(new Vector3(1, 0, 1), world);
-    const p3 = planeV.addFreePoint2D(new Vector3(0, 0, 1), world);
-    const p4 = planeV.addFreePoint2D(new Vector3(1, 0, 1), world);
-    const lineH = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
-    const lineV = planeV.addLine2DBetweenTwoPoints(p3.id, p4.id, world);
-    const segmentH = planeH.addSegment2DBetweenPoints(p1.id, p2.id, world);
-    const segmentV = planeV.addSegment2DBetweenPoints(p3.id, p4.id, world);
+    const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
+    const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(1, 0, 1));
+    const p3 = world.getConstructionService().addFreePoint2D(planeV, new Vector3(0, 0, 1));
+    const p4 = world.getConstructionService().addFreePoint2D(planeV, new Vector3(1, 0, 1));
+    const lineH = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p1.id, p2.id);
+    const lineV = world.getConstructionService().addLine2DBetweenTwoPoints(planeV, p3.id, p4.id);
+    const segmentH = world.getConstructionService().addSegment2DBetweenPoints(planeH, p1.id, p2.id);
+    const segmentV = world.getConstructionService().addSegment2DBetweenPoints(planeV, p3.id, p4.id);
 
     const point3D = new Point3DByCoordinates(firstPoint3DId, 'A', new Vector4(1, 2, 3, 1), createVisualStyle());
     const line3D = new Line3DFromProjections(firstLine3DId, 'r', lineH.id, lineV.id, planeH.id, planeV.id, createVisualStyle());

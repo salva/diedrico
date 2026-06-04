@@ -35,10 +35,10 @@ describe('Circle2D', () => {
     planeId = getHorizontalPlaneId(world);
     
     // Create test points with hierarchical IDs
-    const centerPoint = new FreePoint2D(plane.generatePoint2DId(world), new Vector3(0, 0, 1), planeId);
-    const point1 = new FreePoint2D(plane.generatePoint2DId(world), new Vector3(50, 0, 1), planeId);
-    const point2 = new FreePoint2D(plane.generatePoint2DId(world), new Vector3(0, 50, 1), planeId);
-    const point3 = new FreePoint2D(plane.generatePoint2DId(world), new Vector3(-50, 0, 1), planeId);
+    const centerPoint = new FreePoint2D(world.getConstructionService().generatePoint2DId(plane), new Vector3(0, 0, 1), planeId);
+    const point1 = new FreePoint2D(world.getConstructionService().generatePoint2DId(plane), new Vector3(50, 0, 1), planeId);
+    const point2 = new FreePoint2D(world.getConstructionService().generatePoint2DId(plane), new Vector3(0, 50, 1), planeId);
+    const point3 = new FreePoint2D(world.getConstructionService().generatePoint2DId(plane), new Vector3(-50, 0, 1), planeId);
     
     plane.addPoint(centerPoint);
     plane.addPoint(point1);
@@ -54,7 +54,7 @@ describe('Circle2D', () => {
   describe('Circle2DByCenterAndPoint', () => {
     it('should create circle with center and circumference point', () => {
       const plane = getHorizontalPlane(world);
-      const circle = new Circle2DByCenterAndPoint(plane.generateCircle2DId(world), centerPointId, point1Id, planeId);
+      const circle = new Circle2DByCenterAndPoint(world.getConstructionService().generateCircle2DId(plane), centerPointId, point1Id, planeId);
       
       expect(circle.id).toBeDefined();
       expect(circle).toBeInstanceOf(Circle2DByCenterAndPoint);
@@ -64,7 +64,7 @@ describe('Circle2D', () => {
 
     it('should realize circle with computed radius', () => {
       const plane = getHorizontalPlane(world);
-      const circle = new Circle2DByCenterAndPoint(plane.generateCircle2DId(world), centerPointId, point1Id, planeId);
+      const circle = new Circle2DByCenterAndPoint(world.getConstructionService().generateCircle2DId(plane), centerPointId, point1Id, planeId);
       
       plane.addCircle(circle);
       const realization = world.realizeCircle2D(world.getCircle2D(circle.id)!, world);
@@ -83,10 +83,10 @@ describe('Circle2D', () => {
     it('should return null for degenerate circle (center = circumference point)', () => {
       const plane = getHorizontalPlane(world);
       // Create coincident point
-      const coincident = new FreePoint2D(plane.generatePoint2DId(world), new Vector3(0, 0, 1), planeId);
+      const coincident = new FreePoint2D(world.getConstructionService().generatePoint2DId(plane), new Vector3(0, 0, 1), planeId);
       plane.addPoint(coincident);
       
-      const circle = new Circle2DByCenterAndPoint(plane.generateCircle2DId(world), centerPointId, coincident.id, planeId);
+      const circle = new Circle2DByCenterAndPoint(world.getConstructionService().generateCircle2DId(plane), centerPointId, coincident.id, planeId);
       plane.addCircle(circle);
       const realization = world.realizeCircle2D(world.getCircle2D(circle.id)!, world);
       
@@ -99,7 +99,7 @@ describe('Circle2D', () => {
   describe('Circle2DByThreePoints', () => {
     it('should create circle through three points', () => {
       const plane = getHorizontalPlane(world);
-      const circle = new Circle2DByThreePoints(plane.generateCircle2DId(world), point1Id, point2Id, point3Id, planeId);
+      const circle = new Circle2DByThreePoints(world.getConstructionService().generateCircle2DId(plane), point1Id, point2Id, point3Id, planeId);
       
       expect(circle.id).toBeDefined();
       expect(circle).toBeInstanceOf(Circle2DByThreePoints);
@@ -110,7 +110,7 @@ describe('Circle2D', () => {
 
     it('should realize circle through three non-collinear points', () => {
       const plane = getHorizontalPlane(world);
-      const circle = new Circle2DByThreePoints(plane.generateCircle2DId(world), point1Id, point2Id, point3Id, planeId);
+      const circle = new Circle2DByThreePoints(world.getConstructionService().generateCircle2DId(plane), point1Id, point2Id, point3Id, planeId);
       
       plane.addCircle(circle);
       const realization = world.realizeCircle2D(world.getCircle2D(circle.id)!, world);
@@ -126,14 +126,14 @@ describe('Circle2D', () => {
     it('should return null for collinear points', () => {
       const plane = getHorizontalPlane(world);
       // Create three collinear points
-      const collinear1 = new FreePoint2D(plane.generatePoint2DId(world), new Vector3(0, 0, 1), planeId);
-      const collinear2 = new FreePoint2D(plane.generatePoint2DId(world), new Vector3(10, 0, 1), planeId);
-      const collinear3 = new FreePoint2D(plane.generatePoint2DId(world), new Vector3(20, 0, 1), planeId);
+      const collinear1 = new FreePoint2D(world.getConstructionService().generatePoint2DId(plane), new Vector3(0, 0, 1), planeId);
+      const collinear2 = new FreePoint2D(world.getConstructionService().generatePoint2DId(plane), new Vector3(10, 0, 1), planeId);
+      const collinear3 = new FreePoint2D(world.getConstructionService().generatePoint2DId(plane), new Vector3(20, 0, 1), planeId);
       plane.addPoint(collinear1);
       plane.addPoint(collinear2);
       plane.addPoint(collinear3);
       
-      const circle = new Circle2DByThreePoints(plane.generateCircle2DId(world), collinear1.id, collinear2.id, collinear3.id, planeId);
+      const circle = new Circle2DByThreePoints(world.getConstructionService().generateCircle2DId(plane), collinear1.id, collinear2.id, collinear3.id, planeId);
       plane.addCircle(circle);
       const realization = world.realizeCircle2D(world.getCircle2D(circle.id)!, world);
       

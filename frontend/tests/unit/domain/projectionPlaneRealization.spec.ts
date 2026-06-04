@@ -22,8 +22,8 @@ describe('World realization facade', () => {
     planeH = world.getProjectionPlaneByLabel('P_H')!;
     
     // Create test points (let IDs auto-generate)
-    const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
-    const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
+    const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
+    const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(10, 10, 1));
     
     p1Id = p1.id;
     p2Id = p2.id;
@@ -71,7 +71,7 @@ describe('World realization facade', () => {
 
   describe('Line realization computation', () => {
     it('World.realizeLine2D() should compute and cache line realization', () => {
-      const line = planeH.addLine2DBetweenTwoPoints(p1Id, p2Id, world);
+      const line = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p1Id, p2Id);
       const realization = world.realizeLine2D(line, world);
       
       // Verify realization computed
@@ -104,8 +104,8 @@ describe('World realization facade', () => {
   describe('Circle realization computation', () => {
     it('World.realizeCircle2D() should compute and cache circle realization', () => {
       // Create circumference point
-      const p2 = planeH.addFreePoint2D(new Vector3(5, 0, 1), world);
-      const circle = planeH.addCircle2DByCenterAndPoint(p1Id, p2.id, world);
+      const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, 0, 1));
+      const circle = world.getConstructionService().addCircle2DByCenterAndPoint(planeH, p1Id, p2.id);
       
       const realization = world.realizeCircle2D(circle, world);
       
@@ -128,8 +128,8 @@ describe('World realization facade', () => {
       const planeV = world.getProjectionPlaneByLabel('P_V')!;
       
       // Add points to both planes (no hardcoded IDs)
-      const p1H = planeH.addFreePoint2D(new Vector3(5, 5, 1), world);
-      const p1V = planeV.addFreePoint2D(new Vector3(5, 5, 1), world);
+      const p1H = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, 5, 1));
+      const p1V = world.getConstructionService().addFreePoint2D(planeV, new Vector3(5, 5, 1));
       
       const firstH = world.realizePoint2D(p1H, world);
       const firstV = world.realizePoint2D(p1V, world);

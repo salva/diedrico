@@ -60,11 +60,19 @@ describe('RemoveElement Operations (T286, T290)', () => {
     return actionNode.id;
   }
 
+  function addFreePoint(plane: ReturnType<typeof getHorizontalPlane>, position: Vector3) {
+    return world.getConstructionService().addFreePoint2D(plane, position);
+  }
+
+  function addLineByPoints(plane: ReturnType<typeof getHorizontalPlane>, point1Id: string, point2Id: string) {
+    return world.getConstructionService().addLine2DBetweenTwoPoints(plane, point1Id, point2Id);
+  }
+
   describe('RemovePoint2DOp', () => {
     it('should remove a point from World', () => {
       const plane = getHorizontalPlane(world);
       const planeId = getHorizontalPlaneId(world);
-      const point = plane.addFreePoint2D(new Vector3(100, 200, 1), world);
+      const point = addFreePoint(plane, new Vector3(100, 200, 1));
       expect(plane.getPoint(point.id)).toBeDefined();
       
       const removeOp = new RemovePoint2DOp(planeId, point.id);
@@ -77,7 +85,7 @@ describe('RemoveElement Operations (T286, T290)', () => {
     it('should support undo to restore point', () => {
       const plane = getHorizontalPlane(world);
       const planeId = getHorizontalPlaneId(world);
-      const point = plane.addFreePoint2D(new Vector3(100, 200, 1), world);
+      const point = addFreePoint(plane, new Vector3(100, 200, 1));
       
       const removeOp = new RemovePoint2DOp(planeId, point.id);
       removeOp.apply(world);
@@ -101,9 +109,9 @@ describe('RemoveElement Operations (T286, T290)', () => {
     it('should remove a line from World', () => {
       const plane = getHorizontalPlane(world);
       const planeId = getHorizontalPlaneId(world);
-      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const p2 = plane.addFreePoint2D(new Vector3(100, 100, 1), world);
-      const line = plane.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+      const p1 = addFreePoint(plane, new Vector3(0, 0, 1));
+      const p2 = addFreePoint(plane, new Vector3(100, 100, 1));
+      const line = addLineByPoints(plane, p1.id, p2.id);
       
       expect(plane.getLine(line.id)).toBeDefined();
       
@@ -117,9 +125,9 @@ describe('RemoveElement Operations (T286, T290)', () => {
     it('should support undo to restore line', () => {
       const plane = getHorizontalPlane(world);
       const planeId = getHorizontalPlaneId(world);
-      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const p2 = plane.addFreePoint2D(new Vector3(100, 100, 1), world);
-      const line = plane.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+      const p1 = addFreePoint(plane, new Vector3(0, 0, 1));
+      const p2 = addFreePoint(plane, new Vector3(100, 100, 1));
+      const line = addLineByPoints(plane, p1.id, p2.id);
       
       const removeOp = new RemoveLine2DOp(planeId, line.id);
       removeOp.apply(world);
@@ -135,9 +143,9 @@ describe('RemoveElement Operations (T286, T290)', () => {
       const plane = getHorizontalPlane(world);
       const planeId = getHorizontalPlaneId(world);
       // Create point → line dependency
-      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const p2 = plane.addFreePoint2D(new Vector3(100, 100, 1), world);
-      const line = plane.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+      const p1 = addFreePoint(plane, new Vector3(0, 0, 1));
+      const p2 = addFreePoint(plane, new Vector3(100, 100, 1));
+      const line = addLineByPoints(plane, p1.id, p2.id);
       
       // Add actions to process tree - Phase 93: addTestAction returns ActionNode ID
       const actionNode1 = addTestAction(p1.id);
@@ -169,9 +177,9 @@ describe('RemoveElement Operations (T286, T290)', () => {
     it('should support undo for cascade deletion', () => {
       const plane = getHorizontalPlane(world);
       const planeId = getHorizontalPlaneId(world);
-      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const p2 = plane.addFreePoint2D(new Vector3(100, 100, 1), world);
-      const line = plane.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+      const p1 = addFreePoint(plane, new Vector3(0, 0, 1));
+      const p2 = addFreePoint(plane, new Vector3(100, 100, 1));
+      const line = addLineByPoints(plane, p1.id, p2.id);
       
       // Phase 93: addTestAction returns ActionNode ID
       const actionNode1 = addTestAction(p1.id);
@@ -199,9 +207,9 @@ describe('RemoveElement Operations (T286, T290)', () => {
     it('should support redo after undo', () => {
       const plane = getHorizontalPlane(world);
       const planeId = getHorizontalPlaneId(world);
-      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const p2 = plane.addFreePoint2D(new Vector3(100, 100, 1), world);
-      const line = plane.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
+      const p1 = addFreePoint(plane, new Vector3(0, 0, 1));
+      const p2 = addFreePoint(plane, new Vector3(100, 100, 1));
+      const line = addLineByPoints(plane, p1.id, p2.id);
       
       // Phase 93: addTestAction returns ActionNode ID
       const actionNode1 = addTestAction(p1.id);
@@ -231,8 +239,8 @@ describe('RemoveElement Operations (T286, T290)', () => {
     it('should delete multiple independent points', () => {
       const plane = getHorizontalPlane(world);
       const planeId = getHorizontalPlaneId(world);
-      const p1 = plane.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const p2 = plane.addFreePoint2D(new Vector3(100, 100, 1), world);
+      const p1 = addFreePoint(plane, new Vector3(0, 0, 1));
+      const p2 = addFreePoint(plane, new Vector3(100, 100, 1));
       
       // Phase 93: addTestAction returns ActionNode ID
       const actionNode1 = addTestAction(p1.id);
