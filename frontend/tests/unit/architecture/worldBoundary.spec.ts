@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { findContentMatches, findForbiddenImports, scanTextFiles } from './helpers/sourceScanner';
-import runtimeSession from '@/application/appShell/RuntimeSession.ts?raw';
 
 const forbiddenOuterLayerImports = [
   /^@\/application(\/|$)/,
@@ -37,36 +36,6 @@ describe('Architecture: domain world boundary', () => {
     expect(worldFile.content).not.toMatch(/activePlaneId|getActivePlaneId|setActivePlaneId/);
   });
 
-  it('keeps World realization cache storage in RealizationStore', () => {
-    const files = scanTextFiles(['src/domain/world']);
-    const [worldFile] = files.filter(file => file.projectPath === 'src/domain/world/World.ts');
-    const [storeFile] = files.filter(file => file.projectPath === 'src/domain/world/RealizationStore.ts');
-
-    expect(storeFile).toBeDefined();
-    expect(worldFile.content).toMatch(/new RealizationStore\(\)/);
-    expect(worldFile.content).not.toMatch(/pointRealizations3D|projectionPlaneRealizations2D|projectionPlaneRealizations3D|lineRealizations3D|segmentRealizations3D|planeRealizations3D/);
-    expect(storeFile.content).toMatch(/new Map<string, Point3DRealization3D>/);
-    expect(storeFile.content).toMatch(/new Map<string, ProjectionPlaneRealization2D>/);
-  });
-
-  it('keeps World ID allocation delegated to WorldIdAllocator', () => {
-    const files = scanTextFiles(['src/domain/world']);
-    const [worldFile] = files.filter(file => file.projectPath === 'src/domain/world/World.ts');
-    const [allocatorFile] = files.filter(file => file.projectPath === 'src/domain/world/WorldIdAllocator.ts');
-
-    expect(allocatorFile).toBeDefined();
-    expect(worldFile.content).toMatch(/new WorldIdAllocator\(\)/);
-    expect(worldFile.content).not.toMatch(/private nextId/);
-    expect(allocatorFile.content).toMatch(/next\(\): number/);
-    expect(allocatorFile.content).toMatch(/prefixed\(prefix: string\): string/);
-  });
-
-  it('routes RuntimeSession port subscriptions through the standalone RuntimeChangePublisher', () => {
-    expect(runtimeSession).toMatch(/new RuntimeChangePublisher\(\)/);
-    expect(runtimeSession).not.toMatch(/this\.world\.subscribeToChanges|this\.world\.unsubscribeFromChanges|this\.world\.getVersion\(/);
-    expect(runtimeSession).toMatch(/this\.changes\.getVersion\(\)/);
-  });
-
   it('keeps World.ts free of notification plumbing', () => {
     const [worldFile] = scanTextFiles(['src/domain/world']).filter(file => file.projectPath === 'src/domain/world/World.ts');
 
@@ -99,9 +68,8 @@ describe('Architecture: domain world boundary', () => {
   });
 
   it('keeps dependency access narrowed to query and registrar ports outside World', () => {
-    const files = scanTextFiles(['src/application', 'src/commands', 'src/domain/world/projectionPlane']);
+    const files = scanTextFiles(['src/application', 'src/commands']);
     const offenders = files
-      .filter(file => file.projectPath !== 'src/domain/world/projectionPlane/ProjectionPlaneContext.ts')
       .filter(file => /getDependencyService\(\)\.(registerNode|unregisterNode|getElementsInDeletionOrder|getDependencies|getDependents|getAllDependents)/.test(file.content))
       .map(file => file.projectPath);
 

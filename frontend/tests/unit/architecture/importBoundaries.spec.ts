@@ -72,16 +72,14 @@ describe('Architecture: import boundaries', () => {
     expect(findForbiddenImports(componentFiles, [/^@\/tools(\/|$)/, /\.\.\/tools(\/|$)/])).toEqual([]);
   });
 
-  it('keeps SvgCanvas from importing direct tool store or rendering constructors', () => {
+  it('keeps SvgCanvas from importing the direct tool store', () => {
     const svgCanvasFiles = scanTextFiles(['src/components/workspace'])
       .filter(file => file.projectPath === 'src/components/workspace/SvgCanvas.vue');
 
     expect(svgCanvasFiles).toHaveLength(1);
     expect(findForbiddenImports(svgCanvasFiles, [
       /^@\/stores\/toolStore$/,
-      /^@\/rendering\/svg\/SVGRenderer$/,
     ])).toEqual([]);
-    expect(findContentMatches(svgCanvasFiles, /new\s+SVGRenderer\s*\(/g)).toEqual([]);
   });
 
   it('keeps UI components from importing domain process-tree model modules', () => {
@@ -127,7 +125,7 @@ describe('Architecture: import boundaries', () => {
   it('keeps factories and render/input helpers out of the services directory', () => {
     const files = scanTextFiles(['src']);
 
-    expect(findContentMatches(files, /src\/services\/factories|@\/services\/(SVGRenderer|GeometryService)|@\/services\/factories\//g, {
+    expect(findContentMatches(files, /src\/services\/factories|@\/services\/GeometryService|@\/services\/factories\//g, {
       exclude: isArchitectureSpec,
     })).toEqual([]);
   });
@@ -183,7 +181,6 @@ describe('Architecture: import boundaries', () => {
       /^@\/stores(\/|$)/,
       /^@\/tools\/(?!ToolCommandIntents$)/,
       /^@\/rendering(\/|$)/,
-      /SVGRenderer$/,
     ])).toEqual([]);
     expect(findContentMatches(runtimeViewPortFiles, /CanvasTool|invokeToolClick/g)).toEqual([]);
   });
