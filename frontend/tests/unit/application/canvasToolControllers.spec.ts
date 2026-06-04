@@ -197,7 +197,6 @@ describe('Wave 006a canvas/tool command controllers', () => {
         intents.push(intent);
         return { success: true };
       }),
-      executeQuickIntent: vi.fn(() => ({ success: true })),
       startFreePointMove: vi.fn(() => ({ preview: vi.fn(() => ({ success: true })), commit: vi.fn(() => ({ success: true })), cancel: vi.fn() })),
       updateElementStyle: vi.fn(() => ({ success: true }))
     };

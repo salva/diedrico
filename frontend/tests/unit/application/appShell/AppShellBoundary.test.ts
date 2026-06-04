@@ -91,8 +91,8 @@ describe('Cycle 022 runtime session persistence boundary', () => {
     expect(appShellPorts).not.toMatch(/SerializedProjectSession|schemaVersion|commands:|created:|modified:/);
     expect(appShellPorts).toMatch(/OpenedProjectSession/);
     expect(appShellPorts).not.toMatch(/PersistedProjectSession/);
-    expect(appShellPorts).toMatch(/RuntimeSessionSnapshotHandle/);
-    expect(appShellPorts).toMatch(/RuntimeSessionRestoreHandle/);
+    expect(appShellPorts).not.toMatch(/RuntimeSessionSnapshotHandle/);
+    expect(appShellPorts).not.toMatch(/RuntimeSessionRestoreHandle/);
     expect(appShellPorts).toMatch(/createFile\(fileName: string, data: ProjectSessionPersistencePayload\)/);
     expect(appShellPorts).toMatch(/updateFile\(fileId: string, data: ProjectSessionPersistencePayload\)/);
     expect(appShellPorts).toMatch(/loadFile\(fileId: string\): Promise<unknown>/);
@@ -200,7 +200,6 @@ import canvasToolController from '@/application/tools/CanvasToolController.ts?ra
 import canvasPointMovementUseCase from '@/application/canvas/CanvasPointMovementUseCase.ts?raw';
 import canvasStyleUseCase from '@/application/canvas/CanvasStyleUseCase.ts?raw';
 import constructionUseCases from '@/application/construction/ConstructionUseCases.ts?raw';
-import quickToolUseCases from '@/application/construction/QuickToolUseCases.ts?raw';
 import processHistoryController from '@/application/processHistory/ProcessHistoryController.ts?raw';
 import processHistoryUseCases from '@/application/processHistory/ProcessHistoryUseCases.ts?raw';
 import runtimeCommandProducer from '@/application/commandProduction/RuntimeCommandProducer.ts?raw';
@@ -212,7 +211,6 @@ describe('Cycle 024 command-producer runtime ports', () => {
       canvasPointMovementUseCase,
       canvasStyleUseCase,
       constructionUseCases,
-      quickToolUseCases,
       processHistoryController,
       processHistoryUseCases,
     ];
@@ -239,8 +237,7 @@ describe('Cycle 024 command-producer runtime ports', () => {
     expect(processHistoryController).not.toMatch(/CommandStack/);
   });
 
-  it('deletes stale quick-tool world and command-stack params', () => {
-    expect(quickToolUseCases).not.toMatch(/world:/);
-    expect(quickToolUseCases).not.toMatch(/commandStack:/);
+  it('keeps the removed quick-tool path out of the canvas controller', () => {
+    expect(canvasToolController).not.toMatch(/QuickToolUseCases|executeQuickIntent|QuickToolIntent/);
   });
 });

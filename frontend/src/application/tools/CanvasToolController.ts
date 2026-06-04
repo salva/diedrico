@@ -1,8 +1,7 @@
 import type { CanvasCommandProductionPort } from '@/application/commandProduction/CommandProductionPorts';
 import type { World } from '@/domain/world/World';
-import type { ToolCommandSink, ToolConstructionIntent, QuickToolIntent, MoveFreePointRequest, FreePointMoveSession, StyleUpdateRequest, ToolCommandResult } from '@/tools/ToolCommandIntents';
+import type { ToolCommandSink, ToolConstructionIntent, MoveFreePointRequest, FreePointMoveSession, StyleUpdateRequest, ToolCommandResult } from '@/tools/ToolCommandIntents';
 import { executeConstructionIntent } from '@/application/construction/ConstructionUseCases';
-import { executeQuickToolIntent } from '@/application/construction/QuickToolUseCases';
 import { CanvasPointMovementUseCase } from '@/application/canvas/CanvasPointMovementUseCase';
 import { CanvasStyleUseCase } from '@/application/canvas/CanvasStyleUseCase';
 
@@ -31,12 +30,6 @@ export class CanvasToolController implements ToolCommandSink {
       world: this.deps.world,
       commands: this.deps.commands
     });
-  }
-
-  executeQuickIntent(intent: QuickToolIntent): ToolCommandResult {
-    const result = executeQuickToolIntent({ intent });
-    this.deps.toolStore.setTool('select');
-    return result;
   }
 
   startFreePointMove(request: MoveFreePointRequest): FreePointMoveSession {

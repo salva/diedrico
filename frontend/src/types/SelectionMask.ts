@@ -138,15 +138,6 @@ export abstract class SelectionMask {
   }
   
   /**
-   * Create mask matching any Line2D subtype
-   * Phase 63: All Line2D subclasses (perpendicular, parallel, by-two-points) map to 'line',
-   * plus specialized line types (segment, guide, half-hinge-line)
-   */
-  static anyLine(): TypeMask {
-    return new TypeMask('line');
-  }
-  
-  /**
    * Create mask matching any of the provided masks (logical OR)
    * @param masks - Array of masks to combine
    * @returns UnionMask that matches if any child mask matches
@@ -162,20 +153,6 @@ export abstract class SelectionMask {
     return new UnionMask(masks);
   }
   
-  /**
-   * Create mask matching all of the provided masks (logical AND)
-   * @param masks - Array of masks that must all match
-   * @returns IntersectionMask that matches only if all child masks match
-   */
-  static intersection(...masks: SelectionMask[]): SelectionMask {
-    if (masks.length === 0) {
-      throw new Error('intersection() requires at least one mask');
-    }
-    if (masks.length === 1) {
-      return masks[0]; // Optimize single-element case
-    }
-    return new IntersectionMask(masks);
-  }
 }
 
 /**
@@ -248,9 +225,7 @@ export class TypeMask extends SelectionMask {
  * Matches if ANY child mask matches (logical OR)
  * Replaces string arrays: ['point', 'line'] → UnionMask([TypeMask('point'), TypeMask('line')])
  * 
- * Enables complex queries:
- * - "point or any line": union(point(), anyLine())
- * - "segment or circle": union(segment(), circle())
+ * Enables complex queries, such as "point or line" and "segment or circle".
  */
 export class UnionMask extends SelectionMask {
   constructor(private readonly masks: SelectionMask[]) {
@@ -277,42 +252,6 @@ export class UnionMask extends SelectionMask {
   }
 }
 
-/**
- * Matches if ALL child masks match (logical AND)
- * New capability - enables complex filtering
- * 
- * Future use cases:
- * - "constructible elements only" (intersection with ConstructibleMask)
- * - "visible elements only" (intersection with VisibilityMask)
- * 
- * Note: Most practical use cases are future extensions.
- * Included for architectural completeness and symmetry with UnionMask.
- */
-export class IntersectionMask extends SelectionMask {
-  constructor(private readonly masks: SelectionMask[]) {
-    super();
-    if (masks.length === 0) {
-      throw new Error('IntersectionMask requires at least one child mask');
-    }
-  }
-
-  matches(element: Element2D): boolean {
-    // Short-circuit: return false on first non-match
-    return this.masks.every(mask => mask.matches(element));
-  }
-
-  toString(): string {
-    return `Intersection(${this.masks.map(m => m.toString()).join(' & ')})`;
-  }
-
-  /**
-   * Get the child masks combined by this intersection
-   */
-  getMasks(): readonly SelectionMask[] {
-    return this.masks;
-  }
-}
-
 // === Type Guards ===
 
 /**
@@ -327,11 +266,4 @@ export function isTypeMask(mask: SelectionMask): mask is TypeMask {
  */
 export function isUnionMask(mask: SelectionMask): mask is UnionMask {
   return mask instanceof UnionMask;
-}
-
-/**
- * Check if mask is an IntersectionMask
- */
-export function isIntersectionMask(mask: SelectionMask): mask is IntersectionMask {
-  return mask instanceof IntersectionMask;
 }

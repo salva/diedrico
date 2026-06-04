@@ -3,7 +3,7 @@ import type { CommandStack } from '@/commands/CommandStack';
 import { buildWorldInitialization } from '@/commands/factories/InitializationSequenceFactory';
 import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
 import { PopSubprocessOp, PushSubprocessOp } from '@/commands/operations/processTree';
-import { createActionGroup } from '@/domain/processTree/ActionGroup';
+import { createActionGroup } from '@/domain/processTree/ProcessTree';
 import type { World } from '@/domain/world/World';
 import type { ChangeNotifier } from '@/application/appShell/RuntimeChangePublisher';
 

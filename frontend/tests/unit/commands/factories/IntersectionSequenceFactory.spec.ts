@@ -15,7 +15,7 @@ import { AddLine2DByTwoPointsOp } from '@/commands/operations/world/AddLineOp';
 import { AddCircle2DByCenterAndPointOp } from '@/commands/operations/world/AddCircleOp';
 import { SiblingIntersectionPoint2D } from '@/domain/world/Point';
 import { Vector3 } from 'three';
-import { createActionGroup } from '@/domain/processTree/ActionGroup';
+import { createActionGroup } from '@/domain/processTree/ProcessTree';
 import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
 
 // Helper to create ActionGroup for a command

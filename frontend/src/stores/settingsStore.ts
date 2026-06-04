@@ -33,7 +33,7 @@ const DEFAULT_SETTINGS = {
   },
 };
 
-export interface Settings {
+interface Settings {
   grid: {
     spacing: number;
     color: string;
@@ -90,13 +90,6 @@ export const useSettingsStore = defineStore('settings', () => {
     },
   });
   
-  const gridColor = computed({
-    get: () => settings.value.grid.color,
-    set: (value: string) => {
-      settings.value.grid.color = value;
-    },
-  });
-  
   // Snap settings
   const snapEnabled = computed({
     get: () => settings.value.snap.enabled,
@@ -111,50 +104,17 @@ export const useSettingsStore = defineStore('settings', () => {
       settings.value.snap.radius = value;
     },
   });
-  /**
-   * Update a specific setting
-   */
-  function updateSetting(path: string, value: any) {
-    const keys = path.split('.');
-    let target: any = settings.value;
-    
-    for (let i = 0; i < keys.length - 1; i++) {
-      target = target[keys[i]];
-    }
-    
-    target[keys[keys.length - 1]] = value;
-  }
-  
-  /**
-   * Reset all settings to defaults
-   */
-  function resetToDefaults() {
-    settings.value = structuredClone(DEFAULT_SETTINGS);
-  }
-  
-  /**
-   * Reset a specific category to defaults
-   */
-  function resetCategory(category: keyof Settings) {
-    (settings.value as any)[category] = structuredClone((DEFAULT_SETTINGS as any)[category]);
-  }
-  
   return {
     // State
     settings,
     
     // Grid settings
     gridSpacing,
-    gridColor,
-    
     // Snap settings
     snapEnabled,
     snapRadius,
     
     // Methods
-    updateSetting,
-    resetToDefaults,
-    resetCategory,
     initFromStorage,
     saveToStorage,
   };

@@ -13,7 +13,7 @@ import { CommandStack } from '@/commands/CommandStack';
 import { initializeWorld } from '@/application/world/initializeWorld';
 import { HalfHingeLine2D } from '@/domain/world/HingeLine';
 import { getMainHingeLine } from '../../helpers/worldHelpers';
-import { createActionGroup } from '@/domain/processTree/ActionGroup';
+import { createActionGroup } from '@/domain/processTree/ProcessTree';
 import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
 
 describe('InitializeWorldCommand', () => {

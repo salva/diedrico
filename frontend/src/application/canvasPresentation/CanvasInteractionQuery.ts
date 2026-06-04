@@ -1,7 +1,7 @@
 import { Matrix3, Vector3 } from 'three';
 import type { CanvasQueryItem, CanvasSnapPoint } from './CanvasPresentationModel';
 import type { SelectionMask, SelectableElementType } from '@/types/SelectionMask';
-import { isIntersectionMask, isTypeMask, isUnionMask, NoneMask } from '@/types/SelectionMask';
+import { isTypeMask, isUnionMask, NoneMask } from '@/types/SelectionMask';
 
 export interface CanvasInteractionQueryContext { viewport: { zoom: number; panX: number; panY: number }; paperToPlaneTransform?: Matrix3; activePlaneId?: string }
 
@@ -35,7 +35,6 @@ function itemMatchesMask(item: CanvasQueryItem, mask: SelectionMask): boolean {
   if (mask instanceof NoneMask) return false;
   if (isTypeMask(mask)) return itemSelectableTypes(item).has(mask.getType());
   if (isUnionMask(mask)) return mask.getMasks().some(child => itemMatchesMask(item, child));
-  if (isIntersectionMask(mask)) return mask.getMasks().every(child => itemMatchesMask(item, child));
   return true;
 }
 

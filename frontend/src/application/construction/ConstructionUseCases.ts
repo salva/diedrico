@@ -15,7 +15,7 @@ import { Add3DPointOp } from '@/commands/operations/world/Add3DPointOp';
 import { Add3DLineOp } from '@/commands/operations/world/Add3DLineOp';
 import { Add3DSegmentOp } from '@/commands/operations/world/Add3DSegmentOp';
 import { AddLine2DTangentToCircleThroughPointOp, AddLine2DTangentToCircleParallelToLineOp } from '@/commands/operations/world/AddLineOp';
-import { createActionGroup } from '@/domain/processTree/ActionGroup';
+import { createActionGroup } from '@/domain/processTree/ProcessTree';
 import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
 import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
 import { createSegmentAction } from '@/domain/processTree/actions/CreateSegmentAction';

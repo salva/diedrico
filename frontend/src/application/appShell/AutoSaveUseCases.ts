@@ -3,8 +3,6 @@ import type { DrivePort, IntervalHandle, LastProjectRepositoryPort, ProjectSessi
 import type { SnapshotCapableProjectSessionKernel } from './ProjectSessionKernel';
 import { isAuthenticationError, isMissingRemoteFileError, isQuotaError } from './AppShellErrorClassifier';
 
-export type AutoSaveRuntimeSessionPort = SnapshotCapableProjectSessionKernel;
-
 export class AutoSaveUseCases {
   private pollInterval: IntervalHandle | null = null;
   private debounceTimer: TimeoutHandle | null = null;
@@ -13,7 +11,7 @@ export class AutoSaveUseCases {
 
   constructor(
     private readonly deps: {
-      session: AutoSaveRuntimeSessionPort;
+      session: SnapshotCapableProjectSessionKernel;
       drive: DrivePort | null;
       persistence: ProjectSessionPersistencePort;
       lastProjectRepository: LastProjectRepositoryPort;

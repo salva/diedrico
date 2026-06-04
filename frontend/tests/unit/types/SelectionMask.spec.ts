@@ -1,17 +1,5 @@
-/**
- * Unit tests for SelectionMask class hierarchy (Phase 63)
- * 
- * Tests the class-based selection mask architecture that replaces
- * the string-based system from Phase 62.
- */
-
 import { describe, it, expect } from 'vitest';
-import { SelectionMask } from '@/types/SelectionMask';
-import { 
-  isTypeMask, 
-  isUnionMask, 
-  isIntersectionMask 
-} from '@/types/SelectionMask';
+import { SelectionMask, isTypeMask, isUnionMask } from '@/types/SelectionMask';
 import { FreePoint2D } from '@/domain/world/Point';
 import { Line2DByTwoPoints } from '@/domain/world/Line';
 import { Segment2DByPoints } from '@/domain/world/Segment';
@@ -20,9 +8,7 @@ import { Circle2DByCenterAndPoint } from '@/domain/world/Circle';
 import { HalfHingeLine2D } from '@/domain/world/HingeLine';
 import { Vector3 } from 'three';
 
-describe('SelectionMask - Phase 63 Class-Based Architecture', () => {
-  
-  // Create test element instances with proper hierarchical IDs
+describe('SelectionMask', () => {
   const planeId = 'projPlane1';
   const point = new FreePoint2D(`${planeId}/point2d_1`, new Vector3(0, 0, 1), planeId);
   const line = new Line2DByTwoPoints(`${planeId}/line2d_1`, `${planeId}/point2d_1`, `${planeId}/point2d_2`, planeId);
@@ -30,202 +16,34 @@ describe('SelectionMask - Phase 63 Class-Based Architecture', () => {
   const guide = new Guide2D(`${planeId}/guide2d_1`, `${planeId}/point2d_1`, new Vector3(1, 0, 0), planeId);
   const circle = new Circle2DByCenterAndPoint(`${planeId}/circle2d_1`, `${planeId}/point2d_1`, `${planeId}/point2d_2`, planeId);
   const halfHingeLine = new HalfHingeLine2D(`${planeId}/hhl2d_1`, { id: 'hinge_1' } as any, planeId);
-  
-  describe('TypeMask - Exact Type Matching', () => {
-    it('T1069.1: point() should match only point type', () => {
-      const mask = SelectionMask.point();
-      
-      expect(mask.matches(point)).toBe(true);
-      expect(mask.matches(line)).toBe(false);
-      expect(mask.matches(segment)).toBe(false);
-      expect(mask.matches(guide)).toBe(false);
-      expect(mask.matches(circle)).toBe(false);
-      expect(mask.matches(halfHingeLine)).toBe(false);
-    });
 
-    it('T1069.2: line() should match only line type', () => {
-      const mask = SelectionMask.line();
-      
-      expect(mask.matches(line)).toBe(true);
-      // Segment is a Line2D subclass, so it matches
-      expect(mask.matches(segment)).toBe(true);
-      expect(mask.matches(point)).toBe(false);
-    });
-
-    it('T1069.3: circle() should match only circle type', () => {
-      const mask = SelectionMask.circle();
-      
-      expect(mask.matches(circle)).toBe(true);
-      expect(mask.matches(point)).toBe(false);
-      expect(mask.matches(line)).toBe(false);
-    });
-
-    it('T1069.4: Type guards should identify TypeMask', () => {
-      const mask = SelectionMask.point();
-      
-      expect(isTypeMask(mask)).toBe(true);
-      expect(isUnionMask(mask)).toBe(false);
-      expect(isIntersectionMask(mask)).toBe(false);
-    });
-
-    it('T1069.5: toString() should return descriptive string', () => {
-      expect(SelectionMask.point().toString()).toContain('point');
-      expect(SelectionMask.line().toString()).toContain('line');
-      expect(SelectionMask.circle().toString()).toContain('circle');
-    });
+  it('matches concrete element categories', () => {
+    expect(SelectionMask.point().matches(point)).toBe(true);
+    expect(SelectionMask.point().matches(line)).toBe(false);
+    expect(SelectionMask.line().matches(line)).toBe(true);
+    expect(SelectionMask.line().matches(segment)).toBe(true);
+    expect(SelectionMask.line().matches(guide)).toBe(true);
+    expect(SelectionMask.line().matches(halfHingeLine)).toBe(true);
+    expect(SelectionMask.circle().matches(circle)).toBe(true);
+    expect(SelectionMask.circle().matches(point)).toBe(false);
   });
 
-  describe('anyLine - Line Type Matching', () => {
-    it('T1070.1: anyLine() should match all Line2D subtypes', () => {
-      const mask = SelectionMask.anyLine();
-      
-      // Should match all line types
-      expect(mask.matches(line)).toBe(true);
-      expect(mask.matches(segment)).toBe(true);
-      expect(mask.matches(guide)).toBe(true);
-      expect(mask.matches(halfHingeLine)).toBe(true);
-      
-      // Should NOT match non-line types
-      expect(mask.matches(point)).toBe(false);
-      expect(mask.matches(circle)).toBe(false);
-    });
-
-    it('T1070.2: Type guards should identify anyLine as TypeMask', () => {
-      const mask = SelectionMask.anyLine();
-      
-      expect(isTypeMask(mask)).toBe(true);
-      expect(isUnionMask(mask)).toBe(false);
-    });
-
-    it('T1070.3: toString() should indicate line matching', () => {
-      const str = SelectionMask.anyLine().toString();
-      expect(str).toContain('line');
-    });
+  it('supports union masks and single-item unwrap', () => {
+    const union = SelectionMask.union(SelectionMask.point(), SelectionMask.circle());
+    expect(union.matches(point)).toBe(true);
+    expect(union.matches(circle)).toBe(true);
+    expect(union.matches(line)).toBe(false);
+    expect(isUnionMask(union)).toBe(true);
+    expect(isTypeMask(SelectionMask.union(SelectionMask.point()))).toBe(true);
+    expect(() => SelectionMask.union()).toThrow('union() requires at least one mask');
   });
 
-  describe('UnionMask - OR Logic Composition', () => {
-    it('T1070.4: union() should match any of its constituent masks', () => {
-      const mask = SelectionMask.union(
-        SelectionMask.point(),
-        SelectionMask.circle()
-      );
-      
-      expect(mask.matches(point)).toBe(true);
-      expect(mask.matches(circle)).toBe(true);
-      expect(mask.matches(line)).toBe(false);
-      expect(mask.matches(segment)).toBe(false);
-    });
-
-    it('T1070.5: union() with anyLine should match points and all line types', () => {
-      const mask = SelectionMask.union(
-        SelectionMask.point(),
-        SelectionMask.anyLine()
-      );
-      
-      // Points
-      expect(mask.matches(point)).toBe(true);
-      
-      // All line types
-      expect(mask.matches(line)).toBe(true);
-      expect(mask.matches(segment)).toBe(true);
-      expect(mask.matches(guide)).toBe(true);
-      expect(mask.matches(halfHingeLine)).toBe(true);
-      
-      // Not circles
-      expect(mask.matches(circle)).toBe(false);
-    });
-
-    it('T1070.6: empty union() should throw error (requires at least one mask)', () => {
-      expect(() => SelectionMask.union()).toThrow('union() requires at least one mask');
-    });
-
-    it('T1070.7: single-element union() should unwrap to inner mask', () => {
-      const mask = SelectionMask.union(SelectionMask.point());
-      
-      // Should be optimized to TypeMask
-      expect(isTypeMask(mask)).toBe(true);
-      expect(mask.matches(point)).toBe(true);
-    });
-
-    it('T1070.8: Type guards should identify UnionMask', () => {
-      const mask = SelectionMask.union(
-        SelectionMask.point(),
-        SelectionMask.line()
-      );
-      
-      expect(isUnionMask(mask)).toBe(true);
-      expect(isTypeMask(mask)).toBe(false);
-    });
-
-    it('T1070.9: toString() should show union of constituent masks', () => {
-      const mask = SelectionMask.union(
-        SelectionMask.point(),
-        SelectionMask.circle()
-      );
-      const str = mask.toString();
-      
-      expect(str).toContain('point');
-      expect(str).toContain('circle');
-      expect(str).toContain('|'); // Union operator
-    });
-  });
-
-  describe('IntersectionMask - AND Logic Composition', () => {
-    it('T1070.10: intersection() should match only elements matching all masks', () => {
-      // Note: This is a contrived example since element types are mutually exclusive
-      // But it demonstrates the AND logic
-      const mask = SelectionMask.intersection(
-        SelectionMask.anyLine(),
-        SelectionMask.segment()
-      );
-      
-      // Segment matches both anyLine AND segment
-      expect(mask.matches(segment)).toBe(true);
-      
-      // Line matches anyLine but NOT segment specifically
-      expect(mask.matches(line)).toBe(false);
-      
-      // Point matches neither
-      expect(mask.matches(point)).toBe(false);
-    });
-
-    it('T1070.11: empty intersection() should throw error (requires at least one mask)', () => {
-      expect(() => SelectionMask.intersection()).toThrow('intersection() requires at least one mask');
-    });
-
-    it('T1070.12: single-element intersection() should unwrap to inner mask', () => {
-      const mask = SelectionMask.intersection(SelectionMask.point());
-      
-      // Should be optimized to TypeMask
-      expect(isTypeMask(mask)).toBe(true);
-      expect(mask.matches(point)).toBe(true);
-    });
-
-    it('T1070.13: Type guards should identify IntersectionMask', () => {
-      const mask = SelectionMask.intersection(
-        SelectionMask.anyLine(),
-        SelectionMask.segment()
-      );
-      
-      expect(isIntersectionMask(mask)).toBe(true);
-      expect(isTypeMask(mask)).toBe(false);
-    });
-  });
-
-  describe('Factory Methods', () => {
-    it('T1070.14: All factory methods should create proper masks', () => {
-      expect(SelectionMask.point()).toBeDefined();
-      expect(SelectionMask.line()).toBeDefined();
-      expect(SelectionMask.segment()).toBeDefined();
-      expect(SelectionMask.circle()).toBeDefined();
-      expect(SelectionMask.halfHingeLine()).toBeDefined();
-      expect(SelectionMask.anyLine()).toBeDefined();
-    });
-
-    it('T1070.15: Factory methods should return correct types', () => {
-      expect(isTypeMask(SelectionMask.point())).toBe(true);
-      expect(isTypeMask(SelectionMask.line())).toBe(true);
-      expect(isTypeMask(SelectionMask.anyLine())).toBe(true);
-    });
+  it('creates factory masks', () => {
+    expect(isTypeMask(SelectionMask.point())).toBe(true);
+    expect(isTypeMask(SelectionMask.line())).toBe(true);
+    expect(isTypeMask(SelectionMask.segment())).toBe(true);
+    expect(isTypeMask(SelectionMask.circle())).toBe(true);
+    expect(isTypeMask(SelectionMask.halfHingeLine())).toBe(true);
+    expect(SelectionMask.none().matches(point)).toBe(false);
   });
 });

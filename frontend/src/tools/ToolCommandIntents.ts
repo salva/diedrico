@@ -19,11 +19,6 @@ export type ConstructionIntentType =
   | 'createprojectionplane'
   | 'interactiveprojectionsetup';
 
-export type QuickToolIntentType =
-  | 'quickprojectionsetup'
-  | 'quick3dline'
-  | 'quick3dsegment';
-
 export type TangentChoiceMetadata = {
   tangentIndex: 0 | 1;
   selectionPoint: Vector3;
@@ -53,11 +48,6 @@ export type ToolConstructionIntent =
   | (BaseToolConstructionIntent & { type: 'intersection'; metadata: IntersectionChoiceMetadata })
   | (BaseToolConstructionIntent & { type: 'tangent-line-to-circle-through-point'; metadata: TangentChoiceMetadata })
   | (BaseToolConstructionIntent & { type: 'tangent-line-to-circle-parallel'; metadata: TangentChoiceMetadata });
-
-export interface QuickToolIntent {
-  type: QuickToolIntentType;
-  description: string;
-}
 
 export interface MoveFreePointRequest {
   planeId: string;
@@ -90,7 +80,6 @@ export interface FreePointMoveSession {
 
 export interface ToolCommandSink {
   executeConstructionIntent(intent: ToolConstructionIntent): ToolCommandResult;
-  executeQuickIntent(intent: QuickToolIntent): ToolCommandResult;
   startFreePointMove(request: MoveFreePointRequest): FreePointMoveSession;
   updateElementStyle(request: StyleUpdateRequest): ToolCommandResult;
 }

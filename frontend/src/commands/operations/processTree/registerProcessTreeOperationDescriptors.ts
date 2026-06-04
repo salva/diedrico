@@ -1,6 +1,6 @@
 import type { OperationRegistry } from '../OperationRegistry';
 import type { JsonObject } from '../IOperation';
-import { createActionGroup } from '@/domain/processTree/ActionGroup';
+import { createActionGroup } from '@/domain/processTree/ProcessTree';
 import { AddProcessTreeActionOp } from './AddProcessTreeActionOp';
 import { AddProcessTreeActionGroupOp } from './AddProcessTreeActionGroupOp';
 import { PushSubprocessOp } from './PushSubprocessOp';

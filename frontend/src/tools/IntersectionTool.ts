@@ -46,11 +46,11 @@ export class IntersectionTool extends ArgumentCollectorTool {
         arguments: [
           { 
             name: 'element1', 
-            mask: SelectionMask.union(SelectionMask.anyLine(), SelectionMask.circle())
+            mask: SelectionMask.union(SelectionMask.line(), SelectionMask.circle())
           },
           { 
             name: 'element2', 
-            mask: SelectionMask.union(SelectionMask.anyLine(), SelectionMask.circle()),
+            mask: SelectionMask.union(SelectionMask.line(), SelectionMask.circle()),
             // Argument-level validator: Ensure different from element1
             validator: (element: Element2D, context: CollectionContext) => {
               const element1 = context.collected.get('element1');

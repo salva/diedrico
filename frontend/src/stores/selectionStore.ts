@@ -31,12 +31,6 @@ export const useSelectionStore = defineStore('selection', () => {
   // Computed: Get array of cascade highlight IDs
   const cascadeHighlightIdsArray = computed(() => Array.from(cascadeHighlightIds.value));
 
-  // Computed: Check if any elements are selected
-  const hasSelection = computed(() => selectedIds.value.size > 0);
-
-  // Computed: Get count of selected elements
-  const selectionCount = computed(() => selectedIds.value.size);
-
   /**
    * Select a single element (replaces current selection)
    */
@@ -50,24 +44,6 @@ export const useSelectionStore = defineStore('selection', () => {
    */
   function addToSelection(elementId: string): void {
     selectedIds.value.add(elementId);
-  }
-
-  /**
-   * Remove element from selection
-   */
-  function removeFromSelection(elementId: string): void {
-    selectedIds.value.delete(elementId);
-  }
-
-  /**
-   * Toggle element selection (add if not selected, remove if selected)
-   */
-  function toggleSelection(elementId: string): void {
-    if (selectedIds.value.has(elementId)) {
-      selectedIds.value.delete(elementId);
-    } else {
-      selectedIds.value.add(elementId);
-    }
   }
 
   /**
@@ -107,13 +83,6 @@ export const useSelectionStore = defineStore('selection', () => {
     cascadeHighlightIds.value.clear();
   }
   
-  /**
-   * Check if element is cascade highlighted
-   */
-  function isCascadeHighlighted(elementId: string): boolean {
-    return cascadeHighlightIds.value.has(elementId);
-  }
-
   return {
     // State
     selectedIds,
@@ -122,19 +91,14 @@ export const useSelectionStore = defineStore('selection', () => {
     // Computed
     selectedIdsArray,
     cascadeHighlightIdsArray,
-    hasSelection,
-    selectionCount,
-    
+
     // Actions
     selectSingle,
     addToSelection,
-    removeFromSelection,
-    toggleSelection,
     clearSelection,
     isSelected,
     selectMultiple,
     setCascadeHighlight,
     clearCascadeHighlight,
-    isCascadeHighlighted,
   };
 });

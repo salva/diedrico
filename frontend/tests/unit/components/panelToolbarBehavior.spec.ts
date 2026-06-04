@@ -178,7 +178,8 @@ describe('Wave 006b Toolbar component behavior', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     useToolStore().setTool('select');
-    useViewStore().setGridVisible(true);
+    const viewStore = useViewStore();
+    if (!viewStore.gridVisible.value) viewStore.toggleGrid();
   });
 
   it('delegates undo/redo through the toolbar history controller and refreshes enabled state', async () => {

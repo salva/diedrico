@@ -54,16 +54,10 @@ export interface CommandHistoryPort {
   subscribe(listener: () => void): () => void;
 }
 
-export interface RuntimeSessionSnapshotHandle {
-  readonly nextElementId: number;
-}
-
-export interface RuntimeSessionRestoreHandle {}
-
 export interface ProjectSessionPersistencePort {
-  snapshotCurrentSession(session: RuntimeSessionSnapshotHandle, projectName: string): ProjectSessionPersistencePayload;
+  snapshotCurrentSession(session: { readonly nextElementId: number }, projectName: string): ProjectSessionPersistencePayload;
   validateProjectData(data: unknown): OpenedProjectSession;
-  restoreSession(session: ProjectSessionPersistencePayload, target: RuntimeSessionRestoreHandle): void;
+  restoreSession(session: ProjectSessionPersistencePayload, target: unknown): void;
 }
 
 export interface LastProjectRecord {

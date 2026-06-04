@@ -22,7 +22,7 @@ import { Line2D } from '@/domain/world/Line';
  * 
  * Framework handles:
  * - Any-order collection (point→line OR line→point automatically)
- * - Selection mask computation (union of point and anyLine)
+ * - Selection mask computation (union of point and line)
  * - UI feedback showing what's been selected and what's next
  * - Automatic execution when both arguments collected
  */
@@ -41,7 +41,7 @@ export class PerpendicularLineTool extends ArgumentCollectorTool {
         arguments: [
           { 
             name: 'referenceLine', 
-            mask: SelectionMask.anyLine() // Accepts lines, segments, guides, half-hinge-lines
+            mask: SelectionMask.line() // Accepts lines, segments, guides, half-hinge-lines
           },
           { 
             name: 'throughPoint', 

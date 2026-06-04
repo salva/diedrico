@@ -7,7 +7,7 @@
 
 import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
-import type { ActionGroup } from '@/domain/processTree/ActionGroup';
+import type { ActionGroup } from '@/domain/processTree/ProcessTree';
 
 export class AddProcessTreeActionGroupOp implements IOperation {
   readonly type = 'AddProcessTreeActionGroup';

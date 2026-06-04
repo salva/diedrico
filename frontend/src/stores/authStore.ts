@@ -105,29 +105,16 @@ export function useAuthStore() {
     }
   }
 
-  /**
-   * Check if token is expired or about to expire (within 5 minutes)
-   */
-  function isTokenExpired(): boolean {
-    if (!tokenExpiry.value) {
-      return false; // No expiry info, assume valid
-    }
-    const fiveMinutesFromNow = new Date(Date.now() + 5 * 60 * 1000);
-    return tokenExpiry.value < fiveMinutesFromNow;
-  }
-
   return {
     // State (readonly)
     isAuthenticated: computed(() => isAuthenticated.value),
     user: computed(() => user.value),
     accessToken: computed(() => accessToken.value),
-    tokenExpiry: computed(() => tokenExpiry.value),
-    
+
     // Actions
     setAuthenticated,
     setUser,
     clearAuth,
     restoreSession,
-    isTokenExpired,
   };
 }

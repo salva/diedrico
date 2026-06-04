@@ -33,7 +33,7 @@ export interface HoverState {
  * - clearHover(): Clear hover state
  * - isElementHovered(): Check if specific element is hovered
  */
-export function useHoverHighlight() {
+function createHoverHighlightState() {
   // Hover state
   const hoverState = ref<HoverState>({
     elementId: null,
@@ -111,15 +111,17 @@ export function useHoverHighlight() {
  * Global hover state instance (singleton pattern)
  * Allows different components to share the same hover state
  */
-let globalHoverInstance: ReturnType<typeof useHoverHighlight> | null = null;
+type HoverHighlightState = ReturnType<typeof createHoverHighlightState>;
+
+let globalHoverInstance: HoverHighlightState | null = null;
 
 /**
  * Get or create global hover highlight instance
  * Use this when you need shared hover state across components
  */
-export function useGlobalHoverHighlight(): ReturnType<typeof useHoverHighlight> {
+export function useGlobalHoverHighlight(): HoverHighlightState {
   if (!globalHoverInstance) {
-    globalHoverInstance = useHoverHighlight();
+    globalHoverInstance = createHoverHighlightState();
   }
   return globalHoverInstance;
 }

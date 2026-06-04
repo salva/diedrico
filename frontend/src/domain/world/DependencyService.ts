@@ -20,15 +20,6 @@
 import type { DependencyRegistrarPort, DependencyQueryPort } from './DependencyPorts';
 
 /**
- * Dependency graph edge representing input-output relationship
- */
-export interface DependencyEdge {
-  fromElementId: string;  // Input (base element)
-  toElementId: string;    // Output (derived element)
-  actionId: string;       // Action that created the relationship
-}
-
-/**
  * Element dependency information
  */
 export interface ElementDependencies {

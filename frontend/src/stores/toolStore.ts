@@ -13,7 +13,7 @@
 
 import { ref, computed } from 'vue';
 import type { ToolType } from '@/application/tools/ToolTypes';
-import type { ToolFamilyConfig, ToolConfig } from '../types/ToolConfig';
+import type { ToolFamilyConfig } from '../types/ToolConfig';
 
 export const TOOL_TYPE = {
   SELECT: 'select',
@@ -74,34 +74,6 @@ export function useToolStore() {
    */
   function setToolFamilies(families: ToolFamilyConfig[]) {
     toolFamilies = families;
-  }
-
-  /**
-   * Find the family that contains the given tool
-   */
-  function getToolFamily(toolId: string): ToolFamilyConfig | undefined {
-    return toolFamilies.find(family => 
-      family.tools.some(tool => tool.id === toolId)
-    );
-  }
-
-  /**
-   * Get configuration for a specific tool
-   */
-  function getToolConfig(toolId: string): ToolConfig | undefined {
-    for (const family of toolFamilies) {
-      const tool = family.tools.find(t => t.id === toolId);
-      if (tool) return tool;
-    }
-    return undefined;
-  }
-
-  /**
-   * Get completion behavior for a tool
-   */
-  function getCompletionBehavior(toolId: string): 'stay-active' | 'return-to-selection' | undefined {
-    const config = getToolConfig(toolId);
-    return config?.completionBehavior;
   }
 
   /**
@@ -173,9 +145,6 @@ export function useToolStore() {
     setToolStepMessage,
     isToolActive,
     setToolFamilies,
-    getToolFamily,
-    getToolConfig,
-    getCompletionBehavior,
     activateToolFamily,
     selectSubTool,
     getLastUsedTool,

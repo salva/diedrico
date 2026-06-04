@@ -15,7 +15,7 @@
 import { ref, computed } from 'vue';
 import { defaultThreeViewDisplayOptions, type ThreeViewDisplayOptions } from '../types/ThreeViewDisplayOptions';
 
-export interface ViewportState {
+interface ViewportState {
   zoom: number;
   panX: number;
   panY: number;
@@ -29,8 +29,8 @@ const panX = ref(0);
 const panY = ref(0);
 const gridVisible = ref(true); // Grid visible by default
 
-export const PROJECTION_DISPLAY_KEY = 'diedrico-show-projected-elements';
-export const THREE_VIEW_OPTIONS_KEY = 'diedrico-threeview-options';
+const PROJECTION_DISPLAY_KEY = 'diedrico-show-projected-elements';
+const THREE_VIEW_OPTIONS_KEY = 'diedrico-threeview-options';
 
 const showProjectedElements = ref(false);
 
@@ -95,15 +95,6 @@ export function useViewStore() {
   }
 
   /**
-   * Reset viewport to default state
-   */
-  function resetViewport() {
-    zoom.value = 1.0;
-    panX.value = 0;
-    panY.value = 0;
-  }
-
-  /**
    * Toggle grid visibility (T276)
    */
   function toggleGrid() {
@@ -111,25 +102,10 @@ export function useViewStore() {
   }
 
   /**
-   * Set grid visibility
-   */
-  function setGridVisible(visible: boolean) {
-    gridVisible.value = visible;
-  }
-
-  /**
    * Toggle 3D element projection display (Phase 106 - T1831/T1832)
    */
   function toggleProjectedElements() {
     showProjectedElements.value = !showProjectedElements.value;
-  }
-
-  /**
-   * Update 3D view display options (Phase 77.5 - T1203)
-   * @param options New display options
-   */
-  function setThreeViewOptions(options: ThreeViewDisplayOptions) {
-    threeViewOptions.value = { ...options };
   }
 
   /**
@@ -203,11 +179,8 @@ export function useViewStore() {
     setPan,
     adjustPan,
     adjustZoom,
-    resetViewport,
     toggleGrid,
-    setGridVisible,
     toggleProjectedElements,
-    setThreeViewOptions,
     updateThreeViewOption,
     initFromStorage,
     saveToStorage,

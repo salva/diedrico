@@ -3,11 +3,11 @@ import { nextTick, reactive, ref } from 'vue';
 import { createAppShellRuntime } from '@/application/appShell/AppShellRuntime';
 import { createProductionAppShellRuntime } from '@/application/appShell/AppShellProductionRuntime';
 import { ActivePlaneUseCases } from '@/application/appShell/ActivePlaneUseCases';
-import { AutoSaveUseCases, type AutoSaveRuntimeSessionPort } from '@/application/appShell/AutoSaveUseCases';
+import { AutoSaveUseCases } from '@/application/appShell/AutoSaveUseCases';
 import { BrowserLastProjectRepository } from '@/application/appShell/BrowserLastProjectRepository';
 import { ProjectSessionUseCases } from '@/application/appShell/ProjectSessionUseCases';
 import { RuntimeSession } from '@/application/appShell/RuntimeSession';
-import type { ProjectSessionKernel } from '@/application/appShell/ProjectSessionKernel';
+import type { ProjectSessionKernel, SnapshotCapableProjectSessionKernel } from '@/application/appShell/ProjectSessionKernel';
 import { SelectionUseCases } from '@/application/appShell/SelectionUseCases';
 import type { AppShellRuntimePorts, DrivePort, LastProjectRepositoryPort, ProjectSessionPersistencePayload, ProjectSessionPersistencePort, SchedulerPort, SelectionStorePort } from '@/application/appShell/AppShellPorts';
 
@@ -98,7 +98,7 @@ function lastProjectRepository(): LastProjectRepositoryPort & { records: { set: 
 }
 
 
-function autoSaveSession(versionSource: () => number = () => 1): AutoSaveRuntimeSessionPort {
+function autoSaveSession(versionSource: () => number = () => 1): SnapshotCapableProjectSessionKernel {
   return {
     getVersion: versionSource,
     snapshot: (projectName, port) => port.snapshotCurrentSession({ nextElementId: 10 }, projectName),
@@ -643,7 +643,7 @@ describe('ProjectSessionUseCases startup and project flows', () => {
     const fakeScheduler = scheduler();
     const saveStatus = ref<'idle' | 'saving' | 'saved'>('saving');
     const autoSave = new AutoSaveUseCases({
-      session: { getVersion: () => 1, snapshot: () => { throw new Error('snapshot failed'); } } satisfies AutoSaveRuntimeSessionPort,
+      session: { getVersion: () => 1, snapshot: () => { throw new Error('snapshot failed'); } } satisfies SnapshotCapableProjectSessionKernel,
       drive: drive(),
       persistence: persistence(),
       lastProjectRepository: lastProjectRepository(),

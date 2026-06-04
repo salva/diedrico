@@ -25,7 +25,7 @@ import { Vector3 } from 'three';
  * 
  * Framework handles:
  * - Any-order argument collection (circle + line)
- * - Selection mask computation (circle + anyLine)
+ * - Selection mask computation (circle + line)
  * - UI feedback
  * - Automatic execution when both elements collected
  * 
@@ -51,7 +51,7 @@ export class TangentLineToCircleParallelToLineTool extends ArgumentCollectorTool
           },
           { 
             name: 'referenceLine', 
-            mask: SelectionMask.anyLine()  // Accepts all Line2D subtypes
+            mask: SelectionMask.line()  // Accepts all Line2D subtypes
           }
         ],
         // Phase 113: Validate reference line is feasible

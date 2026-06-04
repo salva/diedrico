@@ -12,7 +12,7 @@
  * - When a new element is added, only the receiving subprocess is ensured expanded
  */
 
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 
 /** Set of node IDs that are currently collapsed */
 const collapsedNodes = ref(new Set<string>());
@@ -51,29 +51,6 @@ export function useProcessTreeStore() {
   }
 
   /**
-   * Ensure a specific subprocess is expanded (for when new elements are added).
-   * Does NOT change any other node's state — preserves user's manual collapses.
-   */
-  function ensureExpanded(nodeId: string): void {
-    if (collapsedNodes.value.has(nodeId)) {
-      explicitlySet.value.add(nodeId);
-      collapsedNodes.value.delete(nodeId);
-      collapsedNodes.value = new Set(collapsedNodes.value);
-      explicitlySet.value = new Set(explicitlySet.value);
-    }
-  }
-
-  /**
-   * Set a node as collapsed (used for initial defaults).
-   */
-  function setCollapsed(nodeId: string): void {
-    explicitlySet.value.add(nodeId);
-    collapsedNodes.value.add(nodeId);
-    collapsedNodes.value = new Set(collapsedNodes.value);
-    explicitlySet.value = new Set(explicitlySet.value);
-  }
-
-  /**
    * Reset all collapse state (for testing or re-initialization).
    */
   function reset(): void {
@@ -84,10 +61,6 @@ export function useProcessTreeStore() {
   return {
     isCollapsed,
     toggleCollapse,
-    ensureExpanded,
-    setCollapsed,
     reset,
-    /** Reactive count of collapsed nodes (for testing) */
-    collapsedCount: computed(() => collapsedNodes.value.size),
   };
 }

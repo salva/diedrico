@@ -3,7 +3,7 @@
  */
 
 import type { VisualStyle } from '../world/VisualStyle';
-import type { ActionGroup } from './ActionGroup';
+import type { ActionGroup } from './ProcessTree';
 
 export interface Subprocess {
   id: string;

@@ -36,6 +36,20 @@ export interface ActionGroup extends ProcessNodeBase {
   isOutput: boolean;                       // Output flag
 }
 
+export function createActionGroup(
+  id: string,
+  children: ActionNode[] = []
+): ActionGroup {
+  return {
+    id,
+    type: 'actionGroup',
+    children,
+    isOutput: true,
+    isAuxiliary: false,
+    created: new Date()
+  };
+}
+
 // ActionNode wraps Action to fit the tree structure
 export interface ActionNode extends ProcessNodeBase, Action {
   type: 'action';
