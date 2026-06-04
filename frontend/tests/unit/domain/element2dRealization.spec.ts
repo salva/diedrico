@@ -1,8 +1,8 @@
 /**
- * Unit tests for Element2DRealization2D base class
+ * Unit tests for Realization base class
  * 
  * Tests that all three realization types (Point2D, Line2D, Circle2D) properly extend
- * the Element2DRealization2D base class and inherit the isFeasible() method.
+ * the Realization base class and inherit the isFeasible() method.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -10,13 +10,13 @@ import { Vector3 } from 'three';
 import { Point2DRealization2D } from '@/domain/world/Point';
 import { Line2DRealization2D } from '@/domain/world/Line';
 import { Circle2DRealization2D } from '@/domain/world/Circle';
-import { Element2DRealization2D } from '@/domain/world/Element2DRealization2D';
+import { Realization } from '@/domain/world/Realization';
 
-describe('Element2DRealization2D base class', () => {
-  describe('Point2DRealization2D extends Element2DRealization2D', () => {
-    it('should extend Element2DRealization2D', () => {
+describe('Realization base class', () => {
+  describe('Point2DRealization2D extends Realization', () => {
+    it('should extend Realization', () => {
       const realization = new Point2DRealization2D(new Vector3(1, 2, 1), true);
-      expect(realization).toBeInstanceOf(Element2DRealization2D);
+      expect(realization).toBeInstanceOf(Realization);
     });
 
     it('should have isFeasible() method that returns true for feasible points', () => {
@@ -38,12 +38,12 @@ describe('Element2DRealization2D base class', () => {
     });
   });
 
-  describe('Line2DRealization2D extends Element2DRealization2D', () => {
-    it('should extend Element2DRealization2D', () => {
+  describe('Line2DRealization2D extends Realization', () => {
+    it('should extend Realization', () => {
       const p1 = new Vector3(0, 0, 1);
       const p2 = new Vector3(1, 0, 0); // Direction vector
       const realization = new Line2DRealization2D(p1, p2, true);
-      expect(realization).toBeInstanceOf(Element2DRealization2D);
+      expect(realization).toBeInstanceOf(Realization);
     });
 
     it('should have isFeasible() method that returns true for feasible lines', () => {
@@ -71,12 +71,12 @@ describe('Element2DRealization2D base class', () => {
     });
   });
 
-  describe('Circle2DRealization2D extends Element2DRealization2D', () => {
-    it('should extend Element2DRealization2D', () => {
+  describe('Circle2DRealization2D extends Realization', () => {
+    it('should extend Realization', () => {
       const center = new Vector3(5, 5, 1);
       const radiusVector = new Vector3(3, 0, 0);
       const realization = new Circle2DRealization2D(center, radiusVector, true);
-      expect(realization).toBeInstanceOf(Element2DRealization2D);
+      expect(realization).toBeInstanceOf(Realization);
     });
 
     it('should have isFeasible() method that returns true for feasible circles', () => {
@@ -106,20 +106,20 @@ describe('Element2DRealization2D base class', () => {
 
   describe('Uniform feasibility checking', () => {
     it('should allow generic code to check feasibility on any realization type', () => {
-      const realizations: Element2DRealization2D[] = [
+      const realizations: Realization[] = [
         new Point2DRealization2D(new Vector3(1, 2, 1), true),
         new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), true),
         new Circle2DRealization2D(new Vector3(5, 5, 1), new Vector3(3, 0, 0), true),
       ];
 
-      // Generic code can work with Element2DRealization2D interface
+      // Generic code can work with Realization interface
       realizations.forEach(realization => {
         expect(realization.isFeasible()).toBe(true);
       });
     });
 
     it('should filter feasible realizations using generic code', () => {
-      const realizations: Element2DRealization2D[] = [
+      const realizations: Realization[] = [
         new Point2DRealization2D(new Vector3(1, 2, 1), true),
         new Point2DRealization2D(new Vector3(0, 0, 1), false), // Infeasible
         new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), true),

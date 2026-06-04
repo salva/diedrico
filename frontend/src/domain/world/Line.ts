@@ -17,7 +17,7 @@
 
 import type { ProjectionElementRealizationContext } from './projectionPlane/ProjectionPlaneContext';
 import { Vector3 } from 'three';
-import { Element2DRealization2D } from './Element2DRealization2D';
+import { Realization } from './Realization';
 import { Element2D } from './Element2D';
 import { assert } from '@/utils/assert';
 
@@ -67,7 +67,7 @@ export type Line2DType = typeof LINE_2D_TYPE[keyof typeof LINE_2D_TYPE];
  * 
  * Contains ONLY numeric data. Structural information (id, planeId) stays in domain objects.
  */
-export class Line2DRealization2D extends Element2DRealization2D {
+export class Line2DRealization2D extends Realization {
   point1: Vector3;     // First defining point (always finite: z=1)
   point2: Vector3;     // Second defining point (z=0 for direction, z=1 for endpoint)
   

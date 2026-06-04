@@ -12,8 +12,8 @@
  * 
  * **Hierarchy**:
  *   Realization
- *   └── Element2DRealization2D (Point2DRealization2D, Line2DRealization2D, Circle2DRealization2D)
- *   └── Element3DRealization3D (future: if 3D elements need dynamic realization)
+ *   ├── Point2DRealization2D, Line2DRealization2D, Circle2DRealization2D
+ *   └── Point3DRealization3D, Line3DRealization3D, Segment3DRealization3D, Plane3DRealization3D
  * 
  * **Design Principle: DRY + Architectural Symmetry**
  * - Mirrors Element base class pattern in realization layer
@@ -21,16 +21,13 @@
  * - Enables uniform feasibility checking
  * 
  * **Benefits**:
- * - **DRY Principle**: feasible property defined once, not duplicated in Element2DRealization2D and potential future realization classes
+ * - **DRY Principle**: feasible property defined once, not duplicated in concrete realization classes
  * - **Uniform Interface**: isFeasible() method guaranteed to exist on all realizations
  * - **Type Safety**: Can write functions accepting Realization base type
  * - **Architectural Symmetry**: Realization hierarchy mirrors Element hierarchy
  * - **Generic Processing**: Infeasibility handling code can work with Realization base type
  * 
- * **Design Note**: Currently only 2D elements need realizations (Element2DRealization2D).
- * 3D elements in MVP have fixed geometry (Plane3DFixed) or are defined by references
- * (Plane3DByTraces, HingeLine). If future phases introduce dynamically computed 3D
- * geometry, Element3DRealization3D can extend Realization.
+ * **Design Note**: Concrete 2D and 3D realization classes extend this base directly.
  * 
  */
 export abstract class Realization {

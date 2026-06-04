@@ -7,6 +7,7 @@
  */
 
 import type { Action } from './Action';
+import type { VisualStyle } from '../world/VisualStyle';
 
 export const PROCESS_NODE_TYPE = {
   SUBPROCESS: 'subprocess',
@@ -27,6 +28,7 @@ export interface Subprocess extends ProcessNodeBase {
   children: (Subprocess | ActionGroup)[];  // Mixed children, no direct actions
   showIntermediates: boolean;              // Phase 87: Encapsulation (Positive Logic)
   isOutput: boolean;                       // Output flag (punches through encapsulation)
+  defaultStyle?: VisualStyle;              // Default style inherited by contained elements
 }
 
 export interface ActionGroup extends ProcessNodeBase {
@@ -47,6 +49,23 @@ export function createActionGroup(
     isOutput: true,
     isAuxiliary: false,
     created: new Date()
+  };
+}
+
+export function createSubprocess(
+  id: string,
+  name: string,
+  options?: Partial<Subprocess>
+): Subprocess {
+  return {
+    id,
+    type: 'subprocess',
+    name,
+    children: [],
+    showIntermediates: true,
+    isOutput: true,
+    created: new Date(),
+    ...options
   };
 }
 

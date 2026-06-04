@@ -99,7 +99,7 @@ import { Element2D } from './Element2D';
 // Phase 78: 3D element domain types
 import type { Point3D } from './Point3D';
 import type { Line3D } from './Line3D';
-import type { Segment3D } from './Segment3D';
+import type { Segment3DFromProjections } from './Segment3D';
 
 // Phase 78: 3D element realization types (Element3DRealization3D.ts)
 import { Point3DRealization3D, Line3DRealization3D, Segment3DRealization3D, Plane3DRealization3D } from './Element3DRealization3D';
@@ -117,7 +117,7 @@ export class World {
   // Phase 78: User-created 3D elements (domain layer - definitions)
   private points3D: Map<string, Point3D>;        // User-created 3D points from projections
   private lines3D: Map<string, Line3D>;          // User-created 3D lines from projections
-  private segments3D: Map<string, Segment3D>;    // User-created 3D segments from projections
+  private segments3D: Map<string, Segment3DFromProjections>;    // User-created 3D segments from projections
   
   // Construction history
   private processTree: ProcessTree;
@@ -1049,7 +1049,7 @@ export class World {
   /**
    * Add 3D segment to World
    */
-  add3DSegment(segment: Segment3D): void {
+  add3DSegment(segment: Segment3DFromProjections): void {
     this.segments3D.set(segment.id!, segment);
     this.dependencyService.registerNode(segment.id!, segment.getDependencies());
     
@@ -1058,7 +1058,7 @@ export class World {
   /**
    * Get 3D segment by ID
    */
-  get3DSegment(id: string): Segment3D | undefined {
+  get3DSegment(id: string): Segment3DFromProjections | undefined {
     return this.segments3D.get(id);
   }
 
@@ -1075,7 +1075,7 @@ export class World {
   /**
    * Get all 3D segments
    */
-  getAll3DSegments(): Segment3D[] {
+  getAll3DSegments(): Segment3DFromProjections[] {
     return Array.from(this.segments3D.values());
   }
 
@@ -1114,7 +1114,7 @@ export class World {
    * Tries all 3D element types: points, lines, segments, planes, hinge lines
    * Returns undefined if element not found
    */
-  getElement3DById(id: string): Point3D | Line3D | Segment3D | Plane3D | HingeLine | undefined {
+  getElement3DById(id: string): Point3D | Line3D | Segment3DFromProjections | Plane3D | HingeLine | undefined {
     // Try each 3D element type
     return this.get3DPoint(id) 
       || this.get3DLine(id) 

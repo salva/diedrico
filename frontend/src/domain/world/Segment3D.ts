@@ -1,5 +1,5 @@
 /**
- * Segment3D - 3D segment classes (domain layer - definitions)
+ * 3D segment classes (domain layer - definitions)
  * 
  * Contains high-level definitions and relationships (IDs of source 2D elements).
  * NO numeric coordinates - those are computed and stored in Segment3DRealization3D.
@@ -184,8 +184,3 @@ export class Segment3DFromProjections extends Element3D {
     return plane1Id !== plane2Id;
   }
 }
-
-/**
- * Type union for all Segment3D types
- */
-export type Segment3D = Segment3DFromProjections;

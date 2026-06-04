@@ -17,7 +17,7 @@
 import { Vector3, Vector4 } from 'three';
 import type { ProjectionElementRealizationContext } from './projectionPlane/ProjectionPlaneContext';
 import { intersectLineLine, intersectLineCircle, intersectCircleCircle } from '@/domain/calculations/Intersections';
-import { Element2DRealization2D } from './Element2DRealization2D';
+import { Realization } from './Realization';
 import { Element2D } from './Element2D';
 import { BrokenHalfHingeLine2D } from './elements/BrokenHalfHingeLine2D';
 import { applyMatrix4x3, applyMatrix3x4 } from '@/utils/threeUtils';
@@ -34,7 +34,7 @@ import { assert } from '@/utils/assert';
  * 
  * Contains ONLY numeric data. Structural information (id, planeId) stays in domain objects.
  */
-export class Point2DRealization2D extends Element2DRealization2D {
+export class Point2DRealization2D extends Realization {
   position: Vector3;  // Position in plane coordinates (u, v, 1) - ONLY NUMERIC DATA
 
   constructor(position: Vector3, feasible: boolean = true) {

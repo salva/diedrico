@@ -1,14 +1,12 @@
 /**
- * Element3DRealization3D - Base class for all 3D element realizations
+ * 3D element realizations
  * 
- * Mirrors Element2DRealization2D architecture:
+ * Mirrors 2D realization architecture:
  * - Contains ONLY numeric data (Vector4 coordinates)
  * - NO structural information (id, projection IDs) - that stays in Element3D
  * - Extends Realization to inherit feasible property
  * 
- * Architectural symmetry:
- * - Realization → Element2DRealization2D (Vector3 for 2D)
- * - Realization → Element3DRealization3D (Vector4 for 3D)
+ * Concrete 3D realization classes extend Realization directly.
  * 
  * Phase 78: Introduced for user-created 3D elements from 2D projections
  * 
@@ -17,31 +15,12 @@ import { Vector4 } from 'three';
 import { Realization } from './Realization';
 
 /**
- * Base class for all 3D element realizations (point, line, segment, plane geometry)
- * 
- * Provides common feasibility status for all 3D geometric computations.
- * 
- * Architectural principle: Realization classes contain ONLY geometric data.
- * No structural information (id, projection IDs) - that stays in domain objects.
- */
-export abstract class Element3DRealization3D extends Realization {
-  /**
-   * Constructor for all 3D element realizations
-   * 
-   * @param feasible - Whether the geometric computation succeeded (default: true)
-   */
-  constructor(feasible: boolean = true) {
-    super(feasible);
-  }
-}
-
-/**
  * Point3DRealization3D - Stores computed 3D position for a point
  * Result of realize3D() geometric calculation
  * 
  * Contains ONLY numeric data (Vector4). Structural information (id, projection IDs) stays in Point3D.
  */
-export class Point3DRealization3D extends Element3DRealization3D {
+export class Point3DRealization3D extends Realization {
   position: Vector4;  // Position in 3D space [x, y, z, 1] - ONLY NUMERIC DATA
 
   constructor(position: Vector4, feasible: boolean = true) {
@@ -88,7 +67,7 @@ export class Point3DRealization3D extends Element3DRealization3D {
  * 
  * Contains ONLY numeric data. Structural information (id, projection IDs) stays in Line3D.
  */
-export class Line3DRealization3D extends Element3DRealization3D {
+export class Line3DRealization3D extends Realization {
   point: Vector4;      // Point on line [x, y, z, 1] - w=1 for points
   direction: Vector4;  // Direction vector [dx, dy, dz, 0] - w=0 for vectors
 
@@ -140,7 +119,7 @@ export class Line3DRealization3D extends Element3DRealization3D {
  * 
  * Contains ONLY numeric data. Structural information (id, projection IDs) stays in Segment3D.
  */
-export class Segment3DRealization3D extends Element3DRealization3D {
+export class Segment3DRealization3D extends Realization {
   startPoint: Vector4;  // Start point [x1, y1, z1, 1]
   endPoint: Vector4;    // End point [x2, y2, z2, 1]
 
@@ -202,7 +181,7 @@ export class Segment3DRealization3D extends Element3DRealization3D {
  * 
  * Contains ONLY numeric data. Structural information (id, trace IDs) stays in Plane3D.
  */
-export class Plane3DRealization3D extends Element3DRealization3D {
+export class Plane3DRealization3D extends Realization {
   normal: Vector4;  // Plane equation [a, b, c, d]: ax + by + cz + d = 0
   quaternion?: Vector4;  // Orientation quaternion (domain coords) [x, y, z, w]
   originPoint?: Vector4;  // Origin point on plane in domain coordinates [x, y, z, 1]

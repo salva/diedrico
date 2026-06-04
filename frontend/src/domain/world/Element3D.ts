@@ -29,7 +29,7 @@
  * 
  */
 import { Element } from './Element';
-import type { Element3DRealization3D } from './Element3DRealization3D';
+import type { Realization } from './Realization';
 import type { Element3DRealizationContext } from './projectionPlane/ProjectionPlaneContext';
 
 export abstract class Element3D extends Element {
@@ -37,9 +37,9 @@ export abstract class Element3D extends Element {
    * Compute 3D geometric realization from defining data
    * 
    * @param context - Narrow realization context for resolving dependencies (2D projections, planes)
-   * @returns Element3DRealization3D with numeric coordinates, or infeasible if computation fails
+   * @returns Realization with numeric coordinates, or infeasible if computation fails
    */
-  abstract realize3D(context: Element3DRealizationContext): Element3DRealization3D;
+  abstract realize3D(context: Element3DRealizationContext): Realization;
 
   /**
    * Get dependencies - IDs of elements this 3D element depends on
