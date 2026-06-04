@@ -116,7 +116,7 @@ describe('Cycle 022 runtime session persistence boundary', () => {
     expect(runtimeSession).toMatch(/import \{ ProjectService \} from '\.\/ProjectService'/);
     expect(runtimeSession).toMatch(/ProjectService\.serializeCommands\(this\.commandStack, this\.world\.peekNextId\(\), projectName\)/);
     expect(runtimeSession).toMatch(/ProjectService\.validateProjectData\(data\)/);
-    expect(runtimeSession).toMatch(/ProjectService\.deserializeCommands\(openedSession\.payload, this\.world, this\.visibilityModel, this\.commandStack, this\.changes\)/);
+    expect(runtimeSession).toMatch(/ProjectService\.deserializeCommands\(openedSession\.payload, this\.world, this\.visibilityModel, this\.commandStack, this\.changes, this\.operationContext\)/);
     expect(runtimeSession).not.toMatch(/@\/services\/ProjectService/);
     expect(appShellPorts).toMatch(/import type \{ ProjectData \} from '\.\/ProjectService'/);
     expect(appShellPorts).not.toMatch(/new ProjectService|ProjectService\.|ProjectSessionPersistencePort/);

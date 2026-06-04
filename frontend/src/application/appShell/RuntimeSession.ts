@@ -1,5 +1,5 @@
 import { CommandStack } from '@/commands/CommandStack';
-import { World } from '@/domain/world/World';
+import { RuntimeDomainContext } from './RuntimeDomainContext';
 import { initializeWorld } from '@/application/world/initializeWorld';
 import { RuntimeCommandProducer } from '@/application/commandProduction/RuntimeCommandProducer';
 import { SelectionDeletionCommandService } from '@/application/selectionDeletion/SelectionDeletionCommandService';
@@ -26,21 +26,13 @@ import { VisibilityModel } from '@/application/processTree/VisibilityModel';
 import type { OperationContext } from '@/commands/operations/OperationContext';
 
 export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort {
-  private readonly world = new World();
+  private readonly domain = new RuntimeDomainContext();
+  private readonly world = this.domain.world;
   private readonly visibilityModel = new VisibilityModel();
   private readonly changes = new RuntimeChangePublisher();
   private readonly commandStack = new CommandStack();
   private readonly descriptorRegistry = registerAllDescriptors();
-  private readonly operationContext: OperationContext = {
-    world: this.world,
-    visibilityModel: this.visibilityModel,
-    processTree: this.world.getProcessTree(),
-    dependencies: this.world.getDependencyService(),
-    realizations: this.world.getRealizationService(),
-    constructionService: this.world.getConstructionService(),
-    idAllocator: this.world.getIdAllocator(),
-    labelGenerator: this.world.labelGenerator,
-  };
+  private readonly operationContext: OperationContext = this.domain.createOperationContext(this.visibilityModel);
   private readonly commandProducer = new RuntimeCommandProducer(this.operationContext, this.commandStack, this.changes);
   private activePlaneIdValue?: string;
 
@@ -146,7 +138,7 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
   }
 
   selectionDeletionCommandPort(): SelectionDeletionCommandPort {
-    return new SelectionDeletionCommandService(this.world, this.visibilityModel, this.commandStack, this.changes);
+    return new SelectionDeletionCommandService(this.world, this.visibilityModel, this.commandStack, this.changes, undefined, this.operationContext);
   }
 
   canUndo(): boolean {
@@ -210,7 +202,7 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
   }
 
   initializeDefaultWorldIfNeeded(): void {
-    initializeWorld(this.world, this.visibilityModel, this.commandStack, this.changes);
+    initializeWorld(this.world, this.visibilityModel, this.commandStack, this.changes, this.operationContext);
     this.ensureActivePlane();
   }
 
@@ -245,18 +237,20 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
   }
 
   restoreValidatedProject(openedSession: OpenedProjectSession): void {
-    const candidateWorld = new World();
+    const candidateDomain = new RuntimeDomainContext();
+    const candidateWorld = candidateDomain.world;
     const candidateVisibilityModel = new VisibilityModel();
     const candidateCommandStack = new CommandStack();
     const validationNotifier: ChangeNotifier = { notifyChange: () => {} };
-    ProjectService.deserializeCommands(openedSession.payload, candidateWorld, candidateVisibilityModel, candidateCommandStack, validationNotifier);
-    if (candidateWorld.getAllProjectionPlanes().length === 0) initializeWorld(candidateWorld, candidateVisibilityModel, candidateCommandStack, validationNotifier);
+    const candidateOperationContext = candidateDomain.createOperationContext(candidateVisibilityModel);
+    ProjectService.deserializeCommands(openedSession.payload, candidateWorld, candidateVisibilityModel, candidateCommandStack, validationNotifier, candidateOperationContext);
+    if (candidateWorld.getAllProjectionPlanes().length === 0) initializeWorld(candidateWorld, candidateVisibilityModel, candidateCommandStack, validationNotifier, candidateOperationContext);
 
     this.world.clear();
     this.visibilityModel.clear();
     this.commandStack.clear();
     this.activePlaneIdValue = undefined;
-    ProjectService.deserializeCommands(openedSession.payload, this.world, this.visibilityModel, this.commandStack, this.changes);
+    ProjectService.deserializeCommands(openedSession.payload, this.world, this.visibilityModel, this.commandStack, this.changes, this.operationContext);
     if (this.world.getAllProjectionPlanes().length === 0) this.initializeDefaultWorldIfNeeded();
     this.ensureActivePlane();
     this.changes.markDirty();

@@ -110,6 +110,14 @@ import { ConstructionService } from './ConstructionService';
 import { WorldIdAllocator } from './WorldIdAllocator';
 import type { ProjectionElementRealizationContext } from './projectionPlane/ProjectionPlaneContext';
 
+export interface WorldServiceOptions {
+  readonly processTree?: ProcessTree;
+  readonly dependencyService?: DependencyService;
+  readonly realizationService?: RealizationService;
+  readonly idAllocator?: WorldIdAllocator;
+  readonly labelGenerator?: LabelGenerator;
+}
+
 export class World {
   // Phase 22.5.3: Element storage removed - now stored in ProjectionPlane only
   private hingeLines: Map<string, HingeLine>;
@@ -142,9 +150,9 @@ export class World {
   private plane3DUserCounter: number = 0;
 
   // Phase 116: Sequential mathematical label generator
-  readonly labelGenerator: LabelGenerator = new LabelGenerator();
+  readonly labelGenerator: LabelGenerator;
 
-  constructor() {
+  constructor(services: WorldServiceOptions = {}) {
     // Phase 22.5.3: Element storage removed - stored in ProjectionPlane
     this.hingeLines = new Map();
     this.planes3D = new Map();
@@ -155,12 +163,12 @@ export class World {
     this.lines3D = new Map();
     this.segments3D = new Map();
     
-    this.realizationService = new RealizationService();
+    this.processTree = services.processTree ?? new ProcessTree();
+    this.dependencyService = services.dependencyService ?? new DependencyService();
+    this.realizationService = services.realizationService ?? new RealizationService();
+    this.idAllocator = services.idAllocator ?? new WorldIdAllocator();
+    this.labelGenerator = services.labelGenerator ?? new LabelGenerator();
     this.constructionService = new ConstructionService(this);
-    
-    this.idAllocator = new WorldIdAllocator();
-    this.processTree = new ProcessTree();
-    this.dependencyService = new DependencyService();
     
     // Phase 47: Static initialization removed.
     // Initialization is now an explicit application use case so command history

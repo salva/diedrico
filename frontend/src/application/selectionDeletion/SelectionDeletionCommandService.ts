@@ -33,6 +33,7 @@ export class SelectionDeletionCommandService implements SelectionDeletionCommand
     commandStack: CommandStack,
     notifierOrInternals: ChangeNotifier | Partial<SelectionDeletionCommandServiceInternals> = noopChangeNotifier,
     internals: Partial<SelectionDeletionCommandServiceInternals> | undefined = undefined,
+    private readonly operationContext?: OperationContext,
   ) {
     this.visibilityModel = visibilityModel;
     this.commandStack = commandStack;
@@ -48,7 +49,7 @@ export class SelectionDeletionCommandService implements SelectionDeletionCommand
   execute(selectedIds: readonly string[]): void {
     if (selectedIds.length === 0) return;
 
-    const operationContext: OperationContext = {
+    const operationContext: OperationContext = this.operationContext ?? {
       world: this.world,
       visibilityModel: this.visibilityModel,
       processTree: this.world.getProcessTree(),

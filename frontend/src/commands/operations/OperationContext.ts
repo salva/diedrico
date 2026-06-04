@@ -17,3 +17,16 @@ export interface OperationContext {
   readonly idAllocator: WorldIdAllocator;
   readonly labelGenerator: LabelGenerator;
 }
+
+export function createOperationContextFromWorld(world: World, visibilityModel: VisibilityModel): OperationContext {
+  return {
+    world,
+    visibilityModel,
+    processTree: world.getProcessTree(),
+    dependencies: world.getDependencyService(),
+    realizations: world.getRealizationService(),
+    constructionService: world.getConstructionService(),
+    idAllocator: world.getIdAllocator(),
+    labelGenerator: world.labelGenerator,
+  };
+}

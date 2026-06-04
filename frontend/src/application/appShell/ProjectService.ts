@@ -7,6 +7,7 @@ import type { CommandStack } from '@/commands/CommandStack';
 import { Command, type CommandSnapshot } from '@/commands/Command';
 import type { OperationDescriptor } from '@/commands/operations/IOperation';
 import type { OperationContext } from '@/commands/operations/OperationContext';
+import { createOperationContextFromWorld } from '@/commands/operations/OperationContext';
 import { assertOperationDescriptor, assertRestorableOperationDescriptor, deserializeOperation } from '@/commands/operations/OperationRegistry';
 import type { ChangeNotifier } from '@/application/appShell/RuntimeChangePublisher';
 import type { VisibilityModel } from '@/application/processTree/VisibilityModel';
@@ -45,21 +46,18 @@ export class ProjectService {
     };
   }
 
-  static deserializeCommands(data: ProjectData, world: World, visibilityModel: VisibilityModel, commandStack: CommandStack, notifier: ChangeNotifier = { notifyChange: () => {} }): void {
+  static deserializeCommands(
+    data: ProjectData,
+    world: World,
+    visibilityModel: VisibilityModel,
+    commandStack: CommandStack,
+    notifier: ChangeNotifier = { notifyChange: () => {} },
+    operationContext: OperationContext = createOperationContextFromWorld(world, visibilityModel),
+  ): void {
     this.validateProjectData(data);
     commandStack.clear();
     visibilityModel.clear();
     world.restoreNextId(data.nextElementId);
-    const operationContext: OperationContext = {
-      world,
-      visibilityModel,
-      processTree: world.getProcessTree(),
-      dependencies: world.getDependencyService(),
-      realizations: world.getRealizationService(),
-      constructionService: world.getConstructionService(),
-      idAllocator: world.getIdAllocator(),
-      labelGenerator: world.labelGenerator,
-    };
 
     const restoredCommands: Command[] = [];
     for (const serializedCommand of data.commands) {

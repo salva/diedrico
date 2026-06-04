@@ -1,6 +1,7 @@
 import { Command } from '@/commands/Command';
 import type { CommandStack } from '@/commands/CommandStack';
 import type { OperationContext } from '@/commands/operations/OperationContext';
+import { createOperationContextFromWorld } from '@/commands/operations/OperationContext';
 import { buildWorldInitialization } from '@/commands/factories/InitializationSequenceFactory';
 import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
 import { PopSubprocessOp, PushSubprocessOp } from '@/commands/operations/processTree';
@@ -21,19 +22,14 @@ function createInitializationGroupId(): string {
  * The domain World owns geometric state only; command construction and history
  * recording belong at the application/command boundary.
  */
-export function initializeWorld(world: World, visibilityModel: VisibilityModel, commandStack: CommandStack, notifier: ChangeNotifier = noopChangeNotifier): void {
+export function initializeWorld(
+  world: World,
+  visibilityModel: VisibilityModel,
+  commandStack: CommandStack,
+  notifier: ChangeNotifier = noopChangeNotifier,
+  operationContext: OperationContext = createOperationContextFromWorld(world, visibilityModel),
+): void {
   if (world.getAllProjectionPlanes().length > 0) return;
-
-  const operationContext: OperationContext = {
-    world,
-    visibilityModel,
-    processTree: world.getProcessTree(),
-    dependencies: world.getDependencyService(),
-    realizations: world.getRealizationService(),
-    constructionService: world.getConstructionService(),
-    idAllocator: world.getIdAllocator(),
-    labelGenerator: world.labelGenerator,
-  };
   const initCmd = new Command('Initialize World', operationContext, notifier);
 
   initCmd.addAndExecute(new PushSubprocessOp('World Initialization'));
