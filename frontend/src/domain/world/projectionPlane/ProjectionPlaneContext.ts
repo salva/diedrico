@@ -3,6 +3,9 @@ import type { HingeLine } from '../HingeLine';
 import type { Line2D } from '../Line';
 import type { Circle2D } from '../Circle';
 import type { Point2D } from '../Point';
+import type { Circle2DRealization2D } from '../Circle';
+import type { Line2DRealization2D } from '../Line';
+import type { Point2DRealization2D } from '../Point';
 import type { ProjectionPlane } from '@/domain/world/projectionPlane/ProjectionPlane';
 import type { DependencyRegistrarPort } from '@/domain/world/DependencyPorts';
 import type { ProjectionPlaneRealization2D, ProjectionPlaneRealization3D } from './ProjectionPlaneRealization';
@@ -22,6 +25,14 @@ export interface ProjectionRealizationLookupContext {
 }
 
 export interface ProjectionElementRealizationContext extends ProjectionElementLookupContext, ProjectionRealizationLookupContext {}
+
+export interface ProjectionElementRealizer {
+  realizePoint2D(point: Point2D, context?: ProjectionElementRealizationContext): Point2DRealization2D | undefined;
+  realizeLine2D(line: Line2D, context?: ProjectionElementRealizationContext): Line2DRealization2D | undefined;
+  realizeCircle2D(circle: Circle2D, context?: ProjectionElementRealizationContext): Circle2DRealization2D | undefined;
+}
+
+export interface CachedProjectionElementRealizationContext extends ProjectionElementRealizationContext, ProjectionElementRealizer {}
 
 export interface ProjectionRealizationCollectionContext {
   getAllProjectionPlanes(): ProjectionPlane[];

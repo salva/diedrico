@@ -11,7 +11,7 @@
  * Architecture:
  * - Element3D classes store WHAT the element is (definition/rules)
  * - realize3D() computes numeric geometry → Line3DRealization3D
- * - Lazy evaluation with caching owned by World's RealizationStore
+ * - Lazy evaluation with caching owned by World's RealizationService
  * 
  */
 import { Vector4 } from 'three';

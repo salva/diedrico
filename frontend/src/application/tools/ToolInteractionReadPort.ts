@@ -9,9 +9,9 @@ export function createToolInteractionReadPort(world: World): ToolInteractionRead
     getPoint2D: (id) => safeLookup(() => world.getPoint2D(id)),
     getLine2D: (id) => safeLookup(() => world.getLine2D(id)),
     getCircle2D: (id) => safeLookup(() => world.getCircle2D(id)),
-    realizePoint2D: (point) => point.realize2D(world),
-    realizeLine2D: (line) => line.realize2D(world),
-    realizeCircle2D: (circle) => circle.realize2D(world) ?? undefined,
+    realizePoint2D: (point) => world.realizePoint2D(point),
+    realizeLine2D: (line) => world.realizeLine2D(line),
+    realizeCircle2D: (circle) => world.realizeCircle2D(circle),
     areProjectionPlanesDistinct: (firstPlaneId, secondPlaneId) => {
       const firstPlane = world.getProjectionPlaneById(firstPlaneId);
       const secondPlane = world.getProjectionPlaneById(secondPlaneId);

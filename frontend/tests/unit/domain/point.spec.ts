@@ -301,8 +301,7 @@ describe('Point2D', () => {
         const planeH = getHorizontalPlane(world);
         const primaryPoint = new FreePoint2D(primaryPointId, new Vector3(75, 0, 1), planeHId);
         planeH.addPoint(primaryPoint);
-        // Phase 22.5.3: Clear cache from plane, not World
-        planeH?.clearPointRealization2D(primaryPointId);
+        world.invalidateRealization(primaryPointId);
 
         // Sibling should reflect updated coordinates
         const realization2 = sibling.realize2D(world);

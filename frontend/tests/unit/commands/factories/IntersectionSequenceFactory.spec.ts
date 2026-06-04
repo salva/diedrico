@@ -99,8 +99,8 @@ describe('IntersectionSequenceFactory', () => {
       expect((siblingPoint as any).primaryIntersectionId).toBe(result.pointId);
 
       // Verify: Both points realize to same coordinate (parametric consistency)
-      const primaryRealization = horizontalPlane.realizePoint2D(primaryPoint!, world);
-      const siblingRealization = verticalPlane.realizePoint2D(siblingPoint!, world);
+      const primaryRealization = world.realizePoint2D(primaryPoint!, world);
+      const siblingRealization = world.realizePoint2D(siblingPoint!, world);
       
       expect(primaryRealization).toBeDefined();
       expect(siblingRealization).toBeDefined();

@@ -7,9 +7,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Vector3 } from 'three';
 import { FixedProjectionPlane } from '@/domain/world/projectionPlane/FixedProjectionPlane';
-import { FreePoint2D, Point2DRealization2D } from '@/domain/world/Point';
-import { Line2DByTwoPoints, Line2DRealization2D } from '@/domain/world/Line';
-import { Circle2DByCenterAndPoint, Circle2DRealization2D } from '@/domain/world/Circle';
+import { FreePoint2D } from '@/domain/world/Point';
+import { Line2DByTwoPoints } from '@/domain/world/Line';
+import { Circle2DByCenterAndPoint } from '@/domain/world/Circle';
 import type { World } from '@/domain/world/World';
 import { createTestWorld, getHorizontalPlane, getVerticalPlane, getHorizontalPlaneId, getVerticalPlaneId } from '../helpers/worldHelpers';
 
@@ -221,38 +221,6 @@ describe('ProjectionPlane Element Storage (Phase 22.5.1)', () => {
       expect(planeH.getPoint(point.id)).toBeUndefined();
     });
 
-    it('should cache and retrieve point realizations', () => {
-      const point = planeH.addFreePoint2D(new Vector3(10, 20, 1), world);
-      
-      const realization = new Point2DRealization2D(new Vector3(10, 20, 1), true);
-      planeH.setPointRealization2D(point.id, realization);
-      
-      const retrieved = planeH.getPointRealization2D(point.id);
-      expect(retrieved).toBeDefined();
-      expect(retrieved?.position.x).toBe(10);
-      expect(retrieved?.position.y).toBe(20);
-    });
-
-    it('should clear point realization', () => {
-      const point = planeH.addFreePoint2D(new Vector3(10, 20, 1), world);
-      
-      const realization = new Point2DRealization2D(new Vector3(10, 20, 1), true);
-      planeH.setPointRealization2D(point.id, realization);
-      expect(planeH.getPointRealization2D(point.id)).toBeDefined();
-      
-      planeH.clearPointRealization2D(point.id);
-      expect(planeH.getPointRealization2D(point.id)).toBeUndefined();
-    });
-
-    it('should auto-clear realization when removing point', () => {
-      const point = planeH.addFreePoint2D(new Vector3(10, 20, 1), world);
-      
-      const realization = new Point2DRealization2D(new Vector3(10, 20, 1), true);
-      planeH.setPointRealization2D(point.id, realization);
-      
-      planeH.removePoint(point.id);
-      expect(planeH.getPointRealization2D(point.id)).toBeUndefined();
-    });
   });
 
   describe('Line Storage', () => {
@@ -296,23 +264,6 @@ describe('ProjectionPlane Element Storage (Phase 22.5.1)', () => {
       expect(planeH.getLine(line.id)).toBeUndefined();
     });
 
-    it('should cache and retrieve line realizations', () => {
-      const p1 = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
-      const p2 = planeH.addFreePoint2D(new Vector3(10, 10, 1), world);
-      const line = planeH.addLine2DBetweenTwoPoints(p1.id, p2.id, world);
-      
-      const realization = new Line2DRealization2D(
-        new Vector3(0, 0, 1), 
-        new Vector3(1, 0, 0),
-        true
-      );
-      planeH.setLineRealization2D(line.id, realization);
-      
-      const retrieved = planeH.getLineRealization2D(line.id);
-      expect(retrieved).toBeDefined();
-      expect(retrieved?.point1.x).toBe(0);
-      expect(retrieved?.point2.x).toBe(1);
-    });
   });
 
   describe('Circle Storage', () => {
@@ -355,25 +306,6 @@ describe('ProjectionPlane Element Storage (Phase 22.5.1)', () => {
       expect(planeH.getCircle(circle.id)).toBeUndefined();
     });
 
-    it('should cache and retrieve circle realizations', () => {
-      const center = planeH.addFreePoint2D(new Vector3(100, 100, 1), world);
-      const edge = planeH.addFreePoint2D(new Vector3(150, 100, 1), world);
-      const circle = planeH.addCircle2DByCenterAndPoint(center.id, edge.id, world);
-      
-      const realization = new Circle2DRealization2D(
-        new Vector3(100, 100, 1),
-        new Vector3(50, 0, 0),  // Radius vector pointing right
-        true
-      );
-      planeH.setCircleRealization2D(circle.id, realization);
-      
-      const retrieved = planeH.getCircleRealization2D(circle.id);
-      expect(retrieved).toBeDefined();
-      expect(retrieved?.center.x).toBe(100);
-      expect(retrieved?.getRadius()).toBe(50);  // Use getRadius() method
-      expect(retrieved?.radiusVector.x).toBe(50);  // Check radiusVector components
-      expect(retrieved?.radiusVector.y).toBe(0);
-    });
   });
 
   describe('Multi-Plane Isolation', () => {
@@ -395,7 +327,7 @@ describe('ProjectionPlane Element Storage (Phase 22.5.1)', () => {
       expect(planeV.getPoint(pointH.id)).toBeUndefined();
     });
 
-    it('should keep line realizations isolated between planes', () => {
+    it('should keep line storage isolated between planes', () => {
       const p1H = planeH.addFreePoint2D(new Vector3(0, 0, 1), world);
       const p2H = planeH.addFreePoint2D(new Vector3(10, 0, 1), world);
       const p1V = planeV.addFreePoint2D(new Vector3(0, 0, 1), world);
@@ -403,17 +335,11 @@ describe('ProjectionPlane Element Storage (Phase 22.5.1)', () => {
       
       const lineH = planeH.addLine2DBetweenTwoPoints(p1H.id, p2H.id, world);
       const lineV = planeV.addLine2DBetweenTwoPoints(p1V.id, p2V.id, world);
-      
-      const realH = new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), true);
-      const realV = new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(0, 1, 0), true);
-      
-      planeH.setLineRealization2D(lineH.id, realH);
-      planeV.setLineRealization2D(lineV.id, realV);
-      
-      expect(planeH.getLineRealization2D(lineH.id)).toBeDefined();
-      expect(planeH.getLineRealization2D(lineV.id)).toBeUndefined();
-      expect(planeV.getLineRealization2D(lineV.id)).toBeDefined();
-      expect(planeV.getLineRealization2D(lineH.id)).toBeUndefined();
+
+      expect(planeH.getLine(lineH.id)).toBe(lineH);
+      expect(planeH.getLine(lineV.id)).toBeUndefined();
+      expect(planeV.getLine(lineV.id)).toBe(lineV);
+      expect(planeV.getLine(lineH.id)).toBeUndefined();
     });
   });
 

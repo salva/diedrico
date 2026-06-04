@@ -54,6 +54,8 @@ export class RemovePoint2DOp implements IOperation {
         };
       }
 
+      world.invalidateRealization(this.pointId);
+
       // Remove the point from the plane
       const removed = plane.removePoint(this.pointId, world);
       if (!removed) {
@@ -138,6 +140,8 @@ export class RemoveLine2DOp implements IOperation {
         };
       }
 
+      world.invalidateRealization(this.lineId);
+
       // Remove the line from the plane
       const removed = plane.removeLine(this.lineId, world);
       if (!removed) {
@@ -221,6 +225,8 @@ export class RemoveSegment2DOp implements IOperation {
         };
       }
 
+      world.invalidateRealization(this.segmentId);
+
       // Remove the segment from the plane (segments are stored as lines)
       const removed = plane.removeLine(this.segmentId, world);
       if (!removed) {
@@ -302,6 +308,8 @@ export class RemoveCircle2DOp implements IOperation {
           error: `Circle ${this.circleId} not found`
         };
       }
+
+      world.invalidateRealization(this.circleId);
 
       // Remove the circle from the plane
       const removed = plane.removeCircle(this.circleId, world);
@@ -426,6 +434,8 @@ export class RemoveGuide2DOp implements IOperation {
             this.siblingPlaneId = siblingGuide.planeId;
             this.removedSibling = siblingGuide;
             
+            world.invalidateRealization(siblingGuideId);
+
             // Remove sibling guide
             const siblingRemoved = siblingPlane.removeLine(siblingGuideId, world);
             if (!siblingRemoved) {
@@ -434,6 +444,8 @@ export class RemoveGuide2DOp implements IOperation {
           }
         }
       }
+
+      world.invalidateRealization(this.guideId);
 
       // Remove the primary guide from the plane
       const removed = plane.removeLine(this.guideId, world);

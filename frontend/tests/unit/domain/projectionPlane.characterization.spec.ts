@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { Matrix3, Vector3 } from 'three';
-import { Circle2DRealization2D } from '@/domain/world/Circle';
-import { Line2DRealization2D } from '@/domain/world/Line';
-import { Point2DRealization2D } from '@/domain/world/Point';
 import { AuxiliaryProjectionPlane } from '@/domain/world/projectionPlane/AuxiliaryProjectionPlane';
 import type { ProjectionPlane } from '@/domain/world/projectionPlane/ProjectionPlane';
 import { mat4x3 } from '@/utils/threeUtils';
@@ -39,22 +36,22 @@ describe('ProjectionPlane characterization before responsibility extraction', ()
     expect(dependencyQuery.getDependents(circle.id)).toEqual([intersection.id]);
   });
 
-  it('clears point, line, and circle realization caches through the plane-level facade', () => {
+  it('invalidates affected point, line, and circle caches through World', () => {
     const { world } = createTestWorld();
     const plane = getHorizontalPlane(world);
-    const { p1, p2 } = createLineCircleFixture(plane, world);
+    const { p1, p2, line, circle } = createLineCircleFixture(plane, world);
 
-    plane.setPointRealization2D(p1.id, new Point2DRealization2D(new Vector3(1, 2, 1)));
-    plane.setLineRealization2D(p1.id, new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0)));
-    plane.setCircleRealization2D(p1.id, new Circle2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0)));
-    plane.setPointRealization2D(p2.id, new Point2DRealization2D(new Vector3(3, 4, 1)));
+    const p1Realization = world.realizePoint2D(p1);
+    const p2Realization = world.realizePoint2D(p2);
+    const lineRealization = world.realizeLine2D(line);
+    const circleRealization = world.realizeCircle2D(circle);
 
-    plane.clearRealizationCaches(p1.id);
+    world.invalidateRealization(p1.id);
 
-    expect(plane.getPointRealization2D(p1.id)).toBeUndefined();
-    expect(plane.getLineRealization2D(p1.id)).toBeUndefined();
-    expect(plane.getCircleRealization2D(p1.id)).toBeUndefined();
-    expect(plane.getPointRealization2D(p2.id)).toBeDefined();
+    expect(world.realizePoint2D(p1)).not.toBe(p1Realization);
+    expect(world.realizeLine2D(line)).not.toBe(lineRealization);
+    expect(world.realizeCircle2D(circle)).not.toBe(circleRealization);
+    expect(world.realizePoint2D(p2)).toBe(p2Realization);
   });
 
   it('keeps fixed projection plane 2D and 3D realization values stable across calls', () => {

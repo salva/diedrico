@@ -1,26 +1,51 @@
 import { describe, expect, it } from 'vitest';
 import { Vector3 } from 'three';
-import { Circle2DRealization2D } from '@/domain/world/Circle';
-import { Line2DRealization2D } from '@/domain/world/Line';
-import { Point2DRealization2D } from '@/domain/world/Point';
-import { ProjectionPlaneElementStore } from '@/domain/world/projectionPlane/ProjectionPlaneElementStore';
+import { FreePoint2D } from '@/domain/world/Point';
+import { RealizationService } from '@/domain/world/RealizationService';
+import { AuxiliaryProjectionPlane } from '@/domain/world/projectionPlane/AuxiliaryProjectionPlane';
+import type { DependencyQueryPort } from '@/domain/world/DependencyPorts';
+import { createTestWorld } from '../../helpers/worldHelpers';
 
-describe('ProjectionPlaneElementStore', () => {
-  it('clears all realization caches for an element id', () => {
-    const store = new ProjectionPlaneElementStore();
-    const id = 'projPlane1/element1';
-    const otherId = 'projPlane1/element2';
+describe('RealizationService', () => {
+  it('invalidates one cached 2D realization without clearing unrelated entries', () => {
+    const { world } = createTestWorld();
+    const service = new RealizationService();
+    const point = new FreePoint2D('projPlane1/point1', new Vector3(0, 0, 1), 'projPlane1');
+    const otherPoint = new FreePoint2D('projPlane1/point2', new Vector3(1, 1, 1), 'projPlane1');
+    const dependencyQuery: DependencyQueryPort = {
+      getDependents: () => [],
+      getDependencies: () => [],
+      getAllDependents: () => [],
+      getElementsInDeletionOrder: (ids) => ids,
+    };
 
-    store.setPointRealization2D(id, new Point2DRealization2D(new Vector3(0, 0, 1)));
-    store.setLineRealization2D(id, new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0)));
-    store.setCircleRealization2D(id, new Circle2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0)));
-    store.setPointRealization2D(otherId, new Point2DRealization2D(new Vector3(1, 1, 1)));
+    const pointRealization = service.realizePoint2D(point, world);
+    const otherRealization = service.realizePoint2D(otherPoint, world);
 
-    store.clearRealizationCaches(id);
+    expect(service.invalidateElement(point.id, dependencyQuery, new Map())).toEqual([point.id]);
 
-    expect(store.getPointRealization2D(id)).toBeUndefined();
-    expect(store.getLineRealization2D(id)).toBeUndefined();
-    expect(store.getCircleRealization2D(id)).toBeUndefined();
-    expect(store.getPointRealization2D(otherId)).toBeDefined();
+    expect(service.realizePoint2D(point, world)).not.toBe(pointRealization);
+    expect(service.realizePoint2D(otherPoint, world)).toBe(otherRealization);
+  });
+
+  it('clears auxiliary projection-plane matrix caches when a trace dependency is invalidated', () => {
+    const { world } = createTestWorld();
+    const service = new RealizationService();
+    const traceId = 'projPlane1/trace-line';
+    const plane = new AuxiliaryProjectionPlane('auxPlane1', 'Auxiliary', traceId, 'other-trace', 'other-trace-prime');
+    const dependencyQuery: DependencyQueryPort = {
+      getDependents: () => [],
+      getDependencies: () => [],
+      getAllDependents: () => [],
+      getElementsInDeletionOrder: (ids) => ids,
+    };
+
+    const first2D = service.realizeProjectionPlane2D(plane, world);
+    const first3D = service.realizeProjectionPlane3D(plane, world);
+
+    service.invalidateElement(traceId, dependencyQuery, new Map([[plane.id, plane]]));
+
+    expect(service.realizeProjectionPlane2D(plane, world)).not.toBe(first2D);
+    expect(service.realizeProjectionPlane3D(plane, world)).not.toBe(first3D);
   });
 });

@@ -72,10 +72,10 @@ export class UpdateFreePoint2DPositionOp implements IOperation<UpdateFreePoint2D
       const updated = new FreePoint2D(this.pointId, nextPos, this.planeId, this.previousLabel);
       updated.locked = this.previousLocked ?? false;
 
+      world.invalidateRealization(this.pointId);
+
       plane.removePoint(this.pointId);
       plane.addPoint(updated);
-
-      world.invalidateRealization(this.pointId);
 
       return { success: true, outputs: this.outputs };
     } catch (error) {
@@ -100,10 +100,10 @@ export class UpdateFreePoint2DPositionOp implements IOperation<UpdateFreePoint2D
     const restored = new FreePoint2D(this.pointId, this.previousPosition, this.planeId, this.previousLabel);
     restored.locked = this.previousLocked ?? false;
 
+    world.invalidateRealization(this.pointId);
+
     plane.removePoint(this.pointId);
     plane.addPoint(restored);
-
-    world.invalidateRealization(this.pointId);
   }
 
   serialize(): UpdateFreePoint2DPositionDescriptor {

@@ -81,10 +81,10 @@
 
 import { Vector4, Matrix3 } from 'three';
 import { Matrix4x3 } from '@/utils/threeUtils';
-import { Point2D, Point2DLineLineIntersection, Point2DLineCircleIntersection, Point2DCircleCircleIntersection } from './Point';
-import { Line2D } from './Line';
+import { Point2D, Point2DLineLineIntersection, Point2DLineCircleIntersection, Point2DCircleCircleIntersection, type Point2DRealization2D } from './Point';
+import { Line2D, type Line2DRealization2D } from './Line';
 import { Segment2D } from './Segment';
-import { Circle2D } from './Circle';
+import { Circle2D, type Circle2DRealization2D } from './Circle';
 import { Guide2D } from './Guide';
 import { HingeLine, HalfHingeLine2D } from './HingeLine';
 import { Plane3D, Plane3DFixed } from './Plane';
@@ -105,8 +105,9 @@ import type { Segment3DFromProjections } from './Segment3D';
 import { Point3DRealization3D, Line3DRealization3D, Segment3DRealization3D, Plane3DRealization3D } from './Element3DRealization3D';
 import { getContainerIdFromElementId } from './ElementId';
 import { LabelGenerator } from './LabelGenerator';
-import { RealizationStore } from './RealizationStore';
+import { RealizationService } from './RealizationService';
 import { WorldIdAllocator } from './WorldIdAllocator';
+import type { ProjectionElementRealizationContext } from './projectionPlane/ProjectionPlaneContext';
 
 export class World {
   // Phase 22.5.3: Element storage removed - now stored in ProjectionPlane only
@@ -125,7 +126,7 @@ export class World {
   // Dependency tracking: World owns the concrete service; collaborators receive ports.
   private dependencyService: DependencyService;
   
-  private realizations: RealizationStore;
+  private realizationService: RealizationService;
   
   private idAllocator: WorldIdAllocator;
 
@@ -152,7 +153,7 @@ export class World {
     this.lines3D = new Map();
     this.segments3D = new Map();
     
-    this.realizations = new RealizationStore();
+    this.realizationService = new RealizationService();
     
     this.idAllocator = new WorldIdAllocator();
     this.processTree = new ProcessTree();
@@ -178,7 +179,7 @@ export class World {
     this.planes3D.clear();
     this.projectionPlanes.clear();
     this.hingeLines.clear();
-    this.realizations.clear();
+    this.realizationService.clear();
     this.idAllocator.restore(1);
     this.labelGenerator.reset();
     this.point3DCounter = 0;
@@ -393,25 +394,12 @@ export class World {
    * Consistent pattern with getPoint2DRealization()
    */
   getProjectionPlane2DRealization(planeId: string): ProjectionPlaneRealization2D | undefined {
-    // Check cache first
-    let realization = this.realizations.getProjectionPlane2D(planeId);
-    if (realization) {
-      return realization;
-    }
-
-    // Not cached - compute it
     const plane = this.projectionPlanes.get(planeId);
     if (!plane) {
       return undefined;
     }
 
-    // Call realize2D with this realization context (uniform API for all plane types)
-    realization = plane.realize2D(this);
-    
-    // Cache the result
-    this.realizations.setProjectionPlane2D(planeId, realization);
-    
-    return realization;
+    return this.realizationService.realizeProjectionPlane2D(plane, this);
   }
 
   /**
@@ -419,56 +407,24 @@ export class World {
    * Returns the 3D transformation matrix for converting plane coordinates to 3D space
    */
   getProjectionPlane3DRealization(planeId: string): ProjectionPlaneRealization3D | undefined {
-    // Check cache first
-    let realization = this.realizations.getProjectionPlane3D(planeId);
-    if (realization) {
-      return realization;
-    }
-
-    // Not cached - compute it
     const plane = this.projectionPlanes.get(planeId);
     if (!plane) {
       return undefined;
     }
 
-    // Call realize3D with this realization context (uniform API for all plane types)
-    realization = plane.realize3D(this);
-    
-    // Cache the result
-    this.realizations.setProjectionPlane3D(planeId, realization);
-    
-    return realization;
+    return this.realizationService.realizeProjectionPlane3D(plane, this);
   }
 
   /**
    * Invalidate cached realizations for a point and all dependent points
    * Call this when a point's definition changes (e.g., user moves a point)
    */
-  invalidateRealization(pointId: string): void {
-    // Phase 22.5.3: Clear realizations from ProjectionPlane caches
-    // Use dependency service to cascade invalidation to all dependents
-    this.dependencyService.invalidateCascade(pointId, (id: string) => {
-      // Clear all 3D realization caches (Phase 78: includes 3D elements)
-      this.realizations.clear3DElements(id);
-      
-      // Clear projection plane 3D realizations if this is a Plane3D
-      // When a Plane3D is invalidated, any projection planes depending on it need recomputation
-      for (const [projPlaneId, projPlane] of this.projectionPlanes) {
-        if (projPlane.plane3DId === id) {
-          this.realizations.clearProjectionPlane3D(projPlaneId);
-        }
-      }
-      
-      // Phase 84: If this ID is a projection plane, clear its transformation cache
-      // (Projection planes are elements in dependency graph like any other)
-      this.realizations.clearProjectionPlane3D(id);
-      this.realizations.clearProjectionPlane2D(id);  // Also clear 2D plane-to-paper transform
-      
-      // Clear 2D realization caches in all planes
-      for (const plane of this.projectionPlanes.values()) {
-        plane.clearRealizationCaches(id);
-      }
-    });
+  invalidateRealization(elementId: string): string[] {
+    return this.realizationService.invalidateElement(
+      elementId,
+      this.dependencyService,
+      this.projectionPlanes
+    );
   }
 
   // ========================================
@@ -479,22 +435,20 @@ export class World {
    * Invalidate line realization cache for a specific line
    * Call this when the line's dependencies change
    */
-  invalidateLineRealization(lineId: string): void {
-    // Phase 22.5.3: Clear realizations from ProjectionPlane caches
-    // Use dependency service to cascade invalidation to all dependents
-    this.dependencyService.invalidateCascade(lineId, (id: string) => {
-      // Clear all 3D realization caches (Phase 78: includes 3D elements)
-      this.realizations.clear3DElements(id);
-      
-      // Clear projection plane 2D and 3D transformation caches
-      this.realizations.clearProjectionPlane3D(id);
-      this.realizations.clearProjectionPlane2D(id);
-      
-      // Clear 2D realization caches in all planes
-      for (const plane of this.projectionPlanes.values()) {
-        plane.clearRealizationCaches(id);
-      }
-    });
+  invalidateLineRealization(lineId: string): string[] {
+    return this.invalidateRealization(lineId);
+  }
+
+  realizePoint2D(point: Point2D, context: ProjectionElementRealizationContext = this): Point2DRealization2D | undefined {
+    return this.realizationService.realizePoint2D(point, context);
+  }
+
+  realizeLine2D(line: Line2D, context: ProjectionElementRealizationContext = this): Line2DRealization2D | undefined {
+    return this.realizationService.realizeLine2D(line, context);
+  }
+
+  realizeCircle2D(circle: Circle2D, context: ProjectionElementRealizationContext = this): Circle2DRealization2D | undefined {
+    return this.realizationService.realizeCircle2D(circle, context);
   }
 
 
@@ -511,6 +465,7 @@ export class World {
     const plane = this.getPlaneForElement(circleId);
     if (plane) {
       const circle = plane.getCircle(circleId);
+      this.invalidateRealization(circleId);
       plane.removeCircle(circleId);
       return circle;
     }
@@ -550,12 +505,11 @@ export class World {
 
   removeProjectionPlaneByIdForUndo(id: string): void {
     const plane = this.projectionPlanes.get(id);
+    this.invalidateRealization(id);
     if (plane) {
       plane.clear();
     }
     this.projectionPlanes.delete(id);
-    this.realizations.clearProjectionPlane2D(id);
-    this.realizations.clearProjectionPlane3D(id);
     this.dependencyService.unregisterNode(id);
   }
 
@@ -943,8 +897,8 @@ export class World {
    * Remove 3D point from World
    */
   remove3DPoint(id: string): void {
+    this.invalidateRealization(id);
     this.points3D.delete(id);
-    this.realizations.clearPoint3D(id);
     this.dependencyService.unregisterNode(id);
     
   }
@@ -976,8 +930,8 @@ export class World {
    * Remove 3D line from World
    */
   remove3DLine(id: string): void {
+    this.invalidateRealization(id);
     this.lines3D.delete(id);
-    this.realizations.clearLine3D(id);
     this.dependencyService.unregisterNode(id);
     
   }
@@ -1009,8 +963,8 @@ export class World {
    * Remove 3D segment from World
    */
   remove3DSegment(id: string): void {
+    this.invalidateRealization(id);
     this.segments3D.delete(id);
-    this.realizations.clearSegment3D(id);
     this.dependencyService.unregisterNode(id);
     
   }
@@ -1042,8 +996,8 @@ export class World {
    * Remove 3D plane from World (base or user-created)
    */
   remove3DPlane(id: string): void {
+    this.invalidateRealization(id);
     this.planes3D.delete(id);
-    this.realizations.clearPlane3D(id);
     this.dependencyService.unregisterNode(id);
     
   }
@@ -1073,19 +1027,10 @@ export class World {
    * Uses cache for performance
    */
   get3DPointRealization(id: string): Point3DRealization3D | undefined {
-    // Check cache first
-    const cached = this.realizations.getPoint3D(id);
-    if (cached) {
-      return cached;
-    }
-
-    // Compute and cache
     const point = this.get3DPoint(id);
     if (!point) return undefined;
 
-    const realization = point.realize3D(this);
-    this.realizations.setPoint3D(id, realization);
-    return realization;
+    return this.realizationService.realizePoint3D(point, this);
   }
 
   /**
@@ -1093,19 +1038,10 @@ export class World {
    * Uses cache for performance
    */
   get3DLineRealization(id: string): Line3DRealization3D | undefined {
-    // Check cache first
-    const cached = this.realizations.getLine3D(id);
-    if (cached) {
-      return cached;
-    }
-
-    // Compute and cache
     const line = this.get3DLine(id);
     if (!line) return undefined;
 
-    const realization = line.realize3D(this);
-    this.realizations.setLine3D(id, realization);
-    return realization;
+    return this.realizationService.realizeLine3D(line, this);
   }
 
   /**
@@ -1113,19 +1049,10 @@ export class World {
    * Uses cache for performance
    */
   get3DSegmentRealization(id: string): Segment3DRealization3D | undefined {
-    // Check cache first
-    const cached = this.realizations.getSegment3D(id);
-    if (cached) {
-      return cached;
-    }
-
-    // Compute and cache
     const segment = this.get3DSegment(id);
     if (!segment) return undefined;
 
-    const realization = segment.realize3D(this);
-    this.realizations.setSegment3D(id, realization);
-    return realization;
+    return this.realizationService.realizeSegment3D(segment, this);
   }
 
   /**
@@ -1133,19 +1060,10 @@ export class World {
    * Uses cache for performance
    */
   get3DPlaneRealization(id: string): Plane3DRealization3D | undefined {
-    // Check cache first
-    const cached = this.realizations.getPlane3D(id);
-    if (cached) {
-      return cached;
-    }
-
-    // Compute and cache
     const plane = this.get3DPlane(id);
     if (!plane) return undefined;
 
-    const realization = plane.realize3D(this);
-    this.realizations.setPlane3D(id, realization);
-    return realization;
+    return this.realizationService.realizePlane3D(plane, this);
   }
 
   /**
@@ -1153,6 +1071,6 @@ export class World {
    * Called when 2D elements change to invalidate dependent 3D elements
    */
   clear3DRealizationCaches(): void {
-    this.realizations.clear3DElementCaches();
+    this.realizationService.clear3DElementCaches();
   }
 }

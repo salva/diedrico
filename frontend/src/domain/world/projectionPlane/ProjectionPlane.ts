@@ -1,17 +1,17 @@
 import { Vector3 } from 'three';
 import { buildElementId } from '../ElementId';
 import { Element } from '../Element';
-import type { Point2D, Point2DRealization2D } from '../Point';
+import type { Point2D } from '../Point';
 import { FreePoint2D, Point2DLineLineIntersection, Point2DLineCircleIntersection, Point2DCircleCircleIntersection, SiblingIntersectionPoint2D } from '../Point';
-import type { Line2D, Line2DRealization2D } from '../Line';
+import type { Line2D } from '../Line';
 import { Line2DByTwoPoints, Line2DParallel, Line2DPerpendicularToLine, Line2DTangentToCircleThroughPoint, Line2DTangentToCircleParallelToLine } from '../Line';
-import type { Circle2D, Circle2DRealization2D } from '../Circle';
+import type { Circle2D } from '../Circle';
 import { Circle2DByCenterAndPoint } from '../Circle';
 import { Segment2D } from '../Segment';
 import { Guide2D, SiblingGuide2D } from '../Guide';
 import { HalfHingeLine2D } from '../HingeLine';
 import { ProjectionPlaneElementStore } from './ProjectionPlaneElementStore';
-import type { ProjectionElementRealizationContext, ProjectionPlaneMutationContext, ProjectionPlaneRealizationContext } from './ProjectionPlaneContext';
+import type { ProjectionPlaneMutationContext, ProjectionPlaneRealizationContext } from './ProjectionPlaneContext';
 import {
   requireBinaryIndex,
   requireDistinctPointIds,
@@ -29,11 +29,6 @@ import {
   resolveElementId,
 } from './ProjectionPlaneElementCreation';
 import { ProjectionPlaneRealization2D, ProjectionPlaneRealization3D } from './ProjectionPlaneRealization';
-import {
-  realizeCircle2DWithCache,
-  realizeLine2DWithCache,
-  realizePoint2DWithCache,
-} from './ProjectionPlaneRealizationHelpers';
 
 export const PROJECTION_PLANE_TYPE = {
   BASE: 'base',
@@ -137,28 +132,6 @@ export abstract class ProjectionPlane extends Element {
     return this.elementStore.removePoint(id, context);
   }
 
-  /**
-   * Get point realization (cached 2D position)
-   * Phase 22.5: Consistent naming - all 2D realization methods end with "2D"
-   */
-  getPointRealization2D(id: string): Point2DRealization2D | undefined {
-    return this.elementStore.getPointRealization2D(id);
-  }
-
-  /**
-   * Set/cache point realization
-   */
-  setPointRealization2D(id: string, realization: Point2DRealization2D): void {
-    this.elementStore.setPointRealization2D(id, realization);
-  }
-
-  /**
-   * Clear point realization cache
-   */
-  clearPointRealization2D(id: string): void {
-    this.elementStore.clearPointRealization2D(id);
-  }
-
   // ==================== Line Methods ====================
 
   /**
@@ -189,29 +162,6 @@ export abstract class ProjectionPlane extends Element {
     return this.elementStore.removeLine(id, context);
   }
 
-  /**
-   * Get line realization (cached 2D equation)
-   * Phase 22.5: Consistent naming - all 2D realization methods end with "2D"
-   * Note: This includes segments, guides, and all Line2D subtypes
-   */
-  getLineRealization2D(id: string): Line2DRealization2D | undefined {
-    return this.elementStore.getLineRealization2D(id);
-  }
-
-  /**
-   * Set/cache line realization
-   */
-  setLineRealization2D(id: string, realization: Line2DRealization2D): void {
-    this.elementStore.setLineRealization2D(id, realization);
-  }
-
-  /**
-   * Clear line realization cache
-   */
-  clearLineRealization2D(id: string): void {
-    this.elementStore.clearLineRealization2D(id);
-  }
-
   // ==================== Circle Methods ====================
 
   /**
@@ -240,66 +190,6 @@ export abstract class ProjectionPlane extends Element {
    */
   removeCircle(id: string, context?: ProjectionPlaneMutationContext): boolean {
     return this.elementStore.removeCircle(id, context);
-  }
-
-  /**
-   * Get circle realization (cached 2D geometry)
-   * Phase 22.5: Consistent naming - all 2D realization methods end with "2D"
-   */
-  getCircleRealization2D(id: string): Circle2DRealization2D | undefined {
-    return this.elementStore.getCircleRealization2D(id);
-  }
-
-  /**
-   * Set/cache circle realization
-   */
-  setCircleRealization2D(id: string, realization: Circle2DRealization2D): void {
-    this.elementStore.setCircleRealization2D(id, realization);
-  }
-
-  /**
-   * Clear circle realization cache
-   */
-  clearCircleRealization2D(id: string): void {
-    this.elementStore.clearCircleRealization2D(id);
-  }
-
-  clearRealizationCaches(id: string): void {
-    this.elementStore.clearRealizationCaches(id);
-  }
-
-  // ==================== Realization Computation Methods ====================
-  // Phase 22.5: Realization computation moved from World to ProjectionPlane
-  // These methods compute realizations and manage the plane-level cache
-
-  /**
-   * Compute and cache 2D realization for a point
-   * @param point Point to realize
-   * @param context Typed realization context for querying dependencies
-   * @returns Point2DRealization2D if computation succeeds, undefined otherwise
-   */
-  realizePoint2D(point: Point2D, context: ProjectionElementRealizationContext): Point2DRealization2D | undefined {
-    return realizePoint2DWithCache(point, context, this.elementStore);
-  }
-
-  /**
-   * Compute and cache 2D realization for a line
-   * @param line Line to realize (includes segments, guides, hinge lines - all Line2D subtypes)
-   * @param context Typed realization context for querying dependencies
-   * @returns Line2DRealization2D if computation succeeds, undefined otherwise
-   */
-  realizeLine2D(line: Line2D, context: ProjectionElementRealizationContext): Line2DRealization2D | undefined {
-    return realizeLine2DWithCache(line, context, this.elementStore);
-  }
-
-  /**
-   * Compute and cache 2D realization for a circle
-   * @param circle Circle to realize
-   * @param context Typed realization context for querying dependencies
-   * @returns Circle2DRealization2D if computation succeeds, undefined otherwise
-   */
-  realizeCircle2D(circle: Circle2D, context: ProjectionElementRealizationContext): Circle2DRealization2D | undefined {
-    return realizeCircle2DWithCache(circle, context, this.elementStore);
   }
 
   // ==================== Factory Methods ====================

@@ -1,7 +1,7 @@
 import { Guide2D, SiblingGuide2D } from '@/domain/world/Guide';
 import { HalfHingeLine2D } from '@/domain/world/HingeLine';
 import { Segment2D } from '@/domain/world/Segment';
-import type { ProjectionElementRealizationContext } from '@/domain/world/projectionPlane/ProjectionPlaneContext';
+import type { CachedProjectionElementRealizationContext, ProjectionElementRealizationContext } from '@/domain/world/projectionPlane/ProjectionPlaneContext';
 import type { ProjectionPlane } from '@/domain/world/projectionPlane/ProjectionPlane';
 import type { Element } from '@/domain/world/Element';
 import type { World } from '@/domain/world/World';
@@ -54,11 +54,12 @@ export function getPlaneCanvasItems(plane: ProjectionPlane, transform: CanvasPla
   const itemState = state as PlaneItemBuildState;
   const context = itemState.realizationContext;
   if (!context) return [];
+  if (!isCachedRealizationContext(context)) return [];
   const items: CanvasPlaneItem[] = [];
 
   for (const point of plane.getAllPoints()) {
     if (itemState.isVisible && !itemState.isVisible(point)) continue;
-    const realization = plane.realizePoint2D(point, context);
+    const realization = context.realizePoint2D(point, context);
     if (!realization) continue;
     items.push({
       kind: 'point',
@@ -71,7 +72,7 @@ export function getPlaneCanvasItems(plane: ProjectionPlane, transform: CanvasPla
 
   for (const line of plane.getAllLines()) {
     if (itemState.isVisible && !itemState.isVisible(line)) continue;
-    const realization = plane.realizeLine2D(line, context);
+    const realization = context.realizeLine2D(line, context);
     if (!realization) continue;
     const kind: CanvasPlaneLineItem['kind'] = line instanceof HalfHingeLine2D
       ? 'half-hinge-line'
@@ -96,7 +97,7 @@ export function getPlaneCanvasItems(plane: ProjectionPlane, transform: CanvasPla
 
   for (const circle of plane.getAllCircles()) {
     if (itemState.isVisible && !itemState.isVisible(circle)) continue;
-    const realization = plane.realizeCircle2D(circle, context);
+    const realization = context.realizeCircle2D(circle, context);
     if (!realization) continue;
     items.push({
       kind: 'circle',
@@ -109,6 +110,10 @@ export function getPlaneCanvasItems(plane: ProjectionPlane, transform: CanvasPla
   }
 
   return items;
+}
+
+function isCachedRealizationContext(context: ProjectionElementRealizationContext): context is CachedProjectionElementRealizationContext {
+  return 'realizePoint2D' in context && 'realizeLine2D' in context && 'realizeCircle2D' in context;
 }
 
 function optionalArcGeometry(line: object): CanvasPlaneLineItem['arcGeometry'] | undefined {

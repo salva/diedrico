@@ -67,7 +67,7 @@ describe('Circle2D', () => {
       const circle = new Circle2DByCenterAndPoint(plane.generateCircle2DId(world), centerPointId, point1Id, planeId);
       
       plane.addCircle(circle);
-      const realization = plane.realizeCircle2D(world.getCircle2D(circle.id)!, world);
+      const realization = world.realizeCircle2D(world.getCircle2D(circle.id)!, world);
       
       expect(realization).toBeDefined();
       expect(realization!.center.x).toBe(0);
@@ -88,7 +88,7 @@ describe('Circle2D', () => {
       
       const circle = new Circle2DByCenterAndPoint(plane.generateCircle2DId(world), centerPointId, coincident.id, planeId);
       plane.addCircle(circle);
-      const realization = plane.realizeCircle2D(world.getCircle2D(circle.id)!, world);
+      const realization = world.realizeCircle2D(world.getCircle2D(circle.id)!, world);
       
       // Should return infeasible realization for degenerate circle
       expect(realization).toBeDefined();
@@ -113,7 +113,7 @@ describe('Circle2D', () => {
       const circle = new Circle2DByThreePoints(plane.generateCircle2DId(world), point1Id, point2Id, point3Id, planeId);
       
       plane.addCircle(circle);
-      const realization = plane.realizeCircle2D(world.getCircle2D(circle.id)!, world);
+      const realization = world.realizeCircle2D(world.getCircle2D(circle.id)!, world);
       
       expect(realization).toBeDefined();
       // For points at (50,0), (0,50), (-50,0), the circumcircle has center near origin
@@ -135,7 +135,7 @@ describe('Circle2D', () => {
       
       const circle = new Circle2DByThreePoints(plane.generateCircle2DId(world), collinear1.id, collinear2.id, collinear3.id, planeId);
       plane.addCircle(circle);
-      const realization = plane.realizeCircle2D(world.getCircle2D(circle.id)!, world);
+      const realization = world.realizeCircle2D(world.getCircle2D(circle.id)!, world);
       
       // Should return infeasible realization for collinear points (no unique circle)
       expect(realization).toBeDefined();
