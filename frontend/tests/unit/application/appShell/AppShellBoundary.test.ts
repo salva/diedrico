@@ -153,7 +153,7 @@ describe('Cycle 023 runtime-session consumer ports and command-history boundary'
     expect(runtimeSession).toMatch(/processHistoryCommandPort\(/);
     expect(runtimeSession).toMatch(/activePlanePort\(/);
     expect(runtimeSession).toMatch(/selectionReadPort\(/);
-    expect(runtimeSession).toMatch(/commandHistoryPort\(/);
+    expect(runtimeSession).toMatch(/implements ProjectSessionKernel, CommandHistoryPort/);
     expect(runtimeSession).toMatch(/selectionDeletionCommandPort\(/);
   });
 
@@ -175,7 +175,7 @@ describe('Cycle 023 runtime-session consumer ports and command-history boundary'
   });
 
   it('keeps keyboard and toolbar undo-redo on the shared command-history port without raw dual paths', () => {
-    expect(appShellRuntime).toMatch(/const commandHistory = session\.commandHistoryPort\(\)/);
+    expect(appShellRuntime).toMatch(/const commandHistory: CommandHistoryPort = session/);
     expect(appShellRuntime).toMatch(/commandHistory,/);
     expect(keyboard).toMatch(/CommandHistoryPort/);
     expect(keyboard).toMatch(/commandHistory\.canUndo\(\)/);

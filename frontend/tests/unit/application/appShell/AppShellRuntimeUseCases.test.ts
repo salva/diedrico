@@ -594,14 +594,14 @@ describe('ProjectSessionUseCases startup and project flows', () => {
     deps.currentProjectName.value = 'Existing';
     deps.currentFileId.value = 'existing-file';
     const preOpenPlaneCount = deps.session.activePlanePort().getProjectionPlaneSummaries().length;
-    const preOpenCommandHistory = deps.session.commandHistoryPort();
+    const preOpenCommandHistory = deps.session;
     const preOpenCanUndo = preOpenCommandHistory.canUndo();
     const useCases = new ProjectSessionUseCases(deps);
 
     await expect(useCases.openProject('bad-file')).rejects.toThrow('invalid payload');
 
     expect(deps.session.activePlanePort().getProjectionPlaneSummaries()).toHaveLength(preOpenPlaneCount);
-    expect(deps.session.commandHistoryPort().canUndo()).toBe(preOpenCanUndo);
+    expect(deps.session.canUndo()).toBe(preOpenCanUndo);
     expect(preOpenCommandHistory.canUndo()).toBe(preOpenCanUndo);
     expect(preOpenCommandHistory.canRedo()).toBe(false);
     expect(deps.currentProjectName.value).toBe('Existing');
@@ -622,7 +622,7 @@ describe('ProjectSessionUseCases startup and project flows', () => {
     deps.currentProjectName.value = 'Existing';
     deps.currentFileId.value = 'existing-file';
     const preOpenPlaneCount = deps.session.activePlanePort().getProjectionPlaneSummaries().length;
-    const preOpenCommandHistory = deps.session.commandHistoryPort();
+    const preOpenCommandHistory = deps.session;
     const preOpenCanUndo = preOpenCommandHistory.canUndo();
     const useCases = new ProjectSessionUseCases(deps);
 
@@ -631,7 +631,7 @@ describe('ProjectSessionUseCases startup and project flows', () => {
     expect(ports.persistence.restoreSession).toHaveBeenCalledTimes(1);
     expect(ports.persistence.restoreSession).toHaveBeenCalledTimes(1);
     expect(deps.session.activePlanePort().getProjectionPlaneSummaries()).toHaveLength(preOpenPlaneCount);
-    expect(deps.session.commandHistoryPort().canUndo()).toBe(preOpenCanUndo);
+    expect(deps.session.canUndo()).toBe(preOpenCanUndo);
     expect(preOpenCommandHistory.canUndo()).toBe(preOpenCanUndo);
     expect(preOpenCommandHistory.canRedo()).toBe(false);
     expect(deps.currentProjectName.value).toBe('Existing');
@@ -665,7 +665,7 @@ describe('ProjectSessionUseCases startup and project flows', () => {
   it('creates, opens, renames, and signs out without replacing stable world or command-history references', async () => {
     const deps = projectSessionDeps();
     const originalPlaneCount = deps.session.activePlanePort().getProjectionPlaneSummaries().length;
-    const originalCommandHistory = deps.session.commandHistoryPort();
+    const originalCommandHistory = deps.session;
     const useCases = new ProjectSessionUseCases(deps);
 
     await useCases.createProject('Created');
@@ -688,7 +688,7 @@ describe('ProjectSessionUseCases startup and project flows', () => {
 
     await useCases.signOut();
     expect(deps.session.activePlanePort().getProjectionPlaneSummaries()).toHaveLength(originalPlaneCount);
-    expect(deps.session.commandHistoryPort().canUndo()).toBe(originalCommandHistory.canUndo());
+    expect(deps.session.canUndo()).toBe(originalCommandHistory.canUndo());
     expect(deps.currentProjectName.value).toBeNull();
     expect(deps.currentFileId.value).toBeNull();
     expect(deps.showStartupDialog.value).toBe(true);

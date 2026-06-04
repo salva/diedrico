@@ -416,6 +416,27 @@ Acceptance criteria for continuing:
 - No loss of testability.
 - Components remain decoupled from raw `World` and `CommandStack`.
 
+Constrained spike result, 2026-06-04:
+
+| RuntimeSession-created object | Classification | Decision |
+| --- | --- | --- |
+| `canvasViewPort()` object | Component read model | Keep for now. It is a component-facing read/intent facade over canvas presentation, input transforms, point movement, properties, and coordinate conversion. It must continue hiding raw `World`. |
+| `processTreeReadPort()` object | Component read model | Keep for now. It exposes process-tree DTOs and related-action lookup without exposing `World` or dependency graph internals. |
+| `elementsPanelPort()` object | Component read model | Keep for now. It pairs an elements-panel DTO with the adjacent visibility intent and keeps components away from raw elements. |
+| `threePresentationPort()` object | Component read model | Keep for now. It preserves the Three presentation boundary and should be revisited with the deferred presentation-context work, not in this runtime-session slice. |
+| `activePlaneSelectorPort()` object | Component read model | Keep for now. It serves the active-plane selector component directly and is separate from active-plane lifecycle use cases. |
+| `activePlanePort()` object | Use-case dependency RuntimeSession can implement | Candidate next slice. `RuntimeSession` already owns active-plane state and change notifications, but this slice stopped after command history. |
+| `selectionReadPort()` object | Use-case dependency | Keep for now. It remains a narrow read seam for selection use cases and deletion preview behavior. RuntimeSession could implement it later, but the benefit is smaller than command history. |
+| `commandHistoryPort()` object | Use-case dependency RuntimeSession can implement | Implemented first slice. `RuntimeSession` now implements `CommandHistoryPort` directly, removing one anonymous object while keeping `CommandStack` private and retaining the `CommandHistoryPort` seam for keyboard/toolbar tests. |
+| `snapshotHandle()` object | External/test seam | Keep. This is an adapter-local persistence handle and intentionally exposes concrete runtime internals only to `ProjectSessionPersistenceAdapter`, not to general app-shell ports or components. |
+| `restoreTarget()` object | External/test seam | Keep. This is the paired persistence restore handle needed for project loading and validation isolation. |
+
+Target facade direction:
+
+- Let `RuntimeSession` directly implement small use-case dependency ports only when that removes an anonymous object and keeps the same narrow consumer type.
+- Keep component read-model ports as explicit returned objects until a separate facade design can group them without exposing raw `World` or weakening presentation boundaries.
+- Keep external/test seams, especially persistence handles and browser/service ports, as explicit boundaries.
+
 Commit message for first slice:
 
 ```text

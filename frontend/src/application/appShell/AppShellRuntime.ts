@@ -2,7 +2,7 @@ import { computed, ref } from 'vue';
 import { ActivePlaneUseCases } from './ActivePlaneUseCases';
 import { AutoSaveUseCases } from './AutoSaveUseCases';
 import { KeyboardShortcutRouter } from './KeyboardShortcutRouter';
-import type { AppShellRuntimePorts, SaveStatus } from './AppShellPorts';
+import type { AppShellRuntimePorts, CommandHistoryPort, SaveStatus } from './AppShellPorts';
 import { ProjectSessionUseCases } from './ProjectSessionUseCases';
 import { RuntimeSession } from './RuntimeSession';
 import { SelectionUseCases } from './SelectionUseCases';
@@ -13,7 +13,7 @@ export interface AppShellRuntimeOptions {
 
 export function createAppShellRuntime(options: AppShellRuntimeOptions) {
   const session = new RuntimeSession();
-  const commandHistory = session.commandHistoryPort();
+  const commandHistory: CommandHistoryPort = session;
   const canvasCommandProducerPort = session.canvasCommandProducerPort(options.ports.toolStore);
   const processHistoryCommandPort = session.processHistoryCommandPort();
   const canvasViewPort = session.canvasViewPort();

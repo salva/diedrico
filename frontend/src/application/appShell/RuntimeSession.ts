@@ -23,7 +23,7 @@ import { buildElementsPanelReadModel } from './readModels/ElementsPanelReadModel
 import { toggleElementVisibility } from './readModels/ElementVisibilityIntent';
 import { RuntimeChangePublisher, type ChangeNotifier } from './RuntimeChangePublisher';
 
-export class RuntimeSession implements ProjectSessionKernel {
+export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort {
   private readonly world = new World();
   private readonly changes = new RuntimeChangePublisher();
   private readonly commandStack = new CommandStack();
@@ -158,18 +158,28 @@ export class RuntimeSession implements ProjectSessionKernel {
     };
   }
 
-  commandHistoryPort(): CommandHistoryPort {
-    return {
-      canUndo: () => this.commandStack.canUndo(),
-      undo: () => this.commandStack.undo(),
-      canRedo: () => this.commandStack.canRedo(),
-      redo: () => this.commandStack.redo(),
-      subscribe: (listener) => this.commandStack.subscribe(listener),
-    };
-  }
-
   selectionDeletionCommandPort(): SelectionDeletionCommandPort {
     return new SelectionDeletionCommandService(this.world, this.commandStack, this.changes);
+  }
+
+  canUndo(): boolean {
+    return this.commandStack.canUndo();
+  }
+
+  undo(): void {
+    this.commandStack.undo();
+  }
+
+  canRedo(): boolean {
+    return this.commandStack.canRedo();
+  }
+
+  redo(): void {
+    this.commandStack.redo();
+  }
+
+  subscribe(listener: () => void): () => void {
+    return this.commandStack.subscribe(listener);
   }
 
   initializeDefaultWorldIfNeeded(): void {
