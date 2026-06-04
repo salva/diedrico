@@ -10,7 +10,7 @@ import type { DescriptionPart } from './DescriptionPart';
 import type { World } from '../World';
 import type { Circle2DByCenterAndPoint } from '../Circle';
 import type { Circle2DByThreePoints } from '../Circle';
-import type { Segment2DByPoints } from '../Segment';
+import type { Segment2D } from '../Segment';
 import type { Guide2D } from '../Guide';
 import type { SiblingGuide2D } from '../Guide';
 
@@ -68,14 +68,14 @@ export class Circle2DByThreePointsDescriptor implements ElementDescriptor<Circle
 }
 
 /**
- * Descriptor for Segment2DByPoints - segment between two points
+ * Descriptor for Segment2D - segment between two points
  */
-export class Segment2DByPointsDescriptor implements ElementDescriptor<Segment2DByPoints> {
-  getTypeName(_element: Segment2DByPoints): string {
+export class Segment2DDescriptor implements ElementDescriptor<Segment2D> {
+  getTypeName(_element: Segment2D): string {
     return 'Segment';
   }
   
-  getConstructionDescription(element: Segment2DByPoints, world: World): DescriptionPart[] {
+  getConstructionDescription(element: Segment2D, world: World): DescriptionPart[] {
     const plane = world.getProjectionPlaneById(element.planeId);
     const planeName = plane?.label || plane?.name || element.planeId;
     const point1 = world.getElement2D(element.point1Id);

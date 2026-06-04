@@ -1,640 +1,457 @@
-# Architecture remediation plan
+# Architecture Remediation Plan
 
-This plan records the recommended architecture cleanup for the current Diedrico frontend codebase. The priority is simple, clean architecture and code. Backward compatibility with old tests, old on-disk formats, existing layer boundaries, or current component shapes has no weight unless a concrete product requirement says otherwise.
+Date: 2026-06-04 (revised)
 
-The current application has several strong foundations: a frontend-only Vue 3 + TypeScript stack, operation-backed commands, a mostly isolated domain layer, presentation selectors for rendering, and useful architecture tests. The remediation should preserve those strengths only where they continue to support clarity. Existing design is not protected by default.
+Source: current codebase review, `docs/architecture/data-structure-review.md`, and direct verification of the current tree.
 
-## Implementation Status
+This plan replaces the previous draft. It reflects only the current codebase state, removes stale items, drops items that reduce readability without improving cleanliness, and applies corrections from the review cycle.
 
-- Workstreams 1, 3, 4, 10, and 11 have been implemented for their current scope and are guarded by tests where practical. The overview now records the current boundary state, and stale `tests/unit/services/` coverage has been moved beside the layers it exercises.
-- Workstream 2 is implemented for the current canvas-shell cleanup batch: component-level concrete tool construction has moved behind `createCanvasTool()`, and select-click/free-point drag policy now lives in `CanvasInteractionController`. Tool lifecycle, tool click dispatch, viewport pan/zoom, hover/snap, fit-to-view, direct renderer/input construction, and screen/canvas-to-plane coordinate conversion have moved out of `SvgCanvas.vue`. Further cleanup is opportunistic around presentation/store reads, properties-dialog orchestration, and controller/composition placement.
-- Workstream 5 is partially implemented: tools no longer depend on Pinia stores or application modules. `ITool.ts`, `ToolCommandIntents.ts`, and `ToolInteractionReadPort.ts` are now owned by the tools layer; application code depends on those tool contracts. `ArgumentCollectorTool` no longer maps tool names through application construction-intent taxonomy; basic construction tools declare their intent type directly, and metadata tools still override intent construction. Remaining tool work is mainly reducing command-intent coupling further if a cleaner neutral command boundary emerges.
-- Workstream 6 is implemented for the current store cleanup batch: selected application-owned selection mutations now go through `SelectionActionPort`, and `SvgCanvas.vue` no longer imports the tool store. Browser persistence has been extracted from `toolStore` and `viewStore` module-level init into explicit `initFromStorage()` / save wiring in App.vue. `ThreeView.vue` no longer uses v-model to directly mutate store reactive state; it uses `:checked` + `updateThreeViewOption()`. Remaining store work is low priority and focused on `settingsStore` persistence placement plus process-tree/view/settings ownership classification.
-- Workstream 7 is implemented for the current domain cleanup batch: active-plane UI state moved from `World` to `RuntimeSession`, runtime subscription wiring moved behind `RuntimeChangePublisher`, and realization cache maps moved into `RealizationStore`. ProcessTree notification (`_version`, `listeners`, `subscribe`, `getVersion`, `notifyChange`) removed — `ProcessTreeReadPort` now uses inherited `subscribeToChanges`. `ProcessTreeIdAllocator` owns process-tree node ID generation. DependencyService port interfaces (`DependencyQueryPort`, `DependencyRegistrarPort`) created; stale reverse-edge bug in `registerNode()` fixed; application and command callers now use `getDependencyQuery()` / `getDependencyRegistrar()` when they only need those narrowed surfaces. Presentation description logic moved from domain `Action.ts` to application read model. `WorldEntityFactory` now owns concrete construction of fixed planes, projection planes, and hinge-line entities. Domain `console.*` side effects have been removed and guarded. Remaining notification debt is low priority.
-- Workstream 8 is partially implemented: rollback/cancel notification behavior has tests, and `SvgCanvas.vue` now keeps only its runtime-subscription `renderTick` increment. `ThreeView.vue` still has a runtime-subscription refresh tick, and broader notification ownership remains open.
-- Workstream 9 is implemented for the current port cleanup batch: `RuntimeViewPorts.ts` no longer imports store modules, rendering implementation types, or `CanvasTool`, `ToolType` moved to an application tool contract, and `AppShellPorts.ts` is guarded from importing stores. The former `invokeToolClick(tool, context)` leak has been removed; tool invocation now happens in `CanvasInteractionController` with an injected `ToolInteractionReadPort`. Remaining port work is focused on view/selection/store presentation reads and avoiding unnecessary app-shell exposure.
+## What Changed From the Previous Draft
 
-## Revised Remaining Plan
+- Removed P1.1 (inline action factories): calling `createPointAction("point5")` is more readable than `createAction("point5", "Create point point5")`. Removing named wrappers reduces readability without improving the architecture.
+- Marked P1.3 (realization parameter names) as partially done; reduced scope to what remains.
+- Added P1.4 (remove `Segment2D` alias), P1.5 (document `Element3D` as intentional seam), P1.6 (remove vestigial `type` fields from Line2D).
+- Added P5.3 (remove non-null assertions for non-optional element IDs outside the domain paths already cleaned).
+- Added cross-phase dependency notes: P2/P5, P1.3/P4.3.
+- Added numeric target for P4: reduce `ProjectionPlane.ts` from 1,338 lines to approximately 600-800.
+- Flagged P6.1 serialization risk explicitly.
+- Marked P6.3 as partially done (styleService already moved).
+- Explicitly noted `Element3D` needs no action.
 
-The original workstreams remain useful as historical structure, but remaining execution should be organized by current coupling hotspots. The next work should not continue linearly through the old numbering. Architectural leverage is now concentrated in canvas orchestration, runtime/tool port shape, store ownership, and the domain `World` aggregate.
+## Already Resolved
 
-### Priority 1: Finish The Thin Canvas Shell
+- `styleService.ts` moved from `domain/world` to `application/canvasPresentation`.
+- `ViewportTransform` consolidated to one definition in `domain/presentation/Paper.ts`.
+- stale `domain/viewState/HingeLine.ts` deleted.
+- obvious `id!` assertions removed in 3D/domain presentation paths.
+- `ProjectionPlane.clearRealizationCaches(id)` and `ProjectionPlaneElementStore.clearRealizationCaches(id)` facade added.
+- `AddFreePoint2D` and `UpdateFreePoint2DPosition` now have explicit descriptor/output interfaces.
+- `World.ts` no longer imports command or services modules.
+- deprecated `ProcessTree.addAction()` and `getActionsDependingOnElement()` already removed.
+- `Workspace2D.vue`, `ElementRenderer.vue`, `worldStore.ts`, `commands/operations/paper/`, `commands/operations/toolbar/` already removed.
 
-This combines the remaining parts of Workstreams 2, 6, and 9. `SvgCanvas.vue` is still the largest cross-layer pressure point, so it should be reduced before deeper runtime or domain redesign.
+## Explicitly Skipped
 
-Target state:
+These items do not improve cleanliness or would reduce readability:
 
-- `SvgCanvas.vue` renders SVG/presentation data and forwards normalized events.
-- Tool instance lifecycle, active tool switching, command invocation, select-click, drag, hover/snap, viewport pan/zoom, fit-to-view, and coordinate conversion live in application/controller code.
-- Rendering/input adapters such as `SVGRenderer` and `InputService` are constructed by application/rendering composition or controller code, not directly by the component.
-- Direct store reads in `SvgCanvas.vue` are limited to clearly visual UI state, or replaced by injected runtime/application ports where the state is application-owned.
-- Canvas behavior is covered by focused application/controller tests, not large component orchestration tests.
+- Inlining trivial ProcessTree action wrappers: named wrappers like `createPointAction(id)` are more readable at call sites than raw `createAction(id, description)`. Removing them is a net negative for clarity.
+- Batch-removing `console.warn`/`console.error` statements: current statements are error-path reporting, not debug noise. Individual cleanup is fine; blanket removal is not.
 
-Recommended steps:
+These items target files or methods that no longer exist:
 
-1. Move remaining coordinate conversion and normalized event construction out of `SvgCanvas.vue` into `application/canvas` helpers or `CanvasInteractionController`.
-2. Move active tool instance lifecycle and tool invocation into application/canvas code so `SvgCanvas.vue` no longer owns current tool instances.
-3. Move hover/snap and selection-mask policy into the same controller or a small sibling selector if combining them would make one object too broad.
-4. Move viewport drag, wheel zoom, and fit-to-view policy out of the component.
-5. Move direct `SVGRenderer` and `InputService` construction out of `SvgCanvas.vue`.
-6. Remove remaining manual `renderTick` refresh workarounds once runtime notifications cover the behavior.
-7. Add architecture tests for the resulting component boundary only after the replacement ports/controllers exist, including guards for component imports from application tool factories and rendering adapters where those imports have been removed.
+- `Workspace2D.vue`, `ElementRenderer.vue`, `worldStore.ts`, `commands/operations/paper/`, `commands/operations/toolbar/`, deprecated `ProcessTree.addAction()`, deprecated `ProcessTree.getActionsDependingOnElement()`, direct command/service imports in `World.ts`, `PaperService.ts`, `RenderService.ts`.
 
-### Priority 2: Narrow Canvas Runtime And Tool Ports
+---
 
-Do this after Priority 1, when the controller shape is clear. Avoid premature DTO churn.
+## Phase 1: Quick Wins
 
-Target state:
+### P1.1 Extract Duplicated Segment-Bounds Utility
 
-- `RuntimeViewPorts.ts` exposes intent/event-level canvas operations, not `CanvasTool` object invocation.
-- `CanvasViewPort` does not contain `invokeToolClick(tool, context)`. This is now implemented and guarded.
-- Concrete tool classes remain hidden behind application/controller construction.
-- `ITool.ts` does not import application-layer tool protocols; shared tool protocols are owned by the tools layer. This is implemented and guarded.
-- Tool protocols stay minimal: collect arguments, emit construction intents/status, and use explicit callbacks for completion.
+Problem: `Point2DLineLineIntersection` and `Point2DLineCircleIntersection` duplicate an `isPointOnSegment()` helper in `frontend/src/domain/world/Point.ts`.
 
-Recommended steps:
+Action:
+- Extract a small pure utility to `frontend/src/domain/calculations/SegmentUtils.ts`.
+- Keep the function domain-calculation focused and independent of `World`.
 
-1. Replace `invokeToolClick(tool, context)` with controller-owned event handling or an intent-level method. Done: `CanvasInteractionController` invokes active tools directly.
-2. Keep `CanvasTool` types out of app-shell runtime ports if the canvas controller can own tool object interaction. Done and guarded by architecture tests.
-3. Move the shared `CanvasTool` / `ToolContext` protocol out of `application/tools` or invert the dependency so tools do not import application-owned protocol types. Done: `ITool.ts` owns the protocol.
-4. Replace `ArgumentCollectorTool`'s base-class dependency on application construction-intent taxonomy with a cleaner contract, such as per-tool intent builders or a neutral tool-intent descriptor mapped by the application controller. Done for the base-class mapping: basic tools declare `constructionIntentType`; metadata tools override construction intent creation.
-5. Keep `ToolCommandSink` only as the command-intent boundary if it remains simpler than introducing another adapter.
-6. Strengthen architecture tests around app-shell/runtime port imports once the new seam is stable.
+Validation:
+- `npm run test -- tests/unit/domain/point.spec.ts tests/unit/domain/segmentIntersections.spec.ts tests/unit/calculations/intersections.spec.ts`
+- `npm run build`
 
-### Priority 3: Resolve Store Ownership And Browser Persistence
+Effort: 30-60 minutes.
 
-Store cleanup should be ownership-driven, not a blanket import ban. Some stores are valid UI adapters; others currently hide application or browser-persistence policy.
+### P1.2 Remove `Segment2D` Type Alias
 
-Target state:
+Problem: `type Segment2D = Segment2DByPoints` is a single-implementation alias that forces two names for the same type. The data-structure review flagged this as cosmetic but genuine.
 
-- Application-owned state is accessed through runtime/application ports.
-- Stores hold UI-only reactive state or production adapter state.
-- Browser persistence is initialized by production composition/adapters where practical, not arbitrary module top-level store code.
+Action:
+- Rename `Segment2DByPoints` to `Segment2D`.
+- Remove the type alias.
+- Update all import sites.
 
-Store classification:
+Note: this is a rename-only change with no behavior impact. The class is stored in the same line map as infinite lines, but the name `Segment2D` is more natural.
 
-| Store | Classification | Persistence | Remaining issues |
-| --- | --- | --- | --- |
-| `toolStore` | UI interaction state (active tool, step message, sub-tool preferences). Not a Pinia store; module-level refs. | `initFromStorage()` in App.vue loads sub-tool preferences; `selectSubTool` still writes to localStorage inline. | Inline `localStorage.setItem` in `selectSubTool` should move to an external watcher or callback. |
-| `selectionStore` | UI selection state. Pinia store. Read-only in all components; mutations go through `SelectionActionsInjectionKey` port. | None. | Clean: no persistence, mutations already behind port. |
-| `viewStore` | Viewport state and 3D display options. Not Pinia; module-level refs. | `initFromStorage()` in App.vue loads projection/3D-view preferences; mutation methods still write to localStorage inline. | Inline `localStorage.setItem` in `toggleProjectedElements`, `setThreeViewOptions`, `updateThreeViewOption` should move to an external watcher. `ThreeView.vue` v-model anti-pattern fixed: now uses `:checked` + `updateThreeViewOption()`. |
-| `processTreeStore` | UI panel collapse state. Not Pinia; module-level refs. No domain data. | None. | Clean: pure UI state, no persistence, two component consumers. |
-| `settingsStore` | User preferences with auto-persist. Pinia store. Deep watcher auto-saves to localStorage. | Module-level `loadSettings()` on store creation; deep watcher auto-saves. Only consumed in App.vue for init side effects. | Module-level init still runs on store creation (Pinia, not module scope). Consider extracting init to App.vue explicit call. |
-| `authStore` | Google Drive auth session state. Not Pinia; module-level refs. | sessionStorage (not localStorage). Init and clear methods handle session persistence. | Clean: session-scoped persistence is appropriate for auth state. No module-level side effects; `restoreSession()` is called explicitly. |
+Validation:
+- `npm run build`
+- `npm run test`
+- grep for any remaining `Segment2DByPoints` references
 
-Completed steps:
+Effort: 15-30 minutes.
 
-1. ✅ Classified all 6 stores field-by-field.
-2. ✅ Preserved direct store use for clearly visual component state.
-3. ✅ Extracted browser preference persistence from `toolStore` and `viewStore` module-level init into explicit `initFromStorage()` calls in App.vue. Exported storage key constants for future external persistence wiring.
-4. ✅ Fixed `ThreeView.vue` v-model anti-pattern: replaced direct mutation of `threeViewOptions` reactive properties with `:checked` + `viewStore.updateThreeViewOption()`.
+### P1.3 Document `Element3D` as Intentional Seam
 
-Remaining steps:
+Problem: `Element3D extends Element` adds no stored properties. The data-structure review considered calling it a "zero-value abstraction" but confirmed it serves as the 3D reconstruction contract. Future audits keep rediscovering it as suspicious.
 
-5. ✅ Extracted inline localStorage writes from `viewStore.toggleProjectedElements`, `viewStore.setThreeViewOptions`, and `viewStore.updateThreeViewOption`. These now delegate to `viewStore.saveToStorage()` via App.vue watchers. `toolStore.selectSubTool` calls `saveToStorage()` internally because the underlying `lastUsedByFamily` ref is not exposed reactively.
-6. Extract `settingsStore` module-level `loadSettings()` + auto-save watcher into explicit App.vue composition. Low priority: only consumed in App.vue for init side effects.
-7. Decide whether `processTreeStore` is UI panel state or an application projection after process-tree ownership is clarified.
-8. Add narrow architecture tests for components that have been migrated, not a broad no-store rule that blocks valid UI state.
+Action:
+- Add a class-level JSDoc to `Element3D.ts` explicitly stating it is an intentional seam between 2D definitions and 3D reconstruction, and listing the concrete 3D element types it covers.
+- No structural change.
 
-### Priority 4: Decompose `World.ts` Further
+Validation:
+- `npm run build`
 
-Do this after canvas/runtime/store boundaries are clearer. The domain aggregate should shrink around real domain responsibilities instead of compensating for unclear callers.
+Effort: 10 minutes.
 
-Target state:
+### P1.4 Remove Vestigial `type` Fields from Line2D
 
-- `World` owns geometry/construction state, not UI or rendering notification policy.
-- ID allocation, process-tree ownership, dependency graph ownership, and factory-style construction are explicit responsibilities, not incidental fields on a god object.
-- Domain code has no routine logging side effects.
+Problem: `Line2DPerpendicularToLine`, `Line2DTangentToCircleThroughPoint`, `Line2DTangentToCircleParallelToLine`, and `SiblingGuide2D` have `readonly type: Line2DType` fields that are not used for runtime discrimination (all dispatch uses `instanceof`). These are dead data that create confusion alongside the `kind` fields on some 3D elements.
 
-Completed steps:
+Action:
+- Remove the `type` field from the four classes listed above.
+- Remove the `LINE_2D_TYPE` enum values that only these classes use (`PERPENDICULAR`, `TANGENT_TO_CIRCLE_THROUGH_POINT`, `TANGENT_TO_CIRCLE_PARALLEL`, `SIBLING_GUIDE`), or document them as unused if any serialization path relies on them.
+- Verify that no serialization path depends on these `type` values (check `registerWorldOperationDescriptors.ts` and `ProjectService`).
 
-1. ✅ Replaced World-owned mutation notification with a standalone `RuntimeChangePublisher` / `ChangeNotifier` seam.
-2. ✅ Removed `World.markDirty()`, `notifyChange()`, `changeListeners`, `_version`, `getVersion()`, `subscribeToChanges()`, and `unsubscribeFromChanges()`.
-3. ✅ Routed `Command.addAndExecute()`, `rollback()`, `undo()`, and `redo()` through `ChangeNotifier.notifyChange()` instead of `world.markDirty()`.
-4. ✅ Removed redundant operation-level `world.markDirty()` calls from `UpdateFreePoint2DPositionOp`, `AddBrokenHingeLineOp`, and `AddAuxiliaryProjectionPlaneOp`.
-5. ✅ Removed `ProjectionPlaneElementStore` mutation-context `markDirty()` and kept dependency registration only.
-6. ✅ Kept runtime-level notifications in `RuntimeSession` for active-plane changes, project restore, visibility toggle, and other application-owned changes.
-7. ✅ Updated behavior and architecture tests so components still subscribe through runtime ports and World remains free of rendering notification policy.
-8. ✅ Extracted generated-ID counter ownership into `WorldIdAllocator`; `World` keeps the public ID API but no longer stores the raw `nextId` counter.
-9. ✅ ProcessTree notification removed: `_version`, `listeners`, `subscribe()`, `getVersion()`, `notifyChange()` removed from `ProcessTree`. UI re-reads tree model through `ProcessTreeReadPort.subscribeToChanges`. `version` field removed from `ProcessTreeReadModel`. `ActionsPanel.vue` uses single `subscribeToChanges` subscription through `RuntimeChangePublisher`.
-10. ✅ DependencyService ownership decided: keep mutable graph in World, split surfaces incrementally. `DependencyQueryPort` and `DependencyRegistrarPort` interfaces created in `DependencyPorts.ts`. Application read models use `DependencyQueryPort`. Stale reverse edges in `registerNode()` fixed.
-11. ✅ Presentation description logic moved: `getActionDescriptionParts(action, world)` moved from domain `Action.ts` to application read model `ProcessTreeReadModel.ts`. Domain `Action.ts` no longer imports `World` or `DescriptorRegistry`.
-12. ✅ ProcessTree ID allocation moved to `ProcessTreeIdAllocator`; architecture tests now guard `ProcessTree` against inline Date/random ID generation.
-13. ✅ Dependency accessors narrowed: `World.getDependencyQuery()` and `World.getDependencyRegistrar()` expose query/write surfaces; production callers that only need those surfaces no longer call full-service `getDependencyService()` methods.
-14. ✅ Concrete World entity construction moved to `WorldEntityFactory`: `createFixed3DPlane`, `createFixedProjectionPlane`, and `createHingeLineEntity`. `World` keeps storage, dependency registration, ID assignment, and its public convenience APIs.
-15. ✅ Domain logging cleanup completed: all `console.log`, `console.debug`, `console.info`, `console.warn`, and `console.error` calls removed from `frontend/src/domain`; architecture tests guard the boundary.
+This is independent of P5 (discrimination policy). Even if `kind` is later added to all elements, removing dead `type` fields that duplicate `instanceof` is unambiguously cleaner.
 
-Remaining steps:
+Validation:
+- `npm run test`
+- `npm run build`
+- grep for any remaining references to the removed type values
 
-16. Review non-domain `console.warn` / `console.error` usage separately if operator-facing diagnostics need consolidation.
-
-#### ProcessTree Ownership Decision
-
-Current responsibilities:
-
-- `ProcessTree` is durable construction-history state: subprocesses, action groups, action nodes, output/encapsulation flags, tombstones, and active subprocess stack.
-- Command operations mutate it through `world.getProcessTree()` so undo/redo/replay keep process history consistent with geometry operations.
-- Application read models project it into UI DTOs with descriptions, related actions, infeasibility, and missing-element display state.
+Effort: 30-60 minutes.
 
-Options considered:
+### P1.5 Complete Realization Parameter/Comment Cleanup
 
-| Option | Pros | Cons | Decision |
-| --- | --- | --- | --- |
-| Keep `ProcessTree` in `World` unchanged | Minimal migration; replay and undo/redo already work; process operations already receive `World`. | `World` remains broad; live mutable tree leaks through `getProcessTree()`; process tree still owns some presentation-ish details. | Not enough cleanup. |
-| Move `ProcessTree` to `CommandStack` / command history | Sounds conceptually aligned with “history”; could reduce duplicated state. | `CommandStack` is intentionally generic; `ProcessTree` is not just a list of commands; active subprocess stack is needed while commands are being built; bootstrap/non-undoable flows become awkward. | Rejected. |
-| Move `ProcessTree` to application read model | Removes UI-ish state from domain. | Current tree is authoritative write state, not just a projection; deletion, visibility, process-history commands, undo/redo, and replay depend on it. | Rejected. |
-| Split write model and read model | Preserves working command semantics; clarifies durable state vs UI projection; low migration risk; supports future narrowing. | `World` still owns tree for now; requires incremental caller cleanup. | Chosen. |
+Problem: Some `realize*()` parameter names and comments still say `world` where the type is now a narrow realization context. The recent commit fixed the most visible cases (`ProjectionPlane.ts`, `Point.ts`, `AuxiliaryProjectionPlane.ts`, `Element3D.ts`), but others remain.
 
-Chosen direction:
+Action:
+- Inventory all remaining `realize2D(`, `realize3D(`, and `realize*(` signatures across the domain layer.
+- Rename local parameters from `world` to `context` where the type is a context, not `World`.
+- Update stale comments that describe passing `World`.
 
-- Keep authoritative `ProcessTree` state in domain/World for now because it is durable construction-history state, not merely UI panel state.
-- Treat `ProcessTreeReadModel.ts` and related application code as the owner of presentation descriptions, missing-element flags, related-action display, and infeasibility display.
-- Move `getActionDescriptionParts(action, world)`-style presentation description logic out of domain `Action.ts` when possible, because it needs `World` lookup and DTO/presentation concepts.
-- Avoid adding new broad `world.getProcessTree()` consumers. Prefer process-history use cases/ports and read models for UI callers.
-- Reconcile duplicate process-tree interfaces (`ProcessTree.ts`, `Subprocess.ts`, `Process.ts`) only when doing focused process-tree cleanup.
+Validation:
+- `npm run build`
+- `npm run test`
 
-#### DependencyService Ownership Decision
+Effort: 30-60 minutes for remaining cases.
 
-Current responsibilities:
+### P1.6 Remove Remaining Non-Null Assertions on Non-Optional Element IDs
 
-- `DependencyService` stores a mutable bidirectional element dependency graph.
-- Operations and projection-plane element storage register/unregister graph nodes.
-- Deletion, cascade preview, and realization invalidation query the graph.
-- The graph is currently duplicated mutable state alongside element definitions, so consistency depends on correct registration/unregistration.
+Problem: The recent commit removed `id!` assertions in 3D/domain presentation paths. Other `id!` uses may still exist in startup/factory utilities or 3D element clone methods.
 
-Options considered:
+Action:
+- Audit all remaining `id!` uses in `frontend/src/domain/`.
+- Remove assertions where `Element.id` is provably set before use (construction paths).
+- Keep assertions where IDs may genuinely be unset at the type level.
 
-| Option | Pros | Cons | Decision |
-| --- | --- | --- | --- |
-| Keep full mutable `DependencyService` exposed from `World` | Minimal migration; current invalidation/deletion flows work. | Any caller can mutate graph; missed unregisters create stale graph state; ownership remains unclear. | Not enough cleanup. |
-| Move graph to `RuntimeSession` | Separates session/runtime from `World`; selection preview already lives near runtime. | Splits domain invariants across runtime and domain; realization invalidation and projection-plane mutation need graph access; tests/replay would need extra graph plumbing. | Rejected. |
-| Fully derive graph from element definitions/history | Eliminates duplicate mutable graph and stale edge risk. | Requires complete dependency extraction for every element kind; broad and risky; may be expensive without caching; process history can diverge from current storage. | Attractive long-term, rejected for current wave. |
-| Split registrar/query/invalidation ports while keeping graph World-owned | Clarifies who can mutate; preserves behavior; existing projection-plane registrar is a partial seam; enables future derived graph work. | Still mutable duplicate state; requires caller cleanup and graph consistency fixes. | Chosen. |
+Validation:
+- `npm run test`
+- `npm run build`
 
-Chosen direction:
+Effort: 30-60 minutes.
 
-- Keep the actual graph implementation World-owned for now because it supports domain invalidation, deletion, and projection-plane mutation invariants.
-- Stop treating `world.getDependencyService()` as a general-purpose public escape hatch.
-- Split surfaces incrementally:
-  - Registrar surface: `registerNode` / `unregisterNode`, used by World/projection-plane mutation and operations.
-  - Query surface: dependency/dependent lookup and deletion order, used by application deletion and cascade preview.
-  - Invalidation surface: kept inside World methods such as `invalidateRealization` and `invalidateLineRealization`.
-- Fix graph consistency before broader moves: `registerNode()` should remove stale reverse edges before re-registering a node, and add-operation undo paths should consistently pass mutation context when removing projection-plane elements.
+---
 
-### Priority 5: Keep Boundaries Executable
+## Phase 2: Persistence Type Safety
 
-Every completed boundary should get a focused architecture or behavior test. Do not add broad tests before the replacement design exists.
+### P2.1 Descriptor Shape Policy Decision
 
-Recommended steps:
+Status: prerequisite for P2.2 and all subsequent descriptor work.
 
-1. Keep `npm run test:architecture` as the minimum boundary gate.
-2. Add tests after each migration that would fail if the old coupling returns.
-3. Prefer narrow assertions tied to actual completed boundaries over speculative global bans.
-4. Update `docs/architecture/overview.md` with concrete current violations after each reassessment, not just high-level cleanup priorities.
+Problem: Some descriptors use flat top-level fields (the recently typed ones), while some operations use `payload` objects. This inconsistency will grow as more descriptors are typed.
 
-## Objectives
+Action:
+- Document the chosen policy: new descriptors should follow the `AddFreePoint2DDescriptor` pattern (flat top-level fields matching the operation constructor parameters).
+- Note cross-phase dependency: if element `kind` fields are later added (P5), descriptors constructing those elements would need their descriptor types updated to include `kind`.
 
-- Make ownership obvious: UI renders and forwards events, application orchestrates use cases, commands mutate state, domain models geometry, rendering adapts presentation DTOs.
-- Remove cross-layer shortcuts that make the codebase harder to reason about.
-- Prefer fewer, clearer abstractions over many small indirection layers.
-- Keep domain code free of UI state, browser concerns, logging side effects, and rendering notification policy.
-- Make component, store, tool, service, command, and domain boundaries executable through tests.
-- Keep validation scripts honest: command names should describe what they actually verify.
+Validation:
+- Architecture decision note in code comments or docs.
+- `ProjectService.roundTrip.spec.ts` still passes.
 
-## Scope Boundaries
+Effort: 30 minutes to document.
 
-- Do not introduce a backend as part of this remediation.
-- Do not replace Vue, TypeScript, Pinia, Three.js, Vitest, or Playwright unless a specific task proves the tool itself is blocking clean architecture.
-- Do not preserve old project formats or compatibility shims unless there is an explicit product requirement.
-- Do not keep a current boundary, schema, test shape, or component API just because changing it is large.
+### P2.2 Add Explicit Descriptor Types to High-Value Operations
 
-## Current Strengths To Preserve When Useful
+Already done:
+- `AddFreePoint2D`
+- `UpdateFreePoint2DPosition`
 
-- Commands are operation-backed, serializable, undoable, and explicitly not subclassed.
-- Current-schema persistence restores command streams through operation descriptors.
-- Domain modules are already guarded from importing application, command, service, UI, store, and persistence layers.
-- Canvas and 3D rendering already have presentation/read-model DTO seams.
-- `App.vue` mostly composes runtime ports instead of directly owning business orchestration.
-- Existing architecture tests are useful and should be strengthened.
+Recommended next batches:
 
-## Target Architecture
+1. Basic 2D construction operations:
+   - `AddLine2DByTwoPoints`
+   - `AddLine2DParallelToLine`
+   - `AddLine2DPerpendicularToLine`
+   - `AddSegment2DByPoints`
+   - `AddCircle2DByCenterAndPoint`
 
-| Area | Target ownership |
-| --- | --- |
-| Vue components | Template rendering, lifecycle hooks, event forwarding, injected port consumption. No command construction, no concrete tool factories, no domain mutation policy. |
-| Stores | UI-only reactive state or adapter state. Stores should not become alternate domain/application models. Components should prefer injected ports over direct global-store access where the state is application-owned. |
-| Application | Use cases, controllers, runtime composition, command production, selection policy, tool interaction policy, persistence orchestration. |
-| Tools | UI interaction argument collectors that emit typed intents. Tools should not depend on stores or command stacks directly. |
-| Commands | Operation sequencing, undo/redo, persistence descriptors, rollback. Commands should not contain domain policy beyond sequencing operations. |
-| Domain | Geometry definitions, construction relationships, pure calculations, realization definitions. No UI active-tool/active-plane state, browser state, console logging, or rendering subscription policy. |
-| Rendering | SVG/Three adapters that consume presentation DTOs and produce rendered objects/attributes. |
-| Services | Real external I/O only, such as Drive and browser persistence adapters. Avoid using `services/` as a dumping ground for factories, renderers, or geometry helpers. |
+2. Intersection operations:
+   - `AddLineLineIntersectionPoint2D`
+   - `AddLineCircleIntersectionPoint2D`
+   - `AddCircleCircleIntersectionPoint2D`
+   - `AddSiblingIntersectionPoint2D`
 
-## Workstream 1: Update Current-State Architecture Docs
+3. 3D reconstruction operations:
+   - `Add3DPoint`
+   - `Add3DLine`
+   - `Add3DSegment`
+   - `Add3DPlane`
 
-### Problem
+Note: total operation count in `frontend/src/commands/operations/world/` is approximately 25. These 13 operations cover the most frequently replayed construction commands. The remaining 12 (guide, style, view state, initialization, removal, projection plane, hinge line) can be typed incrementally as needed.
 
-The current architecture overview is concise but does not fully describe the actual dependency rules, known boundary exceptions, and areas being cleaned up. Historical audit artifacts are useful provenance but too noisy as day-to-day architecture guidance.
+Action per batch:
+- Add operation-specific descriptor/output interfaces for each operation.
+- Register restorers with typed descriptors in `registerWorldOperationDescriptors.ts`.
+- Preserve current serialized shape.
 
-### Target State
+Validation:
+- `npm run test -- tests/unit/commands/operations/operationRegistry.spec.ts tests/unit/application/appShell/ProjectService.roundTrip.spec.ts tests/integration/projectService.determinism.spec.ts`
+- `npm run build`
 
-- `docs/architecture/overview.md` describes the current architecture honestly before code refactors start.
-- The docs include a clear boundary table for components, stores, application, tools, commands, domain, rendering, and services.
-- Known violations are called out as remediation targets, not normalized as acceptable patterns.
+Effort: 2-4 hours per batch.
 
-### Steps
+---
 
-1. Fix the root VitePress dependency issue that currently prevents `npm run docs:build` from resolving `vite`.
-2. Update `docs/architecture/overview.md` with the target boundary table from this plan.
-3. Add a short section for current violations and cleanup priorities.
-4. Clarify that `architecture-audit/` is provenance, not the primary source for contributors.
-5. Link this remediation plan from the architecture overview.
-6. Add a concise current-violations table to the overview for still-open boundary problems, including canvas store/tool/rendering imports and runtime tool-object invocation.
+## Phase 3: Descriptor Registry Boundary
 
-### Acceptance Criteria
+### P3.1 Convert DescriptorRegistry Away From Static Global State
 
-- Contributors can understand the intended architecture without reading historical audit cycles.
-- The overview distinguishes intended boundaries from current violations.
-- `npm run docs:build` passes.
+Problem: `DescriptorRegistry` stores descriptors in a `static Map<Function, ElementDescriptor>`. Registration happens via `registerAllDescriptors()` at `main.ts` startup. This is global mutable state that prevents test isolation and is fragile under code splitting or minification.
 
-## Workstream 2: Extract Canvas Orchestration From `SvgCanvas.vue`
+Before starting, audit all call sites of `DescriptorRegistry.get()` and `getDescriptor()` to understand the consumer surface.
 
-### Problem
+Action:
+- Convert `DescriptorRegistry` to instance-based, constructed and populated at `RuntimeSession` creation.
+- Inject the registry through read-model constructors that need it.
+- Maintain a test helper that creates a pre-registered registry for unit tests.
 
-`frontend/src/components/workspace/SvgCanvas.vue` is a 1240-line orchestration component. It imports concrete tools, services, stores, runtime ports, hit-testing, coordinate conversion, rendering grouping, selection policy, drag policy, viewport policy, properties interactions, and fit-to-view behavior. This is the largest current architecture pressure point.
+Likely affected files:
+- `frontend/src/domain/world/descriptors/DescriptorRegistry.ts`
+- `frontend/src/domain/world/descriptors/registerDescriptors.ts`
+- `frontend/src/main.ts`
+- `frontend/src/application/appShell/RuntimeSession.ts`
+- application read models that call `DescriptorRegistry.getDescriptor()`
+- tests that depend on global registration
 
-### Target State
+Validation:
+- `npm run test:architecture`
+- `npm run test -- tests/unit/application/appShell reads and descriptor tests`
+- `npm run build`
 
-- `SvgCanvas.vue` is a thin SVG shell.
-- It renders already-prepared SVG view data and forwards normalized user events.
-- It does not import concrete tools from `@/tools/*`.
-- It does not own selection, drag, tool lifecycle, command invocation, or coordinate-conversion policy.
+Effort: 2-4 hours depending on call-site count.
 
-### Recommended Approach
+---
 
-Use the fewest new abstractions possible. Do not introduce a registry, runtime port, selection controller, drag controller, and coordinate service all at once unless each is independently necessary.
+## Phase 4: ProjectionPlane Responsibility Split
 
-The likely clean shape is one application-level canvas interaction controller plus existing presentation/read ports:
+`ProjectionPlane.ts` is 1,338 lines and combines element storage, creation, realization, and identity. This phase reduces it through tested extractions.
 
-- `CanvasInteractionController` owns tool instance lifecycle, click handling, select-mode behavior, point drag, and viewport drag decisions.
-- `SvgCanvas.vue` forwards events and receives render state.
-- Existing `CanvasViewPort`, `CanvasToolController`, and `CanvasInteractionQuery` should be reused or simplified instead of duplicated.
+### P4.1 Add Characterization Tests
 
-### Steps
+Prerequisite before any extraction.
 
-1. Add failing architecture tests that demonstrate `SvgCanvas.vue` must not import concrete tools or forbidden services.
-2. Extract the local `toolFactories` map into a minimal application-level factory function or controller. Avoid a class registry unless there is more than one caller or real mutable registry behavior.
-3. Move select-click policy and free-point drag policy into the same controller if practical.
-4. Move repeated screen-to-canvas and canvas-to-plane conversion into application/canvas utilities or the controller.
-5. Keep `SVGRenderer` use temporary if needed, then move it under rendering in Workstream 4.
-6. Delete component-level workarounds once controller/runtime notifications are reliable.
-7. Keep tests focused on behavior: tool selection, argument collection, select-click, shift-select, drag commit, drag cancel, viewport pan.
+Action:
+- Write tests covering: point/line/circle addition, dependency registration, realization cache invalidation, fixed and auxiliary plane realization, element lookup, `getAll*()` methods.
+- Run full `npm run test` to establish baseline.
 
-### Acceptance Criteria
+Effort: 2-3 hours.
 
-- `SvgCanvas.vue` imports no concrete tool classes.
-- `SvgCanvas.vue` does not contain a tool factory map.
-- Selection and drag behavior are unit-tested outside the component.
-- Component tests verify only rendering/event-forwarding responsibilities.
-- New architecture tests fail if concrete tools are reintroduced into components.
+### P4.2 Extract Creation/Validation Helpers
 
-## Workstream 3: Define And Enforce Component Boundaries
+Safest first extraction.
 
-### Problem
+Action:
+- Extract repeated validation and lookup helpers used by `add*()` methods to `frontend/src/domain/world/projectionPlane/ProjectionPlaneElementCreation.ts`.
+- Keep public `ProjectionPlane.add*()` methods as delegation wrappers initially.
+- Preserve `clearRealizationCaches(id)` facade on `ProjectionPlane`.
 
-Current architecture tests block component imports of command construction surfaces, but they do not enforce the broader component rule. Components can still import concrete tools, services, and potentially domain concepts.
+Validation:
+- `npm run test -- tests/unit/domain tests/unit/commands/factories`
+- `npm run build`
 
-### Target State
+Target: `ProjectionPlane.ts` reduced by approximately 200-300 lines.
 
-- Components do not import command construction, concrete tools, business services, or domain mutation surfaces.
-- Any exception is explicit, narrow, and documented.
-- Boundary tests are added before cleanup so violations are visible and intentional.
+Effort: 2-4 hours.
 
-### Steps
+### P4.3 Extract 2D Realization Calculation Helpers
 
-1. Extend `frontend/tests/unit/architecture/importBoundaries.spec.ts` with failing checks for current violations.
-2. Forbid `src/components` imports from `@/tools`.
-3. Forbid `src/components` imports from `@/services` after `SVGRenderer` and `InputService` move out of services.
-4. Forbid `src/components` imports from `@/commands` and command operation paths, preserving the existing guard.
-5. Forbid `src/components` imports from domain mutation modules. If a component needs a presentation type, expose it from application/presentation instead.
-6. Keep exception predicates narrow and named.
+Second extraction.
 
-### Acceptance Criteria
+Action:
+- Move pure realization logic (`realizePoint2D`, `realizeLine2D`, `realizeCircle2D` helpers) out of `ProjectionPlane.ts` into small pure functions in `frontend/src/domain/world/projectionPlane/ProjectionPlaneRealization.ts` or similar.
+- Prefer small pure functions over a monolithic `ProjectionPlaneRealizationCalculator` class.
+- Do not change realization method signatures on `ProjectionPlane` itself initially.
 
-- Architecture tests describe the desired boundary even before all code is fixed.
-- After remediation, no component imports concrete tools or forbidden services.
-- Boundary exceptions are documented in both tests and architecture docs.
+Cross-phase note: P1.5 (realization parameter names) should complete before P4.3 so extracted functions have clean signatures.
 
-## Workstream 4: Clean Up The `services/` Directory
+Validation:
+- `npm run test -- tests/unit/domain tests/unit/application/canvasPresentation`
+- `npm run build`
 
-### Problem
+Target: `ProjectionPlane.ts` reduced to approximately 600-800 lines total after P4.2 and P4.3 combined.
 
-`frontend/src/services` mixes unrelated concepts:
+Effort: 3-5 hours.
 
-- `GoogleDriveService.ts`: external I/O service.
-- `ProjectService.ts`: persistence schema/replay orchestration.
-- `SVGRenderer.ts`: rendering adapter.
-- `InputService.ts`: coordinate conversion helper.
-- `GeometryService.ts`: wrapper around pure domain calculations.
-- `factories/PlaneSequenceFactory.ts`: command/domain sequence factory.
+Success criteria:
+- `ProjectionPlane.ts` is smaller and easier to navigate.
+- Public API remains stable.
+- No new generic factory layer or registry is introduced.
+- `clearRealizationCaches(id)` facade preserved on `ProjectionPlane`.
 
-This directory hides ownership and encourages components to import things called services even when they are rendering, application, command, or domain helpers.
+---
 
-### Target State
+## Phase 5: Element Type Discrimination Policy
 
-- `services/` contains only external I/O or browser-facing services.
-- `GoogleDriveService.ts` remains a service only if `services/` is kept as the external I/O layer.
-- `ProjectService.ts` either moves to an explicit persistence module or remains as the persistence service with that ownership documented.
-- Rendering code lives under `rendering/`.
-- Input/coordinate conversion lives under `application/canvas` or `utils`.
-- Command sequence factories live under `commands/factories` or `application/construction`.
-- Thin wrappers around pure domain calculations are deleted unless they add real policy.
+### P5.1 Inventory Current Type-Discrimination Sites
 
-### Steps
+Required before choosing implementation.
 
-1. Move `SVGRenderer.ts` to `frontend/src/rendering/svg/` or `frontend/src/rendering/canvas/`.
-2. Move `InputService.ts` to `frontend/src/application/canvas/` or convert it into pure utility functions.
-3. Move `PlaneSequenceFactory.ts` out of `services/factories` into `commands/factories` if it remains command-sequence oriented, or into `application/construction` if it becomes use-case oriented.
-4. Review `GeometryService.ts` callers. Prefer direct imports from `domain/calculations/*`; delete `GeometryService` if it adds no policy.
-5. Decide whether `ProjectService.ts` belongs under `application/persistence`, `persistence/`, or `services/ProjectService.ts`. Prefer the location that makes command-stream persistence ownership obvious.
-6. Keep `GoogleDriveService.ts` as external I/O, or move it under a more explicit `services/drive/` path if `services/` remains too broad.
-7. Add architecture tests that reject `src/services/factories` and reject rendering helpers under `services`.
+Action:
+- Grep all `instanceof` checks involving `Element`, `Element2D`, `Element3D`, `Point2D`, `Line2D`, `Circle2D`, `Segment2D`, `Guide2D`, `HalfHingeLine2D`, `ProjectionPlane`, and their subclasses.
+- Count total sites by category: domain realization, presentation selectors, command operations, other.
+- Document the inventory in an architecture note.
 
-### Acceptance Criteria
+Validation:
+- Architecture note with site count.
 
-- `frontend/src/services` no longer contains rendering adapters, coordinate helpers, command factories, or domain calculation wrappers.
-- Components do not import from `@/services` except explicitly allowed external I/O adapters, if any.
-- Architecture tests enforce the cleaned directory ownership.
+Effort: 1-2 hours.
 
-## Workstream 5: Clarify The Tools Layer
+### P5.2 Decide Policy
 
-### Problem
+Choose one of:
 
-`frontend/src/tools` is currently an ambiguous layer. Tools collect interaction arguments and emit construction intents, but `ITool.ToolContext` imports application read ports, canvas interaction queries, matrices, and `useToolStore`. This makes tools depend on stores and application details, while application/runtime code also knows about concrete `ITool`.
+Option A: Standardize on `kind` discriminated union.
+- Add `kind` string literal to ALL concrete element subclasses.
+- Convert presentation selectors to exhaustive `switch`.
+- Remove vestigial `type` fields (P1.4 already removes the Line2D ones).
+- Keep `instanceof` in domain realization code (no need to change working code).
 
-`ArgumentCollectorTool.buildConstructionIntent()` also hard-codes application intent typing through `ConstructionIntentType` casts. That makes the base tool class know too much about the application command-intent taxonomy.
+Option B: Keep `instanceof`, document and remove vestigial fields.
+- Remove `type` (P1.4) and document `kind` fields on 3D elements as serialization-only.
+- Add class-level JSDoc explaining the discrimination strategy.
+- Keep `instanceof` as the canonical dispatch everywhere.
+- Do not add new `kind` fields.
 
-### Target State
+Recommendation: Option B is lower risk and sufficient for cleanliness. Option A is more TypeScript-idiomatic but has cascading impact on selectors, operations, and tests. The choice should be documented before P5.3 begins.
 
-- Tools are UI interaction argument collectors.
-- Tools emit typed construction intents and status messages.
-- Tools do not depend on Pinia stores.
-- Application code does not need to know concrete tool classes.
-- Tool context contains only the minimal read/query/emit capabilities needed for argument collection.
-- Tool intent typing is simple and owned by the tool/application boundary, not by casts in a base class.
+Effort: decision only, no code change.
 
-### Steps
+### P5.3 Implement Chosen Policy
 
-1. Remove `ReturnType<typeof useToolStore>` from `ToolContext`.
-2. Replace store mutation in tools with explicit callbacks such as `completeTool()` or return values interpreted by the canvas interaction controller.
-3. Replace the `ConstructionIntentType` cast in `ArgumentCollectorTool` with a cleaner tool-intent contract. Either each tool provides its exact intent type, or the base class emits a generic construction request that the application maps explicitly.
-4. Keep `ToolCommandSink` as the command-intent boundary only if it remains clean after the intent contract is simplified.
-5. Move concrete tool construction behind the canvas interaction controller or a pure factory function.
-6. Ensure application ports no longer expose `ITool` unless there is a strong reason.
-7. Add architecture tests preventing `frontend/src/tools` from importing `@/stores`.
+If Option B (recommended):
+- P1.4 already removes `type` fields.
+- P1.5 already documents `Element3D` as intentional seam.
+- Add JSDoc to `Element2D` and `Element3D` explaining that `instanceof` is the canonical dispatch.
+- Document `kind` fields on `Point3D*`, `Line3DFromProjections`, `Segment3DFromProjections`, `Plane3DFromTraces` as serialization-only discrimination, not runtime dispatch.
 
-### Acceptance Criteria
+If Option A:
+- Add `kind` to Point2D family first, then Line2D, then Circle2D.
+- Convert presentation selectors to exhaustive switches.
+- Leave domain realization code on `instanceof` initially.
+- Cross-phase dependency: P2.2 descriptor types that construct these elements would need updating if `kind` is added to the element interface.
 
-- `ITool.ts` imports no Pinia store types.
-- Tool implementations do not import stores.
-- `ArgumentCollectorTool` does not cast through application intent unions to build commands.
-- Components do not construct tools directly.
-- Application/runtime code interacts with tool intents, not concrete tool classes, wherever practical.
+Validation:
+- `npm run test`
+- `npm run build`
 
-## Workstream 6: Resolve Store And Port Dual Access
+Effort: 30 minutes for Option B documentation; 4-8 hours for Option A depending on scope.
 
-### Problem
+---
 
-Stores such as `toolStore`, `selectionStore`, `viewStore`, `processTreeStore`, and `settingsStore` hold state that components can access globally. Some of that state is UI-only, but some is application-owned or browser-persisted. At the same time, app-shell ports define store-like interfaces. This creates two access paths: direct `useStore()` imports and injected runtime ports.
+## Phase 6: Naming and Presentation Contracts
 
-### Target State
+### P6.1 Audit `name` vs `label`
 
-- Application-owned state is accessed through runtime/application ports.
-- Stores are either UI adapter state or internal implementation details of production composition.
-- Components do not bypass application policy by directly mutating application-owned stores.
+Problem: `Element.label` overlaps with `ProjectionPlane.name` and `Point3DByCoordinates.name`.
 
-### Steps
+Warning: `ProjectionPlane.name` is serialized in project persistence files. Removing or renaming `name` requires a schema version bump and migration logic. This is a serialization-breaking change.
 
-1. Classify each field in `toolStore`, `selectionStore`, `viewStore`, `processTreeStore`, `settingsStore`, and `authStore` as UI-only, application state, browser preference, external-session state, or runtime session state.
-2. Move selection policy behind injected selection/application ports where components currently mutate selection directly.
-3. Move active-tool completion behavior behind the canvas interaction controller or tool runtime port.
-4. Keep purely visual viewport state in `viewStore` only if it remains UI state; otherwise expose it through a view port.
-5. Decide where process-tree panel state belongs after `ProcessTree` ownership is clarified in Workstream 7.
-6. Move localStorage persistence out of module top-level store initialization where possible; production composition should own browser storage defaults. Include `settingsStore`, `toolStore`, and `viewStore` persistence keys in this review.
-7. Add architecture tests that prevent selected components from importing stores once ports exist.
+Action:
+- Scope the audit specifically to `ProjectionPlane.name` and `Point3DByCoordinates.name` vs `Element.label`. Do not grep all `.name` and `.label` across the entire codebase (that would return hundreds of unrelated hits).
+- Determine whether `name` serves a different purpose than `label` (e.g., stable user-facing identifier vs changeable display label).
+- If redundant: consolidate to `label`, bump project schema version, add migration in `ProjectService`.
+- If not redundant: document the distinction in code comments.
 
-### Acceptance Criteria
+Validation:
+- `npm run test -- tests/unit/application/appShell/ProjectService.roundTrip.spec.ts tests/integration/projectService.determinism.spec.ts`
+- `npm run build`
 
-- Components cannot directly mutate application-owned state through stores.
-- Store access rules are documented and test-enforced.
-- Browser persistence keys live in adapter/composition code, not arbitrary stores.
-- `processTreeStore` ownership is consistent with the final process-tree ownership decision.
+Effort: 1-3 hours for audit; additional 2-4 hours if schema migration is needed.
 
-## Workstream 7: Decompose `World.ts`
+### P6.2 Document and Test Canvas Render/Query Contracts
 
-### Problem
+Problem: `CanvasPlaneItem.kind`, `CanvasRenderItem.kind`, and `CanvasQueryItem.kind` serve different purposes but the mapping is implicit. `CanvasRenderItem.kind` and `primitive.type` can disagree at compile time.
 
-`frontend/src/domain/world/World.ts` is a large god object. It owns geometry storage, ID generation, process tree, dependency service, change listeners, labels, element factory methods, and realization lookup orchestration. Some of these are domain responsibilities; some are application or runtime responsibilities. Active-plane UI state has moved to `RuntimeSession`, and direct realization cache map storage has moved to `RealizationStore`, but the other ownership questions remain.
+Action:
+- Add comments to `CanvasPresentationModel.ts` documenting the three kind layers.
+- Add selector tests asserting that selectable render items get corresponding query items.
+- Consider stricter discriminated unions only if tests expose mistakes.
 
-### Target State
+Validation:
+- `npm run test -- tests/unit/application/canvasPresentation`
+- `npm run build`
 
-- `World` is a domain aggregate for geometry and construction state, not UI state or runtime notification plumbing.
-- Active plane state moves out of `World` into application/runtime state.
-- Change notification policy moves out of the domain root or becomes a thin runtime wrapper around domain mutations.
-- Realization caches are separated from element definitions.
-- Process tree and dependency graph ownership is explicit and not hidden as incidental fields on `World`.
+Effort: 1-2 hours.
 
-### Steps
+### P6.3 Clarify ProcessTree Visibility/Style Semantics
 
-1. Extract active-plane state from `World` into `RuntimeSession` or an `ActivePlaneState` application object.
-2. Replace `World.subscribeToChanges()` with a runtime-level change publisher if feasible. Domain mutations should not know about UI subscribers.
-3. Extract ID generation into a small domain ID allocator if keeping generated IDs in domain remains necessary.
-4. Extract realization caches into a `RealizationStore` or computed realization service. Keep definitions and computed values separate.
-5. Review whether `ProcessTree` belongs in `World` or in construction history/application state. Move if cleaner.
-6. Review whether `DependencyService` should be an owned mutable service or a derived graph from current construction definitions.
-7. Split large element factory methods into cohesive modules if they remain on the domain side.
+Problem: `Subprocess` and `ActionGroup` carry `showIntermediates`, `isOutput`, `isAuxiliary`, `defaultStyle` flags. These are presentation state in the domain write model.
 
-### Acceptance Criteria
+Note: the style resolution function has already been moved from `domain/world` to `application/canvasPresentation/`. The remaining concern is whether the flags themselves belong in the domain model.
 
-- `World` no longer owns active UI state.
-- Domain change notification is not coupled to rendering/component refresh needs.
-- Realization caches are not mixed with element definition storage in the same god object.
-- `World.ts` is materially smaller and has fewer unrelated responsibilities.
-- Architecture tests guard domain independence and forbid reintroducing UI/runtime state into `World`.
+Action:
+- Document that these flags are construction-history display semantics, not geometric dependencies.
+- Add JSDoc to `Subprocess` and `ActionGroup` clarifying this.
+- Do not migrate fields until there is a clear target application-layer model and tests.
 
-## Workstream 8: Fix Command And Notification Semantics Simply
+Validation:
+- `npm run build`
 
-### Problem
+Effort: 30-60 minutes for documentation.
 
-`Command.addAndExecute()` marks the world dirty after each operation. `undo()`, `redo()`, and rollback/cancel paths now have targeted notification coverage, but components still compensate with manual `renderTick` increments in several canvas interaction paths.
+---
 
-This is two separate concerns: missing rollback/cancel notifications are correctness bugs; excessive intermediate notifications are a possible performance issue.
+## Phase 7: Dependency Registration Ownership
 
-### Target State
+### P7.1 Standardize Dependency Registration Pattern
 
-- Rollback and preview cancel notify subscribers when they undo applied state.
-- Components do not force refresh to compensate for command/runtime gaps.
-- No batching API is added to `World` unless a measured performance problem requires it.
+Problem: `World` calls `this.dependencyService.registerNode()` directly while `ProjectionPlaneElementStore` calls `context.getDependencyRegistrar().registerNode()` through a port. The registration contract is working but distributed.
 
-### Steps
+Current state: `ProjectionPlaneElementStore` already uses `DependencyRegistrarPort` (a port interface). `World` is the sole `DependencyService` owner. The pattern is partially in place.
 
-1. Add tests for notifications on commit, rollback after applied operations, preview update, preview cancel, undo, and redo.
-2. Keep tests for `Command.rollback()` and preview cancel notification behavior.
-3. Identify every remaining `renderTick.value++` use and classify it as either legitimate local UI invalidation or compensation for command/runtime notification gaps.
-4. Remove component-level `renderTick` increments that only compensate for command/runtime notification uncertainty.
-5. If too many renders occur, debounce or batch at the subscriber/rendering layer, not by adding transaction state to `World`.
+Action:
+- Keep the port-based pattern for projection-plane registration.
+- Document in `DependencyPorts.ts` that `World` is the sole dependency-graph owner and projection-plane storage uses the registrar port.
+- Confirm that no new direct `DependencyService` callers are added outside `World`.
 
-### Acceptance Criteria
+This is a documentation-only change to formalize the current working pattern.
 
-- Notification behavior is specified by tests.
-- Rollback and preview cancel refresh views without component workarounds.
-- No new `World.beginBatch()` or equivalent domain batching API exists unless justified by measured performance evidence.
+Validation:
+- `npm run build`
 
-## Workstream 9: Narrow Runtime And App Ports Without Extra Indirection
+Effort: 30 minutes.
 
-### Problem
+---
 
-Central port files leak avoidable concrete types. Store imports and rendering implementation types have been removed from the most important app-shell ports, but `RuntimeViewPorts.ts` still exposes `CanvasTool` object invocation through `invokeToolClick(tool, context)`. However, over-abstracting Vue refs or translating every DTO would add complexity without improving clarity.
+## Recommended Order
 
-### Target State
+1. P1 quick wins (extract utility, remove alias, document, remove vestigial fields, complete parameter names, clean assertions).
+2. P2.1 descriptor shape policy decision.
+3. P2.2 descriptor typing, batch by batch as needed.
+4. P3 descriptor registry boundary.
+5. P4 characterization tests, then P4.2 extraction, then P4.3 extraction.
+6. P5 discrimination inventory, policy decision, implementation.
+7. P6 naming/presentation contracts.
+8. P7 dependency registration documentation.
 
-- Ports expose operations and intent-level DTOs.
-- Implementation-specific types stay in implementation/composition files where possible.
-- Vue-specific types are acceptable in Vue runtime implementation files, but not in generic operation-port contracts unless there is no simpler alternative.
-- Do not create DTO translation layers unless they remove a real dependency problem.
+Phases 2-4 can proceed in parallel where they don't overlap. P5 implementation should wait until P1.4 and P5.1/P5.2 are complete.
 
-### Steps
+## Validation Baseline
 
-1. Remove `useToolStore` and `ITool` from `RuntimeViewPorts.ts` through Workstreams 2 and 5.
-2. Replace `ViewportTransform` imported from `SVGRenderer` with a local `CanvasViewport` type or move the type to a shared presentation module.
-3. Remove `CanvasTool` and `invokeToolClick(tool, context)` from `RuntimeViewPorts.ts` after canvas interaction handling moves fully into application/controller code.
-4. Keep `ProjectData` as a persistence contract if it remains the only current schema. Do not wrap it in a duplicate DTO just to avoid a type import.
-5. Keep Vue refs in runtime implementation where they simplify Vue integration; avoid pretending the Vue app shell is framework-neutral.
-6. Split port files only where it clarifies ownership. Do not split files solely for aesthetics.
+For most phases:
+- `npm run build`
+- `npm run test:architecture`
+- focused tests for touched areas
 
-### Acceptance Criteria
+For persistence or command changes:
+- `npm run test -- tests/unit/commands/operations/operationRegistry.spec.ts tests/unit/application/appShell/ProjectService.roundTrip.spec.ts tests/integration/projectService.determinism.spec.ts`
 
-- Runtime view ports no longer import stores, concrete tools, or rendering implementation types.
-- Port changes reduce coupling without adding duplicate DTOs or unnecessary adapters.
-- Architecture tests cover the most important forbidden imports.
+For broad domain changes:
+- `npm run test`
 
-## Workstream 10: Remove Routine Console Noise
+## Success Metrics
 
-### Problem
-
-Routine `console.log`, `console.debug`, and `console.info` calls remain in UI, command factories, services, stores, and domain geometry code. Domain code should not have side-effect logging.
-
-### Target State
-
-- Active source has no routine production console noise.
-- Domain computations return structured results, not console traces.
-- `console.warn` and `console.error` remain only for explicit failure reporting where there is no better UI path.
-
-### Steps
-
-1. Add an architecture test that scans all `frontend/src` files for `console.log`, `console.debug`, and `console.info`.
-2. Delete routine logs rather than introducing a logger abstraction.
-3. If a diagnostic trace is truly needed, make it returned data or a test helper, not a domain side effect.
-4. Review `console.warn` and `console.error` separately; do not remove useful failure reports blindly.
-
-### Acceptance Criteria
-
-- Architecture tests reject routine `console.log`, `console.debug`, and `console.info` in active source.
-- Browser console is quiet during normal startup, tool selection, zooming, and rendering.
-- Domain files do not log as a side effect of geometry calculation.
-
-## Workstream 11: Make Validation Scripts Honest
-
-### Problem
-
-`frontend/package.json` maps `lint` to `npm run test:architecture`. That command is useful, but it is not linting. The project also lacks a clear routine validation script.
-
-### Target State
-
-- `test:architecture` remains the architecture boundary gate.
-- `lint` runs real ESLint-based TypeScript/Vue static analysis.
-- A routine validation script runs architecture tests, unit tests, and build.
-
-### Steps
-
-1. Add ESLint for TypeScript/Vue and make `npm run lint` run real lint/static analysis.
-2. Add `validate:routine` at the root for `test:architecture`, frontend unit tests, and frontend build.
-3. Add `validate:docs` if docs builds remain part of routine contributor workflow.
-4. Update `docs/contributing/testing.md` with exact script meanings.
-5. Keep docs validation wired to the VitePress dependency fix completed in Workstream 1.
-
-### Acceptance Criteria
-
-- `npm run lint` means ESLint-based TypeScript/Vue static analysis.
-- `npm run test:architecture` means architecture boundary tests.
-- Contributors have a single routine validation command for implementation changes.
-- Docs build runs successfully after dependency cleanup.
-
-## Preferred Implementation Order
-
-This order supersedes the original workstream order and prioritizes current architectural leverage.
-
-1. Finish the thin canvas shell: remove remaining orchestration, store policy, event normalization, coordinate conversion, viewport policy, hover/snap, and tool lifecycle from `SvgCanvas.vue`.
-2. Narrow canvas runtime/tool ports after the controller shape is clear, especially by removing tool-object invocation from app-shell runtime ports.
-3. Resolve remaining store ownership and browser persistence placement based on field-level classification.
-4. Decompose `World.ts` further: notification plumbing, ID allocation, process-tree ownership, dependency graph ownership, factory methods, and remaining domain logging.
-5. Strengthen architecture tests for each completed boundary.
-6. Keep documentation and validation status current after each wave.
-
-The completed workstreams remain part of the historical plan below, but new implementation should follow this revised order unless a concrete blocker makes a different sequence cleaner.
-
-## Validation Cadence
-
-Minimum gate for architecture-boundary work:
-
-```bash
-npm run test:architecture
-```
-
-Recommended gate for source refactors:
-
-```bash
-npm run test:architecture
-npm run test --workspace=frontend
-npm run build --workspace=frontend
-```
-
-Recommended gate for interaction-heavy canvas changes:
-
-```bash
-npm run test:architecture
-npm run test --workspace=frontend
-npm run build --workspace=frontend
-npm run test:e2e --workspace=frontend
-```
-
-Recommended gate for docs changes after dependency cleanup:
-
-```bash
-npm run docs:build
-```
-
-## Risk Rules
-
-- Do not preserve old interfaces, schemas, files, tests, or formats just because changing them is large.
-- Prefer fewer concepts over more concepts.
-- Add failing boundary tests first, then fix the code.
-- Delete unnecessary wrappers before adding new abstractions.
-- Do not add logger, transaction, registry, or adapter abstractions unless a concrete need remains after simpler cleanup.
-- Keep domain code deterministic and side-effect-light.
-
-## Definition Of Done
-
-The remediation is complete when:
-
-- `SvgCanvas.vue` is a thin SVG shell and no longer owns tool factories or business interaction policy.
-- Components cannot import concrete tools, forbidden services, command construction, or domain mutation surfaces.
-- `services/` contains only true external/browser-facing services.
-- Tools emit intents, no longer depend on stores, and do not cast through application intent unions from base tool classes.
-- Application-owned state is not mutated through direct component store access.
-- `World` no longer owns active UI state, rendering notification policy, or unrelated realization/process/dependency responsibilities in one god object.
-- Command rollback/cancel/preview/undo/redo notifications are specified by tests and behave consistently.
-- Runtime/app ports no longer leak avoidable store/tool/rendering implementation types.
-- Active source has no routine production `console.log`, `console.debug`, or `console.info` calls.
-- Validation scripts are accurately named and documented.
-- Architecture docs describe the current and target architecture without relying on historical audit artifacts.
+- `ProjectionPlane.ts` reduced to approximately 600-800 lines through tested extractions.
+- Operation descriptors become progressively more typed while preserving current persistence behavior.
+- Descriptor lookup no longer depends on hidden global static registration.
+- Element type-discrimination policy is documented and vestigial `type` fields are removed.
+- Segment/`Element3D`/parameter naming clarity improvements are in place.
+- Stale baseline-era targets stay out of future plans.

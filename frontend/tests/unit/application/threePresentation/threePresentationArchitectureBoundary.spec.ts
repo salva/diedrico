@@ -48,12 +48,12 @@ describe('three presentation architecture boundary', () => {
     for (const source of selectorAndReadModelSources) {
       expect(source).not.toMatch(/VisualStyle|ThreeEntityPresentationData|ProjectionPlaneRealization3D|Plane3DRealization3D|Point2DRealization2D|Line2DRealization2D|Circle2DRealization2D|Point3DRealization3D|Line3DRealization3D|Segment3DRealization3D/);
       expect(source).not.toMatch(/\b(realization|planeRealization|visualStyle)\b/);
-      expect(source).not.toMatch(/instanceof\s+(AuxiliaryProjectionPlane|Segment2DByPoints)/);
+      expect(source).not.toMatch(/instanceof\s+(AuxiliaryProjectionPlane|Segment2D)/);
     }
   });
 
   it('allows adapter-private domain conversion while keeping public read-model names DTO-native', () => {
-    expect(planarReadPortSource).toMatch(/instanceof Segment2DByPoints/);
+    expect(planarReadPortSource).toMatch(/instanceof Segment2D/);
     expect(projectionPlaneReadPortSource).toMatch(/instanceof AuxiliaryProjectionPlane/);
     expect(contextPrivateSources.join('\n')).toMatch(/Realization|realize2D|realize3D|VisualStyle|visualStyle/);
     expect(readPortSources.join('\n')).not.toMatch(/ThreeEntityPresentationData/);

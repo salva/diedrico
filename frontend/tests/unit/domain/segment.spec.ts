@@ -2,7 +2,7 @@
  * Unit tests for Segment domain entities
  * 
  * Tests the Segment2D geometry classes:
- * - Segment2DByPoints: Defines segment by two point IDs
+ * - Segment2D: Defines segment by two point IDs
  * - Line2DRealization2D: Computed segment with endpoints in plane coordinates
  * 
  * Reference: specs/001-dihedral-learning-mvp/data-model.md
@@ -10,7 +10,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Vector3 } from 'three';
-import { Segment2DByPoints, Segment2D } from '@/domain/world/Segment';
+import { Segment2D } from '@/domain/world/Segment';
 import { Line2DRealization2D } from '@/domain/world/Line';
 import { FreePoint2D, Point2DRealization2D } from '@/domain/world/Point';
 import type { World } from '@/domain/world/World';
@@ -35,19 +35,19 @@ describe('Segment2D', () => {
     point2Id = point2.id;
   });
 
-  describe('Segment2DByPoints', () => {
+  describe('Segment2D', () => {
     it('should create segment with point references', () => {
-      const segment = new Segment2DByPoints(planeH.id + '/seg1', point1Id, point2Id, planeH.id);
+      const segment = new Segment2D(planeH.id + '/seg1', point1Id, point2Id, planeH.id);
       
       expect(segment.id).toBe(planeH.id + '/seg1');
-      expect(segment instanceof Segment2DByPoints).toBe(true);  // Phase 22.5: extends Line2D
+      expect(segment instanceof Segment2D).toBe(true);  // Phase 22.5: extends Line2D
       expect(segment.point1Id).toBe(point1Id);
       expect(segment.point2Id).toBe(point2Id);
       expect(segment.planeId).toBe(planeH.id);
     });
 
     it('should clone segment correctly', () => {
-      const original = new Segment2DByPoints(planeH.id + '/seg1', point1Id, point2Id, planeH.id);
+      const original = new Segment2D(planeH.id + '/seg1', point1Id, point2Id, planeH.id);
       const cloned = original.clone();
       
       expect(cloned.id).toBe(planeH.id + '/seg1');
@@ -73,7 +73,7 @@ describe('Segment2D', () => {
       const point3 = planeH.addFreePoint2D(new Vector3(50, 50, 1), world);
       const point4 = planeH.addFreePoint2D(new Vector3(50, 50, 1), world);
       
-      const segment = new Segment2DByPoints(planeH.id + '/seg1', point3.id, point4.id, planeH.id);
+      const segment = new Segment2D(planeH.id + '/seg1', point3.id, point4.id, planeH.id);
       const realization = segment.realize2D(world);
       
       // Degenerate segments return infeasible realization

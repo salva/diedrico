@@ -1,6 +1,6 @@
 import { Guide2D, SiblingGuide2D } from '@/domain/world/Guide';
 import { HalfHingeLine2D } from '@/domain/world/HingeLine';
-import { Segment2DByPoints } from '@/domain/world/Segment';
+import { Segment2D } from '@/domain/world/Segment';
 import type { ProjectionElementRealizationContext } from '@/domain/world/projectionPlane/ProjectionPlaneContext';
 import type { ProjectionPlane } from '@/domain/world/projectionPlane/ProjectionPlane';
 import type { Element } from '@/domain/world/Element';
@@ -75,7 +75,7 @@ export function getPlaneCanvasItems(plane: ProjectionPlane, transform: CanvasPla
     if (!realization) continue;
     const kind: CanvasPlaneLineItem['kind'] = line instanceof HalfHingeLine2D
       ? 'half-hinge-line'
-      : line instanceof Segment2DByPoints
+      : line instanceof Segment2D
         ? 'finite-segment'
         : line instanceof SiblingGuide2D
           ? 'sibling-guide'

@@ -29,7 +29,7 @@ import {
 import {
   Circle2DByCenterAndPointDescriptor,
   Circle2DByThreePointsDescriptor,
-  Segment2DByPointsDescriptor,
+  Segment2DDescriptor,
   Guide2DDescriptor,
   SiblingGuide2DDescriptor
 } from './CircleSegmentGuideDescriptors';
@@ -51,7 +51,7 @@ import {
 import { FreePoint2D, Point2DLineLineIntersection, Point2DLineCircleIntersection, Point2DCircleCircleIntersection, SiblingIntersectionPoint2D } from '../Point';
 import { Line2DByTwoPoints, Line2DParallel, Line2DPerpendicularToLine, Line2DTangentToCircleThroughPoint, Line2DTangentToCircleParallelToLine } from '../Line';
 import { Circle2DByCenterAndPoint, Circle2DByThreePoints } from '../Circle';
-import { Segment2DByPoints } from '../Segment';
+import { Segment2D } from '../Segment';
 import { Guide2D, SiblingGuide2D } from '../Guide';
 import { Point3DByCoordinates, Point3DFromProjections } from '../Point3D';
 import { Line3DFromProjections } from '../Line3D';
@@ -92,7 +92,7 @@ export function registerAllDescriptors(): void {
   DescriptorRegistry.register(Circle2DByThreePoints, new Circle2DByThreePointsDescriptor());
   
   // 2D Segments
-  DescriptorRegistry.register(Segment2DByPoints, new Segment2DByPointsDescriptor());
+  DescriptorRegistry.register(Segment2D, new Segment2DDescriptor());
   
   // 2D Guides
   DescriptorRegistry.register(Guide2D, new Guide2DDescriptor());

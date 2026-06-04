@@ -12,7 +12,7 @@ import { Line2D } from '@/domain/world/Line';
 import { Circle2D } from '@/domain/world/Circle';
 import { Guide2D } from '@/domain/world/Guide';
 import { SiblingGuide2D } from '@/domain/world/Guide';
-import { Segment2DByPoints } from '@/domain/world/Segment';
+import { Segment2D } from '@/domain/world/Segment';
 import { HalfHingeLine2D } from '@/domain/world/HingeLine';
 import { BrokenHalfHingeLine2D } from '@/domain/world/elements/BrokenHalfHingeLine2D';
 
@@ -23,7 +23,7 @@ import { BrokenHalfHingeLine2D } from '@/domain/world/elements/BrokenHalfHingeLi
 export type SelectableElementType = 
   | 'point'           // Any Point2D (free, intersection, on-element)
   | 'line'            // Line2D and all subclasses
-  | 'segment'         // Specifically Segment2DByPoints only
+  | 'segment'         // Specifically Segment2D only
   | 'guide'           // Specifically Guide2D/SiblingGuide2D only
   | 'half-hinge-line' // Specifically HalfHingeLine2D only
   | 'circle';         // Any Circle2D
@@ -40,7 +40,7 @@ export type SelectableElementType =
  */
 export function getSelectableType(element: Element2D): SelectableElementType {
   // Check specific non-line types first
-  if (element instanceof Segment2DByPoints) {
+  if (element instanceof Segment2D) {
     return 'segment';
   }
   
@@ -196,7 +196,7 @@ export class TypeMask extends SelectionMask {
       case 'line':
         return element instanceof Line2D;
       case 'segment':
-        return element instanceof Segment2DByPoints;
+        return element instanceof Segment2D;
       case 'guide':
         return element instanceof Guide2D || element instanceof SiblingGuide2D;
       case 'half-hinge-line':

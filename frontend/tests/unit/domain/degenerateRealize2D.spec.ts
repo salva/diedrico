@@ -122,7 +122,7 @@ describe('Degenerate Point Handling in realize2D', () => {
     });
   });
 
-  describe('Segment2DByPoints', () => {
+  describe('Segment2D', () => {
     it('should return infeasible when endpoints are coincident', () => {
       const { world } = createTestWorld();
       const plane = world.getProjectionPlaneByLabel('P_H')!;

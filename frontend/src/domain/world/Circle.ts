@@ -84,9 +84,9 @@ export abstract class Circle2D extends Element2D {
 
   /**
    * Calculate 2D realization - compute center and radius
-   * @param world World instance to access element realizations
+   * @param context Realization context to access element realizations
    */
-  abstract realize2D(world: ProjectionElementRealizationContext): Circle2DRealization2D | null;
+  abstract realize2D(context: ProjectionElementRealizationContext): Circle2DRealization2D | null;
 }
 
 /**
@@ -133,9 +133,9 @@ export class Circle2DByCenterAndPoint extends Circle2D {
    * 
    * Phase 76: Always returns realization (never null). Uses feasible flag for geometric failures.
    */
-  realize2D(world: ProjectionElementRealizationContext): Circle2DRealization2D {
-    // Get both point realizations from world
-    const plane = world.getProjectionPlaneById(this.planeId);
+  realize2D(context: ProjectionElementRealizationContext): Circle2DRealization2D {
+    // Get both point realizations from the context
+    const plane = context.getProjectionPlaneById(this.planeId);
     if (!plane) {
       throw new Error(`[Circle2DByCenterAndPoint] Plane ${this.planeId} not found for circle ${this.id}`);
     }
@@ -150,8 +150,8 @@ export class Circle2DByCenterAndPoint extends Circle2D {
       throw new Error(`[Circle2DByCenterAndPoint] Circumference point ${this.circumferencePointId} not found on plane ${this.planeId} for circle ${this.id}`);
     }
     
-    const centerRealization = centerPoint.realize2D(world);
-    const circumferenceRealization = circumferencePoint.realize2D(world);
+    const centerRealization = centerPoint.realize2D(context);
+    const circumferenceRealization = circumferencePoint.realize2D(context);
 
     // Check if parent points are infeasible - propagate infeasibility
     if (!centerRealization.feasible || !circumferenceRealization.feasible) {
@@ -230,9 +230,9 @@ export class Circle2DByThreePoints extends Circle2D {
    * 
    * Phase 76: Always returns realization (never null). Uses feasible flag for geometric failures.
    */
-  realize2D(world: ProjectionElementRealizationContext): Circle2DRealization2D {
-    // Get all three point realizations from world
-    const plane = world.getProjectionPlaneById(this.planeId);
+  realize2D(context: ProjectionElementRealizationContext): Circle2DRealization2D {
+    // Get all three point realizations from the context
+    const plane = context.getProjectionPlaneById(this.planeId);
     if (!plane) {
       throw new Error(`[Circle2DByThreePoints] Plane ${this.planeId} not found for circle ${this.id}`);
     }
@@ -251,9 +251,9 @@ export class Circle2DByThreePoints extends Circle2D {
       throw new Error(`[Circle2DByThreePoints] Point3 ${this.point3Id} not found on plane ${this.planeId} for circle ${this.id}`);
     }
     
-    const p1Realization = point1.realize2D(world);
-    const p2Realization = point2.realize2D(world);
-    const p3Realization = point3.realize2D(world);
+    const p1Realization = point1.realize2D(context);
+    const p2Realization = point2.realize2D(context);
+    const p3Realization = point3.realize2D(context);
 
     // Check if parent points are infeasible - propagate infeasibility
     if (!p1Realization.feasible || !p2Realization.feasible || !p3Realization.feasible) {

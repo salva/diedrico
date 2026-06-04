@@ -19,13 +19,13 @@ import { Line2D, Line2DRealization2D } from './Line';
 export const SEGMENT_2D_TYPE = {
   SEGMENT: 'segment',
 } as const;
-export type Segment2DType = typeof SEGMENT_2D_TYPE[keyof typeof SEGMENT_2D_TYPE];  // Phase 22.5: Use 'segment' to match Line2DType
+export type Segment2DType = typeof SEGMENT_2D_TYPE[keyof typeof SEGMENT_2D_TYPE];
 
 /**
- * Segment2DByPoints - Bounded line segment defined by two endpoint references
+ * Segment2D - Bounded line segment defined by two endpoint references
  * Phase 22.5: Now extends Line2D base class
  */
-export class Segment2DByPoints extends Line2D {
+export class Segment2D extends Line2D {
   readonly point1Id: string;  // ID of first endpoint
   readonly point2Id: string;  // ID of second endpoint
 
@@ -41,8 +41,8 @@ export class Segment2DByPoints extends Line2D {
     this.point2Id = point2Id;
   }
 
-  clone(): Segment2DByPoints {
-    return new Segment2DByPoints(
+  clone(): Segment2D {
+    return new Segment2D(
       this.id,
       this.point1Id,
       this.point2Id,
@@ -71,24 +71,24 @@ export class Segment2DByPoints extends Line2D {
    * 
    * Phase 76: Always returns realization (never null). Uses feasible flag for geometric failures.
    */
-  realize2D(world: ProjectionElementRealizationContext): Line2DRealization2D {
-    // Get both endpoint realizations from world
-    const plane = world.getProjectionPlaneById(this.planeId);
+  realize2D(context: ProjectionElementRealizationContext): Line2DRealization2D {
+    // Get both endpoint realizations from the context
+    const plane = context.getProjectionPlaneById(this.planeId);
     if (!plane) {
-      throw new Error(`[Segment2DByPoints] Plane ${this.planeId} not found for segment ${this.id}`);
+      throw new Error(`[Segment2D] Plane ${this.planeId} not found for segment ${this.id}`);
     }
     const p1 = plane.getPoint(this.point1Id);
     const p2 = plane.getPoint(this.point2Id);
     
     if (!p1) {
-      throw new Error(`[Segment2DByPoints] Point ${this.point1Id} not found in plane ${this.planeId} for segment ${this.id}`);
+      throw new Error(`[Segment2D] Point ${this.point1Id} not found in plane ${this.planeId} for segment ${this.id}`);
     }
     if (!p2) {
-      throw new Error(`[Segment2DByPoints] Point ${this.point2Id} not found in plane ${this.planeId} for segment ${this.id}`);
+      throw new Error(`[Segment2D] Point ${this.point2Id} not found in plane ${this.planeId} for segment ${this.id}`);
     }
     
-    const p1Realization = p1.realize2D(world);
-    const p2Realization = p2.realize2D(world);
+    const p1Realization = p1.realize2D(context);
+    const p2Realization = p2.realize2D(context);
 
     // Check if parent points are infeasible - propagate infeasibility
     if (!p1Realization.feasible || !p2Realization.feasible) {
@@ -110,6 +110,3 @@ export class Segment2DByPoints extends Line2D {
     return new Line2DRealization2D(pos1.clone(), pos2.clone(), true);
   }
 }
-
-// Public alias retained for call sites that use the shorter domain name.
-export type Segment2D = Segment2DByPoints;

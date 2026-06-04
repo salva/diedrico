@@ -10,7 +10,7 @@ import type { IOperation, OperationOutputBag, OperationResult } from '../IOperat
 import type { World } from '@/domain/world/World';
 import type { Point2D } from '@/domain/world/Point';
 import type { Line2D } from '@/domain/world/Line';
-import { Segment2DByPoints, type Segment2D } from '@/domain/world/Segment';
+import { Segment2D } from '@/domain/world/Segment';
 import type { Circle2D } from '@/domain/world/Circle';
 import { isGuide2D, isSiblingGuide2D, type Guide2D, type SiblingGuide2D } from '@/domain/world/Guide';
 
@@ -212,7 +212,7 @@ export class RemoveSegment2DOp implements IOperation {
       }
       
       const line = plane.getLine(this.segmentId);
-      this.removedSegment = line instanceof Segment2DByPoints ? line : undefined;
+      this.removedSegment = line instanceof Segment2D ? line : undefined;
       if (!this.removedSegment) {
         return {
           success: false,

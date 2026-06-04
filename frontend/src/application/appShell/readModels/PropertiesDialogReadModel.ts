@@ -2,7 +2,7 @@ import { Circle2DByCenterAndPoint, Circle2DByThreePoints } from '@/domain/world/
 import { Guide2D } from '@/domain/world/Guide';
 import { Line2DByTwoPoints } from '@/domain/world/Line';
 import { Point2DCircleCircleIntersection, Point2DLineCircleIntersection, Point2DLineLineIntersection } from '@/domain/world/Point';
-import { Segment2DByPoints } from '@/domain/world/Segment';
+import { Segment2D } from '@/domain/world/Segment';
 import type { VisualStyle } from '@/domain/world/VisualStyle';
 import type { World } from '@/domain/world/World';
 import type { PropertiesDialogViewModel } from '../RuntimeViewPorts';
@@ -69,7 +69,7 @@ function describeDependencies(elementId: string, world: PropertiesDialogReadMode
   const line = safe(() => world.getLine2D(elementId));
   if (line instanceof Line2DByTwoPoints) return [line.point1Id, line.point2Id];
   const segment = safe(() => world.getSegment2D(elementId));
-  if (segment instanceof Segment2DByPoints) return [segment.point1Id, segment.point2Id];
+  if (segment instanceof Segment2D) return [segment.point1Id, segment.point2Id];
   const circle = safe(() => world.getCircle2D(elementId));
   if (circle instanceof Circle2DByCenterAndPoint) return [circle.centerPointId, circle.circumferencePointId];
   if (circle instanceof Circle2DByThreePoints) return [circle.point1Id, circle.point2Id, circle.point3Id];

@@ -39,7 +39,7 @@
  *    ```typescript
  *    const plane = world.getProjectionPlaneById(planeId);
  *    const point = plane.getPoint(pointId);
- *    const realization = point?.realize2D(world);  // World provides the realization context
+ *    const realization = point?.realize2D(world);  // World implements the realization context
  *    ```
  *    Realizations contain the actual computed positions/geometry. The domain object
  *    stores the construction definition (e.g., "intersection of line A and circle B"),
@@ -83,7 +83,7 @@ import { Vector4, Matrix3 } from 'three';
 import { Matrix4x3 } from '@/utils/threeUtils';
 import { Point2D, Point2DLineLineIntersection, Point2DLineCircleIntersection, Point2DCircleCircleIntersection } from './Point';
 import { Line2D } from './Line';
-import { Segment2D, Segment2DByPoints } from './Segment';
+import { Segment2D } from './Segment';
 import { Circle2D } from './Circle';
 import { Guide2D } from './Guide';
 import { HingeLine, HalfHingeLine2D } from './HingeLine';
@@ -405,7 +405,7 @@ export class World {
       return undefined;
     }
 
-    // Call realize2D with World context (uniform API for all plane types)
+    // Call realize2D with this realization context (uniform API for all plane types)
     realization = plane.realize2D(this);
     
     // Cache the result
@@ -431,7 +431,7 @@ export class World {
       return undefined;
     }
 
-    // Call realize3D with World context (uniform API for all plane types)
+    // Call realize3D with this realization context (uniform API for all plane types)
     realization = plane.realize3D(this);
     
     // Cache the result
@@ -676,8 +676,8 @@ export class World {
     }
     const line = plane.getLine(id);
     // Segments extend Line2D
-    if (line && line instanceof Segment2DByPoints) {
-      return line as Segment2D;
+    if (line && line instanceof Segment2D) {
+      return line;
     }
     return undefined;
   }

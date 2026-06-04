@@ -1,5 +1,5 @@
 /**
- * AddSegment2DByPointsOp - Operation to add a Segment2DByPoints using ProjectionPlane factory method
+ * AddSegment2DByPointsOp - Operation to add a Segment2D using ProjectionPlane factory method
  * 
  * Wraps ProjectionPlane.addSegment2DBetweenPoints() in the Operation interface.
  */

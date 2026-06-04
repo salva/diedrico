@@ -18,7 +18,7 @@
 
 import type { ProjectionElementRealizationContext } from './projectionPlane/ProjectionPlaneContext';
 import { Vector3 } from 'three';
-import { Line2DPerpendicularToLine, Line2DRealization2D, Line2D, Line2DType } from './Line';
+import { Line2DPerpendicularToLine, Line2DRealization2D, Line2D } from './Line';
 import { intersectLineLine } from '@/domain/calculations/Intersections';
 import { HalfHingeLine2D } from './HingeLine';
 import { HalfHingeLineRealization2D } from './HalfHingeLineRealization2D';
@@ -51,8 +51,7 @@ export class Guide2D extends Line2DPerpendicularToLine {
     siblingGuideId?: string,
     arcGeometry?: ArcGeometry
   ) {
-    // Phase 52: Pass 'guide' as type to parent constructor
-    super(id, referenceLineId, throughPointId, planeId, label, 'guide');
+    super(id, referenceLineId, throughPointId, planeId, label);
     this.siblingGuideId = siblingGuideId;
     this.arcGeometry = arcGeometry;
   }
@@ -97,30 +96,30 @@ export class Guide2D extends Line2DPerpendicularToLine {
    * they are simply lines. Type distinction happens at domain level (Guide2D), not
    * realization level. See data-model.md §Line2D Constructions.
    */
-  realize2D(world: ProjectionElementRealizationContext): Line2DRealization2D {
-    // Get reference line realization from world
-    const plane = world.getProjectionPlaneById(this.planeId)!;
+  realize2D(context: ProjectionElementRealizationContext): Line2DRealization2D {
+    // Get reference line realization from the context
+    const plane = context.getProjectionPlaneById(this.planeId)!;
     const refLine = plane.getLine(this.referenceLineId);
     
     if (!refLine) {
       throw new Error(`[INTERNAL ERROR] [Guide2D] referenceLineId ${this.referenceLineId} not found on plane ${this.planeId} for guide ${this.id}. Dependency graph corrupted.`);
     }
     
-    const referenceLine = refLine.realize2D(world);
+    const referenceLine = refLine.realize2D(context);
 
     // Check if reference line is infeasible - propagate infeasibility
     if (!referenceLine.feasible) {
       return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
     }
 
-    // Get through-point realization from world
+    // Get through-point realization from the context
     const throughPoint = plane.getPoint(this.throughPointId);
     
     if (!throughPoint) {
       throw new Error(`[INTERNAL ERROR] [Guide2D] throughPointId ${this.throughPointId} not found on plane ${this.planeId} for guide ${this.id}. Dependency graph corrupted.`);
     }
     
-    const throughPointRealization = throughPoint.realize2D(world);
+    const throughPointRealization = throughPoint.realize2D(context);
 
     // Check if through-point is infeasible - propagate infeasibility
     if (!throughPointRealization.feasible) {
@@ -177,11 +176,10 @@ export class Guide2D extends Line2DPerpendicularToLine {
  * - Both guides have equal geometric status
  * 
  * Note: SiblingGuide2D extends Line2D directly (not Line2DPerpendicularToLine)
- * to have its own type discriminator, similar to SiblingIntersectionPoint2D pattern.
+ * because it uses primary-guide correspondence rather than an explicit through-point.
  * 
  */
 export class SiblingGuide2D extends Line2D {
-  readonly type: Line2DType = 'sibling-guide';
   readonly referenceLineId: string;  // HalfHingeLine2D in sibling plane
   primaryGuideId: string;  // ID of the primary guide this sibling derives from
   visible: boolean = true;  // Whether guide is visible in the canvas
@@ -221,19 +219,19 @@ export class SiblingGuide2D extends Line2D {
    * 
    * Navigation path: myHHL → HingeLine → otherPlane → primaryGuide
    * 
-   * @param world World instance for plane and hinge line lookup
+   * @param context Realization context for plane and hinge line lookup
    * @returns Object containing the primary guide, primary HHL, and sibling's own HHL
    */
-  private getPrimaryGuideContext(world: ProjectionElementRealizationContext): {
+  private getPrimaryGuideContext(context: ProjectionElementRealizationContext): {
     primaryGuide: Guide2D;
     primaryHHL: HalfHingeLine2D;
     myHHL: HalfHingeLine2D;
   } {
-    const myPlane = world.getProjectionPlaneById(this.planeId)!;
+    const myPlane = context.getProjectionPlaneById(this.planeId)!;
     const myHHL = myPlane.getLine(this.referenceLineId)! as HalfHingeLine2D;
-    const hingeLine = world.getHingeLineById(myHHL.hingeLineId)!;
+    const hingeLine = context.getHingeLineById(myHHL.hingeLineId)!;
     const primaryPlaneId = hingeLine.getOtherPlane(this.planeId)!;
-    const primaryPlane = world.getProjectionPlaneById(primaryPlaneId)!;
+    const primaryPlane = context.getProjectionPlaneById(primaryPlaneId)!;
     const primaryGuide = primaryPlane.getLine(this.primaryGuideId)! as Guide2D;
     const primaryHHL = primaryPlane.getLine(primaryGuide.referenceLineId)! as HalfHingeLine2D;
     
@@ -264,21 +262,21 @@ export class SiblingGuide2D extends Line2D {
    * "primary guide + half HL" rather than "line + point", and we use parametric
    * correspondence instead of explicit through-point.
    * 
-   * @param world World instance to access primary guide and HalfHingeLine realizations
+   * @param context Realization context to access primary guide and HalfHingeLine realizations
    * @returns Line2DRealization2D with perpendicular line to sibling HalfHingeLine
    */
-  realize2D(world: ProjectionElementRealizationContext): Line2DRealization2D {
+  realize2D(context: ProjectionElementRealizationContext): Line2DRealization2D {
     // Get primary guide via: myHHL → HingeLine → otherPlane → primaryGuide
-    const { primaryGuide, primaryHHL, myHHL } = this.getPrimaryGuideContext(world);
+    const { primaryGuide, primaryHHL, myHHL } = this.getPrimaryGuideContext(context);
     
-    const primaryGuideRealization = primaryGuide.realize2D(world);
+    const primaryGuideRealization = primaryGuide.realize2D(context);
     // Check if primary guide is infeasible - propagate infeasibility
     if (!primaryGuideRealization.feasible) {
       return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
     }
 
     // Get primary guide's HalfHingeLine to find the intersection point
-    const primaryHalfHingeLineRealization = primaryHHL.realize2D(world);
+    const primaryHalfHingeLineRealization = primaryHHL.realize2D(context);
 
     // Find intersection of primary guide with its HalfHingeLine
     const intersectionPointReal = intersectLineLine(primaryGuideRealization, primaryHalfHingeLineRealization);
@@ -289,7 +287,7 @@ export class SiblingGuide2D extends Line2D {
     }
     
     // Get sibling HalfHingeLine realization (needed for both approaches)
-    const siblingHalfHingeLineRealization = myHHL.realize2D(world);
+    const siblingHalfHingeLineRealization = myHHL.realize2D(context);
 
     let twinPosition: Vector3;
 
@@ -306,8 +304,8 @@ export class SiblingGuide2D extends Line2D {
 
       const R = intersectionPointReal.position;
 
-      const primaryPlaneReal3D = world.getProjectionPlane3DRealization(primaryHHL.planeId);
-      const siblingPlaneReal3D = world.getProjectionPlane3DRealization(this.planeId);
+      const primaryPlaneReal3D = context.getProjectionPlane3DRealization(primaryHHL.planeId);
+      const siblingPlaneReal3D = context.getProjectionPlane3DRealization(this.planeId);
 
       if (!primaryPlaneReal3D?.feasible || !siblingPlaneReal3D?.feasible) {
         return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);

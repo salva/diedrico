@@ -1,6 +1,6 @@
 import { Guide2D } from '@/domain/world/Guide';
 import { HalfHingeLine2D } from '@/domain/world/HingeLine';
-import { Segment2DByPoints } from '@/domain/world/Segment';
+import { Segment2D } from '@/domain/world/Segment';
 import type { VisualStyle } from '@/domain/world/VisualStyle';
 import type { World } from '@/domain/world/World';
 import type { ElementsPanelElementViewModel, ElementsPanelReadModel } from '../RuntimeViewPorts';
@@ -27,8 +27,8 @@ export function buildElementsPanelReadModel(context: ElementsPanelReadModelConte
     projectionPlanes: world.getAllProjectionPlanes().slice().sort(compareProjectionPlaneNames).map(plane => {
       const points = plane.getAllPoints();
       const allLines = plane.getAllLines();
-      const lines = allLines.filter(l => !(l instanceof HalfHingeLine2D) && !(l instanceof Segment2DByPoints) && !(l instanceof Guide2D));
-      const segments = allLines.filter(l => l instanceof Segment2DByPoints);
+      const lines = allLines.filter(l => !(l instanceof HalfHingeLine2D) && !(l instanceof Segment2D) && !(l instanceof Guide2D));
+      const segments = allLines.filter(l => l instanceof Segment2D);
       const circles = plane.getAllCircles();
       const guides = allLines.filter(l => l instanceof Guide2D);
       return {

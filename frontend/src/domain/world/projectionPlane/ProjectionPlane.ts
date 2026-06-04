@@ -8,7 +8,7 @@ import type { Line2D, Line2DRealization2D } from '../Line';
 import { Line2DByTwoPoints, Line2DParallel, Line2DPerpendicularToLine, Line2DTangentToCircleThroughPoint, Line2DTangentToCircleParallelToLine } from '../Line';
 import type { Circle2D, Circle2DRealization2D } from '../Circle';
 import { Circle2DByCenterAndPoint } from '../Circle';
-import { Segment2DByPoints } from '../Segment';
+import { Segment2D } from '../Segment';
 import { Guide2D, SiblingGuide2D } from '../Guide';
 import { HalfHingeLine2D } from '../HingeLine';
 import { ProjectionPlaneElementStore } from './ProjectionPlaneElementStore';
@@ -865,21 +865,21 @@ export abstract class ProjectionPlane extends Element {
   }
 
   /**
-   * Factory method: Create and add a Segment2DByPoints to this plane
+   * Factory method: Create and add a Segment2D to this plane
    * 
    * @param point1Id ID of first endpoint
    * @param point2Id ID of second endpoint
    * @param world World context for validation and ID generation
    * @param id Optional ID - ONLY for redo operations. Tests and normal operations should
    *           omit this to get auto-generated IDs. See addFreePoint2D() for test pattern.
-   * @returns The created Segment2DByPoints
+   * @returns The created Segment2D
    */
   addSegment2DBetweenPoints(
     point1Id: string,
     point2Id: string,
     world: ProjectionPlaneMutationContext,
     id?: string
-  ): Segment2DByPoints {
+  ): Segment2D {
     if (!this.id) {
       throw new Error('Cannot add segment to plane without ID');
     }
@@ -908,7 +908,7 @@ export abstract class ProjectionPlane extends Element {
     // Phase 97: Generate default label if not provided
     const label = world.generateDefaultLabel(id, 'Segment2D');
 
-    const segment = new Segment2DByPoints(id, point1Id, point2Id, this.id, label);
+    const segment = new Segment2D(id, point1Id, point2Id, this.id, label);
     
     this.addLine(segment, world);  // Segments are stored as lines
     return segment;

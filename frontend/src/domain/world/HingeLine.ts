@@ -139,17 +139,17 @@ export class HalfHingeLine2D extends Line2D {
    * - guideVector is perpendicular to hinge line direction
    * - Guide2D uses this vector to create guides
    * 
-   * @param world World instance for accessing HingeLine and plane realizations
+   * @param context Realization context for accessing HingeLine and plane realizations
    */
-  realize2D(world: ProjectionElementRealizationContext): HalfHingeLineRealization2D {
-    const hingeLine = world.getHingeLineById(this.hingeLineId)!;
+  realize2D(context: ProjectionElementRealizationContext): HalfHingeLineRealization2D {
+    const hingeLine = context.getHingeLineById(this.hingeLineId)!;
 
     // Plane1: Return canonical coordinates directly
     if (this.planeId === hingeLine.plane1Id) {
       // Check feasibility of underlying Plane3D (if projection plane has one)
-      const projPlane1 = world.getProjectionPlaneById(hingeLine.plane1Id)!;
+      const projPlane1 = context.getProjectionPlaneById(hingeLine.plane1Id)!;
       if (projPlane1.plane3DId) {
-        const plane3DReal = world.get3DPlaneRealization(projPlane1.plane3DId)!;
+        const plane3DReal = context.get3DPlaneRealization(projPlane1.plane3DId)!;
         if (!plane3DReal.isFeasible()) {
           // Return infeasible realization instead of throwing
           return HalfHingeLineRealization2D.createInfeasible();
@@ -168,8 +168,8 @@ export class HalfHingeLine2D extends Line2D {
     }
 
     // Plane2: Project 3D line back to plane2
-    const line3D = hingeLine.realize3D(world);
-    const plane2Real = world.getProjectionPlane3DRealization(this.planeId)!;
+    const line3D = hingeLine.realize3D(context);
+    const plane2Real = context.getProjectionPlane3DRealization(this.planeId)!;
 
     // Check feasibility of 3D line (depends on plane1)
     if (!line3D.isFeasible()) {
@@ -235,13 +235,13 @@ export class HingeLine extends Line3D {
    * 
    * Returns Line3DRealization3D with point and direction in 3D domain coordinates (Vector4).
    */
-  realize3D(world: ProjectionElementRealizationContext): Line3DRealization3D {
-    const projPlane1 = world.getProjectionPlaneById(this.plane1Id);
-    const projPlane2 = world.getProjectionPlaneById(this.plane2Id);
+  realize3D(context: ProjectionElementRealizationContext): Line3DRealization3D {
+    const projPlane1 = context.getProjectionPlaneById(this.plane1Id);
+    const projPlane2 = context.getProjectionPlaneById(this.plane2Id);
 
     // Check that both planes exist (structural integrity)
     if (!projPlane1 || !projPlane2) {
-      requireProjectionRealizationCollections(world, 'HingeLine.realize3D');
+      requireProjectionRealizationCollections(context, 'HingeLine.realize3D');
       throw new Error(`HingeLine.realize3D: HingeLine ${this.id} references invalid plane(s) - plane1: ${projPlane1 ? 'exists' : 'MISSING'}, plane2: ${projPlane2 ? 'exists' : 'MISSING'}`);
     }
 
@@ -249,7 +249,7 @@ export class HingeLine extends Line3D {
     // For main planes (P_H, P_V), there's no plane3DId - they're always feasible
     // For auxiliary planes, check the underlying Plane3D feasibility
     if (projPlane1.plane3DId) {
-      const plane3DReal = world.get3DPlaneRealization(projPlane1.plane3DId);
+      const plane3DReal = context.get3DPlaneRealization(projPlane1.plane3DId);
       if (!plane3DReal) {
         // Plane3D not realized yet - return infeasible
         return Line3DRealization3D.createInfeasible();
@@ -260,7 +260,7 @@ export class HingeLine extends Line3D {
       }
     }
 
-    const plane1Real = world.getProjectionPlane3DRealization(this.plane1Id)!;
+    const plane1Real = context.getProjectionPlane3DRealization(this.plane1Id)!;
     const origin = new Vector3(0, 0, 1);      // Canonical origin
     const direction = new Vector3(1, 0, 0);   // Canonical u-axis direction
     

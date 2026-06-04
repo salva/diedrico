@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { SelectionMask, isTypeMask, isUnionMask } from '@/types/SelectionMask';
 import { FreePoint2D } from '@/domain/world/Point';
 import { Line2DByTwoPoints } from '@/domain/world/Line';
-import { Segment2DByPoints } from '@/domain/world/Segment';
+import { Segment2D } from '@/domain/world/Segment';
 import { Guide2D } from '@/domain/world/Guide';
 import { Circle2DByCenterAndPoint } from '@/domain/world/Circle';
 import { HalfHingeLine2D } from '@/domain/world/HingeLine';
@@ -12,7 +12,7 @@ describe('SelectionMask', () => {
   const planeId = 'projPlane1';
   const point = new FreePoint2D(`${planeId}/point2d_1`, new Vector3(0, 0, 1), planeId);
   const line = new Line2DByTwoPoints(`${planeId}/line2d_1`, `${planeId}/point2d_1`, `${planeId}/point2d_2`, planeId);
-  const segment = new Segment2DByPoints(`${planeId}/segment2d_1`, `${planeId}/point2d_1`, `${planeId}/point2d_2`, planeId);
+  const segment = new Segment2D(`${planeId}/segment2d_1`, `${planeId}/point2d_1`, `${planeId}/point2d_2`, planeId);
   const guide = new Guide2D(`${planeId}/guide2d_1`, `${planeId}/point2d_1`, new Vector3(1, 0, 0), planeId);
   const circle = new Circle2DByCenterAndPoint(`${planeId}/circle2d_1`, `${planeId}/point2d_1`, `${planeId}/point2d_2`, planeId);
   const halfHingeLine = new HalfHingeLine2D(`${planeId}/hhl2d_1`, { id: 'hinge_1' } as any, planeId);

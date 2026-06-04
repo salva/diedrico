@@ -1,35 +1,18 @@
-/**
- * Element3D - Abstract base class for 3D geometric elements
- * 
- * Extends Element with no additional properties.
- * Serves as type marker and organizational structure for 3D elements.
- * 
- * **Phase 52**: Introduced as part of unified Element hierarchy to distinguish
- * 3D elements from 2D elements in the type system.
- * 
- * **Current 3D element types**:
- * - Point3D (fixed coordinates and projection-derived points)
- * - Line3D and Segment3D from projections
- * - Plane3D (and subclasses: Plane3DFixed, Plane3DFromTraces)
- * - HingeLine
- * 
- * **Design Note**: Element3D "probably adds nothing" (per planning notes) because
- * 3D elements don't need:
- * - `planeId` (they're not confined to a single projection plane)
- * - `visible` (3D elements don't have direct UI visibility toggles; their 2D projections do)
- * - `type` discriminator (handled by concrete subclass instanceof checks)
- * 
- * However, Element3D provides:
- * - **Type Organization**: Clear distinction between 2D and 3D elements in type system
- * - **Realization Contract**: All 3D elements realize through Element3DRealizationContext
- * - **Dependency Interface**: All 3D elements expose construction dependencies
- * - **Future Extensibility**: Common place to add 3D-specific functionality later
- * 
- */
 import { Element } from './Element';
 import type { Realization } from './Realization';
 import type { Element3DRealizationContext } from './projectionPlane/ProjectionPlaneContext';
 
+/**
+ * Intentional seam between 2D definitions and 3D reconstruction.
+ *
+ * Element3D adds no stored properties to Element by design. It marks elements
+ * whose geometry is reconstructed through Element3DRealizationContext from
+ * defining data such as 2D projections, traces, and planes.
+ *
+ * Current concrete 3D element types are Point3DByCoordinates,
+ * Point3DFromProjections, Line3DFromProjections, Segment3DFromProjections,
+ * Plane3DFixed, Plane3DFromTraces, and HingeLine.
+ */
 export abstract class Element3D extends Element {
   /**
    * Compute 3D geometric realization from defining data

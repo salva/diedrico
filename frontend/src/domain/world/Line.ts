@@ -21,20 +21,6 @@ import { Realization } from './Realization';
 import { Element2D } from './Element2D';
 import { assert } from '@/utils/assert';
 
-export const LINE_2D_TYPE = {
-  BY_TWO_POINTS: 'by-two-points',
-  PARALLEL: 'parallel',
-  PERPENDICULAR: 'perpendicular',
-  PERPENDICULAR_TO_LINE: 'perpendicular-to-line',
-  TANGENT_TO_CIRCLE_THROUGH_POINT: 'tangent-to-circle-through-point',
-  TANGENT_TO_CIRCLE_PARALLEL: 'tangent-to-circle-parallel',
-  HALF_HINGE: 'half-hinge',
-  SEGMENT: 'segment',
-  GUIDE: 'guide',
-  SIBLING_GUIDE: 'sibling-guide',
-} as const;
-export type Line2DType = typeof LINE_2D_TYPE[keyof typeof LINE_2D_TYPE];
-
 /**
  * Line2DRealization2D - Stores computed line using homogeneous coordinates
  * 
@@ -158,7 +144,7 @@ export abstract class Line2D extends Element2D {
    * - Missing dependencies: throw Error with [INTERNAL ERROR]
    * - Geometric failures: return realization with feasible=false
    */
-  abstract realize2D(world: ProjectionElementRealizationContext): Line2DRealization2D;
+  abstract realize2D(context: ProjectionElementRealizationContext): Line2DRealization2D;
   
   /**
    * Check if this line is bounded (finite segment) or unbounded (infinite line)
@@ -216,9 +202,9 @@ export class Line2DByTwoPoints extends Line2D {
    *   point1: finite point on line (z=1)
    *   point2: direction vector (z=0)
    */
-  realize2D(world: ProjectionElementRealizationContext): Line2DRealization2D {
-    // Get both points from world
-    const plane = world.getProjectionPlaneById(this.planeId);
+  realize2D(context: ProjectionElementRealizationContext): Line2DRealization2D {
+    // Get both points from the context
+    const plane = context.getProjectionPlaneById(this.planeId);
     assert(plane, `[Line2DByTwoPoints] plane ${this.planeId} not found for line ${this.id}`);
     const point1 = plane.getPoint(this.point1Id);
     const point2 = plane.getPoint(this.point2Id);
@@ -227,8 +213,8 @@ export class Line2DByTwoPoints extends Line2D {
     assert(point1, `[Line2DByTwoPoints] point1 ${this.point1Id} not found on plane ${this.planeId} for line ${this.id}`);
     assert(point2, `[Line2DByTwoPoints] point2 ${this.point2Id} not found on plane ${this.planeId} for line ${this.id}`);
     
-    const p1Realization = point1.realize2D(world);
-    const p2Realization = point2.realize2D(world);
+    const p1Realization = point1.realize2D(context);
+    const p2Realization = point2.realize2D(context);
     
     // Null realizations are also internal errors
     assert(p1Realization, `[Line2DByTwoPoints] point1.realize2D() returned null for ${this.point1Id}`);
@@ -306,14 +292,14 @@ export class Line2DParallel extends Line2D {
    * - Missing dependencies: asserts handle with explicit errors
    * - Geometric failures: return realization with feasible=false
    */
-  realize2D(world: ProjectionElementRealizationContext): Line2DRealization2D {
-    // Get reference line realization from world
-    const plane = world.getProjectionPlaneById(this.planeId);
+  realize2D(context: ProjectionElementRealizationContext): Line2DRealization2D {
+    // Get reference line realization from the context
+    const plane = context.getProjectionPlaneById(this.planeId);
     assert(plane, `[Line2DParallel] plane ${this.planeId} not found for line ${this.id}`);
     const refLine = plane.getLine(this.referenceLineId);
     assert(refLine, `[Line2DParallel] reference line ${this.referenceLineId} not found on plane ${this.planeId} for line ${this.id}`);
     
-    const referenceLine = refLine.realize2D(world);
+    const referenceLine = refLine.realize2D(context);
     assert(referenceLine, `[Line2DParallel] refLine.realize2D() returned null for ${this.referenceLineId}`);
 
     // Check if reference line is infeasible - propagate infeasibility
@@ -321,11 +307,11 @@ export class Line2DParallel extends Line2D {
       return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
     }
 
-    // Get through-point realization from world
+    // Get through-point realization from the context
     const throughPoint = plane.getPoint(this.throughPointId);
     assert(throughPoint, `[Line2DParallel] through point ${this.throughPointId} not found on plane ${this.planeId} for line ${this.id}`);
     
-    const throughPointRealization = throughPoint.realize2D(world);
+    const throughPointRealization = throughPoint.realize2D(context);
     assert(throughPointRealization, `[Line2DParallel] throughPoint.realize2D() returned null for ${this.throughPointId}`);
 
     // Check if through-point is infeasible - propagate infeasibility
@@ -371,7 +357,6 @@ export class Line2DParallel extends Line2D {
  * This is the base class for Guide2D (guides are lines with special rendering/behavior).
  */
 export class Line2DPerpendicularToLine extends Line2D {
-  readonly type: Line2DType;  // Phase 52: Allow subclasses to override with their own type
   readonly referenceLineId: string;  // Line to be perpendicular to
   readonly throughPointId: string;   // Point the new line passes through
   
@@ -380,11 +365,9 @@ export class Line2DPerpendicularToLine extends Line2D {
     referenceLineId: string,
     throughPointId: string,
     planeId: string,
-    label?: string,
-    type: Line2DType = 'perpendicular-to-line'  // Default type, subclasses can override
+    label?: string
   ) {
     super(id, planeId, label);
-    this.type = type;
     this.referenceLineId = referenceLineId;
     this.throughPointId = throughPointId;
   }
@@ -395,8 +378,7 @@ export class Line2DPerpendicularToLine extends Line2D {
       this.referenceLineId,
       this.throughPointId,
       this.planeId,
-      this.label,
-      this.type
+      this.label
     );
   }
 
@@ -422,13 +404,13 @@ export class Line2DPerpendicularToLine extends Line2D {
    * - This is a counter-clockwise 90-degree rotation
    * - Works correctly with homogeneous coords (z=0 for direction vectors)
    */
-  realize2D(world: ProjectionElementRealizationContext): Line2DRealization2D {
-    // Get reference line realization from world
-    const plane = world.getProjectionPlaneById(this.planeId);
+  realize2D(context: ProjectionElementRealizationContext): Line2DRealization2D {
+    // Get reference line realization from the context
+    const plane = context.getProjectionPlaneById(this.planeId);
     assert(plane, `[Line2DPerpendicular] plane ${this.planeId} not found for line ${this.id}`);
     const refLine = plane.getLine(this.referenceLineId);
     assert(refLine, `[Line2DPerpendicular] reference line ${this.referenceLineId} not found on plane ${this.planeId} for line ${this.id}`);
-    const referenceLine = refLine.realize2D(world);
+    const referenceLine = refLine.realize2D(context);
     assert(referenceLine, `[Line2DPerpendicular] refLine.realize2D() returned null for ${this.referenceLineId}`);
 
     // Check if reference line is infeasible - propagate infeasibility
@@ -436,10 +418,10 @@ export class Line2DPerpendicularToLine extends Line2D {
       return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
     }
 
-    // Get through-point realization from world
+    // Get through-point realization from the context
     const throughPoint = plane.getPoint(this.throughPointId);
     assert(throughPoint, `[Line2DPerpendicular] through point ${this.throughPointId} not found on plane ${this.planeId} for line ${this.id}`);
-    const throughPointRealization = throughPoint.realize2D(world);
+    const throughPointRealization = throughPoint.realize2D(context);
     assert(throughPointRealization, `[Line2DPerpendicular] throughPoint.realize2D() returned null for ${this.throughPointId}`);
 
     // Check if through-point is infeasible - propagate infeasibility
@@ -494,7 +476,6 @@ export class Line2DPerpendicularToLine extends Line2D {
  * 
  */
 export class Line2DTangentToCircleThroughPoint extends Line2D {
-  readonly type: Line2DType = 'tangent-to-circle-through-point';
   readonly circleId: string;           // Circle to be tangent to
   readonly throughPointId: string;     // External point line passes through
   readonly tangentIndex: 0 | 1;        // Disambiguates which of two tangent lines (angle-based)
@@ -555,21 +536,21 @@ export class Line2DTangentToCircleThroughPoint extends Line2D {
    * - Missing dependencies: asserts handle with explicit errors
    * - Geometric failures: return realization with feasible=false (point inside/on circle)
    */
-  realize2D(world: ProjectionElementRealizationContext): Line2DRealization2D {
+  realize2D(context: ProjectionElementRealizationContext): Line2DRealization2D {
     // Step 1: Get containing plane
-    const plane = world.getProjectionPlaneById(this.planeId);
+    const plane = context.getProjectionPlaneById(this.planeId);
     assert(plane, `[TangentLineToCircleThroughPoint] plane ${this.planeId} not found for line ${this.id}`);
     
     // Step 2: Get circle realization
     const circle = plane.getCircle(this.circleId);
     assert(circle, `[TangentLineToCircleThroughPoint] circle ${this.circleId} not found on plane ${this.planeId} for line ${this.id}`);
-    const circleRealization = circle.realize2D(world);
+    const circleRealization = circle.realize2D(context);
     assert(circleRealization, `[TangentLineToCircleThroughPoint] circle.realize2D() returned null for ${this.circleId}`);
     
     // Step 3: Get through-point realization
     const throughPoint = plane.getPoint(this.throughPointId);
     assert(throughPoint, `[TangentLineToCircleThroughPoint] through point ${this.throughPointId} not found on plane ${this.planeId} for line ${this.id}`);
-    const throughPointRealization = throughPoint.realize2D(world);
+    const throughPointRealization = throughPoint.realize2D(context);
     assert(throughPointRealization, `[TangentLineToCircleThroughPoint] throughPoint.realize2D() returned null for ${this.throughPointId}`);
     
     // Step 4: Check infeasibility propagation
@@ -662,7 +643,6 @@ export class Line2DTangentToCircleThroughPoint extends Line2D {
  * 
  */
 export class Line2DTangentToCircleParallelToLine extends Line2D {
-  readonly type: Line2DType = 'tangent-to-circle-parallel';
   readonly circleId: string;           // Circle to be tangent to
   readonly referenceLineId: string;    // Line to be parallel to
   readonly tangentIndex: 0 | 1;        // Disambiguates which of two tangent lines (angle-based)
@@ -718,22 +698,22 @@ export class Line2DTangentToCircleParallelToLine extends Line2D {
    * - Missing dependencies: asserts handle with explicit errors
    * - Geometric failures: return realization with feasible=false (line intersects circle)
    */
-  realize2D(world: ProjectionElementRealizationContext): Line2DRealization2D {
+  realize2D(context: ProjectionElementRealizationContext): Line2DRealization2D {
     // Step 1: Get containing plane
-    const plane = world.getProjectionPlaneById(this.planeId);
+    const plane = context.getProjectionPlaneById(this.planeId);
     assert(plane, `[TangentLineToCircleParallel] plane ${this.planeId} not found for line ${this.id}`);
     
     // Step 2: Get circle realization
     const circle = plane.getCircle(this.circleId);
     assert(circle, `[TangentLineToCircleParallel] circle ${this.circleId} not found on plane ${this.planeId} for line ${this.id}`);
-    const circleRealization = circle.realize2D(world);
+    const circleRealization = circle.realize2D(context);
     assert(circleRealization, `[TangentLineToCircleParallel] circle.realize2D() returned null for ${this.circleId}`);
     
     // Step 3: Get reference line realization (can be from any plane)
-    const refLine = world.getLine2D(this.referenceLineId);
+    const refLine = context.getLine2D(this.referenceLineId);
     assert(refLine, `[TangentLineToCircleParallel] reference line ${this.referenceLineId} not found`);
     
-    const refLineRealization = refLine.realize2D(world);
+    const refLineRealization = refLine.realize2D(context);
     assert(refLineRealization, `[TangentLineToCircleParallel] refLine.realize2D() returned null for ${this.referenceLineId}`);
     
     // Step 4: Check infeasibility propagation

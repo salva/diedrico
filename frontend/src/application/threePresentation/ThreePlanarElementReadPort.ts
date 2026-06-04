@@ -1,6 +1,6 @@
 import { Vector3 } from 'three';
 import type { ThreePresentationContext } from './ThreePresentationContext';
-import { Segment2DByPoints } from '@/domain/world/Segment';
+import { Segment2D } from '@/domain/world/Segment';
 import { applyMatrix4x3, domainToThreeJS, type Matrix4x3 } from '@/utils/threeUtils';
 import type { ThreePlanarElementSourceDto, ThreePlanarPlaneReadModel } from './ThreePresentationReadModel';
 import { planarStyleFromDomain, THREE_STYLE, visibleFromDomain } from './ThreeStylePolicy';
@@ -29,7 +29,7 @@ export function createThreePlanarElementReadPort(context: ThreePresentationConte
         const realization = line.realize2D(realizationContext);
         if (!realization?.feasible || !visibleFromDomain(line)) continue;
         const style = planarStyleFromDomain(line);
-        if (line instanceof Segment2DByPoints || realization.isBounded()) {
+        if (line instanceof Segment2D || realization.isBounded()) {
           elements.push({ id: line.id, kind: 'planar-segment', planeId: plane.id, visible: true, style, start: v(lift(realization.point1, planeRealization.planeTo3D)), end: v(lift(realization.point2, planeRealization.planeTo3D)) });
         } else {
           const direction = realization.getDirection().clone().normalize();

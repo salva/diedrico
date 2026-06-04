@@ -87,15 +87,15 @@ export class BrokenHalfHingeLine2D extends HalfHingeLine2D {
    *   T2/T2' local coords → paper coords (via source planeToPaper) → this plane local coords (via paperToPlane)
    * This avoids the 3D round-trip which incorrectly maps to the P_A1 origin.
    */
-  realize2D(world: ProjectionElementRealizationContext): HalfHingeLineRealization2D {
+  realize2D(context: ProjectionElementRealizationContext): HalfHingeLineRealization2D {
     // Get the BrokenHingeLine parent
-    const bhl = world.getHingeLineById(this.hingeLineId);
+    const bhl = context.getHingeLineById(this.hingeLineId);
     if (!(bhl instanceof BrokenHingeLine)) {
       return HalfHingeLineRealization2D.createInfeasible();
     }
 
     // Get auxiliary plane to find the correct T2/T2' trace
-    const auxPlane = world.getProjectionPlaneById(bhl.auxiliaryPlaneId);
+    const auxPlane = context.getProjectionPlaneById(bhl.auxiliaryPlaneId);
     if (!(auxPlane instanceof AuxiliaryProjectionPlane)) {
       return HalfHingeLineRealization2D.createInfeasible();
     }
@@ -113,20 +113,20 @@ export class BrokenHalfHingeLine2D extends HalfHingeLine2D {
     }
 
     // Get T2/T2' line and realize it in its source plane's local coords
-    const t2Line = world.getLine2D(t2TraceId);
+    const t2Line = context.getLine2D(t2TraceId);
     if (!t2Line) {
       return HalfHingeLineRealization2D.createInfeasible();
     }
 
-    const t2Real2D = t2Line.realize2D(world);
+    const t2Real2D = t2Line.realize2D(context);
     if (!t2Real2D.feasible) {
       return HalfHingeLineRealization2D.createInfeasible();
     }
 
     // Transform T2/T2' from source plane → paper → this plane
     // This ensures the BHHL overlays T2/T2' visually in paper coordinates
-    const sourcePlaneReal2D = world.getProjectionPlane2DRealization(t2Line.planeId);
-    const targetPlaneReal2D = world.getProjectionPlane2DRealization(this.planeId);
+    const sourcePlaneReal2D = context.getProjectionPlane2DRealization(t2Line.planeId);
+    const targetPlaneReal2D = context.getProjectionPlane2DRealization(this.planeId);
     if (!sourcePlaneReal2D?.feasible || !targetPlaneReal2D?.feasible) {
       return HalfHingeLineRealization2D.createInfeasible();
     }
@@ -141,20 +141,20 @@ export class BrokenHalfHingeLine2D extends HalfHingeLine2D {
     const direction2D = dirInPaper.applyMatrix3(targetPlaneReal2D.paperToPlane2D);
 
     // Get T1's direction on THIS plane for parallel guides
-    const mainHinge = world.getHingeLineById(bhl.mainHingeId);
+    const mainHinge = context.getHingeLineById(bhl.mainHingeId);
     if (!mainHinge) {
       return HalfHingeLineRealization2D.createInfeasible();
     }
 
     // Find T1's trace on THIS plane
-    const thisPlane = world.getProjectionPlaneById(this.planeId);
+    const thisPlane = context.getProjectionPlaneById(this.planeId);
     if (!thisPlane) {
       return HalfHingeLineRealization2D.createInfeasible();
     }
 
     // Find hinge line connecting this plane to mainHinge.plane1Id
-    requireProjectionRealizationCollections(world, 'BrokenHalfHingeLine2D.realize2D');
-    const allHingeLines = world.getAllHingeLines();
+    requireProjectionRealizationCollections(context, 'BrokenHalfHingeLine2D.realize2D');
+    const allHingeLines = context.getAllHingeLines();
     
     const t1HingeLine = allHingeLines.find(hl => 
       (hl.plane1Id === this.planeId && hl.plane2Id === mainHinge.plane1Id) ||
@@ -178,7 +178,7 @@ export class BrokenHalfHingeLine2D extends HalfHingeLine2D {
       return HalfHingeLineRealization2D.createInfeasible();
     }
 
-    const t1Realization = t1HalfHinge.realize2D(world);
+    const t1Realization = t1HalfHinge.realize2D(context);
     if (!t1Realization.isFeasible()) {
       return HalfHingeLineRealization2D.createInfeasible();
     }
@@ -210,18 +210,18 @@ export class BrokenHalfHingeLine2D extends HalfHingeLine2D {
    * Static method similar to HalfHingeLine2D.getSiblingInfo(), but for BrokenHalfHingeLine2D.
    * Returns the sibling BHHL ID and plane ID for creating linked guides.
    * 
-   * @param world World instance for navigation
+   * @param context Realization context for navigation
    * @param bhhlId ID of this BrokenHalfHingeLine2D
    * @param currentPlaneId ID of the plane containing this BHHL
    * @returns Sibling info or undefined if not a BHHL
    */
   static getSiblingInfo(
-    world: ProjectionElementRealizationContext,
+    context: ProjectionElementRealizationContext,
     bhhlId: string,
     currentPlaneId: string
   ): { siblingPlaneId: string; siblingHalfHingeLineId: string } | undefined {
     // Get current plane and BHHL
-    const currentPlane = world.getProjectionPlaneById(currentPlaneId);
+    const currentPlane = context.getProjectionPlaneById(currentPlaneId);
     if (!currentPlane) return undefined;
 
     const bhhl = currentPlane.getLine(bhhlId);
@@ -230,7 +230,7 @@ export class BrokenHalfHingeLine2D extends HalfHingeLine2D {
     }
 
     // Get sibling BHHL using direct reference
-    const siblingBHHL = world.getLine2D(bhhl.siblingBHHLId);
+    const siblingBHHL = context.getLine2D(bhhl.siblingBHHLId);
     if (!siblingBHHL || !(siblingBHHL instanceof BrokenHalfHingeLine2D)) {
       return undefined;
     }

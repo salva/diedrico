@@ -3,7 +3,7 @@
  * 
  * Verifies unified line hierarchy where all line-like elements extend Line2D base class:
  * - Line2DByTwoPoints (infinite lines)
- * - Segment2DByPoints (bounded segments)
+ * - Segment2D (bounded segments)
  * - Guide2D (construction guides)
  * - HalfHingeLine2D (hinge projections)
  * 
@@ -14,7 +14,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { Vector3 } from 'three';
 import type { World } from '../../../src/domain/world/World';
 import { Line2D, Line2DByTwoPoints, Line2DRealization2D } from '../../../src/domain/world/Line';
-import { Segment2DByPoints } from '../../../src/domain/world/Segment';
+import { Segment2D } from '../../../src/domain/world/Segment';
 import { Guide2D } from '../../../src/domain/world/Guide';
 import { HalfHingeLine2D } from '../../../src/domain/world/HingeLine';
 import { getHorizontalPlane, createTestWorld } from '../../helpers/worldHelpers';
@@ -44,7 +44,7 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
       // This is a compile-time check - TypeScript prevents instantiation of abstract classes
       // Just verify that concrete subclasses exist
       expect(Line2DByTwoPoints).toBeDefined();
-      expect(Segment2DByPoints).toBeDefined();
+      expect(Segment2D).toBeDefined();
     });
 
     it('all line types should extend Line2D', () => {
@@ -52,7 +52,7 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
       const segmentId = planeH.generateLine2DId(world);
       const guideId = planeH.generateLine2DId(world);
       const line = new Line2DByTwoPoints(lineId, p1Id, p2Id, planeH.id);
-      const segment = new Segment2DByPoints(segmentId, p1Id, p2Id, planeH.id);
+      const segment = new Segment2D(segmentId, p1Id, p2Id, planeH.id);
       const guide = new Guide2D(guideId, lineId, p1Id, planeH.id);
 
       expect(line).toBeInstanceOf(Line2D);
@@ -171,18 +171,18 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
     });
   });
 
-  describe('Segment2DByPoints extends Line2D', () => {
+  describe('Segment2D extends Line2D', () => {
     it('should be instance of Line2D', () => {
       const segmentId = planeH.generateLine2DId(world);
-      const segment = new Segment2DByPoints(segmentId, p1Id, p2Id, planeH.id);
+      const segment = new Segment2D(segmentId, p1Id, p2Id, planeH.id);
       
       expect(segment).toBeInstanceOf(Line2D);
-      expect(segment).toBeInstanceOf(Segment2DByPoints);
+      expect(segment).toBeInstanceOf(Segment2D);
     });
 
     it('realize2D() should return Line2DRealization2D with endpoints', () => {
       const segmentId = planeH.generateLine2DId(world);
-      const segment = new Segment2DByPoints(segmentId, p1Id, p2Id, planeH.id);
+      const segment = new Segment2D(segmentId, p1Id, p2Id, planeH.id);
       const realization = segment.realize2D(world);
       
       expect(realization).toBeInstanceOf(Line2DRealization2D);
@@ -194,7 +194,7 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
 
     it('segment realization endpoints should be finite points (w=1)', () => {
       const segmentId = planeH.generateLine2DId(world);
-      const segment = new Segment2DByPoints(segmentId, p1Id, p2Id, planeH.id);
+      const segment = new Segment2D(segmentId, p1Id, p2Id, planeH.id);
       const realization = segment.realize2D(world);
       
       expect(realization).not.toBeNull();
@@ -207,7 +207,7 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
 
     it('should compute correct segment length', () => {
       const segmentId = planeH.generateLine2DId(world);
-      const segment = new Segment2DByPoints(segmentId, p1Id, p2Id, planeH.id);
+      const segment = new Segment2D(segmentId, p1Id, p2Id, planeH.id);
       const realization = segment.realize2D(world);
       
       expect(realization).not.toBeNull();
@@ -282,7 +282,7 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
       const segmentId = planeH.generateLine2DId(world);
       const lines: Line2D[] = [
         new Line2DByTwoPoints(lineId, p1Id, p2Id, planeH.id),
-        new Segment2DByPoints(segmentId, p1Id, p2Id, planeH.id)
+        new Segment2D(segmentId, p1Id, p2Id, planeH.id)
       ];
       
       expect(lines.length).toBe(2);
@@ -297,10 +297,10 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
       const lineId = planeH.generateLine2DId(world);
       const segmentId = planeH.generateLine2DId(world);
       const line = new Line2DByTwoPoints(lineId, p1Id, p2Id, planeH.id);
-      const segment = new Segment2DByPoints(segmentId, p1Id, p2Id, planeH.id);
+      const segment = new Segment2D(segmentId, p1Id, p2Id, planeH.id);
       
       expect(line).toBeInstanceOf(Line2DByTwoPoints);
-      expect(segment).toBeInstanceOf(Segment2DByPoints);
+      expect(segment).toBeInstanceOf(Segment2D);
     });
 
     it('should call correct realize2D() implementation polymorphically', () => {
@@ -308,7 +308,7 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
       const segmentId = planeH.generateLine2DId(world);
       const lines: Line2D[] = [
         new Line2DByTwoPoints(lineId, p1Id, p2Id, planeH.id),
-        new Segment2DByPoints(segmentId, p1Id, p2Id, planeH.id)
+        new Segment2D(segmentId, p1Id, p2Id, planeH.id)
       ];
       
       const realizations = lines.map(line => line.realize2D(world));
@@ -325,16 +325,16 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
   });
 
   describe('Type narrowing and instanceof checks', () => {
-    it('should narrow Line2D to Segment2DByPoints', () => {
+    it('should narrow Line2D to Segment2D', () => {
       const segmentId = planeH.generateLine2DId(world);
-      const line: Line2D = new Segment2DByPoints(segmentId, p1Id, p2Id, planeH.id);
+      const line: Line2D = new Segment2D(segmentId, p1Id, p2Id, planeH.id);
       
-      if (line instanceof Segment2DByPoints) {
-        // TypeScript knows this is Segment2DByPoints now
+      if (line instanceof Segment2D) {
+        // TypeScript knows this is Segment2D now
         expect(line.point1Id).toBe(p1Id);
         expect(line.point2Id).toBe(p2Id);
       } else {
-        throw new Error('Should be Segment2DByPoints');
+        throw new Error('Should be Segment2D');
       }
     });
 
@@ -354,14 +354,14 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
 
     it('should distinguish segments via instanceof', () => {
       const segmentId = planeH.generateLine2DId(world);
-      const line: Line2D = new Segment2DByPoints(segmentId, p1Id, p2Id, planeH.id);
+      const line: Line2D = new Segment2D(segmentId, p1Id, p2Id, planeH.id);
       
-      if (line instanceof Segment2DByPoints) {
+      if (line instanceof Segment2D) {
         // TypeScript can narrow based on instanceof
         expect(line.point1Id).toBe(p1Id);
         expect(line.point2Id).toBe(p2Id);
       } else {
-        throw new Error('Should be Segment2DByPoints');
+        throw new Error('Should be Segment2D');
       }
     });
   });
