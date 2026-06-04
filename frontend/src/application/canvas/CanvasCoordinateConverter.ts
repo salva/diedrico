@@ -1,10 +1,7 @@
 import { Vector3, type Matrix3 } from 'three';
+import type { ViewportTransform } from '@/domain/presentation/Paper';
 
-export interface ViewportTransform {
-  zoom: number;
-  panX: number;
-  panY: number;
-}
+export type { ViewportTransform } from '@/domain/presentation/Paper';
 
 export interface CanvasPoint {
   readonly x: number;

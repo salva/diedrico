@@ -6,20 +6,29 @@
  */
 
 import { Vector3 } from 'three';
-import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
+import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 import { FreePoint2D } from '@/domain/world/Point';
 
 type SerializableVector3 = { x: number; y: number; z: number };
+
+export interface UpdateFreePoint2DPositionDescriptor extends OperationDescriptor<'UpdateFreePoint2DPosition'> {
+  planeId: string;
+  pointId: string;
+  newPosition: [number, number, number];
+}
+
+export interface UpdateFreePoint2DPositionOutput extends JsonObject {
+}
 
 function toVector3(value: Vector3 | SerializableVector3): Vector3 {
   // Covers both real Vector3 instances and plain objects (from JSON)
   return new Vector3(value.x, value.y, value.z);
 }
 
-export class UpdateFreePoint2DPositionOp implements IOperation {
+export class UpdateFreePoint2DPositionOp implements IOperation<UpdateFreePoint2DPositionDescriptor, UpdateFreePoint2DPositionOutput> {
   readonly type = 'UpdateFreePoint2DPosition';
-  outputs: OperationOutputBag = {};
+  outputs: UpdateFreePoint2DPositionOutput = {};
 
   private previousPosition?: Vector3;
   private previousLabel?: string;
@@ -32,7 +41,7 @@ export class UpdateFreePoint2DPositionOp implements IOperation {
   ) {
   }
 
-  apply(world: World): OperationResult {
+  apply(world: World): OperationResult<UpdateFreePoint2DPositionOutput> {
     try {
       const plane = world.getProjectionPlaneById(this.planeId);
       if (!plane) {
@@ -97,7 +106,7 @@ export class UpdateFreePoint2DPositionOp implements IOperation {
     world.invalidateRealization(this.pointId);
   }
 
-  serialize() {
+  serialize(): UpdateFreePoint2DPositionDescriptor {
     const pos = toVector3(this.newPosition);
     return {
       opType: this.type,

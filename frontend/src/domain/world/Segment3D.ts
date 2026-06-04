@@ -166,7 +166,7 @@ export class Segment3DFromProjections extends Element3D {
 
   clone(): Segment3DFromProjections {
     return new Segment3DFromProjections(
-      this.id!,
+      this.id,
       this.label,
       this.projection1,
       this.projection2,

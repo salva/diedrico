@@ -48,22 +48,22 @@ export function createThreeGuideReadPort(context: ThreePresentationContext): Thr
     getGuideIntersectionModels: () => ({
       points: context.get3DPoints().flatMap(point => {
         if (!visibleFromDomain(point)) return [];
-        const realization = context.get3DPointRealization(point.id!);
+        const realization = context.get3DPointRealization(point.id);
         if (!realization?.isFeasible()) return [];
         const [x, y, z] = realization.getCartesian();
-        return [{ id: point.id!, visible: true, style: THREE_STYLE.guideMarker, position: { x, y, z } }];
+        return [{ id: point.id, visible: true, style: THREE_STYLE.guideMarker, position: { x, y, z } }];
       }),
       lines: context.get3DLines().flatMap(line => {
         if (!visibleFromDomain(line)) return [];
-        const realization = context.get3DLineRealization(line.id!);
+        const realization = context.get3DLineRealization(line.id);
         if (!realization?.isFeasible()) return [];
-        return [{ id: line.id!, visible: true, style: THREE_STYLE.guideMarker, point: v(realization.point), direction: v(realization.getDirection()) }];
+        return [{ id: line.id, visible: true, style: THREE_STYLE.guideMarker, point: v(realization.point), direction: v(realization.getDirection()) }];
       }),
       segments: context.get3DSegments().flatMap(segment => {
         if (!visibleFromDomain(segment)) return [];
-        const realization = context.get3DSegmentRealization(segment.id!);
+        const realization = context.get3DSegmentRealization(segment.id);
         if (!realization?.isFeasible()) return [];
-        return [{ id: segment.id!, visible: true, style: THREE_STYLE.guideMarker, start: v(realization.startPoint), end: v(realization.endPoint) }];
+        return [{ id: segment.id, visible: true, style: THREE_STYLE.guideMarker, start: v(realization.startPoint), end: v(realization.endPoint) }];
       }),
     }),
   };

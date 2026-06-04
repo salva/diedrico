@@ -10,11 +10,17 @@ import type { World } from '@/domain/world/World';
 import { operationFailure, operationSuccess } from '../operationResultHelpers';
 import { requireProjectionPlane } from './operationHelpers';
 
-interface AddFreePoint2DOutput extends JsonObject {
+export interface AddFreePoint2DDescriptor extends OperationDescriptor<'AddFreePoint2D'> {
+  planeId: string;
+  position: [number, number, number];
   pointId?: string;
 }
 
-export class AddFreePoint2DOp implements IOperation<OperationDescriptor, AddFreePoint2DOutput> {
+export interface AddFreePoint2DOutput extends JsonObject {
+  pointId?: string;
+}
+
+export class AddFreePoint2DOp implements IOperation<AddFreePoint2DDescriptor, AddFreePoint2DOutput> {
   readonly type = 'AddFreePoint2D';
   outputs: AddFreePoint2DOutput = {};
 
@@ -43,7 +49,7 @@ export class AddFreePoint2DOp implements IOperation<OperationDescriptor, AddFree
     }
   }
 
-  serialize() {
+  serialize(): AddFreePoint2DDescriptor {
     return {
       opType: this.type,
       planeId: this.planeId,

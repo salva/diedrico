@@ -239,6 +239,10 @@ export abstract class ProjectionPlane extends Element {
     this.elementStore.clearCircleRealization2D(id);
   }
 
+  clearRealizationCaches(id: string): void {
+    this.elementStore.clearRealizationCaches(id);
+  }
+
   // ==================== Realization Computation Methods ====================
   // Phase 22.5: Realization computation moved from World to ProjectionPlane
   // These methods compute realizations and manage the plane-level cache
@@ -1237,7 +1241,7 @@ export abstract class ProjectionPlane extends Element {
    * For fixed planes: returns predetermined transforms
    * For auxiliary planes: computes from trace/hinge geometry
    * 
-   * @param world - World instance for element lookup (auxiliary planes need this)
+   * @param context - Realization context for element lookup (auxiliary planes need this)
    */
   abstract realize2D(context: ProjectionPlaneRealizationContext): ProjectionPlaneRealization2D;
 
@@ -1245,7 +1249,7 @@ export abstract class ProjectionPlane extends Element {
    * Calculate the 3D realization (transformation matrix) for this projection plane
    * Transforms plane intrinsic coordinates to 3D space coordinates
    * 
-   * @param world - World instance for element lookup (auxiliary planes need this)
+   * @param context - Realization context for element lookup (auxiliary planes need this)
    */
   abstract realize3D(context: ProjectionPlaneRealizationContext): ProjectionPlaneRealization3D;
 
@@ -1332,4 +1336,3 @@ export abstract class ProjectionPlane extends Element {
     return threeDToPlane;
   }
 }
-

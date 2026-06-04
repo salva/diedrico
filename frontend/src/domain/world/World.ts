@@ -39,7 +39,7 @@
  *    ```typescript
  *    const plane = world.getProjectionPlaneById(planeId);
  *    const point = plane.getPoint(pointId);
- *    const realization = point?.realize2D(world);  // Get computed coordinates
+ *    const realization = point?.realize2D(world);  // World provides the realization context
  *    ```
  *    Realizations contain the actual computed positions/geometry. The domain object
  *    stores the construction definition (e.g., "intersection of line A and circle B"),
@@ -466,9 +466,7 @@ export class World {
       
       // Clear 2D realization caches in all planes
       for (const plane of this.projectionPlanes.values()) {
-        plane.clearPointRealization2D(id);
-        plane.clearLineRealization2D(id);
-        plane.clearCircleRealization2D(id);
+        plane.clearRealizationCaches(id);
       }
     });
   }
@@ -494,9 +492,7 @@ export class World {
       
       // Clear 2D realization caches in all planes
       for (const plane of this.projectionPlanes.values()) {
-        plane.clearPointRealization2D(id);
-        plane.clearLineRealization2D(id);
-        plane.clearCircleRealization2D(id);
+        plane.clearRealizationCaches(id);
       }
     });
   }
@@ -930,8 +926,8 @@ export class World {
    * Add 3D point to World
    */
   add3DPoint(point: Point3D): void {
-    this.points3D.set(point.id!, point);
-    this.dependencyService.registerNode(point.id!, point.getDependencies());
+    this.points3D.set(point.id, point);
+    this.dependencyService.registerNode(point.id, point.getDependencies());
     
   }
 
@@ -963,8 +959,8 @@ export class World {
    * Add 3D line to World
    */
   add3DLine(line: Line3D): void {
-    this.lines3D.set(line.id!, line);
-    this.dependencyService.registerNode(line.id!, line.getDependencies());
+    this.lines3D.set(line.id, line);
+    this.dependencyService.registerNode(line.id, line.getDependencies());
     
   }
 
@@ -996,8 +992,8 @@ export class World {
    * Add 3D segment to World
    */
   add3DSegment(segment: Segment3DFromProjections): void {
-    this.segments3D.set(segment.id!, segment);
-    this.dependencyService.registerNode(segment.id!, segment.getDependencies());
+    this.segments3D.set(segment.id, segment);
+    this.dependencyService.registerNode(segment.id, segment.getDependencies());
     
   }
 
@@ -1029,8 +1025,8 @@ export class World {
    * Add 3D plane to World (base or user-created)
    */
   add3DPlane(plane: Plane3D): void {
-    this.planes3D.set(plane.id!, plane);
-    this.dependencyService.registerNode(plane.id!, plane.getDependencies());
+    this.planes3D.set(plane.id, plane);
+    this.dependencyService.registerNode(plane.id, plane.getDependencies());
     
   }
 

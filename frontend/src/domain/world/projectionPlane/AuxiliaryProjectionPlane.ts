@@ -56,7 +56,7 @@ export class AuxiliaryProjectionPlane extends ProjectionPlane {
    * Calculate the 3D transformation realization for this auxiliary plane
    * Computes transformation matrices from trace dependencies using computeProjectionPlaneMatrices().
    * 
-   * @param world - World instance for element lookup
+   * @param context - Realization context for element lookup
    * @returns ProjectionPlaneRealization3D with computed transformation matrices
    */
   realize3D(context: ProjectionPlaneRealizationContext): ProjectionPlaneRealization3D {
@@ -105,9 +105,9 @@ export class AuxiliaryProjectionPlane extends ProjectionPlane {
 
   /**
    * Calculate the 2D realization (transformation matrices) for this auxiliary plane
-   * Unlike base planes, this requires World context to resolve trace dependencies.
+   * Unlike base planes, this requires a realization context to resolve trace dependencies.
    * 
-   * @param world - World instance for element lookup
+   * @param context - Realization context for element lookup
    * @returns ProjectionPlaneRealization2D with computed transformation matrices
    */
   realize2D(context: ProjectionPlaneRealizationContext): ProjectionPlaneRealization2D {

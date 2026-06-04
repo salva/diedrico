@@ -7,7 +7,7 @@ import type { Element } from '@/domain/world/Element';
 import type { World } from '@/domain/world/World';
 import type { CanvasPlaneCanvasItems, CanvasPlaneItem, CanvasPlaneLineItem, CanvasPlaneTransformModel } from './CanvasPresentationModel';
 import type { CanvasPresentationState } from './CanvasPresentationModel';
-import { resolveVisibility } from '@/domain/world/styleService';
+import { resolveVisibility } from './styleService';
 import { Projected3DCanvasSelector } from './Projected3DCanvasSelector';
 import { createProjected3DCanvasReadPort } from './Projected3DCanvasReadPort';
 import { createWorldRealizationContext } from '@/application/presentation/WorldRealizationContext';

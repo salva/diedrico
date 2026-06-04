@@ -2,7 +2,7 @@ import { Vector3, Vector4, Matrix3 } from 'three';
 import { Matrix4x3 } from '@/utils/threeUtils';
 import type { OperationRegistry } from '../OperationRegistry';
 import type { OperationDescriptor, JsonObject } from '../IOperation';
-import { AddFreePoint2DOp } from './AddFreePointOp';
+import { AddFreePoint2DOp, type AddFreePoint2DDescriptor } from './AddFreePointOp';
 import {
   AddLine2DByTwoPointsOp,
   AddLine2DParallelToLineOp,
@@ -19,7 +19,7 @@ import { AddCircleCircleIntersectionPoint2DOp } from './AddCircleCircleIntersect
 import { AddSiblingIntersectionPoint2DOp } from './AddSiblingIntersectionPoint2DOp';
 import { RemovePoint2DOp, RemoveLine2DOp, RemoveSegment2DOp, RemoveCircle2DOp, RemoveGuide2DOp } from './RemoveElementOps';
 import { UpdateElementStyleOp, parseStyleProperties } from './UpdateElementStyleOp';
-import { UpdateFreePoint2DPositionOp } from './UpdateFreePoint2DPositionOp';
+import { UpdateFreePoint2DPositionOp, type UpdateFreePoint2DPositionDescriptor } from './UpdateFreePoint2DPositionOp';
 import {
   CreateInitializationSubprocessOp,
   AddPlane3DFixedOp,
@@ -43,7 +43,7 @@ function restoreOutput<T extends { outputs: JsonObject }>(op: T, outputs: JsonOb
 function obj(d: JsonObject, key: string): JsonObject { const v = d[key]; if (!v || typeof v !== 'object' || Array.isArray(v)) throw new Error(`Invalid ${String(d.opType)} descriptor: ${key} must be object`); return v; }
 
 export function registerWorldOperationDescriptors(registry: OperationRegistry): void {
-  registry.register('AddFreePoint2D', d => restoreOutput(new AddFreePoint2DOp(s(d, 'planeId'), new Vector3(...arr(d, 'position', 3))), { pointId: so(d, 'pointId') }));
+  registry.register<AddFreePoint2DDescriptor>('AddFreePoint2D', d => restoreOutput(new AddFreePoint2DOp(s(d, 'planeId'), new Vector3(...arr(d, 'position', 3))), { pointId: so(d, 'pointId') }));
   registry.register('AddLine2DByTwoPoints', d => restoreOutput(new AddLine2DByTwoPointsOp(s(d, 'planeId'), s(d, 'point1Id'), s(d, 'point2Id')), { lineId: so(d, 'lineId') }));
   registry.register('AddLine2DParallelToLine', d => restoreOutput(new AddLine2DParallelToLineOp(s(d, 'planeId'), s(d, 'referenceLineId'), s(d, 'throughPointId')), { lineId: so(d, 'lineId') }));
   registry.register('AddLine2DPerpendicularToLine', d => restoreOutput(new AddLine2DPerpendicularToLineOp(s(d, 'planeId'), s(d, 'referenceLineId'), s(d, 'throughPointId')), { lineId: so(d, 'lineId') }));
@@ -63,7 +63,7 @@ export function registerWorldOperationDescriptors(registry: OperationRegistry): 
   registry.register('RemoveCircle2D', d => new RemoveCircle2DOp(s(d, 'planeId'), s(d, 'circleId')));
   registry.register('RemoveGuide2D', d => new RemoveGuide2DOp(s(d, 'planeId'), s(d, 'guideId')));
   registry.register('UpdateElementStyle', d => { const payload = obj(d, 'payload'); return new UpdateElementStyleOp(s(payload, 'elementId'), s(payload, 'planeId'), parseStyleProperties(obj(payload, 'newStyle'))); });
-  registry.register('UpdateFreePoint2DPosition', d => new UpdateFreePoint2DPositionOp(s(d, 'planeId'), s(d, 'pointId'), new Vector3(...arr(d, 'newPosition', 3))));
+  registry.register<UpdateFreePoint2DPositionDescriptor>('UpdateFreePoint2DPosition', d => new UpdateFreePoint2DPositionOp(s(d, 'planeId'), s(d, 'pointId'), new Vector3(...arr(d, 'newPosition', 3))));
   registry.register('CreateInitializationSubprocess', d => new CreateInitializationSubprocessOp(so(d, 'subprocessName')));
   registry.register('AddPlane3DFixed', d => restoreOutput(new AddPlane3DFixedOp(new Vector4(...arr(d, 'point', 4)), new Vector4(...arr(d, 'normal', 4)), so(d, 'planeId'), so(d, 'label')), { planeId: so(d, 'planeId') }));
   registry.register('AddProjectionPlaneFixed', d => restoreOutput(new AddProjectionPlaneFixedOp(s(d, 'plane3DId'), new Matrix3().fromArray(arr(d, 'planeToPaper2D', 9)), new Matrix4x3().fromArray(arr(d, 'planeTo3D', 12)), so(d, 'projPlaneId'), so(d, 'name')), { projPlaneId: so(d, 'projPlaneId') }));

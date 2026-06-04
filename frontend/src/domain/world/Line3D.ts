@@ -339,7 +339,7 @@ export class Line3DFromProjections extends Line3D {
 
   clone(): Line3DFromProjections {
     return new Line3DFromProjections(
-      this.id!,
+      this.id,
       this.label,
       this.projection1,
       this.projection2,

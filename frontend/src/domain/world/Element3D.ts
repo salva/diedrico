@@ -8,13 +8,10 @@
  * 3D elements from 2D elements in the type system.
  * 
  * **Current 3D element types**:
- * - Plane3D (and subclasses: Plane3DFixed, Plane3DByTraces, Plane3DByPointAndNormal)
+ * - Point3D (fixed coordinates and projection-derived points)
+ * - Line3D and Segment3D from projections
+ * - Plane3D (and subclasses: Plane3DFixed, Plane3DFromTraces)
  * - HingeLine
- * 
- * **Future 3D element types** (when needed):
- * - Point3D (3D point in space)
- * - Line3D (3D line in space)
- * - Circle3D (3D circle in space)
  * 
  * **Design Note**: Element3D "probably adds nothing" (per planning notes) because
  * 3D elements don't need:
@@ -24,7 +21,8 @@
  * 
  * However, Element3D provides:
  * - **Type Organization**: Clear distinction between 2D and 3D elements in type system
- * - **Dependency Interface**: All 3D elements must implement getDependencies()
+ * - **Realization Contract**: All 3D elements realize through Element3DRealizationContext
+ * - **Dependency Interface**: All 3D elements expose construction dependencies
  * - **Future Extensibility**: Common place to add 3D-specific functionality later
  * 
  */

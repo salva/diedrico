@@ -59,7 +59,7 @@ export class Point3DByCoordinates extends Element3D {
 
   clone(): Point3DByCoordinates {
     return new Point3DByCoordinates(
-      this.id!,
+      this.id,
       this.name,
       this.coordinates.clone(),
       this.visualStyle ? { ...this.visualStyle } : createVisualStyle(),
@@ -160,7 +160,7 @@ export class Point3DFromProjections extends Element3D {
 
   clone(): Point3DFromProjections {
     return new Point3DFromProjections(
-      this.id!,
+      this.id,
       this.label,
       this.projection1,
       this.projection2,

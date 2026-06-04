@@ -1,5 +1,5 @@
 import type { Matrix3, Vector3 } from 'three';
-import type { Primitive, ResolvedStyle } from '@/domain/presentation/Paper';
+import type { Primitive, ResolvedStyle, ViewportTransform } from '@/domain/presentation/Paper';
 
 export type CanvasElementKind =
   | 'point'
@@ -119,10 +119,7 @@ export interface CanvasGridLabels {
   right: CanvasGridLabel[];
 }
 
-export interface CanvasViewportModel {
-  zoom: number;
-  panX: number;
-  panY: number;
+export interface CanvasViewportModel extends ViewportTransform {
   width: number;
   height: number;
 }

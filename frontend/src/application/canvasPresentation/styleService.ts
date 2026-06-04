@@ -8,9 +8,9 @@
  * 
  */
 
-import type { Element } from './Element';
-import type { World } from './World';
-import { ProcessTree, type Subprocess, type ActionGroup, type ProcessNode } from '../processTree/ProcessTree';
+import type { Element } from '@/domain/world/Element';
+import type { World } from '@/domain/world/World';
+import { ProcessTree, type Subprocess, type ActionGroup, type ProcessNode } from '@/domain/processTree/ProcessTree';
 
 // Helper to get parents
 function getPathToNode(tree: ProcessTree, targetId: string): ProcessNode[] | null {

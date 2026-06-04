@@ -10,16 +10,11 @@ import type {
   Primitive,
   SegmentPrimitive,
   TextPrimitive,
+  ViewportTransform,
 } from '@/domain/presentation/Paper';
 
 export interface SVGAttributes {
   [key: string]: string | number;
-}
-
-export interface ViewportTransform {
-  zoom: number;
-  panX: number;
-  panY: number;
 }
 
 export interface SvgPoint {

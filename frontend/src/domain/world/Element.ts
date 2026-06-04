@@ -3,7 +3,7 @@
  * 
  * This is the root of the element hierarchy:
  *   Element
- *   ├── Element3D (Plane3D, HingeLine, future Point3D/Line3D/Circle3D)
+ *   ├── Element3D (Point3D, Line3D, Segment3D, Plane3D, HingeLine)
  *   └── Element2D (Point2D, Line2D, Circle2D)
  * 
  * **Phase 52**: Introduced to eliminate code duplication and enable uniform handling

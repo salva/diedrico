@@ -150,7 +150,7 @@ export class AuxiliaryProjectionPlaneDescriptor implements ElementDescriptor<Aux
     // Get hinge line (T1 is associated with a hinge line)
     // We need to find the hinge line that T1 is part of
     const hingeLine = world.getAllHingeLines().find(hl => {
-      const halfHingeLines = basePlane ? world.getHalfHingeLines2D(basePlane.id!) : [];
+      const halfHingeLines = basePlane ? world.getHalfHingeLines2D(basePlane.id) : [];
       return halfHingeLines.some(hhl => 
         (hhl as any).hingeLineId === hl.id && hhl.id === element.t1HingeTraceId
       );
@@ -254,4 +254,3 @@ export class BrokenHingeLineDescriptor implements ElementDescriptor<BrokenHingeL
     ];
   }
 }
-

@@ -81,4 +81,10 @@ export class ProjectionPlaneElementStore {
   getCircleRealization2D(id: string): Circle2DRealization2D | undefined { return this.circleRealizations.get(id); }
   setCircleRealization2D(id: string, realization: Circle2DRealization2D): void { this.circleRealizations.set(id, realization); }
   clearCircleRealization2D(id: string): void { this.circleRealizations.delete(id); }
+
+  clearRealizationCaches(id: string): void {
+    this.pointRealizations.delete(id);
+    this.lineRealizations.delete(id);
+    this.circleRealizations.delete(id);
+  }
 }

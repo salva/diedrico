@@ -72,7 +72,7 @@ export abstract class Point2D extends Element2D {
    * Calculate the 2D realization (position) for this point
    * Returns position in the projection plane's intrinsic coordinates
    * 
-   * @param world World instance to query parent realizations
+   * @param world Realization context to query parent realizations
    */
   abstract realize2D(world: ProjectionElementRealizationContext): Point2DRealization2D;
 }
@@ -150,7 +150,7 @@ export abstract class IntersectionPoint2D extends Point2D {
    * Calculate 2D realization - compute intersection of two geometric objects
    * Intersection is calculated in the plane's intrinsic coordinate system
    * 
-   * @param world World instance to query parent realizations
+   * @param world Realization context to query parent realizations
    * @returns Point2DRealization2D with intersection point, or infeasible if computation fails
    */
   abstract realize2D(world: ProjectionElementRealizationContext): Point2DRealization2D;
@@ -199,7 +199,7 @@ export class Point2DLineLineIntersection extends IntersectionPoint2D {
   /**
    * Calculate 2D realization - compute intersection of two lines
    * 
-   * @param world World instance to query parent realizations
+   * @param world Realization context to query parent realizations
    * @returns Point2DRealization2D with intersection point, or infeasible if lines are parallel/coincident or intersection falls outside segment bounds
    */
   realize2D(world: ProjectionElementRealizationContext): Point2DRealization2D {
@@ -338,7 +338,7 @@ export class Point2DLineCircleIntersection extends IntersectionPoint2D {
   /**
    * Calculate 2D realization - compute intersection of line and circle
    * 
-   * @param world World instance to query parent realizations
+   * @param world Realization context to query parent realizations
    * @returns Point2DRealization2D with intersection point at specified index, or infeasible if no intersection or intersection falls outside segment bounds
    */
   realize2D(world: ProjectionElementRealizationContext): Point2DRealization2D {
@@ -463,7 +463,7 @@ export class Point2DCircleCircleIntersection extends IntersectionPoint2D {
   /**
    * Calculate 2D realization - compute intersection of two circles
    * 
-   * @param world World instance to query parent realizations
+   * @param world Realization context to query parent realizations
    * @returns Point2DRealization2D with intersection point at specified index, or infeasible if no intersection
    */
   realize2D(world: ProjectionElementRealizationContext): Point2DRealization2D {
