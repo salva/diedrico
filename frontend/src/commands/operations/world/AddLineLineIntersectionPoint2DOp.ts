@@ -11,13 +11,20 @@ import type { IOperation, JsonObject, OperationDescriptor, OperationResult } fro
 import type { World } from '@/domain/world/World';
 import { requireProjectionPlane } from './operationHelpers';
 
-interface LineLineIntersectionOutput extends JsonObject {
+export interface AddLineLineIntersectionPoint2DDescriptor extends OperationDescriptor<'AddLineLineIntersectionPoint2D'> {
+  planeId: string;
+  line1Id: string;
+  line2Id: string;
   pointId?: string;
 }
 
-export class AddLineLineIntersectionPoint2DOp implements IOperation<OperationDescriptor, LineLineIntersectionOutput> {
+export interface AddLineLineIntersectionPoint2DOutput extends JsonObject {
+  pointId?: string;
+}
+
+export class AddLineLineIntersectionPoint2DOp implements IOperation<AddLineLineIntersectionPoint2DDescriptor, AddLineLineIntersectionPoint2DOutput> {
   readonly type = 'AddLineLineIntersectionPoint2D';
-  outputs: LineLineIntersectionOutput = {};
+  outputs: AddLineLineIntersectionPoint2DOutput = {};
 
   constructor(
     private planeId: string,
@@ -26,7 +33,7 @@ export class AddLineLineIntersectionPoint2DOp implements IOperation<OperationDes
   ) {
   }
 
-  apply(world: World): OperationResult<LineLineIntersectionOutput> {
+  apply(world: World): OperationResult<AddLineLineIntersectionPoint2DOutput> {
     try {
       const plane = requireProjectionPlane(world, this.planeId);
       
@@ -63,7 +70,7 @@ export class AddLineLineIntersectionPoint2DOp implements IOperation<OperationDes
     // via dependency tracking, not explicitly here
   }
 
-  serialize() {
+  serialize(): AddLineLineIntersectionPoint2DDescriptor {
     return {
       opType: this.type,
       planeId: this.planeId,

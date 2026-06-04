@@ -15,15 +15,29 @@
  * @see World.add3DSegment() for storage
  */
 
-import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
+import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 import { Segment3DFromProjections } from '@/domain/world/Segment3D';
 import { reconstruct3DPointFromProjections } from '@/utils/threeUtils';
 import { requireDistinctProjectionPlanes, requireFeasibleProjectionPair } from './operationHelpers';
 
-export class Add3DSegmentOp implements IOperation {
+export interface Add3DSegmentDescriptor extends OperationDescriptor<'Add3DSegment'> {
+  projection1Id: string;
+  projection2Id: string;
+  plane1Id: string;
+  plane2Id: string;
+  label?: string;
+  visualStyle?: JsonObject;
+  segmentId?: string;
+}
+
+export interface Add3DSegmentOutput extends JsonObject {
+  segmentId?: string;
+}
+
+export class Add3DSegmentOp implements IOperation<Add3DSegmentDescriptor, Add3DSegmentOutput> {
   readonly type = 'Add3DSegment';
-  outputs: OperationOutputBag = {};
+  outputs: Add3DSegmentOutput = {};
 
   constructor(
     private projection1Id: string,     // ID of first Segment2D projection
@@ -35,7 +49,7 @@ export class Add3DSegmentOp implements IOperation {
   ) {
   }
 
-  apply(world: World): OperationResult {
+  apply(world: World): OperationResult<Add3DSegmentOutput> {
     try {
       const { plane1, plane2 } = requireDistinctProjectionPlanes(world, this.plane1Id, this.plane2Id, 'segment');
       
@@ -139,7 +153,7 @@ export class Add3DSegmentOp implements IOperation {
     }
   }
 
-  serialize() {
+  serialize(): Add3DSegmentDescriptor {
     return {
       opType: this.type,
       projection1Id: this.projection1Id,

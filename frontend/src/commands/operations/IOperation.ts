@@ -24,6 +24,8 @@ export interface OperationResult<TOutputs extends JsonObject = JsonObject> {
 
 export interface OperationDescriptor<TType extends string = string, TPayload extends JsonObject = JsonObject> extends JsonObject {
   opType: TType;
+  // New descriptors should put operation parameters as flat top-level fields next to opType.
+  // Keep payload only for existing serialized shapes that already use it.
   payload?: TPayload;
 }
 

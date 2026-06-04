@@ -4,12 +4,23 @@
  * Wraps ProjectionPlane.addSegment2DBetweenPoints() in the Operation interface.
  */
 
-import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
+import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 
-export class AddSegment2DByPointsOp implements IOperation {
+export interface AddSegment2DByPointsDescriptor extends OperationDescriptor<'AddSegment2DByPoints'> {
+  planeId: string;
+  point1Id: string;
+  point2Id: string;
+  segmentId?: string;
+}
+
+export interface AddSegment2DByPointsOutput extends JsonObject {
+  segmentId?: string;
+}
+
+export class AddSegment2DByPointsOp implements IOperation<AddSegment2DByPointsDescriptor, AddSegment2DByPointsOutput> {
   readonly type = 'AddSegment2DByPoints';
-  outputs: OperationOutputBag = {};
+  outputs: AddSegment2DByPointsOutput = {};
 
   constructor(
     private planeId: string,
@@ -18,7 +29,7 @@ export class AddSegment2DByPointsOp implements IOperation {
   ) {
   }
 
-  apply(world: World): OperationResult {
+  apply(world: World): OperationResult<AddSegment2DByPointsOutput> {
     try {
       const plane = world.getProjectionPlaneById(this.planeId);
       if (!plane) {
@@ -56,7 +67,7 @@ export class AddSegment2DByPointsOp implements IOperation {
     }
   }
 
-  serialize() {
+  serialize(): AddSegment2DByPointsDescriptor {
     return {
       opType: this.type,
       planeId: this.planeId,

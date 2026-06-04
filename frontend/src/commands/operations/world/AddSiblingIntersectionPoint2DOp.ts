@@ -18,13 +18,19 @@ import { IntersectionPoint2D } from '@/domain/world/Point';
  * @see SiblingIntersectionPoint2D for the domain class
  * @see data-model.md §HalfHingeLine2D Intersection Sibling Behavior for architecture details
  */
-interface SiblingIntersectionOutput extends JsonObject {
+export interface AddSiblingIntersectionPoint2DDescriptor extends OperationDescriptor<'AddSiblingIntersectionPoint2D'> {
+  planeId: string;
+  primaryIntersectionId: string;
   pointId?: string;
 }
 
-export class AddSiblingIntersectionPoint2DOp implements IOperation<OperationDescriptor, SiblingIntersectionOutput> {
+export interface AddSiblingIntersectionPoint2DOutput extends JsonObject {
+  pointId?: string;
+}
+
+export class AddSiblingIntersectionPoint2DOp implements IOperation<AddSiblingIntersectionPoint2DDescriptor, AddSiblingIntersectionPoint2DOutput> {
   readonly type = 'AddSiblingIntersectionPoint2D';
-  outputs: SiblingIntersectionOutput = {};
+  outputs: AddSiblingIntersectionPoint2DOutput = {};
 
   constructor(
     private planeId: string,
@@ -32,7 +38,7 @@ export class AddSiblingIntersectionPoint2DOp implements IOperation<OperationDesc
   ) {
   }
 
-  apply(world: World): OperationResult<SiblingIntersectionOutput> {
+  apply(world: World): OperationResult<AddSiblingIntersectionPoint2DOutput> {
     try {
       const plane = world.getProjectionPlaneById(this.planeId);
       if (!plane) {
@@ -78,7 +84,7 @@ export class AddSiblingIntersectionPoint2DOp implements IOperation<OperationDesc
     }
   }
 
-  serialize() {
+  serialize(): AddSiblingIntersectionPoint2DDescriptor {
     return {
       opType: this.type,
       planeId: this.planeId,

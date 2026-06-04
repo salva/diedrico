@@ -15,14 +15,28 @@
  * @see World.add3DLine() for storage
  */
 
-import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
+import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 import { Line3DFromProjections } from '@/domain/world/Line3D';
 import { requireDistinctProjectionPlanes, requireFeasibleProjectionPair } from './operationHelpers';
 
-export class Add3DLineOp implements IOperation {
+export interface Add3DLineDescriptor extends OperationDescriptor<'Add3DLine'> {
+  projection1Id: string;
+  projection2Id: string;
+  plane1Id: string;
+  plane2Id: string;
+  label?: string;
+  visualStyle?: JsonObject;
+  lineId?: string;
+}
+
+export interface Add3DLineOutput extends JsonObject {
+  lineId?: string;
+}
+
+export class Add3DLineOp implements IOperation<Add3DLineDescriptor, Add3DLineOutput> {
   readonly type = 'Add3DLine';
-  outputs: OperationOutputBag = {};
+  outputs: Add3DLineOutput = {};
 
   constructor(
     private projection1Id: string,     // ID of first Line2D projection
@@ -34,7 +48,7 @@ export class Add3DLineOp implements IOperation {
   ) {
   }
 
-  apply(world: World): OperationResult {
+  apply(world: World): OperationResult<Add3DLineOutput> {
     try {
       const { plane1, plane2 } = requireDistinctProjectionPlanes(world, this.plane1Id, this.plane2Id, 'line');
       
@@ -104,7 +118,7 @@ export class Add3DLineOp implements IOperation {
     }
   }
 
-  serialize() {
+  serialize(): Add3DLineDescriptor {
     return {
       opType: this.type,
       projection1Id: this.projection1Id,

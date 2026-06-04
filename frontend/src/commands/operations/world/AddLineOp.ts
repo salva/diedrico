@@ -4,14 +4,25 @@
  * Wraps ProjectionPlane.addLine2DBetweenTwoPoints() in the Operation interface.
  */
 
-import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
+import type { IOperation, JsonObject, OperationDescriptor, OperationOutputBag, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 import { operationFailure, operationSuccess } from '../operationResultHelpers';
 import { requireProjectionPlane } from './operationHelpers';
 
-export class AddLine2DByTwoPointsOp implements IOperation {
+export interface AddLine2DByTwoPointsDescriptor extends OperationDescriptor<'AddLine2DByTwoPoints'> {
+  planeId: string;
+  point1Id: string;
+  point2Id: string;
+  lineId?: string;
+}
+
+export interface AddLine2DByTwoPointsOutput extends JsonObject {
+  lineId?: string;
+}
+
+export class AddLine2DByTwoPointsOp implements IOperation<AddLine2DByTwoPointsDescriptor, AddLine2DByTwoPointsOutput> {
   readonly type = 'AddLine2DByTwoPoints';
-  outputs: OperationOutputBag = {};
+  outputs: AddLine2DByTwoPointsOutput = {};
 
   constructor(
     private planeId: string,
@@ -20,7 +31,7 @@ export class AddLine2DByTwoPointsOp implements IOperation {
   ) {
   }
 
-  apply(world: World): OperationResult {
+  apply(world: World): OperationResult<AddLine2DByTwoPointsOutput> {
     try {
       const plane = requireProjectionPlane(world, this.planeId);
       
@@ -47,7 +58,7 @@ export class AddLine2DByTwoPointsOp implements IOperation {
     }
   }
 
-  serialize() {
+  serialize(): AddLine2DByTwoPointsDescriptor {
     return {
       opType: this.type,
       planeId: this.planeId,
@@ -63,9 +74,20 @@ export class AddLine2DByTwoPointsOp implements IOperation {
  * 
  * Wraps ProjectionPlane.addLine2DParallelToLine() in the Operation interface.
  */
-export class AddLine2DParallelToLineOp implements IOperation {
+export interface AddLine2DParallelToLineDescriptor extends OperationDescriptor<'AddLine2DParallelToLine'> {
+  planeId: string;
+  referenceLineId: string;
+  throughPointId: string;
+  lineId?: string;
+}
+
+export interface AddLine2DParallelToLineOutput extends JsonObject {
+  lineId?: string;
+}
+
+export class AddLine2DParallelToLineOp implements IOperation<AddLine2DParallelToLineDescriptor, AddLine2DParallelToLineOutput> {
   readonly type = 'AddLine2DParallelToLine';
-  outputs: OperationOutputBag = {};
+  outputs: AddLine2DParallelToLineOutput = {};
 
   constructor(
     private planeId: string,
@@ -74,7 +96,7 @@ export class AddLine2DParallelToLineOp implements IOperation {
   ) {
   }
 
-  apply(world: World): OperationResult {
+  apply(world: World): OperationResult<AddLine2DParallelToLineOutput> {
     try {
       const plane = requireProjectionPlane(world, this.planeId);
       
@@ -101,7 +123,7 @@ export class AddLine2DParallelToLineOp implements IOperation {
     }
   }
 
-  serialize() {
+  serialize(): AddLine2DParallelToLineDescriptor {
     return {
       opType: this.type,
       planeId: this.planeId,
@@ -117,9 +139,20 @@ export class AddLine2DParallelToLineOp implements IOperation {
  * 
  * Wraps ProjectionPlane.addLine2DPerpendicularToLine() in the Operation interface.
  */
-export class AddLine2DPerpendicularToLineOp implements IOperation {
+export interface AddLine2DPerpendicularToLineDescriptor extends OperationDescriptor<'AddLine2DPerpendicularToLine'> {
+  planeId: string;
+  referenceLineId: string;
+  throughPointId: string;
+  lineId?: string;
+}
+
+export interface AddLine2DPerpendicularToLineOutput extends JsonObject {
+  lineId?: string;
+}
+
+export class AddLine2DPerpendicularToLineOp implements IOperation<AddLine2DPerpendicularToLineDescriptor, AddLine2DPerpendicularToLineOutput> {
   readonly type = 'AddLine2DPerpendicularToLine';
-  outputs: OperationOutputBag = {};
+  outputs: AddLine2DPerpendicularToLineOutput = {};
 
   constructor(
     private planeId: string,
@@ -128,7 +161,7 @@ export class AddLine2DPerpendicularToLineOp implements IOperation {
   ) {
   }
 
-  apply(world: World): OperationResult {
+  apply(world: World): OperationResult<AddLine2DPerpendicularToLineOutput> {
     try {
       const plane = requireProjectionPlane(world, this.planeId);
       
@@ -155,7 +188,7 @@ export class AddLine2DPerpendicularToLineOp implements IOperation {
     }
   }
 
-  serialize() {
+  serialize(): AddLine2DPerpendicularToLineDescriptor {
     return {
       opType: this.type,
       planeId: this.planeId,

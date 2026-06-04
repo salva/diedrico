@@ -10,13 +10,21 @@
 import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 
-interface CircleCircleIntersectionOutput extends JsonObject {
+export interface AddCircleCircleIntersectionPoint2DDescriptor extends OperationDescriptor<'AddCircleCircleIntersectionPoint2D'> {
+  planeId: string;
+  circle1Id: string;
+  circle2Id: string;
+  index: number;
   pointId?: string;
 }
 
-export class AddCircleCircleIntersectionPoint2DOp implements IOperation<OperationDescriptor, CircleCircleIntersectionOutput> {
+export interface AddCircleCircleIntersectionPoint2DOutput extends JsonObject {
+  pointId?: string;
+}
+
+export class AddCircleCircleIntersectionPoint2DOp implements IOperation<AddCircleCircleIntersectionPoint2DDescriptor, AddCircleCircleIntersectionPoint2DOutput> {
   readonly type = 'AddCircleCircleIntersectionPoint2D';
-  outputs: CircleCircleIntersectionOutput = {};
+  outputs: AddCircleCircleIntersectionPoint2DOutput = {};
 
   constructor(
     private planeId: string,
@@ -26,7 +34,7 @@ export class AddCircleCircleIntersectionPoint2DOp implements IOperation<Operatio
   ) {
   }
 
-  apply(world: World): OperationResult<CircleCircleIntersectionOutput> {
+  apply(world: World): OperationResult<AddCircleCircleIntersectionPoint2DOutput> {
     try {
       const plane = world.getProjectionPlaneById(this.planeId);
       if (!plane) {
@@ -70,7 +78,7 @@ export class AddCircleCircleIntersectionPoint2DOp implements IOperation<Operatio
     // via dependency tracking, not explicitly here
   }
 
-  serialize() {
+  serialize(): AddCircleCircleIntersectionPoint2DDescriptor {
     return {
       opType: this.type,
       planeId: this.planeId,

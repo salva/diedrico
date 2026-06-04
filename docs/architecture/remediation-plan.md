@@ -144,13 +144,18 @@ Effort: 30-60 minutes.
 
 ### P2.1 Descriptor Shape Policy Decision
 
-Status: prerequisite for P2.2 and all subsequent descriptor work.
+Status: decided. This remains the policy for P2.2 and all subsequent descriptor work.
 
 Problem: Some descriptors use flat top-level fields (the recently typed ones), while some operations use `payload` objects. This inconsistency will grow as more descriptors are typed.
 
 Action:
 - Document the chosen policy: new descriptors should follow the `AddFreePoint2DDescriptor` pattern (flat top-level fields matching the operation constructor parameters).
 - Note cross-phase dependency: if element `kind` fields are later added (P5), descriptors constructing those elements would need their descriptor types updated to include `kind`.
+
+Policy:
+- Prefer flat top-level descriptor fields beside `opType`, matching the existing `AddFreePoint2DDescriptor` and `UpdateFreePoint2DPositionDescriptor` shape.
+- Preserve existing serialized shapes when adding explicit descriptor types; do not migrate legacy `payload` descriptors as part of typing work.
+- Use `payload` only for existing operations that already serialize that way, or when a future operation has a clear compatibility requirement for nested data.
 
 Validation:
 - Architecture decision note in code comments or docs.

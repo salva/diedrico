@@ -21,14 +21,28 @@
  * @see Create3DPointTool for the interactive creation flow
  */
 
-import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
+import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 import { Point3DFromProjections } from '@/domain/world/Point3D';
 import { requireDistinctProjectionPlanes, requireFeasibleProjectionPair } from './operationHelpers';
 
-export class Add3DPointOp implements IOperation {
+export interface Add3DPointDescriptor extends OperationDescriptor<'Add3DPoint'> {
+  projection1Id: string;
+  projection2Id: string;
+  plane1Id: string;
+  plane2Id: string;
+  label?: string;
+  visualStyle?: JsonObject;
+  pointId?: string;
+}
+
+export interface Add3DPointOutput extends JsonObject {
+  pointId?: string;
+}
+
+export class Add3DPointOp implements IOperation<Add3DPointDescriptor, Add3DPointOutput> {
   readonly type = 'Add3DPoint';
-  outputs: OperationOutputBag = {};
+  outputs: Add3DPointOutput = {};
 
   constructor(
     private projection1Id: string,     // ID of first Point2D projection
@@ -40,7 +54,7 @@ export class Add3DPointOp implements IOperation {
   ) {
   }
 
-  apply(world: World): OperationResult {
+  apply(world: World): OperationResult<Add3DPointOutput> {
     try {
       const { plane1, plane2 } = requireDistinctProjectionPlanes(world, this.plane1Id, this.plane2Id, 'point');
       
@@ -110,7 +124,7 @@ export class Add3DPointOp implements IOperation {
     }
   }
 
-  serialize() {
+  serialize(): Add3DPointDescriptor {
     return {
       opType: this.type,
       projection1Id: this.projection1Id,

@@ -5,18 +5,21 @@ import type { OperationDescriptor, JsonObject } from '../IOperation';
 import { AddFreePoint2DOp, type AddFreePoint2DDescriptor } from './AddFreePointOp';
 import {
   AddLine2DByTwoPointsOp,
+  type AddLine2DByTwoPointsDescriptor,
   AddLine2DParallelToLineOp,
+  type AddLine2DParallelToLineDescriptor,
   AddLine2DPerpendicularToLineOp,
+  type AddLine2DPerpendicularToLineDescriptor,
   AddLine2DTangentToCircleThroughPointOp,
   AddLine2DTangentToCircleParallelToLineOp
 } from './AddLineOp';
-import { AddSegment2DByPointsOp } from './AddSegmentOp';
-import { AddCircle2DByCenterAndPointOp } from './AddCircleOp';
+import { AddSegment2DByPointsOp, type AddSegment2DByPointsDescriptor } from './AddSegmentOp';
+import { AddCircle2DByCenterAndPointOp, type AddCircle2DByCenterAndPointDescriptor } from './AddCircleOp';
 import { AddGuide2DPerpendicularToLineOp, AddSiblingGuide2DOp } from './AddGuideOp';
-import { AddLineLineIntersectionPoint2DOp } from './AddLineLineIntersectionPoint2DOp';
-import { AddLineCircleIntersectionPoint2DOp } from './AddLineCircleIntersectionPoint2DOp';
-import { AddCircleCircleIntersectionPoint2DOp } from './AddCircleCircleIntersectionPoint2DOp';
-import { AddSiblingIntersectionPoint2DOp } from './AddSiblingIntersectionPoint2DOp';
+import { AddLineLineIntersectionPoint2DOp, type AddLineLineIntersectionPoint2DDescriptor } from './AddLineLineIntersectionPoint2DOp';
+import { AddLineCircleIntersectionPoint2DOp, type AddLineCircleIntersectionPoint2DDescriptor } from './AddLineCircleIntersectionPoint2DOp';
+import { AddCircleCircleIntersectionPoint2DOp, type AddCircleCircleIntersectionPoint2DDescriptor } from './AddCircleCircleIntersectionPoint2DOp';
+import { AddSiblingIntersectionPoint2DOp, type AddSiblingIntersectionPoint2DDescriptor } from './AddSiblingIntersectionPoint2DOp';
 import { RemovePoint2DOp, RemoveLine2DOp, RemoveSegment2DOp, RemoveCircle2DOp, RemoveGuide2DOp } from './RemoveElementOps';
 import { UpdateElementStyleOp, parseStyleProperties } from './UpdateElementStyleOp';
 import { UpdateFreePoint2DPositionOp, type UpdateFreePoint2DPositionDescriptor } from './UpdateFreePoint2DPositionOp';
@@ -28,10 +31,10 @@ import {
   AddHingeLineOp,
   AddHalfHingeLine2DOp
 } from './InitializationOps';
-import { Add3DPlaneOp } from './Add3DPlaneOp';
-import { Add3DPointOp } from './Add3DPointOp';
-import { Add3DLineOp } from './Add3DLineOp';
-import { Add3DSegmentOp } from './Add3DSegmentOp';
+import { Add3DPlaneOp, type Add3DPlaneDescriptor } from './Add3DPlaneOp';
+import { Add3DPointOp, type Add3DPointDescriptor } from './Add3DPointOp';
+import { Add3DLineOp, type Add3DLineDescriptor } from './Add3DLineOp';
+import { Add3DSegmentOp, type Add3DSegmentDescriptor } from './Add3DSegmentOp';
 import { AddAuxiliaryProjectionPlaneOp } from './AddAuxiliaryProjectionPlaneOp';
 import { AddBrokenHingeLineOp } from './AddBrokenHingeLineOp';
 
@@ -44,19 +47,19 @@ function obj(d: JsonObject, key: string): JsonObject { const v = d[key]; if (!v 
 
 export function registerWorldOperationDescriptors(registry: OperationRegistry): void {
   registry.register<AddFreePoint2DDescriptor>('AddFreePoint2D', d => restoreOutput(new AddFreePoint2DOp(s(d, 'planeId'), new Vector3(...arr(d, 'position', 3))), { pointId: so(d, 'pointId') }));
-  registry.register('AddLine2DByTwoPoints', d => restoreOutput(new AddLine2DByTwoPointsOp(s(d, 'planeId'), s(d, 'point1Id'), s(d, 'point2Id')), { lineId: so(d, 'lineId') }));
-  registry.register('AddLine2DParallelToLine', d => restoreOutput(new AddLine2DParallelToLineOp(s(d, 'planeId'), s(d, 'referenceLineId'), s(d, 'throughPointId')), { lineId: so(d, 'lineId') }));
-  registry.register('AddLine2DPerpendicularToLine', d => restoreOutput(new AddLine2DPerpendicularToLineOp(s(d, 'planeId'), s(d, 'referenceLineId'), s(d, 'throughPointId')), { lineId: so(d, 'lineId') }));
+  registry.register<AddLine2DByTwoPointsDescriptor>('AddLine2DByTwoPoints', d => restoreOutput(new AddLine2DByTwoPointsOp(s(d, 'planeId'), s(d, 'point1Id'), s(d, 'point2Id')), { lineId: so(d, 'lineId') }));
+  registry.register<AddLine2DParallelToLineDescriptor>('AddLine2DParallelToLine', d => restoreOutput(new AddLine2DParallelToLineOp(s(d, 'planeId'), s(d, 'referenceLineId'), s(d, 'throughPointId')), { lineId: so(d, 'lineId') }));
+  registry.register<AddLine2DPerpendicularToLineDescriptor>('AddLine2DPerpendicularToLine', d => restoreOutput(new AddLine2DPerpendicularToLineOp(s(d, 'planeId'), s(d, 'referenceLineId'), s(d, 'throughPointId')), { lineId: so(d, 'lineId') }));
   registry.register('AddLine2DTangentToCircleThroughPoint', d => restoreOutput(new AddLine2DTangentToCircleThroughPointOp(s(d, 'planeId'), s(d, 'circleId'), s(d, 'throughPointId'), n(d, 'index') as 0 | 1), { lineId: so(d, 'lineId') }));
   registry.register('AddLine2DTangentToCircleParallelToLine', d => restoreOutput(new AddLine2DTangentToCircleParallelToLineOp(s(d, 'planeId'), s(d, 'circleId'), s(d, 'referenceLineId'), n(d, 'index') as 0 | 1), { lineId: so(d, 'lineId') }));
-  registry.register('AddSegment2DByPoints', d => restoreOutput(new AddSegment2DByPointsOp(s(d, 'planeId'), s(d, 'point1Id'), s(d, 'point2Id')), { segmentId: so(d, 'segmentId') }));
-  registry.register('AddCircle2DByCenterAndPoint', d => restoreOutput(new AddCircle2DByCenterAndPointOp(s(d, 'planeId'), s(d, 'centerPointId'), s(d, 'circumferencePointId')), { circleId: so(d, 'circleId') }));
-  registry.register('AddLineLineIntersectionPoint2D', d => restoreOutput(new AddLineLineIntersectionPoint2DOp(s(d, 'planeId'), s(d, 'line1Id'), s(d, 'line2Id')), { pointId: so(d, 'pointId') }));
-  registry.register('AddLineCircleIntersectionPoint2D', d => restoreOutput(new AddLineCircleIntersectionPoint2DOp(s(d, 'planeId'), s(d, 'lineId'), s(d, 'circleId'), n(d, 'index')), { pointId: so(d, 'pointId') }));
-  registry.register('AddCircleCircleIntersectionPoint2D', d => restoreOutput(new AddCircleCircleIntersectionPoint2DOp(s(d, 'planeId'), s(d, 'circle1Id'), s(d, 'circle2Id'), n(d, 'index')), { pointId: so(d, 'pointId') }));
+  registry.register<AddSegment2DByPointsDescriptor>('AddSegment2DByPoints', d => restoreOutput(new AddSegment2DByPointsOp(s(d, 'planeId'), s(d, 'point1Id'), s(d, 'point2Id')), { segmentId: so(d, 'segmentId') }));
+  registry.register<AddCircle2DByCenterAndPointDescriptor>('AddCircle2DByCenterAndPoint', d => restoreOutput(new AddCircle2DByCenterAndPointOp(s(d, 'planeId'), s(d, 'centerPointId'), s(d, 'circumferencePointId')), { circleId: so(d, 'circleId') }));
+  registry.register<AddLineLineIntersectionPoint2DDescriptor>('AddLineLineIntersectionPoint2D', d => restoreOutput(new AddLineLineIntersectionPoint2DOp(s(d, 'planeId'), s(d, 'line1Id'), s(d, 'line2Id')), { pointId: so(d, 'pointId') }));
+  registry.register<AddLineCircleIntersectionPoint2DDescriptor>('AddLineCircleIntersectionPoint2D', d => restoreOutput(new AddLineCircleIntersectionPoint2DOp(s(d, 'planeId'), s(d, 'lineId'), s(d, 'circleId'), n(d, 'index')), { pointId: so(d, 'pointId') }));
+  registry.register<AddCircleCircleIntersectionPoint2DDescriptor>('AddCircleCircleIntersectionPoint2D', d => restoreOutput(new AddCircleCircleIntersectionPoint2DOp(s(d, 'planeId'), s(d, 'circle1Id'), s(d, 'circle2Id'), n(d, 'index')), { pointId: so(d, 'pointId') }));
   registry.register('AddGuide2DPerpendicularToLine', d => restoreOutput(new AddGuide2DPerpendicularToLineOp(s(d, 'planeId'), s(d, 'referenceLineId'), s(d, 'throughPointId'), so(d, 'guideId')), { guideId: so(d, 'guideId') }));
   registry.register('AddSiblingGuide2D', d => restoreOutput(new AddSiblingGuide2DOp(s(d, 'planeId'), s(d, 'primaryGuideId'), s(d, 'referenceLineId'), so(d, 'siblingGuideId')), { siblingGuideId: so(d, 'siblingGuideId') }));
-  registry.register('AddSiblingIntersectionPoint2D', d => restoreOutput(new AddSiblingIntersectionPoint2DOp(s(d, 'planeId'), s(d, 'primaryIntersectionId')), { pointId: so(d, 'pointId') }));
+  registry.register<AddSiblingIntersectionPoint2DDescriptor>('AddSiblingIntersectionPoint2D', d => restoreOutput(new AddSiblingIntersectionPoint2DOp(s(d, 'planeId'), s(d, 'primaryIntersectionId')), { pointId: so(d, 'pointId') }));
   registry.register('RemovePoint2D', d => new RemovePoint2DOp(s(d, 'planeId'), s(d, 'pointId')));
   registry.register('RemoveLine2D', d => new RemoveLine2DOp(s(d, 'planeId'), s(d, 'lineId')));
   registry.register('RemoveSegment2D', d => new RemoveSegment2DOp(s(d, 'planeId'), s(d, 'segmentId')));
@@ -71,10 +74,10 @@ export function registerWorldOperationDescriptors(registry: OperationRegistry): 
   registry.register('AddHingeLine', d => restoreOutput(new AddHingeLineOp(s(d, 'horizontalPlaneId'), s(d, 'verticalPlaneId'), so(d, 'hingeLineId')), { hingeLineId: so(d, 'hingeLineId') }));
   registry.register('AddHalfHingeLine2D', d => restoreOutput(new AddHalfHingeLine2DOp(s(d, 'projPlaneId'), s(d, 'hingeLineId'), so(d, 'lineId')), { lineId: so(d, 'lineId'), projPlaneId: s(d, 'projPlaneId') }));
   registry.register('AddBrokenHingeLine', d => restoreOutput(new AddBrokenHingeLineOp(s(d, 'mainHingeId'), s(d, 'auxiliaryPlaneId'), s(d, 'plane1Id'), s(d, 'plane2Id'), so(d, 'brokenHingeLineId'), so(d, 'bhhl1Id'), so(d, 'bhhl2Id')), { brokenHingeLineId: so(d, 'brokenHingeLineId'), bhhl1Id: so(d, 'bhhl1Id'), bhhl2Id: so(d, 'bhhl2Id') }));
-  registry.register('Add3DPlane', d => restoreOutput(new Add3DPlaneOp(s(d, 'trace1Id'), s(d, 'trace2Id'), s(d, 'plane1Id'), s(d, 'plane2Id'), so(d, 'label')), { planeId: so(d, 'planeId') }));
-  registry.register('Add3DPoint', d => restoreOutput(new Add3DPointOp(s(d, 'projection1Id'), s(d, 'projection2Id'), s(d, 'plane1Id'), s(d, 'plane2Id'), so(d, 'label')), { pointId: so(d, 'pointId') }));
-  registry.register('Add3DLine', d => restoreOutput(new Add3DLineOp(s(d, 'projection1Id'), s(d, 'projection2Id'), s(d, 'plane1Id'), s(d, 'plane2Id'), so(d, 'label')), { lineId: so(d, 'lineId') }));
-  registry.register('Add3DSegment', d => restoreOutput(new Add3DSegmentOp(s(d, 'projection1Id'), s(d, 'projection2Id'), s(d, 'plane1Id'), s(d, 'plane2Id'), so(d, 'label')), { segmentId: so(d, 'segmentId') }));
+  registry.register<Add3DPlaneDescriptor>('Add3DPlane', d => restoreOutput(new Add3DPlaneOp(s(d, 'trace1Id'), s(d, 'trace2Id'), s(d, 'plane1Id'), s(d, 'plane2Id'), so(d, 'label')), { planeId: so(d, 'planeId') }));
+  registry.register<Add3DPointDescriptor>('Add3DPoint', d => restoreOutput(new Add3DPointOp(s(d, 'projection1Id'), s(d, 'projection2Id'), s(d, 'plane1Id'), s(d, 'plane2Id'), so(d, 'label')), { pointId: so(d, 'pointId') }));
+  registry.register<Add3DLineDescriptor>('Add3DLine', d => restoreOutput(new Add3DLineOp(s(d, 'projection1Id'), s(d, 'projection2Id'), s(d, 'plane1Id'), s(d, 'plane2Id'), so(d, 'label')), { lineId: so(d, 'lineId') }));
+  registry.register<Add3DSegmentDescriptor>('Add3DSegment', d => restoreOutput(new Add3DSegmentOp(s(d, 'projection1Id'), s(d, 'projection2Id'), s(d, 'plane1Id'), s(d, 'plane2Id'), so(d, 'label')), { segmentId: so(d, 'segmentId') }));
   registry.register('AddAuxiliaryProjectionPlane', d => restoreOutput(new AddAuxiliaryProjectionPlaneOp(s(d, 'plane3DId'), s(d, 't1HingeTraceId'), s(d, 't2OtherTraceId'), s(d, 't2PrimeLineId'), so(d, 'name')), { projPlaneId: so(d, 'projPlaneId') }));
 }
 

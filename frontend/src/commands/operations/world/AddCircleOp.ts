@@ -5,14 +5,25 @@
  * Wraps ProjectionPlane.addCircle2DByCenterAndPoint() in the Operation interface.
  */
 
-import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
+import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 import { operationFailure, operationSuccess } from '../operationResultHelpers';
 import { requireProjectionPlane } from './operationHelpers';
 
-export class AddCircle2DByCenterAndPointOp implements IOperation {
+export interface AddCircle2DByCenterAndPointDescriptor extends OperationDescriptor<'AddCircle2DByCenterAndPoint'> {
+  planeId: string;
+  centerPointId: string;
+  circumferencePointId: string;
+  circleId?: string;
+}
+
+export interface AddCircle2DByCenterAndPointOutput extends JsonObject {
+  circleId?: string;
+}
+
+export class AddCircle2DByCenterAndPointOp implements IOperation<AddCircle2DByCenterAndPointDescriptor, AddCircle2DByCenterAndPointOutput> {
   readonly type = 'AddCircle2DByCenterAndPoint';
-  outputs: OperationOutputBag = {};
+  outputs: AddCircle2DByCenterAndPointOutput = {};
 
   constructor(
     private planeId: string,
@@ -21,7 +32,7 @@ export class AddCircle2DByCenterAndPointOp implements IOperation {
   ) {
   }
 
-  apply(world: World): OperationResult {
+  apply(world: World): OperationResult<AddCircle2DByCenterAndPointOutput> {
     try {
       const plane = requireProjectionPlane(world, this.planeId);
       
@@ -48,7 +59,7 @@ export class AddCircle2DByCenterAndPointOp implements IOperation {
     }
   }
 
-  serialize() {
+  serialize(): AddCircle2DByCenterAndPointDescriptor {
     return {
       opType: this.type,
       planeId: this.planeId,

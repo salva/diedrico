@@ -15,7 +15,7 @@
  * @see World.add3DPlane() for storage
  */
 
-import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
+import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 import { Plane3DFromTraces } from '@/domain/world/Plane';
 import { computeLineLineIntersection3D } from '@/utils/projectionPlaneUtils';
@@ -23,9 +23,22 @@ import { Vector3, Vector4 } from 'three';
 import { applyMatrix4x3 } from '@/utils/threeUtils';
 import { requireDistinctProjectionPlanes, requireFeasibleProjectionPair } from './operationHelpers';
 
-export class Add3DPlaneOp implements IOperation {
+export interface Add3DPlaneDescriptor extends OperationDescriptor<'Add3DPlane'> {
+  trace1Id: string;
+  trace2Id: string;
+  plane1Id: string;
+  plane2Id: string;
+  label?: string;
+  planeId?: string;
+}
+
+export interface Add3DPlaneOutput extends JsonObject {
+  planeId?: string;
+}
+
+export class Add3DPlaneOp implements IOperation<Add3DPlaneDescriptor, Add3DPlaneOutput> {
   readonly type = 'Add3DPlane';
-  outputs: OperationOutputBag = {};
+  outputs: Add3DPlaneOutput = {};
 
   constructor(
     private trace1Id: string,          // ID of first trace Line2D
@@ -36,7 +49,7 @@ export class Add3DPlaneOp implements IOperation {
   ) {
   }
 
-  apply(world: World): OperationResult {
+  apply(world: World): OperationResult<Add3DPlaneOutput> {
     try {
       const { plane1, plane2 } = requireDistinctProjectionPlanes(world, this.plane1Id, this.plane2Id, 'plane', 'traces');
       
@@ -161,7 +174,7 @@ export class Add3DPlaneOp implements IOperation {
     }
   }
 
-  serialize() {
+  serialize(): Add3DPlaneDescriptor {
     return {
       opType: this.type,
       trace1Id: this.trace1Id,
