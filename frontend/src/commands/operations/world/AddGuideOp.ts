@@ -1,7 +1,7 @@
 /**
- * AddGuide2DPerpendicularToLineOp - Operation to add a Guide2DPerpendicularToLine using ConstructionService
+ * AddGuide2DPerpendicularToLineOp - Operation to add a Guide2DPerpendicularToLine using ProjectionConstructionService
  *
- * Wraps ConstructionService.addGuide2D() in the Operation interface.
+ * Wraps ProjectionConstructionService.addGuide2D() in the Operation interface.
  */
 
 import type { IOperation, JsonObject, OperationResult } from '../IOperation';
@@ -34,7 +34,7 @@ export class AddGuide2DPerpendicularToLineOp implements IOperation {
         throw new Error(`Plane not found: ${this.planeId}`);
       }
 
-      const guide = context.constructionService.addGuide2D(
+      const guide = context.projectionConstruction.addGuide2D(
         plane,
         this.referenceLineId,
         this.throughPointId,
@@ -78,7 +78,7 @@ export class AddGuide2DPerpendicularToLineOp implements IOperation {
  * AddSiblingGuide2DOp - Operation to add a sibling guide in the paired projection plane
  *
  * Sibling guides are automatically created when a primary Guide2D is created.
- * This operation wraps ConstructionService.addSiblingGuide2D().
+ * This operation wraps ProjectionConstructionService.addSiblingGuide2D().
  *
  * Architecture note: Sibling creation must be done at command level using specific ops,
  * not embedded in the world layer (as per architecture requirements).
@@ -101,7 +101,7 @@ export class AddSiblingGuide2DOp implements IOperation {
         throw new Error(`Plane not found: ${this.planeId}`);
       }
 
-      const siblingGuide = context.constructionService.addSiblingGuide2D(
+      const siblingGuide = context.projectionConstruction.addSiblingGuide2D(
         plane,
         this.primaryGuideId,
         this.referenceLineId,

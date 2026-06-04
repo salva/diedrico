@@ -1,7 +1,7 @@
 /**
- * AddFreePoint2DOp - Operation to add a FreePoint2D using ConstructionService
+ * AddFreePoint2DOp - Operation to add a FreePoint2D using ProjectionConstructionService
  * 
- * Wraps ConstructionService.addFreePoint2D() in the Operation interface.
+ * Wraps ProjectionConstructionService.addFreePoint2D() in the Operation interface.
  */
 
 import type { Vector3 } from 'three';
@@ -34,7 +34,7 @@ export class AddFreePoint2DOp implements IOperation<AddFreePoint2DDescriptor, Ad
     try {
       const plane = requireProjectionPlane(context.world, this.planeId);
       
-      const point = context.constructionService.addFreePoint2D(plane, this.position, this.outputs.pointId);
+      const point = context.projectionConstruction.addFreePoint2D(plane, this.position, this.outputs.pointId);
       this.outputs = { pointId: point.id };
       return operationSuccess(this.outputs);
     } catch (error) {

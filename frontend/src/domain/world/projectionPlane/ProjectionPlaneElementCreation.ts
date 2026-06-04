@@ -1,5 +1,5 @@
 import type { Circle2D } from '../Circle';
-import type { ConstructionContext } from '../ConstructionService';
+import type { ConstructionContext } from '../ProjectionConstructionService';
 import type { Line2D } from '../Line';
 import type { Point2D } from '../Point';
 

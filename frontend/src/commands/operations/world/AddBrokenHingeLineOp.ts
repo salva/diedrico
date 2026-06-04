@@ -60,9 +60,9 @@ export class AddBrokenHingeLineOp implements IOperation {
 
       // Generate IDs (use existing for redo, or generate new)
       const bhlId = this.brokenHingeLineId || this.outputs.brokenHingeLineId || context.world.generateHingeLineId();
-      const constructionService = context.constructionService;
-      const bhhl1Id = this.bhhl1Id || this.outputs.bhhl1Id || constructionService.generateLine2DId(plane1!);
-      const bhhl2Id = this.bhhl2Id || this.outputs.bhhl2Id || constructionService.generateLine2DId(plane2!);
+      const projectionConstruction = context.projectionConstruction;
+      const bhhl1Id = this.bhhl1Id || this.outputs.bhhl1Id || projectionConstruction.generateLine2DId(plane1!);
+      const bhhl2Id = this.bhhl2Id || this.outputs.bhhl2Id || projectionConstruction.generateLine2DId(plane2!);
 
       // Validation: Ensure IDs match their intended planes
       if (bhhl1Id && !bhhl1Id.startsWith(this.plane1Id + '/')) {

@@ -1,6 +1,6 @@
 import type { OperationContext } from '@/commands/operations/OperationContext';
 import type { VisibilityModel } from '@/application/processTree/VisibilityModel';
-import { ConstructionService } from '@/domain/world/ConstructionService';
+import { ProjectionConstructionService } from '@/domain/world/ProjectionConstructionService';
 import { DependencyService } from '@/domain/world/DependencyService';
 import { LabelGenerator } from '@/domain/world/LabelGenerator';
 import { RealizationService } from '@/domain/world/RealizationService';
@@ -22,9 +22,9 @@ export class RuntimeDomainContext {
     labelGenerator: this.labelGenerator,
   });
 
-  // ConstructionService still needs World's realization/storage context until the
+  // ProjectionConstructionService still needs World's realization/storage context until the
   // construction split removes that dependency.
-  readonly constructionService: ConstructionService = this.world.getConstructionService();
+  readonly projectionConstruction: ProjectionConstructionService = this.world.getConstructionService();
 
   createOperationContext(visibilityModel: VisibilityModel): OperationContext {
     return {
@@ -33,7 +33,7 @@ export class RuntimeDomainContext {
       processTree: this.processTree,
       dependencies: this.dependencies,
       realizations: this.realizations,
-      constructionService: this.constructionService,
+      projectionConstruction: this.projectionConstruction,
       idAllocator: this.idAllocator,
       labelGenerator: this.labelGenerator,
     };

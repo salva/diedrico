@@ -1,7 +1,7 @@
 /**
  * AddLineLineIntersectionPoint2DOp - Operation to add a Point2DLineLineIntersection
  * 
- * Wraps ConstructionService.addLineLineIntersection() in the Operation interface.
+ * Wraps ProjectionConstructionService.addLineLineIntersection() in the Operation interface.
  * 
  * Note: Sibling point creation for HalfHingeLine2D intersections is handled automatically
  * by the domain logic, not by this operation.
@@ -37,7 +37,7 @@ export class AddLineLineIntersectionPoint2DOp implements IOperation<AddLineLineI
     try {
       const plane = requireProjectionPlane(context.world, this.planeId);
       
-      const point = context.constructionService.addLineLineIntersection(
+      const point = context.projectionConstruction.addLineLineIntersection(
         plane,
         this.line1Id,
         this.line2Id,

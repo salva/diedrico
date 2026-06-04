@@ -46,7 +46,7 @@ export class AddSiblingIntersectionPoint2DOp implements IOperation<AddSiblingInt
         throw new Error(`Plane not found: ${this.planeId}`);
       }
       
-      const siblingPoint = context.constructionService.addSiblingIntersectionPoint(
+      const siblingPoint = context.projectionConstruction.addSiblingIntersectionPoint(
         plane,
         this.primaryIntersectionId,
         this.outputs.pointId

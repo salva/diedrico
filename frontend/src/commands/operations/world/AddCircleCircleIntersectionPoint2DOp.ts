@@ -1,7 +1,7 @@
 /**
  * AddCircleCircleIntersectionPoint2DOp - Operation to add a Point2DCircleCircleIntersection
  * 
- * Wraps ConstructionService.addCircleCircleIntersection() in the Operation interface.
+ * Wraps ProjectionConstructionService.addCircleCircleIntersection() in the Operation interface.
  * 
  * Note: Sibling point creation for HalfHingeLine2D intersections is handled automatically
  * by the domain logic, not by this operation.
@@ -42,7 +42,7 @@ export class AddCircleCircleIntersectionPoint2DOp implements IOperation<AddCircl
         throw new Error(`Plane not found: ${this.planeId}`);
       }
       
-      const point = context.constructionService.addCircleCircleIntersection(
+      const point = context.projectionConstruction.addCircleCircleIntersection(
         plane,
         this.circle1Id,
         this.circle2Id,

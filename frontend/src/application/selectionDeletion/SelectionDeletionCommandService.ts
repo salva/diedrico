@@ -55,7 +55,7 @@ export class SelectionDeletionCommandService implements SelectionDeletionCommand
       processTree: this.world.getProcessTree(),
       dependencies: this.world.getDependencyService(),
       realizations: this.world.getRealizationService(),
-      constructionService: this.world.getConstructionService(),
+      projectionConstruction: this.world.getConstructionService(),
       idAllocator: this.world.getIdAllocator(),
       labelGenerator: this.world.labelGenerator,
     };

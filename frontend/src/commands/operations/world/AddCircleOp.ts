@@ -1,8 +1,8 @@
 /**
- * AddCircle2DByCenterAndPointOp - Operation to add a Circle2DByCenterAndPoint using ConstructionService
+ * AddCircle2DByCenterAndPointOp - Operation to add a Circle2DByCenterAndPoint using ProjectionConstructionService
  * 
  * This is the standard circle construction that defines both radius magnitude and angular reference.
- * Wraps ConstructionService.addCircle2DByCenterAndPoint() in the Operation interface.
+ * Wraps ProjectionConstructionService.addCircle2DByCenterAndPoint() in the Operation interface.
  */
 
 import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
@@ -36,7 +36,7 @@ export class AddCircle2DByCenterAndPointOp implements IOperation<AddCircle2DByCe
     try {
       const plane = requireProjectionPlane(context.world, this.planeId);
       
-      const circle = context.constructionService.addCircle2DByCenterAndPoint(
+      const circle = context.projectionConstruction.addCircle2DByCenterAndPoint(
         plane,
         this.centerPointId,
         this.circumferencePointId,

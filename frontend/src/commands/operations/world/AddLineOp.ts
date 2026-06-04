@@ -1,7 +1,7 @@
 /**
- * AddLine2DByTwoPointsOp - Operation to add a Line2DByTwoPoints using ConstructionService
+ * AddLine2DByTwoPointsOp - Operation to add a Line2DByTwoPoints using ProjectionConstructionService
  * 
- * Wraps ConstructionService.addLine2DBetweenTwoPoints() in the Operation interface.
+ * Wraps ProjectionConstructionService.addLine2DBetweenTwoPoints() in the Operation interface.
  */
 
 import type { IOperation, JsonObject, OperationDescriptor, OperationOutputBag, OperationResult } from '../IOperation';
@@ -35,7 +35,7 @@ export class AddLine2DByTwoPointsOp implements IOperation<AddLine2DByTwoPointsDe
     try {
       const plane = requireProjectionPlane(context.world, this.planeId);
       
-      const line = context.constructionService.addLine2DBetweenTwoPoints(
+      const line = context.projectionConstruction.addLine2DBetweenTwoPoints(
         plane,
         this.point1Id,
         this.point2Id,
@@ -69,9 +69,9 @@ export class AddLine2DByTwoPointsOp implements IOperation<AddLine2DByTwoPointsDe
 }
 
 /**
- * AddLine2DParallelToLineOp - Operation to add a Line2DParallel using ConstructionService
+ * AddLine2DParallelToLineOp - Operation to add a Line2DParallel using ProjectionConstructionService
  * 
- * Wraps ConstructionService.addLine2DParallelToLine() in the Operation interface.
+ * Wraps ProjectionConstructionService.addLine2DParallelToLine() in the Operation interface.
  */
 export interface AddLine2DParallelToLineDescriptor extends OperationDescriptor<'AddLine2DParallelToLine'> {
   planeId: string;
@@ -99,7 +99,7 @@ export class AddLine2DParallelToLineOp implements IOperation<AddLine2DParallelTo
     try {
       const plane = requireProjectionPlane(context.world, this.planeId);
       
-      const line = context.constructionService.addLine2DParallelToLine(
+      const line = context.projectionConstruction.addLine2DParallelToLine(
         plane,
         this.referenceLineId,
         this.throughPointId,
@@ -133,9 +133,9 @@ export class AddLine2DParallelToLineOp implements IOperation<AddLine2DParallelTo
 }
 
 /**
- * AddLine2DPerpendicularToLineOp - Operation to add a Line2DPerpendicularToLine using ConstructionService
+ * AddLine2DPerpendicularToLineOp - Operation to add a Line2DPerpendicularToLine using ProjectionConstructionService
  * 
- * Wraps ConstructionService.addLine2DPerpendicularToLine() in the Operation interface.
+ * Wraps ProjectionConstructionService.addLine2DPerpendicularToLine() in the Operation interface.
  */
 export interface AddLine2DPerpendicularToLineDescriptor extends OperationDescriptor<'AddLine2DPerpendicularToLine'> {
   planeId: string;
@@ -163,7 +163,7 @@ export class AddLine2DPerpendicularToLineOp implements IOperation<AddLine2DPerpe
     try {
       const plane = requireProjectionPlane(context.world, this.planeId);
       
-      const line = context.constructionService.addLine2DPerpendicularToLine(
+      const line = context.projectionConstruction.addLine2DPerpendicularToLine(
         plane,
         this.referenceLineId,
         this.throughPointId,
@@ -196,10 +196,10 @@ export class AddLine2DPerpendicularToLineOp implements IOperation<AddLine2DPerpe
   }
 }
 /**
- * AddLine2DTangentToCircleThroughPointOp - Operation to add a Line2DTangentToCircleThroughPoint using ConstructionService
+ * AddLine2DTangentToCircleThroughPointOp - Operation to add a Line2DTangentToCircleThroughPoint using ProjectionConstructionService
  * 
  * Phase 60: Tangent line to circle through external point
- * Wraps ConstructionService.addLine2DTangentToCircleThroughPoint() in the Operation interface.
+ * Wraps ProjectionConstructionService.addLine2DTangentToCircleThroughPoint() in the Operation interface.
  */
 export class AddLine2DTangentToCircleThroughPointOp implements IOperation {
   readonly type = 'AddLine2DTangentToCircleThroughPoint';
@@ -217,7 +217,7 @@ export class AddLine2DTangentToCircleThroughPointOp implements IOperation {
     try {
       const plane = requireProjectionPlane(context.world, this.planeId);
       
-      const line = context.constructionService.addLine2DTangentToCircleThroughPoint(
+      const line = context.projectionConstruction.addLine2DTangentToCircleThroughPoint(
         plane,
         this.circleId,
         this.throughPointId,
@@ -252,10 +252,10 @@ export class AddLine2DTangentToCircleThroughPointOp implements IOperation {
 }
 
 /**
- * AddLine2DTangentToCircleParallelToLineOp - Operation to add a Line2DTangentToCircleParallelToLine using ConstructionService
+ * AddLine2DTangentToCircleParallelToLineOp - Operation to add a Line2DTangentToCircleParallelToLine using ProjectionConstructionService
  * 
  * Phase 61: Tangent line to circle parallel to reference line
- * Wraps ConstructionService.addLine2DTangentToCircleParallelToLine() in the Operation interface.
+ * Wraps ProjectionConstructionService.addLine2DTangentToCircleParallelToLine() in the Operation interface.
  */
 export class AddLine2DTangentToCircleParallelToLineOp implements IOperation {
   readonly type = 'AddLine2DTangentToCircleParallelToLine';
@@ -273,7 +273,7 @@ export class AddLine2DTangentToCircleParallelToLineOp implements IOperation {
     try {
       const plane = requireProjectionPlane(context.world, this.planeId);
       
-      const line = context.constructionService.addLine2DTangentToCircleParallelToLine(
+      const line = context.projectionConstruction.addLine2DTangentToCircleParallelToLine(
         plane,
         this.circleId,
         this.referenceLineId,

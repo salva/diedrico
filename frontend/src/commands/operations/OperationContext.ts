@@ -3,7 +3,7 @@ import type { VisibilityModel } from '@/application/processTree/VisibilityModel'
 import type { ProcessTree } from '@/domain/processTree/ProcessTree';
 import type { DependencyService } from '@/domain/world/DependencyService';
 import type { RealizationService } from '@/domain/world/RealizationService';
-import type { ConstructionService } from '@/domain/world/ConstructionService';
+import type { ProjectionConstructionService } from '@/domain/world/ProjectionConstructionService';
 import type { WorldIdAllocator } from '@/domain/world/WorldIdAllocator';
 import type { LabelGenerator } from '@/domain/world/LabelGenerator';
 
@@ -13,7 +13,7 @@ export interface OperationContext {
   readonly processTree: ProcessTree;
   readonly dependencies: DependencyService;
   readonly realizations: RealizationService;
-  readonly constructionService: ConstructionService;
+  readonly projectionConstruction: ProjectionConstructionService;
   readonly idAllocator: WorldIdAllocator;
   readonly labelGenerator: LabelGenerator;
 }
@@ -25,7 +25,7 @@ export function createOperationContextFromWorld(world: World, visibilityModel: V
     processTree: world.getProcessTree(),
     dependencies: world.getDependencyService(),
     realizations: world.getRealizationService(),
-    constructionService: world.getConstructionService(),
+    projectionConstruction: world.getConstructionService(),
     idAllocator: world.getIdAllocator(),
     labelGenerator: world.labelGenerator,
   };

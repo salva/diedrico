@@ -106,7 +106,7 @@ import { Point3DRealization3D, Line3DRealization3D, Segment3DRealization3D, Plan
 import { getContainerIdFromElementId } from './ElementId';
 import { LabelGenerator } from './LabelGenerator';
 import { RealizationService } from './RealizationService';
-import { ConstructionService } from './ConstructionService';
+import { ProjectionConstructionService } from './ProjectionConstructionService';
 import { WorldIdAllocator } from './WorldIdAllocator';
 import type { ProjectionElementRealizationContext } from './projectionPlane/ProjectionPlaneContext';
 
@@ -136,7 +136,7 @@ export class World {
   private dependencyService: DependencyService;
   
   private realizationService: RealizationService;
-  private constructionService: ConstructionService;
+  private projectionConstruction: ProjectionConstructionService;
   
   private idAllocator: WorldIdAllocator;
 
@@ -168,7 +168,7 @@ export class World {
     this.realizationService = services.realizationService ?? new RealizationService();
     this.idAllocator = services.idAllocator ?? new WorldIdAllocator();
     this.labelGenerator = services.labelGenerator ?? new LabelGenerator();
-    this.constructionService = new ConstructionService(this);
+    this.projectionConstruction = new ProjectionConstructionService(this);
     
     // Phase 47: Static initialization removed.
     // Initialization is now an explicit application use case so command history
@@ -680,8 +680,8 @@ export class World {
     return this.realizationService;
   }
 
-  getConstructionService(): ConstructionService {
-    return this.constructionService;
+  getConstructionService(): ProjectionConstructionService {
+    return this.projectionConstruction;
   }
 
   getIdAllocator(): WorldIdAllocator {

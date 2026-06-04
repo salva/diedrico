@@ -57,7 +57,7 @@ export function buildHingeLineWithHalves(
   ));
 
   // Step 2: Create half hinge line on horizontal plane
-  // AddHalfHingeLine2DOp calls ConstructionService.addHalfHingeLine2D() which generates ID
+  // AddHalfHingeLine2DOp calls ProjectionConstructionService.addHalfHingeLine2D() which generates ID
   const hhl1Op = new AddHalfHingeLine2DOp(horizontalPlaneId, hingeLineId);
   cmd.addAndExecute(hhl1Op);
   cmd.addAndExecute(new AddProcessTreeActionOp(

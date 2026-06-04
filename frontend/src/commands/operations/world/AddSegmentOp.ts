@@ -1,7 +1,7 @@
 /**
- * AddSegment2DByPointsOp - Operation to add a Segment2D using ConstructionService
+ * AddSegment2DByPointsOp - Operation to add a Segment2D using ProjectionConstructionService
  * 
- * Wraps ConstructionService.addSegment2DBetweenPoints() in the Operation interface.
+ * Wraps ProjectionConstructionService.addSegment2DBetweenPoints() in the Operation interface.
  */
 
 import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
@@ -37,7 +37,7 @@ export class AddSegment2DByPointsOp implements IOperation<AddSegment2DByPointsDe
         throw new Error(`Plane not found: ${this.planeId}`);
       }
       
-      const segment = context.constructionService.addSegment2DBetweenPoints(
+      const segment = context.projectionConstruction.addSegment2DBetweenPoints(
         plane,
         this.point1Id,
         this.point2Id,

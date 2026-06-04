@@ -185,7 +185,7 @@ export class AddOriginPoint2DOp implements IOperation {
         };
       }
       
-      const originPoint = context.constructionService.addOriginPoint2D(
+      const originPoint = context.projectionConstruction.addOriginPoint2D(
         projPlane,
         this.position, 
         this.pointId || this.outputs.pointId,
@@ -325,7 +325,7 @@ export class AddHalfHingeLine2DOp implements IOperation {
         };
       }
       
-      const halfHingeLine = context.constructionService.addHalfHingeLine2D(
+      const halfHingeLine = context.projectionConstruction.addHalfHingeLine2D(
         projPlane,
         this.hingeLineId,
         this.lineId || this.outputs.lineId
