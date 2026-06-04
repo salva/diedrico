@@ -1,16 +1,14 @@
 /**
  * Action - metadata for a construction step in the process tree.
  *
- * Actions identify the element produced by a construction step, carry a
- * human-readable fallback description, and store the process-tree output flag.
- * Dependency relations are not stored on actions; callers query them through
+ * Actions identify the element produced by a construction step and carry a
+ * human-readable fallback description. Dependency relations are not stored on actions; callers query them through
  * the dependency boundary owned by the world/domain layer.
  */
 
 export interface Action {
   elementId: string;             // Element created by this action
   description: string;           // Human-readable action narrative
-  isOutput: boolean;             // Output flag (show in black box stack)
 }
 
 /**
@@ -18,7 +16,7 @@ export interface Action {
  * 
  * @param elementId - The created element ID
  * @param description - Optional description (defaults to "Created {elementId}")
- * @returns Action with isOutput=true by default
+ * @returns Action metadata for the created element
  */
 export function createAction(
   elementId: string,
@@ -27,6 +25,5 @@ export function createAction(
   return {
     elementId,
     description: description ?? `Created ${elementId}`,
-    isOutput: true
   };
 }

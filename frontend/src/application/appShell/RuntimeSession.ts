@@ -22,13 +22,15 @@ import { buildElementsPanelReadModel } from './readModels/ElementsPanelReadModel
 import { toggleElementVisibility } from './readModels/ElementVisibilityIntent';
 import { RuntimeChangePublisher, type ChangeNotifier } from './RuntimeChangePublisher';
 import { registerAllDescriptors } from '@/domain/world/descriptors/registerDescriptors';
+import { VisibilityModel } from '@/application/processTree/VisibilityModel';
 
 export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort {
   private readonly world = new World();
+  private readonly visibilityModel = new VisibilityModel();
   private readonly changes = new RuntimeChangePublisher();
   private readonly commandStack = new CommandStack();
   private readonly descriptorRegistry = registerAllDescriptors();
-  private readonly commandProducer = new RuntimeCommandProducer(this.world, this.commandStack, this.changes);
+  private readonly commandProducer = new RuntimeCommandProducer(this.world, this.visibilityModel, this.commandStack, this.changes);
   private activePlaneIdValue?: string;
 
 
@@ -47,6 +49,7 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
           activePlaneId: options.activePlaneId,
           showProjectedElements: options.showProjectedElements,
           gridVisible: options.gridVisible,
+          visibilityModel: this.visibilityModel,
         }
       ),
       getElementLabel: (elementId, elementType, planeId) => this.getElementLabel(elementId, elementType, planeId),
@@ -69,8 +72,8 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
     return {
       subscribeToChanges: (listener) => this.changes.subscribeToChanges(listener),
       unsubscribeFromChanges: (listener) => this.changes.unsubscribeFromChanges(listener),
-      getTree: () => buildProcessTreeReadModel({ world: this.world, dependencyQuery: this.world.getDependencyQuery(), descriptorRegistry: this.descriptorRegistry }),
-      getRelatedActionIds: (selectedIds) => getRelatedActionIds(selectedIds, { world: this.world, dependencyQuery: this.world.getDependencyQuery(), descriptorRegistry: this.descriptorRegistry }),
+      getTree: () => buildProcessTreeReadModel({ world: this.world, dependencyQuery: this.world.getDependencyQuery(), descriptorRegistry: this.descriptorRegistry, visibilityModel: this.visibilityModel }),
+      getRelatedActionIds: (selectedIds) => getRelatedActionIds(selectedIds, { world: this.world, dependencyQuery: this.world.getDependencyQuery(), descriptorRegistry: this.descriptorRegistry, visibilityModel: this.visibilityModel }),
       countNodes: (node) => countProcessNodeViewModels(node),
     };
   }
@@ -132,7 +135,7 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
   }
 
   selectionDeletionCommandPort(): SelectionDeletionCommandPort {
-    return new SelectionDeletionCommandService(this.world, this.commandStack, this.changes);
+    return new SelectionDeletionCommandService(this.world, this.visibilityModel, this.commandStack, this.changes);
   }
 
   canUndo(): boolean {
@@ -196,18 +199,20 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
   }
 
   initializeDefaultWorldIfNeeded(): void {
-    initializeWorld(this.world, this.commandStack, this.changes);
+    initializeWorld(this.world, this.visibilityModel, this.commandStack, this.changes);
     this.ensureActivePlane();
   }
 
   resetToEmptyInitializedWorld(): void {
     this.world.clear();
+    this.visibilityModel.clear();
     this.commandStack.clear();
     this.initializeDefaultWorldIfNeeded();
   }
 
   clear(): void {
     this.world.clear();
+    this.visibilityModel.clear();
     this.commandStack.clear();
     this.activePlaneIdValue = undefined;
   }
@@ -230,15 +235,17 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
 
   restoreValidatedProject(openedSession: OpenedProjectSession): void {
     const candidateWorld = new World();
+    const candidateVisibilityModel = new VisibilityModel();
     const candidateCommandStack = new CommandStack();
     const validationNotifier: ChangeNotifier = { notifyChange: () => {} };
-    ProjectService.deserializeCommands(openedSession.payload, candidateWorld, candidateCommandStack, validationNotifier);
-    if (candidateWorld.getAllProjectionPlanes().length === 0) initializeWorld(candidateWorld, candidateCommandStack, validationNotifier);
+    ProjectService.deserializeCommands(openedSession.payload, candidateWorld, candidateVisibilityModel, candidateCommandStack, validationNotifier);
+    if (candidateWorld.getAllProjectionPlanes().length === 0) initializeWorld(candidateWorld, candidateVisibilityModel, candidateCommandStack, validationNotifier);
 
     this.world.clear();
+    this.visibilityModel.clear();
     this.commandStack.clear();
     this.activePlaneIdValue = undefined;
-    ProjectService.deserializeCommands(openedSession.payload, this.world, this.commandStack, this.changes);
+    ProjectService.deserializeCommands(openedSession.payload, this.world, this.visibilityModel, this.commandStack, this.changes);
     if (this.world.getAllProjectionPlanes().length === 0) this.initializeDefaultWorldIfNeeded();
     this.ensureActivePlane();
     this.changes.markDirty();

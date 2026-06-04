@@ -14,6 +14,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { PointTool } from '@/tools/PointTool';
 import type { World } from '@/domain/world/World';
 import type { CommandStack } from '@/commands/CommandStack';
+import type { VisibilityModel } from '@/application/processTree/VisibilityModel';
 import type { ToolContext } from '@/tools/ITool';
 import { CanvasToolController } from '@/application/tools/CanvasToolController';
 import { RuntimeCommandProducer } from '@/application/commandProduction/RuntimeCommandProducer';
@@ -21,12 +22,12 @@ import { Vector3 } from 'three';
 import { CanvasPresentationSelector } from '@/application/canvasPresentation/CanvasPresentationSelector';
 import { createToolInteractionReadPort } from '@/application/tools/ToolInteractionReadPort';
 
-function liveInteractionQuery(worldRef: () => any, planeIdRef: () => string): CanvasInteractionQuery {
+function liveInteractionQuery(worldRef: () => any, visibilityModelRef: () => VisibilityModel, planeIdRef: () => string): CanvasInteractionQuery {
   return {
     hitTest(canvasPos: any, snapRadiusPixels: number, context: any, selectionMask?: any) {
       const world = worldRef();
       const activePlaneId = context.activePlaneId ?? planeIdRef();
-      const model = new CanvasPresentationSelector().select(world, { zoom: 1, panX: 0, panY: 0, width: 800, height: 600 }, { activePlaneId });
+      const model = new CanvasPresentationSelector().select(world, { zoom: 1, panX: 0, panY: 0, width: 800, height: 600 }, { activePlaneId, visibilityModel: visibilityModelRef() });
       return new CanvasInteractionQuery(model.queryItems).hitTest(canvasPos, snapRadiusPixels, context, selectionMask);
     }
   } as CanvasInteractionQuery;
@@ -38,6 +39,7 @@ import { createTestWorld } from '../../helpers/worldHelpers';
 describe('PointTool', () => {
   let tool: PointTool;
   let world: World;
+  let visibilityModel: VisibilityModel;
   let commandStack: CommandStack;
   let horizontalPlaneId: string;
   let verticalPlaneId: string;
@@ -48,7 +50,7 @@ describe('PointTool', () => {
     planeId,
     planeCoords,
     canvasCoords,
-    commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, commandStack) }),
+    commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, visibilityModel, commandStack) }),
     readPort: createToolInteractionReadPort(world),
     interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 },
@@ -59,10 +61,11 @@ describe('PointTool', () => {
 
   beforeEach(() => {
     tool = new PointTool();
-    const { world: w, commandStack: cs } = createTestWorld();
+    const { world: w, visibilityModel: vm, commandStack: cs } = createTestWorld();
     world = w;
+    visibilityModel = vm;
     commandStack = cs;
-    interactionQuery = liveInteractionQuery(() => world, () => horizontalPlaneId);
+    interactionQuery = liveInteractionQuery(() => world, () => visibilityModel, () => horizontalPlaneId);
     // Get actual plane IDs from initialized world
     horizontalPlaneId = world.getProjectionPlaneByLabel('P_H').id!;
     verticalPlaneId = world.getProjectionPlaneByLabel('P_V').id!;

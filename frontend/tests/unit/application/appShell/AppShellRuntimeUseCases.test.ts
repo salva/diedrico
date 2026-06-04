@@ -43,7 +43,7 @@ function scheduler() {
 function projectPayload(name = 'Project', nextElementId = 1): ProjectSessionPersistencePayload {
   return {
     id: 'project-id',
-    schemaVersion: '6.0.0',
+    schemaVersion: '7.0.0',
     name,
     created: 'now',
     modified: 'now',
@@ -243,7 +243,7 @@ describe('AutoSaveUseCases', () => {
     expect(fakeScheduler.port.setTimeout).toHaveBeenCalledTimes(1);
 
     await autoSave.perform();
-    expect(fakeDrive.updateFile).toHaveBeenCalledWith('file-1', expect.objectContaining({ name: 'Project', schemaVersion: '6.0.0', commands: [] }));
+    expect(fakeDrive.updateFile).toHaveBeenCalledWith('file-1', expect.objectContaining({ name: 'Project', schemaVersion: '7.0.0', commands: [] }));
     expect(saveStatus.value).toBe('saved');
     expect(fakeScheduler.port.setTimeout).toHaveBeenCalledTimes(2);
 
@@ -306,7 +306,7 @@ describe('AutoSaveUseCases', () => {
     await autoSave.perform();
 
     expect(currentFileId.value).toBe('replacement-file');
-    expect(fakeDrive.createFile).toHaveBeenCalledWith('Project', expect.objectContaining({ name: 'Project', schemaVersion: '6.0.0', commands: [] }));
+    expect(fakeDrive.createFile).toHaveBeenCalledWith('Project', expect.objectContaining({ name: 'Project', schemaVersion: '7.0.0', commands: [] }));
     expect(repository.setLastProject).toHaveBeenCalledWith({ id: 'replacement-file', name: 'Project' });
   });
 });
@@ -642,7 +642,7 @@ describe('ProjectSessionUseCases startup and project flows', () => {
     expect(deps.currentFileId.value).toBe('file-created');
     expect(deps.autoSave.start).toHaveBeenCalled();
     expect(deps.lastProjectRepository.setLastProject).toHaveBeenCalledWith({ id: 'file-created', name: 'Created' });
-    expect(deps.drive?.createFile).toHaveBeenCalledWith('Created', expect.objectContaining({ name: 'Created', schemaVersion: '6.0.0', commands: expect.any(Array) }));
+    expect(deps.drive?.createFile).toHaveBeenCalledWith('Created', expect.objectContaining({ name: 'Created', schemaVersion: '7.0.0', commands: expect.any(Array) }));
 
     await useCases.openProject('file-opened');
     expect(deps.currentProjectName.value).toBe('Loaded project');

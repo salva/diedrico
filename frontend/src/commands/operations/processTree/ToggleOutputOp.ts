@@ -15,7 +15,9 @@ export class ToggleOutputOp implements IOperation {
   apply(context: OperationContext): OperationResult {
     const processTree = context.world.getProcessTree();
     try {
-      processTree.toggleOutput(this.nodeId);
+      const node = processTree.findNodeById(this.nodeId);
+      if (!node) throw new Error(`ProcessTree node not found: ${this.nodeId}`);
+      context.visibilityModel.toggleOutput(this.nodeId, node.type);
       return { success: true, outputs: this.outputs };
     } catch (e: any) {
       return { success: false, outputs: {}, error: e.message };
@@ -24,7 +26,9 @@ export class ToggleOutputOp implements IOperation {
 
   undo(context: OperationContext): void {
     const processTree = context.world.getProcessTree();
-    processTree.toggleOutput(this.nodeId);
+    const node = processTree.findNodeById(this.nodeId);
+    if (!node) throw new Error(`ProcessTree node not found: ${this.nodeId}`);
+    context.visibilityModel.toggleOutput(this.nodeId, node.type);
   }
 
   serialize() {

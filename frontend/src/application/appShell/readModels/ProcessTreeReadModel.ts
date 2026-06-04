@@ -6,11 +6,13 @@ import type { DescriptorRegistry } from '@/domain/world/descriptors/DescriptorRe
 import type { DescriptionPart } from '@/domain/world/descriptors/DescriptionPart';
 import type { Action } from '@/domain/processTree/Action';
 import { mapDescriptionParts, type ProcessNodeViewModel, type ProcessTreeReadModel } from '../RuntimeViewPorts';
+import type { VisibilityModel } from '@/application/processTree/VisibilityModel';
 
 export interface ProcessTreeReadModelContext {
   readonly world: World;
   readonly dependencyQuery: DependencyQueryPort;
   readonly descriptorRegistry: DescriptorRegistry;
+  readonly visibilityModel: VisibilityModel;
 }
 
 export function buildProcessTreeReadModel(context: ProcessTreeReadModelContext): ProcessTreeReadModel {
@@ -37,12 +39,13 @@ export function countProcessNodeViewModels(node: ProcessNodeViewModel): number {
 }
 
 function createProcessNodeViewModel(node: ProcessNode, context: ProcessTreeReadModelContext): ProcessNodeViewModel {
+  const visibility = context.visibilityModel.get(node.id, node.type);
   if (node.type === 'action') {
     const descriptionParts = mapDescriptionParts(getActionDescriptionParts(node, context));
     return {
       id: node.id,
       type: node.type,
-      isOutput: node.isOutput,
+      isOutput: visibility.isOutput === true,
       elementId: node.elementId,
       descriptionParts,
       isInfeasible: isActionInfeasible(node.elementId, context),
@@ -54,9 +57,9 @@ function createProcessNodeViewModel(node: ProcessNode, context: ProcessTreeReadM
     type: node.type,
     name: node.type === 'subprocess' ? node.name : undefined,
     children: node.children.filter(child => child !== null).map(child => createProcessNodeViewModel(child, context)),
-    showIntermediates: node.type === 'subprocess' ? node.showIntermediates : undefined,
-    isOutput: node.isOutput,
-    isAuxiliary: node.type === 'actionGroup' ? node.isAuxiliary : undefined,
+    showIntermediates: node.type === 'subprocess' ? visibility.showIntermediates === true : undefined,
+    isOutput: visibility.isOutput === true,
+    isAuxiliary: node.type === 'actionGroup' ? visibility.isAuxiliary === true : undefined,
     descriptionParts: [],
     isInfeasible: false,
     hideBecauseElementMissing: false,

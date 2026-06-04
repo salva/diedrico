@@ -15,7 +15,9 @@ export class ToggleEncapsulationOp implements IOperation {
   apply(context: OperationContext): OperationResult {
     const processTree = context.world.getProcessTree();
     try {
-      processTree.toggleSubprocessEncapsulation(this.subprocessId);
+      if (!processTree.findSubprocessById(this.subprocessId)) throw new Error(`Subprocess not found: ${this.subprocessId}`);
+      const current = context.visibilityModel.get(this.subprocessId, 'subprocess');
+      context.visibilityModel.setShowIntermediates(this.subprocessId, !current.showIntermediates);
       return { success: true, outputs: this.outputs };
     } catch (e: any) {
       return { success: false, outputs: {}, error: e.message };
@@ -24,7 +26,9 @@ export class ToggleEncapsulationOp implements IOperation {
 
   undo(context: OperationContext): void {
     const processTree = context.world.getProcessTree();
-    processTree.toggleSubprocessEncapsulation(this.subprocessId);
+    if (!processTree.findSubprocessById(this.subprocessId)) throw new Error(`Subprocess not found: ${this.subprocessId}`);
+    const current = context.visibilityModel.get(this.subprocessId, 'subprocess');
+    context.visibilityModel.setShowIntermediates(this.subprocessId, !current.showIntermediates);
   }
 
   serialize() {

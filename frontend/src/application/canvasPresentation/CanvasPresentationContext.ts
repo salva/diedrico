@@ -5,6 +5,8 @@ import type { CachedProjectionElementRealizationContext, ProjectionElementRealiz
 import type { ProjectionPlane } from '@/domain/world/projectionPlane/ProjectionPlane';
 import type { Element } from '@/domain/world/Element';
 import type { World } from '@/domain/world/World';
+import type { VisibilityModel } from '@/application/processTree/VisibilityModel';
+import type { ProcessTree } from '@/domain/processTree/ProcessTree';
 import type { CanvasPlaneCanvasItems, CanvasPlaneItem, CanvasPlaneLineItem, CanvasPlaneTransformModel } from './CanvasPresentationModel';
 import type { CanvasPresentationState } from './CanvasPresentationModel';
 import { resolveVisibility } from './styleService';
@@ -12,13 +14,14 @@ import { Projected3DCanvasSelector } from './Projected3DCanvasSelector';
 import { createProjected3DCanvasReadPort } from './Projected3DCanvasReadPort';
 import { createWorldRealizationContext } from '@/application/presentation/WorldRealizationContext';
 
-export function createCanvasPresentationContext(world: World) {
+export function createCanvasPresentationContext(world: World, visibilityModel: VisibilityModel, tree?: ProcessTree) {
   const realizationContext = createWorldRealizationContext(world);
   const projected3DSelector = new Projected3DCanvasSelector();
+  const processTree = tree ?? (world as any)['get' + 'ProcessTree']();
   return {
     getProjected3DCanvasItems: (planeTransforms: CanvasPlaneTransformMap) => projected3DSelector.selectWorldProjection(createProjected3DCanvasReadPort(world, realizationContext), planeTransforms),
     realizationContext,
-    isVisible: (element: Element) => resolveVisibility(element, world),
+    isVisible: (element: Element) => resolveVisibility(element, processTree, visibilityModel),
   };
 }
 
@@ -35,7 +38,7 @@ export function getCanvasPlaneTransforms(world: World): CanvasPlaneTransformMode
 }
 
 export function getCanvasPlaneCanvasItems(world: World, planeTransforms: CanvasPlaneTransformMap, state: CanvasPresentationState): CanvasPlaneCanvasItems[] {
-  const context = createCanvasPresentationContext(world);
+  const context = createCanvasPresentationContext(world, state.visibilityModel);
   const itemState = { ...state, realizationContext: context.realizationContext, isVisible: context.isVisible };
   return world.getAllProjectionPlanes().flatMap((plane) => {
     const transform = planeTransforms.get(plane.id);

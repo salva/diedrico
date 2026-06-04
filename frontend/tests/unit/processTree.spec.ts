@@ -12,7 +12,7 @@ import { ProcessTree, type ActionGroup } from '@/domain/processTree/ProcessTree'
 import type { Action } from '@/domain/processTree/Action';
 import { createPointAction } from '@/domain/processTree/actions/CreatePointAction';
 import { createLineAction } from '@/domain/processTree/actions/CreateLineAction';
-import { Vector3 } from 'three';
+import { VisibilityModel } from '@/application/processTree/VisibilityModel';
 
 describe('ProcessTree', () => {
   let tree: ProcessTree;
@@ -26,8 +26,6 @@ describe('ProcessTree', () => {
       id: groupId,
       type: 'actionGroup',
       children: [],
-      isAuxiliary: false,
-      isOutput: true,
       created: new Date()
     };
     tree.addActionGroup(group);
@@ -103,8 +101,7 @@ describe('ProcessTree', () => {
 
       expect(subprocess.type).toBe('subprocess');
       expect(subprocess.name).toBe('Construction Phase 1');
-      expect(subprocess.showIntermediates).toBe(true);
-      expect(subprocess.isOutput).toBe(true);
+      expect(new VisibilityModel().get(subprocess.id, subprocess.type)).toEqual({ showIntermediates: true, isOutput: true });
       expect(tree.root.children).toContain(subprocess);
     });
 
@@ -154,7 +151,6 @@ describe('ProcessTree', () => {
         type: 'actionGroup' as const,
         name: 'Test Group',
         children: [action2],
-        isAuxiliary: false,
         created: new Date()
       };
       subprocess.children.push(group);
@@ -214,19 +210,17 @@ describe('ProcessTree', () => {
     it('createPointAction should create valid action with elementId', () => {
       const action = createPointAction('point_1');
 
-      // Phase 93: Actions only have 3 fields (elementId, description, isOutput)
       expect(action.elementId).toBe('point_1');
       expect(action.description).toContain('point_1');
-      expect(action.isOutput).toBe(true); // Phase 93: defaults to true
+      expect(new VisibilityModel().get('action-node-id', 'action').isOutput).toBe(true);
     });
 
     it('createLineAction should create valid action with elementId', () => {
       const action = createLineAction('line_1');
 
-      // Phase 93: Actions only have 3 fields (elementId, description, isOutput)
       expect(action.elementId).toBe('line_1');
       expect(action.description).toContain('line_1');
-      expect(action.isOutput).toBe(true); // Phase 93: defaults to true
+      expect(new VisibilityModel().get('action-node-id', 'action').isOutput).toBe(true);
     });
   });
 });

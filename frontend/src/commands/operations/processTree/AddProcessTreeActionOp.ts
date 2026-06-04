@@ -59,7 +59,6 @@ export class AddProcessTreeActionOp implements IOperation {
     const action: JsonObject = {
       elementId: this.action.elementId,
       description: this.action.description,
-      isOutput: this.action.isOutput
     };
     return {
       opType: this.type,

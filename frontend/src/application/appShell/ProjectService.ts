@@ -9,6 +9,7 @@ import type { OperationDescriptor } from '@/commands/operations/IOperation';
 import type { OperationContext } from '@/commands/operations/OperationContext';
 import { assertOperationDescriptor, assertRestorableOperationDescriptor, deserializeOperation } from '@/commands/operations/OperationRegistry';
 import type { ChangeNotifier } from '@/application/appShell/RuntimeChangePublisher';
+import type { VisibilityModel } from '@/application/processTree/VisibilityModel';
 
 export interface ProjectData {
   id: string;
@@ -24,7 +25,7 @@ type SerializedCommand = CommandSnapshot;
 type SerializedOperation = OperationDescriptor;
 
 export class ProjectService {
-  private static readonly SCHEMA_VERSION = '6.0.0';
+  private static readonly SCHEMA_VERSION = '7.0.0';
 
   static serializeCommands(commandStack: CommandStack, nextElementId: number, projectName: string): ProjectData {
     if (!Number.isInteger(nextElementId) || nextElementId < 1) {
@@ -44,11 +45,12 @@ export class ProjectService {
     };
   }
 
-  static deserializeCommands(data: ProjectData, world: World, commandStack: CommandStack, notifier: ChangeNotifier): void {
+  static deserializeCommands(data: ProjectData, world: World, visibilityModel: VisibilityModel, commandStack: CommandStack, notifier: ChangeNotifier = { notifyChange: () => {} }): void {
     this.validateProjectData(data);
     commandStack.clear();
+    visibilityModel.clear();
     world.restoreNextId(data.nextElementId);
-    const operationContext: OperationContext = { world };
+    const operationContext: OperationContext = { world, visibilityModel };
 
     const restoredCommands: Command[] = [];
     for (const serializedCommand of data.commands) {

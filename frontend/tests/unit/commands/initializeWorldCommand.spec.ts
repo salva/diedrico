@@ -11,6 +11,7 @@ import { Command } from '@/commands/Command';
 import { buildWorldInitialization } from '@/commands/factories/InitializationSequenceFactory';
 import { CommandStack } from '@/commands/CommandStack';
 import { initializeWorld } from '@/application/world/initializeWorld';
+import { VisibilityModel } from '@/application/processTree/VisibilityModel';
 import { HalfHingeLine2D } from '@/domain/world/HingeLine';
 import { getMainHingeLine } from '../../helpers/worldHelpers';
 import { createActionGroup } from '@/domain/processTree/ProcessTree';
@@ -18,24 +19,26 @@ import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/A
 
 describe('InitializeWorldCommand', () => {
   let world: World;
+  let visibilityModel: VisibilityModel;
   let commandStack: CommandStack;
 
   beforeEach(() => {
     // Phase 47: Explicit initialization needed
     world = new World();
+    visibilityModel = new VisibilityModel();
     commandStack = new CommandStack();
-    initializeWorld(world, commandStack);
+    initializeWorld(world, visibilityModel, commandStack);
   });
 
   describe('Command Creation', () => {
     it('should create command with correct name', () => {
-      const cmd = new Command('Initialize World', { world });
+      const cmd = new Command('Initialize World', { world, visibilityModel });
       
       expect(cmd.description).toBe('Initialize World');
     });
 
     it('should have building status after creation', () => {
-      const cmd = new Command('Initialize World', { world });
+      const cmd = new Command('Initialize World', { world, visibilityModel });
       
       // Command is still building until .commit() is called
       expect(cmd.status).toBe('building');
@@ -161,7 +164,7 @@ describe('InitializeWorldCommand', () => {
     });
 
     it('regular commands allow undo', () => {
-      const cmd = new Command('Test Command', { world });
+      const cmd = new Command('Test Command', { world, visibilityModel });
       
       // Regular Command allows undo by default
       expect(cmd.canUndo()).toBe(true);
@@ -170,7 +173,7 @@ describe('InitializeWorldCommand', () => {
 
   describe('Operation Orchestration', () => {
     it('should execute operations in correct order', () => {
-      const cmd = new Command('Initialize World', { world });
+      const cmd = new Command('Initialize World', { world, visibilityModel });
       
       // Create ActionGroup for initialization operations
       const groupId = `group_init_test_${Date.now()}`;

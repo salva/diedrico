@@ -7,6 +7,7 @@ import { PopSubprocessOp, PushSubprocessOp } from '@/commands/operations/process
 import { createActionGroup } from '@/domain/processTree/ProcessTree';
 import type { World } from '@/domain/world/World';
 import type { ChangeNotifier } from '@/application/appShell/RuntimeChangePublisher';
+import type { VisibilityModel } from '@/application/processTree/VisibilityModel';
 
 const noopChangeNotifier: ChangeNotifier = { notifyChange: () => {} };
 
@@ -20,10 +21,10 @@ function createInitializationGroupId(): string {
  * The domain World owns geometric state only; command construction and history
  * recording belong at the application/command boundary.
  */
-export function initializeWorld(world: World, commandStack: CommandStack, notifier: ChangeNotifier = noopChangeNotifier): void {
+export function initializeWorld(world: World, visibilityModel: VisibilityModel, commandStack: CommandStack, notifier: ChangeNotifier = noopChangeNotifier): void {
   if (world.getAllProjectionPlanes().length > 0) return;
 
-  const operationContext: OperationContext = { world };
+  const operationContext: OperationContext = { world, visibilityModel };
   const initCmd = new Command('Initialize World', operationContext, notifier);
 
   initCmd.addAndExecute(new PushSubprocessOp('World Initialization'));

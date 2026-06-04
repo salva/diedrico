@@ -6,12 +6,14 @@ import { CommandStack } from '@/commands/CommandStack';
 import { UpdateFreePoint2DPositionOp } from '@/commands/operations/world/UpdateFreePoint2DPositionOp';
 import { initializeWorld } from '@/application/world/initializeWorld';
 import { World } from '@/domain/world/World';
+import { VisibilityModel } from '@/application/processTree/VisibilityModel';
 
 function initializedWorld() {
   const world = new World();
+  const visibilityModel = new VisibilityModel();
   const stack = new CommandStack();
-  initializeWorld(world, stack);
-  return { world, stack, commands: new RuntimeCommandProducer(world, stack) };
+  initializeWorld(world, visibilityModel, stack);
+  return { world, visibilityModel, stack, commands: new RuntimeCommandProducer(world, visibilityModel, stack) };
 }
 
 describe('RuntimeCommandProducer', () => {

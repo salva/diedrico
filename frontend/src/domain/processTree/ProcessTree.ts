@@ -7,7 +7,6 @@
  */
 
 import type { Action } from './Action';
-import type { VisualStyle } from '../world/VisualStyle';
 
 export const PROCESS_NODE_TYPE = {
   SUBPROCESS: 'subprocess',
@@ -22,39 +21,15 @@ export interface ProcessNodeBase {
   created: Date;
 }
 
-/**
- * Groups construction-history entries for display and encapsulation.
- *
- * The visibility/style flags below describe how the recorded construction
- * history should be presented. They are not geometric dependencies and do not
- * affect realization, invalidation, or dependency-graph registration.
- */
 export interface Subprocess extends ProcessNodeBase {
   type: 'subprocess';
   name: string;
   children: (Subprocess | ActionGroup)[];  // Mixed children, no direct actions
-  /** Display intermediate history entries inside this subprocess. */
-  showIntermediates: boolean;
-  /** Mark this subprocess as visible output when parent history is encapsulated. */
-  isOutput: boolean;
-  /** Presentation default for contained construction outputs; not geometry state. */
-  defaultStyle?: VisualStyle;
 }
 
-/**
- * Atomic group of actions in the construction history.
- *
- * `isAuxiliary` and `isOutput` are presentation semantics for history/canvas
- * visibility. They do not express geometric dependency relationships between
- * the actions or their produced elements.
- */
 export interface ActionGroup extends ProcessNodeBase {
   type: 'actionGroup';
   children: (ActionNode | null)[];         // Actions or tombstones (null = deleted)
-  /** Render/display this action group as auxiliary construction history. */
-  isAuxiliary: boolean;
-  /** Mark this action group as visible output in encapsulated history. */
-  isOutput: boolean;
 }
 
 export function createActionGroup(
@@ -65,8 +40,6 @@ export function createActionGroup(
     id,
     type: 'actionGroup',
     children,
-    isOutput: true,
-    isAuxiliary: false,
     created: new Date()
   };
 }
@@ -90,8 +63,6 @@ export class ProcessTree {
       type: 'subprocess',
       name: 'Root Process',
       children: [],
-      showIntermediates: true,
-      isOutput: true, // Root is implicitly an output
       created: new Date()
     };
     // Initialize stack with root
@@ -120,8 +91,6 @@ export class ProcessTree {
       type: 'subprocess',
       name,
       children: [],
-      showIntermediates: true,
-      isOutput: true,
       created: new Date()
     };
 
@@ -166,8 +135,6 @@ export class ProcessTree {
       type: 'subprocess',
       name,
       children: [],
-      showIntermediates: true,
-      isOutput: true,
       created: new Date()
     };
 
@@ -210,7 +177,6 @@ export class ProcessTree {
       ...action,
       id: this.nextNodeId(),
       type: 'action',
-      isOutput: action.isOutput !== undefined ? action.isOutput : true,
       created: new Date()
     };
     
@@ -230,54 +196,12 @@ export class ProcessTree {
     }
   }
 
-  /**
-   * Toggle encapsulation of a subprocess (hide intermediate steps)
-   */
-  toggleSubprocessEncapsulation(subprocessId: string): void {
-    this.traverseSubprocesses(this.root, (subprocess) => {
-      if (subprocess.id === subprocessId) {
-        subprocess.showIntermediates = !subprocess.showIntermediates;
-      }
-    });
-  }
-
-  /**
-   * Toggle output flag of a node (Subprocess or Action/ActionGroup)
-   * If it's an action ID, we toggle the parent ActionGroup and the ActionNode
-   */
-  toggleOutput(nodeId: string): void {
-    // Check if it's a subprocess
-    let handled = false;
-    this.traverseSubprocesses(this.root, (subprocess) => {
-      if (subprocess.id === nodeId) {
-        subprocess.isOutput = !subprocess.isOutput;
-        handled = true;
-      }
-    });
-
-    if (handled) {
-      return;
-    }
-
-    // Check if it's an action or action group
-    // We need a traversal that visits groups and actions
+  findNodeById(nodeId: string): ProcessNode | undefined {
+    let found: ProcessNode | undefined;
     this.traverseAllNodes(this.root, (node) => {
-      if (node.type === 'actionGroup' && node.id === nodeId) {
-        const group = node as ActionGroup;
-        group.isOutput = !group.isOutput;
-        handled = true;
-      } else if (node.type === 'action' && node.id === nodeId) {
-        const action = node as ActionNode;
-        action.isOutput = !action.isOutput;
-        // Also toggle the parent group? 
-        // For now, let's assume we operate on individual IDs.
-        // But UI usually displays Groups or merged items.
-        // If the UI displays ActionGroups, we should toggle the group.
-        // If we toggle an action, what about the group?
-        // Let's stick to toggling the specific node found.
-        handled = true;
-      }
+      if (node.id === nodeId) found = node;
     });
+    return found;
   }
 
   private traverseAllNodes(node: ProcessNode, callback: (node: ProcessNode) => void): void {

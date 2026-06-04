@@ -19,11 +19,11 @@ function notifyOnlyOperation(): IOperation {
 
 describe('RuntimeCommandProducer notification behavior', () => {
   it('notifies when preview cancel rolls back preview operations', () => {
-    const { world } = createTestWorld();
+    const { world, visibilityModel } = createTestWorld();
     const notifier = new RuntimeChangePublisher();
     const listener = vi.fn();
     notifier.subscribeToChanges(listener);
-    const producer = new RuntimeCommandProducer(world, new CommandStack(), notifier);
+    const producer = new RuntimeCommandProducer(world, visibilityModel, new CommandStack(), notifier);
     const preview = producer.startPreviewCommand('Preview command');
 
     preview.preview(command => command.addAndExecute(notifyOnlyOperation()));
@@ -35,11 +35,11 @@ describe('RuntimeCommandProducer notification behavior', () => {
   });
 
   it('does not notify when preview cancel has no preview operations', () => {
-    const { world } = createTestWorld();
+    const { world, visibilityModel } = createTestWorld();
     const notifier = new RuntimeChangePublisher();
     const listener = vi.fn();
     notifier.subscribeToChanges(listener);
-    const producer = new RuntimeCommandProducer(world, new CommandStack(), notifier);
+    const producer = new RuntimeCommandProducer(world, visibilityModel, new CommandStack(), notifier);
     const preview = producer.startPreviewCommand('Preview command');
 
     preview.cancel();

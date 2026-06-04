@@ -4,6 +4,7 @@ import type { OperationContext } from '@/commands/operations/OperationContext';
 import { DeletionSequenceFactory } from '@/commands/factories/DeletionSequenceFactory';
 import type { World } from '@/domain/world/World';
 import type { ChangeNotifier } from '@/application/appShell/RuntimeChangePublisher';
+import type { VisibilityModel } from '@/application/processTree/VisibilityModel';
 import type { SelectionDeletionCommandPort } from './SelectionDeletionPorts';
 
 const noopChangeNotifier: ChangeNotifier = { notifyChange: () => {} };
@@ -23,13 +24,18 @@ const defaultInternals: SelectionDeletionCommandServiceInternals = {
 export class SelectionDeletionCommandService implements SelectionDeletionCommandPort {
   private readonly internals: SelectionDeletionCommandServiceInternals;
   private readonly notifier: ChangeNotifier;
+  private readonly visibilityModel: VisibilityModel;
+  private readonly commandStack: CommandStack;
 
   constructor(
     private readonly world: World,
-    private readonly commandStack: CommandStack,
+    visibilityModel: VisibilityModel,
+    commandStack: CommandStack,
     notifierOrInternals: ChangeNotifier | Partial<SelectionDeletionCommandServiceInternals> = noopChangeNotifier,
     internals: Partial<SelectionDeletionCommandServiceInternals> | undefined = undefined,
   ) {
+    this.visibilityModel = visibilityModel;
+    this.commandStack = commandStack;
     if ('notifyChange' in notifierOrInternals) {
       this.notifier = notifierOrInternals;
       this.internals = { ...defaultInternals, ...(internals ?? {}) };
@@ -42,7 +48,7 @@ export class SelectionDeletionCommandService implements SelectionDeletionCommand
   execute(selectedIds: readonly string[]): void {
     if (selectedIds.length === 0) return;
 
-    const deleteCommand = this.internals.createCommand('Delete elements', { world: this.world }, this.notifier);
+    const deleteCommand = this.internals.createCommand('Delete elements', { world: this.world, visibilityModel: this.visibilityModel }, this.notifier);
     this.internals.createCascadeDeletion(deleteCommand, [...selectedIds], this.world);
     deleteCommand.commit();
     this.commandStack.push(deleteCommand);

@@ -86,13 +86,13 @@ describe('Wave 006b ActionsPanel component behavior', () => {
   });
 
   it('delegates stack button and keyboard subprocess intents through the application controller', async () => {
-    const { world, commandStack } = createTestWorld();
+    const { world, visibilityModel, commandStack } = createTestWorld();
     commandStack.clear();
     const processTreeReadPort = createProcessTreeReadPort(world);
 
     const wrapper = mount(ActionsPanel, {
       global: {
-        provide: { [ProcessTreeReadInjectionKey as symbol]: processTreeReadPort, [ProcessHistoryCommandInjectionKey as symbol]: new ProcessHistoryController({ world, commands: new RuntimeCommandProducer(world, commandStack, processTreeReadPort) }) },
+        provide: { [ProcessTreeReadInjectionKey as symbol]: processTreeReadPort, [ProcessHistoryCommandInjectionKey as symbol]: new ProcessHistoryController({ world, commands: new RuntimeCommandProducer(world, visibilityModel, commandStack, processTreeReadPort) }) },
         stubs: {
           ProcessTreeNode: {
             template: '<div class="process-tree-node-stub" />',
@@ -127,13 +127,13 @@ describe('Wave 006b ActionsPanel component behavior', () => {
   });
 
   it('delegates process-tree child toggle and rename events without direct command assembly in the component', async () => {
-    const { world, commandStack } = createTestWorld();
+    const { world, visibilityModel, commandStack } = createTestWorld();
     commandStack.clear();
     const processTreeReadPort = createProcessTreeReadPort(world);
 
     const wrapper = mount(ActionsPanel, {
       global: {
-        provide: { [ProcessTreeReadInjectionKey as symbol]: processTreeReadPort, [ProcessHistoryCommandInjectionKey as symbol]: new ProcessHistoryController({ world, commands: new RuntimeCommandProducer(world, commandStack, processTreeReadPort) }) },
+        provide: { [ProcessTreeReadInjectionKey as symbol]: processTreeReadPort, [ProcessHistoryCommandInjectionKey as symbol]: new ProcessHistoryController({ world, commands: new RuntimeCommandProducer(world, visibilityModel, commandStack, processTreeReadPort) }) },
         stubs: {
           ProcessTreeNode: {
             name: 'ProcessTreeNode',
@@ -154,16 +154,16 @@ describe('Wave 006b ActionsPanel component behavior', () => {
     await wrapper.get('button.stack-push-btn').trigger('click');
     await nextTick();
     const subprocessId = world.getProcessTree().getCurrentSubprocess().id;
-    expect(world.getProcessTree().findSubprocessById(subprocessId)?.showIntermediates).toBe(true);
-    expect(world.getProcessTree().findSubprocessById(subprocessId)?.isOutput).toBe(true);
+    expect(visibilityModel.get(subprocessId, 'subprocess').showIntermediates).toBe(true);
+    expect(visibilityModel.get(subprocessId, 'subprocess').isOutput).toBe(true);
 
     await wrapper.get('button.stub-toggle-encapsulate').trigger('click');
     await nextTick();
-    expect(world.getProcessTree().findSubprocessById(subprocessId)?.showIntermediates).toBe(false);
+    expect(visibilityModel.get(subprocessId, 'subprocess').showIntermediates).toBe(false);
 
     await wrapper.get('button.stub-toggle-output').trigger('click');
     await nextTick();
-    expect(world.getProcessTree().findSubprocessById(subprocessId)?.isOutput).toBe(false);
+    expect(visibilityModel.get(subprocessId, 'subprocess').isOutput).toBe(false);
 
     await wrapper.get('button.stub-rename').trigger('click');
     await nextTick();
@@ -183,9 +183,9 @@ describe('Wave 006b Toolbar component behavior', () => {
   });
 
   it('delegates undo/redo through the toolbar history controller and refreshes enabled state', async () => {
-    const { world, commandStack } = createTestWorld();
+    const { world, visibilityModel, commandStack } = createTestWorld();
     commandStack.clear();
-    const processHistory = new ProcessHistoryUseCases(world, new RuntimeCommandProducer(world, commandStack));
+    const processHistory = new ProcessHistoryUseCases(world, new RuntimeCommandProducer(world, visibilityModel, commandStack));
     processHistory.pushSubprocess({ name: 'Undoable from toolbar test' });
 
     const wrapper = mount(Toolbar, {

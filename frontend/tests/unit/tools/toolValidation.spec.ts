@@ -22,6 +22,7 @@ import { PerpendicularLineTool } from '@/tools/PerpendicularLineTool';
 import { TangentLineToCircleThroughPointTool } from '@/tools/TangentLineToCircleThroughPointTool';
 import type { World } from '@/domain/world/World';
 import type { CommandStack } from '@/commands/CommandStack';
+import type { VisibilityModel } from '@/application/processTree/VisibilityModel';
 import { Command } from '@/commands/Command';
 import { createTestWorld } from '../../helpers/worldHelpers';
 import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
@@ -32,12 +33,12 @@ import { Vector3, Matrix3 } from 'three';
 import { CanvasPresentationSelector } from '@/application/canvasPresentation/CanvasPresentationSelector';
 import { createToolInteractionReadPort } from '@/application/tools/ToolInteractionReadPort';
 
-function liveInteractionQuery(worldRef: () => any, planeIdRef: () => string): CanvasInteractionQuery {
+function liveInteractionQuery(worldRef: () => any, visibilityModelRef: () => VisibilityModel, planeIdRef: () => string): CanvasInteractionQuery {
   return {
     hitTest(canvasPos: any, snapRadiusPixels: number, context: any, selectionMask?: any) {
       const world = worldRef();
       const activePlaneId = context.activePlaneId ?? planeIdRef();
-      const model = new CanvasPresentationSelector().select(world, { zoom: 1, panX: 0, panY: 0, width: 800, height: 600 }, { activePlaneId });
+      const model = new CanvasPresentationSelector().select(world, { zoom: 1, panX: 0, panY: 0, width: 800, height: 600 }, { activePlaneId, visibilityModel: visibilityModelRef() });
       return new CanvasInteractionQuery(model.queryItems).hitTest(canvasPos, snapRadiusPixels, context, selectionMask);
     }
   } as CanvasInteractionQuery;
@@ -46,6 +47,7 @@ import { CanvasInteractionQuery } from '@/application/canvasPresentation/CanvasI
 
 describe('Tool Argument Validation', () => {
   let world: World;
+  let visibilityModel: VisibilityModel;
   let commandStack: CommandStack;
   let planeId: string;
   let interactionQuery: CanvasInteractionQuery;
@@ -55,7 +57,7 @@ describe('Tool Argument Validation', () => {
       planeId,
       planeCoords: coords.clone(),
       canvasCoords: coords.clone(),
-      commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, commandStack) }),
+      commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, visibilityModel, commandStack) }),
       readPort: createToolInteractionReadPort(world),
       interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 },
@@ -64,7 +66,7 @@ describe('Tool Argument Validation', () => {
   }
 
   function addPoint(x: number, y: number): string {
-    const cmd = new Command('Add point', { world });
+    const cmd = new Command('Add point', { world, visibilityModel });
     const op = new AddFreePoint2DOp(planeId, new Vector3(x, y, 1));
     cmd.addAndExecute(op);
     cmd.commit();
@@ -73,10 +75,11 @@ describe('Tool Argument Validation', () => {
   }
 
   beforeEach(() => {
-    const { world: w, commandStack: cs } = createTestWorld();
+    const { world: w, visibilityModel: vm, commandStack: cs } = createTestWorld();
     world = w;
+    visibilityModel = vm;
     commandStack = cs;
-    interactionQuery = liveInteractionQuery(() => world, () => planeId);
+    interactionQuery = liveInteractionQuery(() => world, () => visibilityModel, () => planeId);
     planeId = world.getProjectionPlaneByLabel('P_H').id!;
   });
 

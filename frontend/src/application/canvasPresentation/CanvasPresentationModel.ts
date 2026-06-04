@@ -1,5 +1,6 @@
 import type { Matrix3, Vector3 } from 'three';
 import type { Primitive, ResolvedStyle, ViewportTransform } from '@/domain/presentation/Paper';
+import type { VisibilityModel } from '@/application/processTree/VisibilityModel';
 
 export type CanvasElementKind =
   | 'point'
@@ -153,4 +154,5 @@ export interface CanvasPresentationState {
   activePlaneId?: string;
   showProjectedElements?: boolean;
   gridVisible?: boolean;
+  visibilityModel: VisibilityModel;
 }

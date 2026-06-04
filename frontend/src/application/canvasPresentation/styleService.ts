@@ -9,8 +9,8 @@
  */
 
 import type { Element } from '@/domain/world/Element';
-import type { World } from '@/domain/world/World';
 import { ProcessTree, type Subprocess, type ActionGroup, type ProcessNode } from '@/domain/processTree/ProcessTree';
+import type { VisibilityModel } from '@/application/processTree/VisibilityModel';
 
 // Helper to get parents
 function getPathToNode(tree: ProcessTree, targetId: string): ProcessNode[] | null {
@@ -54,14 +54,13 @@ function getPathToNode(tree: ProcessTree, targetId: string): ProcessNode[] | nul
  *      the IMMEDIATE next node in the path MUST be marked isOutput=true.
  *      Even if an Action is Output, if its container Subprocess is not an Output, it is hidden.
  */
-export function resolveVisibility(element: Element, world: World): boolean {
+export function resolveVisibility(element: Element, tree: ProcessTree, visibilityModel: VisibilityModel): boolean {
   // Check element's own visualStyle - explicit hide overrides everything
   if (element.visualStyle?.visible === false) {
     return false;
   }
   
   // Phase 87: Encapsulation / Black Box Logic
-  const tree = world.getProcessTree();
   const actions = tree.getActionsProducingElement(element.id);
   if (actions.length === 0) return true; // System elements visible by default
 
@@ -89,13 +88,13 @@ export function resolveVisibility(element: Element, world: World): boolean {
     const child = fullChain[i + 1];
 
     if (parent.type === 'subprocess') {
-      const sp = parent as Subprocess;
-      if (!sp.showIntermediates) {
+      const parentVisibility = visibilityModel.get(parent.id, parent.type);
+      if (!parentVisibility.showIntermediates) {
         // Encapsulation Active
         // Child MUST be an Output to be visible.
         
         let isChildExposed = false;
-        if ('isOutput' in child && (child as any).isOutput) {
+        if (visibilityModel.get(child.id, child.type).isOutput) {
           isChildExposed = true;
         }
         

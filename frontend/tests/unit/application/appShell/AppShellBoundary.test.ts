@@ -116,7 +116,7 @@ describe('Cycle 022 runtime session persistence boundary', () => {
     expect(runtimeSession).toMatch(/import \{ ProjectService \} from '\.\/ProjectService'/);
     expect(runtimeSession).toMatch(/ProjectService\.serializeCommands\(this\.commandStack, this\.world\.peekNextId\(\), projectName\)/);
     expect(runtimeSession).toMatch(/ProjectService\.validateProjectData\(data\)/);
-    expect(runtimeSession).toMatch(/ProjectService\.deserializeCommands\(openedSession\.payload, this\.world, this\.commandStack, this\.changes\)/);
+    expect(runtimeSession).toMatch(/ProjectService\.deserializeCommands\(openedSession\.payload, this\.world, this\.visibilityModel, this\.commandStack, this\.changes\)/);
     expect(runtimeSession).not.toMatch(/@\/services\/ProjectService/);
     expect(appShellPorts).toMatch(/import type \{ ProjectData \} from '\.\/ProjectService'/);
     expect(appShellPorts).not.toMatch(/new ProjectService|ProjectService\.|ProjectSessionPersistencePort/);
@@ -245,7 +245,7 @@ describe('Cycle 024 command-producer runtime ports', () => {
   });
 
   it('wires canvas and process-history controllers with runtime-owned command producers', () => {
-    expect(runtimeSession).toMatch(/new RuntimeCommandProducer\(this\.world, this\.commandStack, this\.changes\)/);
+    expect(runtimeSession).toMatch(/new RuntimeCommandProducer\(this\.world, this\.visibilityModel, this\.commandStack, this\.changes\)/);
     expect(runtimeSession).toMatch(/commands: this\.commandProducer/);
     expect(canvasToolController).toMatch(/CanvasCommandProductionPort/);
     expect(processHistoryController).toMatch(/ProcessCommandExecutionPort/);

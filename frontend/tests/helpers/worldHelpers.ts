@@ -17,6 +17,7 @@
 import { World } from '../../src/domain/world/World';
 import { CommandStack } from '../../src/commands/CommandStack';
 import { initializeWorld } from '../../src/application/world/initializeWorld';
+import { VisibilityModel } from '../../src/application/processTree/VisibilityModel';
 import type { ProjectionPlane } from '../../src/domain/world/projectionPlane/ProjectionPlane';
 import type { FreePoint2D } from '../../src/domain/world/Point';
 import type { HingeLine } from '../../src/domain/world/HingeLine';
@@ -39,11 +40,12 @@ import type { HingeLine } from '../../src/domain/world/HingeLine';
  * 
  * @returns Object with initialized world and command stack
  */
-export function createTestWorld(): { world: World; commandStack: CommandStack } {
+export function createTestWorld(): { world: World; visibilityModel: VisibilityModel; commandStack: CommandStack } {
   const world = new World();
+  const visibilityModel = new VisibilityModel();
   const commandStack = new CommandStack();
-  initializeWorld(world, commandStack);
-  return { world, commandStack };
+  initializeWorld(world, visibilityModel, commandStack);
+  return { world, visibilityModel, commandStack };
 }
 
 /**
@@ -54,13 +56,15 @@ export function createTestWorld(): { world: World; commandStack: CommandStack } 
  */
 export function setupBasicWorld(): {
   world: World;
+  visibilityModel: VisibilityModel;
   commandStack: CommandStack;
   projPlaneH: string;
   projPlaneV: string;
 } {
-  const { world, commandStack } = createTestWorld();
+  const { world, visibilityModel, commandStack } = createTestWorld();
   return {
     world,
+    visibilityModel,
     commandStack,
     projPlaneH: getHorizontalPlaneId(world),
     projPlaneV: getVerticalPlaneId(world),

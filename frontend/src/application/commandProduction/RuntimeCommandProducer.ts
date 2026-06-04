@@ -3,6 +3,7 @@ import type { CommandStack } from '@/commands/CommandStack';
 import type { IOperation } from '@/commands/operations/IOperation';
 import type { OperationContext } from '@/commands/operations/OperationContext';
 import type { World } from '@/domain/world/World';
+import type { VisibilityModel } from '@/application/processTree/VisibilityModel';
 import type { ChangeNotifier } from '@/application/appShell/RuntimeChangePublisher';
 import type { ToolCommandResult } from '@/tools/ToolCommandIntents';
 import type { ProcessHistoryResult, ProcessHistoryState } from '@/application/processHistory/ProcessHistoryIntents';
@@ -18,13 +19,18 @@ const noopChangeNotifier: ChangeNotifier = { notifyChange: () => {} };
 
 export class RuntimeCommandProducer implements CanvasCommandProductionPort, ProcessCommandExecutionPort, ToolCommandExecutionPort {
   private readonly operationContext: OperationContext;
+  private readonly commandStack: CommandStack;
+  private readonly notifier: ChangeNotifier;
 
   constructor(
     world: World,
-    private readonly commandStack: CommandStack,
-    private readonly notifier: ChangeNotifier = noopChangeNotifier
+    visibilityModel: VisibilityModel,
+    commandStack: CommandStack,
+    notifier: ChangeNotifier = noopChangeNotifier
   ) {
-    this.operationContext = { world };
+    this.commandStack = commandStack;
+    this.notifier = notifier;
+    this.operationContext = { world, visibilityModel };
   }
 
   executeToolCommand(description: string, build: (command: CommandOperationBuilder) => void): ToolCommandResult {

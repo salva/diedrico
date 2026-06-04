@@ -12,7 +12,7 @@ export function buildCanvasPresentationModel(world: World, viewport: CanvasViewp
 
 export class CanvasPresentationSelector {
   select(world: World, viewport: CanvasViewportModel, state: CanvasPresentationState): CanvasPresentationModel {
-    const context = createCanvasPresentationContext(world);
+    const context = createCanvasPresentationContext(world, state.visibilityModel);
     const renderItems: CanvasRenderItem[] = [];
     const queryItems: CanvasQueryItem[] = [];
     const planeTransforms: CanvasPlaneTransformMap = new Map();
