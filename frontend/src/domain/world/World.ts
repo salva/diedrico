@@ -122,7 +122,7 @@ export class World {
   // Construction history
   private processTree: ProcessTree;
   
-  // Dependency tracking
+  // Dependency tracking: World owns the concrete service; collaborators receive ports.
   private dependencyService: DependencyService;
   
   private realizations: RealizationStore;
@@ -724,6 +724,7 @@ export class World {
   }
 
   getDependencyRegistrar(): DependencyRegistrarPort {
+    // Projection-plane storage uses this narrow port to register dependencies.
     return this.dependencyService;
   }
 

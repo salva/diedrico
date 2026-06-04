@@ -4,6 +4,10 @@ import type { Line2D, Line2DRealization2D } from '../Line';
 import type { Point2D, Point2DRealization2D } from '../Point';
 
 export interface ProjectionPlaneStoreMutationContext {
+  /**
+   * Supplied by World, which owns the concrete DependencyService.
+   * Projection-plane storage only needs the registration port.
+   */
   getDependencyRegistrar(): DependencyRegistrarPort;
 }
 

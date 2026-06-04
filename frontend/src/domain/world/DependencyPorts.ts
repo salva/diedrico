@@ -1,10 +1,13 @@
 /**
  * Dependency port interfaces.
  *
- * DependencyService owns the mutable dependency graph, but callers should
- * narrow themselves to the port surface they need: registrar for write
- * operations (register/unregister) or query for read operations (lookup,
- * deletion order).
+ * World is the sole owner of the mutable DependencyService instance.
+ *
+ * Callers should narrow themselves to the port surface they need: registrar
+ * for write operations (register/unregister) or query for read operations
+ * (lookup, deletion order). Projection-plane element storage registers and
+ * unregisters its elements through DependencyRegistrarPort instead of reaching
+ * for DependencyService directly.
  */
 
 export interface DependencyRegistrarPort {
