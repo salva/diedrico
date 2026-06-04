@@ -312,7 +312,7 @@ export class World {
    * @param planeToPaper2D - 3x3 homogeneous matrix: plane (u,v,1) → paper (x',y',1)
    * @param planeTo3D - 4x3 matrix: plane (u,v,1) → domain 3D (x,y,z,w)
    * @param projPlaneId - Optional ID (for redo support)
-   * @param name - Optional name/label (defaults to proj_plane_${id})
+   * @param name - Optional persisted plane name (defaults to proj_plane_${id})
    * @returns Created ProjectionPlane instance
    */
   addProjectionPlane(

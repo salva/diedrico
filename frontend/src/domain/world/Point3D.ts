@@ -29,6 +29,7 @@ import { reconstruct3DPointFromProjections } from '@/utils/threeUtils';
 export class Point3DByCoordinates extends Element3D {
   /** Serialization/DTO discriminator only; runtime dispatch uses instanceof. */
   readonly kind = 'Point3DByCoordinates';
+  /** Stable system-point name; Element.label stays optional user-facing display text. */
   name: string;
   coordinates: Vector4;  // Position [x, y, z, 1] - stored as Vector4
   projectionH?: string;  // ID of projection on P_H

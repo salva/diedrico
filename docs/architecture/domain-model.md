@@ -9,6 +9,12 @@ The domain model lives under `frontend/src/domain`. It represents the geometric 
 - `Point`, `Line`, `Segment`, `Circle`, `Guide`, hinge-line, and 3D element classes provide element definitions and realization methods.
 - `domain/calculations/*` contains pure calculation helpers for coordinates, intersections, distances, and perpendiculars.
 
+### Names and Labels
+
+- `Element.label` is the generic optional display label shared by geometric elements.
+- `ProjectionPlane.name` is also persisted by project command descriptors and is used as a stable plane identifier for replay, lookup, sorting, and default active-plane selection. Do not remove or rename it without a project schema version bump and migration.
+- `Point3DByCoordinates.name` names fixed/system coordinate points separately from optional `Element.label`; current command persistence does not replay these points, so any future consolidation should first add coverage for system-point creation and restore paths.
+
 ## Process and dependencies
 
 - `domain/processTree/*` models construction actions, action groups, subprocesses, and process tree structure.

@@ -43,6 +43,11 @@ export type ProjectionPlaneType = typeof PROJECTION_PLANE_TYPE[keyof typeof PROJ
 
 export abstract class ProjectionPlane extends Element {
   abstract readonly type: ProjectionPlaneType;
+  /**
+   * Stable projection-plane identifier persisted by project command descriptors.
+   * Element.label is currently initialized to the same value for generic element
+   * display, but name remains the replayed plane identity used by lookup/sorting.
+   */
   name: string;
   isActive: boolean;
   isVisible: boolean;

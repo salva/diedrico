@@ -19,6 +19,11 @@ export interface CanvasStyleState extends ResolvedStyle {}
 
 export interface CanvasRenderItem {
   id: string;
+  /**
+   * Presentation role used by the canvas renderer and style policy. This may be
+   * more specific than primitive.type, e.g. finite segments render as segment
+   * primitives and projected 3D points render as point primitives.
+   */
   kind: CanvasElementKind;
   sourceEntityId?: string;
   planeId?: string;
@@ -29,6 +34,10 @@ export interface CanvasRenderItem {
 
 export interface CanvasQueryItem {
   id: string;
+  /**
+   * Hit-test role for selectable plane-backed items. Decorative arcs and
+   * projected 3D overlays are render-only and intentionally excluded.
+   */
   kind: Exclude<CanvasElementKind, 'arc' | 'projected-3d-point' | 'projected-3d-line' | 'projected-3d-segment'>;
   elementId: string;
   elementType: string;
@@ -56,6 +65,7 @@ export interface CanvasPlaneTransformModel {
 }
 
 export interface CanvasPlanePointItem {
+  /** Plane-domain shape classification before paper-space primitive creation. */
   kind: 'point';
   elementId: string;
   planeId: string;
@@ -64,6 +74,7 @@ export interface CanvasPlanePointItem {
 }
 
 export interface CanvasPlaneLineItem {
+  /** Plane-domain shape classification before paper-space primitive creation. */
   kind: 'finite-segment' | 'guide' | 'sibling-guide' | 'half-hinge-line' | 'infinite-line';
   elementId: string;
   planeId: string;
@@ -80,6 +91,7 @@ export interface CanvasPlaneLineItem {
 }
 
 export interface CanvasPlaneCircleItem {
+  /** Plane-domain shape classification before paper-space primitive creation. */
   kind: 'circle';
   elementId: string;
   planeId: string;

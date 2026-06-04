@@ -22,20 +22,39 @@ export interface ProcessNodeBase {
   created: Date;
 }
 
+/**
+ * Groups construction-history entries for display and encapsulation.
+ *
+ * The visibility/style flags below describe how the recorded construction
+ * history should be presented. They are not geometric dependencies and do not
+ * affect realization, invalidation, or dependency-graph registration.
+ */
 export interface Subprocess extends ProcessNodeBase {
   type: 'subprocess';
   name: string;
   children: (Subprocess | ActionGroup)[];  // Mixed children, no direct actions
-  showIntermediates: boolean;              // Phase 87: Encapsulation (Positive Logic)
-  isOutput: boolean;                       // Output flag (punches through encapsulation)
-  defaultStyle?: VisualStyle;              // Default style inherited by contained elements
+  /** Display intermediate history entries inside this subprocess. */
+  showIntermediates: boolean;
+  /** Mark this subprocess as visible output when parent history is encapsulated. */
+  isOutput: boolean;
+  /** Presentation default for contained construction outputs; not geometry state. */
+  defaultStyle?: VisualStyle;
 }
 
+/**
+ * Atomic group of actions in the construction history.
+ *
+ * `isAuxiliary` and `isOutput` are presentation semantics for history/canvas
+ * visibility. They do not express geometric dependency relationships between
+ * the actions or their produced elements.
+ */
 export interface ActionGroup extends ProcessNodeBase {
   type: 'actionGroup';
   children: (ActionNode | null)[];         // Actions or tombstones (null = deleted)
-  isAuxiliary: boolean;                    // Auxiliary actions (lighter styling)
-  isOutput: boolean;                       // Output flag
+  /** Render/display this action group as auxiliary construction history. */
+  isAuxiliary: boolean;
+  /** Mark this action group as visible output in encapsulated history. */
+  isOutput: boolean;
 }
 
 export function createActionGroup(

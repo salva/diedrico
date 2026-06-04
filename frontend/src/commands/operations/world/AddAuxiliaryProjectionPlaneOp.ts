@@ -31,7 +31,7 @@ export class AddAuxiliaryProjectionPlaneOp implements IOperation {
     private t1HingeTraceId: string,         // ID of hinge trace line (T1)
     private t2OtherTraceId: string,         // ID of other trace line (T2)
     private t2PrimeLineId: string,          // ID of position/orientation line (T2')
-    private name?: string                   // Optional name for the plane
+    private name?: string                   // Optional persisted name for the plane
   ) {
   }
 
