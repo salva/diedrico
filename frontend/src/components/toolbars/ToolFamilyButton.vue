@@ -43,22 +43,27 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { computed } from 'vue';
 import type { ToolFamilyConfig } from '@/types/ToolConfig';
 import { useToolStore } from '@/stores/toolStore';
 
 // Props
 const props = defineProps<{
   family: ToolFamilyConfig;
+  isDropdownOpen: boolean;
+}>();
+
+const emit = defineEmits<{
+  (e: 'request-open'): void;
+  (e: 'close'): void;
 }>();
 
 // Store
 const toolStore = useToolStore();
 
-// State
-const isDropdownOpen = ref(false);
-
 // Computed
+const isDropdownOpen = computed(() => props.isDropdownOpen);
+
 const isAnyToolActive = computed(() => {
   return props.family.tools.some(tool => toolStore.isToolActive(tool.id as any));
 });
@@ -89,33 +94,17 @@ const activeToolTooltip = computed(() => {
 // Methods
 function activateLastUsed() {
   toolStore.activateToolFamily(props.family.id);
-  isDropdownOpen.value = false;
+  emit('close');
 }
 
 function toggleDropdown() {
-  isDropdownOpen.value = !isDropdownOpen.value;
+  emit('request-open');
 }
 
 function selectTool(toolId: string) {
   toolStore.selectSubTool(props.family.id, toolId);
-  isDropdownOpen.value = false;
+  emit('close');
 }
-
-// Close dropdown when clicking outside
-function handleClickOutside(event: MouseEvent) {
-  const target = event.target as HTMLElement;
-  if (!target.closest('.tool-family-button')) {
-    isDropdownOpen.value = false;
-  }
-}
-
-onMounted(() => {
-  document.addEventListener('click', handleClickOutside);
-});
-
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside);
-});
 </script>
 
 <style scoped>

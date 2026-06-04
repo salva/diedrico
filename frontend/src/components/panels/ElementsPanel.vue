@@ -31,37 +31,10 @@
               
               <div v-if="!planeGroup.isCollapsed" class="plane-content">
                 <ElementTypeGroup
-                  v-if="planeGroup.elements.points.length > 0"
-                  title="Points"
-                  :elements="planeGroup.elements.points"
-                  @select="handleElementSelect"
-                  @toggle-visibility="handleVisibilityToggle"
-                />
-                <ElementTypeGroup
-                  v-if="planeGroup.elements.lines.length > 0"
-                  title="Lines"
-                  :elements="planeGroup.elements.lines"
-                  @select="handleElementSelect"
-                  @toggle-visibility="handleVisibilityToggle"
-                />
-                <ElementTypeGroup
-                  v-if="planeGroup.elements.segments.length > 0"
-                  title="Segments"
-                  :elements="planeGroup.elements.segments"
-                  @select="handleElementSelect"
-                  @toggle-visibility="handleVisibilityToggle"
-                />
-                <ElementTypeGroup
-                  v-if="planeGroup.elements.circles.length > 0"
-                  title="Circles"
-                  :elements="planeGroup.elements.circles"
-                  @select="handleElementSelect"
-                  @toggle-visibility="handleVisibilityToggle"
-                />
-                <ElementTypeGroup
-                  v-if="planeGroup.elements.guides.length > 0"
-                  title="Guides"
-                  :elements="planeGroup.elements.guides"
+                  v-for="group in planeElementGroups(planeGroup.elements)"
+                  :key="group.title"
+                  :title="group.title"
+                  :elements="group.elements"
                   @select="handleElementSelect"
                   @toggle-visibility="handleVisibilityToggle"
                 />
@@ -85,30 +58,10 @@
           </div>
           
           <ElementTypeGroup
-            v-if="threeDElements.points.length > 0"
-            title="Points"
-            :elements="threeDElements.points"
-            @select="handleElementSelect"
-            @toggle-visibility="handleVisibilityToggle"
-          />
-          <ElementTypeGroup
-            v-if="threeDElements.lines.length > 0"
-            title="Lines"
-            :elements="threeDElements.lines"
-            @select="handleElementSelect"
-            @toggle-visibility="handleVisibilityToggle"
-          />
-          <ElementTypeGroup
-            v-if="threeDElements.segments.length > 0"
-            title="Segments"
-            :elements="threeDElements.segments"
-            @select="handleElementSelect"
-            @toggle-visibility="handleVisibilityToggle"
-          />
-          <ElementTypeGroup
-            v-if="threeDElements.planes.length > 0"
-            title="Planes"
-            :elements="threeDElements.planes"
+            v-for="group in threeDElementGroups"
+            :key="group.title"
+            :title="group.title"
+            :elements="group.elements"
             @select="handleElementSelect"
             @toggle-visibility="handleVisibilityToggle"
           />
@@ -126,8 +79,14 @@
 <script setup lang="ts">
 import { ref, computed, inject, onMounted, onUnmounted } from 'vue';
 import { ElementsPanelInjectionKey, SelectionActionsInjectionKey } from '@/application/appShell/RuntimeInjectionKeys';
+import type { ElementsPanelElementViewModel, ElementsPanelPlaneGroupViewModel } from '@/application/appShell/RuntimeViewPorts';
 import ElementTypeGroup from './ElementTypeGroup.vue';
 import { formatElementLabel } from '@/utils/formatUtils';
+
+interface ElementGroup {
+  title: string;
+  elements: readonly ElementsPanelElementViewModel[];
+}
 
 // Injected dependencies
 const elementsPanelPort = inject(ElementsPanelInjectionKey);
@@ -176,6 +135,27 @@ const projectionPlanesList = computed(() => readModel.value.projectionPlanes.map
 }));
 
 const threeDElements = computed(() => readModel.value.threeDElements);
+
+function presentElementGroups(groups: ElementGroup[]): ElementGroup[] {
+  return groups.filter(group => group.elements.length > 0);
+}
+
+function planeElementGroups(elements: ElementsPanelPlaneGroupViewModel['elements']): ElementGroup[] {
+  return presentElementGroups([
+    { title: 'Points', elements: elements.points },
+    { title: 'Lines', elements: elements.lines },
+    { title: 'Segments', elements: elements.segments },
+    { title: 'Circles', elements: elements.circles },
+    { title: 'Guides', elements: elements.guides },
+  ]);
+}
+
+const threeDElementGroups = computed(() => presentElementGroups([
+  { title: 'Points', elements: threeDElements.value.points },
+  { title: 'Lines', elements: threeDElements.value.lines },
+  { title: 'Segments', elements: threeDElements.value.segments },
+  { title: 'Planes', elements: threeDElements.value.planes },
+]));
 
 const hasAnyElements = computed(() => {
   return projectionPlanesList.value.some(p => p.hasElements) ||

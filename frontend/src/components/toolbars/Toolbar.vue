@@ -1,5 +1,5 @@
 <template>
-  <div class="toolbar">
+  <div ref="toolbarRef" class="toolbar">
     <!-- File operation buttons -->
     <div class="file-controls">
       <button
@@ -112,6 +112,9 @@
       v-for="family in TOOL_FAMILIES"
       :key="family.id"
       :family="family"
+      :is-dropdown-open="openToolFamilyId === family.id"
+      @request-open="handleToolFamilyRequestOpen(family.id)"
+      @close="closeToolFamilyDropdown"
     />
 
     <!-- T406: Login Status Widget at far right -->
@@ -172,6 +175,8 @@ const toolbarHistoryController = createToolbarHistoryController({
 
 // Reactive trigger for history updates (Phase 91)
 const historyUpdate = ref(0);
+const toolbarRef = ref<HTMLElement | null>(null);
+const openToolFamilyId = ref<string | null>(null);
 let unsubscribeHistory: (() => void) | undefined;
 
 // Computed properties for undo/redo availability
@@ -203,13 +208,29 @@ onMounted(() => {
   unsubscribeHistory = toolbarHistoryController.subscribe(() => {
     historyUpdate.value++;
   });
+  document.addEventListener('click', handleClickOutside);
 });
 
 onUnmounted(() => {
   if (unsubscribeHistory) {
     unsubscribeHistory();
   }
+  document.removeEventListener('click', handleClickOutside);
 });
+
+function handleClickOutside(event: MouseEvent) {
+  if (toolbarRef.value && !toolbarRef.value.contains(event.target as Node)) {
+    closeToolFamilyDropdown();
+  }
+}
+
+function handleToolFamilyRequestOpen(familyId: string) {
+  openToolFamilyId.value = openToolFamilyId.value === familyId ? null : familyId;
+}
+
+function closeToolFamilyDropdown() {
+  openToolFamilyId.value = null;
+}
 
 /**
  * Handle undo action

@@ -70,6 +70,7 @@ export function createAppShellRuntime(options: AppShellRuntimeOptions) {
     authStore: ports.authStore,
     lastProjectRepository: ports.lastProjectRepository,
   });
+  const fitToView = ports.callbacks.fitToView;
   const keyboard = new KeyboardShortcutRouter({
     commandHistory,
     toolStore: ports.toolStore,
@@ -77,7 +78,7 @@ export function createAppShellRuntime(options: AppShellRuntimeOptions) {
     projectSession,
     selection,
     activePlane: { cycleActivePlane },
-    fitToView: ports.callbacks.fitToView,
+    fitToView,
     startRename: ports.callbacks.startRename,
   });
 
@@ -128,6 +129,7 @@ export function createAppShellRuntime(options: AppShellRuntimeOptions) {
     planeOptions,
     setActivePlaneId,
     cycleActivePlane,
+    fitToView,
     canvasCommandProducerPort,
     toolInteractionReadPort,
     processHistoryCommandPort,

@@ -26,7 +26,7 @@
       <Toolbar 
         @new-project="runtime.actions.newProject"
         @open-project="runtime.actions.showProjectChooser"
-        @fit-to-view="handleFitToView"
+        @fit-to-view="runtime.fitToView"
         @sign-in="runtime.actions.toolbarSignIn"
         @sign-out="runtime.actions.toolbarSignOut"
       />
@@ -182,10 +182,6 @@ const startupFiles = runtime.state.startupFiles;
 const startupLoading = runtime.state.startupLoading;
 const startupLoadingFiles = runtime.state.startupLoadingFiles;
 const startupError = runtime.state.startupError;
-
-function handleFitToView() {
-  svgCanvasRef.value?.fitToView();
-}
 
 onMounted(() => runtime.actions.start());
 onUnmounted(() => runtime.actions.dispose());
