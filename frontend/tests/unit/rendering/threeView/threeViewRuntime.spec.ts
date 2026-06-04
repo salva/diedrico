@@ -16,7 +16,7 @@ describe('ThreeViewRuntime', () => {
       guides: [{ id: 'guide', kind: 'guide-intersection-marker', visible: true, style: { color: 0 }, renderGroup: 'guides', position: { x: 0, y: 0, z: 0 } }],
       hinges: [{ id: 'hinge', kind: 'hinge-line', visible: true, style: { color: 0 }, renderGroup: 'hinges', start: { x: 0, y: 0, z: 0 }, end: { x: 1, y: 0, z: 0 } }],
     };
-    const controller = { buildModel: vi.fn(() => model) };
+    const controller = { select: vi.fn(() => model) };
     const replaced: Array<{ group: ThreeViewRuntimeGroup; objects: THREE.Object3D[] }> = [];
     const host: ThreeViewRuntimeHost = {
       registry: { replaceGroup: vi.fn((group, objects) => replaced.push({ group, objects })) },
@@ -42,8 +42,8 @@ describe('ThreeViewRuntime', () => {
 
     new ThreeViewRuntime({ host, controller, adapters }).refresh(input);
 
-    expect(controller.buildModel).toHaveBeenCalledOnce();
-    expect(controller.buildModel).toHaveBeenCalledWith(input);
+    expect(controller.select).toHaveBeenCalledOnce();
+    expect(controller.select).toHaveBeenCalledWith(input);
     expect(adapters.projectionPlanes.createObjects).toHaveBeenCalledWith(model.projectionPlanes);
     expect(adapters.planarElements.createObjects).toHaveBeenCalledWith(model.planarElements);
     expect(adapters.reconstructedElements.createObjects).toHaveBeenCalledWith(model.reconstructedElements);
@@ -65,7 +65,7 @@ describe('ThreeViewRuntime', () => {
       resize: vi.fn(),
       dispose: vi.fn(),
     };
-    const runtime = new ThreeViewRuntime({ host, controller: { buildModel: vi.fn() as never } });
+    const runtime = new ThreeViewRuntime({ host, controller: { select: vi.fn() as never } });
     const mount = { container: document.createElement('div'), canvas: document.createElement('canvas') };
 
     runtime.mount(mount);

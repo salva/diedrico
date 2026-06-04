@@ -1,5 +1,5 @@
 import { Quaternion, Vector3 } from 'three';
-import type { ThreeGuideAdapter } from './ThreePresentationAdapter';
+import type { ThreePresentationContext } from './ThreePresentationContext';
 import { isGuide2D, isSiblingGuide2D } from '@/domain/world/Guide';
 import { getPlaneMeshSize } from '@/config/rendering3D';
 import { applyMatrix4x3, domainDirectionToThreeJS, domainToThreeJS } from '@/utils/threeUtils';
@@ -14,14 +14,14 @@ export interface ThreeGuideReadPort {
   getGuideIntersectionModels(): ThreeGuideIntersectionReadModel;
 }
 
-export function createThreeGuideReadPort(adapter: ThreeGuideAdapter): ThreeGuideReadPort {
-  const realizationContext = adapter.realizationContext;
+export function createThreeGuideReadPort(context: ThreePresentationContext): ThreeGuideReadPort {
+  const realizationContext = context.realizationContext;
   return {
     getSelectedGuideModels: (selectedIds: readonly string[]) => selectedIds.flatMap(selectedId => {
       try {
-        const line = adapter.getLine2D(selectedId);
+        const line = context.getLine2D(selectedId);
         if (!line || (!isGuide2D(line) && !isSiblingGuide2D(line)) || !visibleFromDomain(line)) return [];
-        const planeRealization = adapter.getProjectionPlane3DRealization(line.planeId);
+        const planeRealization = context.getProjectionPlane3DRealization(line.planeId);
         const guideRealization = line.realize2D(realizationContext);
         if (!planeRealization?.feasible || !guideRealization?.feasible) return [];
         const guidePoint3D = applyMatrix4x3(guideRealization.point1, planeRealization.planeTo3D);
@@ -46,22 +46,22 @@ export function createThreeGuideReadPort(adapter: ThreeGuideAdapter): ThreeGuide
       }
     }),
     getGuideIntersectionModels: () => ({
-      points: adapter.get3DPoints().flatMap(point => {
+      points: context.get3DPoints().flatMap(point => {
         if (!visibleFromDomain(point)) return [];
-        const realization = adapter.get3DPointRealization(point.id!);
+        const realization = context.get3DPointRealization(point.id!);
         if (!realization?.isFeasible()) return [];
         const [x, y, z] = realization.getCartesian();
         return [{ id: point.id!, visible: true, style: THREE_STYLE.guideMarker, position: { x, y, z } }];
       }),
-      lines: adapter.get3DLines().flatMap(line => {
+      lines: context.get3DLines().flatMap(line => {
         if (!visibleFromDomain(line)) return [];
-        const realization = adapter.get3DLineRealization(line.id!);
+        const realization = context.get3DLineRealization(line.id!);
         if (!realization?.isFeasible()) return [];
         return [{ id: line.id!, visible: true, style: THREE_STYLE.guideMarker, point: v(realization.point), direction: v(realization.getDirection()) }];
       }),
-      segments: adapter.get3DSegments().flatMap(segment => {
+      segments: context.get3DSegments().flatMap(segment => {
         if (!visibleFromDomain(segment)) return [];
-        const realization = adapter.get3DSegmentRealization(segment.id!);
+        const realization = context.get3DSegmentRealization(segment.id!);
         if (!realization?.isFeasible()) return [];
         return [{ id: segment.id!, visible: true, style: THREE_STYLE.guideMarker, start: v(realization.startPoint), end: v(realization.endPoint) }];
       }),

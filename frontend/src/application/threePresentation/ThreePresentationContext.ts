@@ -7,19 +7,11 @@ import type { ProjectionPlaneRealization3D } from '@/domain/world/projectionPlan
 import type { World } from '@/domain/world/World';
 import { createThreeRealizationContext, type ThreeRealizationContext } from './ThreeRealizationContext';
 
-export interface ThreeProjectionPlaneAdapter {
-  getProjectionPlanes(): ProjectionPlane[];
-  getProjectionPlane3DRealization(id: string): ProjectionPlaneRealization3D | undefined;
-  get3DPlaneRealization(id: string): Plane3DRealization3D | undefined;
-}
-
-export interface ThreePlanarElementAdapter {
+export interface ThreePresentationContext {
   readonly realizationContext: ThreeRealizationContext;
   getProjectionPlanes(): ProjectionPlane[];
+  getHingeLines(): HingeLine[];
   getProjectionPlane3DRealization(id: string): ProjectionPlaneRealization3D | undefined;
-}
-
-export interface ThreeReconstructedElementAdapter {
   get3DPlaneRealization(id: string): Plane3DRealization3D | undefined;
   get3DPoints(): Element3D[];
   get3DLines(): Element3D[];
@@ -28,28 +20,10 @@ export interface ThreeReconstructedElementAdapter {
   get3DPointRealization(id: string): Point3DRealization3D | undefined;
   get3DLineRealization(id: string): Line3DRealization3D | undefined;
   get3DSegmentRealization(id: string): Segment3DRealization3D | undefined;
-}
-
-export interface ThreeGuideAdapter {
-  readonly realizationContext: ThreeRealizationContext;
   getLine2D(id: string): Line2D | undefined;
-  getProjectionPlane3DRealization(id: string): ProjectionPlaneRealization3D | undefined;
-  get3DPoints(): Element3D[];
-  get3DLines(): Element3D[];
-  get3DSegments(): Element3D[];
-  get3DPointRealization(id: string): Point3DRealization3D | undefined;
-  get3DLineRealization(id: string): Line3DRealization3D | undefined;
-  get3DSegmentRealization(id: string): Segment3DRealization3D | undefined;
 }
 
-export interface ThreeHingeAdapter {
-  readonly realizationContext: ThreeRealizationContext;
-  getHingeLines(): HingeLine[];
-}
-
-export interface ThreePresentationAdapter extends ThreeProjectionPlaneAdapter, ThreePlanarElementAdapter, ThreeReconstructedElementAdapter, ThreeGuideAdapter, ThreeHingeAdapter {}
-
-export function createThreePresentationAdapter(world: World): ThreePresentationAdapter {
+export function createThreePresentationContext(world: World): ThreePresentationContext {
   const getProjectionPlanes = () => world.getAllProjectionPlanes();
   const getHingeLines = () => world.getAllHingeLines();
   return {

@@ -30,7 +30,7 @@ import { CanvasToolController } from '@/application/tools/CanvasToolController';
 import { RuntimeCommandProducer } from '@/application/commandProduction/RuntimeCommandProducer';
 import { Vector3, Matrix3 } from 'three';
 import { CanvasPresentationSelector } from '@/application/canvasPresentation/CanvasPresentationSelector';
-import { createCanvasWorldReadPort } from '@/application/canvasPresentation/CanvasWorldReadPort';
+import { createCanvasPresentationContext } from '@/application/canvasPresentation/CanvasPresentationContext';
 import { createToolInteractionReadPort } from '@/application/tools/ToolInteractionReadPort';
 
 function liveInteractionQuery(worldRef: () => any, planeIdRef: () => string): CanvasInteractionQuery {
@@ -38,7 +38,7 @@ function liveInteractionQuery(worldRef: () => any, planeIdRef: () => string): Ca
     hitTest(canvasPos: any, snapRadiusPixels: number, context: any, selectionMask?: any) {
       const world = worldRef();
       const activePlaneId = context.activePlaneId ?? planeIdRef();
-      const model = new CanvasPresentationSelector().select(createCanvasWorldReadPort(world), { zoom: 1, panX: 0, panY: 0, width: 800, height: 600 }, { activePlaneId });
+      const model = new CanvasPresentationSelector().select(createCanvasPresentationContext(world), { zoom: 1, panX: 0, panY: 0, width: 800, height: 600 }, { activePlaneId });
       return new CanvasInteractionQuery(model.queryItems).hitTest(canvasPos, snapRadiusPixels, context, selectionMask);
     }
   } as CanvasInteractionQuery;

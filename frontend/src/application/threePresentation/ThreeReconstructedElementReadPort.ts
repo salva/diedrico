@@ -1,5 +1,5 @@
 import { Quaternion, Vector3, Vector4 } from 'three';
-import type { ThreeReconstructedElementAdapter } from './ThreePresentationAdapter';
+import type { ThreePresentationContext } from './ThreePresentationContext';
 import { getPlaneMeshSize } from '@/config/rendering3D';
 import { domainDirectionToThreeJS, domainToThreeJS } from '@/utils/threeUtils';
 import type { ThreeReconstructedReadModel } from './ThreePresentationReadModel';
@@ -12,33 +12,33 @@ export interface ThreeReconstructedElementReadPort {
   getReconstructedModels(): ThreeReconstructedReadModel;
 }
 
-export function createThreeReconstructedElementReadPort(adapter: ThreeReconstructedElementAdapter): ThreeReconstructedElementReadPort {
+export function createThreeReconstructedElementReadPort(context: ThreePresentationContext): ThreeReconstructedElementReadPort {
   return {
     getReconstructedModels: () => ({
-      points: adapter.get3DPoints().flatMap(point => {
+      points: context.get3DPoints().flatMap(point => {
         if (!visibleFromDomain(point)) return [];
-        const realization = adapter.get3DPointRealization(point.id!);
+        const realization = context.get3DPointRealization(point.id!);
         if (!realization?.isFeasible()) return [];
         const [x, y, z] = realization.getCartesian();
         return [{ id: point.id!, kind: 'reconstructed-point' as const, visible: true, style: reconstructedStyleFromDomain(point), position: v(domainToThreeJS(new Vector4(x, y, z, 1))) }];
       }),
-      lines: adapter.get3DLines().flatMap(line => {
+      lines: context.get3DLines().flatMap(line => {
         if (!visibleFromDomain(line)) return [];
-        const realization = adapter.get3DLineRealization(line.id!);
+        const realization = context.get3DLineRealization(line.id!);
         if (!realization?.isFeasible()) return [];
         const point = domainToThreeJS(realization.point);
         const direction = domainDirectionToThreeJS(new Vector3(realization.getDirection().x, realization.getDirection().y, realization.getDirection().z)).normalize();
         return [{ id: line.id!, kind: 'reconstructed-line' as const, visible: true, style: reconstructedStyleFromDomain(line), start: v(point.clone().add(direction.clone().multiplyScalar(-THREE_STYLE.infiniteLineExtent / 2))), end: v(point.clone().add(direction.clone().multiplyScalar(THREE_STYLE.infiniteLineExtent / 2))) }];
       }),
-      segments: adapter.get3DSegments().flatMap(segment => {
+      segments: context.get3DSegments().flatMap(segment => {
         if (!visibleFromDomain(segment)) return [];
-        const realization = adapter.get3DSegmentRealization(segment.id!);
+        const realization = context.get3DSegmentRealization(segment.id!);
         if (!realization?.isFeasible()) return [];
         return [{ id: segment.id!, kind: 'reconstructed-segment' as const, visible: true, style: reconstructedStyleFromDomain(segment), start: v(domainToThreeJS(realization.startPoint)), end: v(domainToThreeJS(realization.endPoint)) }];
       }),
-      planes: adapter.get3DPlanes().flatMap(plane => {
+      planes: context.get3DPlanes().flatMap(plane => {
         if (!visibleFromDomain(plane)) return [];
-        const realization = adapter.get3DPlaneRealization(plane.id!);
+        const realization = context.get3DPlaneRealization(plane.id!);
         if (!realization?.feasible || !realization.originPoint || !realization.normal) return [];
         const origin = domainToThreeJS(realization.originPoint);
         const normal = domainDirectionToThreeJS(new Vector3(realization.normal.x, realization.normal.y, realization.normal.z)).normalize();

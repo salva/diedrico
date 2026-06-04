@@ -3,17 +3,24 @@ import { HalfHingeLine2D } from '@/domain/world/HingeLine';
 import { Segment2DByPoints } from '@/domain/world/Segment';
 import type { ProjectionElementRealizationContext } from '@/domain/world/projectionPlane/ProjectionPlaneContext';
 import type { World } from '@/domain/world/World';
-import type { CanvasPlaneCanvasItems, CanvasPlaneItem, CanvasPlaneLineItem, CanvasPlaneTransformModel, CanvasRenderItem } from './CanvasPresentationModel';
+import type { CanvasPlaneCanvasItems, CanvasPlaneItem, CanvasPlaneLineItem, CanvasPlaneTransformModel } from './CanvasPresentationModel';
 import { resolveVisibility } from '@/domain/world/styleService';
 import { Projected3DCanvasSelector } from './Projected3DCanvasSelector';
 import { createProjected3DCanvasReadPort } from './Projected3DCanvasReadPort';
 import { createWorldRealizationContext } from '@/application/presentation/WorldRealizationContext';
 
-export interface CanvasWorldReadPort {
-  getCanvasPlaneTransforms(): CanvasPlaneTransformModel[];
-  getPlaneCanvasItems(): CanvasPlaneCanvasItems[];
-  getProjected3DCanvasItems(planeTransforms: Map<string, CanvasPlaneTransformModel>): CanvasRenderItem[];
+export function createCanvasPresentationContext(world: World) {
+  const realizationContext = createWorldRealizationContext(world);
+  const projected3DSelector = new Projected3DCanvasSelector();
+  return {
+    getCanvasPlaneTransforms: () => getCanvasPlaneTransforms(world),
+    getPlaneCanvasItems: () => getPlaneCanvasItems(world, realizationContext),
+    getProjected3DCanvasItems: (planeTransforms: CanvasPlaneTransformMap) => projected3DSelector.selectWorldProjection(createProjected3DCanvasReadPort(world, realizationContext), planeTransforms),
+  };
 }
+
+export type CanvasPresentationContext = ReturnType<typeof createCanvasPresentationContext>;
+export type CanvasPlaneTransformMap = Map<string, CanvasPlaneTransformModel>;
 
 function getCanvasPlaneTransforms(world: World): CanvasPlaneTransformModel[] {
   return world.getAllProjectionPlanes().flatMap((plane) => {
@@ -84,18 +91,6 @@ function getPlaneCanvasItems(world: World, context: ProjectionElementRealization
     return [{ planeId: plane.id, transform, items }];
   });
 }
-
-export function createCanvasWorldReadPort(world: World): CanvasWorldReadPort {
-  const realizationContext = createWorldRealizationContext(world);
-  const projected3DSelector = new Projected3DCanvasSelector();
-  return {
-    getCanvasPlaneTransforms: () => getCanvasPlaneTransforms(world),
-    getPlaneCanvasItems: () => getPlaneCanvasItems(world, realizationContext),
-    getProjected3DCanvasItems: planeTransforms => projected3DSelector.selectWorldProjection(createProjected3DCanvasReadPort(world, realizationContext), planeTransforms),
-  };
-}
-
-export type CanvasPlaneTransformMap = Map<string, CanvasPlaneTransformModel>;
 
 function optionalArcGeometry(line: object): CanvasPlaneLineItem['arcGeometry'] | undefined {
   return 'arcGeometry' in line ? line.arcGeometry as CanvasPlaneLineItem['arcGeometry'] | undefined : undefined;

@@ -11,8 +11,8 @@ import { ProcessHistoryController } from '@/application/processHistory/ProcessHi
 import type { ActivePlanePort, CommandHistoryPort, OpenedProjectSession, ProjectSessionPersistencePayload, ProjectSessionPersistencePort, SelectionReadPort } from './AppShellPorts';
 import type { ProjectSessionKernel } from './ProjectSessionKernel';
 import type { RuntimeSessionPersistenceRestoreHandle, RuntimeSessionPersistenceSnapshotHandle } from './ProjectSessionPersistenceTargets';
-import { CanvasPresentationController } from '@/application/canvasPresentation/CanvasPresentationController';
-import { createCanvasWorldReadPort } from '@/application/canvasPresentation/CanvasWorldReadPort';
+import { createCanvasPresentationContext } from '@/application/canvasPresentation/CanvasPresentationContext';
+import { CanvasPresentationSelector } from '@/application/canvasPresentation/CanvasPresentationSelector';
 import { createThreePresentationReadPorts } from '@/application/threePresentation/ThreeWorldReadPort';
 import { screenTo3D } from '@/utils/coordinateTransform';
 import { FreePoint2D } from '@/domain/world/Point';
@@ -32,15 +32,15 @@ export class RuntimeSession implements ProjectSessionKernel {
 
 
   canvasViewPort(): CanvasViewPort {
-    const canvasReadPort = createCanvasWorldReadPort(this.world);
-    const canvasPresentationController = new CanvasPresentationController();
+    const canvasContext = createCanvasPresentationContext(this.world);
+    const canvasPresentationSelector = new CanvasPresentationSelector();
     return {
       subscribeToChanges: (listener) => this.changes.subscribeToChanges(listener),
       unsubscribeFromChanges: (listener) => this.changes.unsubscribeFromChanges(listener),
       getActivePlaneId: () => this.getActivePlaneId(),
-      getPlaneTransformsForInput: () => new Map(canvasReadPort.getCanvasPlaneTransforms().map(transform => [transform.planeId, transform.paperToPlane])),
-      buildPresentationModel: (viewport, options) => canvasPresentationController.buildModel(
-        canvasReadPort,
+      getPlaneTransformsForInput: () => new Map(canvasContext.getCanvasPlaneTransforms().map(transform => [transform.planeId, transform.paperToPlane])),
+      buildPresentationModel: (viewport, options) => canvasPresentationSelector.select(
+        canvasContext,
         viewport,
         {
           hoveredIds: options.hoveredElementId ? new Set([options.hoveredElementId]) : undefined,

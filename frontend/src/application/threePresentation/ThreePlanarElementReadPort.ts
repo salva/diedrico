@@ -1,5 +1,5 @@
 import { Vector3 } from 'three';
-import type { ThreePlanarElementAdapter } from './ThreePresentationAdapter';
+import type { ThreePresentationContext } from './ThreePresentationContext';
 import { Segment2DByPoints } from '@/domain/world/Segment';
 import { applyMatrix4x3, domainToThreeJS, type Matrix4x3 } from '@/utils/threeUtils';
 import type { ThreePlanarElementSourceDto, ThreePlanarPlaneReadModel } from './ThreePresentationReadModel';
@@ -12,12 +12,12 @@ export interface ThreePlanarElementReadPort {
   getPlanarPlaneModels(): ThreePlanarPlaneReadModel[];
 }
 
-export function createThreePlanarElementReadPort(adapter: ThreePlanarElementAdapter): ThreePlanarElementReadPort {
-  const getProjectionPlanes = () => adapter.getProjectionPlanes();
-  const realizationContext = adapter.realizationContext;
+export function createThreePlanarElementReadPort(context: ThreePresentationContext): ThreePlanarElementReadPort {
+  const getProjectionPlanes = () => context.getProjectionPlanes();
+  const realizationContext = context.realizationContext;
   return {
     getPlanarPlaneModels: () => getProjectionPlanes().flatMap(plane => {
-      const planeRealization = adapter.getProjectionPlane3DRealization(plane.id);
+      const planeRealization = context.getProjectionPlane3DRealization(plane.id);
       if (!planeRealization?.feasible) return [];
       const elements: ThreePlanarElementSourceDto[] = [];
       for (const point of plane.getAllPoints()) {

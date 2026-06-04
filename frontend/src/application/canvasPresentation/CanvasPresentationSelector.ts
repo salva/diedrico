@@ -2,10 +2,10 @@ import { RenderLayer, type LinePrimitive, type PointPrimitive, type SegmentPrimi
 import type { CanvasElementKind, CanvasPlaneItem, CanvasPresentationModel, CanvasPresentationState, CanvasQueryItem, CanvasRenderItem, CanvasViewportModel } from './CanvasPresentationModel';
 import { selectCanvasGrid } from './CanvasGridSelector';
 import { circleStyle, guideStyle, hingeStyle, lineStyle, segmentStyle } from './CanvasStylePolicy';
-import type { CanvasPlaneTransformMap, CanvasWorldReadPort } from './CanvasWorldReadPort';
+import type { CanvasPlaneTransformMap, CanvasPresentationContext } from './CanvasPresentationContext';
 
 export class CanvasPresentationSelector {
-  select(readPort: CanvasWorldReadPort, viewport: CanvasViewportModel, state: CanvasPresentationState): CanvasPresentationModel {
+  select(readPort: CanvasPresentationContext, viewport: CanvasViewportModel, state: CanvasPresentationState): CanvasPresentationModel {
     const renderItems: CanvasRenderItem[] = [];
     const queryItems: CanvasQueryItem[] = [];
     const planeTransforms: CanvasPlaneTransformMap = new Map();

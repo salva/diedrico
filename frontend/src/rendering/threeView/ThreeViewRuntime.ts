@@ -8,7 +8,7 @@ import type {
   ThreePresentationInput,
   ThreePresentationModel,
 } from '@/application/threePresentation/ThreePresentationModel';
-import { ThreePresentationController } from '@/application/threePresentation/ThreePresentationController';
+import { ThreePresentationSelector } from '@/application/threePresentation/ThreePresentationSelector';
 import { ThreeSceneHost, type ThreeSceneHostMount } from './ThreeSceneHost';
 import { ProjectionPlaneSceneAdapter } from './ProjectionPlaneSceneAdapter';
 import { PlanarElementSceneAdapter } from './PlanarElementSceneAdapter';
@@ -28,7 +28,7 @@ export interface ThreeViewRuntimeHost {
 }
 
 export interface ThreeViewPresentationController {
-  buildModel(input: ThreePresentationInput): ThreePresentationModel;
+  select(input: ThreePresentationInput): ThreePresentationModel;
 }
 
 export interface ThreeViewSceneAdapter<TDto> {
@@ -58,7 +58,7 @@ export class ThreeViewRuntime {
 
   constructor(options: ThreeViewRuntimeOptions = {}) {
     this.host = options.host ?? new ThreeSceneHost();
-    this.controller = options.controller ?? new ThreePresentationController();
+    this.controller = options.controller ?? new ThreePresentationSelector();
     this.adapters = {
       projectionPlanes: options.adapters?.projectionPlanes ?? new ProjectionPlaneSceneAdapter(),
       planarElements: options.adapters?.planarElements ?? new PlanarElementSceneAdapter(),
@@ -71,7 +71,7 @@ export class ThreeViewRuntime {
   mount(mount: ThreeSceneHostMount): void { this.host.mount(mount); }
 
   refresh(input: ThreePresentationInput): void {
-    const model = this.controller.buildModel(input);
+    const model = this.controller.select(input);
     this.replaceGroup('projectionPlanes', this.adapters.projectionPlanes.createObjects(model.projectionPlanes));
     this.replaceGroup('planarElements', this.adapters.planarElements.createObjects(model.planarElements));
     this.replaceGroup('reconstructedElements', this.adapters.reconstructedElements.createObjects(model.reconstructedElements));
