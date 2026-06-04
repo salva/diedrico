@@ -1,18 +1,11 @@
 import type * as THREE from 'three';
-import type {
-  GuidePresentationDto,
-  HingePresentationDto,
-  PlanarElementPresentationDto,
-  ProjectionPlanePresentationDto,
-  ReconstructedElementPresentationDto,
-  ThreePresentationModel,
-} from '@/application/threePresentation/ThreePresentationModel';
+import type { ThreePresentationModel } from '@/application/threePresentation/ThreePresentationModel';
 import { ThreeSceneHost, type ThreeSceneHostMount } from './ThreeSceneHost';
-import { ProjectionPlaneSceneAdapter } from './ProjectionPlaneSceneAdapter';
-import { PlanarElementSceneAdapter } from './PlanarElementSceneAdapter';
-import { ReconstructedElementSceneAdapter } from './ReconstructedElementSceneAdapter';
-import { GuideSceneAdapter } from './GuideSceneAdapter';
-import { HingeSceneAdapter } from './HingeSceneAdapter';
+import { createProjectionPlaneSceneObjects } from './ProjectionPlaneSceneAdapter';
+import { createPlanarElementSceneObjects } from './PlanarElementSceneAdapter';
+import { createReconstructedElementSceneObjects } from './ReconstructedElementSceneAdapter';
+import { createGuideSceneObjects } from './GuideSceneAdapter';
+import { createHingeSceneObjects } from './HingeSceneAdapter';
 
 export interface ThreeViewSceneRegistry {
   replaceGroup(group: ThreeViewRuntimeGroup, objects: THREE.Object3D[]): void;
@@ -25,48 +18,27 @@ export interface ThreeViewRuntimeHost {
   dispose(): void;
 }
 
-export interface ThreeViewSceneAdapter<TDto> {
-  createObjects(dtos: TDto[]): THREE.Object3D[];
-}
-
 export type ThreeViewRuntimeGroup = 'projectionPlanes' | 'planarElements' | 'reconstructedElements' | 'guides' | 'hinges';
-
-export interface ThreeViewRuntimeAdapters {
-  projectionPlanes: ThreeViewSceneAdapter<ProjectionPlanePresentationDto>;
-  planarElements: ThreeViewSceneAdapter<PlanarElementPresentationDto>;
-  reconstructedElements: ThreeViewSceneAdapter<ReconstructedElementPresentationDto>;
-  guides: ThreeViewSceneAdapter<GuidePresentationDto>;
-  hinges: ThreeViewSceneAdapter<HingePresentationDto>;
-}
 
 export interface ThreeViewRuntimeOptions {
   host?: ThreeViewRuntimeHost;
-  adapters?: Partial<ThreeViewRuntimeAdapters>;
 }
 
 export class ThreeViewRuntime {
   private readonly host: ThreeViewRuntimeHost;
-  private readonly adapters: ThreeViewRuntimeAdapters;
 
   constructor(options: ThreeViewRuntimeOptions = {}) {
     this.host = options.host ?? new ThreeSceneHost();
-    this.adapters = {
-      projectionPlanes: options.adapters?.projectionPlanes ?? new ProjectionPlaneSceneAdapter(),
-      planarElements: options.adapters?.planarElements ?? new PlanarElementSceneAdapter(),
-      reconstructedElements: options.adapters?.reconstructedElements ?? new ReconstructedElementSceneAdapter(),
-      guides: options.adapters?.guides ?? new GuideSceneAdapter(),
-      hinges: options.adapters?.hinges ?? new HingeSceneAdapter(),
-    };
   }
 
   mount(mount: ThreeSceneHostMount): void { this.host.mount(mount); }
 
   refresh(model: ThreePresentationModel): void {
-    this.replaceGroup('projectionPlanes', this.adapters.projectionPlanes.createObjects(model.projectionPlanes));
-    this.replaceGroup('planarElements', this.adapters.planarElements.createObjects(model.planarElements));
-    this.replaceGroup('reconstructedElements', this.adapters.reconstructedElements.createObjects(model.reconstructedElements));
-    this.replaceGroup('guides', this.adapters.guides.createObjects(model.guides));
-    this.replaceGroup('hinges', this.adapters.hinges.createObjects(model.hinges));
+    this.replaceGroup('projectionPlanes', createProjectionPlaneSceneObjects(model.projectionPlanes));
+    this.replaceGroup('planarElements', createPlanarElementSceneObjects(model.planarElements));
+    this.replaceGroup('reconstructedElements', createReconstructedElementSceneObjects(model.reconstructedElements));
+    this.replaceGroup('guides', createGuideSceneObjects(model.guides));
+    this.replaceGroup('hinges', createHingeSceneObjects(model.hinges));
   }
 
   resize(): void { this.host.resize(); }

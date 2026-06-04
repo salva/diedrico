@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
-import { ProjectionPlaneSceneAdapter } from '@/rendering/threeView/ProjectionPlaneSceneAdapter';
-import { PlanarElementSceneAdapter } from '@/rendering/threeView/PlanarElementSceneAdapter';
-import { ReconstructedElementSceneAdapter } from '@/rendering/threeView/ReconstructedElementSceneAdapter';
-import { GuideSceneAdapter } from '@/rendering/threeView/GuideSceneAdapter';
-import { HingeSceneAdapter } from '@/rendering/threeView/HingeSceneAdapter';
+import { createProjectionPlaneSceneObjects } from '@/rendering/threeView/ProjectionPlaneSceneAdapter';
+import { createPlanarElementSceneObjects } from '@/rendering/threeView/PlanarElementSceneAdapter';
+import { createReconstructedElementSceneObjects } from '@/rendering/threeView/ReconstructedElementSceneAdapter';
+import { createGuideSceneObjects } from '@/rendering/threeView/GuideSceneAdapter';
+import { createHingeSceneObjects } from '@/rendering/threeView/HingeSceneAdapter';
 import type {
   GuidePresentationDto,
   HingePresentationDto,
@@ -13,7 +13,7 @@ import type {
   ReconstructedElementPresentationDto,
 } from '@/application/threePresentation/ThreePresentationModel';
 
-describe('threeView scene adapters', () => {
+describe('threeView scene object factories', () => {
   it('creates projection grid, axis, and label objects from typed DTOs', () => {
     const projectionPlaneDtos = [
       {
@@ -48,7 +48,7 @@ describe('threeView scene adapters', () => {
       },
     ] satisfies ProjectionPlanePresentationDto[];
 
-    const objects = new ProjectionPlaneSceneAdapter().createObjects(projectionPlaneDtos);
+    const objects = createProjectionPlaneSceneObjects(projectionPlaneDtos);
 
     expect(objects[0]).toBeInstanceOf(THREE.LineSegments);
     expect(objects[1].userData.type).toBe('reference-axis');
@@ -99,9 +99,9 @@ describe('threeView scene adapters', () => {
       },
     ] satisfies HingePresentationDto[];
 
-    expect(new PlanarElementSceneAdapter().createObjects(planarDtos)[0]).toBeInstanceOf(THREE.Mesh);
-    expect(new ReconstructedElementSceneAdapter().createObjects(reconstructedDtos)[0]).toBeInstanceOf(THREE.Line);
-    expect(new GuideSceneAdapter().createObjects(guideDtos)[0]).toBeInstanceOf(THREE.Mesh);
-    expect(new HingeSceneAdapter().createObjects(hingeDtos)[0]).toBeInstanceOf(THREE.Line);
+    expect(createPlanarElementSceneObjects(planarDtos)[0]).toBeInstanceOf(THREE.Mesh);
+    expect(createReconstructedElementSceneObjects(reconstructedDtos)[0]).toBeInstanceOf(THREE.Line);
+    expect(createGuideSceneObjects(guideDtos)[0]).toBeInstanceOf(THREE.Mesh);
+    expect(createHingeSceneObjects(hingeDtos)[0]).toBeInstanceOf(THREE.Line);
   });
 });
