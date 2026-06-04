@@ -7,13 +7,14 @@ import { UpdateFreePoint2DPositionOp } from '@/commands/operations/world/UpdateF
 import { initializeWorld } from '@/application/world/initializeWorld';
 import { World } from '@/domain/world/World';
 import { VisibilityModel } from '@/application/processTree/VisibilityModel';
+import { buildOperationContext } from '../../../helpers/worldHelpers';
 
 function initializedWorld() {
   const world = new World();
   const visibilityModel = new VisibilityModel();
   const stack = new CommandStack();
   initializeWorld(world, visibilityModel, stack);
-  return { world, visibilityModel, stack, commands: new RuntimeCommandProducer(world, visibilityModel, stack) };
+  return { world, visibilityModel, stack, commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), stack) };
 }
 
 describe('RuntimeCommandProducer', () => {

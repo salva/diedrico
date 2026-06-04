@@ -245,7 +245,7 @@ describe('Cycle 024 command-producer runtime ports', () => {
   });
 
   it('wires canvas and process-history controllers with runtime-owned command producers', () => {
-    expect(runtimeSession).toMatch(/new RuntimeCommandProducer\(this\.world, this\.visibilityModel, this\.commandStack, this\.changes\)/);
+    expect(runtimeSession).toMatch(/new RuntimeCommandProducer\(this\.operationContext, this\.commandStack, this\.changes\)/);
     expect(runtimeSession).toMatch(/commands: this\.commandProducer/);
     expect(canvasToolController).toMatch(/CanvasCommandProductionPort/);
     expect(processHistoryController).toMatch(/ProcessCommandExecutionPort/);

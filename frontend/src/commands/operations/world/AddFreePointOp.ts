@@ -34,7 +34,7 @@ export class AddFreePoint2DOp implements IOperation<AddFreePoint2DDescriptor, Ad
     try {
       const plane = requireProjectionPlane(context.world, this.planeId);
       
-      const point = context.world.getConstructionService().addFreePoint2D(plane, this.position, this.outputs.pointId);
+      const point = context.constructionService.addFreePoint2D(plane, this.position, this.outputs.pointId);
       this.outputs = { pointId: point.id };
       return operationSuccess(this.outputs);
     } catch (error) {

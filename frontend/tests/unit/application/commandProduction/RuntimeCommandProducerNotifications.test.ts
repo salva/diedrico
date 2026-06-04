@@ -3,7 +3,7 @@ import { RuntimeCommandProducer } from '@/application/commandProduction/RuntimeC
 import { CommandStack } from '@/commands/CommandStack';
 import type { IOperation } from '@/commands/operations/IOperation';
 import type { World } from '@/domain/world/World';
-import { createTestWorld } from '../../../helpers/worldHelpers';
+import { createTestWorld, buildOperationContext } from '../../../helpers/worldHelpers';
 import { RuntimeChangePublisher } from '@/application/appShell/RuntimeChangePublisher';
 
 function notifyOnlyOperation(): IOperation {
@@ -23,7 +23,7 @@ describe('RuntimeCommandProducer notification behavior', () => {
     const notifier = new RuntimeChangePublisher();
     const listener = vi.fn();
     notifier.subscribeToChanges(listener);
-    const producer = new RuntimeCommandProducer(world, visibilityModel, new CommandStack(), notifier);
+    const producer = new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), new CommandStack(), notifier);
     const preview = producer.startPreviewCommand('Preview command');
 
     preview.preview(command => command.addAndExecute(notifyOnlyOperation()));
@@ -39,7 +39,7 @@ describe('RuntimeCommandProducer notification behavior', () => {
     const notifier = new RuntimeChangePublisher();
     const listener = vi.fn();
     notifier.subscribeToChanges(listener);
-    const producer = new RuntimeCommandProducer(world, visibilityModel, new CommandStack(), notifier);
+    const producer = new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), new CommandStack(), notifier);
     const preview = producer.startPreviewCommand('Preview command');
 
     preview.cancel();

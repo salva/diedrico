@@ -24,7 +24,16 @@ function createInitializationGroupId(): string {
 export function initializeWorld(world: World, visibilityModel: VisibilityModel, commandStack: CommandStack, notifier: ChangeNotifier = noopChangeNotifier): void {
   if (world.getAllProjectionPlanes().length > 0) return;
 
-  const operationContext: OperationContext = { world, visibilityModel };
+  const operationContext: OperationContext = {
+    world,
+    visibilityModel,
+    processTree: world.getProcessTree(),
+    dependencies: world.getDependencyService(),
+    realizations: world.getRealizationService(),
+    constructionService: world.getConstructionService(),
+    idAllocator: world.getIdAllocator(),
+    labelGenerator: world.labelGenerator,
+  };
   const initCmd = new Command('Initialize World', operationContext, notifier);
 
   initCmd.addAndExecute(new PushSubprocessOp('World Initialization'));

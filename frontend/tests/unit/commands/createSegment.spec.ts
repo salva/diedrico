@@ -7,21 +7,23 @@ import { Command } from '../../../src/commands/Command';
 import { AddSegment2DByPointsOp } from '../../../src/commands/operations/world/AddSegmentOp';
 import { AddFreePoint2DOp } from '../../../src/commands/operations/world/AddFreePointOp';
 import type { World } from '../../../src/domain/world/World';
-import { createTestWorld, getHorizontalPlane, getHorizontalPlaneId } from '../../helpers/worldHelpers';
+import { createTestWorld, buildOperationContext, getHorizontalPlane, getHorizontalPlaneId } from '../../helpers/worldHelpers';
 import { Vector3 } from 'three';
 describe('Create Segment Command', () => {
   let world: World;
+  let visibilityModel;
   let planeId: string;
 
   beforeEach(() => {
-    const { world: w } = createTestWorld();
+    const { world: w, visibilityModel: vm } = createTestWorld();
     world = w;
-    planeId = getHorizontalPlaneId(world);
+
+    visibilityModel = vm;    planeId = getHorizontalPlaneId(world);
   });
 
   describe('execution', () => {
     it('should create a segment between two points', () => {
-      const cmd = new Command("Create segment with points", { world });
+      const cmd = new Command("Create segment with points", buildOperationContext(world, visibilityModel));
       const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
       const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 200, 1)));
       
@@ -44,7 +46,7 @@ describe('Create Segment Command', () => {
     });
 
     it('should return segmentId in outputs', () => {
-      const cmd = new Command("Create segment", { world });
+      const cmd = new Command("Create segment", buildOperationContext(world, visibilityModel));
       const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
       const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 200, 1)));
       
@@ -62,7 +64,7 @@ describe('Create Segment Command', () => {
 
   describe('undo/redo', () => {
     it('should support undo by rolling back operations', () => {
-      const cmd = new Command("Create segment", { world });
+      const cmd = new Command("Create segment", buildOperationContext(world, visibilityModel));
       const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
       const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 200, 1)));
       const segmentResult = cmd.addAndExecute(new AddSegment2DByPointsOp(
@@ -85,7 +87,7 @@ describe('Create Segment Command', () => {
     });
 
     it('should maintain stable IDs across undo/redo', () => {
-      const cmd = new Command("Create segment", { world });
+      const cmd = new Command("Create segment", buildOperationContext(world, visibilityModel));
       const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
       const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 200, 1)));
       const segmentResult = cmd.addAndExecute(new AddSegment2DByPointsOp(

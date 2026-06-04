@@ -36,7 +36,7 @@ export class AddCircle2DByCenterAndPointOp implements IOperation<AddCircle2DByCe
     try {
       const plane = requireProjectionPlane(context.world, this.planeId);
       
-      const circle = context.world.getConstructionService().addCircle2DByCenterAndPoint(
+      const circle = context.constructionService.addCircle2DByCenterAndPoint(
         plane,
         this.centerPointId,
         this.circumferencePointId,

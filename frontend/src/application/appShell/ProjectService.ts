@@ -50,7 +50,16 @@ export class ProjectService {
     commandStack.clear();
     visibilityModel.clear();
     world.restoreNextId(data.nextElementId);
-    const operationContext: OperationContext = { world, visibilityModel };
+    const operationContext: OperationContext = {
+      world,
+      visibilityModel,
+      processTree: world.getProcessTree(),
+      dependencies: world.getDependencyService(),
+      realizations: world.getRealizationService(),
+      constructionService: world.getConstructionService(),
+      idAllocator: world.getIdAllocator(),
+      labelGenerator: world.labelGenerator,
+    };
 
     const restoredCommands: Command[] = [];
     for (const serializedCommand of data.commands) {

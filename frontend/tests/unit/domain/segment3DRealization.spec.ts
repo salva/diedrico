@@ -12,7 +12,7 @@ import { Vector3, Vector4 } from 'three';
 import { reconstruct3DPointFromProjections, Matrix3x4 } from '@/utils/threeUtils';
 import { Segment3DFromProjections } from '@/domain/world/Segment3D';
 import { createVisualStyle } from '@/domain/world/VisualStyle';
-import { createTestWorld } from '../../helpers/worldHelpers';
+import { createTestWorld, buildOperationContext } from '../../helpers/worldHelpers';
 import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
 import { AddSegment2DByPointsOp } from '@/commands/operations/world/AddSegmentOp';
 import { Add3DSegmentOp } from '@/commands/operations/world/Add3DSegmentOp';
@@ -86,11 +86,13 @@ describe('reconstruct3DPointFromProjections', () => {
 
 describe('Segment3DFromProjections.realize3D()', () => {
   let world: World;
+  let visibilityModel;
 
   beforeEach(() => {
-    const { world: w } = createTestWorld();
+    const { world: w, visibilityModel: vm } = createTestWorld();
     world = w;
-  });
+
+    visibilityModel = vm;  });
 
   /**
    * Helper: Create a 2D segment on a plane and return its ID
@@ -220,12 +222,14 @@ describe('Segment3DFromProjections.realize3D()', () => {
 
 describe('Add3DSegmentOp compatibility validation', () => {
   let world: World;
+  let visibilityModel;
   let command: Command;
 
   beforeEach(() => {
-    const { world: w } = createTestWorld();
+    const { world: w, visibilityModel: vm } = createTestWorld();
     world = w;
-    command = new Command('test-cmd', { world });
+
+    visibilityModel = vm;    command = new Command('test-cmd', buildOperationContext(world, visibilityModel));
   });
 
   function createSegment2DWithOps(planeId: string, x1: number, y1: number, x2: number, y2: number): string {
@@ -251,7 +255,7 @@ describe('Add3DSegmentOp compatibility validation', () => {
     const seg2Id = createSegment2DWithOps(planeV.id!, 3, 2, 7, 4);
 
     const op = new Add3DSegmentOp(seg1Id, seg2Id, planeH.id!, planeV.id!);
-    const result = op.apply({ world });
+    const result = op.apply(buildOperationContext(world, visibilityModel));
 
     expect(result.success).toBe(true);
     expect(result.outputs.segmentId).toBeDefined();
@@ -266,7 +270,7 @@ describe('Add3DSegmentOp compatibility validation', () => {
     const seg2Id = createSegment2DWithOps(planeV.id!, 10, 5, 20, 15);
 
     const op = new Add3DSegmentOp(seg1Id, seg2Id, planeH.id!, planeV.id!);
-    const result = op.apply({ world });
+    const result = op.apply(buildOperationContext(world, visibilityModel));
 
     expect(result.success).toBe(false);
     expect(result.error).toContain('incompatible');
@@ -279,7 +283,7 @@ describe('Add3DSegmentOp compatibility validation', () => {
     const seg2Id = createSegment2DWithOps(planeH.id!, 1, 1, 6, 6);
 
     const op = new Add3DSegmentOp(seg1Id, seg2Id, planeH.id!, planeH.id!);
-    const result = op.apply({ world });
+    const result = op.apply(buildOperationContext(world, visibilityModel));
 
     expect(result.success).toBe(false);
     expect(result.error).toContain('different planes');

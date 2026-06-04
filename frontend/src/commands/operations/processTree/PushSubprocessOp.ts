@@ -25,14 +25,14 @@ export class PushSubprocessOp implements IOperation {
     // On replay (deserialization), reuse the stored subprocessId from outputs
     // This ensures toggle operations can find the correct subprocess
     const existingId = this.outputs.subprocessId;
-    const subprocess = context.world.getProcessTree().pushSubprocess(this.subprocessName, existingId);
+    const subprocess = context.processTree.pushSubprocess(this.subprocessName, existingId);
     this.outputs = { subprocessId: subprocess.id };
     return { success: true, outputs: this.outputs };
   }
 
   undo(context: OperationContext): void {
     // Undo by popping the subprocess from the stack
-    context.world.getProcessTree().popSubprocess();
+    context.processTree.popSubprocess();
   }
 
   serialize() {

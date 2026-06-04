@@ -73,7 +73,7 @@ export class Add3DLineOp implements IOperation<Add3DLineDescriptor, Add3DLineOut
       const lineId = this.outputs.lineId || context.world.generate3DLineId();
       
       // Phase 97: Generate default label if not provided
-      const label = this.label || context.world.generateDefaultLabel(lineId, 'Line3D');
+      const label = this.label || context.labelGenerator.next('Line3D');
       
       // Create default visual style if not provided
       const visualStyle = this.visualStyle || {

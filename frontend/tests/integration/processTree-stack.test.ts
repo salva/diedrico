@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import type { World } from '../../src/domain/world/World';
-import { createTestWorld } from '../helpers/worldHelpers';
+import type { VisibilityModel } from '../../src/application/processTree/VisibilityModel';
+import { createTestWorld, buildOperationContext } from '../helpers/worldHelpers';
 import { CommandStack } from '../../src/commands/CommandStack';
 import { Command } from '../../src/commands/Command';
 import { PushSubprocessOp } from '../../src/commands/operations/processTree/PushSubprocessOp';
@@ -9,25 +10,27 @@ import type { ProcessTree } from '../../src/domain/processTree/ProcessTree';
 
 describe('ProcessTree Stack Management', () => {
   let world: World;
+  let visibilityModel: VisibilityModel;
   let processTree: ProcessTree;
   let commandStack: CommandStack;
 
   beforeEach(() => {
     const testWorld = createTestWorld();
     world = testWorld.world;
+    visibilityModel = testWorld.visibilityModel;
     commandStack = testWorld.commandStack;
     processTree = world.getProcessTree();
   });
   
   function executePush(name: string) {
-    const cmd = new Command('Push subprocess', { world });
+    const cmd = new Command('Push subprocess', buildOperationContext(world, visibilityModel));
     cmd.addAndExecute(new PushSubprocessOp(name));
     cmd.commit();
     commandStack.push(cmd);
   }
   
   function executePop() {
-    const cmd = new Command('Pop subprocess', { world });
+    const cmd = new Command('Pop subprocess', buildOperationContext(world, visibilityModel));
     cmd.addAndExecute(new PopSubprocessOp());
     cmd.commit();
     commandStack.push(cmd);

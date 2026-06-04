@@ -37,7 +37,7 @@ export class AddSegment2DByPointsOp implements IOperation<AddSegment2DByPointsDe
         throw new Error(`Plane not found: ${this.planeId}`);
       }
       
-      const segment = context.world.getConstructionService().addSegment2DBetweenPoints(
+      const segment = context.constructionService.addSegment2DBetweenPoints(
         plane,
         this.point1Id,
         this.point2Id,

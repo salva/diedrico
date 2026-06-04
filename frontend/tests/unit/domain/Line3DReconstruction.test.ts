@@ -12,16 +12,18 @@ import { AddLine2DByTwoPointsOp } from '@/commands/operations/world/AddLineOp';
 import { Add3DLineOp } from '@/commands/operations/world/Add3DLineOp';
 import { Command } from '@/commands/Command';
 import { Vector3, Vector4 } from 'three';
-import { createTestWorld } from '../../helpers/worldHelpers';
+import { createTestWorld, buildOperationContext } from '../../helpers/worldHelpers';
 
 describe('Line3D Reconstruction from Projections', () => {
   let world: World;
+  let visibilityModel;
   let command: Command;
 
   beforeEach(() => {
-    const { world: w } = createTestWorld();
+    const { world: w, visibilityModel: vm } = createTestWorld();
     world = w;
-    command = new Command('test-command', { world });
+
+    visibilityModel = vm;    command = new Command('test-command', buildOperationContext(world, visibilityModel));
   });
 
   /**
@@ -287,7 +289,7 @@ describe('Line3D Reconstruction from Projections', () => {
     const line3D_HV = create3DLine(lineH, P_H, lineV, P_V, 'line3D_HV');
     
     // Create new command for second line to avoid duplicate operations
-    command = new Command('test-command-2', { world });
+    command = new Command('test-command-2', buildOperationContext(world, visibilityModel));
     const line3D_VH = create3DLine(lineV, P_V, lineH, P_H, 'line3D_VH');
 
     const real_HV = world.get3DLine(line3D_HV)?.realize3D(world);

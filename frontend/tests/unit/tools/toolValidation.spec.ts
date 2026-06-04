@@ -24,7 +24,7 @@ import type { World } from '@/domain/world/World';
 import type { CommandStack } from '@/commands/CommandStack';
 import type { VisibilityModel } from '@/application/processTree/VisibilityModel';
 import { Command } from '@/commands/Command';
-import { createTestWorld } from '../../helpers/worldHelpers';
+import { createTestWorld, buildOperationContext } from '../../helpers/worldHelpers';
 import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
 import type { ToolContext } from '@/tools/ITool';
 import { CanvasToolController } from '@/application/tools/CanvasToolController';
@@ -57,7 +57,7 @@ describe('Tool Argument Validation', () => {
       planeId,
       planeCoords: coords.clone(),
       canvasCoords: coords.clone(),
-      commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, visibilityModel, commandStack) }),
+      commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack) }),
       readPort: createToolInteractionReadPort(world),
       interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 },
@@ -66,7 +66,7 @@ describe('Tool Argument Validation', () => {
   }
 
   function addPoint(x: number, y: number): string {
-    const cmd = new Command('Add point', { world, visibilityModel });
+    const cmd = new Command('Add point', buildOperationContext(world, visibilityModel));
     const op = new AddFreePoint2DOp(planeId, new Vector3(x, y, 1));
     cmd.addAndExecute(op);
     cmd.commit();

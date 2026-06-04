@@ -23,6 +23,7 @@ import { toggleElementVisibility } from './readModels/ElementVisibilityIntent';
 import { RuntimeChangePublisher, type ChangeNotifier } from './RuntimeChangePublisher';
 import { registerAllDescriptors } from '@/domain/world/descriptors/registerDescriptors';
 import { VisibilityModel } from '@/application/processTree/VisibilityModel';
+import type { OperationContext } from '@/commands/operations/OperationContext';
 
 export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort {
   private readonly world = new World();
@@ -30,7 +31,17 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
   private readonly changes = new RuntimeChangePublisher();
   private readonly commandStack = new CommandStack();
   private readonly descriptorRegistry = registerAllDescriptors();
-  private readonly commandProducer = new RuntimeCommandProducer(this.world, this.visibilityModel, this.commandStack, this.changes);
+  private readonly operationContext: OperationContext = {
+    world: this.world,
+    visibilityModel: this.visibilityModel,
+    processTree: this.world.getProcessTree(),
+    dependencies: this.world.getDependencyService(),
+    realizations: this.world.getRealizationService(),
+    constructionService: this.world.getConstructionService(),
+    idAllocator: this.world.getIdAllocator(),
+    labelGenerator: this.world.labelGenerator,
+  };
+  private readonly commandProducer = new RuntimeCommandProducer(this.operationContext, this.commandStack, this.changes);
   private activePlaneIdValue?: string;
 
 

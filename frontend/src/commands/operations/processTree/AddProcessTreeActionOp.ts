@@ -24,7 +24,7 @@ export class AddProcessTreeActionOp implements IOperation {
     const action = this.action;
     
     // Add to existing group (Strict Mode: groupId is required)
-    const index = context.world.getProcessTree().addActionToGroup(action, this.groupId);
+    const index = context.processTree.addActionToGroup(action, this.groupId);
     
     // Phase 93: Actions no longer have IDs - store elementId for tracking
     this.outputs = {
@@ -43,10 +43,10 @@ export class AddProcessTreeActionOp implements IOperation {
     
     // Phase 93: Remove action by elementId
     // Find the action that produced this element and remove it
-    const actions = context.world.getProcessTree().getActionsProducingElement(this.outputs.elementId);
+    const actions = context.processTree.getActionsProducingElement(this.outputs.elementId);
     if (actions.length > 0) {
       // Remove the most recent action (should be only one, but just in case)
-      context.world.getProcessTree().removeActionByElementId(this.outputs.elementId);
+      context.processTree.removeActionByElementId(this.outputs.elementId);
     }
 
     // Removed fallback: We rely on AddProcessTreeActionGroupOp to manage group lifecycle.

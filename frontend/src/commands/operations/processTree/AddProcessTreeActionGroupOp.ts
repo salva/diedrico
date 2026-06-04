@@ -20,7 +20,7 @@ export class AddProcessTreeActionGroupOp implements IOperation {
   }
 
   apply(context: OperationContext): OperationResult {
-    context.world.getProcessTree().addActionGroup(this.group);
+    context.processTree.addActionGroup(this.group);
     this.outputs = { groupId: this.group.id };
     
     // Dependency maps might refer to groups? Probably not, they refer to elements (actions).
@@ -29,7 +29,7 @@ export class AddProcessTreeActionGroupOp implements IOperation {
   }
 
   undo(context: OperationContext): void {
-    const processTree = context.world.getProcessTree();
+    const processTree = context.processTree;
     processTree.removeActionGroup(this.group.id);
   }
 

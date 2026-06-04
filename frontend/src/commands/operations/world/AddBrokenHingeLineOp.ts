@@ -60,7 +60,7 @@ export class AddBrokenHingeLineOp implements IOperation {
 
       // Generate IDs (use existing for redo, or generate new)
       const bhlId = this.brokenHingeLineId || this.outputs.brokenHingeLineId || context.world.generateHingeLineId();
-      const constructionService = context.world.getConstructionService();
+      const constructionService = context.constructionService;
       const bhhl1Id = this.bhhl1Id || this.outputs.bhhl1Id || constructionService.generateLine2DId(plane1!);
       const bhhl2Id = this.bhhl2Id || this.outputs.bhhl2Id || constructionService.generateLine2DId(plane2!);
 
@@ -79,7 +79,7 @@ export class AddBrokenHingeLineOp implements IOperation {
       }
 
       // Generate label for BrokenHingeLine only (BHHLs generate their own labels)
-      const bhlLabel = context.world.generateDefaultLabel(bhlId, 'BrokenHingeLine');
+      const bhlLabel = context.labelGenerator.next('BrokenHingeLine');
 
       // Create BrokenHingeLine (3D entity)
       const brokenHingeLine = new BrokenHingeLine(
@@ -118,7 +118,7 @@ export class AddBrokenHingeLineOp implements IOperation {
       plane2.addLine(bhhl2);
 
       // Register dependencies
-      const dependencyRegistrar = context.world.getDependencyRegistrar();
+      const dependencyRegistrar = context.dependencies;
       dependencyRegistrar.registerNode(bhlId, brokenHingeLine.getDependencies());
       dependencyRegistrar.registerNode(bhhl1Id, bhhl1.getDependencies());
       dependencyRegistrar.registerNode(bhhl2Id, bhhl2.getDependencies());
@@ -159,7 +159,7 @@ export class AddBrokenHingeLineOp implements IOperation {
 
       context.world.invalidateRealization(this.outputs.brokenHingeLineId);
       context.world.removeHingeLine(this.outputs.brokenHingeLineId);
-      context.world.getDependencyRegistrar().unregisterNode(this.outputs.brokenHingeLineId);
+      context.dependencies.unregisterNode(this.outputs.brokenHingeLineId);
     }
   }
 

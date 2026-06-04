@@ -11,24 +11,26 @@ import { AddFreePoint2DOp } from '../../../../src/commands/operations/world/AddF
 import { World } from '../../../../src/domain/world/World';
 import { Vector3 } from 'three';
 import { Guide2D, SiblingGuide2D } from '../../../../src/domain/world/Guide';
-import { createTestWorld } from '../../../helpers/worldHelpers';
+import { createTestWorld, buildOperationContext } from '../../../helpers/worldHelpers';
 
 describe('GuideSequenceFactory', () => {
   let world: World;
+  let visibilityModel;
   let horizontalPlaneId: string;
   let verticalPlaneId: string;
 
   beforeEach(() => {
-    const { world: w } = createTestWorld();
+    const { world: w, visibilityModel: vm } = createTestWorld();
     world = w;
-    // Get plane IDs dynamically from initialized world
+
+    visibilityModel = vm;    // Get plane IDs dynamically from initialized world
     horizontalPlaneId = world.getProjectionPlaneByLabel('P_H').id!;
     verticalPlaneId = world.getProjectionPlaneByLabel('P_V').id!;
   });
 
   describe('createGuideWithSibling', () => {
     it('should create single operation for non-HHL reference line', () => {
-      const cmd = new Command('Test', { world });
+      const cmd = new Command('Test', buildOperationContext(world, visibilityModel));
       
       // Create reference line (regular line, not HalfHingeLine)
       const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(horizontalPlaneId, new Vector3(0, 100, 1)));
@@ -70,7 +72,7 @@ describe('GuideSequenceFactory', () => {
     });
 
     it('should create two operations for HHL reference line', () => {
-      const cmd = new Command('Test', { world });
+      const cmd = new Command('Test', buildOperationContext(world, visibilityModel));
       
       // Get HalfHingeLine (get actual ID from world)
       const halfHingeLines = world.getHalfHingeLines2D(horizontalPlaneId);
@@ -121,7 +123,7 @@ describe('GuideSequenceFactory', () => {
     it('should handle HHL with no sibling info available gracefully', () => {
       // This test ensures that if getSiblingPlaneAndHalfHingeLineForGuide returns null,
       // we still create the primary guide without throwing
-      const cmd = new Command('Test', { world });
+      const cmd = new Command('Test', buildOperationContext(world, visibilityModel));
       
       // Use a regular line but pretend it's special case
       const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(horizontalPlaneId, new Vector3(0, 100, 1)));
@@ -152,7 +154,7 @@ describe('GuideSequenceFactory', () => {
     });
 
     it('should handle invalid reference line ID gracefully', () => {
-      const cmd = new Command('Test', { world });
+      const cmd = new Command('Test', buildOperationContext(world, visibilityModel));
       
       // Create through point
       const throughResult = cmd.addAndExecute(new AddFreePoint2DOp(horizontalPlaneId, new Vector3(100, 50, 1)));
@@ -170,7 +172,7 @@ describe('GuideSequenceFactory', () => {
     });
 
     it('should handle invalid through point ID gracefully', () => {
-      const cmd = new Command('Test', { world });
+      const cmd = new Command('Test', buildOperationContext(world, visibilityModel));
       
       // Create reference line
       const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(horizontalPlaneId, new Vector3(0, 100, 1)));
@@ -194,7 +196,7 @@ describe('GuideSequenceFactory', () => {
     });
 
     it('should work with command commit and verify state', () => {
-      const cmd = new Command('Create guide with sibling', { world });
+      const cmd = new Command('Create guide with sibling', buildOperationContext(world, visibilityModel));
       
       // Get HalfHingeLine
       const halfHingeLines = world.getHalfHingeLines2D(horizontalPlaneId);
@@ -227,7 +229,7 @@ describe('GuideSequenceFactory', () => {
     });
 
     it('should handle multiple sequential guide creations', () => {
-      const cmd = new Command('Create multiple guides', { world });
+      const cmd = new Command('Create multiple guides', buildOperationContext(world, visibilityModel));
       
       const halfHingeLines = world.getHalfHingeLines2D(horizontalPlaneId);
       expect(halfHingeLines.length).toBeGreaterThan(0);

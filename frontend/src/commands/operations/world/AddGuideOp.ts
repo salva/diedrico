@@ -34,7 +34,7 @@ export class AddGuide2DPerpendicularToLineOp implements IOperation {
         throw new Error(`Plane not found: ${this.planeId}`);
       }
 
-      const guide = context.world.getConstructionService().addGuide2D(
+      const guide = context.constructionService.addGuide2D(
         plane,
         this.referenceLineId,
         this.throughPointId,
@@ -101,7 +101,7 @@ export class AddSiblingGuide2DOp implements IOperation {
         throw new Error(`Plane not found: ${this.planeId}`);
       }
 
-      const siblingGuide = context.world.getConstructionService().addSiblingGuide2D(
+      const siblingGuide = context.constructionService.addSiblingGuide2D(
         plane,
         this.primaryGuideId,
         this.referenceLineId,

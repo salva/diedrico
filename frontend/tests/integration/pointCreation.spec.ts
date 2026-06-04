@@ -21,7 +21,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { PointTool } from '@/tools/PointTool';
 import type { World } from '@/domain/world/World';
 import type { VisibilityModel } from '@/application/processTree/VisibilityModel';
-import { createTestWorld } from '../helpers/worldHelpers';
+import { createTestWorld, buildOperationContext } from '../helpers/worldHelpers';
 import { CommandStack } from '@/commands/CommandStack';
 import type { ToolContext } from '@/tools/ITool';
 import { CanvasToolController } from '@/application/tools/CanvasToolController';
@@ -48,7 +48,7 @@ describe.skip('Integration: Point Creation Full Stack', () => {
       const context: ToolContext = {
         planeId: 'projPlaneH',
         planeCoords: new Vector3(100, 200, 1),
-        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, visibilityModel, commandStack) }),
+        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack) }),
         world
       };
 
@@ -80,7 +80,7 @@ describe.skip('Integration: Point Creation Full Stack', () => {
       const context: ToolContext = {
         planeId: 'projPlaneV',
         planeCoords: new Vector3(300, 400, 1),
-        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, visibilityModel, commandStack) }),
+        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack) }),
         world
       };
 
@@ -105,7 +105,7 @@ describe.skip('Integration: Point Creation Full Stack', () => {
       const context: ToolContext = {
         planeId: 'projPlaneH',
         planeCoords: new Vector3(100, 200, 1),
-        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, visibilityModel, commandStack) }),
+        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack) }),
         world
       };
 
@@ -129,7 +129,7 @@ describe.skip('Integration: Point Creation Full Stack', () => {
       const context: ToolContext = {
         planeId: 'projPlaneH',
         planeCoords: new Vector3(100, 200, 1),
-        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, visibilityModel, commandStack) }),
+        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack) }),
         world
       };
 
@@ -151,7 +151,7 @@ describe.skip('Integration: Point Creation Full Stack', () => {
       const context: ToolContext = {
         planeId: 'projPlaneH',
         planeCoords: new Vector3(100, 200, 1),
-        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, visibilityModel, commandStack) }),
+        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack) }),
         world
       };
 
@@ -178,7 +178,7 @@ describe.skip('Integration: Point Creation Full Stack', () => {
       const context: ToolContext = {
         planeId: 'projPlaneH',
         planeCoords: new Vector3(100, 200, 1),
-        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, visibilityModel, commandStack) }),
+        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack) }),
         world
       };
 
@@ -210,7 +210,7 @@ describe.skip('Integration: Point Creation Full Stack', () => {
         const context: ToolContext = {
           planeId: 'projPlaneH',
           planeCoords: pos,
-          commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, visibilityModel, commandStack) }),
+          commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack) }),
           world
         };
         const result = tool.handleClick(context);
@@ -252,7 +252,7 @@ describe.skip('Integration: Point Creation Full Stack', () => {
       const context: ToolContext = {
         planeId: 'projPlaneH',
         planeCoords: new Vector3(100, 200, 1),
-        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, visibilityModel, commandStack) }),
+        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack) }),
         world
       };
 
@@ -281,7 +281,7 @@ describe.skip('Integration: Point Creation Full Stack', () => {
         const context: ToolContext = {
           planeId: 'projPlaneH',
           planeCoords: new Vector3(100 * i, 100 * i, 1),
-          commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, visibilityModel, commandStack) }),
+          commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack) }),
           world
         };
         tool.handleClick(context);
@@ -314,7 +314,7 @@ describe.skip('Integration: Point Creation Full Stack', () => {
       const context: ToolContext = {
         planeId: 'invalid_plane',
         planeCoords: new Vector3(100, 200, 1),
-        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, visibilityModel, commandStack) }),
+        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack) }),
         world
       };
 
@@ -336,7 +336,7 @@ describe.skip('Integration: Point Creation Full Stack', () => {
       const context: ToolContext = {
         planeId: 'projPlaneH',
         planeCoords: new Vector3(NaN, 200, 1),
-        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, visibilityModel, commandStack) }),
+        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack) }),
         world
       };
 
@@ -357,7 +357,7 @@ describe.skip('Integration: Point Creation Full Stack', () => {
       const context: ToolContext = {
         planeId: 'projPlaneH',
         planeCoords: new Vector3(100, 200, 1),
-        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, visibilityModel, commandStack) }),
+        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack) }),
         world
       };
 
@@ -379,7 +379,7 @@ describe.skip('Integration: Point Creation Full Stack', () => {
       const context: ToolContext = {
         planeId: 'projPlaneH',
         planeCoords: new Vector3(100, 200, 1),
-        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, visibilityModel, commandStack) }),
+        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack) }),
         world
       };
 
@@ -408,7 +408,7 @@ describe.skip('Integration: Point Creation Full Stack', () => {
       const context: ToolContext = {
         planeId: originalPlane,
         planeCoords: originalCoords,
-        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, visibilityModel, commandStack) }),
+        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack) }),
         world
       };
 

@@ -89,7 +89,7 @@ export class RemovePoint2DOp implements IOperation {
       throw new Error(`Plane ${this.planeId} not found`);
     }
     plane.addPoint(this.removedPoint);
-    context.world.getDependencyRegistrar().registerNode(this.removedPoint.id, this.removedPoint.getDependencies());
+    context.dependencies.registerNode(this.removedPoint.id, this.removedPoint.getDependencies());
   }
 
   serialize() {
@@ -173,7 +173,7 @@ export class RemoveLine2DOp implements IOperation {
       throw new Error(`Plane ${this.planeId} not found`);
     }
     plane.addLine(this.removedLine);
-    context.world.getDependencyRegistrar().registerNode(this.removedLine.id, this.removedLine.getDependencies());
+    context.dependencies.registerNode(this.removedLine.id, this.removedLine.getDependencies());
   }
 
   serialize() {
@@ -256,7 +256,7 @@ export class RemoveSegment2DOp implements IOperation {
       throw new Error(`Plane ${this.planeId} not found`);
     }
     plane.addLine(this.removedSegment);
-    context.world.getDependencyRegistrar().registerNode(this.removedSegment.id, this.removedSegment.getDependencies());
+    context.dependencies.registerNode(this.removedSegment.id, this.removedSegment.getDependencies());
   }
 
   serialize() {
@@ -338,7 +338,7 @@ export class RemoveCircle2DOp implements IOperation {
       throw new Error(`Plane ${this.planeId} not found`);
     }
     plane.addCircle(this.removedCircle);
-    context.world.getDependencyRegistrar().registerNode(this.removedCircle.id, this.removedCircle.getDependencies());
+    context.dependencies.registerNode(this.removedCircle.id, this.removedCircle.getDependencies());
   }
 
   serialize() {
@@ -442,7 +442,7 @@ export class RemoveGuide2DOp implements IOperation {
           const siblingPlane = context.world.getProjectionPlaneById(this.siblingPlaneId);
           if (siblingPlane) {
             siblingPlane.addLine(this.removedSibling);
-            context.world.getDependencyRegistrar().registerNode(this.removedSibling.id, this.removedSibling.getDependencies());
+            context.dependencies.registerNode(this.removedSibling.id, this.removedSibling.getDependencies());
           }
         }
         return {
@@ -481,7 +481,7 @@ export class RemoveGuide2DOp implements IOperation {
     }
     if (!plane.getLine(this.removedGuide.id)) {
       plane.addLine(this.removedGuide);
-      context.world.getDependencyRegistrar().registerNode(this.removedGuide.id, this.removedGuide.getDependencies());
+      context.dependencies.registerNode(this.removedGuide.id, this.removedGuide.getDependencies());
     }
 
     // Restore the sibling guide if it was deleted
@@ -489,7 +489,7 @@ export class RemoveGuide2DOp implements IOperation {
       const siblingPlane = context.world.projectionPlanes.get(this.siblingPlaneId);
       if (siblingPlane && !siblingPlane.getLine(this.removedSibling.id)) {
         siblingPlane.addLine(this.removedSibling);
-        context.world.getDependencyRegistrar().registerNode(this.removedSibling.id, this.removedSibling.getDependencies());
+        context.dependencies.registerNode(this.removedSibling.id, this.removedSibling.getDependencies());
       }
     }
   }

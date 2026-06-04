@@ -108,7 +108,7 @@ export class Add3DSegmentOp implements IOperation<Add3DSegmentDescriptor, Add3DS
       const segmentId = this.outputs.segmentId || context.world.generate3DSegmentId();
       
       // Phase 97: Generate default label if not provided
-      const label = this.label || context.world.generateDefaultLabel(segmentId, 'Segment3D');
+      const label = this.label || context.labelGenerator.next('Segment3D');
       
       // Create default visual style if not provided
       const visualStyle = this.visualStyle || {

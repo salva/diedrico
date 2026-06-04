@@ -36,7 +36,7 @@ export class RemoveActionFromProcessTreeOp implements IOperation {
 
   apply(context: OperationContext): OperationResult {
     try {
-      const processTree = context.world.getProcessTree();
+      const processTree = context.processTree;
       const result = processTree.removeAction(this.actionId);
       
       if (!result) {
@@ -76,7 +76,7 @@ export class RemoveActionFromProcessTreeOp implements IOperation {
       throw new Error('Cannot undo: no action data stored');
     }
 
-    const processTree = context.world.getProcessTree();
+    const processTree = context.processTree;
     processTree.restoreAction(this.removedAction, this.groupId, this.index);
   }
 

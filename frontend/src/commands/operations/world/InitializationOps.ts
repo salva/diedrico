@@ -185,7 +185,7 @@ export class AddOriginPoint2DOp implements IOperation {
         };
       }
       
-      const originPoint = context.world.getConstructionService().addOriginPoint2D(
+      const originPoint = context.constructionService.addOriginPoint2D(
         projPlane,
         this.position, 
         this.pointId || this.outputs.pointId,
@@ -325,7 +325,7 @@ export class AddHalfHingeLine2DOp implements IOperation {
         };
       }
       
-      const halfHingeLine = context.world.getConstructionService().addHalfHingeLine2D(
+      const halfHingeLine = context.constructionService.addHalfHingeLine2D(
         projPlane,
         this.hingeLineId,
         this.lineId || this.outputs.lineId
@@ -388,7 +388,7 @@ export class CreateInitializationSubprocessOp implements IOperation {
 
   apply(context: OperationContext): OperationResult {
     try {
-      const processTree = context.world.getProcessTree();
+      const processTree = context.processTree;
       const subprocess = processTree.addSubprocess(this.subprocessName);
       
       // Store subprocess ID for future reference

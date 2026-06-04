@@ -20,7 +20,7 @@ import type { OperationContext } from '@/commands/operations/OperationContext';
 import type { World } from '@/domain/world/World';
 import { Vector3 } from 'three';
 import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
-import { createTestWorld } from '../../helpers/worldHelpers';
+import { createTestWorld, buildOperationContext } from '../../helpers/worldHelpers';
 import { RuntimeChangePublisher } from '@/application/appShell/RuntimeChangePublisher';
 
 // Mock operation for testing
@@ -100,25 +100,26 @@ class DependentMockOperation implements IOperation {
 
 describe('Generic Command Class (R017)', () => {
   let world: World;
+  let visibilityModel: VisibilityModel;
   let command: Command;
   let notifier: RuntimeChangePublisher;
 
   beforeEach(() => {
-    const { world: w } = createTestWorld();
+    const { world: w, visibilityModel } = createTestWorld();
     world = w;
     notifier = new RuntimeChangePublisher();
-    command = new Command('Test Command', { world }, notifier);
+    command = new Command('Test Command', buildOperationContext(world, visibilityModel), notifier);
   });
 
   describe('Concrete Command (no subclass needed)', () => {
     it('should be instantiable without subclassing', () => {
-      const cmd = new Command('Direct instantiation', { world });
+      const cmd = new Command('Direct instantiation', buildOperationContext(world, visibilityModel));
       expect(cmd).toBeInstanceOf(Command);
       expect(cmd.description).toBe('Direct instantiation');
     });
 
     it('should not require execute() method', () => {
-      const cmd = new Command('No execute needed', { world });
+      const cmd = new Command('No execute needed', buildOperationContext(world, visibilityModel));
       // Command is concrete - no execute() method required
       expect(cmd).not.toHaveProperty('execute');
     });
@@ -130,7 +131,7 @@ describe('Generic Command Class (R017)', () => {
     });
 
     it('should have unique ID', () => {
-      const command2 = new Command('Another Command', { world });
+      const command2 = new Command('Another Command', buildOperationContext(world, visibilityModel));
       expect(command.id).not.toBe(command2.id);
     });
 

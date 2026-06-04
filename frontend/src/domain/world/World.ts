@@ -190,8 +190,8 @@ export class World {
     this.segment3DCounter = 0;
     this.plane3DUserCounter = 0;
     this.originPoint = undefined;
-    this.processTree = new ProcessTree();
-    this.dependencyService = new DependencyService();
+    this.processTree.clear();
+    this.dependencyService.clear();
     
     // Phase 95: Do NOT re-initialize automatically.
     // Initialization is now explicit or handled by replaying commands.
@@ -656,6 +656,10 @@ export class World {
     return this.processTree;
   }
 
+  getDependencyService(): DependencyService {
+    return this.dependencyService;
+  }
+
   getDependencyQuery(): DependencyQueryPort {
     return this.dependencyService;
   }
@@ -664,8 +668,16 @@ export class World {
     return this.dependencyService;
   }
 
+  getRealizationService(): RealizationService {
+    return this.realizationService;
+  }
+
   getConstructionService(): ConstructionService {
     return this.constructionService;
+  }
+
+  getIdAllocator(): WorldIdAllocator {
+    return this.idAllocator;
   }
 
   // ========================================

@@ -52,11 +52,15 @@ export interface ActionNode extends ProcessNodeBase, Action {
 export type ProcessNode = Subprocess | ActionGroup | ActionNode;
 
 export class ProcessTree {
-  root: Subprocess;
+  root!: Subprocess;
   private nextNodeCounter = 1;
   private subprocessStack: Subprocess[] = [];
 
   constructor() {
+    this.clear();
+  }
+
+  clear(): void {
     // Initialize with root subprocess
     this.root = {
       id: 'root',
@@ -65,6 +69,7 @@ export class ProcessTree {
       children: [],
       created: new Date()
     };
+    this.nextNodeCounter = 1;
     // Initialize stack with root
     this.subprocessStack = [this.root];
   }

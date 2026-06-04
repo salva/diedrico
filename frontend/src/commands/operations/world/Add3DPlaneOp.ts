@@ -137,7 +137,7 @@ export class Add3DPlaneOp implements IOperation<Add3DPlaneDescriptor, Add3DPlane
       const planeId = this.outputs.planeId || context.world.generate3DPlaneId();
       
       // Phase 97: Generate default label if not provided
-      const label = this.label || context.world.generateDefaultLabel(planeId, 'Plane3D');
+      const label = this.label || context.labelGenerator.next('Plane3D');
       
       // Create Plane3DFromTraces
       const plane = new Plane3DFromTraces(

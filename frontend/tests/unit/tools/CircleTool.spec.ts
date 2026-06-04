@@ -17,7 +17,7 @@ import type { World } from '@/domain/world/World';
 import type { CommandStack } from '@/commands/CommandStack';
 import type { VisibilityModel } from '@/application/processTree/VisibilityModel';
 import { Command } from '@/commands/Command';
-import { createTestWorld } from '../../helpers/worldHelpers';
+import { createTestWorld, buildOperationContext } from '../../helpers/worldHelpers';
 import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
 import { UpdateFreePoint2DPositionOp } from '@/commands/operations/world/UpdateFreePoint2DPositionOp';
 import type { ToolContext } from '@/tools/ITool';
@@ -71,7 +71,7 @@ describe('CircleTool', () => {
   describe('Two-Click Workflow', () => {
     it('should require two clicks to create circle', () => {
       // Create both center and circumference points
-      const setupCmd = new Command('Create test points', { world, visibilityModel });
+      const setupCmd = new Command('Create test points', buildOperationContext(world, visibilityModel));
       const centerOp = new AddFreePoint2DOp(horizontalPlaneId, new Vector3(100, 100, 1));
       setupCmd.addAndExecute(centerOp);
       const centerPointId = centerOp.outputs.pointId as string;
@@ -88,7 +88,7 @@ describe('CircleTool', () => {
         planeId: horizontalPlaneId,
         planeCoords: new Vector3(100, 100, 1),
         canvasCoords: new Vector3(100, 100, 1),
-        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, visibilityModel, commandStack) }),
+        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack) }),
         readPort,
         interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 },
@@ -104,7 +104,7 @@ describe('CircleTool', () => {
         planeId: horizontalPlaneId,
         planeCoords: new Vector3(200, 100, 1),
         canvasCoords: new Vector3(200, 100, 1),
-        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, visibilityModel, commandStack) }),
+        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack) }),
         readPort,
         interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 },
@@ -126,7 +126,7 @@ describe('CircleTool', () => {
   describe('T983: Both Points Snap (No Duplicates)', () => {
     it('should snap to existing points for both center and circumference', () => {
       // Create two existing points
-      const setupCmd = new Command('Setup test points', { world, visibilityModel });
+      const setupCmd = new Command('Setup test points', buildOperationContext(world, visibilityModel));
       
       const centerOp = new AddFreePoint2DOp(horizontalPlaneId, new Vector3(100, 100, 1));
       setupCmd.addAndExecute(centerOp);
@@ -148,7 +148,7 @@ describe('CircleTool', () => {
         planeId: horizontalPlaneId,
         planeCoords: new Vector3(100, 100, 1),
         canvasCoords: new Vector3(100, 100, 1),
-        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, visibilityModel, commandStack) }),
+        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack) }),
         readPort,
         interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 },
@@ -164,7 +164,7 @@ describe('CircleTool', () => {
         planeId: horizontalPlaneId,
         planeCoords: new Vector3(200, 100, 1),
         canvasCoords: new Vector3(200, 100, 1),
-        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, visibilityModel, commandStack) }),
+        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack) }),
         readPort,
         interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 },
@@ -190,7 +190,7 @@ describe('CircleTool', () => {
   describe('T984: Require Both Points to Exist', () => {
     it('should reject circle when circumference point does not exist', () => {
       // Create only center point
-      const setupCmd = new Command('Setup center point', { world, visibilityModel });
+      const setupCmd = new Command('Setup center point', buildOperationContext(world, visibilityModel));
       const centerOp = new AddFreePoint2DOp(horizontalPlaneId, new Vector3(100, 100, 1));
       setupCmd.addAndExecute(centerOp);
       const centerPointId = centerOp.outputs.pointId as string;
@@ -202,7 +202,7 @@ describe('CircleTool', () => {
         planeId: horizontalPlaneId,
         planeCoords: new Vector3(100, 100, 1),
         canvasCoords: new Vector3(100, 100, 1),
-        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, visibilityModel, commandStack) }),
+        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack) }),
         readPort,
         interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 },
@@ -217,7 +217,7 @@ describe('CircleTool', () => {
         planeId: horizontalPlaneId,
         planeCoords: new Vector3(300, 300, 1),
         canvasCoords: new Vector3(400, 400, 1), // Far from any existing point
-        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, visibilityModel, commandStack) }),
+        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack) }),
         readPort,
         interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 },
@@ -242,7 +242,7 @@ describe('CircleTool', () => {
 
     it('should accept circle when snapped points meet minimum radius', () => {
       // Create two points with acceptable distance (> 0.001 units)
-      const setupCmd = new Command('Setup acceptable points', { world, visibilityModel });
+      const setupCmd = new Command('Setup acceptable points', buildOperationContext(world, visibilityModel));
       
       const centerOp = new AddFreePoint2DOp(horizontalPlaneId, new Vector3(100, 100, 1));
       setupCmd.addAndExecute(centerOp);
@@ -258,7 +258,7 @@ describe('CircleTool', () => {
         planeId: horizontalPlaneId,
         planeCoords: new Vector3(100, 100, 1),
         canvasCoords: new Vector3(100, 100, 1),
-        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, visibilityModel, commandStack) }),
+        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack) }),
         readPort,
         interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 },
@@ -273,7 +273,7 @@ describe('CircleTool', () => {
         planeId: horizontalPlaneId,
         planeCoords: new Vector3(100.002, 100, 1),
         canvasCoords: new Vector3(100.002, 100, 1),
-        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, visibilityModel, commandStack) }),
+        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack) }),
         readPort,
         interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 },
@@ -297,7 +297,7 @@ describe('CircleTool', () => {
         planeId: 'invalid_plane',
         planeCoords: new Vector3(100, 100, 1),
         canvasCoords: new Vector3(100, 100, 1),
-        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, visibilityModel, commandStack) }),
+        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack) }),
         readPort,
         interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 },
@@ -314,7 +314,7 @@ describe('CircleTool', () => {
         planeId: horizontalPlaneId,
         planeCoords: new Vector3(100, 100, 0), // Invalid homogeneous coordinate (w = 0)
         canvasCoords: new Vector3(100, 100, 1),
-        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, visibilityModel, commandStack) }),
+        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack) }),
         readPort,
         interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 },
@@ -330,7 +330,7 @@ describe('CircleTool', () => {
   describe('Tool State Reset', () => {
     it('should reset state after successful circle creation', () => {
       // Create two points for circle
-      const setupCmd = new Command('Setup points', { world, visibilityModel });
+      const setupCmd = new Command('Setup points', buildOperationContext(world, visibilityModel));
       const centerOp = new AddFreePoint2DOp(horizontalPlaneId, new Vector3(100, 100, 1));
       setupCmd.addAndExecute(centerOp);
       const circumferenceOp = new AddFreePoint2DOp(horizontalPlaneId, new Vector3(200, 100, 1));
@@ -343,7 +343,7 @@ describe('CircleTool', () => {
         planeId: horizontalPlaneId,
         planeCoords: new Vector3(100, 100, 1),
         canvasCoords: new Vector3(100, 100, 1),
-        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, visibilityModel, commandStack) }),
+        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack) }),
         readPort,
         interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 },
@@ -356,7 +356,7 @@ describe('CircleTool', () => {
         planeId: horizontalPlaneId,
         planeCoords: new Vector3(200, 100, 1),
         canvasCoords: new Vector3(200, 100, 1),
-        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, visibilityModel, commandStack) }),
+        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack) }),
         readPort,
         interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 },
@@ -370,7 +370,7 @@ describe('CircleTool', () => {
         planeId: horizontalPlaneId,
         planeCoords: new Vector3(100, 100, 1),
         canvasCoords: new Vector3(100, 100, 1),
-        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, visibilityModel, commandStack) }),
+        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack) }),
         readPort,
         interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 },
@@ -385,7 +385,7 @@ describe('CircleTool', () => {
   describe('T989: Parametric Updates - Circumference Point Movement', () => {
     it('should update circle when circumference point moves', () => {
       // Create center point at (100, 100)
-      const centerCmd = new Command('Create center', { world, visibilityModel });
+      const centerCmd = new Command('Create center', buildOperationContext(world, visibilityModel));
       const centerOp = new AddFreePoint2DOp(horizontalPlaneId, new Vector3(100, 100, 1));
       centerCmd.addAndExecute(centerOp);
       centerCmd.commit();
@@ -393,7 +393,7 @@ describe('CircleTool', () => {
       const centerPointId = centerOp.outputs.pointId;
 
       // Create circumference point at (150, 100) - radius should be 50
-      const circumferenceCmd = new Command('Create circumference', { world, visibilityModel });
+      const circumferenceCmd = new Command('Create circumference', buildOperationContext(world, visibilityModel));
       const circumferenceOp = new AddFreePoint2DOp(horizontalPlaneId, new Vector3(150, 100, 1));
       circumferenceCmd.addAndExecute(circumferenceOp);
       circumferenceCmd.commit();
@@ -405,7 +405,7 @@ describe('CircleTool', () => {
         planeId: horizontalPlaneId,
         planeCoords: new Vector3(100, 100, 1),
         canvasCoords: new Vector3(100, 100, 1),
-        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, visibilityModel, commandStack) }),
+        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack) }),
         readPort,
         interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 },
@@ -418,7 +418,7 @@ describe('CircleTool', () => {
         planeId: horizontalPlaneId,
         planeCoords: new Vector3(150, 100, 1),
         canvasCoords: new Vector3(150, 100, 1),
-        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, visibilityModel, commandStack) }),
+        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack) }),
         readPort,
         interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 },
@@ -441,7 +441,7 @@ describe('CircleTool', () => {
       expect(initialRealization!.center.y).toBeCloseTo(100, 2);
 
       // Move circumference point to (150, 150) - radius should become ~70.7
-      const moveCmd = new Command('Move circumference point', { world, visibilityModel });
+      const moveCmd = new Command('Move circumference point', buildOperationContext(world, visibilityModel));
       const moveOp = new UpdateFreePoint2DPositionOp(
         horizontalPlaneId,
         circumferencePointId,
@@ -463,7 +463,7 @@ describe('CircleTool', () => {
   describe('T992: Regression - Center Point Movement', () => {
     it('should still update circle when center point moves', () => {
       // Create center point at (100, 100)
-      const centerCmd = new Command('Create center', { world, visibilityModel });
+      const centerCmd = new Command('Create center', buildOperationContext(world, visibilityModel));
       const centerOp = new AddFreePoint2DOp(horizontalPlaneId, new Vector3(100, 100, 1));
       centerCmd.addAndExecute(centerOp);
       centerCmd.commit();
@@ -471,7 +471,7 @@ describe('CircleTool', () => {
       const centerPointId = centerOp.outputs.pointId;
 
       // Create circumference point at (150, 100)
-      const circumferenceCmd = new Command('Create circumference', { world, visibilityModel });
+      const circumferenceCmd = new Command('Create circumference', buildOperationContext(world, visibilityModel));
       const circumferenceOp = new AddFreePoint2DOp(horizontalPlaneId, new Vector3(150, 100, 1));
       circumferenceCmd.addAndExecute(circumferenceOp);
       circumferenceCmd.commit();
@@ -482,7 +482,7 @@ describe('CircleTool', () => {
         planeId: horizontalPlaneId,
         planeCoords: new Vector3(100, 100, 1),
         canvasCoords: new Vector3(100, 100, 1),
-        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, visibilityModel, commandStack) }),
+        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack) }),
         readPort,
         interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 },
@@ -494,7 +494,7 @@ describe('CircleTool', () => {
         planeId: horizontalPlaneId,
         planeCoords: new Vector3(150, 100, 1),
         canvasCoords: new Vector3(150, 100, 1),
-        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, visibilityModel, commandStack) }),
+        commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack) }),
         readPort,
         interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 },
@@ -508,7 +508,7 @@ describe('CircleTool', () => {
       const circle = circles[0];
 
       // Move center point to (200, 100) 
-      const moveCmd = new Command('Move center point', { world, visibilityModel });
+      const moveCmd = new Command('Move center point', buildOperationContext(world, visibilityModel));
       const moveOp = new UpdateFreePoint2DPositionOp(
         horizontalPlaneId,
         centerPointId,

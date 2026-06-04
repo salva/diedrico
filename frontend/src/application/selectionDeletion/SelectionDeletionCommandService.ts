@@ -48,7 +48,16 @@ export class SelectionDeletionCommandService implements SelectionDeletionCommand
   execute(selectedIds: readonly string[]): void {
     if (selectedIds.length === 0) return;
 
-    const deleteCommand = this.internals.createCommand('Delete elements', { world: this.world, visibilityModel: this.visibilityModel }, this.notifier);
+    const deleteCommand = this.internals.createCommand('Delete elements', {
+      world: this.world,
+      visibilityModel: this.visibilityModel,
+      processTree: this.world.getProcessTree(),
+      dependencies: this.world.getDependencyService(),
+      realizations: this.world.getRealizationService(),
+      constructionService: this.world.getConstructionService(),
+      idAllocator: this.world.getIdAllocator(),
+      labelGenerator: this.world.labelGenerator,
+    }, this.notifier);
     this.internals.createCascadeDeletion(deleteCommand, [...selectedIds], this.world);
     deleteCommand.commit();
     this.commandStack.push(deleteCommand);

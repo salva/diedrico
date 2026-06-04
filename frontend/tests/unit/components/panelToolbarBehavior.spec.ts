@@ -9,7 +9,7 @@ import { RuntimeCommandProducer } from '@/application/commandProduction/RuntimeC
 import { ProcessHistoryUseCases } from '@/application/processHistory/ProcessHistoryUseCases';
 import { useToolStore } from '@/stores/toolStore';
 import { useViewStore } from '@/stores/viewStore';
-import { createTestWorld } from '../../helpers/worldHelpers';
+import { createTestWorld, buildOperationContext } from '../../helpers/worldHelpers';
 import { CommandHistoryInjectionKey, ProcessHistoryCommandInjectionKey, ProcessTreeReadInjectionKey } from '@/application/appShell/RuntimeInjectionKeys';
 
 vi.mock('@/components/panels/ProcessTreeNode.vue', () => ({
@@ -92,7 +92,7 @@ describe('Wave 006b ActionsPanel component behavior', () => {
 
     const wrapper = mount(ActionsPanel, {
       global: {
-        provide: { [ProcessTreeReadInjectionKey as symbol]: processTreeReadPort, [ProcessHistoryCommandInjectionKey as symbol]: new ProcessHistoryController({ world, commands: new RuntimeCommandProducer(world, visibilityModel, commandStack, processTreeReadPort) }) },
+        provide: { [ProcessTreeReadInjectionKey as symbol]: processTreeReadPort, [ProcessHistoryCommandInjectionKey as symbol]: new ProcessHistoryController({ world, commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack, processTreeReadPort) }) },
         stubs: {
           ProcessTreeNode: {
             template: '<div class="process-tree-node-stub" />',
@@ -133,7 +133,7 @@ describe('Wave 006b ActionsPanel component behavior', () => {
 
     const wrapper = mount(ActionsPanel, {
       global: {
-        provide: { [ProcessTreeReadInjectionKey as symbol]: processTreeReadPort, [ProcessHistoryCommandInjectionKey as symbol]: new ProcessHistoryController({ world, commands: new RuntimeCommandProducer(world, visibilityModel, commandStack, processTreeReadPort) }) },
+        provide: { [ProcessTreeReadInjectionKey as symbol]: processTreeReadPort, [ProcessHistoryCommandInjectionKey as symbol]: new ProcessHistoryController({ world, commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack, processTreeReadPort) }) },
         stubs: {
           ProcessTreeNode: {
             name: 'ProcessTreeNode',
@@ -185,7 +185,7 @@ describe('Wave 006b Toolbar component behavior', () => {
   it('delegates undo/redo through the toolbar history controller and refreshes enabled state', async () => {
     const { world, visibilityModel, commandStack } = createTestWorld();
     commandStack.clear();
-    const processHistory = new ProcessHistoryUseCases(world, new RuntimeCommandProducer(world, visibilityModel, commandStack));
+    const processHistory = new ProcessHistoryUseCases(world, new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack));
     processHistory.pushSubprocess({ name: 'Undoable from toolbar test' });
 
     const wrapper = mount(Toolbar, {

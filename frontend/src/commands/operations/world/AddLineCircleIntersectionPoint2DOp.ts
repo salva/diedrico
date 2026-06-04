@@ -42,7 +42,7 @@ export class AddLineCircleIntersectionPoint2DOp implements IOperation<AddLineCir
         throw new Error(`Plane not found: ${this.planeId}`);
       }
       
-      const point = context.world.getConstructionService().addLineCircleIntersection(
+      const point = context.constructionService.addLineCircleIntersection(
         plane,
         this.lineId,
         this.circleId,

@@ -14,7 +14,7 @@ import { CanvasInteractionQuery } from '@/application/canvasPresentation/CanvasI
 import type { ToolContext } from '@/tools/ITool';
 import type { ToolCommandSink, ToolConstructionIntent } from '@/tools/ToolCommandIntents';
 import type { ArgumentValue } from '@/tools/ToolArgumentCollector';
-import { createTestWorld, getHorizontalPlane, getHorizontalPlaneId } from '../../helpers/worldHelpers';
+import { createTestWorld, getHorizontalPlane, getHorizontalPlaneId, buildOperationContext } from '../../helpers/worldHelpers';
 import { createToolInteractionReadPort } from '@/application/tools/ToolInteractionReadPort';
 
 function userPoints(world: any, planeId: string) {
@@ -46,7 +46,7 @@ describe('Wave 006a canvas/tool command controllers', () => {
 
     const success = executeConstructionIntent({
       world,
-      commands: new RuntimeCommandProducer(world, visibilityModel, commandStack),
+      commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack),
       intent: {
         type: 'point',
         description: 'Create free point',
@@ -61,7 +61,7 @@ describe('Wave 006a canvas/tool command controllers', () => {
 
     const failure = executeConstructionIntent({
       world,
-      commands: new RuntimeCommandProducer(world, visibilityModel, commandStack),
+      commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack),
       intent: {
         type: 'point',
         description: 'Create invalid point',
@@ -88,7 +88,7 @@ describe('Wave 006a canvas/tool command controllers', () => {
 
     const result = executeConstructionIntent({
       world,
-      commands: new RuntimeCommandProducer(world, visibilityModel, commandStack),
+      commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack),
       intent: {
         type: 'intersection',
         description: 'Create intersection point',
@@ -119,7 +119,7 @@ describe('Wave 006a canvas/tool command controllers', () => {
 
     const result = executeConstructionIntent({
       world,
-      commands: new RuntimeCommandProducer(world, visibilityModel, commandStack),
+      commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack),
       intent: {
         type: 'tangent-line-to-circle-through-point',
         description: 'Create tangent line to circle through point',
@@ -141,7 +141,7 @@ describe('Wave 006a canvas/tool command controllers', () => {
     const { world, visibilityModel, commandStack } = createTestWorld();
     const plane = getHorizontalPlane(world);
     const point = world.getConstructionService().addFreePoint2D(plane, new Vector3(1, 2, 1));
-    const useCase = new CanvasPointMovementUseCase(new RuntimeCommandProducer(world, visibilityModel, commandStack));
+    const useCase = new CanvasPointMovementUseCase(new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack));
 
     const cancelled = useCase.start({ planeId: plane.id, pointId: point.id, label: point.label });
     expect(cancelled.preview(new Vector3(3, 4, 1)).success).toBe(true);
@@ -163,7 +163,7 @@ describe('Wave 006a canvas/tool command controllers', () => {
     const { world, visibilityModel, commandStack } = createTestWorld();
     const plane = getHorizontalPlane(world);
     const point = world.getConstructionService().addFreePoint2D(plane, new Vector3(1, 2, 1));
-    const useCase = new CanvasStyleUseCase(new RuntimeCommandProducer(world, visibilityModel, commandStack));
+    const useCase = new CanvasStyleUseCase(new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack));
     const beforeUndoCount = commandStack.getUndoCount();
 
     const result = useCase.update({
@@ -180,7 +180,7 @@ describe('Wave 006a canvas/tool command controllers', () => {
   });
 
   it('lets tools emit typed construction intents with ambiguous-choice metadata through the command sink', () => {
-    const { world } = createTestWorld();
+    const { world, visibilityModel } = createTestWorld();
     const plane = getHorizontalPlane(world);
     const center = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
     const radius = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 0, 1));
@@ -254,7 +254,7 @@ describe('Wave 006a canvas/tool command controllers', () => {
   it('delegates through CanvasToolController rather than exposing command construction to tools', () => {
     const { world, visibilityModel, commandStack } = createTestWorld();
     const planeId = getHorizontalPlaneId(world);
-    const controller = new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, visibilityModel, commandStack) });
+    const controller = new CanvasToolController({ world, commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack) });
     const pointTool = new PointTool();
     const result = pointTool.handleClick(makeToolContext({
       planeId,

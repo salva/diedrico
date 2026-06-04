@@ -18,6 +18,7 @@ import { World } from '../../src/domain/world/World';
 import { CommandStack } from '../../src/commands/CommandStack';
 import { initializeWorld } from '../../src/application/world/initializeWorld';
 import { VisibilityModel } from '../../src/application/processTree/VisibilityModel';
+import type { OperationContext } from '../../src/commands/operations/OperationContext';
 import type { ProjectionPlane } from '../../src/domain/world/projectionPlane/ProjectionPlane';
 import type { FreePoint2D } from '../../src/domain/world/Point';
 import type { HingeLine } from '../../src/domain/world/HingeLine';
@@ -40,6 +41,19 @@ import type { HingeLine } from '../../src/domain/world/HingeLine';
  * 
  * @returns Object with initialized world and command stack
  */
+export function buildOperationContext(world: World, visibilityModel: VisibilityModel): OperationContext {
+  return {
+    world,
+    visibilityModel,
+    processTree: world.getProcessTree(),
+    dependencies: world.getDependencyService(),
+    realizations: world.getRealizationService(),
+    constructionService: world.getConstructionService(),
+    idAllocator: world.getIdAllocator(),
+    labelGenerator: world.labelGenerator,
+  };
+}
+
 export function createTestWorld(): { world: World; visibilityModel: VisibilityModel; commandStack: CommandStack } {
   const world = new World();
   const visibilityModel = new VisibilityModel();

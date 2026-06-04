@@ -82,7 +82,7 @@ export class AddAuxiliaryProjectionPlaneOp implements IOperation {
       const projPlaneId = this.outputs.projPlaneId || context.world.generateProjPlaneId();
       
       // Auto-generate name if not provided - use generateDefaultLabel for proper subscript formatting
-      const planeName = this.name || context.world.generateDefaultLabel(projPlaneId, 'ProjectionPlane');
+      const planeName = this.name || context.labelGenerator.next('ProjectionPlane');
       
       // Create AuxiliaryProjectionPlane
       // NOTE: Stores trace IDs (dependencies), NOT matrices
@@ -104,7 +104,7 @@ export class AddAuxiliaryProjectionPlaneOp implements IOperation {
       
       // Register with dependency service (CRITICAL for parametric updates)
       // When trace lines move, the dependency service will find this plane and invalidate it
-      context.world.getDependencyRegistrar().registerNode(projPlaneId, plane.getDependencies());
+      context.dependencies.registerNode(projPlaneId, plane.getDependencies());
       
       // Store outputs for undo
       this.outputs = { projPlaneId };
@@ -125,7 +125,7 @@ export class AddAuxiliaryProjectionPlaneOp implements IOperation {
   undo(context: OperationContext): void {
     if (this.outputs.projPlaneId) {
       // Unregister from dependency service
-      context.world.getDependencyRegistrar().unregisterNode(this.outputs.projPlaneId);
+      context.dependencies.unregisterNode(this.outputs.projPlaneId);
       
       context.world.projectionPlanes.delete(this.outputs.projPlaneId);
     }

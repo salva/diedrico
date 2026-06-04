@@ -35,7 +35,7 @@ export class AddLine2DByTwoPointsOp implements IOperation<AddLine2DByTwoPointsDe
     try {
       const plane = requireProjectionPlane(context.world, this.planeId);
       
-      const line = context.world.getConstructionService().addLine2DBetweenTwoPoints(
+      const line = context.constructionService.addLine2DBetweenTwoPoints(
         plane,
         this.point1Id,
         this.point2Id,
@@ -99,7 +99,7 @@ export class AddLine2DParallelToLineOp implements IOperation<AddLine2DParallelTo
     try {
       const plane = requireProjectionPlane(context.world, this.planeId);
       
-      const line = context.world.getConstructionService().addLine2DParallelToLine(
+      const line = context.constructionService.addLine2DParallelToLine(
         plane,
         this.referenceLineId,
         this.throughPointId,
@@ -163,7 +163,7 @@ export class AddLine2DPerpendicularToLineOp implements IOperation<AddLine2DPerpe
     try {
       const plane = requireProjectionPlane(context.world, this.planeId);
       
-      const line = context.world.getConstructionService().addLine2DPerpendicularToLine(
+      const line = context.constructionService.addLine2DPerpendicularToLine(
         plane,
         this.referenceLineId,
         this.throughPointId,
@@ -217,7 +217,7 @@ export class AddLine2DTangentToCircleThroughPointOp implements IOperation {
     try {
       const plane = requireProjectionPlane(context.world, this.planeId);
       
-      const line = context.world.getConstructionService().addLine2DTangentToCircleThroughPoint(
+      const line = context.constructionService.addLine2DTangentToCircleThroughPoint(
         plane,
         this.circleId,
         this.throughPointId,
@@ -273,7 +273,7 @@ export class AddLine2DTangentToCircleParallelToLineOp implements IOperation {
     try {
       const plane = requireProjectionPlane(context.world, this.planeId);
       
-      const line = context.world.getConstructionService().addLine2DTangentToCircleParallelToLine(
+      const line = context.constructionService.addLine2DTangentToCircleParallelToLine(
         plane,
         this.circleId,
         this.referenceLineId,

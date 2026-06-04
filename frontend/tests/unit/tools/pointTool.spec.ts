@@ -34,7 +34,7 @@ function liveInteractionQuery(worldRef: () => any, visibilityModelRef: () => Vis
 }
 import { CanvasInteractionQuery } from '@/application/canvasPresentation/CanvasInteractionQuery';
 import { FreePoint2D } from '@/domain/world/Point';
-import { createTestWorld } from '../../helpers/worldHelpers';
+import { createTestWorld, buildOperationContext } from '../../helpers/worldHelpers';
 
 describe('PointTool', () => {
   let tool: PointTool;
@@ -50,7 +50,7 @@ describe('PointTool', () => {
     planeId,
     planeCoords,
     canvasCoords,
-    commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(world, visibilityModel, commandStack) }),
+    commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack) }),
     readPort: createToolInteractionReadPort(world),
     interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 },

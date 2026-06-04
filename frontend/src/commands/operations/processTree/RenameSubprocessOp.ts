@@ -14,7 +14,7 @@ export class RenameSubprocessOp implements IOperation {
   }
 
   apply(context: OperationContext): OperationResult {
-    const processTree = context.world.getProcessTree();
+    const processTree = context.processTree;
     const subprocess = processTree.findSubprocessById(this.subprocessId);
     
     if (!subprocess) {
@@ -31,7 +31,7 @@ export class RenameSubprocessOp implements IOperation {
 
   undo(context: OperationContext): void {
     if (this.oldName !== null) {
-      const processTree = context.world.getProcessTree();
+      const processTree = context.processTree;
       processTree.renameSubprocess(this.subprocessId, this.oldName);
     }
   }

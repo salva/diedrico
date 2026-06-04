@@ -16,14 +16,14 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import type { World } from '@/domain/world/World';
 import type { VisibilityModel } from '@/application/processTree/VisibilityModel';
-import { createTestWorld } from '../helpers/worldHelpers';
+import { createTestWorld, buildOperationContext } from '../helpers/worldHelpers';
 import { CommandStack } from '@/commands/CommandStack';
 import { Command } from '@/commands/Command';
 import { ProjectService } from '@/application/appShell/ProjectService';
 import { Vector3 } from 'three';
 import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
 import { RemovePoint2DOp } from '@/commands/operations/world/RemoveElementOps';
-import { getHorizontalPlaneId } from '../helpers/worldHelpers';
+import { getHorizontalPlaneId, buildOperationContext } from '../helpers/worldHelpers';
 
 describe('ProjectService Deletion Edge Case Tests', () => {
   let world: World;
@@ -44,7 +44,7 @@ describe('ProjectService Deletion Edge Case Tests', () => {
    */
   it('should preserve deletion through serialization', () => {
     // Create two points
-    const createCmd = new Command('Create points', { world, visibilityModel });
+    const createCmd = new Command('Create points', buildOperationContext(world, visibilityModel));
     const p1Result = createCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 0, 1)));
     const p2Result = createCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 0, 1)));
     createCmd.commit();
@@ -54,7 +54,7 @@ describe('ProjectService Deletion Edge Case Tests', () => {
     const p2Id = p2Result.outputs.pointId;
 
     // Delete one point
-    const deleteCmd = new Command('Delete point', { world, visibilityModel });
+    const deleteCmd = new Command('Delete point', buildOperationContext(world, visibilityModel));
     deleteCmd.addAndExecute(new RemovePoint2DOp(planeId, p1Id));
     deleteCmd.commit();
     commandStack.push(deleteCmd);
@@ -87,7 +87,7 @@ describe('ProjectService Deletion Edge Case Tests', () => {
    */
   it('should handle multiple deletions in sequence', () => {
     // Create three points
-    const createCmd = new Command('Create points', { world, visibilityModel });
+    const createCmd = new Command('Create points', buildOperationContext(world, visibilityModel));
     const p1Result = createCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 0, 1)));
     const p2Result = createCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(50, 0, 1)));
     const p3Result = createCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 0, 1)));
@@ -99,13 +99,13 @@ describe('ProjectService Deletion Edge Case Tests', () => {
     const p3Id = p3Result.outputs.pointId;
 
     // Delete p1
-    const delete1Cmd = new Command('Delete p1', { world, visibilityModel });
+    const delete1Cmd = new Command('Delete p1', buildOperationContext(world, visibilityModel));
     delete1Cmd.addAndExecute(new RemovePoint2DOp(planeId, p1Id));
     delete1Cmd.commit();
     commandStack.push(delete1Cmd);
 
     // Delete p3
-    const delete3Cmd = new Command('Delete p3', { world, visibilityModel });
+    const delete3Cmd = new Command('Delete p3', buildOperationContext(world, visibilityModel));
     delete3Cmd.addAndExecute(new RemovePoint2DOp(planeId, p3Id));
     delete3Cmd.commit();
     commandStack.push(delete3Cmd);
@@ -135,14 +135,14 @@ describe('ProjectService Deletion Edge Case Tests', () => {
    */
   it('should handle deletion through undo/redo cycles', () => {
     // Create and delete
-    const createCmd = new Command('Create', { world, visibilityModel });
+    const createCmd = new Command('Create', buildOperationContext(world, visibilityModel));
     const pResult = createCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(50, 50, 1)));
     createCmd.commit();
     commandStack.push(createCmd);
 
     const pId = pResult.outputs.pointId;
 
-    const deleteCmd = new Command('Delete', { world, visibilityModel });
+    const deleteCmd = new Command('Delete', buildOperationContext(world, visibilityModel));
     deleteCmd.addAndExecute(new RemovePoint2DOp(planeId, pId));
     deleteCmd.commit();
     commandStack.push(deleteCmd);
@@ -174,20 +174,20 @@ describe('ProjectService Deletion Edge Case Tests', () => {
     const position = new Vector3(75, 75, 1);
 
     // Create point
-    const create1Cmd = new Command('Create 1', { world, visibilityModel });
+    const create1Cmd = new Command('Create 1', buildOperationContext(world, visibilityModel));
     const p1Result = create1Cmd.addAndExecute(new AddFreePoint2DOp(planeId, position));
     create1Cmd.commit();
     commandStack.push(create1Cmd);
     const p1Id = p1Result.outputs.pointId;
 
     // Delete it
-    const deleteCmd = new Command('Delete', { world, visibilityModel });
+    const deleteCmd = new Command('Delete', buildOperationContext(world, visibilityModel));
     deleteCmd.addAndExecute(new RemovePoint2DOp(planeId, p1Id));
     deleteCmd.commit();
     commandStack.push(deleteCmd);
 
     // Create another point at same position (should get different ID)
-    const create2Cmd = new Command('Create 2', { world, visibilityModel });
+    const create2Cmd = new Command('Create 2', buildOperationContext(world, visibilityModel));
     const p2Result = create2Cmd.addAndExecute(new AddFreePoint2DOp(planeId, position));
     create2Cmd.commit();
     commandStack.push(create2Cmd);

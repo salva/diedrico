@@ -12,7 +12,7 @@ import { CommandStack } from '@/commands/CommandStack';
 import { Command } from '@/commands/Command';
 import type { World } from '@/domain/world/World';
 import type { IOperation } from '@/commands/operations/IOperation';
-import { createTestWorld } from '../../helpers/worldHelpers';
+import { createTestWorld, buildOperationContext } from '../../helpers/worldHelpers';
 
 // Mock operation helper
 const createMockOperation = (name: string = 'mock'): IOperation => ({
@@ -26,18 +26,20 @@ const createMockOperation = (name: string = 'mock'): IOperation => ({
 describe('CommandStack Observer Pattern', () => {
   let commandStack: CommandStack;
   let world: World;
+  let visibilityModel;
 
   beforeEach(() => {
-    const { world: w, commandStack: cs } = createTestWorld();
+    const { world: w, visibilityModel: vm, commandStack: cs } = createTestWorld();
     commandStack = cs;
     world = w;
-  });
+
+    visibilityModel = vm;  });
 
   it('should notify subscribers when command is pushed', () => {
     const callback = vi.fn();
     commandStack.subscribe(callback);
 
-    const command = new Command('Test Command', { world });
+    const command = new Command('Test Command', buildOperationContext(world, visibilityModel));
     command.addAndExecute(createMockOperation());
     command.commit();
 
@@ -47,7 +49,7 @@ describe('CommandStack Observer Pattern', () => {
   });
 
   it('should notify subscribers when undo is performed', () => {
-    const command = new Command('Test Command', { world });
+    const command = new Command('Test Command', buildOperationContext(world, visibilityModel));
     command.addAndExecute(createMockOperation());
     command.commit();
     commandStack.push(command);
@@ -61,7 +63,7 @@ describe('CommandStack Observer Pattern', () => {
   });
 
   it('should notify subscribers when redo is performed', () => {
-    const command = new Command('Test Command', { world });
+    const command = new Command('Test Command', buildOperationContext(world, visibilityModel));
     command.addAndExecute(createMockOperation());
     command.commit();
     commandStack.push(command);
@@ -79,7 +81,7 @@ describe('CommandStack Observer Pattern', () => {
     const callback = vi.fn();
     const unsubscribe = commandStack.subscribe(callback);
 
-    const command1 = new Command('Command 1', { world });
+    const command1 = new Command('Command 1', buildOperationContext(world, visibilityModel));
     command1.addAndExecute(createMockOperation());
     command1.commit();
     commandStack.push(command1);
@@ -88,7 +90,7 @@ describe('CommandStack Observer Pattern', () => {
 
     unsubscribe();
 
-    const command2 = new Command('Command 2', { world });
+    const command2 = new Command('Command 2', buildOperationContext(world, visibilityModel));
     command2.addAndExecute(createMockOperation());
     command2.commit();
     commandStack.push(command2);
@@ -103,7 +105,7 @@ describe('CommandStack Observer Pattern', () => {
     commandStack.subscribe(callback1);
     commandStack.subscribe(callback2);
 
-    const command = new Command('Test Command', { world });
+    const command = new Command('Test Command', buildOperationContext(world, visibilityModel));
     command.addAndExecute(createMockOperation());
     command.commit();
     commandStack.push(command);

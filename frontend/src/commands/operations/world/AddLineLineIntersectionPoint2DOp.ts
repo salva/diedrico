@@ -37,7 +37,7 @@ export class AddLineLineIntersectionPoint2DOp implements IOperation<AddLineLineI
     try {
       const plane = requireProjectionPlane(context.world, this.planeId);
       
-      const point = context.world.getConstructionService().addLineLineIntersection(
+      const point = context.constructionService.addLineLineIntersection(
         plane,
         this.line1Id,
         this.line2Id,

@@ -79,7 +79,7 @@ export class Add3DPointOp implements IOperation<Add3DPointDescriptor, Add3DPoint
       const pointId = this.outputs.pointId || context.world.generate3DPointId();
       
       // Phase 97: Generate default label if not provided
-      const label = this.label || context.world.generateDefaultLabel(pointId, 'Point3D');
+      const label = this.label || context.labelGenerator.next('Point3D');
       
       // Create default visual style if not provided
       const visualStyle = this.visualStyle || {

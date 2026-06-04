@@ -7,7 +7,7 @@ import { PushSubprocessOp } from '@/commands/operations/processTree/PushSubproce
 import { ProcessHistoryUseCases } from '@/application/processHistory/ProcessHistoryUseCases';
 import { RuntimeCommandProducer } from '@/application/commandProduction/RuntimeCommandProducer';
 import { ToolbarHistoryUseCases } from '@/application/toolbar/ToolbarHistoryUseCases';
-import { createTestWorld } from '../../helpers/worldHelpers';
+import { createTestWorld, buildOperationContext } from '../../helpers/worldHelpers';
 
 describe('Wave 006b panel/toolbar intent controllers', () => {
   it('keeps ActionsPanel and Toolbar free of command construction and stack execution internals', () => {
@@ -47,7 +47,7 @@ describe('Wave 006b panel/toolbar intent controllers', () => {
 
   it('executes process-history mutations through use cases with undo/redo stack effects', () => {
     const { world, visibilityModel, commandStack } = createTestWorld();
-    const useCases = new ProcessHistoryUseCases(world, new RuntimeCommandProducer(world, visibilityModel, commandStack));
+    const useCases = new ProcessHistoryUseCases(world, new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack));
 
     const initialUndoCount = commandStack.getUndoCount();
     const push = useCases.pushSubprocess({ name: 'Nested work' });
@@ -78,7 +78,7 @@ describe('Wave 006b panel/toolbar intent controllers', () => {
 
   it('does not pollute the command stack when process-history operations fail', () => {
     const { world, visibilityModel, commandStack } = createTestWorld();
-    const useCases = new ProcessHistoryUseCases(world, new RuntimeCommandProducer(world, visibilityModel, commandStack));
+    const useCases = new ProcessHistoryUseCases(world, new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack));
 
     const initialUndoCount = commandStack.getUndoCount();
     const popRoot = useCases.popSubprocess();
@@ -92,7 +92,7 @@ describe('Wave 006b panel/toolbar intent controllers', () => {
 
   it('routes toolbar history state and undo/redo execution through use cases', () => {
     const { world, visibilityModel, commandStack } = createTestWorld();
-    const processHistory = new ProcessHistoryUseCases(world, new RuntimeCommandProducer(world, visibilityModel, commandStack));
+    const processHistory = new ProcessHistoryUseCases(world, new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack));
     const toolbarHistory = new ToolbarHistoryUseCases(commandStack);
     let notifications = 0;
     toolbarHistory.subscribe(() => notifications++);
@@ -117,7 +117,7 @@ describe('Wave 006b panel/toolbar intent controllers', () => {
   it('recovers rollback state if command assembly fails after an earlier process-history operation executed', () => {
     const { world, visibilityModel } = createTestWorld();
     const commandStack = new CommandStack();
-    const command = new Command('partial process-history command', { world, visibilityModel });
+    const command = new Command('partial process-history command', buildOperationContext(world, visibilityModel));
 
     command.addAndExecute(new PushSubprocessOp('Partial child'));
     expect(world.getProcessTree().getStackDepth()).toBe(2);
