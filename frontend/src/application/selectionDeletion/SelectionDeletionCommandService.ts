@@ -1,7 +1,7 @@
 import { Command } from '@/commands/Command';
 import type { CommandStack } from '@/commands/CommandStack';
 import type { OperationContext } from '@/commands/operations/OperationContext';
-import { DeletionSequenceFactory } from '@/commands/factories/DeletionSequenceFactory';
+import { DeletionSequenceFactory, type DeletionSequenceContext } from '@/commands/factories/DeletionSequenceFactory';
 import type { World } from '@/domain/world/World';
 import type { ChangeNotifier } from '@/application/appShell/RuntimeChangePublisher';
 import type { VisibilityModel } from '@/application/processTree/VisibilityModel';
@@ -11,13 +11,13 @@ const noopChangeNotifier: ChangeNotifier = { notifyChange: () => {} };
 
 interface SelectionDeletionCommandServiceInternals {
   createCommand(description: string, context: OperationContext, notifier: ChangeNotifier): Command;
-  createCascadeDeletion(command: Command, selectedIds: string[], world: World): void;
+  createCascadeDeletion(command: Command, selectedIds: string[], context: DeletionSequenceContext): void;
 }
 
 const defaultInternals: SelectionDeletionCommandServiceInternals = {
   createCommand: (description, context, notifier) => new Command(description, context, notifier),
-  createCascadeDeletion: (command, selectedIds, world) => {
-    DeletionSequenceFactory.createCascadeDeletion(command, selectedIds, world);
+  createCascadeDeletion: (command, selectedIds, context) => {
+    DeletionSequenceFactory.createCascadeDeletion(command, selectedIds, context);
   },
 };
 
@@ -48,7 +48,7 @@ export class SelectionDeletionCommandService implements SelectionDeletionCommand
   execute(selectedIds: readonly string[]): void {
     if (selectedIds.length === 0) return;
 
-    const deleteCommand = this.internals.createCommand('Delete elements', {
+    const operationContext: OperationContext = {
       world: this.world,
       visibilityModel: this.visibilityModel,
       processTree: this.world.getProcessTree(),
@@ -57,8 +57,13 @@ export class SelectionDeletionCommandService implements SelectionDeletionCommand
       constructionService: this.world.getConstructionService(),
       idAllocator: this.world.getIdAllocator(),
       labelGenerator: this.world.labelGenerator,
-    }, this.notifier);
-    this.internals.createCascadeDeletion(deleteCommand, [...selectedIds], this.world);
+    };
+    const deleteCommand = this.internals.createCommand('Delete elements', operationContext, this.notifier);
+    this.internals.createCascadeDeletion(deleteCommand, [...selectedIds], {
+      world: this.world,
+      dependencyQuery: operationContext.dependencies,
+      processTree: operationContext.processTree,
+    });
     deleteCommand.commit();
     this.commandStack.push(deleteCommand);
   }

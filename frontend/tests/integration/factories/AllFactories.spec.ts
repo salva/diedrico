@@ -38,6 +38,14 @@ describe('Factory Integration Tests', () => {
     planeId = getHorizontalPlaneId(world);
   });
 
+  function deletionContext() {
+    return {
+      world,
+      dependencyQuery: world.getDependencyService(),
+      processTree: world.getProcessTree(),
+    };
+  }
+
   describe('GuideSequenceFactory Integration', () => {
     it('should create guide with sibling on HHL and support undo/redo', () => {
       // Setup: Use existing HHL (created by default in World)
@@ -158,7 +166,7 @@ describe('Factory Integration Tests', () => {
 
       // Test: Delete point1 (should cascade delete line)
       const deleteCmd = new Command('Delete with cascade', buildOperationContext(world, visibilityModel));
-      DeletionSequenceFactory.createCascadeDeletion(deleteCmd, [point1Id], world);
+      DeletionSequenceFactory.createCascadeDeletion(deleteCmd, [point1Id], deletionContext());
       
       deleteCmd.commit();
       commandStack.push(deleteCmd);
@@ -208,7 +216,7 @@ describe('Factory Integration Tests', () => {
 
       // Test: Delete center point (should cascade delete circle)
       const deleteCmd = new Command('Delete with cascade', buildOperationContext(world, visibilityModel));
-      DeletionSequenceFactory.createCascadeDeletion(deleteCmd, [centerId], world);
+      DeletionSequenceFactory.createCascadeDeletion(deleteCmd, [centerId], deletionContext());
       
       deleteCmd.commit();
       commandStack.push(deleteCmd);
@@ -243,7 +251,7 @@ describe('Factory Integration Tests', () => {
 
       // Test: Delete multiple points at once
       const deleteCmd = new Command('Delete multiple', buildOperationContext(world, visibilityModel));
-      DeletionSequenceFactory.createCascadeDeletion(deleteCmd, [point1Id, point3Id], world);
+      DeletionSequenceFactory.createCascadeDeletion(deleteCmd, [point1Id, point3Id], deletionContext());
       
       deleteCmd.commit();
       commandStack.push(deleteCmd);

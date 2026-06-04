@@ -61,6 +61,14 @@ describe('DeletionSequenceFactory', () => {
     return actionNode.id;
   }
 
+  function deletionContext() {
+    return {
+      world,
+      dependencyQuery: world.getDependencyService(),
+      processTree: world.getProcessTree(),
+    };
+  }
+
   function expectActionRemoved(elementId: string): void {
     expect(world.getProcessTree().getActionsProducingElement(elementId)).toHaveLength(0);
   }
@@ -72,7 +80,7 @@ describe('DeletionSequenceFactory', () => {
   describe('createCascadeDeletion', () => {
     it('should handle empty selection gracefully', () => {
       const deleteCmd = new Command('Delete nothing', buildOperationContext(world, visibilityModel));
-      DeletionSequenceFactory.createCascadeDeletion(deleteCmd, [], world);
+      DeletionSequenceFactory.createCascadeDeletion(deleteCmd, [], deletionContext());
 
       expect(deleteCmd.operations.length).toBe(0);
     });
@@ -87,7 +95,7 @@ describe('DeletionSequenceFactory', () => {
       expectActionPresent(pointId);
 
       const deleteCmd = new Command('Delete point', buildOperationContext(world, visibilityModel));
-      DeletionSequenceFactory.createCascadeDeletion(deleteCmd, [pointId], world);
+      DeletionSequenceFactory.createCascadeDeletion(deleteCmd, [pointId], deletionContext());
       deleteCmd.commit();
 
       const plane = world.getProjectionPlaneById(planeId)!;
@@ -106,7 +114,7 @@ describe('DeletionSequenceFactory', () => {
       setupCmd.commit();
 
       const deleteCmd = new Command('Delete point', buildOperationContext(world, visibilityModel));
-      DeletionSequenceFactory.createCascadeDeletion(deleteCmd, [pointId], world);
+      DeletionSequenceFactory.createCascadeDeletion(deleteCmd, [pointId], deletionContext());
       deleteCmd.commit();
 
       const plane = world.getProjectionPlaneById(planeId)!;
@@ -130,7 +138,7 @@ describe('DeletionSequenceFactory', () => {
       setupCmd.commit();
 
       const deleteCmd = new Command('Delete point with cascade', buildOperationContext(world, visibilityModel));
-      DeletionSequenceFactory.createCascadeDeletion(deleteCmd, [point1Id], world);
+      DeletionSequenceFactory.createCascadeDeletion(deleteCmd, [point1Id], deletionContext());
       deleteCmd.commit();
 
       const plane = world.getProjectionPlaneById(planeId)!;
@@ -167,7 +175,7 @@ describe('DeletionSequenceFactory', () => {
       setupCmd.commit();
 
       const deleteCmd = new Command('Delete center with cascade', buildOperationContext(world, visibilityModel));
-      DeletionSequenceFactory.createCascadeDeletion(deleteCmd, [centerId], world);
+      DeletionSequenceFactory.createCascadeDeletion(deleteCmd, [centerId], deletionContext());
       deleteCmd.commit();
 
       const plane = world.getProjectionPlaneById(planeId)!;
@@ -196,7 +204,7 @@ describe('DeletionSequenceFactory', () => {
       setupCmd.commit();
 
       const deleteCmd = new Command('Delete multiple points', buildOperationContext(world, visibilityModel));
-      DeletionSequenceFactory.createCascadeDeletion(deleteCmd, pointIds, world);
+      DeletionSequenceFactory.createCascadeDeletion(deleteCmd, pointIds, deletionContext());
       deleteCmd.commit();
 
       const plane = world.getProjectionPlaneById(planeId)!;
@@ -231,7 +239,7 @@ describe('DeletionSequenceFactory', () => {
       commandStack.push(setupCmd);
 
       const deleteCmd = new Command('Delete point with cascade', buildOperationContext(world, visibilityModel));
-      DeletionSequenceFactory.createCascadeDeletion(deleteCmd, [point1Id], world);
+      DeletionSequenceFactory.createCascadeDeletion(deleteCmd, [point1Id], deletionContext());
       deleteCmd.commit();
       commandStack.push(deleteCmd);
 
@@ -270,7 +278,7 @@ describe('DeletionSequenceFactory', () => {
       setupCmd.commit();
 
       const deleteCmd = new Command('Delete segment', buildOperationContext(world, visibilityModel));
-      DeletionSequenceFactory.createCascadeDeletion(deleteCmd, [segmentId], world);
+      DeletionSequenceFactory.createCascadeDeletion(deleteCmd, [segmentId], deletionContext());
       deleteCmd.commit();
 
       const plane = world.getProjectionPlaneById(planeId)!;

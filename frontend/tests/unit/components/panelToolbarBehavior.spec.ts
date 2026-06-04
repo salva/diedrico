@@ -92,7 +92,7 @@ describe('Wave 006b ActionsPanel component behavior', () => {
 
     const wrapper = mount(ActionsPanel, {
       global: {
-        provide: { [ProcessTreeReadInjectionKey as symbol]: processTreeReadPort, [ProcessHistoryCommandInjectionKey as symbol]: new ProcessHistoryController({ world, commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack, processTreeReadPort) }) },
+        provide: { [ProcessTreeReadInjectionKey as symbol]: processTreeReadPort, [ProcessHistoryCommandInjectionKey as symbol]: new ProcessHistoryController({ processTree: world.getProcessTree(), commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack, processTreeReadPort) }) },
         stubs: {
           ProcessTreeNode: {
             template: '<div class="process-tree-node-stub" />',
@@ -133,7 +133,7 @@ describe('Wave 006b ActionsPanel component behavior', () => {
 
     const wrapper = mount(ActionsPanel, {
       global: {
-        provide: { [ProcessTreeReadInjectionKey as symbol]: processTreeReadPort, [ProcessHistoryCommandInjectionKey as symbol]: new ProcessHistoryController({ world, commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack, processTreeReadPort) }) },
+        provide: { [ProcessTreeReadInjectionKey as symbol]: processTreeReadPort, [ProcessHistoryCommandInjectionKey as symbol]: new ProcessHistoryController({ processTree: world.getProcessTree(), commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack, processTreeReadPort) }) },
         stubs: {
           ProcessTreeNode: {
             name: 'ProcessTreeNode',
@@ -185,7 +185,7 @@ describe('Wave 006b Toolbar component behavior', () => {
   it('delegates undo/redo through the toolbar history controller and refreshes enabled state', async () => {
     const { world, visibilityModel, commandStack } = createTestWorld();
     commandStack.clear();
-    const processHistory = new ProcessHistoryUseCases(world, new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack));
+    const processHistory = new ProcessHistoryUseCases(world.getProcessTree(), new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack));
     processHistory.pushSubprocess({ name: 'Undoable from toolbar test' });
 
     const wrapper = mount(Toolbar, {

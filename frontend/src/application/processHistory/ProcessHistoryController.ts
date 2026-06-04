@@ -1,5 +1,5 @@
 import type { ProcessCommandExecutionPort } from '@/application/commandProduction/CommandProductionPorts';
-import type { World } from '@/domain/world/World';
+import type { ProcessTree } from '@/domain/processTree/ProcessTree';
 import type {
   PopSubprocessRequest,
   ProcessHistoryIntentSink,
@@ -13,7 +13,7 @@ import type {
 import { ProcessHistoryUseCases } from './ProcessHistoryUseCases';
 
 export interface ProcessHistoryControllerDependencies {
-  world: World;
+  processTree: ProcessTree;
   commands: ProcessCommandExecutionPort;
 }
 
@@ -21,7 +21,7 @@ export class ProcessHistoryController implements ProcessHistoryIntentSink {
   private readonly useCases: ProcessHistoryUseCases;
 
   constructor(deps: ProcessHistoryControllerDependencies) {
-    this.useCases = new ProcessHistoryUseCases(deps.world, deps.commands);
+    this.useCases = new ProcessHistoryUseCases(deps.processTree, deps.commands);
   }
 
   getState(): ProcessHistoryState {

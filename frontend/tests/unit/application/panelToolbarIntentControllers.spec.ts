@@ -47,7 +47,7 @@ describe('Wave 006b panel/toolbar intent controllers', () => {
 
   it('executes process-history mutations through use cases with undo/redo stack effects', () => {
     const { world, visibilityModel, commandStack } = createTestWorld();
-    const useCases = new ProcessHistoryUseCases(world, new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack));
+    const useCases = new ProcessHistoryUseCases(world.getProcessTree(), new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack));
 
     const initialUndoCount = commandStack.getUndoCount();
     const push = useCases.pushSubprocess({ name: 'Nested work' });
@@ -78,7 +78,7 @@ describe('Wave 006b panel/toolbar intent controllers', () => {
 
   it('does not pollute the command stack when process-history operations fail', () => {
     const { world, visibilityModel, commandStack } = createTestWorld();
-    const useCases = new ProcessHistoryUseCases(world, new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack));
+    const useCases = new ProcessHistoryUseCases(world.getProcessTree(), new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack));
 
     const initialUndoCount = commandStack.getUndoCount();
     const popRoot = useCases.popSubprocess();
@@ -92,7 +92,7 @@ describe('Wave 006b panel/toolbar intent controllers', () => {
 
   it('routes toolbar history state and undo/redo execution through use cases', () => {
     const { world, visibilityModel, commandStack } = createTestWorld();
-    const processHistory = new ProcessHistoryUseCases(world, new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack));
+    const processHistory = new ProcessHistoryUseCases(world.getProcessTree(), new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack));
     const toolbarHistory = new ToolbarHistoryUseCases(commandStack);
     let notifications = 0;
     toolbarHistory.subscribe(() => notifications++);

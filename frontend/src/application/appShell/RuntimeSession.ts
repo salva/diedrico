@@ -83,8 +83,8 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
     return {
       subscribeToChanges: (listener) => this.changes.subscribeToChanges(listener),
       unsubscribeFromChanges: (listener) => this.changes.unsubscribeFromChanges(listener),
-      getTree: () => buildProcessTreeReadModel({ world: this.world, dependencyQuery: this.world.getDependencyQuery(), descriptorRegistry: this.descriptorRegistry, visibilityModel: this.visibilityModel }),
-      getRelatedActionIds: (selectedIds) => getRelatedActionIds(selectedIds, { world: this.world, dependencyQuery: this.world.getDependencyQuery(), descriptorRegistry: this.descriptorRegistry, visibilityModel: this.visibilityModel }),
+      getTree: () => buildProcessTreeReadModel({ world: this.world, processTree: this.operationContext.processTree, dependencyQuery: this.operationContext.dependencies, descriptorRegistry: this.descriptorRegistry, visibilityModel: this.visibilityModel }),
+      getRelatedActionIds: (selectedIds) => getRelatedActionIds(selectedIds, { world: this.world, processTree: this.operationContext.processTree, dependencyQuery: this.operationContext.dependencies, descriptorRegistry: this.descriptorRegistry, visibilityModel: this.visibilityModel }),
       countNodes: (node) => countProcessNodeViewModels(node),
     };
   }
@@ -122,7 +122,7 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
 
   processHistoryCommandPort(): ProcessHistoryController {
     return new ProcessHistoryController({
-      world: this.world,
+      processTree: this.operationContext.processTree,
       commands: this.commandProducer,
     });
   }
@@ -139,7 +139,7 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
         ];
       },
       getCascadePreviewIds: (selectedIds) => {
-        const deletionOrder = this.world.getDependencyQuery().getElementsInDeletionOrder([...selectedIds]);
+        const deletionOrder = this.operationContext.dependencies.getElementsInDeletionOrder([...selectedIds]);
         return deletionOrder.filter((id) => !selectedIds.includes(id));
       },
     };

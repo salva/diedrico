@@ -5,7 +5,7 @@ import { ToggleEncapsulationOp } from '@/commands/operations/processTree/ToggleE
 import { ToggleOutputOp } from '@/commands/operations/processTree/ToggleOutputOp';
 import type { IOperation } from '@/commands/operations/IOperation';
 import type { ProcessCommandExecutionPort } from '@/application/commandProduction/CommandProductionPorts';
-import type { World } from '@/domain/world/World';
+import type { ProcessTree } from '@/domain/processTree/ProcessTree';
 import type {
   PopSubprocessRequest,
   ProcessHistoryResult,
@@ -18,12 +18,12 @@ import type {
 
 export class ProcessHistoryUseCases {
   constructor(
-    private readonly world: World,
+    private readonly processTree: ProcessTree,
     private readonly commands: ProcessCommandExecutionPort
   ) {}
 
   getState(): ProcessHistoryState {
-    const processTree = this.world.getProcessTree();
+    const processTree = this.processTree;
     return {
       canPop: processTree.getStackDepth() > 1,
       activeSubprocessId: processTree.getCurrentSubprocess().id,

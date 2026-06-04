@@ -1,4 +1,4 @@
-import type { ProcessNode } from '@/domain/processTree/ProcessTree';
+import type { ProcessNode, ProcessTree } from '@/domain/processTree/ProcessTree';
 import { Element2D } from '@/domain/world/Element2D';
 import type { World } from '@/domain/world/World';
 import type { DependencyQueryPort } from '@/domain/world/DependencyPorts';
@@ -10,13 +10,14 @@ import type { VisibilityModel } from '@/application/processTree/VisibilityModel'
 
 export interface ProcessTreeReadModelContext {
   readonly world: World;
+  readonly processTree: ProcessTree;
   readonly dependencyQuery: DependencyQueryPort;
   readonly descriptorRegistry: DescriptorRegistry;
   readonly visibilityModel: VisibilityModel;
 }
 
 export function buildProcessTreeReadModel(context: ProcessTreeReadModelContext): ProcessTreeReadModel {
-  const tree = context.world.getProcessTree();
+  const tree = context.processTree;
   return {
     root: createProcessNodeViewModel(tree.root, context),
     activeSubprocessId: tree.getCurrentSubprocess().id,
@@ -26,7 +27,7 @@ export function buildProcessTreeReadModel(context: ProcessTreeReadModelContext):
 export function getRelatedActionIds(selectedIds: readonly string[], context: ProcessTreeReadModelContext): Set<string> {
   const related = new Set<string>();
   const selectedIdSet = new Set(selectedIds);
-  for (const action of context.world.getProcessTree().getAllActions()) {
+  for (const action of context.processTree.getAllActions()) {
     const producesSelected = selectedIdSet.has(action.elementId);
     const dependsOnSelected = context.dependencyQuery.getDependencies(action.elementId).some(depId => selectedIdSet.has(depId));
     if (producesSelected || dependsOnSelected) related.add(action.id);

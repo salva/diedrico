@@ -20,6 +20,8 @@
 
 import type { Command } from '@/commands/Command';
 import type { World } from '@/domain/world/World';
+import type { ProcessTree } from '@/domain/processTree/ProcessTree';
+import type { DependencyQueryPort } from '@/domain/world/DependencyPorts';
 import { 
   RemovePoint2DOp, 
   RemoveLine2DOp, 
@@ -30,6 +32,12 @@ import {
 import { RemoveActionFromProcessTreeOp } from '@/commands/operations/processTree/ProcessTreeOperations';
 import { Segment2D } from '@/domain/world/Segment';
 import { Guide2D, SiblingGuide2D } from '@/domain/world/Guide';
+
+export interface DeletionSequenceContext {
+  readonly world: World;
+  readonly dependencyQuery: DependencyQueryPort;
+  readonly processTree: ProcessTree;
+}
 
 /**
  * DeletionSequenceFactory - Factory for cascade deletion sequences
@@ -49,19 +57,18 @@ export class DeletionSequenceFactory {
    * 
    * @param cmd - Open command to add operations to
    * @param selectedIds - IDs of elements user wants to delete
-   * @param world - World instance for element lookup and dependency analysis
+   * @param context - Explicit deletion dependencies for element lookup, dependency analysis, and process history
    */
   static createCascadeDeletion(
     cmd: Command,
     selectedIds: string[],
-    world: World
+    context: DeletionSequenceContext
   ): void {
+    const { world, dependencyQuery, processTree } = context;
     // Step 1: Compute cascade and get elements in proper deletion order
-    const dependencyQuery = world.getDependencyQuery();
     const allElementsToDelete = dependencyQuery.getElementsInDeletionOrder(selectedIds);
     
     // Step 2: Find all actions that produce these elements
-    const processTree = world.getProcessTree();
     const actionsToDelete = new Map<string, string[]>();
     
     for (const elementId of allElementsToDelete) {
