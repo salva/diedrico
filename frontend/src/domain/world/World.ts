@@ -457,29 +457,6 @@ export class World {
 
 
   // ========================================
-  // CIRCLE METHODS
-  // ========================================
-
-  /**
-   * Remove a circle from the world (generic version - prefer removeCircle2D factory method)
-   */
-  removeCircle2DGeneric(circleId: string): Circle2D | undefined {
-    // Phase 22.5.3: Remove from plane storage
-    const plane = this.getPlaneForElement(circleId);
-    if (plane) {
-      const circle = plane.getCircle(circleId);
-      this.invalidateRealization(circleId);
-      const removed = plane.removeCircle(circleId);
-      if (removed) {
-        this.dependencyService.unregisterNode(circleId);
-      }
-      return circle;
-    }
-    return undefined;
-  }
-
-
-
   /**
    * Get the 2D realization of a circle (with caching)
    * Returns circle geometry (center and radius) in plane coordinates
