@@ -13,6 +13,22 @@ import { Guide2D, SiblingGuide2D } from '../Guide';
 import { HalfHingeLine2D } from '../HingeLine';
 import { ProjectionPlaneElementStore } from './ProjectionPlaneElementStore';
 import type { ProjectionElementRealizationContext, ProjectionPlaneMutationContext, ProjectionPlaneRealizationContext } from './ProjectionPlaneContext';
+import {
+  requireBinaryIndex,
+  requireDistinctPointIds,
+  requireDistinctRealizedPointsForLine,
+  requireLocalCircle,
+  requireLocalLine,
+  requireLocalOrWorldLine,
+  requireLocalPoint,
+  requirePlaneId,
+  requirePrimaryIntersectionPoint,
+  requireRealizedCircle,
+  requireRealizedLine,
+  requireWorldLine,
+  resolveDefaultLabel,
+  resolveElementId,
+} from './ProjectionPlaneElementCreation';
 import { ProjectionPlaneRealization2D, ProjectionPlaneRealization3D } from './ProjectionPlaneRealization';
 
 export const PROJECTION_PLANE_TYPE = {
@@ -386,21 +402,11 @@ export abstract class ProjectionPlane extends Element {
     id?: string,
     label?: string
   ): FreePoint2D {
-    if (!this.id) {
-      throw new Error('Cannot add point to plane without ID');
-    }
+    const planeId = requirePlaneId(this.id, 'point');
+    id = resolveElementId(id, () => this.generatePoint2DId(world));
+    label = resolveDefaultLabel(label, id, 'Point2D', world);
 
-    // Generate unique ID if not provided
-    if (!id) {
-      id = this.generatePoint2DId(world);
-    }
-
-    // Phase 97: Generate default label if not provided
-    if (!label) {
-      label = world.generateDefaultLabel(id, 'Point2D');
-    }
-
-    const point = new FreePoint2D(id, position, this.id, label);
+    const point = new FreePoint2D(id, position, planeId, label);
     
     this.addPoint(point, world);
     return point;
@@ -422,38 +428,16 @@ export abstract class ProjectionPlane extends Element {
     world: ProjectionPlaneMutationContext,
     id?: string
   ): Point2DLineLineIntersection {
-    if (!this.id) {
-      throw new Error('Cannot add point to plane without ID');
-    }
+    const planeId = requirePlaneId(this.id, 'point');
+    const l1 = requireLocalOrWorldLine(this, world, line1Id, 'line1Id');
+    const l2 = requireLocalOrWorldLine(this, world, line2Id, 'line2Id');
+    requireRealizedLine(l1, line1Id, 'line1Id', world);
+    requireRealizedLine(l2, line2Id, 'line2Id', world);
 
-    // Validate lines exist
-    const l1 = this.getLine(line1Id) || world.getLine2D(line1Id);
-    const l2 = this.getLine(line2Id) || world.getLine2D(line2Id);
-    if (!l1) {
-      throw new Error(`Invalid line1Id: ${line1Id}. Line does not exist.`);
-    }
-    if (!l2) {
-      throw new Error(`Invalid line2Id: ${line2Id}. Line does not exist.`);
-    }
-    const line1 = l1.realize2D(world);
-    const line2 = l2.realize2D(world);
-    
-    if (!line1) {
-      throw new Error(`Invalid line1Id: ${line1Id}. Line does not exist.`);
-    }
-    if (!line2) {
-      throw new Error(`Invalid line2Id: ${line2Id}. Line does not exist.`);
-    }
-
-    // Generate unique ID if not provided
-    if (!id) {
-      id = this.generatePoint2DId(world);
-    }
-
-    // Phase 97: Generate default label if not provided
+    id = resolveElementId(id, () => this.generatePoint2DId(world));
     const label = world.generateDefaultLabel(id, 'Point2D');
 
-    const point = new Point2DLineLineIntersection(id, line1Id, line2Id, this.id, label);
+    const point = new Point2DLineLineIntersection(id, line1Id, line2Id, planeId, label);
     
     this.addPoint(point, world);
     return point;
@@ -475,43 +459,17 @@ export abstract class ProjectionPlane extends Element {
     world: ProjectionPlaneMutationContext,
     id?: string
   ): Point2DLineCircleIntersection {
-    if (!this.id) {
-      throw new Error('Cannot add point to plane without ID');
-    }
+    const planeId = requirePlaneId(this.id, 'point');
+    const lineElement = requireLocalLine(this, lineId, 'lineId');
+    const circleElement = requireLocalCircle(this, circleId, 'circleId', 'Circle does not exist.');
+    requireRealizedLine(lineElement, lineId, 'lineId', world);
+    requireRealizedCircle(circleElement, circleId, 'circleId', world);
+    requireBinaryIndex(index, 'index');
 
-    // Validate elements exist
-    const lineElement = this.getLine(lineId);
-    const circleElement = this.getCircle(circleId);
-    if (!lineElement) {
-      throw new Error(`Invalid lineId: ${lineId}. Line does not exist.`);
-    }
-    if (!circleElement) {
-      throw new Error(`Invalid circleId: ${circleId}. Circle does not exist.`);
-    }
-    const line = lineElement.realize2D(world);
-    const circle = circleElement.realize2D(world);
-    
-    if (!line) {
-      throw new Error(`Invalid lineId: ${lineId}. Line does not exist.`);
-    }
-    if (!circle) {
-      throw new Error(`Invalid circleId: ${circleId}. Circle does not exist.`);
-    }
-
-    // Validate index
-    if (index !== 0 && index !== 1) {
-      throw new Error(`Invalid index: ${index}. Must be 0 or 1.`);
-    }
-
-    // Generate unique ID if not provided
-    if (!id) {
-      id = this.generatePoint2DId(world);
-    }
-
-    // Phase 97: Generate default label if not provided
+    id = resolveElementId(id, () => this.generatePoint2DId(world));
     const label = world.generateDefaultLabel(id, 'Point2D');
 
-    const point = new Point2DLineCircleIntersection(id, lineId, circleId, index, this.id, label);
+    const point = new Point2DLineCircleIntersection(id, lineId, circleId, index, planeId, label);
     
     this.addPoint(point, world);
     return point;
@@ -533,43 +491,17 @@ export abstract class ProjectionPlane extends Element {
     world: ProjectionPlaneMutationContext,
     id?: string
   ): Point2DCircleCircleIntersection {
-    if (!this.id) {
-      throw new Error('Cannot add point to plane without ID');
-    }
+    const planeId = requirePlaneId(this.id, 'point');
+    const circle1Element = requireLocalCircle(this, circle1Id, 'circle1Id', 'Circle does not exist.');
+    const circle2Element = requireLocalCircle(this, circle2Id, 'circle2Id', 'Circle does not exist.');
+    requireRealizedCircle(circle1Element, circle1Id, 'circle1Id', world);
+    requireRealizedCircle(circle2Element, circle2Id, 'circle2Id', world);
+    requireBinaryIndex(index, 'index');
 
-    // Validate circles exist
-    const circle1Element = this.getCircle(circle1Id);
-    const circle2Element = this.getCircle(circle2Id);
-    if (!circle1Element) {
-      throw new Error(`Invalid circle1Id: ${circle1Id}. Circle does not exist.`);
-    }
-    if (!circle2Element) {
-      throw new Error(`Invalid circle2Id: ${circle2Id}. Circle does not exist.`);
-    }
-    const circle1 = circle1Element.realize2D(world);
-    const circle2 = circle2Element.realize2D(world);
-    
-    if (!circle1) {
-      throw new Error(`Invalid circle1Id: ${circle1Id}. Circle does not exist.`);
-    }
-    if (!circle2) {
-      throw new Error(`Invalid circle2Id: ${circle2Id}. Circle does not exist.`);
-    }
-
-    // Validate index
-    if (index !== 0 && index !== 1) {
-      throw new Error(`Invalid index: ${index}. Must be 0 or 1.`);
-    }
-
-    // Generate unique ID if not provided
-    if (!id) {
-      id = this.generatePoint2DId(world);
-    }
-
-    // Phase 97: Generate default label if not provided
+    id = resolveElementId(id, () => this.generatePoint2DId(world));
     const label = world.generateDefaultLabel(id, 'Point2D');
 
-    const point = new Point2DCircleCircleIntersection(id, circle1Id, circle2Id, index, this.id, label);
+    const point = new Point2DCircleCircleIntersection(id, circle1Id, circle2Id, index, planeId, label);
     
     this.addPoint(point, world);
     return point;
@@ -591,48 +523,16 @@ export abstract class ProjectionPlane extends Element {
     world: ProjectionPlaneMutationContext,
     id?: string
   ): Line2DByTwoPoints {
-    if (!this.id) {
-      throw new Error('Cannot add line to plane without ID');
-    }
+    const planeId = requirePlaneId(this.id, 'line');
+    const point1 = requireLocalPoint(this, point1Id, 'point1Id');
+    const point2 = requireLocalPoint(this, point2Id, 'point2Id');
+    requireDistinctPointIds(point1Id, point2Id, 'line');
+    requireDistinctRealizedPointsForLine(point1, point2, point1Id, point2Id, world);
 
-    // Validate points exist
-    const point1 = this.getPoint(point1Id);
-    const point2 = this.getPoint(point2Id);
-    
-    if (!point1) {
-      throw new Error(`Invalid point1Id: ${point1Id}. Point does not exist on this plane.`);
-    }
-    if (!point2) {
-      throw new Error(`Invalid point2Id: ${point2Id}. Point does not exist on this plane.`);
-    }
-
-    // Validate points are distinct
-    if (point1Id === point2Id) {
-      throw new Error(`Cannot create line from a point to itself. point1Id and point2Id must be different.`);
-    }
-
-    // Validate points have distinct positions
-    const point1Realization = point1.realize2D(world);
-    const point2Realization = point2.realize2D(world);
-    
-    if (!point1Realization || !point2Realization) {
-      throw new Error(`Cannot compute point realizations. Points may depend on missing elements.`);
-    }
-
-    const distance = point1Realization.position.distanceTo(point2Realization.position);
-    if (distance < 1e-10) {
-      throw new Error(`Points ${point1Id} and ${point2Id} are too close (distance: ${distance}). Cannot create line.`);
-    }
-
-    // Generate unique ID if not provided
-    if (!id) {
-      id = this.generateLine2DId(world);
-    }
-
-    // Phase 97: Generate default label if not provided
+    id = resolveElementId(id, () => this.generateLine2DId(world));
     const label = world.generateDefaultLabel(id, 'Line2D');
 
-    const line = new Line2DByTwoPoints(id, point1Id, point2Id, this.id, label);
+    const line = new Line2DByTwoPoints(id, point1Id, point2Id, planeId, label);
     
     this.addLine(line, world);
     return line;
@@ -654,35 +554,15 @@ export abstract class ProjectionPlane extends Element {
     world: ProjectionPlaneMutationContext,
     id?: string
   ): Line2DParallel {
-    if (!this.id) {
-      throw new Error('Cannot add line to plane without ID');
-    }
+    const planeId = requirePlaneId(this.id, 'line');
+    requireLocalPoint(this, throughPointId, 'throughPointId');
+    const refLineElement = requireWorldLine(world, referenceLineId, 'referenceLineId');
+    requireRealizedLine(refLineElement, referenceLineId, 'referenceLineId', world);
 
-    // Validate through-point exists on this plane
-    const throughPoint = this.getPoint(throughPointId);
-    if (!throughPoint) {
-      throw new Error(`Invalid throughPointId: ${throughPointId}. Point does not exist on this plane.`);
-    }
-
-    // Validate reference line exists (could be on any plane)
-    const refLineElement = world.getLine2D(referenceLineId);
-    if (!refLineElement) {
-      throw new Error(`Invalid referenceLineId: ${referenceLineId}. Line does not exist.`);
-    }
-    const referenceLine = refLineElement.realize2D(world);
-    if (!referenceLine) {
-      throw new Error(`Invalid referenceLineId: ${referenceLineId}. Line does not exist.`);
-    }
-
-    // Generate unique ID if not provided
-    if (!id) {
-      id = this.generateLine2DId(world);
-    }
-
-    // Phase 97: Generate default label if not provided
+    id = resolveElementId(id, () => this.generateLine2DId(world));
     const label = world.generateDefaultLabel(id, 'Line2D');
 
-    const line = new Line2DParallel(id, referenceLineId, throughPointId, this.id, label);
+    const line = new Line2DParallel(id, referenceLineId, throughPointId, planeId, label);
     
     this.addLine(line, world);
     return line;
@@ -704,35 +584,15 @@ export abstract class ProjectionPlane extends Element {
     world: ProjectionPlaneMutationContext,
     id?: string
   ): Line2DPerpendicularToLine {
-    if (!this.id) {
-      throw new Error('Cannot add line to plane without ID');
-    }
+    const planeId = requirePlaneId(this.id, 'line');
+    requireLocalPoint(this, throughPointId, 'throughPointId');
+    const refLineElement = requireWorldLine(world, referenceLineId, 'referenceLineId');
+    requireRealizedLine(refLineElement, referenceLineId, 'referenceLineId', world);
 
-    // Validate through-point exists on this plane
-    const throughPoint = this.getPoint(throughPointId);
-    if (!throughPoint) {
-      throw new Error(`Invalid throughPointId: ${throughPointId}. Point does not exist on this plane.`);
-    }
-
-    // Validate reference line exists (could be on any plane)
-    const refLineElement = world.getLine2D(referenceLineId);
-    if (!refLineElement) {
-      throw new Error(`Invalid referenceLineId: ${referenceLineId}. Line does not exist.`);
-    }
-    const referenceLine = refLineElement.realize2D(world);
-    if (!referenceLine) {
-      throw new Error(`Invalid referenceLineId: ${referenceLineId}. Line does not exist.`);
-    }
-
-    // Generate unique ID if not provided
-    if (!id) {
-      id = this.generateLine2DId(world);
-    }
-
-    // Phase 97: Generate default label if not provided
+    id = resolveElementId(id, () => this.generateLine2DId(world));
     const label = world.generateDefaultLabel(id, 'Line2D');
 
-    const line = new Line2DPerpendicularToLine(id, referenceLineId, throughPointId, this.id, label);
+    const line = new Line2DPerpendicularToLine(id, referenceLineId, throughPointId, planeId, label);
     
     this.addLine(line, world);
     return line;
@@ -757,33 +617,12 @@ export abstract class ProjectionPlane extends Element {
     world: ProjectionPlaneMutationContext,
     id?: string
   ): Line2DTangentToCircleThroughPoint {
-    if (!this.id) {
-      throw new Error('Cannot add line to plane without ID');
-    }
+    const planeId = requirePlaneId(this.id, 'line');
+    requireLocalCircle(this, circleId, 'circleId');
+    requireLocalPoint(this, throughPointId, 'throughPointId');
+    requireBinaryIndex(tangentIndex, 'tangentIndex');
 
-    // Validate circle exists on this plane
-    const circle = this.getCircle(circleId);
-    if (!circle) {
-      throw new Error(`Invalid circleId: ${circleId}. Circle does not exist on this plane.`);
-    }
-
-    // Validate through-point exists on this plane
-    const throughPoint = this.getPoint(throughPointId);
-    if (!throughPoint) {
-      throw new Error(`Invalid throughPointId: ${throughPointId}. Point does not exist on this plane.`);
-    }
-
-    // Validate tangent index
-    if (tangentIndex !== 0 && tangentIndex !== 1) {
-      throw new Error(`Invalid tangentIndex: ${tangentIndex}. Must be 0 or 1.`);
-    }
-
-    // Generate unique ID if not provided
-    if (!id) {
-      id = this.generateLine2DId(world);
-    }
-
-    // Phase 97: Generate default label if not provided
+    id = resolveElementId(id, () => this.generateLine2DId(world));
     const label = world.generateDefaultLabel(id, 'Line2D');
 
     const line = new Line2DTangentToCircleThroughPoint(
@@ -791,7 +630,7 @@ export abstract class ProjectionPlane extends Element {
       circleId,
       throughPointId,
       tangentIndex,
-      this.id,
+      planeId,
       label
     );
     
@@ -818,37 +657,13 @@ export abstract class ProjectionPlane extends Element {
     world: ProjectionPlaneMutationContext,
     id?: string
   ): Line2DTangentToCircleParallelToLine {
-    if (!this.id) {
-      throw new Error('Cannot add line to plane without ID');
-    }
+    const planeId = requirePlaneId(this.id, 'line');
+    requireLocalCircle(this, circleId, 'circleId');
+    const refLineElement = requireWorldLine(world, referenceLineId, 'referenceLineId');
+    requireRealizedLine(refLineElement, referenceLineId, 'referenceLineId', world);
+    requireBinaryIndex(tangentIndex, 'tangentIndex');
 
-    // Validate circle exists on this plane
-    const circle = this.getCircle(circleId);
-    if (!circle) {
-      throw new Error(`Invalid circleId: ${circleId}. Circle does not exist on this plane.`);
-    }
-
-    // Validate reference line exists (could be on any plane)
-    const refLineElement = world.getLine2D(referenceLineId);
-    if (!refLineElement) {
-      throw new Error(`Invalid referenceLineId: ${referenceLineId}. Line does not exist.`);
-    }
-    const referenceLine = refLineElement.realize2D(world);
-    if (!referenceLine) {
-      throw new Error(`Invalid referenceLineId: ${referenceLineId}. Line does not exist.`);
-    }
-
-    // Validate tangent index
-    if (tangentIndex !== 0 && tangentIndex !== 1) {
-      throw new Error(`Invalid tangentIndex: ${tangentIndex}. Must be 0 or 1.`);
-    }
-
-    // Generate unique ID if not provided
-    if (!id) {
-      id = this.generateLine2DId(world);
-    }
-
-    // Phase 97: Generate default label if not provided
+    id = resolveElementId(id, () => this.generateLine2DId(world));
     const label = world.generateDefaultLabel(id, 'Line2D');
 
     const line = new Line2DTangentToCircleParallelToLine(
@@ -856,7 +671,7 @@ export abstract class ProjectionPlane extends Element {
       circleId,
       referenceLineId,
       tangentIndex,
-      this.id,
+      planeId,
       label
     );
     
@@ -880,35 +695,15 @@ export abstract class ProjectionPlane extends Element {
     world: ProjectionPlaneMutationContext,
     id?: string
   ): Segment2D {
-    if (!this.id) {
-      throw new Error('Cannot add segment to plane without ID');
-    }
+    const planeId = requirePlaneId(this.id, 'segment');
+    requireLocalPoint(this, point1Id, 'point1Id');
+    requireLocalPoint(this, point2Id, 'point2Id');
+    requireDistinctPointIds(point1Id, point2Id, 'segment');
 
-    // Validate points exist
-    const point1 = this.getPoint(point1Id);
-    const point2 = this.getPoint(point2Id);
-    
-    if (!point1) {
-      throw new Error(`Invalid point1Id: ${point1Id}. Point does not exist on this plane.`);
-    }
-    if (!point2) {
-      throw new Error(`Invalid point2Id: ${point2Id}. Point does not exist on this plane.`);
-    }
-
-    // Validate points are distinct
-    if (point1Id === point2Id) {
-      throw new Error(`Cannot create segment from a point to itself. point1Id and point2Id must be different.`);
-    }
-
-    // Generate unique ID if not provided
-    if (!id) {
-      id = this.generateSegment2DId(world);
-    }
-
-    // Phase 97: Generate default label if not provided
+    id = resolveElementId(id, () => this.generateSegment2DId(world));
     const label = world.generateDefaultLabel(id, 'Segment2D');
 
-    const segment = new Segment2D(id, point1Id, point2Id, this.id, label);
+    const segment = new Segment2D(id, point1Id, point2Id, planeId, label);
     
     this.addLine(segment, world);  // Segments are stored as lines
     return segment;
@@ -930,35 +725,18 @@ export abstract class ProjectionPlane extends Element {
     world: ProjectionPlaneMutationContext,
     id?: string
   ): Circle2DByCenterAndPoint {
-    if (!this.id) {
-      throw new Error('Cannot add circle to plane without ID');
-    }
+    const planeId = requirePlaneId(this.id, 'circle');
+    requireLocalPoint(this, centerPointId, 'centerPointId');
+    requireLocalPoint(this, circumferencePointId, 'circumferencePointId');
 
-    // Validate points exist
-    const centerPoint = this.getPoint(centerPointId);
-    const circumferencePoint = this.getPoint(circumferencePointId);
-    
-    if (!centerPoint) {
-      throw new Error(`Invalid centerPointId: ${centerPointId}. Point does not exist on this plane.`);
-    }
-    if (!circumferencePoint) {
-      throw new Error(`Invalid circumferencePointId: ${circumferencePointId}. Point does not exist on this plane.`);
-    }
-
-    // Validate points are distinct
     if (centerPointId === circumferencePointId) {
       throw new Error(`Cannot create circle with center and circumference point being the same point.`);
     }
 
-    // Generate unique ID if not provided
-    if (!id) {
-      id = this.generateCircle2DId(world);
-    }
-
-    // Phase 97: Generate default label if not provided
+    id = resolveElementId(id, () => this.generateCircle2DId(world));
     const label = world.generateDefaultLabel(id, 'Circle2D');
 
-    const circle = new Circle2DByCenterAndPoint(id, centerPointId, circumferencePointId, this.id, label);
+    const circle = new Circle2DByCenterAndPoint(id, centerPointId, circumferencePointId, planeId, label);
     
     this.addCircle(circle, world);
     return circle;
@@ -980,36 +758,15 @@ export abstract class ProjectionPlane extends Element {
     world: ProjectionPlaneMutationContext,
     id?: string
   ): Guide2D {
-    if (!this.id) {
-      throw new Error('Cannot add guide to plane without ID');
-    }
+    const planeId = requirePlaneId(this.id, 'guide');
+    requireLocalPoint(this, throughPointId, 'throughPointId');
+    const refLineElement = requireWorldLine(world, referenceLineId, 'referenceLineId');
+    requireRealizedLine(refLineElement, referenceLineId, 'referenceLineId', world, 'Line cannot be realized.');
 
-    // Validate through point exists on this plane
-    const throughPoint = this.getPoint(throughPointId);
-    if (!throughPoint) {
-      throw new Error(`Invalid throughPointId: ${throughPointId}. Point does not exist on this plane.`);
-    }
-
-    // Validate reference line exists (could be on any plane for perpendicular construction)
-    const refLineElement = world.getLine2D(referenceLineId);
-    if (!refLineElement) {
-      throw new Error(`Invalid referenceLineId: ${referenceLineId}. Line does not exist.`);
-    }
-    
-    const referenceLine = refLineElement.realize2D(world);
-    if (!referenceLine) {
-      throw new Error(`Invalid referenceLineId: ${referenceLineId}. Line cannot be realized.`);
-    }
-
-    // Generate unique ID if not provided
-    if (!id) {
-      id = this.generateGuide2DId(world);
-    }
-
-    // Phase 97: Generate default label if not provided
+    id = resolveElementId(id, () => this.generateGuide2DId(world));
     const label = world.generateDefaultLabel(id, 'Guide2D');
 
-    const guide = new Guide2D(id, referenceLineId, throughPointId, this.id, label);
+    const guide = new Guide2D(id, referenceLineId, throughPointId, planeId, label);
     
     this.addLine(guide, world);  // Guides are stored as lines
     return guide;
@@ -1035,39 +792,22 @@ export abstract class ProjectionPlane extends Element {
     world: ProjectionPlaneMutationContext,
     id?: string
   ): SiblingGuide2D {
-    if (!this.id) {
-      throw new Error('Cannot add sibling guide to plane without ID');
-    }
+    const planeId = requirePlaneId(this.id, 'sibling guide');
+    const refLineElement = requireWorldLine(world, referenceLineId, 'referenceLineId');
+    requireRealizedLine(refLineElement, referenceLineId, 'referenceLineId', world, 'Line cannot be realized.');
 
-    // Validate reference line exists in world
-    const refLineElement = world.getLine2D(referenceLineId);
-    if (!refLineElement) {
-      throw new Error(`Invalid referenceLineId: ${referenceLineId}. Line does not exist.`);
-    }
-    
-    const referenceLine = refLineElement.realize2D(world);
-    if (!referenceLine) {
-      throw new Error(`Invalid referenceLineId: ${referenceLineId}. Line cannot be realized.`);
-    }
-
-    // Validate primary guide exists
     const primaryGuide = world.getLine2D(primaryGuideId);
     if (!primaryGuide) {
       throw new Error(`Invalid primaryGuideId: ${primaryGuideId}. Primary guide does not exist.`);
     }
 
-    // Generate unique ID if not provided
-    if (!id) {
-      id = this.generateGuide2DId(world);
-    }
-
-    // Get label from primary guide
+    id = resolveElementId(id, () => this.generateGuide2DId(world));
     const label = primaryGuide.label;
     
     const siblingGuide = new SiblingGuide2D(
       id,
       referenceLineId,
-      this.id,
+      planeId,
       primaryGuideId,
       label
     );
@@ -1098,20 +838,8 @@ export abstract class ProjectionPlane extends Element {
     world: ProjectionPlaneMutationContext,
     id?: string
   ): SiblingIntersectionPoint2D {
-    if (!this.id) {
-      throw new Error('Cannot add sibling intersection point to plane without ID');
-    }
-
-    // Validate primary intersection exists
-    const primaryPlane = world.getPlaneForElement(primaryIntersectionId);
-    if (!primaryPlane) {
-      throw new Error(`Primary intersection point not found: ${primaryIntersectionId}`);
-    }
-
-    const primaryPoint = primaryPlane.getPoint(primaryIntersectionId);
-    if (!primaryPoint) {
-      throw new Error(`Primary intersection point not found: ${primaryIntersectionId}`);
-    }
+    const planeId = requirePlaneId(this.id, 'sibling intersection point');
+    const primaryPoint = requirePrimaryIntersectionPoint(primaryIntersectionId, world);
 
     // Validate primary is an intersection type using instanceof
     const isIntersection = primaryPoint instanceof Point2DLineLineIntersection ||
@@ -1122,18 +850,13 @@ export abstract class ProjectionPlane extends Element {
       throw new Error(`Primary point must be an intersection type, got: ${primaryPoint.constructor.name}`);
     }
 
-    // Generate unique ID if not provided
-    if (!id) {
-      id = this.generatePoint2DId(world);
-    }
-
-    // Get label from primary point
+    id = resolveElementId(id, () => this.generatePoint2DId(world));
     const label = primaryPoint.label;
     
     const siblingPoint = new SiblingIntersectionPoint2D(
       id,
       primaryIntersectionId,
-      this.id,
+      planeId,
       label
     );
     
@@ -1162,16 +885,10 @@ export abstract class ProjectionPlane extends Element {
     id?: string,
     label?: string
   ): FreePoint2D {
-    if (!this.id) {
-      throw new Error('Cannot add origin point to plane without ID');
-    }
+    const planeId = requirePlaneId(this.id, 'origin point');
+    id = resolveElementId(id, () => this.generatePoint2DId(world));
 
-    // Generate unique ID if not provided
-    if (!id) {
-      id = this.generatePoint2DId(world);
-    }
-
-    const originPoint = new FreePoint2D(id, position, this.id, label);
+    const originPoint = new FreePoint2D(id, position, planeId, label);
     originPoint.locked = true;  // Lock origin point
     
     this.addPoint(originPoint, world);
@@ -1201,14 +918,8 @@ export abstract class ProjectionPlane extends Element {
     world: ProjectionPlaneMutationContext,
     id?: string
   ): HalfHingeLine2D {
-    if (!this.id) {
-      throw new Error('Cannot add half hinge line to plane without ID');
-    }
-
-    // Generate unique ID if not provided
-    if (!id) {
-      id = this.generateLine2DId(world);
-    }
+    const planeId = requirePlaneId(this.id, 'half hinge line');
+    id = resolveElementId(id, () => this.generateLine2DId(world));
 
     const hingeLine = world.getHingeLineById(hingeLineId);
     if (!hingeLine) {
@@ -1220,7 +931,7 @@ export abstract class ProjectionPlane extends Element {
     const halfHingeLine = new HalfHingeLine2D(
       id,
       hingeLine.id,
-      this.id
+      planeId
     );
 
     // Phase 84: No parametric consistency validation needed - automatic with canonical coordinates
