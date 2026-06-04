@@ -1,179 +1,403 @@
-# Remaining Refactoring Before Features
+# Remaining Refactoring Plan
 
 Date: 2026-06-04
 
-## Problem
+## Review Conclusion
 
-After the concern-separation work (Phases A-C), `World.ts` remains a 1085-line god object. It still owns 3D element construction, 3D element removal, plane/hinge construction, and several facade methods that should live elsewhere. Meanwhile, `ConstructionService` only handles 2D -- the four `Add3D*Op` operations bypass it and call `context.world.add3D*` directly. This asymmetry will block feature work (adding undo for 3D, auxiliary-plane strand lines, etc.) because every new feature reinforces the god-object pattern.
+The first version of this plan proposed moving 3D construction from `World` into the existing `ConstructionService`. That is directionally correct, but not the cleanest long-term architecture.
 
-## Current File Sizes
+It would reduce `World.ts`, but it would also turn `ConstructionService` into a large mixed service that owns:
 
-| File | Lines | Target |
-|---|---|---|
-| `World.ts` | 1085 | ~500 |
-| `ConstructionService.ts` | 278 | ~400 (with 3D methods) |
-| `ProjectionPlane.ts` | 193 | (done) |
-| `ProjectionPlaneElementStore.ts` | 46 | (done) |
-| `ProcessTree.ts` | 486 | (done for now) |
+- 2D projection-plane construction
+- 3D reconstruction construction
+- projection-plane creation
+- hinge-line creation
+- storage registration
+- dependency registration
+- ID generation
+- label resolution
+
+That is better than a god `World`, but it risks creating a god `ConstructionService`.
+
+Given the project priority is clean architecture over backward compatibility or implementation effort, the better approach is more decisive:
+
+1. Make `World` a state/store object only.
+2. Move services out of `World` and into runtime/application ownership.
+3. Give operations explicit service dependencies through `OperationContext`.
+4. Split construction by concern instead of putting every factory into one service.
+
+## Current Problem
+
+After the concern-separation work, the worst remaining issue is `World.ts`:
+
+| File | Lines |
+| --- | ---: |
+| `frontend/src/domain/world/World.ts` | 1085 |
+| `frontend/src/domain/world/ConstructionService.ts` | 278 |
+| `frontend/src/domain/world/RealizationService.ts` | 159 |
+
+`World` still owns too much:
+
+- Geometry maps and lookup methods
+- 3D element storage methods
+- projection-plane creation
+- hinge-line creation
+- fixed plane creation
+- dependency registration/unregistration
+- ID allocation
+- label generation
+- realization facade methods
+- `ConstructionService`
+- `RealizationService`
+- `DependencyService`
+- `ProcessTree`
+
+The recent refactor separated caching, construction, and visibility, but `World` is still the service locator and mutation hub.
+
+## Architectural Goal
+
+`World` should become a plain domain state container:
+
+```ts
+class World {
+  // geometry state only
+  projectionPlanes: Map<string, ProjectionPlane>;
+  planes3D: Map<string, Plane3D>;
+  points3D: Map<string, Point3D>;
+  lines3D: Map<string, Line3D>;
+  segments3D: Map<string, Segment3DFromProjections>;
+  hingeLines: Map<string, HingeLine>;
+
+  // lookup/access only
+  getProjectionPlaneById(id: string): ProjectionPlane | undefined;
+  getPoint2D(id: string): Point2D | undefined;
+  get3DPoint(id: string): Point3D | undefined;
+  // etc.
+}
+```
+
+Runtime services should be owned outside `World`:
+
+```ts
+interface OperationContext {
+  readonly world: World;
+  readonly processTree: ProcessTree;
+  readonly dependencies: DependencyService;
+  readonly ids: IdAllocator;
+  readonly labels: LabelGenerator;
+  readonly visibilityModel: VisibilityModel;
+  readonly construction2D: ProjectionConstructionService;
+  readonly construction3D: ReconstructionConstructionService;
+  readonly planeConstruction: ProjectionPlaneConstructionService;
+  readonly realizations: RealizationService;
+}
+```
+
+The exact property names can change, but the ownership direction should not: `RuntimeSession` owns services; `World` owns state.
 
 ## Design Principles
 
-Same principles as the concern-separation plan:
-
-1. Each module owns exactly one concern.
-2. Factory methods live near their callers (operations), not near their storage.
-3. `World` is a root container and facade, not a factory or god object.
-4. Every add/remove path maintains mutation ordering: invalidate before remove before unregister.
+1. `World` stores geometry state and exposes lookups. It does not construct, cache, register dependencies, allocate IDs, generate labels, or own application/runtime services.
+2. Services are explicit dependencies in `OperationContext`, not hidden behind `world.getService()`.
+3. Construction is split by domain concern: 2D projection construction, 3D reconstruction construction, and projection-plane/hinge construction.
+4. Dependency registration is centralized in construction/removal services, not scattered through `World` methods.
+5. Realization caching remains one concern in `RealizationService`, but the service is not owned by `World`.
+6. Mutation ordering remains mandatory: invalidate realizations first, remove from storage second, unregister dependencies third.
 
 ---
 
-## Phase D: Extract 3D Construction into ConstructionService
+## Phase D: Make RuntimeSession Own Domain Services
 
 ### Current State
 
-`Add3DPointOp`, `Add3DLineOp`, `Add3DSegmentOp`, and `Add3DPlaneOp` all:
-- Generate IDs via `context.world.generate3D*Id()`
-- Generate labels via `context.world.generateDefaultLabel()`
-- Construct domain objects inline (`new Point3DFromProjections(...)`, etc.)
-- Call `context.world.add3D*(...)` for storage and dependency registration
-- Call `context.world.invalidateRealization()` in their undo paths
+`World` owns:
 
-`World.ts` contains these methods:
-- `add3DPoint(point)` -- stores in `points3D` map, registers dependency
-- `add3DLine(line)` -- stores in `lines3D` map, registers dependency
-- `add3DSegment(segment)` -- stores in `segments3D` map, registers dependency
-- `add3DPlane(plane)` -- stores in `planes3D` map, registers dependency
-- `addPlane3DFixed(point, normal)` -- constructs `Plane3DFixed`, stores, registers
-- `addHingeLine(hingeLine)` -- stores in `hingeLines` map, registers
-- `addHingeLineEntity(hingeLine)` -- stores in `hingeLines` map (no registration)
-- `addProjectionPlane(...)` -- constructs `FixedProjectionPlane`, stores, registers
-- `remove3DPoint(id)` -- invalidate + delete + unregister
-- `remove3DLine(id)` -- invalidate + delete + unregister
-- `remove3DSegment(id)` -- invalidate + delete + unregister
-- `remove3DPlane(id)` -- invalidate + delete + unregister
-- `removePlane3DByIdForUndo(id)` -- delegates to `remove3DPlane`
-- `removeCircle2DGeneric(id)` -- dead code, zero external callers
-- `removeProjectionPlaneByIdForUndo(id)` -- invalidate + remove + unregister
-- `removeHingeLineByIdForUndo(id)` -- remove from map
+- `private dependencyService: DependencyService`
+- `private realizationService: RealizationService`
+- `private constructionService: ConstructionService`
+- `readonly labelGenerator: LabelGenerator`
+- `private idAllocator: WorldIdAllocator`
+- `private processTree: ProcessTree`
 
-Plus validation helpers: `validateDifferentPlanes` duplicated across Point3D, Line3D, Segment3D, Plane3D.
+Operations currently receive `OperationContext`, but still reach services through `context.world`.
 
 ### Target State
 
-`ConstructionService` gains 3D construction methods. `World` retains only lean storage maps and facade accessors. Operations route through `ConstructionService`.
-
-### New Methods on ConstructionService
+`RuntimeSession` owns service instances and builds one explicit `OperationContext`:
 
 ```ts
-// 3D element construction
-add3DPoint(planeH: ProjectionPlane, planeV: ProjectionPlane, pointHId: string, pointVId: string, id?: string, label?: string): Point3DFromProjections
-add3DLine(planeH: ProjectionPlane, planeV: ProjectionPlane, lineHId: string, lineVId: string, id?: string, label?: string): Line3DFromProjections
-add3DSegment(planeH: ProjectionPlane, planeV: ProjectionPlane, segmentHId: string, segmentVId: string, id?: string, label?: string): Segment3DFromProjections
-add3DPlane(traceLineHId: string, traceLineVId: string, planeHId: string, planeVId: string, id?: string, label?: string): Plane3DFromTraces
-addPlane3DFixed(point: Vector4, normal: Vector4, id?: string, label?: string): Plane3DFixed
+const operationContext: OperationContext = {
+  world,
+  processTree,
+  dependencies,
+  ids,
+  labels,
+  visibilityModel,
+  construction2D,
+  construction3D,
+  planeConstruction,
+  realizations,
+};
 ```
 
-### Changes to Existing Files
+`World` no longer constructs or exposes services.
 
-#### `World.ts`
+### Changes
 
-- Remove `add3DPoint`, `add3DLine`, `add3DSegment`, `add3DPlane`, `addPlane3DFixed`, `addHingeLine`, `addHingeLineEntity`, `addProjectionPlane`.
-- Remove `removeCircle2DGeneric` (dead code, zero callers).
-- Keep simple storage accessors: `get3DPoint`, `get3DLine`, `get3DSegment`, `get3DPlane`, `getAll3D*`, `points3D`, `lines3D`, `segments3D`, `planes3D` maps.
-- Keep `remove3DPoint`, `remove3DLine`, `remove3DSegment`, `remove3DPlane` but simplify to: invalidate + map.delete + unregister. Or move to `ConstructionService` as `remove3D*` convenience methods.
-- Keep `removeProjectionPlaneByIdForUndo`, `removeHingeLineByIdForUndo` as thin wrappers or move to `ConstructionService`.
-- Keep ID generation methods (`generate3DPointId` etc.) temporarily, or move to `ConstructionService`.
+- Move `DependencyService`, `RealizationService`, `ConstructionService`, `WorldIdAllocator`, `LabelGenerator`, and `ProcessTree` ownership from `World` to `RuntimeSession` or a new `RuntimeDomainContext`.
+- Extend `OperationContext` with these services.
+- Update operations to use `context.construction2D`, `context.construction3D`, `context.dependencies`, etc.
+- Keep transitional facade methods on `World` only temporarily inside this phase, then remove them before committing the phase.
 
-#### `World.ts` removal methods -- mutation ordering
+### Result
 
-Current `remove3D*` methods already follow: invalidate, remove from map, unregister. This is correct. They can stay on `World` as thin convenience methods since they are analogous to the 2D removal operations that stayed on `World`. The key is that no construction logic remains on `World`.
-
-#### `Add3DPointOp.ts`, `Add3DLineOp.ts`, `Add3DSegmentOp.ts`, `Add3DPlaneOp.ts`
-
-- Replace `context.world.add3D*` with `context.world.getConstructionService().add3D*`.
-- Replace `context.world.generate3D*Id()` with `context.world.getConstructionService().generate3D*Id()`.
-- Replace inline `new Point3DFromProjections(...)` etc. with `ConstructionService` methods.
-- Keep validation errors in `ConstructionService` methods, matching the 2D pattern.
-
-#### `InitializationOps.ts`
-
-- Currently calls `world.addProjectionPlane(...)`, `world.addHingeLine(...)`, `world.addPlane3DFixed(...)`.
-- Change to `constructionService.addProjectionPlane(...)`, `constructionService.addHingeLine(...)`, `constructionService.addPlane3DFixed(...)`.
-- `ConstructionService` must gain `addProjectionPlane` and `addHingeLine`.
-
-#### `AddBrokenHingeLineOp.ts`
-
-- Currently calls `world.addHingeLineEntity(halfHingeLine)`.
-- Change to call through `ConstructionService`.
-
-#### `ConstructionService.ts`
-
-- Add `add3DPoint`, `add3DLine`, `add3DSegment`, `add3DPlane`, `addPlane3DFixed`, `addProjectionPlane`, `addHingeLine`, `addHingeLineEntity`.
-- Add 3D ID generation: `generate3DPointId()`, `generate3DLineId()`, `generate3DSegmentId()`, `generate3DPlaneId()`.
-- Move `validateDifferentPlanes` from duplicated static methods on domain types to `ConstructionService` or a shared validation helper.
-- Each method: validate inputs, construct domain object, call `plane.addPoint()` / `world.add3DPoint()` for storage, register dependency.
-
-#### Validation helpers
-
-`validateDifferentPlanes` is duplicated identically in `Point3D.ts`, `Line3D.ts`, `Segment3D.ts`, and `Plane.ts`. Move to `ProjectionPlaneElementCreation.ts` or a new `ConstructionValidation.ts` next to `ConstructionService.ts`.
-
-### Validation
-
-- `npm run build` succeeds.
-- `npm run test` passes.
-- `World.ts` shrinks from ~1085 to ~500-600 lines.
-- `ConstructionService.ts` grows from ~278 to ~400-450 lines.
-- 3D operations route through `ConstructionService` like 2D operations.
-- `removeCircle2DGeneric` is deleted.
-
-### Expected Outcome
-
-| Metric | Before | After |
-|---|---|---|
-| `World.ts` lines | 1085 | ~500-600 |
-| `ConstructionService.ts` lines | 278 | ~400-450 |
-| Dead code (`removeCircle2DGeneric`) | 1 method | 0 |
-| 3D ops bypassing ConstructionService | 4 ops | 0 |
-| `validateDifferentPlanes` duplications | 4 copies | 1 |
+This eliminates `World` as a service locator.
 
 ---
 
-## Phase E: Clean Up World Mutations and Remaining Dead Code
+## Phase E: Split Construction Services by Concern
 
-These are smaller cleanups that should follow Phase D.
+### Current State
 
-### E.1 Remove `removePlane3DByIdForUndo` / `removeHingeLineByIdForUndo` indirections
+`ConstructionService.ts` currently contains all 2D projection-plane factory methods. The earlier plan wanted to add all 3D construction and plane/hinge construction to it.
 
-These `*ForUndo` methods on `World` are thin wrappers around `remove3DPlane` / map deletion. They add no value and hide the mutation ordering. Their callers (3D undo operations) should call the removal methods directly.
+### Better Target State
 
-### E.2 Simplify `World.clear()`
+Create separate services:
 
-Currently iterates planes and calls `plane.clear()`, then clears maps. After Phase A, `this.realizationService.clear()` is already called. Verify no redundant clearing.
+```text
+ProjectionConstructionService
+  - FreePoint2D
+  - lines
+  - segments
+  - circles
+  - guides
+  - intersections
+  - origin/half-hinge line 2D helpers
 
-### E.3 Consolidate 3D element storage accessors
+ReconstructionConstructionService
+  - Point3DFromProjections
+  - Line3DFromProjections
+  - Segment3DFromProjections
+  - Plane3DFromTraces
 
-`World` has `getAll3DPoints()`, `getAll3DLines()`, `getAll3DSegments()`, `getAll3DPlanes()` as separate methods. Consider whether a single generic accessor or direct map access is cleaner. Low priority.
+ProjectionPlaneConstructionService
+  - Fixed 3D base planes
+  - fixed projection planes
+  - auxiliary projection planes
+  - hinge lines
+  - broken hinge-line entities
+```
 
-### E.4 Extract `WorldIdAllocator` usage
+Do not keep one monolithic `ConstructionService`.
 
-`World.getNextId()`, `World.generate3DPointId()`, etc. delegate to `WorldIdAllocator`. After 3D construction moves to `ConstructionService`, most ID generation callers shift. Evaluate whether `WorldIdAllocator` should be owned by `ConstructionService` instead of `World`.
+### Why This Is Cleaner
+
+2D projection construction, 3D reconstruction, and projection-plane/hinge setup are different domains. They share ID/label/dependency infrastructure, but their construction rules and validation rules are different.
+
+The shared dependencies should be passed in, not used as a reason to merge all construction into one class.
+
+### Migration
+
+- Rename current `ConstructionService` to `ProjectionConstructionService`.
+- Move 3D operation construction logic from `Add3D*Op` into `ReconstructionConstructionService`.
+- Move initialization/projection-plane/hinge creation from `World` into `ProjectionPlaneConstructionService`.
+- Remove `world.getConstructionService()`.
 
 ---
+
+## Phase F: Extract Storage Mutation Ports from World
+
+### Current State
+
+Construction and removal code needs to mutate maps inside `World`. Today that means `World` exposes methods like `add3DPoint`, `remove3DPoint`, `addProjectionPlane`, etc.
+
+### Target State
+
+`World` exposes narrow storage ports or package-level store methods. Construction services depend on those ports, not the whole `World`.
+
+Example:
+
+```ts
+interface GeometryStore {
+  putPoint3D(point: Point3D): void;
+  deletePoint3D(id: string): boolean;
+  getPoint3D(id: string): Point3D | undefined;
+  putProjectionPlane(plane: ProjectionPlane): void;
+  // etc.
+}
+```
+
+This makes construction services testable without depending on the full `World` API.
+
+### Naming Guidance
+
+Avoid `add*` for pure storage. Use storage verbs:
+
+- `putPoint3D`
+- `deletePoint3D`
+- `putProjectionPlane`
+- `deleteProjectionPlane`
+
+Reserve `add*` for construction methods that validate, allocate IDs, create objects, store, and register dependencies.
+
+---
+
+## Phase G: Move Dependency Registration Out of World
+
+### Current State
+
+Several `World` methods call:
+
+```ts
+this.dependencyService.registerNode(...)
+this.dependencyService.unregisterNode(...)
+```
+
+This mixes storage with graph maintenance.
+
+### Target State
+
+Construction/removal services own dependency registration/unregistration. `World` just stores or deletes objects.
+
+Removal services follow the required order:
+
+```ts
+realizations.invalidateElement(id, dependencies, world.projectionPlanes);
+world.deletePoint3D(id);
+dependencies.unregisterNode(id);
+```
+
+### Required Cleanup
+
+- Delete `removeCircle2DGeneric` immediately. It has zero external callers.
+- Remove `removePlane3DByIdForUndo` and `removeHingeLineByIdForUndo` indirections once callers use explicit removal services.
+- Replace `world.getDependencyRegistrar()` and `world.getDependencyQuery()` with `context.dependencies`.
+
+---
+
+## Phase H: Remove ProcessTree from World
+
+### Current State
+
+Visibility was extracted, but `ProcessTree` still lives inside `World`. This means construction-history operations call:
+
+```ts
+context.world.getProcessTree()
+```
+
+That keeps construction history coupled to geometry state.
+
+### Target State
+
+`RuntimeSession` owns `ProcessTree`, same as `VisibilityModel`.
+
+```ts
+interface OperationContext {
+  readonly world: World;
+  readonly processTree: ProcessTree;
+  readonly visibilityModel: VisibilityModel;
+  // ...
+}
+```
+
+Process-tree operations mutate `context.processTree`, not `context.world.getProcessTree()`.
+
+Read models receive `{ world, processTree, visibilityModel, dependencies }` explicitly.
+
+### Why
+
+Geometry state and construction history are related, but not the same state. A geometry-only `World` is easier to understand and test.
+
+---
+
+## Phase I: RealizationService Ownership Cleanup
+
+### Current State
+
+`World` owns `RealizationService` and exposes facade methods like:
+
+- `world.realizePoint2D(...)`
+- `world.get3DPointRealization(...)`
+- `world.getProjectionPlane2DRealization(...)`
+- `world.invalidateRealization(...)`
+
+This was acceptable as an intermediate architecture, but not final clean architecture.
+
+### Target State
+
+`RealizationService` is runtime-owned and used explicitly by presentation, tools, and operations through context/read ports.
+
+`World` implements lookup contexts only, or a dedicated `WorldRealizationLookup` adapter is introduced.
+
+### Migration
+
+- Move realization service ownership to `RuntimeSession`.
+- Update presentation/read-port creation to receive `realizations` explicitly.
+- Remove realization facade methods from `World` after callers migrate.
+
+---
+
+## Final Target Architecture
+
+```text
+RuntimeSession
+  owns:
+    World                         // geometry state only
+    ProcessTree                   // construction history only
+    VisibilityModel               // presentation visibility state
+    DependencyService             // dependency graph
+    IdAllocator                   // IDs
+    LabelGenerator                // labels
+    RealizationService            // caches
+    ProjectionConstructionService // 2D construction
+    ReconstructionConstructionService // 3D construction
+    ProjectionPlaneConstructionService // planes/hinges
+
+Operations
+  receive OperationContext
+  call explicit services
+  do not reach through World for services
+
+World
+  stores geometry maps
+  exposes lookup/storage ports
+  no factories
+  no cache ownership
+  no dependency graph ownership
+  no process tree ownership
+```
+
+## Expected Outcome
+
+| Metric | Current | Target |
+| --- | ---: | ---: |
+| `World.ts` lines | 1085 | ~350-500 |
+| `ConstructionService.ts` lines | 278 | deleted/renamed/split |
+| Service ownership | mostly `World` | `RuntimeSession` / explicit context |
+| Process tree ownership | `World` | `RuntimeSession` |
+| Realization ownership | `World` | `RuntimeSession` |
+| Dependency graph ownership | `World` | `RuntimeSession` |
+| Operations service access | `context.world.get...` | `context.service` |
 
 ## Execution Order
 
-Phase D first. It is the highest-value change:
-- Removes the last category of god-object methods from `World`.
-- Brings 3D construction in line with 2D construction architecture.
-- Deletes dead code.
-- Unblocks future 3D features (undo, strand construction, etc.).
+1. Delete dead code first: `removeCircle2DGeneric`.
+2. Introduce explicit service fields in `OperationContext` while keeping `World` facades temporarily.
+3. Split `ConstructionService` into the three construction services.
+4. Move 3D construction into `ReconstructionConstructionService`.
+5. Move plane/hinge initialization into `ProjectionPlaneConstructionService`.
+6. Move `DependencyService`, `IdAllocator`, `LabelGenerator`, and `RealizationService` ownership out of `World`.
+7. Move `ProcessTree` ownership out of `World`.
+8. Remove transitional `World` service facades.
+9. Rename or document `World` as geometry state only.
 
-Phase E items are optional and can be done opportunistically during feature work.
+## Recommendation
 
----
+Do not implement new features yet.
 
-## Risk Assessment
+The cleanest next step is not simply adding 3D methods to the current `ConstructionService`. That is an incremental improvement but not the final architecture.
 
-- **Phase D is low risk**: it follows the identical pattern established in Phase B for 2D construction. The `ConstructionContext` interface already has `getLine2D()` and `getPlaneForElement()` which are sufficient for most 3D validation. 3D validation may need `getPoint3D()` or `getLine3D()` lookups -- add those to `ConstructionContext`.
-- **No persistence changes**: 3D operation descriptors are unchanged. Only the operation implementation changes.
-- **No schema version bump**: no descriptor shapes change.
+The better next step is to remove `World` as a service owner and split construction into focused services. This requires more work and touches more files, but it prevents the architecture from replacing one god object with another.
+
+No backward-compatibility work is needed. No schema migration is needed unless operation descriptor shapes are intentionally changed.
