@@ -1,5 +1,4 @@
 import { computed, ref } from 'vue';
-import { ActivePlaneUseCases } from './ActivePlaneUseCases';
 import { AutoSaveUseCases } from './AutoSaveUseCases';
 import { KeyboardShortcutRouter } from './KeyboardShortcutRouter';
 import type { AppShellRuntimePorts, CommandHistoryPort, SaveStatus } from './AppShellPorts';
@@ -20,13 +19,13 @@ export function createAppShellRuntime(options: AppShellRuntimeOptions) {
   const processTreeReadPort = session.processTreeReadPort();
   const elementsPanelPort = session.elementsPanelPort();
   const threePresentationPort = session.threePresentationPort();
-  const activePlaneSelectorPort = session.activePlaneSelectorPort();
   const toolInteractionReadPort = session.toolInteractionReadPort();
   const ports = options.ports;
   const drive = ports.drive;
 
-  const activePlaneId = ref<string | undefined>(session.activePlanePort().getActivePlaneId());
-  const activePlaneName = ref('');
+  const activePlaneId = ref<string | undefined>(session.activePlaneId);
+  const activePlaneName = ref(session.activePlaneName);
+  const planeOptions = ref(session.planeOptions);
   const coordinates3D = ref<{ x: number; y: number; z: number } | null>(null);
   const show3DView = ref(true);
   const showStartupDialog = ref(false);
@@ -42,7 +41,6 @@ export function createAppShellRuntime(options: AppShellRuntimeOptions) {
     error: ref<string | null>(null),
   };
 
-  const activePlane = new ActivePlaneUseCases(session.activePlanePort(), { activePlaneId, activePlaneName });
   const selectionDeletion = session.selectionDeletionCommandPort();
   const selection = new SelectionUseCases(session.selectionReadPort(), selectionDeletion, ports.selectionStore, () => activePlaneId.value);
   const autoSave = new AutoSaveUseCases({
@@ -80,16 +78,33 @@ export function createAppShellRuntime(options: AppShellRuntimeOptions) {
     viewStore: ports.viewStore,
     projectSession,
     selection,
-    activePlane,
+    activePlane: { cycleActivePlane },
     fitToView: ports.callbacks.fitToView,
     startRename: ports.callbacks.startRename,
   });
 
   let started = false;
+  const syncActivePlaneState = () => {
+    activePlaneId.value = session.activePlaneId;
+    activePlaneName.value = session.activePlaneName;
+    planeOptions.value = session.planeOptions;
+  };
+
+  function setActivePlaneId(id: string): void {
+    session.setActivePlaneId(id);
+    syncActivePlaneState();
+  }
+
+  function cycleActivePlane(direction: number): void {
+    session.cycleActivePlane(direction);
+    syncActivePlaneState();
+  }
+
   function start(): void {
     if (started) return;
     started = true;
-    activePlane.start();
+    session.subscribeToChanges(syncActivePlaneState);
+    syncActivePlaneState();
     selection.start();
     keyboard.install(ports.keyboardTarget);
     void projectSession.initialize();
@@ -100,7 +115,7 @@ export function createAppShellRuntime(options: AppShellRuntimeOptions) {
     started = false;
     keyboard.dispose();
     autoSave.dispose();
-    activePlane.dispose();
+    session.unsubscribeFromChanges(syncActivePlaneState);
     selection.dispose();
     projectSession.dispose();
   }
@@ -110,7 +125,11 @@ export function createAppShellRuntime(options: AppShellRuntimeOptions) {
     processTreeReadPort,
     elementsPanelPort,
     threePresentationPort,
-    activePlaneSelectorPort,
+    activePlaneId,
+    activePlaneName,
+    planeOptions,
+    setActivePlaneId,
+    cycleActivePlane,
     canvasCommandProducerPort,
     toolInteractionReadPort,
     processHistoryCommandPort,
@@ -119,6 +138,7 @@ export function createAppShellRuntime(options: AppShellRuntimeOptions) {
     state: {
       activePlaneId,
       activePlaneName,
+      planeOptions,
       coordinates3D,
       show3DView,
       showStartupDialog,
@@ -146,7 +166,7 @@ export function createAppShellRuntime(options: AppShellRuntimeOptions) {
       requestFiles: () => projectSession.requestFiles(),
       updateCoordinates: (coords: { x: number; y: number; z: number } | null) => { coordinates3D.value = coords; },
     },
-    internals: { session, keyboard, activePlane, autoSave, selection, selectionDeletion, projectSession },
+    internals: { session, keyboard, autoSave, selection, selectionDeletion, projectSession },
   };
 }
 

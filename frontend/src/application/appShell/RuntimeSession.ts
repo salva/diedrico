@@ -7,7 +7,7 @@ import type { SelectionDeletionCommandPort } from '@/application/selectionDeleti
 import { CanvasToolController } from '@/application/tools/CanvasToolController';
 import { createToolInteractionReadPort } from '@/application/tools/ToolInteractionReadPort';
 import { ProcessHistoryController } from '@/application/processHistory/ProcessHistoryController';
-import type { ActivePlanePort, CommandHistoryPort, OpenedProjectSession, ProjectSessionPersistencePayload, ProjectSessionPersistencePort, SelectionReadPort } from './AppShellPorts';
+import type { CommandHistoryPort, OpenedProjectSession, ProjectSessionPersistencePayload, ProjectSessionPersistencePort, SelectionReadPort } from './AppShellPorts';
 import type { ProjectSessionKernel } from './ProjectSessionKernel';
 import type { RuntimeSessionPersistenceRestoreHandle, RuntimeSessionPersistenceSnapshotHandle } from './ProjectSessionPersistenceTargets';
 import { createCanvasPresentationContext } from '@/application/canvasPresentation/CanvasPresentationContext';
@@ -15,7 +15,7 @@ import { CanvasPresentationSelector } from '@/application/canvasPresentation/Can
 import { createThreePresentationReadPorts } from '@/application/threePresentation/ThreeWorldReadPort';
 import { screenTo3D } from '@/utils/coordinateTransform';
 import { FreePoint2D } from '@/domain/world/Point';
-import type { CanvasViewPort, ProcessTreeReadPort, ElementsPanelPort, ThreePresentationPort, ActivePlaneSelectorPort } from './RuntimeViewPorts';
+import type { CanvasViewPort, ProcessTreeReadPort, ElementsPanelPort, PlaneOption, ThreePresentationPort } from './RuntimeViewPorts';
 import { buildPropertiesDialogViewModel } from './readModels/PropertiesDialogReadModel';
 import { buildProcessTreeReadModel, countProcessNodeViewModels, getRelatedActionIds } from './readModels/ProcessTreeReadModel';
 import { buildElementsPanelReadModel } from './readModels/ElementsPanelReadModel';
@@ -27,7 +27,7 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
   private readonly changes = new RuntimeChangePublisher();
   private readonly commandStack = new CommandStack();
   private readonly commandProducer = new RuntimeCommandProducer(this.world, this.commandStack, this.changes);
-  private activePlaneId?: string;
+  private activePlaneIdValue?: string;
 
 
   canvasViewPort(): CanvasViewPort {
@@ -36,7 +36,7 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
     return {
       subscribeToChanges: (listener) => this.changes.subscribeToChanges(listener),
       unsubscribeFromChanges: (listener) => this.changes.unsubscribeFromChanges(listener),
-      getActivePlaneId: () => this.getActivePlaneId(),
+      getActivePlaneId: () => this.activePlaneId,
       getPlaneTransformsForInput: () => new Map(canvasContext.getCanvasPlaneTransforms().map(transform => [transform.planeId, transform.paperToPlane])),
       buildPresentationModel: (viewport, options) => canvasPresentationSelector.select(
         canvasContext,
@@ -99,20 +99,6 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
     };
   }
 
-  activePlaneSelectorPort(): ActivePlaneSelectorPort {
-    return {
-      subscribeToChanges: (listener) => this.changes.subscribeToChanges(listener),
-      unsubscribeFromChanges: (listener) => this.changes.unsubscribeFromChanges(listener),
-      getPlaneOptions: () => this.world.getAllProjectionPlanes().filter(p => typeof p.id === 'string' && p.id.length > 0).map(p => ({ id: p.id, label: p.name || p.id })),
-      getActivePlaneId: () => this.getActivePlaneId(),
-      getActivePlaneLabel: () => {
-        const planeId = this.getActivePlaneId();
-        return planeId ? (this.world.getProjectionPlaneById(planeId)?.name || planeId) : undefined;
-      },
-      setActivePlaneId: (id) => this.setActivePlaneId(id),
-    };
-  }
-
   canvasCommandProducerPort(): CanvasToolController {
     return new CanvasToolController({
       world: this.world,
@@ -125,17 +111,6 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
       world: this.world,
       commands: this.commandProducer,
     });
-  }
-
-  activePlanePort(): ActivePlanePort {
-    return {
-      subscribeToChanges: (listener) => this.changes.subscribeToChanges(listener),
-      unsubscribeFromChanges: (listener) => this.changes.unsubscribeFromChanges(listener),
-      getActivePlaneId: () => this.getActivePlaneId(),
-      setActivePlaneId: (id) => this.setActivePlaneId(id),
-      getProjectionPlaneSummaries: () => this.world.getAllProjectionPlanes().map((plane) => ({ id: plane.id, name: plane.name })),
-      getProjectionPlaneName: (id) => this.world.getProjectionPlaneById(id)?.name,
-    };
   }
 
   selectionReadPort(): SelectionReadPort {
@@ -180,6 +155,46 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
     return this.commandStack.subscribe(listener);
   }
 
+  subscribeToChanges(listener: () => void): void {
+    this.changes.subscribeToChanges(listener);
+  }
+
+  unsubscribeFromChanges(listener: () => void): void {
+    this.changes.unsubscribeFromChanges(listener);
+  }
+
+  get activePlaneId(): string | undefined {
+    return this.ensureActivePlane();
+  }
+
+  get activePlaneName(): string {
+    const planeId = this.ensureActivePlane();
+    return planeId ? (this.world.getProjectionPlaneById(planeId)?.name || planeId) : '';
+  }
+
+  get planeOptions(): readonly PlaneOption[] {
+    return this.world.getAllProjectionPlanes()
+      .filter(plane => typeof plane.id === 'string' && plane.id.length > 0)
+      .map(plane => ({ id: plane.id, label: plane.name || plane.id }));
+  }
+
+  setActivePlaneId(id: string): void {
+    this.activePlaneIdValue = id;
+    this.changes.markDirty();
+  }
+
+  cycleActivePlane(direction: number): void {
+    const planes = this.planeOptions;
+    if (planes.length < 2) return;
+    const currentId = this.activePlaneId;
+    if (!currentId) return;
+    const currentIndex = planes.findIndex((plane) => plane.id === currentId);
+    if (currentIndex === -1) return;
+    let newIndex = (currentIndex + direction) % planes.length;
+    if (newIndex < 0) newIndex += planes.length;
+    this.setActivePlaneId(planes[newIndex].id);
+  }
+
   initializeDefaultWorldIfNeeded(): void {
     initializeWorld(this.world, this.commandStack, this.changes);
     this.ensureActivePlane();
@@ -194,7 +209,7 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
   clear(): void {
     this.world.clear();
     this.commandStack.clear();
-    this.activePlaneId = undefined;
+    this.activePlaneIdValue = undefined;
   }
 
   getVersion(): number {
@@ -218,7 +233,7 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
 
     this.world.clear();
     this.commandStack.clear();
-    this.activePlaneId = undefined;
+    this.activePlaneIdValue = undefined;
     persistence.restoreSession(openedSession.payload, this.restoreTarget());
     if (this.world.getAllProjectionPlanes().length === 0) this.initializeDefaultWorldIfNeeded();
     this.ensureActivePlane();
@@ -256,24 +271,15 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
       || this.world.getProjectionPlaneById(elementId);
   }
 
-  private getActivePlaneId(): string | undefined {
-    return this.ensureActivePlane();
-  }
-
-  private setActivePlaneId(id: string): void {
-    this.activePlaneId = id;
-    this.changes.markDirty();
-  }
-
   private ensureActivePlane(): string | undefined {
-    if (this.activePlaneId && this.world.getProjectionPlaneById(this.activePlaneId)) {
-      return this.activePlaneId;
+    if (this.activePlaneIdValue && this.world.getProjectionPlaneById(this.activePlaneIdValue)) {
+      return this.activePlaneIdValue;
     }
 
     const planes = this.world.getAllProjectionPlanes();
     const defaultPlane = planes.find(plane => plane.id === 'projPlaneH' || plane.name === 'P_H') ?? planes[0];
-    this.activePlaneId = defaultPlane?.id;
-    return this.activePlaneId;
+    this.activePlaneIdValue = defaultPlane?.id;
+    return this.activePlaneIdValue;
   }
 
   private snapshotHandle(): RuntimeSessionPersistenceSnapshotHandle {

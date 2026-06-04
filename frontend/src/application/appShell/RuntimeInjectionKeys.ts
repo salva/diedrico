@@ -4,7 +4,7 @@ import type { ToolCommandSink } from '@/tools/ToolCommandIntents';
 import type { ToolRuntimePort } from '@/application/tools/ToolRuntimePort';
 import type { ToolInteractionReadPort } from '@/tools/ToolInteractionReadPort';
 import type { ProcessHistoryIntentSink } from '@/application/processHistory/ProcessHistoryIntents';
-import type { ActivePlaneSelectorPort, CanvasViewPort, ElementsPanelPort, ProcessTreeReadPort, ThreePresentationPort } from './RuntimeViewPorts';
+import type { ActivePlaneRuntimePort, CanvasViewPort, ElementsPanelPort, ProcessTreeReadPort, ThreePresentationPort } from './RuntimeViewPorts';
 
 export const CommandHistoryInjectionKey: InjectionKey<CommandHistoryPort> = Symbol('CommandHistoryPort');
 export const SelectionActionsInjectionKey: InjectionKey<SelectionActionPort> = Symbol('SelectionActionPort');
@@ -16,4 +16,4 @@ export const CanvasViewInjectionKey: InjectionKey<CanvasViewPort> = Symbol('Canv
 export const ProcessTreeReadInjectionKey: InjectionKey<ProcessTreeReadPort> = Symbol('ProcessTreeReadPort');
 export const ElementsPanelInjectionKey: InjectionKey<ElementsPanelPort> = Symbol('ElementsPanelPort');
 export const ThreePresentationInjectionKey: InjectionKey<ThreePresentationPort> = Symbol('ThreePresentationPort');
-export const ActivePlaneSelectorInjectionKey: InjectionKey<ActivePlaneSelectorPort> = Symbol('ActivePlaneSelectorPort');
+export const ActivePlaneRuntimeInjectionKey: InjectionKey<ActivePlaneRuntimePort> = Symbol('ActivePlaneRuntimePort');

@@ -1,8 +1,8 @@
 import { TOOL_FAMILIES } from '@/config/toolFamilies';
-import type { ActivePlaneUseCases } from './ActivePlaneUseCases';
 import type { ProjectSessionUseCases } from './ProjectSessionUseCases';
 import type { SelectionUseCases } from './SelectionUseCases';
 import type { CommandHistoryPort, ToolStorePort, ViewStorePort } from './AppShellPorts';
+import type { ActivePlaneRuntimePort } from './RuntimeViewPorts';
 
 export interface KeyboardShortcutRouterTarget {
   addEventListener(type: 'keydown', listener: (event: KeyboardEvent) => void): void;
@@ -19,7 +19,7 @@ export class KeyboardShortcutRouter {
     viewStore: ViewStorePort;
     projectSession: ProjectSessionUseCases;
     selection: SelectionUseCases;
-    activePlane: ActivePlaneUseCases;
+    activePlane: Pick<ActivePlaneRuntimePort, 'cycleActivePlane'>;
     fitToView: () => void;
     startRename: () => void;
   }) {}
@@ -60,7 +60,7 @@ export class KeyboardShortcutRouter {
     }
     if (event.key === 'Tab' && !isTextInput) {
       event.preventDefault();
-      this.deps.activePlane.cycle(event.shiftKey ? -1 : 1);
+      this.deps.activePlane.cycleActivePlane(event.shiftKey ? -1 : 1);
       return;
     }
     if (!isModifier && !event.shiftKey && !event.altKey && !isTextInput) {

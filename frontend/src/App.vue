@@ -99,7 +99,7 @@ import { useAuthStore } from './stores/authStore';
 import { useViewStore } from './stores/viewStore';
 import { createProductionAppShellRuntime } from './application/appShell/AppShellProductionRuntime';
 import {
-  ActivePlaneSelectorInjectionKey,
+  ActivePlaneRuntimeInjectionKey,
   CanvasCommandProducerInjectionKey,
   CanvasViewInjectionKey,
   CommandHistoryInjectionKey,
@@ -157,7 +157,7 @@ provide(CanvasViewInjectionKey, runtime.canvasViewPort);
 provide(ProcessTreeReadInjectionKey, runtime.processTreeReadPort);
 provide(ElementsPanelInjectionKey, runtime.elementsPanelPort);
 provide(ThreePresentationInjectionKey, runtime.threePresentationPort);
-provide(ActivePlaneSelectorInjectionKey, runtime.activePlaneSelectorPort);
+provide(ActivePlaneRuntimeInjectionKey, runtime);
 provide(CanvasCommandProducerInjectionKey, runtime.canvasCommandProducerPort);
 provide(ToolInteractionReadInjectionKey, runtime.toolInteractionReadPort);
 provide(ToolRuntimeInjectionKey, {
@@ -169,8 +169,8 @@ provide(CommandHistoryInjectionKey, runtime.commandHistory);
 provide(SelectionActionsInjectionKey, runtime.selectionActions);
 
 const activeTool = toolStore.currentTool;
-const activePlaneId = runtime.state.activePlaneId;
-const activePlaneName = runtime.state.activePlaneName;
+const activePlaneId = runtime.activePlaneId;
+const activePlaneName = runtime.activePlaneName;
 const coordinates3D = runtime.state.coordinates3D;
 const show3DView = runtime.state.show3DView;
 const showStartupDialog = runtime.state.showStartupDialog;

@@ -50,34 +50,25 @@
 
 <script setup lang="ts">
 import { computed, inject, onMounted, onUnmounted, ref } from 'vue';
-import { ActivePlaneSelectorInjectionKey } from '@/application/appShell/RuntimeInjectionKeys';
+import { ActivePlaneRuntimeInjectionKey } from '@/application/appShell/RuntimeInjectionKeys';
 import { formatElementLabel } from '@/utils/formatUtils';
 
-const activePlaneSelectorPort = inject(ActivePlaneSelectorInjectionKey);
-if (!activePlaneSelectorPort) {
-  throw new Error('[PlaneSelector] active plane selector port not provided');
+const activePlaneRuntime = inject(ActivePlaneRuntimeInjectionKey);
+if (!activePlaneRuntime) {
+  throw new Error('[PlaneSelector] active plane runtime not provided');
 }
 
-const activePlaneSelectorPortRequired = activePlaneSelectorPort;
-const forceUpdate = ref(0);
+const runtime = activePlaneRuntime;
 const isOpen = ref(false);
 const focusedIndex = ref(-1);
 const dropdownRef = ref<HTMLElement | null>(null);
 
-function handleRuntimeChange(): void {
-  forceUpdate.value++;
-}
-
 onMounted(() => {
-  activePlaneSelectorPortRequired.subscribeToChanges(handleRuntimeChange);
-
-  // Click outside handler
   document.addEventListener('click', handleClickOutside);
   document.addEventListener('keydown', handleKeyDown);
 });
 
 onUnmounted(() => {
-  activePlaneSelectorPortRequired.unsubscribeFromChanges(handleRuntimeChange);
   document.removeEventListener('click', handleClickOutside);
   document.removeEventListener('keydown', handleKeyDown);
 });
@@ -85,19 +76,15 @@ onUnmounted(() => {
 type PlaneOption = { id: string; label: string };
 
 const planes = computed<readonly PlaneOption[]>(() => {
-  forceUpdate.value;
-
-  return activePlaneSelectorPortRequired.getPlaneOptions();
+  return runtime.planeOptions.value;
 });
 
 const activePlaneId = computed(() => {
-  forceUpdate.value;
-  return activePlaneSelectorPortRequired.getActivePlaneId();
+  return runtime.activePlaneId.value;
 });
 
 const activePlaneLabel = computed(() => {
-  forceUpdate.value;
-  return activePlaneSelectorPortRequired.getActivePlaneLabel() || activePlaneSelectorPortRequired.getActivePlaneId();
+  return runtime.activePlaneName.value || runtime.activePlaneId.value;
 });
 
 const focusedOptionId = computed(() => {
@@ -128,7 +115,7 @@ function closeDropdown() {
 }
 
 function selectPlane(planeId: string) {
-  activePlaneSelectorPortRequired.setActivePlaneId(planeId);
+  runtime.setActivePlaneId(planeId);
   closeDropdown();
 }
 

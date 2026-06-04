@@ -2,7 +2,6 @@ import { describe, expect, it, vi } from 'vitest';
 import { nextTick, reactive, ref } from 'vue';
 import { createAppShellRuntime } from '@/application/appShell/AppShellRuntime';
 import { createProductionAppShellRuntime } from '@/application/appShell/AppShellProductionRuntime';
-import { ActivePlaneUseCases } from '@/application/appShell/ActivePlaneUseCases';
 import { AutoSaveUseCases } from '@/application/appShell/AutoSaveUseCases';
 import { BrowserLastProjectRepository } from '@/application/appShell/BrowserLastProjectRepository';
 import { ProjectSessionUseCases } from '@/application/appShell/ProjectSessionUseCases';
@@ -198,7 +197,9 @@ describe('AppShellRuntime lifecycle ownership', () => {
     });
 
     runtime.internals.session.initializeDefaultWorldIfNeeded();
-    expect(runtime.activePlaneSelectorPort.getPlaneOptions().length).toBeGreaterThan(0);
+    runtime.actions.start();
+    expect(runtime.planeOptions.value.length).toBeGreaterThan(0);
+    runtime.actions.dispose();
   });
 
   it('sign-out clears project state without replacing runtime-owned world or ports', async () => {
@@ -344,36 +345,28 @@ describe('BrowserLastProjectRepository', () => {
   });
 });
 
-describe('ActivePlaneUseCases', () => {
-  it('subscribes once, updates active-plane DTO, cycles planes, and unsubscribes on dispose', () => {
-    const planeA = { id: 'plane-a', name: 'P_A' };
-    const planeB = { id: 'plane-b', name: 'P_B' };
-    let activePlaneId = 'plane-a';
-    let listener: (() => void) | null = null;
-    const world = {
-      subscribeToChanges: vi.fn((handler: () => void) => { listener = handler; }),
-      unsubscribeFromChanges: vi.fn(),
-      getActivePlaneId: vi.fn(() => activePlaneId),
-      setActivePlaneId: vi.fn((id: string) => { activePlaneId = id; listener?.(); }),
-      getProjectionPlaneSummaries: vi.fn(() => [planeA, planeB]),
-      getProjectionPlaneName: vi.fn((id: string) => (id === 'plane-a' ? planeA : planeB).name),
-    };
-    const state = { activePlaneId: ref<string | undefined>(), activePlaneName: ref('') };
-    const useCases = new ActivePlaneUseCases(world, state);
+describe('active-plane runtime API', () => {
+  it('exposes active-plane state and actions on one runtime route', () => {
+    const ports = runtimePorts({ drive: null });
+    const runtime = createAppShellRuntime({ ports });
 
-    useCases.start();
-    useCases.start();
-    expect(world.subscribeToChanges).toHaveBeenCalledTimes(1);
-    expect(state.activePlaneName.value).toBe('P_A');
+    runtime.internals.session.initializeDefaultWorldIfNeeded();
+    runtime.actions.start();
 
-    useCases.cycle(1);
-    expect(world.setActivePlaneId).toHaveBeenCalledWith('plane-b');
-    expect(state.activePlaneId.value).toBe('plane-b');
-    expect(state.activePlaneName.value).toBe('P_B');
+    expect(runtime.planeOptions.value.length).toBeGreaterThan(1);
+    expect(runtime.activePlaneName.value).toBeTruthy();
+    const firstPlaneId = runtime.activePlaneId.value;
+    if (!firstPlaneId) throw new Error('expected an active plane');
 
-    useCases.dispose();
-    useCases.dispose();
-    expect(world.unsubscribeFromChanges).toHaveBeenCalledTimes(1);
+    runtime.cycleActivePlane(1);
+
+    expect(runtime.activePlaneId.value).not.toBe(firstPlaneId);
+    expect(runtime.state.activePlaneId.value).toBe(runtime.activePlaneId.value);
+
+    runtime.setActivePlaneId(firstPlaneId);
+    expect(runtime.activePlaneId.value).toBe(firstPlaneId);
+
+    runtime.actions.dispose();
   });
 });
 
@@ -561,7 +554,7 @@ describe('ProjectSessionUseCases startup and project flows', () => {
     await useCases.initialize();
 
     expect(deps.showStartupDialog.value).toBe(false);
-    expect(deps.session.activePlanePort().getProjectionPlaneSummaries().length).toBeGreaterThan(0);
+    expect(deps.session.planeOptions.length).toBeGreaterThan(0);
   });
 
   it('loads and resets startup-dialog file list through typed runtime state', async () => {
@@ -593,14 +586,14 @@ describe('ProjectSessionUseCases startup and project flows', () => {
     deps.session.initializeDefaultWorldIfNeeded();
     deps.currentProjectName.value = 'Existing';
     deps.currentFileId.value = 'existing-file';
-    const preOpenPlaneCount = deps.session.activePlanePort().getProjectionPlaneSummaries().length;
+    const preOpenPlaneCount = deps.session.planeOptions.length;
     const preOpenCommandHistory = deps.session;
     const preOpenCanUndo = preOpenCommandHistory.canUndo();
     const useCases = new ProjectSessionUseCases(deps);
 
     await expect(useCases.openProject('bad-file')).rejects.toThrow('invalid payload');
 
-    expect(deps.session.activePlanePort().getProjectionPlaneSummaries()).toHaveLength(preOpenPlaneCount);
+    expect(deps.session.planeOptions).toHaveLength(preOpenPlaneCount);
     expect(deps.session.canUndo()).toBe(preOpenCanUndo);
     expect(preOpenCommandHistory.canUndo()).toBe(preOpenCanUndo);
     expect(preOpenCommandHistory.canRedo()).toBe(false);
@@ -621,7 +614,7 @@ describe('ProjectSessionUseCases startup and project flows', () => {
     deps.session.initializeDefaultWorldIfNeeded();
     deps.currentProjectName.value = 'Existing';
     deps.currentFileId.value = 'existing-file';
-    const preOpenPlaneCount = deps.session.activePlanePort().getProjectionPlaneSummaries().length;
+    const preOpenPlaneCount = deps.session.planeOptions.length;
     const preOpenCommandHistory = deps.session;
     const preOpenCanUndo = preOpenCommandHistory.canUndo();
     const useCases = new ProjectSessionUseCases(deps);
@@ -630,7 +623,7 @@ describe('ProjectSessionUseCases startup and project flows', () => {
 
     expect(ports.persistence.restoreSession).toHaveBeenCalledTimes(1);
     expect(ports.persistence.restoreSession).toHaveBeenCalledTimes(1);
-    expect(deps.session.activePlanePort().getProjectionPlaneSummaries()).toHaveLength(preOpenPlaneCount);
+    expect(deps.session.planeOptions).toHaveLength(preOpenPlaneCount);
     expect(deps.session.canUndo()).toBe(preOpenCanUndo);
     expect(preOpenCommandHistory.canUndo()).toBe(preOpenCanUndo);
     expect(preOpenCommandHistory.canRedo()).toBe(false);
@@ -664,7 +657,7 @@ describe('ProjectSessionUseCases startup and project flows', () => {
 
   it('creates, opens, renames, and signs out without replacing stable world or command-history references', async () => {
     const deps = projectSessionDeps();
-    const originalPlaneCount = deps.session.activePlanePort().getProjectionPlaneSummaries().length;
+    const originalPlaneCount = deps.session.planeOptions.length;
     const originalCommandHistory = deps.session;
     const useCases = new ProjectSessionUseCases(deps);
 
@@ -687,7 +680,7 @@ describe('ProjectSessionUseCases startup and project flows', () => {
     expect(deps.autoSave.schedule).toHaveBeenCalled();
 
     await useCases.signOut();
-    expect(deps.session.activePlanePort().getProjectionPlaneSummaries()).toHaveLength(originalPlaneCount);
+    expect(deps.session.planeOptions).toHaveLength(originalPlaneCount);
     expect(deps.session.canUndo()).toBe(originalCommandHistory.canUndo());
     expect(deps.currentProjectName.value).toBeNull();
     expect(deps.currentFileId.value).toBeNull();

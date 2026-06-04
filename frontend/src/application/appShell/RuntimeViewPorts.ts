@@ -1,3 +1,4 @@
+import type { Ref } from 'vue';
 import type { Matrix3 } from 'three';
 import type { CanvasPresentationModel } from '@/application/canvasPresentation/CanvasPresentationModel';
 import type { ThreePresentationReadPorts } from '@/application/threePresentation/ThreeWorldReadPort';
@@ -124,11 +125,17 @@ export interface ThreePresentationPort extends RuntimeChangeSubscriptionPort {
   getReadPorts(): ThreePresentationReadPorts;
 }
 
-export interface ActivePlaneSelectorPort extends RuntimeChangeSubscriptionPort {
-  getPlaneOptions(): readonly { id: string; label: string }[];
-  getActivePlaneId(): string | undefined;
-  getActivePlaneLabel(): string | undefined;
+export interface PlaneOption {
+  readonly id: string;
+  readonly label: string;
+}
+
+export interface ActivePlaneRuntimePort {
+  readonly activePlaneId: Ref<string | undefined>;
+  readonly activePlaneName: Ref<string>;
+  readonly planeOptions: Ref<readonly PlaneOption[]>;
   setActivePlaneId(id: string): void;
+  cycleActivePlane(direction: number): void;
 }
 
 export function mapDescriptionParts(parts: readonly DescriptionPart[]): ProcessDescriptionPartViewModel[] {

@@ -23,23 +23,22 @@ describe('RuntimeChangePublisher', () => {
   it('keeps RuntimeSession port subscriptions on the runtime publisher path', () => {
     const session = new RuntimeSession();
     session.initializeDefaultWorldIfNeeded();
-    const port = session.activePlanePort();
     const listener = vi.fn();
     const initialVersion = session.getVersion();
-    const summaries = port.getProjectionPlaneSummaries();
+    const summaries = session.planeOptions;
     const firstPlane = summaries[0];
     const secondPlane = summaries[1];
 
     if (!firstPlane || !secondPlane) throw new Error('expected initialized default planes');
 
-    port.subscribeToChanges(listener);
-    port.setActivePlaneId(secondPlane.id);
+    session.subscribeToChanges(listener);
+    session.setActivePlaneId(secondPlane.id);
 
     expect(session.getVersion()).toBe(initialVersion + 1);
     expect(listener).toHaveBeenCalledTimes(1);
 
-    port.unsubscribeFromChanges(listener);
-    port.setActivePlaneId(firstPlane.id);
+    session.unsubscribeFromChanges(listener);
+    session.setActivePlaneId(firstPlane.id);
 
     expect(session.getVersion()).toBe(initialVersion + 2);
     expect(listener).toHaveBeenCalledTimes(1);

@@ -27,20 +27,6 @@ export interface DrivePort {
 }
 
 
-export interface ActivePlaneSummary {
-  readonly id: string;
-  readonly name: string;
-}
-
-export interface ActivePlanePort {
-  subscribeToChanges(listener: () => void): void;
-  unsubscribeFromChanges(listener: () => void): void;
-  getActivePlaneId(): string | undefined;
-  setActivePlaneId(id: string): void;
-  getProjectionPlaneSummaries(): readonly ActivePlaneSummary[];
-  getProjectionPlaneName(id: string): string | undefined;
-}
-
 export interface SelectionReadPort {
   getSelectableIdsInPlane(planeId: string): readonly string[];
   getCascadePreviewIds(selectedIds: readonly string[]): readonly string[];

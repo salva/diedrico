@@ -10,7 +10,6 @@ import appShellProductionRuntime from '@/application/appShell/AppShellProduction
 import appShellPorts from '@/application/appShell/AppShellPorts.ts?raw';
 import runtimeInjectionKeys from '@/application/appShell/RuntimeInjectionKeys.ts?raw';
 import browserLastProjectRepository from '@/application/appShell/BrowserLastProjectRepository.ts?raw';
-import activePlane from '@/application/appShell/ActivePlaneUseCases.ts?raw';
 import autoSave from '@/application/appShell/AutoSaveUseCases.ts?raw';
 import keyboard from '@/application/appShell/KeyboardShortcutRouter.ts?raw';
 import projectSession from '@/application/appShell/ProjectSessionUseCases.ts?raw';
@@ -33,7 +32,7 @@ describe('Wave 009 app-shell boundaries', () => {
   });
 
   it('keeps appShell modules independent of Vue components', () => {
-    for (const content of [appShellRuntime, appShellPorts, activePlane, autoSave, keyboard, projectSession, selection]) {
+    for (const content of [appShellRuntime, appShellPorts, autoSave, keyboard, projectSession, selection]) {
       expect(content).not.toMatch(/components\//);
     }
   });
@@ -56,7 +55,7 @@ describe('Cycle 020 app-shell production boundary', () => {
   });
 
   it('makes the browser last-project repository the only owner of storage-key literals', () => {
-    const sources = [appShellRuntime, appShellPorts, activePlane, autoSave, keyboard, projectSession, selection, appShellProductionRuntime];
+    const sources = [appShellRuntime, appShellPorts, autoSave, keyboard, projectSession, selection, appShellProductionRuntime];
     for (const content of sources) {
       expect(content).not.toMatch(/diedrico_last_file_id|diedrico_last_file_name/);
     }
@@ -112,7 +111,7 @@ describe('Cycle 022 runtime session persistence boundary', () => {
   });
 
   it('keeps ProjectService awareness inside the app-shell persistence adapter', () => {
-    const runtimeOrchestrationSources = [appShellRuntime, activePlane, autoSave, keyboard, projectSession, selection, runtimeSession];
+    const runtimeOrchestrationSources = [appShellRuntime, autoSave, keyboard, projectSession, selection, runtimeSession];
     for (const content of runtimeOrchestrationSources) {
       expect(content).not.toMatch(/@\/services\/ProjectService/);
     }
@@ -151,14 +150,15 @@ describe('Cycle 023 runtime-session consumer ports and command-history boundary'
     expect(runtimeSession).not.toMatch(/commandStackForDeferredCommandProducers\(/);
     expect(runtimeSession).toMatch(/canvasCommandProducerPort\(/);
     expect(runtimeSession).toMatch(/processHistoryCommandPort\(/);
-    expect(runtimeSession).toMatch(/activePlanePort\(/);
+    expect(runtimeSession).toMatch(/setActivePlaneId\(/);
+    expect(runtimeSession).toMatch(/cycleActivePlane\(/);
     expect(runtimeSession).toMatch(/selectionReadPort\(/);
     expect(runtimeSession).toMatch(/implements ProjectSessionKernel, CommandHistoryPort/);
     expect(runtimeSession).toMatch(/selectionDeletionCommandPort\(/);
   });
 
   it('keeps active-plane, selection, keyboard, and toolbar history consumers on narrow ports', () => {
-    expect(activePlane).not.toMatch(/@\/domain\/world\/World/);
+    expect(appShellRuntime).not.toMatch(/@\/domain\/world\/World/);
     expect(selection).not.toMatch(/@\/domain\/world\/World/);
     expect(keyboard).not.toMatch(/@\/commands\/CommandStack/);
     expect(toolbarVue).toMatch(/CommandHistoryInjectionKey/);

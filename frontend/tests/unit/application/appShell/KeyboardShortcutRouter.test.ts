@@ -21,7 +21,7 @@ function deps() {
     viewStore: { toggleProjectedElements: vi.fn() },
     projectSession: { newProject: vi.fn(), showStartupProjectChooser: vi.fn() },
     selection: { clearSelection: vi.fn(), deleteSelected: vi.fn(), selectAllInActivePlane: vi.fn() },
-    activePlane: { cycle: vi.fn() },
+    activePlane: { cycleActivePlane: vi.fn() },
     fitToView: vi.fn(),
     startRename: vi.fn(),
   } as any;
@@ -53,7 +53,7 @@ describe('KeyboardShortcutRouter', () => {
     router.handle(event('a', { ctrlKey: true }));
     expect(d.selection.selectAllInActivePlane).toHaveBeenCalled();
     router.handle(event('Tab', { shiftKey: true }));
-    expect(d.activePlane.cycle).toHaveBeenCalledWith(-1);
+    expect(d.activePlane.cycleActivePlane).toHaveBeenCalledWith(-1);
   });
 
   it('does not consume text input Delete or tool letters', () => {
