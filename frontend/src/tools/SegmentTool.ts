@@ -32,7 +32,6 @@ import { SelectionMask } from '@/types/SelectionMask';
 export class SegmentTool extends ArgumentCollectorTool {
   readonly name = 'segment';
   protected readonly constructionIntentType = 'segment';
-  readonly completionBehavior = 'stay-active' as const; // Primitives stay active for repeated use
 
   /**
    * Define argument specification

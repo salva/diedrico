@@ -29,7 +29,6 @@ import { SelectionMask } from '@/types/SelectionMask';
 export class LineTool extends ArgumentCollectorTool {
   readonly name = 'line';
   protected readonly constructionIntentType = 'line';
-  readonly completionBehavior = 'stay-active' as const; // Primitives stay active for repeated use
 
   /**
    * Define argument specification

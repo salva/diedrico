@@ -35,7 +35,6 @@ import type { Element2D } from '@/domain/world/Element2D';
 export class CreateProjectionPlaneTool extends ArgumentCollectorTool {
   readonly name = 'createprojectionplane';
   protected readonly constructionIntentType = 'createprojectionplane';
-  readonly completionBehavior = 'stay-active' as const;
 
   /**
    * Distance threshold for T2' position warning (in plane units)

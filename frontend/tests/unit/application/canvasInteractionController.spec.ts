@@ -10,7 +10,6 @@ const viewport = { zoom: 1, panX: 0, panY: 0 };
 const paperToPlaneTransform = new Matrix3().identity();
 
 const noopToolLifecycle: ToolLifecyclePort = {
-  completeTool: vi.fn(),
   setToolStepMessage: vi.fn(),
 };
 
@@ -172,7 +171,6 @@ describe('CanvasInteractionController', () => {
 
   it('manages tool lifecycle through setToolName', () => {
     const toolLifecycle: ToolLifecyclePort = {
-      completeTool: vi.fn(),
       setToolStepMessage: vi.fn(),
     };
     const controller = new CanvasInteractionController({

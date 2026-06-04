@@ -29,7 +29,6 @@ import { SelectionMask } from '@/types/SelectionMask';
 export class CircleTool extends ArgumentCollectorTool {
   readonly name = 'circle';
   protected readonly constructionIntentType = 'circle';
-  readonly completionBehavior = 'stay-active' as const; // Primitives stay active for repeated use
 
   /**
    * Define argument specification

@@ -3,7 +3,7 @@
  * 
  * Defines the structure for tool families and individual tools.
  * Used by toolStore for managing tool families with dropdown menus,
- * last-used sub-tool memory, and completion behavior.
+ * and last-used sub-tool memory.
  * 
  */
 
@@ -27,9 +27,6 @@ export interface ToolConfig {
   
   /** Tooltip text shown on hover */
   tooltip: string;
-  
-  /** What happens after tool completes its operation */
-  completionBehavior: 'stay-active' | 'return-to-selection';
 }
 
 /**

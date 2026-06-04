@@ -34,7 +34,6 @@ import { SelectionMask } from '@/types/SelectionMask';
  */
 export class IntersectionTool extends ArgumentCollectorTool {
   readonly name = 'intersection';
-  readonly completionBehavior = 'stay-active' as const;
 
   /**
    * Define argument specification

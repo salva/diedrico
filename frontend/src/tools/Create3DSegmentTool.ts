@@ -13,7 +13,8 @@
  */
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
-import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/ToolArgumentCollector';
+import { validateDistinctProjectionPlanes } from './toolValidators';
+import type { ToolArgumentSet } from '@/types/ToolArgumentCollector';
 import { SelectionMask } from '@/types/SelectionMask';
 
 /**
@@ -22,7 +23,6 @@ import { SelectionMask } from '@/types/SelectionMask';
 export class Create3DSegmentTool extends ArgumentCollectorTool {
   readonly name = 'create3dsegment';
   protected readonly constructionIntentType = 'create3dsegment';
-  readonly completionBehavior = 'stay-active' as const;
 
   protected getArgumentSets(): ToolArgumentSet[] {
     return [
@@ -37,23 +37,13 @@ export class Create3DSegmentTool extends ArgumentCollectorTool {
             mask: SelectionMask.segment()
           }
         ],
-        setValidator: (args: Map<string, ArgumentValue>, context: CollectionContext) => {
-          const proj1 = args.get('projection1')!;
-          const proj2 = args.get('projection2')!;
-          
-          if (!context.readPort.getProjectionPlaneById(proj1.element!.planeId) || !context.readPort.getProjectionPlaneById(proj2.element!.planeId)) {
-            return { valid: false, error: 'One or both projection planes not found' };
-          }
-          
-          if (!context.readPort.areProjectionPlanesDistinct(proj1.element!.planeId, proj2.element!.planeId)) {
-            return { 
-              valid: false, 
-              error: 'Cannot create 3D segment: both projections must be on DIFFERENT planes' 
-            };
-          }
-          
-          return { valid: true };
-        }
+        setValidator: (args, context) => validateDistinctProjectionPlanes(
+          args,
+          context,
+          'projection1',
+          'projection2',
+          'Cannot create 3D segment: both projections must be on DIFFERENT planes',
+        )
       }
     ];
   }

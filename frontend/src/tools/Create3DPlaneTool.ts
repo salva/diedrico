@@ -13,7 +13,8 @@
  */
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
-import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/ToolArgumentCollector';
+import { validateDistinctProjectionPlanes } from './toolValidators';
+import type { ToolArgumentSet } from '@/types/ToolArgumentCollector';
 import { SelectionMask } from '@/types/SelectionMask';
 
 /**
@@ -22,7 +23,6 @@ import { SelectionMask } from '@/types/SelectionMask';
 export class Create3DPlaneTool extends ArgumentCollectorTool {
   readonly name = 'create3dplane';
   protected readonly constructionIntentType = 'create3dplane';
-  readonly completionBehavior = 'stay-active' as const;
 
   protected getArgumentSets(): ToolArgumentSet[] {
     return [
@@ -37,23 +37,13 @@ export class Create3DPlaneTool extends ArgumentCollectorTool {
             mask: SelectionMask.line()
           }
         ],
-        setValidator: (args: Map<string, ArgumentValue>, context: CollectionContext) => {
-          const trace1 = args.get('trace1')!;
-          const trace2 = args.get('trace2')!;
-          
-          if (!context.readPort.getProjectionPlaneById(trace1.element!.planeId) || !context.readPort.getProjectionPlaneById(trace2.element!.planeId)) {
-            return { valid: false, error: 'One or both projection planes not found' };
-          }
-          
-          if (!context.readPort.areProjectionPlanesDistinct(trace1.element!.planeId, trace2.element!.planeId)) {
-            return { 
-              valid: false, 
-              error: 'Cannot create 3D plane: both traces must be on DIFFERENT planes' 
-            };
-          }
-          
-          return { valid: true };
-        }
+        setValidator: (args, context) => validateDistinctProjectionPlanes(
+          args,
+          context,
+          'trace1',
+          'trace2',
+          'Cannot create 3D plane: both traces must be on DIFFERENT planes',
+        )
       }
     ];
   }

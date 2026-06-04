@@ -33,7 +33,6 @@ import { Vector3 } from 'three';
  */
 export class TangentLineToCircleThroughPointTool extends ArgumentCollectorTool {
   readonly name = 'tangent-line-to-circle-through-point';
-  readonly completionBehavior = 'stay-active' as const;
 
   /**
    * Define argument specification

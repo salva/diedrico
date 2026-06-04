@@ -5,8 +5,7 @@
  * When a tool is selected, the canvas changes its interaction mode
  * to match the tool's behavior (point placement, line creation, etc.)
  * 
- * Supports tool families with dropdown menus, last-used sub-tool memory,
- * and configurable completion behavior (stay-active vs return-to-selection).
+ * Supports tool families with dropdown menus and last-used sub-tool memory.
  * 
  * Tool interaction state is UI/runtime state; command construction belongs to application controllers.
  */

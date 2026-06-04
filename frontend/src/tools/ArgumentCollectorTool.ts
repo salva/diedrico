@@ -144,7 +144,6 @@ export abstract class ArgumentCollectorTool extends BaseTool implements ITool {
       throw new Error(result.message || `Failed to ${this.getCommandDescription().toLowerCase()}`);
     }
 
-    this.handleCompletion(context.completeTool);
   }
 
   

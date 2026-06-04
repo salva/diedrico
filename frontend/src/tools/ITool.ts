@@ -38,7 +38,6 @@ export interface ToolContext {
   interactionQuery: ToolInteractionQuery;
   paperToPlaneTransform: Matrix3 | undefined;
   viewport: { zoom: number; panX: number; panY: number };
-  completeTool?: () => void;
 }
 
 export interface ToolResult {
@@ -52,8 +51,6 @@ export interface ToolResult {
 export interface ITool {
   readonly name: string;
   handleClick(context: ToolContext): ToolResult;
-  activate?(context: ToolContext): void;
-  deactivate?(context: ToolContext): void;
   cancel?(): void;
   getState?(): Record<string, unknown>;
   getSelectionMask?(): SelectionMask | undefined;

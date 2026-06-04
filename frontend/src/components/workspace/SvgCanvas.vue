@@ -209,7 +209,6 @@ const controller = new CanvasInteractionController({
     clearSelection: () => selectionActionsRequired.clearSelection(),
   },
   toolLifecycle: {
-    completeTool: () => toolRuntime.completeTool(),
     setToolStepMessage: msg => toolRuntime.setToolStepMessage(msg),
   },
   toolReadPort: toolInteractionReadPort,

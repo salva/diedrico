@@ -65,7 +65,6 @@ describe('RuntimeSession tool invocation read context', () => {
       interactionQuery: { hitTest: vi.fn(() => null) },
       paperToPlaneTransform: undefined,
       viewport: { zoom: 1, panX: 0, panY: 0 },
-      completeTool: vi.fn(),
     });
 
     expect(result).toEqual({ success: true });

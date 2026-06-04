@@ -14,7 +14,6 @@ export interface CanvasSelectionPort {
 }
 
 export interface ToolLifecyclePort {
-  completeTool(): void;
   setToolStepMessage(message: string): void;
 }
 
@@ -182,7 +181,6 @@ export class CanvasInteractionController {
       interactionQuery: request.interactionQuery,
       paperToPlaneTransform: request.paperToPlaneTransform,
       viewport: request.viewport,
-      completeTool: () => this.toolLifecycle.completeTool(),
     });
 
     this.toolLifecycle.setToolStepMessage(result.message || '');

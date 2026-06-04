@@ -35,7 +35,6 @@ import { Vector3 } from 'three';
  */
 export class TangentLineToCircleParallelToLineTool extends ArgumentCollectorTool {
   readonly name = 'tangent-line-to-circle-parallel';
-  readonly completionBehavior = 'stay-active' as const;
 
   /**
    * Define argument specification
