@@ -7,6 +7,7 @@
 import type { Vector3 } from 'three';
 import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
+import { requireProjectionPlane } from './operationHelpers';
 
 interface AddFreePoint2DOutput extends JsonObject {
   pointId?: string;
@@ -24,11 +25,7 @@ export class AddFreePoint2DOp implements IOperation<OperationDescriptor, AddFree
 
   apply(world: World): OperationResult<AddFreePoint2DOutput> {
     try {
-      // Get the projection plane
-      const plane = world.getProjectionPlaneById(this.planeId);
-      if (!plane) {
-        throw new Error(`Plane not found: ${this.planeId}`);
-      }
+      const plane = requireProjectionPlane(world, this.planeId);
       
       // Pass stored ID if available (for redo), otherwise let plane generate new one
       const point = plane.addFreePoint2D(this.position, world, this.outputs.pointId);
@@ -48,10 +45,7 @@ export class AddFreePoint2DOp implements IOperation<OperationDescriptor, AddFree
 
   undo(world: World): void {
     if (this.outputs.pointId) {
-      const plane = world.getProjectionPlaneById(this.planeId);
-      if (plane) {
-        plane.removePoint(this.outputs.pointId);
-      }
+      world.getProjectionPlaneById(this.planeId)?.removePoint(this.outputs.pointId);
     }
   }
 

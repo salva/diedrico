@@ -21,6 +21,7 @@ import { Plane3DFromTraces } from '@/domain/world/Plane';
 import { computeLineLineIntersection3D } from '@/utils/projectionPlaneUtils';
 import { Vector3, Vector4 } from 'three';
 import { applyMatrix4x3 } from '@/utils/threeUtils';
+import { requireDistinctProjectionPlanes, requireFeasibleProjectionPair } from './operationHelpers';
 
 export class Add3DPlaneOp implements IOperation {
   readonly type = 'Add3DPlane';
@@ -37,24 +38,7 @@ export class Add3DPlaneOp implements IOperation {
 
   apply(world: World): OperationResult {
     try {
-      // Validate that planes exist
-      const plane1 = world.getProjectionPlaneById(this.plane1Id);
-      const plane2 = world.getProjectionPlaneById(this.plane2Id);
-      
-      if (!plane1) {
-        throw new Error(`Projection plane not found: ${this.plane1Id}`);
-      }
-      if (!plane2) {
-        throw new Error(`Projection plane not found: ${this.plane2Id}`);
-      }
-      
-      // Phase 78 requirement: Different-plane validation
-      if (this.plane1Id === this.plane2Id) {
-        throw new Error(
-          `Cannot create 3D plane: traces must be on different planes. ` +
-          `Both traces are on plane ${this.plane1Id}`
-        );
-      }
+      const { plane1, plane2 } = requireDistinctProjectionPlanes(world, this.plane1Id, this.plane2Id, 'plane', 'traces');
       
       // Validate that trace lines exist
       const trace1 = plane1.getLine(this.trace1Id);
@@ -68,12 +52,7 @@ export class Add3DPlaneOp implements IOperation {
       }
       
       // Validate that traces are geometrically feasible
-      const trace1Real = trace1.realize2D(world);
-      const trace2Real = trace2.realize2D(world);
-      
-      if (!trace1Real || !trace2Real || !trace1Real.isFeasible() || !trace2Real.isFeasible()) {
-        throw new Error('Cannot create 3D plane: one or both traces are not geometrically feasible');
-      }
+      const [trace1Real, trace2Real] = requireFeasibleProjectionPair('plane', trace1.realize2D(world), trace2.realize2D(world), 'traces');
       
       // CRITICAL VALIDATION: Verify that traces intersect in 3D
       // Transform traces to 3D and check intersection

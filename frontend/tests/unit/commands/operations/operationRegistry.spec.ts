@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { deserializeOperation, getRegisteredOperationTypes, serializeOperation } from '@/commands/operations/OperationRegistry';
 import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
 import { AddGuide2DPerpendicularToLineOp } from '@/commands/operations/world/AddGuideOp';
-import { AddIntersectionPoint2DOp } from '@/commands/operations/world/AddIntersectionPointOp';
+import { AddLineLineIntersectionPoint2DOp } from '@/commands/operations/world/AddLineLineIntersectionPoint2DOp';
 import { UpdateElementStyleOp } from '@/commands/operations/world/UpdateElementStyleOp';
 import { Vector3 } from 'three';
 
@@ -32,7 +32,7 @@ describe('OperationRegistry', () => {
     expect(serializeOperation(op)).toEqual(descriptor);
   });
 
-  it('round-trips AddIntersectionPoint2D line identifiers and restored output state', () => {
+  it('restores legacy AddIntersectionPoint2D descriptors as line-line intersection operations', () => {
     const descriptor = {
       opType: 'AddIntersectionPoint2D',
       planeId: 'projPlane3',
@@ -42,12 +42,18 @@ describe('OperationRegistry', () => {
     };
 
     const restored = deserializeOperation(descriptor);
-    expect(restored.type).toBe('AddIntersectionPoint2D');
-    expect(serializeOperation(restored)).toEqual(descriptor);
+    expect(restored.type).toBe('AddLineLineIntersectionPoint2D');
+    expect(serializeOperation(restored)).toEqual({
+      ...descriptor,
+      opType: 'AddLineLineIntersectionPoint2D'
+    });
 
-    const created = new AddIntersectionPoint2DOp(descriptor.planeId, descriptor.line1Id, descriptor.line2Id);
+    const created = new AddLineLineIntersectionPoint2DOp(descriptor.planeId, descriptor.line1Id, descriptor.line2Id);
     created.outputs = { pointId: descriptor.pointId };
-    expect(serializeOperation(created)).toEqual(descriptor);
+    expect(serializeOperation(created)).toEqual({
+      ...descriptor,
+      opType: 'AddLineLineIntersectionPoint2D'
+    });
   });
 
 

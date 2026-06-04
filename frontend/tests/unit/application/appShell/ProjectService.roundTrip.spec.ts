@@ -119,6 +119,34 @@ describe('Round-Trip Serialization Tests', () => {
     expect(result.serialize()).toMatchObject({ opType: 'AddLineLineIntersectionPoint2D', planeId: 'projPlaneH', line1Id: 'line1', line2Id: 'line2' });
   });
 
+  it('legacy AddIntersectionPoint2D descriptor restores as AddLineLineIntersectionPoint2D', () => {
+    const descriptor = {
+      opType: 'AddIntersectionPoint2D',
+      planeId: 'projPlaneH',
+      line1Id: 'line1',
+      line2Id: 'line2',
+      pointId: 'projPlaneH/point2d99'
+    };
+
+    const projectData = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'test-project');
+    projectData.commands.push({
+      id: 'cmd-legacy-intersection',
+      timestamp: '2024-01-01T00:00:00.000Z',
+      description: 'Legacy intersection',
+      status: 'committed',
+      operations: [descriptor]
+    });
+
+    ProjectService.validateProjectData(projectData);
+    const result = deserializeOperation(descriptor);
+
+    expect(result.type).toBe('AddLineLineIntersectionPoint2D');
+    expect(result.serialize()).toEqual({
+      ...descriptor,
+      opType: 'AddLineLineIntersectionPoint2D'
+    });
+  });
+
   it('AddLineCircleIntersectionPoint2D survives round-trip', () => {
     const op = new AddLineCircleIntersectionPoint2DOp('projPlaneH', 'line', 'circle', 0);
     

@@ -24,6 +24,7 @@
 import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 import { Point3DFromProjections } from '@/domain/world/Point3D';
+import { requireDistinctProjectionPlanes, requireFeasibleProjectionPair } from './operationHelpers';
 
 export class Add3DPointOp implements IOperation {
   readonly type = 'Add3DPoint';
@@ -41,25 +42,7 @@ export class Add3DPointOp implements IOperation {
 
   apply(world: World): OperationResult {
     try {
-      // Validate that planes exist
-      const plane1 = world.getProjectionPlaneById(this.plane1Id);
-      const plane2 = world.getProjectionPlaneById(this.plane2Id);
-      
-      if (!plane1) {
-        throw new Error(`Projection plane not found: ${this.plane1Id}`);
-      }
-      if (!plane2) {
-        throw new Error(`Projection plane not found: ${this.plane2Id}`);
-      }
-      
-      // Phase 78 requirement: MANDATORY different-plane validation
-      // Cannot create 3D point from projections on same plane
-      if (this.plane1Id === this.plane2Id) {
-        throw new Error(
-          `Cannot create 3D point: projections must be on different planes. ` +
-          `Both projections are on plane ${this.plane1Id}`
-        );
-      }
+      const { plane1, plane2 } = requireDistinctProjectionPlanes(world, this.plane1Id, this.plane2Id, 'point');
       
       // Validate that projection points exist
       const proj1 = plane1.getPoint(this.projection1Id);
@@ -76,9 +59,7 @@ export class Add3DPointOp implements IOperation {
       const proj1Real = proj1.realize2D(world);
       const proj2Real = proj2.realize2D(world);
       
-      if (!proj1Real.isFeasible() || !proj2Real.isFeasible()) {
-        throw new Error('Cannot create 3D point: one or both projections are not geometrically feasible');
-      }
+      requireFeasibleProjectionPair('point', proj1Real, proj2Real);
       
       // Use stored ID if available (for redo), otherwise generate new one
       const pointId = this.outputs.pointId || world.generate3DPointId();

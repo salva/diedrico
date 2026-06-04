@@ -9,6 +9,7 @@
 
 import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
+import { requireProjectionPlane } from './operationHelpers';
 
 interface LineLineIntersectionOutput extends JsonObject {
   pointId?: string;
@@ -27,10 +28,7 @@ export class AddLineLineIntersectionPoint2DOp implements IOperation<OperationDes
 
   apply(world: World): OperationResult<LineLineIntersectionOutput> {
     try {
-      const plane = world.getProjectionPlaneById(this.planeId);
-      if (!plane) {
-        throw new Error(`Plane not found: ${this.planeId}`);
-      }
+      const plane = requireProjectionPlane(world, this.planeId);
       
       // Pass stored ID if available (for redo), otherwise let plane generate new one
       const point = plane.addLineLineIntersection(
@@ -58,10 +56,7 @@ export class AddLineLineIntersectionPoint2DOp implements IOperation<OperationDes
   undo(world: World): void {
     // Remove primary point
     if (this.outputs.pointId) {
-      const plane = world.getProjectionPlaneById(this.planeId);
-      if (plane) {
-        plane.removePoint(this.outputs.pointId);
-      }
+      world.getProjectionPlaneById(this.planeId)?.removePoint(this.outputs.pointId);
     }
     
     // Note: If sibling points exist, they should be removed by domain logic

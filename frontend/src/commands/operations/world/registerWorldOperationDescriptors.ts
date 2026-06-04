@@ -17,7 +17,6 @@ import { AddLineLineIntersectionPoint2DOp } from './AddLineLineIntersectionPoint
 import { AddLineCircleIntersectionPoint2DOp } from './AddLineCircleIntersectionPoint2DOp';
 import { AddCircleCircleIntersectionPoint2DOp } from './AddCircleCircleIntersectionPoint2DOp';
 import { AddSiblingIntersectionPoint2DOp } from './AddSiblingIntersectionPoint2DOp';
-import { AddIntersectionPoint2DOp } from './AddIntersectionPointOp';
 import { RemovePoint2DOp, RemoveLine2DOp, RemoveSegment2DOp, RemoveCircle2DOp, RemoveGuide2DOp } from './RemoveElementOps';
 import { UpdateElementStyleOp, parseStyleProperties } from './UpdateElementStyleOp';
 import { UpdateFreePoint2DPositionOp } from './UpdateFreePoint2DPositionOp';
@@ -58,7 +57,7 @@ export function registerWorldOperationDescriptors(registry: OperationRegistry): 
   registry.register('AddGuide2DPerpendicularToLine', d => restoreOutput(new AddGuide2DPerpendicularToLineOp(s(d, 'planeId'), s(d, 'referenceLineId'), s(d, 'throughPointId'), so(d, 'guideId')), { guideId: so(d, 'guideId') }));
   registry.register('AddSiblingGuide2D', d => restoreOutput(new AddSiblingGuide2DOp(s(d, 'planeId'), s(d, 'primaryGuideId'), s(d, 'referenceLineId'), so(d, 'siblingGuideId')), { siblingGuideId: so(d, 'siblingGuideId') }));
   registry.register('AddSiblingIntersectionPoint2D', d => restoreOutput(new AddSiblingIntersectionPoint2DOp(s(d, 'planeId'), s(d, 'primaryIntersectionId')), { pointId: so(d, 'pointId') }));
-  registry.register('AddIntersectionPoint2D', d => restoreOutput(new AddIntersectionPoint2DOp(s(d, 'planeId'), s(d, 'line1Id'), s(d, 'line2Id')), { pointId: so(d, 'pointId') }));
+  registry.register('AddIntersectionPoint2D', d => restoreOutput(new AddLineLineIntersectionPoint2DOp(s(d, 'planeId'), s(d, 'line1Id'), s(d, 'line2Id')), { pointId: so(d, 'pointId') }));
   registry.register('RemovePoint2D', d => new RemovePoint2DOp(s(d, 'planeId'), s(d, 'pointId')));
   registry.register('RemoveLine2D', d => new RemoveLine2DOp(s(d, 'planeId'), s(d, 'lineId')));
   registry.register('RemoveSegment2D', d => new RemoveSegment2DOp(s(d, 'planeId'), s(d, 'segmentId')));

@@ -18,6 +18,7 @@
 import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
 import type { World } from '@/domain/world/World';
 import { Line3DFromProjections } from '@/domain/world/Line3D';
+import { requireDistinctProjectionPlanes, requireFeasibleProjectionPair } from './operationHelpers';
 
 export class Add3DLineOp implements IOperation {
   readonly type = 'Add3DLine';
@@ -35,24 +36,7 @@ export class Add3DLineOp implements IOperation {
 
   apply(world: World): OperationResult {
     try {
-      // Validate that planes exist
-      const plane1 = world.getProjectionPlaneById(this.plane1Id);
-      const plane2 = world.getProjectionPlaneById(this.plane2Id);
-      
-      if (!plane1) {
-        throw new Error(`Projection plane not found: ${this.plane1Id}`);
-      }
-      if (!plane2) {
-        throw new Error(`Projection plane not found: ${this.plane2Id}`);
-      }
-      
-      // Phase 78 requirement: Different-plane validation
-      if (this.plane1Id === this.plane2Id) {
-        throw new Error(
-          `Cannot create 3D line: projections must be on different planes. ` +
-          `Both projections are on plane ${this.plane1Id}`
-        );
-      }
+      const { plane1, plane2 } = requireDistinctProjectionPlanes(world, this.plane1Id, this.plane2Id, 'line');
       
       // Validate that projection lines exist
       const proj1 = plane1.getLine(this.projection1Id);
@@ -69,9 +53,7 @@ export class Add3DLineOp implements IOperation {
       const proj1Real = proj1.realize2D(world);
       const proj2Real = proj2.realize2D(world);
       
-      if (!proj1Real || !proj2Real || !proj1Real.isFeasible() || !proj2Real.isFeasible()) {
-        throw new Error('Cannot create 3D line: one or both projections are not geometrically feasible');
-      }
+      requireFeasibleProjectionPair('line', proj1Real, proj2Real);
       
       // Use stored ID if available (for redo), otherwise generate new one
       const lineId = this.outputs.lineId || world.generate3DLineId();

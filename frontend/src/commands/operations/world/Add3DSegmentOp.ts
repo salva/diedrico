@@ -19,6 +19,7 @@ import type { IOperation, OperationOutputBag, OperationResult } from '../IOperat
 import type { World } from '@/domain/world/World';
 import { Segment3DFromProjections } from '@/domain/world/Segment3D';
 import { reconstruct3DPointFromProjections } from '@/utils/threeUtils';
+import { requireDistinctProjectionPlanes, requireFeasibleProjectionPair } from './operationHelpers';
 
 export class Add3DSegmentOp implements IOperation {
   readonly type = 'Add3DSegment';
@@ -36,24 +37,7 @@ export class Add3DSegmentOp implements IOperation {
 
   apply(world: World): OperationResult {
     try {
-      // Validate that planes exist
-      const plane1 = world.getProjectionPlaneById(this.plane1Id);
-      const plane2 = world.getProjectionPlaneById(this.plane2Id);
-      
-      if (!plane1) {
-        throw new Error(`Projection plane not found: ${this.plane1Id}`);
-      }
-      if (!plane2) {
-        throw new Error(`Projection plane not found: ${this.plane2Id}`);
-      }
-      
-      // Phase 78 requirement: Different-plane validation
-      if (this.plane1Id === this.plane2Id) {
-        throw new Error(
-          `Cannot create 3D segment: projections must be on different planes. ` +
-          `Both projections are on plane ${this.plane1Id}`
-        );
-      }
+      const { plane1, plane2 } = requireDistinctProjectionPlanes(world, this.plane1Id, this.plane2Id, 'segment');
       
       // Validate that projection segments exist (segments are stored as Line2D in ProjectionPlane)
       const proj1 = plane1.getLine(this.projection1Id);
@@ -67,12 +51,7 @@ export class Add3DSegmentOp implements IOperation {
       }
       
       // Validate that projections are geometrically feasible
-      const proj1Real = proj1.realize2D(world);
-      const proj2Real = proj2.realize2D(world);
-      
-      if (!proj1Real || !proj2Real || !proj1Real.isFeasible() || !proj2Real.isFeasible()) {
-        throw new Error('Cannot create 3D segment: one or both projections are not geometrically feasible');
-      }
+      const [proj1Real, proj2Real] = requireFeasibleProjectionPair('segment', proj1.realize2D(world), proj2.realize2D(world));
       
       // Phase 107: Validate compatibility — check that at least one endpoint pairing
       // produces consistent 3D points

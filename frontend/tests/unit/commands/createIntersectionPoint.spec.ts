@@ -1,10 +1,10 @@
 /**
- * Tests for creating intersection points using Command + AddIntersectionPoint2DOp
+ * Tests for creating intersection points using Command + AddLineLineIntersectionPoint2DOp
  * Refactored from CreateIntersectionPointCommand to generic Command pattern (Phase 8, R017e)
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Command } from '../../../src/commands/Command';
-import { AddIntersectionPoint2DOp } from '../../../src/commands/operations/world/AddIntersectionPointOp';
+import { AddLineLineIntersectionPoint2DOp } from '../../../src/commands/operations/world/AddLineLineIntersectionPoint2DOp';
 import { AddLine2DByTwoPointsOp } from '../../../src/commands/operations/world/AddLineOp';
 import { AddFreePoint2DOp } from '../../../src/commands/operations/world/AddFreePointOp';
 import type { World } from '../../../src/domain/world/World';
@@ -43,11 +43,10 @@ describe('Create Intersection Point Command', () => {
       ));
       
       // Create intersection point
-      const intersectionResult = cmd.addAndExecute(new AddIntersectionPoint2DOp(
+      const intersectionResult = cmd.addAndExecute(new AddLineLineIntersectionPoint2DOp(
         planeId,
         line1Result.outputs.lineId!,
-        line2Result.outputs.lineId!,
-        0
+        line2Result.outputs.lineId!
       ));
       
       expect(intersectionResult.success).toBe(true);
@@ -82,11 +81,10 @@ describe('Create Intersection Point Command', () => {
         p4Result.outputs.pointId!
       ));
       
-      const intersectionResult = cmd.addAndExecute(new AddIntersectionPoint2DOp(
+      const intersectionResult = cmd.addAndExecute(new AddLineLineIntersectionPoint2DOp(
         planeId,
         line1Result.outputs.lineId!,
-        line2Result.outputs.lineId!,
-        0
+        line2Result.outputs.lineId!
       ));
 
       expect(intersectionResult.success).toBe(true);
@@ -115,11 +113,10 @@ describe('Create Intersection Point Command', () => {
         p4Result.outputs.pointId!
       ));
       
-      const intersectionResult = cmd.addAndExecute(new AddIntersectionPoint2DOp(
+      const intersectionResult = cmd.addAndExecute(new AddLineLineIntersectionPoint2DOp(
         planeId,
         line1Result.outputs.lineId!,
-        line2Result.outputs.lineId!,
-        0
+        line2Result.outputs.lineId!
       ));
       cmd.commit();
       
@@ -154,11 +151,10 @@ describe('Create Intersection Point Command', () => {
         p4Result.outputs.pointId!
       ));
       
-      const intersectionResult = cmd.addAndExecute(new AddIntersectionPoint2DOp(
+      const intersectionResult = cmd.addAndExecute(new AddLineLineIntersectionPoint2DOp(
         planeId,
         line1Result.outputs.lineId!,
-        line2Result.outputs.lineId!,
-        0
+        line2Result.outputs.lineId!
       ));
       cmd.commit();
       
