@@ -1,5 +1,4 @@
-import { Matrix3, Vector3 } from 'three';
-import { Matrix4x3, Matrix3x4 } from '@/utils/threeUtils';
+import { Vector3 } from 'three';
 import { buildElementId } from '../ElementId';
 import { Element } from '../Element';
 import type { Point2D, Point2DRealization2D } from '../Point';
@@ -30,6 +29,11 @@ import {
   resolveElementId,
 } from './ProjectionPlaneElementCreation';
 import { ProjectionPlaneRealization2D, ProjectionPlaneRealization3D } from './ProjectionPlaneRealization';
+import {
+  realizeCircle2DWithCache,
+  realizeLine2DWithCache,
+  realizePoint2DWithCache,
+} from './ProjectionPlaneRealizationHelpers';
 
 export const PROJECTION_PLANE_TYPE = {
   BASE: 'base',
@@ -270,21 +274,7 @@ export abstract class ProjectionPlane extends Element {
    * @returns Point2DRealization2D if computation succeeds, undefined otherwise
    */
   realizePoint2D(point: Point2D, context: ProjectionElementRealizationContext): Point2DRealization2D | undefined {
-    // Check cache first
-    const cached = this.elementStore.getPointRealization2D(point.id);
-    if (cached) {
-      return cached;
-    }
-
-    // Compute realization - point will query context for parent element realizations
-    const realization = point.realize2D(context);
-    if (!realization) {
-      return undefined;  // Cannot compute (e.g., missing dependencies)
-    }
-
-    // Cache the result
-    this.elementStore.setPointRealization2D(point.id, realization);
-    return realization;
+    return realizePoint2DWithCache(point, context, this.elementStore);
   }
 
   /**
@@ -294,21 +284,7 @@ export abstract class ProjectionPlane extends Element {
    * @returns Line2DRealization2D if computation succeeds, undefined otherwise
    */
   realizeLine2D(line: Line2D, context: ProjectionElementRealizationContext): Line2DRealization2D | undefined {
-    // Check cache first
-    const cached = this.elementStore.getLineRealization2D(line.id);
-    if (cached) {
-      return cached;
-    }
-
-    // Compute realization - line will query context for parent point realizations
-    const realization = line.realize2D(context);
-    if (!realization) {
-      return undefined;  // Cannot compute (e.g., missing dependency points)
-    }
-
-    // Cache the result
-    this.elementStore.setLineRealization2D(line.id, realization);
-    return realization;
+    return realizeLine2DWithCache(line, context, this.elementStore);
   }
 
   /**
@@ -318,21 +294,7 @@ export abstract class ProjectionPlane extends Element {
    * @returns Circle2DRealization2D if computation succeeds, undefined otherwise
    */
   realizeCircle2D(circle: Circle2D, context: ProjectionElementRealizationContext): Circle2DRealization2D | undefined {
-    // Check cache first
-    const cached = this.elementStore.getCircleRealization2D(circle.id);
-    if (cached) {
-      return cached;
-    }
-
-    // Compute realization - circle will query context for parent element realizations
-    const realization = circle.realize2D(context);
-    if (!realization) {
-      return undefined;  // Cannot compute (e.g., missing dependencies)
-    }
-
-    // Cache the result
-    this.elementStore.setCircleRealization2D(circle.id, realization);
-    return realization;
+    return realizeCircle2DWithCache(circle, context, this.elementStore);
   }
 
   // ==================== Factory Methods ====================
@@ -964,86 +926,4 @@ export abstract class ProjectionPlane extends Element {
    */
   abstract realize3D(context: ProjectionPlaneRealizationContext): ProjectionPlaneRealization3D;
 
-  /**
-   * Protected helper: Compute backward 2D matrix (paperToPlane) from forward matrix (planeToPaper)
-   * Shared between FixedProjectionPlane and AuxiliaryProjectionPlane realize2D() methods.
-   * Extracted to base class to eliminate code duplication.
-   * 
-   * @param planeToPaper - Forward transformation matrix
-   * @returns Object with paperToPlane matrix and feasibility flag
-   */
-  protected computeBackward2DMatrix(planeToPaper: Matrix3): { paperToPlane: Matrix3; feasible: boolean } {
-    let feasible = true;
-    let paperToPlane: Matrix3;
-    
-    try {
-      const det = planeToPaper.determinant();
-      
-      if (Math.abs(det) < 1e-10) {
-        // Matrix is singular (degenerate plane) - mark infeasible
-        feasible = false;
-        paperToPlane = new Matrix3(); // Identity as fallback
-      } else {
-        paperToPlane = planeToPaper.clone().invert();
-      }
-    } catch (error) {
-      // Inversion failed - mark infeasible
-      feasible = false;
-      paperToPlane = new Matrix3(); // Identity as fallback
-    }
-    
-    return { paperToPlane, feasible };
-  }
-
-  /**
-   * Protected helper: Compute backward 3D matrix (threeDToPlane) from forward matrix (planeTo3D)
-   * Extracts basis vectors from embedding matrix and constructs projection matrix.
-   * Used by FixedProjectionPlane.realize3D().
-   * 
-   * @param planeTo3D - Forward embedding matrix (plane → 3D)
-   * @returns Backward projection matrix (3D → plane)
-   */
-  protected computeBackward3DMatrix(planeTo3D: Matrix4x3): Matrix3x4 {
-    // planeTo3D is stored ROW-MAJOR: [m11, m12, m13, m21, m22, m23, m31, m32, m33, m41, m42, m43]
-    // Matrix layout (4 rows × 3 columns):
-    //   [ m11  m12  m13 ]   Row 1: e[0], e[1], e[2]
-    //   [ m21  m22  m23 ]   Row 2: e[3], e[4], e[5]
-    //   [ m31  m32  m33 ]   Row 3: e[6], e[7], e[8]
-    //   [ m41  m42  m43 ]   Row 4: e[9], e[10], e[11]
-    //
-    // Columns represent: [U-axis in 3D, V-axis in 3D, origin in 3D]
-    // For ROW-MAJOR storage, column k elements are at indices: k, k+3, k+6, k+9
-    //
-    // Extract normalized basis vectors and origin
-    const uAxis = new Vector3(
-      planeTo3D.elements[0],   // m11 (column 1, row 1)
-      planeTo3D.elements[3],   // m21 (column 1, row 2)
-      planeTo3D.elements[6]    // m31 (column 1, row 3)
-    ).normalize();
-    
-    const vAxis = new Vector3(
-      planeTo3D.elements[1],   // m12 (column 2, row 1)
-      planeTo3D.elements[4],   // m22 (column 2, row 2)
-      planeTo3D.elements[7]    // m32 (column 2, row 3)
-    ).normalize();
-    
-    const origin = new Vector3(
-      planeTo3D.elements[2],   // m13 (column 3, row 1)
-      planeTo3D.elements[5],   // m23 (column 3, row 2)
-      planeTo3D.elements[8]    // m33 (column 3, row 3)
-    );
-    
-    // Build projection matrix: (point - origin) · basis vectors
-    // Row 1: U projection = point · uAxis - origin · uAxis
-    // Row 2: V projection = point · vAxis - origin · vAxis
-    // Row 3: Homogeneous coordinate [0, 0, 0, 1]
-    const threeDToPlane = new Matrix3x4();
-    threeDToPlane.set(
-      uAxis.x, uAxis.y, uAxis.z, -origin.dot(uAxis),
-      vAxis.x, vAxis.y, vAxis.z, -origin.dot(vAxis),
-      0, 0, 0, 1
-    );
-    
-    return threeDToPlane;
-  }
 }

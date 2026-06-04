@@ -2,6 +2,7 @@ import { Matrix3 } from 'three';
 import { Matrix4x3 } from '@/utils/threeUtils';
 import type { ProjectionPlaneRealizationContext } from './ProjectionPlaneContext';
 import { ProjectionPlane, type ProjectionPlaneType } from '@/domain/world/projectionPlane/ProjectionPlane';
+import { computeBackward2DMatrix, computeBackward3DMatrix } from './ProjectionPlaneMatrixHelpers';
 import { ProjectionPlaneRealization2D, ProjectionPlaneRealization3D } from './ProjectionPlaneRealization';
 
 export class FixedProjectionPlane extends ProjectionPlane {
@@ -55,7 +56,7 @@ export class FixedProjectionPlane extends ProjectionPlane {
     }
     
     // Use shared helper to compute backward matrix with determinant check
-    const { paperToPlane, feasible } = this.computeBackward2DMatrix(this.planeToPaper2D);
+    const { paperToPlane, feasible } = computeBackward2DMatrix(this.planeToPaper2D);
     
     return new ProjectionPlaneRealization2D(
       this.id,
@@ -77,7 +78,7 @@ export class FixedProjectionPlane extends ProjectionPlane {
     }
     
     // Use shared helper to compute backward matrix from basis vectors
-    const threeDToPlane = this.computeBackward3DMatrix(this.planeTo3D);
+    const threeDToPlane = computeBackward3DMatrix(this.planeTo3D);
     
     return new ProjectionPlaneRealization3D(
       this.id,
@@ -87,4 +88,3 @@ export class FixedProjectionPlane extends ProjectionPlane {
     );
   }
 }
-
