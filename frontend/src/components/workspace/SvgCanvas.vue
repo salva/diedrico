@@ -160,7 +160,7 @@ import { ref, computed, watch, onMounted, onUnmounted, inject } from 'vue';
 import { Matrix3, Vector3 } from 'three';
 import { canvasToPlaneCoordinates, screenToCanvasPoint, type ViewportTransform } from '@/application/canvas/CanvasCoordinateConverter';
 import { CanvasInteractionController } from '@/application/canvas/CanvasInteractionController';
-import { renderCanvasPrimitive } from '@/application/canvas/CanvasSvgRendering';
+import { renderSvgPrimitive } from '@/application/canvas/CanvasSvgRendering';
 import { useViewStore } from '@/stores/viewStore';
 import { useSelectionStore } from '@/stores/selectionStore';
 import { useHoverHighlight } from '@/composables/useHoverHighlight';
@@ -332,7 +332,7 @@ const canvasPresentation = computed(() => {
 });
 
 const interactionQuery = computed(() => new CanvasInteractionQuery(canvasPresentation.value.queryItems));
-const primitives = computed(() => canvasPresentation.value.renderItems.map(item => item.primitive));
+const renderItems = computed(() => canvasPresentation.value.renderItems);
 const gridLines = computed(() => canvasPresentation.value.gridLines);
 const gridLabels = computed(() => canvasPresentation.value.gridLabels);
 const paperToPlaneTransforms = computed(() => new Map(
@@ -341,39 +341,45 @@ const paperToPlaneTransforms = computed(() => new Map(
 
 // Render primitives to SVG attributes
 const renderedPoints = computed(() => {
-  return primitives.value
-    .filter(p => p.type === 'point')
-    .map(p => renderCanvasPrimitive(p, viewport.value, { width: canvasWidth.value, height: canvasHeight.value }));
+  return renderItems.value
+    .filter(item => item.primitive.type === 'point')
+    .map(item => renderSvgPrimitive(item, { ...viewport.value, width: canvasWidth.value, height: canvasHeight.value }))
+    .filter(item => item !== null);
 });
 
 const renderedLines = computed(() => {
-  return primitives.value.filter(p => p.type === 'line' && !p.id.startsWith('guide-')).map(p => {
-    return renderCanvasPrimitive(p, viewport.value, { width: canvasWidth.value, height: canvasHeight.value });
-  });
+  return renderItems.value
+    .filter(item => item.primitive.type === 'line' && !item.primitive.id.startsWith('guide-'))
+    .map(item => renderSvgPrimitive(item, { ...viewport.value, width: canvasWidth.value, height: canvasHeight.value }))
+    .filter(item => item !== null);
 });
 
 const renderedSegments = computed(() => {
-  return primitives.value
-    .filter(p => p.type === 'segment')
-    .map(p => renderCanvasPrimitive(p, viewport.value, { width: canvasWidth.value, height: canvasHeight.value }));
+  return renderItems.value
+    .filter(item => item.primitive.type === 'segment')
+    .map(item => renderSvgPrimitive(item, { ...viewport.value, width: canvasWidth.value, height: canvasHeight.value }))
+    .filter(item => item !== null);
 });
 
 const renderedCircles = computed(() => {
-  return primitives.value
-    .filter(p => p.type === 'circle')
-    .map(p => renderCanvasPrimitive(p, viewport.value, { width: canvasWidth.value, height: canvasHeight.value }));
+  return renderItems.value
+    .filter(item => item.primitive.type === 'circle')
+    .map(item => renderSvgPrimitive(item, { ...viewport.value, width: canvasWidth.value, height: canvasHeight.value }))
+    .filter(item => item !== null);
 });
 
 const renderedGuides = computed(() => {
-  return primitives.value
-    .filter(p => p.type === 'line' && p.id.startsWith('guide-'))
-    .map(p => renderCanvasPrimitive(p, viewport.value, { width: canvasWidth.value, height: canvasHeight.value }));
+  return renderItems.value
+    .filter(item => item.primitive.type === 'line' && item.primitive.id.startsWith('guide-'))
+    .map(item => renderSvgPrimitive(item, { ...viewport.value, width: canvasWidth.value, height: canvasHeight.value }))
+    .filter(item => item !== null);
 });
 
 const renderedArcs = computed(() => {
-  return primitives.value
-    .filter(p => p.type === 'arc')
-    .map(p => renderCanvasPrimitive(p, viewport.value, { width: canvasWidth.value, height: canvasHeight.value }));
+  return renderItems.value
+    .filter(item => item.primitive.type === 'arc')
+    .map(item => renderSvgPrimitive(item, { ...viewport.value, width: canvasWidth.value, height: canvasHeight.value }))
+    .filter(item => item !== null);
 });
 
 function handleCanvasClick(event: MouseEvent) {
@@ -606,7 +612,7 @@ function handleGlobalMouseUp() {
 }
 
 function fitToView() {
-  controller.fitToView(primitives.value, canvasWidth.value, canvasHeight.value);
+  controller.fitToView(renderItems.value.map(item => item.primitive), canvasWidth.value, canvasHeight.value);
 }
 
 defineExpose({ fitToView });
