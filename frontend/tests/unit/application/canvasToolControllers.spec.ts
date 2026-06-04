@@ -13,7 +13,7 @@ import { TangentLineToCircleParallelToLineTool } from '@/tools/TangentLineToCirc
 import { CanvasInteractionQuery } from '@/application/canvasPresentation/CanvasInteractionQuery';
 import type { ToolContext } from '@/tools/ITool';
 import type { ToolCommandSink, ToolConstructionIntent } from '@/tools/ToolCommandIntents';
-import type { ArgumentValue } from '@/types/ToolArgumentCollector';
+import type { ArgumentValue } from '@/tools/ToolArgumentCollector';
 import { createTestWorld, getHorizontalPlane, getHorizontalPlaneId } from '../../helpers/worldHelpers';
 import { createToolInteractionReadPort } from '@/application/tools/ToolInteractionReadPort';
 

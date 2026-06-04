@@ -80,7 +80,7 @@
  */
 
 import { Vector4, Matrix3 } from 'three';
-import { applyMatrix4x3, Matrix4x3 } from '@/utils/threeUtils';
+import { Matrix4x3 } from '@/utils/threeUtils';
 import { Point2D, Point2DLineLineIntersection, Point2DLineCircleIntersection, Point2DCircleCircleIntersection } from './Point';
 import { Line2D } from './Line';
 import { Segment2D, Segment2DByPoints } from './Segment';
@@ -386,60 +386,6 @@ export class World {
       }
     }
     return undefined;
-  }
-
-  /**
-   * Get a point by searching all planes
-   * @param pointId ID of point to get
-   * @returns Point if found, undefined otherwise
-   */
-  private getPoint2DFromPlanes(pointId: string): Point2D | undefined {
-    for (const plane of this.projectionPlanes.values()) {
-      const point = plane.getPoint(pointId);
-      if (point) return point;
-    }
-    return undefined;
-  }
-
-  /**
-   * Get the 3D realization for a point (cached or computed on-demand)
-   * Computes 3D position by transforming the 2D realization using the projection plane's 3D transform
-   */
-  getPoint3DRealization(pointId: string): Point3DRealization3D | undefined {
-    // Check cache first
-    let realization = this.realizations.getPoint3D(pointId);
-    if (realization) {
-      return realization;
-    }
-
-    // Not cached - compute it
-    const point = this.getPoint2DFromPlanes(pointId);
-    if (!point) {
-      return undefined;
-    }
-
-    // Get the point's 2D realization (intrinsic plane coordinates)
-    const realization2D = point.realize2D(this);
-    if (!realization2D) {
-      return undefined;
-    }
-
-    // Get the projection plane's 3D transformation
-    const planeRealization3D = this.getProjectionPlane3DRealization(point.planeId!);
-    if (!planeRealization3D) {
-      return undefined;
-    }
-
-    // Transform 2D plane coordinates to 3D space coordinates
-    // [x, y, z, w] = planeTo3D (Matrix4x3) * [u, v, 1]
-    const pos3D = applyMatrix4x3(realization2D.position, planeRealization3D.planeTo3D);
-    
-    realization = new Point3DRealization3D(pos3D);
-    
-    // Cache the result
-    this.realizations.setPoint3D(pointId, realization);
-    
-    return realization;
   }
 
   /**

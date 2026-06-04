@@ -22,7 +22,7 @@
  */
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
-import type { ToolArgumentSet } from '@/types/ToolArgumentCollector';
+import type { ToolArgumentSet } from '@/tools/ToolArgumentCollector';
 import { SelectionMask } from '@/types/SelectionMask';
 
 /**

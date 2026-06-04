@@ -13,7 +13,7 @@
  */
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
-import type { ToolArgumentSet, CollectionContext } from '@/types/ToolArgumentCollector';
+import type { ToolArgumentSet, CollectionContext } from '@/tools/ToolArgumentCollector';
 import { SelectionMask } from '@/types/SelectionMask';
 import { Line2D } from '@/domain/world/Line';
 

@@ -16,7 +16,5 @@ export interface DependencyQueryPort {
   getDependents(elementId: string): string[];
   getDependencies(elementId: string): string[];
   getAllDependents(elementId: string): string[];
-  getAllDependencies(elementId: string): string[];
   getElementsInDeletionOrder(elementIds: string[]): string[];
-  getElementDependencies(elementId: string): { dependencies: string[]; dependents: string[] };
 }

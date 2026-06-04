@@ -46,8 +46,8 @@ import type {
   ToolArgumentSet, 
   CollectionContext,
   ArgumentValue
-} from '@/types/ToolArgumentCollector';
-export type { ArgumentValue } from '@/types/ToolArgumentCollector';
+} from '@/tools/ToolArgumentCollector';
+export type { ArgumentValue } from '@/tools/ToolArgumentCollector';
 
 /**
  * Abstract base class for tools that collect multiple geometric arguments

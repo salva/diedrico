@@ -27,11 +27,6 @@ export class ToggleOutputOp implements IOperation {
     processTree.toggleOutput(this.nodeId);
   }
 
-  redo(world: World): void {
-    const processTree = world.getProcessTree();
-    processTree.toggleOutput(this.nodeId);
-  }
-
   serialize() {
     return { opType: this.type, nodeId: this.nodeId };
   }

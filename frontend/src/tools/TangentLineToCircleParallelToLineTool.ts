@@ -13,7 +13,7 @@
  */
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
-import type { ToolArgumentSet, CollectionContext, ArgumentValue } from '@/types/ToolArgumentCollector';
+import type { ToolArgumentSet, CollectionContext, ArgumentValue } from '@/tools/ToolArgumentCollector';
 import type { ToolContext } from './ITool';
 import type { ToolConstructionIntent } from './ToolCommandIntents';
 import { SelectionMask } from '@/types/SelectionMask';

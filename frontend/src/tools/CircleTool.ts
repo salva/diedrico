@@ -13,7 +13,7 @@
  */
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
-import type { ToolArgumentSet } from '@/types/ToolArgumentCollector';
+import type { ToolArgumentSet } from '@/tools/ToolArgumentCollector';
 import type { Point2D } from '@/domain/world/Point';
 import { SelectionMask } from '@/types/SelectionMask';
 

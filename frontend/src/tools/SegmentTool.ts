@@ -16,7 +16,7 @@
  */
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
-import type { ToolArgumentSet, CollectionContext } from '@/types/ToolArgumentCollector';
+import type { ToolArgumentSet, CollectionContext } from '@/tools/ToolArgumentCollector';
 import type { Element2D } from '@/domain/world/Element2D';
 import { SelectionMask } from '@/types/SelectionMask';
 

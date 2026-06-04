@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { DependencyService } from '@/domain/world/DependencyService';
 
 describe('DependencyService', () => {
-  it('tracks direct and transitive dependencies in both directions', () => {
+  it('tracks direct dependencies and transitive dependents', () => {
     const service = new DependencyService();
 
     service.registerNode('line-1', ['point-1', 'point-2']);
@@ -10,7 +10,6 @@ describe('DependencyService', () => {
 
     expect(service.getDependencies('line-1')).toEqual(['point-1', 'point-2']);
     expect(service.getDependents('line-1')).toEqual(['circle-1']);
-    expect(service.getAllDependencies('circle-1')).toEqual(['line-1', 'point-1', 'point-2']);
     expect(service.getAllDependents('point-1')).toEqual(['line-1', 'circle-1']);
   });
 

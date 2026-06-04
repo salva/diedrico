@@ -102,7 +102,7 @@ describe('Architecture: domain world boundary', () => {
     const files = scanTextFiles(['src/application', 'src/commands', 'src/domain/world/projectionPlane']);
     const offenders = files
       .filter(file => file.projectPath !== 'src/domain/world/projectionPlane/ProjectionPlaneContext.ts')
-      .filter(file => /getDependencyService\(\)\.(registerNode|unregisterNode|getElementsInDeletionOrder|getDependencies|getDependents|getAllDependencies|getAllDependents|getElementDependencies)/.test(file.content))
+      .filter(file => /getDependencyService\(\)\.(registerNode|unregisterNode|getElementsInDeletionOrder|getDependencies|getDependents|getAllDependents)/.test(file.content))
       .map(file => file.projectPath);
 
     expect(offenders).toEqual([]);

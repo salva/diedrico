@@ -20,14 +20,6 @@
 import type { DependencyRegistrarPort, DependencyQueryPort } from './DependencyPorts';
 
 /**
- * Element dependency information
- */
-export interface ElementDependencies {
-  dependencies: string[];   // Elements this depends on (inputs)
-  dependents: string[];     // Elements that depend on this (outputs)
-}
-
-/**
  * Service for managing element dependencies
  */
 export class DependencyService implements DependencyRegistrarPort, DependencyQueryPort {
@@ -179,47 +171,6 @@ export class DependencyService implements DependencyRegistrarPort, DependencyQue
   }
 
   /**
-   * Get all elements in the transitive closure of dependencies
-   * (all elements this element directly or indirectly depends on)
-   * 
-   * @param elementId - Element to query
-   * @returns Array of all element IDs in dependency chain
-   */
-  getAllDependencies(elementId: string): string[] {
-    const visited = new Set<string>();
-    const queue: string[] = [elementId];
-    
-    while (queue.length > 0) {
-      const current = queue.shift()!;
-      const directDependencies = this.getDependencies(current);
-      
-      for (const dependency of directDependencies) {
-        if (!visited.has(dependency)) {
-          visited.add(dependency);
-          queue.push(dependency);
-        }
-      }
-    }
-    
-    return Array.from(visited);
-  }
-
-  /**
-   * Check if adding a dependency would create a cycle
-   * Used during command validation to prevent circular dependencies
-   * 
-   * @param fromElementId - Base element (input)
-   * @param toElementId - Derived element (output)
-   * @returns true if adding this dependency would create a cycle
-   */
-  wouldCreateCycle(fromElementId: string, toElementId: string): boolean {
-    // If toElementId already depends on fromElementId (directly or indirectly),
-    // then adding fromElementId -> toElementId would create a cycle
-    const allDependencies = this.getAllDependencies(fromElementId);
-    return allDependencies.includes(toElementId);
-  }
-
-  /**
    * Get elements to delete in proper order for cascade deletion
    * Returns elements sorted in reverse topological order (dependents before dependencies)
    * 
@@ -290,19 +241,6 @@ export class DependencyService implements DependencyRegistrarPort, DependencyQue
       const depthB = depths.get(b) || 0;
       return depthA - depthB;
     });
-  }
-
-  /**
-   * Get full dependency information for an element
-   * 
-   * @param elementId - Element to query
-   * @returns Complete dependency information
-   */
-  getElementDependencies(elementId: string): ElementDependencies {
-    return {
-      dependencies: this.getDependencies(elementId),
-      dependents: this.getDependents(elementId)
-    };
   }
 
   /**

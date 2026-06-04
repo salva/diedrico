@@ -32,32 +32,6 @@ describe('OperationRegistry', () => {
     expect(serializeOperation(op)).toEqual(descriptor);
   });
 
-  it('restores legacy AddIntersectionPoint2D descriptors as line-line intersection operations', () => {
-    const descriptor = {
-      opType: 'AddIntersectionPoint2D',
-      planeId: 'projPlane3',
-      line1Id: 'projPlane3/line2d4',
-      line2Id: 'projPlane3/line2d5',
-      pointId: 'projPlane3/point2d12'
-    };
-
-    const restored = deserializeOperation(descriptor);
-    expect(restored.type).toBe('AddLineLineIntersectionPoint2D');
-    expect(serializeOperation(restored)).toEqual({
-      ...descriptor,
-      opType: 'AddLineLineIntersectionPoint2D'
-    });
-
-    const created = new AddLineLineIntersectionPoint2DOp(descriptor.planeId, descriptor.line1Id, descriptor.line2Id);
-    created.outputs = { pointId: descriptor.pointId };
-    expect(serializeOperation(created)).toEqual({
-      ...descriptor,
-      opType: 'AddLineLineIntersectionPoint2D'
-    });
-  });
-
-
-
   it('round-trips UpdateElementStyle through its typed JSON payload', () => {
     const descriptor = {
       opType: 'UpdateElementStyle',

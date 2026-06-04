@@ -13,7 +13,7 @@
  * 
  */
 
-import type { SelectionMask } from './SelectionMask';
+import type { SelectionMask } from '@/types/SelectionMask';
 import type { Element2D } from '@/domain/world/Element2D';
 import type { ProjectionPlane } from '@/domain/world/projectionPlane/ProjectionPlane';
 import type { Vector3 } from 'three';
@@ -86,12 +86,12 @@ export interface ToolArgumentSet {
    * Called when all arguments in set are collected, before execution.
    * Validators can use the bounded readPort for geometric reads and realizations.
    */
-  setValidator?: (args: Map<string, import('../tools/ArgumentCollectorTool').ArgumentValue>, context: CollectionContext) => ValidationResult;
+  setValidator?: (args: Map<string, ArgumentValue>, context: CollectionContext) => ValidationResult;
   
   /**
    * Optional execution callback for this specific argument set
    */
-  execute?: (args: Map<string, ArgumentValue>, context: import('../tools/ITool').ToolContext) => import('../tools/ITool').ToolResult;
+  execute?: (args: Map<string, ArgumentValue>, context: import('./ITool').ToolContext) => import('./ITool').ToolResult;
 }
 
 /**
@@ -110,7 +110,7 @@ export interface CollectionContext {
   plane: ProjectionPlane;
   
   /**
-   * Arguments collected so far (name → {element, planeCoords})
+   * Arguments collected so far (name -> {element, planeCoords})
    * Validators can reference previously collected arguments for cross-validation
    * Access element via: collected.get('argName')?.element
    * Access position via: collected.get('argName')?.planeCoords

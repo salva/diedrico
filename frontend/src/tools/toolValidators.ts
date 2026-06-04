@@ -1,4 +1,4 @@
-import type { ArgumentValue, CollectionContext, ValidationResult } from '@/types/ToolArgumentCollector';
+import type { ArgumentValue, CollectionContext, ValidationResult } from '@/tools/ToolArgumentCollector';
 
 export function validateDistinctProjectionPlanes(
   args: Map<string, ArgumentValue>,

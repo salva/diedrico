@@ -14,7 +14,7 @@
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
 import { validateDistinctProjectionPlanes } from './toolValidators';
-import type { ToolArgumentSet } from '@/types/ToolArgumentCollector';
+import type { ToolArgumentSet } from '@/tools/ToolArgumentCollector';
 import { SelectionMask } from '@/types/SelectionMask';
 
 /**

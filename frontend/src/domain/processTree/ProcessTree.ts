@@ -52,23 +52,6 @@ export function createActionGroup(
   };
 }
 
-export function createSubprocess(
-  id: string,
-  name: string,
-  options?: Partial<Subprocess>
-): Subprocess {
-  return {
-    id,
-    type: 'subprocess',
-    name,
-    children: [],
-    showIntermediates: true,
-    isOutput: true,
-    created: new Date(),
-    ...options
-  };
-}
-
 // ActionNode wraps Action to fit the tree structure
 export interface ActionNode extends ProcessNodeBase, Action {
   type: 'action';

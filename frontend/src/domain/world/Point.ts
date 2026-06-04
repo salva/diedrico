@@ -14,7 +14,7 @@
  * 
  */
 
-import { Vector3, Vector4 } from 'three';
+import { Vector3 } from 'three';
 import type { ProjectionElementRealizationContext } from './projectionPlane/ProjectionPlaneContext';
 import { intersectLineLine, intersectLineCircle, intersectCircleCircle } from '@/domain/calculations/Intersections';
 import { Realization } from './Realization';
@@ -46,28 +46,6 @@ export class Point2DRealization2D extends Realization {
    * Get position as Vector3
    */
   getPosition(): Vector3 {
-    return this.position;
-  }
-}
-
-/**
- * Point3DRealization3D - Stores computed 3D position for a point
- * Reconstructed from 2D projections or defined directly in 3D space.
- * Contains ONLY numeric data. Structural information (id) stays in domain objects.
- */
-export class Point3DRealization3D {
-  position: Vector4;  // Position in 3D space (x, y, z, 1) - ONLY NUMERIC DATA
-  feasible: boolean;  // Whether the geometric computation succeeded
-
-  constructor(position: Vector4, feasible: boolean = true) {
-    this.position = position;
-    this.feasible = feasible;
-  }
-
-  /**
-   * Get position as Vector4
-   */
-  getPosition(): Vector4 {
     return this.position;
   }
 }

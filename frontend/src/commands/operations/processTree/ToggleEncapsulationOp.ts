@@ -27,11 +27,6 @@ export class ToggleEncapsulationOp implements IOperation {
     processTree.toggleSubprocessEncapsulation(this.subprocessId);
   }
 
-  redo(world: World): void {
-    const processTree = world.getProcessTree();
-    processTree.toggleSubprocessEncapsulation(this.subprocessId);
-  }
-
   serialize() {
     return { opType: this.type, subprocessId: this.subprocessId };
   }

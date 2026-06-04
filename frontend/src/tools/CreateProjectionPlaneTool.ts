@@ -20,7 +20,7 @@
  */
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
-import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/types/ToolArgumentCollector';
+import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/tools/ToolArgumentCollector';
 import { SelectionMask } from '@/types/SelectionMask';
 import { computeLineDistance } from '@/utils/projectionPlaneUtils';
 import type { Element2D } from '@/domain/world/Element2D';

@@ -14,30 +14,6 @@ import { ref, computed } from 'vue';
 import type { ToolType } from '@/application/tools/ToolTypes';
 import type { ToolFamilyConfig } from '../types/ToolConfig';
 
-export const TOOL_TYPE = {
-  SELECT: 'select',
-  POINT: 'point',
-  LINE: 'line',
-  CIRCLE: 'circle',
-  SEGMENT: 'segment',
-  GUIDE: 'guide',
-  INTERSECTION: 'intersection',
-  TRANSPORT: 'transport',
-  PARALLEL_LINE: 'parallel-line',
-  PERPENDICULAR_LINE: 'perpendicular-line',
-  TANGENT_LINE_TO_CIRCLE_THROUGH_POINT: 'tangent-line-to-circle-through-point',
-  TANGENT_LINE_TO_CIRCLE_PARALLEL: 'tangent-line-to-circle-parallel',
-  CREATE3DPOINT: 'create3dpoint',
-  CREATE3DLINE: 'create3dline',
-  CREATE3DSEGMENT: 'create3dsegment',
-  CREATE3DPLANE: 'create3dplane',
-  CREATEPROJECTIONPLANE: 'createprojectionplane',
-  INTERACTIVEPROJECTIONSETUP: 'interactiveprojectionsetup',
-  QUICKPROJECTIONSETUP: 'quickprojectionsetup',
-  QUICK3DLINE: 'quick3dline',
-  QUICK3DSEGMENT: 'quick3dsegment',
-} as const;
-
 export const TOOL_PREFERENCE_KEY = 'diedrico-tool-last-used';
 
 const activeTool = ref<ToolType>('select');

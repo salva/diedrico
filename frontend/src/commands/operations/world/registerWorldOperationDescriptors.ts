@@ -57,7 +57,6 @@ export function registerWorldOperationDescriptors(registry: OperationRegistry): 
   registry.register('AddGuide2DPerpendicularToLine', d => restoreOutput(new AddGuide2DPerpendicularToLineOp(s(d, 'planeId'), s(d, 'referenceLineId'), s(d, 'throughPointId'), so(d, 'guideId')), { guideId: so(d, 'guideId') }));
   registry.register('AddSiblingGuide2D', d => restoreOutput(new AddSiblingGuide2DOp(s(d, 'planeId'), s(d, 'primaryGuideId'), s(d, 'referenceLineId'), so(d, 'siblingGuideId')), { siblingGuideId: so(d, 'siblingGuideId') }));
   registry.register('AddSiblingIntersectionPoint2D', d => restoreOutput(new AddSiblingIntersectionPoint2DOp(s(d, 'planeId'), s(d, 'primaryIntersectionId')), { pointId: so(d, 'pointId') }));
-  registry.register('AddIntersectionPoint2D', d => restoreOutput(new AddLineLineIntersectionPoint2DOp(s(d, 'planeId'), s(d, 'line1Id'), s(d, 'line2Id')), { pointId: so(d, 'pointId') }));
   registry.register('RemovePoint2D', d => new RemovePoint2DOp(s(d, 'planeId'), s(d, 'pointId')));
   registry.register('RemoveLine2D', d => new RemoveLine2DOp(s(d, 'planeId'), s(d, 'lineId')));
   registry.register('RemoveSegment2D', d => new RemoveSegment2DOp(s(d, 'planeId'), s(d, 'segmentId')));

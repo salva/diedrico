@@ -1,5 +1,5 @@
 import type { Vector3 } from 'three';
-import type { ArgumentValue } from '@/types/ToolArgumentCollector';
+import type { ArgumentValue } from '@/tools/ToolArgumentCollector';
 
 export type ConstructionIntentType =
   | 'point'
