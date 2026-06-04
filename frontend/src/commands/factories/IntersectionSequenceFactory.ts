@@ -24,7 +24,7 @@
  * 
  * Example:
  * ```typescript
- * const cmd = new Command('Create intersection', world);
+   * const cmd = new Command('Create intersection', context);
  * const element1 = world.getLine2D(id1);
  * const element2 = world.getLine2D(id2);
  * 

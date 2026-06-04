@@ -22,7 +22,7 @@
  */
 
 import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
-import type { World } from '@/domain/world/World';
+import type { OperationContext } from '../OperationContext';
 import { Point3DFromProjections } from '@/domain/world/Point3D';
 import { requireDistinctProjectionPlanes, requireFeasibleProjectionPair } from './operationHelpers';
 
@@ -54,9 +54,9 @@ export class Add3DPointOp implements IOperation<Add3DPointDescriptor, Add3DPoint
   ) {
   }
 
-  apply(world: World): OperationResult<Add3DPointOutput> {
+  apply(context: OperationContext): OperationResult<Add3DPointOutput> {
     try {
-      const { plane1, plane2 } = requireDistinctProjectionPlanes(world, this.plane1Id, this.plane2Id, 'point');
+      const { plane1, plane2 } = requireDistinctProjectionPlanes(context.world, this.plane1Id, this.plane2Id, 'point');
       
       // Validate that projection points exist
       const proj1 = plane1.getPoint(this.projection1Id);
@@ -70,16 +70,16 @@ export class Add3DPointOp implements IOperation<Add3DPointDescriptor, Add3DPoint
       }
       
       // Validate that projections are geometrically feasible
-      const proj1Real = proj1.realize2D(world);
-      const proj2Real = proj2.realize2D(world);
+      const proj1Real = proj1.realize2D(context.world);
+      const proj2Real = proj2.realize2D(context.world);
       
       requireFeasibleProjectionPair('point', proj1Real, proj2Real);
       
       // Use stored ID if available (for redo), otherwise generate new one
-      const pointId = this.outputs.pointId || world.generate3DPointId();
+      const pointId = this.outputs.pointId || context.world.generate3DPointId();
       
       // Phase 97: Generate default label if not provided
-      const label = this.label || world.generateDefaultLabel(pointId, 'Point3D');
+      const label = this.label || context.world.generateDefaultLabel(pointId, 'Point3D');
       
       // Create default visual style if not provided
       const visualStyle = this.visualStyle || {
@@ -100,7 +100,7 @@ export class Add3DPointOp implements IOperation<Add3DPointDescriptor, Add3DPoint
       );
       
       // Add to World storage
-      world.add3DPoint(point);
+      context.world.add3DPoint(point);
       
       // Store outputs for undo
       this.outputs = { pointId };
@@ -118,9 +118,9 @@ export class Add3DPointOp implements IOperation<Add3DPointDescriptor, Add3DPoint
     }
   }
 
-  undo(world: World): void {
+  undo(context: OperationContext): void {
     if (this.outputs.pointId) {
-      world.remove3DPoint(this.outputs.pointId);
+      context.world.remove3DPoint(this.outputs.pointId);
     }
   }
 

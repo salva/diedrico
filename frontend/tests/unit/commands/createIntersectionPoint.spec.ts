@@ -22,7 +22,7 @@ describe('Create Intersection Point Command', () => {
 
   describe('execution', () => {
     it('should create intersection point between two lines', () => {
-      const cmd = new Command("Create intersection point", world);
+      const cmd = new Command("Create intersection point", { world });
       
       // Create first line (horizontal)
       const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 100, 1)));
@@ -63,7 +63,7 @@ describe('Create Intersection Point Command', () => {
     });
 
     it('should return pointId in outputs', () => {
-      const cmd = new Command("Create intersection", world);
+      const cmd = new Command("Create intersection", { world });
       
       const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 100, 1)));
       const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 100, 1)));
@@ -95,7 +95,7 @@ describe('Create Intersection Point Command', () => {
 
   describe('undo/redo', () => {
     it('should support undo by rolling back operations', () => {
-      const cmd = new Command("Create intersection", world);
+      const cmd = new Command("Create intersection", { world });
       
       const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 100, 1)));
       const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 100, 1)));
@@ -133,7 +133,7 @@ describe('Create Intersection Point Command', () => {
     });
 
     it('should maintain stable IDs across undo/redo', () => {
-      const cmd = new Command("Create intersection", world);
+      const cmd = new Command("Create intersection", { world });
       
       const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 100, 1)));
       const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 100, 1)));

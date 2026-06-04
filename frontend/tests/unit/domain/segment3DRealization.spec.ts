@@ -225,7 +225,7 @@ describe('Add3DSegmentOp compatibility validation', () => {
   beforeEach(() => {
     const { world: w } = createTestWorld();
     world = w;
-    command = new Command('test-cmd', world);
+    command = new Command('test-cmd', { world });
   });
 
   function createSegment2DWithOps(planeId: string, x1: number, y1: number, x2: number, y2: number): string {
@@ -251,7 +251,7 @@ describe('Add3DSegmentOp compatibility validation', () => {
     const seg2Id = createSegment2DWithOps(planeV.id!, 3, 2, 7, 4);
 
     const op = new Add3DSegmentOp(seg1Id, seg2Id, planeH.id!, planeV.id!);
-    const result = op.apply(world);
+    const result = op.apply({ world });
 
     expect(result.success).toBe(true);
     expect(result.outputs.segmentId).toBeDefined();
@@ -266,7 +266,7 @@ describe('Add3DSegmentOp compatibility validation', () => {
     const seg2Id = createSegment2DWithOps(planeV.id!, 10, 5, 20, 15);
 
     const op = new Add3DSegmentOp(seg1Id, seg2Id, planeH.id!, planeV.id!);
-    const result = op.apply(world);
+    const result = op.apply({ world });
 
     expect(result.success).toBe(false);
     expect(result.error).toContain('incompatible');
@@ -279,7 +279,7 @@ describe('Add3DSegmentOp compatibility validation', () => {
     const seg2Id = createSegment2DWithOps(planeH.id!, 1, 1, 6, 6);
 
     const op = new Add3DSegmentOp(seg1Id, seg2Id, planeH.id!, planeH.id!);
-    const result = op.apply(world);
+    const result = op.apply({ world });
 
     expect(result.success).toBe(false);
     expect(result.error).toContain('different planes');

@@ -39,7 +39,7 @@ describe('IntersectionSequenceFactory', () => {
   describe('HalfHingeLine sibling intersection creation (Phase 42)', () => {
     it('should create sibling intersection when line intersects HHL', () => {
       // Setup: Create a line that intersects with HHL
-      const cmd = new Command('Setup', world);
+      const cmd = new Command('Setup', { world });
       
       // Get HalfHingeLine on horizontal plane
       const horizontalPlane = world.getProjectionPlaneByLabel('P_H')!;
@@ -66,7 +66,7 @@ describe('IntersectionSequenceFactory', () => {
       cmd.commit();
 
       // Test: Create intersection with HHL using proper typed method
-      const intersectionCmd = new Command('Create HHL intersection', world);
+      const intersectionCmd = new Command('Create HHL intersection', { world });
       const groupId = createGroupForCommand(intersectionCmd);
 
       const result = IntersectionSequenceFactory.createLineLineIntersection(
@@ -110,7 +110,7 @@ describe('IntersectionSequenceFactory', () => {
 
     it('should create only primary intersection for non-HHL line', () => {
       // Setup: Create two regular lines that intersect
-      const cmd = new Command('Setup', world);
+      const cmd = new Command('Setup', { world });
       
       // Line 1: horizontal
       const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 0, 1)));
@@ -125,7 +125,7 @@ describe('IntersectionSequenceFactory', () => {
       cmd.commit();
 
       // Test: Create intersection using proper typed method
-      const intersectionCmd = new Command('Create regular intersection', world);
+      const intersectionCmd = new Command('Create regular intersection', { world });
       const groupId = createGroupForCommand(intersectionCmd);
 
       const result = IntersectionSequenceFactory.createLineLineIntersection(
@@ -139,7 +139,7 @@ describe('IntersectionSequenceFactory', () => {
 
     it('should create sibling for line-circle intersection with HHL', () => {
       // Setup: Create circle and HHL that intersect
-      const cmd = new Command('Setup', world);
+      const cmd = new Command('Setup', { world });
       
       // Get HalfHingeLine on horizontal plane
       const horizontalPlane = world.getProjectionPlaneByLabel('P_H')!;
@@ -165,7 +165,7 @@ describe('IntersectionSequenceFactory', () => {
       cmd.commit();
 
       // Test: Create line-circle intersection using proper typed method
-      const intersectionCmd = new Command('Create HHL-circle intersection', world);
+      const intersectionCmd = new Command('Create HHL-circle intersection', { world });
       const groupId = createGroupForCommand(intersectionCmd);
 
       const result = IntersectionSequenceFactory.createLineCircleIntersection(

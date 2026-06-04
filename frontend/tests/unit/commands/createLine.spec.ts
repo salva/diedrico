@@ -23,7 +23,7 @@ describe('Create Line Command', () => {
   describe('execution', () => {
     it('should create a line between two points', () => {
       // Create two points first
-      const cmd = new Command("Create line with points", world);
+      const cmd = new Command("Create line with points", { world });
       const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
       const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 200, 1)));
       
@@ -49,7 +49,7 @@ describe('Create Line Command', () => {
     });
 
     it('should return lineId in outputs', () => {
-      const cmd = new Command("Create line", world);
+      const cmd = new Command("Create line", { world });
       const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
       const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 200, 1)));
       
@@ -67,7 +67,7 @@ describe('Create Line Command', () => {
 
   describe('undo/redo', () => {
     it('should support undo by rolling back operations', () => {
-      const cmd = new Command("Create line", world);
+      const cmd = new Command("Create line", { world });
       const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
       const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 200, 1)));
       const lineResult = cmd.addAndExecute(new AddLine2DByTwoPointsOp(
@@ -92,7 +92,7 @@ describe('Create Line Command', () => {
     });
 
     it('should maintain stable IDs across undo/redo', () => {
-      const cmd = new Command("Create line", world);
+      const cmd = new Command("Create line", { world });
       const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
       const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 200, 1)));
       const lineResult = cmd.addAndExecute(new AddLine2DByTwoPointsOp(

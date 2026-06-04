@@ -8,7 +8,7 @@
  */
 
 import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
-import type { World } from '@/domain/world/World';
+import type { OperationContext } from '../OperationContext';
 
 export class PopSubprocessOp implements IOperation {
   readonly type = 'PopSubprocess';
@@ -16,22 +16,22 @@ export class PopSubprocessOp implements IOperation {
   
   private poppedSubprocessId: string | undefined;
 
-  apply(world: World): OperationResult {
+  apply(context: OperationContext): OperationResult {
     // Store info about subprocess being popped for undo
-    const currentSubprocess = world.getProcessTree().getCurrentSubprocess();
+    const currentSubprocess = context.world.getProcessTree().getCurrentSubprocess();
     this.poppedSubprocessId = currentSubprocess.id;
     
-    world.getProcessTree().popSubprocess();
+    context.world.getProcessTree().popSubprocess();
     return { success: true, outputs: {} };
   }
 
-  undo(world: World): void {
+  undo(context: OperationContext): void {
     if (!this.poppedSubprocessId) {
       throw new Error('Cannot undo PopSubprocessOp: no subprocess ID stored');
     }
     
     // Restore the subprocess to the stack
-    world.getProcessTree().restoreSubprocessToStack(this.poppedSubprocessId);
+    context.world.getProcessTree().restoreSubprocessToStack(this.poppedSubprocessId);
   }
 
   serialize() {

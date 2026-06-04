@@ -5,7 +5,7 @@
  */
 
 import type { IOperation, JsonObject, OperationResult } from '../IOperation';
-import type { World } from '@/domain/world/World';
+import type { OperationContext } from '../OperationContext';
 import { removeLineFromPlane } from './operationHelpers';
 
 interface AddGuideOutput extends JsonObject {
@@ -27,14 +27,14 @@ export class AddGuide2DPerpendicularToLineOp implements IOperation {
     private readonly restoredGuideId?: string
   ) {}
 
-  apply(world: World): OperationResult<AddGuideOutput> {
+  apply(context: OperationContext): OperationResult<AddGuideOutput> {
     try {
-      const plane = world.getProjectionPlaneById(this.planeId);
+      const plane = context.world.getProjectionPlaneById(this.planeId);
       if (!plane) {
         throw new Error(`Plane not found: ${this.planeId}`);
       }
 
-      const guide = world.getConstructionService().addGuide2D(
+      const guide = context.world.getConstructionService().addGuide2D(
         plane,
         this.referenceLineId,
         this.throughPointId,
@@ -54,11 +54,11 @@ export class AddGuide2DPerpendicularToLineOp implements IOperation {
     }
   }
 
-  undo(world: World): void {
+  undo(context: OperationContext): void {
     if (this.outputs.guideId) {
-      const plane = world.getProjectionPlaneById(this.planeId);
+      const plane = context.world.getProjectionPlaneById(this.planeId);
       if (plane) {
-        removeLineFromPlane(world, plane, this.outputs.guideId);
+        removeLineFromPlane(context.world, plane, this.outputs.guideId);
       }
     }
   }
@@ -94,14 +94,14 @@ export class AddSiblingGuide2DOp implements IOperation {
     private readonly restoredSiblingGuideId?: string
   ) {}
 
-  apply(world: World): OperationResult<AddSiblingGuideOutput> {
+  apply(context: OperationContext): OperationResult<AddSiblingGuideOutput> {
     try {
-      const plane = world.getProjectionPlaneById(this.planeId);
+      const plane = context.world.getProjectionPlaneById(this.planeId);
       if (!plane) {
         throw new Error(`Plane not found: ${this.planeId}`);
       }
 
-      const siblingGuide = world.getConstructionService().addSiblingGuide2D(
+      const siblingGuide = context.world.getConstructionService().addSiblingGuide2D(
         plane,
         this.primaryGuideId,
         this.referenceLineId,
@@ -121,11 +121,11 @@ export class AddSiblingGuide2DOp implements IOperation {
     }
   }
 
-  undo(world: World): void {
+  undo(context: OperationContext): void {
     if (this.outputs.siblingGuideId) {
-      const plane = world.getProjectionPlaneById(this.planeId);
+      const plane = context.world.getProjectionPlaneById(this.planeId);
       if (plane) {
-        removeLineFromPlane(world, plane, this.outputs.siblingGuideId);
+        removeLineFromPlane(context.world, plane, this.outputs.siblingGuideId);
       }
     }
   }

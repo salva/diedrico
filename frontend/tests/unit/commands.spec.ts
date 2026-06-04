@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { Command } from '../../src/commands/Command';
 import type { IOperation } from '../../src/commands/operations/IOperation';
 import type { OperationResult } from '../../src/commands/operations/IOperation';
+import type { OperationContext } from '../../src/commands/operations/OperationContext';
 import type { World } from '../../src/domain/world/World';
 import { World as WorldClass } from '../../src/domain/world/World';
 
@@ -22,7 +23,7 @@ class MockOperation implements IOperation {
     this.shouldFail = shouldFail;
   }
 
-  apply(_world: World): OperationResult {
+  apply(_context: OperationContext): OperationResult {
     if (this.shouldFail) {
       return {
         success: false,
@@ -38,7 +39,7 @@ class MockOperation implements IOperation {
     };
   }
 
-  undo(_world: World): void {
+  undo(_context: OperationContext): void {
     this.undone = true;
     this.executed = false;
   }
@@ -50,7 +51,7 @@ describe('Command', () => {
 
   beforeEach(() => {
     world = new WorldClass();
-    command = new Command('Test command', world);
+    command = new Command('Test command', { world });
   });
 
   describe('incremental execution', () => {

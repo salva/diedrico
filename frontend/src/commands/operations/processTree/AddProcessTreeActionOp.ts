@@ -8,7 +8,7 @@
  */
 
 import type { IOperation, JsonObject, OperationOutputBag, OperationResult } from '../IOperation';
-import type { World } from '@/domain/world/World';
+import type { OperationContext } from '../OperationContext';
 import type { Action } from '@/domain/processTree/Action';
 import { operationSuccess } from '../operationResultHelpers';
 
@@ -19,12 +19,12 @@ export class AddProcessTreeActionOp implements IOperation {
   constructor(private readonly action: Action, private readonly groupId: string) {
   }
 
-  apply(world: World): OperationResult {
+  apply(context: OperationContext): OperationResult {
     // Add action to ProcessTree
     const action = this.action;
     
     // Add to existing group (Strict Mode: groupId is required)
-    const index = world.getProcessTree().addActionToGroup(action, this.groupId);
+    const index = context.world.getProcessTree().addActionToGroup(action, this.groupId);
     
     // Phase 93: Actions no longer have IDs - store elementId for tracking
     this.outputs = {
@@ -36,17 +36,17 @@ export class AddProcessTreeActionOp implements IOperation {
     return operationSuccess(this.outputs);
   }
 
-  undo(world: World): void {
+  undo(context: OperationContext): void {
     if (!this.outputs.elementId) {
       throw new Error('Cannot undo: operation was not applied');
     }
     
     // Phase 93: Remove action by elementId
     // Find the action that produced this element and remove it
-    const actions = world.getProcessTree().getActionsProducingElement(this.outputs.elementId);
+    const actions = context.world.getProcessTree().getActionsProducingElement(this.outputs.elementId);
     if (actions.length > 0) {
       // Remove the most recent action (should be only one, but just in case)
-      world.getProcessTree().removeActionByElementId(this.outputs.elementId);
+      context.world.getProcessTree().removeActionByElementId(this.outputs.elementId);
     }
 
     // Removed fallback: We rely on AddProcessTreeActionGroupOp to manage group lifecycle.

@@ -1,5 +1,5 @@
 import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
-import type { World } from '@/domain/world/World';
+import type { OperationContext } from '../OperationContext';
 import { IntersectionPoint2D } from '@/domain/world/Point';
 import { removePointFromPlane } from './operationHelpers';
 
@@ -39,14 +39,14 @@ export class AddSiblingIntersectionPoint2DOp implements IOperation<AddSiblingInt
   ) {
   }
 
-  apply(world: World): OperationResult<AddSiblingIntersectionPoint2DOutput> {
+  apply(context: OperationContext): OperationResult<AddSiblingIntersectionPoint2DOutput> {
     try {
-      const plane = world.getProjectionPlaneById(this.planeId);
+      const plane = context.world.getProjectionPlaneById(this.planeId);
       if (!plane) {
         throw new Error(`Plane not found: ${this.planeId}`);
       }
       
-      const siblingPoint = world.getConstructionService().addSiblingIntersectionPoint(
+      const siblingPoint = context.world.getConstructionService().addSiblingIntersectionPoint(
         plane,
         this.primaryIntersectionId,
         this.outputs.pointId
@@ -65,14 +65,14 @@ export class AddSiblingIntersectionPoint2DOp implements IOperation<AddSiblingInt
     }
   }
 
-  undo(world: World): void {
+  undo(context: OperationContext): void {
     if (this.outputs.pointId) {
-      const plane = world.getProjectionPlaneById(this.planeId);
+      const plane = context.world.getProjectionPlaneById(this.planeId);
       if (plane) {
-        removePointFromPlane(world, plane, this.outputs.pointId);
+        removePointFromPlane(context.world, plane, this.outputs.pointId);
         
         // Unlink from primary - traverse all planes to find primary
-        for (const projPlane of world.getAllProjectionPlanes()) {
+        for (const projPlane of context.world.getAllProjectionPlanes()) {
           const primaryPoint = projPlane.getPoint(this.primaryIntersectionId);
           if (primaryPoint instanceof IntersectionPoint2D) {
             primaryPoint.siblingPointId = undefined;

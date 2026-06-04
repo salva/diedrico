@@ -6,7 +6,7 @@
 
 import type { Vector3 } from 'three';
 import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
-import type { World } from '@/domain/world/World';
+import type { OperationContext } from '../OperationContext';
 import { operationFailure, operationSuccess } from '../operationResultHelpers';
 import { removePointFromPlane, requireProjectionPlane } from './operationHelpers';
 
@@ -30,11 +30,11 @@ export class AddFreePoint2DOp implements IOperation<AddFreePoint2DDescriptor, Ad
   ) {
   }
 
-  apply(world: World): OperationResult<AddFreePoint2DOutput> {
+  apply(context: OperationContext): OperationResult<AddFreePoint2DOutput> {
     try {
-      const plane = requireProjectionPlane(world, this.planeId);
+      const plane = requireProjectionPlane(context.world, this.planeId);
       
-      const point = world.getConstructionService().addFreePoint2D(plane, this.position, this.outputs.pointId);
+      const point = context.world.getConstructionService().addFreePoint2D(plane, this.position, this.outputs.pointId);
       this.outputs = { pointId: point.id };
       return operationSuccess(this.outputs);
     } catch (error) {
@@ -42,10 +42,10 @@ export class AddFreePoint2DOp implements IOperation<AddFreePoint2DDescriptor, Ad
     }
   }
 
-  undo(world: World): void {
+  undo(context: OperationContext): void {
     if (this.outputs.pointId) {
-      const plane = world.getProjectionPlaneById(this.planeId);
-      if (plane) removePointFromPlane(world, plane, this.outputs.pointId);
+      const plane = context.world.getProjectionPlaneById(this.planeId);
+      if (plane) removePointFromPlane(context.world, plane, this.outputs.pointId);
     }
   }
 

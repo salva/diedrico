@@ -6,7 +6,7 @@
  * not inspect mutable operation internals or contain operation reconstruction cases.
  */
 
-import type { World } from '@/domain/world/World';
+import type { OperationContext } from './OperationContext';
 
 export type JsonPrimitive = string | number | boolean | null;
 export type JsonValue = JsonPrimitive | JsonValue[] | JsonObject;
@@ -36,8 +36,8 @@ export interface IOperation<
   TOutputs extends JsonObject = JsonObject
 > {
   type: TDescriptor['opType'];
-  apply(world: World): OperationResult<TOutputs>;
-  undo(world: World): void;
+  apply(context: OperationContext): OperationResult<TOutputs>;
+  undo(context: OperationContext): void;
   serialize?(): TDescriptor;
   outputs: TOutputs;
 }

@@ -8,7 +8,7 @@
  */
 
 import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
-import type { World } from '@/domain/world/World';
+import type { OperationContext } from '../OperationContext';
 import { removePointFromPlane } from './operationHelpers';
 
 export interface AddCircleCircleIntersectionPoint2DDescriptor extends OperationDescriptor<'AddCircleCircleIntersectionPoint2D'> {
@@ -35,14 +35,14 @@ export class AddCircleCircleIntersectionPoint2DOp implements IOperation<AddCircl
   ) {
   }
 
-  apply(world: World): OperationResult<AddCircleCircleIntersectionPoint2DOutput> {
+  apply(context: OperationContext): OperationResult<AddCircleCircleIntersectionPoint2DOutput> {
     try {
-      const plane = world.getProjectionPlaneById(this.planeId);
+      const plane = context.world.getProjectionPlaneById(this.planeId);
       if (!plane) {
         throw new Error(`Plane not found: ${this.planeId}`);
       }
       
-      const point = world.getConstructionService().addCircleCircleIntersection(
+      const point = context.world.getConstructionService().addCircleCircleIntersection(
         plane,
         this.circle1Id,
         this.circle2Id,
@@ -65,12 +65,12 @@ export class AddCircleCircleIntersectionPoint2DOp implements IOperation<AddCircl
     }
   }
 
-  undo(world: World): void {
+  undo(context: OperationContext): void {
     // Remove primary point
     if (this.outputs.pointId) {
-      const plane = world.getProjectionPlaneById(this.planeId);
+      const plane = context.world.getProjectionPlaneById(this.planeId);
       if (plane) {
-        removePointFromPlane(world, plane, this.outputs.pointId);
+        removePointFromPlane(context.world, plane, this.outputs.pointId);
       }
     }
     

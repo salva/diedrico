@@ -35,7 +35,7 @@ export class GuideSequenceFactory {
    * 
    * @example
    * ```typescript
-   * const cmd = new Command('Create guide', world);
+   * const cmd = new Command('Create guide', context);
    * const result = GuideSequenceFactory.createGuideWithSibling(
    *   cmd, 
    *   planeId, 

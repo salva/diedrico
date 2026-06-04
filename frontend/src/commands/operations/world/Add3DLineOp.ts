@@ -16,7 +16,7 @@
  */
 
 import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
-import type { World } from '@/domain/world/World';
+import type { OperationContext } from '../OperationContext';
 import { Line3DFromProjections } from '@/domain/world/Line3D';
 import { requireDistinctProjectionPlanes, requireFeasibleProjectionPair } from './operationHelpers';
 
@@ -48,9 +48,9 @@ export class Add3DLineOp implements IOperation<Add3DLineDescriptor, Add3DLineOut
   ) {
   }
 
-  apply(world: World): OperationResult<Add3DLineOutput> {
+  apply(context: OperationContext): OperationResult<Add3DLineOutput> {
     try {
-      const { plane1, plane2 } = requireDistinctProjectionPlanes(world, this.plane1Id, this.plane2Id, 'line');
+      const { plane1, plane2 } = requireDistinctProjectionPlanes(context.world, this.plane1Id, this.plane2Id, 'line');
       
       // Validate that projection lines exist
       const proj1 = plane1.getLine(this.projection1Id);
@@ -64,16 +64,16 @@ export class Add3DLineOp implements IOperation<Add3DLineDescriptor, Add3DLineOut
       }
       
       // Validate that projections are geometrically feasible
-      const proj1Real = proj1.realize2D(world);
-      const proj2Real = proj2.realize2D(world);
+      const proj1Real = proj1.realize2D(context.world);
+      const proj2Real = proj2.realize2D(context.world);
       
       requireFeasibleProjectionPair('line', proj1Real, proj2Real);
       
       // Use stored ID if available (for redo), otherwise generate new one
-      const lineId = this.outputs.lineId || world.generate3DLineId();
+      const lineId = this.outputs.lineId || context.world.generate3DLineId();
       
       // Phase 97: Generate default label if not provided
-      const label = this.label || world.generateDefaultLabel(lineId, 'Line3D');
+      const label = this.label || context.world.generateDefaultLabel(lineId, 'Line3D');
       
       // Create default visual style if not provided
       const visualStyle = this.visualStyle || {
@@ -94,7 +94,7 @@ export class Add3DLineOp implements IOperation<Add3DLineDescriptor, Add3DLineOut
       );
       
       // Add to World storage
-      world.add3DLine(line);
+      context.world.add3DLine(line);
       
       // Store outputs for undo
       this.outputs = { lineId };
@@ -112,9 +112,9 @@ export class Add3DLineOp implements IOperation<Add3DLineDescriptor, Add3DLineOut
     }
   }
 
-  undo(world: World): void {
+  undo(context: OperationContext): void {
     if (this.outputs.lineId) {
-      world.remove3DLine(this.outputs.lineId);
+      context.world.remove3DLine(this.outputs.lineId);
     }
   }
 

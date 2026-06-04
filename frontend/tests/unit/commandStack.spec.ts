@@ -3,6 +3,7 @@ import { CommandStack } from '../../src/commands/CommandStack';
 import { Command } from '../../src/commands/Command';
 import type { IOperation } from '../../src/commands/operations/IOperation';
 import type { OperationResult } from '../../src/commands/operations/IOperation';
+import type { OperationContext } from '../../src/commands/operations/OperationContext';
 import type { World } from '../../src/domain/world/World';
 import { World as WorldClass } from '../../src/domain/world/World';
 
@@ -18,7 +19,7 @@ class MockOperation implements IOperation {
     this.parameters = { value };
   }
 
-  apply(_world: World): OperationResult {
+  apply(_context: OperationContext): OperationResult {
     this.outputs = { value: this.value };
     return {
       success: true,
@@ -26,7 +27,7 @@ class MockOperation implements IOperation {
     };
   }
 
-  undo(_world: World): void {
+  undo(_context: OperationContext): void {
     // Mock undo
   }
 }
@@ -42,7 +43,7 @@ describe('CommandStack', () => {
 
   describe('push', () => {
     it('should push committed command to stack', () => {
-      const cmd = new Command('Command 1', world);
+      const cmd = new Command('Command 1', { world });
       cmd.addAndExecute(new MockOperation(1));
       cmd.commit();
       
@@ -53,7 +54,7 @@ describe('CommandStack', () => {
     });
 
     it('should not push non-committed commands', () => {
-      const cmd = new Command('Command 1', world);
+      const cmd = new Command('Command 1', { world });
       cmd.addAndExecute(new MockOperation(1));
       // Not committed
       
@@ -61,12 +62,12 @@ describe('CommandStack', () => {
     });
 
     it('should clear redo history when new command pushed', () => {
-      const cmd1 = new Command('Command 1', world);
+      const cmd1 = new Command('Command 1', { world });
       cmd1.addAndExecute(new MockOperation(1));
       cmd1.commit();
       stack.push(cmd1);
       
-      const cmd2 = new Command('Command 2', world);
+      const cmd2 = new Command('Command 2', { world });
       cmd2.addAndExecute(new MockOperation(2));
       cmd2.commit();
       stack.push(cmd2);
@@ -74,7 +75,7 @@ describe('CommandStack', () => {
       stack.undo(); // Now can redo cmd2
       expect(stack.canRedo()).toBe(true);
       
-      const cmd3 = new Command('Command 3', world);
+      const cmd3 = new Command('Command 3', { world });
       cmd3.addAndExecute(new MockOperation(3));
       cmd3.commit();
       stack.push(cmd3); // Should clear redo
@@ -84,7 +85,7 @@ describe('CommandStack', () => {
 
     it('should not push non-undoable commands', () => {
       // Create a command and mark it as non-undoable
-      const cmd = new Command('Non-undoable', world);
+      const cmd = new Command('Non-undoable', { world });
       cmd.addAndExecute(new MockOperation(1));
       cmd.commit();
       // Make it non-undoable by overriding canUndo
@@ -99,7 +100,7 @@ describe('CommandStack', () => {
 
   describe('undo/redo', () => {
     it('should undo last command', () => {
-      const cmd = new Command('Command 1', world);
+      const cmd = new Command('Command 1', { world });
       cmd.addAndExecute(new MockOperation(1));
       cmd.commit();
       stack.push(cmd);
@@ -111,7 +112,7 @@ describe('CommandStack', () => {
     });
 
     it('should redo undone command', () => {
-      const cmd = new Command('Command 1', world);
+      const cmd = new Command('Command 1', { world });
       cmd.addAndExecute(new MockOperation(1));
       cmd.commit();
       stack.push(cmd);
@@ -124,17 +125,17 @@ describe('CommandStack', () => {
     });
 
     it('should handle multiple undo operations', () => {
-      const cmd1 = new Command('Command 1', world);
+      const cmd1 = new Command('Command 1', { world });
       cmd1.addAndExecute(new MockOperation(1));
       cmd1.commit();
       stack.push(cmd1);
       
-      const cmd2 = new Command('Command 2', world);
+      const cmd2 = new Command('Command 2', { world });
       cmd2.addAndExecute(new MockOperation(2));
       cmd2.commit();
       stack.push(cmd2);
       
-      const cmd3 = new Command('Command 3', world);
+      const cmd3 = new Command('Command 3', { world });
       cmd3.addAndExecute(new MockOperation(3));
       cmd3.commit();
       stack.push(cmd3);
@@ -150,12 +151,12 @@ describe('CommandStack', () => {
     });
 
     it('should handle multiple redo operations', () => {
-      const cmd1 = new Command('Command 1', world);
+      const cmd1 = new Command('Command 1', { world });
       cmd1.addAndExecute(new MockOperation(1));
       cmd1.commit();
       stack.push(cmd1);
       
-      const cmd2 = new Command('Command 2', world);
+      const cmd2 = new Command('Command 2', { world });
       cmd2.addAndExecute(new MockOperation(2));
       cmd2.commit();
       stack.push(cmd2);
@@ -186,7 +187,7 @@ describe('CommandStack', () => {
     });
 
     it('should return true for undo after push', () => {
-      const cmd = new Command('Command 1', world);
+      const cmd = new Command('Command 1', { world });
       cmd.addAndExecute(new MockOperation(1));
       cmd.commit();
       stack.push(cmd);
@@ -196,7 +197,7 @@ describe('CommandStack', () => {
     });
 
     it('should return true for redo after undo', () => {
-      const cmd = new Command('Command 1', world);
+      const cmd = new Command('Command 1', { world });
       cmd.addAndExecute(new MockOperation(1));
       cmd.commit();
       stack.push(cmd);
@@ -209,12 +210,12 @@ describe('CommandStack', () => {
 
   describe('clear', () => {
     it('should clear all commands', () => {
-      const cmd1 = new Command('Command 1', world);
+      const cmd1 = new Command('Command 1', { world });
       cmd1.addAndExecute(new MockOperation(1));
       cmd1.commit();
       stack.push(cmd1);
       
-      const cmd2 = new Command('Command 2', world);
+      const cmd2 = new Command('Command 2', { world });
       cmd2.addAndExecute(new MockOperation(2));
       cmd2.commit();
       stack.push(cmd2);
@@ -229,12 +230,12 @@ describe('CommandStack', () => {
 
   describe('getCommands', () => {
     it('should return all commands in undo stack', () => {
-      const cmd1 = new Command('Command 1', world);
+      const cmd1 = new Command('Command 1', { world });
       cmd1.addAndExecute(new MockOperation(1));
       cmd1.commit();
       stack.push(cmd1);
       
-      const cmd2 = new Command('Command 2', world);
+      const cmd2 = new Command('Command 2', { world });
       cmd2.addAndExecute(new MockOperation(2));
       cmd2.commit();
       stack.push(cmd2);

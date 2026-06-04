@@ -23,7 +23,7 @@ describe('UpdateFreePoint2DPositionOp', () => {
     const point = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 20, 1));
 
     const op = new UpdateFreePoint2DPositionOp(planeId, point.id, new Vector3(100, 200, 1));
-    const result = op.apply(world);
+    const result = op.apply({ world });
     expect(result.success).toBe(true);
 
     const moved = plane.getPoint(point.id);
@@ -31,7 +31,7 @@ describe('UpdateFreePoint2DPositionOp', () => {
     expect(moved!.position.x).toBe(100);
     expect(moved.position.y).toBe(200);
 
-    op.undo(world);
+    op.undo({ world });
     const restored = plane.getPoint(point.id) as any;
     expect(restored.position.x).toBe(10);
     expect(restored.position.y).toBe(20);
@@ -42,7 +42,7 @@ describe('UpdateFreePoint2DPositionOp', () => {
     const originId = getHorizontalOriginId(world);
 
     const op = new UpdateFreePoint2DPositionOp(planeId, originId, new Vector3(1, 2, 1));
-    const result = op.apply(world);
+    const result = op.apply({ world });
     expect(result.success).toBe(false);
     expect(result.error).toContain('locked');
   });

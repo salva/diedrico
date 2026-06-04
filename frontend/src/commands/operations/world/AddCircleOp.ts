@@ -6,7 +6,7 @@
  */
 
 import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
-import type { World } from '@/domain/world/World';
+import type { OperationContext } from '../OperationContext';
 import { operationFailure, operationSuccess } from '../operationResultHelpers';
 import { removeCircleFromPlane, requireProjectionPlane } from './operationHelpers';
 
@@ -32,11 +32,11 @@ export class AddCircle2DByCenterAndPointOp implements IOperation<AddCircle2DByCe
   ) {
   }
 
-  apply(world: World): OperationResult<AddCircle2DByCenterAndPointOutput> {
+  apply(context: OperationContext): OperationResult<AddCircle2DByCenterAndPointOutput> {
     try {
-      const plane = requireProjectionPlane(world, this.planeId);
+      const plane = requireProjectionPlane(context.world, this.planeId);
       
-      const circle = world.getConstructionService().addCircle2DByCenterAndPoint(
+      const circle = context.world.getConstructionService().addCircle2DByCenterAndPoint(
         plane,
         this.centerPointId,
         this.circumferencePointId,
@@ -49,11 +49,11 @@ export class AddCircle2DByCenterAndPointOp implements IOperation<AddCircle2DByCe
     }
   }
 
-  undo(world: World): void {
+  undo(context: OperationContext): void {
     if (this.outputs.circleId) {
-      const plane = world.getProjectionPlaneById(this.planeId);
+      const plane = context.world.getProjectionPlaneById(this.planeId);
       if (plane) {
-        removeCircleFromPlane(world, plane, this.outputs.circleId);
+        removeCircleFromPlane(context.world, plane, this.outputs.circleId);
       }
     }
   }

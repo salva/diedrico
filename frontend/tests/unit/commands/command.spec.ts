@@ -16,6 +16,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Command, CommandStatus } from '@/commands/Command';
 import type { IOperation, OperationResult } from '@/commands/operations/IOperation';
+import type { OperationContext } from '@/commands/operations/OperationContext';
 import type { World } from '@/domain/world/World';
 import { Vector3 } from 'three';
 import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
@@ -37,7 +38,7 @@ class MockOperation implements IOperation {
     this.outputValue = outputValue;
   }
 
-  apply(_world: World): OperationResult {
+  apply(_context: OperationContext): OperationResult {
     this.applyCalled = true;
     
     if (this.shouldFail) {
@@ -55,7 +56,7 @@ class MockOperation implements IOperation {
     };
   }
 
-  undo(_world: World): void {
+  undo(_context: OperationContext): void {
     this.undoCalled = true;
   }
 
@@ -79,7 +80,7 @@ class DependentMockOperation implements IOperation {
     this.parameters = { inputId };
   }
 
-  apply(_world: World): OperationResult {
+  apply(_context: OperationContext): OperationResult {
     this.applyCalled = true;
     
     this.outputs = { 
@@ -92,7 +93,7 @@ class DependentMockOperation implements IOperation {
     };
   }
 
-  undo(_world: World): void {
+  undo(_context: OperationContext): void {
     this.undoCalled = true;
   }
 }
@@ -106,18 +107,18 @@ describe('Generic Command Class (R017)', () => {
     const { world: w } = createTestWorld();
     world = w;
     notifier = new RuntimeChangePublisher();
-    command = new Command('Test Command', world, notifier);
+    command = new Command('Test Command', { world }, notifier);
   });
 
   describe('Concrete Command (no subclass needed)', () => {
     it('should be instantiable without subclassing', () => {
-      const cmd = new Command('Direct instantiation', world);
+      const cmd = new Command('Direct instantiation', { world });
       expect(cmd).toBeInstanceOf(Command);
       expect(cmd.description).toBe('Direct instantiation');
     });
 
     it('should not require execute() method', () => {
-      const cmd = new Command('No execute needed', world);
+      const cmd = new Command('No execute needed', { world });
       // Command is concrete - no execute() method required
       expect(cmd).not.toHaveProperty('execute');
     });
@@ -129,7 +130,7 @@ describe('Generic Command Class (R017)', () => {
     });
 
     it('should have unique ID', () => {
-      const command2 = new Command('Another Command', world);
+      const command2 = new Command('Another Command', { world });
       expect(command.id).not.toBe(command2.id);
     });
 
@@ -479,9 +480,9 @@ describe('Generic Command Class (R017)', () => {
           super(outputValue);
         }
         
-        undo(world: World): void {
+        undo(context: OperationContext): void {
           undoOrder.push(this.order);
-          super.undo(world);
+          super.undo({ world });
         }
       }
       
@@ -521,9 +522,9 @@ describe('Generic Command Class (R017)', () => {
           super(outputValue);
         }
         
-        apply(world: World): OperationResult {
+        apply(context: OperationContext): OperationResult {
           applyOrder.push(this.order);
-          return super.apply(world);
+          return super.apply({ world });
         }
       }
       

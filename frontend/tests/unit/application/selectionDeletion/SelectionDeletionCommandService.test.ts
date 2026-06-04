@@ -4,6 +4,7 @@ import { SelectionDeletionCommandService } from '@/application/selectionDeletion
 import { Command } from '@/commands/Command';
 import { CommandStack } from '@/commands/CommandStack';
 import type { IOperation, OperationResult } from '@/commands/operations/IOperation';
+import type { OperationContext } from '@/commands/operations/OperationContext';
 import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
 import { AddLine2DByTwoPointsOp } from '@/commands/operations/world/AddLineOp';
 import type { World } from '@/domain/world/World';
@@ -18,15 +19,15 @@ class MockOperation implements IOperation {
   parameters: Record<string, unknown> = {};
   outputs: Record<string, unknown> = {};
 
-  apply(_world: World): OperationResult {
+  apply(_context: OperationContext): OperationResult {
     return { success: true, outputs: {} };
   }
 
-  undo(_world: World): void {}
+  undo(_context: OperationContext): void {}
 }
 
 function committedCommand(world: World, description = 'Existing command'): Command {
-  const command = new Command(description, world);
+  const command = new Command(description, { world });
   command.addAndExecute(new MockOperation());
   command.commit();
   return command;
@@ -49,7 +50,7 @@ function addExplicitProcessAction(world: World, action: Action): void {
 function createDependentLineFixture() {
   const { world, commandStack } = createTestWorld();
   const planeId = world.getProjectionPlaneByLabel('P_H').id!;
-  const setupCmd = new Command('Setup line', world);
+  const setupCmd = new Command('Setup line', { world });
   const p1 = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 200, 1))).outputs.pointId!;
   const p2 = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(300, 400, 1))).outputs.pointId!;
   const lineId = setupCmd.addAndExecute(new AddLine2DByTwoPointsOp(planeId, p1, p2)).outputs.lineId!;
@@ -120,7 +121,7 @@ describe('SelectionDeletionCommandService', () => {
     expect(commandStack.getRedoCount()).toBe(1);
 
     const order: string[] = [];
-    const command = new Command('Delete elements', world);
+    const command = new Command('Delete elements', { world });
     const commit = vi.spyOn(command, 'commit').mockImplementation(() => { order.push('commit'); });
     const push = vi.spyOn(commandStack, 'push').mockImplementation(() => { order.push('push'); });
     const service = new SelectionDeletionCommandService(world, commandStack, {
@@ -156,7 +157,7 @@ describe('SelectionDeletionCommandService', () => {
 
   it('propagates cascade-build failures before commit or push', () => {
     const { world, commandStack } = createTestWorld();
-    const command = new Command('Delete elements', world);
+    const command = new Command('Delete elements', { world });
     const commit = vi.spyOn(command, 'commit');
     const push = vi.spyOn(commandStack, 'push');
     const service = new SelectionDeletionCommandService(world, commandStack, {
@@ -171,7 +172,7 @@ describe('SelectionDeletionCommandService', () => {
 
   it('propagates commit failures before push', () => {
     const { world, commandStack } = createTestWorld();
-    const command = new Command('Delete elements', world);
+    const command = new Command('Delete elements', { world });
     command.addAndExecute(new MockOperation());
     vi.spyOn(command, 'commit').mockImplementation(() => { throw new Error('commit failed'); });
     const push = vi.spyOn(commandStack, 'push');
@@ -186,7 +187,7 @@ describe('SelectionDeletionCommandService', () => {
 
   it('propagates push failures after commit without swallowing stack contract errors', () => {
     const { world, commandStack } = createTestWorld();
-    const command = new Command('Delete elements', world);
+    const command = new Command('Delete elements', { world });
     command.addAndExecute(new MockOperation());
     const push = vi.spyOn(commandStack, 'push').mockImplementation(() => { throw new Error('push failed'); });
     const service = new SelectionDeletionCommandService(world, commandStack, {
@@ -202,7 +203,7 @@ describe('SelectionDeletionCommandService', () => {
   it('preserves committed-only and non-undoable CommandStack behavior', () => {
     const { world, commandStack } = createTestWorld();
     const initialUndoCount = commandStack.getUndoCount();
-    const nonUndoable = new Command('Delete elements', world);
+    const nonUndoable = new Command('Delete elements', { world });
     nonUndoable.addAndExecute(new MockOperation());
     vi.spyOn(nonUndoable, 'canUndo').mockReturnValue(false);
     const service = new SelectionDeletionCommandService(world, commandStack, {
@@ -214,7 +215,7 @@ describe('SelectionDeletionCommandService', () => {
     expect(commandStack.getUndoCount()).toBe(initialUndoCount);
     expect(commandStack.getRedoCount()).toBe(0);
 
-    const uncommitted = new Command('Delete elements', world);
+    const uncommitted = new Command('Delete elements', { world });
     uncommitted.addAndExecute(new MockOperation());
     vi.spyOn(uncommitted, 'commit').mockImplementation(() => undefined);
     const uncommittedService = new SelectionDeletionCommandService(world, commandStack, {

@@ -5,7 +5,7 @@
  */
 
 import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
-import type { World } from '@/domain/world/World';
+import type { OperationContext } from '../OperationContext';
 import { removeLineFromPlane } from './operationHelpers';
 
 export interface AddSegment2DByPointsDescriptor extends OperationDescriptor<'AddSegment2DByPoints'> {
@@ -30,14 +30,14 @@ export class AddSegment2DByPointsOp implements IOperation<AddSegment2DByPointsDe
   ) {
   }
 
-  apply(world: World): OperationResult<AddSegment2DByPointsOutput> {
+  apply(context: OperationContext): OperationResult<AddSegment2DByPointsOutput> {
     try {
-      const plane = world.getProjectionPlaneById(this.planeId);
+      const plane = context.world.getProjectionPlaneById(this.planeId);
       if (!plane) {
         throw new Error(`Plane not found: ${this.planeId}`);
       }
       
-      const segment = world.getConstructionService().addSegment2DBetweenPoints(
+      const segment = context.world.getConstructionService().addSegment2DBetweenPoints(
         plane,
         this.point1Id,
         this.point2Id,
@@ -57,11 +57,11 @@ export class AddSegment2DByPointsOp implements IOperation<AddSegment2DByPointsDe
     }
   }
 
-  undo(world: World): void {
+  undo(context: OperationContext): void {
     if (this.outputs.segmentId) {
-      const plane = world.getProjectionPlaneById(this.planeId);
+      const plane = context.world.getProjectionPlaneById(this.planeId);
       if (plane) {
-        removeLineFromPlane(world, plane, this.outputs.segmentId);
+        removeLineFromPlane(context.world, plane, this.outputs.segmentId);
       }
     }
   }

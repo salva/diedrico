@@ -9,6 +9,7 @@
  */
 
 import type { IOperation, JsonObject, OperationDescriptor, OperationOutputBag, OperationResult } from '../IOperation';
+import type { OperationContext } from '../OperationContext';
 import type { World } from '@/domain/world/World';
 import type { VisualStyle } from '@/domain/world/VisualStyle';
 import type { Element } from '@/domain/world/Element';
@@ -97,9 +98,9 @@ export class UpdateElementStyleOp implements IOperation<OperationDescriptor<'Upd
   ) {
   }
 
-  apply(world: World): OperationResult {
+  apply(context: OperationContext): OperationResult {
     try {
-      const element = findStyleableElement(world, this.planeId, this.elementId);
+      const element = findStyleableElement(context.world, this.planeId, this.elementId);
       if (!element) {
         throw new Error(`Element not found: ${this.elementId}`);
       }
@@ -143,9 +144,9 @@ export class UpdateElementStyleOp implements IOperation<OperationDescriptor<'Upd
     }
   }
 
-  undo(world: World): void {
+  undo(context: OperationContext): void {
     try {
-      const element = findStyleableElement(world, this.planeId, this.elementId);
+      const element = findStyleableElement(context.world, this.planeId, this.elementId);
       if (!element) {
         console.error('[UpdateElementStyleOp] Cannot undo: Element not found:', this.elementId);
         return;

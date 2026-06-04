@@ -29,13 +29,13 @@ describe('InitializeWorldCommand', () => {
 
   describe('Command Creation', () => {
     it('should create command with correct name', () => {
-      const cmd = new Command('Initialize World', world);
+      const cmd = new Command('Initialize World', { world });
       
       expect(cmd.description).toBe('Initialize World');
     });
 
     it('should have building status after creation', () => {
-      const cmd = new Command('Initialize World', world);
+      const cmd = new Command('Initialize World', { world });
       
       // Command is still building until .commit() is called
       expect(cmd.status).toBe('building');
@@ -161,7 +161,7 @@ describe('InitializeWorldCommand', () => {
     });
 
     it('regular commands allow undo', () => {
-      const cmd = new Command('Test Command', world);
+      const cmd = new Command('Test Command', { world });
       
       // Regular Command allows undo by default
       expect(cmd.canUndo()).toBe(true);
@@ -170,7 +170,7 @@ describe('InitializeWorldCommand', () => {
 
   describe('Operation Orchestration', () => {
     it('should execute operations in correct order', () => {
-      const cmd = new Command('Initialize World', world);
+      const cmd = new Command('Initialize World', { world });
       
       // Create ActionGroup for initialization operations
       const groupId = `group_init_test_${Date.now()}`;

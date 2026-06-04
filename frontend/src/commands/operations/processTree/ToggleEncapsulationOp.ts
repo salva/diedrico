@@ -3,7 +3,7 @@
  */
 
 import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
-import type { World } from '@/domain/world/World';
+import type { OperationContext } from '../OperationContext';
 
 export class ToggleEncapsulationOp implements IOperation {
   readonly type = 'ToggleEncapsulation';
@@ -12,8 +12,8 @@ export class ToggleEncapsulationOp implements IOperation {
   constructor(private readonly subprocessId: string) {
   }
 
-  apply(world: World): OperationResult {
-    const processTree = world.getProcessTree();
+  apply(context: OperationContext): OperationResult {
+    const processTree = context.world.getProcessTree();
     try {
       processTree.toggleSubprocessEncapsulation(this.subprocessId);
       return { success: true, outputs: this.outputs };
@@ -22,8 +22,8 @@ export class ToggleEncapsulationOp implements IOperation {
     }
   }
 
-  undo(world: World): void {
-    const processTree = world.getProcessTree();
+  undo(context: OperationContext): void {
+    const processTree = context.world.getProcessTree();
     processTree.toggleSubprocessEncapsulation(this.subprocessId);
   }
 

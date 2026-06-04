@@ -6,7 +6,7 @@
  */
 
 import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
-import type { World } from '@/domain/world/World';
+import type { OperationContext } from '../OperationContext';
 import type { ActionGroup } from '@/domain/processTree/ProcessTree';
 
 export class AddProcessTreeActionGroupOp implements IOperation {
@@ -20,8 +20,8 @@ export class AddProcessTreeActionGroupOp implements IOperation {
     // CRITICAL: Store visibility flags for proper serialization
   }
 
-  apply(world: World): OperationResult {
-    world.getProcessTree().addActionGroup(this.group);
+  apply(context: OperationContext): OperationResult {
+    context.world.getProcessTree().addActionGroup(this.group);
     this.outputs = { groupId: this.group.id };
     
     // Dependency maps might refer to groups? Probably not, they refer to elements (actions).
@@ -29,8 +29,8 @@ export class AddProcessTreeActionGroupOp implements IOperation {
     return { success: true, outputs: this.outputs };
   }
 
-  undo(world: World): void {
-    const processTree = world.getProcessTree();
+  undo(context: OperationContext): void {
+    const processTree = context.world.getProcessTree();
     processTree.removeActionGroup(this.group.id);
   }
 

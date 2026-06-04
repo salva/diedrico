@@ -16,7 +16,7 @@
  */
 
 import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
-import type { World } from '@/domain/world/World';
+import type { OperationContext } from '../OperationContext';
 import { Segment3DFromProjections } from '@/domain/world/Segment3D';
 import { reconstruct3DPointFromProjections } from '@/utils/threeUtils';
 import { requireDistinctProjectionPlanes, requireFeasibleProjectionPair } from './operationHelpers';
@@ -49,9 +49,9 @@ export class Add3DSegmentOp implements IOperation<Add3DSegmentDescriptor, Add3DS
   ) {
   }
 
-  apply(world: World): OperationResult<Add3DSegmentOutput> {
+  apply(context: OperationContext): OperationResult<Add3DSegmentOutput> {
     try {
-      const { plane1, plane2 } = requireDistinctProjectionPlanes(world, this.plane1Id, this.plane2Id, 'segment');
+      const { plane1, plane2 } = requireDistinctProjectionPlanes(context.world, this.plane1Id, this.plane2Id, 'segment');
       
       // Validate that projection segments exist (segments are stored as Line2D in ProjectionPlane)
       const proj1 = plane1.getLine(this.projection1Id);
@@ -65,12 +65,12 @@ export class Add3DSegmentOp implements IOperation<Add3DSegmentDescriptor, Add3DS
       }
       
       // Validate that projections are geometrically feasible
-      const [proj1Real, proj2Real] = requireFeasibleProjectionPair('segment', proj1.realize2D(world), proj2.realize2D(world));
+      const [proj1Real, proj2Real] = requireFeasibleProjectionPair('segment', proj1.realize2D(context.world), proj2.realize2D(context.world));
       
       // Phase 107: Validate compatibility — check that at least one endpoint pairing
       // produces consistent 3D points
-      const plane1Real3D = world.getProjectionPlane3DRealization(this.plane1Id);
-      const plane2Real3D = world.getProjectionPlane3DRealization(this.plane2Id);
+      const plane1Real3D = context.world.getProjectionPlane3DRealization(this.plane1Id);
+      const plane2Real3D = context.world.getProjectionPlane3DRealization(this.plane2Id);
       
       if (plane1Real3D && plane2Real3D) {
         const p1_s1 = proj1Real.point1;
@@ -105,10 +105,10 @@ export class Add3DSegmentOp implements IOperation<Add3DSegmentDescriptor, Add3DS
       }
       
       // Use stored ID if available (for redo), otherwise generate new one
-      const segmentId = this.outputs.segmentId || world.generate3DSegmentId();
+      const segmentId = this.outputs.segmentId || context.world.generate3DSegmentId();
       
       // Phase 97: Generate default label if not provided
-      const label = this.label || world.generateDefaultLabel(segmentId, 'Segment3D');
+      const label = this.label || context.world.generateDefaultLabel(segmentId, 'Segment3D');
       
       // Create default visual style if not provided
       const visualStyle = this.visualStyle || {
@@ -129,7 +129,7 @@ export class Add3DSegmentOp implements IOperation<Add3DSegmentDescriptor, Add3DS
       );
       
       // Add to World storage
-      world.add3DSegment(segment);
+      context.world.add3DSegment(segment);
       
       // Store outputs for undo
       this.outputs = { segmentId };
@@ -147,9 +147,9 @@ export class Add3DSegmentOp implements IOperation<Add3DSegmentDescriptor, Add3DS
     }
   }
 
-  undo(world: World): void {
+  undo(context: OperationContext): void {
     if (this.outputs.segmentId) {
-      world.remove3DSegment(this.outputs.segmentId);
+      context.world.remove3DSegment(this.outputs.segmentId);
     }
   }
 

@@ -19,7 +19,7 @@
  */
 
 import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
-import type { World } from '@/domain/world/World';
+import type { OperationContext } from '../OperationContext';
 import { BrokenHingeLine } from '@/domain/world/BrokenHingeLine';
 import { BrokenHalfHingeLine2D } from '@/domain/world/elements/BrokenHalfHingeLine2D';
 import { removeLineFromPlane } from './operationHelpers';
@@ -39,28 +39,28 @@ export class AddBrokenHingeLineOp implements IOperation {
   ) {
   }
 
-  apply(world: World): OperationResult {
+  apply(context: OperationContext): OperationResult {
     try {
       // Validate inputs
-      const mainHinge = world.getHingeLineById(this.mainHingeId);
+      const mainHinge = context.world.getHingeLineById(this.mainHingeId);
       if (!mainHinge) {
         throw new Error(`Main hinge line not found: ${this.mainHingeId}`);
       }
 
-      const auxPlane = world.getProjectionPlaneById(this.auxiliaryPlaneId);
+      const auxPlane = context.world.getProjectionPlaneById(this.auxiliaryPlaneId);
       if (!auxPlane) {
         throw new Error(`Auxiliary projection plane not found: ${this.auxiliaryPlaneId}`);
       }
 
-      const plane1 = world.getProjectionPlaneById(this.plane1Id);
-      const plane2 = world.getProjectionPlaneById(this.plane2Id);
+      const plane1 = context.world.getProjectionPlaneById(this.plane1Id);
+      const plane2 = context.world.getProjectionPlaneById(this.plane2Id);
       if (!plane1 || !plane2) {
         throw new Error(`One or both planes not found: ${this.plane1Id}, ${this.plane2Id}`);
       }
 
       // Generate IDs (use existing for redo, or generate new)
-      const bhlId = this.brokenHingeLineId || this.outputs.brokenHingeLineId || world.generateHingeLineId();
-      const constructionService = world.getConstructionService();
+      const bhlId = this.brokenHingeLineId || this.outputs.brokenHingeLineId || context.world.generateHingeLineId();
+      const constructionService = context.world.getConstructionService();
       const bhhl1Id = this.bhhl1Id || this.outputs.bhhl1Id || constructionService.generateLine2DId(plane1!);
       const bhhl2Id = this.bhhl2Id || this.outputs.bhhl2Id || constructionService.generateLine2DId(plane2!);
 
@@ -79,7 +79,7 @@ export class AddBrokenHingeLineOp implements IOperation {
       }
 
       // Generate label for BrokenHingeLine only (BHHLs generate their own labels)
-      const bhlLabel = world.generateDefaultLabel(bhlId, 'BrokenHingeLine');
+      const bhlLabel = context.world.generateDefaultLabel(bhlId, 'BrokenHingeLine');
 
       // Create BrokenHingeLine (3D entity)
       const brokenHingeLine = new BrokenHingeLine(
@@ -113,12 +113,12 @@ export class AddBrokenHingeLineOp implements IOperation {
       );
 
       // Add to World storage through the narrow hinge-line entity API.
-      world.addHingeLineEntity(brokenHingeLine);
+      context.world.addHingeLineEntity(brokenHingeLine);
       plane1.addLine(bhhl1);
       plane2.addLine(bhhl2);
 
       // Register dependencies
-      const dependencyRegistrar = world.getDependencyRegistrar();
+      const dependencyRegistrar = context.world.getDependencyRegistrar();
       dependencyRegistrar.registerNode(bhlId, brokenHingeLine.getDependencies());
       dependencyRegistrar.registerNode(bhhl1Id, bhhl1.getDependencies());
       dependencyRegistrar.registerNode(bhhl2Id, bhhl2.getDependencies());
@@ -150,16 +150,16 @@ export class AddBrokenHingeLineOp implements IOperation {
     }
   }
 
-  undo(world: World): void {
+  undo(context: OperationContext): void {
     if (this.outputs.brokenHingeLineId && this.outputs.bhhl1Id && this.outputs.bhhl2Id) {
-      const plane1 = world.getProjectionPlaneById(this.outputs.plane1Id);
-      const plane2 = world.getProjectionPlaneById(this.outputs.plane2Id);
-      if (plane1) removeLineFromPlane(world, plane1, this.outputs.bhhl1Id);
-      if (plane2) removeLineFromPlane(world, plane2, this.outputs.bhhl2Id);
+      const plane1 = context.world.getProjectionPlaneById(this.outputs.plane1Id);
+      const plane2 = context.world.getProjectionPlaneById(this.outputs.plane2Id);
+      if (plane1) removeLineFromPlane(context.world, plane1, this.outputs.bhhl1Id);
+      if (plane2) removeLineFromPlane(context.world, plane2, this.outputs.bhhl2Id);
 
-      world.invalidateRealization(this.outputs.brokenHingeLineId);
-      world.removeHingeLine(this.outputs.brokenHingeLineId);
-      world.getDependencyRegistrar().unregisterNode(this.outputs.brokenHingeLineId);
+      context.world.invalidateRealization(this.outputs.brokenHingeLineId);
+      context.world.removeHingeLine(this.outputs.brokenHingeLineId);
+      context.world.getDependencyRegistrar().unregisterNode(this.outputs.brokenHingeLineId);
     }
   }
 

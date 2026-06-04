@@ -18,7 +18,7 @@
  * 
  * Example:
  * ```typescript
- * const cmd = new Command('Create construction', world);
+  * const cmd = new Command('Create construction', context);
  * 
  * // Create line by two points
  * const lineResult = LineSequenceFactory.createLineByTwoPoints(

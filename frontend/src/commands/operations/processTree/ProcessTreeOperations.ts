@@ -9,7 +9,7 @@
  */
 
 import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
-import type { World } from '@/domain/world/World';
+import type { OperationContext } from '../OperationContext';
 import type { ActionNode } from '@/domain/processTree/ProcessTree';
 
 /**
@@ -34,9 +34,9 @@ export class RemoveActionFromProcessTreeOp implements IOperation {
   ) {
   }
 
-  apply(world: World): OperationResult {
+  apply(context: OperationContext): OperationResult {
     try {
-      const processTree = world.getProcessTree();
+      const processTree = context.world.getProcessTree();
       const result = processTree.removeAction(this.actionId);
       
       if (!result) {
@@ -71,12 +71,12 @@ export class RemoveActionFromProcessTreeOp implements IOperation {
     }
   }
 
-  undo(world: World): void {
+  undo(context: OperationContext): void {
     if (!this.removedAction || this.groupId === undefined || this.index === undefined) {
       throw new Error('Cannot undo: no action data stored');
     }
 
-    const processTree = world.getProcessTree();
+    const processTree = context.world.getProcessTree();
     processTree.restoreAction(this.removedAction, this.groupId, this.index);
   }
 

@@ -25,7 +25,7 @@ describe('Create Circle Command', () => {
 
   describe('execution', () => {
     it('should create a circle with center and circumference point', () => {
-      const cmd = new Command("Create circle with two points", world);
+      const cmd = new Command("Create circle with two points", { world });
       
       // Create center point
       const centerResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
@@ -58,7 +58,7 @@ describe('Create Circle Command', () => {
     });
 
     it('should return circleId in outputs', () => {
-      const cmd = new Command("Create circle", world);
+      const cmd = new Command("Create circle", { world });
       
       const centerResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
       const circumferenceResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(150, 150, 1)));
@@ -77,7 +77,7 @@ describe('Create Circle Command', () => {
 
   describe('undo/redo', () => {
     it('should support undo by rolling back operations', () => {
-      const cmd = new Command("Create circle", world);
+      const cmd = new Command("Create circle", { world });
       
       const centerResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
       const circumferenceResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(150, 100, 1)));
@@ -101,7 +101,7 @@ describe('Create Circle Command', () => {
     });
 
     it('should maintain stable IDs across undo/redo', () => {
-      const cmd = new Command("Create circle", world);
+      const cmd = new Command("Create circle", { world });
       
       const centerResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
       const circumferenceResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(150, 100, 1)));

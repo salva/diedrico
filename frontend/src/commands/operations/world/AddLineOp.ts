@@ -5,7 +5,7 @@
  */
 
 import type { IOperation, JsonObject, OperationDescriptor, OperationOutputBag, OperationResult } from '../IOperation';
-import type { World } from '@/domain/world/World';
+import type { OperationContext } from '../OperationContext';
 import { operationFailure, operationSuccess } from '../operationResultHelpers';
 import { removeLineFromPlane, requireProjectionPlane } from './operationHelpers';
 
@@ -31,11 +31,11 @@ export class AddLine2DByTwoPointsOp implements IOperation<AddLine2DByTwoPointsDe
   ) {
   }
 
-  apply(world: World): OperationResult<AddLine2DByTwoPointsOutput> {
+  apply(context: OperationContext): OperationResult<AddLine2DByTwoPointsOutput> {
     try {
-      const plane = requireProjectionPlane(world, this.planeId);
+      const plane = requireProjectionPlane(context.world, this.planeId);
       
-      const line = world.getConstructionService().addLine2DBetweenTwoPoints(
+      const line = context.world.getConstructionService().addLine2DBetweenTwoPoints(
         plane,
         this.point1Id,
         this.point2Id,
@@ -48,11 +48,11 @@ export class AddLine2DByTwoPointsOp implements IOperation<AddLine2DByTwoPointsDe
     }
   }
 
-  undo(world: World): void {
+  undo(context: OperationContext): void {
     if (this.outputs.lineId) {
-      const plane = world.getProjectionPlaneById(this.planeId);
+      const plane = context.world.getProjectionPlaneById(this.planeId);
       if (plane) {
-        removeLineFromPlane(world, plane, this.outputs.lineId);
+        removeLineFromPlane(context.world, plane, this.outputs.lineId);
       }
     }
   }
@@ -95,11 +95,11 @@ export class AddLine2DParallelToLineOp implements IOperation<AddLine2DParallelTo
   ) {
   }
 
-  apply(world: World): OperationResult<AddLine2DParallelToLineOutput> {
+  apply(context: OperationContext): OperationResult<AddLine2DParallelToLineOutput> {
     try {
-      const plane = requireProjectionPlane(world, this.planeId);
+      const plane = requireProjectionPlane(context.world, this.planeId);
       
-      const line = world.getConstructionService().addLine2DParallelToLine(
+      const line = context.world.getConstructionService().addLine2DParallelToLine(
         plane,
         this.referenceLineId,
         this.throughPointId,
@@ -112,11 +112,11 @@ export class AddLine2DParallelToLineOp implements IOperation<AddLine2DParallelTo
     }
   }
 
-  undo(world: World): void {
+  undo(context: OperationContext): void {
     if (this.outputs.lineId) {
-      const plane = world.getProjectionPlaneById(this.planeId);
+      const plane = context.world.getProjectionPlaneById(this.planeId);
       if (plane) {
-        removeLineFromPlane(world, plane, this.outputs.lineId);
+        removeLineFromPlane(context.world, plane, this.outputs.lineId);
       }
     }
   }
@@ -159,11 +159,11 @@ export class AddLine2DPerpendicularToLineOp implements IOperation<AddLine2DPerpe
   ) {
   }
 
-  apply(world: World): OperationResult<AddLine2DPerpendicularToLineOutput> {
+  apply(context: OperationContext): OperationResult<AddLine2DPerpendicularToLineOutput> {
     try {
-      const plane = requireProjectionPlane(world, this.planeId);
+      const plane = requireProjectionPlane(context.world, this.planeId);
       
-      const line = world.getConstructionService().addLine2DPerpendicularToLine(
+      const line = context.world.getConstructionService().addLine2DPerpendicularToLine(
         plane,
         this.referenceLineId,
         this.throughPointId,
@@ -176,11 +176,11 @@ export class AddLine2DPerpendicularToLineOp implements IOperation<AddLine2DPerpe
     }
   }
 
-  undo(world: World): void {
+  undo(context: OperationContext): void {
     if (this.outputs.lineId) {
-      const plane = world.getProjectionPlaneById(this.planeId);
+      const plane = context.world.getProjectionPlaneById(this.planeId);
       if (plane) {
-        removeLineFromPlane(world, plane, this.outputs.lineId);
+        removeLineFromPlane(context.world, plane, this.outputs.lineId);
       }
     }
   }
@@ -213,11 +213,11 @@ export class AddLine2DTangentToCircleThroughPointOp implements IOperation {
   ) {
   }
 
-  apply(world: World): OperationResult {
+  apply(context: OperationContext): OperationResult {
     try {
-      const plane = requireProjectionPlane(world, this.planeId);
+      const plane = requireProjectionPlane(context.world, this.planeId);
       
-      const line = world.getConstructionService().addLine2DTangentToCircleThroughPoint(
+      const line = context.world.getConstructionService().addLine2DTangentToCircleThroughPoint(
         plane,
         this.circleId,
         this.throughPointId,
@@ -231,11 +231,11 @@ export class AddLine2DTangentToCircleThroughPointOp implements IOperation {
     }
   }
 
-  undo(world: World): void {
+  undo(context: OperationContext): void {
     if (this.outputs.lineId) {
-      const plane = world.getProjectionPlaneById(this.planeId);
+      const plane = context.world.getProjectionPlaneById(this.planeId);
       if (plane) {
-        removeLineFromPlane(world, plane, this.outputs.lineId);
+        removeLineFromPlane(context.world, plane, this.outputs.lineId);
       }
     }
   }
@@ -269,11 +269,11 @@ export class AddLine2DTangentToCircleParallelToLineOp implements IOperation {
   ) {
   }
 
-  apply(world: World): OperationResult {
+  apply(context: OperationContext): OperationResult {
     try {
-      const plane = requireProjectionPlane(world, this.planeId);
+      const plane = requireProjectionPlane(context.world, this.planeId);
       
-      const line = world.getConstructionService().addLine2DTangentToCircleParallelToLine(
+      const line = context.world.getConstructionService().addLine2DTangentToCircleParallelToLine(
         plane,
         this.circleId,
         this.referenceLineId,
@@ -287,11 +287,11 @@ export class AddLine2DTangentToCircleParallelToLineOp implements IOperation {
     }
   }
 
-  undo(world: World): void {
+  undo(context: OperationContext): void {
     if (this.outputs.lineId) {
-      const plane = world.getProjectionPlaneById(this.planeId);
+      const plane = context.world.getProjectionPlaneById(this.planeId);
       if (plane) {
-        removeLineFromPlane(world, plane, this.outputs.lineId);
+        removeLineFromPlane(context.world, plane, this.outputs.lineId);
       }
     }
   }

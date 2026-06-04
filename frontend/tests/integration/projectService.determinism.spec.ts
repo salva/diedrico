@@ -37,7 +37,7 @@ describe('ProjectService Determinism Tests', () => {
     const planeId = getHorizontalPlaneId(world);
     
     // Create multiple elements
-    const cmd1 = new Command('Create points', world);
+    const cmd1 = new Command('Create points', { world });
     const p1Result = cmd1.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
     const p1Id = p1Result.outputs.pointId;
     
@@ -50,7 +50,7 @@ describe('ProjectService Determinism Tests', () => {
     commandStack.push(cmd1);
     
     // Create lines
-    const cmd2 = new Command('Create lines', world);
+    const cmd2 = new Command('Create lines', { world });
     const l1Result = cmd2.addAndExecute(new AddLine2DByTwoPointsOp(planeId, p1Id, p2Id));
     const l1Id = l1Result.outputs.lineId;
     
@@ -60,14 +60,14 @@ describe('ProjectService Determinism Tests', () => {
     commandStack.push(cmd2);
     
     // Create intersection
-    const cmd3 = new Command('Create intersection', world);
+    const cmd3 = new Command('Create intersection', { world });
     const intResult = cmd3.addAndExecute(new AddLineLineIntersectionPoint2DOp(planeId, l1Id, l2Id));
     const intId = intResult.outputs.pointId;
     cmd3.commit();
     commandStack.push(cmd3);
     
     // Create circle
-    const cmd4 = new Command('Create circle', world);
+    const cmd4 = new Command('Create circle', { world });
     cmd4.addAndExecute(new AddCircle2DByCenterAndPointOp(planeId, p1Id, p3Id));
     cmd4.commit();
     commandStack.push(cmd4);
@@ -75,14 +75,14 @@ describe('ProjectService Determinism Tests', () => {
     // Create guide (needs half-hinge line, use first available)
     const halfHingeLines = world.getHalfHingeLines2D(planeId);
     if (halfHingeLines.length > 0) {
-      const cmd5 = new Command('Create guide', world);
+      const cmd5 = new Command('Create guide', { world });
       cmd5.addAndExecute(new AddGuide2DPerpendicularToLineOp(planeId, halfHingeLines[0].id, p1Id));
       cmd5.commit();
       commandStack.push(cmd5);
     }
     
     // Delete one point
-    const cmd6 = new Command('Delete point', world);
+    const cmd6 = new Command('Delete point', { world });
     cmd6.addAndExecute(new RemovePoint2DOp(planeId, p3Id));
     cmd6.commit();
     commandStack.push(cmd6);
@@ -138,7 +138,7 @@ describe('ProjectService Determinism Tests', () => {
     const { world, commandStack } = createTestWorld();
     const planeId = getHorizontalPlaneId(world);
     
-    const cmd = new Command('Create elements', world);
+    const cmd = new Command('Create elements', { world });
     cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(50, 50, 1)));
     cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 50, 1)));
     cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(75, 100, 1)));

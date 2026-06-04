@@ -19,7 +19,7 @@
  */
 
 import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
-import type { World } from '@/domain/world/World';
+import type { OperationContext } from '../OperationContext';
 import { AuxiliaryProjectionPlane } from '@/domain/world/projectionPlane/AuxiliaryProjectionPlane';
 
 export class AddAuxiliaryProjectionPlaneOp implements IOperation {
@@ -35,12 +35,12 @@ export class AddAuxiliaryProjectionPlaneOp implements IOperation {
   ) {
   }
 
-  apply(world: World): OperationResult {
+  apply(context: OperationContext): OperationResult {
     try {
       // Validate that trace lines exist
-      const t1Line = world.getLine2D(this.t1HingeTraceId);
-      const t2Line = world.getLine2D(this.t2OtherTraceId);
-      const t2PrimeLine = world.getLine2D(this.t2PrimeLineId);
+      const t1Line = context.world.getLine2D(this.t1HingeTraceId);
+      const t2Line = context.world.getLine2D(this.t2OtherTraceId);
+      const t2PrimeLine = context.world.getLine2D(this.t2PrimeLineId);
       
       if (!t1Line) {
         throw new Error(`Hinge trace line not found: ${this.t1HingeTraceId}`);
@@ -69,9 +69,9 @@ export class AddAuxiliaryProjectionPlaneOp implements IOperation {
       }
       
       // Validate that traces are geometrically feasible
-      const t1Real = t1Line.realize2D(world);
-      const t2Real = t2Line.realize2D(world);
-      const t2PrimeReal = t2PrimeLine.realize2D(world);
+      const t1Real = t1Line.realize2D(context.world);
+      const t2Real = t2Line.realize2D(context.world);
+      const t2PrimeReal = t2PrimeLine.realize2D(context.world);
       
       if (!t1Real || !t2Real || !t2PrimeReal || 
           !t1Real.isFeasible() || !t2Real.isFeasible() || !t2PrimeReal.isFeasible()) {
@@ -79,10 +79,10 @@ export class AddAuxiliaryProjectionPlaneOp implements IOperation {
       }
       
       // Use stored ID if available (for redo), otherwise generate new one
-      const projPlaneId = this.outputs.projPlaneId || world.generateProjPlaneId();
+      const projPlaneId = this.outputs.projPlaneId || context.world.generateProjPlaneId();
       
       // Auto-generate name if not provided - use generateDefaultLabel for proper subscript formatting
-      const planeName = this.name || world.generateDefaultLabel(projPlaneId, 'ProjectionPlane');
+      const planeName = this.name || context.world.generateDefaultLabel(projPlaneId, 'ProjectionPlane');
       
       // Create AuxiliaryProjectionPlane
       // NOTE: Stores trace IDs (dependencies), NOT matrices
@@ -100,11 +100,11 @@ export class AddAuxiliaryProjectionPlaneOp implements IOperation {
       );
       
       // Add to World storage
-      world.projectionPlanes.set(projPlaneId, plane);
+      context.world.projectionPlanes.set(projPlaneId, plane);
       
       // Register with dependency service (CRITICAL for parametric updates)
       // When trace lines move, the dependency service will find this plane and invalidate it
-      world.getDependencyRegistrar().registerNode(projPlaneId, plane.getDependencies());
+      context.world.getDependencyRegistrar().registerNode(projPlaneId, plane.getDependencies());
       
       // Store outputs for undo
       this.outputs = { projPlaneId };
@@ -122,12 +122,12 @@ export class AddAuxiliaryProjectionPlaneOp implements IOperation {
     }
   }
 
-  undo(world: World): void {
+  undo(context: OperationContext): void {
     if (this.outputs.projPlaneId) {
       // Unregister from dependency service
-      world.getDependencyRegistrar().unregisterNode(this.outputs.projPlaneId);
+      context.world.getDependencyRegistrar().unregisterNode(this.outputs.projPlaneId);
       
-      world.projectionPlanes.delete(this.outputs.projPlaneId);
+      context.world.projectionPlanes.delete(this.outputs.projPlaneId);
     }
   }
 

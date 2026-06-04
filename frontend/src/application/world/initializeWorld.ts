@@ -1,5 +1,6 @@
 import { Command } from '@/commands/Command';
 import type { CommandStack } from '@/commands/CommandStack';
+import type { OperationContext } from '@/commands/operations/OperationContext';
 import { buildWorldInitialization } from '@/commands/factories/InitializationSequenceFactory';
 import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
 import { PopSubprocessOp, PushSubprocessOp } from '@/commands/operations/processTree';
@@ -22,7 +23,8 @@ function createInitializationGroupId(): string {
 export function initializeWorld(world: World, commandStack: CommandStack, notifier: ChangeNotifier = noopChangeNotifier): void {
   if (world.getAllProjectionPlanes().length > 0) return;
 
-  const initCmd = new Command('Initialize World', world, notifier);
+  const operationContext: OperationContext = { world };
+  const initCmd = new Command('Initialize World', operationContext, notifier);
 
   initCmd.addAndExecute(new PushSubprocessOp('World Initialization'));
 

@@ -22,7 +22,7 @@ describe('Create Free Point Command', () => {
     it('should validate valid coordinates', () => {
       const planePos = new Vector3(100, 200, 1);
       
-      const cmd = new Command("Create free point", world);
+      const cmd = new Command("Create free point", { world });
       const result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, planePos));
       
       expect(result.success).toBe(true);
@@ -38,7 +38,7 @@ describe('Create Free Point Command', () => {
     it('should create a free point', () => {
       const planePos = new Vector3(100, 200, 1);
       
-      const cmd = new Command("Create free point", world);
+      const cmd = new Command("Create free point", { world });
       const result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, planePos));
 
       expect(result.success).toBe(true);
@@ -57,7 +57,7 @@ describe('Create Free Point Command', () => {
     it('should return pointId in outputs', () => {
       const planePos = new Vector3(100, 200, 1);
       
-      const cmd = new Command("Create free point", world);
+      const cmd = new Command("Create free point", { world });
       const result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, planePos));
 
       expect(result.success).toBe(true);
@@ -68,7 +68,7 @@ describe('Create Free Point Command', () => {
     it('should fail for invalid plane', () => {
       const planePos = new Vector3(100, 200, 1);
       
-      const cmd = new Command("Create free point", world);
+      const cmd = new Command("Create free point", { world });
       
       expect(() => {
         cmd.addAndExecute(new AddFreePoint2DOp('INVALID_PLANE', planePos));
@@ -80,7 +80,7 @@ describe('Create Free Point Command', () => {
     it('should support undo by rolling back operations', () => {
       const planePos = new Vector3(100, 200, 1);
       
-      const cmd = new Command("Create free point", world);
+      const cmd = new Command("Create free point", { world });
       const result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, planePos));
       cmd.commit();
       
@@ -101,7 +101,7 @@ describe('Create Free Point Command', () => {
     it('should support redo by re-executing operations', () => {
       const planePos = new Vector3(100, 200, 1);
       
-      const cmd = new Command("Create free point", world);
+      const cmd = new Command("Create free point", { world });
       const result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, planePos));
       cmd.commit();
       
@@ -121,7 +121,7 @@ describe('Create Free Point Command', () => {
       // TODO Phase 83: Re-enable when visualStyle is fully implemented
       const planePos = new Vector3(100, 200, 1);
       
-      const cmd = new Command("Create free point", world);
+      const cmd = new Command("Create free point", { world });
       const result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, planePos));
 
       const pointId = result.outputs.pointId!;

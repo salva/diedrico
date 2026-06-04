@@ -21,7 +21,7 @@ describe('Line3D Reconstruction from Projections', () => {
   beforeEach(() => {
     const { world: w } = createTestWorld();
     world = w;
-    command = new Command('test-command', world);
+    command = new Command('test-command', { world });
   });
 
   /**
@@ -287,7 +287,7 @@ describe('Line3D Reconstruction from Projections', () => {
     const line3D_HV = create3DLine(lineH, P_H, lineV, P_V, 'line3D_HV');
     
     // Create new command for second line to avoid duplicate operations
-    command = new Command('test-command-2', world);
+    command = new Command('test-command-2', { world });
     const line3D_VH = create3DLine(lineV, P_V, lineH, P_H, 'line3D_VH');
 
     const real_HV = world.get3DLine(line3D_HV)?.realize3D(world);

@@ -3,7 +3,7 @@
  */
 
 import type { IOperation, JsonObject, OperationResult } from '../IOperation';
-import type { World } from '@/domain/world/World';
+import type { OperationContext } from '../OperationContext';
 
 interface ActivePlaneViewStore {
   setActivePlane(planeId: string): void;
@@ -41,7 +41,7 @@ export class SetActivePlaneOp implements IOperation {
     this.parameters = { beforePlanePath, afterPlanePath };
   }
 
-  apply(_world: World): OperationResult {
+  apply(_context: OperationContext): OperationResult {
     try {
       const planeId = planeIdFromPath(this.afterPlanePath);
       this.viewStore.setActivePlane(planeId);
@@ -60,7 +60,7 @@ export class SetActivePlaneOp implements IOperation {
     }
   }
 
-  undo(_world: World): void {
+  undo(_context: OperationContext): void {
     const planeId = planeIdFromPath(this.beforePlanePath);
     this.viewStore.setActivePlane(planeId);
   }
@@ -83,7 +83,7 @@ export class UpdateView2DOp implements IOperation {
     this.parameters = { planePath, beforeState, afterState };
   }
 
-  apply(_world: World): OperationResult {
+  apply(_context: OperationContext): OperationResult {
     try {
       const planeId = planeIdFromPath(this.planePath);
       this.viewStore.updateView2D(planeId, this.afterState);
@@ -102,7 +102,7 @@ export class UpdateView2DOp implements IOperation {
     }
   }
 
-  undo(_world: World): void {
+  undo(_context: OperationContext): void {
     const planeId = planeIdFromPath(this.planePath);
     this.viewStore.updateView2D(planeId, this.beforeState);
   }
@@ -125,7 +125,7 @@ export class TogglePlaneVisibilityOp implements IOperation {
     this.parameters = { planePath, beforeVisible, afterVisible };
   }
 
-  apply(_world: World): OperationResult {
+  apply(_context: OperationContext): OperationResult {
     try {
       const planeId = planeIdFromPath(this.planePath);
       this.viewStore.setPlaneVisibility(planeId, this.afterVisible);
@@ -144,7 +144,7 @@ export class TogglePlaneVisibilityOp implements IOperation {
     }
   }
 
-  undo(_world: World): void {
+  undo(_context: OperationContext): void {
     const planeId = planeIdFromPath(this.planePath);
     this.viewStore.setPlaneVisibility(planeId, this.beforeVisible);
   }

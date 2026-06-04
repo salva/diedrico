@@ -3,7 +3,7 @@
  */
 
 import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
-import type { World } from '@/domain/world/World';
+import type { OperationContext } from '../OperationContext';
 
 export class ToggleOutputOp implements IOperation {
   readonly type = 'ToggleOutput';
@@ -12,8 +12,8 @@ export class ToggleOutputOp implements IOperation {
   constructor(private readonly nodeId: string) {
   }
 
-  apply(world: World): OperationResult {
-    const processTree = world.getProcessTree();
+  apply(context: OperationContext): OperationResult {
+    const processTree = context.world.getProcessTree();
     try {
       processTree.toggleOutput(this.nodeId);
       return { success: true, outputs: this.outputs };
@@ -22,8 +22,8 @@ export class ToggleOutputOp implements IOperation {
     }
   }
 
-  undo(world: World): void {
-    const processTree = world.getProcessTree();
+  undo(context: OperationContext): void {
+    const processTree = context.world.getProcessTree();
     processTree.toggleOutput(this.nodeId);
   }
 

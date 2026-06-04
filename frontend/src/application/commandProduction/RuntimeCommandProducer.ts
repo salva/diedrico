@@ -1,6 +1,7 @@
 import { Command } from '@/commands/Command';
 import type { CommandStack } from '@/commands/CommandStack';
 import type { IOperation } from '@/commands/operations/IOperation';
+import type { OperationContext } from '@/commands/operations/OperationContext';
 import type { World } from '@/domain/world/World';
 import type { ChangeNotifier } from '@/application/appShell/RuntimeChangePublisher';
 import type { ToolCommandResult } from '@/tools/ToolCommandIntents';
@@ -16,14 +17,18 @@ import type {
 const noopChangeNotifier: ChangeNotifier = { notifyChange: () => {} };
 
 export class RuntimeCommandProducer implements CanvasCommandProductionPort, ProcessCommandExecutionPort, ToolCommandExecutionPort {
+  private readonly operationContext: OperationContext;
+
   constructor(
-    private readonly world: World,
+    world: World,
     private readonly commandStack: CommandStack,
     private readonly notifier: ChangeNotifier = noopChangeNotifier
-  ) {}
+  ) {
+    this.operationContext = { world };
+  }
 
   executeToolCommand(description: string, build: (command: CommandOperationBuilder) => void): ToolCommandResult {
-    const command = new Command(description, this.world, this.notifier);
+    const command = new Command(description, this.operationContext, this.notifier);
 
     try {
       build(command);
@@ -37,7 +42,7 @@ export class RuntimeCommandProducer implements CanvasCommandProductionPort, Proc
   }
 
   startPreviewCommand(description: string): PreviewCommandSession {
-    const command = new Command(description, this.world, this.notifier);
+    const command = new Command(description, this.operationContext, this.notifier);
     let hasPreview = false;
 
     return {
@@ -77,7 +82,7 @@ export class RuntimeCommandProducer implements CanvasCommandProductionPort, Proc
     operation: IOperation,
     getState: () => ProcessHistoryState
   ): ProcessHistoryResult {
-    const command = new Command(description, this.world, this.notifier);
+    const command = new Command(description, this.operationContext, this.notifier);
 
     try {
       command.addAndExecute(operation);

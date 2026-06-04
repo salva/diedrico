@@ -18,7 +18,7 @@ describe('ViewStateOperations', () => {
 
     const op = new SetActivePlaneOp('/projectionPlanes/plane-before', '/projectionPlanes/plane-after', viewStore);
 
-    const result = op.apply(world);
+    const result = op.apply({ world });
 
     expect(result).toEqual({
       success: true,
@@ -31,7 +31,7 @@ describe('ViewStateOperations', () => {
     });
     expect(activePlaneChanges).toEqual(['plane-after']);
 
-    op.undo(world);
+    op.undo({ world });
 
     expect(activePlaneChanges).toEqual(['plane-after', 'plane-before']);
   });
@@ -49,7 +49,7 @@ describe('ViewStateOperations', () => {
 
     const op = new UpdateView2DOp('/projectionPlanes/plane-1', beforeState, afterState, viewStore);
 
-    const result = op.apply(world);
+    const result = op.apply({ world });
 
     expect(result).toEqual({
       success: true,
@@ -58,7 +58,7 @@ describe('ViewStateOperations', () => {
     expect(op.outputs).toEqual({ updated: true });
     expect(updates).toEqual([{ planeId: 'plane-1', state: afterState }]);
 
-    op.undo(world);
+    op.undo({ world });
 
     expect(updates).toEqual([
       { planeId: 'plane-1', state: afterState },
@@ -77,7 +77,7 @@ describe('ViewStateOperations', () => {
 
     const op = new TogglePlaneVisibilityOp('/projectionPlanes/plane-hidden', true, false, viewStore);
 
-    const result = op.apply(world);
+    const result = op.apply({ world });
 
     expect(result).toEqual({
       success: true,
@@ -86,7 +86,7 @@ describe('ViewStateOperations', () => {
     expect(op.outputs).toEqual({ visible: false });
     expect(visibilityChanges).toEqual([{ planeId: 'plane-hidden', visible: false }]);
 
-    op.undo(world);
+    op.undo({ world });
 
     expect(visibilityChanges).toEqual([
       { planeId: 'plane-hidden', visible: false },
@@ -105,7 +105,7 @@ describe('ViewStateOperations', () => {
 
     const op = new SetActivePlaneOp('/projectionPlanes/plane-before', '/', viewStore);
 
-    const result = op.apply(world);
+    const result = op.apply({ world });
 
     expect(result).toEqual({
       success: false,

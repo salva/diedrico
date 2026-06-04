@@ -3,7 +3,7 @@
  */
 
 import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
-import type { World } from '@/domain/world/World';
+import type { OperationContext } from '../OperationContext';
 
 export class RenameSubprocessOp implements IOperation {
   readonly type = 'RenameSubprocess';
@@ -13,8 +13,8 @@ export class RenameSubprocessOp implements IOperation {
   constructor(private readonly subprocessId: string, private readonly newName: string) {
   }
 
-  apply(world: World): OperationResult {
-    const processTree = world.getProcessTree();
+  apply(context: OperationContext): OperationResult {
+    const processTree = context.world.getProcessTree();
     const subprocess = processTree.findSubprocessById(this.subprocessId);
     
     if (!subprocess) {
@@ -29,9 +29,9 @@ export class RenameSubprocessOp implements IOperation {
     return { success: true, outputs: this.outputs };
   }
 
-  undo(world: World): void {
+  undo(context: OperationContext): void {
     if (this.oldName !== null) {
-      const processTree = world.getProcessTree();
+      const processTree = context.world.getProcessTree();
       processTree.renameSubprocess(this.subprocessId, this.oldName);
     }
   }

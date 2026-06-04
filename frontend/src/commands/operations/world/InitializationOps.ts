@@ -18,7 +18,7 @@
 
 import { Vector3, Vector4, Matrix3 } from 'three';
 import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
-import type { World } from '@/domain/world/World';
+import type { OperationContext } from '../OperationContext';
 import { Matrix4x3 } from '@/utils/threeUtils';
 import { removeLineFromPlane, removePointFromPlane } from './operationHelpers';
 
@@ -41,10 +41,10 @@ export class AddPlane3DFixedOp implements IOperation {
   ) {
   }
 
-  apply(world: World): OperationResult {
+  apply(context: OperationContext): OperationResult {
     try {
       // Call element factory method - it handles ID generation
-      const plane = world.addPlane3DFixed(
+      const plane = context.world.addPlane3DFixed(
         this.point.clone(),
         this.normal.clone(),
         this.planeId || this.outputs.planeId,
@@ -69,9 +69,9 @@ export class AddPlane3DFixedOp implements IOperation {
     }
   }
 
-  undo(world: World): void {
+  undo(context: OperationContext): void {
     if (this.outputs.planeId) {
-      world.removePlane3DByIdForUndo(this.outputs.planeId);
+      context.world.removePlane3DByIdForUndo(this.outputs.planeId);
     }
   }
 
@@ -106,11 +106,11 @@ export class AddProjectionPlaneFixedOp implements IOperation {
     // Phase 94: threeDToPlane computed from planeTo3D in realization constructor
   }
 
-  apply(world: World): OperationResult {
+  apply(context: OperationContext): OperationResult {
     try {
       // Call element factory method - it handles ID generation and semantic references
       // Phase 94: Pass only forward matrices, derived matrices computed in realization
-      const projPlane = world.addProjectionPlane(
+      const projPlane = context.world.addProjectionPlane(
         this.plane3DId,
         this.planeToPaper2D,
         this.planeTo3D,
@@ -136,9 +136,9 @@ export class AddProjectionPlaneFixedOp implements IOperation {
     }
   }
 
-  undo(world: World): void {
+  undo(context: OperationContext): void {
     if (this.outputs.projPlaneId) {
-      world.removeProjectionPlaneByIdForUndo(this.outputs.projPlaneId);
+      context.world.removeProjectionPlaneByIdForUndo(this.outputs.projPlaneId);
     }
   }
 
@@ -174,9 +174,9 @@ export class AddOriginPoint2DOp implements IOperation {
   ) {
   }
 
-  apply(world: World): OperationResult {
+  apply(context: OperationContext): OperationResult {
     try {
-      const projPlane = world.getProjectionPlaneById(this.projPlaneId);
+      const projPlane = context.world.getProjectionPlaneById(this.projPlaneId);
       if (!projPlane) {
         return {
           success: false,
@@ -185,7 +185,7 @@ export class AddOriginPoint2DOp implements IOperation {
         };
       }
       
-      const originPoint = world.getConstructionService().addOriginPoint2D(
+      const originPoint = context.world.getConstructionService().addOriginPoint2D(
         projPlane,
         this.position, 
         this.pointId || this.outputs.pointId,
@@ -212,14 +212,14 @@ export class AddOriginPoint2DOp implements IOperation {
     }
   }
 
-  undo(world: World): void {
-    const projPlane = world.getProjectionPlaneById(this.projPlaneId);
+  undo(context: OperationContext): void {
+    const projPlane = context.world.getProjectionPlaneById(this.projPlaneId);
     if (projPlane) {
       // Get origin point (should be the first point added to plane)
       const points = projPlane.getAllPoints();
       if (points.length > 0) {
         const pointId = points[0].id;
-        removePointFromPlane(world, projPlane, pointId);
+        removePointFromPlane(context.world, projPlane, pointId);
         
         // Phase 53: No longer storing origin IDs in World - use label-based access instead
       }
@@ -254,10 +254,10 @@ export class AddHingeLineOp implements IOperation {
   ) {
   }
 
-  apply(world: World): OperationResult {
+  apply(context: OperationContext): OperationResult {
     try {
       // Call element factory method - it handles ID generation and semantic references
-      const hingeLine = world.addHingeLine(
+      const hingeLine = context.world.addHingeLine(
         this.horizontalPlaneId,
         this.verticalPlaneId,
         this.hingeLineId || this.outputs.hingeLineId
@@ -281,9 +281,9 @@ export class AddHingeLineOp implements IOperation {
     }
   }
 
-  undo(world: World): void {
+  undo(context: OperationContext): void {
     if (this.outputs.hingeLineId) {
-      world.removeHingeLineByIdForUndo(this.outputs.hingeLineId);
+      context.world.removeHingeLineByIdForUndo(this.outputs.hingeLineId);
     }
   }
 
@@ -314,9 +314,9 @@ export class AddHalfHingeLine2DOp implements IOperation {
   ) {
   }
 
-  apply(world: World): OperationResult {
+  apply(context: OperationContext): OperationResult {
     try {
-      const projPlane = world.getProjectionPlaneById(this.projPlaneId);
+      const projPlane = context.world.getProjectionPlaneById(this.projPlaneId);
       if (!projPlane) {
         return {
           success: false,
@@ -325,7 +325,7 @@ export class AddHalfHingeLine2DOp implements IOperation {
         };
       }
       
-      const halfHingeLine = world.getConstructionService().addHalfHingeLine2D(
+      const halfHingeLine = context.world.getConstructionService().addHalfHingeLine2D(
         projPlane,
         this.hingeLineId,
         this.lineId || this.outputs.lineId
@@ -349,13 +349,13 @@ export class AddHalfHingeLine2DOp implements IOperation {
     }
   }
 
-  undo(world: World): void {
-    const projPlane = world.getProjectionPlaneById(this.projPlaneId);
+  undo(context: OperationContext): void {
+    const projPlane = context.world.getProjectionPlaneById(this.projPlaneId);
     if (projPlane) {
       // Get half hinge line (should be the first line added to plane)
       const lines = projPlane.getAllLines();
       if (lines.length > 0) {
-        removeLineFromPlane(world, projPlane, lines[0].id);
+        removeLineFromPlane(context.world, projPlane, lines[0].id);
       }
     }
   }
@@ -386,9 +386,9 @@ export class CreateInitializationSubprocessOp implements IOperation {
   ) {
   }
 
-  apply(world: World): OperationResult {
+  apply(context: OperationContext): OperationResult {
     try {
-      const processTree = world.getProcessTree();
+      const processTree = context.world.getProcessTree();
       const subprocess = processTree.addSubprocess(this.subprocessName);
       
       // Store subprocess ID for future reference
@@ -410,7 +410,7 @@ export class CreateInitializationSubprocessOp implements IOperation {
     }
   }
 
-  undo(_world: World): void {
+  undo(_context: OperationContext): void {
     // Note: For now, we don't undo subprocess creation
     // This could be implemented by removing the subprocess from ProcessTree
     // but since this is a non-undoable command, it's not critical

@@ -117,7 +117,7 @@ describe('Wave 006b panel/toolbar intent controllers', () => {
   it('recovers rollback state if command assembly fails after an earlier process-history operation executed', () => {
     const { world } = createTestWorld();
     const commandStack = new CommandStack();
-    const command = new Command('partial process-history command', world);
+    const command = new Command('partial process-history command', { world });
 
     command.addAndExecute(new PushSubprocessOp('Partial child'));
     expect(world.getProcessTree().getStackDepth()).toBe(2);

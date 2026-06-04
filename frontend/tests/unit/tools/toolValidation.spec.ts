@@ -64,7 +64,7 @@ describe('Tool Argument Validation', () => {
   }
 
   function addPoint(x: number, y: number): string {
-    const cmd = new Command('Add point', world);
+    const cmd = new Command('Add point', { world });
     const op = new AddFreePoint2DOp(planeId, new Vector3(x, y, 1));
     cmd.addAndExecute(op);
     cmd.commit();

@@ -6,6 +6,7 @@ import { World } from '@/domain/world/World';
 import type { CommandStack } from '@/commands/CommandStack';
 import { Command, type CommandSnapshot } from '@/commands/Command';
 import type { OperationDescriptor } from '@/commands/operations/IOperation';
+import type { OperationContext } from '@/commands/operations/OperationContext';
 import { assertOperationDescriptor, assertRestorableOperationDescriptor, deserializeOperation } from '@/commands/operations/OperationRegistry';
 import type { ChangeNotifier } from '@/application/appShell/RuntimeChangePublisher';
 
@@ -47,12 +48,13 @@ export class ProjectService {
     this.validateProjectData(data);
     commandStack.clear();
     world.restoreNextId(data.nextElementId);
+    const operationContext: OperationContext = { world };
 
     const restoredCommands: Command[] = [];
     for (const serializedCommand of data.commands) {
       const operations = serializedCommand.operations.map((descriptor: SerializedOperation) => deserializeOperation(descriptor));
       for (const operation of operations) {
-        const result = operation.apply(world);
+        const result = operation.apply(operationContext);
         if (!result.success) {
           throw new Error(`Failed to replay operation ${operation.type}: ${result.error}`);
         }
@@ -62,7 +64,7 @@ export class ProjectService {
         timestamp: serializedCommand.timestamp,
         description: serializedCommand.description,
         operations
-      }, world, notifier));
+      }, operationContext, notifier));
     }
 
     commandStack.restoreCommittedCommands(restoredCommands);

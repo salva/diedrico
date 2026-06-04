@@ -24,7 +24,7 @@
  * 3. **Operation Chaining**: Commands enable incremental execution where later operations
  *    can use outputs from earlier operations. Example:
  *    ```typescript
- *    const cmd = new Command("Create segment", world);
+   *    const cmd = new Command("Create segment", context);
  *    const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, pos1));
  *    const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, pos2));
  *    cmd.addAndExecute(new AddSegment2DOp(planeId, p1Result.outputs.pointId, p2Result.outputs.pointId));
@@ -67,8 +67,8 @@
  */
 
 import type { IOperation, OperationDescriptor } from './operations/IOperation';
+import type { OperationContext } from './operations/OperationContext';
 import { serializeOperation } from './operations/OperationRegistry';
-import type { World } from '@/domain/world/World';
 import type { ChangeNotifier } from '@/application/appShell/RuntimeChangePublisher';
 
 const noopChangeNotifier: ChangeNotifier = { notifyChange: () => {} };
@@ -105,25 +105,25 @@ export class Command {
   readonly description: string;
   protected operations: IOperation[] = [];
   protected _status: CommandStatus = CommandStatus.Building;
-  protected world: World;
+  protected context: OperationContext;
   protected notifier: ChangeNotifier;
 
-  constructor(description: string, world: World, notifier: ChangeNotifier = noopChangeNotifier) {
+  constructor(description: string, context: OperationContext, notifier: ChangeNotifier = noopChangeNotifier) {
     this.id = this.generateId();
     this.timestamp = new Date();
     this.description = description;
-    this.world = world;
+    this.context = context;
     this.notifier = notifier;
   }
 
-  static restore(input: RestoredCommandInput, world: World, notifier: ChangeNotifier = noopChangeNotifier): Command {
+  static restore(input: RestoredCommandInput, context: OperationContext, notifier: ChangeNotifier = noopChangeNotifier): Command {
     if (!input.id || !input.description) {
       throw new Error('Cannot restore command without id or description');
     }
     if (input.operations.length === 0) {
       throw new Error(`Cannot restore empty command: ${input.id}`);
     }
-    const command = new Command(input.description, world, notifier);
+    const command = new Command(input.description, context, notifier);
     Object.defineProperty(command, 'id', { value: input.id, configurable: false });
     Object.defineProperty(command, 'timestamp', { value: input.timestamp instanceof Date ? input.timestamp : new Date(input.timestamp), configurable: false });
     command.operations = [...input.operations];
@@ -169,7 +169,7 @@ export class Command {
 
     try {
       // Execute operation immediately
-      const result = operation.apply(this.world);
+      const result = operation.apply(this.context);
       
       if (!result.success) {
         // Operation failed, rollback everything
@@ -224,7 +224,7 @@ export class Command {
     const hadOperations = this.operations.length > 0;
     // Undo in reverse order
     for (let i = this.operations.length - 1; i >= 0; i--) {
-      this.operations[i].undo(this.world);
+      this.operations[i].undo(this.context);
     }
     this.operations = [];
     this._status = CommandStatus.Building;
@@ -244,7 +244,7 @@ export class Command {
     
     // Undo in reverse order
     for (let i = this.operations.length - 1; i >= 0; i--) {
-      this.operations[i].undo(this.world);
+      this.operations[i].undo(this.context);
     }
     
     this._status = CommandStatus.Undone;
@@ -264,7 +264,7 @@ export class Command {
     
     // Reapply in original order
     for (const operation of this.operations) {
-      const result = operation.apply(this.world);
+      const result = operation.apply(this.context);
       if (!result.success) {
         throw new Error(`Redo failed: ${result.error}`);
       }

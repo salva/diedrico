@@ -24,7 +24,7 @@ describe('Create Guide Command', () => {
 
   describe('execution', () => {
     it('should create a guide perpendicular to a line through a point', () => {
-      const cmd = new Command("Create guide", world);
+      const cmd = new Command("Create guide", { world });
       
       // Create reference line
       const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 100, 1)));
@@ -60,7 +60,7 @@ describe('Create Guide Command', () => {
     });
 
     it('should return guideId in outputs', () => {
-      const cmd = new Command("Create guide", world);
+      const cmd = new Command("Create guide", { world });
       
       const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 100, 1)));
       const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 100, 1)));
@@ -86,7 +86,7 @@ describe('Create Guide Command', () => {
 
   describe('undo/redo', () => {
     it('should support undo by rolling back operations', () => {
-      const cmd = new Command("Create guide", world);
+      const cmd = new Command("Create guide", { world });
       
       const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 100, 1)));
       const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 100, 1)));
@@ -118,7 +118,7 @@ describe('Create Guide Command', () => {
     });
 
     it('should maintain stable IDs across undo/redo', () => {
-      const cmd = new Command("Create guide", world);
+      const cmd = new Command("Create guide", { world });
       
       const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 100, 1)));
       const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 100, 1)));

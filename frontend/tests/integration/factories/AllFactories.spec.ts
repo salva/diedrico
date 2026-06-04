@@ -39,7 +39,7 @@ describe('Factory Integration Tests', () => {
   describe('GuideSequenceFactory Integration', () => {
     it('should create guide with sibling on HHL and support undo/redo', () => {
       // Setup: Use existing HHL (created by default in World)
-      const setupCmd = new Command('Setup', world);
+      const setupCmd = new Command('Setup', { world });
       
       // Use the default HHL that exists in every World
       const hhlId = world.getHalfHingeLines2D(planeId)[0].id;
@@ -57,7 +57,7 @@ describe('Factory Integration Tests', () => {
       const initialPointCount = plane.getAllPoints().length;
 
       // Test: Create guide with sibling using factory
-      const guideCmd = new Command('Create guide', world);
+      const guideCmd = new Command('Create guide', { world });
       const result = GuideSequenceFactory.createGuideWithSibling(
         guideCmd, planeId, hhlId, throughPointId, world
       );
@@ -96,7 +96,7 @@ describe('Factory Integration Tests', () => {
 
     it.skip('should create guide on regular line without sibling', () => {
       // Setup: Create regular line
-      const setupCmd = new Command('Setup line', world);
+      const setupCmd = new Command('Setup line', { world });
       
       setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 0, 1)));
       const point1Id = world.getProjectionPlaneById(planeId)!.getAllPoints()[0].id;
@@ -114,7 +114,7 @@ describe('Factory Integration Tests', () => {
       commandStack.push(setupCmd);
 
       // Test: Create guide (no sibling expected)
-      const guideCmd = new Command('Create guide', world);
+      const guideCmd = new Command('Create guide', { world });
       const result = GuideSequenceFactory.createGuideWithSibling(
         guideCmd, planeId, lineId, throughPointId, world
       );
@@ -135,7 +135,7 @@ describe('Factory Integration Tests', () => {
     // See DeletionSequenceFactory.spec.ts for details
     it('should cascade delete line when deleting defining point', () => {
       // Setup: Create point and line
-      const setupCmd = new Command('Setup', world);
+      const setupCmd = new Command('Setup', { world });
       
       const p1Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 0, 1)));
       const point1Id = p1Result.outputs.pointId!;
@@ -155,7 +155,7 @@ describe('Factory Integration Tests', () => {
       const initialLineCount = plane.getAllLines().length;
 
       // Test: Delete point1 (should cascade delete line)
-      const deleteCmd = new Command('Delete with cascade', world);
+      const deleteCmd = new Command('Delete with cascade', { world });
       DeletionSequenceFactory.createCascadeDeletion(deleteCmd, [point1Id], world);
       
       deleteCmd.commit();
@@ -185,7 +185,7 @@ describe('Factory Integration Tests', () => {
 
     it('should cascade delete circle when deleting center point', () => {
       // Setup: Create circle
-      const setupCmd = new Command('Setup', world);
+      const setupCmd = new Command('Setup', { world });
       
       const centerResult = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, 0, 1)));
       const centerId = centerResult.outputs.pointId!;
@@ -205,7 +205,7 @@ describe('Factory Integration Tests', () => {
       const initialCircleCount = plane.getAllCircles().length;
 
       // Test: Delete center point (should cascade delete circle)
-      const deleteCmd = new Command('Delete with cascade', world);
+      const deleteCmd = new Command('Delete with cascade', { world });
       DeletionSequenceFactory.createCascadeDeletion(deleteCmd, [centerId], world);
       
       deleteCmd.commit();
@@ -221,7 +221,7 @@ describe('Factory Integration Tests', () => {
 
     it('should handle multiple element deletion in one command', () => {
       // Setup: Create multiple independent points
-      const setupCmd = new Command('Setup', world);
+      const setupCmd = new Command('Setup', { world });
       
       const p1Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 0, 1)));
       const point1Id = p1Result.outputs.pointId!;
@@ -240,7 +240,7 @@ describe('Factory Integration Tests', () => {
       const initialPointCount = plane.getAllPoints().length;
 
       // Test: Delete multiple points at once
-      const deleteCmd = new Command('Delete multiple', world);
+      const deleteCmd = new Command('Delete multiple', { world });
       DeletionSequenceFactory.createCascadeDeletion(deleteCmd, [point1Id, point3Id], world);
       
       deleteCmd.commit();

@@ -21,7 +21,7 @@ describe('Create Segment Command', () => {
 
   describe('execution', () => {
     it('should create a segment between two points', () => {
-      const cmd = new Command("Create segment with points", world);
+      const cmd = new Command("Create segment with points", { world });
       const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
       const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 200, 1)));
       
@@ -44,7 +44,7 @@ describe('Create Segment Command', () => {
     });
 
     it('should return segmentId in outputs', () => {
-      const cmd = new Command("Create segment", world);
+      const cmd = new Command("Create segment", { world });
       const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
       const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 200, 1)));
       
@@ -62,7 +62,7 @@ describe('Create Segment Command', () => {
 
   describe('undo/redo', () => {
     it('should support undo by rolling back operations', () => {
-      const cmd = new Command("Create segment", world);
+      const cmd = new Command("Create segment", { world });
       const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
       const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 200, 1)));
       const segmentResult = cmd.addAndExecute(new AddSegment2DByPointsOp(
@@ -85,7 +85,7 @@ describe('Create Segment Command', () => {
     });
 
     it('should maintain stable IDs across undo/redo', () => {
-      const cmd = new Command("Create segment", world);
+      const cmd = new Command("Create segment", { world });
       const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
       const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 200, 1)));
       const segmentResult = cmd.addAndExecute(new AddSegment2DByPointsOp(

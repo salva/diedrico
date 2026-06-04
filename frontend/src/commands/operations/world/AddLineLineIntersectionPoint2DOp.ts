@@ -8,7 +8,7 @@
  */
 
 import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
-import type { World } from '@/domain/world/World';
+import type { OperationContext } from '../OperationContext';
 import { removePointFromPlane, requireProjectionPlane } from './operationHelpers';
 
 export interface AddLineLineIntersectionPoint2DDescriptor extends OperationDescriptor<'AddLineLineIntersectionPoint2D'> {
@@ -33,11 +33,11 @@ export class AddLineLineIntersectionPoint2DOp implements IOperation<AddLineLineI
   ) {
   }
 
-  apply(world: World): OperationResult<AddLineLineIntersectionPoint2DOutput> {
+  apply(context: OperationContext): OperationResult<AddLineLineIntersectionPoint2DOutput> {
     try {
-      const plane = requireProjectionPlane(world, this.planeId);
+      const plane = requireProjectionPlane(context.world, this.planeId);
       
-      const point = world.getConstructionService().addLineLineIntersection(
+      const point = context.world.getConstructionService().addLineLineIntersection(
         plane,
         this.line1Id,
         this.line2Id,
@@ -59,11 +59,11 @@ export class AddLineLineIntersectionPoint2DOp implements IOperation<AddLineLineI
     }
   }
 
-  undo(world: World): void {
+  undo(context: OperationContext): void {
     // Remove primary point
     if (this.outputs.pointId) {
-      const plane = world.getProjectionPlaneById(this.planeId);
-      if (plane) removePointFromPlane(world, plane, this.outputs.pointId);
+      const plane = context.world.getProjectionPlaneById(this.planeId);
+      if (plane) removePointFromPlane(context.world, plane, this.outputs.pointId);
     }
     
     // Note: If sibling points exist, they should be removed by domain logic

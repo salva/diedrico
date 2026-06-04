@@ -28,7 +28,7 @@ describe('GuideSequenceFactory', () => {
 
   describe('createGuideWithSibling', () => {
     it('should create single operation for non-HHL reference line', () => {
-      const cmd = new Command('Test', world);
+      const cmd = new Command('Test', { world });
       
       // Create reference line (regular line, not HalfHingeLine)
       const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(horizontalPlaneId, new Vector3(0, 100, 1)));
@@ -70,7 +70,7 @@ describe('GuideSequenceFactory', () => {
     });
 
     it('should create two operations for HHL reference line', () => {
-      const cmd = new Command('Test', world);
+      const cmd = new Command('Test', { world });
       
       // Get HalfHingeLine (get actual ID from world)
       const halfHingeLines = world.getHalfHingeLines2D(horizontalPlaneId);
@@ -121,7 +121,7 @@ describe('GuideSequenceFactory', () => {
     it('should handle HHL with no sibling info available gracefully', () => {
       // This test ensures that if getSiblingPlaneAndHalfHingeLineForGuide returns null,
       // we still create the primary guide without throwing
-      const cmd = new Command('Test', world);
+      const cmd = new Command('Test', { world });
       
       // Use a regular line but pretend it's special case
       const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(horizontalPlaneId, new Vector3(0, 100, 1)));
@@ -152,7 +152,7 @@ describe('GuideSequenceFactory', () => {
     });
 
     it('should handle invalid reference line ID gracefully', () => {
-      const cmd = new Command('Test', world);
+      const cmd = new Command('Test', { world });
       
       // Create through point
       const throughResult = cmd.addAndExecute(new AddFreePoint2DOp(horizontalPlaneId, new Vector3(100, 50, 1)));
@@ -170,7 +170,7 @@ describe('GuideSequenceFactory', () => {
     });
 
     it('should handle invalid through point ID gracefully', () => {
-      const cmd = new Command('Test', world);
+      const cmd = new Command('Test', { world });
       
       // Create reference line
       const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(horizontalPlaneId, new Vector3(0, 100, 1)));
@@ -194,7 +194,7 @@ describe('GuideSequenceFactory', () => {
     });
 
     it('should work with command commit and verify state', () => {
-      const cmd = new Command('Create guide with sibling', world);
+      const cmd = new Command('Create guide with sibling', { world });
       
       // Get HalfHingeLine
       const halfHingeLines = world.getHalfHingeLines2D(horizontalPlaneId);
@@ -227,7 +227,7 @@ describe('GuideSequenceFactory', () => {
     });
 
     it('should handle multiple sequential guide creations', () => {
-      const cmd = new Command('Create multiple guides', world);
+      const cmd = new Command('Create multiple guides', { world });
       
       const halfHingeLines = world.getHalfHingeLines2D(horizontalPlaneId);
       expect(halfHingeLines.length).toBeGreaterThan(0);

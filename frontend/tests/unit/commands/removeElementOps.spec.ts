@@ -76,7 +76,7 @@ describe('RemoveElement Operations (T286, T290)', () => {
       expect(plane.getPoint(point.id)).toBeDefined();
       
       const removeOp = new RemovePoint2DOp(planeId, point.id);
-      const result = removeOp.apply(world);
+      const result = removeOp.apply({ world });
       
       expect(result.success).toBe(true);
       expect(plane.getPoint(point.id)).toBeUndefined();
@@ -88,17 +88,17 @@ describe('RemoveElement Operations (T286, T290)', () => {
       const point = addFreePoint(plane, new Vector3(100, 200, 1));
       
       const removeOp = new RemovePoint2DOp(planeId, point.id);
-      removeOp.apply(world);
+      removeOp.apply({ world });
       expect(plane.getPoint(point.id)).toBeUndefined();
       
-      removeOp.undo(world);
+      removeOp.undo({ world });
       expect(plane.getPoint(point.id)).toBeDefined();
     });
 
     it('should return error when point not found', () => {
       const planeId = getHorizontalPlaneId(world);
       const removeOp = new RemovePoint2DOp(planeId, 'nonexistent');
-      const result = removeOp.apply(world);
+      const result = removeOp.apply({ world });
       
       expect(result.success).toBe(false);
       expect(result.error).toContain('not found');
@@ -116,7 +116,7 @@ describe('RemoveElement Operations (T286, T290)', () => {
       expect(plane.getLine(line.id)).toBeDefined();
       
       const removeOp = new RemoveLine2DOp(planeId, line.id);
-      const result = removeOp.apply(world);
+      const result = removeOp.apply({ world });
       
       expect(result.success).toBe(true);
       expect(plane.getLine(line.id)).toBeUndefined();
@@ -130,10 +130,10 @@ describe('RemoveElement Operations (T286, T290)', () => {
       const line = addLineByPoints(plane, p1.id, p2.id);
       
       const removeOp = new RemoveLine2DOp(planeId, line.id);
-      removeOp.apply(world);
+      removeOp.apply({ world });
       expect(plane.getLine(line.id)).toBeUndefined();
       
-      removeOp.undo(world);
+      removeOp.undo({ world });
       expect(plane.getLine(line.id)).toBeDefined();
     });
   });
@@ -155,7 +155,7 @@ describe('RemoveElement Operations (T286, T290)', () => {
       world.getDependencyRegistrar().registerNode(line.id, [p1.id, p2.id]);
       
       // Build delete command with cascade
-      const deleteCmd = new Command('Delete point with cascade', world);
+      const deleteCmd = new Command('Delete point with cascade', { world });
       
       // Remove dependent line first
       deleteCmd.addAndExecute(new RemoveLine2DOp(planeId, line.id));
@@ -186,7 +186,7 @@ describe('RemoveElement Operations (T286, T290)', () => {
       const actionNode2 = addTestAction(p2.id);
       const actionNode3 = addTestAction(line.id);
       
-      const deleteCmd = new Command('Delete with cascade', world);
+      const deleteCmd = new Command('Delete with cascade', { world });
       deleteCmd.addAndExecute(new RemoveLine2DOp(planeId, line.id));
       deleteCmd.addAndExecute(new RemoveActionFromProcessTreeOp(actionNode3));
       deleteCmd.addAndExecute(new RemovePoint2DOp(planeId, p1.id));
@@ -216,7 +216,7 @@ describe('RemoveElement Operations (T286, T290)', () => {
       const actionNode2 = addTestAction(p2.id);
       const actionNode3 = addTestAction(line.id);
       
-      const deleteCmd = new Command('Delete', world);
+      const deleteCmd = new Command('Delete', { world });
       deleteCmd.addAndExecute(new RemoveLine2DOp(planeId, line.id));
       deleteCmd.addAndExecute(new RemoveActionFromProcessTreeOp(actionNode3));
       deleteCmd.addAndExecute(new RemovePoint2DOp(planeId, p1.id));
@@ -246,7 +246,7 @@ describe('RemoveElement Operations (T286, T290)', () => {
       const actionNode1 = addTestAction(p1.id);
       const actionNode2 = addTestAction(p2.id);
       
-      const deleteCmd = new Command('Delete two points', world);
+      const deleteCmd = new Command('Delete two points', { world });
       deleteCmd.addAndExecute(new RemovePoint2DOp(planeId, p1.id));
       deleteCmd.addAndExecute(new RemoveActionFromProcessTreeOp(actionNode1));
       deleteCmd.addAndExecute(new RemovePoint2DOp(planeId, p2.id));

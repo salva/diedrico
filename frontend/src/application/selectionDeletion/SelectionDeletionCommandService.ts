@@ -1,5 +1,6 @@
 import { Command } from '@/commands/Command';
 import type { CommandStack } from '@/commands/CommandStack';
+import type { OperationContext } from '@/commands/operations/OperationContext';
 import { DeletionSequenceFactory } from '@/commands/factories/DeletionSequenceFactory';
 import type { World } from '@/domain/world/World';
 import type { ChangeNotifier } from '@/application/appShell/RuntimeChangePublisher';
@@ -8,12 +9,12 @@ import type { SelectionDeletionCommandPort } from './SelectionDeletionPorts';
 const noopChangeNotifier: ChangeNotifier = { notifyChange: () => {} };
 
 interface SelectionDeletionCommandServiceInternals {
-  createCommand(description: string, world: World, notifier: ChangeNotifier): Command;
+  createCommand(description: string, context: OperationContext, notifier: ChangeNotifier): Command;
   createCascadeDeletion(command: Command, selectedIds: string[], world: World): void;
 }
 
 const defaultInternals: SelectionDeletionCommandServiceInternals = {
-  createCommand: (description, world, notifier) => new Command(description, world, notifier),
+  createCommand: (description, context, notifier) => new Command(description, context, notifier),
   createCascadeDeletion: (command, selectedIds, world) => {
     DeletionSequenceFactory.createCascadeDeletion(command, selectedIds, world);
   },
@@ -41,7 +42,7 @@ export class SelectionDeletionCommandService implements SelectionDeletionCommand
   execute(selectedIds: readonly string[]): void {
     if (selectedIds.length === 0) return;
 
-    const deleteCommand = this.internals.createCommand('Delete elements', this.world, this.notifier);
+    const deleteCommand = this.internals.createCommand('Delete elements', { world: this.world }, this.notifier);
     this.internals.createCascadeDeletion(deleteCommand, [...selectedIds], this.world);
     deleteCommand.commit();
     this.commandStack.push(deleteCommand);

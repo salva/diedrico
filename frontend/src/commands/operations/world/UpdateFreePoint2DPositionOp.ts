@@ -7,7 +7,7 @@
 
 import { Vector3 } from 'three';
 import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
-import type { World } from '@/domain/world/World';
+import type { OperationContext } from '../OperationContext';
 import { FreePoint2D } from '@/domain/world/Point';
 
 type SerializableVector3 = { x: number; y: number; z: number };
@@ -41,9 +41,9 @@ export class UpdateFreePoint2DPositionOp implements IOperation<UpdateFreePoint2D
   ) {
   }
 
-  apply(world: World): OperationResult<UpdateFreePoint2DPositionOutput> {
+  apply(context: OperationContext): OperationResult<UpdateFreePoint2DPositionOutput> {
     try {
-      const plane = world.getProjectionPlaneById(this.planeId);
+      const plane = context.world.getProjectionPlaneById(this.planeId);
       if (!plane) {
         throw new Error(`Plane not found: ${this.planeId}`);
       }
@@ -72,7 +72,7 @@ export class UpdateFreePoint2DPositionOp implements IOperation<UpdateFreePoint2D
       const updated = new FreePoint2D(this.pointId, nextPos, this.planeId, this.previousLabel);
       updated.locked = this.previousLocked ?? false;
 
-      world.invalidateRealization(this.pointId);
+      context.world.invalidateRealization(this.pointId);
 
       plane.removePoint(this.pointId);
       plane.addPoint(updated);
@@ -87,12 +87,12 @@ export class UpdateFreePoint2DPositionOp implements IOperation<UpdateFreePoint2D
     }
   }
 
-  undo(world: World): void {
+  undo(context: OperationContext): void {
     if (!this.previousPosition) {
       return;
     }
 
-    const plane = world.getProjectionPlaneById(this.planeId);
+    const plane = context.world.getProjectionPlaneById(this.planeId);
     if (!plane) {
       return;
     }
@@ -100,7 +100,7 @@ export class UpdateFreePoint2DPositionOp implements IOperation<UpdateFreePoint2D
     const restored = new FreePoint2D(this.pointId, this.previousPosition, this.planeId, this.previousLabel);
     restored.locked = this.previousLocked ?? false;
 
-    world.invalidateRealization(this.pointId);
+    context.world.invalidateRealization(this.pointId);
 
     plane.removePoint(this.pointId);
     plane.addPoint(restored);

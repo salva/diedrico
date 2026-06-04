@@ -25,10 +25,10 @@ describe('RuntimeCommandProducer', () => {
         parameters: {},
         outputs: {},
         apply: targetRuntimeState => {
-          targetRuntimeState.getProjectionPlaneById(planeId)!.addPoint(new FreePoint2D(`${planeId}/runtime-created-point`, new Vector3(10, 20, 0), planeId));
+          targetRuntimeState.world.getProjectionPlaneById(planeId)!.addPoint(new FreePoint2D(`${planeId}/runtime-created-point`, new Vector3(10, 20, 0), planeId));
           return { success: true, outputs: {} };
         },
-        undo: targetRuntimeState => targetRuntimeState.getProjectionPlaneById(planeId)!.removePoint(`${planeId}/runtime-created-point`),
+        undo: targetRuntimeState => targetRuntimeState.world.getProjectionPlaneById(planeId)!.removePoint(`${planeId}/runtime-created-point`),
         serialize: () => ({ opType: 'AddTestPoint' })
       });
     });

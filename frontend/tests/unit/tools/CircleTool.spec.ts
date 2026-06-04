@@ -68,7 +68,7 @@ describe('CircleTool', () => {
   describe('Two-Click Workflow', () => {
     it('should require two clicks to create circle', () => {
       // Create both center and circumference points
-      const setupCmd = new Command('Create test points', world);
+      const setupCmd = new Command('Create test points', { world });
       const centerOp = new AddFreePoint2DOp(horizontalPlaneId, new Vector3(100, 100, 1));
       setupCmd.addAndExecute(centerOp);
       const centerPointId = centerOp.outputs.pointId as string;
@@ -123,7 +123,7 @@ describe('CircleTool', () => {
   describe('T983: Both Points Snap (No Duplicates)', () => {
     it('should snap to existing points for both center and circumference', () => {
       // Create two existing points
-      const setupCmd = new Command('Setup test points', world);
+      const setupCmd = new Command('Setup test points', { world });
       
       const centerOp = new AddFreePoint2DOp(horizontalPlaneId, new Vector3(100, 100, 1));
       setupCmd.addAndExecute(centerOp);
@@ -187,7 +187,7 @@ describe('CircleTool', () => {
   describe('T984: Require Both Points to Exist', () => {
     it('should reject circle when circumference point does not exist', () => {
       // Create only center point
-      const setupCmd = new Command('Setup center point', world);
+      const setupCmd = new Command('Setup center point', { world });
       const centerOp = new AddFreePoint2DOp(horizontalPlaneId, new Vector3(100, 100, 1));
       setupCmd.addAndExecute(centerOp);
       const centerPointId = centerOp.outputs.pointId as string;
@@ -239,7 +239,7 @@ describe('CircleTool', () => {
 
     it('should accept circle when snapped points meet minimum radius', () => {
       // Create two points with acceptable distance (> 0.001 units)
-      const setupCmd = new Command('Setup acceptable points', world);
+      const setupCmd = new Command('Setup acceptable points', { world });
       
       const centerOp = new AddFreePoint2DOp(horizontalPlaneId, new Vector3(100, 100, 1));
       setupCmd.addAndExecute(centerOp);
@@ -327,7 +327,7 @@ describe('CircleTool', () => {
   describe('Tool State Reset', () => {
     it('should reset state after successful circle creation', () => {
       // Create two points for circle
-      const setupCmd = new Command('Setup points', world);
+      const setupCmd = new Command('Setup points', { world });
       const centerOp = new AddFreePoint2DOp(horizontalPlaneId, new Vector3(100, 100, 1));
       setupCmd.addAndExecute(centerOp);
       const circumferenceOp = new AddFreePoint2DOp(horizontalPlaneId, new Vector3(200, 100, 1));
@@ -382,7 +382,7 @@ describe('CircleTool', () => {
   describe('T989: Parametric Updates - Circumference Point Movement', () => {
     it('should update circle when circumference point moves', () => {
       // Create center point at (100, 100)
-      const centerCmd = new Command('Create center', world);
+      const centerCmd = new Command('Create center', { world });
       const centerOp = new AddFreePoint2DOp(horizontalPlaneId, new Vector3(100, 100, 1));
       centerCmd.addAndExecute(centerOp);
       centerCmd.commit();
@@ -390,7 +390,7 @@ describe('CircleTool', () => {
       const centerPointId = centerOp.outputs.pointId;
 
       // Create circumference point at (150, 100) - radius should be 50
-      const circumferenceCmd = new Command('Create circumference', world);
+      const circumferenceCmd = new Command('Create circumference', { world });
       const circumferenceOp = new AddFreePoint2DOp(horizontalPlaneId, new Vector3(150, 100, 1));
       circumferenceCmd.addAndExecute(circumferenceOp);
       circumferenceCmd.commit();
@@ -438,7 +438,7 @@ describe('CircleTool', () => {
       expect(initialRealization!.center.y).toBeCloseTo(100, 2);
 
       // Move circumference point to (150, 150) - radius should become ~70.7
-      const moveCmd = new Command('Move circumference point', world);
+      const moveCmd = new Command('Move circumference point', { world });
       const moveOp = new UpdateFreePoint2DPositionOp(
         horizontalPlaneId,
         circumferencePointId,
@@ -460,7 +460,7 @@ describe('CircleTool', () => {
   describe('T992: Regression - Center Point Movement', () => {
     it('should still update circle when center point moves', () => {
       // Create center point at (100, 100)
-      const centerCmd = new Command('Create center', world);
+      const centerCmd = new Command('Create center', { world });
       const centerOp = new AddFreePoint2DOp(horizontalPlaneId, new Vector3(100, 100, 1));
       centerCmd.addAndExecute(centerOp);
       centerCmd.commit();
@@ -468,7 +468,7 @@ describe('CircleTool', () => {
       const centerPointId = centerOp.outputs.pointId;
 
       // Create circumference point at (150, 100)
-      const circumferenceCmd = new Command('Create circumference', world);
+      const circumferenceCmd = new Command('Create circumference', { world });
       const circumferenceOp = new AddFreePoint2DOp(horizontalPlaneId, new Vector3(150, 100, 1));
       circumferenceCmd.addAndExecute(circumferenceOp);
       circumferenceCmd.commit();
@@ -505,7 +505,7 @@ describe('CircleTool', () => {
       const circle = circles[0];
 
       // Move center point to (200, 100) 
-      const moveCmd = new Command('Move center point', world);
+      const moveCmd = new Command('Move center point', { world });
       const moveOp = new UpdateFreePoint2DPositionOp(
         horizontalPlaneId,
         centerPointId,

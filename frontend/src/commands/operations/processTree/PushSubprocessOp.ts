@@ -8,7 +8,7 @@
  */
 
 import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
-import type { World } from '@/domain/world/World';
+import type { OperationContext } from '../OperationContext';
 
 export class PushSubprocessOp implements IOperation {
   readonly type = 'PushSubprocess';
@@ -21,18 +21,18 @@ export class PushSubprocessOp implements IOperation {
     }
   }
 
-  apply(world: World): OperationResult {
+  apply(context: OperationContext): OperationResult {
     // On replay (deserialization), reuse the stored subprocessId from outputs
     // This ensures toggle operations can find the correct subprocess
     const existingId = this.outputs.subprocessId;
-    const subprocess = world.getProcessTree().pushSubprocess(this.subprocessName, existingId);
+    const subprocess = context.world.getProcessTree().pushSubprocess(this.subprocessName, existingId);
     this.outputs = { subprocessId: subprocess.id };
     return { success: true, outputs: this.outputs };
   }
 
-  undo(world: World): void {
+  undo(context: OperationContext): void {
     // Undo by popping the subprocess from the stack
-    world.getProcessTree().popSubprocess();
+    context.world.getProcessTree().popSubprocess();
   }
 
   serialize() {

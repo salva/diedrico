@@ -20,14 +20,14 @@ describe('ProcessTree Stack Management', () => {
   });
   
   function executePush(name: string) {
-    const cmd = new Command('Push subprocess', world);
+    const cmd = new Command('Push subprocess', { world });
     cmd.addAndExecute(new PushSubprocessOp(name));
     cmd.commit();
     commandStack.push(cmd);
   }
   
   function executePop() {
-    const cmd = new Command('Pop subprocess', world);
+    const cmd = new Command('Pop subprocess', { world });
     cmd.addAndExecute(new PopSubprocessOp());
     cmd.commit();
     commandStack.push(cmd);
