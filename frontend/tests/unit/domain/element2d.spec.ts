@@ -11,12 +11,11 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Vector3 } from 'three';
 import type { World } from '@/domain/world/World';
-import { createTestWorld, getHorizontalPlane, getVerticalPlane } from '../../helpers/worldHelpers';
+import { createTestWorld, getHorizontalPlane, getHorizontalPlaneId, getVerticalPlane } from '../../helpers/worldHelpers';
 import { Element2D } from '@/domain/world/Element2D';
 import { FreePoint2D } from '@/domain/world/Point';
 import { Line2DByTwoPoints } from '@/domain/world/Line';
 import { Circle2DByCenterAndPoint } from '@/domain/world/Circle';
-import { getHorizontalPlane, getHorizontalPlaneId } from '../../helpers/worldHelpers';
 
 describe('Element2D base class', () => {
   let world: World;

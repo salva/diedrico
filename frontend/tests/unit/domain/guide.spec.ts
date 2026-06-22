@@ -18,8 +18,14 @@ import { Guide2D, SiblingGuide2D, isSiblingGuide2D } from '@/domain/world/Guide'
 import { Line2DByTwoPoints, Line2DRealization2D } from '@/domain/world/Line';
 import { FreePoint2D } from '@/domain/world/Point';
 import type { World } from '@/domain/world/World';
-import { createTestWorld, getHorizontalPlane, getVerticalPlane, getHalfHingeLines2D } from '../../helpers/worldHelpers';
-import { getHalfHingeLines2D, getHorizontalPlane, getHorizontalPlaneId, getVerticalPlane, getVerticalPlaneId, getMainHingeLine } from '../../helpers/worldHelpers';
+import {
+  createTestWorld,
+  getHalfHingeLines2D,
+  getHorizontalPlane,
+  getHorizontalPlaneId,
+  getVerticalPlane,
+  getVerticalPlaneId,
+} from '../../helpers/worldHelpers';
 
 describe('Guide2D', () => {
   let world: World;

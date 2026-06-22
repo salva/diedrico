@@ -15,7 +15,13 @@ import type { World } from '@/domain/world/World';
 import type { CommandStack } from '@/commands/CommandStack';
 import type { OperationContext } from '@/commands/operations/OperationContext';
 import { Command } from '@/commands/Command';
-import { createTestWorld, getHorizontalPlane, getVerticalPlane, getHalfHingeLines2D } from '../../helpers/worldHelpers';
+import {
+  createTestWorld,
+  getHalfHingeLines2D,
+  getHorizontalPlane,
+  getHorizontalPlaneId,
+  getVerticalPlane,
+} from '../../helpers/worldHelpers';
 import { GuideSequenceFactory } from '@/commands/factories/GuideSequenceFactory';
 import { DeletionSequenceFactory } from '@/commands/factories/DeletionSequenceFactory';
 import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
@@ -23,7 +29,6 @@ import { Guide2D, SiblingGuide2D } from '@/domain/world/Guide';
 import { AddLine2DByTwoPointsOp } from '@/commands/operations/world/AddLineOp';
 import { AddCircle2DByCenterAndPointOp } from '@/commands/operations/world/AddCircleOp';
 import { Vector3 } from 'three';
-import { getHorizontalPlaneId, getVerticalPlaneId, getHorizontalPlane, getVerticalPlane } from '../../helpers/worldHelpers';
 
 describe('Factory Integration Tests', () => {
   let world: World;
