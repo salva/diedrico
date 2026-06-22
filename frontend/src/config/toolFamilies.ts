@@ -37,7 +37,7 @@ import ExampleIcon from '@/components/icons/toolbar/FreePointIcon.vue';  // TODO
  * 5. Guide Family: guide
  * 6. Transport Family: transport (placeholder - not yet implemented)
  * 7. 3D Elements Family: create3dpoint, create3dline, create3dsegment, create3dplane (Phase 78)
- * 8. Examples Family: exampleconstructions (for testing and demonstration)
+ * 8. Constructions Family: construction macros and setup helpers
  */
 export const TOOL_FAMILIES: ToolFamilyConfig[] = [
   {
@@ -201,10 +201,16 @@ export const TOOL_FAMILIES: ToolFamilyConfig[] = [
   },
   {
     id: 'examples-family',
-    label: 'Examples',
+    label: 'Constructions',
     icon: ExampleIcon,
     defaultTool: 'quickprojectionsetup',
     tools: [
+      {
+        id: 'create3dpoint-by-coordinates',
+        label: '3D Point XYZ',
+        icon: Create3DPointIcon,
+        tooltip: 'Create 3D point by entering X, Y, Z coordinates'
+      },
       {
         id: 'quickprojectionsetup',
         label: 'Folding Plane Setup',

@@ -22,14 +22,26 @@ import { Create3DSegmentTool } from '@/tools/Create3DSegmentTool';
 import { Create3DPlaneTool } from '@/tools/Create3DPlaneTool';
 import { CreateProjectionPlaneTool } from '@/tools/CreateProjectionPlaneTool';
 import { CanvasInteractionQuery } from '@/application/canvasPresentation/CanvasInteractionQuery';
+import { resolveVisibility } from '@/application/canvasPresentation/styleService';
 import type { ToolContext } from '@/tools/ITool';
 import type { ToolCommandSink, ToolConstructionIntent } from '@/tools/ToolCommandIntents';
 import type { ArgumentValue } from '@/tools/ToolArgumentCollector';
-import { createTestWorld, getHorizontalPlane, getHorizontalPlaneId } from '../../helpers/worldHelpers';
+import { createTestWorld, getHorizontalPlane, getHorizontalPlaneId, getVerticalPlane } from '../../helpers/worldHelpers';
 import { createToolInteractionReadPort } from '@/application/tools/ToolInteractionReadPort';
 
 function userPoints(world: any, planeId: string) {
   return world.getProjectionPlaneById(planeId).getAllPoints().filter((point: any) => !point.locked);
+}
+
+function realizedPosition(element: any, operationContext: any) {
+  return element.realize2D(operationContext.realizationContext).position;
+}
+
+function findPointAt(points: any[], operationContext: any, x: number, y: number) {
+  return points.find(point => {
+    const position = realizedPosition(point, operationContext);
+    return Math.abs(position.x - x) < 1e-6 && Math.abs(position.y - y) < 1e-6;
+  });
 }
 
 function makeToolContext(overrides: Partial<ToolContext>): ToolContext {
@@ -146,6 +158,68 @@ describe('Wave 006a canvas/tool command controllers', () => {
     expect(result.success).toBe(true);
     const tangent = plane.getAllLines().at(-1) as any;
     expect(tangent.tangentIndex).toBe(1);
+  });
+
+  it('creates a 3D point from XYZ coordinates as an encapsulated construction procedure', () => {
+    const { world, visibilityModel, commandStack, operationContext } = createTestWorld();
+    const horizontalPlane = getHorizontalPlane(world);
+    const verticalPlane = getVerticalPlane(world);
+    const initialLineIds = new Set([
+      ...horizontalPlane.getAllLines().map(line => line.id),
+      ...verticalPlane.getAllLines().map(line => line.id),
+    ]);
+    const beforeUndoCount = commandStack.getUndoCount();
+
+    const result = executeConstructionIntent({
+      operationContext,
+      commands: new RuntimeCommandProducer(operationContext, commandStack),
+      intent: {
+        type: 'create3dpoint-by-coordinates',
+        description: 'Create 3D point (3, -4, 5)',
+        coordinates: new Vector3(3, -4, 5)
+      }
+    });
+
+    expect(result.success).toBe(true);
+    expect(commandStack.getUndoCount()).toBe(beforeUndoCount + 1);
+
+    const pointA = findPointAt(horizontalPlane.getAllPoints(), operationContext, 3, -4);
+    const pointB = findPointAt(verticalPlane.getAllPoints(), operationContext, 2, 5);
+    const pointC = findPointAt(verticalPlane.getAllPoints(), operationContext, 3, 5);
+    expect(pointA).toBeTruthy();
+    expect(pointB).toBeTruthy();
+    expect(pointC).toBeTruthy();
+
+    const [point3D] = world.getAll3DPoints();
+    expect(point3D).toBeTruthy();
+    const point3DRealization = point3D.realize3D(operationContext.realizationContext);
+    expect(point3DRealization.isFeasible()).toBe(true);
+    expect(point3DRealization.position.x).toBeCloseTo(3);
+    expect(point3DRealization.position.y).toBeCloseTo(-4);
+    expect(point3DRealization.position.z).toBeCloseTo(5);
+
+    const createdLines = [
+      ...horizontalPlane.getAllLines(),
+      ...verticalPlane.getAllLines(),
+    ].filter(line => !initialLineIds.has(line.id));
+    expect(createdLines).toHaveLength(3);
+
+    const subprocess = operationContext.processTree.root.children.find(
+      child => child.type === 'subprocess' && child.name === 'Create 3D point from coordinates'
+    );
+    expect(subprocess).toBeTruthy();
+    expect(visibilityModel.get(subprocess!.id, 'subprocess').showIntermediates).toBe(false);
+
+    expect(resolveVisibility(pointA, operationContext.processTree, visibilityModel)).toBe(true);
+    expect(resolveVisibility(pointC, operationContext.processTree, visibilityModel)).toBe(true);
+    expect(resolveVisibility(point3D, operationContext.processTree, visibilityModel)).toBe(true);
+    expect(resolveVisibility(pointB, operationContext.processTree, visibilityModel)).toBe(false);
+    expect(createdLines.every(line => resolveVisibility(line, operationContext.processTree, visibilityModel) === false)).toBe(true);
+
+    commandStack.undo();
+    expect(world.getAll3DPoints()).toHaveLength(0);
+    expect(findPointAt(horizontalPlane.getAllPoints(), operationContext, 3, -4)).toBeUndefined();
+    expect(findPointAt(verticalPlane.getAllPoints(), operationContext, 3, 5)).toBeUndefined();
   });
 
   it('previews, cancels, commits, and undoes free-point moves through the movement use case', () => {

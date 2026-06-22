@@ -12,6 +12,7 @@ export type ToolType =
   | 'tangent-line-to-circle-through-point'
   | 'tangent-line-to-circle-parallel'
   | 'create3dpoint'
+  | 'create3dpoint-by-coordinates'
   | 'create3dline'
   | 'create3dsegment'
   | 'create3dplane'

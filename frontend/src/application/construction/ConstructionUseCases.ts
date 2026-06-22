@@ -20,6 +20,10 @@ import { Add3DPointOp } from '@/commands/operations/world/Add3DPointOp';
 import { Add3DLineOp } from '@/commands/operations/world/Add3DLineOp';
 import { Add3DSegmentOp } from '@/commands/operations/world/Add3DSegmentOp';
 import { AddLine2DTangentToCircleThroughPointOp, AddLine2DTangentToCircleParallelToLineOp } from '@/commands/operations/world/AddLineOp';
+import { PushSubprocessOp } from '@/commands/operations/processTree/PushSubprocessOp';
+import { PopSubprocessOp } from '@/commands/operations/processTree/PopSubprocessOp';
+import { ToggleEncapsulationOp } from '@/commands/operations/processTree/ToggleEncapsulationOp';
+import { ToggleOutputOp } from '@/commands/operations/processTree/ToggleOutputOp';
 import { createActionGroup } from '@/domain/processTree/ProcessTree';
 import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
 import { AddProcessTreeActionOp } from '@/commands/operations/processTree/AddProcessTreeActionOp';
@@ -29,7 +33,8 @@ import { createSiblingGuideAction } from '@/domain/processTree/actions/CreateSib
 import { createAdd3DPointAction, createAdd3DLineAction, createAdd3DSegmentAction } from '@/domain/processTree/actions/Element3DActions';
 import { createTangentLineToCircleThroughPointAction, createTangentLineToCircleParallelToLineAction } from '@/domain/processTree/actions/CreateTangentLineAction';
 import { areLinesParallel, intersectLineCircle, intersectCircleCircle } from '@/domain/calculations/Intersections';
-import type { Vector3 } from 'three';
+import { HalfHingeLine2D } from '@/domain/world/HingeLine';
+import { Vector3 } from 'three';
 
 export interface ExecuteConstructionParams {
   intent: ToolConstructionIntent;
@@ -49,6 +54,18 @@ type IntentExecutor<T extends ToolConstructionIntent> = (context: ConstructionEx
 
 export function executeConstructionIntent({ intent, operationContext, commands }: ExecuteConstructionParams): ToolCommandResult {
   const result = commands.executeToolCommand(intent.description, (cmd) => {
+    if (intent.type === 'create3dpoint-by-coordinates') {
+      executeCreate3DPointByCoordinatesCommand({
+        cmd,
+        operationContext,
+        world: operationContext.world,
+        realizationContext: operationContext.realizationContext,
+        groupId: '',
+      }, intent);
+      checkCreatedElementsFeasibility(cmd, operationContext.world, operationContext.realizationContext);
+      return;
+    }
+
     const groupId = `group_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
     const group = createActionGroup(groupId);
     cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
@@ -79,6 +96,7 @@ const executors: { [K in ToolConstructionIntent['type']]: IntentExecutor<Extract
   'tangent-line-to-circle-through-point': executeTangentThroughPointIntent,
   'tangent-line-to-circle-parallel': executeTangentParallelIntent,
   create3dpoint: executeCreate3DPointIntent,
+  'create3dpoint-by-coordinates': executeCreate3DPointByCoordinatesIntent,
   create3dline: executeCreate3DLineIntent,
   create3dsegment: executeCreate3DSegmentIntent,
   create3dplane: executeCreate3DPlaneIntent,
@@ -159,6 +177,76 @@ function executeCreate3DPointIntent({ cmd, world, groupId }: ConstructionExecuti
   cmd.addAndExecute(new AddProcessTreeActionOp(createAdd3DPointAction(result.outputs.pointId as string), groupId));
 }
 
+function executeCreate3DPointByCoordinatesIntent(context: ConstructionExecutionContext, intent: Extract<ToolConstructionIntent, { type: 'create3dpoint-by-coordinates' }>): void {
+  executeCreate3DPointByCoordinatesCommand(context, intent);
+}
+
+function executeCreate3DPointByCoordinatesCommand(
+  context: ConstructionExecutionContext,
+  intent: Extract<ToolConstructionIntent, { type: 'create3dpoint-by-coordinates' }>
+): void {
+  validateCoordinates(intent.coordinates);
+
+  const { cmd, world, realizationContext, operationContext } = context;
+  const horizontalPlane = requireProjectionPlaneByName(world, 'P_H');
+  const verticalPlane = requireProjectionPlaneByName(world, 'P_V');
+  const horizontalHinge = requireHalfHingeLine(world, horizontalPlane.id, 'P_H half hinge line');
+
+  const subprocessResult = cmd.addAndExecute(new PushSubprocessOp('Create 3D point from coordinates'));
+  const subprocessId = subprocessResult.outputs.subprocessId as string;
+  const groupId = `group_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+  cmd.addAndExecute(new AddProcessTreeActionGroupOp(createActionGroup(groupId)));
+
+  const x = intent.coordinates.x;
+  const y = intent.coordinates.y;
+  const z = intent.coordinates.z;
+
+  const pointA = PointSequenceFactory.createFreePoint(cmd, horizontalPlane.id, new Vector3(x, y, 1), groupId);
+  const verticalGuide = GuideSequenceFactory.createGuideWithSibling(
+    cmd,
+    horizontalPlane.id,
+    horizontalHinge.id,
+    pointA.pointId,
+    world,
+    realizationContext,
+  );
+  recordGuideActions(cmd, verticalGuide, groupId);
+  if (!verticalGuide.siblingGuideId) {
+    throw new Error('Could not create the vertical transfer guide on P_V.');
+  }
+
+  const pointB = PointSequenceFactory.createFreePoint(cmd, verticalPlane.id, new Vector3(x - 1, z, 1), groupId);
+  const horizontalGuide = GuideSequenceFactory.createGuideWithSibling(
+    cmd,
+    verticalPlane.id,
+    verticalGuide.siblingGuideId,
+    pointB.pointId,
+    world,
+    realizationContext,
+  );
+  recordGuideActions(cmd, horizontalGuide, groupId);
+
+  const pointC = IntersectionSequenceFactory.createLineLineIntersection(
+    cmd,
+    verticalPlane.id,
+    verticalGuide.siblingGuideId,
+    horizontalGuide.guideId,
+    world,
+    groupId,
+  );
+
+  const point3D = cmd.addAndExecute(new Add3DPointOp(pointA.pointId, pointC.pointId, horizontalPlane.id, verticalPlane.id));
+  cmd.addAndExecute(new AddProcessTreeActionOp(createAdd3DPointAction(point3D.outputs.pointId as string), groupId));
+
+  hideProducedElementAction(operationContext, pointB.pointId, cmd);
+  hideProducedElementAction(operationContext, verticalGuide.guideId, cmd);
+  hideProducedElementAction(operationContext, verticalGuide.siblingGuideId, cmd);
+  hideProducedElementAction(operationContext, horizontalGuide.guideId, cmd);
+  if (horizontalGuide.siblingGuideId) hideProducedElementAction(operationContext, horizontalGuide.siblingGuideId, cmd);
+  cmd.addAndExecute(new ToggleEncapsulationOp(subprocessId));
+  cmd.addAndExecute(new PopSubprocessOp());
+}
+
 function executeCreate3DLineIntent({ cmd, world, groupId }: ConstructionExecutionContext, intent: Extract<ToolConstructionIntent, { type: 'create3dline' }>): void {
   const l1 = requireLine(world, intent.projection1LineId, 'projection1 line');
   const l2 = requireLine(world, intent.projection2LineId, 'projection2 line');
@@ -216,6 +304,19 @@ function createIntersection({ cmd, world, groupId, realizationContext }: Constru
 
 function requireProjectionPlane(world: World, planeId: string, role: string): void {
   if (!world.getProjectionPlaneById(planeId)) throw new Error(`${role} plane not found: ${planeId}`);
+}
+
+function requireProjectionPlaneByName(world: World, name: string) {
+  const plane = world.getAllProjectionPlanes().find(candidate => candidate.name === name);
+  if (!plane) throw new Error(`Projection plane not found with name: ${name}`);
+  return plane;
+}
+
+function requireHalfHingeLine(world: World, planeId: string, role: string): HalfHingeLine2D {
+  const plane = world.getProjectionPlaneById(planeId);
+  const line = plane?.getAllLines().find((candidate): candidate is HalfHingeLine2D => candidate instanceof HalfHingeLine2D);
+  if (!line) throw new Error(`${role} not found on plane: ${planeId}`);
+  return line;
 }
 
 function requirePoint(world: World, pointId: string, role: string): Point2D {
@@ -306,6 +407,22 @@ function validateCoordinates(coords: any): void {
   if (!coords || !isFinite(coords.x) || !isFinite(coords.y) || !isFinite(coords.z)) {
     throw new Error('Invalid coordinates: NaN or Infinity not allowed');
   }
+}
+
+function recordGuideActions(
+  cmd: CommandOperationBuilder,
+  result: { guideId: string; siblingGuideId?: string },
+  groupId: string
+): void {
+  cmd.addAndExecute(new AddProcessTreeActionOp(createGuideAction(result.guideId), groupId));
+  if (result.siblingGuideId) cmd.addAndExecute(new AddProcessTreeActionOp(createSiblingGuideAction(result.siblingGuideId), groupId));
+}
+
+function hideProducedElementAction(operationContext: OperationContext, elementId: string | undefined, cmd: CommandOperationBuilder): void {
+  if (!elementId) return;
+  const action = operationContext.processTree.getActionsProducingElement(elementId)[0];
+  if (!action) throw new Error(`No process action found for created element: ${elementId}`);
+  cmd.addAndExecute(new ToggleOutputOp(action.id));
 }
 
 function checkCreatedElementsFeasibility(cmd: CommandOperationBuilder, world: World, realizationContext: CachedProjectionElementRealizationContext): void {

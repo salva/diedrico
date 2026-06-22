@@ -12,6 +12,7 @@ export type ConstructionIntentType =
   | 'tangent-line-to-circle-through-point'
   | 'tangent-line-to-circle-parallel'
   | 'create3dpoint'
+  | 'create3dpoint-by-coordinates'
   | 'create3dline'
   | 'create3dsegment'
   | 'create3dplane'
@@ -29,6 +30,7 @@ export type ToolConstructionIntent =
   | { type: 'tangent-line-to-circle-through-point'; planeId: string; circleId: string; throughPointId: string; tangentIndex: 0 | 1; selectionPoint: Vector3; description: string }
   | { type: 'tangent-line-to-circle-parallel'; planeId: string; circleId: string; referenceLineId: string; tangentIndex: 0 | 1; selectionPoint: Vector3; description: string }
   | { type: 'create3dpoint'; projection1PointId: string; projection2PointId: string; description: string }
+  | { type: 'create3dpoint-by-coordinates'; coordinates: Vector3; description: string }
   | { type: 'create3dline'; projection1LineId: string; projection2LineId: string; description: string }
   | { type: 'create3dsegment'; projection1SegmentId: string; projection2SegmentId: string; description: string }
   | { type: 'create3dplane'; trace1LineId: string; trace2LineId: string; description: string }

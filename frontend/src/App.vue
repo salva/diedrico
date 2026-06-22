@@ -162,6 +162,7 @@ provide(CanvasCommandProducerInjectionKey, runtime.canvasCommandProducerPort);
 provide(ToolInteractionReadInjectionKey, runtime.toolInteractionReadPort);
 provide(ToolRuntimeInjectionKey, {
   currentTool: toolStore.currentTool,
+  setTool: tool => toolStore.setTool(tool),
   setToolStepMessage: message => toolStore.setToolStepMessage(message),
 });
 provide(ProcessHistoryCommandInjectionKey, runtime.processHistoryCommandPort);

@@ -152,6 +152,13 @@
       @close="showPropertiesDialog = false"
       @save="handleSaveProperties"
     />
+
+    <Create3DPointCoordinatesDialog
+      :is-open="show3DPointCoordinatesDialog"
+      :error="create3DPointCoordinatesError"
+      @close="close3DPointCoordinatesDialog"
+      @submit="handleCreate3DPointCoordinates"
+    />
   </div>
 </template>
 
@@ -165,6 +172,7 @@ import { useViewStore } from '@/stores/viewStore';
 import { useSelectionStore } from '@/stores/selectionStore';
 import { useHoverHighlight } from '@/composables/useHoverHighlight';
 import PropertiesDialog from '@/components/dialogs/PropertiesDialog.vue';
+import Create3DPointCoordinatesDialog from '@/components/dialogs/Create3DPointCoordinatesDialog.vue';
 import { CanvasCommandProducerInjectionKey, CanvasViewInjectionKey, SelectionActionsInjectionKey, ToolInteractionReadInjectionKey, ToolRuntimeInjectionKey } from '@/application/appShell/RuntimeInjectionKeys';
 import { CanvasInteractionQuery } from '@/application/canvasPresentation/CanvasInteractionQuery';
 
@@ -197,6 +205,7 @@ const canvasToolController = injectedCanvasToolController;
 
 const toolRuntime = inject(ToolRuntimeInjectionKey);
 if (!toolRuntime) throw new Error('Tool runtime port not provided');
+const toolRuntimeRequired = toolRuntime;
 
 const toolInteractionReadPort = inject(ToolInteractionReadInjectionKey);
 if (!toolInteractionReadPort) throw new Error('Tool interaction read port not provided');
@@ -209,7 +218,7 @@ const controller = new CanvasInteractionController({
     clearSelection: () => selectionActionsRequired.clearSelection(),
   },
   toolLifecycle: {
-    setToolStepMessage: msg => toolRuntime.setToolStepMessage(msg),
+    setToolStepMessage: msg => toolRuntimeRequired.setToolStepMessage(msg),
   },
   toolReadPort: toolInteractionReadPort,
   viewport: {
@@ -232,6 +241,8 @@ const canvasHeight = ref(1000);
 // Properties dialog state
 const showPropertiesDialog = ref(false);
 const propertiesElementId = ref<string | null>(null);
+const show3DPointCoordinatesDialog = ref(false);
+const create3DPointCoordinatesError = ref('');
 
 // Viewport transformation (pan/zoom) - read-only from store
 const viewport = computed<ViewportTransform>(() => viewStore.viewportState.value);
@@ -274,8 +285,12 @@ let lastCoordinateUpdate = 0;
 const COORDINATE_UPDATE_THROTTLE_MS = 50;
 
 // Watch for tool changes and forward to controller
-watch(() => toolRuntime.currentTool.value, (newTool) => {
+watch(() => toolRuntimeRequired.currentTool.value, (newTool) => {
   controller.setToolName(newTool);
+  if (newTool === 'create3dpoint-by-coordinates') {
+    create3DPointCoordinatesError.value = '';
+    show3DPointCoordinatesDialog.value = true;
+  }
 }, { immediate: true });
 
 function updateCanvasDimensions() {
@@ -533,6 +548,29 @@ function handleSaveProperties(changes: any) {
     },
   });
   if (!result.success) console.error('[SvgCanvas] Style update failed:', result.message);
+}
+
+function close3DPointCoordinatesDialog(): void {
+  show3DPointCoordinatesDialog.value = false;
+  create3DPointCoordinatesError.value = '';
+  if (toolRuntimeRequired.currentTool.value === 'create3dpoint-by-coordinates') {
+    toolRuntimeRequired.setTool('select');
+  }
+}
+
+function handleCreate3DPointCoordinates(coordinates: { x: number; y: number; z: number }): void {
+  const result = canvasToolController.executeConstructionIntent({
+    type: 'create3dpoint-by-coordinates',
+    coordinates: new Vector3(coordinates.x, coordinates.y, coordinates.z),
+    description: `Create 3D point (${coordinates.x}, ${coordinates.y}, ${coordinates.z})`,
+  });
+
+  if (!result.success) {
+    create3DPointCoordinatesError.value = result.message || 'Could not create 3D point.';
+    return;
+  }
+
+  close3DPointCoordinatesDialog();
 }
 
 function handleMouseMove(event: MouseEvent) {
