@@ -38,6 +38,38 @@
           </div>
         </section>
 
+        <!-- Position Section (Editable for free points) -->
+        <section class="position-section" v-if="canEditPosition">
+          <h3>Position</h3>
+          <div class="position-controls">
+            <div class="control-row">
+              <label for="position-u-input">u:</label>
+              <input
+                id="position-u-input"
+                type="number"
+                step="any"
+                v-model.number="editableU"
+                class="coordinate-input"
+                :class="{ 'input-error': positionError }"
+                @blur="validatePosition"
+              />
+            </div>
+            <div class="control-row">
+              <label for="position-v-input">v:</label>
+              <input
+                id="position-v-input"
+                type="number"
+                step="any"
+                v-model.number="editableV"
+                class="coordinate-input"
+                :class="{ 'input-error': positionError }"
+                @blur="validatePosition"
+              />
+            </div>
+          </div>
+          <div v-if="positionError" class="error-message">{{ positionError }}</div>
+        </section>
+
         <!-- Visual Style Section (Editable) -->
         <section class="visual-style-section">
           <h3>Visual Style</h3>
@@ -166,8 +198,10 @@ interface Props {
   viewModel: PropertiesDialogViewModel | null;
 }
 
-interface StyleChanges {
+interface PropertiesChanges {
   elementId: string;
+  planeId?: string | null;
+  position?: { u: number; v: number };
   color?: string;
   lineWidth?: number;
   lineStyle?: string;
@@ -177,10 +211,12 @@ interface StyleChanges {
 const props = defineProps<Props>();
 const emit = defineEmits<{
   close: [];
-  save: [changes: StyleChanges];
+  save: [changes: PropertiesChanges];
 }>();
 
 // Editable state
+const editableU = ref<number>(0);
+const editableV = ref<number>(0);
 const editableColor = ref<string>('#000000');
 const editableLineWidth = ref<number>(1.0);
 const editableLineStyle = ref<string>('solid');
@@ -196,6 +232,7 @@ const visibilityOverride = ref<boolean>(false);
 const colorError = ref<string>('');
 const lineWidthError = ref<string>('');
 const lineStyleError = ref<string>('');
+const positionError = ref<string>('');
 
 // Computed properties for display
 const elementLabel = computed(() => props.viewModel?.elementLabel ?? 'Unknown');
@@ -204,6 +241,7 @@ const planeId = computed(() => props.viewModel?.planeId ?? null);
 const coordinates = computed(() => props.viewModel?.coordinates ?? null);
 const dependencies = computed(() => props.viewModel?.dependencies ?? []);
 const createdBy = computed(() => props.viewModel?.createdBy ?? null);
+const canEditPosition = computed(() => props.viewModel?.position?.editable === true);
 
 const hasLineStyle = computed(() => {
   const type = elementType.value;
@@ -224,6 +262,9 @@ watch(() => props.viewModel, () => {
 });
 
 function loadElementProperties() {
+  editableU.value = props.viewModel?.position?.u ?? 0;
+  editableV.value = props.viewModel?.position?.v ?? 0;
+
   const style = props.viewModel?.style;
   editableColor.value = style?.color ?? '#000000';
   editableLineWidth.value = style?.lineWidth ?? 1.0;
@@ -240,6 +281,22 @@ function loadElementProperties() {
   colorError.value = '';
   lineWidthError.value = '';
   lineStyleError.value = '';
+  positionError.value = '';
+}
+
+function validateFiniteCoordinate(value: number, label: string): boolean {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    positionError.value = `${label} must be a finite number`;
+    return false;
+  }
+  return true;
+}
+
+function validatePosition(): boolean {
+  if (!validateFiniteCoordinate(editableU.value, 'u')) return false;
+  if (!validateFiniteCoordinate(editableV.value, 'v')) return false;
+  positionError.value = '';
+  return true;
 }
 
 /**
@@ -299,6 +356,9 @@ function handleSave() {
   if (lineStyleOverride.value && !validateLineStyle(editableLineStyle.value)) {
     isValid = false;
   }
+  if (canEditPosition.value && !validatePosition()) {
+    isValid = false;
+  }
   
   // Don't save if validation failed
   if (!isValid) {
@@ -306,9 +366,17 @@ function handleSave() {
     return;
   }
   
-  const changes: StyleChanges = {
+  const changes: PropertiesChanges = {
     elementId: props.viewModel.elementId,
+    planeId: props.viewModel.planeId,
   };
+
+  if (canEditPosition.value) {
+    const currentPosition = props.viewModel.position;
+    if (!currentPosition || editableU.value !== currentPosition.u || editableV.value !== currentPosition.v) {
+      changes.position = { u: editableU.value, v: editableV.value };
+    }
+  }
   
   // Only include overridden properties
   if (colorOverride.value) {
@@ -450,6 +518,12 @@ section h3 {
   gap: 12px;
 }
 
+.position-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
 .control-row {
   display: flex;
   align-items: center;
@@ -488,6 +562,14 @@ section h3 {
   padding: 6px 8px;
   border: 1px solid #ccc;
   border-radius: 4px;
+}
+
+.coordinate-input {
+  width: 100px;
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-family: "Fira Code", "Consolas", "Monaco", monospace;
 }
 
 .control-row select {

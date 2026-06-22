@@ -40,6 +40,29 @@ describe('UpdateFreePoint2DPositionOp', () => {
     expect(restored.position.y).toBe(20);
   });
 
+  it('preserves free point visual style while moving and undoing', () => {
+    const plane = getHorizontalPlane(world);
+    const planeId = getHorizontalPlaneId(world);
+    const point = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(10, 20, 1));
+    point.visualStyle = {
+      color: '#ff0000',
+      lineWidth: 3,
+      lineStyle: 'dashed',
+      opacity: 0.5,
+      visible: true,
+      inherited: false,
+    };
+
+    const op = new UpdateFreePoint2DPositionOp(planeId, point.id, new Vector3(100, 200, 1));
+    const result = op.apply(operationContext);
+    expect(result.success).toBe(true);
+
+    expect(plane.getPoint(point.id)?.visualStyle).toEqual(point.visualStyle);
+
+    op.undo(operationContext);
+    expect(plane.getPoint(point.id)?.visualStyle).toEqual(point.visualStyle);
+  });
+
   it('refuses to move locked points (origins)', () => {
     const planeId = getHorizontalPlaneId(world);
     const originId = getHorizontalOriginId(world);

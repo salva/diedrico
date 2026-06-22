@@ -35,6 +35,11 @@ export interface PropertiesDialogViewModel {
   readonly elementType: string;
   readonly planeId: string | null;
   readonly coordinates: string | null;
+  readonly position: {
+    readonly u: number;
+    readonly v: number;
+    readonly editable: boolean;
+  } | null;
   readonly dependencies: readonly string[];
   readonly createdBy: string | null;
   readonly style: {

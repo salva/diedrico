@@ -10,6 +10,7 @@ import type { IOperation, JsonObject, OperationDescriptor, OperationResult } fro
 import type { OperationContext } from '../OperationContext';
 import { FreePoint2D } from '@/domain/world/Point';
 import { invalidateRealization } from './operationHelpers';
+import type { VisualStyle } from '@/domain/world/VisualStyle';
 
 type SerializableVector3 = { x: number; y: number; z: number };
 
@@ -34,6 +35,7 @@ export class UpdateFreePoint2DPositionOp implements IOperation<UpdateFreePoint2D
   private previousPosition?: Vector3;
   private previousLabel?: string;
   private previousLocked?: boolean;
+  private previousStyle?: VisualStyle;
 
   constructor(
     private planeId: string,
@@ -67,11 +69,13 @@ export class UpdateFreePoint2DPositionOp implements IOperation<UpdateFreePoint2D
         this.previousPosition = toVector3(freePoint.position);
         this.previousLabel = freePoint.label;
         this.previousLocked = freePoint.locked;
+        this.previousStyle = freePoint.visualStyle ? { ...freePoint.visualStyle } : undefined;
       }
 
       const nextPos = toVector3(this.newPosition);
       const updated = new FreePoint2D(this.pointId, nextPos, this.planeId, this.previousLabel);
       updated.locked = this.previousLocked ?? false;
+      updated.visualStyle = freePoint.visualStyle ? { ...freePoint.visualStyle } : undefined;
 
       invalidateRealization(context, this.pointId);
 
@@ -100,6 +104,7 @@ export class UpdateFreePoint2DPositionOp implements IOperation<UpdateFreePoint2D
 
     const restored = new FreePoint2D(this.pointId, this.previousPosition, this.planeId, this.previousLabel);
     restored.locked = this.previousLocked ?? false;
+    restored.visualStyle = this.previousStyle ? { ...this.previousStyle } : undefined;
 
     invalidateRealization(context, this.pointId);
 

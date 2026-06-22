@@ -1,7 +1,7 @@
 import { Circle2DByCenterAndPoint, Circle2DByThreePoints } from '@/domain/world/Circle';
 import { Guide2D } from '@/domain/world/Guide';
 import { Line2DByTwoPoints } from '@/domain/world/Line';
-import { Point2DCircleCircleIntersection, Point2DLineCircleIntersection, Point2DLineLineIntersection } from '@/domain/world/Point';
+import { FreePoint2D, Point2DCircleCircleIntersection, Point2DLineCircleIntersection, Point2DLineLineIntersection } from '@/domain/world/Point';
 import { Segment2D } from '@/domain/world/Segment';
 import type { VisualStyle } from '@/domain/world/VisualStyle';
 import type { World } from '@/domain/world/World';
@@ -30,6 +30,7 @@ export function buildPropertiesDialogViewModel(
     elementType: describeElementType(elementId, context.world),
     planeId: typeof element.planeId === 'string' ? element.planeId : null,
     coordinates: describeCoordinates(elementId, context.world, context.realizationContext),
+    position: describeEditablePosition(elementId, context.world),
     dependencies: describeDependencies(elementId, context.world),
     createdBy: 'Action in ProcessTree',
     style: styleView(element.visualStyle),
@@ -50,6 +51,17 @@ function describeElementType(elementId: string, world: PropertiesDialogReadModel
   if (lookup.getLine2D(elementId)) return '2D Line';
   if (lookup.getCircle2D(elementId)) return '2D Circle';
   throw new Error(`Selected 2D element not found: ${elementId}`);
+}
+
+function describeEditablePosition(elementId: string, world: PropertiesDialogReadModelContext['world']): PropertiesDialogViewModel['position'] {
+  if (!elementId.includes('/')) return null;
+  const point = new GeometryElementLookup(world).getPoint2D(elementId);
+  if (!(point instanceof FreePoint2D) || point.locked) return null;
+  return {
+    u: point.position.x,
+    v: point.position.y,
+    editable: true,
+  };
 }
 
 function describeCoordinates(elementId: string, world: PropertiesDialogReadModelContext['world'], realizationContext: CachedProjectionElementRealizationContext): string | null {

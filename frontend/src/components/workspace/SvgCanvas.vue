@@ -492,11 +492,38 @@ function handleDoubleClick(event: MouseEvent) {
 }
 
 function handleSaveProperties(changes: any) {
-  const activePlaneId = activePlane.value;
-  if (!activePlaneId) return;
+  const targetPlaneId = changes.planeId ?? activePlane.value;
+  if (!targetPlaneId) return;
+
+  if (changes.position) {
+    const session = canvasViewPortRequired.getMovableFreePointMoveSession({
+      planeId: targetPlaneId,
+      pointId: changes.elementId,
+      commandSink: canvasToolController,
+    });
+    if (!session) {
+      console.error('[SvgCanvas] Point position update failed: point is not movable');
+      return;
+    }
+    const preview = session.preview(new Vector3(changes.position.u, changes.position.v, 1));
+    if (!preview.success) {
+      session.cancel();
+      console.error('[SvgCanvas] Point position preview failed:', preview.message);
+      return;
+    }
+    const commit = session.commit();
+    if (!commit.success) {
+      console.error('[SvgCanvas] Point position commit failed:', commit.message);
+      return;
+    }
+  }
+
+  const hasStyleChanges = ['color', 'lineWidth', 'lineStyle', 'opacity', 'visible'].some(key => changes[key] !== undefined);
+  if (!hasStyleChanges) return;
+
   const result = canvasToolController.updateElementStyle({
     elementId: changes.elementId,
-    planeId: activePlaneId,
+    planeId: targetPlaneId,
     style: {
       color: changes.color,
       lineWidth: changes.lineWidth,

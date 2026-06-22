@@ -27,6 +27,7 @@ describe('PropertiesDialog', () => {
       elementType: '2D Point',
       planeId: 'proj_plane_H',
       coordinates: '(0.00, 0.00)',
+      position: { u: 0, v: 0, editable: true },
       dependencies: [],
       createdBy: 'Action in ProcessTree',
       style: { color: '#000000', lineWidth: 1, lineStyle: 'solid', visible: true },
@@ -36,6 +37,7 @@ describe('PropertiesDialog', () => {
       elementId: 'proj_plane_H/line2d_1',
       elementLabel: 'proj_plane_H/line2d_1',
       elementType: '2D Line',
+      position: null,
       dependencies: ['proj_plane_H/point2d_1', 'proj_plane_H/point2d_2'],
     };
   });
@@ -109,9 +111,6 @@ describe('PropertiesDialog', () => {
 
   describe('Element type detection', () => {
     it('should display "2D Point" for point elements', () => {
-      // Add a point to world
-      const pointId = testPointId;
-      
       const wrapper = mount(PropertiesDialog, {
         props: {
           isOpen: true,
@@ -123,8 +122,6 @@ describe('PropertiesDialog', () => {
     });
 
     it('should display plane ID for 2D elements', () => {
-      const pointId = testPointId;
-      
       const wrapper = mount(PropertiesDialog, {
         props: {
           isOpen: true,
@@ -225,6 +222,68 @@ describe('PropertiesDialog', () => {
   });
 
   describe('Save behavior', () => {
+    it('should render editable coordinate inputs for free points', () => {
+      const wrapper = mount(PropertiesDialog, {
+        props: {
+          isOpen: true,
+          viewModel: pointViewModel
+        }
+      });
+
+      expect(wrapper.find('#position-u-input').exists()).toBe(true);
+      expect(wrapper.find('#position-v-input').exists()).toBe(true);
+      expect((wrapper.find('#position-u-input').element as HTMLInputElement).value).toBe('0');
+      expect((wrapper.find('#position-v-input').element as HTMLInputElement).value).toBe('0');
+    });
+
+    it('should not render coordinate inputs for non-editable elements', () => {
+      const wrapper = mount(PropertiesDialog, {
+        props: {
+          isOpen: true,
+          viewModel: lineViewModel
+        }
+      });
+
+      expect(wrapper.find('#position-u-input').exists()).toBe(false);
+      expect(wrapper.find('#position-v-input').exists()).toBe(false);
+    });
+
+    it('should block save when coordinate values are invalid', async () => {
+      const wrapper = mount(PropertiesDialog, {
+        props: {
+          isOpen: true,
+          viewModel: pointViewModel
+        }
+      });
+
+      await wrapper.find('#position-u-input').setValue('not-a-number');
+      await wrapper.find('.button-primary').trigger('click');
+
+      expect(wrapper.emitted('save')).toBeFalsy();
+      expect(wrapper.text()).toContain('u must be a finite number');
+    });
+
+    it('should emit position changes for free point coordinate edits', async () => {
+      const onSave = vi.fn();
+      const wrapper = mount(PropertiesDialog, {
+        props: {
+          isOpen: true,
+          viewModel: pointViewModel,
+          onSave
+        }
+      });
+
+      await wrapper.find('#position-u-input').setValue('3');
+      await wrapper.find('#position-v-input').setValue('-4');
+      await wrapper.find('.button-primary').trigger('click');
+
+      expect(onSave).toHaveBeenCalledOnce();
+      const saveEvent = onSave.mock.calls[0][0];
+      expect(saveEvent.elementId).toStrictEqual(testPointId);
+      expect(saveEvent.planeId).toBe('proj_plane_H');
+      expect(saveEvent.position).toEqual({ u: 3, v: -4 });
+    });
+
     it('should not save with validation errors', async () => {
       const wrapper = mount(PropertiesDialog, {
         props: {
@@ -281,8 +340,6 @@ describe('PropertiesDialog', () => {
     });
 
     it('should only include overridden properties in save event', async () => {
-      const pointId = testPointId;
-      
       const onSave = vi.fn();
       const wrapper = mount(PropertiesDialog, {
         props: {
