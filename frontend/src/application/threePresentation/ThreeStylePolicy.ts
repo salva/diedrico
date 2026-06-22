@@ -9,6 +9,7 @@ export const THREE_STYLE = {
   projectionPlane: { color: 0xdddddd, opacity: 0.18, transparent: true },
   planarElement: { color: 0x2196f3, opacity: 0.7, transparent: true, radius: 0.15 },
   reconstructedElement: { color: 0xff6b35, opacity: 1, radius: 0.15 },
+  projectionLine: { color: 0x666666, opacity: 0.65, transparent: true, dashSize: 0.35, gapSize: 0.22, lineWidth: 1 },
   reconstructedPlane: { color: 0xbdbdbd, opacity: 0.4, transparent: true },
   guidePlane: { color: 0x00bcd4, opacity: 0.25, transparent: true },
   guideMarker: { color: 0xffd700, radius: 0.25 },

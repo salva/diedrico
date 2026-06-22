@@ -9,7 +9,7 @@ export interface ThreeViewDisplayOptions {
   /** Show 2D elements positioned on their planes in 3D space (Phase 77) */
   show2DElementsOnPlanes: boolean;
   
-  /** Show linking visuals between related elements */
+  /** Show projection connector lines from 3D points to their plane projections */
   showLinkingVisuals: boolean;
   
   /** Show 3D coordinate grid */

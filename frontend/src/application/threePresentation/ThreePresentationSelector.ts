@@ -8,11 +8,13 @@ import { createThreePresentationContext } from './ThreePresentationContext';
 import { ProjectionPlane3DSelector } from './ProjectionPlane3DSelector';
 import { PlanarElement3DSelector } from './PlanarElement3DSelector';
 import { ReconstructedElement3DSelector } from './ReconstructedElement3DSelector';
+import { ProjectionLine3DSelector } from './ProjectionLine3DSelector';
 import { Guide3DSelector } from './Guide3DSelector';
 import { Hinge3DSelector } from './Hinge3DSelector';
 import { buildProjectionPlaneModels } from './ThreeProjectionPlaneBuilder';
 import { buildPlanarPlaneModels } from './ThreePlanarElementBuilder';
 import { buildReconstructedModels } from './ThreeReconstructedElementBuilder';
+import { buildProjectionLineModels } from './ThreeProjectionLineBuilder';
 import { buildGuideIntersectionModels, buildSelectedGuideModels } from './ThreeGuideBuilder';
 import { buildHingeModels } from './ThreeHingeBuilder';
 
@@ -32,6 +34,7 @@ export function buildThreePresentationModel(input: ThreePresentationBuilderInput
     projectionPlanes: buildProjectionPlaneModels(context),
     planarPlanes: buildPlanarPlaneModels(context),
     reconstructedElements: buildReconstructedModels(context),
+    projectionLines: buildProjectionLineModels(context),
     guides,
     guideIntersections: guides.length ? buildGuideIntersectionModels(context) : undefined,
     hinges: buildHingeModels(context),
@@ -43,6 +46,7 @@ interface ThreePresentationSelectionInput {
   projectionPlanes: ReturnType<typeof buildProjectionPlaneModels>;
   planarPlanes: ReturnType<typeof buildPlanarPlaneModels>;
   reconstructedElements: ReturnType<typeof buildReconstructedModels>;
+  projectionLines: ReturnType<typeof buildProjectionLineModels>;
   guides: ReturnType<typeof buildSelectedGuideModels>;
   guideIntersections: ReturnType<typeof buildGuideIntersectionModels> | undefined;
   hinges: ReturnType<typeof buildHingeModels>;
@@ -54,6 +58,7 @@ export class ThreePresentationSelector {
     private readonly projectionPlanes = new ProjectionPlane3DSelector(),
     private readonly planarElements = new PlanarElement3DSelector(),
     private readonly reconstructedElements = new ReconstructedElement3DSelector(),
+    private readonly projectionLines = new ProjectionLine3DSelector(),
     private readonly guides = new Guide3DSelector(),
     private readonly hinges = new Hinge3DSelector(),
   ) {}
@@ -64,6 +69,7 @@ export class ThreePresentationSelector {
       projectionPlanes: this.projectionPlanes.select(input.projectionPlanes, displayOptions.showPlanes, displayOptions.showGrid, displayOptions.showReferenceAxes),
       planarElements: this.planarElements.select(input.planarPlanes, displayOptions.show2DElementsOnPlanes),
       reconstructedElements: this.reconstructedElements.select(input.reconstructedElements, displayOptions.showPlanes),
+      projectionLines: this.projectionLines.select(input.projectionLines, displayOptions.showLinkingVisuals),
       guides: this.guides.select(input.guides, input.guideIntersections),
       hinges: this.hinges.select(input.hinges, displayOptions.showPlanes),
     };

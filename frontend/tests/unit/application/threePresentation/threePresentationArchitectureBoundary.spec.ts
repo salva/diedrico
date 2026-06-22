@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import projectionPlaneSelectorSource from '../../../../src/application/threePresentation/ProjectionPlane3DSelector.ts?raw';
 import planarSelectorSource from '../../../../src/application/threePresentation/PlanarElement3DSelector.ts?raw';
 import reconstructedSelectorSource from '../../../../src/application/threePresentation/ReconstructedElement3DSelector.ts?raw';
+import projectionLineSelectorSource from '../../../../src/application/threePresentation/ProjectionLine3DSelector.ts?raw';
 import guideSelectorSource from '../../../../src/application/threePresentation/Guide3DSelector.ts?raw';
 import hingeSelectorSource from '../../../../src/application/threePresentation/Hinge3DSelector.ts?raw';
 import presentationSelectorSource from '../../../../src/application/threePresentation/ThreePresentationSelector.ts?raw';
@@ -10,6 +11,7 @@ import presentationReadModelSource from '../../../../src/application/threePresen
 import projectionPlaneBuilderSource from '../../../../src/application/threePresentation/ThreeProjectionPlaneBuilder.ts?raw';
 import planarBuilderSource from '../../../../src/application/threePresentation/ThreePlanarElementBuilder.ts?raw';
 import reconstructedBuilderSource from '../../../../src/application/threePresentation/ThreeReconstructedElementBuilder.ts?raw';
+import projectionLineBuilderSource from '../../../../src/application/threePresentation/ThreeProjectionLineBuilder.ts?raw';
 import guideBuilderSource from '../../../../src/application/threePresentation/ThreeGuideBuilder.ts?raw';
 import hingeBuilderSource from '../../../../src/application/threePresentation/ThreeHingeBuilder.ts?raw';
 import realizationContextSource from '../../../../src/application/threePresentation/ThreeRealizationContext.ts?raw';
@@ -17,9 +19,9 @@ import runtimeViewPortsSource from '../../../../src/application/appShell/Runtime
 import canvasContextSource from '../../../../src/application/canvasPresentation/CanvasPresentationContext.ts?raw';
 import threeViewSource from '../../../../src/components/panels/ThreeView.vue?raw';
 
-const selectorSources = [projectionPlaneSelectorSource, planarSelectorSource, reconstructedSelectorSource, guideSelectorSource, hingeSelectorSource];
-const builderSources = [projectionPlaneBuilderSource, planarBuilderSource, reconstructedBuilderSource, guideBuilderSource, hingeBuilderSource, realizationContextSource];
-const contextPrivateSources = [presentationContextSource, projectionPlaneBuilderSource, planarBuilderSource, reconstructedBuilderSource, guideBuilderSource, hingeBuilderSource];
+const selectorSources = [projectionPlaneSelectorSource, planarSelectorSource, reconstructedSelectorSource, projectionLineSelectorSource, guideSelectorSource, hingeSelectorSource];
+const builderSources = [projectionPlaneBuilderSource, planarBuilderSource, reconstructedBuilderSource, projectionLineBuilderSource, guideBuilderSource, hingeBuilderSource, realizationContextSource];
+const contextPrivateSources = [presentationContextSource, projectionPlaneBuilderSource, planarBuilderSource, reconstructedBuilderSource, projectionLineBuilderSource, guideBuilderSource, hingeBuilderSource];
 const selectorAndReadModelSources = [presentationReadModelSource, ...selectorSources];
 
 describe('three presentation architecture boundary', () => {
@@ -31,6 +33,7 @@ describe('three presentation architecture boundary', () => {
     expect(presentationSelectorSource).toContain('input.projectionPlanes');
     expect(presentationSelectorSource).toContain('input.planarPlanes');
     expect(presentationSelectorSource).toContain('input.reconstructedElements');
+    expect(presentationSelectorSource).toContain('input.projectionLines');
   });
 
   it('keeps World imports localized to presentation builders and realization context helper', () => {

@@ -1,6 +1,6 @@
 export type Vec3 = { x: number; y: number; z: number };
 export type QuaternionDto = { x: number; y: number; z: number; w: number };
-export type ThreeRenderGroup = 'projectionPlanes' | 'planarElements' | 'reconstructedElements' | 'guides' | 'hinges' | 'axes' | 'labels';
+export type ThreeRenderGroup = 'projectionPlanes' | 'planarElements' | 'reconstructedElements' | 'projectionLines' | 'guides' | 'hinges' | 'axes' | 'labels';
 
 export interface ThreeStyleDto { color: number | string; opacity?: number; lineWidth?: number; radius?: number; transparent?: boolean; dashSize?: number; gapSize?: number }
 
@@ -20,6 +20,7 @@ export interface PlanarCircleDto extends BaseDto { kind: 'planar-circle'; points
 export interface ReconstructedPointDto extends BaseDto { kind: 'reconstructed-point'; position: Vec3 }
 export interface ReconstructedLineDto extends BaseDto { kind: 'reconstructed-line' | 'reconstructed-segment'; start: Vec3; end: Vec3 }
 export interface ReconstructedPlaneDto extends BaseDto { kind: 'reconstructed-plane'; geometry: PlaneGeometryDto }
+export interface ProjectionLineDto extends BaseDto { kind: 'projection-line'; start: Vec3; end: Vec3 }
 
 export interface HingeLineDto extends BaseDto { kind: 'hinge-line'; start: Vec3; end: Vec3 }
 export interface GuidePerpendicularPlaneDto extends BaseDto { kind: 'guide-perpendicular-plane'; geometry: PlaneGeometryDto }
@@ -28,6 +29,7 @@ export interface GuideIntersectionMarkerDto extends BaseDto { kind: 'guide-inter
 export type ProjectionPlanePresentationDto = ProjectionPlaneGridDto | ProjectionPlaneSurfaceDto | AxisDto | LabelDto;
 export type PlanarElementPresentationDto = PlanarPointDto | PlanarLineDto | PlanarCircleDto;
 export type ReconstructedElementPresentationDto = ReconstructedPointDto | ReconstructedLineDto | ReconstructedPlaneDto;
+export type ProjectionLinePresentationDto = ProjectionLineDto;
 export type GuidePresentationDto = GuidePerpendicularPlaneDto | GuideIntersectionMarkerDto;
 export type HingePresentationDto = HingeLineDto;
 
@@ -35,6 +37,7 @@ export interface ThreePresentationModel {
   projectionPlanes: ProjectionPlanePresentationDto[];
   planarElements: PlanarElementPresentationDto[];
   reconstructedElements: ReconstructedElementPresentationDto[];
+  projectionLines: ProjectionLinePresentationDto[];
   guides: GuidePresentationDto[];
   hinges: HingePresentationDto[];
 }

@@ -4,6 +4,7 @@ import { ThreeSceneHost, type ThreeSceneHostMount } from './ThreeSceneHost';
 import { createProjectionPlaneSceneObjects } from './ProjectionPlaneSceneAdapter';
 import { createPlanarElementSceneObjects } from './PlanarElementSceneAdapter';
 import { createReconstructedElementSceneObjects } from './ReconstructedElementSceneAdapter';
+import { createProjectionLineSceneObjects } from './ProjectionLineSceneAdapter';
 import { createGuideSceneObjects } from './GuideSceneAdapter';
 import { createHingeSceneObjects } from './HingeSceneAdapter';
 
@@ -18,7 +19,7 @@ export interface ThreeViewRuntimeHost {
   dispose(): void;
 }
 
-export type ThreeViewRuntimeGroup = 'projectionPlanes' | 'planarElements' | 'reconstructedElements' | 'guides' | 'hinges';
+export type ThreeViewRuntimeGroup = 'projectionPlanes' | 'planarElements' | 'reconstructedElements' | 'projectionLines' | 'guides' | 'hinges';
 
 export interface ThreeViewRuntimeOptions {
   host?: ThreeViewRuntimeHost;
@@ -37,6 +38,7 @@ export class ThreeViewRuntime {
     this.replaceGroup('projectionPlanes', createProjectionPlaneSceneObjects(model.projectionPlanes));
     this.replaceGroup('planarElements', createPlanarElementSceneObjects(model.planarElements));
     this.replaceGroup('reconstructedElements', createReconstructedElementSceneObjects(model.reconstructedElements));
+    this.replaceGroup('projectionLines', createProjectionLineSceneObjects(model.projectionLines));
     this.replaceGroup('guides', createGuideSceneObjects(model.guides));
     this.replaceGroup('hinges', createHingeSceneObjects(model.hinges));
   }

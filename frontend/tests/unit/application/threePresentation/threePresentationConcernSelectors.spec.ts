@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { Vector3, Vector4 } from 'three';
 import { Guide2D } from '@/domain/world/Guide';
+import { FreePoint2D } from '@/domain/world/Point';
+import { Point3DFromProjections } from '@/domain/world/Point3D';
 import { RealizationService } from '@/domain/world/RealizationService';
 import { mat4x3 } from '@/utils/threeUtils';
 import { VisibilityModel } from '@/application/processTree/VisibilityModel';
@@ -10,8 +12,10 @@ import { buildThreePresentationModel } from '@/application/threePresentation/Thr
 import { ProjectionPlane3DSelector } from '@/application/threePresentation/ProjectionPlane3DSelector';
 import { PlanarElement3DSelector } from '@/application/threePresentation/PlanarElement3DSelector';
 import { ReconstructedElement3DSelector } from '@/application/threePresentation/ReconstructedElement3DSelector';
+import { ProjectionLine3DSelector } from '@/application/threePresentation/ProjectionLine3DSelector';
 import { Guide3DSelector } from '@/application/threePresentation/Guide3DSelector';
 import { Hinge3DSelector } from '@/application/threePresentation/Hinge3DSelector';
+import { buildProjectionLineModels } from '@/application/threePresentation/ThreeProjectionLineBuilder';
 
 const planeTo3D = mat4x3(1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1);
 const feasiblePlaneRealization = { feasible: true, planeTo3D, threeDToPlane: { elements: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0] } };
@@ -63,6 +67,39 @@ describe('threePresentation concern selectors', () => {
 
     expect(kinds).toEqual(expect.arrayContaining(['reconstructed-point', 'reconstructed-line', 'reconstructed-segment', 'reconstructed-plane']));
     expect(new ReconstructedElement3DSelector().select(models, false)).toEqual([]);
+  });
+
+  it('builds projection-line DTOs only when the display option is enabled', () => {
+    const lines = [{ id: 'point3d-a-PH/a', kind: 'projection-line' as const, planeId: 'PH', visible: true, style: { color: 0x666666 }, start: { x: 1, y: 2, z: 3 }, end: { x: 1, y: 2, z: 0 } }];
+
+    expect(new ProjectionLine3DSelector().select(lines, false)).toEqual([]);
+    const dtos = new ProjectionLine3DSelector().select(lines, true);
+
+    expect(dtos).toHaveLength(1);
+    expect(dtos[0]).toMatchObject({ id: 'projection-line-point3d-a-PH/a', kind: 'projection-line', sourceEntityId: 'point3d-a-PH/a', planeId: 'PH', renderGroup: 'projectionLines' });
+  });
+
+  it('builds 3D point projection connectors only for effectively visible projections', () => {
+    const point3D = new Point3DFromProjections('point3d-a', 'A', 'PH/a', 'PV/a', 'PH', 'PV', visibleStyle as never);
+    const horizontalProjection = new FreePoint2D('PH/a', new Vector3(3, -4, 1), 'PH');
+    const verticalProjection = new FreePoint2D('PV/a', new Vector3(3, 5, 1), 'PV');
+    horizontalProjection.visualStyle = visibleStyle as never;
+    verticalProjection.visualStyle = visibleStyle as never;
+    const context = {
+      realizationContext: {},
+      get3DPoints: () => [point3D],
+      get3DPointRealization: () => feasible({ getCartesian: () => [3, -4, 5] }),
+      getPoint2D: (id: string) => id === horizontalProjection.id ? horizontalProjection : id === verticalProjection.id ? verticalProjection : undefined,
+      getProjectionPlane3DRealization: () => feasiblePlaneRealization,
+      isElementVisible: (element: { id: string }) => element.id !== verticalProjection.id,
+    };
+
+    const lines = buildProjectionLineModels(context as never);
+
+    expect(lines).toHaveLength(1);
+    expect(lines[0]).toMatchObject({ id: 'point3d-a-PH/a', kind: 'projection-line', planeId: 'PH', visible: true, style: { color: 0x666666 } });
+    expect(lines[0].start).toMatchObject({ x: 3, y: 4, z: 5 });
+    expect(lines[0].end).toMatchObject({ x: 3, y: 4 });
   });
 
   it('builds selected-guide perpendicular-plane and intersection-marker DTOs from selected IDs', () => {
@@ -121,7 +158,7 @@ describe('threePresentation concern selectors', () => {
       processTree,
       visibilityModel,
       selectedIds: ['PH/guide-1'],
-      displayOptions: { showPlanes: true, show2DElementsOnPlanes: true, showGrid: true, showReferenceAxes: false },
+      displayOptions: { showPlanes: true, show2DElementsOnPlanes: true, showLinkingVisuals: false, showGrid: true, showReferenceAxes: false },
     });
 
     expect(model.projectionPlanes[0]).not.toHaveProperty('realization');
@@ -170,7 +207,7 @@ describe('threePresentation concern selectors', () => {
       processTree,
       visibilityModel,
       selectedIds: [],
-      displayOptions: { showPlanes: true, show2DElementsOnPlanes: true, showGrid: true, showReferenceAxes: false },
+      displayOptions: { showPlanes: true, show2DElementsOnPlanes: true, showLinkingVisuals: false, showGrid: true, showReferenceAxes: false },
     });
 
     expect(model.reconstructedElements).toEqual([]);

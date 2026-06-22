@@ -1,6 +1,7 @@
 import type { HingeLine } from '@/domain/world/HingeLine';
 import type { Element3D } from '@/domain/world/Element3D';
 import type { Line2D } from '@/domain/world/Line';
+import type { Point2D } from '@/domain/world/Point';
 import type { Plane3DRealization3D, Point3DRealization3D, Line3DRealization3D, Segment3DRealization3D } from '@/domain/world/Element3DRealization3D';
 import type { ProjectionPlane } from '@/domain/world/projectionPlane/ProjectionPlane';
 import type { ProjectionPlaneRealization3D } from '@/domain/world/projectionPlane/ProjectionPlaneRealization';
@@ -26,6 +27,7 @@ export interface ThreePresentationContext {
   get3DPointRealization(id: string): Point3DRealization3D | undefined;
   get3DLineRealization(id: string): Line3DRealization3D | undefined;
   get3DSegmentRealization(id: string): Segment3DRealization3D | undefined;
+  getPoint2D(id: string): Point2D | undefined;
   getLine2D(id: string): Line2D | undefined;
   isElementVisible(element: Element): boolean;
 }
@@ -68,6 +70,7 @@ export function createThreePresentationContext(
       const segment = world.get3DSegment(id);
       return segment ? realizations.realizeSegment3D(segment, realizationContext) : undefined;
     },
+    getPoint2D: id => lookup.getPoint2D(id),
     getLine2D: id => lookup.getLine2D(id),
     isElementVisible: element => resolveVisibility(element, processTree, visibilityModel),
   };

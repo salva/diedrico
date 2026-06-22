@@ -9,6 +9,7 @@ describe('ThreeViewRuntime', () => {
       projectionPlanes: [{ id: 'projection-plane', kind: 'projection-plane-grid', visible: true, style: { color: 0, opacity: 1, transparent: false }, renderGroup: 'projectionPlanes', segments: [] }],
       planarElements: [{ id: 'planar-point', kind: 'planar-point', visible: true, style: { color: 0 }, renderGroup: 'planarElements', position: { x: 0, y: 0, z: 0 } }],
       reconstructedElements: [{ id: 'reconstructed-point', kind: 'reconstructed-point', visible: true, style: { color: 0 }, renderGroup: 'reconstructedElements', position: { x: 0, y: 0, z: 0 } }],
+      projectionLines: [{ id: 'projection-line', kind: 'projection-line', visible: true, style: { color: 0, dashSize: 0.25, gapSize: 0.25 }, renderGroup: 'projectionLines', start: { x: 0, y: 0, z: 1 }, end: { x: 0, y: 0, z: 0 } }],
       guides: [{ id: 'guide', kind: 'guide-intersection-marker', visible: true, style: { color: 0 }, renderGroup: 'guides', position: { x: 0, y: 0, z: 0 } }],
       hinges: [{ id: 'hinge', kind: 'hinge-line', visible: true, style: { color: 0 }, renderGroup: 'hinges', start: { x: 0, y: 0, z: 0 }, end: { x: 1, y: 0, z: 0 } }],
     };
@@ -22,16 +23,18 @@ describe('ThreeViewRuntime', () => {
 
     new ThreeViewRuntime({ host }).refresh(model);
 
-    expect(replaced.map(entry => entry.group)).toEqual(['projectionPlanes', 'planarElements', 'reconstructedElements', 'guides', 'hinges']);
+    expect(replaced.map(entry => entry.group)).toEqual(['projectionPlanes', 'planarElements', 'reconstructedElements', 'projectionLines', 'guides', 'hinges']);
     expect(replaced[0].objects[0]).toBeInstanceOf(THREE.LineSegments);
     expect(replaced[1].objects[0]).toBeInstanceOf(THREE.Mesh);
     expect(replaced[2].objects[0]).toBeInstanceOf(THREE.Mesh);
-    expect(replaced[3].objects[0]).toBeInstanceOf(THREE.Mesh);
-    expect(replaced[4].objects[0]).toBeInstanceOf(THREE.Line);
+    expect(replaced[3].objects[0]).toBeInstanceOf(THREE.Line);
+    expect(replaced[4].objects[0]).toBeInstanceOf(THREE.Mesh);
+    expect(replaced[5].objects[0]).toBeInstanceOf(THREE.Line);
     expect(replaced.map(entry => entry.objects[0].userData.type)).toEqual([
       'projection-plane-grid',
       'planar-point',
       'reconstructed-point',
+      'projection-line',
       'guide-intersection-marker',
       'hinge-line',
     ]);

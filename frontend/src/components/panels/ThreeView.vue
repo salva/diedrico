@@ -11,6 +11,10 @@
           <input type="checkbox" :checked="displayOptions.show2DElementsOnPlanes" @change="onToggleOption('show2DElementsOnPlanes')" />
           Show 2D Elements on Planes
         </label>
+        <label class="control-label" title="Show dotted connector lines from reconstructed 3D points to their 2D plane projections">
+          <input type="checkbox" :checked="displayOptions.showLinkingVisuals" @change="onToggleOption('showLinkingVisuals')" />
+          Show Projection Lines
+        </label>
         <label class="control-label" title="Show coordinate grid on each projection plane for spatial reference">
           <input type="checkbox" :checked="displayOptions.showGrid" @change="onToggleOption('showGrid')" />
           Show Grid

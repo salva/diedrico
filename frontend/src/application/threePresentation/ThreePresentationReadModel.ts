@@ -68,6 +68,13 @@ export interface ThreeReconstructedReadModel {
   readonly planes: ThreeReconstructedPlaneSourceDto[];
 }
 
+export interface ThreeProjectionLineSourceDto extends ThreeEntitySourceDto {
+  readonly kind: 'projection-line';
+  readonly planeId: string;
+  readonly start: Vec3;
+  readonly end: Vec3;
+}
+
 export interface ThreeGuideSourceDto extends ThreeEntitySourceDto {
   readonly planeId: string;
   readonly planePoint: Vec3;
