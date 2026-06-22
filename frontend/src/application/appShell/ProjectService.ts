@@ -2,12 +2,10 @@
  * ProjectService - current-schema command-stream persistence orchestration.
  */
 
-import { World } from '@/domain/world/World';
 import type { CommandStack } from '@/commands/CommandStack';
 import { Command, type CommandSnapshot } from '@/commands/Command';
 import type { OperationDescriptor } from '@/commands/operations/IOperation';
 import type { OperationContext } from '@/commands/operations/OperationContext';
-import { createOperationContextFromWorld } from '@/commands/operations/OperationContext';
 import { assertOperationDescriptor, assertRestorableOperationDescriptor, deserializeOperation } from '@/commands/operations/OperationRegistry';
 import type { ChangeNotifier } from '@/application/appShell/RuntimeChangePublisher';
 import type { VisibilityModel } from '@/application/processTree/VisibilityModel';
@@ -26,7 +24,7 @@ type SerializedCommand = CommandSnapshot;
 type SerializedOperation = OperationDescriptor;
 
 export class ProjectService {
-  private static readonly SCHEMA_VERSION = '7.0.0';
+  private static readonly SCHEMA_VERSION = '8.0.0';
 
   static serializeCommands(commandStack: CommandStack, nextElementId: number, projectName: string): ProjectData {
     if (!Number.isInteger(nextElementId) || nextElementId < 1) {
@@ -48,16 +46,17 @@ export class ProjectService {
 
   static deserializeCommands(
     data: ProjectData,
-    world: World,
     visibilityModel: VisibilityModel,
     commandStack: CommandStack,
+    operationContext: OperationContext,
     notifier: ChangeNotifier = { notifyChange: () => {} },
-    operationContext: OperationContext = createOperationContextFromWorld(world, visibilityModel),
   ): void {
     this.validateProjectData(data);
     commandStack.clear();
     visibilityModel.clear();
-    world.restoreNextId(data.nextElementId);
+    operationContext.processTree.clear();
+    operationContext.realizations.clear();
+    operationContext.idAllocator.restore(data.nextElementId);
 
     const restoredCommands: Command[] = [];
     for (const serializedCommand of data.commands) {

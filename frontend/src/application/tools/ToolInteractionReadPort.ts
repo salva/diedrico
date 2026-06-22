@@ -1,17 +1,22 @@
 import type { World } from '@/domain/world/World';
+import type { RealizationService } from '@/domain/world/RealizationService';
 import type { ToolInteractionReadPort } from '@/tools/ToolInteractionReadPort';
 import { computeExpectedT2Prime } from '@/utils/projectionPlaneUtils';
+import { createWorldRealizationContext } from '@/domain/world/WorldRealizationContext';
+import { GeometryElementLookup } from '@/domain/world/GeometryElementLookup';
 
-export function createToolInteractionReadPort(world: World): ToolInteractionReadPort {
+export function createToolInteractionReadPort(world: World, realizations: RealizationService): ToolInteractionReadPort {
+  const realizationContext = createWorldRealizationContext(world, realizations);
+  const lookup = new GeometryElementLookup(world);
   return {
     getProjectionPlaneById: (id) => world.getProjectionPlaneById(id),
-    getElement2D: (id) => world.getElement2D(id),
-    getPoint2D: (id) => safeLookup(() => world.getPoint2D(id)),
-    getLine2D: (id) => safeLookup(() => world.getLine2D(id)),
-    getCircle2D: (id) => safeLookup(() => world.getCircle2D(id)),
-    realizePoint2D: (point) => world.realizePoint2D(point),
-    realizeLine2D: (line) => world.realizeLine2D(line),
-    realizeCircle2D: (circle) => world.realizeCircle2D(circle),
+    getElement2D: (id) => lookup.getElement2D(id),
+    getPoint2D: (id) => lookup.getPoint2D(id),
+    getLine2D: (id) => lookup.getLine2D(id),
+    getCircle2D: (id) => lookup.getCircle2D(id),
+    realizePoint2D: (point) => realizations.realizePoint2D(point, realizationContext),
+    realizeLine2D: (line) => realizations.realizeLine2D(line, realizationContext),
+    realizeCircle2D: (circle) => realizations.realizeCircle2D(circle, realizationContext),
     areProjectionPlanesDistinct: (firstPlaneId, secondPlaneId) => {
       const firstPlane = world.getProjectionPlaneById(firstPlaneId);
       const secondPlane = world.getProjectionPlaneById(secondPlaneId);
@@ -20,15 +25,7 @@ export function createToolInteractionReadPort(world: World): ToolInteractionRead
     getExpectedT2PrimeLineRealization: (t1HingeTraceId, t2OtherTraceId) => computeExpectedT2Prime(
       t1HingeTraceId,
       t2OtherTraceId,
-      world
+      realizationContext
     ),
   };
-}
-
-function safeLookup<T>(lookup: () => T | undefined): T | undefined {
-  try {
-    return lookup();
-  } catch {
-    return undefined;
-  }
 }

@@ -21,19 +21,21 @@ import { getHorizontalPlane, createTestWorld } from '../../helpers/worldHelpers'
 
 describe('Line2D Hierarchy (Phase 22.5)', () => {
   let world: World;
+  let operationContext;
   let planeH: any;
   let p1Id: string;
   let p2Id: string;
 
   beforeEach(() => {
-    const { world: w } = createTestWorld();
+    const { world: w, operationContext: oc } = createTestWorld();
     world = w;
+    operationContext = oc;
     // Get horizontal projection plane
     planeH = getHorizontalPlane(world);
     
     // Create test points using plane factory method
-    const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
-    const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(10, 10, 1));
+    const p1 = operationContext.projectionConstruction.addFreePoint2D(planeH, new Vector3(0, 0, 1));
+    const p2 = operationContext.projectionConstruction.addFreePoint2D(planeH, new Vector3(10, 10, 1));
     
     p1Id = p1.id;
     p2Id = p2.id;
@@ -48,9 +50,9 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
     });
 
     it('all line types should extend Line2D', () => {
-      const lineId = world.getConstructionService().generateLine2DId(planeH);
-      const segmentId = world.getConstructionService().generateLine2DId(planeH);
-      const guideId = world.getConstructionService().generateLine2DId(planeH);
+      const lineId = operationContext.projectionConstruction.generateLine2DId(planeH);
+      const segmentId = operationContext.projectionConstruction.generateLine2DId(planeH);
+      const guideId = operationContext.projectionConstruction.generateLine2DId(planeH);
       const line = new Line2DByTwoPoints(lineId, p1Id, p2Id, planeH.id);
       const segment = new Segment2D(segmentId, p1Id, p2Id, planeH.id);
       const guide = new Guide2D(guideId, lineId, p1Id, planeH.id);
@@ -61,7 +63,7 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
     });
 
     it('Line2D instances should have common properties', () => {
-      const lineId = world.getConstructionService().generateLine2DId(planeH);
+      const lineId = operationContext.projectionConstruction.generateLine2DId(planeH);
       const line = new Line2DByTwoPoints(lineId, p1Id, p2Id, planeH.id, 'Test Line');
       
       expect(line.id).toBe(lineId);
@@ -70,7 +72,7 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
     });
 
     it('Line2D should have realize2D() method', () => {
-      const lineId = world.getConstructionService().generateLine2DId(planeH);
+      const lineId = operationContext.projectionConstruction.generateLine2DId(planeH);
       const line = new Line2DByTwoPoints(lineId, p1Id, p2Id, planeH.id);
       
       // realize2D() is abstract method - concrete classes must implement it
@@ -173,7 +175,7 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
 
   describe('Segment2D extends Line2D', () => {
     it('should be instance of Line2D', () => {
-      const segmentId = world.getConstructionService().generateLine2DId(planeH);
+      const segmentId = operationContext.projectionConstruction.generateLine2DId(planeH);
       const segment = new Segment2D(segmentId, p1Id, p2Id, planeH.id);
       
       expect(segment).toBeInstanceOf(Line2D);
@@ -181,9 +183,9 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
     });
 
     it('realize2D() should return Line2DRealization2D with endpoints', () => {
-      const segmentId = world.getConstructionService().generateLine2DId(planeH);
+      const segmentId = operationContext.projectionConstruction.generateLine2DId(planeH);
       const segment = new Segment2D(segmentId, p1Id, p2Id, planeH.id);
-      const realization = segment.realize2D(world);
+      const realization = segment.realize2D(operationContext.realizationContext);
       
       expect(realization).toBeInstanceOf(Line2DRealization2D);
       expect(realization).not.toBeNull();
@@ -193,9 +195,9 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
     });
 
     it('segment realization endpoints should be finite points (w=1)', () => {
-      const segmentId = world.getConstructionService().generateLine2DId(planeH);
+      const segmentId = operationContext.projectionConstruction.generateLine2DId(planeH);
       const segment = new Segment2D(segmentId, p1Id, p2Id, planeH.id);
-      const realization = segment.realize2D(world);
+      const realization = segment.realize2D(operationContext.realizationContext);
       
       expect(realization).not.toBeNull();
       // For segments, both point1 and point2 should be finite points (z=1)
@@ -206,9 +208,9 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
     });
 
     it('should compute correct segment length', () => {
-      const segmentId = world.getConstructionService().generateLine2DId(planeH);
+      const segmentId = operationContext.projectionConstruction.generateLine2DId(planeH);
       const segment = new Segment2D(segmentId, p1Id, p2Id, planeH.id);
-      const realization = segment.realize2D(world);
+      const realization = segment.realize2D(operationContext.realizationContext);
       
       expect(realization).not.toBeNull();
       const length = realization!.getLength();
@@ -218,7 +220,7 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
 
   describe('Line2DByTwoPoints extends Line2D', () => {
     it('should be instance of Line2D', () => {
-      const lineId = world.getConstructionService().generateLine2DId(planeH);
+      const lineId = operationContext.projectionConstruction.generateLine2DId(planeH);
       const line = new Line2DByTwoPoints(lineId, p1Id, p2Id, planeH.id);
       
       expect(line).toBeInstanceOf(Line2D);
@@ -226,9 +228,9 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
     });
 
     it('realize2D() should return Line2DRealization2D without endpoints', () => {
-      const lineId = world.getConstructionService().generateLine2DId(planeH);
+      const lineId = operationContext.projectionConstruction.generateLine2DId(planeH);
       const line = new Line2DByTwoPoints(lineId, p1Id, p2Id, planeH.id);
-      const realization = line.realize2D(world);
+      const realization = line.realize2D(operationContext.realizationContext);
       
       expect(realization).toBeInstanceOf(Line2DRealization2D);
       expect(realization).not.toBeNull();
@@ -241,9 +243,9 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
     });
 
     it('infinite line should have undefined length', () => {
-      const lineId = world.getConstructionService().generateLine2DId(planeH);
+      const lineId = operationContext.projectionConstruction.generateLine2DId(planeH);
       const line = new Line2DByTwoPoints(lineId, p1Id, p2Id, planeH.id);
-      const realization = line.realize2D(world);
+      const realization = line.realize2D(operationContext.realizationContext);
       
       expect(realization).not.toBeNull();
       expect(realization!.getLength()).toBeUndefined();
@@ -252,8 +254,8 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
 
   describe('Guide2D extends Line2D', () => {
     it('should be instance of Line2D', () => {
-      const lineId = world.getConstructionService().generateLine2DId(planeH);
-      const guideId = world.getConstructionService().generateLine2DId(planeH);
+      const lineId = operationContext.projectionConstruction.generateLine2DId(planeH);
+      const guideId = operationContext.projectionConstruction.generateLine2DId(planeH);
       const line = new Line2DByTwoPoints(lineId, p1Id, p2Id, planeH.id);
       planeH.addLine(line);
       
@@ -264,13 +266,13 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
     });
 
     it('realize2D() should return Line2DRealization2D', () => {
-      const lineId = world.getConstructionService().generateLine2DId(planeH);
-      const guideId = world.getConstructionService().generateLine2DId(planeH);
+      const lineId = operationContext.projectionConstruction.generateLine2DId(planeH);
+      const guideId = operationContext.projectionConstruction.generateLine2DId(planeH);
       const line = new Line2DByTwoPoints(lineId, p1Id, p2Id, planeH.id);
       planeH.addLine(line);
       
       const guide = new Guide2D(guideId, lineId, p1Id, planeH.id);
-      const realization = guide.realize2D(world);
+      const realization = guide.realize2D(operationContext.realizationContext);
       
       expect(realization).toBeInstanceOf(Line2DRealization2D);
     });
@@ -278,8 +280,8 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
 
   describe('Polymorphism - Line2D as common interface', () => {
     it('should store different line types in Line2D array', () => {
-      const lineId = world.getConstructionService().generateLine2DId(planeH);
-      const segmentId = world.getConstructionService().generateLine2DId(planeH);
+      const lineId = operationContext.projectionConstruction.generateLine2DId(planeH);
+      const segmentId = operationContext.projectionConstruction.generateLine2DId(planeH);
       const lines: Line2D[] = [
         new Line2DByTwoPoints(lineId, p1Id, p2Id, planeH.id),
         new Segment2D(segmentId, p1Id, p2Id, planeH.id)
@@ -294,8 +296,8 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
     });
 
     it('should distinguish line types via type property', () => {
-      const lineId = world.getConstructionService().generateLine2DId(planeH);
-      const segmentId = world.getConstructionService().generateLine2DId(planeH);
+      const lineId = operationContext.projectionConstruction.generateLine2DId(planeH);
+      const segmentId = operationContext.projectionConstruction.generateLine2DId(planeH);
       const line = new Line2DByTwoPoints(lineId, p1Id, p2Id, planeH.id);
       const segment = new Segment2D(segmentId, p1Id, p2Id, planeH.id);
       
@@ -304,14 +306,14 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
     });
 
     it('should call correct realize2D() implementation polymorphically', () => {
-      const lineId = world.getConstructionService().generateLine2DId(planeH);
-      const segmentId = world.getConstructionService().generateLine2DId(planeH);
+      const lineId = operationContext.projectionConstruction.generateLine2DId(planeH);
+      const segmentId = operationContext.projectionConstruction.generateLine2DId(planeH);
       const lines: Line2D[] = [
         new Line2DByTwoPoints(lineId, p1Id, p2Id, planeH.id),
         new Segment2D(segmentId, p1Id, p2Id, planeH.id)
       ];
       
-      const realizations = lines.map(line => line.realize2D(world));
+      const realizations = lines.map(line => line.realize2D(operationContext.realizationContext));
       
       expect(realizations[0]).not.toBeNull();
       expect(realizations[1]).not.toBeNull();
@@ -326,7 +328,7 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
 
   describe('Type narrowing and instanceof checks', () => {
     it('should narrow Line2D to Segment2D', () => {
-      const segmentId = world.getConstructionService().generateLine2DId(planeH);
+      const segmentId = operationContext.projectionConstruction.generateLine2DId(planeH);
       const line: Line2D = new Segment2D(segmentId, p1Id, p2Id, planeH.id);
       
       if (line instanceof Segment2D) {
@@ -339,7 +341,7 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
     });
 
     it('should narrow Line2D to Line2DByTwoPoints', () => {
-      const lineId = world.getConstructionService().generateLine2DId(planeH);
+      const lineId = operationContext.projectionConstruction.generateLine2DId(planeH);
       const line: Line2D = new Line2DByTwoPoints(lineId, p1Id, p2Id, planeH.id);
       
       if (line instanceof Line2DByTwoPoints) {
@@ -353,7 +355,7 @@ describe('Line2D Hierarchy (Phase 22.5)', () => {
     });
 
     it('should distinguish segments via instanceof', () => {
-      const segmentId = world.getConstructionService().generateLine2DId(planeH);
+      const segmentId = operationContext.projectionConstruction.generateLine2DId(planeH);
       const line: Line2D = new Segment2D(segmentId, p1Id, p2Id, planeH.id);
       
       if (line instanceof Segment2D) {

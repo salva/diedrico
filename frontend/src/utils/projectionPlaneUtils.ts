@@ -1,22 +1,55 @@
 /**
- * Projection Plane Utilities - Phase 82
+ * Projection Plane Utilities
  * 
- * Utility functions for computing transformation matrices and layout for projection planes.
+ * Utility functions for computing transformation matrices for projection planes.
  * These functions implement the geometric algorithms for creating auxiliary projection planes
  * by unfolding 3D planes onto paper using trace lines.
  * 
  * Key Functions:
  * - computeProjectionPlaneMatrices: Compute planeToPaper, planeTo3D, threeDToPlane from T1, T2, T2'
  * - computeExpectedT2Prime: Compute expected T2' position for validation warning
- * - computeAuxiliaryPlaneLayout: Determine paper-space position for new auxiliary plane
  * 
  */
 
 import { Matrix3, Vector3, Vector4 } from 'three';
-import type { ProjectionPlaneRealizationContext, ProjectionRealizationCollectionContext } from '@/domain/world/projectionPlane/ProjectionPlaneContext';
+import type { ProjectionPlaneRealizationContext } from '@/domain/world/projectionPlane/ProjectionPlaneContext';
 import { Matrix4x3, Matrix3x4, applyMatrix4x3, applyMatrix3x4, crossVector3Homogeneous, dotVector3Homogeneous, dotVector2Homogeneous } from './threeUtils';
-import { Line2DRealization2D } from '@/domain/world/Line';
+import { Line2D, Line2DRealization2D } from '@/domain/world/Line';
 import { Point3DRealization3D } from '@/domain/world/Element3DRealization3D';
+import type { ProjectionPlane } from '@/domain/world/projectionPlane/ProjectionPlane';
+import type { ProjectionPlaneRealization3D } from '@/domain/world/projectionPlane/ProjectionPlaneRealization';
+
+function requireLine(context: ProjectionPlaneRealizationContext, id: string, role: string): Line2D {
+  const line = context.getLine2D(id);
+  if (!line) throw new Error(`${role} line not found: ${id}`);
+  return line;
+}
+
+function requireLinePlaneId(line: Line2D, role: string): string {
+  if (!line.planeId) throw new Error(`${role} line has no projection plane: ${line.id}`);
+  return line.planeId;
+}
+
+function requireProjectionPlane(context: ProjectionPlaneRealizationContext, id: string, role: string): ProjectionPlane {
+  const plane = context.getProjectionPlaneById(id);
+  if (!plane) throw new Error(`${role} projection plane not found: ${id}`);
+  return plane;
+}
+
+function requireProjectionPlaneId(plane: ProjectionPlane, role: string): string {
+  if (!plane.id) throw new Error(`${role} projection plane has no id`);
+  return plane.id;
+}
+
+function requireProjectionPlane3DRealization(
+  context: ProjectionPlaneRealizationContext,
+  id: string,
+  role: string
+): ProjectionPlaneRealization3D {
+  const realization = context.getProjectionPlane3DRealization(id);
+  if (!realization) throw new Error(`${role} projection plane 3D realization not found: ${id}`);
+  return realization;
+}
 
 /**
  * Compute intersection point of two 2D lines in homogeneous coordinates
@@ -31,7 +64,7 @@ import { Point3DRealization3D } from '@/domain/world/Element3DRealization3D';
  * @param dir2 - Direction of second line (Vector3 with z=0)
  * @returns Intersection point (Vector3 with z=1), or null if lines are parallel
  */
-export function computeLineLineIntersection2D(
+function computeLineLineIntersection2D(
   point1: Vector3,
   dir1: Vector3,
   point2: Vector3,
@@ -153,7 +186,7 @@ export interface ProjectionPlaneMatrices {
 /**
  * Compute transformation matrices for new projection plane from three trace lines
  * 
- * Algorithm (Phase 82.1 - Complete geometric specification):
+ * Algorithm:
  * 
  * **Part 1: planeToPaper (Paper Layout)**
  * - Origin: T1-T2' intersection on paper
@@ -174,33 +207,35 @@ export interface ProjectionPlaneMatrices {
  * @param t1HingeTraceId - Line ID for hinge trace T1 on plane P1
  * @param t2OtherTraceId - Line ID for other trace T2 on plane P2 (different from P1)
  * @param t2PrimeLineId - Line ID for position line T2' on plane P1 (orientation selector)
- * @param world - World instance for element lookup and geometry computation
+ * @param context - Context for element lookup and geometry computation
  * @returns Transformation matrices for new projection plane, or null if traces are invalid
  */
 export function computeProjectionPlaneMatrices(
   t1HingeTraceId: string,
   t2OtherTraceId: string,
   t2PrimeLineId: string,
-  world: ProjectionPlaneRealizationContext
+  context: ProjectionPlaneRealizationContext
 ): ProjectionPlaneMatrices | null {
   // Get lines and their containing planes
-  const t1Line = world.getLine2D(t1HingeTraceId)!;
-  const t2Line = world.getLine2D(t2OtherTraceId)!;
-  const t2PrimeLine = world.getLine2D(t2PrimeLineId)!;
+  const t1Line = requireLine(context, t1HingeTraceId, 'T1 hinge trace');
+  const t2Line = requireLine(context, t2OtherTraceId, 'T2 trace');
+  const t2PrimeLine = requireLine(context, t2PrimeLineId, 'T2 prime');
     
-  const planeP1 = world.getProjectionPlaneById(t1Line.planeId!)!;
-  const planeP2 = world.getProjectionPlaneById(t2Line.planeId!)!;
+  const planeP1 = requireProjectionPlane(context, requireLinePlaneId(t1Line, 'T1 hinge trace'), 'T1 source');
+  const planeP2 = requireProjectionPlane(context, requireLinePlaneId(t2Line, 'T2 trace'), 'T2 source');
   
   // Realize lines in 2D (always returns realization object, check feasible flag)
-  const t1Realization = t1Line.realize2D(world);
-  const t2Realization = t2Line.realize2D(world);
-  const t2PrimeRealization = t2PrimeLine.realize2D(world);
+  const t1Realization = t1Line.realize2D(context);
+  const t2Realization = t2Line.realize2D(context);
+  const t2PrimeRealization = t2PrimeLine.realize2D(context);
   
   // Get 3D realizations of projection planes
-  const planeP1Realization3D = world.getProjectionPlane3DRealization(planeP1.id!)!;
-  const planeP2Realization3D = world.getProjectionPlane3DRealization(planeP2.id!)!;
+  const planeP1Id = requireProjectionPlaneId(planeP1, 'T1 source');
+  const planeP2Id = requireProjectionPlaneId(planeP2, 'T2 source');
+  const planeP1Realization3D = requireProjectionPlane3DRealization(context, planeP1Id, 'T1 source');
+  const planeP2Realization3D = requireProjectionPlane3DRealization(context, planeP2Id, 'T2 source');
   
-  const planeP1Realization2D = planeP1.realize2D(world);
+  const planeP1Realization2D = planeP1.realize2D(context);
 
   if (!t1Realization.feasible || !t2Realization.feasible || !t2PrimeRealization.feasible ||
         !planeP1Realization3D.feasible || !planeP2Realization3D.feasible || !planeP1Realization2D.feasible) {
@@ -370,51 +405,44 @@ export function computeProjectionPlaneMatrices(
  * 
  * @param t1HingeTraceId - Line ID for hinge trace T1 on plane P1
  * @param t2OtherTraceId - Line ID for other trace T2 on plane P2
- * @param world - World instance for element lookup
+ * @param context - Context for element lookup and realization
  * @returns 2D line realization representing expected T2' position on P1
  */
 export function computeExpectedT2Prime(
   t1HingeTraceId: string,
   t2OtherTraceId: string,
-  world: ProjectionPlaneRealizationContext
+  context: ProjectionPlaneRealizationContext
 ): Line2DRealization2D | null {
   // Algorithm:
   // 1. Get T1, T2 in 3D
   // 2. Unfold plane Q onto P1 around T1 as hinge
   // 3. Where does T2 land after unfolding? That's expected T2'
   
-  try {
-    const t1Line = world.getLine2D(t1HingeTraceId);
-    const t2Line = world.getLine2D(t2OtherTraceId);
+  const t1Line = context.getLine2D(t1HingeTraceId);
+  const t2Line = context.getLine2D(t2OtherTraceId);
+  if (!t1Line) throw new Error(`T1 hinge trace not found: ${t1HingeTraceId}`);
+  if (!t2Line) throw new Error(`T2 trace not found: ${t2OtherTraceId}`);
     
-    if (!t1Line || !t2Line) {
-      return null;
-    }
+  const planeP1 = context.getProjectionPlaneById(t1Line.planeId!);
+  const planeP2 = context.getProjectionPlaneById(t2Line.planeId!);
+  if (!planeP1) throw new Error(`Projection plane not found: ${t1Line.planeId}`);
+  if (!planeP2) throw new Error(`Projection plane not found: ${t2Line.planeId}`);
+
+  // Get 2D realizations
+  const t1Realization = t1Line.realize2D(context);
+  const t2Realization = t2Line.realize2D(context);
+
+  if (!t1Realization.feasible || !t2Realization.feasible) {
+    return null;
+  }
     
-    const planeP1 = world.getProjectionPlaneById(t1Line.planeId!);
-    const planeP2 = world.getProjectionPlaneById(t2Line.planeId!);
+  // Get 3D realizations of projection planes
+  const planeP1Realization3D = context.getProjectionPlane3DRealization(planeP1.id!);
+  const planeP2Realization3D = context.getProjectionPlane3DRealization(planeP2.id!);
+  if (!planeP1Realization3D) throw new Error(`Projection plane 3D realization not found: ${planeP1.id}`);
+  if (!planeP2Realization3D) throw new Error(`Projection plane 3D realization not found: ${planeP2.id}`);
     
-    if (!planeP1 || !planeP2) {
-      return null;
-    }
-    
-    // Get 2D realizations
-    const t1Realization = t1Line.realize2D(world);
-    const t2Realization = t2Line.realize2D(world);
-    
-    if (!t1Realization?.feasible || !t2Realization?.feasible) {
-      return null;
-    }
-    
-    // Get 3D realizations of projection planes
-    const planeP1Realization3D = world.getProjectionPlane3DRealization(planeP1.id!);
-    const planeP2Realization3D = world.getProjectionPlane3DRealization(planeP2.id!);
-    
-    if (!planeP1Realization3D || !planeP2Realization3D) {
-      return null;
-    }
-    
-    // Transform T1 and T2 to 3D
+  // Transform T1 and T2 to 3D
     const t1Point1_3D = applyMatrix4x3(t1Realization.point1, planeP1Realization3D.planeTo3D);
     const t1Direction_2D = new Vector3(
       t1Realization.point1.x + t1Realization.point2.x,
@@ -541,41 +569,6 @@ export function computeExpectedT2Prime(
       t2PrimeDir_2D,
       true
     );
-    
-  } catch (error) {
-    console.warn('[computeExpectedT2Prime] Failed to compute expected T2\' position:', error);
-    return null;
-  }
-}
-
-/**
- * Compute layout position for auxiliary projection plane on paper
- * 
- * Strategy: Stack auxiliary planes vertically below P_V with spacing.
- * 
- * @param world - World instance to query existing planes
- * @returns Paper-space offset {x, y} for new auxiliary plane
- */
-export function computeAuxiliaryPlaneLayout(world: ProjectionRealizationCollectionContext): { x: number; y: number } {
-  // Count existing auxiliary planes (exclude P_H and P_V)
-  const allPlanes = world.getAllProjectionPlanes();
-  const auxiliaryPlanes = allPlanes.filter(plane => 
-    plane.id !== 'proj_plane_1' && plane.id !== 'proj_plane_2'
-  );
-  
-  const numAuxiliaryPlanes = auxiliaryPlanes.length;
-  
-  // Layout constants
-  const PLANE_HEIGHT = 300;  // Standard projection plane height in paper units
-  const VERTICAL_SPACING = 50;  // Gap between planes
-  
-  // Stack below P_V (which is at y=0 to y=PLANE_HEIGHT)
-  const yOffset = (PLANE_HEIGHT * 2) + (VERTICAL_SPACING * (numAuxiliaryPlanes + 1)) + (PLANE_HEIGHT * numAuxiliaryPlanes);
-  
-  return {
-    x: 0,  // Align with P_H/P_V x-position
-    y: yOffset
-  };
 }
 
 /**

@@ -19,6 +19,7 @@ import {
 import type { World } from '@/domain/world/World';
 import { Plane3D } from '@/domain/world/Plane';
 import { HingeLine, HalfHingeLine2D } from '@/domain/world/HingeLine';
+import type { OperationContext } from '@/commands/operations/OperationContext';
 import { createTestWorld, getHorizontalPlane, getVerticalPlane, getHorizontalPlaneId, getVerticalPlaneId } from '../../helpers/worldHelpers';
 
 describe('Point2D', () => {
@@ -178,19 +179,21 @@ describe('Point2D', () => {
   // T055l: SiblingIntersectionPoint2D tests
   describe('SiblingIntersectionPoint2D', () => {
     let world: World;
+    let operationContext: OperationContext;
     let primaryPointId: string;
     let planeVId: string;
 
     beforeEach(() => {
-      const { world: w } = createTestWorld();
+      const { world: w, operationContext: context } = createTestWorld();
       world = w;
+      operationContext = context;
       const planeH = getHorizontalPlane(world);
       planeVId = getVerticalPlaneId(world);
       
       // Create a primary intersection point using a free point for simplicity
       // (In real usage it would be from line intersection, but for testing we just need
       // a point with known coordinates that the sibling can reference)
-      const freePoint = world.getConstructionService().addFreePoint2D(planeH, new Vector3(50, 0, 1));
+      const freePoint = operationContext.projectionConstruction.addFreePoint2D(planeH, new Vector3(50, 0, 1));
       primaryPointId = freePoint.id;
     });
 
@@ -263,7 +266,7 @@ describe('Point2D', () => {
           planeVId
         );
 
-        const realization = sibling.realize2D(world);
+        const realization = sibling.realize2D(operationContext.realizationContext);
 
         expect(realization.position.x).toBe(50);
         expect(realization.position.y).toBe(0);
@@ -277,8 +280,8 @@ describe('Point2D', () => {
           planeVId
         );
 
-        const realization1 = sibling.realize2D(world);
-        const realization2 = sibling.realize2D(world);
+        const realization1 = sibling.realize2D(operationContext.realizationContext);
+        const realization2 = sibling.realize2D(operationContext.realizationContext);
 
         expect(realization1.position).not.toBe(realization2.position);
         expect(realization1.position.x).toBe(realization2.position.x);
@@ -293,7 +296,7 @@ describe('Point2D', () => {
         );
 
         // Initial realization
-        const realization1 = sibling.realize2D(world);
+        const realization1 = sibling.realize2D(operationContext.realizationContext);
         expect(realization1.position.x).toBe(50);
 
         // Update primary coordinates by creating a new point at same ID
@@ -301,10 +304,10 @@ describe('Point2D', () => {
         const planeH = getHorizontalPlane(world);
         const primaryPoint = new FreePoint2D(primaryPointId, new Vector3(75, 0, 1), planeHId);
         planeH.addPoint(primaryPoint);
-        world.invalidateRealization(primaryPointId);
+        operationContext.realizations.invalidateElement(primaryPointId, operationContext.dependencies, world.getAllProjectionPlanes());
 
         // Sibling should reflect updated coordinates
-        const realization2 = sibling.realize2D(world);
+        const realization2 = sibling.realize2D(operationContext.realizationContext);
         expect(realization2.position.x).toBe(75);
         expect(realization2.position.y).toBe(0);
       });
@@ -316,7 +319,7 @@ describe('Point2D', () => {
           planeVId
         );
 
-        const realization = sibling.realize2D(world);
+        const realization = sibling.realize2D(operationContext.realizationContext);
 
         expect(realization.position.z).toBe(1);
       });
@@ -330,8 +333,8 @@ describe('Point2D', () => {
         //   - Same direction: (1, 0, 0)
         
         // Create primary point with specific coordinates
-        const planeH = world.getProjectionPlaneByLabel('P_H')!;
-        const primary = world.getConstructionService().addFreePoint2D(planeH, new Vector3(100, 0, 1));
+        const planeH = getHorizontalPlane(world);
+        const primary = operationContext.projectionConstruction.addFreePoint2D(planeH, new Vector3(100, 0, 1));
         
         const sibling = new SiblingIntersectionPoint2D(
           planeVId + '/sibling-point',
@@ -339,8 +342,8 @@ describe('Point2D', () => {
           planeVId
         );
 
-        const realizationSibling = sibling.realize2D(world);
-        const realizationPrimary = primary.realize2D(world);
+        const realizationSibling = sibling.realize2D(operationContext.realizationContext);
+        const realizationPrimary = primary.realize2D(operationContext.realizationContext);
 
         expect(realizationSibling.position.x).toBe(realizationPrimary!.position.x);
         expect(realizationSibling.position.y).toBe(realizationPrimary!.position.y);
@@ -357,11 +360,13 @@ describe('Point2D', () => {
 
 describe('projection/world strict guard paths', () => {
   let world: World;
+  let operationContext: OperationContext;
   let planeId: string;
 
   beforeEach(() => {
-    const { world: w } = createTestWorld();
+    const { world: w, operationContext: context } = createTestWorld();
     world = w;
+    operationContext = context;
     planeId = getHorizontalPlaneId(world);
   });
 
@@ -373,7 +378,7 @@ describe('projection/world strict guard paths', () => {
       planeId
     );
 
-    expect(() => point.realize2D(world)).toThrow(
+    expect(() => point.realize2D(operationContext.realizationContext)).toThrow(
       `[Point2DLineLineIntersection] line1 ${planeId}/missing-line-1 not found on plane ${planeId}`
     );
   });
@@ -387,7 +392,7 @@ describe('projection/world strict guard paths', () => {
       planeId
     );
 
-    expect(() => point.realize2D(world)).toThrow(
+    expect(() => point.realize2D(operationContext.realizationContext)).toThrow(
       `[Point2DLineCircleIntersection] line ${planeId}/missing-line not found on plane ${planeId}`
     );
   });
@@ -401,7 +406,7 @@ describe('projection/world strict guard paths', () => {
       planeId
     );
 
-    expect(() => point.realize2D(world)).toThrow(
+    expect(() => point.realize2D(operationContext.realizationContext)).toThrow(
       `[Point2DCircleCircleIntersection] circle1 ${planeId}/missing-circle-1 not found on plane ${planeId}`
     );
   });

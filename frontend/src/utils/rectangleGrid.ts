@@ -11,7 +11,7 @@ import { Matrix3x4, applyMatrix3x4 } from './threeUtils';
 /**
  * A point in 2D space (u, v)
  */
-export interface Point2D {
+interface Point2D {
   u: number;
   v: number;
 }

@@ -7,7 +7,7 @@
 import { describe, it, expect } from 'vitest';
 import { Vector3 } from 'three';
 import { FixedProjectionPlane } from '@/domain/world/projectionPlane/FixedProjectionPlane';
-import { createTestWorld } from '../helpers/worldHelpers';
+import { createTestWorld, getHorizontalPlane, getVerticalPlane } from '../helpers/worldHelpers';
 import { canvasToPlaneCoordinates, type ViewportTransform } from '@/application/canvas/CanvasCoordinateConverter';
 
 describe('Coordinate Transformation Round-Trips', () => {
@@ -15,7 +15,7 @@ describe('Coordinate Transformation Round-Trips', () => {
   
   describe('P_H (Horizontal Plane)', () => {
     it('should preserve screen coordinates through full round-trip', () => {
-      const planeH = world.getProjectionPlaneByLabel('P_H');
+      const planeH = getHorizontalPlane(world);
       const realization = planeH.realize2D();
       
       const viewport: ViewportTransform = {
@@ -49,7 +49,7 @@ describe('Coordinate Transformation Round-Trips', () => {
     });
     
     it('should work with arbitrary screen coordinates', () => {
-      const planeH = world.getProjectionPlaneByLabel('P_H');
+      const planeH = getHorizontalPlane(world);
       const realization = planeH.realize2D();
       
       const viewport: ViewportTransform = {
@@ -84,7 +84,7 @@ describe('Coordinate Transformation Round-Trips', () => {
   
   describe('P_V (Vertical Plane)', () => {
     it('should preserve screen coordinates through full round-trip', () => {
-      const planeV = world.getProjectionPlaneByLabel('P_V');
+      const planeV = getVerticalPlane(world);
       const realization = planeV.realize2D();
       
       const viewport: ViewportTransform = {
@@ -111,7 +111,7 @@ describe('Coordinate Transformation Round-Trips', () => {
     });
     
     it('should work with different viewport transforms', () => {
-      const planeV = world.getProjectionPlaneByLabel('P_V');
+      const planeV = getVerticalPlane(world);
       const realization = planeV.realize2D();
       
       const viewports: ViewportTransform[] = [
@@ -141,7 +141,7 @@ describe('Coordinate Transformation Round-Trips', () => {
   
   describe('Coordinate Invariants', () => {
     it('should preserve w=1 for homogeneous coordinates throughout', () => {
-      const planeH = world.getProjectionPlaneByLabel('P_H');
+      const planeH = getHorizontalPlane(world);
       const realization = planeH.realize2D();
       
       const viewport: ViewportTransform = {
@@ -169,7 +169,7 @@ describe('Coordinate Transformation Round-Trips', () => {
     });
     
     it('should maintain numerical stability across multiple round-trips', () => {
-      const planeH = world.getProjectionPlaneByLabel('P_H');
+      const planeH = getHorizontalPlane(world);
       const realization = planeH.realize2D();
       
       const viewport: ViewportTransform = {

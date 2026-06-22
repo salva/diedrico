@@ -75,66 +75,6 @@ describe('Plane3DFixed', () => {
     });
   });
 
-  // Skip old createPH/createPV tests - these static methods were removed
-  // Planes are now created via initialization operations
-  describe.skip('createPH', () => {
-    it('should create P_H horizontal projection plane', () => {
-      const planeH = Plane3D.createPH();
-
-      expect(planeH.point).toEqual(new Vector4(0, 0, 0, 1));
-      expect(planeH.normal).toEqual(new Vector4(0, 0, 1, 0));
-      expect(planeH.label).toBe('P_H');
-      // expect(planeH.type).toBe('projection'); // Type property removed
-    });
-
-    it('should set default boundaries for P_H', () => {
-      const planeH = Plane3D.createPH();
-
-      expect(planeH.minU).toBe(-400);
-      expect(planeH.maxU).toBe(400);
-      expect(planeH.minV).toBe(-400);
-      expect(planeH.maxV).toBe(400);
-    });
-
-    it('should set coordinate system for P_H', () => {
-      const planeH = Plane3D.createPH();
-
-      expect(planeH.coordinateSystem).toBeDefined();
-      expect(planeH.coordinateSystem?.origin).toEqual(new Vector4(0, 0, 0, 1));
-      expect(planeH.coordinateSystem?.uAxis).toEqual(new Vector4(1, 0, 0, 0));
-      expect(planeH.coordinateSystem?.vAxis).toEqual(new Vector4(0, 1, 0, 0));
-    });
-  });
-
-  describe.skip('createPV', () => {
-    it('should create P_V vertical projection plane', () => {
-      const planeV = Plane3D.createPV();
-
-      expect(planeV.point).toEqual(new Vector4(0, 0, 0, 1));
-      expect(planeV.normal).toEqual(new Vector4(0, 1, 0, 0));
-      expect(planeV.label).toBe('P_V');
-      // expect(planeV.type).toBe('projection'); // Type property removed
-    });
-
-    it('should set default boundaries for P_V', () => {
-      const planeV = Plane3D.createPV();
-
-      expect(planeV.minU).toBe(-400);
-      expect(planeV.maxU).toBe(400);
-      expect(planeV.minV).toBe(-400);
-      expect(planeV.maxV).toBe(400);
-    });
-
-    it('should set coordinate system for P_V', () => {
-      const planeV = Plane3D.createPV();
-
-      expect(planeV.coordinateSystem).toBeDefined();
-      expect(planeV.coordinateSystem?.origin).toEqual(new Vector4(0, 0, 0, 1));
-      expect(planeV.coordinateSystem?.uAxis).toEqual(new Vector4(1, 0, 0, 0));
-      expect(planeV.coordinateSystem?.vAxis).toEqual(new Vector4(0, 0, 1, 0));
-    });
-  });
-
   describe('setBoundaries', () => {
     it('should set and get boundaries', () => {
       const plane = new Plane3DFixed(

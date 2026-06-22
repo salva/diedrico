@@ -10,24 +10,25 @@ import { Command } from '../../../src/commands/Command';
 import { AddCircle2DByCenterAndPointOp } from '../../../src/commands/operations/world/AddCircleOp';
 import { AddFreePoint2DOp } from '../../../src/commands/operations/world/AddFreePointOp';
 import type { World } from '../../../src/domain/world/World';
-import { createTestWorld, buildOperationContext, getHorizontalPlane, getHorizontalPlaneId } from '../../helpers/worldHelpers';
+import { createTestWorld, getHorizontalPlane, getHorizontalPlaneId } from '../../helpers/worldHelpers';
 import { Vector3 } from 'three';
 
 describe('Create Circle Command', () => {
   let world: World;
   let visibilityModel;
+  let operationContext;
   let planeId: string;
 
   beforeEach(() => {
-    const { world: w, visibilityModel: vm } = createTestWorld();
+    const { world: w, visibilityModel: vm, operationContext: oc } = createTestWorld();
     world = w;
 
-    visibilityModel = vm;    planeId = getHorizontalPlaneId(world);
+    visibilityModel = vm;    operationContext = oc;    planeId = getHorizontalPlaneId(world);
   });
 
   describe('execution', () => {
     it('should create a circle with center and circumference point', () => {
-      const cmd = new Command("Create circle with two points", buildOperationContext(world, visibilityModel));
+      const cmd = new Command("Create circle with two points", operationContext);
       
       // Create center point
       const centerResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
@@ -60,7 +61,7 @@ describe('Create Circle Command', () => {
     });
 
     it('should return circleId in outputs', () => {
-      const cmd = new Command("Create circle", buildOperationContext(world, visibilityModel));
+      const cmd = new Command("Create circle", operationContext);
       
       const centerResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
       const circumferenceResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(150, 150, 1)));
@@ -79,7 +80,7 @@ describe('Create Circle Command', () => {
 
   describe('undo/redo', () => {
     it('should support undo by rolling back operations', () => {
-      const cmd = new Command("Create circle", buildOperationContext(world, visibilityModel));
+      const cmd = new Command("Create circle", operationContext);
       
       const centerResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
       const circumferenceResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(150, 100, 1)));
@@ -103,7 +104,7 @@ describe('Create Circle Command', () => {
     });
 
     it('should maintain stable IDs across undo/redo', () => {
-      const cmd = new Command("Create circle", buildOperationContext(world, visibilityModel));
+      const cmd = new Command("Create circle", operationContext);
       
       const centerResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
       const circumferenceResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(150, 100, 1)));

@@ -84,11 +84,10 @@ export class TangentLineToCircleThroughPointTool extends ArgumentCollectorTool {
       type: 'tangent-line-to-circle-through-point',
       description: this.getCommandDescription(),
       planeId: context.planeId,
-      args,
-      metadata: {
-        tangentIndex: this.chooseTangentIndex(args, selectionPoint, context),
-        selectionPoint
-      }
+      circleId: this.requireElementId(args, 'circle'),
+      throughPointId: this.requireElementId(args, 'throughPoint'),
+      tangentIndex: this.chooseTangentIndex(args, selectionPoint, context),
+      selectionPoint
     };
   }
 
@@ -99,9 +98,10 @@ export class TangentLineToCircleThroughPointTool extends ArgumentCollectorTool {
 
     const circle = context.readPort.getCircle2D(circleId);
     const throughPoint = context.readPort.getPoint2D(pointId);
-    const circleRealization = circle ? context.readPort.realizeCircle2D(circle) : undefined;
-    const pointRealization = throughPoint ? context.readPort.realizePoint2D(throughPoint) : undefined;
-    if (!circleRealization?.feasible || !pointRealization?.feasible) return 0;
+    if (!circle || !throughPoint) return 0;
+    const circleRealization = context.readPort.realizeCircle2D(circle);
+    const pointRealization = context.readPort.realizePoint2D(throughPoint);
+    if (!circleRealization.feasible || !pointRealization.feasible) return 0;
 
     const center = circleRealization.center;
     const externalPoint = pointRealization.position;

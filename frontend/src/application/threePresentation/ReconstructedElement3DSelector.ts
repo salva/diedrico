@@ -1,12 +1,11 @@
 import type { ReconstructedElementPresentationDto } from './ThreePresentationModel';
-import type { ThreeReconstructedElementReadPort } from './ThreeReconstructedElementReadPort';
+import type { ThreeReconstructedReadModel } from './ThreePresentationReadModel';
 import { isVisible } from './ThreeStylePolicy';
 
 export class ReconstructedElement3DSelector {
-  select(readPort: ThreeReconstructedElementReadPort, showPlanes: boolean): ReconstructedElementPresentationDto[] {
+  select(models: ThreeReconstructedReadModel, showPlanes: boolean): ReconstructedElementPresentationDto[] {
     if (!showPlanes) return [];
     const items: ReconstructedElementPresentationDto[] = [];
-    const models = readPort.getReconstructedModels();
     for (const point of models.points) {
       if (!isVisible(point)) continue;
       items.push({ id: `reconstructed-point-${point.id}`, kind: 'reconstructed-point', sourceEntityId: point.id, visible: true, style: point.style, renderGroup: 'reconstructedElements', position: point.position });

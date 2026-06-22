@@ -55,7 +55,7 @@ export function assertOperationDescriptor(value: unknown): asserts value is Oper
 const defaultRegistry = new OperationRegistry();
 let registered = false;
 
-export function registerAllOperations(registry: OperationRegistry = defaultRegistry): OperationRegistry {
+function registerAllOperations(registry: OperationRegistry = defaultRegistry): OperationRegistry {
   if (registry === defaultRegistry && registered) {
     return defaultRegistry;
   }

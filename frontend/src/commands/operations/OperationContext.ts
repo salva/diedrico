@@ -2,31 +2,24 @@ import type { World } from '@/domain/world/World';
 import type { VisibilityModel } from '@/application/processTree/VisibilityModel';
 import type { ProcessTree } from '@/domain/processTree/ProcessTree';
 import type { DependencyService } from '@/domain/world/DependencyService';
-import type { RealizationService } from '@/domain/world/RealizationService';
+import type { ProjectionPlaneConstructionService } from '@/domain/world/ProjectionPlaneConstructionService';
 import type { ProjectionConstructionService } from '@/domain/world/ProjectionConstructionService';
-import type { WorldIdAllocator } from '@/domain/world/WorldIdAllocator';
+import type { ReconstructionConstructionService } from '@/domain/world/ReconstructionConstructionService';
 import type { LabelGenerator } from '@/domain/world/LabelGenerator';
+import type { WorldIdAllocator } from '@/domain/world/WorldIdAllocator';
+import type { RealizationService } from '@/domain/world/RealizationService';
+import type { CachedProjectionElementRealizationContext, Element3DRealizationContext } from '@/domain/world/projectionPlane/ProjectionPlaneContext';
 
 export interface OperationContext {
   readonly world: World;
   readonly visibilityModel: VisibilityModel;
   readonly processTree: ProcessTree;
   readonly dependencies: DependencyService;
-  readonly realizations: RealizationService;
   readonly projectionConstruction: ProjectionConstructionService;
+  readonly reconstructionConstruction: ReconstructionConstructionService;
+  readonly projectionPlaneConstruction: ProjectionPlaneConstructionService;
   readonly idAllocator: WorldIdAllocator;
   readonly labelGenerator: LabelGenerator;
-}
-
-export function createOperationContextFromWorld(world: World, visibilityModel: VisibilityModel): OperationContext {
-  return {
-    world,
-    visibilityModel,
-    processTree: world.getProcessTree(),
-    dependencies: world.getDependencyService(),
-    realizations: world.getRealizationService(),
-    projectionConstruction: world.getConstructionService(),
-    idAllocator: world.getIdAllocator(),
-    labelGenerator: world.labelGenerator,
-  };
+  readonly realizations: RealizationService;
+  readonly realizationContext: CachedProjectionElementRealizationContext & Element3DRealizationContext;
 }

@@ -9,7 +9,7 @@ import { RuntimeCommandProducer } from '@/application/commandProduction/RuntimeC
 import { ProcessHistoryUseCases } from '@/application/processHistory/ProcessHistoryUseCases';
 import { useToolStore } from '@/stores/toolStore';
 import { useViewStore } from '@/stores/viewStore';
-import { createTestWorld, buildOperationContext } from '../../helpers/worldHelpers';
+import { createTestWorld } from '../../helpers/worldHelpers';
 import { CommandHistoryInjectionKey, ProcessHistoryCommandInjectionKey, ProcessTreeReadInjectionKey } from '@/application/appShell/RuntimeInjectionKeys';
 
 vi.mock('@/components/panels/ProcessTreeNode.vue', () => ({
@@ -44,12 +44,12 @@ const iconStub = {
 };
 
 
-function createProcessTreeReadPort(world: any) {
+function createProcessTreeReadPort(processTree: any) {
   const listeners = new Set<() => void>();
   const node = (raw: any): any => raw.type === 'action'
     ? { id: raw.id, type: raw.type, isOutput: raw.isOutput, elementId: raw.elementId, descriptionParts: [], isInfeasible: false, hideBecauseElementMissing: false }
     : { id: raw.id, type: raw.type, name: raw.name, children: raw.children.filter((child: any) => child !== null).map(node), showIntermediates: raw.showIntermediates, isOutput: raw.isOutput, isAuxiliary: raw.isAuxiliary, descriptionParts: [], isInfeasible: false, hideBecauseElementMissing: false };
-  const read = () => ({ root: node(world.getProcessTree().root), activeSubprocessId: world.getProcessTree().getCurrentSubprocess().id });
+  const read = () => ({ root: node(processTree.root), activeSubprocessId: processTree.getCurrentSubprocess().id });
   const count = (n: any): number => 1 + (n.children?.reduce((sum: number, child: any) => sum + count(child), 0) ?? 0);
   return {
     subscribeToChanges: (listener: () => void) => { listeners.add(listener); },
@@ -86,13 +86,14 @@ describe('Wave 006b ActionsPanel component behavior', () => {
   });
 
   it('delegates stack button and keyboard subprocess intents through the application controller', async () => {
-    const { world, visibilityModel, commandStack } = createTestWorld();
+    const { world, visibilityModel, commandStack, operationContext } = createTestWorld();
+    const processTree = operationContext.processTree;
     commandStack.clear();
-    const processTreeReadPort = createProcessTreeReadPort(world);
+    const processTreeReadPort = createProcessTreeReadPort(processTree);
 
     const wrapper = mount(ActionsPanel, {
       global: {
-        provide: { [ProcessTreeReadInjectionKey as symbol]: processTreeReadPort, [ProcessHistoryCommandInjectionKey as symbol]: new ProcessHistoryController({ processTree: world.getProcessTree(), commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack, processTreeReadPort) }) },
+        provide: { [ProcessTreeReadInjectionKey as symbol]: processTreeReadPort, [ProcessHistoryCommandInjectionKey as symbol]: new ProcessHistoryController({ processTree, commands: new RuntimeCommandProducer(operationContext, commandStack, processTreeReadPort) }) },
         stubs: {
           ProcessTreeNode: {
             template: '<div class="process-tree-node-stub" />',
@@ -108,32 +109,33 @@ describe('Wave 006b ActionsPanel component behavior', () => {
 
     await pushButton.trigger('click');
     await nextTick();
-    expect(world.getProcessTree().getStackDepth()).toBe(2);
+    expect(processTree.getStackDepth()).toBe(2);
     expect(commandStack.getUndoCount()).toBe(1);
     expect(wrapper.get('button.stack-pop-btn').attributes('disabled')).toBeUndefined();
 
     window.dispatchEvent(new KeyboardEvent('keydown', { key: '[', ctrlKey: true, shiftKey: true }));
     await nextTick();
-    expect(world.getProcessTree().getStackDepth()).toBe(1);
+    expect(processTree.getStackDepth()).toBe(1);
     expect(commandStack.getUndoCount()).toBe(2);
     expect(wrapper.get('button.stack-pop-btn').attributes('disabled')).toBeDefined();
 
     window.dispatchEvent(new KeyboardEvent('keydown', { key: ']', ctrlKey: true, shiftKey: true }));
     await nextTick();
-    expect(world.getProcessTree().getStackDepth()).toBe(2);
+    expect(processTree.getStackDepth()).toBe(2);
     expect(commandStack.getUndoCount()).toBe(3);
 
     wrapper.unmount();
   });
 
   it('delegates process-tree child toggle and rename events without direct command assembly in the component', async () => {
-    const { world, visibilityModel, commandStack } = createTestWorld();
+    const { world, visibilityModel, commandStack, operationContext } = createTestWorld();
+    const processTree = operationContext.processTree;
     commandStack.clear();
-    const processTreeReadPort = createProcessTreeReadPort(world);
+    const processTreeReadPort = createProcessTreeReadPort(processTree);
 
     const wrapper = mount(ActionsPanel, {
       global: {
-        provide: { [ProcessTreeReadInjectionKey as symbol]: processTreeReadPort, [ProcessHistoryCommandInjectionKey as symbol]: new ProcessHistoryController({ processTree: world.getProcessTree(), commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack, processTreeReadPort) }) },
+        provide: { [ProcessTreeReadInjectionKey as symbol]: processTreeReadPort, [ProcessHistoryCommandInjectionKey as symbol]: new ProcessHistoryController({ processTree, commands: new RuntimeCommandProducer(operationContext, commandStack, processTreeReadPort) }) },
         stubs: {
           ProcessTreeNode: {
             name: 'ProcessTreeNode',
@@ -153,7 +155,7 @@ describe('Wave 006b ActionsPanel component behavior', () => {
 
     await wrapper.get('button.stack-push-btn').trigger('click');
     await nextTick();
-    const subprocessId = world.getProcessTree().getCurrentSubprocess().id;
+    const subprocessId = processTree.getCurrentSubprocess().id;
     expect(visibilityModel.get(subprocessId, 'subprocess').showIntermediates).toBe(true);
     expect(visibilityModel.get(subprocessId, 'subprocess').isOutput).toBe(true);
 
@@ -167,7 +169,7 @@ describe('Wave 006b ActionsPanel component behavior', () => {
 
     await wrapper.get('button.stub-rename').trigger('click');
     await nextTick();
-    expect(world.getProcessTree().findSubprocessById(subprocessId)?.name).toBe('Renamed from component');
+    expect(processTree.findSubprocessById(subprocessId)?.name).toBe('Renamed from component');
     expect(commandStack.getUndoCount()).toBe(4);
 
     wrapper.unmount();
@@ -183,9 +185,9 @@ describe('Wave 006b Toolbar component behavior', () => {
   });
 
   it('delegates undo/redo through the toolbar history controller and refreshes enabled state', async () => {
-    const { world, visibilityModel, commandStack } = createTestWorld();
+    const { world, visibilityModel, commandStack, operationContext } = createTestWorld();
     commandStack.clear();
-    const processHistory = new ProcessHistoryUseCases(world.getProcessTree(), new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack));
+    const processHistory = new ProcessHistoryUseCases(operationContext.processTree, new RuntimeCommandProducer(operationContext, commandStack));
     processHistory.pushSubprocess({ name: 'Undoable from toolbar test' });
 
     const wrapper = mount(Toolbar, {

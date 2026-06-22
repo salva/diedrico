@@ -2,10 +2,15 @@
  * ToggleEncapsulationOp - Toggle encapsulation (black-box) mode of a subprocess
  */
 
-import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
+import type { IOperation, OperationDescriptor, OperationOutputBag, OperationResult } from '../IOperation';
 import type { OperationContext } from '../OperationContext';
 
-export class ToggleEncapsulationOp implements IOperation {
+export interface ToggleEncapsulationDescriptorV8 extends OperationDescriptor<'ToggleEncapsulation'> {
+  schemaVersion: '8.0.0';
+  subprocessId: string;
+}
+
+export class ToggleEncapsulationOp implements IOperation<ToggleEncapsulationDescriptorV8> {
   readonly type = 'ToggleEncapsulation';
   outputs: OperationOutputBag = {};
 
@@ -31,7 +36,7 @@ export class ToggleEncapsulationOp implements IOperation {
     context.visibilityModel.setShowIntermediates(this.subprocessId, !current.showIntermediates);
   }
 
-  serialize() {
-    return { opType: this.type, subprocessId: this.subprocessId };
+  serialize(): ToggleEncapsulationDescriptorV8 {
+    return { opType: this.type, schemaVersion: '8.0.0' as const, subprocessId: this.subprocessId };
   }
 }

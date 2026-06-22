@@ -4,17 +4,17 @@ import { buildCanvasPresentationModel, CanvasPresentationSelector } from '@/appl
 import { createCanvasPresentationContext, getCanvasPlaneCanvasItems, getCanvasPlaneTransforms, getPlaneCanvasItems } from '@/application/canvasPresentation/CanvasPresentationContext';
 import selectorSource from '../../../../src/application/canvasPresentation/CanvasPresentationSelector.ts?raw';
 import contextSource from '../../../../src/application/canvasPresentation/CanvasPresentationContext.ts?raw';
-import { createTestWorld } from '../../../helpers/worldHelpers';
+import { createTestWorld, getHorizontalPlane } from '../../../helpers/worldHelpers';
 
 describe('CanvasPresentationContext boundary', () => {
   it('builds canvas presentation directly from world while returning transforms for rendering and input', () => {
-    const { world, visibilityModel } = createTestWorld();
-    const plane = world.getProjectionPlaneByLabel('P_H');
-    const a = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
-    const b = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 0, 1));
-    const segment = world.getConstructionService().addSegment2DBetweenPoints(plane, a.id, b.id);
+    const { world, visibilityModel, operationContext } = createTestWorld();
+    const plane = getHorizontalPlane(world);
+    const a = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0, 0, 1));
+    const b = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(10, 0, 1));
+    const segment = operationContext.projectionConstruction.addSegment2DBetweenPoints(plane, a.id, b.id);
 
-    const model = buildCanvasPresentationModel(world, { zoom: 1, panX: 0, panY: 0, width: 400, height: 300 }, { activePlaneId: plane.id, visibilityModel, selectedIds: new Set([segment.id]), gridVisible: true });
+    const model = buildCanvasPresentationModel(world, { zoom: 1, panX: 0, panY: 0, width: 400, height: 300 }, { activePlaneId: plane.id, visibilityModel, processTree: operationContext.processTree, realizations: operationContext.realizations, selectedIds: new Set([segment.id]), gridVisible: true });
 
     expect(model.renderItems.some(item => item.sourceEntityId === a.id && item.kind === 'point')).toBe(true);
     expect(model.queryItems.some(item => item.elementId === segment.id && item.kind === 'finite-segment')).toBe(true);
@@ -29,21 +29,21 @@ describe('CanvasPresentationContext boundary', () => {
   });
 
   it('builds transforms once and passes those same transform objects into plane item collection', () => {
-    const { world, visibilityModel } = createTestWorld();
-    const plane = world.getProjectionPlaneByLabel('P_H');
-    const context = createCanvasPresentationContext(world, visibilityModel);
-    const transforms = getCanvasPlaneTransforms(world);
+    const { world, visibilityModel, operationContext } = createTestWorld();
+    const plane = getHorizontalPlane(world);
+    const context = createCanvasPresentationContext(world, visibilityModel, operationContext.processTree, operationContext.realizations);
+    const transforms = getCanvasPlaneTransforms(world, operationContext.realizations);
     const transform = transforms.find(item => item.planeId === plane.id)!;
-    const items = getPlaneCanvasItems(plane, transform, { realizationContext: context.realizationContext } as never);
+    const items = getPlaneCanvasItems(plane, transform, { visibilityModel, processTree: operationContext.processTree, realizationContext: context.realizationContext } as never);
 
-    const model = buildCanvasPresentationModel(world, { zoom: 1, panX: 0, panY: 0, width: 400, height: 300 }, { activePlaneId: plane.id, visibilityModel });
+    const model = buildCanvasPresentationModel(world, { zoom: 1, panX: 0, panY: 0, width: 400, height: 300 }, { activePlaneId: plane.id, visibilityModel, processTree: operationContext.processTree, realizations: operationContext.realizations });
 
     expect(items.length).toBeGreaterThan(0);
     expect(model.planeTransforms.get(plane.id)?.paperToPlane).toBeDefined();
-    expect(selectorSource.match(/getCanvasPlaneTransforms\(world\)/g)).toHaveLength(1);
-    expect(selectorSource).toContain('getCanvasPlaneCanvasItems(world, planeTransforms, state)');
+    expect(selectorSource.match(/getCanvasPlaneTransforms\(world, state\.realizations\)/g)).toHaveLength(1);
+    expect(selectorSource).toContain('getCanvasPlaneCanvasItems(world, planeTransforms, state, context)');
     expect(contextSource).toContain('getPlaneCanvasItems(plane, transform, itemState)');
-    expect(getCanvasPlaneCanvasItems(world, new Map(transforms.map(item => [item.planeId, item])), { visibilityModel, realizationContext: context.realizationContext } as never)).toHaveLength(transforms.length);
+    expect(getCanvasPlaneCanvasItems(world, new Map(transforms.map(item => [item.planeId, item])), { visibilityModel, processTree: operationContext.processTree, realizations: operationContext.realizations, realizationContext: context.realizationContext } as never, context)).toHaveLength(transforms.length);
   });
 
 });

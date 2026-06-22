@@ -14,22 +14,24 @@ import { Segment2D } from '@/domain/world/Segment';
 import { Line2DRealization2D } from '@/domain/world/Line';
 import { FreePoint2D, Point2DRealization2D } from '@/domain/world/Point';
 import type { World } from '@/domain/world/World';
-import { createTestWorld } from '../../helpers/worldHelpers';
+import { createTestWorld, getHorizontalPlane } from '../../helpers/worldHelpers';
 
 describe('Segment2D', () => {
   let world: World;
+  let operationContext;
   let planeH: any;
   let point1Id: string;
   let point2Id: string;
 
   beforeEach(() => {
-    const { world: w } = createTestWorld();
+    const { world: w, operationContext: oc } = createTestWorld();
     world = w;
-    planeH = world.getProjectionPlaneByLabel('P_H')!;
+    operationContext = oc;
+    planeH = getHorizontalPlane(world);
     
     // Create two test points using factory method (let IDs auto-generate)
-    const point1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
-    const point2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(100, 50, 1));
+    const point1 = operationContext.projectionConstruction.addFreePoint2D(planeH, new Vector3(0, 0, 1));
+    const point2 = operationContext.projectionConstruction.addFreePoint2D(planeH, new Vector3(100, 50, 1));
     
     point1Id = point1.id;
     point2Id = point2.id;
@@ -58,8 +60,8 @@ describe('Segment2D', () => {
     });
 
     it('should realize segment with valid points', () => {
-      const segment = world.getConstructionService().addSegment2DBetweenPoints(planeH, point1Id, point2Id);
-      const realization = segment.realize2D(world);
+      const segment = operationContext.projectionConstruction.addSegment2DBetweenPoints(planeH, point1Id, point2Id);
+      const realization = segment.realize2D(operationContext.realizationContext);
       
       expect(realization).toBeDefined();
       expect(realization!.point1.x).toBe(0);
@@ -70,11 +72,11 @@ describe('Segment2D', () => {
 
     it('should detect degenerate segment (coincident points)', () => {
       // Create two coincident points using factory method
-      const point3 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(50, 50, 1));
-      const point4 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(50, 50, 1));
+      const point3 = operationContext.projectionConstruction.addFreePoint2D(planeH, new Vector3(50, 50, 1));
+      const point4 = operationContext.projectionConstruction.addFreePoint2D(planeH, new Vector3(50, 50, 1));
       
       const segment = new Segment2D(planeH.id + '/seg1', point3.id, point4.id, planeH.id);
-      const realization = segment.realize2D(world);
+      const realization = segment.realize2D(operationContext.realizationContext);
       
       // Degenerate segments return infeasible realization
       expect(realization).toBeDefined();

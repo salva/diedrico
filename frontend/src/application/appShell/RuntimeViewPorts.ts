@@ -7,12 +7,12 @@ import type { DescriptionPart } from '@/domain/world/descriptors/DescriptionPart
 import type { ProcessNodeType } from '@/domain/processTree/ProcessTree';
 import type { ThreeViewDisplayOptions } from '@/types/ThreeViewDisplayOptions';
 
-export interface RuntimeChangeSubscriptionPort {
+interface RuntimeChangeSubscriptionPort {
   subscribeToChanges(listener: () => void): void;
   unsubscribeFromChanges(listener: () => void): void;
 }
 
-export interface CanvasPresentationOptions {
+interface CanvasPresentationOptions {
   readonly hoveredElementId?: string;
   readonly selectedIds: readonly string[];
   readonly cascadeHighlightIds: readonly string[];
@@ -21,7 +21,7 @@ export interface CanvasPresentationOptions {
   readonly gridVisible: boolean;
 }
 
-export interface CanvasViewport {
+interface CanvasViewport {
   readonly zoom: number;
   readonly panX: number;
   readonly panY: number;

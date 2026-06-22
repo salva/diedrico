@@ -1,5 +1,3 @@
-export type ToolbarHistoryIntent = 'undo' | 'redo';
-
 export interface ToolbarHistoryState {
   canUndo: boolean;
   canRedo: boolean;

@@ -53,7 +53,7 @@ export class AddCircle2DByCenterAndPointOp implements IOperation<AddCircle2DByCe
     if (this.outputs.circleId) {
       const plane = context.world.getProjectionPlaneById(this.planeId);
       if (plane) {
-        removeCircleFromPlane(context.world, plane, this.outputs.circleId);
+        removeCircleFromPlane(context, plane, this.outputs.circleId);
       }
     }
   }

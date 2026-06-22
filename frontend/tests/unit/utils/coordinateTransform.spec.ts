@@ -19,7 +19,8 @@ import {
 } from '@/utils/coordinateTransform';
 import type { World } from '@/domain/world/World';
 import { FixedProjectionPlane } from '@/domain/world/projectionPlane/FixedProjectionPlane';
-import { createTestWorld } from '../../helpers/worldHelpers';
+import { createTestWorld, getHorizontalPlane, getVerticalPlane } from '../../helpers/worldHelpers';
+import type { OperationContext } from '@/commands/operations/OperationContext';
 
 describe('Coordinate Transformation Pipeline', () => {
   describe('screenToSVG', () => {
@@ -130,20 +131,22 @@ describe('Coordinate Transformation Pipeline', () => {
   
   describe('paperToPlane', () => {
     let world: World;
+    let operationContext: OperationContext;
     let horizontalPlaneId: string;
     let verticalPlaneId: string;
     
     beforeEach(() => {
-      const { world: w } = createTestWorld();
+      const { world: w, operationContext: context } = createTestWorld();
       world = w;
-      horizontalPlaneId = world.getProjectionPlaneByLabel('P_H').id!;
-      verticalPlaneId = world.getProjectionPlaneByLabel('P_V').id!;
+      operationContext = context;
+      horizontalPlaneId = getHorizontalPlane(world).id!;
+      verticalPlaneId = getVerticalPlane(world).id!;
     });
     
     it('should convert paper coordinates to plane coordinates for P_H', () => {
       const paperPoint = new Vector3(800, 500, 1);
       
-      const result = paperToPlane(paperPoint, horizontalPlaneId, world);
+      const result = paperToPlane(paperPoint, horizontalPlaneId, world, operationContext.realizationContext);
       
       expect(result).not.toBeNull();
       if (result) {
@@ -159,7 +162,7 @@ describe('Coordinate Transformation Pipeline', () => {
     it('should convert paper coordinates to plane coordinates for P_V', () => {
       const paperPoint = new Vector3(800, 500, 1);
       
-      const result = paperToPlane(paperPoint, verticalPlaneId, world);
+      const result = paperToPlane(paperPoint, verticalPlaneId, world, operationContext.realizationContext);
       
       expect(result).not.toBeNull();
       if (result) {
@@ -172,31 +175,31 @@ describe('Coordinate Transformation Pipeline', () => {
       }
     });
     
-    it('should return null for unknown plane', () => {
+    it('should fail fast for unknown plane', () => {
       const paperPoint = new Vector3(800, 500, 1);
       
-      const result = paperToPlane(paperPoint, 'invalid_plane', world);
-      
-      expect(result).toBeNull();
+      expect(() => paperToPlane(paperPoint, 'invalid_plane', world, operationContext.realizationContext)).toThrow('Projection plane not found: invalid_plane');
     });
   });
   
   describe('planeTo3D', () => {
     let world: World;
+    let operationContext: OperationContext;
     let horizontalPlaneId: string;
     let verticalPlaneId: string;
     
     beforeEach(() => {
-      const { world: w } = createTestWorld();
+      const { world: w, operationContext: context } = createTestWorld();
       world = w;
-      horizontalPlaneId = world.getProjectionPlaneByLabel('P_H').id!;
-      verticalPlaneId = world.getProjectionPlaneByLabel('P_V').id!;
+      operationContext = context;
+      horizontalPlaneId = getHorizontalPlane(world).id!;
+      verticalPlaneId = getVerticalPlane(world).id!;
     });
     
     it('should convert P_H plane coordinates to 3D coordinates', () => {
       const planePoint = new Vector3(100, 50, 1);  // (u, v, 1)
       
-      const result = planeTo3D(planePoint, horizontalPlaneId, world);
+      const result = planeTo3D(planePoint, horizontalPlaneId, world, operationContext.realizationContext);
       
       expect(result).not.toBeNull();
       if (result) {
@@ -212,7 +215,7 @@ describe('Coordinate Transformation Pipeline', () => {
     it('should convert P_V plane coordinates to 3D coordinates', () => {
       const planePoint = new Vector3(100, 50, 1);  // (u, v, 1)
       
-      const result = planeTo3D(planePoint, verticalPlaneId, world);
+      const result = planeTo3D(planePoint, verticalPlaneId, world, operationContext.realizationContext);
       
       expect(result).not.toBeNull();
       if (result) {
@@ -225,26 +228,26 @@ describe('Coordinate Transformation Pipeline', () => {
       }
     });
     
-    it('should return null for unknown plane', () => {
+    it('should fail fast for unknown plane', () => {
       const planePoint = new Vector3(100, 50, 1);
       
-      const result = planeTo3D(planePoint, 'invalid_plane', world);
-      
-      expect(result).toBeNull();
+      expect(() => planeTo3D(planePoint, 'invalid_plane', world, operationContext.realizationContext)).toThrow('Projection plane not found: invalid_plane');
     });
   });
   
   describe('screenTo3D (complete pipeline)', () => {
     let world: World;
+    let operationContext: OperationContext;
     let svgElement: SVGSVGElement;
     let horizontalPlaneId: string;
     let verticalPlaneId: string;
     
     beforeEach(() => {
-      const { world: w } = createTestWorld();
+      const { world: w, operationContext: context } = createTestWorld();
       world = w;
-      horizontalPlaneId = world.getProjectionPlaneByLabel('P_H').id!;
-      verticalPlaneId = world.getProjectionPlaneByLabel('P_V').id!;
+      operationContext = context;
+      horizontalPlaneId = getHorizontalPlane(world).id!;
+      verticalPlaneId = getVerticalPlane(world).id!;
       
       svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
       svgElement.setAttribute('viewBox', '0 0 1600 1000');
@@ -271,7 +274,8 @@ describe('Coordinate Transformation Pipeline', () => {
         svgElement,
         identityViewport,
         horizontalPlaneId,
-        world
+        world,
+        operationContext.realizationContext
       );
       
       expect(result.success).toBe(true);
@@ -292,7 +296,8 @@ describe('Coordinate Transformation Pipeline', () => {
         svgElement,
         identityViewport,
         verticalPlaneId,
-        world
+        world,
+        operationContext.realizationContext
       );
       
       expect(result.success).toBe(true);
@@ -304,19 +309,17 @@ describe('Coordinate Transformation Pipeline', () => {
       }
     });
     
-    it('should handle errors gracefully for invalid plane', () => {
+    it('should fail fast for invalid plane', () => {
       const identityViewport = new Matrix3().identity();
       
-      const result = screenTo3D(
+      expect(() => screenTo3D(
         800, 500,
         svgElement,
         identityViewport,
         'invalid_plane',
-        world
-      );
-      
-      expect(result.success).toBe(false);
-      expect(result.error).toBeDefined();
+        world,
+        operationContext.realizationContext
+      )).toThrow('Projection plane not found: invalid_plane');
     });
   });
 });

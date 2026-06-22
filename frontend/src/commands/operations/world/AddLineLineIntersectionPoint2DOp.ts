@@ -63,7 +63,7 @@ export class AddLineLineIntersectionPoint2DOp implements IOperation<AddLineLineI
     // Remove primary point
     if (this.outputs.pointId) {
       const plane = context.world.getProjectionPlaneById(this.planeId);
-      if (plane) removePointFromPlane(context.world, plane, this.outputs.pointId);
+      if (plane) removePointFromPlane(context, plane, this.outputs.pointId);
     }
     
     // Note: If sibling points exist, they should be removed by domain logic

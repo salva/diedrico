@@ -6,11 +6,7 @@ import { ProjectionPlaneElementStore } from './ProjectionPlaneElementStore';
 import type { ProjectionPlaneRealizationContext } from './ProjectionPlaneContext';
 import { ProjectionPlaneRealization2D, ProjectionPlaneRealization3D } from './ProjectionPlaneRealization';
 
-export const PROJECTION_PLANE_TYPE = {
-  BASE: 'base',
-  AUXILIARY: 'auxiliary',
-} as const;
-export type ProjectionPlaneType = typeof PROJECTION_PLANE_TYPE[keyof typeof PROJECTION_PLANE_TYPE];
+export type ProjectionPlaneType = 'base' | 'auxiliary';
 
 export abstract class ProjectionPlane extends Element {
   abstract readonly type: ProjectionPlaneType;

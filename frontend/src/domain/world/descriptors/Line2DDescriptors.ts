@@ -16,6 +16,19 @@ import type { Line2DTangentToCircleParallelToLine } from '../Line';
 import { HalfHingeLine2D } from '../HingeLine';
 import { BrokenHalfHingeLine2D } from '../elements/BrokenHalfHingeLine2D';
 import type { BrokenHingeLine } from '../BrokenHingeLine';
+import { GeometryElementLookup } from '../GeometryElementLookup';
+
+function requireProjectionPlaneName(world: World, planeId: string): string {
+  const plane = world.getProjectionPlaneById(planeId);
+  if (!plane) throw new Error(`Descriptor invariant failed: projection plane not found: ${planeId}`);
+  return plane.label || plane.name;
+}
+
+function requireElementLabel(world: World, elementId: string): string {
+  const element = new GeometryElementLookup(world).getElement2D(elementId);
+  if (!element) throw new Error(`Descriptor invariant failed: 2D element not found: ${elementId}`);
+  return element.label || elementId;
+}
 
 /**
  * Descriptor for Line2DByTwoPoints - line through two points
@@ -26,18 +39,17 @@ export class Line2DByTwoPointsDescriptor implements ElementDescriptor<Line2DByTw
   }
   
   getConstructionDescription(element: Line2DByTwoPoints, world: World): DescriptionPart[] {
-    const plane = world.getProjectionPlaneById(element.planeId);
-    const planeName = plane?.label || plane?.name || element.planeId;
-    const point1 = world.getElement2D(element.point1Id);
-    const point2 = world.getElement2D(element.point2Id);
+    const planeName = requireProjectionPlaneName(world, element.planeId);
+    const point1Label = requireElementLabel(world, element.point1Id);
+    const point2Label = requireElementLabel(world, element.point2Id);
     
     return [
       { type: 'text', content: 'in ' },
       { type: 'label', content: planeName, elementId: element.planeId },
       { type: 'text', content: ', through points ' },
-      { type: 'label', content: point1?.label || element.point1Id, elementId: element.point1Id },
+      { type: 'label', content: point1Label, elementId: element.point1Id },
       { type: 'text', content: ' and ' },
-      { type: 'label', content: point2?.label || element.point2Id, elementId: element.point2Id }
+      { type: 'label', content: point2Label, elementId: element.point2Id }
     ];
   }
 }
@@ -51,18 +63,17 @@ export class Line2DParallelDescriptor implements ElementDescriptor<Line2DParalle
   }
   
   getConstructionDescription(element: Line2DParallel, world: World): DescriptionPart[] {
-    const plane = world.getProjectionPlaneById(element.planeId);
-    const planeName = plane?.label || plane?.name || element.planeId;
-    const sourceLine = world.getElement2D(element.referenceLineId);
-    const throughPoint = world.getElement2D(element.throughPointId);
+    const planeName = requireProjectionPlaneName(world, element.planeId);
+    const sourceLineLabel = requireElementLabel(world, element.referenceLineId);
+    const throughPointLabel = requireElementLabel(world, element.throughPointId);
     
     return [
       { type: 'text', content: 'in ' },
       { type: 'label', content: planeName, elementId: element.planeId },
       { type: 'text', content: ', parallel to line ' },
-      { type: 'label', content: sourceLine?.label || element.referenceLineId, elementId: element.referenceLineId },
+      { type: 'label', content: sourceLineLabel, elementId: element.referenceLineId },
       { type: 'text', content: ' through point ' },
-      { type: 'label', content: throughPoint?.label || element.throughPointId, elementId: element.throughPointId }
+      { type: 'label', content: throughPointLabel, elementId: element.throughPointId }
     ];
   }
 }
@@ -76,18 +87,17 @@ export class Line2DPerpendicularToLineDescriptor implements ElementDescriptor<Li
   }
   
   getConstructionDescription(element: Line2DPerpendicularToLine, world: World): DescriptionPart[] {
-    const plane = world.getProjectionPlaneById(element.planeId);
-    const planeName = plane?.label || plane?.name || element.planeId;
-    const sourceLine = world.getElement2D(element.referenceLineId);
-    const throughPoint = world.getElement2D(element.throughPointId);
+    const planeName = requireProjectionPlaneName(world, element.planeId);
+    const sourceLineLabel = requireElementLabel(world, element.referenceLineId);
+    const throughPointLabel = requireElementLabel(world, element.throughPointId);
     
     return [
       { type: 'text', content: 'in ' },
       { type: 'label', content: planeName, elementId: element.planeId },
       { type: 'text', content: ', perpendicular to line ' },
-      { type: 'label', content: sourceLine?.label || element.referenceLineId, elementId: element.referenceLineId },
+      { type: 'label', content: sourceLineLabel, elementId: element.referenceLineId },
       { type: 'text', content: ' through point ' },
-      { type: 'label', content: throughPoint?.label || element.throughPointId, elementId: element.throughPointId }
+      { type: 'label', content: throughPointLabel, elementId: element.throughPointId }
     ];
   }
 }
@@ -101,19 +111,18 @@ export class Line2DTangentToCircleThroughPointDescriptor implements ElementDescr
   }
   
   getConstructionDescription(element: Line2DTangentToCircleThroughPoint, world: World): DescriptionPart[] {
-    const plane = world.getProjectionPlaneById(element.planeId);
-    const planeName = plane?.label || plane?.name || element.planeId;
-    const circle = world.getElement2D(element.circleId);
-    const point = world.getElement2D(element.throughPointId);
+    const planeName = requireProjectionPlaneName(world, element.planeId);
+    const circleLabel = requireElementLabel(world, element.circleId);
+    const pointLabel = requireElementLabel(world, element.throughPointId);
     const indexText = element.tangentIndex === 0 ? ' (first tangent)' : ' (second tangent)';
     
     return [
       { type: 'text', content: 'in ' },
       { type: 'label', content: planeName, elementId: element.planeId },
       { type: 'text', content: ', tangent to circle ' },
-      { type: 'label', content: circle?.label || element.circleId, elementId: element.circleId },
+      { type: 'label', content: circleLabel, elementId: element.circleId },
       { type: 'text', content: ' through point ' },
-      { type: 'label', content: point?.label || element.throughPointId, elementId: element.throughPointId },
+      { type: 'label', content: pointLabel, elementId: element.throughPointId },
       { type: 'text', content: indexText }
     ];
   }
@@ -128,19 +137,18 @@ export class Line2DTangentToCircleParallelToLineDescriptor implements ElementDes
   }
   
   getConstructionDescription(element: Line2DTangentToCircleParallelToLine, world: World): DescriptionPart[] {
-    const plane = world.getProjectionPlaneById(element.planeId);
-    const planeName = plane?.label || plane?.name || element.planeId;
-    const circle = world.getElement2D(element.circleId);
-    const line = world.getElement2D(element.referenceLineId);
+    const planeName = requireProjectionPlaneName(world, element.planeId);
+    const circleLabel = requireElementLabel(world, element.circleId);
+    const lineLabel = requireElementLabel(world, element.referenceLineId);
     const indexText = element.tangentIndex === 0 ? ' (first tangent)' : ' (second tangent)';
     
     return [
       { type: 'text', content: 'in ' },
       { type: 'label', content: planeName, elementId: element.planeId },
       { type: 'text', content: ', tangent to circle ' },
-      { type: 'label', content: circle?.label || element.circleId, elementId: element.circleId },
+      { type: 'label', content: circleLabel, elementId: element.circleId },
       { type: 'text', content: ' parallel to line ' },
-      { type: 'label', content: line?.label || element.referenceLineId, elementId: element.referenceLineId },
+      { type: 'label', content: lineLabel, elementId: element.referenceLineId },
       { type: 'text', content: indexText }
     ];
   }
@@ -157,21 +165,16 @@ export class HalfHingeLine2DDescriptor implements ElementDescriptor<HalfHingeLin
   
   getConstructionDescription(element: HalfHingeLine2D, world: World): DescriptionPart[] {
     const hingeLine = world.getHingeLineById(element.hingeLineId);
-    const currentPlane = world.getProjectionPlaneById(element.planeId);
-    
-    if (!hingeLine) {
-      return [{ type: 'text', content: `trace of ${element.hingeLineId}` }];
-    }
+    if (!hingeLine) throw new Error(`Descriptor invariant failed: hinge line not found: ${element.hingeLineId}`);
     
     // Get the other plane in the hinge
     const otherPlaneId = hingeLine.plane1Id === element.planeId ? hingeLine.plane2Id : hingeLine.plane1Id;
-    const otherPlane = world.getProjectionPlaneById(otherPlaneId);
     
     return [
       { type: 'text', content: 'on ' },
-      { type: 'label', content: currentPlane?.label || currentPlane?.name || element.planeId, elementId: element.planeId },
+      { type: 'label', content: requireProjectionPlaneName(world, element.planeId), elementId: element.planeId },
       { type: 'text', content: ' (connects to ' },
-      { type: 'label', content: otherPlane?.label || otherPlane?.name || otherPlaneId, elementId: otherPlaneId },
+      { type: 'label', content: requireProjectionPlaneName(world, otherPlaneId), elementId: otherPlaneId },
       { type: 'text', content: ')' }
     ];
   }
@@ -188,23 +191,16 @@ export class BrokenHalfHingeLine2DDescriptor implements ElementDescriptor<Broken
   
   getConstructionDescription(element: BrokenHalfHingeLine2D, world: World): DescriptionPart[] {
     const brokenHinge = world.getHingeLineById(element.hingeLineId) as BrokenHingeLine | undefined;
-    const currentPlane = world.getProjectionPlaneById(element.planeId);
-    
-    if (!brokenHinge) {
-      return [{ type: 'text', content: `broken trace of ${element.hingeLineId}` }];
-    }
+    if (!brokenHinge) throw new Error(`Descriptor invariant failed: broken hinge line not found: ${element.hingeLineId}`);
     
     // Get the sibling plane
     const siblingPlaneId = brokenHinge.plane1Id === element.planeId ? brokenHinge.plane2Id : brokenHinge.plane1Id;
-    const siblingPlane = world.getProjectionPlaneById(siblingPlaneId);
-    
     return [
       { type: 'text', content: 'on ' },
-      { type: 'label', content: currentPlane?.label || currentPlane?.name || element.planeId, elementId: element.planeId },
+      { type: 'label', content: requireProjectionPlaneName(world, element.planeId), elementId: element.planeId },
       { type: 'text', content: ' (transports distances to ' },
-      { type: 'label', content: siblingPlane?.label || siblingPlane?.name || siblingPlaneId, elementId: siblingPlaneId },
+      { type: 'label', content: requireProjectionPlaneName(world, siblingPlaneId), elementId: siblingPlaneId },
       { type: 'text', content: ')' }
     ];
   }
 }
-

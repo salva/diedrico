@@ -127,7 +127,9 @@ export class BrokenHalfHingeLine2D extends HalfHingeLine2D {
     // This ensures the BHHL overlays T2/T2' visually in paper coordinates
     const sourcePlaneReal2D = context.getProjectionPlane2DRealization(t2Line.planeId);
     const targetPlaneReal2D = context.getProjectionPlane2DRealization(this.planeId);
-    if (!sourcePlaneReal2D?.feasible || !targetPlaneReal2D?.feasible) {
+    if (!sourcePlaneReal2D) throw new Error(`BrokenHalfHingeLine2D ${this.id}: missing 2D realization for source plane ${t2Line.planeId}`);
+    if (!targetPlaneReal2D) throw new Error(`BrokenHalfHingeLine2D ${this.id}: missing 2D realization for target plane ${this.planeId}`);
+    if (!sourcePlaneReal2D.feasible || !targetPlaneReal2D.feasible) {
       return HalfHingeLineRealization2D.createInfeasible();
     }
 

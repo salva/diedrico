@@ -1,11 +1,8 @@
 import type { Plane3DRealization3D } from '../Element3DRealization3D';
 import type { HingeLine } from '../HingeLine';
-import type { Line2D } from '../Line';
-import type { Circle2D } from '../Circle';
-import type { Point2D } from '../Point';
-import type { Circle2DRealization2D } from '../Circle';
-import type { Line2DRealization2D } from '../Line';
-import type { Point2DRealization2D } from '../Point';
+import type { Line2D, Line2DRealization2D } from '../Line';
+import type { Circle2D, Circle2DRealization2D } from '../Circle';
+import type { Point2D, Point2DRealization2D } from '../Point';
 import type { ProjectionPlane } from '@/domain/world/projectionPlane/ProjectionPlane';
 import type { ProjectionPlaneRealization2D, ProjectionPlaneRealization3D } from './ProjectionPlaneRealization';
 
@@ -26,9 +23,9 @@ export interface ProjectionRealizationLookupContext {
 export interface ProjectionElementRealizationContext extends ProjectionElementLookupContext, ProjectionRealizationLookupContext {}
 
 export interface ProjectionElementRealizer {
-  realizePoint2D(point: Point2D, context?: ProjectionElementRealizationContext): Point2DRealization2D | undefined;
-  realizeLine2D(line: Line2D, context?: ProjectionElementRealizationContext): Line2DRealization2D | undefined;
-  realizeCircle2D(circle: Circle2D, context?: ProjectionElementRealizationContext): Circle2DRealization2D | undefined;
+  realizePoint2D(point: Point2D, context?: ProjectionElementRealizationContext): Point2DRealization2D;
+  realizeLine2D(line: Line2D, context?: ProjectionElementRealizationContext): Line2DRealization2D;
+  realizeCircle2D(circle: Circle2D, context?: ProjectionElementRealizationContext): Circle2DRealization2D;
 }
 
 export interface CachedProjectionElementRealizationContext extends ProjectionElementRealizationContext, ProjectionElementRealizer {}

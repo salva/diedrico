@@ -145,19 +145,13 @@ export class UpdateElementStyleOp implements IOperation<OperationDescriptor<'Upd
   }
 
   undo(context: OperationContext): void {
-    try {
-      const element = findStyleableElement(context.world, this.planeId, this.elementId);
-      if (!element) {
-        console.error('[UpdateElementStyleOp] Cannot undo: Element not found:', this.elementId);
-        return;
-      }
-
-      // Restore previous style
-      element.visualStyle = this.previousStyle ? { ...this.previousStyle } : undefined;
-      
-    } catch (error) {
-      console.error('[UpdateElementStyleOp] Undo failed:', error);
+    const element = findStyleableElement(context.world, this.planeId, this.elementId);
+    if (!element) {
+      throw new Error(`Cannot undo style update: element not found: ${this.elementId}`);
     }
+
+    // Restore previous style
+    element.visualStyle = this.previousStyle ? { ...this.previousStyle } : undefined;
   }
 
   serialize(): OperationDescriptor<'UpdateElementStyle', UpdateElementStylePayload> {

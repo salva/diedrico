@@ -70,7 +70,7 @@ export class AddCircleCircleIntersectionPoint2DOp implements IOperation<AddCircl
     if (this.outputs.pointId) {
       const plane = context.world.getProjectionPlaneById(this.planeId);
       if (plane) {
-        removePointFromPlane(context.world, plane, this.outputs.pointId);
+        removePointFromPlane(context, plane, this.outputs.pointId);
       }
     }
     

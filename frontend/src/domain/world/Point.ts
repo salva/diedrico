@@ -531,7 +531,9 @@ export class SiblingIntersectionPoint2D extends Point2D {
         const primaryPlaneReal3D = context.getProjectionPlane3DRealization(primaryBHHL.planeId);
         const siblingPlaneReal3D = context.getProjectionPlane3DRealization(this.planeId);
 
-        if (!primaryPlaneReal3D?.feasible || !siblingPlaneReal3D?.feasible) {
+        if (!primaryPlaneReal3D) throw new Error(`SiblingPoint2D ${this.id}: missing 3D realization for primary plane ${primaryBHHL.planeId}`);
+        if (!siblingPlaneReal3D) throw new Error(`SiblingPoint2D ${this.id}: missing 3D realization for sibling plane ${this.planeId}`);
+        if (!primaryPlaneReal3D.feasible || !siblingPlaneReal3D.feasible) {
           return new Point2DRealization2D(new Vector3(0, 0, 1), false);
         }
 
@@ -548,29 +550,4 @@ export class SiblingIntersectionPoint2D extends Point2D {
     //   Primary: R = Q + d·D   Sibling: R' = Q' + d·D' = Q + d·D = R
     return new Point2DRealization2D(primaryRealization.position.clone());
   }
-}
-
-// Type guards for Point2D types
-export function isFreePoint2D(point: Point2D): point is FreePoint2D {
-  return point instanceof FreePoint2D;
-}
-
-export function isLineLineIntersection(point: Point2D): point is Point2DLineLineIntersection {
-  return point instanceof Point2DLineLineIntersection;
-}
-
-export function isLineCircleIntersection(point: Point2D): point is Point2DLineCircleIntersection {
-  return point instanceof Point2DLineCircleIntersection;
-}
-
-export function isCircleCircleIntersection(point: Point2D): point is Point2DCircleCircleIntersection {
-  return point instanceof Point2DCircleCircleIntersection;
-}
-
-export function isIntersectionPoint2D(point: Point2D): point is IntersectionPoint2D {
-  return point instanceof IntersectionPoint2D;
-}
-
-export function isSiblingIntersectionPoint2D(point: Point2D): point is SiblingIntersectionPoint2D {
-  return point instanceof SiblingIntersectionPoint2D;
 }

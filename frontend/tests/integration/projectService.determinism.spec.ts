@@ -12,12 +12,11 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import type { World } from '@/domain/world/World';
-import { createTestWorld, buildOperationContext } from '../helpers/worldHelpers';
+import { createTestWorld, getHorizontalPlaneId, getHalfHingeLines2D } from '../helpers/worldHelpers';
 import { CommandStack } from '@/commands/CommandStack';
 import { ProjectService } from '@/application/appShell/ProjectService';
 import { Command } from '@/commands/Command';
 import { Vector3 } from 'three';
-import { getHorizontalPlaneId, buildOperationContext } from '../helpers/worldHelpers';
 
 // Import operations
 import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
@@ -33,11 +32,11 @@ import type { Circle2D } from '@/domain/world/Circle';
 describe('ProjectService Determinism Tests', () => {
   it('should produce identical World state when deserializing same project 5 times', () => {
     // Step 1: Create a complex project with various operations
-    const { world, visibilityModel, commandStack } = createTestWorld();
+    const { world, visibilityModel, commandStack, operationContext } = createTestWorld();
     const planeId = getHorizontalPlaneId(world);
     
     // Create multiple elements
-    const cmd1 = new Command('Create points', buildOperationContext(world, visibilityModel));
+    const cmd1 = new Command('Create points', operationContext);
     const p1Result = cmd1.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
     const p1Id = p1Result.outputs.pointId;
     
@@ -50,7 +49,7 @@ describe('ProjectService Determinism Tests', () => {
     commandStack.push(cmd1);
     
     // Create lines
-    const cmd2 = new Command('Create lines', buildOperationContext(world, visibilityModel));
+    const cmd2 = new Command('Create lines', operationContext);
     const l1Result = cmd2.addAndExecute(new AddLine2DByTwoPointsOp(planeId, p1Id, p2Id));
     const l1Id = l1Result.outputs.lineId;
     
@@ -60,43 +59,43 @@ describe('ProjectService Determinism Tests', () => {
     commandStack.push(cmd2);
     
     // Create intersection
-    const cmd3 = new Command('Create intersection', buildOperationContext(world, visibilityModel));
+    const cmd3 = new Command('Create intersection', operationContext);
     const intResult = cmd3.addAndExecute(new AddLineLineIntersectionPoint2DOp(planeId, l1Id, l2Id));
     const intId = intResult.outputs.pointId;
     cmd3.commit();
     commandStack.push(cmd3);
     
     // Create circle
-    const cmd4 = new Command('Create circle', buildOperationContext(world, visibilityModel));
+    const cmd4 = new Command('Create circle', operationContext);
     cmd4.addAndExecute(new AddCircle2DByCenterAndPointOp(planeId, p1Id, p3Id));
     cmd4.commit();
     commandStack.push(cmd4);
     
     // Create guide (needs half-hinge line, use first available)
-    const halfHingeLines = world.getHalfHingeLines2D(planeId);
+    const halfHingeLines = getHalfHingeLines2D(world, planeId);
     if (halfHingeLines.length > 0) {
-      const cmd5 = new Command('Create guide', buildOperationContext(world, visibilityModel));
+      const cmd5 = new Command('Create guide', operationContext);
       cmd5.addAndExecute(new AddGuide2DPerpendicularToLineOp(planeId, halfHingeLines[0].id, p1Id));
       cmd5.commit();
       commandStack.push(cmd5);
     }
     
     // Delete one point
-    const cmd6 = new Command('Delete point', buildOperationContext(world, visibilityModel));
+    const cmd6 = new Command('Delete point', operationContext);
     cmd6.addAndExecute(new RemovePoint2DOp(planeId, p3Id));
     cmd6.commit();
     commandStack.push(cmd6);
     
     // Step 2: Serialize the project
-    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Determinism Test Project');
+    const serialized = ProjectService.serializeCommands(commandStack, operationContext.idAllocator.peek(), 'Determinism Test Project');
     
     // Step 3: Deserialize 5 times and capture World state
     const worldStates: any[] = [];
     
     for (let i = 0; i < 5; i++) {
-      const { world: freshWorld, visibilityModel: freshVisibilityModel, commandStack: freshStack } = createTestWorld();
+      const { world: freshWorld, visibilityModel: freshVisibilityModel, commandStack: freshStack, operationContext: freshOperationContext } = createTestWorld();
       
-      ProjectService.deserializeCommands(serialized, freshWorld, freshVisibilityModel, freshStack);
+      ProjectService.deserializeCommands(serialized, freshVisibilityModel, freshStack, freshOperationContext);
       
       // Capture World state for comparison
       const state = captureWorldState(freshWorld);
@@ -135,25 +134,25 @@ describe('ProjectService Determinism Tests', () => {
   
   it('should generate same element IDs across multiple deserializations', () => {
     // Create a simple project
-    const { world, visibilityModel, commandStack } = createTestWorld();
+    const { world, visibilityModel, commandStack, operationContext } = createTestWorld();
     const planeId = getHorizontalPlaneId(world);
     
-    const cmd = new Command('Create elements', buildOperationContext(world, visibilityModel));
+    const cmd = new Command('Create elements', operationContext);
     cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(50, 50, 1)));
     cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 50, 1)));
     cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(75, 100, 1)));
     cmd.commit();
     commandStack.push(cmd);
     
-    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'ID Test');
+    const serialized = ProjectService.serializeCommands(commandStack, operationContext.idAllocator.peek(), 'ID Test');
     
     // Deserialize 3 times
     const idSets: string[][] = [];
     
     for (let i = 0; i < 3; i++) {
-      const { world: freshWorld, visibilityModel: freshVisibilityModel, commandStack: freshStack } = createTestWorld();
+      const { world: freshWorld, visibilityModel: freshVisibilityModel, commandStack: freshStack, operationContext: freshOperationContext } = createTestWorld();
       
-      ProjectService.deserializeCommands(serialized, freshWorld, freshVisibilityModel, freshStack);
+      ProjectService.deserializeCommands(serialized, freshVisibilityModel, freshStack, freshOperationContext);
       
       const freshPlaneId = getHorizontalPlaneId(freshWorld);
       const plane = freshWorld.getProjectionPlaneById(freshPlaneId);

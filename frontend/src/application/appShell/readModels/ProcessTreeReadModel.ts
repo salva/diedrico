@@ -1,12 +1,14 @@
-import type { ProcessNode, ProcessTree } from '@/domain/processTree/ProcessTree';
+import type { ProcessNodeSnapshot, ProcessTree } from '@/domain/processTree/ProcessTree';
 import { Element2D } from '@/domain/world/Element2D';
 import type { World } from '@/domain/world/World';
+import { GeometryElementLookup } from '@/domain/world/GeometryElementLookup';
 import type { DependencyQueryPort } from '@/domain/world/DependencyPorts';
 import type { DescriptorRegistry } from '@/domain/world/descriptors/DescriptorRegistry';
 import type { DescriptionPart } from '@/domain/world/descriptors/DescriptionPart';
 import type { Action } from '@/domain/processTree/Action';
 import { mapDescriptionParts, type ProcessNodeViewModel, type ProcessTreeReadModel } from '../RuntimeViewPorts';
 import type { VisibilityModel } from '@/application/processTree/VisibilityModel';
+import type { CachedProjectionElementRealizationContext, Element3DRealizationContext } from '@/domain/world/projectionPlane/ProjectionPlaneContext';
 
 export interface ProcessTreeReadModelContext {
   readonly world: World;
@@ -14,12 +16,13 @@ export interface ProcessTreeReadModelContext {
   readonly dependencyQuery: DependencyQueryPort;
   readonly descriptorRegistry: DescriptorRegistry;
   readonly visibilityModel: VisibilityModel;
+  readonly realizationContext: CachedProjectionElementRealizationContext & Element3DRealizationContext;
 }
 
 export function buildProcessTreeReadModel(context: ProcessTreeReadModelContext): ProcessTreeReadModel {
   const tree = context.processTree;
   return {
-    root: createProcessNodeViewModel(tree.root, context),
+    root: createProcessNodeViewModel(tree.getRootSnapshot(), context),
     activeSubprocessId: tree.getCurrentSubprocess().id,
   };
 }
@@ -39,7 +42,7 @@ export function countProcessNodeViewModels(node: ProcessNodeViewModel): number {
   return 1 + (node.children?.reduce((sum, child) => sum + countProcessNodeViewModels(child), 0) ?? 0);
 }
 
-function createProcessNodeViewModel(node: ProcessNode, context: ProcessTreeReadModelContext): ProcessNodeViewModel {
+function createProcessNodeViewModel(node: ProcessNodeSnapshot, context: ProcessTreeReadModelContext): ProcessNodeViewModel {
   const visibility = context.visibilityModel.get(node.id, node.type);
   if (node.type === 'action') {
     const descriptionParts = mapDescriptionParts(getActionDescriptionParts(node, context));
@@ -57,7 +60,7 @@ function createProcessNodeViewModel(node: ProcessNode, context: ProcessTreeReadM
     id: node.id,
     type: node.type,
     name: node.type === 'subprocess' ? node.name : undefined,
-    children: node.children.filter(child => child !== null).map(child => createProcessNodeViewModel(child, context)),
+    children: node.children.map(child => createProcessNodeViewModel(child, context)),
     showIntermediates: node.type === 'subprocess' ? visibility.showIntermediates === true : undefined,
     isOutput: visibility.isOutput === true,
     isAuxiliary: node.type === 'actionGroup' ? visibility.isAuxiliary === true : undefined,
@@ -68,21 +71,25 @@ function createProcessNodeViewModel(node: ProcessNode, context: ProcessTreeReadM
 }
 
 function isActionInfeasible(elementId: string, context: ProcessTreeReadModelContext): boolean {
-  let element;
-  try {
-    element = context.world.getElement2D(elementId);
-  } catch {
-    element = context.world.getElement3DById(elementId) || context.world.getProjectionPlaneById(elementId);
+  const lookup = new GeometryElementLookup(context.world);
+  if (!elementId.includes('/')) {
+    const element = lookup.getElement3DById(elementId) || context.world.getProjectionPlaneById(elementId);
+    if (!element) throw new Error(`Process action references missing element: ${elementId}`);
+    return false;
   }
+
+  const element = lookup.getElement2D(elementId);
+  if (!element) throw new Error(`Process action references missing 2D element: ${elementId}`);
   if (element instanceof Element2D) {
-    const realization = element.realize2D(context.world);
-    return realization ? !realization.isFeasible() : false;
+    const realization = element.realize2D(context.realizationContext);
+    return !realization.isFeasible();
   }
   return false;
 }
 
 function getActionDescriptionParts(action: Action, context: ProcessTreeReadModelContext): DescriptionPart[] {
   const { descriptorRegistry, world } = context;
+  const lookup = new GeometryElementLookup(world);
   if (!action.elementId.includes('/')) {
     const plane = world.getProjectionPlaneById(action.elementId);
     if (plane) {
@@ -99,25 +106,22 @@ function getActionDescriptionParts(action: Action, context: ProcessTreeReadModel
     }
   }
   
-  try {
-    const element = world.getElement2D(action.elementId);
-    if (element) {
-      const descriptor = descriptorRegistry.get(element);
-      const typeName = descriptor.getTypeName(element).toLowerCase();
-      const label = element.label || action.elementId;
-      const constructionParts = descriptor.getConstructionDescription(element, world);
-      
-      return [
-        { type: 'label', content: label, elementId: action.elementId },
-        { type: 'text', content: `: ${typeName} ` },
-        ...constructionParts
-      ];
-    }
-  } catch {
-    // Not a 2D element, continue to 3D
+  if (action.elementId.includes('/')) {
+    const element = lookup.getElement2D(action.elementId);
+    if (!element) throw new Error(`Process action references missing 2D element: ${action.elementId}`);
+    const descriptor = descriptorRegistry.get(element);
+    const typeName = descriptor.getTypeName(element).toLowerCase();
+    const label = element.label || action.elementId;
+    const constructionParts = descriptor.getConstructionDescription(element, world);
+
+    return [
+      { type: 'label', content: label, elementId: action.elementId },
+      { type: 'text', content: `: ${typeName} ` },
+      ...constructionParts
+    ];
   }
   
-  const element3d = world.getElement3DById(action.elementId);
+  const element3d = lookup.getElement3DById(action.elementId);
   if (element3d) {
     const descriptor = descriptorRegistry.get(element3d);
     const typeName = descriptor.getTypeName(element3d).toLowerCase();
@@ -131,5 +135,5 @@ function getActionDescriptionParts(action: Action, context: ProcessTreeReadModel
     ];
   }
   
-  return [];
+  throw new Error(`Process action references missing element: ${action.elementId}`);
 }

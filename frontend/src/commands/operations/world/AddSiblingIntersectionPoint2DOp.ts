@@ -69,7 +69,7 @@ export class AddSiblingIntersectionPoint2DOp implements IOperation<AddSiblingInt
     if (this.outputs.pointId) {
       const plane = context.world.getProjectionPlaneById(this.planeId);
       if (plane) {
-        removePointFromPlane(context.world, plane, this.outputs.pointId);
+        removePointFromPlane(context, plane, this.outputs.pointId);
         
         // Unlink from primary - traverse all planes to find primary
         for (const projPlane of context.world.getAllProjectionPlanes()) {

@@ -1,18 +1,18 @@
 import { Vector4 } from 'three';
 import { domainToThreeJS, intersectLinePlane3D, intersectSegmentPlane3D, isPointOnPlane3D } from '@/utils/threeUtils';
 import type { GuidePresentationDto, Vec3 } from './ThreePresentationModel';
-import type { ThreeGuideIntersectionReadModel, ThreeGuideReadPort } from './ThreeGuideReadPort';
+import type { ThreeGuideIntersectionReadModel, ThreeGuideSourceDto } from './ThreePresentationReadModel';
 import { isVisible, THREE_STYLE } from './ThreeStylePolicy';
 
 export class Guide3DSelector {
-  select(readPort: ThreeGuideReadPort, selectedIds: readonly string[]): GuidePresentationDto[] {
+  select(guides: ThreeGuideSourceDto[], intersectionModels: ThreeGuideIntersectionReadModel | undefined): GuidePresentationDto[] {
     const items: GuidePresentationDto[] = [];
-    for (const guide of readPort.getSelectedGuideModels(selectedIds)) {
+    for (const guide of guides) {
       if (!isVisible(guide)) continue;
       const planePoint = vec4(guide.planePoint);
       const planeNormal = guide.planeNormal;
       items.push({ id: `guide-plane-${guide.id}`, kind: 'guide-perpendicular-plane', sourceEntityId: guide.id, planeId: guide.planeId, visible: true, style: guide.style, renderGroup: 'guides', geometry: guide.geometry });
-      items.push(...intersections(readPort.getGuideIntersectionModels(), planePoint, planeNormal, guide.id));
+      if (intersectionModels) items.push(...intersections(intersectionModels, planePoint, planeNormal, guide.id));
     }
     return items;
   }

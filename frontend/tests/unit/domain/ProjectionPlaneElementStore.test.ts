@@ -43,7 +43,7 @@ describe('RealizationService', () => {
     const first2D = service.realizeProjectionPlane2D(plane, world);
     const first3D = service.realizeProjectionPlane3D(plane, world);
 
-    service.invalidateElement(traceId, dependencyQuery, new Map([[plane.id, plane]]));
+    service.invalidateElement(traceId, dependencyQuery, [plane]);
 
     expect(service.realizeProjectionPlane2D(plane, world)).not.toBe(first2D);
     expect(service.realizeProjectionPlane3D(plane, world)).not.toBe(first3D);

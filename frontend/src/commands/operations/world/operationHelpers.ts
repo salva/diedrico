@@ -1,5 +1,6 @@
 import type { World } from '@/domain/world/World';
 import type { ProjectionPlane } from '@/domain/world/projectionPlane/ProjectionPlane';
+import type { OperationContext } from '../OperationContext';
 
 type FeasibleRealization = {
   isFeasible(): boolean;
@@ -18,29 +19,33 @@ export function requireProjectionPlane(world: World, planeId: string): Projectio
   return plane;
 }
 
-export function removePointFromPlane(world: World, plane: ProjectionPlane, pointId: string): boolean {
-  world.invalidateRealization(pointId);
+export function invalidateRealization(context: OperationContext, elementId: string): string[] {
+  return context.realizations.invalidateElement(elementId, context.dependencies, context.world.getAllProjectionPlanes());
+}
+
+export function removePointFromPlane(context: OperationContext, plane: ProjectionPlane, pointId: string): boolean {
+  invalidateRealization(context, pointId);
   const removed = plane.removePoint(pointId);
   if (removed) {
-    world.getDependencyRegistrar().unregisterNode(pointId);
+    context.dependencies.unregisterNode(pointId);
   }
   return removed;
 }
 
-export function removeLineFromPlane(world: World, plane: ProjectionPlane, lineId: string): boolean {
-  world.invalidateRealization(lineId);
+export function removeLineFromPlane(context: OperationContext, plane: ProjectionPlane, lineId: string): boolean {
+  invalidateRealization(context, lineId);
   const removed = plane.removeLine(lineId);
   if (removed) {
-    world.getDependencyRegistrar().unregisterNode(lineId);
+    context.dependencies.unregisterNode(lineId);
   }
   return removed;
 }
 
-export function removeCircleFromPlane(world: World, plane: ProjectionPlane, circleId: string): boolean {
-  world.invalidateRealization(circleId);
+export function removeCircleFromPlane(context: OperationContext, plane: ProjectionPlane, circleId: string): boolean {
+  invalidateRealization(context, circleId);
   const removed = plane.removeCircle(circleId);
   if (removed) {
-    world.getDependencyRegistrar().unregisterNode(circleId);
+    context.dependencies.unregisterNode(circleId);
   }
   return removed;
 }
@@ -69,17 +74,6 @@ export function requireDistinctProjectionPlanes(
   }
 
   return { plane1, plane2 };
-}
-
-export function requireFeasibleProjection<T extends FeasibleRealization | null | undefined>(
-  elementLabel: string,
-  projectionLabel: string,
-  realization: T
-): Exclude<T, null | undefined> {
-  if (!realization || !realization.isFeasible()) {
-    throw new Error(`Cannot create 3D ${elementLabel}: ${projectionLabel} is not geometrically feasible`);
-  }
-  return realization as Exclude<T, null | undefined>;
 }
 
 export function requireFeasibleProjectionPair<T1 extends FeasibleRealization | null | undefined, T2 extends FeasibleRealization | null | undefined>(

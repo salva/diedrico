@@ -23,7 +23,9 @@
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
 import { lineThroughPointArgumentSet } from './toolArgumentSpecs';
-import type { ToolArgumentSet } from '@/tools/ToolArgumentCollector';
+import type { ArgumentValue, ToolArgumentSet } from '@/tools/ToolArgumentCollector';
+import type { ToolContext } from './ITool';
+import type { ToolConstructionIntent } from './ToolCommandIntents';
 import { SelectionMask } from '@/types/SelectionMask';
 
 /**
@@ -42,7 +44,6 @@ import { SelectionMask } from '@/types/SelectionMask';
  */
 export class GuideTool extends ArgumentCollectorTool {
   readonly name = 'guide';
-  protected readonly constructionIntentType = 'guide';
 
   /**
    * Define argument specification
@@ -57,6 +58,16 @@ export class GuideTool extends ArgumentCollectorTool {
         SelectionMask.halfHingeLine()
       )
     ];
+  }
+
+  protected buildConstructionIntent(args: Map<string, ArgumentValue>, context: ToolContext): ToolConstructionIntent {
+    return {
+      type: 'guide',
+      planeId: context.planeId,
+      referenceLineId: this.requireElementId(args, 'referenceLine'),
+      throughPointId: this.requireElementId(args, 'throughPoint'),
+      description: this.getCommandDescription()
+    };
   }
 
   /**

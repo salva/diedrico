@@ -14,7 +14,9 @@
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
 import { lineThroughPointArgumentSet } from './toolArgumentSpecs';
-import type { ToolArgumentSet } from '@/tools/ToolArgumentCollector';
+import type { ArgumentValue, ToolArgumentSet } from '@/tools/ToolArgumentCollector';
+import type { ToolContext } from './ITool';
+import type { ToolConstructionIntent } from './ToolCommandIntents';
 
 /**
  * PerpendicularLineTool using ArgumentCollectorTool framework
@@ -27,7 +29,6 @@ import type { ToolArgumentSet } from '@/tools/ToolArgumentCollector';
  */
 export class PerpendicularLineTool extends ArgumentCollectorTool {
   readonly name = 'perpendicular-line';
-  protected readonly constructionIntentType = 'perpendicular-line';
 
   /**
    * Define argument specification
@@ -41,6 +42,16 @@ export class PerpendicularLineTool extends ArgumentCollectorTool {
         'Cannot create perpendicular line: reference line is infeasible'
       )
     ];
+  }
+
+  protected buildConstructionIntent(args: Map<string, ArgumentValue>, context: ToolContext): ToolConstructionIntent {
+    return {
+      type: 'perpendicular-line',
+      planeId: context.planeId,
+      referenceLineId: this.requireElementId(args, 'referenceLine'),
+      throughPointId: this.requireElementId(args, 'throughPoint'),
+      description: this.getCommandDescription()
+    };
   }
 
   /**

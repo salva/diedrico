@@ -20,7 +20,7 @@ import type { VisibilityModel } from '@/application/processTree/VisibilityModel'
 import { Command } from '@/commands/Command';
 import { ProjectService } from '@/application/appShell/ProjectService';
 import { Vector3 } from 'three';
-import { createTestWorld, buildOperationContext } from '../../../helpers/worldHelpers';
+import { createTestWorld, getHorizontalPlane } from '../../../helpers/worldHelpers';
 import { 
   AddFreePoint2DOp 
 } from '@/commands/operations/world/AddFreePointOp';
@@ -47,15 +47,17 @@ describe('ProjectService Self-Containment Tests', () => {
   let world: World;
   let visibilityModel: VisibilityModel;
   let commandStack: CommandStack;
+  let operationContext: ReturnType<typeof createTestWorld>['operationContext'];
   let planeId: string; // Plane ID determined from World initialization
 
   beforeEach(() => {
-    const { world: w, visibilityModel: vm, commandStack: cs } = createTestWorld();
+    const { world: w, visibilityModel: vm, commandStack: cs, operationContext: oc } = createTestWorld();
     world = w;
     visibilityModel = vm;
     commandStack = cs;
+    operationContext = oc;
     // Get the actual plane ID after World initialization
-    const planeH = world.getProjectionPlaneByLabel('P_H');
+    const planeH = getHorizontalPlane(world);
     if (!planeH || !planeH.id) {
       throw new Error('P_H plane not found after World initialization');
     }
@@ -67,20 +69,20 @@ describe('ProjectService Self-Containment Tests', () => {
    */
   it('AddFreePoint2DOp should be self-contained', () => {
     // Create operation
-    const cmd = new Command('Test', buildOperationContext(world, visibilityModel));
+    const cmd = new Command('Test', operationContext);
     cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
     cmd.commit();
     commandStack.push(cmd);
 
     // Serialize
-    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Test Project');
+    const serialized = ProjectService.serializeCommands(commandStack, operationContext.idAllocator.peek(), 'Test Project');
 
     // Deserialize on FRESH World (no prior state except plane initialization)
-    const { world: freshWorld, visibilityModel: freshVisibilityModel, commandStack: freshStack } = createTestWorld();
+    const { world: freshWorld, visibilityModel: freshVisibilityModel, commandStack: freshStack, operationContext: freshOperationContext } = createTestWorld();
     
     // This should succeed - operation parameters contain everything needed
     expect(() => {
-      ProjectService.deserializeCommands(serialized, freshWorld, freshVisibilityModel, freshStack);
+      ProjectService.deserializeCommands(serialized, freshVisibilityModel, freshStack, freshOperationContext);
     }).not.toThrow();
 
     // Verify the operation executed
@@ -95,7 +97,7 @@ describe('ProjectService Self-Containment Tests', () => {
    */
   it('AddLine2DByTwoPoints should be self-contained', () => {
     // Create points and line
-    const cmd = new Command('Test', buildOperationContext(world, visibilityModel));
+    const cmd = new Command('Test', operationContext);
     const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 0, 1)));
     const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 0, 1)));
     cmd.addAndExecute(new AddLine2DByTwoPointsOp(planeId, p1Result.outputs.pointId, p2Result.outputs.pointId));
@@ -103,13 +105,13 @@ describe('ProjectService Self-Containment Tests', () => {
     commandStack.push(cmd);
 
     // Serialize
-    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Test Project');
+    const serialized = ProjectService.serializeCommands(commandStack, operationContext.idAllocator.peek(), 'Test Project');
 
     // Deserialize on FRESH World - this should succeed without errors
-    const { world: freshWorld, visibilityModel: freshVisibilityModel, commandStack: freshStack } = createTestWorld();
+    const { world: freshWorld, visibilityModel: freshVisibilityModel, commandStack: freshStack, operationContext: freshOperationContext } = createTestWorld();
     
     expect(() => {
-      ProjectService.deserializeCommands(serialized, freshWorld, freshVisibilityModel, freshStack);
+      ProjectService.deserializeCommands(serialized, freshVisibilityModel, freshStack, freshOperationContext);
     }).not.toThrow();
   });
 
@@ -117,18 +119,18 @@ describe('ProjectService Self-Containment Tests', () => {
    * Test that AddSegment2DByPoints is self-contained
    */
   it('AddSegment2DByPoints should be self-contained', () => {
-    const cmd = new Command('Test', buildOperationContext(world, visibilityModel));
+    const cmd = new Command('Test', operationContext);
     const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 0, 1)));
     const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 0, 1)));
     cmd.addAndExecute(new AddSegment2DByPointsOp(planeId, p1Result.outputs.pointId, p2Result.outputs.pointId));
     cmd.commit();
     commandStack.push(cmd);
 
-    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Test Project');
-    const { world: freshWorld, visibilityModel: freshVisibilityModel, commandStack: freshStack } = createTestWorld();
+    const serialized = ProjectService.serializeCommands(commandStack, operationContext.idAllocator.peek(), 'Test Project');
+    const { world: freshWorld, visibilityModel: freshVisibilityModel, commandStack: freshStack, operationContext: freshOperationContext } = createTestWorld();
     
     expect(() => {
-      ProjectService.deserializeCommands(serialized, freshWorld, freshVisibilityModel, freshStack);
+      ProjectService.deserializeCommands(serialized, freshVisibilityModel, freshStack, freshOperationContext);
     }).not.toThrow();
   });
 
@@ -136,18 +138,18 @@ describe('ProjectService Self-Containment Tests', () => {
    * Test that AddCircle2DByCenterAndPoint is self-contained
    */
   it('AddCircle2DByCenterAndPoint should be self-contained', () => {
-    const cmd = new Command('Test', buildOperationContext(world, visibilityModel));
+    const cmd = new Command('Test', operationContext);
     const centerResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(50, 50, 1)));
     const radiusResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 50, 1)));
     cmd.addAndExecute(new AddCircle2DByCenterAndPointOp(planeId, centerResult.outputs.pointId, radiusResult.outputs.pointId));
     cmd.commit();
     commandStack.push(cmd);
 
-    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Test Project');
-    const { world: freshWorld, visibilityModel: freshVisibilityModel, commandStack: freshStack } = createTestWorld();
+    const serialized = ProjectService.serializeCommands(commandStack, operationContext.idAllocator.peek(), 'Test Project');
+    const { world: freshWorld, visibilityModel: freshVisibilityModel, commandStack: freshStack, operationContext: freshOperationContext } = createTestWorld();
     
     expect(() => {
-      ProjectService.deserializeCommands(serialized, freshWorld, freshVisibilityModel, freshStack);
+      ProjectService.deserializeCommands(serialized, freshVisibilityModel, freshStack, freshOperationContext);
     }).not.toThrow();
 
     const plane = freshWorld.getProjectionPlaneById(planeId);
@@ -158,7 +160,7 @@ describe('ProjectService Self-Containment Tests', () => {
    * Test that AddGuide2DPerpendicularToLine is self-contained
    */
   it('AddGuide2DPerpendicularToLine should be self-contained', () => {
-    const cmd = new Command('Test', buildOperationContext(world, visibilityModel));
+    const cmd = new Command('Test', operationContext);
     const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 0, 1)));
     const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 0, 1)));
     const lineResult = cmd.addAndExecute(new AddLine2DByTwoPointsOp(planeId, p1Result.outputs.pointId, p2Result.outputs.pointId));
@@ -171,11 +173,11 @@ describe('ProjectService Self-Containment Tests', () => {
     cmd.commit();
     commandStack.push(cmd);
 
-    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Test Project');
-    const { world: freshWorld, visibilityModel: freshVisibilityModel, commandStack: freshStack } = createTestWorld();
+    const serialized = ProjectService.serializeCommands(commandStack, operationContext.idAllocator.peek(), 'Test Project');
+    const { world: freshWorld, visibilityModel: freshVisibilityModel, commandStack: freshStack, operationContext: freshOperationContext } = createTestWorld();
     
     expect(() => {
-      ProjectService.deserializeCommands(serialized, freshWorld, freshVisibilityModel, freshStack);
+      ProjectService.deserializeCommands(serialized, freshVisibilityModel, freshStack, freshOperationContext);
     }).not.toThrow();
   });
 
@@ -183,7 +185,7 @@ describe('ProjectService Self-Containment Tests', () => {
    * Test that UpdateElementStyleOp is self-contained
    */
   it('UpdateElementStyleOp should be self-contained', () => {
-    const cmd = new Command('Test', buildOperationContext(world, visibilityModel));
+    const cmd = new Command('Test', operationContext);
     const pointResult = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
     cmd.addAndExecute(new UpdateElementStyleOp(
       pointResult.outputs.pointId,
@@ -193,11 +195,11 @@ describe('ProjectService Self-Containment Tests', () => {
     cmd.commit();
     commandStack.push(cmd);
 
-    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Test Project');
-    const { world: freshWorld, visibilityModel: freshVisibilityModel, commandStack: freshStack } = createTestWorld();
+    const serialized = ProjectService.serializeCommands(commandStack, operationContext.idAllocator.peek(), 'Test Project');
+    const { world: freshWorld, visibilityModel: freshVisibilityModel, commandStack: freshStack, operationContext: freshOperationContext } = createTestWorld();
     
     expect(() => {
-      ProjectService.deserializeCommands(serialized, freshWorld, freshVisibilityModel, freshStack);
+      ProjectService.deserializeCommands(serialized, freshVisibilityModel, freshStack, freshOperationContext);
     }).not.toThrow();
   });
 
@@ -206,21 +208,21 @@ describe('ProjectService Self-Containment Tests', () => {
    */
   it('RemoveElement2DOp should be self-contained', () => {
     // Create and remove a point
-    const cmd1 = new Command('Create', buildOperationContext(world, visibilityModel));
+    const cmd1 = new Command('Create', operationContext);
     const pointResult = cmd1.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
     cmd1.commit();
     commandStack.push(cmd1);
 
-    const cmd2 = new Command('Remove', buildOperationContext(world, visibilityModel));
+    const cmd2 = new Command('Remove', operationContext);
     cmd2.addAndExecute(new RemovePoint2DOp(planeId, pointResult.outputs.pointId));
     cmd2.commit();
     commandStack.push(cmd2);
 
-    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Test Project');
-    const { world: freshWorld, visibilityModel: freshVisibilityModel, commandStack: freshStack } = createTestWorld();
+    const serialized = ProjectService.serializeCommands(commandStack, operationContext.idAllocator.peek(), 'Test Project');
+    const { world: freshWorld, visibilityModel: freshVisibilityModel, commandStack: freshStack, operationContext: freshOperationContext } = createTestWorld();
     
     expect(() => {
-      ProjectService.deserializeCommands(serialized, freshWorld, freshVisibilityModel, freshStack);
+      ProjectService.deserializeCommands(serialized, freshVisibilityModel, freshStack, freshOperationContext);
     }).not.toThrow();
 
     const plane = freshWorld.getProjectionPlaneById(planeId);
@@ -233,7 +235,7 @@ describe('ProjectService Self-Containment Tests', () => {
    */
   it('Complex multi-operation sequence should be self-contained', () => {
     // Create complex construction
-    const cmd = new Command('Complex', buildOperationContext(world, visibilityModel));
+    const cmd = new Command('Complex', operationContext);
     
     // Points
     const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 0, 1)));
@@ -259,11 +261,11 @@ describe('ProjectService Self-Containment Tests', () => {
     commandStack.push(cmd);
 
     // Serialize and replay on fresh World - this should succeed
-    const serialized = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'Test Project');
-    const { world: freshWorld, visibilityModel: freshVisibilityModel, commandStack: freshStack } = createTestWorld();
+    const serialized = ProjectService.serializeCommands(commandStack, operationContext.idAllocator.peek(), 'Test Project');
+    const { world: freshWorld, visibilityModel: freshVisibilityModel, commandStack: freshStack, operationContext: freshOperationContext } = createTestWorld();
     
     expect(() => {
-      ProjectService.deserializeCommands(serialized, freshWorld, freshVisibilityModel, freshStack);
+      ProjectService.deserializeCommands(serialized, freshVisibilityModel, freshStack, freshOperationContext);
     }).not.toThrow();
   });
 });

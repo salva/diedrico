@@ -15,6 +15,7 @@
 
 import { Vector3, Vector4, Matrix3 } from 'three';
 import type { World } from '@/domain/world/World';
+import type { ProjectionPlaneRealizationContext } from '@/domain/world/projectionPlane/ProjectionPlaneContext';
 import { applyMatrix3, applyMatrix4x3 } from './threeUtils';
 
 export interface CoordinateTransformResult {
@@ -86,22 +87,23 @@ export function svgToPaper(
  * @param paperPoint - Point in paper coordinates (homogeneous)
  * @param planeId - ID of the projection plane
  * @param world - World instance containing planes
- * @returns Plane coordinates as Vector3 (u, v, 1) or null if plane not found
+ * @returns Plane coordinates as Vector3 (u, v, 1)
  */
 export function paperToPlane(
   paperPoint: Vector3,
   planeId: string,
-  world: World
-): Vector3 | null {
+  world: World,
+  realizationContext: ProjectionPlaneRealizationContext
+): Vector3 {
   const plane = world.getProjectionPlaneById(planeId);
   if (!plane) {
-    return null;
+    throw new Error(`Projection plane not found: ${planeId}`);
   }
   
   // Get the plane's realization which contains the transform
-  const realization = world.getProjectionPlane2DRealization(planeId);
+  const realization = realizationContext.getProjectionPlane2DRealization(planeId);
   if (!realization) {
-    return null;
+    throw new Error(`Projection plane 2D realization not found: ${planeId}`);
   }
   
   // Apply paper-to-plane transformation
@@ -117,22 +119,23 @@ export function paperToPlane(
  * @param planePoint - Point in plane coordinates (u, v, 1)
  * @param planeId - ID of the projection plane
  * @param world - World instance containing planes
- * @returns 3D coordinates as Vector4 (x, y, z, w) or null if plane not found
+ * @returns 3D coordinates as Vector4 (x, y, z, w)
  */
 export function planeTo3D(
   planePoint: Vector3,
   planeId: string,
-  world: World
-): Vector4 | null {
+  world: World,
+  realizationContext: ProjectionPlaneRealizationContext
+): Vector4 {
   const plane = world.getProjectionPlaneById(planeId);
   if (!plane) {
-    return null;
+    throw new Error(`Projection plane not found: ${planeId}`);
   }
   
   // Get the plane's realization which contains the 3D transform
-  const realization = world.getProjectionPlane3DRealization(planeId);
+  const realization = realizationContext.getProjectionPlane3DRealization(planeId);
   if (!realization) {
-    return null;
+    throw new Error(`Projection plane 3D realization not found: ${planeId}`);
   }
   
   // Apply plane-to-3D transformation using Matrix4x3
@@ -160,53 +163,35 @@ export function screenTo3D(
   svgElement: SVGSVGElement,
   viewportTransform: Matrix3,
   activePlaneId: string,
-  world: World
+  world: World,
+  realizationContext: ProjectionPlaneRealizationContext
 ): CoordinateTransformResult {
-  try {
-    // Step 1: Screen → SVG
-    const svgCoords = screenToSVG(screenX, screenY, svgElement);
-    
-    // Step 2: SVG → Paper
-    const paperCoords = svgToPaper(svgCoords, viewportTransform);
-    
-    // Step 3: Paper → Plane
-    const planeCoords = paperToPlane(paperCoords, activePlaneId, world);
-    if (!planeCoords) {
-      return {
-        success: false,
-        error: 'Active plane not found'
-      };
-    }
-    
-    // Step 4: Plane → 3D
-    const coords3D = planeTo3D(planeCoords, activePlaneId, world);
-    if (!coords3D) {
-      return {
-        success: false,
-        error: 'Failed to transform to 3D coordinates'
-      };
-    }
-    
-    // Convert from homogeneous coordinates (x,y,z,w) → (x/w, y/w, z/w)
-    if (coords3D.w === 0) {
-      return {
-        success: false,
-        error: 'Point at infinity'
-      };
-    }
-    
-    return {
-      success: true,
-      coordinates: {
-        x: coords3D.x / coords3D.w,
-        y: coords3D.y / coords3D.w,
-        z: coords3D.z / coords3D.w
-      }
-    };
-  } catch (error) {
+  // Step 1: Screen → SVG
+  const svgCoords = screenToSVG(screenX, screenY, svgElement);
+
+  // Step 2: SVG → Paper
+  const paperCoords = svgToPaper(svgCoords, viewportTransform);
+
+  // Step 3: Paper → Plane
+  const planeCoords = paperToPlane(paperCoords, activePlaneId, world, realizationContext);
+
+  // Step 4: Plane → 3D
+  const coords3D = planeTo3D(planeCoords, activePlaneId, world, realizationContext);
+
+  // Convert from homogeneous coordinates (x,y,z,w) → (x/w, y/w, z/w)
+  if (coords3D.w === 0) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: 'Point at infinity'
     };
   }
+
+  return {
+    success: true,
+    coordinates: {
+      x: coords3D.x / coords3D.w,
+      y: coords3D.y / coords3D.w,
+      z: coords3D.z / coords3D.w
+    }
+  };
 }

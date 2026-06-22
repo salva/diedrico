@@ -146,14 +146,14 @@ describe('ProcessTree', () => {
       addActionInExplicitGroup(action1);
 
       // Manually add action to subprocess for testing
-      const group = {
+      const group: ActionGroup = {
         id: 'group_test',
         type: 'actionGroup' as const,
-        name: 'Test Group',
-        children: [action2],
+        children: [],
         created: new Date()
       };
       subprocess.children.push(group);
+      tree.addActionToGroup(action2, group.id);
 
       const actions = tree.getAllActions();
       // Depth-first traversal visits children in order: first action group (action1), then subprocess (action2)
@@ -179,6 +179,80 @@ describe('ProcessTree', () => {
     it('should return undefined for non-existent action', () => {
       const found = tree.findAction('non_existent');
       expect(found).toBeUndefined();
+    });
+  });
+
+  describe('compact action removal', () => {
+    function addThreeActions(): ActionGroup {
+      const group: ActionGroup = { id: 'group', type: 'actionGroup', children: [], created: new Date() };
+      tree.addActionGroup(group);
+      tree.addActionToGroup(createPointAction('point_1'), group.id);
+      tree.addActionToGroup(createPointAction('point_2'), group.id);
+      tree.addActionToGroup(createPointAction('point_3'), group.id);
+      return group;
+    }
+
+    it('removes actions by splicing without tombstones', () => {
+      const group = addThreeActions();
+      const removed = tree.removeAction(group.children[1].id);
+
+      expect(removed?.originalIndex).toBe(1);
+      expect(group.children).toHaveLength(2);
+      expect(group.children.map(action => action.elementId)).toEqual(['point_1', 'point_3']);
+      expect(group.children).not.toContain(null);
+    });
+
+    it('restores adjacent same-command removals using reverse undo order', () => {
+      const group = addThreeActions();
+      const first = tree.removeAction(group.children[0].id)!;
+      const second = tree.removeAction(group.children[0].id)!;
+
+      tree.restoreAction(second);
+      tree.restoreAction(first);
+
+      expect(group.children.map(action => action.elementId)).toEqual(['point_1', 'point_2', 'point_3']);
+    });
+
+    it('restores first action with next sibling anchor', () => {
+      const group = addThreeActions();
+      const removed = tree.removeAction(group.children[0].id)!;
+
+      tree.restoreAction(removed);
+
+      expect(group.children.map(action => action.elementId)).toEqual(['point_1', 'point_2', 'point_3']);
+    });
+
+    it('restores last action with previous sibling anchor', () => {
+      const group = addThreeActions();
+      const removed = tree.removeAction(group.children[2].id)!;
+
+      tree.restoreAction(removed);
+
+      expect(group.children.map(action => action.elementId)).toEqual(['point_1', 'point_2', 'point_3']);
+    });
+
+    it('restores a whole group deletion with original indexes', () => {
+      const group = addThreeActions();
+      const removed = [
+        tree.removeAction(group.children[0].id)!,
+        tree.removeAction(group.children[0].id)!,
+        tree.removeAction(group.children[0].id)!,
+      ];
+
+      for (const metadata of removed.toReversed()) tree.restoreAction(metadata);
+
+      expect(group.children.map(action => action.elementId)).toEqual(['point_1', 'point_2', 'point_3']);
+    });
+
+    it('returns immutable snapshots at read boundaries', () => {
+      addThreeActions();
+      const root = tree.getRootSnapshot();
+
+      expect(Object.isFrozen(root)).toBe(true);
+      if (root.type !== 'subprocess') throw new Error('Expected root subprocess');
+      expect(Object.isFrozen(root.children)).toBe(true);
+      expect(() => (root.children as unknown as unknown[]).push({})).toThrow();
+      expect(tree.root.children).toHaveLength(1);
     });
   });
 

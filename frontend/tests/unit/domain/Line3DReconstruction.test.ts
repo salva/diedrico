@@ -12,18 +12,19 @@ import { AddLine2DByTwoPointsOp } from '@/commands/operations/world/AddLineOp';
 import { Add3DLineOp } from '@/commands/operations/world/Add3DLineOp';
 import { Command } from '@/commands/Command';
 import { Vector3, Vector4 } from 'three';
-import { createTestWorld, buildOperationContext } from '../../helpers/worldHelpers';
+import { createTestWorld, getHorizontalPlane, getVerticalPlane } from '../../helpers/worldHelpers';
 
 describe('Line3D Reconstruction from Projections', () => {
   let world: World;
   let visibilityModel;
   let command: Command;
+  let operationContext;
 
   beforeEach(() => {
-    const { world: w, visibilityModel: vm } = createTestWorld();
+    const { world: w, visibilityModel: vm, operationContext: oc } = createTestWorld();
     world = w;
 
-    visibilityModel = vm;    command = new Command('test-command', buildOperationContext(world, visibilityModel));
+    visibilityModel = vm;    operationContext = oc;    command = new Command('test-command', operationContext);
   });
 
   /**
@@ -112,15 +113,15 @@ describe('Line3D Reconstruction from Projections', () => {
     // Setup: Line from (0,0,0) to (10,0,0)
     // P_H: horizontal line from (0,0) to (10,0)
     // P_V: horizontal line from (0,0) to (10,0)
-    const P_H = world.getProjectionPlaneByLabel('P_H')!.id!;
-    const P_V = world.getProjectionPlaneByLabel('P_V')!.id!;
+    const P_H = getHorizontalPlane(world).id!;
+    const P_V = getVerticalPlane(world).id!;
 
     const lineH = createLine2D(P_H, 0, 0, 10, 0, 'lineH');
     const lineV = createLine2D(P_V, 0, 0, 10, 0, 'lineV');
     const line3D = create3DLine(lineH, P_H, lineV, P_V, 'line3D_x');
 
     // Get realization
-    const realization = world.get3DLine(line3D)?.realize3D(world);
+    const realization = world.get3DLine(line3D)?.realize3D(operationContext.realizationContext);
     expect(realization).toBeDefined();
     expect(realization!.isFeasible()).toBe(true);
 
@@ -142,14 +143,14 @@ describe('Line3D Reconstruction from Projections', () => {
     // Setup: Line from (5,0,3) to (5,10,3)
     // P_H: vertical line from (5,0) to (5,10)
     // P_V: appears as nearly a point at (5,3) - use tiny offset
-    const P_H = world.getProjectionPlaneByLabel('P_H')!.id!;
-    const P_V = world.getProjectionPlaneByLabel('P_V')!.id!;
+    const P_H = getHorizontalPlane(world).id!;
+    const P_V = getVerticalPlane(world).id!;
 
     const lineH = createLine2D(P_H, 5, 0, 5, 10, 'lineH');
     const lineV = createLine2D(P_V, 5, 3, 5.0001, 3.0001, 'lineV');
     const line3D = create3DLine(lineH, P_H, lineV, P_V, 'line3D_y');
 
-    const realization = world.get3DLine(line3D)?.realize3D(world);
+    const realization = world.get3DLine(line3D)?.realize3D(operationContext.realizationContext);
     expect(realization).toBeDefined();
     expect(realization!.isFeasible()).toBe(true);
 
@@ -171,14 +172,14 @@ describe('Line3D Reconstruction from Projections', () => {
     // Setup: Line from (5,3,0) to (5,3,10)
     // P_H: appears as nearly a point at (5,3) - use tiny offset
     // P_V: vertical line from (5,0) to (5,10)
-    const P_H = world.getProjectionPlaneByLabel('P_H')!.id!;
-    const P_V = world.getProjectionPlaneByLabel('P_V')!.id!;
+    const P_H = getHorizontalPlane(world).id!;
+    const P_V = getVerticalPlane(world).id!;
 
     const lineH = createLine2D(P_H, 5, 3, 5.0001, 3.0001, 'lineH');
     const lineV = createLine2D(P_V, 5, 0, 5, 10, 'lineV');
     const line3D = create3DLine(lineH, P_H, lineV, P_V, 'line3D_z');
 
-    const realization = world.get3DLine(line3D)?.realize3D(world);
+    const realization = world.get3DLine(line3D)?.realize3D(operationContext.realizationContext);
     expect(realization).toBeDefined();
     expect(realization!.isFeasible()).toBe(true);
 
@@ -200,14 +201,14 @@ describe('Line3D Reconstruction from Projections', () => {
     // Setup: Line from (0,0,0) to (10,10,0)
     // P_H: diagonal from (0,0) to (10,10)
     // P_V: horizontal from (0,0) to (10,0)
-    const P_H = world.getProjectionPlaneByLabel('P_H')!.id!;
-    const P_V = world.getProjectionPlaneByLabel('P_V')!.id!;
+    const P_H = getHorizontalPlane(world).id!;
+    const P_V = getVerticalPlane(world).id!;
 
     const lineH = createLine2D(P_H, 0, 0, 10, 10, 'lineH');
     const lineV = createLine2D(P_V, 0, 0, 10, 0, 'lineV');
     const line3D = create3DLine(lineH, P_H, lineV, P_V, 'line3D_xy');
 
-    const realization = world.get3DLine(line3D)?.realize3D(world);
+    const realization = world.get3DLine(line3D)?.realize3D(operationContext.realizationContext);
     expect(realization).toBeDefined();
     expect(realization!.isFeasible()).toBe(true);
 
@@ -227,14 +228,14 @@ describe('Line3D Reconstruction from Projections', () => {
     // Setup: Line from (0,0,0) to (10,0,10)
     // P_H: horizontal from (0,0) to (10,0)
     // P_V: diagonal from (0,0) to (10,10)
-    const P_H = world.getProjectionPlaneByLabel('P_H')!.id!;
-    const P_V = world.getProjectionPlaneByLabel('P_V')!.id!;
+    const P_H = getHorizontalPlane(world).id!;
+    const P_V = getVerticalPlane(world).id!;
 
     const lineH = createLine2D(P_H, 0, 0, 10, 0, 'lineH');
     const lineV = createLine2D(P_V, 0, 0, 10, 10, 'lineV');
     const line3D = create3DLine(lineH, P_H, lineV, P_V, 'line3D_xz');
 
-    const realization = world.get3DLine(line3D)?.realize3D(world);
+    const realization = world.get3DLine(line3D)?.realize3D(operationContext.realizationContext);
     expect(realization).toBeDefined();
     expect(realization!.isFeasible()).toBe(true);
 
@@ -254,14 +255,14 @@ describe('Line3D Reconstruction from Projections', () => {
     // Setup: Line from (0,0,0) to (10,10,5)
     // P_H: diagonal from (0,0) to (10,10)
     // P_V: diagonal from (0,0) to (10,5)
-    const P_H = world.getProjectionPlaneByLabel('P_H')!.id!;
-    const P_V = world.getProjectionPlaneByLabel('P_V')!.id!;
+    const P_H = getHorizontalPlane(world).id!;
+    const P_V = getVerticalPlane(world).id!;
 
     const lineH = createLine2D(P_H, 0, 0, 10, 10, 'lineH');
     const lineV = createLine2D(P_V, 0, 0, 10, 5, 'lineV');
     const line3D = create3DLine(lineH, P_H, lineV, P_V, 'line3D_full');
 
-    const realization = world.get3DLine(line3D)?.realize3D(world);
+    const realization = world.get3DLine(line3D)?.realize3D(operationContext.realizationContext);
     expect(realization).toBeDefined();
     expect(realization!.isFeasible()).toBe(true);
 
@@ -278,8 +279,8 @@ describe('Line3D Reconstruction from Projections', () => {
   });
 
   it('should handle order independence - H then V vs V then H', () => {
-    const P_H = world.getProjectionPlaneByLabel('P_H')!.id!;
-    const P_V = world.getProjectionPlaneByLabel('P_V')!.id!;
+    const P_H = getHorizontalPlane(world).id!;
+    const P_V = getVerticalPlane(world).id!;
 
     // Create same line traces
     const lineH = createLine2D(P_H, 0, 0, 10, 5, 'lineH');
@@ -289,11 +290,11 @@ describe('Line3D Reconstruction from Projections', () => {
     const line3D_HV = create3DLine(lineH, P_H, lineV, P_V, 'line3D_HV');
     
     // Create new command for second line to avoid duplicate operations
-    command = new Command('test-command-2', buildOperationContext(world, visibilityModel));
+    command = new Command('test-command-2', operationContext);
     const line3D_VH = create3DLine(lineV, P_V, lineH, P_H, 'line3D_VH');
 
-    const real_HV = world.get3DLine(line3D_HV)?.realize3D(world);
-    const real_VH = world.get3DLine(line3D_VH)?.realize3D(world);
+    const real_HV = world.get3DLine(line3D_HV)?.realize3D(operationContext.realizationContext);
+    const real_VH = world.get3DLine(line3D_VH)?.realize3D(operationContext.realizationContext);
 
     expect(real_HV).toBeDefined();
     expect(real_VH).toBeDefined();
@@ -311,14 +312,14 @@ describe('Line3D Reconstruction from Projections', () => {
 
   it('should reconstruct line from actual browser case', () => {
     // From user's browser: approximate coordinates
-    const P_H = world.getProjectionPlaneByLabel('P_H')!.id!;
-    const P_V = world.getProjectionPlaneByLabel('P_V')!.id!;
+    const P_H = getHorizontalPlane(world).id!;
+    const P_V = getVerticalPlane(world).id!;
 
     const lineH = createLine2D(P_H, 0.5, 0.5, 2.5, 1.5, 'lineH_browser');
     const lineV = createLine2D(P_V, 0.5, 0.3, 2.5, 0.8, 'lineV_browser');
     const line3D = create3DLine(lineH, P_H, lineV, P_V, 'line3D_browser');
 
-    const realization = world.get3DLine(line3D)?.realize3D(world);
+    const realization = world.get3DLine(line3D)?.realize3D(operationContext.realizationContext);
     
     // Should at least produce a feasible result
     expect(realization).toBeDefined();
@@ -338,8 +339,8 @@ describe('Line3D Reconstruction from Projections', () => {
     // - P_V: vertical line at x=0 (perpendicular to X axis)
     // 
     // This creates a FEASIBLE 3D line parallel to Z axis at position (0, 15, t)
-    const P_H = world.getProjectionPlaneByLabel('P_H')!.id!;
-    const P_V = world.getProjectionPlaneByLabel('P_V')!.id!;
+    const P_H = getHorizontalPlane(world).id!;
+    const P_V = getVerticalPlane(world).id!;
 
     // P_H: horizontal line from (-40, 15) to (40, 15) → direction (1, 0)
     const lineH = createLine2D(P_H, -40, 15, 40, 15, 'lineH_horizontal');
@@ -349,7 +350,7 @@ describe('Line3D Reconstruction from Projections', () => {
     
     const line3D = create3DLine(lineH, P_H, lineV, P_V, 'line3D_original');
 
-    const realization = world.get3DLine(line3D)?.realize3D(world);
+    const realization = world.get3DLine(line3D)?.realize3D(operationContext.realizationContext);
     
     // Should be FEASIBLE - creates line parallel to Z axis
     expect(realization).toBeDefined();
@@ -379,8 +380,8 @@ describe('Line3D Reconstruction from Projections', () => {
     //
     // Note: This is different from "parallel projections on paper" - these lines happen
     // to create parallel 3D planes due to the specific geometry of P_H and P_V
-    const P_H = world.getProjectionPlaneByLabel('P_H')!.id!;
-    const P_V = world.getProjectionPlaneByLabel('P_V')!.id!;
+    const P_H = getHorizontalPlane(world).id!;
+    const P_V = getVerticalPlane(world).id!;
 
     // P_H: vertical line from (5,0) to (5,10) → direction (0,1)
     const lineH = createLine2D(P_H, 5, 0, 5, 10, 'lineH_vertical');
@@ -390,7 +391,7 @@ describe('Line3D Reconstruction from Projections', () => {
     
     const line3D = create3DLine(lineH, P_H, lineV, P_V, 'line3D_parallel_planes');
 
-    const realization = world.get3DLine(line3D)?.realize3D(world);
+    const realization = world.get3DLine(line3D)?.realize3D(operationContext.realizationContext);
     
     // Should return infeasible realization
     expect(realization).toBeDefined();

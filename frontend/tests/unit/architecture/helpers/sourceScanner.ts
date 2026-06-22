@@ -39,13 +39,20 @@ export function findContentMatches(
       continue;
     }
 
+    const searchableContent = stripComments(file.content);
     const regexp = new RegExp(pattern.source, pattern.flags.includes('g') ? pattern.flags : `${pattern.flags}g`);
-    for (const match of file.content.matchAll(regexp)) {
+    for (const match of searchableContent.matchAll(regexp)) {
       violations.push(options.describe?.(file, match) ?? `${file.projectPath}: ${match[0]}`);
     }
   }
 
   return violations;
+}
+
+function stripComments(content: string): string {
+  return content
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/(^|[^:])\/\/.*$/gm, '$1');
 }
 
 export function findForbiddenImports(

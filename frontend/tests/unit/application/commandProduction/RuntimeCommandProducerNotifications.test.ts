@@ -3,7 +3,7 @@ import { RuntimeCommandProducer } from '@/application/commandProduction/RuntimeC
 import { CommandStack } from '@/commands/CommandStack';
 import type { IOperation } from '@/commands/operations/IOperation';
 import type { World } from '@/domain/world/World';
-import { createTestWorld, buildOperationContext } from '../../../helpers/worldHelpers';
+import { createTestWorld } from '../../../helpers/worldHelpers';
 import { RuntimeChangePublisher } from '@/application/appShell/RuntimeChangePublisher';
 
 function notifyOnlyOperation(): IOperation {
@@ -19,11 +19,11 @@ function notifyOnlyOperation(): IOperation {
 
 describe('RuntimeCommandProducer notification behavior', () => {
   it('notifies when preview cancel rolls back preview operations', () => {
-    const { world, visibilityModel } = createTestWorld();
+    const { operationContext } = createTestWorld();
     const notifier = new RuntimeChangePublisher();
     const listener = vi.fn();
     notifier.subscribeToChanges(listener);
-    const producer = new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), new CommandStack(), notifier);
+    const producer = new RuntimeCommandProducer(operationContext, new CommandStack(), notifier);
     const preview = producer.startPreviewCommand('Preview command');
 
     preview.preview(command => command.addAndExecute(notifyOnlyOperation()));
@@ -35,11 +35,11 @@ describe('RuntimeCommandProducer notification behavior', () => {
   });
 
   it('does not notify when preview cancel has no preview operations', () => {
-    const { world, visibilityModel } = createTestWorld();
+    const { operationContext } = createTestWorld();
     const notifier = new RuntimeChangePublisher();
     const listener = vi.fn();
     notifier.subscribeToChanges(listener);
-    const producer = new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), new CommandStack(), notifier);
+    const producer = new RuntimeCommandProducer(operationContext, new CommandStack(), notifier);
     const preview = producer.startPreviewCommand('Preview command');
 
     preview.cancel();

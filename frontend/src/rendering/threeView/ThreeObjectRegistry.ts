@@ -30,7 +30,7 @@ export class ThreeObjectRegistry {
   }
 }
 
-export function disposeObject(object: THREE.Object3D): void {
+function disposeObject(object: THREE.Object3D): void {
   object.traverse(child => {
     const mesh = child as THREE.Mesh | THREE.Line;
     mesh.geometry?.dispose?.();

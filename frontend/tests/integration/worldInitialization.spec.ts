@@ -2,7 +2,7 @@
  * Integration tests for World initialization (Phase 47)
  * 
  * Tests the complete initialization workflow:
- * - initializeWorld(world, visibilityModel, commandStack) application use case
+ * - initializeWorld(world, commandStack, operationContext) application use case
  * - World.clear() re-initialization
  * - Verification of all elements created correctly
  */
@@ -13,12 +13,14 @@ import { CommandStack } from '@/commands/CommandStack';
 import { initializeWorld } from '@/application/world/initializeWorld';
 import { VisibilityModel } from '@/application/processTree/VisibilityModel';
 import { HalfHingeLine2D } from '@/domain/world/HingeLine';
-import { getMainHingeLine } from '../helpers/worldHelpers';
+import { createTestRuntimeContext, getMainHingeLine, getHorizontalPlane, getVerticalPlane } from '../helpers/worldHelpers';
+import type { ProcessTree } from '@/domain/processTree/ProcessTree';
 
-function initializeWorldForTest(world: World, commandStack: CommandStack): VisibilityModel {
+function initializeWorldForTest(world: World, commandStack: CommandStack): { visibilityModel: VisibilityModel; processTree: ProcessTree } {
   const visibilityModel = new VisibilityModel();
-  initializeWorld(world, visibilityModel, commandStack);
-  return visibilityModel;
+  const { operationContext } = createTestRuntimeContext({ initialized: false, world, visibilityModel, commandStack });
+  initializeWorld(world, commandStack, operationContext);
+  return { visibilityModel, processTree: operationContext.processTree };
 }
 
 describe('World Initialization Integration', () => {
@@ -29,8 +31,8 @@ describe('World Initialization Integration', () => {
       initializeWorldForTest(world, commandStack);
 
       // Verify semantic references work via label-based access
-      const projPlaneH = world.getProjectionPlaneByLabel('P_H');
-      const projPlaneV = world.getProjectionPlaneByLabel('P_V');
+      const projPlaneH = getHorizontalPlane(world);
+      const projPlaneV = getVerticalPlane(world);
       const mainHingeLine = getMainHingeLine(world);
       
       expect(projPlaneH).toBeDefined();
@@ -57,8 +59,8 @@ describe('World Initialization Integration', () => {
       const commandStack = new CommandStack();
       initializeWorldForTest(world, commandStack);
 
-      const projPlaneH = world.getProjectionPlaneByLabel('P_H');
-      const projPlaneV = world.getProjectionPlaneByLabel('P_V');
+      const projPlaneH = getHorizontalPlane(world);
+      const projPlaneV = getVerticalPlane(world);
       
       const originH = projPlaneH.getPoint2DByLabel('O_H');
       const originV = projPlaneV.getPoint2DByLabel('O_V');
@@ -74,8 +76,8 @@ describe('World Initialization Integration', () => {
       const commandStack = new CommandStack();
       initializeWorldForTest(world, commandStack);
 
-      const projPlaneH = world.getProjectionPlaneByLabel('P_H');
-      const projPlaneV = world.getProjectionPlaneByLabel('P_V');
+      const projPlaneH = getHorizontalPlane(world);
+      const projPlaneV = getVerticalPlane(world);
       
       const originH = projPlaneH.getPoint2DByLabel('O_H');
       const originV = projPlaneV.getPoint2DByLabel('O_V');
@@ -89,8 +91,8 @@ describe('World Initialization Integration', () => {
       const commandStack = new CommandStack();
       initializeWorldForTest(world, commandStack);
 
-      const projPlaneH = world.getProjectionPlaneByLabel('P_H');
-      const projPlaneV = world.getProjectionPlaneByLabel('P_V');
+      const projPlaneH = getHorizontalPlane(world);
+      const projPlaneV = getVerticalPlane(world);
       
       const linesH = projPlaneH.getAllLines();
       const linesV = projPlaneV.getAllLines();
@@ -102,17 +104,6 @@ describe('World Initialization Integration', () => {
       expect(halfHingeV).toBeDefined();
     });
 
-    // NOTE: Skipped - World no longer maintains a 3D originPoint property
-    // Origin exists as 2D points (O_H, O_V) on each projection plane
-    it.skip('should set origin point in 3D space', () => {
-      const world = new World();
-
-      expect(world.originPoint).toBeDefined();
-      expect(world.originPoint?.x).toBe(0);
-      expect(world.originPoint?.y).toBe(0);
-      expect(world.originPoint?.z).toBe(0);
-      expect(world.originPoint?.w).toBe(1);
-    });
   });
 
   describe('World.clear() Re-initialization', () => {
@@ -122,8 +113,8 @@ describe('World Initialization Integration', () => {
       initializeWorldForTest(world, commandStack);
 
       // Store initial labels to verify re-initialization
-      const planeHBefore = world.getProjectionPlaneByLabel('P_H');
-      const planeVBefore = world.getProjectionPlaneByLabel('P_V');
+      const planeHBefore = getHorizontalPlane(world);
+      const planeVBefore = getVerticalPlane(world);
       const initialHPlaneId = planeHBefore.id;
       const initialVPlaneId = planeVBefore.id;
 
@@ -132,8 +123,8 @@ describe('World Initialization Integration', () => {
       initializeWorldForTest(world, commandStack);
 
       // Should have new instances (re-initialized)
-      const planeHAfter = world.getProjectionPlaneByLabel('P_H');
-      const planeVAfter = world.getProjectionPlaneByLabel('P_V');
+      const planeHAfter = getHorizontalPlane(world);
+      const planeVAfter = getVerticalPlane(world);
       const mainHingeLineAfter = getMainHingeLine(world);
       
       expect(planeHAfter).toBeDefined();
@@ -158,8 +149,8 @@ describe('World Initialization Integration', () => {
       world.clear();
       initializeWorldForTest(world, commandStack);
 
-      const projPlaneH = world.getProjectionPlaneByLabel('P_H');
-      const projPlaneV = world.getProjectionPlaneByLabel('P_V');
+      const projPlaneH = getHorizontalPlane(world);
+      const projPlaneV = getVerticalPlane(world);
       
       const originH = projPlaneH?.getPoint2DByLabel('O_H');
       const originV = projPlaneV?.getPoint2DByLabel('O_V');
@@ -176,8 +167,8 @@ describe('World Initialization Integration', () => {
       const commandStack = new CommandStack();
       initializeWorldForTest(world, commandStack);
 
-      const projPlaneH = world.getProjectionPlaneByLabel('P_H');
-      const projPlaneV = world.getProjectionPlaneByLabel('P_V');
+      const projPlaneH = getHorizontalPlane(world);
+      const projPlaneV = getVerticalPlane(world);
 
       expect(projPlaneH!.plane3DId).toBeDefined();
       expect(projPlaneV!.plane3DId).toBeDefined();
@@ -192,8 +183,8 @@ describe('World Initialization Integration', () => {
       initializeWorldForTest(world, commandStack);
 
       const hingeLine = getMainHingeLine(world);
-      const projPlaneH = world.getProjectionPlaneByLabel('P_H');
-      const projPlaneV = world.getProjectionPlaneByLabel('P_V');
+      const projPlaneH = getHorizontalPlane(world);
+      const projPlaneV = getVerticalPlane(world);
       
       expect(hingeLine).toBeDefined();
       expect(hingeLine.plane1Id).toBe(projPlaneH.id);
@@ -205,8 +196,8 @@ describe('World Initialization Integration', () => {
       const commandStack = new CommandStack();
       initializeWorldForTest(world, commandStack);
 
-      const projPlaneH = world.getProjectionPlaneByLabel('P_H');
-      const projPlaneV = world.getProjectionPlaneByLabel('P_V');
+      const projPlaneH = getHorizontalPlane(world);
+      const projPlaneV = getVerticalPlane(world);
       
       const halfHingeH = projPlaneH.getAllLines().find((l: any) => l instanceof HalfHingeLine2D);
       const halfHingeV = projPlaneV.getAllLines().find((l: any) => l instanceof HalfHingeLine2D);
@@ -229,7 +220,7 @@ describe('World Initialization Integration', () => {
       initializeWorldForTest(world, commandStack);
 
       const hingeLine = getMainHingeLine(world);
-      const projPlaneH = world.getProjectionPlaneByLabel('P_H');
+      const projPlaneH = getHorizontalPlane(world);
 
       // Verify hinge line identity is generated while label remains semantic.
       expect(hingeLine.id).toMatch(/^hingeLine\d+$/);
@@ -252,8 +243,7 @@ describe('World Initialization Integration', () => {
     it('should create subprocess for initialization', () => {
       const world = new World();
       const commandStack = new CommandStack();
-      initializeWorldForTest(world, commandStack);
-      const processTree = world.getProcessTree();
+      const { processTree } = initializeWorldForTest(world, commandStack);
 
       const subprocesses = processTree.root.children.filter(
         (child: any) => child.type === 'subprocess'
@@ -265,8 +255,7 @@ describe('World Initialization Integration', () => {
     it('should have actions in initialization subprocess', () => {
       const world = new World();
       const commandStack = new CommandStack();
-      initializeWorldForTest(world, commandStack);
-      const processTree = world.getProcessTree();
+      const { processTree } = initializeWorldForTest(world, commandStack);
 
       const initSubprocess = processTree.root.children.find(
         (child: any) => child.type === 'subprocess' && 'name' in child

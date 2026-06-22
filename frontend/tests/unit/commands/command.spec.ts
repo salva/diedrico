@@ -20,7 +20,7 @@ import type { OperationContext } from '@/commands/operations/OperationContext';
 import type { World } from '@/domain/world/World';
 import { Vector3 } from 'three';
 import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
-import { createTestWorld, buildOperationContext } from '../../helpers/worldHelpers';
+import { createTestWorld } from '../../helpers/worldHelpers';
 import { RuntimeChangePublisher } from '@/application/appShell/RuntimeChangePublisher';
 
 // Mock operation for testing
@@ -32,6 +32,7 @@ class MockOperation implements IOperation {
   applyCalled = false;
   undoCalled = false;
   shouldFail = false;
+  shouldThrowOnUndo = false;
   outputValue: string;
 
   constructor(outputValue: string = 'test') {
@@ -58,6 +59,9 @@ class MockOperation implements IOperation {
 
   undo(_context: OperationContext): void {
     this.undoCalled = true;
+    if (this.shouldThrowOnUndo) {
+      throw new Error(`Rollback failed for ${this.outputValue}`);
+    }
   }
 
   serialize() {
@@ -103,23 +107,26 @@ describe('Generic Command Class (R017)', () => {
   let visibilityModel: VisibilityModel;
   let command: Command;
   let notifier: RuntimeChangePublisher;
+  let operationContext: OperationContext;
 
   beforeEach(() => {
-    const { world: w, visibilityModel } = createTestWorld();
+    const { world: w, visibilityModel: vm, operationContext: oc } = createTestWorld();
     world = w;
+    visibilityModel = vm;
+    operationContext = oc;
     notifier = new RuntimeChangePublisher();
-    command = new Command('Test Command', buildOperationContext(world, visibilityModel), notifier);
+    command = new Command('Test Command', operationContext, notifier);
   });
 
   describe('Concrete Command (no subclass needed)', () => {
     it('should be instantiable without subclassing', () => {
-      const cmd = new Command('Direct instantiation', buildOperationContext(world, visibilityModel));
+      const cmd = new Command('Direct instantiation', operationContext);
       expect(cmd).toBeInstanceOf(Command);
       expect(cmd.description).toBe('Direct instantiation');
     });
 
     it('should not require execute() method', () => {
-      const cmd = new Command('No execute needed', buildOperationContext(world, visibilityModel));
+      const cmd = new Command('No execute needed', operationContext);
       // Command is concrete - no execute() method required
       expect(cmd).not.toHaveProperty('execute');
     });
@@ -131,7 +138,7 @@ describe('Generic Command Class (R017)', () => {
     });
 
     it('should have unique ID', () => {
-      const command2 = new Command('Another Command', buildOperationContext(world, visibilityModel));
+      const command2 = new Command('Another Command', operationContext);
       expect(command.id).not.toBe(command2.id);
     });
 
@@ -469,6 +476,52 @@ describe('Generic Command Class (R017)', () => {
       
       expect(result.success).toBe(true);
       expect(command['operations']).toHaveLength(1);
+    });
+
+    it('throws AggregateError when operation failure rollback also fails', () => {
+      const op1 = new MockOperation('first');
+      op1.shouldThrowOnUndo = true;
+      const op2 = new MockOperation('second');
+      op2.shouldFail = true;
+
+      command.addAndExecute(op1);
+
+      try {
+        command.addAndExecute(op2);
+        throw new Error('Expected command failure');
+      } catch (error) {
+        expect(error).toBeInstanceOf(AggregateError);
+        expect((error as AggregateError).errors[0]).toMatchObject({ message: 'Mock operation failed' });
+        expect((error as AggregateError).errors[1]).toMatchObject({ message: 'Rollback failed for first' });
+      }
+      expect(op1.undoCalled).toBe(true);
+    });
+
+    it('preserves the original operation error when rollback succeeds', () => {
+      const op1 = new MockOperation('first');
+      const op2 = new MockOperation('second');
+      op2.shouldFail = true;
+
+      command.addAndExecute(op1);
+
+      expect(() => command.addAndExecute(op2)).toThrow('Mock operation failed');
+      expect(op1.undoCalled).toBe(true);
+    });
+
+    it('resets rollback tracking after successful rollback and new operations', () => {
+      const op1 = new MockOperation('first');
+      command.addAndExecute(op1);
+      command.rollback();
+
+      const op2 = new MockOperation('second');
+      op2.shouldThrowOnUndo = true;
+      const op3 = new MockOperation('third');
+      op3.shouldFail = true;
+      command.addAndExecute(op2);
+
+      expect(() => command.addAndExecute(op3)).toThrow(AggregateError);
+      expect(op1.undoCalled).toBe(true);
+      expect(op2.undoCalled).toBe(true);
     });
   });
 

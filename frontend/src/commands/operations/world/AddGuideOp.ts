@@ -58,7 +58,7 @@ export class AddGuide2DPerpendicularToLineOp implements IOperation {
     if (this.outputs.guideId) {
       const plane = context.world.getProjectionPlaneById(this.planeId);
       if (plane) {
-        removeLineFromPlane(context.world, plane, this.outputs.guideId);
+        removeLineFromPlane(context, plane, this.outputs.guideId);
       }
     }
   }
@@ -125,7 +125,7 @@ export class AddSiblingGuide2DOp implements IOperation {
     if (this.outputs.siblingGuideId) {
       const plane = context.world.getProjectionPlaneById(this.planeId);
       if (plane) {
-        removeLineFromPlane(context.world, plane, this.outputs.siblingGuideId);
+        removeLineFromPlane(context, plane, this.outputs.siblingGuideId);
       }
     }
   }

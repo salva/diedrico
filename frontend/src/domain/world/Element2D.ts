@@ -11,61 +11,13 @@ import { Element } from './Element';
 export type Element2DRealization = Point2DRealization2D | Line2DRealization2D | Circle2DRealization2D;
 
 /**
- * Base class for all 2D geometric elements (points, lines, circles)
- * 
- * **Phase 44**: Originally introduced as standalone base class with shared 2D element properties.
- * 
- * **Phase 52 Refactoring**: Element2D now extends Element base class to share id and label properties
- * with 3D elements. Element2D adds the 2D-specific planeId property.
- * 
- * **Architectural Principle: DRY and Uniform Interface**
- * 
- * Before Element2D (Phase 44), Point2D, Line2D, and Circle2D were three separate hierarchies
- * with no common ancestor, despite sharing identical properties (id, planeId, label, visible).
- * This caused:
- * - Code duplication (same properties defined three times)
- * - No uniform handling (couldn't write generic functions for all elements)
- * - Inconsistent interfaces (each hierarchy evolved independently)
- * 
- * Element2D (Phase 44) provided:
- * - Common properties: id, planeId, label, visible
- * - Abstract methods: clone(), realize2D()
- * - Uniform type guard: isElement2D() works for all types
- * - Generic processing: Functions can work with Element2D regardless of specific type
- * 
- * Element2D (Phase 52) now extends Element:
- * - Inherits id and label from Element base class
- * - Adds 2D-specific properties: planeId
- * - Enables uniform handling with 3D elements via Element base type
+ * Base class for all 2D geometric elements.
  *
- * Runtime dispatch policy: concrete 2D element classes are discriminated with
- * instanceof. Do not add broad kind/type fields to 2D elements unless a
- * serialization boundary explicitly requires them.
- * 
- * **Usage**:
- * ```typescript
- * // Type guard works for all 2D elements
- * function isElement2D(obj: any): obj is Element2D {
- *   return obj instanceof Element2D;
- * }
- * 
- * // Generic functions for 2D elements
- * function hideElement(element: Element2D, world: World): void {
- *   // Use resolveVisibility or modify visualStyle
- * }
- * 
- * // Filter by plane
- * function getElementsOnPlane(planeId: string, elements: Element2D[]): Element2D[] {
- *   return elements.filter(el => el.planeId === planeId);
- * }
- * 
- * // Generic functions for all elements (2D and 3D)
- * function getElementLabel(element: Element): string {
- *   return element.label || element.id;
- * }
- * ```
- * 
- * @sealed - Cannot be directly subclassed, only Point2D/Line2D/Circle2D extend it
+ * Element IDs must be hierarchical and scoped to their containing projection
+ * plane. Runtime dispatch uses concrete classes with instanceof; do not add
+ * broad kind/type fields unless a serialization boundary requires them.
+ *
+ * @sealed - Only Point2D, Line2D, and Circle2D extend it.
  */
 export abstract class Element2D extends Element {
   /** Which projection plane this element belongs to */
@@ -85,12 +37,8 @@ export abstract class Element2D extends Element {
     planeId: string,
     label?: string
   ) {
-    // Phase 52: Call Element base constructor with id and label
     super(id, label);
     
-    // Phase 45: Validate hierarchical ID format
-    // Ensure element ID starts with its container plane ID
-    // Throws error if ID doesn't match format '{planeId}/{localId}'
     validateElementId(id, planeId);
     
     this.planeId = planeId;
@@ -107,17 +55,7 @@ export abstract class Element2D extends Element {
    * Returns realization in the projection plane's intrinsic coordinates
    * 
    * @param world World instance to query parent element realizations
-   * @returns Element realization or null if computation fails
+   * @returns Element realization. Geometric failures are represented by an infeasible realization.
    */
-  abstract realize2D(context: ProjectionElementRealizationContext): Element2DRealization | null;
-}
-
-/**
- * Type guard to check if an object is an Element2D
- * 
- * @param obj Object to check
- * @returns true if obj is an Element2D (Point2D, Line2D, or Circle2D), false otherwise
- */
-export function isElement2D(obj: any): obj is Element2D {
-  return obj instanceof Element2D;
+  abstract realize2D(context: ProjectionElementRealizationContext): Element2DRealization;
 }

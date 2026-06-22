@@ -18,7 +18,8 @@ import { World } from '@/domain/world/World';
 import { VisibilityModel } from '@/application/processTree/VisibilityModel';
 import { initializeWorld } from '@/application/world/initializeWorld';
 import type { IOperation } from '@/commands/operations/IOperation';
-import { buildOperationContext } from '../../helpers/worldHelpers';
+import type { OperationContext } from '@/commands/operations/OperationContext';
+import { createTestRuntimeContext } from '../../helpers/worldHelpers';
 
 // Simple mock operation for building commands
 const createMockOperation = (name: string = 'mock'): IOperation => ({
@@ -34,13 +35,15 @@ describe('CommandStack (R018)', () => {
   let commandStack: CommandStack;
   let world: World;
   let visibilityModel: VisibilityModel;
+  let operationContext: OperationContext;
 
   beforeEach(() => {
     // Create fresh World and CommandStack without initialization
     // This ensures empty command stacks for testing command stack behavior
     world = new World();
     visibilityModel = new VisibilityModel();
-    initializeWorld(world, visibilityModel, new CommandStack());
+    operationContext = createTestRuntimeContext({ initialized: false, world, visibilityModel }).operationContext;
+    initializeWorld(world, new CommandStack(), operationContext);
     commandStack = new CommandStack();
   });
 
@@ -55,7 +58,7 @@ describe('CommandStack (R018)', () => {
 
   describe('push() - Primary API for new Command pattern', () => {
     it('should accept pre-built, committed command', () => {
-      const command = new Command('Test Command', buildOperationContext(world, visibilityModel));
+      const command = new Command('Test Command', operationContext);
       command.addAndExecute(createMockOperation('test'));
       command.commit();
       
@@ -66,11 +69,11 @@ describe('CommandStack (R018)', () => {
     });
 
     it('should add command to undo stack', () => {
-      const cmd1 = new Command('Command 1', buildOperationContext(world, visibilityModel));
+      const cmd1 = new Command('Command 1', operationContext);
       cmd1.addAndExecute(createMockOperation('1'));
       cmd1.commit();
       
-      const cmd2 = new Command('Command 2', buildOperationContext(world, visibilityModel));
+      const cmd2 = new Command('Command 2', operationContext);
       cmd2.addAndExecute(createMockOperation('2'));
       cmd2.commit();
       
@@ -81,7 +84,7 @@ describe('CommandStack (R018)', () => {
     });
 
     it('should clear redo stack on push', () => {
-      const cmd1 = new Command('Command 1', buildOperationContext(world, visibilityModel));
+      const cmd1 = new Command('Command 1', operationContext);
       cmd1.addAndExecute(createMockOperation('1'));
       cmd1.commit();
       commandStack.push(cmd1);
@@ -91,7 +94,7 @@ describe('CommandStack (R018)', () => {
       expect(commandStack.getRedoCount()).toBe(1);
       
       // Push new command
-      const cmd2 = new Command('Command 2', buildOperationContext(world, visibilityModel));
+      const cmd2 = new Command('Command 2', operationContext);
       cmd2.addAndExecute(createMockOperation('2'));
       cmd2.commit();
       commandStack.push(cmd2);
@@ -102,7 +105,7 @@ describe('CommandStack (R018)', () => {
     });
 
     it('should require command to be committed', () => {
-      const command = new Command('Uncommitted', buildOperationContext(world, visibilityModel));
+      const command = new Command('Uncommitted', operationContext);
       command.addAndExecute(createMockOperation('test'));
       // Not committed
       
@@ -112,7 +115,7 @@ describe('CommandStack (R018)', () => {
     });
 
     it('should handle multi-operation commands', () => {
-      const command = new Command('Multi-op Command', buildOperationContext(world, visibilityModel));
+      const command = new Command('Multi-op Command', operationContext);
       command.addAndExecute(createMockOperation('op1'));
       command.addAndExecute(createMockOperation('op2'));
       command.addAndExecute(createMockOperation('op3'));
@@ -127,7 +130,7 @@ describe('CommandStack (R018)', () => {
 
   describe('undo()', () => {
     it('should undo the most recent command', () => {
-      const command = new Command('Test Command', buildOperationContext(world, visibilityModel));
+      const command = new Command('Test Command', operationContext);
       command.addAndExecute(createMockOperation('test'));
       command.commit();
       commandStack.push(command);
@@ -138,7 +141,7 @@ describe('CommandStack (R018)', () => {
     });
 
     it('should move command from undo to redo stack', () => {
-      const command = new Command('Test Command', buildOperationContext(world, visibilityModel));
+      const command = new Command('Test Command', operationContext);
       command.addAndExecute(createMockOperation('test'));
       command.commit();
       commandStack.push(command);
@@ -155,9 +158,9 @@ describe('CommandStack (R018)', () => {
     it('should undo commands in LIFO order', () => {
       const undoOrder: string[] = [];
       
-      const cmd1 = new Command('Command 1', buildOperationContext(world, visibilityModel));
-      const cmd2 = new Command('Command 2', buildOperationContext(world, visibilityModel));
-      const cmd3 = new Command('Command 3', buildOperationContext(world, visibilityModel));
+      const cmd1 = new Command('Command 1', operationContext);
+      const cmd2 = new Command('Command 2', operationContext);
+      const cmd3 = new Command('Command 3', operationContext);
       
       [cmd1, cmd2, cmd3].forEach(cmd => {
         const op = createMockOperation(cmd.description);
@@ -187,7 +190,7 @@ describe('CommandStack (R018)', () => {
 
   describe('redo()', () => {
     it('should redo the most recently undone command', () => {
-      const command = new Command('Test Command', buildOperationContext(world, visibilityModel));
+      const command = new Command('Test Command', operationContext);
       command.addAndExecute(createMockOperation('test'));
       command.commit();
       commandStack.push(command);
@@ -199,7 +202,7 @@ describe('CommandStack (R018)', () => {
     });
 
     it('should move command from redo to undo stack', () => {
-      const command = new Command('Test Command', buildOperationContext(world, visibilityModel));
+      const command = new Command('Test Command', operationContext);
       command.addAndExecute(createMockOperation('test'));
       command.commit();
       commandStack.push(command);
@@ -217,8 +220,8 @@ describe('CommandStack (R018)', () => {
     it('should redo commands in LIFO order', () => {
       const redoOrder: string[] = [];
       
-      const cmd1 = new Command('Command 1', buildOperationContext(world, visibilityModel));
-      const cmd2 = new Command('Command 2', buildOperationContext(world, visibilityModel));
+      const cmd1 = new Command('Command 1', operationContext);
+      const cmd2 = new Command('Command 2', operationContext);
       
       [cmd1, cmd2].forEach(cmd => {
         const op = createMockOperation(cmd.description);
@@ -260,7 +263,7 @@ describe('CommandStack (R018)', () => {
     });
 
     it('should return true when undo stack has commands', () => {
-      const command = new Command('Test Command', buildOperationContext(world, visibilityModel));
+      const command = new Command('Test Command', operationContext);
       command.addAndExecute(createMockOperation('test'));
       command.commit();
       commandStack.push(command);
@@ -269,7 +272,7 @@ describe('CommandStack (R018)', () => {
     });
 
     it('should return false after undoing all commands', () => {
-      const command = new Command('Test Command', buildOperationContext(world, visibilityModel));
+      const command = new Command('Test Command', operationContext);
       command.addAndExecute(createMockOperation('test'));
       command.commit();
       commandStack.push(command);
@@ -285,7 +288,7 @@ describe('CommandStack (R018)', () => {
     });
 
     it('should return true after undoing a command', () => {
-      const command = new Command('Test Command', buildOperationContext(world, visibilityModel));
+      const command = new Command('Test Command', operationContext);
       command.addAndExecute(createMockOperation('test'));
       command.commit();
       commandStack.push(command);
@@ -295,7 +298,7 @@ describe('CommandStack (R018)', () => {
     });
 
     it('should return false after redoing all commands', () => {
-      const command = new Command('Test Command', buildOperationContext(world, visibilityModel));
+      const command = new Command('Test Command', operationContext);
       command.addAndExecute(createMockOperation('test'));
       command.commit();
       commandStack.push(command);
@@ -306,7 +309,7 @@ describe('CommandStack (R018)', () => {
     });
 
     it('should return false after new command execution', () => {
-      const cmd1 = new Command('Command 1', buildOperationContext(world, visibilityModel));
+      const cmd1 = new Command('Command 1', operationContext);
       cmd1.addAndExecute(createMockOperation('1'));
       cmd1.commit();
       commandStack.push(cmd1);
@@ -314,7 +317,7 @@ describe('CommandStack (R018)', () => {
       
       expect(commandStack.canRedo()).toBe(true);
       
-      const cmd2 = new Command('Command 2', buildOperationContext(world, visibilityModel));
+      const cmd2 = new Command('Command 2', operationContext);
       cmd2.addAndExecute(createMockOperation('2'));
       cmd2.commit();
       commandStack.push(cmd2);
@@ -327,13 +330,13 @@ describe('CommandStack (R018)', () => {
     it('should track undo stack size correctly', () => {
       expect(commandStack.getUndoCount()).toBe(0);
       
-      const cmd1 = new Command('Command 1', buildOperationContext(world, visibilityModel));
+      const cmd1 = new Command('Command 1', operationContext);
       cmd1.addAndExecute(createMockOperation('1'));
       cmd1.commit();
       commandStack.push(cmd1);
       expect(commandStack.getUndoCount()).toBe(1);
       
-      const cmd2 = new Command('Command 2', buildOperationContext(world, visibilityModel));
+      const cmd2 = new Command('Command 2', operationContext);
       cmd2.addAndExecute(createMockOperation('2'));
       cmd2.commit();
       commandStack.push(cmd2);
@@ -346,14 +349,14 @@ describe('CommandStack (R018)', () => {
     it('should track redo stack size correctly', () => {
       expect(commandStack.getRedoCount()).toBe(0);
       
-      const cmd1 = new Command('Command 1', buildOperationContext(world, visibilityModel));
+      const cmd1 = new Command('Command 1', operationContext);
       cmd1.addAndExecute(createMockOperation('1'));
       cmd1.commit();
       commandStack.push(cmd1);
       commandStack.undo();
       expect(commandStack.getRedoCount()).toBe(1);
       
-      const cmd2 = new Command('Command 2', buildOperationContext(world, visibilityModel));
+      const cmd2 = new Command('Command 2', operationContext);
       cmd2.addAndExecute(createMockOperation('2'));
       cmd2.commit();
       commandStack.push(cmd2);
@@ -363,12 +366,12 @@ describe('CommandStack (R018)', () => {
 
   describe('clear()', () => {
     it('should clear both stacks', () => {
-      const cmd1 = new Command('Command 1', buildOperationContext(world, visibilityModel));
+      const cmd1 = new Command('Command 1', operationContext);
       cmd1.addAndExecute(createMockOperation('1'));
       cmd1.commit();
       commandStack.push(cmd1);
       
-      const cmd2 = new Command('Command 2', buildOperationContext(world, visibilityModel));
+      const cmd2 = new Command('Command 2', operationContext);
       cmd2.addAndExecute(createMockOperation('2'));
       cmd2.commit();
       commandStack.push(cmd2);
@@ -388,7 +391,7 @@ describe('CommandStack (R018)', () => {
 
   describe('Complex Scenarios', () => {
     it('should handle undo/redo cycles', () => {
-      const command = new Command('Test Command', buildOperationContext(world, visibilityModel));
+      const command = new Command('Test Command', operationContext);
       command.addAndExecute(createMockOperation('test'));
       command.commit();
       
@@ -414,7 +417,7 @@ describe('CommandStack (R018)', () => {
 
     it('should handle multiple undo/redo operations', () => {
       const commands = [1, 2, 3].map(i => {
-        const cmd = new Command(`Command ${i}`, buildOperationContext(world, visibilityModel));
+        const cmd = new Command(`Command ${i}`, operationContext);
         cmd.addAndExecute(createMockOperation(`${i}`));
         cmd.commit();
         return cmd;
@@ -455,7 +458,7 @@ describe('CommandStack (R018)', () => {
     });
 
     it('rejects non-committed command history', () => {
-      const cmd = new Command('Building', buildOperationContext(world, visibilityModel));
+      const cmd = new Command('Building', operationContext);
       cmd.addAndExecute(createMockOperation('building'));
 
       expect(() => commandStack.restoreCommittedCommands([cmd])).toThrow('Can only restore committed commands');

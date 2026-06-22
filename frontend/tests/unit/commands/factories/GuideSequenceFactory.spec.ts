@@ -9,28 +9,39 @@ import { AddGuide2DPerpendicularToLineOp, AddSiblingGuide2DOp } from '../../../.
 import { AddLine2DByTwoPointsOp } from '../../../../src/commands/operations/world/AddLineOp';
 import { AddFreePoint2DOp } from '../../../../src/commands/operations/world/AddFreePointOp';
 import { World } from '../../../../src/domain/world/World';
+import type { OperationContext } from '../../../../src/commands/operations/OperationContext';
 import { Vector3 } from 'three';
 import { Guide2D, SiblingGuide2D } from '../../../../src/domain/world/Guide';
-import { createTestWorld, buildOperationContext } from '../../../helpers/worldHelpers';
+import { createTestWorld } from '../../../helpers/worldHelpers';
+import { GeometryElementLookup } from '../../../../src/domain/world/GeometryElementLookup';
+import { HalfHingeLine2D } from '../../../../src/domain/world/HingeLine';
 
 describe('GuideSequenceFactory', () => {
   let world: World;
   let visibilityModel;
+  let operationContext: OperationContext;
   let horizontalPlaneId: string;
   let verticalPlaneId: string;
 
+  function getHalfHingeLines2D(planeId: string): HalfHingeLine2D[] {
+    const plane = world.getProjectionPlaneById(planeId);
+    if (!plane) return [];
+    return plane.getAllLines().filter((line): line is HalfHingeLine2D => line instanceof HalfHingeLine2D);
+  }
+
   beforeEach(() => {
-    const { world: w, visibilityModel: vm } = createTestWorld();
+    const { world: w, visibilityModel: vm, operationContext: oc } = createTestWorld();
     world = w;
+    operationContext = oc;
 
     visibilityModel = vm;    // Get plane IDs dynamically from initialized world
-    horizontalPlaneId = world.getProjectionPlaneByLabel('P_H').id!;
-    verticalPlaneId = world.getProjectionPlaneByLabel('P_V').id!;
+    horizontalPlaneId = world.getAllProjectionPlanes().find(plane => plane.name === 'P_H')!.id!;
+    verticalPlaneId = world.getAllProjectionPlanes().find(plane => plane.name === 'P_V')!.id!;
   });
 
   describe('createGuideWithSibling', () => {
     it('should create single operation for non-HHL reference line', () => {
-      const cmd = new Command('Test', buildOperationContext(world, visibilityModel));
+      const cmd = new Command('Test', operationContext);
       
       // Create reference line (regular line, not HalfHingeLine)
       const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(horizontalPlaneId, new Vector3(0, 100, 1)));
@@ -53,7 +64,8 @@ describe('GuideSequenceFactory', () => {
         horizontalPlaneId,
         lineResult.outputs.lineId!,
         throughResult.outputs.pointId!,
-        world
+        world,
+        operationContext.realizationContext
       );
       
       // Should add exactly 1 operation (no sibling for regular line)
@@ -66,16 +78,18 @@ describe('GuideSequenceFactory', () => {
       expect(result.siblingGuideId).toBeUndefined();
       
       // Verify guide exists in world
-      const guide = world.getLine2D(result.guideId);
+      const lookup = new GeometryElementLookup(world);
+      const guide = lookup.getLine2D(result.guideId);
       expect(guide).toBeDefined();
       expect(guide).toBeInstanceOf(Guide2D);
     });
 
     it('should create two operations for HHL reference line', () => {
-      const cmd = new Command('Test', buildOperationContext(world, visibilityModel));
+      const cmd = new Command('Test', operationContext);
       
       // Get HalfHingeLine (get actual ID from world)
-      const halfHingeLines = world.getHalfHingeLines2D(horizontalPlaneId);
+      const lookup = new GeometryElementLookup(world);
+      const halfHingeLines = getHalfHingeLines2D(horizontalPlaneId);
       expect(halfHingeLines.length).toBeGreaterThan(0);
       const hhlId = halfHingeLines[0].id;
       
@@ -91,7 +105,8 @@ describe('GuideSequenceFactory', () => {
         horizontalPlaneId,
         hhlId,
         throughResult.outputs.pointId!,
-        world
+        world,
+        operationContext.realizationContext
       );
       
       // Should add 2 operations (primary + sibling)
@@ -107,8 +122,8 @@ describe('GuideSequenceFactory', () => {
       expect(result.guideId).not.toBe(result.siblingGuideId);
       
       // Verify both guides exist in world
-      const primaryGuide = world.getLine2D(result.guideId);
-      const siblingGuide = world.getLine2D(result.siblingGuideId!);
+      const primaryGuide = lookup.getLine2D(result.guideId);
+      const siblingGuide = lookup.getLine2D(result.siblingGuideId!);
       
       expect(primaryGuide).toBeDefined();
       expect(siblingGuide).toBeDefined();
@@ -123,7 +138,7 @@ describe('GuideSequenceFactory', () => {
     it('should handle HHL with no sibling info available gracefully', () => {
       // This test ensures that if getSiblingPlaneAndHalfHingeLineForGuide returns null,
       // we still create the primary guide without throwing
-      const cmd = new Command('Test', buildOperationContext(world, visibilityModel));
+      const cmd = new Command('Test', operationContext);
       
       // Use a regular line but pretend it's special case
       const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(horizontalPlaneId, new Vector3(0, 100, 1)));
@@ -142,19 +157,20 @@ describe('GuideSequenceFactory', () => {
         horizontalPlaneId,
         lineResult.outputs.lineId!,
         throughResult.outputs.pointId!,
-        world
+        world,
+        operationContext.realizationContext
       );
       
       // Should still create primary guide
       expect(result.guideId).toBeDefined();
       expect(result.siblingGuideId).toBeUndefined();
       
-      const guide = world.getLine2D(result.guideId);
+      const guide = new GeometryElementLookup(world).getLine2D(result.guideId);
       expect(guide).toBeDefined();
     });
 
     it('should handle invalid reference line ID gracefully', () => {
-      const cmd = new Command('Test', buildOperationContext(world, visibilityModel));
+      const cmd = new Command('Test', operationContext);
       
       // Create through point
       const throughResult = cmd.addAndExecute(new AddFreePoint2DOp(horizontalPlaneId, new Vector3(100, 50, 1)));
@@ -166,13 +182,14 @@ describe('GuideSequenceFactory', () => {
           horizontalPlaneId,
           'invalid_line_id',
           throughResult.outputs.pointId!,
-          world
+          world,
+          operationContext.realizationContext
         );
       }).toThrow();
     });
 
     it('should handle invalid through point ID gracefully', () => {
-      const cmd = new Command('Test', buildOperationContext(world, visibilityModel));
+      const cmd = new Command('Test', operationContext);
       
       // Create reference line
       const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(horizontalPlaneId, new Vector3(0, 100, 1)));
@@ -190,16 +207,17 @@ describe('GuideSequenceFactory', () => {
           horizontalPlaneId,
           lineResult.outputs.lineId!,
           'invalid_point_id',
-          world
+          world,
+          operationContext.realizationContext
         );
       }).toThrow();
     });
 
     it('should work with command commit and verify state', () => {
-      const cmd = new Command('Create guide with sibling', buildOperationContext(world, visibilityModel));
+      const cmd = new Command('Create guide with sibling', operationContext);
       
       // Get HalfHingeLine
-      const halfHingeLines = world.getHalfHingeLines2D(horizontalPlaneId);
+      const halfHingeLines = getHalfHingeLines2D(horizontalPlaneId);
       expect(halfHingeLines.length).toBeGreaterThan(0);
       const hhlId = halfHingeLines[0].id;
       
@@ -212,15 +230,17 @@ describe('GuideSequenceFactory', () => {
         horizontalPlaneId,
         hhlId,
         throughResult.outputs.pointId!,
-        world
+        world,
+        operationContext.realizationContext
       );
       
       // Commit command
       cmd.commit();
       
       // Verify guides still exist after commit
-      const primaryGuide = world.getLine2D(result.guideId);
-      const siblingGuide = world.getLine2D(result.siblingGuideId!);
+      const lookup = new GeometryElementLookup(world);
+      const primaryGuide = lookup.getLine2D(result.guideId);
+      const siblingGuide = lookup.getLine2D(result.siblingGuideId!);
       
       expect(primaryGuide).toBeDefined();
       expect(siblingGuide).toBeDefined();
@@ -229,9 +249,10 @@ describe('GuideSequenceFactory', () => {
     });
 
     it('should handle multiple sequential guide creations', () => {
-      const cmd = new Command('Create multiple guides', buildOperationContext(world, visibilityModel));
+      const cmd = new Command('Create multiple guides', operationContext);
       
-      const halfHingeLines = world.getHalfHingeLines2D(horizontalPlaneId);
+      const lookup = new GeometryElementLookup(world);
+      const halfHingeLines = getHalfHingeLines2D(horizontalPlaneId);
       expect(halfHingeLines.length).toBeGreaterThan(0);
       const hhlId = halfHingeLines[0].id;
       
@@ -242,7 +263,8 @@ describe('GuideSequenceFactory', () => {
         horizontalPlaneId,
         hhlId,
         through1.outputs.pointId!,
-        world
+        world,
+        operationContext.realizationContext
       );
       
       const through2 = cmd.addAndExecute(new AddFreePoint2DOp(horizontalPlaneId, new Vector3(150, 75, 1)));
@@ -251,17 +273,18 @@ describe('GuideSequenceFactory', () => {
         horizontalPlaneId,
         hhlId,
         through2.outputs.pointId!,
-        world
+        world,
+        operationContext.realizationContext
       );
       
       // Should have created 4 guides total (2 primaries + 2 siblings)
       expect(result1.guideId).not.toBe(result2.guideId);
       expect(result1.siblingGuideId).not.toBe(result2.siblingGuideId);
       
-      const guide1 = world.getLine2D(result1.guideId);
-      const guide2 = world.getLine2D(result2.guideId);
-      const sibling1 = world.getLine2D(result1.siblingGuideId!);
-      const sibling2 = world.getLine2D(result2.siblingGuideId!);
+      const guide1 = lookup.getLine2D(result1.guideId);
+      const guide2 = lookup.getLine2D(result2.guideId);
+      const sibling1 = lookup.getLine2D(result1.siblingGuideId!);
+      const sibling2 = lookup.getLine2D(result2.siblingGuideId!);
       
       expect(guide1).toBeDefined();
       expect(guide2).toBeDefined();

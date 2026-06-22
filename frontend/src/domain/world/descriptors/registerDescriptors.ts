@@ -120,5 +120,3 @@ export function registerAllDescriptors(registry = new DescriptorRegistry()): Des
 
   return registry;
 }
-
-export const createRegisteredDescriptorRegistry = registerAllDescriptors;

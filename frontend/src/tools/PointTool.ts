@@ -11,7 +11,9 @@
  */
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
-import type { ToolArgumentSet } from '@/tools/ToolArgumentCollector';
+import type { ArgumentValue, ToolArgumentSet } from '@/tools/ToolArgumentCollector';
+import type { ToolContext } from './ITool';
+import type { ToolConstructionIntent } from './ToolCommandIntents';
 import { SelectionMask } from '@/types/SelectionMask';
 
 /**
@@ -27,7 +29,6 @@ import { SelectionMask } from '@/types/SelectionMask';
  */
 export class PointTool extends ArgumentCollectorTool {
   readonly name = 'point';
-  protected readonly constructionIntentType = 'point';
 
   /**
    * Define argument specification
@@ -44,6 +45,15 @@ export class PointTool extends ArgumentCollectorTool {
         ]
       }
     ];
+  }
+
+  protected buildConstructionIntent(args: Map<string, ArgumentValue>, context: ToolContext): ToolConstructionIntent {
+    return {
+      type: 'point',
+      planeId: context.planeId,
+      position: this.requirePlanePosition(args, 'position'),
+      description: this.getCommandDescription()
+    };
   }
 
   /**

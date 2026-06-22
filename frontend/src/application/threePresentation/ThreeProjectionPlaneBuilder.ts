@@ -11,15 +11,11 @@ import type { ThreeProjectionPlaneSourceDto } from './ThreePresentationReadModel
 
 export type ThreeProjectionPlaneReadModel = ThreeProjectionPlaneSourceDto;
 
-export interface ThreeProjectionPlaneReadPort {
-  getProjectionPlaneModels(): ThreeProjectionPlaneReadModel[];
-}
-
-export function createThreeProjectionPlaneReadPort(context: ThreePresentationContext): ThreeProjectionPlaneReadPort {
-  return {
-    getProjectionPlaneModels: () => context.getProjectionPlanes().flatMap(plane => {
+export function buildProjectionPlaneModels(context: ThreePresentationContext): ThreeProjectionPlaneReadModel[] {
+  return context.getProjectionPlanes().flatMap(plane => {
       const projectionRealization = context.getProjectionPlane3DRealization(plane.id);
-      if (!projectionRealization?.feasible) return [];
+      if (!projectionRealization) throw new Error(`Missing 3D realization for projection plane ${plane.id}`);
+      if (!projectionRealization.feasible) return [];
       const plane3DId = plane instanceof AuxiliaryProjectionPlane ? plane.plane3DId : plane.id;
       const basis = planeBasis(projectionRealization.planeTo3D.elements);
       const center = domainToThreeJS(new Vector4(basis.origin.x, basis.origin.y, basis.origin.z, 1));
@@ -33,8 +29,7 @@ export function createThreeProjectionPlaneReadPort(context: ThreePresentationCon
         gridSegments: gridSegments(plane3DId ? context.get3DPlaneRealization(plane3DId) : undefined, projectionRealization).map(segment => to3DSegment(segment, projectionRealization.planeTo3D)),
         auxiliaryAxes: plane instanceof AuxiliaryProjectionPlane ? { origin: v(basis.origin), uDirection: v(basis.uAxis), vDirection: v(basis.vAxis) } : undefined,
       }];
-    }),
-  };
+    });
 }
 
 function gridSegments(plane3DRealization: Plane3DRealization3D | undefined, projectionRealization: ProjectionPlaneRealization3D): Segment2D[] {

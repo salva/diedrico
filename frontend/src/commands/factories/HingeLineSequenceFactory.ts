@@ -46,7 +46,7 @@ export function buildHingeLineWithHalves(
   groupId: string
 ): void {
   // Step 1: Create 3D hinge line
-  // AddHingeLineOp calls world.addHingeLine() which generates ID if not provided
+  // AddHingeLineOp delegates construction and ID generation to ProjectionPlaneConstructionService.
   const hingeLineOp = new AddHingeLineOp(horizontalPlaneId, verticalPlaneId);
   cmd.addAndExecute(hingeLineOp);
   const hingeLineId = hingeLineOp.outputs.hingeLineId as string;

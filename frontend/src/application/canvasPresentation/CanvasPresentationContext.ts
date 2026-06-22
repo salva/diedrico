@@ -10,16 +10,14 @@ import type { ProcessTree } from '@/domain/processTree/ProcessTree';
 import type { CanvasPlaneCanvasItems, CanvasPlaneItem, CanvasPlaneLineItem, CanvasPlaneTransformModel } from './CanvasPresentationModel';
 import type { CanvasPresentationState } from './CanvasPresentationModel';
 import { resolveVisibility } from './styleService';
-import { Projected3DCanvasSelector } from './Projected3DCanvasSelector';
-import { createProjected3DCanvasReadPort } from './Projected3DCanvasReadPort';
-import { createWorldRealizationContext } from '@/application/presentation/WorldRealizationContext';
+import { buildProjected3DCanvasItems } from './Projected3DCanvasSelector';
+import { createWorldRealizationContext } from '@/domain/world/WorldRealizationContext';
+import type { RealizationService } from '@/domain/world/RealizationService';
 
-export function createCanvasPresentationContext(world: World, visibilityModel: VisibilityModel, tree?: ProcessTree) {
-  const realizationContext = createWorldRealizationContext(world);
-  const projected3DSelector = new Projected3DCanvasSelector();
-  const processTree = tree ?? (world as any)['get' + 'ProcessTree']();
+export function createCanvasPresentationContext(world: World, visibilityModel: VisibilityModel, processTree: ProcessTree, realizations: RealizationService) {
+  const realizationContext = createWorldRealizationContext(world, realizations);
   return {
-    getProjected3DCanvasItems: (planeTransforms: CanvasPlaneTransformMap) => projected3DSelector.selectWorldProjection(createProjected3DCanvasReadPort(world, realizationContext), planeTransforms),
+    getProjected3DCanvasItems: (planeTransforms: CanvasPlaneTransformMap) => buildProjected3DCanvasItems({ world, realizations, realizationContext, planeTransforms }),
     realizationContext,
     isVisible: (element: Element) => resolveVisibility(element, processTree, visibilityModel),
   };
@@ -29,16 +27,16 @@ export type CanvasPlaneTransformMap = Map<string, CanvasPlaneTransformModel>;
 
 export type CanvasPresentationContext = ReturnType<typeof createCanvasPresentationContext>;
 
-export function getCanvasPlaneTransforms(world: World): CanvasPlaneTransformModel[] {
+export function getCanvasPlaneTransforms(world: World, realizations: RealizationService): CanvasPlaneTransformModel[] {
+  const realizationContext = createWorldRealizationContext(world, realizations);
   return world.getAllProjectionPlanes().flatMap((plane) => {
-    const realization = world.getProjectionPlane2DRealization(plane.id);
+    const realization = realizations.realizeProjectionPlane2D(plane, realizationContext);
     if (!realization) return [];
     return [{ planeId: plane.id, planeToPaper: realization.planeToPaper2D, paperToPlane: realization.paperToPlane2D }];
   });
 }
 
-export function getCanvasPlaneCanvasItems(world: World, planeTransforms: CanvasPlaneTransformMap, state: CanvasPresentationState): CanvasPlaneCanvasItems[] {
-  const context = createCanvasPresentationContext(world, state.visibilityModel);
+export function getCanvasPlaneCanvasItems(world: World, planeTransforms: CanvasPlaneTransformMap, state: CanvasPresentationState, context: CanvasPresentationContext): CanvasPlaneCanvasItems[] {
   const itemState = { ...state, realizationContext: context.realizationContext, isVisible: context.isVisible };
   return world.getAllProjectionPlanes().flatMap((plane) => {
     const transform = planeTransforms.get(plane.id);
@@ -77,7 +75,7 @@ export function getPlaneCanvasItems(plane: ProjectionPlane, transform: CanvasPla
     if (itemState.isVisible && !itemState.isVisible(line)) continue;
     const realization = context.realizeLine2D(line, context);
     if (!realization) continue;
-    const kind: CanvasPlaneLineItem['kind'] = line instanceof HalfHingeLine2D
+    const kind = line instanceof HalfHingeLine2D
       ? 'half-hinge-line'
       : line instanceof Segment2D
         ? 'finite-segment'
@@ -86,14 +84,22 @@ export function getPlaneCanvasItems(plane: ProjectionPlane, transform: CanvasPla
           : line instanceof Guide2D
             ? 'guide'
             : 'infinite-line';
+    if (kind === 'finite-segment') {
+      items.push({
+        kind,
+        elementId: line.id,
+        planeId: line.planeId,
+        point1: realization.point1.clone(),
+        point2: realization.point2.clone(),
+      });
+      continue;
+    }
     items.push({
       kind,
       elementId: line.id,
       planeId: line.planeId,
       point: realization.point1.clone(),
       direction: realization.getDirection(),
-      point1: kind === 'finite-segment' ? realization.point1.clone() : undefined,
-      point2: kind === 'finite-segment' ? realization.point2.clone() : undefined,
       arcGeometry: optionalArcGeometry(line),
     });
   }

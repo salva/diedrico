@@ -13,7 +13,9 @@
  */
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
-import type { ToolArgumentSet } from '@/tools/ToolArgumentCollector';
+import type { ArgumentValue, ToolArgumentSet } from '@/tools/ToolArgumentCollector';
+import type { ToolContext } from './ITool';
+import type { ToolConstructionIntent } from './ToolCommandIntents';
 import type { Point2D } from '@/domain/world/Point';
 import { SelectionMask } from '@/types/SelectionMask';
 
@@ -28,7 +30,6 @@ import { SelectionMask } from '@/types/SelectionMask';
  */
 export class CircleTool extends ArgumentCollectorTool {
   readonly name = 'circle';
-  protected readonly constructionIntentType = 'circle';
 
   /**
    * Define argument specification
@@ -69,6 +70,16 @@ export class CircleTool extends ArgumentCollectorTool {
         }
       }
     ];
+  }
+
+  protected buildConstructionIntent(args: Map<string, ArgumentValue>, context: ToolContext): ToolConstructionIntent {
+    return {
+      type: 'circle',
+      planeId: context.planeId,
+      centerPointId: this.requireElementId(args, 'center'),
+      circumferencePointId: this.requireElementId(args, 'circumferencePoint'),
+      description: this.getCommandDescription()
+    };
   }
 
   /**

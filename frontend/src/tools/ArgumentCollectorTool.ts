@@ -39,7 +39,7 @@
 import { Vector3 } from 'three';
 import { BaseTool } from './BaseTool';
 import type { ToolContext, ToolResult, ITool } from './ITool';
-import type { BasicConstructionIntentType, ToolConstructionIntent } from './ToolCommandIntents';
+import type { ToolConstructionIntent } from './ToolCommandIntents';
 import { SelectionMask, NoneMask } from '@/types/SelectionMask';
 import type { 
   ToolArgumentSpec, 
@@ -64,8 +64,6 @@ export type { ArgumentValue } from '@/tools/ToolArgumentCollector';
  * - cancel(): Abort collection and reset
  */
 export abstract class ArgumentCollectorTool extends BaseTool implements ITool {
-  protected readonly constructionIntentType?: BasicConstructionIntentType;
-
   /** Map of collected arguments (argument name → {element, position}) */
   private collected: Map<string, ArgumentValue> = new Map();
   
@@ -94,18 +92,21 @@ export abstract class ArgumentCollectorTool extends BaseTool implements ITool {
    * Subclasses keep interaction-specific validation, while application
    * controllers own command construction/execution.
    */
-  protected buildConstructionIntent(
-    args: Map<string, ArgumentValue>,
-    context: ToolContext
-  ): ToolConstructionIntent {
-    if (!this.constructionIntentType) throw new Error(`Tool ${this.name} must declare a construction intent type or override buildConstructionIntent`);
+  protected abstract buildConstructionIntent(
+    _args: Map<string, ArgumentValue>,
+    _context: ToolContext
+  ): ToolConstructionIntent;
 
-    return {
-      type: this.constructionIntentType,
-      description: this.getCommandDescription(),
-      planeId: context.planeId,
-      args
-    };
+  protected requireElementId(args: Map<string, ArgumentValue>, name: string): string {
+    const element = args.get(name)?.element;
+    if (!element) throw new Error(`Missing selected ${name}`);
+    return element.id;
+  }
+
+  protected requirePlanePosition(args: Map<string, ArgumentValue>, name: string): Vector3 {
+    const position = args.get(name)?.planeCoords;
+    if (!position) throw new Error(`Missing ${name} position`);
+    return position;
   }
 
 

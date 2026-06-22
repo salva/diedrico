@@ -27,11 +27,11 @@ export function resolveElementId(
 
 export function resolveDefaultLabel(
   label: string | undefined,
-  id: string,
+  _id: string,
   elementType: string,
   world: ConstructionContext
 ): string {
-  return label || world.generateDefaultLabel(id, elementType);
+  return label || world.labelGenerator.next(elementType);
 }
 
 export function requireLocalPoint(
@@ -100,10 +100,10 @@ export function requireRealizedLine(
   line: Line2D,
   lineId: string,
   fieldName: string,
-  world: ConstructionContext,
+  context: ConstructionContext,
   missingMessage: string = 'Line does not exist.'
 ): void {
-  const realization = line.realize2D(world);
+  const realization = line.realize2D(context);
   if (!realization) {
     throw new Error(`Invalid ${fieldName}: ${lineId}. ${missingMessage}`);
   }
@@ -113,9 +113,9 @@ export function requireRealizedCircle(
   circle: Circle2D,
   circleId: string,
   fieldName: string,
-  world: ConstructionContext
+  context: ConstructionContext
 ): void {
-  const realization = circle.realize2D(world);
+  const realization = circle.realize2D(context);
   if (!realization) {
     throw new Error(`Invalid ${fieldName}: ${circleId}. Circle does not exist.`);
   }
@@ -142,10 +142,10 @@ export function requireDistinctRealizedPointsForLine(
   point2: Point2D,
   point1Id: string,
   point2Id: string,
-  world: ConstructionContext
+  context: ConstructionContext
 ): void {
-  const point1Realization = point1.realize2D(world);
-  const point2Realization = point2.realize2D(world);
+  const point1Realization = point1.realize2D(context);
+  const point2Realization = point2.realize2D(context);
 
   if (!point1Realization || !point2Realization) {
     throw new Error('Cannot compute point realizations. Points may depend on missing elements.');

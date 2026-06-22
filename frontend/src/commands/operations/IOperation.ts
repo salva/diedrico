@@ -8,8 +8,8 @@
 
 import type { OperationContext } from './OperationContext';
 
-export type JsonPrimitive = string | number | boolean | null;
-export type JsonValue = JsonPrimitive | JsonValue[] | JsonObject;
+type JsonPrimitive = string | number | boolean | null;
+type JsonValue = JsonPrimitive | JsonValue[] | JsonObject;
 export interface JsonObject {
   [key: string]: JsonValue | undefined;
 }
@@ -28,8 +28,6 @@ export interface OperationDescriptor<TType extends string = string, TPayload ext
   // Keep payload only for existing serialized shapes that already use it.
   payload?: TPayload;
 }
-
-export type SerializedOperation = OperationDescriptor;
 
 export interface IOperation<
   TDescriptor extends OperationDescriptor = OperationDescriptor,

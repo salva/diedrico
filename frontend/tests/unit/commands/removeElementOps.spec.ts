@@ -16,19 +16,23 @@ import { RemoveActionFromProcessTreeOp } from '@/commands/operations/processTree
 import { Command } from '@/commands/Command';
 import type { World } from '@/domain/world/World';
 import type { CommandStack } from '@/commands/CommandStack';
-import { createTestWorld, buildOperationContext } from '../../helpers/worldHelpers';
+import { createTestWorld, getHorizontalPlane, getHorizontalPlaneId } from '../../helpers/worldHelpers';
+import type { OperationContext } from '@/commands/operations/OperationContext';
 import type { Action } from '@/domain/processTree/Action';
-import type { ActionGroup } from '@/domain/processTree/ProcessTree';
-import { getHorizontalPlane, getHorizontalPlaneId } from '../../helpers/worldHelpers';
+import type { ActionGroup, ProcessTree } from '@/domain/processTree/ProcessTree';
 
 describe('RemoveElement Operations (T286, T290)', () => {
   let world: World;
   let visibilityModel;
   let commandStack: CommandStack;
+  let processTree: ProcessTree;
+  let operationContext: OperationContext;
 
   beforeEach(() => {
-    const { world: w, visibilityModel: vm, commandStack: cs } = createTestWorld();
+    const { world: w, visibilityModel: vm, commandStack: cs, operationContext: oc } = createTestWorld();
     world = w;
+    operationContext = oc;
+    processTree = operationContext.processTree;
 
     visibilityModel = vm;    commandStack = cs;
   });
@@ -43,7 +47,6 @@ describe('RemoveElement Operations (T286, T290)', () => {
       description: `Test action for ${elementId}`,
       isOutput: true
     };
-    const processTree = world.getProcessTree();
     const actionGroup: ActionGroup = {
       id: `test-group-${elementId}`,
       type: 'actionGroup',
@@ -53,8 +56,7 @@ describe('RemoveElement Operations (T286, T290)', () => {
       created: new Date()
     };
     processTree.addActionGroup(actionGroup);
-    const index = processTree.addActionToGroup(action, actionGroup.id);
-    const actionNode = actionGroup.children[index];
+    const { actionNode } = processTree.addActionToGroup(action, actionGroup.id);
     if (!actionNode) {
       throw new Error('Failed to insert test action');
     }
@@ -63,11 +65,11 @@ describe('RemoveElement Operations (T286, T290)', () => {
   }
 
   function addFreePoint(plane: ReturnType<typeof getHorizontalPlane>, position: Vector3) {
-    return world.getConstructionService().addFreePoint2D(plane, position);
+    return operationContext.projectionConstruction.addFreePoint2D(plane, position);
   }
 
   function addLineByPoints(plane: ReturnType<typeof getHorizontalPlane>, point1Id: string, point2Id: string) {
-    return world.getConstructionService().addLine2DBetweenTwoPoints(plane, point1Id, point2Id);
+    return operationContext.projectionConstruction.addLine2DBetweenTwoPoints(plane, point1Id, point2Id);
   }
 
   describe('RemovePoint2DOp', () => {
@@ -78,7 +80,7 @@ describe('RemoveElement Operations (T286, T290)', () => {
       expect(plane.getPoint(point.id)).toBeDefined();
       
       const removeOp = new RemovePoint2DOp(planeId, point.id);
-      const result = removeOp.apply(buildOperationContext(world, visibilityModel));
+      const result = removeOp.apply(operationContext);
       
       expect(result.success).toBe(true);
       expect(plane.getPoint(point.id)).toBeUndefined();
@@ -90,20 +92,43 @@ describe('RemoveElement Operations (T286, T290)', () => {
       const point = addFreePoint(plane, new Vector3(100, 200, 1));
       
       const removeOp = new RemovePoint2DOp(planeId, point.id);
-      removeOp.apply(buildOperationContext(world, visibilityModel));
+      removeOp.apply(operationContext);
       expect(plane.getPoint(point.id)).toBeUndefined();
       
-      removeOp.undo(buildOperationContext(world, visibilityModel));
+      removeOp.undo(operationContext);
       expect(plane.getPoint(point.id)).toBeDefined();
     });
 
     it('should return error when point not found', () => {
       const planeId = getHorizontalPlaneId(world);
       const removeOp = new RemovePoint2DOp(planeId, 'nonexistent');
-      const result = removeOp.apply(buildOperationContext(world, visibilityModel));
+      const result = removeOp.apply(operationContext);
       
       expect(result.success).toBe(false);
       expect(result.error).toContain('not found');
+    });
+
+    it('invalidates realizations before unregistering dependencies', () => {
+      const plane = getHorizontalPlane(world);
+      const planeId = getHorizontalPlaneId(world);
+      const point = addFreePoint(plane, new Vector3(100, 200, 1));
+      const calls: string[] = [];
+      const originalInvalidate = operationContext.realizations.invalidateElement.bind(operationContext.realizations);
+      const originalUnregister = operationContext.dependencies.unregisterNode.bind(operationContext.dependencies);
+
+      operationContext.realizations.invalidateElement = ((elementId, dependencyQuery, projectionPlanes) => {
+        calls.push(`invalidate:${elementId}`);
+        return originalInvalidate(elementId, dependencyQuery, projectionPlanes);
+      }) as typeof operationContext.realizations.invalidateElement;
+      operationContext.dependencies.unregisterNode = ((elementId) => {
+        calls.push(`unregister:${elementId}`);
+        return originalUnregister(elementId);
+      }) as typeof operationContext.dependencies.unregisterNode;
+
+      const result = new RemovePoint2DOp(planeId, point.id).apply(operationContext);
+
+      expect(result.success).toBe(true);
+      expect(calls).toEqual([`invalidate:${point.id}`, `unregister:${point.id}`]);
     });
   });
 
@@ -118,7 +143,7 @@ describe('RemoveElement Operations (T286, T290)', () => {
       expect(plane.getLine(line.id)).toBeDefined();
       
       const removeOp = new RemoveLine2DOp(planeId, line.id);
-      const result = removeOp.apply(buildOperationContext(world, visibilityModel));
+      const result = removeOp.apply(operationContext);
       
       expect(result.success).toBe(true);
       expect(plane.getLine(line.id)).toBeUndefined();
@@ -132,10 +157,10 @@ describe('RemoveElement Operations (T286, T290)', () => {
       const line = addLineByPoints(plane, p1.id, p2.id);
       
       const removeOp = new RemoveLine2DOp(planeId, line.id);
-      removeOp.apply(buildOperationContext(world, visibilityModel));
+      removeOp.apply(operationContext);
       expect(plane.getLine(line.id)).toBeUndefined();
       
-      removeOp.undo(buildOperationContext(world, visibilityModel));
+      removeOp.undo(operationContext);
       expect(plane.getLine(line.id)).toBeDefined();
     });
   });
@@ -154,10 +179,10 @@ describe('RemoveElement Operations (T286, T290)', () => {
       const actionNode2 = addTestAction(p2.id);
       const actionNode3 = addTestAction(line.id);
       
-      world.getDependencyRegistrar().registerNode(line.id, [p1.id, p2.id]);
+      operationContext.dependencies.registerNode(line.id, [p1.id, p2.id]);
       
       // Build delete command with cascade
-      const deleteCmd = new Command('Delete point with cascade', buildOperationContext(world, visibilityModel));
+      const deleteCmd = new Command('Delete point with cascade', operationContext);
       
       // Remove dependent line first
       deleteCmd.addAndExecute(new RemoveLine2DOp(planeId, line.id));
@@ -188,7 +213,7 @@ describe('RemoveElement Operations (T286, T290)', () => {
       const actionNode2 = addTestAction(p2.id);
       const actionNode3 = addTestAction(line.id);
       
-      const deleteCmd = new Command('Delete with cascade', buildOperationContext(world, visibilityModel));
+      const deleteCmd = new Command('Delete with cascade', operationContext);
       deleteCmd.addAndExecute(new RemoveLine2DOp(planeId, line.id));
       deleteCmd.addAndExecute(new RemoveActionFromProcessTreeOp(actionNode3));
       deleteCmd.addAndExecute(new RemovePoint2DOp(planeId, p1.id));
@@ -218,7 +243,7 @@ describe('RemoveElement Operations (T286, T290)', () => {
       const actionNode2 = addTestAction(p2.id);
       const actionNode3 = addTestAction(line.id);
       
-      const deleteCmd = new Command('Delete', buildOperationContext(world, visibilityModel));
+      const deleteCmd = new Command('Delete', operationContext);
       deleteCmd.addAndExecute(new RemoveLine2DOp(planeId, line.id));
       deleteCmd.addAndExecute(new RemoveActionFromProcessTreeOp(actionNode3));
       deleteCmd.addAndExecute(new RemovePoint2DOp(planeId, p1.id));
@@ -248,7 +273,7 @@ describe('RemoveElement Operations (T286, T290)', () => {
       const actionNode1 = addTestAction(p1.id);
       const actionNode2 = addTestAction(p2.id);
       
-      const deleteCmd = new Command('Delete two points', buildOperationContext(world, visibilityModel));
+      const deleteCmd = new Command('Delete two points', operationContext);
       deleteCmd.addAndExecute(new RemovePoint2DOp(planeId, p1.id));
       deleteCmd.addAndExecute(new RemoveActionFromProcessTreeOp(actionNode1));
       deleteCmd.addAndExecute(new RemovePoint2DOp(planeId, p2.id));

@@ -37,17 +37,19 @@ import { RemoveActionFromProcessTreeOp } from '@/commands/operations/processTree
 describe('Round-Trip Serialization Tests', () => {
   let world: World;
   let commandStack: CommandStack;
+  let operationContext: ReturnType<typeof createTestWorld>['operationContext'];
 
   beforeEach(() => {
-    const { world: w, commandStack: cs } = createTestWorld();
+    const { world: w, commandStack: cs, operationContext: oc } = createTestWorld();
     world = w;
     commandStack = cs;
+    operationContext = oc;
   });
 
   it('AddFreePoint2DOp survives round-trip', () => {
     const op = new AddFreePoint2DOp('projPlaneH', new Vector3(5, 10, 1));
     
-    const result = roundTripOperation(op, world, commandStack);
+    const result = roundTripOperation(op, world, commandStack, operationContext.idAllocator.peek());
     
     expect(result.type).toBe('AddFreePoint2D');
     expect(result.serialize()).toMatchObject({ opType: 'AddFreePoint2D', planeId: 'projPlaneH', position: [5, 10, 1] });
@@ -56,7 +58,7 @@ describe('Round-Trip Serialization Tests', () => {
   it('AddLine2DByTwoPoints survives round-trip', () => {
     const op = new AddLine2DByTwoPointsOp('projPlaneH', 'point1', 'point2');
     
-    const result = roundTripOperation(op, world, commandStack);
+    const result = roundTripOperation(op, world, commandStack, operationContext.idAllocator.peek());
     
     expect(result.type).toBe('AddLine2DByTwoPoints');
     expect(result.serialize()).toMatchObject({ opType: 'AddLine2DByTwoPoints', planeId: 'projPlaneH', point1Id: 'point1', point2Id: 'point2' });
@@ -65,7 +67,7 @@ describe('Round-Trip Serialization Tests', () => {
   it('AddSegment2DByPoints survives round-trip', () => {
     const op = new AddSegment2DByPointsOp('projPlaneH', 'point1', 'point2');
     
-    const result = roundTripOperation(op, world, commandStack);
+    const result = roundTripOperation(op, world, commandStack, operationContext.idAllocator.peek());
     
     expect(result.type).toBe('AddSegment2DByPoints');
     expect(result.serialize()).toMatchObject({ opType: 'AddSegment2DByPoints', planeId: 'projPlaneH', point1Id: 'point1', point2Id: 'point2' });
@@ -74,7 +76,7 @@ describe('Round-Trip Serialization Tests', () => {
   it('AddCircle2DByCenterAndPoint survives round-trip', () => {
     const op = new AddCircle2DByCenterAndPointOp('projPlaneH', 'center', 'radiusPoint');
     
-    const result = roundTripOperation(op, world, commandStack);
+    const result = roundTripOperation(op, world, commandStack, operationContext.idAllocator.peek());
     
     expect(result.type).toBe('AddCircle2DByCenterAndPoint');
     expect(result.serialize()).toMatchObject({ opType: 'AddCircle2DByCenterAndPoint', planeId: 'projPlaneH', centerPointId: 'center', circumferencePointId: 'radiusPoint' });
@@ -83,7 +85,7 @@ describe('Round-Trip Serialization Tests', () => {
   it('AddGuide2DPerpendicularToLine survives round-trip', () => {
     const op = new AddGuide2DPerpendicularToLineOp('projPlaneH', 'lineId', 'pointId');
     
-    const result = roundTripOperation(op, world, commandStack);
+    const result = roundTripOperation(op, world, commandStack, operationContext.idAllocator.peek());
     
     expect(result.type).toBe('AddGuide2DPerpendicularToLine');
     expect(result.serialize()).toEqual({
@@ -98,7 +100,7 @@ describe('Round-Trip Serialization Tests', () => {
   it('AddSiblingGuide2D survives round-trip', () => {
     const op = new AddSiblingGuide2DOp('projPlaneV', 'primaryGuide', 'refLine');
     
-    const result = roundTripOperation(op, world, commandStack);
+    const result = roundTripOperation(op, world, commandStack, operationContext.idAllocator.peek());
     
     expect(result.type).toBe('AddSiblingGuide2D');
     expect(result.serialize()).toEqual({
@@ -113,7 +115,7 @@ describe('Round-Trip Serialization Tests', () => {
   it('AddLineLineIntersectionPoint2D survives round-trip', () => {
     const op = new AddLineLineIntersectionPoint2DOp('projPlaneH', 'line1', 'line2');
     
-    const result = roundTripOperation(op, world, commandStack);
+    const result = roundTripOperation(op, world, commandStack, operationContext.idAllocator.peek());
     
     expect(result.type).toBe('AddLineLineIntersectionPoint2D');
     expect(result.serialize()).toMatchObject({ opType: 'AddLineLineIntersectionPoint2D', planeId: 'projPlaneH', line1Id: 'line1', line2Id: 'line2' });
@@ -122,7 +124,7 @@ describe('Round-Trip Serialization Tests', () => {
   it('AddLineCircleIntersectionPoint2D survives round-trip', () => {
     const op = new AddLineCircleIntersectionPoint2DOp('projPlaneH', 'line', 'circle', 0);
     
-    const result = roundTripOperation(op, world, commandStack);
+    const result = roundTripOperation(op, world, commandStack, operationContext.idAllocator.peek());
     
     expect(result.type).toBe('AddLineCircleIntersectionPoint2D');
     expect(result.serialize()).toMatchObject({ opType: 'AddLineCircleIntersectionPoint2D', planeId: 'projPlaneH', lineId: 'line', circleId: 'circle', index: 0 });
@@ -131,7 +133,7 @@ describe('Round-Trip Serialization Tests', () => {
   it('AddCircleCircleIntersectionPoint2D survives round-trip', () => {
     const op = new AddCircleCircleIntersectionPoint2DOp('projPlaneH', 'circle1', 'circle2', 1);
     
-    const result = roundTripOperation(op, world, commandStack);
+    const result = roundTripOperation(op, world, commandStack, operationContext.idAllocator.peek());
     
     expect(result.type).toBe('AddCircleCircleIntersectionPoint2D');
     expect(result.serialize()).toMatchObject({ opType: 'AddCircleCircleIntersectionPoint2D', planeId: 'projPlaneH', circle1Id: 'circle1', circle2Id: 'circle2', index: 1 });
@@ -140,7 +142,7 @@ describe('Round-Trip Serialization Tests', () => {
   it('RemovePoint2D survives round-trip', () => {
     const op = new RemovePoint2DOp('projPlaneH', 'point1');
     
-    const result = roundTripOperation(op, world, commandStack);
+    const result = roundTripOperation(op, world, commandStack, operationContext.idAllocator.peek());
     
     expect(result.type).toBe('RemovePoint2D');
     expect(result.serialize()).toMatchObject({ opType: 'RemovePoint2D', planeId: 'projPlaneH', pointId: 'point1' });
@@ -149,7 +151,7 @@ describe('Round-Trip Serialization Tests', () => {
   it('RemoveLine2D survives round-trip', () => {
     const op = new RemoveLine2DOp('projPlaneH', 'line1');
     
-    const result = roundTripOperation(op, world, commandStack);
+    const result = roundTripOperation(op, world, commandStack, operationContext.idAllocator.peek());
     
     expect(result.type).toBe('RemoveLine2D');
     expect(result.serialize()).toMatchObject({ opType: 'RemoveLine2D', planeId: 'projPlaneH', lineId: 'line1' });
@@ -158,7 +160,7 @@ describe('Round-Trip Serialization Tests', () => {
   it('RemoveSegment2D survives round-trip', () => {
     const op = new RemoveSegment2DOp('projPlaneH', 'segment1');
     
-    const result = roundTripOperation(op, world, commandStack);
+    const result = roundTripOperation(op, world, commandStack, operationContext.idAllocator.peek());
     
     expect(result.type).toBe('RemoveSegment2D');
     expect(result.serialize()).toMatchObject({ opType: 'RemoveSegment2D', planeId: 'projPlaneH', segmentId: 'segment1' });
@@ -167,7 +169,7 @@ describe('Round-Trip Serialization Tests', () => {
   it('RemoveCircle2D survives round-trip', () => {
     const op = new RemoveCircle2DOp('projPlaneH', 'circle1');
     
-    const result = roundTripOperation(op, world, commandStack);
+    const result = roundTripOperation(op, world, commandStack, operationContext.idAllocator.peek());
     
     expect(result.type).toBe('RemoveCircle2D');
     expect(result.serialize()).toMatchObject({ opType: 'RemoveCircle2D', planeId: 'projPlaneH', circleId: 'circle1' });
@@ -176,7 +178,7 @@ describe('Round-Trip Serialization Tests', () => {
   it('RemoveGuide2D survives round-trip', () => {
     const op = new RemoveGuide2DOp('projPlaneH', 'guide1');
     
-    const result = roundTripOperation(op, world, commandStack);
+    const result = roundTripOperation(op, world, commandStack, operationContext.idAllocator.peek());
     
     expect(result.type).toBe('RemoveGuide2D');
     expect(result.serialize()).toMatchObject({ opType: 'RemoveGuide2D', planeId: 'projPlaneH', guideId: 'guide1' });
@@ -185,19 +187,44 @@ describe('Round-Trip Serialization Tests', () => {
   it('UpdateElementStyle survives round-trip', () => {
     const op = new UpdateElementStyleOp('point1', 'projPlaneH', { color: '#FF0000', lineWidth: 2 });
     
-    const result = roundTripOperation(op, world, commandStack);
+    const result = roundTripOperation(op, world, commandStack, operationContext.idAllocator.peek());
     
     expect(result.type).toBe('UpdateElementStyle');
     expect(result.serialize()).toEqual({ opType: 'UpdateElementStyle', payload: { elementId: 'point1', planeId: 'projPlaneH', newStyle: { color: '#FF0000', lineWidth: 2 } } });
   });
 
   it('RemoveActionFromProcessTree survives round-trip', () => {
-    const op = new RemoveActionFromProcessTreeOp('action_123');
+    const op = new RemoveActionFromProcessTreeOp('action_123', {
+      groupId: 'group_123',
+      actionNode: {
+        id: 'action_123',
+        type: 'action',
+        created: new Date('2026-06-05T00:00:00.000Z'),
+        elementId: 'element_123',
+        description: 'Remove action descriptor test',
+      },
+      originalIndex: 0,
+    });
     
-    const result = roundTripOperation(op, world, commandStack);
+    const result = roundTripOperation(op, world, commandStack, operationContext.idAllocator.peek());
     
     expect(result.type).toBe('RemoveActionFromProcessTree');
-    expect(result.serialize()).toMatchObject({ opType: 'RemoveActionFromProcessTree', actionId: 'action_123' });
+    expect(result.serialize()).toEqual({
+      opType: 'RemoveActionFromProcessTree',
+      schemaVersion: '8.0.0',
+      groupId: 'group_123',
+      actionId: 'action_123',
+      removedActionNode: {
+        id: 'action_123',
+        type: 'action',
+        created: '2026-06-05T00:00:00.000Z',
+        elementId: 'element_123',
+        description: 'Remove action descriptor test',
+      },
+      originalIndex: 0,
+      previousSiblingId: undefined,
+      nextSiblingId: undefined,
+    });
   });
 });
 
@@ -205,7 +232,7 @@ describe('Round-Trip Serialization Tests', () => {
  * Helper: Round-trip an operation through serialization
  * Tests that operation descriptors survive serialization without data loss
  */
-function roundTripOperation(op: any, world: World, commandStack: CommandStack): any {
+function roundTripOperation(op: any, world: World, commandStack: CommandStack, nextElementId: number): any {
   const expectedDescriptor = op.serialize();
   // 1. Create command with operation
   const cmd = Command.restore({
@@ -217,7 +244,7 @@ function roundTripOperation(op: any, world: World, commandStack: CommandStack): 
   commandStack.restoreCommittedCommands([cmd]);
   
   // 2. Serialize
-  const projectData = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'test-project');
+  const projectData = ProjectService.serializeCommands(commandStack, nextElementId, 'test-project');
   
   // 3. Deserialize using private method via type assertion
   // We only test parameter reconstruction, not full execution

@@ -39,7 +39,9 @@ export class RuntimeCommandProducer implements CanvasCommandProductionPort, Proc
       this.commandStack.push(command);
       return { success: true };
     } catch (error) {
-      command.rollback();
+      if (command.hasCurrentExecutionAttempt()) {
+        command.rollbackAfterFailure(error);
+      }
       return { success: false, message: error instanceof Error ? error.message : String(error) };
     }
   }
@@ -56,7 +58,9 @@ export class RuntimeCommandProducer implements CanvasCommandProductionPort, Proc
           hasPreview = true;
           return { success: true };
         } catch (error) {
-          command.rollback();
+          if (command.hasCurrentExecutionAttempt()) {
+            command.rollbackAfterFailure(error);
+          }
           return { success: false, message: error instanceof Error ? error.message : String(error) };
         }
       },
@@ -70,7 +74,9 @@ export class RuntimeCommandProducer implements CanvasCommandProductionPort, Proc
           this.commandStack.push(command);
           return { success: true };
         } catch (error) {
-          command.rollback();
+          if (command.hasCurrentExecutionAttempt()) {
+            command.rollbackAfterFailure(error);
+          }
           return { success: false, message: error instanceof Error ? error.message : String(error) };
         }
       },
@@ -96,12 +102,7 @@ export class RuntimeCommandProducer implements CanvasCommandProductionPort, Proc
         state: getState()
       };
     } catch (error) {
-      command.rollback();
-      return {
-        success: false,
-        state: getState(),
-        error: error instanceof Error ? error.message : String(error)
-      };
+      return command.rollbackAfterFailure(error);
     }
   }
 }

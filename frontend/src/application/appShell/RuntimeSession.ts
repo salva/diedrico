@@ -11,8 +11,7 @@ import type { CommandHistoryPort, OpenedProjectSession, ProjectSessionPersistenc
 import type { ProjectSessionKernel } from './ProjectSessionKernel';
 import { ProjectService } from './ProjectService';
 import { buildCanvasPresentationModel } from '@/application/canvasPresentation/CanvasPresentationSelector';
-import { createThreePresentationReadPorts } from '@/application/threePresentation/ThreeWorldReadPort';
-import { ThreePresentationSelector } from '@/application/threePresentation/ThreePresentationSelector';
+import { buildThreePresentationModel } from '@/application/threePresentation/ThreePresentationSelector';
 import { screenTo3D } from '@/utils/coordinateTransform';
 import { FreePoint2D } from '@/domain/world/Point';
 import type { CanvasViewPort, ProcessTreeReadPort, ElementsPanelPort, PlaneOption, ThreePresentationPort } from './RuntimeViewPorts';
@@ -24,6 +23,7 @@ import { RuntimeChangePublisher, type ChangeNotifier } from './RuntimeChangePubl
 import { registerAllDescriptors } from '@/domain/world/descriptors/registerDescriptors';
 import { VisibilityModel } from '@/application/processTree/VisibilityModel';
 import type { OperationContext } from '@/commands/operations/OperationContext';
+import { GeometryElementLookup } from '@/domain/world/GeometryElementLookup';
 
 export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort {
   private readonly domain = new RuntimeDomainContext();
@@ -33,14 +33,14 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
   private readonly commandStack = new CommandStack();
   private readonly descriptorRegistry = registerAllDescriptors();
   private readonly operationContext: OperationContext = this.domain.createOperationContext(this.visibilityModel);
+  private readonly elementLookup = new GeometryElementLookup(this.world);
   private readonly commandProducer = new RuntimeCommandProducer(this.operationContext, this.commandStack, this.changes);
   private activePlaneIdValue?: string;
 
 
   canvasViewPort(): CanvasViewPort {
     return {
-      subscribeToChanges: (listener) => this.changes.subscribeToChanges(listener),
-      unsubscribeFromChanges: (listener) => this.changes.unsubscribeFromChanges(listener),
+      ...this.changeSubscriptionPort(),
       getActivePlaneId: () => this.activePlaneId,
       buildPresentationModel: (viewport, options) => buildCanvasPresentationModel(
         this.world,
@@ -53,6 +53,8 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
           showProjectedElements: options.showProjectedElements,
           gridVisible: options.gridVisible,
           visibilityModel: this.visibilityModel,
+          processTree: this.operationContext.processTree,
+          realizations: this.operationContext.realizations,
         }
       ),
       getElementLabel: (elementId, elementType, planeId) => this.getElementLabel(elementId, elementType, planeId),
@@ -62,29 +64,27 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
         if (!(point instanceof FreePoint2D) || point.locked) return null;
         return commandSink.startFreePointMove({ planeId, pointId, label: point.label ?? pointId });
       },
-      screenTo3D: ({ clientX, clientY, svg, viewportMatrix, activePlaneId }) => screenTo3D(clientX, clientY, svg, viewportMatrix, activePlaneId, this.world),
+      screenTo3D: ({ clientX, clientY, svg, viewportMatrix, activePlaneId }) => screenTo3D(clientX, clientY, svg, viewportMatrix, activePlaneId, this.world, this.domain.realizationContext),
       getPropertiesDialogViewModel: (elementId) => this.getPropertiesDialogViewModel(elementId),
     };
   }
 
   toolInteractionReadPort() {
-    return createToolInteractionReadPort(this.world);
+    return createToolInteractionReadPort(this.world, this.operationContext.realizations);
   }
 
   processTreeReadPort(): ProcessTreeReadPort {
     return {
-      subscribeToChanges: (listener) => this.changes.subscribeToChanges(listener),
-      unsubscribeFromChanges: (listener) => this.changes.unsubscribeFromChanges(listener),
-      getTree: () => buildProcessTreeReadModel({ world: this.world, processTree: this.operationContext.processTree, dependencyQuery: this.operationContext.dependencies, descriptorRegistry: this.descriptorRegistry, visibilityModel: this.visibilityModel }),
-      getRelatedActionIds: (selectedIds) => getRelatedActionIds(selectedIds, { world: this.world, processTree: this.operationContext.processTree, dependencyQuery: this.operationContext.dependencies, descriptorRegistry: this.descriptorRegistry, visibilityModel: this.visibilityModel }),
+      ...this.changeSubscriptionPort(),
+      getTree: () => buildProcessTreeReadModel(this.processTreeReadModelContext()),
+      getRelatedActionIds: (selectedIds) => getRelatedActionIds(selectedIds, this.processTreeReadModelContext()),
       countNodes: (node) => countProcessNodeViewModels(node),
     };
   }
 
   elementsPanelPort(): ElementsPanelPort {
     return {
-      subscribeToChanges: (listener) => this.changes.subscribeToChanges(listener),
-      unsubscribeFromChanges: (listener) => this.changes.unsubscribeFromChanges(listener),
+      ...this.changeSubscriptionPort(),
       getReadModel: () => buildElementsPanelReadModel({ world: this.world }),
       toggleVisibility: (elementId) => {
         toggleElementVisibility(elementId, {
@@ -96,18 +96,15 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
   }
 
   threePresentationPort(): ThreePresentationPort {
-    const readPorts = createThreePresentationReadPorts(this.world);
-    const selector = new ThreePresentationSelector();
     return {
-      subscribeToChanges: (listener) => this.changes.subscribeToChanges(listener),
-      unsubscribeFromChanges: (listener) => this.changes.unsubscribeFromChanges(listener),
-      buildThreePresentationModel: (displayOptions, selectedIds) => selector.select({ readPorts, displayOptions, selectedIds }),
+      ...this.changeSubscriptionPort(),
+      buildThreePresentationModel: (displayOptions, selectedIds) => buildThreePresentationModel({ world: this.world, realizations: this.operationContext.realizations, displayOptions, selectedIds }),
     };
   }
 
   canvasCommandProducerPort(): CanvasToolController {
     return new CanvasToolController({
-      world: this.world,
+      operationContext: this.operationContext,
       commands: this.commandProducer,
     });
   }
@@ -138,7 +135,7 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
   }
 
   selectionDeletionCommandPort(): SelectionDeletionCommandPort {
-    return new SelectionDeletionCommandService(this.world, this.visibilityModel, this.commandStack, this.changes, undefined, this.operationContext);
+    return new SelectionDeletionCommandService(this.world, this.visibilityModel, this.commandStack, this.operationContext, this.changes);
   }
 
   canUndo(): boolean {
@@ -202,12 +199,14 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
   }
 
   initializeDefaultWorldIfNeeded(): void {
-    initializeWorld(this.world, this.visibilityModel, this.commandStack, this.changes, this.operationContext);
+    initializeWorld(this.world, this.commandStack, this.operationContext, this.changes);
     this.ensureActivePlane();
   }
 
   resetToEmptyInitializedWorld(): void {
     this.world.clear();
+    this.operationContext.realizations.clear();
+    this.operationContext.processTree.clear();
     this.visibilityModel.clear();
     this.commandStack.clear();
     this.initializeDefaultWorldIfNeeded();
@@ -215,6 +214,8 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
 
   clear(): void {
     this.world.clear();
+    this.operationContext.realizations.clear();
+    this.operationContext.processTree.clear();
     this.visibilityModel.clear();
     this.commandStack.clear();
     this.activePlaneIdValue = undefined;
@@ -225,7 +226,7 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
   }
 
   snapshot(projectName: string): ProjectSessionPersistencePayload {
-    return ProjectService.serializeCommands(this.commandStack, this.world.peekNextId(), projectName);
+    return ProjectService.serializeCommands(this.commandStack, this.operationContext.idAllocator.peek(), projectName);
   }
 
   validateProjectData(data: unknown): OpenedProjectSession {
@@ -243,14 +244,16 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
     const candidateCommandStack = new CommandStack();
     const validationNotifier: ChangeNotifier = { notifyChange: () => {} };
     const candidateOperationContext = candidateDomain.createOperationContext(candidateVisibilityModel);
-    ProjectService.deserializeCommands(openedSession.payload, candidateWorld, candidateVisibilityModel, candidateCommandStack, validationNotifier, candidateOperationContext);
-    if (candidateWorld.getAllProjectionPlanes().length === 0) initializeWorld(candidateWorld, candidateVisibilityModel, candidateCommandStack, validationNotifier, candidateOperationContext);
+    ProjectService.deserializeCommands(openedSession.payload, candidateVisibilityModel, candidateCommandStack, candidateOperationContext, validationNotifier);
+    if (candidateWorld.getAllProjectionPlanes().length === 0) initializeWorld(candidateWorld, candidateCommandStack, candidateOperationContext, validationNotifier);
 
     this.world.clear();
+    this.operationContext.realizations.clear();
+    this.operationContext.processTree.clear();
     this.visibilityModel.clear();
     this.commandStack.clear();
     this.activePlaneIdValue = undefined;
-    ProjectService.deserializeCommands(openedSession.payload, this.world, this.visibilityModel, this.commandStack, this.changes, this.operationContext);
+    ProjectService.deserializeCommands(openedSession.payload, this.visibilityModel, this.commandStack, this.operationContext, this.changes);
     if (this.world.getAllProjectionPlanes().length === 0) this.initializeDefaultWorldIfNeeded();
     this.ensureActivePlane();
     this.changes.markDirty();
@@ -278,13 +281,32 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
     return buildPropertiesDialogViewModel(elementId, {
       findElement: (id) => this.findVisibleElement(id),
       world: this.world,
+      realizationContext: this.operationContext.realizationContext,
     });
   }
 
   private findVisibleElement(elementId: string) {
-    return this.world.getElement2D(elementId)
-      || this.world.getElement3DById(elementId)
+    return this.elementLookup.getElement2D(elementId)
+      || this.elementLookup.getElement3DById(elementId)
       || this.world.getProjectionPlaneById(elementId);
+  }
+
+  private changeSubscriptionPort() {
+    return {
+      subscribeToChanges: (listener: () => void) => this.changes.subscribeToChanges(listener),
+      unsubscribeFromChanges: (listener: () => void) => this.changes.unsubscribeFromChanges(listener),
+    };
+  }
+
+  private processTreeReadModelContext() {
+    return {
+      world: this.world,
+      processTree: this.operationContext.processTree,
+      dependencyQuery: this.operationContext.dependencies,
+      descriptorRegistry: this.descriptorRegistry,
+      visibilityModel: this.visibilityModel,
+      realizationContext: this.operationContext.realizationContext,
+    };
   }
 
   private ensureActivePlane(): string | undefined {

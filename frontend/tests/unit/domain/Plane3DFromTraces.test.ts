@@ -17,10 +17,12 @@ import { createTestWorld } from '../../helpers/worldHelpers';
 
 describe('Plane3DFromTraces - Intersecting via Hinge Line', () => {
   let world: World;
+  let operationContext;
 
   beforeEach(() => {
-    const { world: w } = createTestWorld();
+    const { world: w, operationContext: oc } = createTestWorld();
     world = w;
+    operationContext = oc;
   });
 
   /**
@@ -87,15 +89,15 @@ describe('Plane3DFromTraces - Intersecting via Hinge Line', () => {
     planeH.addPoint(pointC);
 
     // 5. Create sibling point C' on P_V (manual creation since we're in test)
-    const pointCPrime = world.getConstructionService().addSiblingIntersectionPoint(planeV, pointC.id, 'projPlane4/point_C_prime');
+    const pointCPrime = operationContext.projectionConstruction.addSiblingIntersectionPoint(planeV, pointC.id, 'projPlane4/point_C_prime');
     
     // Verify sibling relationship
     expect(pointC.siblingPointId).toBe(pointCPrime.id);
     expect(pointCPrime.primaryIntersectionId).toBe(pointC.id);
 
     // Debug: Check coordinates
-    const cRealization = pointC.realize2D(world);
-    const cPrimeRealization = pointCPrime.realize2D(world);
+    const cRealization = pointC.realize2D(operationContext.realizationContext);
+    const cPrimeRealization = pointCPrime.realize2D(operationContext.realizationContext);
     console.log('[TEST] Point C coords on P_H:', cRealization.position);
     console.log('[TEST] Point C\' coords on P_V:', cPrimeRealization.position);
     
@@ -133,11 +135,11 @@ describe('Plane3DFromTraces - Intersecting via Hinge Line', () => {
     );
 
     // Realize the 3D plane
-    const realization = planeP.realize3D(world);
+    const realization = planeP.realize3D(operationContext.realizationContext);
 
     // Verify C and C' have identical 2D coordinates
-    const coordsC = pointC.realize2D(world);
-    const coordsCPrime = pointCPrime!.realize2D(world);
+    const coordsC = pointC.realize2D(operationContext.realizationContext);
+    const coordsCPrime = pointCPrime!.realize2D(operationContext.realizationContext);
     
     console.log('[Test] Point C coords:', coordsC.position);
     console.log('[Test] Point C\' coords:', coordsCPrime.position);
@@ -223,18 +225,18 @@ describe('Plane3DFromTraces - Intersecting via Hinge Line', () => {
     );
 
     // Realize the 3D plane
-    const realization = plane3D.realize3D(world);
+    const realization = plane3D.realize3D(operationContext.realizationContext);
 
     // Check that the lines transform correctly
-    const lineV_2D = lineV.realize2D(world);
-    const lineH_2D = lineH.realize2D(world);
+    const lineV_2D = lineV.realize2D(operationContext.realizationContext);
+    const lineH_2D = lineH.realize2D(operationContext.realizationContext);
     
     expect(lineV_2D?.feasible).toBe(true);
     expect(lineH_2D?.feasible).toBe(true);
 
     // Verify that both lines have the "common" point with identical 2D coords
-    const pointV_real = pointV.realize2D(world);
-    const pointH_real = pointH.realize2D(world);
+    const pointV_real = pointV.realize2D(operationContext.realizationContext);
+    const pointH_real = pointH.realize2D(operationContext.realizationContext);
     
     expect(pointV_real.position.x).toBeCloseTo(pointH_real.position.x, 10);
     expect(pointV_real.position.y).toBeCloseTo(pointH_real.position.y, 10);

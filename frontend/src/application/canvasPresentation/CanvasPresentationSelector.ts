@@ -12,16 +12,16 @@ export function buildCanvasPresentationModel(world: World, viewport: CanvasViewp
 
 export class CanvasPresentationSelector {
   select(world: World, viewport: CanvasViewportModel, state: CanvasPresentationState): CanvasPresentationModel {
-    const context = createCanvasPresentationContext(world, state.visibilityModel);
+    const context = createCanvasPresentationContext(world, state.visibilityModel, state.processTree, state.realizations);
     const renderItems: CanvasRenderItem[] = [];
     const queryItems: CanvasQueryItem[] = [];
     const planeTransforms: CanvasPlaneTransformMap = new Map();
 
-    for (const transform of getCanvasPlaneTransforms(world)) {
+    for (const transform of getCanvasPlaneTransforms(world, state.realizations)) {
       planeTransforms.set(transform.planeId, transform);
     }
 
-    for (const planeItems of getCanvasPlaneCanvasItems(world, planeTransforms, state)) {
+    for (const planeItems of getCanvasPlaneCanvasItems(world, planeTransforms, state, context)) {
       for (const item of planeItems.items) appendPlaneItem(item, planeItems.transform.planeToPaper, state, renderItems, queryItems);
     }
 
@@ -45,9 +45,9 @@ function appendPlaneItem(item: CanvasPlaneItem, transform: { elements: number[];
     }
     case 'finite-segment': {
       const style = segmentStyle({ id: item.elementId, planeId: item.planeId } as never, stateFor(item.elementId, state));
-      const primitive: SegmentPrimitive = { type: 'segment', id: `segment-${item.elementId}`, sourceEntityId: item.elementId, planeId: item.planeId, layer: RenderLayer.Elements, visible: true, style, point1: item.point1!.clone().applyMatrix3(transform), point2: item.point2!.clone().applyMatrix3(transform) };
+      const primitive: SegmentPrimitive = { type: 'segment', id: `segment-${item.elementId}`, sourceEntityId: item.elementId, planeId: item.planeId, layer: RenderLayer.Elements, visible: true, style, point1: item.point1.clone().applyMatrix3(transform), point2: item.point2.clone().applyMatrix3(transform) };
       renderItems.push(canvasRenderItem(primitive, item.kind));
-      queryItems.push({ id: primitive.id, kind: item.kind, elementId: item.elementId, elementType: 'segment', planeId: item.planeId, selectable: true, planeGeometry: { type: 'segment', point1: item.point1!.clone(), point2: item.point2!.clone() } });
+      queryItems.push({ id: primitive.id, kind: item.kind, elementId: item.elementId, elementType: 'segment', planeId: item.planeId, selectable: true, planeGeometry: { type: 'segment', point1: item.point1.clone(), point2: item.point2.clone() } });
       break;
     }
     case 'guide':
@@ -96,5 +96,3 @@ function pointDtoStyle(pointRole: 'free' | 'dependent', planeId: string, ctx: Re
   const opacity = ctx.activePlaneId && planeId !== ctx.activePlaneId ? 0.5 : 1;
   return { layer: ctx.snapTarget ? RenderLayer.Highlights : RenderLayer.Elements, radius: pointRole === 'free' ? 5 : 4, style: { stroke, strokeWidth, strokeStyle: 'solid', fill, opacity, zIndex: 10 + zBoost } };
 }
-
-export { canvasRenderItem };

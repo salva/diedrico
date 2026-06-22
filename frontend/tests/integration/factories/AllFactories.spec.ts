@@ -13,8 +13,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import type { World } from '@/domain/world/World';
 import type { CommandStack } from '@/commands/CommandStack';
+import type { OperationContext } from '@/commands/operations/OperationContext';
 import { Command } from '@/commands/Command';
-import { createTestWorld, buildOperationContext } from '../../helpers/worldHelpers';
+import { createTestWorld, getHorizontalPlane, getVerticalPlane, getHalfHingeLines2D } from '../../helpers/worldHelpers';
 import { GuideSequenceFactory } from '@/commands/factories/GuideSequenceFactory';
 import { DeletionSequenceFactory } from '@/commands/factories/DeletionSequenceFactory';
 import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
@@ -28,31 +29,33 @@ describe('Factory Integration Tests', () => {
   let world: World;
   let visibilityModel;
   let commandStack: CommandStack;
+  let operationContext: OperationContext;
   let planeId: string;
 
   beforeEach(() => {
-    const { world: w, visibilityModel: vm, commandStack: cs } = createTestWorld();
+    const { world: w, visibilityModel: vm, commandStack: cs, operationContext: oc } = createTestWorld();
     world = w;
 
     visibilityModel = vm;    commandStack = cs;
+    operationContext = oc;
     planeId = getHorizontalPlaneId(world);
   });
 
   function deletionContext() {
     return {
       world,
-      dependencyQuery: world.getDependencyService(),
-      processTree: world.getProcessTree(),
+      dependencyQuery: operationContext.dependencies,
+      processTree: operationContext.processTree,
     };
   }
 
   describe('GuideSequenceFactory Integration', () => {
     it('should create guide with sibling on HHL and support undo/redo', () => {
       // Setup: Use existing HHL (created by default in World)
-      const setupCmd = new Command('Setup', buildOperationContext(world, visibilityModel));
+      const setupCmd = new Command('Setup', operationContext);
       
       // Use the default HHL that exists in every World
-      const hhlId = world.getHalfHingeLines2D(planeId)[0].id;
+      const hhlId = getHalfHingeLines2D(world, planeId)[0].id;
       
       // Create through point for guide
       setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, 5, 1)));
@@ -67,9 +70,9 @@ describe('Factory Integration Tests', () => {
       const initialPointCount = plane.getAllPoints().length;
 
       // Test: Create guide with sibling using factory
-      const guideCmd = new Command('Create guide', buildOperationContext(world, visibilityModel));
+      const guideCmd = new Command('Create guide', operationContext);
       const result = GuideSequenceFactory.createGuideWithSibling(
-        guideCmd, planeId, hhlId, throughPointId, world
+        guideCmd, planeId, hhlId, throughPointId, world, operationContext.realizationContext
       );
 
       guideCmd.commit();
@@ -106,7 +109,7 @@ describe('Factory Integration Tests', () => {
 
     it.skip('should create guide on regular line without sibling', () => {
       // Setup: Create regular line
-      const setupCmd = new Command('Setup line', buildOperationContext(world, visibilityModel));
+      const setupCmd = new Command('Setup line', operationContext);
       
       setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 0, 1)));
       const point1Id = world.getProjectionPlaneById(planeId)!.getAllPoints()[0].id;
@@ -124,9 +127,9 @@ describe('Factory Integration Tests', () => {
       commandStack.push(setupCmd);
 
       // Test: Create guide (no sibling expected)
-      const guideCmd = new Command('Create guide', buildOperationContext(world, visibilityModel));
+      const guideCmd = new Command('Create guide', operationContext);
       const result = GuideSequenceFactory.createGuideWithSibling(
-        guideCmd, planeId, lineId, throughPointId, world
+        guideCmd, planeId, lineId, throughPointId, world, operationContext.realizationContext
       );
 
       guideCmd.commit();
@@ -145,7 +148,7 @@ describe('Factory Integration Tests', () => {
     // See DeletionSequenceFactory.spec.ts for details
     it('should cascade delete line when deleting defining point', () => {
       // Setup: Create point and line
-      const setupCmd = new Command('Setup', buildOperationContext(world, visibilityModel));
+      const setupCmd = new Command('Setup', operationContext);
       
       const p1Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 0, 1)));
       const point1Id = p1Result.outputs.pointId!;
@@ -165,7 +168,7 @@ describe('Factory Integration Tests', () => {
       const initialLineCount = plane.getAllLines().length;
 
       // Test: Delete point1 (should cascade delete line)
-      const deleteCmd = new Command('Delete with cascade', buildOperationContext(world, visibilityModel));
+      const deleteCmd = new Command('Delete with cascade', operationContext);
       DeletionSequenceFactory.createCascadeDeletion(deleteCmd, [point1Id], deletionContext());
       
       deleteCmd.commit();
@@ -195,7 +198,7 @@ describe('Factory Integration Tests', () => {
 
     it('should cascade delete circle when deleting center point', () => {
       // Setup: Create circle
-      const setupCmd = new Command('Setup', buildOperationContext(world, visibilityModel));
+      const setupCmd = new Command('Setup', operationContext);
       
       const centerResult = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(5, 0, 1)));
       const centerId = centerResult.outputs.pointId!;
@@ -215,7 +218,7 @@ describe('Factory Integration Tests', () => {
       const initialCircleCount = plane.getAllCircles().length;
 
       // Test: Delete center point (should cascade delete circle)
-      const deleteCmd = new Command('Delete with cascade', buildOperationContext(world, visibilityModel));
+      const deleteCmd = new Command('Delete with cascade', operationContext);
       DeletionSequenceFactory.createCascadeDeletion(deleteCmd, [centerId], deletionContext());
       
       deleteCmd.commit();
@@ -231,7 +234,7 @@ describe('Factory Integration Tests', () => {
 
     it('should handle multiple element deletion in one command', () => {
       // Setup: Create multiple independent points
-      const setupCmd = new Command('Setup', buildOperationContext(world, visibilityModel));
+      const setupCmd = new Command('Setup', operationContext);
       
       const p1Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 0, 1)));
       const point1Id = p1Result.outputs.pointId!;
@@ -250,7 +253,7 @@ describe('Factory Integration Tests', () => {
       const initialPointCount = plane.getAllPoints().length;
 
       // Test: Delete multiple points at once
-      const deleteCmd = new Command('Delete multiple', buildOperationContext(world, visibilityModel));
+      const deleteCmd = new Command('Delete multiple', operationContext);
       DeletionSequenceFactory.createCascadeDeletion(deleteCmd, [point1Id, point3Id], deletionContext());
       
       deleteCmd.commit();

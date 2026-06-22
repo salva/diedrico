@@ -21,6 +21,8 @@
 import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
 import type { OperationContext } from '../OperationContext';
 import { AuxiliaryProjectionPlane } from '@/domain/world/projectionPlane/AuxiliaryProjectionPlane';
+import { invalidateRealization } from './operationHelpers';
+import { GeometryElementLookup } from '@/domain/world/GeometryElementLookup';
 
 export class AddAuxiliaryProjectionPlaneOp implements IOperation {
   readonly type = 'AddAuxiliaryProjectionPlane';
@@ -38,9 +40,10 @@ export class AddAuxiliaryProjectionPlaneOp implements IOperation {
   apply(context: OperationContext): OperationResult {
     try {
       // Validate that trace lines exist
-      const t1Line = context.world.getLine2D(this.t1HingeTraceId);
-      const t2Line = context.world.getLine2D(this.t2OtherTraceId);
-      const t2PrimeLine = context.world.getLine2D(this.t2PrimeLineId);
+      const lookup = new GeometryElementLookup(context.world);
+      const t1Line = lookup.getLine2D(this.t1HingeTraceId);
+      const t2Line = lookup.getLine2D(this.t2OtherTraceId);
+      const t2PrimeLine = lookup.getLine2D(this.t2PrimeLineId);
       
       if (!t1Line) {
         throw new Error(`Hinge trace line not found: ${this.t1HingeTraceId}`);
@@ -69,9 +72,9 @@ export class AddAuxiliaryProjectionPlaneOp implements IOperation {
       }
       
       // Validate that traces are geometrically feasible
-      const t1Real = t1Line.realize2D(context.world);
-      const t2Real = t2Line.realize2D(context.world);
-      const t2PrimeReal = t2PrimeLine.realize2D(context.world);
+      const t1Real = t1Line.realize2D(context.realizationContext);
+      const t2Real = t2Line.realize2D(context.realizationContext);
+      const t2PrimeReal = t2PrimeLine.realize2D(context.realizationContext);
       
       if (!t1Real || !t2Real || !t2PrimeReal || 
           !t1Real.isFeasible() || !t2Real.isFeasible() || !t2PrimeReal.isFeasible()) {
@@ -79,7 +82,7 @@ export class AddAuxiliaryProjectionPlaneOp implements IOperation {
       }
       
       // Use stored ID if available (for redo), otherwise generate new one
-      const projPlaneId = this.outputs.projPlaneId || context.world.generateProjPlaneId();
+      const projPlaneId = this.outputs.projPlaneId || context.idAllocator.prefixed('projPlane');
       
       // Auto-generate name if not provided - use generateDefaultLabel for proper subscript formatting
       const planeName = this.name || context.labelGenerator.next('ProjectionPlane');
@@ -100,7 +103,7 @@ export class AddAuxiliaryProjectionPlaneOp implements IOperation {
       );
       
       // Add to World storage
-      context.world.projectionPlanes.set(projPlaneId, plane);
+      context.world.putProjectionPlane(plane);
       
       // Register with dependency service (CRITICAL for parametric updates)
       // When trace lines move, the dependency service will find this plane and invalidate it
@@ -124,10 +127,9 @@ export class AddAuxiliaryProjectionPlaneOp implements IOperation {
 
   undo(context: OperationContext): void {
     if (this.outputs.projPlaneId) {
-      // Unregister from dependency service
+      invalidateRealization(context, this.outputs.projPlaneId);
+      context.world.deleteProjectionPlane(this.outputs.projPlaneId);
       context.dependencies.unregisterNode(this.outputs.projPlaneId);
-      
-      context.world.projectionPlanes.delete(this.outputs.projPlaneId);
     }
   }
 

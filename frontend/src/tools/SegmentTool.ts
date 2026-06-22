@@ -17,7 +17,9 @@
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
 import { twoPointArgumentSet } from './toolArgumentSpecs';
-import type { ToolArgumentSet } from '@/tools/ToolArgumentCollector';
+import type { ArgumentValue, ToolArgumentSet } from '@/tools/ToolArgumentCollector';
+import type { ToolContext } from './ITool';
+import type { ToolConstructionIntent } from './ToolCommandIntents';
 
 /**
  * SegmentTool using ArgumentCollectorTool framework
@@ -30,7 +32,6 @@ import type { ToolArgumentSet } from '@/tools/ToolArgumentCollector';
  */
 export class SegmentTool extends ArgumentCollectorTool {
   readonly name = 'segment';
-  protected readonly constructionIntentType = 'segment';
 
   /**
    * Define argument specification
@@ -40,6 +41,16 @@ export class SegmentTool extends ArgumentCollectorTool {
     return [
       twoPointArgumentSet('point1', 'point2', 'Cannot create segment: must select two different points')
     ];
+  }
+
+  protected buildConstructionIntent(args: Map<string, ArgumentValue>, context: ToolContext): ToolConstructionIntent {
+    return {
+      type: 'segment',
+      planeId: context.planeId,
+      point1Id: this.requireElementId(args, 'point1'),
+      point2Id: this.requireElementId(args, 'point2'),
+      description: this.getCommandDescription()
+    };
   }
 
   /**

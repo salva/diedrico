@@ -6,8 +6,6 @@ export class RuntimeChangePublisher implements ChangeNotifier {
   private version = 0;
   private readonly listeners = new Set<() => void>();
 
-  constructor() {}
-
   getVersion(): number {
     return this.version;
   }

@@ -10,9 +10,9 @@ export interface ToolInteractionReadPort {
   getPoint2D(id: string): Point2D | undefined;
   getLine2D(id: string): Line2D | undefined;
   getCircle2D(id: string): Circle2D | undefined;
-  realizePoint2D(point: Point2D): Point2DRealization2D | undefined;
-  realizeLine2D(line: Line2D): Line2DRealization2D | undefined;
-  realizeCircle2D(circle: Circle2D): Circle2DRealization2D | undefined;
+  realizePoint2D(point: Point2D): Point2DRealization2D;
+  realizeLine2D(line: Line2D): Line2DRealization2D;
+  realizeCircle2D(circle: Circle2D): Circle2DRealization2D;
   areProjectionPlanesDistinct(firstPlaneId: string, secondPlaneId: string): boolean;
   getExpectedT2PrimeLineRealization(t1HingeTraceId: string, t2OtherTraceId: string): Line2DRealization2D | null;
 }

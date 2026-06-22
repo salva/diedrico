@@ -64,24 +64,6 @@ export const PLANE_RENDERING_CONFIG = {
 } as const;
 
 /**
- * Get plane rendering boundaries for a specific plane
- * 
- * Currently returns same boundaries for all planes.
- * Can be extended in the future to support per-plane customization.
- * 
- * @param _planeId - ID of the plane (reserved for future per-plane config)
- * @returns Boundary configuration object
- */
-export function getPlaneBoundaries(_planeId?: string) {
-  return {
-    minU: PLANE_RENDERING_CONFIG.MIN_U,
-    maxU: PLANE_RENDERING_CONFIG.MAX_U,
-    minV: PLANE_RENDERING_CONFIG.MIN_V,
-    maxV: PLANE_RENDERING_CONFIG.MAX_V,
-  };
-}
-
-/**
  * Get plane mesh size for Three.js PlaneGeometry
  * 
  * @param _planeId - ID of the plane (reserved for future per-plane config)

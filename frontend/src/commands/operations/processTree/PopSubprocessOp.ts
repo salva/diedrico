@@ -7,10 +7,14 @@
  * Phase 85: ProcessTree Subprocess Stack Architecture
  */
 
-import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
+import type { IOperation, OperationDescriptor, OperationOutputBag, OperationResult } from '../IOperation';
 import type { OperationContext } from '../OperationContext';
 
-export class PopSubprocessOp implements IOperation {
+export interface PopSubprocessDescriptorV8 extends OperationDescriptor<'PopSubprocess'> {
+  schemaVersion: '8.0.0';
+}
+
+export class PopSubprocessOp implements IOperation<PopSubprocessDescriptorV8> {
   readonly type = 'PopSubprocess';
   outputs: OperationOutputBag = {};
   
@@ -34,7 +38,7 @@ export class PopSubprocessOp implements IOperation {
     context.processTree.restoreSubprocessToStack(this.poppedSubprocessId);
   }
 
-  serialize() {
-    return { opType: this.type, outputs: this.outputs };
+  serialize(): PopSubprocessDescriptorV8 {
+    return { opType: this.type, schemaVersion: '8.0.0' as const };
   }
 }

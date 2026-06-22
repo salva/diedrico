@@ -5,13 +5,16 @@ import { Point2DCircleCircleIntersection, Point2DLineCircleIntersection, Point2D
 import { Segment2D } from '@/domain/world/Segment';
 import type { VisualStyle } from '@/domain/world/VisualStyle';
 import type { World } from '@/domain/world/World';
+import { GeometryElementLookup } from '@/domain/world/GeometryElementLookup';
 import type { PropertiesDialogViewModel } from '../RuntimeViewPorts';
+import type { CachedProjectionElementRealizationContext } from '@/domain/world/projectionPlane/ProjectionPlaneContext';
 
 type PropertiesElement = { id: string; label?: string; planeId?: string; visualStyle?: VisualStyle };
 
 export interface PropertiesDialogReadModelContext {
   readonly findElement: (elementId: string) => PropertiesElement | undefined;
   readonly world: World;
+  readonly realizationContext: CachedProjectionElementRealizationContext;
 }
 
 export function buildPropertiesDialogViewModel(
@@ -26,7 +29,7 @@ export function buildPropertiesDialogViewModel(
     elementLabel: element.label || elementId,
     elementType: describeElementType(elementId, context.world),
     planeId: typeof element.planeId === 'string' ? element.planeId : null,
-    coordinates: describeCoordinates(elementId, context.world),
+    coordinates: describeCoordinates(elementId, context.world, context.realizationContext),
     dependencies: describeDependencies(elementId, context.world),
     createdBy: 'Action in ProcessTree',
     style: styleView(element.visualStyle),
@@ -34,46 +37,57 @@ export function buildPropertiesDialogViewModel(
 }
 
 function describeElementType(elementId: string, world: PropertiesDialogReadModelContext['world']): string {
-  if (safe(() => world.getPoint2D(elementId))) return '2D Point';
-  if (safe(() => world.getLine2D(elementId))) return '2D Line';
-  if (safe(() => world.getSegment2D(elementId))) return '2D Segment';
-  if (safe(() => world.getCircle2D(elementId))) return '2D Circle';
-  if (safe(() => world.getGuide2D(elementId))) return '2D Guide';
-  if (world.getElement3DById(elementId)) return '3D Element';
-  if (world.getProjectionPlaneById(elementId)) return 'Projection Plane';
-  return 'Unknown';
+  const lookup = new GeometryElementLookup(world);
+  if (!elementId.includes('/')) {
+    if (lookup.getElement3DById(elementId)) return '3D Element';
+    if (world.getProjectionPlaneById(elementId)) return 'Projection Plane';
+    throw new Error(`Selected non-2D element not found: ${elementId}`);
+  }
+
+  if (lookup.getPoint2D(elementId)) return '2D Point';
+  if (lookup.getLine2D(elementId) instanceof Segment2D) return '2D Segment';
+  if (lookup.getLine2D(elementId) instanceof Guide2D) return '2D Guide';
+  if (lookup.getLine2D(elementId)) return '2D Line';
+  if (lookup.getCircle2D(elementId)) return '2D Circle';
+  throw new Error(`Selected 2D element not found: ${elementId}`);
 }
 
-function describeCoordinates(elementId: string, world: PropertiesDialogReadModelContext['world']): string | null {
-  const point = safe(() => world.getPoint2D(elementId));
+function describeCoordinates(elementId: string, world: PropertiesDialogReadModelContext['world'], realizationContext: CachedProjectionElementRealizationContext): string | null {
+  if (!elementId.includes('/')) return null;
+  const lookup = new GeometryElementLookup(world);
+
+  const point = lookup.getPoint2D(elementId);
   if (point) {
-    const realization = world.getProjectionPlaneById(point.planeId)?.getPoint(elementId)?.realize2D(world);
+    const realization = world.getProjectionPlaneById(point.planeId)?.getPoint(elementId)?.realize2D(realizationContext);
     if (realization) {
       const pos = realization.getPosition();
       return `(${pos.x.toFixed(2)}, ${pos.y.toFixed(2)})`;
     }
   }
-  const circle = safe(() => world.getCircle2D(elementId));
+  const circle = lookup.getCircle2D(elementId);
   if (circle) {
-    const realization = world.getProjectionPlaneById(circle.planeId)?.getCircle(elementId)?.realize2D(world);
+    const realization = world.getProjectionPlaneById(circle.planeId)?.getCircle(elementId)?.realize2D(realizationContext);
     if (realization) return `Center: (${realization.center.x.toFixed(2)}, ${realization.center.y.toFixed(2)}), Radius: ${realization.getRadius().toFixed(2)}`;
   }
   return null;
 }
 
 function describeDependencies(elementId: string, world: PropertiesDialogReadModelContext['world']): readonly string[] {
-  const point = safe(() => world.getPoint2D(elementId));
+  if (!elementId.includes('/')) return [];
+  const lookup = new GeometryElementLookup(world);
+
+  const point = lookup.getPoint2D(elementId);
   if (point instanceof Point2DLineLineIntersection) return [point.line1Id, point.line2Id].filter(Boolean);
   if (point instanceof Point2DLineCircleIntersection) return [point.lineId, point.circleId].filter(Boolean);
   if (point instanceof Point2DCircleCircleIntersection) return [point.circle1Id, point.circle2Id].filter(Boolean);
-  const line = safe(() => world.getLine2D(elementId));
+  const line = lookup.getLine2D(elementId);
   if (line instanceof Line2DByTwoPoints) return [line.point1Id, line.point2Id];
-  const segment = safe(() => world.getSegment2D(elementId));
+  const segment = line instanceof Segment2D ? line : undefined;
   if (segment instanceof Segment2D) return [segment.point1Id, segment.point2Id];
-  const circle = safe(() => world.getCircle2D(elementId));
+  const circle = lookup.getCircle2D(elementId);
   if (circle instanceof Circle2DByCenterAndPoint) return [circle.centerPointId, circle.circumferencePointId];
   if (circle instanceof Circle2DByThreePoints) return [circle.point1Id, circle.point2Id, circle.point3Id];
-  const guide = safe(() => world.getGuide2D(elementId));
+  const guide = lookup.getLine2D(elementId);
   if (guide instanceof Guide2D) return [guide.referenceLineId, guide.throughPointId];
   return [];
 }
@@ -85,12 +99,4 @@ function styleView(style?: VisualStyle): PropertiesDialogViewModel['style'] {
     lineStyle: style?.lineStyle ?? 'solid',
     visible: style?.visible !== false,
   };
-}
-
-function safe<T>(read: () => T): T | undefined {
-  try {
-    return read();
-  } catch {
-    return undefined;
-  }
 }

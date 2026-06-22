@@ -18,8 +18,8 @@ import { Guide2D, SiblingGuide2D, isSiblingGuide2D } from '@/domain/world/Guide'
 import { Line2DByTwoPoints, Line2DRealization2D } from '@/domain/world/Line';
 import { FreePoint2D } from '@/domain/world/Point';
 import type { World } from '@/domain/world/World';
-import { createTestWorld } from '../../helpers/worldHelpers';
-import { getHorizontalPlane, getHorizontalPlaneId, getVerticalPlane, getVerticalPlaneId, getMainHingeLine } from '../../helpers/worldHelpers';
+import { createTestWorld, getHorizontalPlane, getVerticalPlane, getHalfHingeLines2D } from '../../helpers/worldHelpers';
+import { getHalfHingeLines2D, getHorizontalPlane, getHorizontalPlaneId, getVerticalPlane, getVerticalPlaneId, getMainHingeLine } from '../../helpers/worldHelpers';
 
 describe('Guide2D', () => {
   let world: World;
@@ -27,24 +27,26 @@ describe('Guide2D', () => {
   let throughPointId: string;
   let point1Id: string;
   let point2Id: string;
+  let operationContext;
 
   beforeEach(() => {
-    const { world: w } = createTestWorld();
+    const { world: w, operationContext: oc } = createTestWorld();
     world = w;
+    operationContext = oc;
     const plane = getHorizontalPlane(world);
     const planeId = getHorizontalPlaneId(world);
     
     // Create reference line (horizontal line along X-axis)
-    const p1 = new FreePoint2D(world.getConstructionService().generatePoint2DId(plane), new Vector3(0, 0, 1), planeId);
-    const p2 = new FreePoint2D(world.getConstructionService().generatePoint2DId(plane), new Vector3(100, 0, 1), planeId);
+    const p1 = new FreePoint2D(operationContext.projectionConstruction.generatePoint2DId(plane), new Vector3(0, 0, 1), planeId);
+    const p2 = new FreePoint2D(operationContext.projectionConstruction.generatePoint2DId(plane), new Vector3(100, 0, 1), planeId);
     plane.addPoint(p1);
     plane.addPoint(p2);
     
-    const referenceLine = new Line2DByTwoPoints(world.getConstructionService().generateLine2DId(plane), p1.id, p2.id, planeId);
+    const referenceLine = new Line2DByTwoPoints(operationContext.projectionConstruction.generateLine2DId(plane), p1.id, p2.id, planeId);
     plane.addLine(referenceLine);
     
     // Create through-point above the line
-    const throughPoint = new FreePoint2D(world.getConstructionService().generatePoint2DId(plane), new Vector3(50, 30, 1), planeId);
+    const throughPoint = new FreePoint2D(operationContext.projectionConstruction.generatePoint2DId(plane), new Vector3(50, 30, 1), planeId);
     plane.addPoint(throughPoint);
     
     referenceLineId = referenceLine.id;
@@ -57,7 +59,7 @@ describe('Guide2D', () => {
     it('should create guide with reference line and through-point', () => {
       const plane = getHorizontalPlane(world);
       const planeId = getHorizontalPlaneId(world);
-      const guideId = world.getConstructionService().generateLine2DId(plane);
+      const guideId = operationContext.projectionConstruction.generateLine2DId(plane);
       const guide = new Guide2D(guideId, referenceLineId, throughPointId, planeId);
       
       expect(guide.id).toBe(guideId);
@@ -70,7 +72,7 @@ describe('Guide2D', () => {
     it('should clone guide correctly', () => {
       const plane = getHorizontalPlane(world);
       const planeId = getHorizontalPlaneId(world);
-      const guideId = world.getConstructionService().generateLine2DId(plane);
+      const guideId = operationContext.projectionConstruction.generateLine2DId(plane);
       const original = new Guide2D(guideId, referenceLineId, throughPointId, planeId);
       const cloned = original.clone();
       
@@ -85,9 +87,9 @@ describe('Guide2D', () => {
       // Reference line is horizontal (direction: 1, 0, 0)
       // Perpendicular guide should be vertical (direction: 0, 1, 0)
       const plane = getHorizontalPlane(world);
-      const guide = world.getConstructionService().addGuide2D(plane, referenceLineId, throughPointId);
+      const guide = operationContext.projectionConstruction.addGuide2D(plane, referenceLineId, throughPointId);
       
-      const realization = guide.realize2D(world);
+      const realization = guide.realize2D(operationContext.realizationContext);
       
       expect(realization).toBeDefined();
       
@@ -107,18 +109,18 @@ describe('Guide2D', () => {
       // Create vertical reference line
       const plane = getHorizontalPlane(world);
       const planeId = getHorizontalPlaneId(world);
-      const p3 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
-      const p4 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 100, 1));
+      const p3 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const p4 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0, 100, 1));
       
-      const verticalLine = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p3.id, p4.id);
+      const verticalLine = operationContext.projectionConstruction.addLine2DBetweenTwoPoints(plane, p3.id, p4.id);
       
       // Create through-point to the right of the vertical line
-      const throughPoint2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(30, 50, 1));
+      const throughPoint2 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(30, 50, 1));
       
       // Create guide perpendicular to vertical line
-      const guide = world.getConstructionService().addGuide2D(plane, verticalLine.id, throughPoint2.id);
+      const guide = operationContext.projectionConstruction.addGuide2D(plane, verticalLine.id, throughPoint2.id);
       
-      const realization = guide.realize2D(world);
+      const realization = guide.realize2D(operationContext.realizationContext);
       
       expect(realization).toBeDefined();
       
@@ -138,18 +140,18 @@ describe('Guide2D', () => {
     it('should realize guide perpendicular to diagonal reference line', () => {
       // Create diagonal reference line (45 degrees)
       const plane = getHorizontalPlane(world);
-      const p3 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
-      const p4 = world.getConstructionService().addFreePoint2D(plane, new Vector3(100, 100, 1));
+      const p3 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const p4 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(100, 100, 1));
       
-      const diagonalLine = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p3.id, p4.id);
+      const diagonalLine = operationContext.projectionConstruction.addLine2DBetweenTwoPoints(plane, p3.id, p4.id);
       
       // Create through-point
-      const throughPoint2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(50, 50, 1));
+      const throughPoint2 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(50, 50, 1));
       
       // Create guide perpendicular to diagonal line
-      const guide = world.getConstructionService().addGuide2D(plane, diagonalLine.id, throughPoint2.id);
+      const guide = operationContext.projectionConstruction.addGuide2D(plane, diagonalLine.id, throughPoint2.id);
       
-      const realization = guide.realize2D(world);
+      const realization = guide.realize2D(operationContext.realizationContext);
       
       expect(realization).toBeDefined();
       
@@ -165,7 +167,7 @@ describe('Guide2D', () => {
       const planeId = getHorizontalPlaneId(world);
       const missingLineId = `${planeId}/missing-line`;
       expect(() => {
-        world.getConstructionService().addGuide2D(plane, missingLineId, throughPointId);
+        operationContext.projectionConstruction.addGuide2D(plane, missingLineId, throughPointId);
       }).toThrow('Invalid referenceLineId');
     });
 
@@ -174,7 +176,7 @@ describe('Guide2D', () => {
       const planeId = getHorizontalPlaneId(world);
       const missingPointId = `${planeId}/missing-point`;
       expect(() => {
-        world.getConstructionService().addGuide2D(plane, referenceLineId, missingPointId);
+        operationContext.projectionConstruction.addGuide2D(plane, referenceLineId, missingPointId);
       }).toThrow('Invalid throughPointId');
     });
 
@@ -182,9 +184,9 @@ describe('Guide2D', () => {
       // This test verifies the perpendicular calculation uses the correct formula:
       // For direction vector (dx, dy, 0), perpendicular is (-dy, dx, 0)
       const plane = getHorizontalPlane(world);
-      const guide = world.getConstructionService().addGuide2D(plane, referenceLineId, throughPointId);
+      const guide = operationContext.projectionConstruction.addGuide2D(plane, referenceLineId, throughPointId);
       
-      const realization = guide.realize2D(world);
+      const realization = guide.realize2D(operationContext.realizationContext);
       
       expect(realization).toBeDefined();
       
@@ -205,10 +207,10 @@ describe('Guide2D', () => {
   describe('SiblingGuide2D (Phase 36 - Refactored)', () => {
     it('should create sibling guide with primary guide reference (no throughPointId)', () => {
       // Create a sibling guide using coordinate correspondence pattern
-      const plane = world.getProjectionPlaneByLabel('P_V');
+      const plane = getVerticalPlane(world);
       const planeId = plane.id!;
-      const guideId = world.getConstructionService().generateLine2DId(plane);
-      const primaryGuideId = world.getConstructionService().generateLine2DId(getHorizontalPlane(world));
+      const guideId = operationContext.projectionConstruction.generateLine2DId(plane);
+      const primaryGuideId = operationContext.projectionConstruction.generateLine2DId(getHorizontalPlane(world));
       const siblingGuide = new SiblingGuide2D(
         guideId,
         referenceLineId,
@@ -228,10 +230,10 @@ describe('Guide2D', () => {
     });
 
     it('should clone sibling guide correctly', () => {
-      const plane = world.getProjectionPlaneByLabel('P_V');
+      const plane = getVerticalPlane(world);
       const planeId = plane.id!;
-      const guideId = world.getConstructionService().generateLine2DId(plane);
-      const primaryGuideId = world.getConstructionService().generateLine2DId(getHorizontalPlane(world));
+      const guideId = operationContext.projectionConstruction.generateLine2DId(plane);
+      const primaryGuideId = operationContext.projectionConstruction.generateLine2DId(getHorizontalPlane(world));
       const original = new SiblingGuide2D(guideId, referenceLineId, planeId, primaryGuideId, 'Test');
       const cloned = original.clone();
       
@@ -250,19 +252,19 @@ describe('Guide2D', () => {
       const planeHId = getHorizontalPlaneId(world);
       
       // Get the horizontal half hinge line
-      const halfHLH = world.getHalfHingeLines2D(planeHId)[0];
+      const halfHLH = getHalfHingeLines2D(world, planeHId)[0];
       
       // Create a through-point for the primary guide at (50, 30, 1)
-      const throughPoint = world.getConstructionService().addFreePoint2D(planeH, new Vector3(50, 30, 1));
+      const throughPoint = operationContext.projectionConstruction.addFreePoint2D(planeH, new Vector3(50, 30, 1));
       
       // Create primary guide perpendicular to half_HL_HV_on_PH, passing through (50, 30, 1)
       // half_HL_HV_on_PH is at (0, 0, 1) with direction (1, 0, 0) - horizontal
       // Primary guide will be vertical passing through (50, 30, 1)
       // It intersects half_HL_HV_on_PH at (50, 0, 1)
-      const primaryGuide = world.getConstructionService().addGuide2D(planeH, halfHLH.id, throughPoint.id);
+      const primaryGuide = operationContext.projectionConstruction.addGuide2D(planeH, halfHLH.id, throughPoint.id);
       
       // Verify primary guide realization
-      const primaryRealization = primaryGuide.realize2D(world);
+      const primaryRealization = primaryGuide.realize2D(operationContext.realizationContext);
       expect(primaryRealization).toBeDefined();
       expect(primaryRealization!.feasible).toBe(true);
       
@@ -271,12 +273,12 @@ describe('Guide2D', () => {
       // Sibling should use SAME (50, 0, 1) on half_HL_HV_on_PV and be perpendicular to it
       const planeV = getVerticalPlane(world);
       const planeVId = getVerticalPlaneId(world);
-      const halfHLV = world.getHalfHingeLines2D(planeVId)[0];
-      const siblingGuide = new SiblingGuide2D(world.getConstructionService().generateLine2DId(planeV), halfHLV.id, planeVId, primaryGuide.id);
+      const halfHLV = getHalfHingeLines2D(world, planeVId)[0];
+      const siblingGuide = new SiblingGuide2D(operationContext.projectionConstruction.generateLine2DId(planeV), halfHLV.id, planeVId, primaryGuide.id);
       planeV.addLine(siblingGuide);
       
       // Verify sibling guide realization
-      const siblingRealization = siblingGuide.realize2D(world);
+      const siblingRealization = siblingGuide.realize2D(operationContext.realizationContext);
       expect(siblingRealization).toBeDefined();
       expect(siblingRealization!.feasible).toBe(true);
       
@@ -296,10 +298,10 @@ describe('Guide2D', () => {
     it('should have bidirectional links between Guide2D and SiblingGuide2D', () => {
       const planeH = getHorizontalPlane(world);
       const planeHId = getHorizontalPlaneId(world);
-      const planeV = world.getProjectionPlaneByLabel('P_V');
+      const planeV = getVerticalPlane(world);
       const planeVId = planeV.id!;
-      const guideId = world.getConstructionService().generateLine2DId(planeH);
-      const siblingId = world.getConstructionService().generateLine2DId(planeV);
+      const guideId = operationContext.projectionConstruction.generateLine2DId(planeH);
+      const siblingId = operationContext.projectionConstruction.generateLine2DId(planeV);
       
       // Create primary guide with siblingGuideId
       const primaryGuide = new Guide2D(guideId, referenceLineId, throughPointId, planeHId, 'Primary', siblingId);
@@ -313,10 +315,10 @@ describe('Guide2D', () => {
     it('should use isSiblingGuide2D type guard correctly', () => {
       const planeH = getHorizontalPlane(world);
       const planeHId = getHorizontalPlaneId(world);
-      const planeV = world.getProjectionPlaneByLabel('P_V');
+      const planeV = getVerticalPlane(world);
       const planeVId = planeV.id!;
-      const guideId = world.getConstructionService().generateLine2DId(planeH);
-      const siblingId = world.getConstructionService().generateLine2DId(planeV);
+      const guideId = operationContext.projectionConstruction.generateLine2DId(planeH);
+      const siblingId = operationContext.projectionConstruction.generateLine2DId(planeV);
       
       const primaryGuide = new Guide2D(guideId, referenceLineId, throughPointId, planeHId);
       const siblingGuide = new SiblingGuide2D(siblingId, referenceLineId, planeVId, guideId);

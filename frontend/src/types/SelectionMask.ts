@@ -29,36 +29,6 @@ export type SelectableElementType =
   | 'circle';         // Any Circle2D
 
 /**
- * Map domain element to its SelectableElementType using class hierarchy
- * 
- * Phase 63: Uses instanceof checks to leverage TypeScript class hierarchy.
- * All Line2D subclasses (including Guide2D, HalfHingeLine2D) return 'line'
- * since derived classes should be selectable in any context requiring their base type.
- * 
- * @param element - Domain element (Point2D, Line2D, etc.)
- * @returns SelectableElementType for selection mask matching
- */
-export function getSelectableType(element: Element2D): SelectableElementType {
-  // Check specific non-line types first
-  if (element instanceof Segment2D) {
-    return 'segment';
-  }
-  
-  // Base types (all subclasses match their base type)
-  if (element instanceof Point2D) {
-    return 'point';
-  }
-  if (element instanceof Line2D) {
-    return 'line';  // Matches ALL Line2D subclasses: regular, perpendicular, parallel, Guide2D, HalfHingeLine2D
-  }
-  if (element instanceof Circle2D) {
-    return 'circle';
-  }
-  
-  return 'point';
-}
-
-/**
  * Abstract base class for all selection masks
  * 
  * Selection masks determine which element types can be selected/hit-tested by tools.

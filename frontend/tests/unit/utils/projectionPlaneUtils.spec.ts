@@ -7,8 +7,48 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { Vector3, Vector4 } from 'three';
-import { computeLineLineIntersection3D } from '../../../src/utils/projectionPlaneUtils';
+import { Matrix3, Vector3, Vector4 } from 'three';
+import { computeLineLineIntersection3D, computeProjectionPlaneMatrices } from '../../../src/utils/projectionPlaneUtils';
+import { Line2D, Line2DRealization2D } from '@/domain/world/Line';
+import type { ProjectionPlaneRealizationContext } from '@/domain/world/projectionPlane/ProjectionPlaneContext';
+
+class TestLine2D extends Line2D {
+  constructor(id: string, planeId: string) {
+    super(id, planeId);
+  }
+
+  clone(): Line2D {
+    return new TestLine2D(this.id, this.planeId);
+  }
+
+  realize2D(): Line2DRealization2D {
+    return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), true);
+  }
+}
+
+function makeProjectionPlaneContext(overrides: Partial<ProjectionPlaneRealizationContext> = {}): ProjectionPlaneRealizationContext {
+  const lines = new Map<string, Line2D>([
+    ['p1/t1', new TestLine2D('p1/t1', 'p1')],
+    ['p2/t2', new TestLine2D('p2/t2', 'p2')],
+    ['p1/t2Prime', new TestLine2D('p1/t2Prime', 'p1')],
+  ]);
+  const planes = new Map<string, any>([
+    ['p1', { id: 'p1', realize2D: () => ({ feasible: true, planeToPaper2D: new Matrix3().identity() }) }],
+    ['p2', { id: 'p2', realize2D: () => ({ feasible: true, planeToPaper2D: new Matrix3().identity() }) }],
+  ]);
+
+  return {
+    getProjectionPlaneById: id => planes.get(id),
+    getPoint2D: () => undefined,
+    getLine2D: id => lines.get(id),
+    getCircle2D: () => undefined,
+    getHingeLineById: () => undefined,
+    getProjectionPlane2DRealization: () => undefined,
+    getProjectionPlane3DRealization: () => ({ feasible: true, planeTo3D: new Matrix3() } as any),
+    get3DPlaneRealization: () => undefined,
+    ...overrides,
+  };
+}
 
 describe('computeLineLineIntersection3D', () => {
   describe('Intersecting lines', () => {
@@ -154,6 +194,18 @@ describe('computeLineLineIntersection3D', () => {
 // of the core geometric algorithm
 
 describe('computeProjectionPlaneMatrices - TODO', () => {
+  it('throws a precise invariant error when a selected trace line is missing', () => {
+    const context = makeProjectionPlaneContext({ getLine2D: id => id === 'p1/t1' ? undefined : new TestLine2D(id, 'p1') });
+
+    expect(() => computeProjectionPlaneMatrices('p1/t1', 'p2/t2', 'p1/t2Prime', context)).toThrow('T1 hinge trace line not found: p1/t1');
+  });
+
+  it('throws a precise invariant error when a source projection plane realization is missing', () => {
+    const context = makeProjectionPlaneContext({ getProjectionPlane3DRealization: id => id === 'p1' ? undefined : ({ feasible: true } as any) });
+
+    expect(() => computeProjectionPlaneMatrices('p1/t1', 'p2/t2', 'p1/t2Prime', context)).toThrow('T1 source projection plane 3D realization not found: p1');
+  });
+
   it.todo('should satisfy paper layout constraints: v=0 coincides with T1');
   it.todo('should satisfy paper layout constraints: origin at T1-T2\' intersection');
   it.todo('should satisfy paper layout constraints: V perpendicular to U');

@@ -13,7 +13,8 @@ import type { Line2D } from '@/domain/world/Line';
 import { Segment2D } from '@/domain/world/Segment';
 import type { Circle2D } from '@/domain/world/Circle';
 import { isGuide2D, isSiblingGuide2D, type Guide2D, type SiblingGuide2D } from '@/domain/world/Guide';
-import { removeCircleFromPlane, removeLineFromPlane, removePointFromPlane } from './operationHelpers';
+import { removeCircleFromPlane, removeLineFromPlane, removePointFromPlane, requireProjectionPlane } from './operationHelpers';
+import { GeometryElementLookup } from '@/domain/world/GeometryElementLookup';
 
 /**
  * RemovePoint2DOp - Remove a point from a projection plane
@@ -37,7 +38,7 @@ export class RemovePoint2DOp implements IOperation {
   apply(context: OperationContext): OperationResult {
     try {
       // Store element before removal for undo - get from plane
-      const plane = context.world.projectionPlanes.get(this.planeId);
+      const plane = context.world.getProjectionPlaneById(this.planeId);
       if (!plane) {
         return {
           success: false,
@@ -55,7 +56,7 @@ export class RemovePoint2DOp implements IOperation {
         };
       }
 
-      const removed = removePointFromPlane(context.world, plane, this.pointId);
+      const removed = removePointFromPlane(context, plane, this.pointId);
       if (!removed) {
         return {
           success: false,
@@ -84,10 +85,7 @@ export class RemovePoint2DOp implements IOperation {
     }
 
     // Restore the point by adding it back to the plane
-    const plane = context.world.projectionPlanes.get(this.planeId);
-    if (!plane) {
-      throw new Error(`Plane ${this.planeId} not found`);
-    }
+    const plane = requireProjectionPlane(context.world, this.planeId);
     plane.addPoint(this.removedPoint);
     context.dependencies.registerNode(this.removedPoint.id, this.removedPoint.getDependencies());
   }
@@ -121,7 +119,7 @@ export class RemoveLine2DOp implements IOperation {
   apply(context: OperationContext): OperationResult {
     try {
       // Get from plane for undo storage
-      const plane = context.world.projectionPlanes.get(this.planeId);
+      const plane = context.world.getProjectionPlaneById(this.planeId);
       if (!plane) {
         return {
           success: false,
@@ -139,7 +137,7 @@ export class RemoveLine2DOp implements IOperation {
         };
       }
 
-      const removed = removeLineFromPlane(context.world, plane, this.lineId);
+      const removed = removeLineFromPlane(context, plane, this.lineId);
       if (!removed) {
         return {
           success: false,
@@ -168,10 +166,7 @@ export class RemoveLine2DOp implements IOperation {
     }
 
     // Restore the line by adding it back to the plane
-    const plane = context.world.projectionPlanes.get(this.planeId);
-    if (!plane) {
-      throw new Error(`Plane ${this.planeId} not found`);
-    }
+    const plane = requireProjectionPlane(context.world, this.planeId);
     plane.addLine(this.removedLine);
     context.dependencies.registerNode(this.removedLine.id, this.removedLine.getDependencies());
   }
@@ -203,7 +198,7 @@ export class RemoveSegment2DOp implements IOperation {
   apply(context: OperationContext): OperationResult {
     try {
       // Get from plane for undo storage
-      const plane = context.world.projectionPlanes.get(this.planeId);
+      const plane = context.world.getProjectionPlaneById(this.planeId);
       if (!plane) {
         return {
           success: false,
@@ -222,7 +217,7 @@ export class RemoveSegment2DOp implements IOperation {
         };
       }
 
-      const removed = removeLineFromPlane(context.world, plane, this.segmentId);
+      const removed = removeLineFromPlane(context, plane, this.segmentId);
       if (!removed) {
         return {
           success: false,
@@ -251,10 +246,7 @@ export class RemoveSegment2DOp implements IOperation {
     }
 
     // Restore the segment by adding it back to the plane as a line
-    const plane = context.world.projectionPlanes.get(this.planeId);
-    if (!plane) {
-      throw new Error(`Plane ${this.planeId} not found`);
-    }
+    const plane = requireProjectionPlane(context.world, this.planeId);
     plane.addLine(this.removedSegment);
     context.dependencies.registerNode(this.removedSegment.id, this.removedSegment.getDependencies());
   }
@@ -286,7 +278,7 @@ export class RemoveCircle2DOp implements IOperation {
   apply(context: OperationContext): OperationResult {
     try {
       // Get from plane for undo storage
-      const plane = context.world.projectionPlanes.get(this.planeId);
+      const plane = context.world.getProjectionPlaneById(this.planeId);
       if (!plane) {
         return {
           success: false,
@@ -304,7 +296,7 @@ export class RemoveCircle2DOp implements IOperation {
         };
       }
 
-      const removed = removeCircleFromPlane(context.world, plane, this.circleId);
+      const removed = removeCircleFromPlane(context, plane, this.circleId);
       if (!removed) {
         return {
           success: false,
@@ -333,10 +325,7 @@ export class RemoveCircle2DOp implements IOperation {
     }
 
     // Restore the circle by adding it back to the plane
-    const plane = context.world.projectionPlanes.get(this.planeId);
-    if (!plane) {
-      throw new Error(`Plane ${this.planeId} not found`);
-    }
+    const plane = requireProjectionPlane(context.world, this.planeId);
     plane.addCircle(this.removedCircle);
     context.dependencies.registerNode(this.removedCircle.id, this.removedCircle.getDependencies());
   }
@@ -377,7 +366,7 @@ export class RemoveGuide2DOp implements IOperation {
   apply(context: OperationContext): OperationResult {
     try {
       // Get from plane for undo storage
-      const plane = context.world.projectionPlanes.get(this.planeId);
+      const plane = context.world.getProjectionPlaneById(this.planeId);
       if (!plane) {
         return {
           success: false,
@@ -397,7 +386,6 @@ export class RemoveGuide2DOp implements IOperation {
 
       // Check if this is a SiblingGuide2D → redirect to delete primary
       if (isSiblingGuide2D(guide)) {
-        console.warn(`[RemoveGuide2DOp] Cannot delete sibling guide ${this.guideId} directly. Redirect to delete primary guide ${guide.primaryGuideId} instead.`);
         return {
           success: false,
           outputs: {},
@@ -420,22 +408,26 @@ export class RemoveGuide2DOp implements IOperation {
       const siblingGuideId = this.removedGuide.siblingGuideId;
       if (siblingGuideId) {
         // Find sibling's plane and delete sibling
-        const siblingGuide = context.world.getLine2D(siblingGuideId);
-        if (siblingGuide && isSiblingGuide2D(siblingGuide)) {
-          const siblingPlane = context.world.getProjectionPlaneById(siblingGuide.planeId);
-          if (siblingPlane) {
-            this.siblingPlaneId = siblingGuide.planeId;
-            this.removedSibling = siblingGuide;
-            
-            const siblingRemoved = removeLineFromPlane(context.world, siblingPlane, siblingGuideId);
-            if (!siblingRemoved) {
-              console.warn(`[RemoveGuide2DOp] Failed to remove sibling guide ${siblingGuideId}`);
-            }
-          }
+        const lookup = new GeometryElementLookup(context.world);
+        const siblingGuide = lookup.getLine2D(siblingGuideId);
+        if (!siblingGuide || !isSiblingGuide2D(siblingGuide)) {
+          throw new Error(`Primary guide ${this.guideId} references missing sibling guide ${siblingGuideId}`);
+        }
+        const siblingPlane = context.world.getProjectionPlaneById(siblingGuide.planeId);
+        if (!siblingPlane) {
+          throw new Error(`Sibling guide ${siblingGuideId} references missing plane ${siblingGuide.planeId}`);
+        }
+
+        this.siblingPlaneId = siblingGuide.planeId;
+        this.removedSibling = siblingGuide;
+
+        const siblingRemoved = removeLineFromPlane(context, siblingPlane, siblingGuideId);
+        if (!siblingRemoved) {
+          throw new Error(`Failed to remove sibling guide ${siblingGuideId}`);
         }
       }
 
-      const removed = removeLineFromPlane(context.world, plane, this.guideId);
+      const removed = removeLineFromPlane(context, plane, this.guideId);
       if (!removed) {
         // If primary removal failed but sibling was removed, restore sibling
         if (this.removedSibling && this.siblingPlaneId) {
@@ -475,10 +467,7 @@ export class RemoveGuide2DOp implements IOperation {
     }
 
     // Restore the primary guide
-    const plane = context.world.projectionPlanes.get(this.planeId);
-    if (!plane) {
-      throw new Error(`Plane ${this.planeId} not found`);
-    }
+    const plane = requireProjectionPlane(context.world, this.planeId);
     if (!plane.getLine(this.removedGuide.id)) {
       plane.addLine(this.removedGuide);
       context.dependencies.registerNode(this.removedGuide.id, this.removedGuide.getDependencies());
@@ -486,7 +475,7 @@ export class RemoveGuide2DOp implements IOperation {
 
     // Restore the sibling guide if it was deleted
     if (this.removedSibling && this.siblingPlaneId) {
-      const siblingPlane = context.world.projectionPlanes.get(this.siblingPlaneId);
+      const siblingPlane = context.world.getProjectionPlaneById(this.siblingPlaneId);
       if (siblingPlane && !siblingPlane.getLine(this.removedSibling.id)) {
         siblingPlane.addLine(this.removedSibling);
         context.dependencies.registerNode(this.removedSibling.id, this.removedSibling.getDependencies());

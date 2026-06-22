@@ -5,41 +5,39 @@ import reconstructedSelectorSource from '../../../../src/application/threePresen
 import guideSelectorSource from '../../../../src/application/threePresentation/Guide3DSelector.ts?raw';
 import hingeSelectorSource from '../../../../src/application/threePresentation/Hinge3DSelector.ts?raw';
 import presentationSelectorSource from '../../../../src/application/threePresentation/ThreePresentationSelector.ts?raw';
-import presentationReadPortsSource from '../../../../src/application/threePresentation/ThreeWorldReadPort.ts?raw';
 import presentationContextSource from '../../../../src/application/threePresentation/ThreePresentationContext.ts?raw';
 import presentationReadModelSource from '../../../../src/application/threePresentation/ThreePresentationReadModel.ts?raw';
-import projectionPlaneReadPortSource from '../../../../src/application/threePresentation/ThreeProjectionPlaneReadPort.ts?raw';
-import planarReadPortSource from '../../../../src/application/threePresentation/ThreePlanarElementReadPort.ts?raw';
-import reconstructedReadPortSource from '../../../../src/application/threePresentation/ThreeReconstructedElementReadPort.ts?raw';
-import guideReadPortSource from '../../../../src/application/threePresentation/ThreeGuideReadPort.ts?raw';
-import hingeReadPortSource from '../../../../src/application/threePresentation/ThreeHingeReadPort.ts?raw';
+import projectionPlaneBuilderSource from '../../../../src/application/threePresentation/ThreeProjectionPlaneBuilder.ts?raw';
+import planarBuilderSource from '../../../../src/application/threePresentation/ThreePlanarElementBuilder.ts?raw';
+import reconstructedBuilderSource from '../../../../src/application/threePresentation/ThreeReconstructedElementBuilder.ts?raw';
+import guideBuilderSource from '../../../../src/application/threePresentation/ThreeGuideBuilder.ts?raw';
+import hingeBuilderSource from '../../../../src/application/threePresentation/ThreeHingeBuilder.ts?raw';
 import realizationContextSource from '../../../../src/application/threePresentation/ThreeRealizationContext.ts?raw';
 import runtimeViewPortsSource from '../../../../src/application/appShell/RuntimeViewPorts.ts?raw';
 import canvasContextSource from '../../../../src/application/canvasPresentation/CanvasPresentationContext.ts?raw';
 import threeViewSource from '../../../../src/components/panels/ThreeView.vue?raw';
 
 const selectorSources = [projectionPlaneSelectorSource, planarSelectorSource, reconstructedSelectorSource, guideSelectorSource, hingeSelectorSource];
-const readPortSources = [presentationReadPortsSource, projectionPlaneReadPortSource, planarReadPortSource, reconstructedReadPortSource, guideReadPortSource, hingeReadPortSource, realizationContextSource];
-const contextPrivateSources = [presentationContextSource, projectionPlaneReadPortSource, planarReadPortSource, reconstructedReadPortSource, guideReadPortSource, hingeReadPortSource];
+const builderSources = [projectionPlaneBuilderSource, planarBuilderSource, reconstructedBuilderSource, guideBuilderSource, hingeBuilderSource, realizationContextSource];
+const contextPrivateSources = [presentationContextSource, projectionPlaneBuilderSource, planarBuilderSource, reconstructedBuilderSource, guideBuilderSource, hingeBuilderSource];
 const selectorAndReadModelSources = [presentationReadModelSource, ...selectorSources];
 
 describe('three presentation architecture boundary', () => {
-  it('keeps selectors on named concern read ports instead of a broad ThreeWorldReadPort dependency', () => {
+  it('keeps selectors on named source DTOs instead of read-port bridges', () => {
     for (const source of selectorSources) {
-      expect(source).not.toMatch(/ThreeWorldReadPort|Pick<\s*ThreeWorldReadPort/);
+      expect(source).not.toMatch(/ThreeWorldReadPort|Three[A-Za-z]*ReadPort|Pick<\s*ThreeWorldReadPort/);
     }
-    expect(presentationSelectorSource).toContain('readPorts.projectionPlanes');
-    expect(presentationSelectorSource).toContain('readPorts.planarElements');
-    expect(presentationSelectorSource).toContain('readPorts.reconstructedElements');
-    expect(presentationSelectorSource).toContain('readPorts.guides');
-    expect(presentationSelectorSource).toContain('readPorts.hinges');
+    expect(presentationSelectorSource).toContain('buildThreePresentationModel');
+    expect(presentationSelectorSource).toContain('input.projectionPlanes');
+    expect(presentationSelectorSource).toContain('input.planarPlanes');
+    expect(presentationSelectorSource).toContain('input.reconstructedElements');
   });
 
-  it('keeps World imports localized to runtime-created three read-port adapters and realization context helper', () => {
+  it('keeps World imports localized to presentation builders and realization context helper', () => {
     for (const source of selectorSources) {
       expect(source).not.toMatch(/@\/domain\/world\/World/);
     }
-    for (const source of [...readPortSources, presentationContextSource]) {
+    for (const source of [...builderSources, presentationContextSource]) {
       expect(source).not.toMatch(new RegExp(['RuntimeWorld', 'WorldReadModel', 'PresentationWorld', 'get' + 'World\\s*\\('].join('|')));
     }
   });
@@ -53,23 +51,23 @@ describe('three presentation architecture boundary', () => {
   });
 
   it('allows adapter-private domain conversion while keeping public read-model names DTO-native', () => {
-    expect(planarReadPortSource).toMatch(/instanceof Segment2D/);
-    expect(projectionPlaneReadPortSource).toMatch(/instanceof AuxiliaryProjectionPlane/);
+    expect(planarBuilderSource).toMatch(/instanceof Segment2D/);
+    expect(projectionPlaneBuilderSource).toMatch(/instanceof AuxiliaryProjectionPlane/);
     expect(contextPrivateSources.join('\n')).toMatch(/Realization|realize2D|realize3D|VisualStyle|visualStyle/);
-    expect(readPortSources.join('\n')).not.toMatch(/ThreeEntityPresentationData/);
-    expect(presentationReadPortsSource).not.toMatch(/ThreeProjectionPlaneGridSource|getProjectionPlaneGridSource/);
+    expect(builderSources.join('\n')).not.toMatch(/ThreeEntityPresentationData/);
+    expect(presentationSelectorSource).not.toMatch(/ThreeProjectionPlaneGridSource|getProjectionPlaneGridSource/);
   });
 
   it('keeps realization context helper free of broad world collection traversal', () => {
     expect(realizationContextSource).not.toMatch(/world\.getAllProjectionPlanes|world\.getAllHingeLines/);
     expect(presentationContextSource).toContain('const getProjectionPlanes = () => world.getAllProjectionPlanes()');
     expect(presentationContextSource).toContain('const getHingeLines = () => world.getAllHingeLines()');
-    expect(planarReadPortSource).not.toMatch(/world\.getAllProjectionPlanes/);
-    expect(hingeReadPortSource).not.toMatch(/world\.getAllHingeLines/);
+    expect(planarBuilderSource).not.toMatch(/world\.getAllProjectionPlanes/);
+    expect(hingeBuilderSource).not.toMatch(/world\.getAllHingeLines/);
   });
 
   it('does not introduce generic world/read-model facades or canvas raw seams', () => {
-    const searchedSources = [presentationSelectorSource, runtimeViewPortsSource, canvasContextSource, ...readPortSources, presentationContextSource].join('\n');
+    const searchedSources = [presentationSelectorSource, runtimeViewPortsSource, canvasContextSource, ...builderSources, presentationContextSource].join('\n');
     expect(searchedSources).not.toMatch(new RegExp(['RuntimeWorld', 'WorldReadModel', 'PresentationWorld', 'SceneKernel', 'get' + 'World\\s*\\('].join('|')));
     expect(canvasContextSource).not.toMatch(new RegExp(['getProcessTree', 'get' + 'World', 'getRealizationContext'].join('|')));
   });

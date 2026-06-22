@@ -1,12 +1,12 @@
 import type { PlanarElementPresentationDto } from './ThreePresentationModel';
-import type { ThreePlanarElementReadPort } from './ThreePlanarElementReadPort';
+import type { ThreePlanarPlaneReadModel } from './ThreePresentationReadModel';
 import { isVisible } from './ThreeStylePolicy';
 
 export class PlanarElement3DSelector {
-  select(readPort: ThreePlanarElementReadPort, show2DElementsOnPlanes: boolean): PlanarElementPresentationDto[] {
+  select(planes: ThreePlanarPlaneReadModel[], show2DElementsOnPlanes: boolean): PlanarElementPresentationDto[] {
     if (!show2DElementsOnPlanes) return [];
     const items: PlanarElementPresentationDto[] = [];
-    for (const plane of readPort.getPlanarPlaneModels()) {
+    for (const plane of planes) {
       for (const element of plane.elements) {
         if (!isVisible(element)) continue;
         switch (element.kind) {

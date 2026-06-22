@@ -7,25 +7,46 @@
  * Phase 85: ProcessTree Subprocess Stack Architecture
  */
 
-import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
+import type { IOperation, JsonObject, OperationDescriptor, OperationOutputBag, OperationResult } from '../IOperation';
 import type { OperationContext } from '../OperationContext';
+import type { Subprocess } from '@/domain/processTree/ProcessTree';
 
-export class PushSubprocessOp implements IOperation {
+interface SubprocessDescriptorV8 extends JsonObject {
+  id: string;
+  type: 'subprocess';
+  created: string;
+  name: string;
+}
+
+export interface PushSubprocessDescriptorV8 extends OperationDescriptor<'PushSubprocess'> {
+  schemaVersion: '8.0.0';
+  subprocess: SubprocessDescriptorV8;
+}
+
+function subprocessToDescriptor(subprocess: Subprocess): SubprocessDescriptorV8 {
+  return { id: subprocess.id, type: 'subprocess', created: subprocess.created.toISOString(), name: subprocess.name };
+}
+
+export class PushSubprocessOp implements IOperation<PushSubprocessDescriptorV8> {
   readonly type = 'PushSubprocess';
   outputs: OperationOutputBag = {};
 
-  constructor(private readonly subprocessName: string, subprocessId?: string) {
-    // If subprocessId provided (during deserialization), store it in outputs
-    if (subprocessId) {
-      this.outputs = { subprocessId };
-    }
+  private subprocess?: Subprocess;
+
+  constructor(private readonly subprocessName: string, subprocess?: Subprocess) {
+    this.subprocess = subprocess;
   }
 
   apply(context: OperationContext): OperationResult {
-    // On replay (deserialization), reuse the stored subprocessId from outputs
-    // This ensures toggle operations can find the correct subprocess
-    const existingId = this.outputs.subprocessId;
-    const subprocess = context.processTree.pushSubprocess(this.subprocessName, existingId);
+    const subprocess = this.subprocess ?? context.processTree.pushSubprocess(this.subprocessName);
+    if (this.subprocess) {
+      if (context.processTree.findNodeById(this.subprocess.id)) {
+        context.processTree.restoreSubprocessToStack(this.subprocess.id);
+      } else {
+        context.processTree.insertSubprocess(this.subprocess);
+      }
+    }
+    this.subprocess = subprocess;
     this.outputs = { subprocessId: subprocess.id };
     return { success: true, outputs: this.outputs };
   }
@@ -35,7 +56,8 @@ export class PushSubprocessOp implements IOperation {
     context.processTree.popSubprocess();
   }
 
-  serialize() {
-    return { opType: this.type, subprocessName: this.subprocessName, subprocessId: this.outputs.subprocessId, outputs: this.outputs };
+  serialize(): PushSubprocessDescriptorV8 {
+    if (!this.subprocess) throw new Error('Cannot serialize PushSubprocessOp before apply');
+    return { opType: this.type, schemaVersion: '8.0.0' as const, subprocess: subprocessToDescriptor(this.subprocess) };
   }
 }

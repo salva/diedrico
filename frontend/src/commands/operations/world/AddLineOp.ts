@@ -52,7 +52,7 @@ export class AddLine2DByTwoPointsOp implements IOperation<AddLine2DByTwoPointsDe
     if (this.outputs.lineId) {
       const plane = context.world.getProjectionPlaneById(this.planeId);
       if (plane) {
-        removeLineFromPlane(context.world, plane, this.outputs.lineId);
+        removeLineFromPlane(context, plane, this.outputs.lineId);
       }
     }
   }
@@ -116,7 +116,7 @@ export class AddLine2DParallelToLineOp implements IOperation<AddLine2DParallelTo
     if (this.outputs.lineId) {
       const plane = context.world.getProjectionPlaneById(this.planeId);
       if (plane) {
-        removeLineFromPlane(context.world, plane, this.outputs.lineId);
+        removeLineFromPlane(context, plane, this.outputs.lineId);
       }
     }
   }
@@ -180,7 +180,7 @@ export class AddLine2DPerpendicularToLineOp implements IOperation<AddLine2DPerpe
     if (this.outputs.lineId) {
       const plane = context.world.getProjectionPlaneById(this.planeId);
       if (plane) {
-        removeLineFromPlane(context.world, plane, this.outputs.lineId);
+        removeLineFromPlane(context, plane, this.outputs.lineId);
       }
     }
   }
@@ -235,7 +235,7 @@ export class AddLine2DTangentToCircleThroughPointOp implements IOperation {
     if (this.outputs.lineId) {
       const plane = context.world.getProjectionPlaneById(this.planeId);
       if (plane) {
-        removeLineFromPlane(context.world, plane, this.outputs.lineId);
+        removeLineFromPlane(context, plane, this.outputs.lineId);
       }
     }
   }
@@ -291,7 +291,7 @@ export class AddLine2DTangentToCircleParallelToLineOp implements IOperation {
     if (this.outputs.lineId) {
       const plane = context.world.getProjectionPlaneById(this.planeId);
       if (plane) {
-        removeLineFromPlane(context.world, plane, this.outputs.lineId);
+        removeLineFromPlane(context, plane, this.outputs.lineId);
       }
     }
   }

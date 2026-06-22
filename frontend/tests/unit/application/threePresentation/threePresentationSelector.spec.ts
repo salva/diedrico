@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { ThreePresentationSelector } from '@/application/threePresentation/ThreePresentationSelector';
-import type { ThreePresentationReadPorts } from '@/application/threePresentation/ThreeWorldReadPort';
 import type { ProjectionPlane3DSelector } from '@/application/threePresentation/ProjectionPlane3DSelector';
 import type { PlanarElement3DSelector } from '@/application/threePresentation/PlanarElement3DSelector';
 import type { ReconstructedElement3DSelector } from '@/application/threePresentation/ReconstructedElement3DSelector';
@@ -39,23 +38,17 @@ function spy<T extends (...args: unknown[]) => unknown>(impl: T): T & { calls: u
 }
 
 describe('ThreePresentationSelector', () => {
-  it('orchestrates concern-split selectors through named read-port slices and passes selected IDs only to guide selection', () => {
+  it('orchestrates concern-split selectors through named source model slices', () => {
     const { selector, projectionPlanes, planarElements, reconstructedElements, guides, hinges } = selectorWithSpies();
-    const readPorts: ThreePresentationReadPorts = {
-      projectionPlanes: { getProjectionPlaneModels: () => [] },
-      planarElements: { getPlanarPlaneModels: () => [] },
-      reconstructedElements: { getReconstructedModels: () => ({ points: [], lines: [], segments: [], planes: [] }) },
-      guides: { getSelectedGuideModels: () => [], getGuideIntersectionModels: () => ({ points: [], lines: [], segments: [] }) },
-      hinges: { getHingeModels: () => [] },
-    };
+    const sources = { projectionPlanes: [], planarPlanes: [], reconstructedElements: { points: [], lines: [], segments: [], planes: [] }, guides: [], guideIntersections: undefined, hinges: [] };
 
-    const model = selector.select({ readPorts, displayOptions, selectedIds: ['guide-1'] });
+    const model = selector.select({ ...sources, displayOptions });
 
     expect(model.projectionPlanes).toHaveLength(1);
-    expect(projectionPlanes.select.calls[0]).toEqual([readPorts.projectionPlanes, true, true, true]);
-    expect(planarElements.select.calls[0]).toEqual([readPorts.planarElements, true]);
-    expect(reconstructedElements.select.calls[0]).toEqual([readPorts.reconstructedElements, true]);
-    expect(guides.select.calls[0]).toEqual([readPorts.guides, ['guide-1']]);
-    expect(hinges.select.calls[0]).toEqual([readPorts.hinges, true]);
+    expect(projectionPlanes.select.calls[0]).toEqual([sources.projectionPlanes, true, true, true]);
+    expect(planarElements.select.calls[0]).toEqual([sources.planarPlanes, true]);
+    expect(reconstructedElements.select.calls[0]).toEqual([sources.reconstructedElements, true]);
+    expect(guides.select.calls[0]).toEqual([sources.guides, undefined]);
+    expect(hinges.select.calls[0]).toEqual([sources.hinges, true]);
   });
 });

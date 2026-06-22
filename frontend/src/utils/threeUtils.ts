@@ -22,62 +22,6 @@ export function applyMatrix3(vector: Vector3, matrix: Matrix3): Vector3 {
 }
 
 /**
- * Invert a matrix (non-destructive)
- * Returns a new matrix that is the inverse of the input
- */
-export function invert(matrix: Matrix3): Matrix3 {
-  return matrix.clone().invert();
-}
-
-/**
- * Normalize a vector (non-destructive)
- * Returns a new vector with length 1 in the same direction
- */
-export function normalize(vector: Vector3): Vector3 {
-  return vector.clone().normalize();
-}
-
-/**
- * Add two vectors (non-destructive)
- * Returns a new vector that is the sum of the inputs
- */
-export function add(v1: Vector3, v2: Vector3): Vector3 {
-  return v1.clone().add(v2);
-}
-
-/**
- * Subtract two vectors (non-destructive)
- * Returns a new vector v1 - v2
- */
-export function sub(v1: Vector3, v2: Vector3): Vector3 {
-  return v1.clone().sub(v2);
-}
-
-/**
- * Multiply vector by scalar (non-destructive)
- * Returns a new vector scaled by the scalar
- */
-export function multiplyScalar(vector: Vector3, scalar: number): Vector3 {
-  return vector.clone().multiplyScalar(scalar);
-}
-
-/**
- * Compute dot product of two vectors
- * This operation is already non-destructive in Three.js
- */
-export function dot(v1: Vector3, v2: Vector3): number {
-  return v1.dot(v2);
-}
-
-/**
- * Compute cross product of two vectors (non-destructive)
- * Returns a new vector perpendicular to both inputs
- */
-export function cross(v1: Vector3, v2: Vector3): Vector3 {
-  return v1.clone().cross(v2);
-}
-
-/**
  * Compute cross product of two Vector4 objects (treating as 3D vectors, ignoring w)
  * Returns a new Vector4 with the cross product (w=0 for direction vector)
  */
@@ -107,43 +51,11 @@ export function dotVector2Homogeneous(v1: Vector3, v2: Vector3): number {
 }
 
 /**
- * Get vector length
- * This operation is already non-destructive in Three.js
- */
-export function length(vector: Vector3): number {
-  return vector.length();
-}
-
-/**
- * Multiply two matrices (non-destructive)
- * Returns a new matrix that is m1 * m2
- */
-export function multiply(m1: Matrix3, m2: Matrix3): Matrix3 {
-  return m1.clone().multiply(m2);
-}
-
-/**
  * Create a new Vector3 from x, y coordinates (z defaults to 0)
  * Convenience function for 2D operations
  */
 export function vec3(x: number, y: number, z: number = 0): Vector3 {
   return new Vector3(x, y, z);
-}
-
-/**
- * Create a new Matrix3 from array elements in row-major order
- * Matrix3.set() takes parameters in ROW-MAJOR order: set(n11, n12, n13, n21, n22, n23, n31, n32, n33)
- * Input:  m11 m12 m13   (row 1)
- *         m21 m22 m23   (row 2)  
- *         m31 m32 m33   (row 3)
- * This helper just passes through to set() since it already expects row-major.
- */
-export function mat3(
-  m11: number, m12: number, m13: number,
-  m21: number, m22: number, m23: number,
-  m31: number, m32: number, m33: number
-): Matrix3 {
-  return new Matrix3().set(m11, m12, m13, m21, m22, m23, m31, m32, m33);
 }
 
 /**

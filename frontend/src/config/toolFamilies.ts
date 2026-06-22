@@ -222,12 +222,6 @@ export const TOOL_FAMILIES: ToolFamilyConfig[] = [
         label: 'Quick 3D Segment',
         icon: ExampleIcon,
         tooltip: 'Creates example 3D segment from two projections'
-      },
-      {
-        id: 'interactiveprojectionsetup',
-        label: 'Interactive Setup',
-        icon: ExampleIcon,
-        tooltip: 'Interactive projection plane setup - Select A1, A2 on P_H, then B1 on P_V'
       }
     ]
   }

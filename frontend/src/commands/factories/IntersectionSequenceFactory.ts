@@ -52,6 +52,9 @@ import { createLineCircleIntersectionPointAction } from '@/domain/processTree/ac
 import { createCircleCircleIntersectionPointAction } from '@/domain/processTree/actions/CreateCircleCircleIntersectionPointAction';
 import { createSiblingIntersectionPointAction } from '@/domain/processTree/actions/CreateSiblingIntersectionPointAction';
 import type { World } from '@/domain/world/World';
+import { GeometryElementLookup } from '@/domain/world/GeometryElementLookup';
+import { HalfHingeLine2D } from '@/domain/world/HingeLine';
+import { Point2DLineLineIntersection, Point2DLineCircleIntersection, Point2DCircleCircleIntersection, type Point2D } from '@/domain/world/Point';
 
 /**
  * Result of intersection creation with optional sibling point
@@ -185,32 +188,26 @@ export class IntersectionSequenceFactory {
     const pointId = requireStringOutput(result, 'pointId', 'pointId missing from intersection operation output');
     
     let siblingPointId: string | undefined;
-    
-    try {
-      // Check if either element is HalfHingeLine2D and get sibling plane
-      const plane = world.getProjectionPlaneById(planeId);
-      if (!plane) {
-        throw new Error(`Plane not found: ${planeId}`);
-      }
-      
-      const primaryPoint = plane.getPoint(pointId);
-      if (!primaryPoint) {
-        throw new Error(`Primary intersection point not found: ${pointId}`);
-      }
-      
-      const siblingPlaneId = world.getSiblingPlaneForIntersection(primaryPoint);
-      
-      if (siblingPlaneId) {
-        // Create sibling intersection using coordinate correspondence
-        const siblingResult = cmd.addAndExecute(
-          new AddSiblingIntersectionPoint2DOp(siblingPlaneId, pointId)
-        );
-        siblingPointId = requireStringOutput(siblingResult, 'pointId', 'pointId missing from sibling intersection operation output');
-        
-      }
-    } catch (siblingError) {
-      // Sibling creation failed - log but don't fail the entire operation
-      console.warn('[IntersectionSequenceFactory] Failed to create sibling intersection:', siblingError);
+
+    // Check if either element is HalfHingeLine2D and get sibling plane
+    const plane = world.getProjectionPlaneById(planeId);
+    if (!plane) {
+      throw new Error(`Plane not found: ${planeId}`);
+    }
+
+    const primaryPoint = plane.getPoint(pointId);
+    if (!primaryPoint) {
+      throw new Error(`Primary intersection point not found: ${pointId}`);
+    }
+
+    const siblingPlaneId = getSiblingPlaneForIntersection(world, primaryPoint);
+
+    if (siblingPlaneId) {
+      // Create sibling intersection using coordinate correspondence
+      const siblingResult = cmd.addAndExecute(
+        new AddSiblingIntersectionPoint2DOp(siblingPlaneId, pointId)
+      );
+      siblingPointId = requireStringOutput(siblingResult, 'pointId', 'pointId missing from sibling intersection operation output');
     }
 
     return { pointId, siblingPointId };
@@ -224,8 +221,9 @@ export class IntersectionSequenceFactory {
   ): void {
     if (!result.siblingPointId) return;
 
-    const primaryPoint = world.getPoint2D(result.pointId);
-    if (!primaryPoint || !world.getSiblingPlaneForIntersection(primaryPoint)) return;
+    const lookup = new GeometryElementLookup(world);
+    const primaryPoint = lookup.getPoint2D(result.pointId);
+    if (!primaryPoint || !getSiblingPlaneForIntersection(world, primaryPoint)) return;
 
     recordProcessTreeAction(
       cmd,
@@ -233,4 +231,32 @@ export class IntersectionSequenceFactory {
       groupId
     );
   }
+}
+
+function getSiblingPlaneForIntersection(world: World, intersectionPoint: Point2D): string | undefined {
+  const lookup = new GeometryElementLookup(world);
+  const [element1Id, element2Id] = getIntersectionElementIds(intersectionPoint);
+  const element1 = element1Id ? lookup.getLine2D(element1Id) : undefined;
+  const element2 = element2Id ? lookup.getLine2D(element2Id) : undefined;
+  const halfHingeLine = element1 instanceof HalfHingeLine2D
+    ? element1
+    : element2 instanceof HalfHingeLine2D
+      ? element2
+      : undefined;
+
+  if (!halfHingeLine) return undefined;
+  return world.getHingeLineById(halfHingeLine.hingeLineId)?.getOtherPlane(intersectionPoint.planeId) || undefined;
+}
+
+function getIntersectionElementIds(intersectionPoint: Point2D): [string | undefined, string | undefined] {
+  if (intersectionPoint instanceof Point2DLineLineIntersection) {
+    return [intersectionPoint.line1Id, intersectionPoint.line2Id];
+  }
+  if (intersectionPoint instanceof Point2DLineCircleIntersection) {
+    return [intersectionPoint.lineId, intersectionPoint.circleId];
+  }
+  if (intersectionPoint instanceof Point2DCircleCircleIntersection) {
+    return [intersectionPoint.circle1Id, intersectionPoint.circle2Id];
+  }
+  return [undefined, undefined];
 }

@@ -16,11 +16,6 @@ import type { ProjectionElementRealizationContext } from './projectionPlane/Proj
 import { Vector3 } from 'three';
 import { Line2D, Line2DRealization2D } from './Line';
 
-export const SEGMENT_2D_TYPE = {
-  SEGMENT: 'segment',
-} as const;
-export type Segment2DType = typeof SEGMENT_2D_TYPE[keyof typeof SEGMENT_2D_TYPE];
-
 /**
  * Segment2D - Bounded line segment defined by two endpoint references
  * Phase 22.5: Now extends Line2D base class

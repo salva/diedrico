@@ -74,8 +74,7 @@ export class DeletionSequenceFactory {
     for (const elementId of allElementsToDelete) {
       const actions = processTree.getActionsProducingElement(elementId);
       if (actions.length === 0) {
-        console.warn(`[DeletionSequenceFactory] Element ${elementId} has no producing action - skipping`);
-        continue;
+        throw new Error(`Cannot delete ${elementId}: no producing action found in process tree`);
       }
       
       for (const action of actions) {
@@ -92,7 +91,8 @@ export class DeletionSequenceFactory {
       let found = false;
       
       // Search in all projection planes
-      for (const [planeId, plane] of world.projectionPlanes.entries()) {
+      for (const plane of world.getAllProjectionPlanes()) {
+        const planeId = plane.id;
         // Check if it's a point
         const point = plane.getPoint(elementId);
         if (point) {
@@ -126,7 +126,7 @@ export class DeletionSequenceFactory {
       }
       
       if (!found) {
-        console.warn(`[DeletionSequenceFactory] Element ${elementId} not found in any plane`);
+        throw new Error(`Cannot delete ${elementId}: element not found in any projection plane`);
       }
     }
     

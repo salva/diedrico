@@ -14,7 +14,7 @@ export interface VisualStyle {
 /**
  * Default visual style for new elements
  */
-export const defaultVisualStyle: VisualStyle = {
+const defaultVisualStyle: VisualStyle = {
   color: '#000000',
   lineWidth: 2,
   lineStyle: 'solid',
@@ -32,28 +32,3 @@ export function createVisualStyle(overrides?: Partial<VisualStyle>): VisualStyle
     ...overrides
   };
 }
-
-/**
- * Special styles for system-managed elements
- */
-export const infeasibleStyle: Partial<VisualStyle> = {
-  color: '#ff0000',
-  lineStyle: 'dashed',
-  opacity: 0.5
-};
-
-export const derivedProjectionStyle: Partial<VisualStyle> = {
-  opacity: 0.5,
-  lineStyle: 'dashed'
-};
-
-export const guideStyle: Partial<VisualStyle> = {
-  color: '#0000ff',
-  lineStyle: 'dotted',
-  lineWidth: 1
-};
-
-export const hingeLineStyle: Partial<VisualStyle> = {
-  color: '#00ff00',
-  lineWidth: 3
-};

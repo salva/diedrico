@@ -5,6 +5,8 @@ import { HalfHingeLine2D } from '../../domain/world/HingeLine';
 import { BrokenHalfHingeLine2D } from '../../domain/world/elements/BrokenHalfHingeLine2D';
 import { computeArcGeometry } from '../../utils/arcGeometry';
 import { Guide2D, SiblingGuide2D } from '../../domain/world/Guide';
+import type { CachedProjectionElementRealizationContext } from '@/domain/world/projectionPlane/ProjectionPlaneContext';
+import { GeometryElementLookup } from '@/domain/world/GeometryElementLookup';
 
 /**
  * Factory for creating guide operation sequences.
@@ -31,7 +33,7 @@ export class GuideSequenceFactory {
    * @param throughPointId - ID of point guide should pass through
    * @param world - World instance for navigation
    * 
-   * @returns Object with guideId and siblingGuideId (both always present)
+    * @returns Object with guideId and siblingGuideId when a sibling is created
    * 
    * @example
    * ```typescript
@@ -53,7 +55,8 @@ export class GuideSequenceFactory {
     planeId: string,
     referenceLineId: string,
     throughPointId: string,
-    world: World
+    world: World,
+    realizationContext: CachedProjectionElementRealizationContext
   ): { guideId: string; siblingGuideId?: string } {
     
     // Create primary guide
@@ -67,11 +70,11 @@ export class GuideSequenceFactory {
     
     // Check if reference line is a HalfHingeLine (regular or broken)
     // Try HalfHingeLine2D first
-    let siblingInfo = HalfHingeLine2D.getSiblingInfo(world, referenceLineId, planeId);
+    let siblingInfo = HalfHingeLine2D.getSiblingInfo(realizationContext, referenceLineId, planeId);
     
     // If not regular HHL, try BrokenHalfHingeLine2D
     if (!siblingInfo) {
-      siblingInfo = BrokenHalfHingeLine2D.getSiblingInfo(world, referenceLineId, planeId);
+      siblingInfo = BrokenHalfHingeLine2D.getSiblingInfo(realizationContext, referenceLineId, planeId);
     }
     
     if (!siblingInfo) {
@@ -92,31 +95,32 @@ export class GuideSequenceFactory {
     }
     
     // Update bidirectional links
-    const primaryGuide = world.getLine2D(guideId);
+    const lookup = new GeometryElementLookup(world);
+    const primaryGuide = lookup.getLine2D(guideId);
     if (!(primaryGuide instanceof Guide2D)) {
       throw new Error(`Primary guide not found: ${guideId}`);
     }
     primaryGuide.siblingGuideId = siblingGuideId;
     
     // Phase 101: If reference line is BrokenHalfHingeLine2D, compute arc geometry
-    const referenceLine = world.getLine2D(referenceLineId);
+    const referenceLine = lookup.getLine2D(referenceLineId);
     if (referenceLine instanceof BrokenHalfHingeLine2D) {
       
-      const siblingGuideLine = world.getLine2D(siblingGuideId);
+      const siblingGuideLine = lookup.getLine2D(siblingGuideId);
       if (!(siblingGuideLine instanceof SiblingGuide2D)) {
         throw new Error(`Sibling guide not found: ${siblingGuideId}`);
       }
       const siblingGuide = siblingGuideLine;
       
       // Compute arc geometry connecting the two guides
-      const arcGeometry = computeArcGeometry(world, primaryGuide, siblingGuide);
+      const arcGeometry = computeArcGeometry(realizationContext, primaryGuide, siblingGuide);
       
       if (arcGeometry) {
         // Store arc in BOTH guides for rendering
         primaryGuide.arcGeometry = arcGeometry;
         siblingGuide.arcGeometry = arcGeometry;
       } else {
-        console.warn(`[GuideSequenceFactory] Failed to compute arc geometry`);
+        throw new Error(`Failed to compute arc geometry for sibling guides ${guideId} and ${siblingGuideId}`);
       }
     }
     

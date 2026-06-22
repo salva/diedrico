@@ -21,7 +21,7 @@ export function selectCanvasGrid(planeToPaper: Matrix3 | undefined, viewport: Ca
   if (!planeToPaper) return empty;
 
   const zoom = viewport.zoom;
-  const { spacing, subdivision, majorSpacing } = computeAdaptiveGridParams(zoom);
+  const { spacing, majorSpacing } = computeAdaptiveGridParams(zoom);
   const originPaper = new Vector3(0, 0, 1).applyMatrix3(planeToPaper);
   const uPaper = new Vector3(1, 0, 0).applyMatrix3(planeToPaper);
   const vPaper = new Vector3(0, 1, 0).applyMatrix3(planeToPaper);
@@ -67,7 +67,6 @@ export function selectCanvasGrid(planeToPaper: Matrix3 | undefined, viewport: Ca
     if (Number.isFinite(position) && position >= -10 && position <= (edge === 'top' || edge === 'bottom' ? viewport.width + 10 : viewport.height + 10)) arr.push({ key, value, position, edge });
   };
   const uHorizontal = Math.abs(uPaper.x) / (Math.abs(uPaper.y) + 1e-10) > 1;
-  const screenToPaper = (x: number, y: number) => new Vector3(x / zoom - viewport.panX, y / zoom - viewport.panY, 1);
   const findULineY = (u: number, xPaper: number) => {
     if (Math.abs(vPaper.x) < 1e-10) return null;
     const t = (xPaper - originPaper.x - u * uPaper.x) / vPaper.x;
@@ -89,6 +88,5 @@ export function selectCanvasGrid(planeToPaper: Matrix3 | undefined, viewport: Ca
       pushLabel(labels.right, `right-${u}`, u, findULineY(u, viewport.width / zoom - viewport.panX) ?? NaN, 'right');
     }
   }
-  void subdivision; void screenToPaper;
   return { lines, labels };
 }

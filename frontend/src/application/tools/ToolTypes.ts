@@ -16,7 +16,6 @@ export type ToolType =
   | 'create3dsegment'
   | 'create3dplane'
   | 'createprojectionplane'
-  | 'interactiveprojectionsetup'
   | 'quickprojectionsetup'
   | 'quick3dline'
   | 'quick3dsegment';

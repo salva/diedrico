@@ -1,16 +1,16 @@
 import { Vector3, Vector4 } from 'three';
 import { domainDirectionToThreeJS, domainToThreeJS } from '@/utils/threeUtils';
 import type { AxisDto, LabelDto, ProjectionPlanePresentationDto, Vec3 } from './ThreePresentationModel';
-import type { ThreeProjectionPlaneReadPort } from './ThreeProjectionPlaneReadPort';
+import type { ThreeProjectionPlaneReadModel } from './ThreeProjectionPlaneBuilder';
 import { THREE_STYLE } from './ThreeStylePolicy';
 
 export class ProjectionPlane3DSelector {
-  select(readPort: ThreeProjectionPlaneReadPort, showPlanes: boolean, showGrid: boolean, showReferenceAxes: boolean): ProjectionPlanePresentationDto[] {
+  select(planes: ThreeProjectionPlaneReadModel[], showPlanes: boolean, showGrid: boolean, showReferenceAxes: boolean): ProjectionPlanePresentationDto[] {
     const items: ProjectionPlanePresentationDto[] = [];
     if (showReferenceAxes) items.push(...referenceAxes());
     if (!showPlanes) return items;
 
-    for (const plane of readPort.getProjectionPlaneModels()) {
+    for (const plane of planes) {
       items.push({ id: `surface-${plane.id}`, kind: 'projection-plane-surface', sourceEntityId: plane.id, planeId: plane.id, visible: true, style: THREE_STYLE.projectionPlane, renderGroup: 'projectionPlanes', geometry: plane.surface });
 
       if (showGrid) {

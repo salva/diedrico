@@ -21,27 +21,39 @@ import { ToggleOutputOp } from '@/commands/operations/processTree/ToggleOutputOp
 describe('ProjectService Subprocess Operations Serialization', () => {
   let world: World;
   let commandStack: CommandStack;
+  let operationContext: ReturnType<typeof createTestWorld>['operationContext'];
 
   beforeEach(() => {
-    const { world: w, commandStack: cs } = createTestWorld();
+    const { world: w, commandStack: cs, operationContext: oc } = createTestWorld();
     world = w;
     commandStack = cs;
+    operationContext = oc;
   });
 
   it('PushSubprocessOp survives round-trip', () => {
-    const op = new PushSubprocessOp('New Subprocess');
+    const op = new PushSubprocessOp('New Subprocess', {
+      id: 'node123',
+      type: 'subprocess',
+      name: 'New Subprocess',
+      created: new Date('2026-06-05T00:00:00.000Z'),
+      children: [],
+    });
     
-    const result = roundTripOperation(op, world, commandStack);
+    const result = roundTripOperation(op, world, commandStack, operationContext.idAllocator.peek());
     
     expect(result).toBeInstanceOf(PushSubprocessOp);
     expect(result.type).toBe('PushSubprocess');
-    expect(result.serialize()).toMatchObject({ opType: 'PushSubprocess', subprocessName: 'New Subprocess' });
+    expect(result.serialize()).toEqual({
+      opType: 'PushSubprocess',
+      schemaVersion: '8.0.0',
+      subprocess: { id: 'node123', type: 'subprocess', created: '2026-06-05T00:00:00.000Z', name: 'New Subprocess' },
+    });
   });
 
   it('PopSubprocessOp survives round-trip', () => {
     const op = new PopSubprocessOp();
     
-    const result = roundTripOperation(op, world, commandStack);
+    const result = roundTripOperation(op, world, commandStack, operationContext.idAllocator.peek());
     
     expect(result).toBeInstanceOf(PopSubprocessOp);
     expect(result.type).toBe('PopSubprocess');
@@ -50,38 +62,38 @@ describe('ProjectService Subprocess Operations Serialization', () => {
   it('RenameSubprocessOp survives round-trip', () => {
     const op = new RenameSubprocessOp('sub-123', 'My New Name');
     
-    const result = roundTripOperation(op, world, commandStack);
+    const result = roundTripOperation(op, world, commandStack, operationContext.idAllocator.peek());
     
     expect(result).toBeInstanceOf(RenameSubprocessOp);
     expect(result.type).toBe('RenameSubprocess');
-    expect(result.serialize()).toEqual({ opType: 'RenameSubprocess', subprocessId: 'sub-123', newName: 'My New Name' });
+    expect(result.serialize()).toEqual({ opType: 'RenameSubprocess', schemaVersion: '8.0.0', subprocessId: 'sub-123', newName: 'My New Name' });
   });
 
   it('ToggleEncapsulationOp survives round-trip', () => {
     const op = new ToggleEncapsulationOp('sub-123');
     
-    const result = roundTripOperation(op, world, commandStack);
+    const result = roundTripOperation(op, world, commandStack, operationContext.idAllocator.peek());
     
     expect(result).toBeInstanceOf(ToggleEncapsulationOp);
     expect(result.type).toBe('ToggleEncapsulation');
-    expect(result.serialize()).toEqual({ opType: 'ToggleEncapsulation', subprocessId: 'sub-123' });
+    expect(result.serialize()).toEqual({ opType: 'ToggleEncapsulation', schemaVersion: '8.0.0', subprocessId: 'sub-123' });
   });
 
   it('ToggleOutputOp survives round-trip', () => {
     const op = new ToggleOutputOp('node-123');
     
-    const result = roundTripOperation(op, world, commandStack);
+    const result = roundTripOperation(op, world, commandStack, operationContext.idAllocator.peek());
     
     expect(result).toBeInstanceOf(ToggleOutputOp);
     expect(result.type).toBe('ToggleOutput');
-    expect(result.serialize()).toEqual({ opType: 'ToggleOutput', nodeId: 'node-123' });
+    expect(result.serialize()).toEqual({ opType: 'ToggleOutput', schemaVersion: '8.0.0', nodeId: 'node-123' });
   });
 });
 
 /**
  * Helper: Round-trip an operation through serialization
  */
-function roundTripOperation(op: any, world: World, commandStack: CommandStack): any {
+function roundTripOperation(op: any, world: World, commandStack: CommandStack, nextElementId: number): any {
   const expectedDescriptor = op.serialize();
   // 1. Create command with operation
   const cmd = Command.restore({
@@ -93,7 +105,7 @@ function roundTripOperation(op: any, world: World, commandStack: CommandStack): 
   commandStack.restoreCommittedCommands([cmd]);
   
   // 2. Serialize
-  const projectData = ProjectService.serializeCommands(commandStack, world.peekNextId(), 'test-project');
+  const projectData = ProjectService.serializeCommands(commandStack, nextElementId, 'test-project');
   
   // 3. Deserialize using private method via type assertion
   // Note: World initialization pushes commands to stack, so get the last command (our test command)

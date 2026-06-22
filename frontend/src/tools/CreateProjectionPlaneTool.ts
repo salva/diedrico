@@ -21,6 +21,8 @@
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
 import type { ToolArgumentSet, ArgumentValue, CollectionContext } from '@/tools/ToolArgumentCollector';
+import type { ToolContext } from './ITool';
+import type { ToolConstructionIntent } from './ToolCommandIntents';
 import { SelectionMask } from '@/types/SelectionMask';
 import { computeLineDistance } from '@/utils/projectionPlaneUtils';
 import type { Element2D } from '@/domain/world/Element2D';
@@ -34,7 +36,6 @@ import type { Element2D } from '@/domain/world/Element2D';
  */
 export class CreateProjectionPlaneTool extends ArgumentCollectorTool {
   readonly name = 'createprojectionplane';
-  protected readonly constructionIntentType = 'createprojectionplane';
 
   /**
    * Distance threshold for T2' position warning (in plane units)
@@ -51,89 +52,84 @@ export class CreateProjectionPlaneTool extends ArgumentCollectorTool {
             mask: SelectionMask.line()
           },
           { 
-            name: 't2OtherTrace', 
+            name: 't2OtherTrace',
             mask: SelectionMask.line(),
             validator: (element: Element2D, context: CollectionContext) => {
               // T2 must be on DIFFERENT plane than T1
               const t1 = context.collected.get('t1HingeTrace');
               if (!t1) return { valid: true }; // T1 not yet collected
-              
-              const t1PlaneId = t1.element!.planeId;
+              if (!t1.element) return { valid: false, error: 'T1 selection is missing' };
+
+              const t1PlaneId = t1.element.planeId;
               const t2PlaneId = element.planeId;
-              
+
               if (t1PlaneId === t2PlaneId) {
-                return { 
-                  valid: false, 
-                  error: 'T2 must be on a DIFFERENT plane than T1' 
+                return {
+                  valid: false,
+                  error: 'T2 must be on a DIFFERENT plane than T1'
                 };
               }
-              
+
               return { valid: true };
             }
           },
-          { 
-            name: 't2PrimePositionLine', 
+          {
+            name: 't2PrimePositionLine',
             mask: SelectionMask.line(),
             validator: (element: Element2D, context: CollectionContext) => {
               // T2' must be on SAME plane as T1
               const t1 = context.collected.get('t1HingeTrace');
               if (!t1) return { valid: true }; // T1 not yet collected
-              
-              const t1PlaneId = t1.element!.planeId;
+              if (!t1.element) return { valid: false, error: 'T1 selection is missing' };
+
+              const t1PlaneId = t1.element.planeId;
               const t2PrimePlaneId = element.planeId;
-              
+
               if (t1PlaneId !== t2PrimePlaneId) {
-                return { 
-                  valid: false, 
-                  error: 'T2\' must be on the SAME plane as T1' 
+                return {
+                  valid: false,
+                  error: 'T2\' must be on the SAME plane as T1'
                 };
               }
-              
+
               // Compute expected T2' position and check distance
               const t2 = context.collected.get('t2OtherTrace');
               if (!t2) return { valid: true }; // T2 not yet collected, can't compute expected position
-              
-              const t1LineId = t1.element!.id;
-              const t2LineId = t2.element!.id;
+              if (!t2.element) return { valid: false, error: 'T2 selection is missing' };
+
+              const t1LineId = t1.element.id;
+              const t2LineId = t2.element.id;
               const t2PrimeLineId = element.id;
-              
-              try {
-                const expected = context.readPort.getExpectedT2PrimeLineRealization(
-                  t1LineId,
-                  t2LineId
-                );
-                
-                if (!expected) {
-                  // Expected position could not be computed (e.g., parallel traces)
-                  return { valid: true, warning: 'Could not compute expected T2\' position' };
-                }
-                
-                // Get realized T2' line to compute distance
-                const t2PrimeLineModel = context.readPort.getLine2D(t2PrimeLineId);
-                if (!t2PrimeLineModel) {
-                  return { valid: true, warning: 'Could not validate T2\' position' };
-                }
-                
-                const t2PrimeRealization = context.readPort.realizeLine2D(t2PrimeLineModel);
-                if (!t2PrimeRealization) {
-                  return { valid: true, warning: 'Could not validate T2\' position' };
-                }
-                
-                // Compute distance between selected T2' and expected T2'
-                const distance = computeLineDistance(t2PrimeRealization, expected);
-                
-                if (distance > this.POSITION_WARNING_THRESHOLD) {
-                  return { 
-                    valid: true, 
-                    warning: `T2' is ${distance.toFixed(1)} units from expected position (unfolding T2)` 
-                  };
-                }
-                
-                return { valid: true };
-              } catch (error) {
-                // Error computing expected position - allow but warn
-                return { valid: true, warning: 'Could not validate T2\' position' };
+
+              const expected = context.readPort.getExpectedT2PrimeLineRealization(
+                t1LineId,
+                t2LineId
+              );
+
+              if (!expected) {
+                // Expected position could not be computed (e.g., parallel traces)
+                return { valid: true, warning: 'Could not compute expected T2\' position' };
               }
+
+              // Get realized T2' line to compute distance
+              const t2PrimeLineModel = context.readPort.getLine2D(t2PrimeLineId);
+              if (!t2PrimeLineModel) {
+                return { valid: false, error: 'Selected T2\' line is no longer available' };
+              }
+              
+              const t2PrimeRealization = context.readPort.realizeLine2D(t2PrimeLineModel);
+
+              // Compute distance between selected T2' and expected T2'
+              const distance = computeLineDistance(t2PrimeRealization, expected);
+
+              if (distance > this.POSITION_WARNING_THRESHOLD) {
+                return {
+                  valid: true,
+                  warning: `T2' is ${distance.toFixed(1)} units from expected position (unfolding T2)`
+                };
+              }
+
+              return { valid: true };
             }
           }
         ],
@@ -147,19 +143,39 @@ export class CreateProjectionPlaneTool extends ArgumentCollectorTool {
           if (!t1 || !t2 || !t2Prime) {
             return { valid: false, error: 'Missing required arguments' };
           }
+          if (!t1.element || !t2.element || !t2Prime.element) {
+            return { valid: false, error: 'Missing selected line' };
+          }
           
           // Verify planes exist
-          const t1Plane = context.readPort.getProjectionPlaneById(t1.element!.planeId);
-          const t2Plane = context.readPort.getProjectionPlaneById(t2.element!.planeId);
+          const t1Plane = context.readPort.getProjectionPlaneById(t1.element.planeId);
+          const t2Plane = context.readPort.getProjectionPlaneById(t2.element.planeId);
+          const t2PrimePlane = context.readPort.getProjectionPlaneById(t2Prime.element.planeId);
           
-          if (!t1Plane || !t2Plane) {
+          if (!t1Plane || !t2Plane || !t2PrimePlane) {
             return { valid: false, error: 'One or more projection planes not found' };
+          }
+          if (t1.element.planeId === t2.element.planeId) {
+            return { valid: false, error: 'T2 must be on a DIFFERENT plane than T1' };
+          }
+          if (t1.element.planeId !== t2Prime.element.planeId) {
+            return { valid: false, error: 'T2\' must be on the SAME plane as T1' };
           }
           
           return { valid: true };
         }
       }
     ];
+  }
+
+  protected buildConstructionIntent(args: Map<string, ArgumentValue>, _context: ToolContext): ToolConstructionIntent {
+    return {
+      type: 'createprojectionplane',
+      t1HingeTraceLineId: this.requireElementId(args, 't1HingeTrace'),
+      t2OtherTraceLineId: this.requireElementId(args, 't2OtherTrace'),
+      t2PrimePositionLineId: this.requireElementId(args, 't2PrimePositionLine'),
+      description: this.getCommandDescription()
+    };
   }
 
 

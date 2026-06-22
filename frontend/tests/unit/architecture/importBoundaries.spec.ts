@@ -15,8 +15,12 @@ function isArchitectureSpec(file: ScannedFile): boolean {
   return file.projectPath.startsWith('tests/unit/architecture/');
 }
 
+function isProductionSource(file: ScannedFile): boolean {
+  return file.projectPath.startsWith('src/');
+}
 
-const wave012ConsoleHygieneFiles = [
+
+const consoleHygieneFiles = [
   'src/infrastructure/googleDrive/GoogleDriveService.ts',
   'src/utils/rectangleGrid.ts',
   'src/utils/projectionPlaneUtils.ts',
@@ -28,8 +32,8 @@ const wave012ConsoleHygieneFiles = [
   'src/commands/operations/processTree/ToggleEncapsulationOp.ts',
 ];
 
-function isWave012ConsoleHygieneFile(file: ScannedFile): boolean {
-  return wave012ConsoleHygieneFiles.includes(file.projectPath);
+function isConsoleHygieneFile(file: ScannedFile): boolean {
+  return consoleHygieneFiles.includes(file.projectPath);
 }
 
 function isWave010NegativeE2EGuard(file: ScannedFile): boolean {
@@ -153,10 +157,10 @@ describe('Architecture: import boundaries', () => {
     })).toEqual([]);
   });
 
-  it('keeps routine console noise out of the Wave 012 cleanup files only', () => {
-    const files = frontendSourceAndTests().filter(isWave012ConsoleHygieneFile);
+  it('keeps routine console noise out of selected high-churn source files', () => {
+    const files = frontendSourceAndTests().filter(isConsoleHygieneFile);
 
-    expect(files.map(file => file.projectPath).sort()).toEqual([...wave012ConsoleHygieneFiles].sort());
+    expect(files.map(file => file.projectPath).sort()).toEqual([...consoleHygieneFiles].sort());
     expect(findContentMatches(files, /console\.(log|debug|info)\s*\(/g)).toEqual([]);
   });
 
@@ -191,5 +195,37 @@ describe('Architecture: import boundaries', () => {
 
     expect(appShellPortFiles).toHaveLength(1);
     expect(findForbiddenImports(appShellPortFiles, [/^@\/stores(\/|$)/, /stores\//])).toEqual([]);
+  });
+
+  it('keeps production code from importing deleted compatibility modules', () => {
+    const productionFiles = scanTextFiles(['src']).filter(isProductionSource);
+
+    expect(findForbiddenImports(productionFiles, [
+      /ProjectSessionPersistenceAdapter$/,
+      /ProjectSessionPersistenceTargets$/,
+      /RuntimeSessionPersistenceSnapshotHandle$/,
+      /RuntimeSessionPersistenceRestoreHandle$/,
+      /ThreeWorldReadPort$/,
+      /Projected3DCanvasReadPort$/,
+    ])).toEqual([]);
+  });
+
+  it('keeps construction execution on typed intents instead of generic argument maps', () => {
+    const constructionExecutionFiles = scanTextFiles(['src/application/construction', 'src/application/commandProduction'])
+      .filter(isProductionSource);
+
+    expect(findContentMatches(constructionExecutionFiles, /intent\.args\b|\bArgumentValue\b/g)).toEqual([]);
+    expect(findForbiddenImports(constructionExecutionFiles, [/ToolArgumentCollector$/])).toEqual([]);
+  });
+
+  it('keeps presentation code from importing deleted read-port bridge modules', () => {
+    const presentationFiles = scanTextFiles(['src/application/canvasPresentation', 'src/application/threePresentation'])
+      .filter(isProductionSource);
+
+    expect(findForbiddenImports(presentationFiles, [
+      /ThreeWorldReadPort$/,
+      /Projected3DCanvasReadPort$/,
+    ])).toEqual([]);
+    expect(findContentMatches(presentationFiles, /createThreePresentationReadPorts|ThreeWorldReadPort|Projected3DCanvasReadPort/g)).toEqual([]);
   });
 });

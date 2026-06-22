@@ -79,29 +79,3 @@ export class DescriptorRegistry {
     return this.descriptors.size;
   }
 }
-
-const legacyGlobalRegistry = new DescriptorRegistry();
-
-/**
- * Explicit legacy compatibility facade for isolated callers that have not been
- * moved to runtime-owned registry injection yet. Production runtime code should
- * own a DescriptorRegistry instance instead of using this singleton.
- * TODO: Remove after any remaining legacy tests/callers use injected registries.
- */
-export const LegacyDescriptorRegistry = {
-  register<T extends Element>(elementClass: new (...args: any[]) => T, descriptor: ElementDescriptor<T>): void {
-    legacyGlobalRegistry.register(elementClass, descriptor);
-  },
-  get(element: Element): ElementDescriptor {
-    return legacyGlobalRegistry.get(element);
-  },
-  has(elementClass: Function): boolean {
-    return legacyGlobalRegistry.has(elementClass);
-  },
-  clear(): void {
-    legacyGlobalRegistry.clear();
-  },
-  size(): number {
-    return legacyGlobalRegistry.size();
-  },
-};

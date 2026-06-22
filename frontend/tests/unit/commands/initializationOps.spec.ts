@@ -24,11 +24,13 @@ import {
   AddHalfHingeLine2DOp,
   CreateInitializationSubprocessOp
 } from '@/commands/operations/world/InitializationOps';
-import { buildOperationContext } from '../../helpers/worldHelpers';
+import { createTestRuntimeContext } from '../../helpers/worldHelpers';
+import type { OperationContext } from '@/commands/operations/OperationContext';
 
 describe('Initialization Operations', () => {
   let world: World;
   let visibilityModel: VisibilityModel;
+  let operationContext: OperationContext;
 
   // Helper functions to create standard transformation matrices
   function createPHMatrices() {
@@ -76,17 +78,18 @@ describe('Initialization Operations', () => {
     visibilityModel = new VisibilityModel();
     // Clear the world to remove default initialization
     world.clear();
+    operationContext = createTestRuntimeContext({ initialized: false, world, visibilityModel }).operationContext;
   });
 
   describe('CreateInitializationSubprocessOp', () => {
     it('should create subprocess in ProcessTree', () => {
       const op = new CreateInitializationSubprocessOp('Test Initialization');
-      const result = op.apply(buildOperationContext(world, visibilityModel));
+      const result = op.apply(operationContext);
 
       expect(result.success).toBe(true);
       expect(result.outputs.subprocessId).toBeDefined();
       
-      const processTree = world.getProcessTree();
+      const processTree = operationContext.processTree;
       const subprocess = processTree.root.children.find(
         (child) => child.type === 'subprocess' && child.id === result.outputs.subprocessId
       );
@@ -113,13 +116,13 @@ describe('Initialization Operations', () => {
       const point = new Vector4(0, 0, 0, 1);   // Homogeneous: point
       const normal = new Vector4(0, 0, 1, 0);  // Homogeneous: vector
       const op = new AddPlane3DFixedOp(point, normal, 'plane_test_H', 'P_H');
-      const result = op.apply(buildOperationContext(world, visibilityModel));
+      const result = op.apply(operationContext);
 
       expect(result.success).toBe(true);
       expect(result.outputs.planeId).toBeDefined();
       
       // Phase 78: AddPlane3DFixedOp creates Plane3D, not ProjectionPlane
-      const plane = world.getPlaneById(result.outputs.planeId);
+      const plane = world.get3DPlane(result.outputs.planeId);
       expect(plane).toBeDefined();
       expect(plane!.label).toBe('P_H');
     });
@@ -128,13 +131,13 @@ describe('Initialization Operations', () => {
       const point = new Vector4(0, 0, 0, 1);   // Homogeneous: point
       const normal = new Vector4(0, 1, 0, 0);  // Homogeneous: vector
       const op = new AddPlane3DFixedOp(point, normal, 'plane_test_V', 'P_V');
-      const result = op.apply(buildOperationContext(world, visibilityModel));
+      const result = op.apply(operationContext);
 
       expect(result.success).toBe(true);
       expect(result.outputs.planeId).toBeDefined();
       
       // Phase 78: AddPlane3DFixedOp creates Plane3D, not ProjectionPlane
-      const plane = world.getPlaneById(result.outputs.planeId);
+      const plane = world.get3DPlane(result.outputs.planeId);
       expect(plane).toBeDefined();
       expect(plane!.label).toBe('P_V');
     });
@@ -143,14 +146,14 @@ describe('Initialization Operations', () => {
       const point = new Vector4(0, 0, 0, 1);
       const normal = new Vector4(0, 0, 1, 0);
       const op = new AddPlane3DFixedOp(point, normal, 'plane_undo_test');
-      const result = op.apply(buildOperationContext(world, visibilityModel));
+      const result = op.apply(operationContext);
       
       // Phase 78: AddPlane3DFixedOp creates Plane3D, not ProjectionPlane
-      expect(world.getPlaneById(result.outputs.planeId)).toBeDefined();
+      expect(world.get3DPlane(result.outputs.planeId)).toBeDefined();
       
-      op.undo(buildOperationContext(world, visibilityModel));
+      op.undo(operationContext);
       
-      expect(world.getPlaneById(result.outputs.planeId)).toBeUndefined();
+      expect(world.get3DPlane(result.outputs.planeId)).toBeUndefined();
     });
 
 
@@ -158,7 +161,7 @@ describe('Initialization Operations', () => {
       const point = new Vector4(0, 0, 0, 1);
       const normal = new Vector4(0, 1, 0, 0);
       const op = new AddPlane3DFixedOp(point, normal, 'plane_ser', 'P_V');
-      op.apply(buildOperationContext(world, visibilityModel)); // Need to apply to populate outputs
+      op.apply(operationContext); // Need to apply to populate outputs
       const serialized = op.serialize();
       
       expect(serialized.opType).toBe('AddPlane3DFixed');
@@ -174,7 +177,7 @@ describe('Initialization Operations', () => {
       // Create 3D plane first
       const point = new Vector4(0, 0, 0, 1);
       const normal = new Vector4(0, 0, 1, 0);
-      new AddPlane3DFixedOp(point, normal, 'plane_3d_test', 'P_H').apply(buildOperationContext(world, visibilityModel));
+      new AddPlane3DFixedOp(point, normal, 'plane_3d_test', 'P_H').apply(operationContext);
     });
 
     it('should create projection plane with explicit matrices', () => {
@@ -186,7 +189,7 @@ describe('Initialization Operations', () => {
         'proj_plane_test',  // Phase 94: threeDToPlane removed, this is projPlaneId
         'P_H'  // Optional name
       );
-      const result = op.apply(buildOperationContext(world, visibilityModel));
+      const result = op.apply(operationContext);
 
       expect(result.success).toBe(true);
       expect(result.outputs.projPlaneId).toBe('proj_plane_test');
@@ -204,11 +207,11 @@ describe('Initialization Operations', () => {
         matrices.planeTo3D,
         'proj_undo'  // Phase 94: threeDToPlane removed, this is projPlaneId
       );
-      op.apply(buildOperationContext(world, visibilityModel));
+      op.apply(operationContext);
       
       expect(world.getProjectionPlaneById('proj_undo')).toBeDefined();
       
-      op.undo(buildOperationContext(world, visibilityModel));
+      op.undo(operationContext);
       
       expect(world.getProjectionPlaneById('proj_undo')).toBeUndefined();
     });
@@ -219,15 +222,15 @@ describe('Initialization Operations', () => {
     beforeEach(() => {
       const point = new Vector4(0, 0, 0, 1);
       const normal = new Vector4(0, 0, 1, 0);
-      new AddPlane3DFixedOp(point, normal, 'plane_3d', 'P_H').apply(buildOperationContext(world, visibilityModel));
+      new AddPlane3DFixedOp(point, normal, 'plane_3d', 'P_H').apply(operationContext);
       const matrices = createPHMatrices();
-      new AddProjectionPlaneFixedOp('plane_3d', matrices.planeToPaper, matrices.planeTo3D, 'proj_plane').apply(buildOperationContext(world, visibilityModel));  // Phase 94: threeDToPlane removed
+      new AddProjectionPlaneFixedOp('plane_3d', matrices.planeToPaper, matrices.planeTo3D, 'proj_plane').apply(operationContext);  // Phase 94: threeDToPlane removed
     });
 
     it('should create locked origin point', () => {
       const position = new Vector3(0, 0, 1);
       const op = new AddOriginPoint2DOp('proj_plane', position);
-      const result = op.apply(buildOperationContext(world, visibilityModel));
+      const result = op.apply(operationContext);
 
       expect(result.success).toBe(true);
       expect(result.outputs.pointId).toBeDefined();
@@ -244,7 +247,7 @@ describe('Initialization Operations', () => {
 
     it('should return error if plane not found', () => {
       const op = new AddOriginPoint2DOp('nonexistent_plane', new Vector3(0, 0, 1));
-      const result = op.apply(buildOperationContext(world, visibilityModel));
+      const result = op.apply(operationContext);
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('not found');
@@ -257,21 +260,21 @@ describe('Initialization Operations', () => {
     beforeEach(() => {
       const pointH = new Vector4(0, 0, 0, 1);
       const normalH = new Vector4(0, 0, 1, 0);
-      new AddPlane3DFixedOp(pointH, normalH, 'plane_H', 'P_H').apply(buildOperationContext(world, visibilityModel));
+      new AddPlane3DFixedOp(pointH, normalH, 'plane_H', 'P_H').apply(operationContext);
       
       const pointV = new Vector4(0, 0, 0, 1);
       const normalV = new Vector4(0, 1, 0, 0);
-      new AddPlane3DFixedOp(pointV, normalV, 'plane_V', 'P_V').apply(buildOperationContext(world, visibilityModel));
+      new AddPlane3DFixedOp(pointV, normalV, 'plane_V', 'P_V').apply(operationContext);
       
       const matricesH = createPHMatrices();
       const matricesV = createPVMatrices();
-      new AddProjectionPlaneFixedOp('plane_H', matricesH.planeToPaper, matricesH.planeTo3D, 'proj_H').apply(buildOperationContext(world, visibilityModel));
-      new AddProjectionPlaneFixedOp('plane_V', matricesV.planeToPaper, matricesV.planeTo3D, 'proj_V').apply(buildOperationContext(world, visibilityModel));
+      new AddProjectionPlaneFixedOp('plane_H', matricesH.planeToPaper, matricesH.planeTo3D, 'proj_H').apply(operationContext);
+      new AddProjectionPlaneFixedOp('plane_V', matricesV.planeToPaper, matricesV.planeTo3D, 'proj_V').apply(operationContext);
     });
 
     it('should create hinge line', () => {
       const op = new AddHingeLineOp('proj_H', 'proj_V', 'hl_test');
-      const result = op.apply(buildOperationContext(world, visibilityModel));
+      const result = op.apply(operationContext);
 
       expect(result.success).toBe(true);
       expect(result.outputs.hingeLineId).toBe('hl_test');
@@ -283,11 +286,11 @@ describe('Initialization Operations', () => {
 
     it('should undo hinge line creation', () => {
       const op = new AddHingeLineOp('proj_H', 'proj_V', 'hl_undo');
-      op.apply(buildOperationContext(world, visibilityModel));
+      op.apply(operationContext);
       
       expect((world as any).hingeLines.has('hl_undo')).toBe(true);
       
-      op.undo(buildOperationContext(world, visibilityModel));
+      op.undo(operationContext);
       
       expect((world as any).hingeLines.has('hl_undo')).toBe(false);
       expect((world as any).mainHingeLineId).toBeUndefined();
@@ -295,7 +298,7 @@ describe('Initialization Operations', () => {
 
     it('should serialize correctly', () => {
       const op = new AddHingeLineOp('proj_1', 'proj_2', 'hl_ser');
-      op.apply(buildOperationContext(world, visibilityModel)); // Need to apply to populate outputs
+      op.apply(operationContext); // Need to apply to populate outputs
       const serialized = op.serialize();
       
       expect(serialized).toEqual({
@@ -313,21 +316,21 @@ describe('Initialization Operations', () => {
       const normal = new Vector4(0, 0, 1, 0);
 
       // Create two distinct planes so hinge line construction is valid
-      new AddPlane3DFixedOp(point, normal, 'plane_3d_h', 'P_H').apply(buildOperationContext(world, visibilityModel));
+      new AddPlane3DFixedOp(point, normal, 'plane_3d_h', 'P_H').apply(operationContext);
       const matricesH = createPHMatrices();
-      new AddProjectionPlaneFixedOp('plane_3d_h', matricesH.planeToPaper, matricesH.planeTo3D, 'proj_plane_h').apply(buildOperationContext(world, visibilityModel));
+      new AddProjectionPlaneFixedOp('plane_3d_h', matricesH.planeToPaper, matricesH.planeTo3D, 'proj_plane_h').apply(operationContext);
 
-      new AddPlane3DFixedOp(point, normal, 'plane_3d_v', 'P_V').apply(buildOperationContext(world, visibilityModel));
+      new AddPlane3DFixedOp(point, normal, 'plane_3d_v', 'P_V').apply(operationContext);
       const matricesV = createPVMatrices();
-      new AddProjectionPlaneFixedOp('plane_3d_v', matricesV.planeToPaper, matricesV.planeTo3D, 'proj_plane_v').apply(buildOperationContext(world, visibilityModel));
+      new AddProjectionPlaneFixedOp('plane_3d_v', matricesV.planeToPaper, matricesV.planeTo3D, 'proj_plane_v').apply(operationContext);
 
       // Parent hinge line must exist before creating half-hinge lines
-      new AddHingeLineOp('proj_plane_h', 'proj_plane_v', 'hl_test').apply({ world });
+      new AddHingeLineOp('proj_plane_h', 'proj_plane_v', 'hl_test').apply(operationContext);
     });
 
     it('should create half hinge line', () => {
       const op = new AddHalfHingeLine2DOp('proj_plane_h', 'hl_test');
-      const result = op.apply(buildOperationContext(world, visibilityModel));
+      const result = op.apply(operationContext);
 
       expect(result.success).toBe(true);
       expect(result.outputs.lineId).toBeDefined();
@@ -342,7 +345,7 @@ describe('Initialization Operations', () => {
 
     it('should return error if plane not found', () => {
       const op = new AddHalfHingeLine2DOp('nonexistent', 'hl');
-      const result = op.apply(buildOperationContext(world, visibilityModel));
+      const result = op.apply(operationContext);
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('not found');

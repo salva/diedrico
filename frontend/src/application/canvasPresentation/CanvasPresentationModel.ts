@@ -1,6 +1,8 @@
 import type { Matrix3, Vector3 } from 'three';
 import type { Primitive, ResolvedStyle, ViewportTransform } from '@/domain/presentation/Paper';
 import type { VisibilityModel } from '@/application/processTree/VisibilityModel';
+import type { ProcessTree } from '@/domain/processTree/ProcessTree';
+import type { RealizationService } from '@/domain/world/RealizationService';
 
 export type CanvasElementKind =
   | 'point'
@@ -74,15 +76,22 @@ export interface CanvasPlanePointItem {
   pointRole: 'free' | 'dependent';
 }
 
+export interface CanvasPlaneFiniteSegmentItem {
+  /** Plane-domain shape classification before paper-space primitive creation. */
+  kind: 'finite-segment';
+  elementId: string;
+  planeId: string;
+  point1: Vector3;
+  point2: Vector3;
+}
+
 export interface CanvasPlaneLineItem {
   /** Plane-domain shape classification before paper-space primitive creation. */
-  kind: 'finite-segment' | 'guide' | 'sibling-guide' | 'half-hinge-line' | 'infinite-line';
+  kind: 'guide' | 'sibling-guide' | 'half-hinge-line' | 'infinite-line';
   elementId: string;
   planeId: string;
   point: Vector3;
   direction: Vector3;
-  point1?: Vector3;
-  point2?: Vector3;
   arcGeometry?: {
     startPoint?: { x: number; y: number };
     endPoint?: { x: number; y: number };
@@ -101,7 +110,7 @@ export interface CanvasPlaneCircleItem {
   radiusVector: Vector3;
 }
 
-export type CanvasPlaneItem = CanvasPlanePointItem | CanvasPlaneLineItem | CanvasPlaneCircleItem;
+export type CanvasPlaneItem = CanvasPlanePointItem | CanvasPlaneFiniteSegmentItem | CanvasPlaneLineItem | CanvasPlaneCircleItem;
 
 export interface CanvasPlaneCanvasItems {
   planeId: string;
@@ -155,4 +164,6 @@ export interface CanvasPresentationState {
   showProjectedElements?: boolean;
   gridVisible?: boolean;
   visibilityModel: VisibilityModel;
+  processTree: ProcessTree;
+  realizations: RealizationService;
 }

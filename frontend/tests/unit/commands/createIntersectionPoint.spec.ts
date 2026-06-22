@@ -8,23 +8,24 @@ import { AddLineLineIntersectionPoint2DOp } from '../../../src/commands/operatio
 import { AddLine2DByTwoPointsOp } from '../../../src/commands/operations/world/AddLineOp';
 import { AddFreePoint2DOp } from '../../../src/commands/operations/world/AddFreePointOp';
 import type { World } from '../../../src/domain/world/World';
-import { createTestWorld, buildOperationContext, getHorizontalPlane, getHorizontalPlaneId } from '../../helpers/worldHelpers';
+import { createTestWorld, getHorizontalPlane, getHorizontalPlaneId } from '../../helpers/worldHelpers';
 import { Vector3 } from 'three';
 describe('Create Intersection Point Command', () => {
   let world: World;
   let visibilityModel;
+  let operationContext;
   let planeId: string;
 
   beforeEach(() => {
-    const { world: w, visibilityModel: vm } = createTestWorld();
+    const { world: w, visibilityModel: vm, operationContext: oc } = createTestWorld();
     world = w;
 
-    visibilityModel = vm;    planeId = getHorizontalPlaneId(world);
+    visibilityModel = vm;    operationContext = oc;    planeId = getHorizontalPlaneId(world);
   });
 
   describe('execution', () => {
     it('should create intersection point between two lines', () => {
-      const cmd = new Command("Create intersection point", buildOperationContext(world, visibilityModel));
+      const cmd = new Command("Create intersection point", operationContext);
       
       // Create first line (horizontal)
       const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 100, 1)));
@@ -65,7 +66,7 @@ describe('Create Intersection Point Command', () => {
     });
 
     it('should return pointId in outputs', () => {
-      const cmd = new Command("Create intersection", buildOperationContext(world, visibilityModel));
+      const cmd = new Command("Create intersection", operationContext);
       
       const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 100, 1)));
       const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 100, 1)));
@@ -97,7 +98,7 @@ describe('Create Intersection Point Command', () => {
 
   describe('undo/redo', () => {
     it('should support undo by rolling back operations', () => {
-      const cmd = new Command("Create intersection", buildOperationContext(world, visibilityModel));
+      const cmd = new Command("Create intersection", operationContext);
       
       const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 100, 1)));
       const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 100, 1)));
@@ -135,7 +136,7 @@ describe('Create Intersection Point Command', () => {
     });
 
     it('should maintain stable IDs across undo/redo', () => {
-      const cmd = new Command("Create intersection", buildOperationContext(world, visibilityModel));
+      const cmd = new Command("Create intersection", operationContext);
       
       const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 100, 1)));
       const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 100, 1)));

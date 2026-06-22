@@ -47,6 +47,12 @@ describe('Architecture: domain world boundary', () => {
     expect(worldFile.content).not.toMatch(/_version/);
   });
 
+  it('keeps World.ts from owning domain services', () => {
+    const [worldFile] = scanTextFiles(['src/domain/world']).filter(file => file.projectPath === 'src/domain/world/World.ts');
+
+    expect(worldFile.content).not.toMatch(/DependencyService|ProcessTree|WorldIdAllocator|LabelGenerator|RealizationService|ConstructionService/);
+  });
+
   it('keeps ProcessTree free of notification plumbing', () => {
     const [processTreeFile] = scanTextFiles(['src/domain/processTree']).filter(file => file.projectPath === 'src/domain/processTree/ProcessTree.ts');
 

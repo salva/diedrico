@@ -12,7 +12,7 @@ import { Vector3, Vector4 } from 'three';
 import { reconstruct3DPointFromProjections, Matrix3x4 } from '@/utils/threeUtils';
 import { Segment3DFromProjections } from '@/domain/world/Segment3D';
 import { createVisualStyle } from '@/domain/world/VisualStyle';
-import { createTestWorld, buildOperationContext } from '../../helpers/worldHelpers';
+import { createTestWorld, getHorizontalPlane, getVerticalPlane } from '../../helpers/worldHelpers';
 import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
 import { AddSegment2DByPointsOp } from '@/commands/operations/world/AddSegmentOp';
 import { Add3DSegmentOp } from '@/commands/operations/world/Add3DSegmentOp';
@@ -87,27 +87,28 @@ describe('reconstruct3DPointFromProjections', () => {
 describe('Segment3DFromProjections.realize3D()', () => {
   let world: World;
   let visibilityModel;
+  let operationContext;
 
   beforeEach(() => {
-    const { world: w, visibilityModel: vm } = createTestWorld();
+    const { world: w, visibilityModel: vm, operationContext: oc } = createTestWorld();
     world = w;
 
-    visibilityModel = vm;  });
+    visibilityModel = vm;    operationContext = oc;  });
 
   /**
    * Helper: Create a 2D segment on a plane and return its ID
    */
   function createSegment2D(planeId: string, x1: number, y1: number, x2: number, y2: number): string {
     const plane = world.getProjectionPlaneById(planeId);
-    const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(x1, y1, 1));
-    const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(x2, y2, 1));
-    const seg = world.getConstructionService().addSegment2DBetweenPoints(plane, p1.id, p2.id);
+    const p1 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(x1, y1, 1));
+    const p2 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(x2, y2, 1));
+    const seg = operationContext.projectionConstruction.addSegment2DBetweenPoints(plane, p1.id, p2.id);
     return seg.id;
   }
 
   it('should reconstruct a 3D segment from compatible projections', () => {
-    const planeH = world.getProjectionPlaneByLabel('P_H');
-    const planeV = world.getProjectionPlaneByLabel('P_V');
+    const planeH = getHorizontalPlane(world);
+    const planeV = getVerticalPlane(world);
 
     // 3D segment from (2, 3, 4) to (6, 7, 8)
     // PH projection: (2,3)→(6,7)  [x,y coords]
@@ -122,7 +123,7 @@ describe('Segment3DFromProjections.realize3D()', () => {
       createVisualStyle()
     );
 
-    const realization = segment3D.realize3D(world);
+    const realization = segment3D.realize3D(operationContext.realizationContext);
 
     expect(realization.isFeasible()).toBe(true);
 
@@ -142,8 +143,8 @@ describe('Segment3DFromProjections.realize3D()', () => {
   });
 
   it('should handle swapped endpoint pairing', () => {
-    const planeH = world.getProjectionPlaneByLabel('P_H');
-    const planeV = world.getProjectionPlaneByLabel('P_V');
+    const planeH = getHorizontalPlane(world);
+    const planeV = getVerticalPlane(world);
 
     // 3D segment from (1, 2, 3) to (5, 6, 7)
     // PH projection: endpoint order (1,2)→(5,6)
@@ -158,7 +159,7 @@ describe('Segment3DFromProjections.realize3D()', () => {
       createVisualStyle()
     );
 
-    const realization = segment3D.realize3D(world);
+    const realization = segment3D.realize3D(operationContext.realizationContext);
 
     expect(realization.isFeasible()).toBe(true);
 
@@ -176,8 +177,8 @@ describe('Segment3DFromProjections.realize3D()', () => {
   });
 
   it('should return infeasible for incompatible segment projections', () => {
-    const planeH = world.getProjectionPlaneByLabel('P_H');
-    const planeV = world.getProjectionPlaneByLabel('P_V');
+    const planeH = getHorizontalPlane(world);
+    const planeV = getVerticalPlane(world);
 
     // PH: segment (1,2)→(3,4) x-values: 1, 3
     // PV: segment (10,5)→(20,15) x-values: 10, 20 — no x match possible
@@ -191,14 +192,14 @@ describe('Segment3DFromProjections.realize3D()', () => {
       createVisualStyle()
     );
 
-    const realization = segment3D.realize3D(world);
+    const realization = segment3D.realize3D(operationContext.realizationContext);
 
     expect(realization.isFeasible()).toBe(false);
   });
 
   it('should reconstruct a segment along x-axis', () => {
-    const planeH = world.getProjectionPlaneByLabel('P_H');
-    const planeV = world.getProjectionPlaneByLabel('P_V');
+    const planeH = getHorizontalPlane(world);
+    const planeV = getVerticalPlane(world);
 
     // 3D segment from (0,0,0) to (10,0,0) — along x-axis
     // PH: (0,0)→(10,0)  [y=0 on both]
@@ -213,7 +214,7 @@ describe('Segment3DFromProjections.realize3D()', () => {
       createVisualStyle()
     );
 
-    const realization = segment3D.realize3D(world);
+    const realization = segment3D.realize3D(operationContext.realizationContext);
 
     expect(realization.isFeasible()).toBe(true);
     expect(realization.getLength()).toBeCloseTo(10);
@@ -224,12 +225,13 @@ describe('Add3DSegmentOp compatibility validation', () => {
   let world: World;
   let visibilityModel;
   let command: Command;
+  let operationContext;
 
   beforeEach(() => {
-    const { world: w, visibilityModel: vm } = createTestWorld();
+    const { world: w, visibilityModel: vm, operationContext: oc } = createTestWorld();
     world = w;
 
-    visibilityModel = vm;    command = new Command('test-cmd', buildOperationContext(world, visibilityModel));
+    visibilityModel = vm;    operationContext = oc;    command = new Command('test-cmd', operationContext);
   });
 
   function createSegment2DWithOps(planeId: string, x1: number, y1: number, x2: number, y2: number): string {
@@ -247,43 +249,43 @@ describe('Add3DSegmentOp compatibility validation', () => {
   }
 
   it('should succeed for compatible segment projections', () => {
-    const planeH = world.getProjectionPlaneByLabel('P_H');
-    const planeV = world.getProjectionPlaneByLabel('P_V');
+    const planeH = getHorizontalPlane(world);
+    const planeV = getVerticalPlane(world);
 
     // Compatible: same x-values on both planes
     const seg1Id = createSegment2DWithOps(planeH.id!, 3, 5, 7, 9);
     const seg2Id = createSegment2DWithOps(planeV.id!, 3, 2, 7, 4);
 
     const op = new Add3DSegmentOp(seg1Id, seg2Id, planeH.id!, planeV.id!);
-    const result = op.apply(buildOperationContext(world, visibilityModel));
+    const result = op.apply(operationContext);
 
     expect(result.success).toBe(true);
     expect(result.outputs.segmentId).toBeDefined();
   });
 
   it('should fail for incompatible segment projections', () => {
-    const planeH = world.getProjectionPlaneByLabel('P_H');
-    const planeV = world.getProjectionPlaneByLabel('P_V');
+    const planeH = getHorizontalPlane(world);
+    const planeV = getVerticalPlane(world);
 
     // Incompatible: x-values don't match at all
     const seg1Id = createSegment2DWithOps(planeH.id!, 1, 2, 3, 4);
     const seg2Id = createSegment2DWithOps(planeV.id!, 10, 5, 20, 15);
 
     const op = new Add3DSegmentOp(seg1Id, seg2Id, planeH.id!, planeV.id!);
-    const result = op.apply(buildOperationContext(world, visibilityModel));
+    const result = op.apply(operationContext);
 
     expect(result.success).toBe(false);
     expect(result.error).toContain('incompatible');
   });
 
   it('should fail when projections are on the same plane', () => {
-    const planeH = world.getProjectionPlaneByLabel('P_H');
+    const planeH = getHorizontalPlane(world);
 
     const seg1Id = createSegment2DWithOps(planeH.id!, 0, 0, 5, 5);
     const seg2Id = createSegment2DWithOps(planeH.id!, 1, 1, 6, 6);
 
     const op = new Add3DSegmentOp(seg1Id, seg2Id, planeH.id!, planeH.id!);
-    const result = op.apply(buildOperationContext(world, visibilityModel));
+    const result = op.apply(operationContext);
 
     expect(result.success).toBe(false);
     expect(result.error).toContain('different planes');

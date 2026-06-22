@@ -12,13 +12,12 @@
  * The operation is reversible (undo removes the line).
  * 
  * @see Line3DFromProjections in Line3D.ts
- * @see World.add3DLine() for storage
+ * @see ReconstructionConstructionService for storage
  */
 
 import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
 import type { OperationContext } from '../OperationContext';
-import { Line3DFromProjections } from '@/domain/world/Line3D';
-import { requireDistinctProjectionPlanes, requireFeasibleProjectionPair } from './operationHelpers';
+import { invalidateRealization, requireDistinctProjectionPlanes, requireFeasibleProjectionPair } from './operationHelpers';
 
 export interface Add3DLineDescriptor extends OperationDescriptor<'Add3DLine'> {
   projection1Id: string;
@@ -64,40 +63,23 @@ export class Add3DLineOp implements IOperation<Add3DLineDescriptor, Add3DLineOut
       }
       
       // Validate that projections are geometrically feasible
-      const proj1Real = proj1.realize2D(context.world);
-      const proj2Real = proj2.realize2D(context.world);
+      const proj1Real = proj1.realize2D(context.realizationContext);
+      const proj2Real = proj2.realize2D(context.realizationContext);
       
       requireFeasibleProjectionPair('line', proj1Real, proj2Real);
       
-      // Use stored ID if available (for redo), otherwise generate new one
-      const lineId = this.outputs.lineId || context.world.generate3DLineId();
-      
-      // Phase 97: Generate default label if not provided
-      const label = this.label || context.labelGenerator.next('Line3D');
-      
-      // Create default visual style if not provided
-      const visualStyle = this.visualStyle || {
-        color: '#FF6B35',    // Orange for 3D elements
-        thickness: 0.003,     // Thicker than 2D lines (0.002)
-        visible: true
-      };
-      
-      // Create Line3DFromProjections
-      const line = new Line3DFromProjections(
-        lineId,
-        label,
-        this.projection1Id,
-        this.projection2Id,
-        this.plane1Id,
-        this.plane2Id,
-        visualStyle
-      );
-      
-      // Add to World storage
-      context.world.add3DLine(line);
+      const line = context.reconstructionConstruction.addLineFromProjections({
+        projection1Id: this.projection1Id,
+        projection2Id: this.projection2Id,
+        plane1Id: this.plane1Id,
+        plane2Id: this.plane2Id,
+        lineId: this.outputs.lineId,
+        label: this.label,
+        visualStyle: this.visualStyle,
+      });
       
       // Store outputs for undo
-      this.outputs = { lineId };
+      this.outputs = { lineId: line.id };
       
       return {
         success: true,
@@ -114,7 +96,9 @@ export class Add3DLineOp implements IOperation<Add3DLineDescriptor, Add3DLineOut
 
   undo(context: OperationContext): void {
     if (this.outputs.lineId) {
-      context.world.remove3DLine(this.outputs.lineId);
+      invalidateRealization(context, this.outputs.lineId);
+      context.world.deleteLine3D(this.outputs.lineId);
+      context.dependencies.unregisterNode(this.outputs.lineId);
     }
   }
 

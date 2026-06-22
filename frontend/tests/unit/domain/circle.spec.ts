@@ -19,9 +19,13 @@ import {
 import { FreePoint2D } from '@/domain/world/Point';
 import type { World } from '@/domain/world/World';
 import { createTestWorld, getHorizontalPlane, getHorizontalPlaneId } from '../../helpers/worldHelpers';
+import type { OperationContext } from '@/commands/operations/OperationContext';
+import type { CachedProjectionElementRealizationContext } from '@/domain/world/projectionPlane/ProjectionPlaneContext';
 
 describe('Circle2D', () => {
   let world: World;
+  let operationContext: OperationContext;
+  let realizationContext: CachedProjectionElementRealizationContext;
   let planeId: string;
   let centerPointId: string;
   let point1Id: string;
@@ -29,16 +33,18 @@ describe('Circle2D', () => {
   let point3Id: string;
 
   beforeEach(() => {
-    const { world: w } = createTestWorld();
+    const { world: w, operationContext: context } = createTestWorld();
     world = w;
+    operationContext = context;
+    realizationContext = operationContext.realizationContext;
     const plane = getHorizontalPlane(world);
     planeId = getHorizontalPlaneId(world);
     
     // Create test points with hierarchical IDs
-    const centerPoint = new FreePoint2D(world.getConstructionService().generatePoint2DId(plane), new Vector3(0, 0, 1), planeId);
-    const point1 = new FreePoint2D(world.getConstructionService().generatePoint2DId(plane), new Vector3(50, 0, 1), planeId);
-    const point2 = new FreePoint2D(world.getConstructionService().generatePoint2DId(plane), new Vector3(0, 50, 1), planeId);
-    const point3 = new FreePoint2D(world.getConstructionService().generatePoint2DId(plane), new Vector3(-50, 0, 1), planeId);
+    const centerPoint = new FreePoint2D(operationContext.projectionConstruction.generatePoint2DId(plane), new Vector3(0, 0, 1), planeId);
+    const point1 = new FreePoint2D(operationContext.projectionConstruction.generatePoint2DId(plane), new Vector3(50, 0, 1), planeId);
+    const point2 = new FreePoint2D(operationContext.projectionConstruction.generatePoint2DId(plane), new Vector3(0, 50, 1), planeId);
+    const point3 = new FreePoint2D(operationContext.projectionConstruction.generatePoint2DId(plane), new Vector3(-50, 0, 1), planeId);
     
     plane.addPoint(centerPoint);
     plane.addPoint(point1);
@@ -54,7 +60,7 @@ describe('Circle2D', () => {
   describe('Circle2DByCenterAndPoint', () => {
     it('should create circle with center and circumference point', () => {
       const plane = getHorizontalPlane(world);
-      const circle = new Circle2DByCenterAndPoint(world.getConstructionService().generateCircle2DId(plane), centerPointId, point1Id, planeId);
+      const circle = new Circle2DByCenterAndPoint(operationContext.projectionConstruction.generateCircle2DId(plane), centerPointId, point1Id, planeId);
       
       expect(circle.id).toBeDefined();
       expect(circle).toBeInstanceOf(Circle2DByCenterAndPoint);
@@ -64,10 +70,10 @@ describe('Circle2D', () => {
 
     it('should realize circle with computed radius', () => {
       const plane = getHorizontalPlane(world);
-      const circle = new Circle2DByCenterAndPoint(world.getConstructionService().generateCircle2DId(plane), centerPointId, point1Id, planeId);
+      const circle = new Circle2DByCenterAndPoint(operationContext.projectionConstruction.generateCircle2DId(plane), centerPointId, point1Id, planeId);
       
       plane.addCircle(circle);
-      const realization = world.realizeCircle2D(world.getCircle2D(circle.id)!, world);
+      const realization = operationContext.realizations.realizeCircle2D(plane.getCircle(circle.id)!, realizationContext);
       
       expect(realization).toBeDefined();
       expect(realization!.center.x).toBe(0);
@@ -83,12 +89,12 @@ describe('Circle2D', () => {
     it('should return null for degenerate circle (center = circumference point)', () => {
       const plane = getHorizontalPlane(world);
       // Create coincident point
-      const coincident = new FreePoint2D(world.getConstructionService().generatePoint2DId(plane), new Vector3(0, 0, 1), planeId);
+      const coincident = new FreePoint2D(operationContext.projectionConstruction.generatePoint2DId(plane), new Vector3(0, 0, 1), planeId);
       plane.addPoint(coincident);
       
-      const circle = new Circle2DByCenterAndPoint(world.getConstructionService().generateCircle2DId(plane), centerPointId, coincident.id, planeId);
+      const circle = new Circle2DByCenterAndPoint(operationContext.projectionConstruction.generateCircle2DId(plane), centerPointId, coincident.id, planeId);
       plane.addCircle(circle);
-      const realization = world.realizeCircle2D(world.getCircle2D(circle.id)!, world);
+      const realization = operationContext.realizations.realizeCircle2D(plane.getCircle(circle.id)!, realizationContext);
       
       // Should return infeasible realization for degenerate circle
       expect(realization).toBeDefined();
@@ -99,7 +105,7 @@ describe('Circle2D', () => {
   describe('Circle2DByThreePoints', () => {
     it('should create circle through three points', () => {
       const plane = getHorizontalPlane(world);
-      const circle = new Circle2DByThreePoints(world.getConstructionService().generateCircle2DId(plane), point1Id, point2Id, point3Id, planeId);
+      const circle = new Circle2DByThreePoints(operationContext.projectionConstruction.generateCircle2DId(plane), point1Id, point2Id, point3Id, planeId);
       
       expect(circle.id).toBeDefined();
       expect(circle).toBeInstanceOf(Circle2DByThreePoints);
@@ -110,10 +116,10 @@ describe('Circle2D', () => {
 
     it('should realize circle through three non-collinear points', () => {
       const plane = getHorizontalPlane(world);
-      const circle = new Circle2DByThreePoints(world.getConstructionService().generateCircle2DId(plane), point1Id, point2Id, point3Id, planeId);
+      const circle = new Circle2DByThreePoints(operationContext.projectionConstruction.generateCircle2DId(plane), point1Id, point2Id, point3Id, planeId);
       
       plane.addCircle(circle);
-      const realization = world.realizeCircle2D(world.getCircle2D(circle.id)!, world);
+      const realization = operationContext.realizations.realizeCircle2D(plane.getCircle(circle.id)!, realizationContext);
       
       expect(realization).toBeDefined();
       // For points at (50,0), (0,50), (-50,0), the circumcircle has center near origin
@@ -126,16 +132,16 @@ describe('Circle2D', () => {
     it('should return null for collinear points', () => {
       const plane = getHorizontalPlane(world);
       // Create three collinear points
-      const collinear1 = new FreePoint2D(world.getConstructionService().generatePoint2DId(plane), new Vector3(0, 0, 1), planeId);
-      const collinear2 = new FreePoint2D(world.getConstructionService().generatePoint2DId(plane), new Vector3(10, 0, 1), planeId);
-      const collinear3 = new FreePoint2D(world.getConstructionService().generatePoint2DId(plane), new Vector3(20, 0, 1), planeId);
+      const collinear1 = new FreePoint2D(operationContext.projectionConstruction.generatePoint2DId(plane), new Vector3(0, 0, 1), planeId);
+      const collinear2 = new FreePoint2D(operationContext.projectionConstruction.generatePoint2DId(plane), new Vector3(10, 0, 1), planeId);
+      const collinear3 = new FreePoint2D(operationContext.projectionConstruction.generatePoint2DId(plane), new Vector3(20, 0, 1), planeId);
       plane.addPoint(collinear1);
       plane.addPoint(collinear2);
       plane.addPoint(collinear3);
       
-      const circle = new Circle2DByThreePoints(world.getConstructionService().generateCircle2DId(plane), collinear1.id, collinear2.id, collinear3.id, planeId);
+      const circle = new Circle2DByThreePoints(operationContext.projectionConstruction.generateCircle2DId(plane), collinear1.id, collinear2.id, collinear3.id, planeId);
       plane.addCircle(circle);
-      const realization = world.realizeCircle2D(world.getCircle2D(circle.id)!, world);
+      const realization = operationContext.realizations.realizeCircle2D(plane.getCircle(circle.id)!, realizationContext);
       
       // Should return infeasible realization for collinear points (no unique circle)
       expect(realization).toBeDefined();

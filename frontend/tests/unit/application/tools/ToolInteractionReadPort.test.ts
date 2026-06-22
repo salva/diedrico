@@ -4,12 +4,12 @@ import { RuntimeSession } from '@/application/appShell/RuntimeSession';
 import { createToolInteractionReadPort } from '@/application/tools/ToolInteractionReadPort';
 import type { ITool, ToolContext } from '@/tools/ITool';
 import type { ToolCommandSink } from '@/tools/ToolCommandIntents';
-import { createTestWorld, getHorizontalOrigin, getHorizontalOriginId, getHorizontalPlaneId, getVerticalPlaneId } from '../../../helpers/worldHelpers';
+import { createTestWorld, getHorizontalOrigin, getHorizontalOriginId, getHorizontalPlaneId, getVerticalPlaneId, getElement2D } from '../../../helpers/worldHelpers';
 
 describe('ToolInteractionReadPort', () => {
   it('exposes only caller-mapped tool read and realization behavior from the runtime-owned world', () => {
-    const { world } = createTestWorld();
-    const readPort = createToolInteractionReadPort(world);
+    const { world, operationContext } = createTestWorld();
+    const readPort = createToolInteractionReadPort(world, operationContext.realizations);
     const horizontalPlaneId = getHorizontalPlaneId(world);
     const verticalPlaneId = getVerticalPlaneId(world);
     const origin = getHorizontalOrigin(world);

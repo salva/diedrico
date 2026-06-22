@@ -278,10 +278,3 @@ export function renderPrimitive(
   const _exhaustive: never = primitive;
   throw new Error(`Unhandled primitive type: ${(_exhaustive as any).type}`);
 }
-
-export function renderPaper(
-  primitives: Primitive[],
-  viewport: ViewportTransform,
-): Array<{ element: string; attributes: SVGAttributes }> {
-  return primitives.filter(p => p.visible).map(p => renderPrimitive(p, viewport));
-}

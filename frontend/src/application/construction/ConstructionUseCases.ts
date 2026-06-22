@@ -1,9 +1,14 @@
 import type { CommandOperationBuilder, ToolCommandExecutionPort } from '@/application/commandProduction/CommandProductionPorts';
+import type { OperationContext } from '@/commands/operations/OperationContext';
 import type { World } from '@/domain/world/World';
+import { GeometryElementLookup } from '@/domain/world/GeometryElementLookup';
+import type { CachedProjectionElementRealizationContext } from '@/domain/world/projectionPlane/ProjectionPlaneContext';
 import type { ToolConstructionIntent, ToolCommandResult } from '@/tools/ToolCommandIntents';
 import type { Point2D } from '@/domain/world/Point';
 import { Line2D } from '@/domain/world/Line';
 import { Circle2D } from '@/domain/world/Circle';
+import { Segment2D } from '@/domain/world/Segment';
+import type { Element2D } from '@/domain/world/Element2D';
 import { PointSequenceFactory } from '@/commands/factories/PointSequenceFactory';
 import { LineSequenceFactory } from '@/commands/factories/LineSequenceFactory';
 import { CircleSequenceFactory } from '@/commands/factories/CircleSequenceFactory';
@@ -24,20 +29,37 @@ import { createSiblingGuideAction } from '@/domain/processTree/actions/CreateSib
 import { createAdd3DPointAction, createAdd3DLineAction, createAdd3DSegmentAction } from '@/domain/processTree/actions/Element3DActions';
 import { createTangentLineToCircleThroughPointAction, createTangentLineToCircleParallelToLineAction } from '@/domain/processTree/actions/CreateTangentLineAction';
 import { areLinesParallel, intersectLineCircle, intersectCircleCircle } from '@/domain/calculations/Intersections';
+import type { Vector3 } from 'three';
 
 export interface ExecuteConstructionParams {
   intent: ToolConstructionIntent;
-  world: World;
+  operationContext: OperationContext;
   commands: ToolCommandExecutionPort;
 }
 
-export function executeConstructionIntent({ intent, world, commands }: ExecuteConstructionParams): ToolCommandResult {
+interface ConstructionExecutionContext {
+  readonly cmd: CommandOperationBuilder;
+  readonly operationContext: OperationContext;
+  readonly world: World;
+  readonly realizationContext: CachedProjectionElementRealizationContext;
+  readonly groupId: string;
+}
+
+type IntentExecutor<T extends ToolConstructionIntent> = (context: ConstructionExecutionContext, intent: T) => void;
+
+export function executeConstructionIntent({ intent, operationContext, commands }: ExecuteConstructionParams): ToolCommandResult {
   const result = commands.executeToolCommand(intent.description, (cmd) => {
     const groupId = `group_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
     const group = createActionGroup(groupId);
     cmd.addAndExecute(new AddProcessTreeActionGroupOp(group));
-    executeConstructionOperations(cmd, intent, world, groupId);
-    checkCreatedElementsFeasibility(cmd, world);
+    executeConstructionOperations({
+      cmd,
+      operationContext,
+      world: operationContext.world,
+      realizationContext: operationContext.realizationContext,
+      groupId,
+    }, intent);
+    checkCreatedElementsFeasibility(cmd, operationContext.world, operationContext.realizationContext);
   });
 
   return result.success
@@ -45,140 +67,146 @@ export function executeConstructionIntent({ intent, world, commands }: ExecuteCo
     : result;
 }
 
-function executeConstructionOperations(cmd: CommandOperationBuilder, intent: ToolConstructionIntent, world: World, groupId: string): void {
-  const args = intent.args;
-  const planeId = intent.planeId;
+const executors: { [K in ToolConstructionIntent['type']]: IntentExecutor<Extract<ToolConstructionIntent, { type: K }>> } = {
+  point: executePointIntent,
+  line: executeLineIntent,
+  segment: executeSegmentIntent,
+  circle: executeCircleIntent,
+  guide: executeGuideIntent,
+  'parallel-line': executeParallelLineIntent,
+  'perpendicular-line': executePerpendicularLineIntent,
+  intersection: executeIntersectionIntent,
+  'tangent-line-to-circle-through-point': executeTangentThroughPointIntent,
+  'tangent-line-to-circle-parallel': executeTangentParallelIntent,
+  create3dpoint: executeCreate3DPointIntent,
+  create3dline: executeCreate3DLineIntent,
+  create3dsegment: executeCreate3DSegmentIntent,
+  create3dplane: executeCreate3DPlaneIntent,
+  createprojectionplane: executeCreateProjectionPlaneIntent,
+};
 
-  switch (intent.type) {
-    case 'point': {
-      const planeCoords = args.get('position')!.planeCoords;
-      validateCoordinates(planeCoords);
-      if (!world.getProjectionPlaneById(planeId)) throw new Error(`Plane not found: ${planeId}`);
-      PointSequenceFactory.createFreePoint(cmd, planeId, planeCoords, groupId);
-      return;
-    }
-    case 'line': {
-      const p1 = args.get('point1')!.element as Point2D;
-      const p2 = args.get('point2')!.element as Point2D;
-      LineSequenceFactory.createLineByTwoPoints(cmd, planeId, p1.id, p2.id, groupId);
-      return;
-    }
-    case 'segment': {
-      const p1 = args.get('point1')!.element as Point2D;
-      const p2 = args.get('point2')!.element as Point2D;
-      const result = cmd.addAndExecute(new AddSegment2DByPointsOp(planeId, p1.id, p2.id));
-      cmd.addAndExecute(new AddProcessTreeActionOp(createSegmentAction(result.outputs.segmentId as string), groupId));
-      return;
-    }
-    case 'circle': {
-      const center = args.get('center')!.element as Point2D;
-      const circumferencePoint = args.get('circumferencePoint')!.element as Point2D;
-      CircleSequenceFactory.createCircleByCenterAndPoint(cmd, planeId, center.id, circumferencePoint.id, groupId);
-      return;
-    }
-    case 'guide': {
-      const referenceLineId = args.get('referenceLine')!.element!.id;
-      const throughPointId = args.get('throughPoint')!.element!.id;
-      const result = GuideSequenceFactory.createGuideWithSibling(cmd, planeId, referenceLineId, throughPointId, world);
-      cmd.addAndExecute(new AddProcessTreeActionOp(createGuideAction(result.guideId), groupId));
-      if (result.siblingGuideId) cmd.addAndExecute(new AddProcessTreeActionOp(createSiblingGuideAction(result.siblingGuideId), groupId));
-      return;
-    }
-    case 'parallel-line': {
-      const line = args.get('referenceLine')!.element as Line2D;
-      const point = args.get('throughPoint')!.element as Point2D;
-      LineSequenceFactory.createParallelLine(cmd, planeId, line.id, point.id, groupId);
-      return;
-    }
-    case 'perpendicular-line': {
-      const line = args.get('referenceLine')!.element as Line2D;
-      const point = args.get('throughPoint')!.element as Point2D;
-      LineSequenceFactory.createPerpendicularLine(cmd, planeId, line.id, point.id, groupId);
-      return;
-    }
-    case 'intersection': {
-      createIntersection(cmd, intent, world, groupId);
-      return;
-    }
-    case 'tangent-line-to-circle-through-point': {
-      const circle = args.get('circle')!.element as Circle2D;
-      const point = args.get('throughPoint')!.element as Point2D;
-      const tangentIndex = intent.metadata.tangentIndex;
-      const result = cmd.addAndExecute(new AddLine2DTangentToCircleThroughPointOp(planeId, circle.id, point.id, tangentIndex));
-      cmd.addAndExecute(new AddProcessTreeActionOp(createTangentLineToCircleThroughPointAction(result.outputs.lineId as string), groupId));
-      return;
-    }
-    case 'tangent-line-to-circle-parallel': {
-      const circle = args.get('circle')!.element as Circle2D;
-      const line = args.get('referenceLine')!.element as Line2D;
-      const tangentIndex = intent.metadata.tangentIndex;
-      const result = cmd.addAndExecute(new AddLine2DTangentToCircleParallelToLineOp(planeId, circle.id, line.id, tangentIndex));
-      cmd.addAndExecute(new AddProcessTreeActionOp(createTangentLineToCircleParallelToLineAction(result.outputs.lineId as string), groupId));
-      return;
-    }
-    case 'create3dpoint': {
-      const p1 = args.get('projection1')!.element!;
-      const p2 = args.get('projection2')!.element!;
-      const result = cmd.addAndExecute(new Add3DPointOp(p1.id, p2.id, p1.planeId, p2.planeId));
-      cmd.addAndExecute(new AddProcessTreeActionOp(createAdd3DPointAction(result.outputs.pointId as string), groupId));
-      return;
-    }
-    case 'create3dline': {
-      const l1 = args.get('projection1')!.element!;
-      const l2 = args.get('projection2')!.element!;
-      const result = cmd.addAndExecute(new Add3DLineOp(l1.id, l2.id, l1.planeId, l2.planeId));
-      cmd.addAndExecute(new AddProcessTreeActionOp(createAdd3DLineAction(result.outputs.lineId as string), groupId));
-      return;
-    }
-    case 'create3dsegment': {
-      const s1 = args.get('projection1')!.element!;
-      const s2 = args.get('projection2')!.element!;
-      const result = cmd.addAndExecute(new Add3DSegmentOp(s1.id, s2.id, s1.planeId, s2.planeId));
-      cmd.addAndExecute(new AddProcessTreeActionOp(createAdd3DSegmentAction(result.outputs.segmentId as string), groupId));
-      return;
-    }
-    case 'create3dplane': {
-      const t1 = args.get('trace1')!.element!;
-      const t2 = args.get('trace2')!.element!;
-      PlaneSequenceFactory.create3DPlaneFromTraces(cmd, t1.id, t2.id, t1.planeId, t2.planeId, undefined, groupId);
-      return;
-    }
-    case 'createprojectionplane': {
-      const t1 = args.get('t1HingeTrace')!.element!;
-      const t2 = args.get('t2OtherTrace')!.element!;
-      const t2Prime = args.get('t2PrimePositionLine')!.element!;
-      const { planeId: plane3DId } = PlaneSequenceFactory.create3DPlaneFromTraces(cmd, t1.id, t2.id, t1.planeId, t2.planeId, undefined, groupId);
-      PlaneSequenceFactory.createAuxiliaryProjectionPlane(cmd, world, plane3DId, t1.id, t2.id, t2Prime.id, t1.planeId, undefined, groupId);
-      return;
-    }
-    case 'interactiveprojectionsetup': {
-      throw new Error('Interactive projection setup is not retained in Wave 006a application controller');
-    }
-    default:
-      throw new Error(`Unsupported construction intent: ${(intent as any).type}`);
-  }
+function executeConstructionOperations(context: ConstructionExecutionContext, intent: ToolConstructionIntent): void {
+  executors[intent.type](context, intent as never);
 }
 
-function createIntersection(cmd: CommandOperationBuilder, intent: Extract<ToolConstructionIntent, { type: 'intersection' }>, world: World, groupId: string): void {
-  const element1 = intent.args.get('element1')!.element!;
-  const element2 = intent.args.get('element2')!.element!;
-  const selectionPoint = intent.metadata.selectionPoint;
+function executePointIntent({ cmd, world, groupId }: ConstructionExecutionContext, intent: Extract<ToolConstructionIntent, { type: 'point' }>): void {
+  validateCoordinates(intent.position);
+  requireProjectionPlane(world, intent.planeId, 'target');
+  PointSequenceFactory.createFreePoint(cmd, intent.planeId, intent.position, groupId);
+}
+
+function executeLineIntent({ cmd, world, groupId }: ConstructionExecutionContext, intent: Extract<ToolConstructionIntent, { type: 'line' }>): void {
+  requirePointOnPlane(world, intent.point1Id, intent.planeId, 'point1');
+  requirePointOnPlane(world, intent.point2Id, intent.planeId, 'point2');
+  LineSequenceFactory.createLineByTwoPoints(cmd, intent.planeId, intent.point1Id, intent.point2Id, groupId);
+}
+
+function executeSegmentIntent({ cmd, world, groupId }: ConstructionExecutionContext, intent: Extract<ToolConstructionIntent, { type: 'segment' }>): void {
+  requirePointOnPlane(world, intent.point1Id, intent.planeId, 'point1');
+  requirePointOnPlane(world, intent.point2Id, intent.planeId, 'point2');
+  const result = cmd.addAndExecute(new AddSegment2DByPointsOp(intent.planeId, intent.point1Id, intent.point2Id));
+  cmd.addAndExecute(new AddProcessTreeActionOp(createSegmentAction(result.outputs.segmentId as string), groupId));
+}
+
+function executeCircleIntent({ cmd, world, groupId }: ConstructionExecutionContext, intent: Extract<ToolConstructionIntent, { type: 'circle' }>): void {
+  requirePointOnPlane(world, intent.centerPointId, intent.planeId, 'center point');
+  requirePointOnPlane(world, intent.circumferencePointId, intent.planeId, 'circumference point');
+  CircleSequenceFactory.createCircleByCenterAndPoint(cmd, intent.planeId, intent.centerPointId, intent.circumferencePointId, groupId);
+}
+
+function executeGuideIntent({ cmd, world, realizationContext, groupId }: ConstructionExecutionContext, intent: Extract<ToolConstructionIntent, { type: 'guide' }>): void {
+  requireLineOnPlane(world, intent.referenceLineId, intent.planeId, 'reference line');
+  requirePointOnPlane(world, intent.throughPointId, intent.planeId, 'through point');
+  const result = GuideSequenceFactory.createGuideWithSibling(cmd, intent.planeId, intent.referenceLineId, intent.throughPointId, world, realizationContext);
+  cmd.addAndExecute(new AddProcessTreeActionOp(createGuideAction(result.guideId), groupId));
+  if (result.siblingGuideId) cmd.addAndExecute(new AddProcessTreeActionOp(createSiblingGuideAction(result.siblingGuideId), groupId));
+}
+
+function executeParallelLineIntent({ cmd, world, groupId }: ConstructionExecutionContext, intent: Extract<ToolConstructionIntent, { type: 'parallel-line' }>): void {
+  requireLineOnPlane(world, intent.referenceLineId, intent.planeId, 'reference line');
+  requirePointOnPlane(world, intent.throughPointId, intent.planeId, 'through point');
+  LineSequenceFactory.createParallelLine(cmd, intent.planeId, intent.referenceLineId, intent.throughPointId, groupId);
+}
+
+function executePerpendicularLineIntent({ cmd, world, groupId }: ConstructionExecutionContext, intent: Extract<ToolConstructionIntent, { type: 'perpendicular-line' }>): void {
+  requireLineOnPlane(world, intent.referenceLineId, intent.planeId, 'reference line');
+  requirePointOnPlane(world, intent.throughPointId, intent.planeId, 'through point');
+  LineSequenceFactory.createPerpendicularLine(cmd, intent.planeId, intent.referenceLineId, intent.throughPointId, groupId);
+}
+
+function executeIntersectionIntent(context: ConstructionExecutionContext, intent: Extract<ToolConstructionIntent, { type: 'intersection' }>): void {
+  createIntersection(context, intent);
+}
+
+function executeTangentThroughPointIntent({ cmd, world, groupId }: ConstructionExecutionContext, intent: Extract<ToolConstructionIntent, { type: 'tangent-line-to-circle-through-point' }>): void {
+  requireCircleOnPlane(world, intent.circleId, intent.planeId, 'circle');
+  requirePointOnPlane(world, intent.throughPointId, intent.planeId, 'through point');
+  const result = cmd.addAndExecute(new AddLine2DTangentToCircleThroughPointOp(intent.planeId, intent.circleId, intent.throughPointId, intent.tangentIndex));
+  cmd.addAndExecute(new AddProcessTreeActionOp(createTangentLineToCircleThroughPointAction(result.outputs.lineId as string), groupId));
+}
+
+function executeTangentParallelIntent({ cmd, world, groupId }: ConstructionExecutionContext, intent: Extract<ToolConstructionIntent, { type: 'tangent-line-to-circle-parallel' }>): void {
+  requireCircleOnPlane(world, intent.circleId, intent.planeId, 'circle');
+  requireLineOnPlane(world, intent.referenceLineId, intent.planeId, 'reference line');
+  const result = cmd.addAndExecute(new AddLine2DTangentToCircleParallelToLineOp(intent.planeId, intent.circleId, intent.referenceLineId, intent.tangentIndex));
+  cmd.addAndExecute(new AddProcessTreeActionOp(createTangentLineToCircleParallelToLineAction(result.outputs.lineId as string), groupId));
+}
+
+function executeCreate3DPointIntent({ cmd, world, groupId }: ConstructionExecutionContext, intent: Extract<ToolConstructionIntent, { type: 'create3dpoint' }>): void {
+  const p1 = requirePoint(world, intent.projection1PointId, 'projection1 point');
+  const p2 = requirePoint(world, intent.projection2PointId, 'projection2 point');
+  const result = cmd.addAndExecute(new Add3DPointOp(p1.id, p2.id, p1.planeId, p2.planeId));
+  cmd.addAndExecute(new AddProcessTreeActionOp(createAdd3DPointAction(result.outputs.pointId as string), groupId));
+}
+
+function executeCreate3DLineIntent({ cmd, world, groupId }: ConstructionExecutionContext, intent: Extract<ToolConstructionIntent, { type: 'create3dline' }>): void {
+  const l1 = requireLine(world, intent.projection1LineId, 'projection1 line');
+  const l2 = requireLine(world, intent.projection2LineId, 'projection2 line');
+  const result = cmd.addAndExecute(new Add3DLineOp(l1.id, l2.id, l1.planeId, l2.planeId));
+  cmd.addAndExecute(new AddProcessTreeActionOp(createAdd3DLineAction(result.outputs.lineId as string), groupId));
+}
+
+function executeCreate3DSegmentIntent({ cmd, world, groupId }: ConstructionExecutionContext, intent: Extract<ToolConstructionIntent, { type: 'create3dsegment' }>): void {
+  const s1 = requireSegment(world, intent.projection1SegmentId, 'projection1 segment');
+  const s2 = requireSegment(world, intent.projection2SegmentId, 'projection2 segment');
+  const result = cmd.addAndExecute(new Add3DSegmentOp(s1.id, s2.id, s1.planeId, s2.planeId));
+  cmd.addAndExecute(new AddProcessTreeActionOp(createAdd3DSegmentAction(result.outputs.segmentId as string), groupId));
+}
+
+function executeCreate3DPlaneIntent({ cmd, world, groupId }: ConstructionExecutionContext, intent: Extract<ToolConstructionIntent, { type: 'create3dplane' }>): void {
+  const t1 = requireLine(world, intent.trace1LineId, 'trace1 line');
+  const t2 = requireLine(world, intent.trace2LineId, 'trace2 line');
+  PlaneSequenceFactory.create3DPlaneFromTraces(cmd, t1.id, t2.id, t1.planeId, t2.planeId, undefined, groupId);
+}
+
+function executeCreateProjectionPlaneIntent({ cmd, world, groupId }: ConstructionExecutionContext, intent: Extract<ToolConstructionIntent, { type: 'createprojectionplane' }>): void {
+  const t1 = requireLine(world, intent.t1HingeTraceLineId, 'T1 hinge trace line');
+  const t2 = requireLine(world, intent.t2OtherTraceLineId, 'T2 other trace line');
+  const t2Prime = requireLine(world, intent.t2PrimePositionLineId, "T2' position line");
+  const { planeId: plane3DId } = PlaneSequenceFactory.create3DPlaneFromTraces(cmd, t1.id, t2.id, t1.planeId, t2.planeId, undefined, groupId);
+  PlaneSequenceFactory.createAuxiliaryProjectionPlane(cmd, world, plane3DId, t1.id, t2.id, t2Prime.id, t1.planeId, undefined, groupId);
+}
+
+function createIntersection({ cmd, world, groupId, realizationContext }: ConstructionExecutionContext, intent: Extract<ToolConstructionIntent, { type: 'intersection' }>): void {
+  const element1 = requireLineOrCircleOnPlane(world, intent.element1Id, intent.planeId, 'element1');
+  const element2 = requireLineOrCircleOnPlane(world, intent.element2Id, intent.planeId, 'element2');
+  const selectionPoint = intent.selectionPoint;
   if (element1 instanceof Line2D && element2 instanceof Line2D) {
-    const r1 = element1.realize2D(world);
-    const r2 = element2.realize2D(world);
+    const r1 = element1.realize2D(realizationContext);
+    const r2 = element2.realize2D(realizationContext);
     if (!r1 || !r2) throw new Error('Could not realize lines.');
     if (areLinesParallel(r1, r2)) throw new Error('Lines are parallel and do not intersect.');
     IntersectionSequenceFactory.createLineLineIntersection(cmd, intent.planeId, element1.id, element2.id, world, groupId);
   } else if (element1 instanceof Line2D && element2 instanceof Circle2D) {
-    const index = lineCircleIndex(element1.id, element2.id, selectionPoint, world);
+    const index = lineCircleIndex(element1.id, element2.id, selectionPoint, world, realizationContext);
     if (index === null) throw new Error('Line and circle do not intersect.');
     IntersectionSequenceFactory.createLineCircleIntersection(cmd, intent.planeId, element1.id, element2.id, index, world, groupId);
   } else if (element1 instanceof Circle2D && element2 instanceof Line2D) {
-    const index = lineCircleIndex(element2.id, element1.id, selectionPoint, world);
+    const index = lineCircleIndex(element2.id, element1.id, selectionPoint, world, realizationContext);
     if (index === null) throw new Error('Circle and line do not intersect.');
     IntersectionSequenceFactory.createLineCircleIntersection(cmd, intent.planeId, element2.id, element1.id, index, world, groupId);
   } else if (element1 instanceof Circle2D && element2 instanceof Circle2D) {
-    const index = circleCircleIndex(element1.id, element2.id, selectionPoint, world);
+    const index = circleCircleIndex(element1.id, element2.id, selectionPoint, world, realizationContext);
     if (index === null) throw new Error('Circles do not intersect.');
     IntersectionSequenceFactory.createCircleCircleIntersection(cmd, intent.planeId, element1.id, element2.id, index, world, groupId);
   } else {
@@ -186,12 +214,72 @@ function createIntersection(cmd: CommandOperationBuilder, intent: Extract<ToolCo
   }
 }
 
-function lineCircleIndex(lineId: string, circleId: string, mousePos: THREE.Vector3, world: World): number | null {
-  const line = world.getLine2D(lineId);
-  const circle = world.getCircle2D(circleId);
-  if (!line || !circle) return null;
-  const lr = line.realize2D(world);
-  const cr = circle.realize2D(world);
+function requireProjectionPlane(world: World, planeId: string, role: string): void {
+  if (!world.getProjectionPlaneById(planeId)) throw new Error(`${role} plane not found: ${planeId}`);
+}
+
+function requirePoint(world: World, pointId: string, role: string): Point2D {
+  const point = new GeometryElementLookup(world).getPoint2D(pointId);
+  if (!point) throw new Error(`${role} not found or is not a point: ${pointId}`);
+  return point;
+}
+
+function requireLine(world: World, lineId: string, role: string): Line2D {
+  const line = new GeometryElementLookup(world).getLine2D(lineId);
+  if (!line) throw new Error(`${role} not found or is not a line: ${lineId}`);
+  return line;
+}
+
+function requireCircle(world: World, circleId: string, role: string): Circle2D {
+  const circle = new GeometryElementLookup(world).getCircle2D(circleId);
+  if (!circle) throw new Error(`${role} not found or is not a circle: ${circleId}`);
+  return circle;
+}
+
+function requireSegment(world: World, segmentId: string, role: string): Segment2D {
+  const line = requireLine(world, segmentId, role);
+  if (!(line instanceof Segment2D)) throw new Error(`${role} is not a segment: ${segmentId}`);
+  return line;
+}
+
+function requirePointOnPlane(world: World, pointId: string, planeId: string, role: string): Point2D {
+  const point = requirePoint(world, pointId, role);
+  requireElementOnPlane(point, planeId, role);
+  return point;
+}
+
+function requireLineOnPlane(world: World, lineId: string, planeId: string, role: string): Line2D {
+  const line = requireLine(world, lineId, role);
+  requireElementOnPlane(line, planeId, role);
+  return line;
+}
+
+function requireCircleOnPlane(world: World, circleId: string, planeId: string, role: string): Circle2D {
+  const circle = requireCircle(world, circleId, role);
+  requireElementOnPlane(circle, planeId, role);
+  return circle;
+}
+
+function requireLineOrCircleOnPlane(world: World, elementId: string, planeId: string, role: string): Line2D | Circle2D {
+  const lookup = new GeometryElementLookup(world);
+  const element = lookup.getLine2D(elementId) ?? lookup.getCircle2D(elementId);
+  if (!element) throw new Error(`${role} not found or is not a line/circle: ${elementId}`);
+  requireElementOnPlane(element, planeId, role);
+  return element;
+}
+
+function requireElementOnPlane(element: Element2D, planeId: string, role: string): void {
+  if (element.planeId !== planeId) throw new Error(`${role} belongs to plane ${element.planeId}, expected ${planeId}: ${element.id}`);
+}
+
+function lineCircleIndex(lineId: string, circleId: string, mousePos: Vector3, world: World, realizationContext: CachedProjectionElementRealizationContext): number | null {
+  const lookup = new GeometryElementLookup(world);
+  const line = lookup.getLine2D(lineId);
+  const circle = lookup.getCircle2D(circleId);
+  if (!line) throw new Error(`Line not found for line-circle intersection: ${lineId}`);
+  if (!circle) throw new Error(`Circle not found for line-circle intersection: ${circleId}`);
+  const lr = line.realize2D(realizationContext);
+  const cr = circle.realize2D(realizationContext);
   if (!lr || !cr) return null;
   const intersections = intersectLineCircle(lr, cr);
   if (intersections.length === 0) return null;
@@ -199,12 +287,14 @@ function lineCircleIndex(lineId: string, circleId: string, mousePos: THREE.Vecto
   return intersections[0].distanceTo(mousePos) <= intersections[1].distanceTo(mousePos) ? 0 : 1;
 }
 
-function circleCircleIndex(circle1Id: string, circle2Id: string, mousePos: THREE.Vector3, world: World): number | null {
-  const c1 = world.getCircle2D(circle1Id);
-  const c2 = world.getCircle2D(circle2Id);
-  if (!c1 || !c2) return null;
-  const r1 = c1.realize2D(world);
-  const r2 = c2.realize2D(world);
+function circleCircleIndex(circle1Id: string, circle2Id: string, mousePos: Vector3, world: World, realizationContext: CachedProjectionElementRealizationContext): number | null {
+  const lookup = new GeometryElementLookup(world);
+  const c1 = lookup.getCircle2D(circle1Id);
+  const c2 = lookup.getCircle2D(circle2Id);
+  if (!c1) throw new Error(`Circle not found for circle-circle intersection: ${circle1Id}`);
+  if (!c2) throw new Error(`Circle not found for circle-circle intersection: ${circle2Id}`);
+  const r1 = c1.realize2D(realizationContext);
+  const r2 = c2.realize2D(realizationContext);
   if (!r1 || !r2) return null;
   const intersections = intersectCircleCircle(r1, r2);
   if (intersections.length === 0) return null;
@@ -218,16 +308,19 @@ function validateCoordinates(coords: any): void {
   }
 }
 
-function checkCreatedElementsFeasibility(cmd: CommandOperationBuilder, world: World): void {
+function checkCreatedElementsFeasibility(cmd: CommandOperationBuilder, world: World, realizationContext: CachedProjectionElementRealizationContext): void {
+  const lookup = new GeometryElementLookup(world);
   for (const op of cmd.getOperations()) {
     for (const [key, value] of Object.entries(op.outputs)) {
       if (typeof value !== 'string' || !key.endsWith('Id') || key === 'groupId' || key === 'actionId') continue;
-      const element = world.getPoint2D(value) ?? world.getLine2D(value) ?? world.getCircle2D(value);
-      try {
-        const realization = element?.realize2D(world);
-        if (realization && !realization.feasible) console.warn(`[Feasibility] Newly created element ${value} is immediately infeasible`);
-      } catch {
-        // Ignore feasibility diagnostics for unresolved outputs.
+      if (!value.includes('/')) continue;
+
+      const element = lookup.getElement2D(value);
+      if (!element) throw new Error(`Operation ${op.type} reported missing 2D output ${key}: ${value}`);
+
+      const realization = element.realize2D(realizationContext);
+      if (realization && !realization.feasible) {
+        throw new Error(`Operation ${op.type} created infeasible 2D output ${key}: ${value}`);
       }
     }
   }

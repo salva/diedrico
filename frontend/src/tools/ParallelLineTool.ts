@@ -14,7 +14,9 @@
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
 import { lineThroughPointArgumentSet } from './toolArgumentSpecs';
-import type { ToolArgumentSet } from '@/tools/ToolArgumentCollector';
+import type { ArgumentValue, ToolArgumentSet } from '@/tools/ToolArgumentCollector';
+import type { ToolContext } from './ITool';
+import type { ToolConstructionIntent } from './ToolCommandIntents';
 
 /**
  * ParallelLineTool using ArgumentCollectorTool framework
@@ -27,7 +29,6 @@ import type { ToolArgumentSet } from '@/tools/ToolArgumentCollector';
  */
 export class ParallelLineTool extends ArgumentCollectorTool {
   readonly name = 'parallel-line';
-  protected readonly constructionIntentType = 'parallel-line';
 
   /**
    * Define argument specification
@@ -41,6 +42,16 @@ export class ParallelLineTool extends ArgumentCollectorTool {
         'Cannot create parallel line: reference line is infeasible'
       )
     ];
+  }
+
+  protected buildConstructionIntent(args: Map<string, ArgumentValue>, context: ToolContext): ToolConstructionIntent {
+    return {
+      type: 'parallel-line',
+      planeId: context.planeId,
+      referenceLineId: this.requireElementId(args, 'referenceLine'),
+      throughPointId: this.requireElementId(args, 'throughPoint'),
+      description: this.getCommandDescription()
+    };
   }
 
   /**

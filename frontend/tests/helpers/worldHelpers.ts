@@ -1,107 +1,134 @@
-/**
- * Test helpers for World semantic access (Phase 46)
- * 
- * These helpers abstract away specific ID values, allowing tests
- * to work with semantic references (horizontal plane, vertical plane, etc.)
- * instead of hardcoded IDs.
- * 
- * Usage:
- * ```typescript
- * const { world, commandStack } = createTestWorld();
- * const planeH = getHorizontalPlane(world);
- * const planeV = getVerticalPlane(world);
- * const originH = getHorizontalOrigin(world);
- * ```
- */
+/** Test helpers for initialized runtime contexts and semantic world access. */
 
 import { World } from '../../src/domain/world/World';
 import { CommandStack } from '../../src/commands/CommandStack';
 import { initializeWorld } from '../../src/application/world/initializeWorld';
 import { VisibilityModel } from '../../src/application/processTree/VisibilityModel';
-import { createOperationContextFromWorld, type OperationContext } from '../../src/commands/operations/OperationContext';
+import type { OperationContext } from '../../src/commands/operations/OperationContext';
+import { DependencyService } from '../../src/domain/world/DependencyService';
+import { ProcessTree } from '../../src/domain/processTree/ProcessTree';
+import { ProjectionConstructionService } from '../../src/domain/world/ProjectionConstructionService';
+import { ProjectionPlaneConstructionService } from '../../src/domain/world/ProjectionPlaneConstructionService';
+import { ReconstructionConstructionService } from '../../src/domain/world/ReconstructionConstructionService';
+import { WorldIdAllocator } from '../../src/domain/world/WorldIdAllocator';
+import { LabelGenerator } from '../../src/domain/world/LabelGenerator';
+import { RealizationService } from '../../src/domain/world/RealizationService';
+import { createWorldRealizationContext } from '../../src/domain/world/WorldRealizationContext';
+import { GeometryElementLookup } from '../../src/domain/world/GeometryElementLookup';
 import type { ProjectionPlane } from '../../src/domain/world/projectionPlane/ProjectionPlane';
 import type { FreePoint2D } from '../../src/domain/world/Point';
-import type { HingeLine } from '../../src/domain/world/HingeLine';
+import { HalfHingeLine2D, type HingeLine } from '../../src/domain/world/HingeLine';
 
-/**
- * Create a fully initialized World for testing.
- * 
- * Returns a World with:
- * - P_H (horizontal) and P_V (vertical) projection planes
- * - Origin points O_H and O_V at (0,0) on each plane
- * - Hinge line connecting the two planes
- * - CommandStack for executing commands
- * 
- * Usage:
- * ```typescript
- * const { world, commandStack } = createTestWorld();
- * const plane = world.getProjectionPlaneByLabel('P_H');  // Succeeds
- * const origin = plane.getPoint2DByLabel('O_H');          // Succeeds
- * ```
- * 
- * @returns Object with initialized world and command stack
- */
-export function buildOperationContext(world: World, visibilityModel: VisibilityModel): OperationContext {
-  return createOperationContextFromWorld(world, visibilityModel);
+export interface TestRuntimeContext {
+  readonly world: World;
+  readonly visibilityModel: VisibilityModel;
+  readonly commandStack: CommandStack;
+  readonly operationContext: OperationContext;
 }
 
-export function createTestWorld(): { world: World; visibilityModel: VisibilityModel; commandStack: CommandStack } {
-  const world = new World();
-  const visibilityModel = new VisibilityModel();
-  const commandStack = new CommandStack();
-  initializeWorld(world, visibilityModel, commandStack);
-  return { world, visibilityModel, commandStack };
+function createProjectionConstructionService(
+  world: World,
+  dependencies: DependencyService,
+  ids: WorldIdAllocator,
+  labels: LabelGenerator,
+  realizations: RealizationService,
+): ProjectionConstructionService {
+  const realizationContext = createWorldRealizationContext(world, realizations);
+  const lookup = new GeometryElementLookup(world);
+  return new ProjectionConstructionService({
+    idAllocator: ids,
+    labelGenerator: labels,
+    getProjectionPlaneById: id => world.getProjectionPlaneById(id),
+    getPoint2D: id => lookup.getPoint2D(id),
+    getLine2D: id => lookup.getLine2D(id),
+    getCircle2D: id => lookup.getCircle2D(id),
+    getProjectionPlane2DRealization: id => realizationContext.getProjectionPlane2DRealization(id),
+    getProjectionPlane3DRealization: id => realizationContext.getProjectionPlane3DRealization(id),
+    get3DPlaneRealization: id => realizationContext.get3DPlaneRealization(id),
+    getPlaneForElement: id => getPlaneForElement(world, id),
+    getHingeLineById: id => world.getHingeLineById(id),
+  }, dependencies);
 }
 
-/**
- * Setup basic world and return with plane IDs for convenience.
- * Alias for createTestWorld that also returns semantic IDs.
- * 
- * @returns Object with world, commandStack, and plane IDs
- */
-export function setupBasicWorld(): {
-  world: World;
-  visibilityModel: VisibilityModel;
-  commandStack: CommandStack;
-  projPlaneH: string;
-  projPlaneV: string;
-} {
-  const { world, visibilityModel, commandStack } = createTestWorld();
-  return {
+export function createTestRuntimeContext(options: {
+  initialized?: boolean;
+  world?: World;
+  visibilityModel?: VisibilityModel;
+  commandStack?: CommandStack;
+  dependencies?: DependencyService;
+  processTree?: ProcessTree;
+  ids?: WorldIdAllocator;
+  labels?: LabelGenerator;
+  realizations?: RealizationService;
+} = {}): TestRuntimeContext {
+  const world = options.world ?? new World();
+  const visibilityModel = options.visibilityModel ?? new VisibilityModel();
+  const commandStack = options.commandStack ?? new CommandStack();
+  const processTree = options.processTree ?? new ProcessTree();
+  const dependencies = options.dependencies ?? new DependencyService();
+  const ids = options.ids ?? new WorldIdAllocator();
+  const labels = options.labels ?? new LabelGenerator();
+  const realizations = options.realizations ?? new RealizationService();
+  const realizationContext = createWorldRealizationContext(world, realizations);
+  const projectionConstruction = createProjectionConstructionService(world, dependencies, ids, labels, realizations);
+  const operationContext: OperationContext = {
     world,
     visibilityModel,
-    commandStack,
-    projPlaneH: getHorizontalPlaneId(world),
-    projPlaneV: getVerticalPlaneId(world),
+    processTree,
+    dependencies,
+    projectionConstruction,
+    reconstructionConstruction: new ReconstructionConstructionService({
+      world,
+      dependencies,
+      ids,
+      labels,
+    }),
+    projectionPlaneConstruction: new ProjectionPlaneConstructionService({
+      world,
+      dependencies,
+      ids,
+      labels,
+      projectionConstruction,
+    }),
+    idAllocator: ids,
+    labelGenerator: labels,
+    realizations,
+    realizationContext,
   };
+  if (options.initialized !== false) {
+    initializeWorld(world, commandStack, operationContext);
+  }
+  return { world, visibilityModel, commandStack, operationContext };
 }
+
+export const createTestWorld = createTestRuntimeContext;
 
 /**
  * Get horizontal projection plane from world
  */
 export function getHorizontalPlane(world: World): ProjectionPlane {
-  return world.getProjectionPlaneByLabel('P_H');
+  return getProjectionPlaneByName(world, 'P_H');
 }
 
 /**
  * Get vertical projection plane from world
  */
 export function getVerticalPlane(world: World): ProjectionPlane {
-  return world.getProjectionPlaneByLabel('P_V');
+  return getProjectionPlaneByName(world, 'P_V');
 }
 
 /**
  * Get horizontal projection plane ID
  */
 export function getHorizontalPlaneId(world: World): string {
-  return world.getProjectionPlaneByLabel('P_H').id!;
+  return getHorizontalPlane(world).id!;
 }
 
 /**
  * Get vertical projection plane ID
  */
 export function getVerticalPlaneId(world: World): string {
-  return world.getProjectionPlaneByLabel('P_V').id!;
+  return getVerticalPlane(world).id!;
 }
 
 /**
@@ -109,15 +136,7 @@ export function getVerticalPlaneId(world: World): string {
  * Phase 53: Use label-based access
  */
 export function getHorizontalOrigin(world: World): FreePoint2D {
-  return world.getProjectionPlaneByLabel('P_H').getPoint2DByLabel('O_H') as FreePoint2D;
-}
-
-/**
- * Get vertical origin point from world
- * Phase 53: Use label-based access
- */
-export function getVerticalOrigin(world: World): FreePoint2D {
-  return world.getProjectionPlaneByLabel('P_V').getPoint2DByLabel('O_V') as FreePoint2D;
+  return getHorizontalPlane(world).getPoint2DByLabel('O_H') as FreePoint2D;
 }
 
 /**
@@ -125,15 +144,32 @@ export function getVerticalOrigin(world: World): FreePoint2D {
  * Phase 53: Use label-based access
  */
 export function getHorizontalOriginId(world: World): string {
-  return world.getProjectionPlaneByLabel('P_H').getPoint2DByLabel('O_H').id!;
+  return getHorizontalPlane(world).getPoint2DByLabel('O_H').id!;
 }
 
-/**
- * Get vertical origin point ID
- * Phase 53: Use label-based access
- */
-export function getVerticalOriginId(world: World): string {
-  return world.getProjectionPlaneByLabel('P_V').getPoint2DByLabel('O_V').id!;
+function getProjectionPlaneByName(world: World, name: string): ProjectionPlane {
+  const plane = world.getAllProjectionPlanes().find(candidate => candidate.name === name);
+  if (!plane) throw new Error(`Projection plane not found with name: ${name}`);
+  return plane;
+}
+
+export function getHalfHingeLines2D(world: World, planeId: string): HalfHingeLine2D[] {
+  const plane = world.getProjectionPlaneById(planeId);
+  if (!plane) throw new Error(`Projection plane not found with id: ${planeId}`);
+  return plane.getAllLines().filter((line): line is HalfHingeLine2D => line instanceof HalfHingeLine2D);
+}
+
+export function getElement2D(world: World, elementId: string) {
+  return new GeometryElementLookup(world).getElement2D(elementId);
+}
+
+export function getPlaneForElement(world: World, elementId: string): ProjectionPlane | undefined {
+  for (const plane of world.getAllProjectionPlanes()) {
+    if (plane.getPoint(elementId) || plane.getLine(elementId) || plane.getCircle(elementId)) {
+      return plane;
+    }
+  }
+  return undefined;
 }
 
 /**
@@ -155,11 +191,4 @@ export function getMainHingeLine(world: World): HingeLine {
   }
   
   return hingeLine;
-}
-
-/**
- * Get ID of hinge line connecting P_H and P_V
- */
-export function getMainHingeLineId(world: World): string {
-  return getMainHingeLine(world).id!;
 }

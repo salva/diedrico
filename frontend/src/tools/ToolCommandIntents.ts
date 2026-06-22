@@ -1,5 +1,4 @@
 import type { Vector3 } from 'three';
-import type { ArgumentValue } from '@/tools/ToolArgumentCollector';
 
 export type ConstructionIntentType =
   | 'point'
@@ -16,38 +15,24 @@ export type ConstructionIntentType =
   | 'create3dline'
   | 'create3dsegment'
   | 'create3dplane'
-  | 'createprojectionplane'
-  | 'interactiveprojectionsetup';
-
-export type TangentChoiceMetadata = {
-  tangentIndex: 0 | 1;
-  selectionPoint: Vector3;
-};
-
-export type IntersectionChoiceMetadata = {
-  selectionPoint: Vector3;
-};
-
-export type ToolConstructionMetadata = TangentChoiceMetadata | IntersectionChoiceMetadata;
-
-export type MetadataConstructionIntentType =
-  | 'intersection'
-  | 'tangent-line-to-circle-through-point'
-  | 'tangent-line-to-circle-parallel';
-
-export type BasicConstructionIntentType = Exclude<ConstructionIntentType, MetadataConstructionIntentType>;
-
-interface BaseToolConstructionIntent {
-  description: string;
-  planeId: string;
-  args: Map<string, ArgumentValue>;
-}
+  | 'createprojectionplane';
 
 export type ToolConstructionIntent =
-  | (BaseToolConstructionIntent & { type: BasicConstructionIntentType; metadata?: undefined })
-  | (BaseToolConstructionIntent & { type: 'intersection'; metadata: IntersectionChoiceMetadata })
-  | (BaseToolConstructionIntent & { type: 'tangent-line-to-circle-through-point'; metadata: TangentChoiceMetadata })
-  | (BaseToolConstructionIntent & { type: 'tangent-line-to-circle-parallel'; metadata: TangentChoiceMetadata });
+  | { type: 'point'; planeId: string; position: Vector3; description: string }
+  | { type: 'line'; planeId: string; point1Id: string; point2Id: string; description: string }
+  | { type: 'circle'; planeId: string; centerPointId: string; circumferencePointId: string; description: string }
+  | { type: 'segment'; planeId: string; point1Id: string; point2Id: string; description: string }
+  | { type: 'guide'; planeId: string; referenceLineId: string; throughPointId: string; description: string }
+  | { type: 'parallel-line'; planeId: string; referenceLineId: string; throughPointId: string; description: string }
+  | { type: 'perpendicular-line'; planeId: string; referenceLineId: string; throughPointId: string; description: string }
+  | { type: 'intersection'; planeId: string; element1Id: string; element2Id: string; selectionPoint: Vector3; description: string }
+  | { type: 'tangent-line-to-circle-through-point'; planeId: string; circleId: string; throughPointId: string; tangentIndex: 0 | 1; selectionPoint: Vector3; description: string }
+  | { type: 'tangent-line-to-circle-parallel'; planeId: string; circleId: string; referenceLineId: string; tangentIndex: 0 | 1; selectionPoint: Vector3; description: string }
+  | { type: 'create3dpoint'; projection1PointId: string; projection2PointId: string; description: string }
+  | { type: 'create3dline'; projection1LineId: string; projection2LineId: string; description: string }
+  | { type: 'create3dsegment'; projection1SegmentId: string; projection2SegmentId: string; description: string }
+  | { type: 'create3dplane'; trace1LineId: string; trace2LineId: string; description: string }
+  | { type: 'createprojectionplane'; t1HingeTraceLineId: string; t2OtherTraceLineId: string; t2PrimePositionLineId: string; description: string };
 
 export interface MoveFreePointRequest {
   planeId: string;

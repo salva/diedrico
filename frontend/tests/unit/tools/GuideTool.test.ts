@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import type { World } from '../../../src/domain/world/World';
 import { GuideTool } from '../../../src/tools/GuideTool';
 import type { CommandStack } from '../../../src/commands/CommandStack';
-import { setupBasicWorld } from '../../helpers/worldHelpers';
+import { createTestWorld, getHorizontalPlaneId, getVerticalPlaneId } from '../../helpers/worldHelpers';
 
 describe('GuideTool', () => {
   let world: World;
@@ -10,7 +10,7 @@ describe('GuideTool', () => {
   let tool: GuideTool;
 
   beforeEach(() => {
-    const setup = setupBasicWorld();
+    const setup = createTestWorld();
     world = setup.world;
     commandStack = setup.commandStack;
     tool = new GuideTool(world, commandStack);
@@ -26,7 +26,9 @@ describe('GuideTool', () => {
 
     it('should create sibling guide when reference is HalfHingeLine2D', async () => {
       // Setup world with hinge line
-      const { projPlaneH, projPlaneV } = setupBasicWorld();
+      const { world } = createTestWorld();
+      const projPlaneH = getHorizontalPlaneId(world);
+      const projPlaneV = getVerticalPlaneId(world);
       
       // After QuickSetup, there should be hinge lines connecting planes
       // Creating guide on a hinge line should create sibling on other plane

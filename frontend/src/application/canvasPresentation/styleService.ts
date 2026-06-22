@@ -9,37 +9,12 @@
  */
 
 import type { Element } from '@/domain/world/Element';
-import { ProcessTree, type Subprocess, type ActionGroup, type ProcessNode } from '@/domain/processTree/ProcessTree';
+import { ProcessTree, type ProcessNodeSnapshot } from '@/domain/processTree/ProcessTree';
 import type { VisibilityModel } from '@/application/processTree/VisibilityModel';
 
 // Helper to get parents
-function getPathToNode(tree: ProcessTree, targetId: string): ProcessNode[] | null {
-  // Use existing method if available, or just reimplement straightforward DFS
-  const path: ProcessNode[] = [];
-  
-  function find(node: ProcessNode): boolean {
-    if (node.id === targetId) return true;
-    
-    if (node.type === 'subprocess') {
-      const sp = node as Subprocess;
-      path.push(sp);
-      for (const child of sp.children) {
-        if (find(child)) return true;
-      }
-      path.pop();
-    } else if (node.type === 'actionGroup') {
-      const ag = node as ActionGroup;
-      path.push(ag);
-      for (const child of ag.children) {
-        if (child && find(child)) return true;
-      }
-      path.pop();
-    }
-    return false;
-  }
-  
-  if (find(tree.root)) return path;
-  return null;
+function getPathToNode(tree: ProcessTree, targetId: string): readonly ProcessNodeSnapshot[] | null {
+  return tree.getPathToNodeSnapshot(targetId);
 }
 
 /**
@@ -73,13 +48,13 @@ export function resolveVisibility(element: Element, tree: ProcessTree, visibilit
   // We should treat the creatingAction as the final node in the chain
   // Cast creatingAction to ActionNode (Action interface + type='action')
   // We approximate it because tree.getActionsProducingElement returns Action[]
-  // but in the tree they are wrapped as ActionNode. Since Action is just data, 
+    // but in the tree they are wrapped as ActionNode. Since Action is just data,
   // we can treat it as the leaf node for logic purposes.
-  const leafNode = creatingAction as unknown as ProcessNode; 
+  const leafNode = creatingAction as unknown as ProcessNodeSnapshot;
   // We filter out ActionGroups because they are structural containers that should be transparent
   // for visibility logic (as requested by user "Action Groups must be transparents in this regard").
   // This effectively connects Subprocess -> Subprocess or Subprocess -> Action directly.
-  const fullChain: ProcessNode[] = [...path, leafNode].filter(node => node.type !== 'actionGroup');
+  const fullChain: ProcessNodeSnapshot[] = [...path, leafNode].filter(node => node.type !== 'actionGroup');
 
   // Iterate the chain to check permissions
   // At each step, if parent enforces encapsulation, child must have permission (isOutput)

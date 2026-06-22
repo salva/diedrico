@@ -307,7 +307,9 @@ export class SiblingGuide2D extends Line2D {
       const primaryPlaneReal3D = context.getProjectionPlane3DRealization(primaryHHL.planeId);
       const siblingPlaneReal3D = context.getProjectionPlane3DRealization(this.planeId);
 
-      if (!primaryPlaneReal3D?.feasible || !siblingPlaneReal3D?.feasible) {
+      if (!primaryPlaneReal3D) throw new Error(`SiblingGuide2D ${this.id}: missing 3D realization for primary plane ${primaryHHL.planeId}`);
+      if (!siblingPlaneReal3D) throw new Error(`SiblingGuide2D ${this.id}: missing 3D realization for sibling plane ${this.planeId}`);
+      if (!primaryPlaneReal3D.feasible || !siblingPlaneReal3D.feasible) {
         return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
       }
 

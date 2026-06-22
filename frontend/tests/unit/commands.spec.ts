@@ -5,10 +5,9 @@ import type { OperationResult } from '../../src/commands/operations/IOperation';
 import type { OperationContext } from '../../src/commands/operations/OperationContext';
 import type { World } from '../../src/domain/world/World';
 import { World as WorldClass } from '../../src/domain/world/World';
-import { VisibilityModel } from '../../src/application/processTree/VisibilityModel';
 import { CommandStack } from '../../src/commands/CommandStack';
 import { initializeWorld } from '../../src/application/world/initializeWorld';
-import { buildOperationContext } from '../helpers/worldHelpers';
+import { createTestRuntimeContext } from '../helpers/worldHelpers';
 
 // Mock operation for testing
 class MockOperation implements IOperation {
@@ -52,13 +51,14 @@ class MockOperation implements IOperation {
 describe('Command', () => {
   let command: Command;
   let world: World;
-  let visibilityModel: VisibilityModel;
+  let operationContext: OperationContext;
 
   beforeEach(() => {
     world = new WorldClass();
-    visibilityModel = new VisibilityModel();
-    initializeWorld(world, visibilityModel, new CommandStack());
-    command = new Command('Test command', buildOperationContext(world, visibilityModel));
+    const commandStack = new CommandStack();
+    operationContext = createTestRuntimeContext({ initialized: false, world, commandStack }).operationContext;
+    initializeWorld(world, commandStack, operationContext);
+    command = new Command('Test command', operationContext);
   });
 
   describe('incremental execution', () => {

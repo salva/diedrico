@@ -14,7 +14,7 @@ import { ref, computed } from 'vue';
 import type { ToolType } from '@/application/tools/ToolTypes';
 import type { ToolFamilyConfig } from '../types/ToolConfig';
 
-export const TOOL_PREFERENCE_KEY = 'diedrico-tool-last-used';
+const TOOL_PREFERENCE_KEY = 'diedrico-tool-last-used';
 
 const activeTool = ref<ToolType>('select');
 const lastUsedByFamily = ref<Record<string, string>>({});

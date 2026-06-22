@@ -7,64 +7,76 @@
  * 
  */
 
-import type { IOperation, JsonObject, OperationOutputBag, OperationResult } from '../IOperation';
+import type { IOperation, JsonObject, OperationDescriptor, OperationOutputBag, OperationResult } from '../IOperation';
 import type { OperationContext } from '../OperationContext';
 import type { Action } from '@/domain/processTree/Action';
+import type { ActionNode } from '@/domain/processTree/ProcessTree';
 import { operationSuccess } from '../operationResultHelpers';
 
-export class AddProcessTreeActionOp implements IOperation {
+export interface ActionNodeDescriptorV8 extends JsonObject {
+  id: string;
+  type: 'action';
+  created: string;
+  elementId: string;
+  description: string;
+}
+
+export interface AddProcessTreeActionDescriptorV8 extends OperationDescriptor<'AddProcessTreeActionOp'> {
+  schemaVersion: '8.0.0';
+  groupId: string;
+  actionNode: ActionNodeDescriptorV8;
+}
+
+export function actionNodeToDescriptor(actionNode: ActionNode): ActionNodeDescriptorV8 {
+  return {
+    id: actionNode.id,
+    type: 'action',
+    created: actionNode.created.toISOString(),
+    elementId: actionNode.elementId,
+    description: actionNode.description,
+  };
+}
+
+export class AddProcessTreeActionOp implements IOperation<AddProcessTreeActionDescriptorV8> {
   readonly type = 'AddProcessTreeActionOp';
   outputs: OperationOutputBag = {};
+  private actionNode?: ActionNode;
 
-  constructor(private readonly action: Action, private readonly groupId: string) {
+  constructor(private readonly action: Action | ActionNode, private readonly groupId: string) {
+    if ('type' in action && action.type === 'action' && action.created instanceof Date) this.actionNode = action;
   }
 
   apply(context: OperationContext): OperationResult {
-    // Add action to ProcessTree
-    const action = this.action;
-    
-    // Add to existing group (Strict Mode: groupId is required)
-    const index = context.processTree.addActionToGroup(action, this.groupId);
+    const result = this.actionNode
+      ? { actionNode: this.actionNode, index: context.processTree.insertActionNodeToGroup(this.actionNode, this.groupId) }
+      : context.processTree.addActionToGroup(this.action, this.groupId);
+    this.actionNode = result.actionNode;
     
     // Phase 93: Actions no longer have IDs - store elementId for tracking
     this.outputs = {
-      elementId: action.elementId,  // Store elementId instead of action.id
+      actionId: result.actionNode.id,
+      elementId: result.actionNode.elementId,
       groupId: this.groupId,
-      index: index
+      index: result.index
     };
     
     return operationSuccess(this.outputs);
   }
 
   undo(context: OperationContext): void {
-    if (!this.outputs.elementId) {
+    if (!this.actionNode) {
       throw new Error('Cannot undo: operation was not applied');
     }
-    
-    // Phase 93: Remove action by elementId
-    // Find the action that produced this element and remove it
-    const actions = context.processTree.getActionsProducingElement(this.outputs.elementId);
-    if (actions.length > 0) {
-      // Remove the most recent action (should be only one, but just in case)
-      context.processTree.removeActionByElementId(this.outputs.elementId);
-    }
-
-    // Removed fallback: We rely on AddProcessTreeActionGroupOp to manage group lifecycle.
-    // If this op added an action to a group, undoing it naturally removes the action.
-    // The group itself is handled by its own Op.
-
+    context.processTree.removeAction(this.actionNode.id);
   }
 
-  serialize() {
-    const action: JsonObject = {
-      elementId: this.action.elementId,
-      description: this.action.description,
-    };
+  serialize(): AddProcessTreeActionDescriptorV8 {
+    if (!this.actionNode) throw new Error('Cannot serialize AddProcessTreeActionOp before apply');
     return {
       opType: this.type,
-      action,
+      schemaVersion: '8.0.0' as const,
+      actionNode: actionNodeToDescriptor(this.actionNode),
       groupId: this.groupId,
-      outputs: this.outputs
     };
   }
 }

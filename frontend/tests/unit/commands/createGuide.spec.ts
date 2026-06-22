@@ -9,24 +9,25 @@ import { AddLine2DByTwoPointsOp } from '../../../src/commands/operations/world/A
 import { AddFreePoint2DOp } from '../../../src/commands/operations/world/AddFreePointOp';
 import { Guide2D } from '../../../src/domain/world/Guide';
 import type { World } from '../../../src/domain/world/World';
-import { createTestWorld, buildOperationContext, getHorizontalPlane, getHorizontalPlaneId } from '../../helpers/worldHelpers';
+import { createTestWorld, getHorizontalPlane, getHorizontalPlaneId } from '../../helpers/worldHelpers';
 import { Vector3 } from 'three';
 
 describe('Create Guide Command', () => {
   let world: World;
   let visibilityModel;
+  let operationContext;
   let planeId: string;
 
   beforeEach(() => {
-    const { world: w, visibilityModel: vm } = createTestWorld();
+    const { world: w, visibilityModel: vm, operationContext: oc } = createTestWorld();
     world = w;
 
-    visibilityModel = vm;    planeId = getHorizontalPlaneId(world);
+    visibilityModel = vm;    operationContext = oc;    planeId = getHorizontalPlaneId(world);
   });
 
   describe('execution', () => {
     it('should create a guide perpendicular to a line through a point', () => {
-      const cmd = new Command("Create guide", buildOperationContext(world, visibilityModel));
+      const cmd = new Command("Create guide", operationContext);
       
       // Create reference line
       const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 100, 1)));
@@ -62,7 +63,7 @@ describe('Create Guide Command', () => {
     });
 
     it('should return guideId in outputs', () => {
-      const cmd = new Command("Create guide", buildOperationContext(world, visibilityModel));
+      const cmd = new Command("Create guide", operationContext);
       
       const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 100, 1)));
       const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 100, 1)));
@@ -88,7 +89,7 @@ describe('Create Guide Command', () => {
 
   describe('undo/redo', () => {
     it('should support undo by rolling back operations', () => {
-      const cmd = new Command("Create guide", buildOperationContext(world, visibilityModel));
+      const cmd = new Command("Create guide", operationContext);
       
       const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 100, 1)));
       const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 100, 1)));
@@ -120,7 +121,7 @@ describe('Create Guide Command', () => {
     });
 
     it('should maintain stable IDs across undo/redo', () => {
-      const cmd = new Command("Create guide", buildOperationContext(world, visibilityModel));
+      const cmd = new Command("Create guide", operationContext);
       
       const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 100, 1)));
       const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 100, 1)));

@@ -1,28 +1,8 @@
 /**
- * Element - Abstract base class for ALL geometric elements (2D and 3D)
- * 
- * This is the root of the element hierarchy:
- *   Element
- *   ├── Element3D (Point3D, Line3D, Segment3D, Plane3D, HingeLine)
- *   └── Element2D (Point2D, Line2D, Circle2D)
- * 
- * **Phase 52**: Introduced to eliminate code duplication and enable uniform handling
- * of geometric elements across dimensions.
- * 
- * **Phase 83**: Added visualStyle property for unified styling across all elements.
- * 
- * **Design Principle: DRY (Don't Repeat Yourself)**
- * - id, label, and visualStyle are common to ALL geometric elements
- * - Extracted to base class to avoid duplication
- * - Enables uniform handling across dimensions
- * 
- * **Benefits**:
- * - **DRY Principle**: Common properties defined once in base class
- * - **Uniform Interface**: Can write functions accepting Element to work with any geometric object
- * - **Type Safety**: isElement() type guard works for all elements
- * - **Consistent Property Names**: Enforce `label` instead of `name` across all elements
- * - **Unified Styling**: All elements have consistent visual configuration through visualStyle
- * 
+ * Abstract base class for all geometric elements.
+ *
+ * Every element has a stable ID, an optional display label, optional visual
+ * style, cloning semantics, and dependency declarations for graph tracking.
  */
 
 import type { VisualStyle } from './VisualStyle';
@@ -34,7 +14,7 @@ export abstract class Element {
   /** Optional user-assigned label for UI display */
   label?: string;
   
-  /** Visual styling properties (color, lineWidth, lineStyle, visibility, opacity) - Phase 83 */
+  /** Visual styling properties: color, line width, line style, visibility, and opacity. */
   visualStyle?: VisualStyle;
   
   /**
@@ -65,14 +45,4 @@ export abstract class Element {
    * @returns Array of dependency IDs
    */
   abstract getDependencies(): string[];
-}
-
-/**
- * Type guard to check if an object is an Element
- * 
- * @param obj Object to check
- * @returns true if obj is an Element (2D or 3D), false otherwise
- */
-export function isElement(obj: any): obj is Element {
-  return obj instanceof Element;
 }

@@ -13,32 +13,36 @@ import { CommandStack } from '@/commands/CommandStack';
 import { initializeWorld } from '@/application/world/initializeWorld';
 import { VisibilityModel } from '@/application/processTree/VisibilityModel';
 import { HalfHingeLine2D } from '@/domain/world/HingeLine';
-import { getMainHingeLine, buildOperationContext } from '../../helpers/worldHelpers';
-import { createActionGroup } from '@/domain/processTree/ProcessTree';
+import { createTestRuntimeContext, getMainHingeLine, getHorizontalPlane, getVerticalPlane } from '../../helpers/worldHelpers';
+import { createActionGroup, type ProcessTree } from '@/domain/processTree/ProcessTree';
 import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
 
 describe('InitializeWorldCommand', () => {
   let world: World;
   let visibilityModel: VisibilityModel;
   let commandStack: CommandStack;
+  let processTree: ProcessTree;
+  let operationContext;
 
   beforeEach(() => {
     // Phase 47: Explicit initialization needed
     world = new World();
     visibilityModel = new VisibilityModel();
     commandStack = new CommandStack();
-    initializeWorld(world, visibilityModel, commandStack);
+    operationContext = createTestRuntimeContext({ initialized: false, world, visibilityModel, commandStack }).operationContext;
+    processTree = operationContext.processTree;
+    initializeWorld(world, commandStack, operationContext);
   });
 
   describe('Command Creation', () => {
     it('should create command with correct name', () => {
-      const cmd = new Command('Initialize World', buildOperationContext(world, visibilityModel));
+      const cmd = new Command('Initialize World', operationContext);
       
       expect(cmd.description).toBe('Initialize World');
     });
 
     it('should have building status after creation', () => {
-      const cmd = new Command('Initialize World', buildOperationContext(world, visibilityModel));
+      const cmd = new Command('Initialize World', operationContext);
       
       // Command is still building until .commit() is called
       expect(cmd.status).toBe('building');
@@ -54,8 +58,8 @@ describe('InitializeWorldCommand', () => {
       expect(projPlanes.length).toBeGreaterThanOrEqual(2);
 
       // Verify horizontal and vertical planes accessible
-      const horizontalPlane = world.getProjectionPlaneByLabel('P_H');
-      const verticalPlane = world.getProjectionPlaneByLabel('P_V');
+      const horizontalPlane = getHorizontalPlane(world);
+      const verticalPlane = getVerticalPlane(world);
       
       expect(horizontalPlane).toBeDefined();
       expect(verticalPlane).toBeDefined();
@@ -68,8 +72,8 @@ describe('InitializeWorldCommand', () => {
     });
 
     it('should create locked origin points', () => {
-      const projPlaneH = world.getProjectionPlaneByLabel('P_H');
-      const projPlaneV = world.getProjectionPlaneByLabel('P_V');
+      const projPlaneH = getHorizontalPlane(world);
+      const projPlaneV = getVerticalPlane(world);
       
       const originH = projPlaneH.getAllPoints()[0];
       const originV = projPlaneV.getAllPoints()[0];
@@ -79,8 +83,8 @@ describe('InitializeWorldCommand', () => {
     });
 
     it('should create half hinge lines', () => {
-      const projPlaneH = world.getProjectionPlaneByLabel('P_H');
-      const projPlaneV = world.getProjectionPlaneByLabel('P_V');
+      const projPlaneH = getHorizontalPlane(world);
+      const projPlaneV = getVerticalPlane(world);
       
       const linesH = projPlaneH.getAllLines();
       const linesV = projPlaneV.getAllLines();
@@ -96,8 +100,8 @@ describe('InitializeWorldCommand', () => {
     });
 
     it('should use generated IDs (no hardcoded IDs)', () => {
-      const horizPlane = world.getProjectionPlaneByLabel('P_H');
-      const vertPlane = world.getProjectionPlaneByLabel('P_V');
+      const horizPlane = getHorizontalPlane(world);
+      const vertPlane = getVerticalPlane(world);
       const hingeLine = getMainHingeLine(world);
 
       // Verify IDs follow generated pattern (Phase 95: camelCase)
@@ -111,7 +115,6 @@ describe('InitializeWorldCommand', () => {
 
   describe('ProcessTree Integration', () => {
     it('should create subprocess in ProcessTree', () => {
-      const processTree = world.getProcessTree();
       const subprocesses = processTree.root.children.filter(
         (child: any) => child.type === 'subprocess'
       );
@@ -126,7 +129,6 @@ describe('InitializeWorldCommand', () => {
     });
 
     it('should record initialization actions under subprocess', () => {
-      const processTree = world.getProcessTree();
       const initSubprocess = processTree.root.children.find(
         (child: any) => child.type === 'subprocess' && child.name === 'World Initialization'
       ) as any;
@@ -164,7 +166,7 @@ describe('InitializeWorldCommand', () => {
     });
 
     it('regular commands allow undo', () => {
-      const cmd = new Command('Test Command', buildOperationContext(world, visibilityModel));
+      const cmd = new Command('Test Command', operationContext);
       
       // Regular Command allows undo by default
       expect(cmd.canUndo()).toBe(true);
@@ -173,7 +175,7 @@ describe('InitializeWorldCommand', () => {
 
   describe('Operation Orchestration', () => {
     it('should execute operations in correct order', () => {
-      const cmd = new Command('Initialize World', buildOperationContext(world, visibilityModel));
+      const cmd = new Command('Initialize World', operationContext);
       
       // Create ActionGroup for initialization operations
       const groupId = `group_init_test_${Date.now()}`;

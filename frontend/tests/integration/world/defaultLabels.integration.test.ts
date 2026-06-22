@@ -9,24 +9,26 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { World } from '@/domain/world/World';
 import { Vector3 } from 'three';
-import { createTestWorld } from '../../helpers/worldHelpers';
+import { createTestWorld, getHorizontalPlane } from '../../helpers/worldHelpers';
 
 describe('Phase 116: Default Label Generation Integration', () => {
   let world: World;
+  let operationContext;
 
   beforeEach(() => {
-    const { world: w } = createTestWorld();
+    const { world: w, operationContext: oc } = createTestWorld();
     world = w;
+    operationContext = oc;
   });
 
   describe('2D Point creation', () => {
     it('should assign sequential letter labels to free points', () => {
-      const plane = world.getProjectionPlaneByLabel('P_H');
+      const plane = getHorizontalPlane(world);
       if (!plane) throw new Error('P_H not found');
       
-      const point1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0.1, 0.2, 1));
-      const point2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0.3, 0.4, 1));
-      const point3 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0.5, 0.6, 1));
+      const point1 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0.1, 0.2, 1));
+      const point2 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0.3, 0.4, 1));
+      const point3 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0.5, 0.6, 1));
       
       // Labels are sequential from the world's label generator
       // The exact first letter depends on how many points were created during init
@@ -40,10 +42,10 @@ describe('Phase 116: Default Label Generation Integration', () => {
     });
 
     it('should allow explicit label override', () => {
-      const plane = world.getProjectionPlaneByLabel('P_H');
+      const plane = getHorizontalPlane(world);
       if (!plane) throw new Error('P_H not found');
       
-      const point = world.getConstructionService().addFreePoint2D(plane, new Vector3(0.1, 0.2, 1), undefined, 'Custom');
+      const point = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0.1, 0.2, 1), undefined, 'Custom');
       
       expect(point.label).toBe('Custom');
     });
@@ -51,15 +53,15 @@ describe('Phase 116: Default Label Generation Integration', () => {
 
   describe('2D Line creation', () => {
     it('should assign sequential letter labels to lines', () => {
-      const plane = world.getProjectionPlaneByLabel('P_H');
+      const plane = getHorizontalPlane(world);
       if (!plane) throw new Error('P_H not found');
       
-      const point1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0.1, 0.2, 1));
-      const point2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0.3, 0.4, 1));
-      const point3 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0.5, 0.6, 1));
+      const point1 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0.1, 0.2, 1));
+      const point2 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0.3, 0.4, 1));
+      const point3 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0.5, 0.6, 1));
       
-      const line1 = world.getConstructionService().addLine2DBetweenTwoPoints(plane, point1.id, point2.id);
-      const line2 = world.getConstructionService().addLine2DBetweenTwoPoints(plane, point2.id, point3.id);
+      const line1 = operationContext.projectionConstruction.addLine2DBetweenTwoPoints(plane, point1.id, point2.id);
+      const line2 = operationContext.projectionConstruction.addLine2DBetweenTwoPoints(plane, point2.id, point3.id);
       
       // Lines should get labels from the line sequence (r, s, t, ...)
       expect(line1.label).toBeTruthy();
@@ -70,26 +72,26 @@ describe('Phase 116: Default Label Generation Integration', () => {
 
   describe('Element label types and formats', () => {
     it('should assign line-category labels to segments', () => {
-      const plane = world.getProjectionPlaneByLabel('P_H');
+      const plane = getHorizontalPlane(world);
       if (!plane) throw new Error('P_H not found');
       
-      const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0.1, 0.2, 1));
-      const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0.3, 0.4, 1));
+      const p1 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0.1, 0.2, 1));
+      const p2 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0.3, 0.4, 1));
       
-      const segment = world.getConstructionService().addSegment2DBetweenPoints(plane, p1.id, p2.id);
+      const segment = operationContext.projectionConstruction.addSegment2DBetweenPoints(plane, p1.id, p2.id);
       
       // Segment shares sequence with lines
       expect(segment.label).toBeTruthy();
     });
 
     it('should assign Greek letter labels to circles', () => {
-      const plane = world.getProjectionPlaneByLabel('P_H');
+      const plane = getHorizontalPlane(world);
       if (!plane) throw new Error('P_H not found');
       
-      const center = world.getConstructionService().addFreePoint2D(plane, new Vector3(0.5, 0.5, 1));
-      const circumferencePoint = world.getConstructionService().addFreePoint2D(plane, new Vector3(0.6, 0.5, 1));
+      const center = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0.5, 0.5, 1));
+      const circumferencePoint = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0.6, 0.5, 1));
       
-      const circle = world.getConstructionService().addCircle2DByCenterAndPoint(plane, center.id, circumferencePoint.id);
+      const circle = operationContext.projectionConstruction.addCircle2DByCenterAndPoint(plane, center.id, circumferencePoint.id);
       
       // Circle should get a Greek letter label
       expect(circle.label).toBeTruthy();
@@ -98,33 +100,33 @@ describe('Phase 116: Default Label Generation Integration', () => {
     });
 
     it('should assign guide labels with g_ prefix', () => {
-      const plane = world.getProjectionPlaneByLabel('P_H');
+      const plane = getHorizontalPlane(world);
       if (!plane) throw new Error('P_H not found');
       
-      const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0.1, 0.2, 1));
-      const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0.3, 0.4, 1));
-      const p3 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0.5, 0.6, 1));
+      const p1 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0.1, 0.2, 1));
+      const p2 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0.3, 0.4, 1));
+      const p3 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0.5, 0.6, 1));
       
-      const line = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
-      const guide = world.getConstructionService().addGuide2D(plane, line.id, p3.id);
+      const line = operationContext.projectionConstruction.addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
+      const guide = operationContext.projectionConstruction.addGuide2D(plane, line.id, p3.id);
       
       // Guide labels start with g_ prefix
       expect(guide.label).toMatch(/^g_\d/);
     });
 
     it('should assign point labels to intersection points', () => {
-      const plane = world.getProjectionPlaneByLabel('P_H');
+      const plane = getHorizontalPlane(world);
       if (!plane) throw new Error('P_H not found');
       
-      const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
-      const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(1, 0, 1));
-      const p3 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 1, 1));
-      const p4 = world.getConstructionService().addFreePoint2D(plane, new Vector3(1, 1, 1));
+      const p1 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const p2 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(1, 0, 1));
+      const p3 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0, 1, 1));
+      const p4 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(1, 1, 1));
       
-      const line1 = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
-      const line2 = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p3.id, p4.id);
+      const line1 = operationContext.projectionConstruction.addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
+      const line2 = operationContext.projectionConstruction.addLine2DBetweenTwoPoints(plane, p3.id, p4.id);
       
-      const intersection = world.getConstructionService().addLineLineIntersection(plane, line1.id, line2.id);
+      const intersection = operationContext.projectionConstruction.addLineLineIntersection(plane, line1.id, line2.id);
       
       // Intersection points are in the point sequence
       expect(intersection.label).toBeTruthy();
@@ -133,27 +135,27 @@ describe('Phase 116: Default Label Generation Integration', () => {
 
   describe('Label uniqueness', () => {
     it('should produce unique labels for elements of the same type', () => {
-      const plane = world.getProjectionPlaneByLabel('P_H');
+      const plane = getHorizontalPlane(world);
       if (!plane) throw new Error('P_H not found');
       
       const labels = new Set<string>();
       for (let i = 0; i < 10; i++) {
-        const point = world.getConstructionService().addFreePoint2D(plane, new Vector3(i * 0.1, 0.5, 1));
+        const point = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(i * 0.1, 0.5, 1));
         expect(labels.has(point.label!)).toBe(false);
         labels.add(point.label!);
       }
     });
 
     it('should produce unique labels across lines and segments', () => {
-      const plane = world.getProjectionPlaneByLabel('P_H');
+      const plane = getHorizontalPlane(world);
       if (!plane) throw new Error('P_H not found');
       
-      const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
-      const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(1, 0, 1));
-      const p3 = world.getConstructionService().addFreePoint2D(plane, new Vector3(2, 0, 1));
+      const p1 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const p2 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(1, 0, 1));
+      const p3 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(2, 0, 1));
       
-      const line = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
-      const segment = world.getConstructionService().addSegment2DBetweenPoints(plane, p2.id, p3.id);
+      const line = operationContext.projectionConstruction.addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
+      const segment = operationContext.projectionConstruction.addSegment2DBetweenPoints(plane, p2.id, p3.id);
       
       // Lines and segments share a counter, so labels must differ
       expect(line.label).not.toBe(segment.label);

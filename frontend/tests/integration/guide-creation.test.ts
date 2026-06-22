@@ -2,25 +2,28 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import type { World } from '../../src/domain/world/World';
 import type { VisibilityModel } from '../../src/application/processTree/VisibilityModel';
 import type { CommandStack } from '../../src/commands/CommandStack';
+import type { OperationContext } from '../../src/commands/operations/OperationContext';
 import { Command } from '../../src/commands/Command';
 import { AddFreePoint2DOp } from '../../src/commands/operations/world/AddFreePointOp';
 import { AddLine2DByTwoPointsOp } from '../../src/commands/operations/world/AddLineOp';
 import { GuideSequenceFactory } from '../../src/commands/factories/GuideSequenceFactory';
-import { setupBasicWorld, buildOperationContext } from '../helpers/worldHelpers';
+import { createTestWorld, getHorizontalPlaneId } from '../helpers/worldHelpers';
 import { Vector3 } from 'three';
 
 describe('Guide Creation - Integration Tests', () => {
   let world: World;
   let visibilityModel: VisibilityModel;
   let commandStack: CommandStack;
+  let operationContext: OperationContext;
   let projPlaneH: string;
 
   beforeEach(() => {
-    const setup = setupBasicWorld();
+    const setup = createTestWorld();
     world = setup.world;
     visibilityModel = setup.visibilityModel;
     commandStack = setup.commandStack;
-    projPlaneH = setup.projPlaneH;
+    operationContext = setup.operationContext;
+    projPlaneH = getHorizontalPlaneId(world);
   });
 
   describe('Regular Line Reference', () => {
@@ -28,7 +31,7 @@ describe('Guide Creation - Integration Tests', () => {
       const planeId = projPlaneH;
 
       // Create two points and a line between them
-      const cmd = new Command('Setup test geometry', buildOperationContext(world, visibilityModel));
+      const cmd = new Command('Setup test geometry', operationContext);
       
       const point1Result = cmd.addAndExecute(
         new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1))
@@ -55,13 +58,14 @@ describe('Guide Creation - Integration Tests', () => {
       commandStack.push(cmd);
 
       // Create guide using regular line as reference
-      const guideCmd = new Command('Create guide on regular line', buildOperationContext(world, visibilityModel));
+      const guideCmd = new Command('Create guide on regular line', operationContext);
       const result = GuideSequenceFactory.createGuideWithSibling(
         guideCmd,
         planeId,
         lineId,
         throughPointId,
-        world
+        world,
+        operationContext.realizationContext
       );
 
       guideCmd.commit();
@@ -86,7 +90,7 @@ describe('Guide Creation - Integration Tests', () => {
       // This error occurred when GuideTool assumed all guides had siblings
       
       // Create regular line (not hinge)
-      const cmd = new Command('Setup', buildOperationContext(world, visibilityModel));
+      const cmd = new Command('Setup', operationContext);
       const p1 = cmd.addAndExecute(new AddFreePoint2DOp(projPlaneH, new Vector3(0, 0, 1)));
       const p2 = cmd.addAndExecute(new AddFreePoint2DOp(projPlaneH, new Vector3(100, 0, 1)));
       const line = cmd.addAndExecute(new AddLine2DByTwoPointsOp(projPlaneH, p1.outputs.pointId, p2.outputs.pointId));
@@ -96,13 +100,14 @@ describe('Guide Creation - Integration Tests', () => {
 
       // This should NOT throw
       expect(() => {
-        const guideCmd = new Command('Create guide', buildOperationContext(world, visibilityModel));
+        const guideCmd = new Command('Create guide', operationContext);
         GuideSequenceFactory.createGuideWithSibling(
           guideCmd,
           projPlaneH,
           line.outputs.lineId,
           throughPoint.outputs.pointId,
-          world
+          world,
+          operationContext.realizationContext
         );
         guideCmd.commit();
       }).not.toThrow();

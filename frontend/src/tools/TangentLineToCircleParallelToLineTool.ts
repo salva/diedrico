@@ -79,11 +79,10 @@ export class TangentLineToCircleParallelToLineTool extends ArgumentCollectorTool
       type: 'tangent-line-to-circle-parallel',
       description: this.getCommandDescription(),
       planeId: context.planeId,
-      args,
-      metadata: {
-        tangentIndex: this.chooseTangentIndex(selectionPoint, circle?.id, args, context),
-        selectionPoint
-      }
+      circleId: this.requireElementId(args, 'circle'),
+      referenceLineId: this.requireElementId(args, 'referenceLine'),
+      tangentIndex: this.chooseTangentIndex(selectionPoint, circle?.id, args, context),
+      selectionPoint
     };
   }
 
@@ -92,9 +91,10 @@ export class TangentLineToCircleParallelToLineTool extends ArgumentCollectorTool
     if (!circleId || !referenceLineId) return 0;
     const circle = context.readPort.getCircle2D(circleId);
     const referenceLine = context.readPort.getLine2D(referenceLineId);
-    const circleRealization = circle ? context.readPort.realizeCircle2D(circle) : undefined;
-    const lineRealization = referenceLine ? context.readPort.realizeLine2D(referenceLine) : undefined;
-    if (!circleRealization?.feasible || !lineRealization?.feasible) return 0;
+    if (!circle || !referenceLine) return 0;
+    const circleRealization = context.readPort.realizeCircle2D(circle);
+    const lineRealization = context.readPort.realizeLine2D(referenceLine);
+    if (!circleRealization.feasible || !lineRealization.feasible) return 0;
 
     const center = circleRealization.center;
     const radius = circleRealization.getRadius();

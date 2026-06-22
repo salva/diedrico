@@ -17,14 +17,13 @@
  * - Passing their IDs to this operation
  * 
  * @see Point3DFromProjections in Point3D.ts
- * @see World.add3DPoint() for storage
+ * @see ReconstructionConstructionService for storage
  * @see Create3DPointTool for the interactive creation flow
  */
 
 import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
 import type { OperationContext } from '../OperationContext';
-import { Point3DFromProjections } from '@/domain/world/Point3D';
-import { requireDistinctProjectionPlanes, requireFeasibleProjectionPair } from './operationHelpers';
+import { invalidateRealization, requireDistinctProjectionPlanes, requireFeasibleProjectionPair } from './operationHelpers';
 
 export interface Add3DPointDescriptor extends OperationDescriptor<'Add3DPoint'> {
   projection1Id: string;
@@ -70,40 +69,23 @@ export class Add3DPointOp implements IOperation<Add3DPointDescriptor, Add3DPoint
       }
       
       // Validate that projections are geometrically feasible
-      const proj1Real = proj1.realize2D(context.world);
-      const proj2Real = proj2.realize2D(context.world);
+      const proj1Real = proj1.realize2D(context.realizationContext);
+      const proj2Real = proj2.realize2D(context.realizationContext);
       
       requireFeasibleProjectionPair('point', proj1Real, proj2Real);
       
-      // Use stored ID if available (for redo), otherwise generate new one
-      const pointId = this.outputs.pointId || context.world.generate3DPointId();
-      
-      // Phase 97: Generate default label if not provided
-      const label = this.label || context.labelGenerator.next('Point3D');
-      
-      // Create default visual style if not provided
-      const visualStyle = this.visualStyle || {
-        color: '#FF6B35',    // Orange for 3D elements
-        thickness: 0.015,     // Thicker than 2D points (0.01)
-        visible: true
-      };
-      
-      // Create Point3DFromProjections
-      const point = new Point3DFromProjections(
-        pointId,
-        label,
-        this.projection1Id,
-        this.projection2Id,
-        this.plane1Id,
-        this.plane2Id,
-        visualStyle
-      );
-      
-      // Add to World storage
-      context.world.add3DPoint(point);
+      const point = context.reconstructionConstruction.addPointFromProjections({
+        projection1Id: this.projection1Id,
+        projection2Id: this.projection2Id,
+        plane1Id: this.plane1Id,
+        plane2Id: this.plane2Id,
+        pointId: this.outputs.pointId,
+        label: this.label,
+        visualStyle: this.visualStyle,
+      });
       
       // Store outputs for undo
-      this.outputs = { pointId };
+      this.outputs = { pointId: point.id };
       
       return {
         success: true,
@@ -120,7 +102,9 @@ export class Add3DPointOp implements IOperation<Add3DPointDescriptor, Add3DPoint
 
   undo(context: OperationContext): void {
     if (this.outputs.pointId) {
-      context.world.remove3DPoint(this.outputs.pointId);
+      invalidateRealization(context, this.outputs.pointId);
+      context.world.deletePoint3D(this.outputs.pointId);
+      context.dependencies.unregisterNode(this.outputs.pointId);
     }
   }
 

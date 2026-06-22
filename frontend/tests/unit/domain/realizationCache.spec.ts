@@ -9,100 +9,106 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { Vector3 } from 'three';
 import type { World } from '@/domain/world/World';
 import type { ProjectionPlane } from '@/domain/world/projectionPlane/ProjectionPlane';
-import { createTestWorld } from '../../helpers/worldHelpers';
+import type { OperationContext } from '@/commands/operations/OperationContext';
+import { createTestWorld, getHorizontalPlane, getVerticalPlane } from '../../helpers/worldHelpers';
+import type { CachedProjectionElementRealizationContext } from '@/domain/world/projectionPlane/ProjectionPlaneContext';
 
 describe('Per-Plane Realization Cache (Phase 119)', () => {
   let world: World;
+  let operationContext: OperationContext;
+  let realizationContext: CachedProjectionElementRealizationContext;
   let planeH: ProjectionPlane;
   let planeV: ProjectionPlane;
 
   beforeEach(() => {
-    const { world: w } = createTestWorld();
+    const { world: w, operationContext: context } = createTestWorld();
     world = w;
-    planeH = world.getProjectionPlaneByLabel('P_H')!;
-    planeV = world.getProjectionPlaneByLabel('P_V')!;
+    operationContext = context;
+    realizationContext = operationContext.realizationContext;
+    planeH = getHorizontalPlane(world);
+    planeV = getVerticalPlane(world);
   });
 
   // ── T1913: Cache hit — same object reference on repeated calls ──
 
   describe('Cache hit (T1913)', () => {
     it('realizePoint2D returns same instance on second call', () => {
-      const p = world.getConstructionService().addFreePoint2D(planeH, new Vector3(3, 4, 1));
+      const p = operationContext.projectionConstruction.addFreePoint2D(planeH, new Vector3(3, 4, 1));
 
-      const first = world.realizePoint2D(p, world);
-      const second = world.realizePoint2D(p, world);
+      const first = operationContext.realizations.realizePoint2D(p, realizationContext);
+      const second = operationContext.realizations.realizePoint2D(p, realizationContext);
 
       expect(first).toBeDefined();
       expect(second).toBe(first); // exact same reference
     });
 
     it('realizeLine2D returns same instance on second call', () => {
-      const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
-      const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, 5, 1));
-      const line = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p1.id, p2.id);
+      const p1 = operationContext.projectionConstruction.addFreePoint2D(planeH, new Vector3(0, 0, 1));
+      const p2 = operationContext.projectionConstruction.addFreePoint2D(planeH, new Vector3(5, 5, 1));
+      const line = operationContext.projectionConstruction.addLine2DBetweenTwoPoints(planeH, p1.id, p2.id);
 
-      const first = world.realizeLine2D(line, world);
-      const second = world.realizeLine2D(line, world);
+      const first = operationContext.realizations.realizeLine2D(line, realizationContext);
+      const second = operationContext.realizations.realizeLine2D(line, realizationContext);
 
       expect(first).toBeDefined();
       expect(second).toBe(first);
     });
 
     it('realizeCircle2D returns same instance on second call', () => {
-      const center = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
-      const circumPt = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, 0, 1));
-      const circle = world.getConstructionService().addCircle2DByCenterAndPoint(planeH, center.id, circumPt.id);
+      const center = operationContext.projectionConstruction.addFreePoint2D(planeH, new Vector3(0, 0, 1));
+      const circumPt = operationContext.projectionConstruction.addFreePoint2D(planeH, new Vector3(5, 0, 1));
+      const circle = operationContext.projectionConstruction.addCircle2DByCenterAndPoint(planeH, center.id, circumPt.id);
 
-      const first = world.realizeCircle2D(circle, world);
-      const second = world.realizeCircle2D(circle, world);
+      const first = operationContext.realizations.realizeCircle2D(circle, realizationContext);
+      const second = operationContext.realizations.realizeCircle2D(circle, realizationContext);
 
       expect(first).toBeDefined();
       expect(second).toBe(first);
     });
 
     it('subsequent facade calls return the exact cached realization', () => {
-      const p = world.getConstructionService().addFreePoint2D(planeH, new Vector3(1, 2, 1));
+      const p = operationContext.projectionConstruction.addFreePoint2D(planeH, new Vector3(1, 2, 1));
 
-      const realized = world.realizePoint2D(p, world);
-      expect(world.realizePoint2D(p, world)).toBe(realized);
+      const realized = operationContext.realizations.realizePoint2D(p, realizationContext);
+      expect(operationContext.realizations.realizePoint2D(p, realizationContext)).toBe(realized);
     });
   });
 
-  // ── T1914: Cache invalidation via World.invalidateRealization ──
+  // ── T1914: Cache invalidation via RealizationService.invalidateElement ──
 
   describe('Cache invalidation (T1914)', () => {
-    it('invalidateRealization clears point cache; next call returns fresh object', () => {
-      const p = world.getConstructionService().addFreePoint2D(planeH, new Vector3(7, 8, 1));
-      const first = world.realizePoint2D(p, world);
+    it('invalidateElement clears point cache; next call returns fresh object', () => {
+      const p = operationContext.projectionConstruction.addFreePoint2D(planeH, new Vector3(7, 8, 1));
+      const first = operationContext.realizations.realizePoint2D(p, realizationContext);
 
-      world.invalidateRealization(p.id);
+      operationContext.realizations.invalidateElement(p.id, operationContext.dependencies, world.getAllProjectionPlanes());
 
-      const second = world.realizePoint2D(p, world);
+      const second = operationContext.realizations.realizePoint2D(p, realizationContext);
       expect(second).toBeDefined();
       expect(second).not.toBe(first); // new instance after invalidation
     });
 
-    it('invalidateRealization clears line cache for the same element', () => {
-      const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
-      const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(10, 0, 1));
-      const line = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p1.id, p2.id);
+    it('invalidateElement clears line cache for the same element', () => {
+      const p1 = operationContext.projectionConstruction.addFreePoint2D(planeH, new Vector3(0, 0, 1));
+      const p2 = operationContext.projectionConstruction.addFreePoint2D(planeH, new Vector3(10, 0, 1));
+      const line = operationContext.projectionConstruction.addLine2DBetweenTwoPoints(planeH, p1.id, p2.id);
 
-      const first = world.realizeLine2D(line, world);
+      const first = operationContext.realizations.realizeLine2D(line, realizationContext);
 
       // Invalidating a parent point cascades to the line
-      world.invalidateRealization(p1.id);
-      expect(world.realizeLine2D(line, world)).not.toBe(first);
+      operationContext.realizations.invalidateElement(p1.id, operationContext.dependencies, world.getAllProjectionPlanes());
+      expect(operationContext.realizations.realizeLine2D(line, realizationContext)).not.toBe(first);
     });
 
-    it('invalidateRealization clears circle cache when center point invalidated', () => {
-      const center = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
-      const circumPt = world.getConstructionService().addFreePoint2D(planeH, new Vector3(3, 0, 1));
-      const circle = world.getConstructionService().addCircle2DByCenterAndPoint(planeH, center.id, circumPt.id);
+    it('invalidateElement clears circle cache when center point invalidated', () => {
+      const center = operationContext.projectionConstruction.addFreePoint2D(planeH, new Vector3(0, 0, 1));
+      const circumPt = operationContext.projectionConstruction.addFreePoint2D(planeH, new Vector3(3, 0, 1));
+      const circle = operationContext.projectionConstruction.addCircle2DByCenterAndPoint(planeH, center.id, circumPt.id);
 
-      const first = world.realizeCircle2D(circle, world);
+      const first = operationContext.realizations.realizeCircle2D(circle, realizationContext);
 
-      world.invalidateRealization(center.id);
-      expect(world.realizeCircle2D(circle, world)).not.toBe(first);
+      operationContext.realizations.invalidateElement(center.id, operationContext.dependencies, world.getAllProjectionPlanes());
+      expect(operationContext.realizations.realizeCircle2D(circle, realizationContext)).not.toBe(first);
     });
   });
 
@@ -110,123 +116,123 @@ describe('Per-Plane Realization Cache (Phase 119)', () => {
 
   describe('Dependency propagation (T1915)', () => {
     it('invalidating a point clears dependent line on same plane', () => {
-      const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
-      const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(10, 10, 1));
-      const line = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p1.id, p2.id);
+      const p1 = operationContext.projectionConstruction.addFreePoint2D(planeH, new Vector3(0, 0, 1));
+      const p2 = operationContext.projectionConstruction.addFreePoint2D(planeH, new Vector3(10, 10, 1));
+      const line = operationContext.projectionConstruction.addLine2DBetweenTwoPoints(planeH, p1.id, p2.id);
 
       // Populate all caches
-      const pReal = world.realizePoint2D(p1, world);
-      const p2Real = world.realizePoint2D(p2, world);
-      const lReal = world.realizeLine2D(line, world);
+      const pReal = operationContext.realizations.realizePoint2D(p1, realizationContext);
+      const p2Real = operationContext.realizations.realizePoint2D(p2, realizationContext);
+      const lReal = operationContext.realizations.realizeLine2D(line, realizationContext);
       expect(pReal).toBeDefined();
       expect(p2Real).toBeDefined();
       expect(lReal).toBeDefined();
 
       // Invalidate root point → line should also be cleared
-      world.invalidateRealization(p1.id);
+      operationContext.realizations.invalidateElement(p1.id, operationContext.dependencies, world.getAllProjectionPlanes());
 
-      expect(world.realizePoint2D(p1, world)).not.toBe(pReal);
-      expect(world.realizeLine2D(line, world)).not.toBe(lReal);
+      expect(operationContext.realizations.realizePoint2D(p1, realizationContext)).not.toBe(pReal);
+      expect(operationContext.realizations.realizeLine2D(line, realizationContext)).not.toBe(lReal);
       // Sibling point (p2) not dependent on p1, so should remain cached
-      expect(world.realizePoint2D(p2, world)).toBe(p2Real);
+      expect(operationContext.realizations.realizePoint2D(p2, realizationContext)).toBe(p2Real);
     });
 
     it('invalidating a point clears dependent circle on same plane', () => {
-      const center = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
-      const circPt = world.getConstructionService().addFreePoint2D(planeH, new Vector3(4, 0, 1));
-      const circle = world.getConstructionService().addCircle2DByCenterAndPoint(planeH, center.id, circPt.id);
+      const center = operationContext.projectionConstruction.addFreePoint2D(planeH, new Vector3(0, 0, 1));
+      const circPt = operationContext.projectionConstruction.addFreePoint2D(planeH, new Vector3(4, 0, 1));
+      const circle = operationContext.projectionConstruction.addCircle2DByCenterAndPoint(planeH, center.id, circPt.id);
 
-      world.realizePoint2D(center, world);
-      const circPtRealization = world.realizePoint2D(circPt, world);
-      const circleRealization = world.realizeCircle2D(circle, world);
+      operationContext.realizations.realizePoint2D(center, realizationContext);
+      const circPtRealization = operationContext.realizations.realizePoint2D(circPt, realizationContext);
+      const circleRealization = operationContext.realizations.realizeCircle2D(circle, realizationContext);
 
-      world.invalidateRealization(center.id);
+      operationContext.realizations.invalidateElement(center.id, operationContext.dependencies, world.getAllProjectionPlanes());
 
-      expect(world.realizeCircle2D(circle, world)).not.toBe(circleRealization);
+      expect(operationContext.realizations.realizeCircle2D(circle, realizationContext)).not.toBe(circleRealization);
       // circPt is independent of center, cache untouched
-      expect(world.realizePoint2D(circPt, world)).toBe(circPtRealization);
+      expect(operationContext.realizations.realizePoint2D(circPt, realizationContext)).toBe(circPtRealization);
     });
 
     it('two-level cascade: point → line → intersection point', () => {
       // p1, p2 define line1; p3, p4 define line2; they intersect
-      const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
-      const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(10, 0, 1));
-      const p3 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, -5, 1));
-      const p4 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5,  5, 1));
-      const line1 = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p1.id, p2.id);
-      const line2 = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, p3.id, p4.id);
+      const p1 = operationContext.projectionConstruction.addFreePoint2D(planeH, new Vector3(0, 0, 1));
+      const p2 = operationContext.projectionConstruction.addFreePoint2D(planeH, new Vector3(10, 0, 1));
+      const p3 = operationContext.projectionConstruction.addFreePoint2D(planeH, new Vector3(5, -5, 1));
+      const p4 = operationContext.projectionConstruction.addFreePoint2D(planeH, new Vector3(5,  5, 1));
+      const line1 = operationContext.projectionConstruction.addLine2DBetweenTwoPoints(planeH, p1.id, p2.id);
+      const line2 = operationContext.projectionConstruction.addLine2DBetweenTwoPoints(planeH, p3.id, p4.id);
 
-      const intPt = world.getConstructionService().addLineLineIntersection(planeH, line1.id, line2.id);
+      const intPt = operationContext.projectionConstruction.addLineLineIntersection(planeH, line1.id, line2.id);
 
       // Realize everything
-      const p1Realization = world.realizePoint2D(p1, world);
-      world.realizePoint2D(p2, world);
-      const p3Realization = world.realizePoint2D(p3, world);
-      const p4Realization = world.realizePoint2D(p4, world);
-      const line1Realization = world.realizeLine2D(line1, world);
-      const line2Realization = world.realizeLine2D(line2, world);
-      const intPtRealization = world.realizePoint2D(intPt, world);
+      const p1Realization = operationContext.realizations.realizePoint2D(p1, realizationContext);
+      operationContext.realizations.realizePoint2D(p2, realizationContext);
+      const p3Realization = operationContext.realizations.realizePoint2D(p3, realizationContext);
+      const p4Realization = operationContext.realizations.realizePoint2D(p4, realizationContext);
+      const line1Realization = operationContext.realizations.realizeLine2D(line1, realizationContext);
+      const line2Realization = operationContext.realizations.realizeLine2D(line2, realizationContext);
+      const intPtRealization = operationContext.realizations.realizePoint2D(intPt, realizationContext);
 
       // Invalidate p1 → line1 → intersection
-      world.invalidateRealization(p1.id);
+      operationContext.realizations.invalidateElement(p1.id, operationContext.dependencies, world.getAllProjectionPlanes());
 
-      expect(world.realizePoint2D(p1, world)).not.toBe(p1Realization);
-      expect(world.realizeLine2D(line1, world)).not.toBe(line1Realization);
-      expect(world.realizePoint2D(intPt, world)).not.toBe(intPtRealization);
+      expect(operationContext.realizations.realizePoint2D(p1, realizationContext)).not.toBe(p1Realization);
+      expect(operationContext.realizations.realizeLine2D(line1, realizationContext)).not.toBe(line1Realization);
+      expect(operationContext.realizations.realizePoint2D(intPt, realizationContext)).not.toBe(intPtRealization);
 
       // line2 and its defining points should be untouched
-      expect(world.realizeLine2D(line2, world)).toBe(line2Realization);
-      expect(world.realizePoint2D(p3, world)).toBe(p3Realization);
-      expect(world.realizePoint2D(p4, world)).toBe(p4Realization);
+      expect(operationContext.realizations.realizeLine2D(line2, realizationContext)).toBe(line2Realization);
+      expect(operationContext.realizations.realizePoint2D(p3, realizationContext)).toBe(p3Realization);
+      expect(operationContext.realizations.realizePoint2D(p4, realizationContext)).toBe(p4Realization);
     });
   });
 
   // ── T1916: Cross-plane cache clearing on invalidation ──
 
   describe('Cross-plane propagation (T1916)', () => {
-    it('invalidateRealization clears caches across ALL planes', () => {
+    it('invalidateElement clears affected caches across all planes', () => {
       // Add a point to P_H and a different point to P_V
-      const pH = world.getConstructionService().addFreePoint2D(planeH, new Vector3(2, 3, 1));
-      const pV = world.getConstructionService().addFreePoint2D(planeV, new Vector3(7, 8, 1));
+      const pH = operationContext.projectionConstruction.addFreePoint2D(planeH, new Vector3(2, 3, 1));
+      const pV = operationContext.projectionConstruction.addFreePoint2D(planeV, new Vector3(7, 8, 1));
 
-      const firstH = world.realizePoint2D(pH, world);
-      const firstV = world.realizePoint2D(pV, world);
+      const firstH = operationContext.realizations.realizePoint2D(pH, realizationContext);
+      const firstV = operationContext.realizations.realizePoint2D(pV, realizationContext);
 
       // Invalidate pH → should clear pH's cache in ALL planes (even though it's only on P_H)
-      world.invalidateRealization(pH.id);
+      operationContext.realizations.invalidateElement(pH.id, operationContext.dependencies, world.getAllProjectionPlanes());
 
-      expect(world.realizePoint2D(pH, world)).not.toBe(firstH);
+      expect(operationContext.realizations.realizePoint2D(pH, realizationContext)).not.toBe(firstH);
       // pV is independent, should remain cached
-      expect(world.realizePoint2D(pV, world)).toBe(firstV);
+      expect(operationContext.realizations.realizePoint2D(pV, realizationContext)).toBe(firstV);
     });
 
     it('invalidation on one plane does not clear unrelated caches on other plane', () => {
-      const pA = world.getConstructionService().addFreePoint2D(planeH, new Vector3(1, 1, 1));
-      const pB = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, 1, 1));
-      const pC = world.getConstructionService().addFreePoint2D(planeV, new Vector3(2, 2, 1));
-      const pD = world.getConstructionService().addFreePoint2D(planeV, new Vector3(8, 2, 1));
+      const pA = operationContext.projectionConstruction.addFreePoint2D(planeH, new Vector3(1, 1, 1));
+      const pB = operationContext.projectionConstruction.addFreePoint2D(planeH, new Vector3(5, 1, 1));
+      const pC = operationContext.projectionConstruction.addFreePoint2D(planeV, new Vector3(2, 2, 1));
+      const pD = operationContext.projectionConstruction.addFreePoint2D(planeV, new Vector3(8, 2, 1));
 
-      const lineH = world.getConstructionService().addLine2DBetweenTwoPoints(planeH, pA.id, pB.id);
-      const lineV = world.getConstructionService().addLine2DBetweenTwoPoints(planeV, pC.id, pD.id);
+      const lineH = operationContext.projectionConstruction.addLine2DBetweenTwoPoints(planeH, pA.id, pB.id);
+      const lineV = operationContext.projectionConstruction.addLine2DBetweenTwoPoints(planeV, pC.id, pD.id);
 
       // Realize everything
-      const pARealization = world.realizePoint2D(pA, world);
-      world.realizePoint2D(pB, world);
-      const lineHRealization = world.realizeLine2D(lineH, world);
-      const pCRealization = world.realizePoint2D(pC, world);
-      const pDRealization = world.realizePoint2D(pD, world);
-      const lineVRealization = world.realizeLine2D(lineV, world);
+      const pARealization = operationContext.realizations.realizePoint2D(pA, realizationContext);
+      operationContext.realizations.realizePoint2D(pB, realizationContext);
+      const lineHRealization = operationContext.realizations.realizeLine2D(lineH, realizationContext);
+      const pCRealization = operationContext.realizations.realizePoint2D(pC, realizationContext);
+      const pDRealization = operationContext.realizations.realizePoint2D(pD, realizationContext);
+      const lineVRealization = operationContext.realizations.realizeLine2D(lineV, realizationContext);
 
       // Invalidate pA → cascades to lineH, but nothing on P_V linked
-      world.invalidateRealization(pA.id);
+      operationContext.realizations.invalidateElement(pA.id, operationContext.dependencies, world.getAllProjectionPlanes());
 
-      expect(world.realizePoint2D(pA, world)).not.toBe(pARealization);
-      expect(world.realizeLine2D(lineH, world)).not.toBe(lineHRealization);
+      expect(operationContext.realizations.realizePoint2D(pA, realizationContext)).not.toBe(pARealization);
+      expect(operationContext.realizations.realizeLine2D(lineH, realizationContext)).not.toBe(lineHRealization);
 
       // P_V caches untouched
-      expect(world.realizePoint2D(pC, world)).toBe(pCRealization);
-      expect(world.realizePoint2D(pD, world)).toBe(pDRealization);
-      expect(world.realizeLine2D(lineV, world)).toBe(lineVRealization);
+      expect(operationContext.realizations.realizePoint2D(pC, realizationContext)).toBe(pCRealization);
+      expect(operationContext.realizations.realizePoint2D(pD, realizationContext)).toBe(pDRealization);
+      expect(operationContext.realizations.realizeLine2D(lineV, realizationContext)).toBe(lineVRealization);
     });
   });
 
@@ -234,28 +240,29 @@ describe('Per-Plane Realization Cache (Phase 119)', () => {
 
   describe('Full cache clear (T1917)', () => {
     it('World.clear() empties all point, line, and circle realization caches', () => {
-      const p1 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(0, 0, 1));
-      const p2 = world.getConstructionService().addFreePoint2D(planeH, new Vector3(5, 5, 1));
-      const p1Realization = world.realizePoint2D(p1, world);
-      const p2Realization = world.realizePoint2D(p2, world);
+      const p1 = operationContext.projectionConstruction.addFreePoint2D(planeH, new Vector3(0, 0, 1));
+      const p2 = operationContext.projectionConstruction.addFreePoint2D(planeH, new Vector3(5, 5, 1));
+      const p1Realization = operationContext.realizations.realizePoint2D(p1, realizationContext);
+      const p2Realization = operationContext.realizations.realizePoint2D(p2, realizationContext);
 
       world.clear();
+      operationContext.realizations.clear();
 
-      expect(world.realizePoint2D(p1, world)).not.toBe(p1Realization);
-      expect(world.realizePoint2D(p2, world)).not.toBe(p2Realization);
+      expect(operationContext.realizations.realizePoint2D(p1, realizationContext)).not.toBe(p1Realization);
+      expect(operationContext.realizations.realizePoint2D(p2, realizationContext)).not.toBe(p2Realization);
     });
 
     it('targeted invalidation does not affect unrelated other-plane entries', () => {
-      const pH = world.getConstructionService().addFreePoint2D(planeH, new Vector3(1, 1, 1));
-      const pV = world.getConstructionService().addFreePoint2D(planeV, new Vector3(2, 2, 1));
+      const pH = operationContext.projectionConstruction.addFreePoint2D(planeH, new Vector3(1, 1, 1));
+      const pV = operationContext.projectionConstruction.addFreePoint2D(planeV, new Vector3(2, 2, 1));
 
-      const firstH = world.realizePoint2D(pH, world);
-      const firstV = world.realizePoint2D(pV, world);
+      const firstH = operationContext.realizations.realizePoint2D(pH, realizationContext);
+      const firstV = operationContext.realizations.realizePoint2D(pV, realizationContext);
 
-      world.invalidateRealization(pH.id);
+      operationContext.realizations.invalidateElement(pH.id, operationContext.dependencies, world.getAllProjectionPlanes());
 
-      expect(world.realizePoint2D(pH, world)).not.toBe(firstH);
-      expect(world.realizePoint2D(pV, world)).toBe(firstV);
+      expect(operationContext.realizations.realizePoint2D(pH, realizationContext)).not.toBe(firstH);
+      expect(operationContext.realizations.realizePoint2D(pV, realizationContext)).toBe(firstV);
     });
   });
 });

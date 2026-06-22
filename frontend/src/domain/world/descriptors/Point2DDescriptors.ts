@@ -13,6 +13,19 @@ import type { Point2DLineLineIntersection } from '../Point';
 import type { Point2DLineCircleIntersection } from '../Point';
 import type { Point2DCircleCircleIntersection } from '../Point';
 import type { SiblingIntersectionPoint2D } from '../Point';
+import { GeometryElementLookup } from '../GeometryElementLookup';
+
+function requireProjectionPlaneName(world: World, planeId: string): string {
+  const plane = world.getProjectionPlaneById(planeId);
+  if (!plane) throw new Error(`Descriptor invariant failed: projection plane not found: ${planeId}`);
+  return plane.label || plane.name;
+}
+
+function requireElementLabel(world: World, elementId: string): string {
+  const element = new GeometryElementLookup(world).getElement2D(elementId);
+  if (!element) throw new Error(`Descriptor invariant failed: 2D element not found: ${elementId}`);
+  return element.label || elementId;
+}
 
 /**
  * Descriptor for FreePoint2D - points defined by position
@@ -23,8 +36,7 @@ export class FreePoint2DDescriptor implements ElementDescriptor<FreePoint2D> {
   }
   
   getConstructionDescription(element: FreePoint2D, world: World): DescriptionPart[] {
-    const plane = world.getProjectionPlaneById(element.planeId);
-    const planeName = plane?.label || plane?.name || element.planeId;
+    const planeName = requireProjectionPlaneName(world, element.planeId);
     const x = Math.round(element.position.x * 10) / 10;
     const y = Math.round(element.position.y * 10) / 10;
     
@@ -45,18 +57,17 @@ export class Point2DLineLineIntersectionDescriptor implements ElementDescriptor<
   }
   
   getConstructionDescription(element: Point2DLineLineIntersection, world: World): DescriptionPart[] {
-    const plane = world.getProjectionPlaneById(element.planeId);
-    const planeName = plane?.label || plane?.name || element.planeId;
-    const line1 = world.getElement2D(element.line1Id);
-    const line2 = world.getElement2D(element.line2Id);
+    const planeName = requireProjectionPlaneName(world, element.planeId);
+    const line1Label = requireElementLabel(world, element.line1Id);
+    const line2Label = requireElementLabel(world, element.line2Id);
     
     return [
       { type: 'text', content: 'in ' },
       { type: 'label', content: planeName, elementId: element.planeId },
       { type: 'text', content: ', intersection of line ' },
-      { type: 'label', content: line1?.label || element.line1Id, elementId: element.line1Id },
+      { type: 'label', content: line1Label, elementId: element.line1Id },
       { type: 'text', content: ' and line ' },
-      { type: 'label', content: line2?.label || element.line2Id, elementId: element.line2Id }
+      { type: 'label', content: line2Label, elementId: element.line2Id }
     ];
   }
 }
@@ -70,19 +81,18 @@ export class Point2DLineCircleIntersectionDescriptor implements ElementDescripto
   }
   
   getConstructionDescription(element: Point2DLineCircleIntersection, world: World): DescriptionPart[] {
-    const plane = world.getProjectionPlaneById(element.planeId);
-    const planeName = plane?.label || plane?.name || element.planeId;
-    const line = world.getElement2D(element.lineId);
-    const circle = world.getElement2D(element.circleId);
+    const planeName = requireProjectionPlaneName(world, element.planeId);
+    const lineLabel = requireElementLabel(world, element.lineId);
+    const circleLabel = requireElementLabel(world, element.circleId);
     const indexText = element.index === 0 ? ' (first intersection)' : ' (second intersection)';
     
     return [
       { type: 'text', content: 'in ' },
       { type: 'label', content: planeName, elementId: element.planeId },
       { type: 'text', content: ', intersection of line ' },
-      { type: 'label', content: line?.label || element.lineId, elementId: element.lineId },
+      { type: 'label', content: lineLabel, elementId: element.lineId },
       { type: 'text', content: ' and circle ' },
-      { type: 'label', content: circle?.label || element.circleId, elementId: element.circleId },
+      { type: 'label', content: circleLabel, elementId: element.circleId },
       { type: 'text', content: indexText }
     ];
   }
@@ -97,19 +107,18 @@ export class Point2DCircleCircleIntersectionDescriptor implements ElementDescrip
   }
   
   getConstructionDescription(element: Point2DCircleCircleIntersection, world: World): DescriptionPart[] {
-    const plane = world.getProjectionPlaneById(element.planeId);
-    const planeName = plane?.label || plane?.name || element.planeId;
-    const circle1 = world.getElement2D(element.circle1Id);
-    const circle2 = world.getElement2D(element.circle2Id);
+    const planeName = requireProjectionPlaneName(world, element.planeId);
+    const circle1Label = requireElementLabel(world, element.circle1Id);
+    const circle2Label = requireElementLabel(world, element.circle2Id);
     const indexText = element.index === 0 ? ' (first intersection)' : ' (second intersection)';
     
     return [
       { type: 'text', content: 'in ' },
       { type: 'label', content: planeName, elementId: element.planeId },
       { type: 'text', content: ', intersection of circle ' },
-      { type: 'label', content: circle1?.label || element.circle1Id, elementId: element.circle1Id },
+      { type: 'label', content: circle1Label, elementId: element.circle1Id },
       { type: 'text', content: ' and circle ' },
-      { type: 'label', content: circle2?.label || element.circle2Id, elementId: element.circle2Id },
+      { type: 'label', content: circle2Label, elementId: element.circle2Id },
       { type: 'text', content: indexText }
     ];
   }
@@ -124,15 +133,14 @@ export class SiblingIntersectionPoint2DDescriptor implements ElementDescriptor<S
   }
   
   getConstructionDescription(element: SiblingIntersectionPoint2D, world: World): DescriptionPart[] {
-    const plane = world.getProjectionPlaneById(element.planeId);
-    const planeName = plane?.label || plane?.name || element.planeId;
-    const primaryPoint = world.getElement2D(element.primaryIntersectionId);
+    const planeName = requireProjectionPlaneName(world, element.planeId);
+    const primaryPointLabel = requireElementLabel(world, element.primaryIntersectionId);
     
     return [
       { type: 'text', content: 'in ' },
       { type: 'label', content: planeName, elementId: element.planeId },
       { type: 'text', content: ', sibling of ' },
-      { type: 'label', content: primaryPoint?.label || element.primaryIntersectionId, elementId: element.primaryIntersectionId }
+      { type: 'label', content: primaryPointLabel, elementId: element.primaryIntersectionId }
     ];
   }
 }

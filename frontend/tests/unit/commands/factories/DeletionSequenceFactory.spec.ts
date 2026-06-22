@@ -11,10 +11,11 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { Vector3 } from 'three';
 import type { World } from '../../../../src/domain/world/World';
 import type { CommandStack } from '../../../../src/commands/CommandStack';
+import type { OperationContext } from '../../../../src/commands/operations/OperationContext';
 import type { Action } from '../../../../src/domain/processTree/Action';
 import type { ActionGroup } from '../../../../src/domain/processTree/ProcessTree';
 import { Command } from '../../../../src/commands/Command';
-import { createTestWorld, buildOperationContext } from '../../../helpers/worldHelpers';
+import { createTestWorld, getHorizontalPlaneId } from '../../../helpers/worldHelpers';
 import { DeletionSequenceFactory } from '../../../../src/commands/factories/DeletionSequenceFactory';
 import { AddFreePoint2DOp } from '../../../../src/commands/operations/world/AddFreePointOp';
 import { AddLine2DByTwoPointsOp } from '../../../../src/commands/operations/world/AddLineOp';
@@ -29,18 +30,20 @@ describe('DeletionSequenceFactory', () => {
   let world: World;
   let visibilityModel;
   let commandStack: CommandStack;
+  let operationContext: OperationContext;
   let planeId: string;
 
   beforeEach(() => {
-    const { world: w, visibilityModel: vm, commandStack: cs } = createTestWorld();
+    const { world: w, visibilityModel: vm, commandStack: cs, operationContext: oc } = createTestWorld();
     world = w;
 
     visibilityModel = vm;    commandStack = cs;
-    planeId = world.getProjectionPlaneByLabel('P_H').id!;
+    operationContext = oc;
+    planeId = getHorizontalPlaneId(world);
   });
 
   function addExplicitProcessAction(action: Action): string {
-    const processTree = world.getProcessTree();
+    const processTree = operationContext.processTree;
     const actionGroup: ActionGroup = {
       id: `test-group-${action.elementId}`,
       type: 'actionGroup',
@@ -51,8 +54,7 @@ describe('DeletionSequenceFactory', () => {
     };
 
     processTree.addActionGroup(actionGroup);
-    const index = processTree.addActionToGroup(action, actionGroup.id);
-    const actionNode = actionGroup.children[index];
+    const { actionNode } = processTree.addActionToGroup(action, actionGroup.id);
 
     if (!actionNode) {
       throw new Error(`Failed to insert process action for ${action.elementId}`);
@@ -64,29 +66,29 @@ describe('DeletionSequenceFactory', () => {
   function deletionContext() {
     return {
       world,
-      dependencyQuery: world.getDependencyService(),
-      processTree: world.getProcessTree(),
+      dependencyQuery: operationContext.dependencies,
+      processTree: operationContext.processTree,
     };
   }
 
   function expectActionRemoved(elementId: string): void {
-    expect(world.getProcessTree().getActionsProducingElement(elementId)).toHaveLength(0);
+    expect(operationContext.processTree.getActionsProducingElement(elementId)).toHaveLength(0);
   }
 
   function expectActionPresent(elementId: string): void {
-    expect(world.getProcessTree().getActionsProducingElement(elementId)).toHaveLength(1);
+    expect(operationContext.processTree.getActionsProducingElement(elementId)).toHaveLength(1);
   }
 
   describe('createCascadeDeletion', () => {
     it('should handle empty selection gracefully', () => {
-      const deleteCmd = new Command('Delete nothing', buildOperationContext(world, visibilityModel));
+      const deleteCmd = new Command('Delete nothing', operationContext);
       DeletionSequenceFactory.createCascadeDeletion(deleteCmd, [], deletionContext());
 
       expect(deleteCmd.operations.length).toBe(0);
     });
 
     it('should delete a single point and tombstone its explicit process-tree action', () => {
-      const setupCmd = new Command('Setup point', buildOperationContext(world, visibilityModel));
+      const setupCmd = new Command('Setup point', operationContext);
       const pointResult = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 200, 1)));
       const pointId = pointResult.outputs.pointId!;
       addExplicitProcessAction(createPointAction(pointId));
@@ -94,7 +96,7 @@ describe('DeletionSequenceFactory', () => {
 
       expectActionPresent(pointId);
 
-      const deleteCmd = new Command('Delete point', buildOperationContext(world, visibilityModel));
+      const deleteCmd = new Command('Delete point', operationContext);
       DeletionSequenceFactory.createCascadeDeletion(deleteCmd, [pointId], deletionContext());
       deleteCmd.commit();
 
@@ -107,23 +109,18 @@ describe('DeletionSequenceFactory', () => {
       ]);
     });
 
-    it('should handle element without process tree action', () => {
-      const setupCmd = new Command('Setup', buildOperationContext(world, visibilityModel));
+    it('should fail fast when element has no process tree action', () => {
+      const setupCmd = new Command('Setup', operationContext);
       const pointResult = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 200, 1)));
       const pointId = pointResult.outputs.pointId!;
       setupCmd.commit();
 
-      const deleteCmd = new Command('Delete point', buildOperationContext(world, visibilityModel));
-      DeletionSequenceFactory.createCascadeDeletion(deleteCmd, [pointId], deletionContext());
-      deleteCmd.commit();
-
-      const plane = world.getProjectionPlaneById(planeId)!;
-      expect(plane.getPoint(pointId)).toBeUndefined();
-      expect(deleteCmd.operations.length).toBe(1);
+      const deleteCmd = new Command('Delete point', operationContext);
+      expect(() => DeletionSequenceFactory.createCascadeDeletion(deleteCmd, [pointId], deletionContext())).toThrow(`Cannot delete ${pointId}: no producing action found in process tree`);
     });
 
     it('should cascade delete a dependent line before deleting its defining point', () => {
-      const setupCmd = new Command('Setup line', buildOperationContext(world, visibilityModel));
+      const setupCmd = new Command('Setup line', operationContext);
       const p1Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 200, 1)));
       const p2Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(300, 400, 1)));
       const point1Id = p1Result.outputs.pointId!;
@@ -134,10 +131,10 @@ describe('DeletionSequenceFactory', () => {
       addExplicitProcessAction(createPointAction(point1Id));
       addExplicitProcessAction(createPointAction(point2Id));
       addExplicitProcessAction(createLineAction(lineId));
-      world.getDependencyRegistrar().registerNode(lineId, [point1Id, point2Id]);
+      operationContext.dependencies.registerNode(lineId, [point1Id, point2Id]);
       setupCmd.commit();
 
-      const deleteCmd = new Command('Delete point with cascade', buildOperationContext(world, visibilityModel));
+      const deleteCmd = new Command('Delete point with cascade', operationContext);
       DeletionSequenceFactory.createCascadeDeletion(deleteCmd, [point1Id], deletionContext());
       deleteCmd.commit();
 
@@ -160,7 +157,7 @@ describe('DeletionSequenceFactory', () => {
     });
 
     it('should cascade delete a dependent circle through real dependency registration', () => {
-      const setupCmd = new Command('Setup circle', buildOperationContext(world, visibilityModel));
+      const setupCmd = new Command('Setup circle', operationContext);
       const centerResult = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 200, 1)));
       const circumferenceResult = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(300, 200, 1)));
       const centerId = centerResult.outputs.pointId!;
@@ -171,10 +168,10 @@ describe('DeletionSequenceFactory', () => {
       addExplicitProcessAction(createPointAction(centerId));
       addExplicitProcessAction(createPointAction(circumferenceId));
       addExplicitProcessAction(createCircleAction(circleId));
-      world.getDependencyRegistrar().registerNode(circleId, [centerId, circumferenceId]);
+      operationContext.dependencies.registerNode(circleId, [centerId, circumferenceId]);
       setupCmd.commit();
 
-      const deleteCmd = new Command('Delete center with cascade', buildOperationContext(world, visibilityModel));
+      const deleteCmd = new Command('Delete center with cascade', operationContext);
       DeletionSequenceFactory.createCascadeDeletion(deleteCmd, [centerId], deletionContext());
       deleteCmd.commit();
 
@@ -194,7 +191,7 @@ describe('DeletionSequenceFactory', () => {
     });
 
     it('should delete multiple independent points and their explicit process-tree actions', () => {
-      const setupCmd = new Command('Setup multiple points', buildOperationContext(world, visibilityModel));
+      const setupCmd = new Command('Setup multiple points', operationContext);
       const p1Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 200, 1)));
       const p2Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(300, 400, 1)));
       const p3Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(500, 600, 1)));
@@ -203,7 +200,7 @@ describe('DeletionSequenceFactory', () => {
       pointIds.forEach(pointId => addExplicitProcessAction(createPointAction(pointId)));
       setupCmd.commit();
 
-      const deleteCmd = new Command('Delete multiple points', buildOperationContext(world, visibilityModel));
+      const deleteCmd = new Command('Delete multiple points', operationContext);
       DeletionSequenceFactory.createCascadeDeletion(deleteCmd, pointIds, deletionContext());
       deleteCmd.commit();
 
@@ -223,7 +220,7 @@ describe('DeletionSequenceFactory', () => {
     });
 
     it('should support undo and redo for dependency-driven cascade deletion', () => {
-      const setupCmd = new Command('Setup line', buildOperationContext(world, visibilityModel));
+      const setupCmd = new Command('Setup line', operationContext);
       const p1Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 200, 1)));
       const p2Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(300, 400, 1)));
       const point1Id = p1Result.outputs.pointId!;
@@ -234,11 +231,11 @@ describe('DeletionSequenceFactory', () => {
       addExplicitProcessAction(createPointAction(point1Id));
       addExplicitProcessAction(createPointAction(point2Id));
       addExplicitProcessAction(createLineAction(lineId));
-      world.getDependencyRegistrar().registerNode(lineId, [point1Id, point2Id]);
+      operationContext.dependencies.registerNode(lineId, [point1Id, point2Id]);
       setupCmd.commit();
       commandStack.push(setupCmd);
 
-      const deleteCmd = new Command('Delete point with cascade', buildOperationContext(world, visibilityModel));
+      const deleteCmd = new Command('Delete point with cascade', operationContext);
       DeletionSequenceFactory.createCascadeDeletion(deleteCmd, [point1Id], deletionContext());
       deleteCmd.commit();
       commandStack.push(deleteCmd);
@@ -263,7 +260,7 @@ describe('DeletionSequenceFactory', () => {
     });
 
     it('should dispatch segment deletion to RemoveSegment2D without deleting defining points', () => {
-      const setupCmd = new Command('Setup segment', buildOperationContext(world, visibilityModel));
+      const setupCmd = new Command('Setup segment', operationContext);
       const p1Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 200, 1)));
       const p2Result = setupCmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(300, 400, 1)));
       const point1Id = p1Result.outputs.pointId!;
@@ -274,10 +271,10 @@ describe('DeletionSequenceFactory', () => {
       addExplicitProcessAction(createPointAction(point1Id));
       addExplicitProcessAction(createPointAction(point2Id));
       addExplicitProcessAction(createSegmentAction(segmentId));
-      world.getDependencyRegistrar().registerNode(segmentId, [point1Id, point2Id]);
+      operationContext.dependencies.registerNode(segmentId, [point1Id, point2Id]);
       setupCmd.commit();
 
-      const deleteCmd = new Command('Delete segment', buildOperationContext(world, visibilityModel));
+      const deleteCmd = new Command('Delete segment', operationContext);
       DeletionSequenceFactory.createCascadeDeletion(deleteCmd, [segmentId], deletionContext());
       deleteCmd.commit();
 

@@ -1,12 +1,12 @@
 import type { CanvasCommandProductionPort } from '@/application/commandProduction/CommandProductionPorts';
-import type { World } from '@/domain/world/World';
+import type { OperationContext } from '@/commands/operations/OperationContext';
 import type { ToolCommandSink, ToolConstructionIntent, MoveFreePointRequest, FreePointMoveSession, StyleUpdateRequest, ToolCommandResult } from '@/tools/ToolCommandIntents';
 import { executeConstructionIntent } from '@/application/construction/ConstructionUseCases';
 import { CanvasPointMovementUseCase } from '@/application/canvas/CanvasPointMovementUseCase';
 import { CanvasStyleUseCase } from '@/application/canvas/CanvasStyleUseCase';
 
 export interface CanvasToolControllerDependencies {
-  world: World;
+  operationContext: OperationContext;
   commands: CanvasCommandProductionPort;
 }
 
@@ -22,8 +22,8 @@ export class CanvasToolController implements ToolCommandSink {
   executeConstructionIntent(intent: ToolConstructionIntent): ToolCommandResult {
     return executeConstructionIntent({
       intent,
-      world: this.deps.world,
-      commands: this.deps.commands
+      operationContext: this.deps.operationContext,
+      commands: this.deps.commands,
     });
   }
 

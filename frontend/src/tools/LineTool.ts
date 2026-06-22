@@ -14,7 +14,9 @@
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
 import { twoPointArgumentSet } from './toolArgumentSpecs';
-import type { ToolArgumentSet } from '@/tools/ToolArgumentCollector';
+import type { ArgumentValue, ToolArgumentSet } from '@/tools/ToolArgumentCollector';
+import type { ToolContext } from './ITool';
+import type { ToolConstructionIntent } from './ToolCommandIntents';
 
 /**
  * LineTool using ArgumentCollectorTool framework
@@ -27,7 +29,6 @@ import type { ToolArgumentSet } from '@/tools/ToolArgumentCollector';
  */
 export class LineTool extends ArgumentCollectorTool {
   readonly name = 'line';
-  protected readonly constructionIntentType = 'line';
 
   /**
    * Define argument specification
@@ -37,6 +38,16 @@ export class LineTool extends ArgumentCollectorTool {
     return [
       twoPointArgumentSet('point1', 'point2', 'Cannot create line: must select two different points')
     ];
+  }
+
+  protected buildConstructionIntent(args: Map<string, ArgumentValue>, context: ToolContext): ToolConstructionIntent {
+    return {
+      type: 'line',
+      planeId: context.planeId,
+      point1Id: this.requireElementId(args, 'point1'),
+      point2Id: this.requireElementId(args, 'point2'),
+      description: this.getCommandDescription()
+    };
   }
 
   /**

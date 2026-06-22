@@ -77,8 +77,9 @@ export class IntersectionTool extends ArgumentCollectorTool {
       type: 'intersection',
       description: this.getCommandDescription(),
       planeId: context.planeId,
-      args,
-      metadata: { selectionPoint }
+      element1Id: this.requireElementId(args, 'element1'),
+      element2Id: this.requireElementId(args, 'element2'),
+      selectionPoint
     };
   }
 

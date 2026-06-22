@@ -16,7 +16,7 @@ import {
   Line2DRealization2D,
   Line2DByTwoPoints
 } from '@/domain/world/Line';
-import { createTestWorld } from '../../helpers/worldHelpers';
+import { createTestWorld, getHorizontalPlane, getVerticalPlane } from '../../helpers/worldHelpers';
 
 describe('Line2DRealization2D', () => {
   it('should store point and direction', () => {
@@ -84,14 +84,14 @@ describe('Line2DByTwoPoints', () => {
   });
 
   it('should realize line from two points', () => {
-    const { world } = createTestWorld();
-    const plane = world.getProjectionPlaneByLabel('P_H')!;
-    const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
-    const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 0, 1));
+    const { world, operationContext } = createTestWorld();
+    const plane = getHorizontalPlane(world);
+    const p1 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0, 0, 1));
+    const p2 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(10, 0, 1));
     
-    const line = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
+    const line = operationContext.projectionConstruction.addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
     
-    const realization = line.realize2D(world);
+    const realization = line.realize2D(operationContext.realizationContext);
     
     expect(realization).not.toBeNull();
     expect(realization!.point1.x).toBeCloseTo(0, 10);
@@ -105,14 +105,14 @@ describe('Line2DByTwoPoints', () => {
   });
 
   it('should realize line with diagonal direction', () => {
-    const { world } = createTestWorld();
-    const plane = world.getProjectionPlaneByLabel('P_H')!;
-    const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
-    const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(3, 4, 1));
+    const { world, operationContext } = createTestWorld();
+    const plane = getHorizontalPlane(world);
+    const p1 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0, 0, 1));
+    const p2 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(3, 4, 1));
     
-    const line = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
+    const line = operationContext.projectionConstruction.addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
     
-    const realization = line.realize2D(world);
+    const realization = line.realize2D(operationContext.realizationContext);
     
     expect(realization).not.toBeNull();
     
@@ -123,14 +123,14 @@ describe('Line2DByTwoPoints', () => {
   });
 
   it('should return null if both points are too close (degenerate line)', () => {
-    const { world } = createTestWorld();
-    const plane = world.getProjectionPlaneByLabel('P_H')!;
-    const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
-    const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0.0000001, 0.0000001, 1));
+    const { world, operationContext } = createTestWorld();
+    const plane = getHorizontalPlane(world);
+    const p1 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0, 0, 1));
+    const p2 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0.0000001, 0.0000001, 1));
     
-    const line = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
+    const line = operationContext.projectionConstruction.addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
     
-    const realization = line.realize2D(world);
+    const realization = line.realize2D(operationContext.realizationContext);
     
     // Should return infeasible realization, not null (per Phase 23 infeasibility handling)
     expect(realization).not.toBeNull();
@@ -138,14 +138,14 @@ describe('Line2DByTwoPoints', () => {
   });
 
   it('should realize line with negative coordinates', () => {
-    const { world } = createTestWorld();
-    const plane = world.getProjectionPlaneByLabel('P_V')!;
-    const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(-10, -5, 1));
-    const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 10, 1));
+    const { world, operationContext } = createTestWorld();
+    const plane = getVerticalPlane(world);
+    const p1 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(-10, -5, 1));
+    const p2 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(5, 10, 1));
     
-    const line = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
+    const line = operationContext.projectionConstruction.addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
     
-    const realization = line.realize2D(world);
+    const realization = line.realize2D(operationContext.realizationContext);
     
     expect(realization).not.toBeNull();
     expect(realization!.point1.x).toBeCloseTo(-10, 10);
@@ -157,14 +157,14 @@ describe('Line2DByTwoPoints', () => {
   });
 
   it('should work with vertical line', () => {
-    const { world } = createTestWorld();
-    const plane = world.getProjectionPlaneByLabel('P_H')!;
-    const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 0, 1));
-    const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 10, 1));
+    const { world, operationContext } = createTestWorld();
+    const plane = getHorizontalPlane(world);
+    const p1 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(5, 0, 1));
+    const p2 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(5, 10, 1));
     
-    const line = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
+    const line = operationContext.projectionConstruction.addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
     
-    const realization = line.realize2D(world);
+    const realization = line.realize2D(operationContext.realizationContext);
     
     expect(realization).not.toBeNull();
     
@@ -175,14 +175,14 @@ describe('Line2DByTwoPoints', () => {
   });
 
   it('should work with horizontal line', () => {
-    const { world } = createTestWorld();
-    const plane = world.getProjectionPlaneByLabel('P_V')!;
-    const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 7, 1));
-    const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(20, 7, 1));
+    const { world, operationContext } = createTestWorld();
+    const plane = getVerticalPlane(world);
+    const p1 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0, 7, 1));
+    const p2 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(20, 7, 1));
     
-    const line = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
+    const line = operationContext.projectionConstruction.addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
     
-    const realization = line.realize2D(world);
+    const realization = line.realize2D(operationContext.realizationContext);
     
     expect(realization).not.toBeNull();
     

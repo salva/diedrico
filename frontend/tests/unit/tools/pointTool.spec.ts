@@ -15,6 +15,7 @@ import { PointTool } from '@/tools/PointTool';
 import type { World } from '@/domain/world/World';
 import type { CommandStack } from '@/commands/CommandStack';
 import type { VisibilityModel } from '@/application/processTree/VisibilityModel';
+import type { OperationContext } from '@/commands/operations/OperationContext';
 import type { ToolContext } from '@/tools/ITool';
 import { CanvasToolController } from '@/application/tools/CanvasToolController';
 import { RuntimeCommandProducer } from '@/application/commandProduction/RuntimeCommandProducer';
@@ -22,25 +23,27 @@ import { Vector3 } from 'three';
 import { CanvasPresentationSelector } from '@/application/canvasPresentation/CanvasPresentationSelector';
 import { createToolInteractionReadPort } from '@/application/tools/ToolInteractionReadPort';
 
-function liveInteractionQuery(worldRef: () => any, visibilityModelRef: () => VisibilityModel, planeIdRef: () => string): CanvasInteractionQuery {
+function liveInteractionQuery(worldRef: () => any, visibilityModelRef: () => VisibilityModel, operationContextRef: () => OperationContext, planeIdRef: () => string): CanvasInteractionQuery {
   return {
     hitTest(canvasPos: any, snapRadiusPixels: number, context: any, selectionMask?: any) {
       const world = worldRef();
       const activePlaneId = context.activePlaneId ?? planeIdRef();
-      const model = new CanvasPresentationSelector().select(world, { zoom: 1, panX: 0, panY: 0, width: 800, height: 600 }, { activePlaneId, visibilityModel: visibilityModelRef() });
+      const operationContext = operationContextRef();
+      const model = new CanvasPresentationSelector().select(world, { zoom: 1, panX: 0, panY: 0, width: 800, height: 600 }, { activePlaneId, visibilityModel: visibilityModelRef(), processTree: operationContext.processTree, realizations: operationContext.realizations });
       return new CanvasInteractionQuery(model.queryItems).hitTest(canvasPos, snapRadiusPixels, context, selectionMask);
     }
   } as CanvasInteractionQuery;
 }
 import { CanvasInteractionQuery } from '@/application/canvasPresentation/CanvasInteractionQuery';
 import { FreePoint2D } from '@/domain/world/Point';
-import { createTestWorld, buildOperationContext } from '../../helpers/worldHelpers';
+import { createTestWorld, getHorizontalPlane, getVerticalPlane } from '../../helpers/worldHelpers';
 
 describe('PointTool', () => {
   let tool: PointTool;
   let world: World;
   let visibilityModel: VisibilityModel;
   let commandStack: CommandStack;
+  let operationContext: OperationContext;
   let horizontalPlaneId: string;
   let verticalPlaneId: string;
   let interactionQuery: CanvasInteractionQuery;
@@ -50,8 +53,8 @@ describe('PointTool', () => {
     planeId,
     planeCoords,
     canvasCoords,
-    commandSink: new CanvasToolController({ world, commands: new RuntimeCommandProducer(buildOperationContext(world, visibilityModel), commandStack) }),
-    readPort: createToolInteractionReadPort(world),
+    commandSink: new CanvasToolController({ operationContext, commands: new RuntimeCommandProducer(operationContext, commandStack) }),
+    readPort: createToolInteractionReadPort(world, operationContext.realizations),
     interactionQuery,
       viewport: { zoom: 1, panX: 0, panY: 0 },
     paperToPlaneTransform: undefined, // Mock tool store
@@ -61,14 +64,15 @@ describe('PointTool', () => {
 
   beforeEach(() => {
     tool = new PointTool();
-    const { world: w, visibilityModel: vm, commandStack: cs } = createTestWorld();
+    const { world: w, visibilityModel: vm, commandStack: cs, operationContext: oc } = createTestWorld();
     world = w;
     visibilityModel = vm;
     commandStack = cs;
-    interactionQuery = liveInteractionQuery(() => world, () => visibilityModel, () => horizontalPlaneId);
+    operationContext = oc;
+    interactionQuery = liveInteractionQuery(() => world, () => visibilityModel, () => operationContext, () => horizontalPlaneId);
     // Get actual plane IDs from initialized world
-    horizontalPlaneId = world.getProjectionPlaneByLabel('P_H').id!;
-    verticalPlaneId = world.getProjectionPlaneByLabel('P_V').id!;
+    horizontalPlaneId = getHorizontalPlane(world).id!;
+    verticalPlaneId = getVerticalPlane(world).id!;
     // Record initial undo count after initialization
     // Use a trick: undo until we can't, then count how many we did, then redo them all
     let undoCount = 0;
@@ -102,7 +106,7 @@ describe('PointTool', () => {
       
       // Verify point was created in World
       const allPoints: any[] = [];
-      for (const plane of world.projectionPlanes.values()) {
+      for (const plane of world.getAllProjectionPlanes().values()) {
         allPoints.push(...plane.getAllPoints());
       }
       // Phase 63: Hierarchical IDs format: proj_plane_3/point2d10
@@ -130,7 +134,7 @@ describe('PointTool', () => {
       tool.handleClick(context);
 
       const allPoints: any[] = [];
-      for (const plane of world.projectionPlanes.values()) {
+      for (const plane of world.getAllProjectionPlanes().values()) {
         allPoints.push(...plane.getAllPoints());
       }
       // Phase 63: Hierarchical IDs
@@ -153,7 +157,7 @@ describe('PointTool', () => {
       tool.handleClick(context);
 
       const allPoints: any[] = [];
-      for (const plane of world.projectionPlanes.values()) {
+      for (const plane of world.getAllProjectionPlanes().values()) {
         allPoints.push(...plane.getAllPoints());
       }
       // Phase 63: Hierarchical IDs
@@ -231,7 +235,7 @@ describe('PointTool', () => {
       const result = tool.handleClick(context);
 
       expect(result.success).toBe(false);
-      expect(result.message).toContain('Plane not found');
+      expect(result.message).toContain('target plane not found');
       expect(result.message).toContain('invalid_plane');
     });
 
@@ -245,7 +249,7 @@ describe('PointTool', () => {
 
       // No point should be created
       const allPoints: any[] = [];
-      for (const plane of world.projectionPlanes.values()) {
+      for (const plane of world.getAllProjectionPlanes().values()) {
         allPoints.push(...plane.getAllPoints());
       }
       // Phase 63: Hierarchical IDs
@@ -327,7 +331,7 @@ describe('PointTool', () => {
 
       // Verify all points exist
       const allPoints: any[] = [];
-      for (const plane of world.projectionPlanes.values()) {
+      for (const plane of world.getAllProjectionPlanes().values()) {
         allPoints.push(...plane.getAllPoints());
       }
       // Phase 63: Hierarchical IDs
@@ -403,7 +407,7 @@ describe('PointTool', () => {
       const result = tool.handleClick(context);
 
       expect(result.success).toBe(false);
-      expect(result.message).toContain('Plane not found');
+      expect(result.message).toContain('target plane not found');
       expect(result.message).toContain('nonexistent_plane');
     });
   });
@@ -419,7 +423,7 @@ describe('PointTool', () => {
 
       // Point should exist
       let allPoints: any[] = [];
-      for (const plane of world.projectionPlanes.values()) {
+      for (const plane of world.getAllProjectionPlanes().values()) {
         allPoints.push(...plane.getAllPoints());
       }
       // Phase 63: Hierarchical IDs
@@ -431,7 +435,7 @@ describe('PointTool', () => {
 
       // Point should be removed
       allPoints = [];
-      for (const plane of world.projectionPlanes.values()) {
+      for (const plane of world.getAllProjectionPlanes().values()) {
         allPoints.push(...plane.getAllPoints());
       }
       userPoints = allPoints.filter(p => p.id?.includes('/point2d') && !p.locked);
@@ -452,7 +456,7 @@ describe('PointTool', () => {
 
       // Point should be restored
       const allPoints: any[] = [];
-      for (const plane of world.projectionPlanes.values()) {
+      for (const plane of world.getAllProjectionPlanes().values()) {
         allPoints.push(...plane.getAllPoints());
       }
       // Phase 63: Hierarchical IDs

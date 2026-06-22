@@ -1,14 +1,13 @@
 import { Command } from '@/commands/Command';
 import type { CommandStack } from '@/commands/CommandStack';
 import type { OperationContext } from '@/commands/operations/OperationContext';
-import { createOperationContextFromWorld } from '@/commands/operations/OperationContext';
 import { buildWorldInitialization } from '@/commands/factories/InitializationSequenceFactory';
 import { AddProcessTreeActionGroupOp } from '@/commands/operations/processTree/AddProcessTreeActionGroupOp';
-import { PopSubprocessOp, PushSubprocessOp } from '@/commands/operations/processTree';
+import { PopSubprocessOp } from '@/commands/operations/processTree/PopSubprocessOp';
+import { PushSubprocessOp } from '@/commands/operations/processTree/PushSubprocessOp';
 import { createActionGroup } from '@/domain/processTree/ProcessTree';
 import type { World } from '@/domain/world/World';
 import type { ChangeNotifier } from '@/application/appShell/RuntimeChangePublisher';
-import type { VisibilityModel } from '@/application/processTree/VisibilityModel';
 
 const noopChangeNotifier: ChangeNotifier = { notifyChange: () => {} };
 
@@ -24,10 +23,9 @@ function createInitializationGroupId(): string {
  */
 export function initializeWorld(
   world: World,
-  visibilityModel: VisibilityModel,
   commandStack: CommandStack,
+  operationContext: OperationContext,
   notifier: ChangeNotifier = noopChangeNotifier,
-  operationContext: OperationContext = createOperationContextFromWorld(world, visibilityModel),
 ): void {
   if (world.getAllProjectionPlanes().length > 0) return;
   const initCmd = new Command('Initialize World', operationContext, notifier);

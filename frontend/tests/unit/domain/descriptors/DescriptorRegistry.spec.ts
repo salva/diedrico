@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DescriptorRegistry } from '@/domain/world/descriptors/DescriptorRegistry';
-import { createRegisteredDescriptorRegistry } from '@/domain/world/descriptors/registerDescriptors';
+import { registerAllDescriptors } from '@/domain/world/descriptors/registerDescriptors';
 import type { ElementDescriptor } from '@/domain/world/descriptors/ElementDescriptor';
 import { Element } from '@/domain/world/Element';
 import { FreePoint2D } from '@/domain/world/Point';
@@ -34,7 +34,7 @@ describe('DescriptorRegistry', () => {
   });
 
   it('creates a populated registry for runtime and test sessions', () => {
-    const registry = createRegisteredDescriptorRegistry();
+    const registry = registerAllDescriptors();
 
     expect(registry.size()).toBeGreaterThan(0);
     expect(registry.has(FreePoint2D)).toBe(true);

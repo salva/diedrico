@@ -61,7 +61,7 @@ export class AddSegment2DByPointsOp implements IOperation<AddSegment2DByPointsDe
     if (this.outputs.segmentId) {
       const plane = context.world.getProjectionPlaneById(this.planeId);
       if (plane) {
-        removeLineFromPlane(context.world, plane, this.outputs.segmentId);
+        removeLineFromPlane(context, plane, this.outputs.segmentId);
       }
     }
   }

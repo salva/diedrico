@@ -17,12 +17,6 @@ import { Vector3 } from 'three';
 import { Realization } from './Realization';
 import { Element2D } from './Element2D';
 
-export const CIRCLE_2D_TYPE = {
-  BY_CENTER_AND_POINT: 'by-center-and-point',
-  BY_THREE_POINTS: 'by-three-points',
-} as const;
-export type Circle2DType = typeof CIRCLE_2D_TYPE[keyof typeof CIRCLE_2D_TYPE];
-
 /**
  * Circle2DRealization2D - Stores computed geometry for a Circle2D
  * 
@@ -86,7 +80,7 @@ export abstract class Circle2D extends Element2D {
    * Calculate 2D realization - compute center and radius
    * @param context Realization context to access element realizations
    */
-  abstract realize2D(context: ProjectionElementRealizationContext): Circle2DRealization2D | null;
+  abstract realize2D(context: ProjectionElementRealizationContext): Circle2DRealization2D;
 }
 
 /**

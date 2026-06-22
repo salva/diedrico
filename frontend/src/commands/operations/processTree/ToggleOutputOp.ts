@@ -2,10 +2,15 @@
  * ToggleOutputOp - Toggle "isOutput" status of a node
  */
 
-import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
+import type { IOperation, OperationDescriptor, OperationOutputBag, OperationResult } from '../IOperation';
 import type { OperationContext } from '../OperationContext';
 
-export class ToggleOutputOp implements IOperation {
+export interface ToggleOutputDescriptorV8 extends OperationDescriptor<'ToggleOutput'> {
+  schemaVersion: '8.0.0';
+  nodeId: string;
+}
+
+export class ToggleOutputOp implements IOperation<ToggleOutputDescriptorV8> {
   readonly type = 'ToggleOutput';
   outputs: OperationOutputBag = {};
 
@@ -31,7 +36,7 @@ export class ToggleOutputOp implements IOperation {
     context.visibilityModel.toggleOutput(this.nodeId, node.type);
   }
 
-  serialize() {
-    return { opType: this.type, nodeId: this.nodeId };
+  serialize(): ToggleOutputDescriptorV8 {
+    return { opType: this.type, schemaVersion: '8.0.0' as const, nodeId: this.nodeId };
   }
 }

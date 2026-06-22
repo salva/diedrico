@@ -17,32 +17,32 @@
 
 import { describe, it, expect } from 'vitest';
 import { Vector3 } from 'three';
-import { createTestWorld } from '../../helpers/worldHelpers';
+import { createTestWorld, getHorizontalPlane } from '../../helpers/worldHelpers';
 
 describe('Intersection Correctness', () => {
   // Helper: create world + plane
   function setup() {
-    const { world } = createTestWorld();
-    const plane = world.getProjectionPlaneByLabel('P_H')!;
-    return { world, plane };
+    const { world, operationContext } = createTestWorld();
+    const plane = getHorizontalPlane(world);
+    return { world, plane, operationContext };
   }
 
   describe('Line-Line Intersection', () => {
     it('should return feasible intersection of two crossing lines', () => {
-      const { world, plane } = setup();
+      const { world, plane, operationContext } = setup();
 
       // Horizontal line through (0,0)-(10,0)
-      const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
-      const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 0, 1));
-      const line1 = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
+      const p1 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const p2 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(10, 0, 1));
+      const line1 = operationContext.projectionConstruction.addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
 
       // Vertical line through (5,-5)-(5,5)
-      const p3 = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, -5, 1));
-      const p4 = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 5, 1));
-      const line2 = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p3.id, p4.id);
+      const p3 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(5, -5, 1));
+      const p4 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(5, 5, 1));
+      const line2 = operationContext.projectionConstruction.addLine2DBetweenTwoPoints(plane, p3.id, p4.id);
 
-      const intersection = world.getConstructionService().addLineLineIntersection(plane, line1.id, line2.id);
-      const r = intersection.realize2D(world);
+      const intersection = operationContext.projectionConstruction.addLineLineIntersection(plane, line1.id, line2.id);
+      const r = intersection.realize2D(operationContext.realizationContext);
 
       expect(r.feasible).toBe(true);
       expect(r.position.x).toBeCloseTo(5, 5);
@@ -50,18 +50,18 @@ describe('Intersection Correctness', () => {
     });
 
     it('should return infeasible for parallel lines', () => {
-      const { world, plane } = setup();
+      const { world, plane, operationContext } = setup();
 
-      const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
-      const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 0, 1));
-      const line1 = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
+      const p1 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const p2 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(10, 0, 1));
+      const line1 = operationContext.projectionConstruction.addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
 
-      const p3 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 5, 1));
-      const p4 = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 5, 1));
-      const line2 = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p3.id, p4.id);
+      const p3 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0, 5, 1));
+      const p4 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(10, 5, 1));
+      const line2 = operationContext.projectionConstruction.addLine2DBetweenTwoPoints(plane, p3.id, p4.id);
 
-      const intersection = world.getConstructionService().addLineLineIntersection(plane, line1.id, line2.id);
-      const r = intersection.realize2D(world);
+      const intersection = operationContext.projectionConstruction.addLineLineIntersection(plane, line1.id, line2.id);
+      const r = intersection.realize2D(operationContext.realizationContext);
 
       expect(r.feasible).toBe(false);
     });
@@ -69,21 +69,21 @@ describe('Intersection Correctness', () => {
 
   describe('Line-Segment Intersection', () => {
     it('should return feasible when intersection is within segment bounds', () => {
-      const { world, plane } = setup();
+      const { world, plane, operationContext } = setup();
 
       // Infinite diagonal line
-      const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
-      const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 10, 1));
-      const line = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
+      const p1 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const p2 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(10, 10, 1));
+      const line = operationContext.projectionConstruction.addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
 
       // Horizontal segment from (2, 5) to (8, 5)
-      const s1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(2, 5, 1));
-      const s2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(8, 5, 1));
-      const segment = world.getConstructionService().addSegment2DBetweenPoints(plane, s1.id, s2.id);
+      const s1 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(2, 5, 1));
+      const s2 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(8, 5, 1));
+      const segment = operationContext.projectionConstruction.addSegment2DBetweenPoints(plane, s1.id, s2.id);
 
       // Line y=x intersects segment y=5 at x=5 → (5,5) which is within [2,8]
-      const intersection = world.getConstructionService().addLineLineIntersection(plane, line.id, segment.id);
-      const r = intersection.realize2D(world);
+      const intersection = operationContext.projectionConstruction.addLineLineIntersection(plane, line.id, segment.id);
+      const r = intersection.realize2D(operationContext.realizationContext);
 
       expect(r.feasible).toBe(true);
       expect(r.position.x).toBeCloseTo(5, 3);
@@ -91,21 +91,21 @@ describe('Intersection Correctness', () => {
     });
 
     it('should return infeasible when intersection is outside segment bounds', () => {
-      const { world, plane } = setup();
+      const { world, plane, operationContext } = setup();
 
       // Steep line through origin: y = 3x
-      const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
-      const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(1, 3, 1));
-      const line = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
+      const p1 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const p2 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(1, 3, 1));
+      const line = operationContext.projectionConstruction.addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
 
       // Horizontal segment from (2, 5) to (4, 5) — extends from x=2 to x=4
-      const s1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(2, 5, 1));
-      const s2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(4, 5, 1));
-      const segment = world.getConstructionService().addSegment2DBetweenPoints(plane, s1.id, s2.id);
+      const s1 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(2, 5, 1));
+      const s2 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(4, 5, 1));
+      const segment = operationContext.projectionConstruction.addSegment2DBetweenPoints(plane, s1.id, s2.id);
 
       // y=3x intersects y=5 at x=5/3 ≈ 1.67, which is OUTSIDE segment [2,4]
-      const intersection = world.getConstructionService().addLineLineIntersection(plane, line.id, segment.id);
-      const r = intersection.realize2D(world);
+      const intersection = operationContext.projectionConstruction.addLineLineIntersection(plane, line.id, segment.id);
+      const r = intersection.realize2D(operationContext.realizationContext);
 
       expect(r.feasible).toBe(false);
       // The position should still be computed (the actual intersection point)
@@ -116,20 +116,20 @@ describe('Intersection Correctness', () => {
 
   describe('Segment-Segment Intersection', () => {
     it('should return feasible when intersection is inside both segments', () => {
-      const { world, plane } = setup();
+      const { world, plane, operationContext } = setup();
 
       // Segment from (0,0) to (10,10)
-      const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
-      const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 10, 1));
-      const seg1 = world.getConstructionService().addSegment2DBetweenPoints(plane, p1.id, p2.id);
+      const p1 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const p2 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(10, 10, 1));
+      const seg1 = operationContext.projectionConstruction.addSegment2DBetweenPoints(plane, p1.id, p2.id);
 
       // Segment from (0,10) to (10,0) — crosses at (5,5)
-      const p3 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 10, 1));
-      const p4 = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 0, 1));
-      const seg2 = world.getConstructionService().addSegment2DBetweenPoints(plane, p3.id, p4.id);
+      const p3 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0, 10, 1));
+      const p4 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(10, 0, 1));
+      const seg2 = operationContext.projectionConstruction.addSegment2DBetweenPoints(plane, p3.id, p4.id);
 
-      const intersection = world.getConstructionService().addLineLineIntersection(plane, seg1.id, seg2.id);
-      const r = intersection.realize2D(world);
+      const intersection = operationContext.projectionConstruction.addLineLineIntersection(plane, seg1.id, seg2.id);
+      const r = intersection.realize2D(operationContext.realizationContext);
 
       expect(r.feasible).toBe(true);
       expect(r.position.x).toBeCloseTo(5, 3);
@@ -137,58 +137,58 @@ describe('Intersection Correctness', () => {
     });
 
     it('should return infeasible when intersection is outside one segment', () => {
-      const { world, plane } = setup();
+      const { world, plane, operationContext } = setup();
 
       // Short segment from (0,0) to (3,3)
-      const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
-      const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(3, 3, 1));
-      const seg1 = world.getConstructionService().addSegment2DBetweenPoints(plane, p1.id, p2.id);
+      const p1 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const p2 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(3, 3, 1));
+      const seg1 = operationContext.projectionConstruction.addSegment2DBetweenPoints(plane, p1.id, p2.id);
 
       // Segment from (0,10) to (10,0) — would intersect diagonal at (5,5), outside seg1 [0,3]
-      const p3 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 10, 1));
-      const p4 = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 0, 1));
-      const seg2 = world.getConstructionService().addSegment2DBetweenPoints(plane, p3.id, p4.id);
+      const p3 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0, 10, 1));
+      const p4 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(10, 0, 1));
+      const seg2 = operationContext.projectionConstruction.addSegment2DBetweenPoints(plane, p3.id, p4.id);
 
-      const intersection = world.getConstructionService().addLineLineIntersection(plane, seg1.id, seg2.id);
-      const r = intersection.realize2D(world);
+      const intersection = operationContext.projectionConstruction.addLineLineIntersection(plane, seg1.id, seg2.id);
+      const r = intersection.realize2D(operationContext.realizationContext);
 
       expect(r.feasible).toBe(false);
     });
 
     it('should return infeasible when intersection is outside both segments', () => {
-      const { world, plane } = setup();
+      const { world, plane, operationContext } = setup();
 
       // Short segment from (0,0) to (2,2)
-      const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
-      const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(2, 2, 1));
-      const seg1 = world.getConstructionService().addSegment2DBetweenPoints(plane, p1.id, p2.id);
+      const p1 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const p2 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(2, 2, 1));
+      const seg1 = operationContext.projectionConstruction.addSegment2DBetweenPoints(plane, p1.id, p2.id);
 
       // Short segment from (8,10) to (10,8) — extension would cross seg1's extension at (5,5)
-      const p3 = world.getConstructionService().addFreePoint2D(plane, new Vector3(8, 10, 1));
-      const p4 = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 8, 1));
-      const seg2 = world.getConstructionService().addSegment2DBetweenPoints(plane, p3.id, p4.id);
+      const p3 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(8, 10, 1));
+      const p4 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(10, 8, 1));
+      const seg2 = operationContext.projectionConstruction.addSegment2DBetweenPoints(plane, p3.id, p4.id);
 
-      const intersection = world.getConstructionService().addLineLineIntersection(plane, seg1.id, seg2.id);
-      const r = intersection.realize2D(world);
+      const intersection = operationContext.projectionConstruction.addLineLineIntersection(plane, seg1.id, seg2.id);
+      const r = intersection.realize2D(operationContext.realizationContext);
 
       expect(r.feasible).toBe(false);
     });
 
     it('should return feasible when intersection is at segment endpoint', () => {
-      const { world, plane } = setup();
+      const { world, plane, operationContext } = setup();
 
       // Segment from (0,0) to (5,5)
-      const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
-      const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 5, 1));
-      const seg1 = world.getConstructionService().addSegment2DBetweenPoints(plane, p1.id, p2.id);
+      const p1 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const p2 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(5, 5, 1));
+      const seg1 = operationContext.projectionConstruction.addSegment2DBetweenPoints(plane, p1.id, p2.id);
 
       // Segment from (5,0) to (5,10) — crosses first segment at endpoint (5,5)
-      const p3 = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 0, 1));
-      const p4 = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 10, 1));
-      const seg2 = world.getConstructionService().addSegment2DBetweenPoints(plane, p3.id, p4.id);
+      const p3 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(5, 0, 1));
+      const p4 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(5, 10, 1));
+      const seg2 = operationContext.projectionConstruction.addSegment2DBetweenPoints(plane, p3.id, p4.id);
 
-      const intersection = world.getConstructionService().addLineLineIntersection(plane, seg1.id, seg2.id);
-      const r = intersection.realize2D(world);
+      const intersection = operationContext.projectionConstruction.addLineLineIntersection(plane, seg1.id, seg2.id);
+      const r = intersection.realize2D(operationContext.realizationContext);
 
       expect(r.feasible).toBe(true);
       expect(r.position.x).toBeCloseTo(5, 3);
@@ -198,22 +198,22 @@ describe('Intersection Correctness', () => {
 
   describe('Line-Circle Intersection', () => {
     it('should return two feasible intersection points', () => {
-      const { world, plane } = setup();
+      const { world, plane, operationContext } = setup();
 
       // Horizontal line through y=0
-      const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
-      const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 0, 1));
-      const line = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
+      const p1 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const p2 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(10, 0, 1));
+      const line = operationContext.projectionConstruction.addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
 
       // Circle centered at (5,0) with radius 3
-      const center = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 0, 1));
-      const circPt = world.getConstructionService().addFreePoint2D(plane, new Vector3(8, 0, 1));
-      const circle = world.getConstructionService().addCircle2DByCenterAndPoint(plane, center.id, circPt.id);
+      const center = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(5, 0, 1));
+      const circPt = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(8, 0, 1));
+      const circle = operationContext.projectionConstruction.addCircle2DByCenterAndPoint(plane, center.id, circPt.id);
 
-      const int0 = world.getConstructionService().addLineCircleIntersection(plane, line.id, circle.id, 0);
-      const int1 = world.getConstructionService().addLineCircleIntersection(plane, line.id, circle.id, 1);
-      const r0 = int0.realize2D(world);
-      const r1 = int1.realize2D(world);
+      const int0 = operationContext.projectionConstruction.addLineCircleIntersection(plane, line.id, circle.id, 0);
+      const int1 = operationContext.projectionConstruction.addLineCircleIntersection(plane, line.id, circle.id, 1);
+      const r0 = int0.realize2D(operationContext.realizationContext);
+      const r1 = int1.realize2D(operationContext.realizationContext);
 
       expect(r0.feasible).toBe(true);
       expect(r1.feasible).toBe(true);
@@ -225,41 +225,41 @@ describe('Intersection Correctness', () => {
     });
 
     it('should return infeasible when line does not intersect circle', () => {
-      const { world, plane } = setup();
+      const { world, plane, operationContext } = setup();
 
       // Line at y=10
-      const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 10, 1));
-      const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 10, 1));
-      const line = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
+      const p1 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0, 10, 1));
+      const p2 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(10, 10, 1));
+      const line = operationContext.projectionConstruction.addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
 
       // Circle centered at (5,0) with radius 3
-      const center = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 0, 1));
-      const circPt = world.getConstructionService().addFreePoint2D(plane, new Vector3(8, 0, 1));
-      const circle = world.getConstructionService().addCircle2DByCenterAndPoint(plane, center.id, circPt.id);
+      const center = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(5, 0, 1));
+      const circPt = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(8, 0, 1));
+      const circle = operationContext.projectionConstruction.addCircle2DByCenterAndPoint(plane, center.id, circPt.id);
 
-      const int0 = world.getConstructionService().addLineCircleIntersection(plane, line.id, circle.id, 0);
-      const r0 = int0.realize2D(world);
+      const int0 = operationContext.projectionConstruction.addLineCircleIntersection(plane, line.id, circle.id, 0);
+      const r0 = int0.realize2D(operationContext.realizationContext);
 
       expect(r0.feasible).toBe(false);
     });
 
     it('should fallback index=1 to index=0 for tangent line', () => {
-      const { world, plane } = setup();
+      const { world, plane, operationContext } = setup();
 
       // Circle centered at (5,0) with radius 5
-      const center = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 0, 1));
-      const circPt = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 0, 1));
-      const circle = world.getConstructionService().addCircle2DByCenterAndPoint(plane, center.id, circPt.id);
+      const center = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(5, 0, 1));
+      const circPt = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(10, 0, 1));
+      const circle = operationContext.projectionConstruction.addCircle2DByCenterAndPoint(plane, center.id, circPt.id);
 
       // Tangent line y=5 (tangent at (5,5))
-      const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 5, 1));
-      const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 5, 1));
-      const tangent = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
+      const p1 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0, 5, 1));
+      const p2 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(10, 5, 1));
+      const tangent = operationContext.projectionConstruction.addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
 
-      const int0 = world.getConstructionService().addLineCircleIntersection(plane, tangent.id, circle.id, 0);
-      const int1 = world.getConstructionService().addLineCircleIntersection(plane, tangent.id, circle.id, 1);
-      const r0 = int0.realize2D(world);
-      const r1 = int1.realize2D(world);
+      const int0 = operationContext.projectionConstruction.addLineCircleIntersection(plane, tangent.id, circle.id, 0);
+      const int1 = operationContext.projectionConstruction.addLineCircleIntersection(plane, tangent.id, circle.id, 1);
+      const r0 = int0.realize2D(operationContext.realizationContext);
+      const r1 = int1.realize2D(operationContext.realizationContext);
 
       // Both should return the same tangent point
       expect(r0.feasible).toBe(true);
@@ -271,61 +271,61 @@ describe('Intersection Correctness', () => {
 
   describe('Segment-Circle Intersection', () => {
     it('should return feasible when intersection is within segment bounds', () => {
-      const { world, plane } = setup();
+      const { world, plane, operationContext } = setup();
 
       // Segment from (0,0) to (10,0) — horizontal, passes through circle
-      const s1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
-      const s2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 0, 1));
-      const segment = world.getConstructionService().addSegment2DBetweenPoints(plane, s1.id, s2.id);
+      const s1 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const s2 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(10, 0, 1));
+      const segment = operationContext.projectionConstruction.addSegment2DBetweenPoints(plane, s1.id, s2.id);
 
       // Circle centered at (5,0) with radius 3
-      const center = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 0, 1));
-      const circPt = world.getConstructionService().addFreePoint2D(plane, new Vector3(8, 0, 1));
-      const circle = world.getConstructionService().addCircle2DByCenterAndPoint(plane, center.id, circPt.id);
+      const center = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(5, 0, 1));
+      const circPt = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(8, 0, 1));
+      const circle = operationContext.projectionConstruction.addCircle2DByCenterAndPoint(plane, center.id, circPt.id);
 
       // Both intersections at x=2 and x=8 are within segment [0,10]
-      const int0 = world.getConstructionService().addLineCircleIntersection(plane, segment.id, circle.id, 0);
-      const r0 = int0.realize2D(world);
+      const int0 = operationContext.projectionConstruction.addLineCircleIntersection(plane, segment.id, circle.id, 0);
+      const r0 = int0.realize2D(operationContext.realizationContext);
 
       expect(r0.feasible).toBe(true);
     });
 
     it('should return infeasible when intersection is outside segment bounds', () => {
-      const { world, plane } = setup();
+      const { world, plane, operationContext } = setup();
 
       // Short segment from (0,0) to (1,0) — far from circle intersection
-      const s1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
-      const s2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(1, 0, 1));
-      const segment = world.getConstructionService().addSegment2DBetweenPoints(plane, s1.id, s2.id);
+      const s1 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const s2 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(1, 0, 1));
+      const segment = operationContext.projectionConstruction.addSegment2DBetweenPoints(plane, s1.id, s2.id);
 
       // Circle centered at (5,0) with radius 3 — intersections at x=2 and x=8
-      const center = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 0, 1));
-      const circPt = world.getConstructionService().addFreePoint2D(plane, new Vector3(8, 0, 1));
-      const circle = world.getConstructionService().addCircle2DByCenterAndPoint(plane, center.id, circPt.id);
+      const center = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(5, 0, 1));
+      const circPt = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(8, 0, 1));
+      const circle = operationContext.projectionConstruction.addCircle2DByCenterAndPoint(plane, center.id, circPt.id);
 
-      const int0 = world.getConstructionService().addLineCircleIntersection(plane, segment.id, circle.id, 0);
-      const r0 = int0.realize2D(world);
+      const int0 = operationContext.projectionConstruction.addLineCircleIntersection(plane, segment.id, circle.id, 0);
+      const r0 = int0.realize2D(operationContext.realizationContext);
 
       expect(r0.feasible).toBe(false);
     });
 
     it('should handle segment partially intersecting circle', () => {
-      const { world, plane } = setup();
+      const { world, plane, operationContext } = setup();
 
       // Segment from (0,0) to (5,0) — one intersection in bounds, one outside
-      const s1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
-      const s2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 0, 1));
-      const segment = world.getConstructionService().addSegment2DBetweenPoints(plane, s1.id, s2.id);
+      const s1 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const s2 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(5, 0, 1));
+      const segment = operationContext.projectionConstruction.addSegment2DBetweenPoints(plane, s1.id, s2.id);
 
       // Circle centered at (5,0) with radius 3 — intersections at x=2 and x=8
-      const center = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 0, 1));
-      const circPt = world.getConstructionService().addFreePoint2D(plane, new Vector3(8, 0, 1));
-      const circle = world.getConstructionService().addCircle2DByCenterAndPoint(plane, center.id, circPt.id);
+      const center = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(5, 0, 1));
+      const circPt = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(8, 0, 1));
+      const circle = operationContext.projectionConstruction.addCircle2DByCenterAndPoint(plane, center.id, circPt.id);
 
-      const int0 = world.getConstructionService().addLineCircleIntersection(plane, segment.id, circle.id, 0);
-      const int1 = world.getConstructionService().addLineCircleIntersection(plane, segment.id, circle.id, 1);
-      const r0 = int0.realize2D(world);
-      const r1 = int1.realize2D(world);
+      const int0 = operationContext.projectionConstruction.addLineCircleIntersection(plane, segment.id, circle.id, 0);
+      const int1 = operationContext.projectionConstruction.addLineCircleIntersection(plane, segment.id, circle.id, 1);
+      const r0 = int0.realize2D(operationContext.realizationContext);
+      const r1 = int1.realize2D(operationContext.realizationContext);
 
       // One should be feasible (x=2 inside [0,5]), one infeasible (x=8 outside [0,5])
       const feasibleCount = [r0, r1].filter(r => r.feasible).length;
@@ -337,22 +337,22 @@ describe('Intersection Correctness', () => {
 
   describe('Circle-Circle Intersection', () => {
     it('should return two feasible intersections', () => {
-      const { world, plane } = setup();
+      const { world, plane, operationContext } = setup();
 
       // Circle 1 at (0,0) radius 5
-      const c1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
-      const c1p = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 0, 1));
-      const circle1 = world.getConstructionService().addCircle2DByCenterAndPoint(plane, c1.id, c1p.id);
+      const c1 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const c1p = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(5, 0, 1));
+      const circle1 = operationContext.projectionConstruction.addCircle2DByCenterAndPoint(plane, c1.id, c1p.id);
 
       // Circle 2 at (6,0) radius 5
-      const c2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(6, 0, 1));
-      const c2p = world.getConstructionService().addFreePoint2D(plane, new Vector3(11, 0, 1));
-      const circle2 = world.getConstructionService().addCircle2DByCenterAndPoint(plane, c2.id, c2p.id);
+      const c2 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(6, 0, 1));
+      const c2p = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(11, 0, 1));
+      const circle2 = operationContext.projectionConstruction.addCircle2DByCenterAndPoint(plane, c2.id, c2p.id);
 
-      const int0 = world.getConstructionService().addCircleCircleIntersection(plane, circle1.id, circle2.id, 0);
-      const int1 = world.getConstructionService().addCircleCircleIntersection(plane, circle1.id, circle2.id, 1);
-      const r0 = int0.realize2D(world);
-      const r1 = int1.realize2D(world);
+      const int0 = operationContext.projectionConstruction.addCircleCircleIntersection(plane, circle1.id, circle2.id, 0);
+      const int1 = operationContext.projectionConstruction.addCircleCircleIntersection(plane, circle1.id, circle2.id, 1);
+      const r0 = int0.realize2D(operationContext.realizationContext);
+      const r1 = int1.realize2D(operationContext.realizationContext);
 
       expect(r0.feasible).toBe(true);
       expect(r1.feasible).toBe(true);
@@ -367,41 +367,41 @@ describe('Intersection Correctness', () => {
     });
 
     it('should return infeasible when circles do not intersect', () => {
-      const { world, plane } = setup();
+      const { world, plane, operationContext } = setup();
 
       // Circle 1 at (0,0) radius 2
-      const c1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
-      const c1p = world.getConstructionService().addFreePoint2D(plane, new Vector3(2, 0, 1));
-      const circle1 = world.getConstructionService().addCircle2DByCenterAndPoint(plane, c1.id, c1p.id);
+      const c1 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const c1p = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(2, 0, 1));
+      const circle1 = operationContext.projectionConstruction.addCircle2DByCenterAndPoint(plane, c1.id, c1p.id);
 
       // Circle 2 at (10,0) radius 2 — too far apart
-      const c2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 0, 1));
-      const c2p = world.getConstructionService().addFreePoint2D(plane, new Vector3(12, 0, 1));
-      const circle2 = world.getConstructionService().addCircle2DByCenterAndPoint(plane, c2.id, c2p.id);
+      const c2 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(10, 0, 1));
+      const c2p = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(12, 0, 1));
+      const circle2 = operationContext.projectionConstruction.addCircle2DByCenterAndPoint(plane, c2.id, c2p.id);
 
-      const int0 = world.getConstructionService().addCircleCircleIntersection(plane, circle1.id, circle2.id, 0);
-      const r0 = int0.realize2D(world);
+      const int0 = operationContext.projectionConstruction.addCircleCircleIntersection(plane, circle1.id, circle2.id, 0);
+      const r0 = int0.realize2D(operationContext.realizationContext);
 
       expect(r0.feasible).toBe(false);
     });
 
     it('should fallback index=1 to index=0 for tangent circles', () => {
-      const { world, plane } = setup();
+      const { world, plane, operationContext } = setup();
 
       // Circle 1 at (0,0) radius 5
-      const c1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
-      const c1p = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 0, 1));
-      const circle1 = world.getConstructionService().addCircle2DByCenterAndPoint(plane, c1.id, c1p.id);
+      const c1 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const c1p = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(5, 0, 1));
+      const circle1 = operationContext.projectionConstruction.addCircle2DByCenterAndPoint(plane, c1.id, c1p.id);
 
       // Circle 2 at (10,0) radius 5 — tangent at (5,0)
-      const c2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 0, 1));
-      const c2p = world.getConstructionService().addFreePoint2D(plane, new Vector3(15, 0, 1));
-      const circle2 = world.getConstructionService().addCircle2DByCenterAndPoint(plane, c2.id, c2p.id);
+      const c2 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(10, 0, 1));
+      const c2p = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(15, 0, 1));
+      const circle2 = operationContext.projectionConstruction.addCircle2DByCenterAndPoint(plane, c2.id, c2p.id);
 
-      const int0 = world.getConstructionService().addCircleCircleIntersection(plane, circle1.id, circle2.id, 0);
-      const int1 = world.getConstructionService().addCircleCircleIntersection(plane, circle1.id, circle2.id, 1);
-      const r0 = int0.realize2D(world);
-      const r1 = int1.realize2D(world);
+      const int0 = operationContext.projectionConstruction.addCircleCircleIntersection(plane, circle1.id, circle2.id, 0);
+      const int1 = operationContext.projectionConstruction.addCircleCircleIntersection(plane, circle1.id, circle2.id, 1);
+      const r0 = int0.realize2D(operationContext.realizationContext);
+      const r1 = int1.realize2D(operationContext.realizationContext);
 
       // Both should be feasible and close to (5,0) — tangent point
       expect(r0.feasible).toBe(true);
@@ -414,39 +414,39 @@ describe('Intersection Correctness', () => {
 
   describe('Parent Infeasibility Propagation', () => {
     it('should propagate infeasible line to line-line intersection', () => {
-      const { world, plane } = setup();
+      const { world, plane, operationContext } = setup();
 
       // Degenerate line (near-coincident points)
-      const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 5, 1));
-      const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(5 + 1e-7, 5 + 1e-7, 1));
-      const degLine = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
+      const p1 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(5, 5, 1));
+      const p2 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(5 + 1e-7, 5 + 1e-7, 1));
+      const degLine = operationContext.projectionConstruction.addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
 
       // Normal line
-      const p3 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
-      const p4 = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 10, 1));
-      const normalLine = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p3.id, p4.id);
+      const p3 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const p4 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(10, 10, 1));
+      const normalLine = operationContext.projectionConstruction.addLine2DBetweenTwoPoints(plane, p3.id, p4.id);
 
-      const intersection = world.getConstructionService().addLineLineIntersection(plane, degLine.id, normalLine.id);
-      const r = intersection.realize2D(world);
+      const intersection = operationContext.projectionConstruction.addLineLineIntersection(plane, degLine.id, normalLine.id);
+      const r = intersection.realize2D(operationContext.realizationContext);
 
       expect(r.feasible).toBe(false);
     });
 
     it('should propagate infeasible circle to line-circle intersection', () => {
-      const { world, plane } = setup();
+      const { world, plane, operationContext } = setup();
 
       // Normal line
-      const p1 = world.getConstructionService().addFreePoint2D(plane, new Vector3(0, 0, 1));
-      const p2 = world.getConstructionService().addFreePoint2D(plane, new Vector3(10, 0, 1));
-      const line = world.getConstructionService().addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
+      const p1 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(0, 0, 1));
+      const p2 = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(10, 0, 1));
+      const line = operationContext.projectionConstruction.addLine2DBetweenTwoPoints(plane, p1.id, p2.id);
 
       // Degenerate circle (coincident center + circumference point → radius 0)
-      const center = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 0, 1));
-      const circPt = world.getConstructionService().addFreePoint2D(plane, new Vector3(5, 0, 1));
-      const circle = world.getConstructionService().addCircle2DByCenterAndPoint(plane, center.id, circPt.id);
+      const center = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(5, 0, 1));
+      const circPt = operationContext.projectionConstruction.addFreePoint2D(plane, new Vector3(5, 0, 1));
+      const circle = operationContext.projectionConstruction.addCircle2DByCenterAndPoint(plane, center.id, circPt.id);
 
-      const int0 = world.getConstructionService().addLineCircleIntersection(plane, line.id, circle.id, 0);
-      const r0 = int0.realize2D(world);
+      const int0 = operationContext.projectionConstruction.addLineCircleIntersection(plane, line.id, circle.id, 0);
+      const r0 = int0.realize2D(operationContext.realizationContext);
 
       expect(r0.feasible).toBe(false);
     });

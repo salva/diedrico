@@ -7,7 +7,7 @@
  * 
  * Operations:
  * - AddPlane3DFixedOp: Create a fixed 3D plane (P_H or P_V)
- * - AddProjectionPlaneOp: Create a projection plane
+ * - AddProjectionPlaneFixedOp: Create a projection plane
  * - AddOriginPoint2DOp: Create a locked origin point
  * - AddHingeLineOp: Create a hinge line connecting two planes
  * - AddHalfHingeLine2DOp: Create a half hinge line on a projection plane
@@ -20,7 +20,7 @@ import { Vector3, Vector4, Matrix3 } from 'three';
 import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
 import type { OperationContext } from '../OperationContext';
 import { Matrix4x3 } from '@/utils/threeUtils';
-import { removeLineFromPlane, removePointFromPlane } from './operationHelpers';
+import { invalidateRealization, removeLineFromPlane, removePointFromPlane } from './operationHelpers';
 
 /**
  * AddPlane3DFixedOp - Create a fixed 3D plane
@@ -43,13 +43,12 @@ export class AddPlane3DFixedOp implements IOperation {
 
   apply(context: OperationContext): OperationResult {
     try {
-      // Call element factory method - it handles ID generation
-      const plane = context.world.addPlane3DFixed(
-        this.point.clone(),
-        this.normal.clone(),
-        this.planeId || this.outputs.planeId,
-        this.label
-      );
+      const plane = context.projectionPlaneConstruction.addFixed3DPlane({
+        point: this.point,
+        normal: this.normal,
+        planeId: this.planeId || this.outputs.planeId,
+        label: this.label,
+      });
       
       // Store ID in outputs for redo support
       this.outputs = { planeId: plane.id };
@@ -71,7 +70,9 @@ export class AddPlane3DFixedOp implements IOperation {
 
   undo(context: OperationContext): void {
     if (this.outputs.planeId) {
-      context.world.removePlane3DByIdForUndo(this.outputs.planeId);
+      invalidateRealization(context, this.outputs.planeId);
+      context.world.deletePlane3D(this.outputs.planeId);
+      context.dependencies.unregisterNode(this.outputs.planeId);
     }
   }
 
@@ -108,15 +109,13 @@ export class AddProjectionPlaneFixedOp implements IOperation {
 
   apply(context: OperationContext): OperationResult {
     try {
-      // Call element factory method - it handles ID generation and semantic references
-      // Phase 94: Pass only forward matrices, derived matrices computed in realization
-      const projPlane = context.world.addProjectionPlane(
-        this.plane3DId,
-        this.planeToPaper2D,
-        this.planeTo3D,
-        this.projPlaneId || this.outputs.projPlaneId,
-        this.name
-      );
+      const projPlane = context.projectionPlaneConstruction.addFixedProjectionPlane({
+        plane3DId: this.plane3DId,
+        planeToPaper2D: this.planeToPaper2D,
+        planeTo3D: this.planeTo3D,
+        projPlaneId: this.projPlaneId || this.outputs.projPlaneId,
+        name: this.name,
+      });
       
       // Store ID in outputs for redo support
       this.outputs = { projPlaneId: projPlane.id };
@@ -138,7 +137,11 @@ export class AddProjectionPlaneFixedOp implements IOperation {
 
   undo(context: OperationContext): void {
     if (this.outputs.projPlaneId) {
-      context.world.removeProjectionPlaneByIdForUndo(this.outputs.projPlaneId);
+      const plane = context.world.getProjectionPlaneById(this.outputs.projPlaneId);
+      invalidateRealization(context, this.outputs.projPlaneId);
+      plane?.clear();
+      context.world.deleteProjectionPlane(this.outputs.projPlaneId);
+      context.dependencies.unregisterNode(this.outputs.projPlaneId);
     }
   }
 
@@ -214,15 +217,8 @@ export class AddOriginPoint2DOp implements IOperation {
 
   undo(context: OperationContext): void {
     const projPlane = context.world.getProjectionPlaneById(this.projPlaneId);
-    if (projPlane) {
-      // Get origin point (should be the first point added to plane)
-      const points = projPlane.getAllPoints();
-      if (points.length > 0) {
-        const pointId = points[0].id;
-        removePointFromPlane(context.world, projPlane, pointId);
-        
-        // Phase 53: No longer storing origin IDs in World - use label-based access instead
-      }
+    if (projPlane && this.outputs.pointId) {
+      removePointFromPlane(context, projPlane, this.outputs.pointId);
     }
   }
 
@@ -256,12 +252,11 @@ export class AddHingeLineOp implements IOperation {
 
   apply(context: OperationContext): OperationResult {
     try {
-      // Call element factory method - it handles ID generation and semantic references
-      const hingeLine = context.world.addHingeLine(
-        this.horizontalPlaneId,
-        this.verticalPlaneId,
-        this.hingeLineId || this.outputs.hingeLineId
-      );
+      const hingeLine = context.projectionPlaneConstruction.addHingeLine({
+        horizontalPlaneId: this.horizontalPlaneId,
+        verticalPlaneId: this.verticalPlaneId,
+        hingeLineId: this.hingeLineId || this.outputs.hingeLineId,
+      });
       
       // Store ID in outputs for redo support
       this.outputs = { hingeLineId: hingeLine.id };
@@ -283,7 +278,9 @@ export class AddHingeLineOp implements IOperation {
 
   undo(context: OperationContext): void {
     if (this.outputs.hingeLineId) {
-      context.world.removeHingeLineByIdForUndo(this.outputs.hingeLineId);
+      invalidateRealization(context, this.outputs.hingeLineId);
+      context.world.deleteHingeLine(this.outputs.hingeLineId);
+      context.dependencies.unregisterNode(this.outputs.hingeLineId);
     }
   }
 
@@ -351,12 +348,8 @@ export class AddHalfHingeLine2DOp implements IOperation {
 
   undo(context: OperationContext): void {
     const projPlane = context.world.getProjectionPlaneById(this.projPlaneId);
-    if (projPlane) {
-      // Get half hinge line (should be the first line added to plane)
-      const lines = projPlane.getAllLines();
-      if (lines.length > 0) {
-        removeLineFromPlane(context.world, projPlane, lines[0].id);
-      }
+    if (projPlane && this.outputs.lineId) {
+      removeLineFromPlane(context, projPlane, this.outputs.lineId);
     }
   }
 

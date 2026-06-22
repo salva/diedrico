@@ -24,34 +24,34 @@ export class RealizationService {
   private readonly projectionPlane2D = new Map<string, ProjectionPlaneRealization2D>();
   private readonly projectionPlane3D = new Map<string, ProjectionPlaneRealization3D>();
 
-  realizePoint2D(point: Point2D, context: ProjectionElementRealizationContext): Point2DRealization2D | undefined {
+  realizePoint2D(point: Point2D, context: ProjectionElementRealizationContext): Point2DRealization2D {
     const cached = this.point2D.get(point.id);
     if (cached) return cached;
 
     const realization = point.realize2D(context);
-    if (realization) this.point2D.set(point.id, realization);
+    this.point2D.set(point.id, realization);
     return realization;
   }
 
-  realizeLine2D(line: Line2D, context: ProjectionElementRealizationContext): Line2DRealization2D | undefined {
+  realizeLine2D(line: Line2D, context: ProjectionElementRealizationContext): Line2DRealization2D {
     const cached = this.line2D.get(line.id);
     if (cached) return cached;
 
     const realization = line.realize2D(context);
-    if (realization) this.line2D.set(line.id, realization);
+    this.line2D.set(line.id, realization);
     return realization;
   }
 
-  realizeCircle2D(circle: Circle2D, context: ProjectionElementRealizationContext): Circle2DRealization2D | undefined {
+  realizeCircle2D(circle: Circle2D, context: ProjectionElementRealizationContext): Circle2DRealization2D {
     const cached = this.circle2D.get(circle.id);
     if (cached) return cached;
 
-    const realization = circle.realize2D(context) ?? undefined;
-    if (realization) this.circle2D.set(circle.id, realization);
+    const realization = circle.realize2D(context);
+    this.circle2D.set(circle.id, realization);
     return realization;
   }
 
-  realizePoint3D(point: Point3D, context: Element3DRealizationContext): Point3DRealization3D | undefined {
+  realizePoint3D(point: Point3D, context: Element3DRealizationContext): Point3DRealization3D {
     const cached = this.point3D.get(point.id);
     if (cached) return cached;
 
@@ -60,7 +60,7 @@ export class RealizationService {
     return realization;
   }
 
-  realizeLine3D(line: Line3D, context: Element3DRealizationContext): Line3DRealization3D | undefined {
+  realizeLine3D(line: Line3D, context: Element3DRealizationContext): Line3DRealization3D {
     const cached = this.line3D.get(line.id);
     if (cached) return cached;
 
@@ -69,7 +69,7 @@ export class RealizationService {
     return realization;
   }
 
-  realizeSegment3D(segment: Segment3DFromProjections, context: Element3DRealizationContext): Segment3DRealization3D | undefined {
+  realizeSegment3D(segment: Segment3DFromProjections, context: Element3DRealizationContext): Segment3DRealization3D {
     const cached = this.segment3D.get(segment.id);
     if (cached) return cached;
 
@@ -78,7 +78,7 @@ export class RealizationService {
     return realization;
   }
 
-  realizePlane3D(plane: Plane3D, context: Element3DRealizationContext): Plane3DRealization3D | undefined {
+  realizePlane3D(plane: Plane3D, context: Element3DRealizationContext): Plane3DRealization3D {
     const cached = this.plane3D.get(plane.id);
     if (cached) return cached;
 
@@ -87,7 +87,7 @@ export class RealizationService {
     return realization;
   }
 
-  realizeProjectionPlane2D(plane: ProjectionPlane, context: ProjectionPlaneRealizationContext): ProjectionPlaneRealization2D | undefined {
+  realizeProjectionPlane2D(plane: ProjectionPlane, context: ProjectionPlaneRealizationContext): ProjectionPlaneRealization2D {
     const cached = this.projectionPlane2D.get(plane.id);
     if (cached) return cached;
 
@@ -96,7 +96,7 @@ export class RealizationService {
     return realization;
   }
 
-  realizeProjectionPlane3D(plane: ProjectionPlane, context: ProjectionPlaneRealizationContext): ProjectionPlaneRealization3D | undefined {
+  realizeProjectionPlane3D(plane: ProjectionPlane, context: ProjectionPlaneRealizationContext): ProjectionPlaneRealization3D {
     const cached = this.projectionPlane3D.get(plane.id);
     if (cached) return cached;
 
@@ -105,7 +105,7 @@ export class RealizationService {
     return realization;
   }
 
-  invalidateElement(elementId: string, dependencyQuery: DependencyQueryPort, projectionPlanes: Map<string, ProjectionPlane>): string[] {
+  invalidateElement(elementId: string, dependencyQuery: DependencyQueryPort, projectionPlanes: Iterable<ProjectionPlane>): string[] {
     const affectedIds = [elementId, ...dependencyQuery.getAllDependents(elementId)];
     const affected = new Set(affectedIds);
 
@@ -113,7 +113,8 @@ export class RealizationService {
       this.clearElement(id);
     }
 
-    for (const [projPlaneId, projPlane] of projectionPlanes) {
+    for (const projPlane of projectionPlanes) {
+      const projPlaneId = projPlane.id;
       if (
         affected.has(projPlaneId) ||
         (projPlane.plane3DId != null && affected.has(projPlane.plane3DId)) ||

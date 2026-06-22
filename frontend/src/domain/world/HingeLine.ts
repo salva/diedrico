@@ -71,7 +71,7 @@ export class HalfHingeLine2D extends Line2D {
    * - Projection plane (for transformation matrix in realize2D)
    * 
    * Phase 85 FIX: Must include planeId because realize2D() for plane2 calls:
-   *   world.getProjectionPlane3DRealization(this.planeId)
+   *   context.getProjectionPlane3DRealization(this.planeId)
    * 
    * When projection plane transforms change (e.g., auxiliary plane's trace lines move),
    * this half hinge line's realization must be recomputed.
@@ -251,8 +251,7 @@ export class HingeLine extends Line3D {
     if (projPlane1.plane3DId) {
       const plane3DReal = context.get3DPlaneRealization(projPlane1.plane3DId);
       if (!plane3DReal) {
-        // Plane3D not realized yet - return infeasible
-        return Line3DRealization3D.createInfeasible();
+        throw new Error(`HingeLine.realize3D: missing 3D plane realization ${projPlane1.plane3DId} for hinge ${this.id}`);
       }
       if (!plane3DReal.isFeasible()) {
         // Return infeasible realization instead of throwing

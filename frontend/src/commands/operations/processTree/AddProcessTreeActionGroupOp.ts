@@ -5,11 +5,26 @@
  * This operation creates the container group, while AddProcessTreeActionOp adds items to it.
  */
 
-import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
+import type { IOperation, JsonObject, OperationDescriptor, OperationOutputBag, OperationResult } from '../IOperation';
 import type { OperationContext } from '../OperationContext';
 import type { ActionGroup } from '@/domain/processTree/ProcessTree';
 
-export class AddProcessTreeActionGroupOp implements IOperation {
+interface ActionGroupDescriptorV8 extends JsonObject {
+  id: string;
+  type: 'actionGroup';
+  created: string;
+}
+
+export interface AddProcessTreeActionGroupDescriptorV8 extends OperationDescriptor<'AddProcessTreeActionGroup'> {
+  schemaVersion: '8.0.0';
+  group: ActionGroupDescriptorV8;
+}
+
+function actionGroupToDescriptor(group: ActionGroup): ActionGroupDescriptorV8 {
+  return { id: group.id, type: 'actionGroup', created: group.created.toISOString() };
+}
+
+export class AddProcessTreeActionGroupOp implements IOperation<AddProcessTreeActionGroupDescriptorV8> {
   readonly type = 'AddProcessTreeActionGroup';
   outputs: OperationOutputBag = {};
 
@@ -33,11 +48,11 @@ export class AddProcessTreeActionGroupOp implements IOperation {
     processTree.removeActionGroup(this.group.id);
   }
 
-  serialize() {
+  serialize(): AddProcessTreeActionGroupDescriptorV8 {
     return {
       opType: this.type,
-      groupId: this.group.id,
-      outputs: this.outputs
+      schemaVersion: '8.0.0' as const,
+      group: actionGroupToDescriptor(this.group),
     };
   }
 }

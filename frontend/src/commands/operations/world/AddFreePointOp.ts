@@ -45,7 +45,7 @@ export class AddFreePoint2DOp implements IOperation<AddFreePoint2DDescriptor, Ad
   undo(context: OperationContext): void {
     if (this.outputs.pointId) {
       const plane = context.world.getProjectionPlaneById(this.planeId);
-      if (plane) removePointFromPlane(context.world, plane, this.outputs.pointId);
+      if (plane) removePointFromPlane(context, plane, this.outputs.pointId);
     }
   }
 

@@ -14,7 +14,9 @@
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
 import { projectionPairArgumentSet } from './toolArgumentSpecs';
-import type { ToolArgumentSet } from '@/tools/ToolArgumentCollector';
+import type { ArgumentValue, ToolArgumentSet } from '@/tools/ToolArgumentCollector';
+import type { ToolContext } from './ITool';
+import type { ToolConstructionIntent } from './ToolCommandIntents';
 import { SelectionMask } from '@/types/SelectionMask';
 
 /**
@@ -22,7 +24,6 @@ import { SelectionMask } from '@/types/SelectionMask';
  */
 export class Create3DSegmentTool extends ArgumentCollectorTool {
   readonly name = 'create3dsegment';
-  protected readonly constructionIntentType = 'create3dsegment';
 
   protected getArgumentSets(): ToolArgumentSet[] {
     return [
@@ -33,6 +34,15 @@ export class Create3DSegmentTool extends ArgumentCollectorTool {
         'Cannot create 3D segment: both projections must be on DIFFERENT planes'
       )
     ];
+  }
+
+  protected buildConstructionIntent(args: Map<string, ArgumentValue>, _context: ToolContext): ToolConstructionIntent {
+    return {
+      type: 'create3dsegment',
+      projection1SegmentId: this.requireElementId(args, 'projection1'),
+      projection2SegmentId: this.requireElementId(args, 'projection2'),
+      description: this.getCommandDescription()
+    };
   }
 
 

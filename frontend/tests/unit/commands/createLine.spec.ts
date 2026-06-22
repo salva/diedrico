@@ -7,25 +7,26 @@ import { Command } from '../../../src/commands/Command';
 import { AddLine2DByTwoPointsOp } from '../../../src/commands/operations/world/AddLineOp';
 import { AddFreePoint2DOp } from '../../../src/commands/operations/world/AddFreePointOp';
 import type { World } from '../../../src/domain/world/World';
-import { createTestWorld, buildOperationContext, getHorizontalPlane, getHorizontalPlaneId } from '../../helpers/worldHelpers';
+import { createTestWorld, getHorizontalPlane, getHorizontalPlaneId } from '../../helpers/worldHelpers';
 import { Vector3 } from 'three';
 
 describe('Create Line Command', () => {
   let world: World;
   let visibilityModel;
+  let operationContext;
   let planeId: string;
 
   beforeEach(() => {
-    const { world: w, visibilityModel: vm } = createTestWorld();
+    const { world: w, visibilityModel: vm, operationContext: oc } = createTestWorld();
     world = w;
 
-    visibilityModel = vm;    planeId = getHorizontalPlaneId(world);
+    visibilityModel = vm;    operationContext = oc;    planeId = getHorizontalPlaneId(world);
   });
 
   describe('execution', () => {
     it('should create a line between two points', () => {
       // Create two points first
-      const cmd = new Command("Create line with points", buildOperationContext(world, visibilityModel));
+      const cmd = new Command("Create line with points", operationContext);
       const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
       const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 200, 1)));
       
@@ -51,7 +52,7 @@ describe('Create Line Command', () => {
     });
 
     it('should return lineId in outputs', () => {
-      const cmd = new Command("Create line", buildOperationContext(world, visibilityModel));
+      const cmd = new Command("Create line", operationContext);
       const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
       const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 200, 1)));
       
@@ -69,7 +70,7 @@ describe('Create Line Command', () => {
 
   describe('undo/redo', () => {
     it('should support undo by rolling back operations', () => {
-      const cmd = new Command("Create line", buildOperationContext(world, visibilityModel));
+      const cmd = new Command("Create line", operationContext);
       const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
       const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 200, 1)));
       const lineResult = cmd.addAndExecute(new AddLine2DByTwoPointsOp(
@@ -94,7 +95,7 @@ describe('Create Line Command', () => {
     });
 
     it('should maintain stable IDs across undo/redo', () => {
-      const cmd = new Command("Create line", buildOperationContext(world, visibilityModel));
+      const cmd = new Command("Create line", operationContext);
       const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(100, 100, 1)));
       const p2Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(200, 200, 1)));
       const lineResult = cmd.addAndExecute(new AddLine2DByTwoPointsOp(

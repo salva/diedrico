@@ -72,6 +72,9 @@ import { serializeOperation } from './operations/OperationRegistry';
 import type { ChangeNotifier } from '@/application/appShell/RuntimeChangePublisher';
 
 const noopChangeNotifier: ChangeNotifier = { notifyChange: () => {} };
+declare const AggregateError: {
+  new(errors: Iterable<unknown>, message?: string): Error & { errors: unknown[] };
+};
 
 export interface CommandSnapshot {
   id: string;
@@ -94,6 +97,8 @@ export enum CommandStatus {
   Undone = 'undone'           // Command has been undone
 }
 
+type RollbackState = 'not-started' | 'completed' | 'failed';
+
 /**
  * Command - Generic container for operations
  * 
@@ -107,6 +112,10 @@ export class Command {
   protected _status: CommandStatus = CommandStatus.Building;
   protected context: OperationContext;
   protected notifier: ChangeNotifier;
+  private rollbackState: RollbackState = 'not-started';
+  private rollbackError: unknown;
+  private executionAttemptedInGeneration = false;
+  private failureRollbackAttempted = false;
 
   constructor(description: string, context: OperationContext, notifier: ChangeNotifier = noopChangeNotifier) {
     this.id = this.generateId();
@@ -138,6 +147,10 @@ export class Command {
     return this.operations;
   }
 
+  hasCurrentExecutionAttempt(): boolean {
+    return this.executionAttemptedInGeneration || this.failureRollbackAttempted;
+  }
+
   toSnapshot(): CommandSnapshot {
     if (this._status !== CommandStatus.Committed) {
       throw new Error('Only committed commands can be snapshotted');
@@ -167,14 +180,15 @@ export class Command {
       throw new Error('Cannot add operations to non-building command');
     }
 
+    this.prepareNewExecutionGenerationIfNeeded();
+
     try {
       // Execute operation immediately
+      this.executionAttemptedInGeneration = true;
       const result = operation.apply(this.context);
       
       if (!result.success) {
-        // Operation failed, rollback everything
-        this.rollback();
-        throw new Error(result.error || 'Operation failed');
+        this.rollbackAfterFailure(new Error(result.error || 'Operation failed'));
       }
       
       // Store operation for undo
@@ -188,8 +202,7 @@ export class Command {
       return result as ReturnType<TOperation['apply']>;
     } catch (error) {
       // Operation failed, rollback entire command
-      this.rollback();
-      throw error;
+      this.rollbackAfterFailure(error);
     }
   }
 
@@ -221,15 +234,54 @@ export class Command {
    * Returns command to building state with no operations
    */
   rollback(): void {
+    if (this.rollbackState === 'completed' || this.rollbackState === 'failed') {
+      return;
+    }
+
     const hadOperations = this.operations.length > 0;
-    // Undo in reverse order
-    for (let i = this.operations.length - 1; i >= 0; i--) {
-      this.operations[i].undo(this.context);
+    try {
+      // Undo in reverse order
+      for (let i = this.operations.length - 1; i >= 0; i--) {
+        this.operations[i].undo(this.context);
+      }
+    } catch (error) {
+      this.rollbackState = 'failed';
+      this.rollbackError = error;
+      throw error;
     }
     this.operations = [];
     this._status = CommandStatus.Building;
+    this.rollbackState = 'completed';
+    this.executionAttemptedInGeneration = false;
     if (hadOperations) {
       this.notifier.notifyChange();
+    }
+  }
+
+  rollbackAfterFailure(originalError: unknown): never {
+    this.failureRollbackAttempted = true;
+    if (this.rollbackState === 'not-started') {
+      try {
+        this.rollback();
+      } catch (rollbackError) {
+        throw new AggregateError([originalError, rollbackError], 'Command failed and rollback failed');
+      }
+    }
+    if (this.rollbackState === 'failed') {
+      if (originalError instanceof Error && originalError.name === 'AggregateError' && originalError.message === 'Command failed and rollback failed') {
+        throw originalError;
+      }
+      throw new AggregateError([originalError, this.rollbackError], 'Command failed and rollback failed');
+    }
+    throw originalError;
+  }
+
+  private prepareNewExecutionGenerationIfNeeded(): void {
+    if (this.operations.length === 0 && this.rollbackState === 'completed') {
+      this.rollbackState = 'not-started';
+      this.rollbackError = undefined;
+      this.failureRollbackAttempted = false;
+      this.executionAttemptedInGeneration = false;
     }
   }
 

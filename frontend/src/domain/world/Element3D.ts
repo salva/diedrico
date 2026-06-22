@@ -44,13 +44,3 @@ export abstract class Element3D extends Element {
    */
   abstract clone(): Element3D;
 }
-
-/**
- * Type guard to check if an object is an Element3D
- * 
- * @param obj Object to check
- * @returns true if obj is an Element3D, false otherwise
- */
-export function isElement3D(obj: any): obj is Element3D {
-  return obj instanceof Element3D;
-}

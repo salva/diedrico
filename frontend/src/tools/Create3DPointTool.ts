@@ -14,7 +14,9 @@
 
 import { ArgumentCollectorTool } from './ArgumentCollectorTool';
 import { projectionPairArgumentSet } from './toolArgumentSpecs';
-import type { ToolArgumentSet } from '@/tools/ToolArgumentCollector';
+import type { ArgumentValue, ToolArgumentSet } from '@/tools/ToolArgumentCollector';
+import type { ToolContext } from './ITool';
+import type { ToolConstructionIntent } from './ToolCommandIntents';
 import { SelectionMask } from '@/types/SelectionMask';
 
 /**
@@ -31,7 +33,6 @@ import { SelectionMask } from '@/types/SelectionMask';
  */
 export class Create3DPointTool extends ArgumentCollectorTool {
   readonly name = 'create3dpoint';
-  protected readonly constructionIntentType = 'create3dpoint';
 
   /**
    * Define argument specification
@@ -46,6 +47,15 @@ export class Create3DPointTool extends ArgumentCollectorTool {
         'Cannot create 3D point: both projections must be on DIFFERENT planes'
       )
     ];
+  }
+
+  protected buildConstructionIntent(args: Map<string, ArgumentValue>, _context: ToolContext): ToolConstructionIntent {
+    return {
+      type: 'create3dpoint',
+      projection1PointId: this.requireElementId(args, 'projection1'),
+      projection2PointId: this.requireElementId(args, 'projection2'),
+      description: this.getCommandDescription()
+    };
   }
 
   /**

@@ -12,16 +12,15 @@
  * The operation is reversible (undo removes the plane).
  * 
  * @see Plane3DFromTraces in Plane.ts
- * @see World.add3DPlane() for storage
+ * @see ReconstructionConstructionService for storage
  */
 
 import type { IOperation, JsonObject, OperationDescriptor, OperationResult } from '../IOperation';
 import type { OperationContext } from '../OperationContext';
-import { Plane3DFromTraces } from '@/domain/world/Plane';
 import { computeLineLineIntersection3D } from '@/utils/projectionPlaneUtils';
 import { Vector3, Vector4 } from 'three';
 import { applyMatrix4x3 } from '@/utils/threeUtils';
-import { requireDistinctProjectionPlanes, requireFeasibleProjectionPair } from './operationHelpers';
+import { invalidateRealization, requireDistinctProjectionPlanes, requireFeasibleProjectionPair } from './operationHelpers';
 
 export interface Add3DPlaneDescriptor extends OperationDescriptor<'Add3DPlane'> {
   trace1Id: string;
@@ -65,12 +64,12 @@ export class Add3DPlaneOp implements IOperation<Add3DPlaneDescriptor, Add3DPlane
       }
       
       // Validate that traces are geometrically feasible
-      const [trace1Real, trace2Real] = requireFeasibleProjectionPair('plane', trace1.realize2D(context.world), trace2.realize2D(context.world), 'traces');
+      const [trace1Real, trace2Real] = requireFeasibleProjectionPair('plane', trace1.realize2D(context.realizationContext), trace2.realize2D(context.realizationContext), 'traces');
       
       // CRITICAL VALIDATION: Verify that traces intersect in 3D
       // Transform traces to 3D and check intersection
-      const plane1Realization = context.world.getProjectionPlane3DRealization(this.plane1Id);
-      const plane2Realization = context.world.getProjectionPlane3DRealization(this.plane2Id);
+      const plane1Realization = context.realizations.realizeProjectionPlane3D(plane1, context.realizationContext);
+      const plane2Realization = context.realizations.realizeProjectionPlane3D(plane2, context.realizationContext);
       
       if (!plane1Realization || !plane2Realization) {
         throw new Error('Cannot create 3D plane: projection plane realizations not available');
@@ -133,27 +132,17 @@ export class Add3DPlaneOp implements IOperation<Add3DPlaneDescriptor, Add3DPlane
         );
       }
       
-      // Use stored ID if available (for redo), otherwise generate new one
-      const planeId = this.outputs.planeId || context.world.generate3DPlaneId();
-      
-      // Phase 97: Generate default label if not provided
-      const label = this.label || context.labelGenerator.next('Plane3D');
-      
-      // Create Plane3DFromTraces
-      const plane = new Plane3DFromTraces(
-        planeId,
-        label,
-        this.trace1Id,
-        this.trace2Id,
-        this.plane1Id,
-        this.plane2Id
-      );
-      
-      // Add to World storage
-      context.world.add3DPlane(plane);
+      const plane = context.reconstructionConstruction.addPlaneFromTraces({
+        trace1Id: this.trace1Id,
+        trace2Id: this.trace2Id,
+        plane1Id: this.plane1Id,
+        plane2Id: this.plane2Id,
+        planeId: this.outputs.planeId,
+        label: this.label,
+      });
       
       // Store outputs for undo
-      this.outputs = { planeId };
+      this.outputs = { planeId: plane.id };
       
       return {
         success: true,
@@ -170,7 +159,9 @@ export class Add3DPlaneOp implements IOperation<Add3DPlaneDescriptor, Add3DPlane
 
   undo(context: OperationContext): void {
     if (this.outputs.planeId) {
-      context.world.remove3DPlane(this.outputs.planeId);
+      invalidateRealization(context, this.outputs.planeId);
+      context.world.deletePlane3D(this.outputs.planeId);
+      context.dependencies.unregisterNode(this.outputs.planeId);
     }
   }
 

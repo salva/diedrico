@@ -20,9 +20,7 @@
 
 import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
 import type { OperationContext } from '../OperationContext';
-import { BrokenHingeLine } from '@/domain/world/BrokenHingeLine';
-import { BrokenHalfHingeLine2D } from '@/domain/world/elements/BrokenHalfHingeLine2D';
-import { removeLineFromPlane } from './operationHelpers';
+import { invalidateRealization, removeLineFromPlane } from './operationHelpers';
 
 export class AddBrokenHingeLineOp implements IOperation {
   readonly type = 'AddBrokenHingeLine';
@@ -58,84 +56,29 @@ export class AddBrokenHingeLineOp implements IOperation {
         throw new Error(`One or both planes not found: ${this.plane1Id}, ${this.plane2Id}`);
       }
 
-      // Generate IDs (use existing for redo, or generate new)
-      const bhlId = this.brokenHingeLineId || this.outputs.brokenHingeLineId || context.world.generateHingeLineId();
-      const projectionConstruction = context.projectionConstruction;
-      const bhhl1Id = this.bhhl1Id || this.outputs.bhhl1Id || projectionConstruction.generateLine2DId(plane1!);
-      const bhhl2Id = this.bhhl2Id || this.outputs.bhhl2Id || projectionConstruction.generateLine2DId(plane2!);
-
-      // Validation: Ensure IDs match their intended planes
-      if (bhhl1Id && !bhhl1Id.startsWith(this.plane1Id + '/')) {
-        throw new Error(
-          `AddBrokenHingeLineOp: bhhl1Id "${bhhl1Id}" does not start with plane1Id "${this.plane1Id}/". ` +
-          `This indicates a parameter mismatch during deserialization.`
-        );
-      }
-      if (bhhl2Id && !bhhl2Id.startsWith(this.plane2Id + '/')) {
-        throw new Error(
-          `AddBrokenHingeLineOp: bhhl2Id "${bhhl2Id}" does not start with plane2Id "${this.plane2Id}/". ` +
-          `This indicates a parameter mismatch during deserialization.`
-        );
-      }
-
-      // Generate label for BrokenHingeLine only (BHHLs generate their own labels)
-      const bhlLabel = context.labelGenerator.next('BrokenHingeLine');
-
-      // Create BrokenHingeLine (3D entity)
-      const brokenHingeLine = new BrokenHingeLine(
-        bhlId,
-        bhlLabel,
-        this.plane1Id,
-        this.plane2Id,
-        this.mainHingeId,
-        this.auxiliaryPlaneId
-      );
-
-      // Create BrokenHalfHingeLine2D traces using the authoritative BrokenHingeLine id.
-      // Create BrokenHalfHingeLine2D on plane1 (no label - will generate BHHL_{n})
-      const bhhl1 = new BrokenHalfHingeLine2D(
-        bhhl1Id,
-        this.plane1Id,    // planeId
-        brokenHingeLine.id,  // broken hinge line id
-        this.mainHingeId, // mainHingeId
-        bhhl2Id           // siblingBHHLId (Reference to sibling on plane2)
-        // No label parameter - constructor will generate BHHL_{n}
-      );
-
-      // Create BrokenHalfHingeLine2D on plane2 (no label - will generate BHHL_{n})
-      const bhhl2 = new BrokenHalfHingeLine2D(
-        bhhl2Id,
-        this.plane2Id,    // planeId
-        brokenHingeLine.id,  // broken hinge line id
-        this.mainHingeId, // mainHingeId
-        bhhl1Id           // siblingBHHLId (Reference to sibling on plane1)
-        // No label parameter - constructor will generate BHHL_{n}
-      );
-
-      // Add to World storage through the narrow hinge-line entity API.
-      context.world.addHingeLineEntity(brokenHingeLine);
-      plane1.addLine(bhhl1);
-      plane2.addLine(bhhl2);
-
-      // Register dependencies
-      const dependencyRegistrar = context.dependencies;
-      dependencyRegistrar.registerNode(bhlId, brokenHingeLine.getDependencies());
-      dependencyRegistrar.registerNode(bhhl1Id, bhhl1.getDependencies());
-      dependencyRegistrar.registerNode(bhhl2Id, bhhl2.getDependencies());
+      const { brokenHingeLine, bhhl1, bhhl2 } = context.projectionPlaneConstruction.addBrokenHingeLine({
+        mainHingeId: this.mainHingeId,
+        auxiliaryPlaneId: this.auxiliaryPlaneId,
+        plane1,
+        plane2,
+        brokenHingeLineId: this.brokenHingeLineId || this.outputs.brokenHingeLineId,
+        bhhl1Id: this.bhhl1Id || this.outputs.bhhl1Id,
+        bhhl2Id: this.bhhl2Id || this.outputs.bhhl2Id,
+      });
 
       // Store outputs for undo
       this.outputs = {
-        brokenHingeLineId: bhlId,
-        bhhl1Id,
-        bhhl2Id,
+        brokenHingeLineId: brokenHingeLine.id,
+        bhhl1Id: bhhl1.id,
+        bhhl2Id: bhhl2.id,
         plane1Id: this.plane1Id,
         plane2Id: this.plane2Id
       };
 
       // Back-fill generated IDs into parameters for persistence
-      this.brokenHingeLineId = bhlId;
-      this.bhhl1Id = bhhl1Id;
-      this.bhhl2Id = bhhl2Id;
+      this.brokenHingeLineId = brokenHingeLine.id;
+      this.bhhl1Id = bhhl1.id;
+      this.bhhl2Id = bhhl2.id;
 
       return {
         success: true,
@@ -154,11 +97,11 @@ export class AddBrokenHingeLineOp implements IOperation {
     if (this.outputs.brokenHingeLineId && this.outputs.bhhl1Id && this.outputs.bhhl2Id) {
       const plane1 = context.world.getProjectionPlaneById(this.outputs.plane1Id);
       const plane2 = context.world.getProjectionPlaneById(this.outputs.plane2Id);
-      if (plane1) removeLineFromPlane(context.world, plane1, this.outputs.bhhl1Id);
-      if (plane2) removeLineFromPlane(context.world, plane2, this.outputs.bhhl2Id);
+      if (plane1) removeLineFromPlane(context, plane1, this.outputs.bhhl1Id);
+      if (plane2) removeLineFromPlane(context, plane2, this.outputs.bhhl2Id);
 
-      context.world.invalidateRealization(this.outputs.brokenHingeLineId);
-      context.world.removeHingeLine(this.outputs.brokenHingeLineId);
+      invalidateRealization(context, this.outputs.brokenHingeLineId);
+      context.world.deleteHingeLine(this.outputs.brokenHingeLineId);
       context.dependencies.unregisterNode(this.outputs.brokenHingeLineId);
     }
   }

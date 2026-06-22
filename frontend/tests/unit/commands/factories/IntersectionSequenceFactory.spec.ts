@@ -9,7 +9,8 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { IntersectionSequenceFactory } from '@/commands/factories/IntersectionSequenceFactory';
 import { Command } from '@/commands/Command';
 import type { World } from '@/domain/world/World';
-import { createTestWorld, buildOperationContext, getMainHingeLine } from '../../../helpers/worldHelpers';
+import type { OperationContext } from '@/commands/operations/OperationContext';
+import { createTestWorld, getHorizontalPlane, getMainHingeLine, getVerticalPlane } from '../../../helpers/worldHelpers';
 import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
 import { AddLine2DByTwoPointsOp } from '@/commands/operations/world/AddLineOp';
 import { AddCircle2DByCenterAndPointOp } from '@/commands/operations/world/AddCircleOp';
@@ -28,23 +29,25 @@ function createGroupForCommand(cmd: Command): string {
 
 describe('IntersectionSequenceFactory', () => {
   let world: World;
+  let operationContext: OperationContext;
   let visibilityModel;
   let planeId: string;
 
   beforeEach(() => {
-    const { world: w, visibilityModel: vm } = createTestWorld();
+    const { world: w, visibilityModel: vm, operationContext: context } = createTestWorld();
     world = w;
+    operationContext = context;
 
-    visibilityModel = vm;    planeId = world.getProjectionPlaneByLabel('P_H')!.id;
+    visibilityModel = vm;    planeId = getHorizontalPlane(world).id;
   });
 
   describe('HalfHingeLine sibling intersection creation (Phase 42)', () => {
     it('should create sibling intersection when line intersects HHL', () => {
       // Setup: Create a line that intersects with HHL
-      const cmd = new Command('Setup', buildOperationContext(world, visibilityModel));
+      const cmd = new Command('Setup', operationContext);
       
       // Get HalfHingeLine on horizontal plane
-      const horizontalPlane = world.getProjectionPlaneByLabel('P_H')!;
+      const horizontalPlane = getHorizontalPlane(world);
       const mainHingeLine = getMainHingeLine(world);
       const hhl = horizontalPlane.getAllLines().find(
         l => (l as any).hingeLineId === mainHingeLine.id
@@ -68,7 +71,7 @@ describe('IntersectionSequenceFactory', () => {
       cmd.commit();
 
       // Test: Create intersection with HHL using proper typed method
-      const intersectionCmd = new Command('Create HHL intersection', buildOperationContext(world, visibilityModel));
+      const intersectionCmd = new Command('Create HHL intersection', operationContext);
       const groupId = createGroupForCommand(intersectionCmd);
 
       const result = IntersectionSequenceFactory.createLineLineIntersection(
@@ -87,7 +90,7 @@ describe('IntersectionSequenceFactory', () => {
       intersectionCmd.commit();
 
       // Verify: Both points exist in world
-      const verticalPlane = world.getProjectionPlaneByLabel('P_V')!;
+      const verticalPlane = getVerticalPlane(world);
       
       const primaryPoint = horizontalPlane.getPoint(result.pointId);
       const siblingPoint = verticalPlane.getPoint(result.siblingPointId!);
@@ -101,8 +104,9 @@ describe('IntersectionSequenceFactory', () => {
       expect((siblingPoint as any).primaryIntersectionId).toBe(result.pointId);
 
       // Verify: Both points realize to same coordinate (parametric consistency)
-      const primaryRealization = world.realizePoint2D(primaryPoint!, world);
-      const siblingRealization = world.realizePoint2D(siblingPoint!, world);
+      const realizationContext = operationContext.realizationContext;
+      const primaryRealization = operationContext.realizations.realizePoint2D(primaryPoint!, realizationContext);
+      const siblingRealization = operationContext.realizations.realizePoint2D(siblingPoint!, realizationContext);
       
       expect(primaryRealization).toBeDefined();
       expect(siblingRealization).toBeDefined();
@@ -112,7 +116,7 @@ describe('IntersectionSequenceFactory', () => {
 
     it('should create only primary intersection for non-HHL line', () => {
       // Setup: Create two regular lines that intersect
-      const cmd = new Command('Setup', buildOperationContext(world, visibilityModel));
+      const cmd = new Command('Setup', operationContext);
       
       // Line 1: horizontal
       const p1Result = cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(0, 0, 1)));
@@ -127,7 +131,7 @@ describe('IntersectionSequenceFactory', () => {
       cmd.commit();
 
       // Test: Create intersection using proper typed method
-      const intersectionCmd = new Command('Create regular intersection', buildOperationContext(world, visibilityModel));
+      const intersectionCmd = new Command('Create regular intersection', operationContext);
       const groupId = createGroupForCommand(intersectionCmd);
 
       const result = IntersectionSequenceFactory.createLineLineIntersection(
@@ -141,10 +145,10 @@ describe('IntersectionSequenceFactory', () => {
 
     it('should create sibling for line-circle intersection with HHL', () => {
       // Setup: Create circle and HHL that intersect
-      const cmd = new Command('Setup', buildOperationContext(world, visibilityModel));
+      const cmd = new Command('Setup', operationContext);
       
       // Get HalfHingeLine on horizontal plane
-      const horizontalPlane = world.getProjectionPlaneByLabel('P_H')!;
+      const horizontalPlane = getHorizontalPlane(world);
       const mainHingeLine = getMainHingeLine(world);
       const hhl = horizontalPlane.getAllLines().find(
         l => (l as any).hingeLineId === mainHingeLine.id
@@ -167,7 +171,7 @@ describe('IntersectionSequenceFactory', () => {
       cmd.commit();
 
       // Test: Create line-circle intersection using proper typed method
-      const intersectionCmd = new Command('Create HHL-circle intersection', buildOperationContext(world, visibilityModel));
+      const intersectionCmd = new Command('Create HHL-circle intersection', operationContext);
       const groupId = createGroupForCommand(intersectionCmd);
 
       const result = IntersectionSequenceFactory.createLineCircleIntersection(
@@ -181,7 +185,7 @@ describe('IntersectionSequenceFactory', () => {
       intersectionCmd.commit();
 
       // Verify: Both points exist
-      const verticalPlane = world.getProjectionPlaneByLabel('P_V')!;
+      const verticalPlane = getVerticalPlane(world);
       
       const primaryPoint = horizontalPlane.getPoint(result.pointId);
       const siblingPoint = verticalPlane.getPoint(result.siblingPointId!);

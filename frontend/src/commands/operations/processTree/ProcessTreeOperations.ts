@@ -8,9 +8,21 @@
  * 
  */
 
-import type { IOperation, OperationOutputBag, OperationResult } from '../IOperation';
+import type { IOperation, OperationDescriptor, OperationOutputBag, OperationResult } from '../IOperation';
 import type { OperationContext } from '../OperationContext';
-import type { ActionNode } from '@/domain/processTree/ProcessTree';
+import type { RemovedActionMetadata } from '@/domain/processTree/ProcessTree';
+import type { ActionNodeDescriptorV8 } from './AddProcessTreeActionOp';
+import { actionNodeToDescriptor } from './AddProcessTreeActionOp';
+
+export interface RemoveActionFromProcessTreeDescriptorV8 extends OperationDescriptor<'RemoveActionFromProcessTree'> {
+  schemaVersion: '8.0.0';
+  groupId: string;
+  actionId: string;
+  removedActionNode: ActionNodeDescriptorV8;
+  originalIndex: number;
+  previousSiblingId?: string;
+  nextSiblingId?: string;
+}
 
 /**
  * RemoveActionFromProcessTreeOp - Remove an action from the construction history
@@ -20,25 +32,24 @@ import type { ActionNode } from '@/domain/processTree/ProcessTree';
  * 
  * This is the primary operation used by DeleteElementsCommand.
  */
-export class RemoveActionFromProcessTreeOp implements IOperation {
+export class RemoveActionFromProcessTreeOp implements IOperation<RemoveActionFromProcessTreeDescriptorV8> {
   readonly type = 'RemoveActionFromProcessTree';
   outputs: OperationOutputBag = {};
   
-  // Stored for undo
-  private removedAction?: ActionNode;
-  private groupId?: string;
-  private index?: number;
+  private removed?: RemovedActionMetadata;
 
   constructor(
-    private actionId: string
+    private actionId: string,
+    restoredMetadata?: RemovedActionMetadata,
   ) {
+    this.removed = restoredMetadata;
   }
 
   apply(context: OperationContext): OperationResult {
     try {
       const processTree = context.processTree;
       const result = processTree.removeAction(this.actionId);
-      
+
       if (!result) {
         return {
           success: false,
@@ -47,15 +58,12 @@ export class RemoveActionFromProcessTreeOp implements IOperation {
         };
       }
       
-      // Store for undo
-      this.removedAction = result.action;
-      this.groupId = result.groupId;
-      this.index = result.index;
-      
-      this.outputs = { 
+      this.removed = result;
+
+      this.outputs = {
         removedActionId: this.actionId,
         groupId: result.groupId,
-        index: result.index
+        index: result.originalIndex
       };
       
       return {
@@ -72,15 +80,24 @@ export class RemoveActionFromProcessTreeOp implements IOperation {
   }
 
   undo(context: OperationContext): void {
-    if (!this.removedAction || this.groupId === undefined || this.index === undefined) {
+    if (!this.removed) {
       throw new Error('Cannot undo: no action data stored');
     }
 
-    const processTree = context.processTree;
-    processTree.restoreAction(this.removedAction, this.groupId, this.index);
+    context.processTree.restoreAction(this.removed);
   }
 
-  serialize() {
-    return { opType: this.type, actionId: this.actionId, outputs: this.outputs };
+  serialize(): RemoveActionFromProcessTreeDescriptorV8 {
+    if (!this.removed) throw new Error('Cannot serialize RemoveActionFromProcessTreeOp before apply');
+    return {
+      opType: this.type,
+      schemaVersion: '8.0.0' as const,
+      groupId: this.removed.groupId,
+      actionId: this.actionId,
+      removedActionNode: actionNodeToDescriptor(this.removed.actionNode),
+      originalIndex: this.removed.originalIndex,
+      previousSiblingId: this.removed.previousSiblingId,
+      nextSiblingId: this.removed.nextSiblingId,
+    };
   }
 }

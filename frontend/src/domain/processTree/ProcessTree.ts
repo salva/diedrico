@@ -8,12 +8,7 @@
 
 import type { Action } from './Action';
 
-export const PROCESS_NODE_TYPE = {
-  SUBPROCESS: 'subprocess',
-  ACTION_GROUP: 'actionGroup',
-  ACTION: 'action',
-} as const;
-export type ProcessNodeType = typeof PROCESS_NODE_TYPE[keyof typeof PROCESS_NODE_TYPE];
+export type ProcessNodeType = 'subprocess' | 'actionGroup' | 'action';
 
 export interface ProcessNodeBase {
   id: string;
@@ -29,7 +24,7 @@ export interface Subprocess extends ProcessNodeBase {
 
 export interface ActionGroup extends ProcessNodeBase {
   type: 'actionGroup';
-  children: (ActionNode | null)[];         // Actions or tombstones (null = deleted)
+  children: ActionNode[];
 }
 
 export function createActionGroup(
@@ -50,6 +45,19 @@ export interface ActionNode extends ProcessNodeBase, Action {
 }
 
 export type ProcessNode = Subprocess | ActionGroup | ActionNode;
+
+export type ProcessNodeSnapshot =
+  | Readonly<Omit<Subprocess, 'children'> & { readonly children: readonly ProcessNodeSnapshot[] }>
+  | Readonly<Omit<ActionGroup, 'children'> & { readonly children: readonly ProcessNodeSnapshot[] }>
+  | Readonly<ActionNode>;
+
+export interface RemovedActionMetadata {
+  groupId: string;
+  actionNode: ActionNode;
+  originalIndex: number;
+  previousSiblingId?: string;
+  nextSiblingId?: string;
+}
 
 export class ProcessTree {
   root!: Subprocess;
@@ -87,17 +95,15 @@ export class ProcessTree {
    * @param id - Optional ID to use (for deserialization), otherwise generates new ID
    */
   pushSubprocess(name: string, id?: string): Subprocess {
-    if (id) {
-      this.reserveNodeId(id);
-    }
-
     const subprocess: Subprocess = {
-      id: id || this.nextNodeId(),
+      id: id || this.nextUniqueNodeId(),
       type: 'subprocess',
       name,
       children: [],
       created: new Date()
     };
+    this.assertUniqueNodeId(subprocess.id);
+    this.reserveNodeId(subprocess.id);
 
     // Add to current subprocess's children
     const parent = this.getCurrentSubprocess();
@@ -136,7 +142,7 @@ export class ProcessTree {
    */
   addSubprocess(name: string, parent?: Subprocess): Subprocess {
     const subprocess: Subprocess = {
-      id: this.nextNodeId(),
+      id: this.nextUniqueNodeId(),
       type: 'subprocess',
       name,
       children: [],
@@ -154,8 +160,18 @@ export class ProcessTree {
    * Adds to the current subprocess on top of the stack.
    */
   addActionGroup(group: ActionGroup): void {
+    this.importActionGroup(group);
     const currentSubprocess = this.getCurrentSubprocess();
     currentSubprocess.children.push(group);
+  }
+
+  importActionGroup(group: ActionGroup): void {
+    this.assertUniqueNodeId(group.id);
+    this.reserveNodeId(group.id);
+    for (const child of group.children) {
+      this.assertUniqueNodeId(child.id);
+      this.reserveNodeId(child.id);
+    }
   }
 
   /**
@@ -164,29 +180,36 @@ export class ProcessTree {
    * @param groupId The ID of the target ActionGroup
    * @returns The index where the action was added
    */
-  addActionToGroup(action: Action, groupId: string): number {
-    let groupFound: ActionGroup | undefined;
-    
-    // Find group
-    this.traverseGroups(this.root, (group) => {
-      if (group.id === groupId) {
-        groupFound = group;
-      }
-    });
-
-    if (!groupFound) {
-      throw new Error(`ActionGroup ${groupId} not found`);
-    }
+  addActionToGroup(action: Action, groupId: string): { actionNode: ActionNode; index: number } {
+    const groupFound = this.requireGroup(groupId);
 
     const actionNode: ActionNode = {
       ...action,
-      id: this.nextNodeId(),
+      id: this.nextUniqueNodeId(),
       type: 'action',
       created: new Date()
     };
-    
+    this.assertUniqueNodeId(actionNode.id);
+    this.reserveNodeId(actionNode.id);
     const index = groupFound.children.push(actionNode) - 1;
-    return index;
+    return { actionNode, index };
+  }
+
+  insertActionNodeToGroup(actionNode: ActionNode, groupId: string, index?: number): number {
+    const group = this.requireGroup(groupId);
+    if (this.findNodeById(actionNode.id)) throw new Error(`ProcessTree node ID already exists: ${actionNode.id}`);
+    this.reserveNodeId(actionNode.id);
+    const insertionIndex = index === undefined ? group.children.length : Math.max(0, Math.min(index, group.children.length));
+    group.children.splice(insertionIndex, 0, actionNode);
+    return insertionIndex;
+  }
+
+  insertSubprocess(subprocess: Subprocess): void {
+    this.assertUniqueNodeId(subprocess.id);
+    this.reserveNodeId(subprocess.id);
+    const parent = this.getCurrentSubprocess();
+    parent.children.push(subprocess);
+    this.subprocessStack.push(subprocess);
   }
 
   /**
@@ -214,14 +237,18 @@ export class ProcessTree {
     if (node.type === 'subprocess') {
       node.children.forEach(child => this.traverseAllNodes(child, callback));
     } else if (node.type === 'actionGroup') {
-      node.children.forEach(child => {
-        if (child) this.traverseAllNodes(child, callback);
-      });
+      node.children.forEach(child => this.traverseAllNodes(child, callback));
     }
   }
 
-  private nextNodeId(): string {
+  private nextNodeIdUnchecked(): string {
     return `node${this.nextNodeCounter++}`;
+  }
+
+  private nextUniqueNodeId(): string {
+    let id = this.nextNodeIdUnchecked();
+    while (this.findNodeById(id)) id = this.nextNodeIdUnchecked();
+    return id;
   }
 
   private reserveNodeId(id: string): void {
@@ -229,6 +256,10 @@ export class ProcessTree {
     if (match) {
       this.nextNodeCounter = Math.max(this.nextNodeCounter, Number(match[1]) + 1);
     }
+  }
+
+  private assertUniqueNodeId(id: string): void {
+    if (this.findNodeById(id)) throw new Error(`ProcessTree node ID already exists: ${id}`);
   }
 
   /**
@@ -257,17 +288,12 @@ export class ProcessTree {
 
   /**
    * Depth-first traversal of actions
-   * Automatically skips null tombstones (deleted actions)
    */
   private traverseActions(node: ProcessNode, callback: (action: ActionNode) => void): void {
     if (node.type === 'action') {
       callback(node);
     } else if (node.type === 'actionGroup') {
-      node.children.forEach(action => {
-        if (action !== null) {  // Skip tombstones
-          callback(action);
-        }
-      });
+      node.children.forEach(action => callback(action));
     } else if (node.type === 'subprocess') {
       node.children.forEach(child => this.traverseActions(child, callback));
     }
@@ -300,21 +326,24 @@ export class ProcessTree {
   }
 
   /**
-   * Remove an action from the tree (creates tombstone at same index)
-   * Uses stable indices - action index never changes
-   * 
    * @param actionId - ID of action to remove
    * @returns Object with removed action data and location, or null if not found
    */
-  removeAction(actionId: string): { action: ActionNode, groupId: string, index: number } | null {
-    let result: { action: ActionNode, groupId: string, index: number } | null = null;
+  removeAction(actionId: string): RemovedActionMetadata | null {
+    let result: RemovedActionMetadata | null = null;
     
     this.traverseGroups(this.root, (group) => {
-      const index = group.children.findIndex(child => child?.id === actionId);
-      if (index !== -1 && group.children[index] !== null) {
-        const action = group.children[index]!;
-        group.children[index] = null;  // Create tombstone
-        result = { action, groupId: group.id, index };
+      if (result) return;
+      const index = group.children.findIndex(child => child.id === actionId);
+      if (index !== -1) {
+        const [actionNode] = group.children.splice(index, 1);
+        result = {
+          actionNode,
+          groupId: group.id,
+          originalIndex: index,
+          previousSiblingId: group.children[index - 1]?.id,
+          nextSiblingId: group.children[index]?.id,
+        };
       }
     });
     
@@ -327,15 +356,21 @@ export class ProcessTree {
    * @param elementId - ID of element produced by action
    * @returns Object with removed action data and location, or null if not found
    */
-  removeActionByElementId(elementId: string): { action: ActionNode, groupId: string, index: number } | null {
-    let result: { action: ActionNode, groupId: string, index: number } | null = null;
+  removeActionByElementId(elementId: string): RemovedActionMetadata | null {
+    let result: RemovedActionMetadata | null = null;
     
     this.traverseGroups(this.root, (group) => {
-      const index = group.children.findIndex(child => child?.elementId === elementId);
-      if (index !== -1 && group.children[index] !== null) {
-        const action = group.children[index]!;
-        group.children[index] = null;  // Create tombstone
-        result = { action, groupId: group.id, index };
+      if (result) return;
+      const index = group.children.findIndex(child => child.elementId === elementId);
+      if (index !== -1) {
+        const [actionNode] = group.children.splice(index, 1);
+        result = {
+          actionNode,
+          groupId: group.id,
+          originalIndex: index,
+          previousSiblingId: group.children[index - 1]?.id,
+          nextSiblingId: group.children[index]?.id,
+        };
       }
     });
     
@@ -378,32 +413,20 @@ export class ProcessTree {
   }
 
   /**
-   * Restore an action at a specific location (fills tombstone)
-   * 
-   * @param action - Action to restore
-   * @param groupId - ID of parent ActionGroup
-   * @param index - Index in children array
-   * @throws Error if location not found or not a tombstone
+   * Restore an action using deterministic sibling anchors captured at removal time.
    */
-  restoreAction(action: ActionNode, groupId: string, index: number): void {
-    let restored = false;
-    
-    this.traverseGroups(this.root, (group) => {
-      if (group.id === groupId) {
-        if (index < 0 || index >= group.children.length) {
-          throw new Error(`Invalid index ${index} for group ${groupId}`);
-        }
-        if (group.children[index] !== null) {
-          throw new Error(`Cannot restore: position ${index} in group ${groupId} is not empty`);
-        }
-        group.children[index] = action;  // Fill tombstone
-        restored = true;
-      }
-    });
-    
-    if (!restored) {
-      throw new Error(`Group ${groupId} not found`);
-    }
+  restoreAction(metadata: RemovedActionMetadata): void {
+    const group = this.requireGroup(metadata.groupId);
+    if (this.findNodeById(metadata.actionNode.id)) throw new Error(`Cannot restore: action already exists: ${metadata.actionNode.id}`);
+    const nextIndex = metadata.nextSiblingId ? group.children.findIndex(child => child.id === metadata.nextSiblingId) : -1;
+    const previousIndex = metadata.previousSiblingId ? group.children.findIndex(child => child.id === metadata.previousSiblingId) : -1;
+    const insertionIndex = nextIndex !== -1
+      ? nextIndex
+      : previousIndex !== -1
+        ? previousIndex + 1
+        : Math.min(metadata.originalIndex, group.children.length);
+    this.reserveNodeId(metadata.actionNode.id);
+    group.children.splice(insertionIndex, 0, metadata.actionNode);
   }
 
   /**
@@ -415,6 +438,41 @@ export class ProcessTree {
     } else if (node.type === 'subprocess') {
       node.children.forEach(child => this.traverseGroups(child, callback));
     }
+  }
+
+  findGroup(groupId: string): ActionGroup | undefined {
+    let found: ActionGroup | undefined;
+    this.traverseGroups(this.root, (group) => {
+      if (group.id === groupId) found = group;
+    });
+    return found;
+  }
+
+  private requireGroup(groupId: string): ActionGroup {
+    const group = this.findGroup(groupId);
+    if (!group) throw new Error(`ActionGroup ${groupId} not found`);
+    return group;
+  }
+
+  getRootSnapshot(): ProcessNodeSnapshot {
+    return this.snapshotNode(this.root);
+  }
+
+  getChildrenSnapshot(nodeId: string): readonly ProcessNodeSnapshot[] {
+    const node = this.findNodeById(nodeId);
+    if (!node) throw new Error(`ProcessTree node not found: ${nodeId}`);
+    if (node.type === 'action') return [];
+    return Object.freeze(node.children.map(child => this.snapshotNode(child)));
+  }
+
+  getPathToNodeSnapshot(nodeId: string): readonly ProcessNodeSnapshot[] | null {
+    const path = this.findPathToNode(this.root, nodeId, []);
+    return path ? Object.freeze(path.map(node => this.snapshotNode(node))) : null;
+  }
+
+  private snapshotNode(node: ProcessNode): ProcessNodeSnapshot {
+    if (node.type === 'action') return Object.freeze({ ...node });
+    return Object.freeze({ ...node, children: Object.freeze(node.children.map(child => this.snapshotNode(child))) }) as ProcessNodeSnapshot;
   }
 
   /**
@@ -469,7 +527,7 @@ export class ProcessTree {
   private findPathToGroup(node: ProcessNode, targetActionId: string, currentPath: ProcessNode[]): ProcessNode[] | null {
     // If it's an action group, check if it contains the action
     if (node.type === 'actionGroup') {
-      const hasAction = node.children.some(child => child !== null && child.id === targetActionId);
+      const hasAction = node.children.some(child => child.id === targetActionId);
       if (hasAction) {
         return [...currentPath, node];
       }
@@ -486,6 +544,17 @@ export class ProcessTree {
     }
 
     // Action nodes are not traversed directly here as we look for groups or subprocesses
+    return null;
+  }
+
+  private findPathToNode(node: ProcessNode, targetNodeId: string, currentPath: ProcessNode[]): ProcessNode[] | null {
+    if (node.id === targetNodeId) return currentPath;
+    if (node.type === 'action') return null;
+    const nextPath = [...currentPath, node];
+    for (const child of node.children) {
+      const result = this.findPathToNode(child, targetNodeId, nextPath);
+      if (result) return result;
+    }
     return null;
   }
 }
