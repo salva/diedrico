@@ -64,29 +64,77 @@ export function selectCanvasGrid(planeToPaper: Matrix3 | undefined, viewport: Ca
 
   const labels: CanvasGridLabels = { top: [], bottom: [], left: [], right: [] };
   const pushLabel = (arr: CanvasGridLabel[], key: string, value: number, position: number, edge: CanvasGridLabel['edge']) => {
-    if (Number.isFinite(position) && position >= -10 && position <= (edge === 'top' || edge === 'bottom' ? viewport.width + 10 : viewport.height + 10)) arr.push({ key, value, position, edge });
+    const limit = edge === 'top' || edge === 'bottom' ? viewport.width : viewport.height;
+    if (Number.isFinite(position) && position >= -10 && position <= limit + 10) arr.push({ key, value, position, edge });
   };
-  const uHorizontal = Math.abs(uPaper.x) / (Math.abs(uPaper.y) + 1e-10) > 1;
-  const findULineY = (u: number, xPaper: number) => {
-    if (Math.abs(vPaper.x) < 1e-10) return null;
-    const t = (xPaper - originPaper.x - u * uPaper.x) / vPaper.x;
-    return (originPaper.y + u * uPaper.y + t * vPaper.y + viewport.panY) * zoom;
+  const screenToPaper = (screenX: number, screenY: number) => new Vector3(screenX / zoom - viewport.panX, screenY / zoom - viewport.panY, 1);
+  const majorStart = (value: number) => Math.floor(value / majorSpacing) * majorSpacing;
+  const majorEnd = (value: number) => Math.ceil(value / majorSpacing) * majorSpacing;
+  const findULineIntersectionWithHorizontal = (u: number, yPaper: number): number | null => {
+    if (Math.abs(vPaper.y) < 1e-10) return null;
+    const v = (yPaper - originPaper.y - u * uPaper.y) / vPaper.y;
+    const xPaper = originPaper.x + u * uPaper.x + v * vPaper.x;
+    return (xPaper + viewport.panX) * zoom;
   };
-  const findVLineX = (v: number, yPaper: number) => {
+  const findVLineIntersectionWithHorizontal = (v: number, yPaper: number): number | null => {
     if (Math.abs(uPaper.y) < 1e-10) return null;
-    const t = (yPaper - originPaper.y - v * vPaper.y) / uPaper.y;
-    return (originPaper.x + t * uPaper.x + v * vPaper.x + viewport.panX) * zoom;
+    const u = (yPaper - originPaper.y - v * vPaper.y) / uPaper.y;
+    const xPaper = originPaper.x + u * uPaper.x + v * vPaper.x;
+    return (xPaper + viewport.panX) * zoom;
   };
-  if (uHorizontal) {
-    for (let u = Math.floor(uMin / majorSpacing) * majorSpacing; u <= Math.ceil(uMax / majorSpacing) * majorSpacing; u += majorSpacing) {
-      pushLabel(labels.top, `top-${u}`, u, findVLineX(0, -viewport.panY) ?? NaN, 'top');
-      pushLabel(labels.bottom, `bottom-${u}`, u, findVLineX(0, viewport.height / zoom - viewport.panY) ?? NaN, 'bottom');
+  const findULineIntersectionWithVertical = (u: number, xPaper: number): number | null => {
+    if (Math.abs(vPaper.x) < 1e-10) return null;
+    const v = (xPaper - originPaper.x - u * uPaper.x) / vPaper.x;
+    const yPaper = originPaper.y + u * uPaper.y + v * vPaper.y;
+    return (yPaper + viewport.panY) * zoom;
+  };
+  const findVLineIntersectionWithVertical = (v: number, xPaper: number): number | null => {
+    if (Math.abs(uPaper.x) < 1e-10) return null;
+    const u = (xPaper - originPaper.x - v * vPaper.x) / uPaper.x;
+    const yPaper = originPaper.y + u * uPaper.y + v * vPaper.y;
+    return (yPaper + viewport.panY) * zoom;
+  };
+  const pushHorizontalEdgeLabels = (
+    edge: 'top' | 'bottom',
+    rangeCoordinate: 'u' | 'v',
+    screenY: number,
+    intersect: (value: number, yPaper: number) => number | null,
+  ) => {
+    const yPaper = screenY / zoom - viewport.panY;
+    const left = paperToUV(screenToPaper(0, screenY));
+    const right = paperToUV(screenToPaper(viewport.width, screenY));
+    const min = Math.min(left[rangeCoordinate], right[rangeCoordinate]);
+    const max = Math.max(left[rangeCoordinate], right[rangeCoordinate]);
+    for (let value = majorStart(min); value <= majorEnd(max); value += majorSpacing) {
+      pushLabel(labels[edge], `${edge}-${value}`, value, intersect(value, yPaper) ?? NaN, edge);
     }
+  };
+  const pushVerticalEdgeLabels = (
+    edge: 'left' | 'right',
+    rangeCoordinate: 'u' | 'v',
+    screenX: number,
+    intersect: (value: number, xPaper: number) => number | null,
+  ) => {
+    const xPaper = screenX / zoom - viewport.panX;
+    const top = paperToUV(screenToPaper(screenX, 0));
+    const bottom = paperToUV(screenToPaper(screenX, viewport.height));
+    const min = Math.min(top[rangeCoordinate], bottom[rangeCoordinate]);
+    const max = Math.max(top[rangeCoordinate], bottom[rangeCoordinate]);
+    for (let value = majorStart(min); value <= majorEnd(max); value += majorSpacing) {
+      pushLabel(labels[edge], `${edge}-${value}`, value, intersect(value, xPaper) ?? NaN, edge);
+    }
+  };
+  const uIsHorizontal = Math.abs(uPaper.x) / (Math.abs(uPaper.y) + 1e-10) > 1;
+  if (uIsHorizontal) {
+    pushHorizontalEdgeLabels('top', 'u', 0, findULineIntersectionWithHorizontal);
+    pushHorizontalEdgeLabels('bottom', 'u', viewport.height, findULineIntersectionWithHorizontal);
+    pushVerticalEdgeLabels('left', 'v', 0, findVLineIntersectionWithVertical);
+    pushVerticalEdgeLabels('right', 'v', viewport.width, findVLineIntersectionWithVertical);
   } else {
-    for (let u = Math.floor(uMin / majorSpacing) * majorSpacing; u <= Math.ceil(uMax / majorSpacing) * majorSpacing; u += majorSpacing) {
-      pushLabel(labels.left, `left-${u}`, u, findULineY(u, -viewport.panX) ?? NaN, 'left');
-      pushLabel(labels.right, `right-${u}`, u, findULineY(u, viewport.width / zoom - viewport.panX) ?? NaN, 'right');
-    }
+    pushHorizontalEdgeLabels('top', 'v', 0, findVLineIntersectionWithHorizontal);
+    pushHorizontalEdgeLabels('bottom', 'v', viewport.height, findVLineIntersectionWithHorizontal);
+    pushVerticalEdgeLabels('left', 'u', 0, findULineIntersectionWithVertical);
+    pushVerticalEdgeLabels('right', 'u', viewport.width, findULineIntersectionWithVertical);
   }
   return { lines, labels };
 }

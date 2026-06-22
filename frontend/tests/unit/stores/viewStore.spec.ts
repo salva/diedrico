@@ -23,8 +23,9 @@ describe('viewStore', () => {
     viewStore.adjustPan(50, -25);
     expect(viewStore.panX.value).toBe(50);
     expect(viewStore.panY.value).toBe(-25);
-    viewStore.setZoom(15);
-    expect(viewStore.zoom.value).toBe(10);
+    viewStore.setZoom(300);
+    expect(viewStore.zoom.value).toBe(250);
+    viewStore.setZoom(1);
     viewStore.adjustZoom(-0.99);
     expect(viewStore.zoom.value).toBeCloseTo(0.1);
   });

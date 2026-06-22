@@ -27,6 +27,8 @@ interface ViewportState {
 const zoom = ref(1.0);
 const panX = ref(0);
 const panY = ref(0);
+const MIN_ZOOM = 0.1;
+const MAX_ZOOM = 250;
 const gridVisible = ref(true); // Grid visible by default
 
 const PROJECTION_DISPLAY_KEY = 'diedrico-show-projected-elements';
@@ -43,7 +45,7 @@ export function useViewStore() {
    */
   function setZoom(newZoom: number) {
     // Clamp zoom to reasonable range
-    zoom.value = Math.max(0.1, Math.min(10, newZoom));
+    zoom.value = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newZoom));
   }
 
   /**
@@ -74,7 +76,7 @@ export function useViewStore() {
    */
   function adjustZoom(delta: number, focusX?: number, focusY?: number) {
     const oldZoom = zoom.value;
-    const newZoom = Math.max(0.1, Math.min(10, oldZoom * (1 + delta)));
+    const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, oldZoom * (1 + delta)));
     
     // If focus point provided, adjust pan to zoom toward that point
     if (focusX !== undefined && focusY !== undefined) {
