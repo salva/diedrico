@@ -13,6 +13,7 @@ export type ThreeProjectionPlaneReadModel = ThreeProjectionPlaneSourceDto;
 
 export function buildProjectionPlaneModels(context: ThreePresentationContext): ThreeProjectionPlaneReadModel[] {
   return context.getProjectionPlanes().flatMap(plane => {
+      if (!context.isElementVisible(plane)) return [];
       const projectionRealization = context.getProjectionPlane3DRealization(plane.id);
       if (!projectionRealization) throw new Error(`Missing 3D realization for projection plane ${plane.id}`);
       if (!projectionRealization.feasible) return [];

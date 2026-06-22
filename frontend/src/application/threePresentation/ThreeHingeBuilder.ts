@@ -11,7 +11,7 @@ export function buildHingeModels(context: ThreePresentationContext): ThreeHingeS
   const getHingeLines = () => context.getHingeLines();
   const realizationContext = context.realizationContext;
   return getHingeLines().flatMap(hingeLine => {
-      if (!visibleFromDomain(hingeLine)) return [];
+      if (!visibleFromDomain(hingeLine) || !context.isElementVisible(hingeLine)) return [];
       const realization = hingeLine.realize3D(realizationContext);
       if (!realization.isFeasible() || !realization.point || !realization.direction) return [];
       const origin = domainToThreeJS(realization.point);

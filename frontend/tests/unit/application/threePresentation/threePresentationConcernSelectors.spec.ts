@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { Vector3 } from 'three';
+import { Vector3, Vector4 } from 'three';
 import { Guide2D } from '@/domain/world/Guide';
 import { RealizationService } from '@/domain/world/RealizationService';
 import { mat4x3 } from '@/utils/threeUtils';
+import { VisibilityModel } from '@/application/processTree/VisibilityModel';
+import { ProcessTree, createActionGroup } from '@/domain/processTree/ProcessTree';
+import { createAction } from '@/domain/processTree/Action';
 import { buildThreePresentationModel } from '@/application/threePresentation/ThreePresentationSelector';
 import { ProjectionPlane3DSelector } from '@/application/threePresentation/ProjectionPlane3DSelector';
 import { PlanarElement3DSelector } from '@/application/threePresentation/PlanarElement3DSelector';
@@ -16,6 +19,13 @@ const plane = { id: 'PH', getAllPoints: () => [], getAllLines: () => [], getAllC
 const visibleStyle = { visible: true, color: 0x123456 };
 
 function feasible(realization: object) { return { ...realization, feasible: true, isFeasible: () => true }; }
+
+function processVisibility() {
+  return {
+    processTree: new ProcessTree(),
+    visibilityModel: new VisibilityModel(),
+  };
+}
 
 describe('threePresentation concern selectors', () => {
   it('builds projection-plane surface/grid DTOs and reference-axis/label DTOs from DTO-native plane sources', () => {
@@ -78,6 +88,7 @@ describe('threePresentation concern selectors', () => {
   });
 
   it('builds the three presentation model directly from world and realization context', () => {
+    const { processTree, visibilityModel } = processVisibility();
     const guide = new Guide2D('PH/guide-1', 'PH/ref', 'PH/through', 'PH');
     guide.visualStyle = visibleStyle as never;
     guide.realize2D = () => feasible({ point1: new Vector3(0, 0, 1), point2: new Vector3(1, 0, 1), getDirection: () => new Vector3(1, 0, 0) }) as never;
@@ -107,6 +118,8 @@ describe('threePresentation concern selectors', () => {
     const model = buildThreePresentationModel({
       world: world as never,
       realizations: realizations as never,
+      processTree,
+      visibilityModel,
       selectedIds: ['PH/guide-1'],
       displayOptions: { showPlanes: true, show2DElementsOnPlanes: true, showGrid: true, showReferenceAxes: false },
     });
@@ -114,5 +127,52 @@ describe('threePresentation concern selectors', () => {
     expect(model.projectionPlanes[0]).not.toHaveProperty('realization');
     expect(model.planarElements[0]).toMatchObject({ sourceEntityId: 'p1', kind: 'planar-point', style: { color: 0x123456 } });
     expect(model.guides[0]).toMatchObject({ sourceEntityId: 'PH/guide-1', planeId: 'PH', geometry: expect.any(Object) });
+  });
+
+  it('honors effective process-tree visibility for reconstructed 3D elements', () => {
+    const processTree = new ProcessTree();
+    const visibilityModel = new VisibilityModel();
+    const subprocess = processTree.pushSubprocess('Hidden 3D construction');
+    const group = createActionGroup('group-hidden-3d');
+    processTree.addActionGroup(group);
+    const action = processTree.addActionToGroup(createAction('point3d-hidden', 'Hidden 3D point'), group.id).actionNode;
+    visibilityModel.toggleOutput(action.id, 'action');
+    visibilityModel.setShowIntermediates(subprocess.id, false);
+
+    const hiddenPoint = {
+      id: 'point3d-hidden',
+      visualStyle: visibleStyle,
+      realize3D: () => feasible({ position: new Vector4(3, -4, 5, 1), getCartesian: () => [3, -4, 5] }),
+      getDependencies: () => [],
+      clone: () => hiddenPoint,
+    };
+    const world = {
+      getAllProjectionPlanes: () => [],
+      getProjectionPlaneById: () => undefined,
+      get3DPlane: () => undefined,
+      get3DPoint: (id: string) => id === hiddenPoint.id ? hiddenPoint : undefined,
+      get3DLine: () => undefined,
+      get3DSegment: () => undefined,
+      getAll3DPoints: () => [hiddenPoint],
+      getAll3DLines: () => [],
+      getAll3DSegments: () => [],
+      getAllPlanes: () => [],
+      getAllHingeLines: () => [],
+      getHingeLineById: () => undefined,
+    };
+    const realizations = Object.assign(new RealizationService(), {
+      realizePoint3D: () => feasible({ getCartesian: () => [3, -4, 5] }),
+    });
+
+    const model = buildThreePresentationModel({
+      world: world as never,
+      realizations: realizations as never,
+      processTree,
+      visibilityModel,
+      selectedIds: [],
+      displayOptions: { showPlanes: true, show2DElementsOnPlanes: true, showGrid: true, showReferenceAxes: false },
+    });
+
+    expect(model.reconstructedElements).toEqual([]);
   });
 });

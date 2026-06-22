@@ -1,5 +1,7 @@
 import type { RealizationService } from '@/domain/world/RealizationService';
 import type { World } from '@/domain/world/World';
+import type { VisibilityModel } from '@/application/processTree/VisibilityModel';
+import type { ProcessTree } from '@/domain/processTree/ProcessTree';
 import type { ThreeViewDisplayOptions } from '@/types/ThreeViewDisplayOptions';
 import type { ThreePresentationModel } from './ThreePresentationModel';
 import { createThreePresentationContext } from './ThreePresentationContext';
@@ -17,12 +19,14 @@ import { buildHingeModels } from './ThreeHingeBuilder';
 export interface ThreePresentationBuilderInput {
   world: World;
   realizations: RealizationService;
+  processTree: ProcessTree;
+  visibilityModel: VisibilityModel;
   displayOptions: ThreeViewDisplayOptions;
   selectedIds: readonly string[];
 }
 
 export function buildThreePresentationModel(input: ThreePresentationBuilderInput): ThreePresentationModel {
-  const context = createThreePresentationContext(input.world, input.realizations);
+  const context = createThreePresentationContext(input.world, input.realizations, input.processTree, input.visibilityModel);
   const guides = buildSelectedGuideModels(context, input.selectedIds);
   return new ThreePresentationSelector().select({
     projectionPlanes: buildProjectionPlaneModels(context),

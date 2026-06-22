@@ -6,8 +6,12 @@ import type { ProjectionPlane } from '@/domain/world/projectionPlane/ProjectionP
 import type { ProjectionPlaneRealization3D } from '@/domain/world/projectionPlane/ProjectionPlaneRealization';
 import type { RealizationService } from '@/domain/world/RealizationService';
 import type { World } from '@/domain/world/World';
+import type { VisibilityModel } from '@/application/processTree/VisibilityModel';
+import type { ProcessTree } from '@/domain/processTree/ProcessTree';
+import type { Element } from '@/domain/world/Element';
 import { createThreeRealizationContext, type ThreeRealizationContext } from './ThreeRealizationContext';
 import { GeometryElementLookup } from '@/domain/world/GeometryElementLookup';
+import { resolveVisibility } from '@/application/canvasPresentation/styleService';
 
 export interface ThreePresentationContext {
   readonly realizationContext: ThreeRealizationContext;
@@ -23,9 +27,15 @@ export interface ThreePresentationContext {
   get3DLineRealization(id: string): Line3DRealization3D | undefined;
   get3DSegmentRealization(id: string): Segment3DRealization3D | undefined;
   getLine2D(id: string): Line2D | undefined;
+  isElementVisible(element: Element): boolean;
 }
 
-export function createThreePresentationContext(world: World, realizations: RealizationService): ThreePresentationContext {
+export function createThreePresentationContext(
+  world: World,
+  realizations: RealizationService,
+  processTree: ProcessTree,
+  visibilityModel: VisibilityModel
+): ThreePresentationContext {
   const lookup = new GeometryElementLookup(world);
   const getProjectionPlanes = () => world.getAllProjectionPlanes();
   const getHingeLines = () => world.getAllHingeLines();
@@ -59,5 +69,6 @@ export function createThreePresentationContext(world: World, realizations: Reali
       return segment ? realizations.realizeSegment3D(segment, realizationContext) : undefined;
     },
     getLine2D: id => lookup.getLine2D(id),
+    isElementVisible: element => resolveVisibility(element, processTree, visibilityModel),
   };
 }

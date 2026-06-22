@@ -18,12 +18,12 @@ export function buildPlanarPlaneModels(context: ThreePresentationContext): Three
       const elements: ThreePlanarElementSourceDto[] = [];
       for (const point of plane.getAllPoints()) {
         const realization = point.realize2D(realizationContext);
-        if (!realization.feasible || !visibleFromDomain(point)) continue;
+        if (!realization.feasible || !visibleFromDomain(point) || !context.isElementVisible(point)) continue;
         elements.push({ id: point.id, kind: 'planar-point', planeId: plane.id, visible: true, style: planarStyleFromDomain(point), position: v(lift(realization.position, planeRealization.planeTo3D)) });
       }
       for (const line of plane.getAllLines()) {
         const realization = line.realize2D(realizationContext);
-        if (!realization.feasible || !visibleFromDomain(line)) continue;
+        if (!realization.feasible || !visibleFromDomain(line) || !context.isElementVisible(line)) continue;
         const style = planarStyleFromDomain(line);
         if (line instanceof Segment2D || realization.isBounded()) {
           elements.push({ id: line.id, kind: 'planar-segment', planeId: plane.id, visible: true, style, start: v(lift(realization.point1, planeRealization.planeTo3D)), end: v(lift(realization.point2, planeRealization.planeTo3D)) });
@@ -36,7 +36,7 @@ export function buildPlanarPlaneModels(context: ThreePresentationContext): Three
       }
       for (const circle of plane.getAllCircles()) {
         const realization = circle.realize2D(realizationContext);
-        if (!realization.feasible || !visibleFromDomain(circle)) continue;
+        if (!realization.feasible || !visibleFromDomain(circle) || !context.isElementVisible(circle)) continue;
         const radius = realization.getRadius();
         const circlePoints: Vec3[] = [];
         for (let i = 0; i < 64; i++) {

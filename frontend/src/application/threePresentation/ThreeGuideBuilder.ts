@@ -13,7 +13,7 @@ export function buildSelectedGuideModels(context: ThreePresentationContext, sele
   const realizationContext = context.realizationContext;
   return selectedIds.flatMap(selectedId => {
       const line = context.getLine2D(selectedId);
-      if (!line || (!isGuide2D(line) && !isSiblingGuide2D(line)) || !visibleFromDomain(line)) return [];
+      if (!line || (!isGuide2D(line) && !isSiblingGuide2D(line)) || !visibleFromDomain(line) || !context.isElementVisible(line)) return [];
       const planeRealization = context.getProjectionPlane3DRealization(line.planeId);
       const guideRealization = line.realize2D(realizationContext);
       if (!planeRealization) throw new Error(`Missing 3D realization for guide plane ${line.planeId}`);
@@ -41,7 +41,7 @@ export function buildSelectedGuideModels(context: ThreePresentationContext, sele
 export function buildGuideIntersectionModels(context: ThreePresentationContext): ThreeGuideIntersectionReadModel {
   return {
       points: context.get3DPoints().flatMap(point => {
-        if (!visibleFromDomain(point)) return [];
+        if (!visibleFromDomain(point) || !context.isElementVisible(point)) return [];
         const realization = context.get3DPointRealization(point.id);
         if (!realization) throw new Error(`Missing 3D point realization for ${point.id}`);
         if (!realization.isFeasible()) return [];
@@ -49,14 +49,14 @@ export function buildGuideIntersectionModels(context: ThreePresentationContext):
         return [{ id: point.id, visible: true, style: THREE_STYLE.guideMarker, position: { x, y, z } }];
       }),
       lines: context.get3DLines().flatMap(line => {
-        if (!visibleFromDomain(line)) return [];
+        if (!visibleFromDomain(line) || !context.isElementVisible(line)) return [];
         const realization = context.get3DLineRealization(line.id);
         if (!realization) throw new Error(`Missing 3D line realization for ${line.id}`);
         if (!realization.isFeasible()) return [];
         return [{ id: line.id, visible: true, style: THREE_STYLE.guideMarker, point: v(realization.point), direction: v(realization.getDirection()) }];
       }),
       segments: context.get3DSegments().flatMap(segment => {
-        if (!visibleFromDomain(segment)) return [];
+        if (!visibleFromDomain(segment) || !context.isElementVisible(segment)) return [];
         const realization = context.get3DSegmentRealization(segment.id);
         if (!realization) throw new Error(`Missing 3D segment realization for ${segment.id}`);
         if (!realization.isFeasible()) return [];

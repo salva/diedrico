@@ -98,7 +98,14 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
   threePresentationPort(): ThreePresentationPort {
     return {
       ...this.changeSubscriptionPort(),
-      buildThreePresentationModel: (displayOptions, selectedIds) => buildThreePresentationModel({ world: this.world, realizations: this.operationContext.realizations, displayOptions, selectedIds }),
+      buildThreePresentationModel: (displayOptions, selectedIds) => buildThreePresentationModel({
+        world: this.world,
+        realizations: this.operationContext.realizations,
+        processTree: this.operationContext.processTree,
+        visibilityModel: this.visibilityModel,
+        displayOptions,
+        selectedIds,
+      }),
     };
   }
 
