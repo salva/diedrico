@@ -4,8 +4,8 @@
  * Encapsulates the complex cascade deletion logic:
  * 1. Compute dependency cascade (dependents before dependencies)
  * 2. Sort elements in proper deletion order (reverse topological)
- * 3. Add type-specific RemoveElementOp for each element
- * 4. Remove corresponding ProcessTree actions
+ * 3. Remove corresponding ProcessTree actions
+ * 4. Add type-specific RemoveElementOp for each element
  * 
  * Design: This factory follows the Open Command pattern:
  * - Receives open Command object
@@ -52,8 +52,8 @@ export class DeletionSequenceFactory {
    * Algorithm:
    * 1. Compute cascade using dependency service (get all dependent elements)
    * 2. Sort elements in deletion order (dependents first, roots last)
-   * 3. Add type-specific RemoveElementOp for each element
-   * 4. Add RemoveActionFromProcessTreeOp for each producing action
+   * 3. Add RemoveActionFromProcessTreeOp for each producing action
+   * 4. Add type-specific RemoveElementOp for each element
    * 
    * @param cmd - Open command to add operations to
    * @param selectedIds - IDs of elements user wants to delete
@@ -85,7 +85,14 @@ export class DeletionSequenceFactory {
       }
     }
     
-    // Step 3: Add operations to command in proper order
+    // Step 3: Remove actions from ProcessTree first. Command execution notifies
+    // after each operation, so the read model must never see a live action whose
+    // element has already been removed.
+    for (const [actionId] of actionsToDelete) {
+      cmd.addAndExecute(new RemoveActionFromProcessTreeOp(actionId));
+    }
+
+    // Step 4: Add element removal operations in proper order
     // Search through projection planes to find each element and determine its type
     for (const elementId of allElementsToDelete) {
       let found = false;
@@ -128,11 +135,6 @@ export class DeletionSequenceFactory {
       if (!found) {
         throw new Error(`Cannot delete ${elementId}: element not found in any projection plane`);
       }
-    }
-    
-    // Step 4: Remove actions from ProcessTree (creates tombstones for undo)
-    for (const [actionId] of actionsToDelete) {
-      cmd.addAndExecute(new RemoveActionFromProcessTreeOp(actionId));
     }
   }
 }

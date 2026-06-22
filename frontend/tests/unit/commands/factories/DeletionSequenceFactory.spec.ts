@@ -104,8 +104,8 @@ describe('DeletionSequenceFactory', () => {
       expect(plane.getPoint(pointId)).toBeUndefined();
       expectActionRemoved(pointId);
       expect(deleteCmd.operations.map(op => op.type)).toEqual([
+        'RemoveActionFromProcessTree',
         'RemovePoint2D',
-        'RemoveActionFromProcessTree'
       ]);
     });
 
@@ -149,10 +149,10 @@ describe('DeletionSequenceFactory', () => {
       const operationTypes = deleteCmd.operations.map(op => op.type);
       expect(operationTypes.indexOf('RemoveLine2D')).toBeLessThan(operationTypes.indexOf('RemovePoint2D'));
       expect(operationTypes).toEqual([
-        'RemoveLine2D',
-        'RemovePoint2D',
         'RemoveActionFromProcessTree',
-        'RemoveActionFromProcessTree'
+        'RemoveActionFromProcessTree',
+        'RemoveLine2D',
+        'RemovePoint2D'
       ]);
     });
 
@@ -183,10 +183,10 @@ describe('DeletionSequenceFactory', () => {
       expectActionRemoved(centerId);
       expectActionPresent(circumferenceId);
       expect(deleteCmd.operations.map(op => op.type)).toEqual([
-        'RemoveCircle2D',
-        'RemovePoint2D',
         'RemoveActionFromProcessTree',
-        'RemoveActionFromProcessTree'
+        'RemoveActionFromProcessTree',
+        'RemoveCircle2D',
+        'RemovePoint2D'
       ]);
     });
 
@@ -210,12 +210,12 @@ describe('DeletionSequenceFactory', () => {
         expectActionRemoved(pointId);
       });
       expect(deleteCmd.operations.map(op => op.type)).toEqual([
-        'RemovePoint2D',
-        'RemovePoint2D',
-        'RemovePoint2D',
         'RemoveActionFromProcessTree',
         'RemoveActionFromProcessTree',
-        'RemoveActionFromProcessTree'
+        'RemoveActionFromProcessTree',
+        'RemovePoint2D',
+        'RemovePoint2D',
+        'RemovePoint2D'
       ]);
     });
 
@@ -286,8 +286,8 @@ describe('DeletionSequenceFactory', () => {
       expectActionPresent(point1Id);
       expectActionPresent(point2Id);
       expect(deleteCmd.operations.map(op => op.type)).toEqual([
+        'RemoveActionFromProcessTree',
         'RemoveSegment2D',
-        'RemoveActionFromProcessTree'
       ]);
     });
   });
