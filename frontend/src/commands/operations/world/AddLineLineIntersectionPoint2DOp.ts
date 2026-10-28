@@ -47,8 +47,10 @@ export class AddLineLineIntersectionPoint2DOp implements IOperation<AddLineLineI
       );
       
       if (this.createdLabel !== undefined) point.label = this.createdLabel;
+      else if (typeof this.outputs.label === 'string') point.label = this.outputs.label;
       this.createdLabel = point.label;
-      this.outputs = { pointId: point.id };
+      context.labelGenerator.reserve('Point2D', point.label);
+      this.outputs = { pointId: point.id, label: point.label };
       
       return {
         success: true,
@@ -80,7 +82,8 @@ export class AddLineLineIntersectionPoint2DOp implements IOperation<AddLineLineI
       planeId: this.planeId,
       line1Id: this.line1Id,
       line2Id: this.line2Id,
-      pointId: this.outputs.pointId
+      pointId: this.outputs.pointId,
+      label: this.createdLabel
     };
   }
 }

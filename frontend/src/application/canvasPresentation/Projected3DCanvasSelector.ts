@@ -33,6 +33,7 @@ interface Projected3DCanvasBuilderInput {
   world: World;
   realizations: RealizationService;
   realizationContext: Element3DRealizationContext;
+  isVisible?: (element: import('@/domain/world/Element').Element) => boolean;
   planeTransforms: Map<string, Pick<CanvasPlaneTransformModel, 'planeToPaper'> | { planeToPaper: Matrix3 }>;
 }
 
@@ -45,14 +46,17 @@ export function buildProjected3DCanvasItems(input: Projected3DCanvasBuilderInput
       return plane ? realizations.realizeProjectionPlane3D(plane, realizationContext) : undefined;
     },
     points3D: world.getAll3DPoints().flatMap(point => {
+      if (input.isVisible && !input.isVisible(point)) return [];
       const realization = realizations.realizePoint3D(point, realizationContext);
       return realization ? [{ id: point.id, realization }] : [];
     }),
     lines3D: world.getAll3DLines().flatMap(line => {
+      if (input.isVisible && !input.isVisible(line)) return [];
       const realization = realizations.realizeLine3D(line, realizationContext);
       return realization ? [{ id: line.id, realization }] : [];
     }),
     segments3D: world.getAll3DSegments().flatMap(segment => {
+      if (input.isVisible && !input.isVisible(segment)) return [];
       const realization = realizations.realizeSegment3D(segment, realizationContext);
       return realization ? [{ id: segment.id, realization }] : [];
     }),
@@ -78,7 +82,7 @@ export class Projected3DCanvasSelector {
     for (const plane of sources.projectionPlanes) {
       const planeRealization = sources.getProjectionPlane3DRealization(plane.id);
       const planeToPaper = planeTransforms.get(plane.id)?.planeToPaper;
-      if (!planeRealization || !planeToPaper) continue;
+      if (!planeRealization || !planeRealization.feasible || !planeToPaper) continue;
 
       for (const point3D of points3D) {
         const realization = point3D.realization;

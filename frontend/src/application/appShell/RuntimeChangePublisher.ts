@@ -20,6 +20,10 @@ export class RuntimeChangePublisher implements ChangeNotifier {
 
   notifyChange(): void {
     this.version++;
+    this.notifyPresentationChange();
+  }
+
+  notifyPresentationChange(): void {
     this.listeners.forEach(listener => listener());
   }
 

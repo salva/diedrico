@@ -102,7 +102,7 @@ export class AddProjectionPlaneFixedOp implements IOperation {
     private readonly planeToPaper2D: Matrix3,
     private readonly planeTo3D: Matrix4x3,
     private projPlaneId?: string,
-    private readonly name?: string
+    private name?: string
   ) {
     // Phase 94: threeDToPlane computed from planeTo3D in realization constructor
   }
@@ -117,6 +117,8 @@ export class AddProjectionPlaneFixedOp implements IOperation {
         name: this.name,
       });
       
+      this.name = projPlane.name;
+      context.labelGenerator.reserve('ProjectionPlane', projPlane.name);
       // Store ID in outputs for redo support
       this.outputs = { projPlaneId: projPlane.id };
       // Phase 95: Back-fill generated ID into parameters for persistence
@@ -260,9 +262,11 @@ export class AddHingeLineOp implements IOperation {
       });
       
       if (this.createdLabel !== undefined) hingeLine.label = this.createdLabel;
+      else if (typeof this.outputs.label === 'string') hingeLine.label = this.outputs.label;
       this.createdLabel = hingeLine.label;
+      context.labelGenerator.reserve('HingeLine', hingeLine.label);
       // Store ID in outputs for redo support
-      this.outputs = { hingeLineId: hingeLine.id };
+      this.outputs = { hingeLineId: hingeLine.id, label: hingeLine.label };
       // Phase 95: Back-fill generated ID into parameters for persistence
       this.hingeLineId = hingeLine.id;
       
@@ -292,7 +296,8 @@ export class AddHingeLineOp implements IOperation {
       opType: this.type,
       horizontalPlaneId: this.horizontalPlaneId,
       verticalPlaneId: this.verticalPlaneId,
-      hingeLineId: this.outputs.hingeLineId || this.hingeLineId
+      hingeLineId: this.outputs.hingeLineId || this.hingeLineId,
+      label: this.createdLabel
     };
   }
 }

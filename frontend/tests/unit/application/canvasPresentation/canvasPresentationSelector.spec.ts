@@ -6,6 +6,23 @@ import { createVisualStyle } from '@/domain/world/VisualStyle';
 import { createTestWorld, getHorizontalPlane } from '../../../helpers/worldHelpers';
 
 describe('CanvasPresentationSelector', () => {
+  it('omits hidden 3D sources before projection and infeasible 2D intersections from both models', () => {
+    const { world, visibilityModel, operationContext: ctx } = createTestWorld();
+    const plane = getHorizontalPlane(world);
+    const a = ctx.projectionConstruction.addFreePoint2D(plane, new Vector3(0, 10, 1));
+    const b = ctx.projectionConstruction.addFreePoint2D(plane, new Vector3(10, 10, 1));
+    const c = ctx.projectionConstruction.addFreePoint2D(plane, new Vector3(0, 20, 1));
+    const line = ctx.projectionConstruction.addLine2DBetweenTwoPoints(plane, a.id, b.id);
+    const parallel = ctx.projectionConstruction.addLine2DParallelToLine(plane, line.id, c.id);
+    const intersection = ctx.projectionConstruction.addLineLineIntersection(plane, line.id, parallel.id);
+    const hidden = new Point3DByCoordinates(ctx.idAllocator.generate3DPointId(), 'Hidden', new Vector4(1, 2, 3, 1), createVisualStyle());
+    hidden.visualStyle!.visible = false;
+    world.putPoint3D(hidden);
+    const model = buildCanvasPresentationModel(world, { zoom: 1, panX: 0, panY: 0, width: 400, height: 300 }, { activePlaneId: plane.id, visibilityModel, processTree: ctx.processTree, realizations: ctx.realizations, showProjectedElements: true, gridVisible: false });
+    expect(model.renderItems.some(item => item.sourceEntityId === hidden.id || item.sourceEntityId === intersection.id)).toBe(false);
+    expect(model.queryItems.some(item => item.elementId === intersection.id)).toBe(false);
+  });
+
   it('builds render/query DTOs and grid labels from one world/view snapshot', () => {
     const { world, visibilityModel, operationContext } = createTestWorld();
     const plane = getHorizontalPlane(world);

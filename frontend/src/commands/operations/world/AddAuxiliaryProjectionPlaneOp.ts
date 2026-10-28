@@ -88,6 +88,8 @@ export class AddAuxiliaryProjectionPlaneOp implements IOperation {
       // Auto-generate name if not provided - use generateDefaultLabel for proper subscript formatting
       const planeName = this.name || context.labelGenerator.next('ProjectionPlane');
       
+      this.name = planeName;
+      context.labelGenerator.reserve('ProjectionPlane', planeName);
       // Create AuxiliaryProjectionPlane
       // NOTE: Stores trace IDs (dependencies), NOT matrices
       // Matrices will be computed on-demand via realizeWithWorld()

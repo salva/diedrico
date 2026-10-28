@@ -44,8 +44,10 @@ export class AddGuide2DPerpendicularToLineOp implements IOperation {
         this.restoredGuideId ?? this.outputs.guideId
       );
       if (this.createdLabel !== undefined) guide.label = this.createdLabel;
+      else if (typeof this.outputs.label === 'string') guide.label = this.outputs.label;
       this.createdLabel = guide.label;
-      this.outputs = { guideId: guide.id };
+      context.labelGenerator.reserve('Guide2D', guide.label);
+      this.outputs = { guideId: guide.id, label: guide.label };
       return {
         success: true,
         outputs: this.outputs
@@ -74,7 +76,8 @@ export class AddGuide2DPerpendicularToLineOp implements IOperation {
       planeId: this.planeId,
       referenceLineId: this.referenceLineId,
       throughPointId: this.throughPointId,
-      guideId: this.outputs.guideId
+      guideId: this.outputs.guideId,
+      label: this.createdLabel
     };
   }
 }

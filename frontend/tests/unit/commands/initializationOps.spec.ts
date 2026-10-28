@@ -305,7 +305,8 @@ describe('Initialization Operations', () => {
         opType: 'AddHingeLine',
         horizontalPlaneId: 'proj_1',
         verticalPlaneId: 'proj_2',
-        hingeLineId: 'hl_ser'
+        hingeLineId: 'hl_ser',
+        label: 'LT_1'
       });
     });
   });

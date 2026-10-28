@@ -24,6 +24,7 @@ export interface ToolInteractionQuery {
     snapRadiusPixels: number,
     context: ToolInteractionQueryContext,
     selectionMask?: SelectionMask,
+    isEligible?: (elementId: string) => boolean,
   ): ToolInteractionHit | null;
 }
 
@@ -55,6 +56,7 @@ export interface ITool {
   cancel?(): void;
   getState?(): Record<string, unknown>;
   getSelectionMask?(): SelectionMask | undefined;
+  isElementEligible?(elementId: string, planeId: string, readPort: ToolInteractionReadPort): boolean;
 }
 
 export interface PlanePositionInputCapableTool extends ITool {

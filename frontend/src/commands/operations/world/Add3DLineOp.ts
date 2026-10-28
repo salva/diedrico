@@ -78,6 +78,8 @@ export class Add3DLineOp implements IOperation<Add3DLineDescriptor, Add3DLineOut
         visualStyle: this.visualStyle,
       });
       
+      this.label = line.label;
+      context.labelGenerator.reserve('Line3D', line.label);
       // Store outputs for undo
       this.outputs = { lineId: line.id };
       

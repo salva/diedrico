@@ -52,8 +52,20 @@ describe('KeyboardShortcutRouter', () => {
     expect(d.viewStore.toggleProjectedElements).toHaveBeenCalled();
     router.handle(event('a', { ctrlKey: true }));
     expect(d.selection.selectAllInActivePlane).toHaveBeenCalled();
-    router.handle(event('Tab', { shiftKey: true }));
+    const canvas = document.createElement('div');
+    canvas.dataset.testid = 'svg-canvas';
+    router.handle(event('Tab', { shiftKey: true, target: canvas }));
     expect(d.activePlane.cycleActivePlane).toHaveBeenCalledWith(-1);
+  });
+
+  it('preserves native Tab on toolbar and dialog controls', () => {
+    const d = deps();
+    const router = new KeyboardShortcutRouter(d);
+    const button = document.createElement('button');
+    const e = event('Tab', { target: button });
+    router.handle(e);
+    expect(e.preventDefault).not.toHaveBeenCalled();
+    expect(d.activePlane.cycleActivePlane).not.toHaveBeenCalled();
   });
 
   it('does not consume text input Delete or tool letters', () => {

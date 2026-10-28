@@ -50,7 +50,9 @@ export class AddCircleCircleIntersectionPoint2DOp implements IOperation<AddCircl
         this.outputs.pointId
       );
       
-      this.outputs = { pointId: point.id };
+      if (typeof this.outputs.label === 'string') point.label = this.outputs.label;
+      context.labelGenerator.reserve('Point2D', point.label);
+      this.outputs = { pointId: point.id, label: point.label };
       
       return {
         success: true,
@@ -85,7 +87,8 @@ export class AddCircleCircleIntersectionPoint2DOp implements IOperation<AddCircl
       circle1Id: this.circle1Id,
       circle2Id: this.circle2Id,
       index: this.index,
-      pointId: this.outputs.pointId
+      pointId: this.outputs.pointId,
+      label: this.outputs.label
     };
   }
 }

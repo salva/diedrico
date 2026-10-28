@@ -34,13 +34,13 @@ describe('RuntimeChangePublisher', () => {
     session.subscribeToChanges(listener);
     session.setActivePlaneId(secondPlane.id);
 
-    expect(session.getVersion()).toBe(initialVersion + 1);
+    expect(session.getVersion()).toBe(initialVersion);
     expect(listener).toHaveBeenCalledTimes(1);
 
     session.unsubscribeFromChanges(listener);
     session.setActivePlaneId(firstPlane.id);
 
-    expect(session.getVersion()).toBe(initialVersion + 2);
+    expect(session.getVersion()).toBe(initialVersion);
     expect(listener).toHaveBeenCalledTimes(1);
   });
 });

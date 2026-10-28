@@ -191,6 +191,30 @@ describe('AppShellRuntime lifecycle ownership', () => {
     runtime.actions.dispose();
   });
 
+  it('uses Drive sign-in state even when profile lookup fails and never fabricates a token', async () => {
+    const ports = runtimePorts({ drive: drive({ fetchUserProfile: vi.fn().mockRejectedValue(new Error('profile unavailable')) }) });
+    const runtime = createAppShellRuntime({ ports });
+    await runtime.actions.signIn();
+    expect(runtime.state.isSignedIn.value).toBe(true);
+    expect(ports.authStore.setAuthenticated).not.toHaveBeenCalled();
+    await runtime.actions.toolbarSignOut();
+    expect(runtime.state.isSignedIn.value).toBe(false);
+    runtime.actions.dispose();
+  });
+
+  it('does not install a stale open after a newer project request', async () => {
+    let finish!: (payload: ProjectSessionPersistencePayload) => void;
+    const fakeDrive = drive({ loadFile: vi.fn(id => id === 'slow' ? new Promise(resolve => { finish = resolve; }) : Promise.resolve(projectPayload('Latest'))) });
+    const runtime = createAppShellRuntime({ ports: runtimePorts({ drive: fakeDrive }) });
+    const slow = runtime.actions.openProject('slow');
+    await runtime.actions.openProject('fast');
+    finish(projectPayload('Stale'));
+    await slow;
+    expect(runtime.state.currentFileId.value).toBe('fast');
+    expect(runtime.state.currentProjectName.value).toBe('Latest');
+    runtime.actions.dispose();
+  });
+
   it('sign-out clears project state without replacing runtime-owned world or ports', async () => {
     const ports = runtimePorts();
     const runtime = createAppShellRuntime({ ports });
@@ -215,6 +239,26 @@ describe('AppShellRuntime lifecycle ownership', () => {
 });
 
 describe('AutoSaveUseCases', () => {
+  it('serializes writes and schedules the latest revision after a pending save', async () => {
+    let finish!: () => void;
+    const fakeDrive = drive({ updateFile: vi.fn(() => new Promise<void>(resolve => { finish = resolve; })) });
+    const timer = scheduler();
+    const autoSave = new AutoSaveUseCases({ session: autoSaveSession(), drive: fakeDrive,
+      lastProjectRepository: lastProjectRepository(), scheduler: timer.port,
+      currentFileId: ref('file'), currentProjectName: ref('Name'), saveStatus: ref('idle'),
+      showStartupDialog: ref(false), isSignedIn: ref(true), alert: vi.fn() });
+    const first = autoSave.perform();
+    await autoSave.perform();
+    expect(fakeDrive.updateFile).toHaveBeenCalledTimes(1);
+    finish();
+    await first;
+    const handles = timer.port.setTimeout.mock.results;
+    timer.runTimeout(handles[handles.length - 1].value);
+    expect(fakeDrive.updateFile).toHaveBeenCalledTimes(2);
+    finish();
+    await Promise.resolve();
+    autoSave.dispose();
+  });
   it.each(['success', 'missing', 'authentication', 'quota', 'recovery', 'recovery-failure', 'same-file', 'dispose'])(
     'does not apply a stale %s completion to another session', async (completion) => {
       let resolveUpdate!: () => void;
@@ -739,6 +783,20 @@ describe('ProjectSessionUseCases startup and project flows', () => {
 
     expect(saveStatus.value).toBe('idle');
     expect(fakeScheduler.port.clearInterval).not.toHaveBeenCalled();
+  });
+
+  it('does not rename the replacement session when an earlier remote rename completes', async () => {
+    const deps = projectSessionDeps();
+    let finish!: () => void;
+    deps.drive!.renameFile = vi.fn(() => new Promise<void>(resolve => { finish = resolve; }));
+    deps.currentFileId.value = 'old'; deps.currentProjectName.value = 'Old';
+    const useCases = new ProjectSessionUseCases(deps);
+    const pending = useCases.renameProject('Renamed');
+    await useCases.openProject('replacement');
+    finish(); await pending;
+    expect(deps.currentProjectName.value).toBe('Loaded project');
+    expect(deps.currentFileId.value).toBe('replacement');
+    expect(deps.drive!.renameFile).toHaveBeenCalledWith('old', 'Renamed');
   });
 
   it('creates, opens, renames, and signs out without replacing stable world or command-history references', async () => {

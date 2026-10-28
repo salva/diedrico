@@ -43,7 +43,9 @@ export class AddSegment2DByPointsOp implements IOperation<AddSegment2DByPointsDe
         this.point2Id,
         this.outputs.segmentId
       );
-      this.outputs = { segmentId: segment.id };
+      if (typeof this.outputs.label === 'string') segment.label = this.outputs.label;
+      context.labelGenerator.reserve('Segment2D', segment.label);
+      this.outputs = { segmentId: segment.id, label: segment.label };
       return {
         success: true,
         outputs: this.outputs
@@ -72,7 +74,8 @@ export class AddSegment2DByPointsOp implements IOperation<AddSegment2DByPointsDe
       planeId: this.planeId,
       point1Id: this.point1Id,
       point2Id: this.point2Id,
-      segmentId: this.outputs.segmentId
+      segmentId: this.outputs.segmentId,
+      label: this.outputs.label
     };
   }
 }

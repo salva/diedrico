@@ -18,7 +18,7 @@ import type { CanvasViewPort, ProcessTreeReadPort, ElementsPanelPort, PlaneOptio
 import { buildPropertiesDialogViewModel } from './readModels/PropertiesDialogReadModel';
 import { buildProcessTreeReadModel, countProcessNodeViewModels, getRelatedActionIds } from './readModels/ProcessTreeReadModel';
 import { buildElementsPanelReadModel } from './readModels/ElementsPanelReadModel';
-import { toggleElementVisibility } from './readModels/ElementVisibilityIntent';
+import { UpdateElementStyleOp } from '@/commands/operations/world/UpdateElementStyleOp';
 import { RuntimeChangePublisher, type ChangeNotifier } from './RuntimeChangePublisher';
 import { registerAllDescriptors } from '@/domain/world/descriptors/registerDescriptors';
 import { VisibilityModel } from '@/application/processTree/VisibilityModel';
@@ -87,10 +87,12 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
       ...this.changeSubscriptionPort(),
       getReadModel: () => buildElementsPanelReadModel({ world: this.world }),
       toggleVisibility: (elementId) => {
-        toggleElementVisibility(elementId, {
-          findElement: (id) => this.findVisibleElement(id),
+        const element = this.findVisibleElement(elementId);
+        if (!element) return;
+        const planeId = 'planeId' in element ? String(element.planeId) : elementId;
+        this.commandProducer.executeToolCommand('Toggle visibility', command => {
+          command.addAndExecute(new UpdateElementStyleOp(elementId, planeId, { visible: element.visualStyle?.visible === false }));
         });
-        this.changes.markDirty();
       },
     };
   }
@@ -190,7 +192,7 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
 
   setActivePlaneId(id: string): void {
     this.activePlaneIdValue = id;
-    this.changes.markDirty();
+    this.changes.notifyPresentationChange();
   }
 
   cycleActivePlane(direction: number): void {
@@ -211,18 +213,14 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
   }
 
   resetToEmptyInitializedWorld(): void {
-    this.world.clear();
-    this.operationContext.realizations.clear();
-    this.operationContext.processTree.clear();
+    this.domain.clear();
     this.visibilityModel.clear();
     this.commandStack.clear();
     this.initializeDefaultWorldIfNeeded();
   }
 
   clear(): void {
-    this.world.clear();
-    this.operationContext.realizations.clear();
-    this.operationContext.processTree.clear();
+    this.domain.clear();
     this.visibilityModel.clear();
     this.commandStack.clear();
     this.activePlaneIdValue = undefined;
@@ -260,9 +258,7 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
     ProjectService.deserializeCommands(openedSession.payload, candidateVisibilityModel, candidateCommandStack, candidateOperationContext, validationNotifier);
     if (candidateWorld.getAllProjectionPlanes().length === 0) initializeWorld(candidateWorld, candidateCommandStack, candidateOperationContext, validationNotifier);
 
-    this.world.clear();
-    this.operationContext.realizations.clear();
-    this.operationContext.processTree.clear();
+    this.domain.clear();
     this.visibilityModel.clear();
     this.commandStack.clear();
     this.activePlaneIdValue = undefined;
@@ -299,9 +295,9 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
   }
 
   private findVisibleElement(elementId: string) {
-    return this.elementLookup.getElement2D(elementId)
-      || this.elementLookup.getElement3DById(elementId)
-      || this.world.getProjectionPlaneById(elementId);
+    return this.elementLookup.getElement3DById(elementId)
+      || this.world.getProjectionPlaneById(elementId)
+      || this.elementLookup.getElement2D(elementId);
   }
 
   private changeSubscriptionPort() {

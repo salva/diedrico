@@ -69,7 +69,9 @@ export class AddBrokenHingeLineOp implements IOperation {
       });
 
       if (this.createdLabel !== undefined) brokenHingeLine.label = this.createdLabel;
+      else if (typeof this.outputs.label === 'string') brokenHingeLine.label = this.outputs.label;
       this.createdLabel = brokenHingeLine.label;
+      context.labelGenerator.reserve('BrokenHingeLine', brokenHingeLine.label);
       // Store outputs for undo
       this.outputs = {
         brokenHingeLineId: brokenHingeLine.id,
@@ -119,7 +121,8 @@ export class AddBrokenHingeLineOp implements IOperation {
       plane2Id: this.plane2Id,
       brokenHingeLineId: this.outputs.brokenHingeLineId || this.brokenHingeLineId,
       bhhl1Id: this.outputs.bhhl1Id || this.bhhl1Id,
-      bhhl2Id: this.outputs.bhhl2Id || this.bhhl2Id
+      bhhl2Id: this.outputs.bhhl2Id || this.bhhl2Id,
+      label: this.createdLabel
     };
   }
 }

@@ -27,6 +27,7 @@ export class ReconstructionConstructionService {
     readonly visualStyle?: any;
   }): Point3DFromProjections {
     const id = params.pointId || this.context.ids.generate3DPointId();
+    this.context.ids.reserve3DId(id);
     const label = params.label || this.context.labels.next('Point3D');
     const visualStyle = params.visualStyle || {
       color: '#FF6B35',
@@ -57,6 +58,7 @@ export class ReconstructionConstructionService {
     readonly visualStyle?: any;
   }): Line3DFromProjections {
     const id = params.lineId || this.context.ids.generate3DLineId();
+    this.context.ids.reserve3DId(id);
     const label = params.label || this.context.labels.next('Line3D');
     const visualStyle = params.visualStyle || {
       color: '#FF6B35',
@@ -87,6 +89,7 @@ export class ReconstructionConstructionService {
     readonly visualStyle?: any;
   }): Segment3DFromProjections {
     const id = params.segmentId || this.context.ids.generate3DSegmentId();
+    this.context.ids.reserve3DId(id);
     const label = params.label || this.context.labels.next('Segment3D');
     const visualStyle = params.visualStyle || {
       color: '#FF6B35',
@@ -116,6 +119,7 @@ export class ReconstructionConstructionService {
     readonly label?: string;
   }): Plane3DFromTraces {
     const id = params.planeId || this.context.ids.generate3DPlaneId();
+    this.context.ids.reserve3DId(id);
     const label = params.label || this.context.labels.next('Plane3D');
     const plane = new Plane3DFromTraces(
       id,

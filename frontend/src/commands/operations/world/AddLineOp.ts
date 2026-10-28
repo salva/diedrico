@@ -43,7 +43,9 @@ export class AddLine2DByTwoPointsOp implements IOperation<AddLine2DByTwoPointsDe
         this.point2Id,
         this.outputs.lineId
       );
-      this.outputs = { lineId: line.id };
+      if (typeof this.outputs.label === 'string') line.label = this.outputs.label;
+      context.labelGenerator.reserve('Line2D', line.label);
+      this.outputs = { lineId: line.id, label: line.label };
       return operationSuccess(this.outputs);
     } catch (error) {
       return operationFailure(error);
@@ -65,7 +67,8 @@ export class AddLine2DByTwoPointsOp implements IOperation<AddLine2DByTwoPointsDe
       planeId: this.planeId,
       point1Id: this.point1Id,
       point2Id: this.point2Id,
-      lineId: this.outputs.lineId
+      lineId: this.outputs.lineId,
+      label: this.outputs.label
     };
   }
 }
@@ -107,7 +110,9 @@ export class AddLine2DParallelToLineOp implements IOperation<AddLine2DParallelTo
         this.throughPointId,
         this.outputs.lineId
       );
-      this.outputs = { lineId: line.id };
+      if (typeof this.outputs.label === 'string') line.label = this.outputs.label;
+      context.labelGenerator.reserve('Line2D', line.label);
+      this.outputs = { lineId: line.id, label: line.label };
       return operationSuccess(this.outputs);
     } catch (error) {
       return operationFailure(error);
@@ -129,7 +134,8 @@ export class AddLine2DParallelToLineOp implements IOperation<AddLine2DParallelTo
       planeId: this.planeId,
       referenceLineId: this.referenceLineId,
       throughPointId: this.throughPointId,
-      lineId: this.outputs.lineId
+      lineId: this.outputs.lineId,
+      label: this.outputs.label
     };
   }
 }
@@ -171,7 +177,9 @@ export class AddLine2DPerpendicularToLineOp implements IOperation<AddLine2DPerpe
         this.throughPointId,
         this.outputs.lineId
       );
-      this.outputs = { lineId: line.id };
+      if (typeof this.outputs.label === 'string') line.label = this.outputs.label;
+      context.labelGenerator.reserve('Line2D', line.label);
+      this.outputs = { lineId: line.id, label: line.label };
       return operationSuccess(this.outputs);
     } catch (error) {
       return operationFailure(error);
@@ -193,7 +201,8 @@ export class AddLine2DPerpendicularToLineOp implements IOperation<AddLine2DPerpe
       planeId: this.planeId,
       referenceLineId: this.referenceLineId,
       throughPointId: this.throughPointId,
-      lineId: this.outputs.lineId
+      lineId: this.outputs.lineId,
+      label: this.outputs.label
     };
   }
 }
@@ -232,7 +241,9 @@ export class AddLine2DByPointAndRelativeAngleOp implements IOperation<AddLine2DB
         this.angleRadians,
         this.outputs.lineId
       );
-      this.outputs = { lineId: line.id };
+      if (typeof this.outputs.label === 'string') line.label = this.outputs.label;
+      context.labelGenerator.reserve('Line2D', line.label);
+      this.outputs = { lineId: line.id, label: line.label };
       return operationSuccess(this.outputs);
     } catch (error) {
       return operationFailure(error);
@@ -255,7 +266,8 @@ export class AddLine2DByPointAndRelativeAngleOp implements IOperation<AddLine2DB
       referenceLineId: this.referenceLineId,
       throughPointId: this.throughPointId,
       angleRadians: this.angleRadians,
-      lineId: this.outputs.lineId
+      lineId: this.outputs.lineId,
+      label: this.outputs.label
     };
   }
 }
@@ -376,7 +388,9 @@ export class AddLine2DTangentToCircleThroughPointOp implements IOperation {
         this.tangentIndex,
         this.outputs.lineId
       );
-      this.outputs = { lineId: line.id };
+      if (typeof this.outputs.label === 'string') line.label = this.outputs.label;
+      context.labelGenerator.reserve('Line2D', line.label);
+      this.outputs = { lineId: line.id, label: line.label };
       return operationSuccess(this.outputs);
     } catch (error) {
       return operationFailure(error);
@@ -398,7 +412,8 @@ export class AddLine2DTangentToCircleThroughPointOp implements IOperation {
       circleId: this.circleId,
       throughPointId: this.throughPointId,
       index: this.tangentIndex,
-      lineId: this.outputs.lineId
+      lineId: this.outputs.lineId,
+      label: this.outputs.label
     };
   }
 }
@@ -432,7 +447,9 @@ export class AddLine2DTangentToCircleParallelToLineOp implements IOperation {
         this.tangentIndex,
         this.outputs.lineId
       );
-      this.outputs = { lineId: line.id };
+      if (typeof this.outputs.label === 'string') line.label = this.outputs.label;
+      context.labelGenerator.reserve('Line2D', line.label);
+      this.outputs = { lineId: line.id, label: line.label };
       return operationSuccess(this.outputs);
     } catch (error) {
       return operationFailure(error);
@@ -455,7 +472,8 @@ export class AddLine2DTangentToCircleParallelToLineOp implements IOperation {
       circleId: this.circleId,
       referenceLineId: this.referenceLineId,
       index: this.tangentIndex,
-      lineId: this.outputs.lineId
+      lineId: this.outputs.lineId,
+      label: this.outputs.label
     };
   }
 }

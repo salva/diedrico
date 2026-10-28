@@ -23,7 +23,8 @@
         :is-renaming="isRenamingProject"
         @rename="runtime.actions.renameProject"
       />
-      <Toolbar 
+      <Toolbar
+        :is-signed-in="isSignedIn"
         @new-project="runtime.actions.newProject"
         @open-project="runtime.actions.showProjectChooser"
         @fit-to-view="runtime.fitToView"

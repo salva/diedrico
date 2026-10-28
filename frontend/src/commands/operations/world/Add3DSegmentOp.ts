@@ -113,6 +113,8 @@ export class Add3DSegmentOp implements IOperation<Add3DSegmentDescriptor, Add3DS
         visualStyle: this.visualStyle,
       });
       
+      this.label = segment.label;
+      context.labelGenerator.reserve('Segment3D', segment.label);
       // Store outputs for undo
       this.outputs = { segmentId: segment.id };
       

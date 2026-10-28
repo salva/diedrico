@@ -1,3 +1,6 @@
+import { GuideSequenceFactory } from '@/commands/factories/GuideSequenceFactory';
+import { HalfHingeLine2D } from '@/domain/world/HingeLine';
+import { Guide2D, SiblingGuide2D } from '@/domain/world/Guide';
 import { describe, expect, it, vi } from 'vitest';
 import { Vector3 } from 'three';
 import { SelectionDeletionCommandService } from '@/application/selectionDeletion/SelectionDeletionCommandService';
@@ -63,6 +66,31 @@ function createDependentLineFixture() {
 }
 
 describe('SelectionDeletionCommandService', () => {
+  it.each(['primary', 'sibling', 'both', 'point'])('deletes a guide pair once from %s and restores references', (selection) => {
+    const { world, visibilityModel, commandStack, operationContext: ctx } = createTestWorld();
+    const planeId = getHorizontalPlaneId(world);
+    const plane = world.getProjectionPlaneById(planeId)!;
+    const setup = new Command('Guides', ctx);
+    const pointId = setup.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(70, 30, 1))).outputs.pointId!;
+    const hinge = plane.getAllLines().find(line => line instanceof HalfHingeLine2D)!;
+    const pair = GuideSequenceFactory.createGuideWithSibling(setup, planeId, hinge.id, pointId, world, ctx.realizationContext);
+    const siblingPlane = world.getAllProjectionPlanes().find(p => p.getLine(pair.siblingGuideId!))!;
+    addExplicitProcessAction(ctx.processTree, createPointAction(pointId));
+    addExplicitProcessAction(ctx.processTree, createLineAction(pair.guideId));
+    addExplicitProcessAction(ctx.processTree, createLineAction(pair.siblingGuideId!));
+    setup.commit(); commandStack.push(setup);
+    const ids = selection === 'primary' ? [pair.guideId] : selection === 'sibling' ? [pair.siblingGuideId!]
+      : selection === 'both' ? [pair.guideId, pair.siblingGuideId!] : [pointId];
+    new SelectionDeletionCommandService(world, visibilityModel, commandStack, ctx).execute(ids);
+    expect(plane.getLine(pair.guideId)).toBeUndefined();
+    expect(siblingPlane.getLine(pair.siblingGuideId!)).toBeUndefined();
+    commandStack.undo();
+    expect((plane.getLine(pair.guideId) as Guide2D).siblingGuideId).toBe(pair.siblingGuideId);
+    expect((siblingPlane.getLine(pair.siblingGuideId!) as SiblingGuide2D).primaryGuideId).toBe(pair.guideId);
+    commandStack.redo();
+    expect(plane.getLine(pair.guideId)).toBeUndefined();
+    expect(siblingPlane.getLine(pair.siblingGuideId!)).toBeUndefined();
+  });
   it('executes cascade deletion through a committed command and preserves undo/redo behavior', () => {
     const { world, visibilityModel, commandStack, operationContext, planeId, selectedPointId, retainedPointId, lineId } = createDependentLineFixture();
     const notifications: Array<{ undo: number; redo: number }> = [];

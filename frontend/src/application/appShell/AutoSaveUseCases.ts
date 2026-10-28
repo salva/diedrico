@@ -7,7 +7,9 @@ export class AutoSaveUseCases {
   private pollInterval: IntervalHandle | null = null;
   private debounceTimer: TimeoutHandle | null = null;
   private savedStatusTimer: TimeoutHandle | null = null;
-  private lastVersion = 0;
+  private lastObservedVersion = 0;
+  private inFlight = false;
+  private saveRequested = false;
   private generation = 0;
 
   constructor(
@@ -28,11 +30,11 @@ export class AutoSaveUseCases {
 
   start(): void {
     this.stop();
-    this.lastVersion = this.deps.session.getVersion();
+    this.lastObservedVersion = this.deps.session.getVersion();
     this.pollInterval = this.deps.scheduler.setInterval(() => {
       const currentVersion = this.deps.session.getVersion();
-      if (currentVersion !== this.lastVersion) {
-        this.lastVersion = currentVersion;
+      if (currentVersion !== this.lastObservedVersion) {
+        this.lastObservedVersion = currentVersion;
         this.schedule();
       }
     }, 100);
@@ -49,23 +51,33 @@ export class AutoSaveUseCases {
   async perform(): Promise<void> {
     const { drive, currentFileId, currentProjectName } = this.deps;
     if (!drive || !currentFileId.value || !currentProjectName.value) return;
+    if (this.inFlight) { this.saveRequested = true; return; }
+    this.inFlight = true;
     const generation = this.generation;
     const fileId = currentFileId.value;
     const projectName = currentProjectName.value;
     // A restart also invalidates requests when reopening the same file ID.
     const isCurrent = () => generation === this.generation
       && currentFileId.value === fileId && currentProjectName.value === projectName;
+    const revision = this.deps.session.getVersion();
     try {
       const projectData = this.deps.session.snapshot(projectName);
       await drive.updateFile(fileId, projectData);
-      if (isCurrent()) this.markSavedThenIdle();
+      if (isCurrent() && !this.saveRequested && this.deps.session.getVersion() === revision) this.markSavedThenIdle();
     } catch (error: unknown) {
       if (isCurrent()) await this.handleSaveError(error, isCurrent);
+    } finally {
+      this.inFlight = false;
+      if (this.saveRequested) {
+        this.saveRequested = false;
+        this.schedule();
+      }
     }
   }
 
   stop(): void {
     this.generation += 1;
+    this.saveRequested = false;
     this.stopPolling();
     if (this.debounceTimer) this.deps.scheduler.clearTimeout(this.debounceTimer);
     if (this.savedStatusTimer) this.deps.scheduler.clearTimeout(this.savedStatusTimer);

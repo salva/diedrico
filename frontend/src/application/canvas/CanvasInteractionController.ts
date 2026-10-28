@@ -408,9 +408,10 @@ export class CanvasInteractionController {
     const selectionMask = this.currentTool?.getSelectionMask?.();
     const hit = interactionQuery.hitTest(
       canvasPos,
-      20,
+      50,
       { viewport, activePlaneId, paperToPlaneTransform },
       selectionMask,
+      this.currentTool?.isElementEligible ? id => this.currentTool!.isElementEligible!(id, activePlaneId, this.deps.toolReadPort) : undefined,
     );
 
     const previousSnapPointId = this.snapTargetPointId;

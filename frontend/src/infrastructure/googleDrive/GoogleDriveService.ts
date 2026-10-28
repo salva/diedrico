@@ -145,7 +145,8 @@ export class GoogleDriveService {
   isSignedIn(): boolean {
     // Check if we have an access token, or if gapi client has a token
     const token = gapi.client.getToken();
-    return this.accessToken !== null || (token !== null && token.access_token !== undefined);
+    return (typeof this.accessToken === 'string' && this.accessToken.length > 0)
+      || (typeof token?.access_token === 'string' && token.access_token.length > 0);
   }
 
   /**
@@ -239,6 +240,9 @@ export class GoogleDriveService {
         this.accessToken = null;
         gapi.client.setToken(null);
       }
+      // Restored gapi sessions may not have populated the instance token.
+      this.accessToken = null;
+      gapi.client.setToken(null);
       localStorage.removeItem('diedrico_was_signed_in');
       this.folderId = null;
     } catch (error) {

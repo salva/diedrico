@@ -8,7 +8,7 @@ export interface CanvasInteractionQueryContext { viewport: { zoom: number; panX:
 export class CanvasInteractionQuery {
   private readonly queryItems: readonly CanvasQueryItem[];
   constructor(queryItems: readonly CanvasQueryItem[]) { this.queryItems = queryItems; }
-  hitTest(canvasPos: Vector3, snapRadiusPixels: number, context: CanvasInteractionQueryContext, selectionMask?: SelectionMask): CanvasSnapPoint | null {
+  hitTest(canvasPos: Vector3, snapRadiusPixels: number, context: CanvasInteractionQueryContext, selectionMask?: SelectionMask, isEligible?: (elementId: string) => boolean): CanvasSnapPoint | null {
     if (!context.activePlaneId || !context.paperToPlaneTransform) return null;
     const canvasToPaper = new Matrix3().set(1 / context.viewport.zoom, 0, -context.viewport.panX, 0, 1 / context.viewport.zoom, -context.viewport.panY, 0, 0, 1);
     const paperPos = canvasPos.clone().applyMatrix3(canvasToPaper);
@@ -18,6 +18,7 @@ export class CanvasInteractionQuery {
     let closest: CanvasSnapPoint | null = null;
     for (const item of this.queryItems) {
       if (!item.selectable) continue;
+      if (isEligible && !isEligible(item.elementId)) continue;
       if (item.planeId && item.planeId !== context.activePlaneId) continue;
       if (selectionMask && !itemMatchesMask(item, selectionMask)) continue;
       const { distance, snapPoint } = distanceAndSnap(planePos, item);

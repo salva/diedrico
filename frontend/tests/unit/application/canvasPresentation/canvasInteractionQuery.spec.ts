@@ -7,6 +7,14 @@ import { SelectionMask } from '@/types/SelectionMask';
 const ctx = { viewport: { zoom: 1, panX: 0, panY: 0 }, activePlaneId: 'plane-a', paperToPlaneTransform: new Matrix3().identity() };
 
 describe('CanvasInteractionQuery', () => {
+  it('filters ineligible overlapping operands before ranking', () => {
+    const items: CanvasQueryItem[] = ['rejected', 'eligible'].map((id, index) => ({
+      id, kind: 'infinite-line', elementId: id, elementType: 'line', planeId: 'plane-a', selectable: true,
+      planeGeometry: { type: 'line', point: new Vector3(0, index, 1), direction: new Vector3(1, 0, 0) },
+    }));
+    expect(new CanvasInteractionQuery(items).hitTest(new Vector3(0, 0, 1), 10, ctx, SelectionMask.line(), id => id === 'eligible')?.elementId).toBe('eligible');
+  });
+
   it('keeps finite segments finite and misses outside extents', () => {
     const item: CanvasQueryItem = { id: 'segment-s1', kind: 'finite-segment', elementId: 's1', elementType: 'segment', planeId: 'plane-a', selectable: true, planeGeometry: { type: 'segment', point1: new Vector3(0, 0, 1), point2: new Vector3(10, 0, 1) } };
     const query = new CanvasInteractionQuery([item]);

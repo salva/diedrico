@@ -1,3 +1,5 @@
+import { BrokenHalfHingeLine2D } from '@/domain/world/elements/BrokenHalfHingeLine2D';
+import { computeArcGeometry } from '@/utils/arcGeometry';
 import { Guide2D, SiblingGuide2D } from '@/domain/world/Guide';
 import { HalfHingeLine2D } from '@/domain/world/HingeLine';
 import { Segment2D } from '@/domain/world/Segment';
@@ -17,7 +19,7 @@ import type { RealizationService } from '@/domain/world/RealizationService';
 export function createCanvasPresentationContext(world: World, visibilityModel: VisibilityModel, processTree: ProcessTree, realizations: RealizationService) {
   const realizationContext = createWorldRealizationContext(world, realizations);
   return {
-    getProjected3DCanvasItems: (planeTransforms: CanvasPlaneTransformMap) => buildProjected3DCanvasItems({ world, realizations, realizationContext, planeTransforms }),
+    getProjected3DCanvasItems: (planeTransforms: CanvasPlaneTransformMap) => buildProjected3DCanvasItems({ world, realizations, realizationContext, planeTransforms, isVisible: element => resolveVisibility(element, processTree, visibilityModel) }),
     realizationContext,
     isVisible: (element: Element) => resolveVisibility(element, processTree, visibilityModel),
   };
@@ -31,7 +33,7 @@ export function getCanvasPlaneTransforms(world: World, realizations: Realization
   const realizationContext = createWorldRealizationContext(world, realizations);
   return world.getAllProjectionPlanes().flatMap((plane) => {
     const realization = realizations.realizeProjectionPlane2D(plane, realizationContext);
-    if (!realization) return [];
+    if (!realization || !realization.feasible) return [];
     return [{ planeId: plane.id, planeToPaper: realization.planeToPaper2D, paperToPlane: realization.paperToPlane2D }];
   });
 }
@@ -61,7 +63,7 @@ export function getPlaneCanvasItems(plane: ProjectionPlane, transform: CanvasPla
   for (const point of plane.getAllPoints()) {
     if (itemState.isVisible && !itemState.isVisible(point)) continue;
     const realization = context.realizePoint2D(point, context);
-    if (!realization) continue;
+    if (!realization || !realization.feasible) continue;
     items.push({
       kind: 'point',
       elementId: point.id,
@@ -74,7 +76,7 @@ export function getPlaneCanvasItems(plane: ProjectionPlane, transform: CanvasPla
   for (const line of plane.getAllLines()) {
     if (itemState.isVisible && !itemState.isVisible(line)) continue;
     const realization = context.realizeLine2D(line, context);
-    if (!realization) continue;
+    if (!realization || !realization.feasible) continue;
     const kind = line instanceof HalfHingeLine2D
       ? 'half-hinge-line'
       : line instanceof Segment2D
@@ -100,14 +102,21 @@ export function getPlaneCanvasItems(plane: ProjectionPlane, transform: CanvasPla
       planeId: line.planeId,
       point: realization.point1.clone(),
       direction: realization.getDirection(),
-      arcGeometry: optionalArcGeometry(line),
+      arcGeometry: (() => {
+        const primary = line instanceof SiblingGuide2D ? context.getLine2D(line.primaryGuideId) : line;
+        if (!(primary instanceof Guide2D) || !primary.siblingGuideId) return 'arcGeometry' in line ? line.arcGeometry as CanvasPlaneLineItem['arcGeometry'] : undefined;
+        if (!(context.getLine2D(primary.referenceLineId) instanceof BrokenHalfHingeLine2D)) return 'arcGeometry' in line ? line.arcGeometry as CanvasPlaneLineItem['arcGeometry'] : undefined;
+        const sibling = context.getLine2D(primary.siblingGuideId);
+        const arc = sibling instanceof SiblingGuide2D ? computeArcGeometry(context, primary, sibling) : null;
+        return arc ? { ...arc, style: { ...arc.style, dashArray: arc.style.dashArray ? arc.style.dashArray.split(/[ ,]+/).map(Number) : undefined } } : undefined;
+      })(),
     });
   }
 
   for (const circle of plane.getAllCircles()) {
     if (itemState.isVisible && !itemState.isVisible(circle)) continue;
     const realization = context.realizeCircle2D(circle, context);
-    if (!realization) continue;
+    if (!realization || !realization.feasible) continue;
     items.push({
       kind: 'circle',
       elementId: circle.id,
@@ -123,8 +132,4 @@ export function getPlaneCanvasItems(plane: ProjectionPlane, transform: CanvasPla
 
 function isCachedRealizationContext(context: ProjectionElementRealizationContext): context is CachedProjectionElementRealizationContext {
   return 'realizePoint2D' in context && 'realizeLine2D' in context && 'realizeCircle2D' in context;
-}
-
-function optionalArcGeometry(line: object): CanvasPlaneLineItem['arcGeometry'] | undefined {
-  return 'arcGeometry' in line ? line.arcGeometry as CanvasPlaneLineItem['arcGeometry'] | undefined : undefined;
 }

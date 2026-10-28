@@ -20,8 +20,6 @@ import { intersectLineLine, intersectLineCircle, intersectCircleCircle } from '@
 import { isPointOnSegment } from '@/domain/calculations/SegmentUtils';
 import { Realization } from './Realization';
 import { Element2D } from './Element2D';
-import { HalfHingeLine2D } from './HingeLine';
-import { BrokenHalfHingeLine2D } from './elements/BrokenHalfHingeLine2D';
 import { applyMatrix4x3, applyMatrix3x4 } from '@/utils/threeUtils';
 import { assert } from '@/utils/assert';
 
@@ -480,25 +478,8 @@ export class SiblingIntersectionPoint2D extends Point2D {
   }
 
   /**
-   * Calculate 2D realization - uses coordinate cloning from primary point
-   * 
-   * CRITICAL REQUIREMENT: Coordinate cloning is mathematically equivalent to parametric
-   * scalar transfer (R = Q + d·D pattern) ONLY when both HalfHingeLine2D objects
-   * representing the same 3D HingeLine use IDENTICAL parametric representation:
-   *   - Same reference point Q in local (u,v) coordinates
-   *   - Same direction vector D in local (u,v) coordinates
-   * 
-   * When this parametric consistency holds:
-   *   Primary intersection: R = Q + d·D (on primary plane)
-   *   Sibling position: R' = Q' + d·D' = Q + d·D = R (coordinates identical!)
-   *   Therefore: coordinate cloning ≡ parametric scalar transfer
-   * 
-   * This property MUST be enforced for ALL HingeLines during construction.
-   * Breaking this constraint causes sibling points to compute incorrect positions silently.
-   * 
-   * @param context Realization context to access primary point realization
-   * @returns Point2DRealization2D with same coordinates as primary
-   * @see HingeLine constructor must ensure parametric consistency for paired HalfHingeLine2D
+   * Lift the primary point through its source-plane frame, independently of
+   * intersection subtype, then project into the sibling frame.
    */
   realize2D(context: ProjectionElementRealizationContext): Point2DRealization2D {
     // Get primary intersection point's 2D realization
@@ -512,42 +493,15 @@ export class SiblingIntersectionPoint2D extends Point2D {
       return new Point2DRealization2D(new Vector3(0, 0, 1), false);
     }
 
-    // If the primary intersection involves any hinge representation, both points
-    // are the same 3D point seen from different projection planes. Use a 3D
-    // round-trip instead of coordinate cloning; auxiliary hinges do not always
-    // share the same local 2D parametrization.
-    const primaryPointDomain = context.getPoint2D(this.primaryIntersectionId);
-    if (primaryPointDomain && 'line1Id' in primaryPointDomain && 'line2Id' in primaryPointDomain) {
-      const intersection = primaryPointDomain as Point2DLineLineIntersection;
-      const line1 = context.getLine2D(intersection.line1Id);
-      const line2 = context.getLine2D(intersection.line2Id);
-
-      const primaryHinge = (
-        line1 instanceof BrokenHalfHingeLine2D || line1 instanceof HalfHingeLine2D ? line1 :
-        line2 instanceof BrokenHalfHingeLine2D || line2 instanceof HalfHingeLine2D ? line2 :
-        null
-      );
-
-      if (primaryHinge) {
-        const R = primaryRealization.position;
-        const primaryPlaneReal3D = context.getProjectionPlane3DRealization(primaryHinge.planeId);
-        const siblingPlaneReal3D = context.getProjectionPlane3DRealization(this.planeId);
-
-        if (!primaryPlaneReal3D) throw new Error(`SiblingPoint2D ${this.id}: missing 3D realization for primary plane ${primaryHinge.planeId}`);
-        if (!siblingPlaneReal3D) throw new Error(`SiblingPoint2D ${this.id}: missing 3D realization for sibling plane ${this.planeId}`);
-        if (!primaryPlaneReal3D.feasible || !siblingPlaneReal3D.feasible) {
-          return new Point2DRealization2D(new Vector3(0, 0, 1), false);
-        }
-
-        // Lift R to 3D (Vector3 → Vector4 homogeneous)
-        const R_3D = applyMatrix4x3(R, primaryPlaneReal3D.planeTo3D);
-        // Project back to sibling plane 2D (Vector4 → Vector3 homogeneous)
-        const R_prime = applyMatrix3x4(R_3D, siblingPlaneReal3D.threeDToPlane);
-        return new Point2DRealization2D(new Vector3(R_prime.x, R_prime.y, 1), true);
-      }
+    // The source point owns its plane for every intersection subtype, including
+    // line/circle. Lifting through that frame avoids subtype-specific copying.
+    const sourceFrame = context.getProjectionPlane3DRealization(primaryPoint.planeId);
+    const targetFrame = context.getProjectionPlane3DRealization(this.planeId);
+    if (!sourceFrame || !targetFrame || !sourceFrame.feasible || !targetFrame.feasible) {
+      return new Point2DRealization2D(new Vector3(0, 0, 1), false);
     }
-
-    // Fallback for legacy non-hinge sibling points.
-    return new Point2DRealization2D(primaryRealization.position.clone());
+    const spatial = applyMatrix4x3(primaryRealization.position, sourceFrame.planeTo3D);
+    const projected = applyMatrix3x4(spatial, targetFrame.threeDToPlane);
+    return new Point2DRealization2D(new Vector3(projected.x, projected.y, 1), true);
   }
 }

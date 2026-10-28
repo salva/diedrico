@@ -37,6 +37,7 @@
  */
 
 import { Vector3 } from 'three';
+import type { ToolInteractionReadPort } from './ToolInteractionReadPort';
 import { BaseTool } from './BaseTool';
 import type { ToolArgumentInputCapableTool, ToolContext, ToolResult, ITool, PlanePositionInputCapableTool } from './ITool';
 import type { ParsedToolArgumentInput, ToolArgumentInputRequest } from '@/types/ToolArgumentInput';
@@ -182,6 +183,14 @@ export abstract class ArgumentCollectorTool extends BaseTool implements ITool, P
    * @param context - Tool execution context
    * @returns Tool result with status message
    */
+  isElementEligible(id: string, planeId: string, readPort: ToolInteractionReadPort): boolean {
+    if (this.viableSets.length === 0) this.viableSets = this.getArgumentSets().map((_, index) => index);
+    const plane = readPort.getProjectionPlaneById(planeId);
+    const element = readPort.getElement2D(id);
+    return !!plane && !!element && this.getViableNextArgumentSpecs().some(spec => isElementSpec(spec)
+      && spec.mask.matches(element) && (!spec.validator || spec.validator(element, { readPort, plane, collected: this.collected }).valid));
+  }
+
   handleClick(context: ToolContext): ToolResult {
     const { planeId, canvasCoords, readPort, interactionQuery, paperToPlaneTransform, viewport } = context;
     
@@ -196,7 +205,7 @@ export abstract class ArgumentCollectorTool extends BaseTool implements ITool, P
     // Hit-test with current selection mask
     const canvasPos = new Vector3(canvasCoords.x, canvasCoords.y, 1);
     const selectionMask = this.getSelectionMask();
-    const hit = interactionQuery.hitTest(canvasPos, 50, { viewport, activePlaneId: planeId, paperToPlaneTransform }, selectionMask);
+    const hit = interactionQuery.hitTest(canvasPos, 50, { viewport, activePlaneId: planeId, paperToPlaneTransform }, selectionMask, id => this.isElementEligible(id, planeId, readPort));
     
     // Extract position from context
     const { planeCoords } = context;
@@ -539,10 +548,7 @@ export abstract class ArgumentCollectorTool extends BaseTool implements ITool, P
           if (isElementSpec(spec) && spec.validator && element) {
             const validationResult = spec.validator(element, context);
             if (!validationResult.valid) {
-              return { 
-                success: false, 
-                error: validationResult.error || 'Argument validation failed' 
-              };
+              continue; // Another viable spec may accept the same element.
             }
           }
           
@@ -597,7 +603,7 @@ export abstract class ArgumentCollectorTool extends BaseTool implements ITool, P
           matches = true;
         }
         
-        if (!matches) {
+        if (!matches || (element && isElementSpec(spec) && spec.validator && !spec.validator(element, context).valid)) {
           return false;
         }
       }
@@ -647,16 +653,14 @@ export abstract class ArgumentCollectorTool extends BaseTool implements ITool, P
   private getViableNextArgumentSpecs(): ToolArgumentSpec[] {
     const argumentSets = this.getArgumentSets();
     const specs: ToolArgumentSpec[] = [];
-    const seenNames = new Set<string>();
     
     for (const setIndex of this.viableSets) {
       const set = argumentSets[setIndex];
       
       for (const spec of set.arguments) {
         // Only include specs for arguments not yet collected
-        if (!this.collected.has(spec.name) && !seenNames.has(spec.name) && isSpecCollectable(spec, this.collected)) {
+        if (!this.collected.has(spec.name) && isSpecCollectable(spec, this.collected)) {
           specs.push(spec);
-          seenNames.add(spec.name);
         }
       }
     }

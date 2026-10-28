@@ -65,7 +65,7 @@ export class KeyboardShortcutRouter {
       return;
     }
 
-    if (isTextInput) return;
+    if (isTextInput || target?.closest?.('[role="dialog"], [aria-modal="true"]')) return;
 
     if (coordinateInput?.isAvailable() && isCoordinateStarterKey(event)) {
       coordinateInput.focusWithText(event.key);
@@ -90,8 +90,11 @@ export class KeyboardShortcutRouter {
       return;
     }
     if (event.key === 'Tab') {
-      event.preventDefault();
-      this.deps.activePlane.cycleActivePlane(event.shiftKey ? -1 : 1);
+      // Tab belongs to native focus navigation outside the drawing surface.
+      if (target?.closest?.('[data-testid="svg-canvas"]')) {
+        event.preventDefault();
+        this.deps.activePlane.cycleActivePlane(event.shiftKey ? -1 : 1);
+      }
       return;
     }
     if (!isModifier && !event.shiftKey && !event.altKey) {

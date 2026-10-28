@@ -121,6 +121,20 @@ export class LabelGenerator {
   /**
    * Get current counter value for a category (for serialization/testing).
    */
+  /** Reserve a persisted generated label, including gaps left by abandoned redo. */
+  reserve(elementType: string, label: string | undefined): void {
+    if (!label) return;
+    const category = categoryForType(elementType);
+    const match = /^(.*?)(?:_\{?(\d+)\}?)?$/.exec(label);
+    if (!match) return;
+    const bases = basesForCategory(category);
+    const index = bases ? bases.indexOf(match[1]) : -1;
+    const suffix = Number(match[2] ?? 0);
+    const count = bases ? (index < 0 ? 0 : suffix * bases.length + index + 1)
+      : match[1] === prefixForCategory(category) ? suffix : 0;
+    if (Number.isSafeInteger(count)) this.setCount(elementType, count);
+  }
+
   getCount(elementType: string): number {
     const category = categoryForType(elementType);
     return this.counters.get(category) ?? 0;

@@ -9,6 +9,7 @@ function sources() {
     projectionPlanes: [{ id: 'plane-a' }],
     getProjectionPlane3DRealization: () => ({
       planeId: 'plane-a',
+      feasible: true,
       planeTo3D: undefined as never,
       threeDToPlane: mat3x4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1),
     }),

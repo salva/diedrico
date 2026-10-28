@@ -66,7 +66,14 @@ export class DeletionSequenceFactory {
   ): void {
     const { world, dependencyQuery, processTree } = context;
     // Step 1: Compute cascade and get elements in proper deletion order
-    const allElementsToDelete = dependencyQuery.getElementsInDeletionOrder(selectedIds);
+    const roots = selectedIds.map(id => {
+      for (const plane of world.getAllProjectionPlanes()) {
+        const line = plane.getLine(id);
+        if (line instanceof SiblingGuide2D) return line.primaryGuideId;
+      }
+      return id;
+    });
+    const allElementsToDelete = dependencyQuery.getElementsInDeletionOrder(roots);
     
     // Step 2: Find all actions that produce these elements
     const actionsToDelete = new Map<string, string[]>();
@@ -110,6 +117,11 @@ export class DeletionSequenceFactory {
         
         // Check if it's a line (includes segments and guides)
         const line = plane.getLine(elementId);
+        // Pair removal belongs to RemoveGuide2DOp(primary), exactly once.
+        if (line instanceof SiblingGuide2D && allElementsToDelete.includes(line.primaryGuideId)) {
+          found = true;
+          break;
+        }
         if (line) {
           // Determine specific line subtype using instanceof for type-safe dispatch
           if (line instanceof Segment2D) {

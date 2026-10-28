@@ -3,10 +3,7 @@ import { World } from '../../domain/world/World';
 import { AddGuide2DPerpendicularToLineOp, AddSiblingGuide2DOp } from '../operations/world/AddGuideOp';
 import { HalfHingeLine2D } from '../../domain/world/HingeLine';
 import { BrokenHalfHingeLine2D } from '../../domain/world/elements/BrokenHalfHingeLine2D';
-import { computeArcGeometry } from '../../utils/arcGeometry';
-import { Guide2D, SiblingGuide2D } from '../../domain/world/Guide';
 import type { CachedProjectionElementRealizationContext } from '@/domain/world/projectionPlane/ProjectionPlaneContext';
-import { GeometryElementLookup } from '@/domain/world/GeometryElementLookup';
 
 /**
  * Factory for creating guide operation sequences.
@@ -55,7 +52,7 @@ export class GuideSequenceFactory {
     planeId: string,
     referenceLineId: string,
     throughPointId: string,
-    world: World,
+    _world: World,
     realizationContext: CachedProjectionElementRealizationContext
   ): { guideId: string; siblingGuideId?: string } {
     
@@ -94,35 +91,7 @@ export class GuideSequenceFactory {
       throw new Error('siblingGuideId missing from operation output');
     }
     
-    // Update bidirectional links
-    const lookup = new GeometryElementLookup(world);
-    const primaryGuide = lookup.getLine2D(guideId);
-    if (!(primaryGuide instanceof Guide2D)) {
-      throw new Error(`Primary guide not found: ${guideId}`);
-    }
-    primaryGuide.siblingGuideId = siblingGuideId;
-    
-    // Phase 101: If reference line is BrokenHalfHingeLine2D, compute arc geometry
-    const referenceLine = lookup.getLine2D(referenceLineId);
-    if (referenceLine instanceof BrokenHalfHingeLine2D) {
-      
-      const siblingGuideLine = lookup.getLine2D(siblingGuideId);
-      if (!(siblingGuideLine instanceof SiblingGuide2D)) {
-        throw new Error(`Sibling guide not found: ${siblingGuideId}`);
-      }
-      const siblingGuide = siblingGuideLine;
-      
-      // Compute arc geometry connecting the two guides
-      const arcGeometry = computeArcGeometry(realizationContext, primaryGuide, siblingGuide);
-      
-      if (arcGeometry) {
-        // Store arc in BOTH guides for rendering
-        primaryGuide.arcGeometry = arcGeometry;
-        siblingGuide.arcGeometry = arcGeometry;
-      } else {
-        throw new Error(`Failed to compute arc geometry for sibling guides ${guideId} and ${siblingGuideId}`);
-      }
-    }
+    // Backlinks are owned by AddSiblingGuide2DOp; arcs are derived at presentation time.
     
     return { guideId, siblingGuideId };
   }

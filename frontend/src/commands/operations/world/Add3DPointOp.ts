@@ -85,6 +85,7 @@ export class Add3DPointOp implements IOperation<Add3DPointDescriptor, Add3DPoint
       });
       
       this.label = point.label;
+      context.labelGenerator.reserve('Point3D', point.label);
       // Store outputs for undo
       this.outputs = { pointId: point.id };
       

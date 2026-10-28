@@ -48,6 +48,15 @@ export class RuntimeDomainContext {
     projectionConstruction: this.projectionConstruction,
   });
 
+  clear(): void {
+    this.world.clear();
+    this.realizations.clear();
+    this.processTree.clear();
+    this.dependencies.clear();
+    this.labelGenerator.reset();
+    this.idAllocator.reset();
+  }
+
   createOperationContext(visibilityModel: VisibilityModel): OperationContext {
     return {
       world: this.world,

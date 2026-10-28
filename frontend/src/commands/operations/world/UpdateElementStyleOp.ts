@@ -12,6 +12,7 @@ import type { IOperation, JsonObject, OperationDescriptor, OperationOutputBag, O
 import type { OperationContext } from '../OperationContext';
 import type { World } from '@/domain/world/World';
 import type { VisualStyle } from '@/domain/world/VisualStyle';
+import { GeometryElementLookup } from '@/domain/world/GeometryElementLookup';
 import type { Element } from '@/domain/world/Element';
 import { createVisualStyle } from '@/domain/world/VisualStyle';
 
@@ -34,11 +35,11 @@ interface UpdateElementStylePayload extends JsonObject {
 }
 
 function findStyleableElement(world: World, planeId: string, elementId: string): Element | undefined {
+  const lookup = new GeometryElementLookup(world);
+  const global = lookup.getElement3DById(elementId) ?? world.getProjectionPlaneById(elementId);
+  if (global) return global;
   const plane = world.getProjectionPlaneById(planeId);
-  if (!plane) {
-    throw new Error(`Plane not found: ${planeId}`);
-  }
-
+  if (!plane) throw new Error(`Plane not found: ${planeId}`);
   return plane.getPoint(elementId) ?? plane.getLine(elementId) ?? plane.getCircle(elementId);
 }
 

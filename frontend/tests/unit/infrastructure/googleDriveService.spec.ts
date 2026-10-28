@@ -131,6 +131,20 @@ describe('GoogleDriveService', () => {
       expect(service.isSignedIn()).toBe(false);
     });
 
+    it('clears a restored gapi-only session on sign-out', async () => {
+      await service.initialize();
+      mockGapi.client.getToken.mockReturnValue({ access_token: 'restored-fixture' });
+      mockGapi.client.setToken.mockImplementation(value => mockGapi.client.getToken.mockReturnValue(value));
+      await service.signOut();
+      expect(service.isSignedIn()).toBe(false);
+    });
+
+    it('rejects restored empty tokens', async () => {
+      await service.initialize();
+      mockGapi.client.getToken.mockReturnValue({ access_token: '' });
+      expect(service.isSignedIn()).toBe(false);
+    });
+
     it('should return true when user is signed in', async () => {
       await service.initialize();
       

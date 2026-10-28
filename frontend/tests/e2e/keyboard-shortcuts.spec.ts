@@ -6,6 +6,29 @@ test.describe('Keyboard shortcuts', () => {
     await expect(page.locator('svg.diedrico-canvas')).toBeVisible();
   });
 
+  test('Tab keeps native toolbar focus traversal without changing the active plane', async ({ page }) => {
+    const plane = page.getByTestId('plane-selector');
+    const initialPlane = await plane.textContent();
+    const select = page.getByTestId('tool-select');
+    await select.focus();
+    await expect(select).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(select).not.toBeFocused();
+    await expect(plane).toHaveText(initialPlane!);
+  });
+
+  test('Tab cycles only from the focused drawing canvas', async ({ page }) => {
+    const plane = page.getByTestId('plane-selector');
+    const initial = await plane.textContent();
+    const canvas = page.getByTestId('svg-canvas');
+    await canvas.focus();
+    await page.keyboard.press('Tab');
+    await expect(canvas).toBeFocused();
+    await expect(plane).not.toHaveText(initial!);
+    await page.keyboard.press('Shift+Tab');
+    await expect(plane).toHaveText(initial!);
+  });
+
   test('tool shortcut keys activate current tool buttons', async ({ page }) => {
     const shortcuts = [
       ['p', 'tool-point'],

@@ -9,7 +9,7 @@
   <div class="login-status-widget">
     <!-- Unauthenticated state: Sign in button -->
     <button
-      v-if="!authStore.isAuthenticated.value"
+      v-if="!isSignedIn"
       class="sign-in-button"
       @click="$emit('sign-in')"
       title="Sign in with Google"
@@ -67,6 +67,7 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useAuthStore } from '../stores/authStore';
 
+defineProps<{ isSignedIn?: boolean }>();
 const authStore = useAuthStore();
 
 // Dropdown state

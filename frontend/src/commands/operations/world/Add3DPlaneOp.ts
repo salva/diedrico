@@ -135,6 +135,8 @@ export class Add3DPlaneOp implements IOperation<Add3DPlaneDescriptor, Add3DPlane
         label: this.label,
       });
       
+      this.label = plane.label;
+      context.labelGenerator.reserve('Plane3D', plane.label);
       // Store outputs for undo
       this.outputs = { planeId: plane.id };
       

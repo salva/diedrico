@@ -23,10 +23,12 @@ export interface AddSiblingIntersectionPoint2DDescriptor extends OperationDescri
   planeId: string;
   primaryIntersectionId: string;
   pointId?: string;
+  label?: string;
 }
 
 export interface AddSiblingIntersectionPoint2DOutput extends JsonObject {
   pointId?: string;
+  label?: string;
 }
 
 export class AddSiblingIntersectionPoint2DOp implements IOperation<AddSiblingIntersectionPoint2DDescriptor, AddSiblingIntersectionPoint2DOutput> {
@@ -51,7 +53,9 @@ export class AddSiblingIntersectionPoint2DOp implements IOperation<AddSiblingInt
         this.primaryIntersectionId,
         this.outputs.pointId
       );
-      this.outputs = { pointId: siblingPoint.id };
+      if (this.outputs.label !== undefined) siblingPoint.label = this.outputs.label;
+      context.labelGenerator.reserve('Point2D', siblingPoint.label);
+      this.outputs = { pointId: siblingPoint.id, label: siblingPoint.label };
       return {
         success: true,
         outputs: this.outputs
@@ -88,7 +92,8 @@ export class AddSiblingIntersectionPoint2DOp implements IOperation<AddSiblingInt
       opType: this.type,
       planeId: this.planeId,
       primaryIntersectionId: this.primaryIntersectionId,
-      pointId: this.outputs.pointId
+      pointId: this.outputs.pointId,
+      label: this.outputs.label
     };
   }
 }

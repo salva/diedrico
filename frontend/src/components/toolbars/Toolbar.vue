@@ -119,6 +119,7 @@
 
     <!-- T406: Login Status Widget at far right -->
     <LoginStatusWidget
+      :is-signed-in="isSignedIn"
       @sign-in="handleSignIn"
       @sign-out="handleSignOut"
     />
@@ -152,6 +153,8 @@ import { CommandHistoryInjectionKey } from '@/application/appShell/RuntimeInject
  * Manages active tool state via tool store.
  *
  */
+
+defineProps<{ isSignedIn?: boolean }>();
 
 interface Emits {
   (e: 'new-project'): void;

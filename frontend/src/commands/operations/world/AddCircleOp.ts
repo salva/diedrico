@@ -45,7 +45,9 @@ export class AddCircle2DByCenterAndPointOp implements IOperation<AddCircle2DByCe
         this.circumferencePointId,
         this.outputs.circleId
       );
-      this.outputs = { circleId: circle.id };
+      if (typeof this.outputs.label === 'string') circle.label = this.outputs.label;
+      context.labelGenerator.reserve('Circle2D', circle.label);
+      this.outputs = { circleId: circle.id, label: circle.label };
       return operationSuccess(this.outputs);
     } catch (error) {
       return operationFailure(error);
@@ -67,7 +69,8 @@ export class AddCircle2DByCenterAndPointOp implements IOperation<AddCircle2DByCe
       planeId: this.planeId,
       centerPointId: this.centerPointId,
       circumferencePointId: this.circumferencePointId,
-      circleId: this.outputs.circleId
+      circleId: this.outputs.circleId,
+      label: this.outputs.label
     };
   }
 }
@@ -111,7 +114,9 @@ export class AddCircle2DByCenterAndRadiusVectorOp implements IOperation<AddCircl
         this.radiusVector,
         this.outputs.circleId
       );
-      this.outputs = { circleId: circle.id };
+      if (typeof this.outputs.label === 'string') circle.label = this.outputs.label;
+      context.labelGenerator.reserve('Circle2D', circle.label);
+      this.outputs = { circleId: circle.id, label: circle.label };
       return operationSuccess(this.outputs);
     } catch (error) {
       return operationFailure(error);
@@ -133,7 +138,8 @@ export class AddCircle2DByCenterAndRadiusVectorOp implements IOperation<AddCircl
       planeId: this.planeId,
       centerPointId: this.centerPointId,
       radiusVector: vectorToTuple(this.radiusVector),
-      circleId: this.outputs.circleId
+      circleId: this.outputs.circleId,
+      label: this.outputs.label
     };
   }
 }
