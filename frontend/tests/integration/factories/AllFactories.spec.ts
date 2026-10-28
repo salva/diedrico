@@ -112,7 +112,7 @@ describe('Factory Integration Tests', () => {
       expect(siblingPlane.getLine(result.siblingGuideId!)).toBeDefined(); // Sibling restored on paired plane
     });
 
-    it.skip('should create guide on regular line without sibling', () => {
+    it.skip('legacy regular-line guide fixture selects bootstrap points by array index', () => {
       // Setup: Create regular line
       const setupCmd = new Command('Setup line', operationContext);
       
@@ -148,9 +148,8 @@ describe('Factory Integration Tests', () => {
     });
   });
 
-  describe.skip('DeletionSequenceFactory Integration - SKIPPED: Cascade deletion broken', () => {
-    // NOTE: Cascade deletion not working - dependency service doesn't find dependents
-    // See DeletionSequenceFactory.spec.ts for details
+  describe.skip('DeletionSequenceFactory Integration - legacy fixtures omit producing actions', () => {
+    // Current deletion requires process-tree producing actions; exercised by SelectionDeletionCommandService tests.
     it('should cascade delete line when deleting defining point', () => {
       // Setup: Create point and line
       const setupCmd = new Command('Setup', operationContext);

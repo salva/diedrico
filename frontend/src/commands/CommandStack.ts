@@ -76,8 +76,9 @@ export class CommandStack {
       throw new Error('Nothing to undo');
     }
     
-    const command = this.undoStack.pop()!;
+    const command = this.undoStack[this.undoStack.length - 1]!;
     command.undo();
+    this.undoStack.pop();
     this.redoStack.push(command);
     
     this.notify();
@@ -92,8 +93,9 @@ export class CommandStack {
       throw new Error('Nothing to redo');
     }
     
-    const command = this.redoStack.pop()!;
+    const command = this.redoStack[this.redoStack.length - 1]!;
     command.redo();
+    this.redoStack.pop();
     this.undoStack.push(command);
     
     this.notify();

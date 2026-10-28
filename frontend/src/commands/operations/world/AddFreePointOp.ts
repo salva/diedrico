@@ -28,6 +28,7 @@ export class AddFreePoint2DOp implements IOperation<AddFreePoint2DDescriptor, Ad
     private planeId: string,
     private position: Vector3
   ) {
+    this.position = position.clone();
   }
 
   apply(context: OperationContext): OperationResult<AddFreePoint2DOutput> {

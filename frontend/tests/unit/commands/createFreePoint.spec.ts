@@ -4,6 +4,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Command } from '../../../src/commands/Command';
 import { AddFreePoint2DOp } from '../../../src/commands/operations/world/AddFreePointOp';
+import { UpdateFreePoint2DPositionOp } from '@/commands/operations/world/UpdateFreePoint2DPositionOp';
 import type { World } from '../../../src/domain/world/World';
 import { createTestWorld, getHorizontalPlane, getHorizontalPlaneId } from '../../helpers/worldHelpers';
 import { Vector3 } from 'three';
@@ -31,9 +32,47 @@ describe('Create Free Point Command', () => {
       expect(result.success).toBe(true);
     });
 
-    it.skip('coordinate validation happens elsewhere', () => {
-      // The AddFreePoint2DOp operation doesn't validate coordinates
-      // Validation would happen in the UI or in a separate validation layer
+    it.each([NaN, Infinity, -Infinity])('rejects nonfinite coordinates (%s) before mutation', (value) => {
+      const plane = getHorizontalPlane(world);
+      const before = plane.getAllPoints().length;
+      const cmd = new Command('Invalid point', operationContext);
+      expect(() => cmd.addAndExecute(new AddFreePoint2DOp(planeId, new Vector3(value, 0, 1)))).toThrow(/finite/);
+      expect(plane.getAllPoints()).toHaveLength(before);
+    });
+
+    it.each([NaN, Infinity, -Infinity])('rejects nonfinite moves (%s) without replacing the point', (value) => {
+      const plane = getHorizontalPlane(world);
+      const added = new AddFreePoint2DOp(planeId, new Vector3(2, 3, 1));
+      const result = added.apply(operationContext);
+      const id = result.outputs.pointId!;
+      const before = plane.getPoint(id);
+      const move = new UpdateFreePoint2DPositionOp(planeId, id, new Vector3(0, value, 1));
+      expect(move.apply(operationContext).success).toBe(false);
+      expect(plane.getPoint(id)).toBe(before);
+    });
+
+    it('captures move coordinates before a caller reuses its vector', () => {
+      const op = new AddFreePoint2DOp(planeId, new Vector3(2, 3, 1));
+      const id = op.apply(operationContext).outputs.pointId!;
+      const position = new Vector3(4, 5, 1);
+      const move = new UpdateFreePoint2DPositionOp(planeId, id, position);
+      position.x = 900;
+      expect(move.apply(operationContext).success).toBe(true);
+      expect(move.serialize().newPosition).toEqual([4, 5, 1]);
+    });
+
+    it('owns a stable coordinate snapshot across caller mutation and redo', () => {
+      const position = new Vector3(10, 20, 1);
+      const op = new AddFreePoint2DOp(planeId, position);
+      const cmd = new Command('Point', operationContext);
+      const result = cmd.addAndExecute(op);
+      cmd.commit();
+      position.x = 999;
+      expect(op.serialize().position).toEqual([10, 20, 1]);
+      expect((getHorizontalPlane(world).getPoint(result.outputs.pointId!) as { position: Vector3 }).position).toEqual(new Vector3(10, 20, 1));
+      cmd.undo();
+      cmd.redo();
+      expect(op.serialize().position).toEqual([10, 20, 1]);
     });
   });
 

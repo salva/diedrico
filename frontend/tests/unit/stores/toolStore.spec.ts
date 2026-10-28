@@ -2,7 +2,7 @@
  * Tests for toolStore.ts - Tool selection state management
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useToolStore } from '@/stores/toolStore';
 
 describe('toolStore', () => {
@@ -12,6 +12,26 @@ describe('toolStore', () => {
     toolStore = useToolStore();
     // Reset to default state
     toolStore.setTool('select');
+  });
+
+  it.each(['null', '[]', '"point"', '{"point":123}'])('ignores malformed stored preferences: %s', (stored) => {
+    const spy = vi.spyOn(Storage.prototype, 'getItem').mockReturnValue(stored);
+    try {
+      toolStore.initFromStorage();
+      expect(toolStore.lastUsedTools.value).toEqual({});
+      expect(() => toolStore.getLastUsedTool('point')).not.toThrow();
+    } finally { spy.mockRestore(); }
+  });
+
+  it('falls back to the family default for a stale stored tool ID', () => {
+    toolStore.setToolFamilies([{ id: 'points', label: 'Points', icon: {}, defaultTool: 'point',
+      tools: [{ id: 'point', label: 'Point', icon: {}, tooltip: 'Point' }] }]);
+    const spy = vi.spyOn(Storage.prototype, 'getItem').mockReturnValue('{"points":"removed-tool"}');
+    try {
+      toolStore.initFromStorage();
+      toolStore.activateToolFamily('points');
+      expect(toolStore.currentTool.value).toBe('point');
+    } finally { spy.mockRestore(); toolStore.setTool('select'); }
   });
 
   describe('Tool Selection', () => {

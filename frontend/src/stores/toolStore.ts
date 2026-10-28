@@ -62,7 +62,8 @@ export function useToolStore() {
     }
 
     // Use last-used tool for this family, or default if none
-    const toolId = lastUsedByFamily.value[familyId] || family.defaultTool;
+    const preferred = lastUsedByFamily.value[familyId];
+    const toolId = family.tools.some(tool => tool.id === preferred) ? preferred! : family.defaultTool;
     setTool(toolId as ToolType);
   }
 
@@ -91,8 +92,14 @@ export function useToolStore() {
   function initFromStorage(): void {
     try {
       const stored = localStorage.getItem(TOOL_PREFERENCE_KEY);
+      lastUsedByFamily.value = {};
       if (stored) {
-        lastUsedByFamily.value = JSON.parse(stored);
+        const parsed: unknown = JSON.parse(stored);
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          lastUsedByFamily.value = Object.fromEntries(
+            Object.entries(parsed).filter(([, value]) => typeof value === 'string'),
+          );
+        }
       }
     } catch (error) {
       console.warn('Failed to load tool preferences:', error);

@@ -94,7 +94,10 @@ export class FreePoint2D extends Point2D {
     label?: string
   ) {
     super(id, planeId, label);
-    this.position = position;
+    if (![position.x, position.y, position.z].every(Number.isFinite)) {
+      throw new Error('Point coordinates must be finite');
+    }
+    this.position = position.clone();
     this.locked = false;
   }
 

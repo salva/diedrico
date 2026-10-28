@@ -42,6 +42,7 @@ export class UpdateFreePoint2DPositionOp implements IOperation<UpdateFreePoint2D
     private pointId: string,
     private newPosition: Vector3 | SerializableVector3
   ) {
+    this.newPosition = toVector3(newPosition);
   }
 
   apply(context: OperationContext): OperationResult<UpdateFreePoint2DPositionOutput> {
