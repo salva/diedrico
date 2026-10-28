@@ -236,6 +236,12 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
     return ProjectService.serializeCommands(this.commandStack, this.operationContext.idAllocator.peek(), projectName);
   }
 
+  snapshotEmptyProject(projectName: string): ProjectSessionPersistencePayload {
+    const candidate = new RuntimeSession();
+    candidate.initializeDefaultWorldIfNeeded();
+    return candidate.snapshot(projectName);
+  }
+
   validateProjectData(data: unknown): OpenedProjectSession {
     ProjectService.validateProjectData(data);
     return {

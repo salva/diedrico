@@ -7,6 +7,7 @@ export interface SnapshotCapableProjectSessionKernel {
 
 export interface ProjectSessionKernel extends SnapshotCapableProjectSessionKernel {
   initializeDefaultWorldIfNeeded(): void;
+  snapshotEmptyProject(projectName: string): ProjectSessionPersistencePayload;
   resetToEmptyInitializedWorld(): void;
   clear(): void;
   validateProjectData(data: unknown): OpenedProjectSession;

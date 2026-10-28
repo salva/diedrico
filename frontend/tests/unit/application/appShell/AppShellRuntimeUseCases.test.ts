@@ -542,6 +542,55 @@ describe('ProjectSessionUseCases startup and project flows', () => {
     expect(deps.session.planeOptions.length).toBeGreaterThan(0);
   });
 
+  it('preserves the active project and history when remote creation fails', async () => {
+    const deps = projectSessionDeps({ ports: runtimePorts({
+      drive: drive({ createFile: vi.fn().mockRejectedValue(new Error('offline')) }),
+    }) });
+    deps.session.initializeDefaultWorldIfNeeded();
+    deps.session.undo();
+    const before = deps.session.snapshot('Existing');
+    deps.currentFileId.value = 'existing-file';
+    deps.currentProjectName.value = 'Existing';
+
+    await new ProjectSessionUseCases(deps).createProject('New');
+
+    expect(deps.session.snapshot('Existing').commands).toEqual(before.commands);
+    expect(deps.session.canRedo()).toBe(true);
+    expect(deps.currentFileId.value).toBe('existing-file');
+    expect(deps.currentProjectName.value).toBe('Existing');
+    expect(deps.autoSave.start).not.toHaveBeenCalled();
+    expect(deps.startupDialog.error.value).toContain('offline');
+  });
+
+  it('keeps edits and redo available until new project creation succeeds', async () => {
+    let resolveCreate!: (id: string) => void;
+    const createFile = vi.fn((_name: string, _data: ProjectSessionPersistencePayload) => new Promise<string>(resolve => { resolveCreate = resolve; }));
+    const deps = projectSessionDeps({ ports: runtimePorts({ drive: drive({ createFile }) }) });
+    deps.session.initializeDefaultWorldIfNeeded();
+    deps.session.undo();
+    const before = deps.session.snapshot('Existing');
+    const pending = new ProjectSessionUseCases(deps).createProject('New');
+    expect(deps.session.snapshot('Existing').commands).toEqual(before.commands);
+    expect(deps.session.canRedo()).toBe(true);
+    const uploaded = createFile.mock.calls[0]?.[1];
+    expect(uploaded).toEqual(expect.objectContaining({ name: 'New' }));
+    resolveCreate('new-file');
+    await pending;
+    expect(deps.session.snapshot('New').commands).toEqual(uploaded?.commands);
+    expect(deps.session.canRedo()).toBe(false);
+    expect(deps.currentFileId.value).toBe('new-file');
+    expect(deps.autoSave.start).toHaveBeenCalledOnce();
+  });
+
+  it('initializes a usable local world when Drive initialization fails', async () => {
+    const deps = projectSessionDeps({ ports: runtimePorts({
+      drive: drive({ initialize: vi.fn().mockRejectedValue(new Error('offline')) }),
+    }) });
+    await new ProjectSessionUseCases(deps).initialize();
+    expect(deps.session.planeOptions.length).toBeGreaterThan(0);
+    expect(deps.showStartupDialog.value).toBe(false);
+  });
+
   it('loads and resets startup-dialog file list through typed runtime state', async () => {
     const deps = projectSessionDeps();
     const useCases = new ProjectSessionUseCases(deps);

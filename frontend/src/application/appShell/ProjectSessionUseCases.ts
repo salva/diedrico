@@ -50,6 +50,7 @@ export class ProjectSessionUseCases {
       }
       this.deps.showStartupDialog.value = true;
     } catch {
+      this.deps.session.initializeDefaultWorldIfNeeded();
       this.deps.showStartupDialog.value = false;
     }
   }
@@ -92,9 +93,9 @@ export class ProjectSessionUseCases {
   async createProject(projectName: string): Promise<void> {
     const drive = this.requireDrive();
     try {
-      this.deps.session.resetToEmptyInitializedWorld();
-      const projectData = this.deps.session.snapshot(projectName);
+      const projectData = this.deps.session.snapshotEmptyProject(projectName);
       const fileId = await drive.createFile(projectName, projectData);
+      this.deps.session.restoreValidatedProject(this.deps.session.validateProjectData(projectData));
       this.setCurrentProject(projectName, fileId);
       this.deps.showStartupDialog.value = false;
       this.deps.autoSave.start();
