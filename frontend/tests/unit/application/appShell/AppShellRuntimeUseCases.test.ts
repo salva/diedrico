@@ -374,6 +374,63 @@ describe('AutoSaveUseCases', () => {
     stopWatching();
     autoSave.dispose();
   });
+  it.each(['401', 'expiry', 'stale-401'])('actual-service autosave handles %s with auth and save generations kept distinct', async kind => {
+    const oldGapi = globalThis.gapi, oldGoogle = window.google;
+    let token: { access_token: string } | null = null;
+    let callback!: (response: any) => void;
+    let rejectOld!: (error: unknown) => void;
+    const request = vi.fn(() => kind === 'stale-401'
+      ? new Promise<any>((_resolve, reject) => { rejectOld = reject; })
+      : Promise.reject({ status: 401, message: 'private-provider-body' }));
+    vi.stubGlobal('gapi', { load: (_: string, config: any) => config.callback(), client: {
+      init: async () => {}, getToken: () => token, setToken: (value: typeof token) => { token = value; }, request,
+    } });
+    window.google = { accounts: { oauth2: { initTokenClient: (config: any) => {
+      callback = config.callback; return { requestAccessToken: () => {} };
+    }, revoke: () => {} } } };
+    const timer = scheduler();
+    const session = new RuntimeSession(); session.initializeDefaultWorldIfNeeded();
+    const drawing = session.snapshot('Drawing');
+    session.undo();
+    const before = session.snapshot('Drawing');
+    const history = { undo: session.canUndo(), redo: session.canRedo() };
+    const signedIn = ref(true), chooser = ref(false), status = ref<'idle' | 'saving' | 'saved'>('idle');
+    const service = new GoogleDriveService({ clientId: 'fixture', appId: '' });
+    const autoSave = new AutoSaveUseCases({ session, drive: service, scheduler: timer.port,
+      lastProjectRepository: lastProjectRepository(), currentFileId: ref('same-file'), currentProjectName: ref('Drawing'),
+      isSignedIn: signedIn, showStartupDialog: chooser, saveStatus: status, alert: vi.fn() });
+    try {
+      await service.initialize();
+      const authorization = service.signIn(); await Promise.resolve();
+      callback({ access_token: 'A-fixture', ...(kind === 'expiry' ? { expires_in: 0 } : {}) }); await authorization;
+      autoSave.start();
+      if (kind === 'stale-401') status.value = 'saving';
+      const pending = autoSave.perform();
+      if (kind === 'stale-401') {
+        await service.signOut();
+        const b = service.signIn(); await Promise.resolve(); callback({ access_token: 'B-fixture' }); await b;
+        rejectOld({ status: 401 });
+      }
+      await pending;
+      expect(signedIn.value).toBe(kind === 'stale-401');
+      expect(chooser.value).toBe(kind !== 'stale-401');
+      expect(status.value).toBe(kind === 'stale-401' ? 'saving' : 'idle');
+      if (kind === 'stale-401') {
+        expect(service.isSignedIn()).toBe(true);
+        expect(timer.port.clearInterval).not.toHaveBeenCalled();
+      } else {
+        expect(service.isSignedIn()).toBe(false);
+        expect(timer.port.clearInterval).toHaveBeenCalled();
+      }
+      expect(session.snapshot('Drawing').commands).toEqual(before.commands);
+      expect({ undo: session.canUndo(), redo: session.canRedo() }).toEqual(history);
+      session.redo(); expect(session.snapshot('Drawing').commands).toEqual(drawing.commands);
+      expect(request).toHaveBeenCalledTimes(kind === 'expiry' ? 0 : 1);
+    } finally {
+      autoSave.dispose(); vi.stubGlobal('gapi', oldGapi); window.google = oldGoogle;
+    }
+  });
+
   it('serializes writes and schedules the latest revision after a pending save', async () => {
     let finish!: () => void;
     const fakeDrive = drive({ updateFile: vi.fn(() => new Promise<void>(resolve => { finish = resolve; })) });

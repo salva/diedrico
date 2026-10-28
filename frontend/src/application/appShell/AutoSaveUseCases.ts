@@ -1,3 +1,4 @@
+import { DriveAuthenticationError } from './DriveAuthenticationError';
 import type { Ref } from 'vue';
 import type { DrivePort, IntervalHandle, LastProjectRepositoryPort, SaveStatus, SchedulerPort, TimeoutHandle } from './AppShellPorts';
 import type { SnapshotCapableProjectSessionKernel } from './ProjectSessionKernel';
@@ -104,6 +105,7 @@ export class AutoSaveUseCases {
   }
 
   private async handleSaveError(error: unknown, isCurrent: () => boolean): Promise<void> {
+    if (error instanceof DriveAuthenticationError && !error.ownsCurrentSession) return;
     this.deps.saveStatus.value = 'idle';
     if (isMissingRemoteFileError(error)) {
       try {
@@ -117,8 +119,12 @@ export class AutoSaveUseCases {
         this.deps.lastProjectRepository.setLastProject({ id: newFileId, name: this.deps.currentProjectName.value });
         if (!this.saveRequested && this.deps.session.getVersion() === revision) this.markSavedThenIdle();
         return;
-      } catch {
+      } catch (recoveryError) {
         if (!isCurrent()) return;
+        if (isAuthenticationError(recoveryError)) {
+          await this.handleSaveError(recoveryError, isCurrent);
+          return;
+        }
         this.deps.alert('Remote file was deleted and could not be re-saved. Please try to export your work or refresh if connection is lost.');
       }
     }

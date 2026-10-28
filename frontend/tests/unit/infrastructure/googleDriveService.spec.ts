@@ -5,6 +5,7 @@
  * Uses mocks for gapi client library.
  */
 
+import { DriveAuthenticationError } from '@/application/appShell/DriveAuthenticationError';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { GoogleDriveService } from '../../../src/infrastructure/googleDrive/GoogleDriveService';
 
@@ -129,7 +130,7 @@ describe('GoogleDriveService', () => {
       const pending = service.createFile('A', {});
       await service.signOut();
       finish({ result: { files: [{ id: 'old-folder' }] } });
-      await expect(pending).rejects.toThrow('Failed to create');
+      await expect(pending).rejects.toThrow('Authentication changed');
       expect(mockGapi.client.request).not.toHaveBeenCalled();
       expect(mockGapi.client.drive.files.create).not.toHaveBeenCalled();
     });
@@ -237,6 +238,72 @@ describe('GoogleDriveService', () => {
         await expect(service.loadFile('fixture')).rejects.not.toThrow('private-token-fixture');
         await service.signOut();
       } finally { remove.mockRestore(); }
+    });
+  });
+
+  describe('authentication result ownership', () => {
+    it.each(['401', 'signed-out'])('rechecks %s ownership at consumption after reauthorization', async kind => {
+      await service.initialize(); await signInHelper();
+      if (kind === '401') mockGapi.client.request.mockRejectedValueOnce({ status: 401 });
+      else await service.signOut();
+      const failure = await service.updateFile('fixture', {}).catch(error => error);
+      expect(failure).toBeInstanceOf(DriveAuthenticationError);
+      expect(failure.ownsCurrentSession).toBe(true);
+      const signInB = service.signIn(); await Promise.resolve();
+      mockTokenClient.callback({ access_token: 'B-fixture' }); await signInB;
+      expect(failure.ownsCurrentSession).toBe(false);
+      expect(service.isSignedIn()).toBe(true);
+    });
+    it.each(['folder', 'list', 'profile', 'profile-response', 'load', 'save', 'rename', 'delete', 'create'])('does not let delayed A %s 401 invalidate authorized B or its folder', async path => {
+      await service.initialize(); await signInHelper();
+      let rejectOld!: (error: unknown) => void;
+      const deferred = () => new Promise<any>((_resolve, reject) => { rejectOld = reject; });
+      mockGapi.client.drive.files.list.mockReset();
+      mockGapi.client.drive.files.list.mockResolvedValue({ result: { files: [{ id: 'folder-A' }] } });
+      (mockGapi.client.drive.files as any).update = vi.fn();
+      let pending: Promise<unknown>;
+      const originalFetch = globalThis.fetch;
+      let resolveProfile!: (value: unknown) => void;
+      if (path === 'profile-response') {
+        globalThis.fetch = vi.fn(() => new Promise<any>(resolve => { resolveProfile = resolve; }));
+        pending = service.fetchUserProfile();
+      } else if (path === 'profile') {
+        globalThis.fetch = vi.fn(deferred);
+        pending = service.fetchUserProfile();
+      } else if (path === 'folder') {
+        mockGapi.client.drive.files.list.mockImplementationOnce(deferred);
+        pending = service.createFile('A', {});
+      } else if (path === 'list') {
+        await service.listFiles();
+        mockGapi.client.drive.files.list.mockImplementationOnce(deferred);
+        pending = service.listFiles();
+      } else if (path === 'load') {
+        mockGapi.client.drive.files.get.mockImplementationOnce(deferred); pending = service.loadFile('A');
+      } else if (path === 'rename') {
+        (mockGapi.client.drive.files as any).update.mockImplementationOnce(deferred); pending = service.renameFile('A', 'Name');
+      } else if (path === 'delete') {
+        mockGapi.client.drive.files.delete.mockImplementationOnce(deferred); pending = service.deleteFile('A');
+      } else {
+        mockGapi.client.request.mockImplementationOnce(deferred);
+        pending = path === 'save' ? service.updateFile('A', {}) : service.createFile('A', {});
+        for (let i = 0; i < 6; i++) await Promise.resolve();
+      }
+      const rejection = expect(pending).rejects.toThrow('Authentication expired');
+      await service.signOut();
+      const signInB = service.signIn(); await Promise.resolve();
+      mockTokenClient.callback({ access_token: 'B-fixture' }); await signInB;
+      mockGapi.client.drive.files.list.mockResolvedValue({ result: { files: [{ id: 'folder-B' }] } });
+      await service.listFiles();
+      const before = mockGapi.client.drive.files.list.mock.calls.length;
+      if (path === 'profile-response') resolveProfile({ ok: false, status: 401 });
+      else rejectOld({ status: 401, message: 'private-provider-body' });
+      await rejection;
+      expect(service.isSignedIn()).toBe(true);
+      expect(mockGapi.client.setToken).toHaveBeenLastCalledWith({ access_token: 'B-fixture' });
+      await service.listFiles();
+      expect(mockGapi.client.drive.files.list).toHaveBeenCalledTimes(before + 1);
+      expect(mockGapi.client.drive.files.list).toHaveBeenLastCalledWith(expect.objectContaining({ q: expect.stringContaining("'folder-B' in parents") }));
+      globalThis.fetch = originalFetch;
     });
   });
 

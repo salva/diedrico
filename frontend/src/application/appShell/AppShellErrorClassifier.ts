@@ -1,3 +1,5 @@
+import { DriveAuthenticationError } from './DriveAuthenticationError';
+
 export function describeUnknownError(error: unknown): string {
   if (error instanceof Error) return error.message;
   if (typeof error === 'string') return error;
@@ -15,7 +17,7 @@ export function isMissingRemoteFileError(error: unknown): boolean {
 
 export function isAuthenticationError(error: unknown): boolean {
   const message = describeUnknownError(error);
-  return message.includes('authentication') || message.includes('401');
+  return error instanceof DriveAuthenticationError || message.includes('authentication') || message.includes('401');
 }
 
 export function isQuotaError(error: unknown): boolean {

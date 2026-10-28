@@ -14,6 +14,7 @@
 /// <reference types="gapi" />
 /// <reference types="gapi.client.drive-v3" />
 
+import { DriveAuthenticationError } from '@/application/appShell/DriveAuthenticationError';
 import type { GoogleDriveConfig, GoogleDriveFile, GoogleUserProfile } from '@/application/appShell/DrivePortTypes';
 
 interface TokenResponse { access_token?: unknown; expires_in?: unknown; error?: unknown }
@@ -199,9 +200,10 @@ export class GoogleDriveService {
    */
   async fetchUserProfile(): Promise<GoogleUserProfile> {
     if (!this.isSignedIn()) {
-      throw new Error('User not signed in');
+      throw this.signedOutError();
     }
 
+    const session = this.session;
     try {
       const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
         headers: {
@@ -210,7 +212,6 @@ export class GoogleDriveService {
       });
 
       if (!response.ok) {
-        if (response.status === 401) this.clearExpiredAuthentication();
         throw { status: response.status };
       }
 
@@ -222,14 +223,19 @@ export class GoogleDriveService {
         picture: data.picture,
         sub: data.id,
       };
-    } catch (error: unknown) { throw this.driveError(error, 'fetch user profile'); }
+    } catch (error: unknown) { throw this.driveError(error, 'fetch user profile', session); }
   }
 
   /**
    * Get or create the "diedrico" folder in user's Drive
    */
   private assertSession(session: number): void {
-    if (session !== this.session || !this.isSignedIn()) throw new Error('Authentication changed. Please sign in again.');
+    const ownsCurrentSession = session === this.session;
+    if (!ownsCurrentSession || !this.isSignedIn()) {
+      const invalidatedSession = this.session;
+      throw new DriveAuthenticationError('Authentication changed. Please sign in again.',
+        () => ownsCurrentSession && invalidatedSession === this.session);
+    }
   }
 
   private async findFolder(session: number): Promise<string | null> {
@@ -269,7 +275,7 @@ export class GoogleDriveService {
 
   /** Listing is read-only, including when no app folder exists yet. */
   async listFiles(): Promise<GoogleDriveFile[]> {
-    if (!this.isSignedIn()) throw new Error('User not signed in');
+    if (!this.isSignedIn()) throw this.signedOutError();
     const session = this.session;
     try {
       const folderId = await this.findFolder(session);
@@ -290,13 +296,25 @@ export class GoogleDriveService {
         pageToken = response.result.nextPageToken;
       } while (pageToken);
       return files;
-    } catch (error: unknown) { throw this.driveError(error, 'list files'); }
+    } catch (error: unknown) { throw this.driveError(error, 'list files', session); }
   }
 
-  private driveError(error: unknown, operation: string): Error {
+  private signedOutError(): DriveAuthenticationError {
+    const session = this.session;
+    return new DriveAuthenticationError('User not signed in', () => session === this.session);
+  }
+
+  private driveError(error: unknown, operation: string, session: number): Error {
+    if (error instanceof DriveAuthenticationError) return error;
     const status = (error as { status?: number; result?: { error?: { code?: number } } } | null)?.status
       ?? (error as { result?: { error?: { code?: number } } } | null)?.result?.error?.code;
-    if (status === 401) { this.clearExpiredAuthentication(); return new Error('Authentication expired. Please sign in again.'); }
+    if (status === 401) {
+      const ownsCurrentSession = session === this.session;
+      if (ownsCurrentSession) this.clearExpiredAuthentication();
+      const invalidatedSession = this.session;
+      return new DriveAuthenticationError('Authentication expired. Please sign in again.',
+        () => ownsCurrentSession && invalidatedSession === this.session);
+    }
     if (status === 403) return new Error('Permission denied or storage quota exceeded.');
     if (status === 404) return new Error('File not found. It may have been deleted.');
     if (!navigator.onLine) return new Error('No internet connection. Work remains local; retry when connected.');
@@ -309,18 +327,11 @@ export class GoogleDriveService {
    */
   async getRecentFiles(limit: number = 5): Promise<GoogleDriveFile[]> {
     if (!this.isSignedIn()) {
-      throw new Error('User not signed in');
+      throw this.signedOutError();
     }
 
-    try {
-      // Get all files (already sorted by modifiedTime desc)
-      const files = await this.listFiles();
-      
-      // Return top N files
-      return files.slice(0, limit);
-    } catch (error) {
-      throw new Error(`Failed to get recent files: ${error}`);
-    }
+    const files = await this.listFiles();
+    return files.slice(0, limit);
   }
 
   /**
@@ -328,7 +339,7 @@ export class GoogleDriveService {
    */
   async createFile(fileName: string, data: object): Promise<string> {
     if (!this.isSignedIn()) {
-      throw new Error('User not signed in');
+      throw this.signedOutError();
     }
 
     const session = this.session;
@@ -375,7 +386,7 @@ export class GoogleDriveService {
 
       const response = await request;
       return response.result.id;
-    } catch (error: unknown) { throw this.driveError(error, 'create file'); }
+    } catch (error: unknown) { throw this.driveError(error, 'create file', session); }
   }
 
   /**
@@ -383,9 +394,10 @@ export class GoogleDriveService {
    */
   async loadFile(fileId: string): Promise<object> {
     if (!this.isSignedIn()) {
-      throw new Error('User not signed in');
+      throw this.signedOutError();
     }
 
+    const session = this.session;
     try {
       // Check metadata first to verify file exists and is not trashed
       // T409: Fix "Ghost files" loading from trash
@@ -407,7 +419,7 @@ export class GoogleDriveService {
 
       // The response.body contains the JSON string
       return JSON.parse(response.body);
-    } catch (error: unknown) { throw this.driveError(error, 'load file'); }
+    } catch (error: unknown) { throw this.driveError(error, 'load file', session); }
   }
 
   /**
@@ -415,9 +427,10 @@ export class GoogleDriveService {
    */
   async updateFile(fileId: string, data: object): Promise<void> {
     if (!this.isSignedIn()) {
-      throw new Error('User not signed in');
+      throw this.signedOutError();
     }
 
+    const session = this.session;
     try {
       // First, check if file exists and is not trashed
       const fileCheckRequest = gapi.client.request({
@@ -469,7 +482,7 @@ export class GoogleDriveService {
       });
 
       await request;
-    } catch (error: unknown) { throw this.driveError(error, 'save file'); }
+    } catch (error: unknown) { throw this.driveError(error, 'save file', session); }
   }
 
   /**
@@ -481,6 +494,7 @@ export class GoogleDriveService {
       return 'untitled 1';
     }
 
+    const session = this.session;
     try {
       // List all .diedrico files in the diedrico folder
       const files = await this.listFiles();
@@ -515,7 +529,7 @@ export class GoogleDriveService {
       const nextNum = numbers.length + 1;
       return `untitled ${nextNum}`;
     } catch (error) {
-      throw this.driveError(error, 'generate project name');
+      throw this.driveError(error, 'generate project name', session);
     }
   }
 
@@ -524,7 +538,7 @@ export class GoogleDriveService {
    */
   async renameFile(fileId: string, newName: string): Promise<void> {
     if (!this.isSignedIn()) {
-      throw new Error('User not signed in');
+      throw this.signedOutError();
     }
 
     // Validate new name
@@ -542,6 +556,7 @@ export class GoogleDriveService {
       ? newName
       : `${newName}.diedrico`;
 
+    const session = this.session;
     try {
       await gapi.client.drive.files.update({
         fileId: fileId,
@@ -550,7 +565,7 @@ export class GoogleDriveService {
         },
       });
       
-    } catch (error: unknown) { throw this.driveError(error, 'rename file'); }
+    } catch (error: unknown) { throw this.driveError(error, 'rename file', session); }
   }
 
   /**
@@ -558,13 +573,14 @@ export class GoogleDriveService {
    */
   async deleteFile(fileId: string): Promise<void> {
     if (!this.isSignedIn()) {
-      throw new Error('User not signed in');
+      throw this.signedOutError();
     }
 
+    const session = this.session;
     try {
       await gapi.client.drive.files.delete({
         fileId: fileId,
       });
-    } catch (error: unknown) { throw this.driveError(error, 'delete file'); }
+    } catch (error: unknown) { throw this.driveError(error, 'delete file', session); }
   }
 }
