@@ -537,62 +537,25 @@ function handleSaveProperties(changes: any) {
   const targetPlaneId = changes.planeId ?? activePlane.value;
   if (!targetPlaneId) return;
 
-  if (changes.position) {
-    const session = canvasViewPortRequired.getMovableFreePointMoveSession({
-      planeId: targetPlaneId,
-      pointId: changes.elementId,
-      commandSink: canvasToolController,
-    });
-    if (!session) {
-      console.error('[SvgCanvas] Point position update failed: point is not movable');
-      return;
-    }
-    const preview = session.preview(new Vector3(changes.position.u, changes.position.v, 1));
-    if (!preview.success) {
-      session.cancel();
-      console.error('[SvgCanvas] Point position preview failed:', preview.message);
-      return;
-    }
-    const commit = session.commit();
-    if (!commit.success) {
-      console.error('[SvgCanvas] Point position commit failed:', commit.message);
-      return;
-    }
-  }
-
-  if (changes.parameter) {
-    const result = changes.parameter.kind === 'radius'
-      ? canvasToolController.updateElementParameter({
-          elementId: changes.elementId,
-          planeId: targetPlaneId,
-          parameter: { kind: 'radius', value: changes.parameter.value },
-        })
-      : canvasToolController.updateElementParameter({
-          elementId: changes.elementId,
-          planeId: targetPlaneId,
-          parameter: { kind: 'angle', degrees: changes.parameter.value },
-        });
-    if (!result.success) {
-      console.error('[SvgCanvas] Parameter update failed:', result.message);
-      return;
-    }
-  }
-
   const hasStyleChanges = ['color', 'lineWidth', 'lineStyle', 'opacity', 'visible'].some(key => changes[key] !== undefined);
-  if (!hasStyleChanges) return;
-
-  const result = canvasToolController.updateElementStyle({
+  const result = canvasToolController.updateElementProperties({
     elementId: changes.elementId,
     planeId: targetPlaneId,
-    style: {
+    position: changes.position ? new Vector3(changes.position.u, changes.position.v, 1) : undefined,
+    parameter: changes.parameter
+      ? changes.parameter.kind === 'radius'
+        ? { kind: 'radius', value: changes.parameter.value }
+        : { kind: 'angle', degrees: changes.parameter.value }
+      : undefined,
+    style: hasStyleChanges ? {
       color: changes.color,
       lineWidth: changes.lineWidth,
       lineStyle: changes.lineStyle,
       opacity: changes.opacity,
       visible: changes.visible,
-    },
+    } : undefined,
   });
-  if (!result.success) console.error('[SvgCanvas] Style update failed:', result.message);
+  if (!result.success) console.error('[SvgCanvas] Properties update failed:', result.message);
 }
 
 function close3DPointCoordinatesDialog(): void {

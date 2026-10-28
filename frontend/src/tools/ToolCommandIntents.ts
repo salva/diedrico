@@ -64,6 +64,14 @@ export type ParameterUpdateRequest =
   | { elementId: string; planeId: string; parameter: { kind: 'radius'; value: number } }
   | { elementId: string; planeId: string; parameter: { kind: 'angle'; degrees: number } };
 
+export interface ElementPropertiesRequest {
+  elementId: string;
+  planeId: string;
+  position?: Vector3;
+  parameter?: ParameterUpdateRequest['parameter'];
+  style?: StyleUpdateRequest['style'];
+}
+
 export interface ToolCommandResult {
   success: boolean;
   message?: string;
@@ -79,5 +87,6 @@ export interface ToolCommandSink {
   executeConstructionIntent(intent: ToolConstructionIntent): ToolCommandResult;
   startFreePointMove(request: MoveFreePointRequest): FreePointMoveSession;
   updateElementStyle(request: StyleUpdateRequest): ToolCommandResult;
+  updateElementProperties(request: ElementPropertiesRequest): ToolCommandResult;
   updateElementParameter(request: ParameterUpdateRequest): ToolCommandResult;
 }

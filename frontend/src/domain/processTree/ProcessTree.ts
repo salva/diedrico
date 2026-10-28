@@ -127,6 +127,19 @@ export class ProcessTree {
     this.subprocessStack.pop();
   }
 
+  /** Undo creation, not navigation: detach only the owned, active empty child. */
+  undoSubprocessCreation(subprocessId: string): void {
+    const current = this.getCurrentSubprocess();
+    const parent = this.subprocessStack[this.subprocessStack.length - 2];
+    if (!parent || current.id !== subprocessId || current.children.length !== 0) {
+      throw new Error(`Cannot undo subprocess creation: ${subprocessId} is not the active empty child`);
+    }
+    const index = parent.children.indexOf(current);
+    if (index < 0) throw new Error(`Subprocess ${subprocessId} is not attached to its active parent`);
+    parent.children.splice(index, 1);
+    this.subprocessStack.pop();
+  }
+
   findSubprocessById(subprocessId: string): Subprocess | undefined {
     let found: Subprocess | undefined;
     this.traverseSubprocesses(this.root, (subprocess) => {

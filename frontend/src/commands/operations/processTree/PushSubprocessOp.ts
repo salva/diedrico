@@ -52,8 +52,8 @@ export class PushSubprocessOp implements IOperation<PushSubprocessDescriptorV8> 
   }
 
   undo(context: OperationContext): void {
-    // Undo by popping the subprocess from the stack
-    context.processTree.popSubprocess();
+    if (!this.subprocess) throw new Error('Cannot undo PushSubprocessOp before apply');
+    context.processTree.undoSubprocessCreation(this.subprocess.id);
   }
 
   serialize(): PushSubprocessDescriptorV8 {

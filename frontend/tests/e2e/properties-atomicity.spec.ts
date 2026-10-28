@@ -1,0 +1,34 @@
+import { test, expect } from '@playwright/test';
+
+test('dialog confirmation undoes position and color in one step and redoes both', async ({ page }) => {
+  await page.goto('/');
+  const svg = page.getByTestId('svg-canvas');
+  await expect(svg).toBeVisible();
+  await page.getByTestId('tool-point').click();
+  await svg.click({ position: { x: 80, y: 80 } });
+  const point = svg.locator('circle[data-entity-id]').last();
+  const id = await point.getAttribute('data-entity-id');
+  const target = svg.locator(`circle[data-entity-id="${id}"]`);
+  await page.getByTestId('tool-select').click();
+  await svg.dblclick({ position: { x: 80, y: 80 } });
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toBeVisible();
+  const u = dialog.locator('#position-u-input');
+  const original = await u.inputValue();
+  await u.fill(String(Number(original) + 10));
+  await dialog.locator('.override-checkbox input').first().check();
+  await dialog.locator('.hex-input').fill('#ff0000');
+  await dialog.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  await page.getByTestId('toolbar-undo').click();
+  await svg.dblclick({ position: { x: 80, y: 80 } });
+  await expect(dialog).toBeVisible();
+  await expect(u).toHaveValue(original);
+  await expect(dialog.locator('.hex-input')).not.toHaveValue('#ff0000');
+  await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await page.getByTestId('toolbar-redo').click();
+  await target.dblclick();
+  await expect(dialog).toBeVisible();
+  await expect(u).toHaveValue(String(Number(original) + 10));
+  await expect(dialog.locator('.hex-input')).toHaveValue('#ff0000');
+});

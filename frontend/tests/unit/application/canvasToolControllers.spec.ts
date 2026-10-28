@@ -485,7 +485,7 @@ describe('Wave 006a canvas/tool command controllers', () => {
     expect(source).toContain("type: 'create-yz-projection-plane'");
     expect(source).not.toContain("inject('commandStack')");
     expect(source).toContain('getMovableFreePointMoveSession');
-    expect(source).toContain('.updateElementStyle(');
+    expect(source).toContain('.updateElementProperties(');
     expect(source).not.toContain("from '@/commands/Command'");
     expect(source).not.toContain('UpdateFreePoint2DPositionOp');
     expect(source).not.toContain('UpdateElementStyleOp');
