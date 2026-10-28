@@ -4,8 +4,8 @@ Diedrico is a frontend-only Vue 3 + TypeScript workspace.
 
 ## Prerequisites
 
-- Node.js 18 or newer
-- npm 9 or newer
+- Node.js >=20.19.0
+- npm >=10.0.0 (the root `package.json` engines are authoritative)
 
 ## Install
 
@@ -14,6 +14,10 @@ npm install
 ```
 
 The root workspace installs the `frontend` package and root VitePress documentation dependencies.
+Run installation from the repository root, which owns `package-lock.json`.
+For a reproducible install of the committed dependencies, use `npm ci` instead.
+Use `npm install` when intentionally updating dependencies; preserve the lockfile
+when troubleshooting ordinary installation failures.
 
 ## Run the application
 

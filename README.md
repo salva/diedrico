@@ -27,8 +27,8 @@ Key capabilities:
 
 ### Prerequisites
 
-- Node.js 18 or newer
-- npm 9 or newer
+- Node.js >=20.19.0
+- npm >=10.0.0 (see root `package.json` engines)
 - A modern desktop browser
 
 ### Install and run
@@ -51,7 +51,7 @@ diedrico/
 │   │   ├── components/    # Vue UI shells and panels
 │   │   ├── domain/        # geometry, process tree, world, projection planes
 │   │   ├── rendering/     # Three.js scene adapters/runtime
-│   │   ├── services/      # project, input, Drive, SVG helpers
+│   │   ├── infrastructure/ # persistence, input, Drive and SVG adapters
 │   │   ├── stores/        # UI/runtime Pinia stores
 │   │   └── tools/         # interactive tool argument collectors
 │   └── tests/             # Vitest and Playwright tests
