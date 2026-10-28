@@ -7,9 +7,11 @@
       :is-signed-in="isSignedIn"
       :files="startupFiles"
       :loading="startupLoading"
+      :drive-available="hasGoogleCredentials"
       :loading-files="startupLoadingFiles"
       :error="startupError"
       @sign-in="runtime.actions.signIn"
+      @close="showStartupDialog = false"
       @request-files="runtime.actions.requestFiles"
       @open="runtime.actions.openProject"
       @create-project="runtime.actions.newProject"
@@ -24,6 +26,7 @@
         @rename="runtime.actions.renameProject"
       />
       <Toolbar
+        :drive-available="hasGoogleCredentials && !startupLoading"
         :is-signed-in="isSignedIn"
         @new-project="runtime.actions.newProject"
         @open-project="runtime.actions.showProjectChooser"
@@ -33,6 +36,10 @@
       />
     </header>
 
+    <!-- Main Workspace: Sidebar + Canvas area -->
+    <p role="status" data-testid="drive-availability">
+      {{ !hasGoogleCredentials ? 'Local mode — Google Drive is not configured.' : startupLoading ? 'Google Drive loading…' : startupError || (isSignedIn ? 'Google Drive connected' : 'Local mode — Sign in to connect Google Drive. Expired sessions require Sign in again.') }}
+    </p>
     <!-- Main Workspace: Sidebar + Canvas area -->
     <main class="app-main">
       <!-- Left Sidebar: Stacked Panels -->

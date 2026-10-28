@@ -11,6 +11,7 @@
     <button
       v-if="!isSignedIn"
       class="sign-in-button"
+      :disabled="driveAvailable === false"
       @click="$emit('sign-in')"
       title="Sign in with Google"
     >
@@ -67,7 +68,7 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useAuthStore } from '../stores/authStore';
 
-defineProps<{ isSignedIn?: boolean }>();
+defineProps<{ isSignedIn?: boolean; driveAvailable?: boolean }>();
 const authStore = useAuthStore();
 
 // Dropdown state

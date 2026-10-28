@@ -25,12 +25,14 @@ export class ProjectSessionUseCases {
   ) {}
 
   async initialize(): Promise<void> {
+    this.deps.session.initializeDefaultWorldIfNeeded();
     const { drive, authStore, lastProjectRepository } = this.deps;
     if (!this.deps.hasGoogleCredentials || !drive) {
       this.deps.session.initializeDefaultWorldIfNeeded();
       this.deps.showStartupDialog.value = false;
       return;
     }
+    this.deps.startupDialog.loading.value = true;
     try {
       await this.withDriveResult(() => drive.initialize());
       if (this.deps.isSignedIn.value) {
@@ -51,17 +53,20 @@ export class ProjectSessionUseCases {
         }
       }
       this.deps.showStartupDialog.value = true;
-    } catch {
+    } catch (error) {
+      this.deps.startupDialog.error.value = `Drive unavailable — local mode: ${describeUnknownError(error)}`;
       this.deps.session.initializeDefaultWorldIfNeeded();
       this.deps.showStartupDialog.value = false;
+    } finally {
+      this.deps.startupDialog.loading.value = false;
     }
   }
 
   async signIn(): Promise<void> {
-    const drive = this.requireDrive();
     this.deps.startupDialog.loading.value = true;
     this.deps.startupDialog.error.value = null;
     try {
+      const drive = this.requireDrive();
       await this.withDriveResult(() => drive.signIn());
       try {
         const profile = await this.withDriveResult(() => drive.fetchUserProfile());
@@ -88,12 +93,16 @@ export class ProjectSessionUseCases {
     this.deps.currentProjectName.value = null;
     this.deps.currentFileId.value = null;
     this.deps.autoSave.stop();
-    this.deps.session.clear();
+    // Keep the local drawing and history; disconnect is not project deletion.
     this.deps.showStartupDialog.value = true;
   }
 
   async createProject(projectName: string): Promise<void> {
-    const drive = this.requireDrive();
+    if (!this.deps.drive) {
+      this.deps.startupDialog.error.value = 'Google Drive is not configured. Continue in local mode.';
+      return;
+    }
+    const drive = this.deps.drive;
     const transition = ++this.transition;
     try {
       const projectData = this.deps.session.snapshotEmptyProject(projectName);
@@ -108,7 +117,11 @@ export class ProjectSessionUseCases {
   }
 
   async openProject(fileId: string): Promise<void> {
-    const drive = this.requireDrive();
+    if (!this.deps.drive) {
+      this.deps.startupDialog.error.value = 'Google Drive is not configured. Continue in local mode.';
+      return;
+    }
+    const drive = this.deps.drive;
     const transition = ++this.transition;
     try {
       const loadedProject = await this.withDriveResult(() => drive.loadFile(fileId));
@@ -124,7 +137,11 @@ export class ProjectSessionUseCases {
   }
 
   async newProject(): Promise<void> {
-    const drive = this.requireDrive();
+    if (!this.deps.drive) {
+      this.deps.startupDialog.error.value = 'Google Drive is not configured. Continue in local mode.';
+      return;
+    }
+    const drive = this.deps.drive;
     const transition = ++this.transition;
     try {
       const projectName = await this.withDriveResult(() => drive.generateDefaultProjectName());
@@ -159,10 +176,10 @@ export class ProjectSessionUseCases {
   }
 
   async requestFiles(): Promise<void> {
-    const drive = this.requireDrive();
     this.deps.startupDialog.loadingFiles.value = true;
     this.deps.startupDialog.error.value = null;
     try {
+      const drive = this.requireDrive();
       this.deps.startupDialog.files.value = await this.withDriveResult(() => drive.listFiles());
     } catch (error: unknown) {
       this.deps.startupDialog.error.value = `Failed to load files: ${describeUnknownError(error)}`;

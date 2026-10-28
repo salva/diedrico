@@ -29,7 +29,7 @@ Despite its name, `.github/workflows/docs.yml` deploys the **frontend applicatio
 - Sets up Node 20 (the resolved version must satisfy the package engine), runs root `npm ci`, and builds using `cd frontend && npx vite build`.
 - Uploads `frontend/dist` and deploys it using GitHub Pages Actions.
 
-That workflow's direct Vite invocation does **not** perform the `vue-tsc` check in `npm run build`, or run tests. Run the validation above separately; do not infer full validation from a Pages build. It currently has no explicit Google Drive build-variable mapping; configure that if the deployed application needs Drive integration.
+That workflow's direct Vite invocation does **not** perform the `vue-tsc` check in `npm run build`, or run tests. Run the validation above separately; do not infer full validation from a Pages build. It explicitly maps repository Actions variables `VITE_GOOGLE_CLIENT_ID` and optional `VITE_GOOGLE_API_KEY` at build time. Missing public client ID deliberately produces local mode, not usable Drive authentication. The operator must supply the actual ID and authorize a new deployment; no credentials are invented by the workflow. See [Google Drive setup](./GOOGLE_DRIVE_SETUP.md) for the exact `https://salva.github.io` origin (no `/diedrico/` path), audience/test users and restrictions.
 
 Enable GitHub Actions as the repository's Pages source and adapt this existing workflow rather than creating a competing Pages workflow. Deployment occurs only for configured events/branches; a push to `main` is not currently a trigger. Review changes and the intended branch before committing or pushing; no deployment is performed by this guide itself.
 

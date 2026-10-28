@@ -1,3 +1,4 @@
+import { GoogleDriveService } from '@/infrastructure/googleDrive/GoogleDriveService';
 import { describe, expect, it, vi } from 'vitest';
 import { nextTick, reactive, ref, watch } from 'vue';
 import { createAppShellRuntime } from '@/application/appShell/AppShellRuntime';
@@ -247,6 +248,51 @@ describe('AppShellRuntime lifecycle ownership', () => {
     expect(ports.authStore.clearAuth).toHaveBeenCalled();
     expect(runtime.state.startupError.value).toContain(reason);
     runtime.actions.dispose();
+  });
+
+  it('integrates GIS popup retry, expiry and local disconnect without changing drawing history', async () => {
+    const previousGapi = globalThis.gapi;
+    const previousGoogle = window.google;
+    let token: { access_token: string } | null = null;
+    let config: any;
+    vi.stubGlobal('gapi', { load: (_: string, options: any) => options.callback(), client: {
+      init: async () => {}, getToken: () => token, setToken: (value: typeof token) => { token = value; },
+      drive: { files: { list: async () => ({ result: { files: [] } }) } },
+    } });
+    window.google = { accounts: { oauth2: { initTokenClient: (options: any) => {
+      config = options;
+      return { requestAccessToken: () => { config.error_callback({ type: 'popup_closed' }); } };
+    }, revoke: () => {} } } };
+    try {
+      const service = new GoogleDriveService({ clientId: 'fixture', appId: '' });
+      const runtime = createAppShellRuntime({ ports: runtimePorts({ drive: service }) });
+      await runtime.internals.projectSession.initialize();
+      const before = runtime.internals.session.snapshot('Local');
+      await runtime.actions.signIn();
+      expect(runtime.state.startupError.value).toContain('cancelled');
+      window.google.accounts.oauth2.initTokenClient = (options: any) => {
+        config = options;
+        return { requestAccessToken: () => config.callback({ access_token: 'fixture', expires_in: 0 }) };
+      };
+      await runtime.actions.signIn();
+      expect(runtime.state.isSignedIn.value).toBe(false);
+      await runtime.actions.toolbarSignOut();
+      expect(runtime.internals.session.snapshot('Local').commands).toEqual(before.commands);
+      expect(runtime.commandHistory.canUndo()).toBe(true);
+    } finally {
+      vi.stubGlobal('gapi', previousGapi);
+      window.google = previousGoogle;
+    }
+  });
+
+  it('contains unconfigured Sign in without losing local drawing/history', async () => {
+    const runtime = createAppShellRuntime({ ports: runtimePorts({ drive: null }) });
+    runtime.internals.session.initializeDefaultWorldIfNeeded();
+    const before = runtime.internals.session.snapshot('Local');
+    await expect(runtime.actions.signIn()).resolves.toBeUndefined();
+    expect(runtime.state.startupError.value).toContain('not available');
+    expect(runtime.internals.session.snapshot('Local').commands).toEqual(before.commands);
+    expect(runtime.state.startupLoading.value).toBe(false);
   });
 
   it('does not install a stale open after a newer project request', async () => {
@@ -911,8 +957,10 @@ describe('ProjectSessionUseCases startup and project flows', () => {
     expect(deps.lastProjectRepository.setLastProject).toHaveBeenCalledWith({ id: 'file-opened', name: 'Renamed' });
     expect(deps.autoSave.schedule).toHaveBeenCalled();
 
+    const beforeSignout = deps.session.snapshot('Local');
     await useCases.signOut();
-    expect(deps.session.planeOptions).toHaveLength(originalPlaneCount);
+    expect(deps.session.planeOptions.length).toBeGreaterThan(originalPlaneCount);
+    expect(deps.session.snapshot('Local').commands).toEqual(beforeSignout.commands);
     expect(deps.session.canUndo()).toBe(originalCommandHistory.canUndo());
     expect(deps.currentProjectName.value).toBeNull();
     expect(deps.currentFileId.value).toBeNull();

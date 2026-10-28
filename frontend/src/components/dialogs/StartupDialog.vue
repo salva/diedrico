@@ -2,11 +2,12 @@
   <div v-if="show" class="dialog-overlay" @click="handleOverlayClick">
     <div class="dialog-content startup-dialog" @click.stop>
       <h1 class="dialog-title">Diedrico - Project Selection</h1>
+      <button @click="emit('close')">Continue in local mode</button>
 
       <!-- Sign in section (if not signed in) -->
       <div v-if="!isSignedIn" class="sign-in-section">
         <p class="info-text">Sign in with your Google account to access your projects</p>
-        <button class="sign-in-button" @click="handleSignIn" :disabled="props.loading">
+        <button class="sign-in-button" @click="handleSignIn" :disabled="props.loading || props.driveAvailable === false">
           <span v-if="!props.loading">Sign in with Google</span>
           <span v-else>Signing in...</span>
         </button>
@@ -73,6 +74,7 @@ interface Props {
   isSignedIn: boolean;
   files: GoogleDriveFile[];
   loading: boolean;
+  driveAvailable?: boolean;
   loadingFiles: boolean;
   error: string | null;
 }

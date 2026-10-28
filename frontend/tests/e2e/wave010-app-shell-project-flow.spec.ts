@@ -1,6 +1,12 @@
 import { expect, test } from '@playwright/test';
 
 test.describe('Wave 010 app-shell project boundary', () => {
+  test('makes unconfigured local mode explicit without an enabled sign-in control', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByTestId('drive-availability')).toContainText('Local mode');
+    await expect(page.locator('.login-status-widget .sign-in-button')).toBeDisabled();
+  });
+
   test('starts without Google credentials and opens the app-shell project chooser without backend project API calls', async ({ page }) => {
     const staleBackendProjectRequests: string[] = [];
 

@@ -59,7 +59,7 @@ describe('GoogleDriveService', () => {
 
     // Setup gapi.load to call callback immediately
     mockGapi.load.mockImplementation((api: string, callback: () => void) => {
-      callback();
+      if (typeof callback === 'function') callback(); else (callback as any).callback();
     });
     
     // Setup gapi.client.init to resolve
@@ -69,7 +69,11 @@ describe('GoogleDriveService', () => {
     mockGapi.client.getToken.mockReturnValue(null);
     
     // Setup initTokenClient to return mock token client
-    mockGoogle.accounts.oauth2.initTokenClient.mockReturnValue(mockTokenClient);
+    mockGoogle.accounts.oauth2.initTokenClient.mockImplementation(config => {
+      mockTokenClient.callback = config.callback;
+      (mockTokenClient as any).error_callback = config.error_callback;
+      return mockTokenClient;
+    });
     
     // Setup revoke to resolve
     mockGoogle.accounts.oauth2.revoke.mockResolvedValue(undefined);
@@ -89,6 +93,7 @@ describe('GoogleDriveService', () => {
   // Helper function to simulate successful sign-in
   async function signInHelper() {
     const signInPromise = service.signIn();
+    await Promise.resolve();
     if (mockTokenClient.callback) {
       mockTokenClient.callback({ access_token: 'test-token' });
     }
@@ -96,20 +101,155 @@ describe('GoogleDriveService', () => {
     mockGapi.client.getToken.mockReturnValue({ access_token: 'test-token' });
   }
 
+  describe('lifecycle contract', () => {
+    it('serializes folder creation and invalidates cached ownership on disconnect', async () => {
+      await service.initialize(); await signInHelper();
+      let finish!: (value: unknown) => void;
+      mockGapi.client.drive.files.list.mockResolvedValue({ result: { files: [] } });
+      mockGapi.client.drive.files.create.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+      mockGapi.client.request.mockResolvedValue({ result: { id: 'created' } });
+      const first = service.createFile('A', {});
+      const second = service.createFile('B', {});
+      await Promise.resolve(); await Promise.resolve();
+      expect(mockGapi.client.drive.files.create).toHaveBeenCalledTimes(1);
+      finish({ result: { id: 'shared-folder' } });
+      await Promise.all([first, second]);
+      expect(mockGapi.client.request).toHaveBeenCalledTimes(2);
+      await service.signOut();
+      await signInHelper();
+      mockGapi.client.drive.files.list.mockClear();
+      expect(await service.listFiles()).toEqual([]);
+      expect(mockGapi.client.drive.files.list).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not adopt or upload after a folder lookup crosses account ownership', async () => {
+      await service.initialize(); await signInHelper();
+      let finish!: (value: unknown) => void;
+      mockGapi.client.drive.files.list.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+      const pending = service.createFile('A', {});
+      await service.signOut();
+      finish({ result: { files: [{ id: 'old-folder' }] } });
+      await expect(pending).rejects.toThrow('Failed to create');
+      expect(mockGapi.client.request).not.toHaveBeenCalled();
+      expect(mockGapi.client.drive.files.create).not.toHaveBeenCalled();
+    });
+
+    it('settles token-install failure without leaking provider text and permits retry', async () => {
+      await service.initialize();
+      const pending = service.signIn(); await Promise.resolve();
+      mockGapi.client.setToken.mockImplementationOnce(() => { throw new Error('private-token-fixture'); });
+      expect(() => mockTokenClient.callback({ access_token: 'private-token-fixture' })).not.toThrow();
+      await expect(pending).rejects.toThrow('invalid response');
+      const retry = service.signIn(); await Promise.resolve();
+      mockTokenClient.callback({ access_token: 'fixture' }); await retry;
+    });
+
+    it('shares initialization completion and retries after failure', async () => {
+      let finish!: () => void;
+      mockGapi.client.init.mockImplementationOnce(() => new Promise<void>(resolve => { finish = resolve; }));
+      const first = service.initialize();
+      const second = service.initialize();
+      expect(first).toBe(second);
+      await Promise.resolve(); await Promise.resolve();
+      finish(); await Promise.all([first, second]);
+      const retry = new GoogleDriveService({ clientId: 'fixture', appId: '' });
+      mockGapi.client.init.mockRejectedValueOnce(new Error('private provider payload'));
+      await expect(retry.initialize()).rejects.toThrow('unavailable');
+      await retry.initialize();
+    });
+
+    it.each(['popup_failed_to_open', 'popup_closed', 'unknown'])('settles %s and permits a gesture retry', async type => {
+      await service.initialize();
+      const pending = service.signIn(); await Promise.resolve();
+      (mockTokenClient as any).error_callback({ type });
+      await expect(pending).rejects.toThrow(/popup|cancelled/);
+      const retry = service.signIn(); await Promise.resolve();
+      mockTokenClient.callback({ access_token: 'fixture' }); await retry;
+    });
+
+    it.each([{}, null, { access_token: '' }, { error: 'provider-private-detail' }])('contains malformed/denied callback %j', async response => {
+      await service.initialize();
+      const pending = service.signIn(); await Promise.resolve();
+      expect(() => mockTokenClient.callback(response)).not.toThrow();
+      await expect(pending).rejects.toThrow(/authorization/);
+    });
+
+    it('cancels sign-in on local disconnect and ignores the late callback', async () => {
+      await service.initialize();
+      const pending = service.signIn(); await Promise.resolve();
+      const callback = mockTokenClient.callback;
+      await service.signOut();
+      await expect(pending).rejects.toThrow('cancelled');
+      callback({ access_token: 'late-fixture' });
+      expect(service.isSignedIn()).toBe(false);
+      expect(mockGoogle.accounts.oauth2.revoke).not.toHaveBeenCalled();
+    });
+
+    it('does not create a folder when listing an empty Drive', async () => {
+      await service.initialize(); await signInHelper();
+      mockGapi.client.drive.files.list.mockResolvedValueOnce({ result: { files: [] } });
+      expect(await service.listFiles()).toEqual([]);
+      expect(mockGapi.client.drive.files.create).not.toHaveBeenCalled();
+    });
+
+    it('reads folder and file pagination without scope expansion', async () => {
+      await service.initialize(); await signInHelper();
+      mockGapi.client.drive.files.list
+        .mockResolvedValueOnce({ result: { files: [], nextPageToken: 'folder-page' } })
+        .mockResolvedValueOnce({ result: { files: [{ id: 'folder' }] } })
+        .mockResolvedValueOnce({ result: { files: [{ id: 'a', name: 'a.diedrico' }], nextPageToken: 'file-page' } })
+        .mockResolvedValueOnce({ result: { files: [{ id: 'b', name: 'b.diedrico' }] } });
+      expect((await service.listFiles()).map(file => file.id)).toEqual(['a', 'b']);
+      expect(mockGapi.client.drive.files.list).toHaveBeenNthCalledWith(2, expect.objectContaining({ pageToken: 'folder-page' }));
+      expect(mockGapi.client.drive.files.list).toHaveBeenNthCalledWith(4, expect.objectContaining({ pageToken: 'file-page' }));
+      expect(mockGoogle.accounts.oauth2.initTokenClient).toHaveBeenCalledWith(expect.objectContaining({ callback: expect.any(Function), error_callback: expect.any(Function) }));
+    });
+
+    it('waits for delayed GIS and bounds blocked scripts', async () => {
+      vi.useFakeTimers();
+      const google = (window as any).google;
+      try {
+        (window as any).google = undefined;
+        const pending = service.initialize();
+        await vi.advanceTimersByTimeAsync(100);
+        expect(mockGapi.client.init).not.toHaveBeenCalled();
+        (window as any).google = google;
+        await vi.advanceTimersByTimeAsync(50); await pending;
+        const blocked = new GoogleDriveService({ clientId: 'fixture', appId: '' });
+        (window as any).google = undefined;
+        const failure = expect(blocked.initialize()).rejects.toThrow('unavailable');
+        await vi.advanceTimersByTimeAsync(10000); await failure;
+      } finally { (window as any).google = google; vi.useRealTimers(); }
+    });
+
+    it.each(['onerror', 'ontimeout'])('settles gapi.load %s and allows retry', async event => {
+      mockGapi.load.mockImplementationOnce((_api, config: any) => config[event]());
+      await expect(service.initialize()).rejects.toThrow('unavailable');
+      await service.initialize();
+    });
+
+    it('sanitizes provider bodies and tolerates unavailable optional marker storage', async () => {
+      await service.initialize();
+      const remove = vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => { throw new Error('storage blocked'); });
+      try {
+        await signInHelper();
+        mockGapi.client.drive.files.get.mockRejectedValueOnce({ status: 500, message: 'private-token-fixture' });
+        await expect(service.loadFile('fixture')).rejects.not.toThrow('private-token-fixture');
+        await service.signOut();
+      } finally { remove.mockRestore(); }
+    });
+  });
+
   describe('initialize', () => {
     it('should initialize Google API client', async () => {
       await service.initialize();
 
-      expect(mockGapi.load).toHaveBeenCalledWith('client', expect.any(Function));
+      expect(mockGapi.load).toHaveBeenCalledWith('client', expect.objectContaining({ callback: expect.any(Function) }));
       expect(mockGapi.client.init).toHaveBeenCalledWith({
         apiKey: 'test-api-key',
         discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
       });
-      expect(mockGoogle.accounts.oauth2.initTokenClient).toHaveBeenCalledWith({
-        client_id: 'test-client-id',
-        scope: expect.stringContaining('drive.file'),
-        callback: '',
-      });
+      expect(mockGoogle.accounts.oauth2.initTokenClient).not.toHaveBeenCalled();
     });
 
     it('should only initialize once', async () => {
@@ -122,7 +262,7 @@ describe('GoogleDriveService', () => {
     it('should throw error if initialization fails', async () => {
       mockGapi.client.init.mockRejectedValue(new Error('Init failed'));
 
-      await expect(service.initialize()).rejects.toThrow('Failed to initialize Google API');
+      await expect(service.initialize()).rejects.toThrow('Google Drive unavailable');
     });
   });
 
@@ -143,6 +283,7 @@ describe('GoogleDriveService', () => {
       await service.initialize();
       const now = vi.spyOn(Date, 'now').mockReturnValue(1000);
       const pending = service.signIn();
+      await Promise.resolve();
       mockTokenClient.callback({ access_token: 'expiry-fixture', expires_in: 2 });
       await pending;
       expect(service.isSignedIn()).toBe(true);
@@ -178,18 +319,10 @@ describe('GoogleDriveService', () => {
   });
 
   describe('authentication lifetime and restoration', () => {
-    it('restores silently with a new deadline and expires the restored session', async () => {
+    it('does not request consent automatically even with a previous session marker', async () => {
       localStorage.setItem('diedrico_was_signed_in', 'true');
-      const now = vi.spyOn(Date, 'now').mockReturnValue(1000);
-      mockTokenClient.requestAccessToken.mockImplementationOnce(() => {
-        mockTokenClient.callback({ access_token: 'restored-fixture', expires_in: 1 });
-      });
       await service.initialize();
-      expect(service.isSignedIn()).toBe(true);
-      now.mockReturnValue(2000);
-      expect(service.isSignedIn()).toBe(false);
-      expect(localStorage.getItem('diedrico_was_signed_in')).toBeNull();
-      now.mockRestore();
+      expect(mockTokenClient.requestAccessToken).not.toHaveBeenCalled();
     });
 
     it('clears authentication on a Drive 401 without retrying', async () => {
@@ -221,6 +354,7 @@ describe('GoogleDriveService', () => {
       
       // Start sign-in (will set up callback)
       const signInPromise = service.signIn();
+    await Promise.resolve();
       
       // Simulate successful token response
       if (mockTokenClient.callback) {
@@ -239,10 +373,11 @@ describe('GoogleDriveService', () => {
       await service.initialize();
       
       const signInPromise = service.signIn();
+    await Promise.resolve();
       
       // Simulate popup closed error
       if (mockTokenClient.callback) {
-        mockTokenClient.callback({ error: 'popup_closed_by_user' });
+        (mockTokenClient as any).error_callback({ type: 'popup_closed' });
       }
 
       await expect(signInPromise).rejects.toThrow('Sign-in cancelled by user');
@@ -253,6 +388,7 @@ describe('GoogleDriveService', () => {
       await service.initialize();
       
       const signInPromise = service.signIn();
+    await Promise.resolve();
       
       // Simulate access denied error
       if (mockTokenClient.callback) {
@@ -269,6 +405,7 @@ describe('GoogleDriveService', () => {
       
       // Sign in first
       const signInPromise = service.signIn();
+    await Promise.resolve();
       if (mockTokenClient.callback) {
         mockTokenClient.callback({ access_token: 'test-token' });
       }
@@ -291,6 +428,7 @@ describe('GoogleDriveService', () => {
       
       // Sign in
       const signInPromise = service.signIn();
+    await Promise.resolve();
       if (mockTokenClient.callback) {
         mockTokenClient.callback({ access_token: 'test-token' });
       }
@@ -654,7 +792,7 @@ describe('GoogleDriveService', () => {
     });
 
     it('should handle authentication expiry', async () => {
-      global.fetch = vi.fn().mockRejectedValue(new Error('401: Unauthorized'));
+      global.fetch = vi.fn().mockRejectedValue({ status: 401 });
 
       await expect(service.fetchUserProfile()).rejects.toThrow('Authentication expired');
     });
@@ -662,7 +800,7 @@ describe('GoogleDriveService', () => {
     it('should handle network errors', async () => {
       global.fetch = vi.fn().mockRejectedValue(new Error('Network error'));
 
-      await expect(service.fetchUserProfile()).rejects.toThrow('Failed to fetch user profile: Network error');
+      await expect(service.fetchUserProfile()).rejects.toThrow('Failed to fetch user profile.');
     });
   });
 });

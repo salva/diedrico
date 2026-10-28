@@ -119,6 +119,7 @@
 
     <!-- T406: Login Status Widget at far right -->
     <LoginStatusWidget
+      :drive-available="driveAvailable"
       :is-signed-in="isSignedIn"
       @sign-in="handleSignIn"
       @sign-out="handleSignOut"
@@ -154,7 +155,7 @@ import { CommandHistoryInjectionKey } from '@/application/appShell/RuntimeInject
  *
  */
 
-defineProps<{ isSignedIn?: boolean }>();
+defineProps<{ isSignedIn?: boolean; driveAvailable?: boolean }>();
 
 interface Emits {
   (e: 'new-project'): void;
