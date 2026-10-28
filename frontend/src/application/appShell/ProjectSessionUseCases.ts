@@ -32,10 +32,9 @@ export class ProjectSessionUseCases {
       return;
     }
     try {
-      await drive.initialize();
-      this.deps.isSignedIn.value = drive.isSignedIn();
+      await this.withDriveResult(() => drive.initialize());
       if (this.deps.isSignedIn.value) {
-        try { authStore.setUser(await drive.fetchUserProfile()); } catch { /* profile refresh is non-blocking */ }
+        try { authStore.setUser(await this.withDriveResult(() => drive.fetchUserProfile())); } catch { /* profile refresh is non-blocking */ }
       } else {
         authStore.clearAuth();
       }
@@ -63,10 +62,9 @@ export class ProjectSessionUseCases {
     this.deps.startupDialog.loading.value = true;
     this.deps.startupDialog.error.value = null;
     try {
-      await drive.signIn();
-      this.deps.isSignedIn.value = drive.isSignedIn();
+      await this.withDriveResult(() => drive.signIn());
       try {
-        const profile = await drive.fetchUserProfile();
+        const profile = await this.withDriveResult(() => drive.fetchUserProfile());
         this.deps.authStore.setUser(profile);
       } catch { /* allow Drive use without profile */ }
       await this.requestFiles();
@@ -99,7 +97,7 @@ export class ProjectSessionUseCases {
     const transition = ++this.transition;
     try {
       const projectData = this.deps.session.snapshotEmptyProject(projectName);
-      const fileId = await drive.createFile(projectName, projectData);
+      const fileId = await this.withDriveResult(() => drive.createFile(projectName, projectData));
       if (transition !== this.transition) return;
       this.installProject(this.deps.session.validateProjectData(projectData), fileId);
     } catch (error: unknown) {
@@ -113,7 +111,7 @@ export class ProjectSessionUseCases {
     const drive = this.requireDrive();
     const transition = ++this.transition;
     try {
-      const loadedProject = await drive.loadFile(fileId);
+      const loadedProject = await this.withDriveResult(() => drive.loadFile(fileId));
       if (transition !== this.transition) return;
       const openedSession = this.deps.session.validateProjectData(loadedProject);
       this.installProject(openedSession, fileId);
@@ -129,7 +127,7 @@ export class ProjectSessionUseCases {
     const drive = this.requireDrive();
     const transition = ++this.transition;
     try {
-      const projectName = await drive.generateDefaultProjectName();
+      const projectName = await this.withDriveResult(() => drive.generateDefaultProjectName());
       if (transition !== this.transition) return;
       await this.createProject(projectName);
     } catch {
@@ -150,7 +148,7 @@ export class ProjectSessionUseCases {
     const originalName = this.deps.currentProjectName.value;
     this.deps.isRenamingProject.value = true;
     try {
-      await drive.renameFile(fileId, newName);
+      await this.withDriveResult(() => drive.renameFile(fileId, newName));
       if (transition !== this.transition || this.deps.currentFileId.value !== fileId || this.deps.currentProjectName.value !== originalName) return;
       this.deps.currentProjectName.value = newName;
       this.deps.lastProjectRepository.setLastProject({ id: fileId, name: newName });
@@ -165,7 +163,7 @@ export class ProjectSessionUseCases {
     this.deps.startupDialog.loadingFiles.value = true;
     this.deps.startupDialog.error.value = null;
     try {
-      this.deps.startupDialog.files.value = await drive.listFiles();
+      this.deps.startupDialog.files.value = await this.withDriveResult(() => drive.listFiles());
     } catch (error: unknown) {
       this.deps.startupDialog.error.value = `Failed to load files: ${describeUnknownError(error)}`;
     } finally {
@@ -189,6 +187,17 @@ export class ProjectSessionUseCases {
     this.deps.showStartupDialog.value = false;
     this.deps.autoSave.start();
     this.deps.saveStatus.value = 'saved';
+  }
+
+  // Drive owns authentication, including invalidation discovered by an async
+  // result. Optional profile errors alone do not imply sign-out.
+  private async withDriveResult<T>(operation: () => Promise<T>): Promise<T> {
+    try {
+      return await operation();
+    } finally {
+      this.deps.isSignedIn.value = this.requireDrive().isSignedIn();
+      if (!this.deps.isSignedIn.value) this.deps.authStore.clearAuth();
+    }
   }
 
   private requireDrive() {

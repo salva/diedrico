@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { nextTick, reactive, ref } from 'vue';
+import { nextTick, reactive, ref, watch } from 'vue';
 import { createAppShellRuntime } from '@/application/appShell/AppShellRuntime';
 import { createProductionAppShellRuntime } from '@/application/appShell/AppShellProductionRuntime';
 import { AutoSaveUseCases } from '@/application/appShell/AutoSaveUseCases';
@@ -202,6 +202,53 @@ describe('AppShellRuntime lifecycle ownership', () => {
     runtime.actions.dispose();
   });
 
+  it.each(['initialize', 'signIn'])('retains usable authentication after a benign profile network failure during %s', async (entry) => {
+    const ports = runtimePorts({ drive: drive({ fetchUserProfile: vi.fn().mockRejectedValue(new Error('network unavailable')) }) });
+    const runtime = createAppShellRuntime({ ports });
+    if (entry === 'initialize') await runtime.internals.projectSession.initialize();
+    else await runtime.actions.signIn();
+    expect(runtime.state.isSignedIn.value).toBe(true);
+    await runtime.actions.requestFiles();
+    expect(runtime.state.startupFiles.value).toHaveLength(1);
+    expect(ports.authStore.clearAuth).not.toHaveBeenCalled();
+    runtime.actions.dispose();
+  });
+
+  it.each(['initialize', 'signIn'])('reconciles profile 401 invalidation during %s with the displayed runtime state', async (entry) => {
+    let signedIn = true;
+    const ports = runtimePorts({ drive: drive({
+      isSignedIn: vi.fn(() => signedIn),
+      fetchUserProfile: vi.fn(async () => { signedIn = false; throw new Error('Authentication expired'); }),
+    }) });
+    const runtime = createAppShellRuntime({ ports });
+    if (entry === 'initialize') await runtime.internals.projectSession.initialize();
+    else await runtime.actions.signIn();
+    expect(runtime.state.isSignedIn.value).toBe(false);
+    expect(ports.authStore.clearAuth).toHaveBeenCalled();
+    runtime.actions.dispose();
+  });
+
+  it.each(['401', 'known expiry'])('reconciles %s observed by listing after sign-in', async (reason) => {
+    let signedIn = true;
+    let expired = false;
+    const ports = runtimePorts({ drive: drive({
+      isSignedIn: vi.fn(() => { if (expired) signedIn = false; return signedIn; }),
+      listFiles: vi.fn(async () => {
+        if (expired) { signedIn = false; throw new Error(reason); }
+        return [];
+      }),
+    }) });
+    const runtime = createAppShellRuntime({ ports });
+    await runtime.actions.signIn();
+    expect(runtime.state.isSignedIn.value).toBe(true);
+    expired = true;
+    await runtime.actions.requestFiles();
+    expect(runtime.state.isSignedIn.value).toBe(false);
+    expect(ports.authStore.clearAuth).toHaveBeenCalled();
+    expect(runtime.state.startupError.value).toContain(reason);
+    runtime.actions.dispose();
+  });
+
   it('does not install a stale open after a newer project request', async () => {
     let finish!: (payload: ProjectSessionPersistencePayload) => void;
     const fakeDrive = drive({ loadFile: vi.fn(id => id === 'slow' ? new Promise(resolve => { finish = resolve; }) : Promise.resolve(projectPayload('Latest'))) });
@@ -239,6 +286,48 @@ describe('AppShellRuntime lifecycle ownership', () => {
 });
 
 describe('AutoSaveUseCases', () => {
+  it.each([false, true])('keeps recovery status truthful with an edit during create (follow-up already requested: %s)', async (requestBeforeCompletion) => {
+    let version = 1;
+    let finishCreate!: (id: string) => void;
+    const timer = scheduler();
+    const fakeDrive = drive({
+      updateFile: vi.fn().mockRejectedValueOnce(new Error('File not found')).mockResolvedValue(undefined),
+      createFile: vi.fn(() => new Promise<string>(resolve => { finishCreate = resolve; })),
+    });
+    const currentFileId = ref<string | null>('missing');
+    const saveStatus = ref<'idle' | 'saving' | 'saved'>('saving');
+    const autoSave = new AutoSaveUseCases({
+      session: { getVersion: () => version, snapshot: name => projectPayload(name, version) },
+      drive: fakeDrive, lastProjectRepository: lastProjectRepository(), scheduler: timer.port,
+      currentFileId, currentProjectName: ref('Name'), saveStatus,
+      showStartupDialog: ref(false), isSignedIn: ref(true), alert: vi.fn(),
+    });
+    const observed: string[] = [];
+    const stopWatching = watch(saveStatus, value => observed.push(value), { flush: 'sync' });
+    autoSave.start();
+    const pending = autoSave.perform();
+    await Promise.resolve();
+    expect(fakeDrive.createFile).toHaveBeenCalledWith('Name', expect.objectContaining({ nextElementId: 1 }));
+    version = 2;
+    const poll = timer.port.setInterval.mock.results[0].value;
+    if (requestBeforeCompletion) {
+      timer.runInterval(poll);
+      timer.runTimeout(timer.port.setTimeout.mock.results.at(-1)!.value);
+    }
+    finishCreate('adopted');
+    await pending;
+    expect(currentFileId.value).toBe('adopted');
+    expect(saveStatus.value).not.toBe('saved');
+    expect(observed).not.toContain('saved');
+    if (!requestBeforeCompletion) timer.runInterval(poll);
+    timer.runTimeout(timer.port.setTimeout.mock.results.at(-1)!.value);
+    await Promise.resolve();
+    expect(fakeDrive.updateFile).toHaveBeenLastCalledWith('adopted', expect.objectContaining({ nextElementId: 2 }));
+    expect(saveStatus.value).toBe('saved');
+    expect(fakeDrive.createFile).toHaveBeenCalledTimes(1);
+    stopWatching();
+    autoSave.dispose();
+  });
   it('serializes writes and schedules the latest revision after a pending save', async () => {
     let finish!: () => void;
     const fakeDrive = drive({ updateFile: vi.fn(() => new Promise<void>(resolve => { finish = resolve; })) });

@@ -108,13 +108,14 @@ export class AutoSaveUseCases {
     if (isMissingRemoteFileError(error)) {
       try {
         if (!this.deps.drive || !this.deps.currentProjectName.value) throw new Error('No project name');
+        const revision = this.deps.session.getVersion();
         const projectData = this.deps.session.snapshot(this.deps.currentProjectName.value);
         const newFileId = await this.deps.drive.createFile(this.deps.currentProjectName.value, projectData);
         // The remote create may have succeeded after a switch; do not adopt it.
         if (!isCurrent()) return;
         this.deps.currentFileId.value = newFileId;
         this.deps.lastProjectRepository.setLastProject({ id: newFileId, name: this.deps.currentProjectName.value });
-        this.markSavedThenIdle();
+        if (!this.saveRequested && this.deps.session.getVersion() === revision) this.markSavedThenIdle();
         return;
       } catch {
         if (!isCurrent()) return;
