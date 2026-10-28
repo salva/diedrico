@@ -59,16 +59,6 @@ export interface CanvasClickRequest {
   commandSink: ToolCommandSink;
 }
 
-export interface PlanePositionInputRequest {
-  activePlaneId: string;
-  planePos: Vector3;
-  commandSink: ToolCommandSink;
-  readPort: ToolInteractionReadPort;
-  interactionQuery: CanvasInteractionQuery;
-  paperToPlaneTransform: Matrix3 | undefined;
-  viewport: { zoom: number; panX: number; panY: number };
-}
-
 export interface ToolArgumentInputSubmitRequest {
   activePlaneId: string;
   commandSink: ToolCommandSink;
@@ -207,30 +197,6 @@ export class CanvasInteractionController {
       paperToPlaneTransform: request.paperToPlaneTransform,
       viewport: request.viewport,
     });
-
-    this.deps.toolLifecycle.setToolStepMessage(result.message || '');
-    return result;
-  }
-
-  submitPlanePositionInput(request: PlanePositionInputRequest): ToolResult {
-    const activeTool = this.currentTool;
-    if (!supportsPlanePositionInput(activeTool)) {
-      return { success: false, message: 'Current tool does not accept coordinate input.' };
-    }
-    if (!activeTool.acceptsPlanePositionInput()) {
-      return { success: false, message: 'Current tool is not waiting for a free position.' };
-    }
-
-    const result = activeTool.handlePlanePositionInput({
-      planeId: request.activePlaneId,
-      planeCoords: request.planePos,
-      canvasCoords: { x: 0, y: 0 },
-      commandSink: request.commandSink,
-      readPort: request.readPort,
-      interactionQuery: request.interactionQuery,
-      paperToPlaneTransform: request.paperToPlaneTransform,
-      viewport: request.viewport,
-    }, request.planePos);
 
     this.deps.toolLifecycle.setToolStepMessage(result.message || '');
     return result;

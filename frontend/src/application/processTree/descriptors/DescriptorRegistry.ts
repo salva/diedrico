@@ -5,7 +5,7 @@
  * This enables clean separation of domain (geometry) and presentation (description) logic.
  */
 
-import type { Element } from '../Element';
+import type { Element } from '@/domain/world/Element';
 import type { ElementDescriptor } from './ElementDescriptor';
 
 /**

@@ -7,14 +7,14 @@
 
 import type { ElementDescriptor } from './ElementDescriptor';
 import type { DescriptionPart } from './DescriptionPart';
-import type { World } from '../World';
-import type { Circle2DByCenterAndPoint } from '../Circle';
-import type { Circle2DByCenterAndRadiusVector } from '../Circle';
-import type { Circle2DByThreePoints } from '../Circle';
-import type { Segment2D } from '../Segment';
-import type { Guide2D } from '../Guide';
-import type { SiblingGuide2D } from '../Guide';
-import { GeometryElementLookup } from '../GeometryElementLookup';
+import type { World } from '@/domain/world/World';
+import type { Circle2DByCenterAndPoint } from '@/domain/world/Circle';
+import type { Circle2DByCenterAndRadiusVector } from '@/domain/world/Circle';
+import type { Circle2DByThreePoints } from '@/domain/world/Circle';
+import type { Segment2D } from '@/domain/world/Segment';
+import type { Guide2D } from '@/domain/world/Guide';
+import type { SiblingGuide2D } from '@/domain/world/Guide';
+import { GeometryElementLookup } from '@/domain/world/GeometryElementLookup';
 
 function requireProjectionPlaneName(world: World, planeId: string): string {
   const plane = world.getProjectionPlaneById(planeId);

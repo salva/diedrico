@@ -3,7 +3,7 @@ import type { Matrix3 } from 'three';
 import type { CanvasPresentationModel } from '@/application/canvasPresentation/CanvasPresentationModel';
 import type { ThreePresentationModel } from '@/application/threePresentation/ThreePresentationModel';
 import type { FreePointMoveSession, ToolCommandSink } from '@/tools/ToolCommandIntents';
-import type { DescriptionPart } from '@/domain/world/descriptors/DescriptionPart';
+import type { DescriptionPart } from '@/application/processTree/descriptors/DescriptionPart';
 import type { ProcessNodeType } from '@/domain/processTree/ProcessTree';
 import type { ThreeViewDisplayOptions } from '@/types/ThreeViewDisplayOptions';
 

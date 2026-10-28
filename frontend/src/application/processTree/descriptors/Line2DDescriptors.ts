@@ -7,17 +7,17 @@
 
 import type { ElementDescriptor } from './ElementDescriptor';
 import type { DescriptionPart } from './DescriptionPart';
-import type { World } from '../World';
-import type { Line2DByTwoPoints } from '../Line';
-import type { Line2DByPointAndRelativeAngle } from '../Line';
-import type { Line2DParallel } from '../Line';
-import type { Line2DPerpendicularToLine } from '../Line';
-import type { Line2DTangentToCircleThroughPoint } from '../Line';
-import type { Line2DTangentToCircleParallelToLine } from '../Line';
-import { HalfHingeLine2D } from '../HingeLine';
-import { BrokenHalfHingeLine2D } from '../elements/BrokenHalfHingeLine2D';
-import type { BrokenHingeLine } from '../BrokenHingeLine';
-import { GeometryElementLookup } from '../GeometryElementLookup';
+import type { World } from '@/domain/world/World';
+import type { Line2DByTwoPoints } from '@/domain/world/Line';
+import type { Line2DByPointAndRelativeAngle } from '@/domain/world/Line';
+import type { Line2DParallel } from '@/domain/world/Line';
+import type { Line2DPerpendicularToLine } from '@/domain/world/Line';
+import type { Line2DTangentToCircleThroughPoint } from '@/domain/world/Line';
+import type { Line2DTangentToCircleParallelToLine } from '@/domain/world/Line';
+import { HalfHingeLine2D } from '@/domain/world/HingeLine';
+import { BrokenHalfHingeLine2D } from '@/domain/world/elements/BrokenHalfHingeLine2D';
+import type { BrokenHingeLine } from '@/domain/world/BrokenHingeLine';
+import { GeometryElementLookup } from '@/domain/world/GeometryElementLookup';
 
 function requireProjectionPlaneName(world: World, planeId: string): string {
   const plane = world.getProjectionPlaneById(planeId);

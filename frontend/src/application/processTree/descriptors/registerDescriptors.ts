@@ -53,20 +53,20 @@ import {
 } from './Element3DDescriptors';
 
 // Import element classes
-import { FreePoint2D, Point2DLineLineIntersection, Point2DLineCircleIntersection, Point2DCircleCircleIntersection, SiblingIntersectionPoint2D } from '../Point';
-import { Line2DByPointAndRelativeAngle, Line2DByTwoPoints, Line2DParallel, Line2DPerpendicularToLine, Line2DTangentToCircleThroughPoint, Line2DTangentToCircleParallelToLine } from '../Line';
-import { Circle2DByCenterAndPoint, Circle2DByCenterAndRadiusVector, Circle2DByThreePoints } from '../Circle';
-import { Segment2D } from '../Segment';
-import { Guide2D, SiblingGuide2D } from '../Guide';
-import { Point3DByCoordinates, Point3DByPlaneNormalOffset, Point3DFromProjectionOnPlane, Point3DFromProjections } from '../Point3D';
-import { Line3DFromProjections } from '../Line3D';
-import { Segment3DByPoints, Segment3DFromProjections } from '../Segment3D';
-import { FixedProjectionPlane } from '../projectionPlane/FixedProjectionPlane';
-import { AuxiliaryProjectionPlane } from '../projectionPlane/AuxiliaryProjectionPlane';
-import { Plane3DFixed, Plane3DFromTraces } from '../Plane';
-import { HingeLine, HalfHingeLine2D } from '../HingeLine';
-import { BrokenHingeLine } from '../BrokenHingeLine';
-import { BrokenHalfHingeLine2D } from '../elements/BrokenHalfHingeLine2D';
+import { FreePoint2D, Point2DLineLineIntersection, Point2DLineCircleIntersection, Point2DCircleCircleIntersection, SiblingIntersectionPoint2D } from '@/domain/world/Point';
+import { Line2DByPointAndRelativeAngle, Line2DByTwoPoints, Line2DParallel, Line2DPerpendicularToLine, Line2DTangentToCircleThroughPoint, Line2DTangentToCircleParallelToLine } from '@/domain/world/Line';
+import { Circle2DByCenterAndPoint, Circle2DByCenterAndRadiusVector, Circle2DByThreePoints } from '@/domain/world/Circle';
+import { Segment2D } from '@/domain/world/Segment';
+import { Guide2D, SiblingGuide2D } from '@/domain/world/Guide';
+import { Point3DByCoordinates, Point3DByPlaneNormalOffset, Point3DFromProjectionOnPlane, Point3DFromProjections } from '@/domain/world/Point3D';
+import { Line3DFromProjections } from '@/domain/world/Line3D';
+import { Segment3DByPoints, Segment3DFromProjections } from '@/domain/world/Segment3D';
+import { FixedProjectionPlane } from '@/domain/world/projectionPlane/FixedProjectionPlane';
+import { AuxiliaryProjectionPlane } from '@/domain/world/projectionPlane/AuxiliaryProjectionPlane';
+import { Plane3DFixed, Plane3DFromTraces } from '@/domain/world/Plane';
+import { HingeLine, HalfHingeLine2D } from '@/domain/world/HingeLine';
+import { BrokenHingeLine } from '@/domain/world/BrokenHingeLine';
+import { BrokenHalfHingeLine2D } from '@/domain/world/elements/BrokenHalfHingeLine2D';
 
 /**
  * Register all descriptors with the supplied registry, or create and return a

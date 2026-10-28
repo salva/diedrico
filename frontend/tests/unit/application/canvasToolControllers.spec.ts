@@ -24,7 +24,7 @@ import { CreateProjectionPlaneTool } from '@/tools/CreateProjectionPlaneTool';
 import { CanvasInteractionQuery } from '@/application/canvasPresentation/CanvasInteractionQuery';
 import { resolveVisibility } from '@/application/canvasPresentation/styleService';
 import { buildProcessTreeReadModel } from '@/application/appShell/readModels/ProcessTreeReadModel';
-import { registerAllDescriptors } from '@/domain/world/descriptors/registerDescriptors';
+import { registerAllDescriptors } from '@/application/processTree/descriptors/registerDescriptors';
 import type { ToolContext } from '@/tools/ITool';
 import type { ToolCommandSink, ToolConstructionIntent } from '@/tools/ToolCommandIntents';
 import type { ArgumentValue } from '@/tools/ToolArgumentCollector';

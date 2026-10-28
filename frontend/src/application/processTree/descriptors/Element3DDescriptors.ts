@@ -7,16 +7,16 @@
 
 import type { ElementDescriptor } from './ElementDescriptor';
 import type { DescriptionPart } from './DescriptionPart';
-import type { World } from '../World';
-import type { Point3DByCoordinates, Point3DByPlaneNormalOffset, Point3DFromProjectionOnPlane, Point3DFromProjections } from '../Point3D';
-import type { Line3DFromProjections } from '../Line3D';
-import type { Segment3DByPoints, Segment3DFromProjections } from '../Segment3D';
-import type { FixedProjectionPlane } from '../projectionPlane/FixedProjectionPlane';
-import type { AuxiliaryProjectionPlane } from '../projectionPlane/AuxiliaryProjectionPlane';
-import type { Plane3DFixed, Plane3DFromTraces } from '../Plane';
-import type { HingeLine } from '../HingeLine';
-import type { BrokenHingeLine } from '../BrokenHingeLine';
-import { GeometryElementLookup } from '../GeometryElementLookup';
+import type { World } from '@/domain/world/World';
+import type { Point3DByCoordinates, Point3DByPlaneNormalOffset, Point3DFromProjectionOnPlane, Point3DFromProjections } from '@/domain/world/Point3D';
+import type { Line3DFromProjections } from '@/domain/world/Line3D';
+import type { Segment3DByPoints, Segment3DFromProjections } from '@/domain/world/Segment3D';
+import type { FixedProjectionPlane } from '@/domain/world/projectionPlane/FixedProjectionPlane';
+import type { AuxiliaryProjectionPlane } from '@/domain/world/projectionPlane/AuxiliaryProjectionPlane';
+import type { Plane3DFixed, Plane3DFromTraces } from '@/domain/world/Plane';
+import type { HingeLine } from '@/domain/world/HingeLine';
+import type { BrokenHingeLine } from '@/domain/world/BrokenHingeLine';
+import { GeometryElementLookup } from '@/domain/world/GeometryElementLookup';
 
 function requireProjectionPlaneName(world: World, planeId: string): string {
   const plane = world.getProjectionPlaneById(planeId);

@@ -73,13 +73,15 @@ describe('Architecture: domain world boundary', () => {
     expect(processTreeFile.content).not.toMatch(/Date\.now\(\)|Math\.random\(\)/);
   });
 
-  it('keeps dependency access narrowed to query and registrar ports outside World', () => {
-    const files = scanTextFiles(['src/application', 'src/commands']);
-    const offenders = files
-      .filter(file => /getDependencyService\(\)\.(registerNode|unregisterNode|getElementsInDeletionOrder|getDependencies|getDependents|getAllDependents)/.test(file.content))
-      .map(file => file.projectPath);
+  it('keeps presentation descriptors outside the geometric domain', () => {
+    const domainFiles = scanTextFiles(['src/domain']);
+    expect(findContentMatches(domainFiles, /getConstructionDescription\s*\(|getTypeName\s*\(/g)).toEqual([]);
+    expect(findForbiddenImports(domainFiles, [/descriptors\//])).toEqual([]);
+  });
 
-    expect(offenders).toEqual([]);
+  it('keeps operations on a minimal visibility capability, not the application implementation', () => {
+    const files = scanTextFiles(['src/commands/operations']);
+    expect(findForbiddenImports(files, [/@\/application\/processTree\/VisibilityModel/])).toEqual([]);
   });
 
   it('keeps domain code free of console side effects', () => {

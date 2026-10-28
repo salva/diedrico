@@ -1,6 +1,8 @@
 # Architecture Remediation Plan
 
-Date: 2026-06-04 (revised)
+Date: 2026-06-04 (historical plan; current-source disposition below)
+
+> **Current-source correction (Astra claims 6–10):** This plan is historical, not an instruction to repeat completed extractions. See [the structural follow-up and current owner map](../contributing/astra-structural-c-c.md). `ProjectionPlane.ts` is now 189 lines; creation, realization/cache and identity already have separate owners. The old 1,338-line / 600–800-line targets and P4 extraction steps below are superseded. `DescriptorRegistry` is already session-instance-based; P3's static-global diagnosis is obsolete. Presentation descriptors now live under `frontend/src/application/processTree/descriptors/`, not domain. Preserve replay/reset/dependency-cache/async invariants before further structural changes; class/line count is not an acceptance criterion.
 
 Source: current codebase review, `docs/architecture/data-structure-review.md`, and direct verification of the current tree.
 

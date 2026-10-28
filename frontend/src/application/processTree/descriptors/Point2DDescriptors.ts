@@ -7,13 +7,13 @@
 
 import type { ElementDescriptor } from './ElementDescriptor';
 import type { DescriptionPart } from './DescriptionPart';
-import type { World } from '../World';
-import type { FreePoint2D } from '../Point';
-import type { Point2DLineLineIntersection } from '../Point';
-import type { Point2DLineCircleIntersection } from '../Point';
-import type { Point2DCircleCircleIntersection } from '../Point';
-import type { SiblingIntersectionPoint2D } from '../Point';
-import { GeometryElementLookup } from '../GeometryElementLookup';
+import type { World } from '@/domain/world/World';
+import type { FreePoint2D } from '@/domain/world/Point';
+import type { Point2DLineLineIntersection } from '@/domain/world/Point';
+import type { Point2DLineCircleIntersection } from '@/domain/world/Point';
+import type { Point2DCircleCircleIntersection } from '@/domain/world/Point';
+import type { SiblingIntersectionPoint2D } from '@/domain/world/Point';
+import { GeometryElementLookup } from '@/domain/world/GeometryElementLookup';
 
 function requireProjectionPlaneName(world: World, planeId: string): string {
   const plane = world.getProjectionPlaneById(planeId);

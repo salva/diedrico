@@ -5,8 +5,8 @@
  * Like CSS selectors separate style from structure, descriptors separate presentation from geometry.
  */
 
-import type { Element } from '../Element';
-import type { World } from '../World';
+import type { Element } from '@/domain/world/Element';
+import type { World } from '@/domain/world/World';
 import type { DescriptionPart } from './DescriptionPart';
 
 /**

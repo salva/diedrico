@@ -49,7 +49,7 @@ function addExplicitProcessAction(processTree: ProcessTree, action: Action): voi
 }
 
 function createDependentLineFixture() {
-  const { world, visibilityModel, commandStack, operationContext } = createTestWorld();
+  const { world, commandStack, operationContext } = createTestWorld();
   const processTree = operationContext.processTree;
   const planeId = getHorizontalPlaneId(world);
   const setupCmd = new Command('Setup line', operationContext);
@@ -62,12 +62,12 @@ function createDependentLineFixture() {
   operationContext.dependencies.registerNode(lineId, [p1, p2]);
   setupCmd.commit();
   commandStack.push(setupCmd);
-  return { world, visibilityModel, commandStack, operationContext, planeId, selectedPointId: p1, retainedPointId: p2, lineId };
+  return { world, commandStack, operationContext, planeId, selectedPointId: p1, retainedPointId: p2, lineId };
 }
 
 describe('SelectionDeletionCommandService', () => {
   it.each(['primary', 'sibling', 'both', 'point'])('deletes a guide pair once from %s and restores references', (selection) => {
-    const { world, visibilityModel, commandStack, operationContext: ctx } = createTestWorld();
+    const { world, commandStack, operationContext: ctx } = createTestWorld();
     const planeId = getHorizontalPlaneId(world);
     const plane = world.getProjectionPlaneById(planeId)!;
     const setup = new Command('Guides', ctx);
@@ -81,7 +81,7 @@ describe('SelectionDeletionCommandService', () => {
     setup.commit(); commandStack.push(setup);
     const ids = selection === 'primary' ? [pair.guideId] : selection === 'sibling' ? [pair.siblingGuideId!]
       : selection === 'both' ? [pair.guideId, pair.siblingGuideId!] : [pointId];
-    new SelectionDeletionCommandService(world, visibilityModel, commandStack, ctx).execute(ids);
+    new SelectionDeletionCommandService(world, commandStack, ctx).execute(ids);
     expect(plane.getLine(pair.guideId)).toBeUndefined();
     expect(siblingPlane.getLine(pair.siblingGuideId!)).toBeUndefined();
     commandStack.undo();
@@ -92,12 +92,12 @@ describe('SelectionDeletionCommandService', () => {
     expect(siblingPlane.getLine(pair.siblingGuideId!)).toBeUndefined();
   });
   it('executes cascade deletion through a committed command and preserves undo/redo behavior', () => {
-    const { world, visibilityModel, commandStack, operationContext, planeId, selectedPointId, retainedPointId, lineId } = createDependentLineFixture();
+    const { world, commandStack, operationContext, planeId, selectedPointId, retainedPointId, lineId } = createDependentLineFixture();
     const notifications: Array<{ undo: number; redo: number }> = [];
     commandStack.subscribe(() => notifications.push({ undo: commandStack.getUndoCount(), redo: commandStack.getRedoCount() }));
 
     const initialUndoCount = commandStack.getUndoCount();
-    const service = new SelectionDeletionCommandService(world, visibilityModel, commandStack, operationContext);
+    const service = new SelectionDeletionCommandService(world, commandStack, operationContext);
     service.execute([selectedPointId]);
 
     const plane = world.getProjectionPlaneById(planeId)!;
@@ -123,7 +123,7 @@ describe('SelectionDeletionCommandService', () => {
   });
 
   it('does nothing for empty selection and does not create, commit, push, or notify', () => {
-    const { world, visibilityModel, commandStack, operationContext } = createTestWorld();
+    const { world, commandStack, operationContext } = createTestWorld();
     const initialUndoCount = commandStack.getUndoCount();
     const listener = vi.fn();
     commandStack.subscribe(listener);
@@ -131,7 +131,7 @@ describe('SelectionDeletionCommandService', () => {
     const createCascadeDeletion = vi.fn();
     const push = vi.spyOn(commandStack, 'push');
 
-    new SelectionDeletionCommandService(world, visibilityModel, commandStack, operationContext, { createCommand, createCascadeDeletion }).execute([]);
+    new SelectionDeletionCommandService(world, commandStack, operationContext, { createCommand, createCascadeDeletion }).execute([]);
 
     expect(createCommand).not.toHaveBeenCalled();
     expect(createCascadeDeletion).not.toHaveBeenCalled();
@@ -142,7 +142,7 @@ describe('SelectionDeletionCommandService', () => {
   });
 
   it('does not clear redo until successful command creation, cascade build, commit, and push', () => {
-    const { world, visibilityModel, commandStack, operationContext } = createTestWorld();
+    const { world, commandStack, operationContext } = createTestWorld();
     commandStack.push(committedCommand(operationContext, 'first'));
     commandStack.undo();
     expect(commandStack.getRedoCount()).toBe(1);
@@ -151,7 +151,7 @@ describe('SelectionDeletionCommandService', () => {
     const command = new Command('Delete elements', operationContext);
     const commit = vi.spyOn(command, 'commit').mockImplementation(() => { order.push('commit'); });
     const push = vi.spyOn(commandStack, 'push').mockImplementation(() => { order.push('push'); });
-    const service = new SelectionDeletionCommandService(world, visibilityModel, commandStack, operationContext, {
+    const service = new SelectionDeletionCommandService(world, commandStack, operationContext, {
       createCommand: () => { order.push('create'); return command; },
       createCascadeDeletion: () => {
         order.push('cascade');
@@ -167,12 +167,12 @@ describe('SelectionDeletionCommandService', () => {
   });
 
   it('propagates command creation failures without pushing or changing redo state', () => {
-    const { world, visibilityModel, commandStack, operationContext } = createTestWorld();
+    const { world, commandStack, operationContext } = createTestWorld();
     commandStack.push(committedCommand(operationContext));
     commandStack.undo();
     const undoAfterFailureBaseline = commandStack.getUndoCount();
     const push = vi.spyOn(commandStack, 'push');
-    const service = new SelectionDeletionCommandService(world, visibilityModel, commandStack, operationContext, {
+    const service = new SelectionDeletionCommandService(world, commandStack, operationContext, {
       createCommand: () => { throw new Error('create failed'); },
     });
 
@@ -183,11 +183,11 @@ describe('SelectionDeletionCommandService', () => {
   });
 
   it('propagates cascade-build failures before commit or push', () => {
-    const { world, visibilityModel, commandStack, operationContext } = createTestWorld();
+    const { world, commandStack, operationContext } = createTestWorld();
     const command = new Command('Delete elements', operationContext);
     const commit = vi.spyOn(command, 'commit');
     const push = vi.spyOn(commandStack, 'push');
-    const service = new SelectionDeletionCommandService(world, visibilityModel, commandStack, operationContext, {
+    const service = new SelectionDeletionCommandService(world, commandStack, operationContext, {
       createCommand: () => command,
       createCascadeDeletion: () => { throw new Error('cascade failed'); },
     });
@@ -198,12 +198,12 @@ describe('SelectionDeletionCommandService', () => {
   });
 
   it('propagates commit failures before push', () => {
-    const { world, visibilityModel, commandStack, operationContext } = createTestWorld();
+    const { world, commandStack, operationContext } = createTestWorld();
     const command = new Command('Delete elements', operationContext);
     command.addAndExecute(new MockOperation());
     vi.spyOn(command, 'commit').mockImplementation(() => { throw new Error('commit failed'); });
     const push = vi.spyOn(commandStack, 'push');
-    const service = new SelectionDeletionCommandService(world, visibilityModel, commandStack, operationContext, {
+    const service = new SelectionDeletionCommandService(world, commandStack, operationContext, {
       createCommand: () => command,
       createCascadeDeletion: vi.fn(),
     });
@@ -213,11 +213,11 @@ describe('SelectionDeletionCommandService', () => {
   });
 
   it('propagates push failures after commit without swallowing stack contract errors', () => {
-    const { world, visibilityModel, commandStack, operationContext } = createTestWorld();
+    const { world, commandStack, operationContext } = createTestWorld();
     const command = new Command('Delete elements', operationContext);
     command.addAndExecute(new MockOperation());
     const push = vi.spyOn(commandStack, 'push').mockImplementation(() => { throw new Error('push failed'); });
-    const service = new SelectionDeletionCommandService(world, visibilityModel, commandStack, operationContext, {
+    const service = new SelectionDeletionCommandService(world, commandStack, operationContext, {
       createCommand: () => command,
       createCascadeDeletion: vi.fn(),
     });
@@ -228,12 +228,12 @@ describe('SelectionDeletionCommandService', () => {
   });
 
   it('preserves committed-only and non-undoable CommandStack behavior', () => {
-    const { world, visibilityModel, commandStack, operationContext } = createTestWorld();
+    const { world, commandStack, operationContext } = createTestWorld();
     const initialUndoCount = commandStack.getUndoCount();
     const nonUndoable = new Command('Delete elements', operationContext);
     nonUndoable.addAndExecute(new MockOperation());
     vi.spyOn(nonUndoable, 'canUndo').mockReturnValue(false);
-    const service = new SelectionDeletionCommandService(world, visibilityModel, commandStack, operationContext, {
+    const service = new SelectionDeletionCommandService(world, commandStack, operationContext, {
       createCommand: () => nonUndoable,
       createCascadeDeletion: vi.fn(),
     });
@@ -245,7 +245,7 @@ describe('SelectionDeletionCommandService', () => {
     const uncommitted = new Command('Delete elements', operationContext);
     uncommitted.addAndExecute(new MockOperation());
     vi.spyOn(uncommitted, 'commit').mockImplementation(() => undefined);
-    const uncommittedService = new SelectionDeletionCommandService(world, visibilityModel, commandStack, operationContext, {
+    const uncommittedService = new SelectionDeletionCommandService(world, commandStack, operationContext, {
       createCommand: () => uncommitted,
       createCascadeDeletion: vi.fn(),
     });
@@ -254,14 +254,14 @@ describe('SelectionDeletionCommandService', () => {
   });
 
   it('clears redo history only through the same CommandStack push path after new delete', () => {
-    const { world, visibilityModel, commandStack, operationContext, selectedPointId } = createDependentLineFixture();
+    const { world, commandStack, operationContext, selectedPointId } = createDependentLineFixture();
     const baselineUndoCount = commandStack.getUndoCount();
     commandStack.push(committedCommand(operationContext, 'redo candidate'));
     commandStack.undo();
     expect(commandStack.getUndoCount()).toBe(baselineUndoCount);
     expect(commandStack.getRedoCount()).toBe(1);
 
-    new SelectionDeletionCommandService(world, visibilityModel, commandStack, operationContext).execute([selectedPointId]);
+    new SelectionDeletionCommandService(world, commandStack, operationContext).execute([selectedPointId]);
 
     expect(commandStack.getUndoCount()).toBe(baselineUndoCount + 1);
     expect(commandStack.getRedoCount()).toBe(0);

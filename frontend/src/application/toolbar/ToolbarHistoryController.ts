@@ -6,18 +6,14 @@ export interface ToolbarHistoryControllerDependencies {
   commandHistory: CommandHistoryPort;
 }
 
-export interface ToolbarHistoryControllerProviderDependencies {
-  commandHistory: unknown;
-}
-
 export function createToolbarHistoryController(
-  deps: ToolbarHistoryControllerProviderDependencies
+  deps: ToolbarHistoryControllerDependencies
 ): ToolbarHistoryController {
   if (!deps.commandHistory) {
     throw new Error('CommandHistoryPort not provided');
   }
 
-  return new ToolbarHistoryController({ commandHistory: deps.commandHistory as CommandHistoryPort });
+  return new ToolbarHistoryController(deps);
 }
 
 export class ToolbarHistoryController implements ToolbarHistoryIntentSink {

@@ -4,7 +4,6 @@ import type { OperationContext } from '@/commands/operations/OperationContext';
 import { DeletionSequenceFactory, type DeletionSequenceContext } from '@/commands/factories/DeletionSequenceFactory';
 import type { World } from '@/domain/world/World';
 import type { ChangeNotifier } from '@/application/appShell/RuntimeChangePublisher';
-import type { VisibilityModel } from '@/application/processTree/VisibilityModel';
 import type { SelectionDeletionCommandPort } from './SelectionDeletionPorts';
 
 const noopChangeNotifier: ChangeNotifier = { notifyChange: () => {} };
@@ -28,20 +27,14 @@ export class SelectionDeletionCommandService implements SelectionDeletionCommand
 
   constructor(
     private readonly world: World,
-    _visibilityModel: VisibilityModel,
     commandStack: CommandStack,
     private readonly operationContext: OperationContext,
-    notifierOrInternals: ChangeNotifier | Partial<SelectionDeletionCommandServiceInternals> = noopChangeNotifier,
-    internals: Partial<SelectionDeletionCommandServiceInternals> | undefined = undefined,
+    internals: Partial<SelectionDeletionCommandServiceInternals> = {},
+    notifier: ChangeNotifier = noopChangeNotifier,
   ) {
     this.commandStack = commandStack;
-    if ('notifyChange' in notifierOrInternals) {
-      this.notifier = notifierOrInternals;
-      this.internals = { ...defaultInternals, ...(internals ?? {}) };
-    } else {
-      this.notifier = noopChangeNotifier;
-      this.internals = { ...defaultInternals, ...notifierOrInternals };
-    }
+    this.notifier = notifier;
+    this.internals = { ...defaultInternals, ...internals };
   }
 
   execute(selectedIds: readonly string[]): void {

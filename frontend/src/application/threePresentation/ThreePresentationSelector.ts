@@ -30,14 +30,15 @@ export interface ThreePresentationBuilderInput {
 export function buildThreePresentationModel(input: ThreePresentationBuilderInput): ThreePresentationModel {
   const context = createThreePresentationContext(input.world, input.realizations, input.processTree, input.visibilityModel);
   const guides = buildSelectedGuideModels(context, input.selectedIds);
+  const options = input.displayOptions;
   return new ThreePresentationSelector().select({
-    projectionPlanes: buildProjectionPlaneModels(context),
-    planarPlanes: buildPlanarPlaneModels(context),
-    reconstructedElements: buildReconstructedModels(context),
-    projectionLines: buildProjectionLineModels(context),
+    projectionPlanes: options.showPlanes ? buildProjectionPlaneModels(context) : [],
+    planarPlanes: options.show2DElementsOnPlanes ? buildPlanarPlaneModels(context) : [],
+    reconstructedElements: options.showPlanes ? buildReconstructedModels(context) : { points: [], lines: [], segments: [], planes: [] },
+    projectionLines: options.showLinkingVisuals ? buildProjectionLineModels(context) : [],
     guides,
     guideIntersections: guides.length ? buildGuideIntersectionModels(context) : undefined,
-    hinges: buildHingeModels(context),
+    hinges: options.showPlanes ? buildHingeModels(context) : [],
     displayOptions: input.displayOptions,
   });
 }

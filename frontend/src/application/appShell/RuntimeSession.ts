@@ -20,7 +20,7 @@ import { buildProcessTreeReadModel, countProcessNodeViewModels, getRelatedAction
 import { buildElementsPanelReadModel } from './readModels/ElementsPanelReadModel';
 import { UpdateElementStyleOp } from '@/commands/operations/world/UpdateElementStyleOp';
 import { RuntimeChangePublisher, type ChangeNotifier } from './RuntimeChangePublisher';
-import { registerAllDescriptors } from '@/domain/world/descriptors/registerDescriptors';
+import { registerAllDescriptors } from '@/application/processTree/descriptors/registerDescriptors';
 import { VisibilityModel } from '@/application/processTree/VisibilityModel';
 import type { OperationContext } from '@/commands/operations/OperationContext';
 import { GeometryElementLookup } from '@/domain/world/GeometryElementLookup';
@@ -144,7 +144,7 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
   }
 
   selectionDeletionCommandPort(): SelectionDeletionCommandPort {
-    return new SelectionDeletionCommandService(this.world, this.visibilityModel, this.commandStack, this.operationContext, this.changes);
+    return new SelectionDeletionCommandService(this.world, this.commandStack, this.operationContext, {}, this.changes);
   }
 
   canUndo(): boolean {

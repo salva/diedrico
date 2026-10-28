@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { DescriptorRegistry } from '@/domain/world/descriptors/DescriptorRegistry';
-import { registerAllDescriptors } from '@/domain/world/descriptors/registerDescriptors';
-import type { ElementDescriptor } from '@/domain/world/descriptors/ElementDescriptor';
+import { DescriptorRegistry } from '@/application/processTree/descriptors/DescriptorRegistry';
+import { registerAllDescriptors } from '@/application/processTree/descriptors/registerDescriptors';
+import type { ElementDescriptor } from '@/application/processTree/descriptors/ElementDescriptor';
 import { Element } from '@/domain/world/Element';
 import { FreePoint2D } from '@/domain/world/Point';
 
