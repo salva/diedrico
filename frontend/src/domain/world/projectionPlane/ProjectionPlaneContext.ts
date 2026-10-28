@@ -1,4 +1,4 @@
-import type { Plane3DRealization3D } from '../Element3DRealization3D';
+import type { Plane3DRealization3D, Point3DRealization3D } from '../Element3DRealization3D';
 import type { HingeLine } from '../HingeLine';
 import type { Line2D, Line2DRealization2D } from '../Line';
 import type { Circle2D, Circle2DRealization2D } from '../Circle';
@@ -18,6 +18,7 @@ export interface ProjectionRealizationLookupContext {
   getProjectionPlane2DRealization(id: string): ProjectionPlaneRealization2D | undefined;
   getProjectionPlane3DRealization(id: string): ProjectionPlaneRealization3D | undefined;
   get3DPlaneRealization(id: string): Plane3DRealization3D | undefined;
+  get3DPointRealization?(id: string): Point3DRealization3D | undefined;
 }
 
 export interface ProjectionElementRealizationContext extends ProjectionElementLookupContext, ProjectionRealizationLookupContext {}

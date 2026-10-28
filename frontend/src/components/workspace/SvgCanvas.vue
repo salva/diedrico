@@ -175,10 +175,18 @@ import PropertiesDialog from '@/components/dialogs/PropertiesDialog.vue';
 import Create3DPointCoordinatesDialog from '@/components/dialogs/Create3DPointCoordinatesDialog.vue';
 import { CanvasCommandProducerInjectionKey, CanvasViewInjectionKey, SelectionActionsInjectionKey, ToolInteractionReadInjectionKey, ToolRuntimeInjectionKey } from '@/application/appShell/RuntimeInjectionKeys';
 import { CanvasInteractionQuery } from '@/application/canvasPresentation/CanvasInteractionQuery';
+import type { ParsedToolArgumentInput } from '@/types/ToolArgumentInput';
 
 const emit = defineEmits<{
   'update-3d-coordinates': [coords: { x: number; y: number; z: number } | null];
+  'update-plane-position-input-state': [state: { enabled: boolean; kind: 'plane-position' | 'scalar'; valueKind?: 'distance' | 'angle'; label: string; placeholder: string }];
+  'clear-plane-position-input': [];
 }>();
+
+interface PlanePositionSubmitResult {
+  success: boolean;
+  message?: string;
+}
 
 const svgElement = ref<SVGSVGElement | null>(null);
 
@@ -209,6 +217,7 @@ const toolRuntimeRequired = toolRuntime;
 
 const toolInteractionReadPort = inject(ToolInteractionReadInjectionKey);
 if (!toolInteractionReadPort) throw new Error('Tool interaction read port not provided');
+const toolInteractionReadPortRequired = toolInteractionReadPort;
 
 // Canvas interaction controller - owns tool lifecycle, selection, point drag, viewport pan, hover
 const controller = new CanvasInteractionController({
@@ -291,6 +300,10 @@ watch(() => toolRuntimeRequired.currentTool.value, (newTool) => {
     create3DPointCoordinatesError.value = '';
     show3DPointCoordinatesDialog.value = true;
   }
+  if (newTool === 'quick-yz-projection-plane') {
+    handleCreateYZProjectionPlane();
+  }
+  emitPlanePositionInputState();
 }, { immediate: true });
 
 function updateCanvasDimensions() {
@@ -325,6 +338,18 @@ onUnmounted(() => {
 
 function handleRuntimeViewChange(): void {
   renderTick.value++;
+  emitPlanePositionInputState();
+}
+
+function emitPlanePositionInputState(): void {
+  const request = controller.getToolArgumentInputRequest();
+  emit('update-plane-position-input-state', {
+    enabled: !!request,
+    kind: request?.kind ?? 'plane-position',
+    valueKind: request?.valueKind,
+    label: request?.label ?? 'position',
+    placeholder: request?.placeholder ?? 'u,v',
+  });
 }
 
 // Presentation model
@@ -431,7 +456,7 @@ function handleCanvasClick(event: MouseEvent) {
     return;
   }
 
-  controller.handleCanvasClick({
+  const result = controller.handleCanvasClick({
     canvasPos,
     canvasPoint: { x: canvasPoint.x, y: canvasPoint.y },
     activePlaneId,
@@ -441,6 +466,8 @@ function handleCanvasClick(event: MouseEvent) {
     interactionQuery: interactionQuery.value,
     commandSink: canvasToolController,
   });
+  if (result?.success) emit('clear-plane-position-input');
+  emitPlanePositionInputState();
 }
 
 function handleWheel(event: WheelEvent) {
@@ -533,6 +560,24 @@ function handleSaveProperties(changes: any) {
     }
   }
 
+  if (changes.parameter) {
+    const result = changes.parameter.kind === 'radius'
+      ? canvasToolController.updateElementParameter({
+          elementId: changes.elementId,
+          planeId: targetPlaneId,
+          parameter: { kind: 'radius', value: changes.parameter.value },
+        })
+      : canvasToolController.updateElementParameter({
+          elementId: changes.elementId,
+          planeId: targetPlaneId,
+          parameter: { kind: 'angle', degrees: changes.parameter.value },
+        });
+    if (!result.success) {
+      console.error('[SvgCanvas] Parameter update failed:', result.message);
+      return;
+    }
+  }
+
   const hasStyleChanges = ['color', 'lineWidth', 'lineStyle', 'opacity', 'visible'].some(key => changes[key] !== undefined);
   if (!hasStyleChanges) return;
 
@@ -571,6 +616,47 @@ function handleCreate3DPointCoordinates(coordinates: { x: number; y: number; z: 
   }
 
   close3DPointCoordinatesDialog();
+}
+
+function handleCreateYZProjectionPlane(): void {
+  const result = canvasToolController.executeConstructionIntent({
+    type: 'create-yz-projection-plane',
+    description: 'Add YZ projection plane',
+  });
+
+  if (!result.success) {
+    console.error('[SvgCanvas] YZ projection plane creation failed:', result.message);
+  }
+
+  if (toolRuntimeRequired.currentTool.value === 'quick-yz-projection-plane') {
+    toolRuntimeRequired.setTool('select');
+  }
+}
+
+function submitPlanePositionInput(coords: { u: number; v: number }): PlanePositionSubmitResult {
+  return submitToolArgumentInput({ kind: 'plane-position', position: new Vector3(coords.u, coords.v, 1) });
+}
+
+function submitToolArgumentInput(input: ParsedToolArgumentInput): PlanePositionSubmitResult {
+  const activePlaneId = activePlane.value;
+  if (!activePlaneId) return { success: false, message: 'No active plane selected.' };
+
+  const planeTransforms = paperToPlaneTransforms.value;
+  const paperToPlane = planeTransforms.get(activePlaneId);
+  if (!paperToPlane) return { success: false, message: `Active plane ${activePlaneId} is not available.` };
+
+  const result = controller.submitToolArgumentInput({
+    activePlaneId,
+    commandSink: canvasToolController,
+    readPort: toolInteractionReadPortRequired,
+    interactionQuery: interactionQuery.value,
+    paperToPlaneTransform: paperToPlane,
+    viewport: viewport.value,
+    input,
+  });
+
+  emitPlanePositionInputState();
+  return result;
 }
 
 function handleMouseMove(event: MouseEvent) {
@@ -680,7 +766,7 @@ function fitToView() {
   controller.fitToView(renderItems.value.map(item => item.primitive), canvasWidth.value, canvasHeight.value);
 }
 
-defineExpose({ fitToView });
+defineExpose({ fitToView, submitPlanePositionInput, submitToolArgumentInput });
 </script>
 
 <style scoped>

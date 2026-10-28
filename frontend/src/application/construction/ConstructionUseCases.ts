@@ -20,6 +20,7 @@ import { Add3DPointOp } from '@/commands/operations/world/Add3DPointOp';
 import { Add3DLineOp } from '@/commands/operations/world/Add3DLineOp';
 import { Add3DSegmentOp } from '@/commands/operations/world/Add3DSegmentOp';
 import { AddLine2DTangentToCircleThroughPointOp, AddLine2DTangentToCircleParallelToLineOp } from '@/commands/operations/world/AddLineOp';
+import { UpdateElementStyleOp } from '@/commands/operations/world/UpdateElementStyleOp';
 import { PushSubprocessOp } from '@/commands/operations/processTree/PushSubprocessOp';
 import { PopSubprocessOp } from '@/commands/operations/processTree/PopSubprocessOp';
 import { ToggleEncapsulationOp } from '@/commands/operations/processTree/ToggleEncapsulationOp';
@@ -53,7 +54,23 @@ interface ConstructionExecutionContext {
 type IntentExecutor<T extends ToolConstructionIntent> = (context: ConstructionExecutionContext, intent: T) => void;
 
 export function executeConstructionIntent({ intent, operationContext, commands }: ExecuteConstructionParams): ToolCommandResult {
+  if (intent.type === 'create-yz-projection-plane' && operationContext.world.getAllProjectionPlanes().some(candidate => candidate.name === 'P_YZ')) {
+    return { success: true, message: 'P_YZ projection plane already exists.' };
+  }
+
   const result = commands.executeToolCommand(intent.description, (cmd) => {
+    if (intent.type === 'create-yz-projection-plane') {
+      executeCreateYZProjectionPlaneCommand({
+        cmd,
+        operationContext,
+        world: operationContext.world,
+        realizationContext: operationContext.realizationContext,
+        groupId: '',
+      }, intent);
+      checkCreatedElementsFeasibility(cmd, operationContext.world, operationContext.realizationContext);
+      return;
+    }
+
     if (intent.type === 'create3dpoint-by-coordinates') {
       executeCreate3DPointByCoordinatesCommand({
         cmd,
@@ -89,9 +106,11 @@ const executors: { [K in ToolConstructionIntent['type']]: IntentExecutor<Extract
   line: executeLineIntent,
   segment: executeSegmentIntent,
   circle: executeCircleIntent,
+  'circle-by-radius': executeCircleByRadiusIntent,
   guide: executeGuideIntent,
   'parallel-line': executeParallelLineIntent,
   'perpendicular-line': executePerpendicularLineIntent,
+  'line-with-angle': executeLineWithAngleIntent,
   intersection: executeIntersectionIntent,
   'tangent-line-to-circle-through-point': executeTangentThroughPointIntent,
   'tangent-line-to-circle-parallel': executeTangentParallelIntent,
@@ -101,6 +120,7 @@ const executors: { [K in ToolConstructionIntent['type']]: IntentExecutor<Extract
   create3dsegment: executeCreate3DSegmentIntent,
   create3dplane: executeCreate3DPlaneIntent,
   createprojectionplane: executeCreateProjectionPlaneIntent,
+  'create-yz-projection-plane': executeCreateYZProjectionPlaneIntent,
 };
 
 function executeConstructionOperations(context: ConstructionExecutionContext, intent: ToolConstructionIntent): void {
@@ -132,6 +152,11 @@ function executeCircleIntent({ cmd, world, groupId }: ConstructionExecutionConte
   CircleSequenceFactory.createCircleByCenterAndPoint(cmd, intent.planeId, intent.centerPointId, intent.circumferencePointId, groupId);
 }
 
+function executeCircleByRadiusIntent({ cmd, world, groupId }: ConstructionExecutionContext, intent: Extract<ToolConstructionIntent, { type: 'circle-by-radius' }>): void {
+  requirePointOnPlane(world, intent.centerPointId, intent.planeId, 'center point');
+  CircleSequenceFactory.createCircleByCenterAndRadiusVector(cmd, intent.planeId, intent.centerPointId, intent.radiusVector, groupId);
+}
+
 function executeGuideIntent({ cmd, world, realizationContext, groupId }: ConstructionExecutionContext, intent: Extract<ToolConstructionIntent, { type: 'guide' }>): void {
   requireLineOnPlane(world, intent.referenceLineId, intent.planeId, 'reference line');
   requirePointOnPlane(world, intent.throughPointId, intent.planeId, 'through point');
@@ -150,6 +175,12 @@ function executePerpendicularLineIntent({ cmd, world, groupId }: ConstructionExe
   requireLineOnPlane(world, intent.referenceLineId, intent.planeId, 'reference line');
   requirePointOnPlane(world, intent.throughPointId, intent.planeId, 'through point');
   LineSequenceFactory.createPerpendicularLine(cmd, intent.planeId, intent.referenceLineId, intent.throughPointId, groupId);
+}
+
+function executeLineWithAngleIntent({ cmd, world, groupId }: ConstructionExecutionContext, intent: Extract<ToolConstructionIntent, { type: 'line-with-angle' }>): void {
+  requireLineOnPlane(world, intent.referenceLineId, intent.planeId, 'reference line');
+  requirePointOnPlane(world, intent.throughPointId, intent.planeId, 'through point');
+  LineSequenceFactory.createLineByPointAndRelativeAngle(cmd, intent.planeId, intent.referenceLineId, intent.throughPointId, intent.angleRadians, groupId);
 }
 
 function executeIntersectionIntent(context: ConstructionExecutionContext, intent: Extract<ToolConstructionIntent, { type: 'intersection' }>): void {
@@ -272,7 +303,97 @@ function executeCreateProjectionPlaneIntent({ cmd, world, groupId }: Constructio
   const t2 = requireLine(world, intent.t2OtherTraceLineId, 'T2 other trace line');
   const t2Prime = requireLine(world, intent.t2PrimePositionLineId, "T2' position line");
   const { planeId: plane3DId } = PlaneSequenceFactory.create3DPlaneFromTraces(cmd, t1.id, t2.id, t1.planeId, t2.planeId, undefined, groupId);
-  PlaneSequenceFactory.createAuxiliaryProjectionPlane(cmd, world, plane3DId, t1.id, t2.id, t2Prime.id, t1.planeId, undefined, groupId);
+  const projectionPlane = PlaneSequenceFactory.createAuxiliaryProjectionPlane(cmd, world, plane3DId, t1.id, t2.id, t2Prime.id, t1.planeId, undefined, groupId);
+  PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane(cmd, projectionPlane.hingeLineId, projectionPlane.projPlaneId, t2.planeId, groupId);
+  hideTraceLineIfReplaced(cmd, world, t2.id, t2.planeId);
+}
+
+function executeCreateYZProjectionPlaneIntent({ cmd, operationContext, world, realizationContext, groupId }: ConstructionExecutionContext, _intent: Extract<ToolConstructionIntent, { type: 'create-yz-projection-plane' }>): void {
+  createYZProjectionPlaneConstruction({ cmd, operationContext, world, realizationContext, groupId });
+}
+
+function executeCreateYZProjectionPlaneCommand(
+  context: ConstructionExecutionContext,
+  _intent: Extract<ToolConstructionIntent, { type: 'create-yz-projection-plane' }>
+): void {
+  const { cmd } = context;
+  const subprocessResult = cmd.addAndExecute(new PushSubprocessOp('Add YZ projection plane'));
+  const subprocessId = subprocessResult.outputs.subprocessId as string;
+  const groupId = `group_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+  cmd.addAndExecute(new AddProcessTreeActionGroupOp(createActionGroup(groupId)));
+
+  createYZProjectionPlaneConstruction({ ...context, groupId });
+
+  cmd.addAndExecute(new ToggleEncapsulationOp(subprocessId));
+  cmd.addAndExecute(new PopSubprocessOp());
+}
+
+function createYZProjectionPlaneConstruction({ cmd, world, realizationContext, groupId }: ConstructionExecutionContext): void {
+  if (world.getAllProjectionPlanes().some(candidate => candidate.name === 'P_YZ')) {
+    throw new Error('P_YZ projection plane already exists.');
+  }
+  const horizontalPlane = requireProjectionPlaneByName(world, 'P_H');
+  const verticalPlane = requireProjectionPlaneByName(world, 'P_V');
+  const horizontalHinge = requireHalfHingeLine(world, horizontalPlane.id, 'P_H half hinge line');
+  const verticalHinge = requireHalfHingeLine(world, verticalPlane.id, 'P_V half hinge line');
+  const origin = horizontalPlane.getPoint2DByLabel('O_H');
+
+  const yzTraces = GuideSequenceFactory.createGuideWithSibling(
+    cmd,
+    horizontalPlane.id,
+    horizontalHinge.id,
+    origin.id,
+    world,
+    realizationContext,
+  );
+  recordGuideActions(cmd, yzTraces, groupId);
+  if (!yzTraces.siblingGuideId) {
+    throw new Error('Could not create the YZ trace sibling on P_V.');
+  }
+
+  const { planeId: plane3DId } = PlaneSequenceFactory.create3DPlaneFromTraces(
+    cmd,
+    yzTraces.siblingGuideId,
+    yzTraces.guideId,
+    verticalPlane.id,
+    horizontalPlane.id,
+    'P_{YZ}',
+    groupId,
+  );
+
+  const yzProjectionPlane = PlaneSequenceFactory.createAuxiliaryProjectionPlane(
+    cmd,
+    world,
+    plane3DId,
+    yzTraces.siblingGuideId,
+    yzTraces.guideId,
+    verticalHinge.id,
+    verticalPlane.id,
+    'P_YZ',
+    groupId,
+    'P_{YZ}',
+  );
+  PlaneSequenceFactory.createBrokenHingeLineForAuxiliaryPlane(
+    cmd,
+    yzProjectionPlane.hingeLineId,
+    yzProjectionPlane.projPlaneId,
+    horizontalPlane.id,
+    groupId,
+  );
+  hideTraceLineIfReplaced(cmd, world, yzTraces.guideId, horizontalPlane.id);
+}
+
+function hideTraceLineIfReplaced(
+  cmd: CommandOperationBuilder,
+  world: World,
+  lineId: string,
+  planeId: string,
+): void {
+  const plane = world.getProjectionPlaneById(planeId);
+  const line = plane?.getLine(lineId);
+  if (line && !(line instanceof HalfHingeLine2D)) {
+    cmd.addAndExecute(new UpdateElementStyleOp(lineId, planeId, { visible: false }));
+  }
 }
 
 function createIntersection({ cmd, world, groupId, realizationContext }: ConstructionExecutionContext, intent: Extract<ToolConstructionIntent, { type: 'intersection' }>): void {

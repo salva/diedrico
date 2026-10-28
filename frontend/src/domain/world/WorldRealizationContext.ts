@@ -1,17 +1,18 @@
-import type { CachedProjectionElementRealizationContext, Element3DRealizationContext } from './projectionPlane/ProjectionPlaneContext';
+import type { CachedProjectionElementRealizationContext, Element3DRealizationContext, ProjectionRealizationCollectionContext } from './projectionPlane/ProjectionPlaneContext';
 import type { RealizationService } from './RealizationService';
 import type { World } from './World';
 import { GeometryElementLookup } from './GeometryElementLookup';
 
-export function createWorldRealizationContext(world: World, realizations: RealizationService): CachedProjectionElementRealizationContext & Element3DRealizationContext {
+export function createWorldRealizationContext(world: World, realizations: RealizationService): CachedProjectionElementRealizationContext & Element3DRealizationContext & ProjectionRealizationCollectionContext {
   const lookup = new GeometryElementLookup(world);
   const getProjectionPlaneById = world.getProjectionPlaneById.bind(world);
   const getPoint2D = lookup.getPoint2D.bind(lookup);
   const getLine2D = lookup.getLine2D.bind(lookup);
   const getCircle2D = lookup.getCircle2D.bind(lookup);
+  const get3DPoint = world.get3DPoint.bind(world);
   const get3DPlane = world.get3DPlane.bind(world);
   const getHingeLineById = world.getHingeLineById.bind(world);
-  const context: CachedProjectionElementRealizationContext & Element3DRealizationContext = {
+  const context: CachedProjectionElementRealizationContext & Element3DRealizationContext & ProjectionRealizationCollectionContext = {
     getProjectionPlaneById,
     getPoint2D,
     getLine2D,
@@ -31,7 +32,13 @@ export function createWorldRealizationContext(world: World, realizations: Realiz
       const plane = get3DPlane(id);
       return plane ? realizations.realizePlane3D(plane, context) : undefined;
     },
+    get3DPointRealization: id => {
+      const point = get3DPoint(id);
+      return point ? realizations.realizePoint3D(point, context) : undefined;
+    },
     getHingeLineById,
+    getAllProjectionPlanes: world.getAllProjectionPlanes.bind(world),
+    getAllHingeLines: world.getAllHingeLines.bind(world),
   };
   return context;
 }

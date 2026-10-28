@@ -38,15 +38,18 @@
 
 import { Vector3 } from 'three';
 import { BaseTool } from './BaseTool';
-import type { ToolContext, ToolResult, ITool } from './ITool';
+import type { ToolArgumentInputCapableTool, ToolContext, ToolResult, ITool, PlanePositionInputCapableTool } from './ITool';
+import type { ParsedToolArgumentInput, ToolArgumentInputRequest } from '@/types/ToolArgumentInput';
 import type { ToolConstructionIntent } from './ToolCommandIntents';
 import { SelectionMask, NoneMask } from '@/types/SelectionMask';
 import type { 
   ToolArgumentSpec, 
   ToolArgumentSet, 
   CollectionContext,
-  ArgumentValue
+  ArgumentValue,
+  ScalarArgumentSpec
 } from '@/tools/ToolArgumentCollector';
+import { MIN_PARAMETER_RADIUS, signedAngleCCW } from '@/domain/world/GeometricParameters';
 export type { ArgumentValue } from '@/tools/ToolArgumentCollector';
 
 /**
@@ -63,7 +66,7 @@ export type { ArgumentValue } from '@/tools/ToolArgumentCollector';
  * - reset(): Clear collected arguments
  * - cancel(): Abort collection and reset
  */
-export abstract class ArgumentCollectorTool extends BaseTool implements ITool {
+export abstract class ArgumentCollectorTool extends BaseTool implements ITool, PlanePositionInputCapableTool, ToolArgumentInputCapableTool {
   /** Map of collected arguments (argument name → {element, position}) */
   private collected: Map<string, ArgumentValue> = new Map();
   
@@ -107,6 +110,22 @@ export abstract class ArgumentCollectorTool extends BaseTool implements ITool {
     const position = args.get(name)?.planeCoords;
     if (!position) throw new Error(`Missing ${name} position`);
     return position;
+  }
+
+  protected requireScalarDistance(args: Map<string, ArgumentValue>, name: string): { value: number; direction?: Vector3 } {
+    const scalar = args.get(name)?.scalar;
+    if (!scalar || scalar.valueKind !== 'distance' || scalar.value === undefined) {
+      throw new Error(`Missing ${name} distance`);
+    }
+    return { value: scalar.value, direction: scalar.direction };
+  }
+
+  protected requireScalarAngle(args: Map<string, ArgumentValue>, name: string): number {
+    const scalar = args.get(name)?.scalar;
+    if (!scalar || scalar.valueKind !== 'angle' || scalar.radians === undefined) {
+      throw new Error(`Missing ${name} angle`);
+    }
+    return scalar.radians;
   }
 
 
@@ -181,24 +200,36 @@ export abstract class ArgumentCollectorTool extends BaseTool implements ITool {
     
     // Extract position from context
     const { planeCoords } = context;
+    const collectionContext: CollectionContext = {
+      readPort,
+      plane,
+      collected: this.collected
+    };
     
     // Create ArgumentValue - either with selected element or null (for SelectionMask.none())
     let argumentValue: ArgumentValue;
     
     if (!hit) {
-      // No element hit - check if any viable next argument accepts SelectionMask.none()
       const viableSpecs = this.getViableNextArgumentSpecs();
-      const hasNoneMask = viableSpecs.some(spec => spec.mask instanceof NoneMask);
-      
-      if (!hasNoneMask) {
+      const freeSpec = viableSpecs.find(spec => acceptsFreeClick(spec, this.collected));
+
+      if (!freeSpec) {
         return { success: false, message: 'No selectable element found at click position.' };
       }
-      
-      // SelectionMask.none() - use null element with mouse position
-      argumentValue = {
-        element: null,
-        planeCoords
-      };
+
+      if (isScalarSpec(freeSpec)) {
+        const scalarValue = this.scalarValueFromMouse(freeSpec, planeCoords, collectionContext);
+        if (!scalarValue.success) {
+          return { success: false, message: scalarValue.error };
+        }
+        argumentValue = scalarValue.value;
+      } else {
+        argumentValue = {
+          kind: 'plane-position',
+          element: null,
+          planeCoords
+        };
+      }
     } else {
       // Element hit - get element and create ArgumentValue
       const element = readPort.getElement2D(hit.elementId);
@@ -207,57 +238,111 @@ export abstract class ArgumentCollectorTool extends BaseTool implements ITool {
       }
       
       argumentValue = {
+        kind: 'element',
         element,
         planeCoords
       };
     }
     
-    // Try to add argument
-    const collectionContext: CollectionContext = {
-      readPort,
-      plane,
-      collected: this.collected
-    };
-    
-    const result = this.tryAddArgument(argumentValue, collectionContext);
-    
-    if (!result.success) {
-      return { success: false, message: result.error || 'Cannot add element as argument' };
+    return this.collectArgumentValue(argumentValue, context, collectionContext);
+  }
+
+  handlePlanePositionInput(context: ToolContext, position: Vector3): ToolResult {
+    const { planeId, readPort } = context;
+    const plane = readPort.getProjectionPlaneById(planeId);
+    if (!plane) {
+      return { success: false, message: `Plane not found: ${planeId}` };
     }
-    
-    // Update viable sets
-    this.updateViableSets(collectionContext);
-    
-    // Check for completed set
-    const completedSetIndex = this.findCompletedSet();
-    
-    if (completedSetIndex !== null) {
+
+    if (this.viableSets.length === 0) {
       const argumentSets = this.getArgumentSets();
-      const completedSet = argumentSets[completedSetIndex];
-      
-      try {
-        // Execute construction using set's callback or tool's execute method
-        if (completedSet.execute) {
-          const executeResult = completedSet.execute(this.collected, context);
-          // Reset after execution
-          this.reset();
-          return executeResult;
-        } else {
-          this.execute(completedSetIndex, this.collected, context);
-          // Reset after execution
-          this.reset();
-          return { success: true, message: `${this.getCommandDescription()} completed successfully` };
-        }
-      } catch (error) {
-        // Reset on error
-        this.reset();
-        const message = error instanceof Error ? error.message : String(error);
-        return { success: false, message: `Failed to ${this.getCommandDescription().toLowerCase()}: ${message}` };
-      }
+      this.viableSets = argumentSets.map((_, index) => index);
     }
-    
-    // Return status showing progress
-    return { success: true, message: this.getStatusMessage() };
+
+    if (!this.acceptsPlanePositionInput()) {
+      return { success: false, message: 'Current tool is not waiting for a free position.' };
+    }
+
+    return this.collectArgumentValue(
+      { kind: 'plane-position', element: null, planeCoords: position },
+      { ...context, planeCoords: position },
+      { readPort, plane, collected: this.collected },
+    );
+  }
+
+  acceptsPlanePositionInput(): boolean {
+    if (this.viableSets.length === 0) {
+      const argumentSets = this.getArgumentSets();
+      this.viableSets = argumentSets.map((_, index) => index);
+    }
+    return this.getViableNextArgumentSpecs().some(isPlanePositionSpec);
+  }
+
+  getPlanePositionInputLabel(): string {
+    if (this.viableSets.length === 0) {
+      const argumentSets = this.getArgumentSets();
+      this.viableSets = argumentSets.map((_, index) => index);
+    }
+    return this.getViableNextArgumentSpecs().find(isPlanePositionSpec)?.name ?? 'position';
+  }
+
+  getToolArgumentInputRequest(): ToolArgumentInputRequest | null {
+    if (this.viableSets.length === 0) {
+      const argumentSets = this.getArgumentSets();
+      this.viableSets = argumentSets.map((_, index) => index);
+    }
+
+    const next = this.getViableNextArgumentSpecs().find(spec => isPlanePositionSpec(spec) || (isScalarSpec(spec) && spec.numericInput));
+    if (!next) return null;
+    if (isScalarSpec(next)) {
+      return {
+        kind: 'scalar',
+        valueKind: next.valueKind,
+        label: next.name,
+        placeholder: next.valueKind === 'angle' ? 'deg' : 'value',
+      };
+    }
+    return {
+      kind: 'plane-position',
+      label: next.name,
+      placeholder: 'u,v',
+    };
+  }
+
+  handleToolArgumentInput(context: ToolContext, input: ParsedToolArgumentInput): ToolResult {
+    if (input.kind === 'plane-position') {
+      return this.handlePlanePositionInput(context, input.position);
+    }
+
+    const { planeId, readPort } = context;
+    const plane = readPort.getProjectionPlaneById(planeId);
+    if (!plane) {
+      return { success: false, message: `Plane not found: ${planeId}` };
+    }
+
+    if (this.viableSets.length === 0) {
+      const argumentSets = this.getArgumentSets();
+      this.viableSets = argumentSets.map((_, index) => index);
+    }
+
+    const spec = this.getViableNextArgumentSpecs().find(candidate => (
+      isScalarSpec(candidate) && candidate.numericInput && candidate.valueKind === input.valueKind
+    )) as ScalarArgumentSpec | undefined;
+
+    if (!spec) {
+      return { success: false, message: 'Current tool is not waiting for this numeric input.' };
+    }
+
+    const argumentValue = this.scalarValueFromInput(spec, input, { readPort, plane, collected: this.collected });
+    if (!argumentValue.success) {
+      return { success: false, message: argumentValue.error };
+    }
+
+    return this.collectArgumentValue(
+      argumentValue.value,
+      context,
+      { readPort, plane, collected: this.collected },
+    );
   }
   
   /**
@@ -286,11 +371,54 @@ export abstract class ArgumentCollectorTool extends BaseTool implements ITool {
     }
     
     // Union of all viable next argument masks
-    const masks = viableSpecs.map(spec => spec.mask);
+    const masks = viableSpecs.filter(isElementSpec).map(spec => spec.mask);
+
+    if (masks.length === 0) {
+      return SelectionMask.none();
+    }
     
     // Compute union of selection masks
     const mask = SelectionMask.union(...masks);
     return mask;
+  }
+
+  private collectArgumentValue(
+    argumentValue: ArgumentValue,
+    context: ToolContext,
+    collectionContext: CollectionContext,
+  ): ToolResult {
+    const result = this.tryAddArgument(argumentValue, collectionContext);
+
+    if (!result.success) {
+      return { success: false, message: result.error || 'Cannot add element as argument' };
+    }
+
+    this.updateViableSets(collectionContext);
+
+    const completedSetIndex = this.findCompletedSet();
+
+    if (completedSetIndex !== null) {
+      const argumentSets = this.getArgumentSets();
+      const completedSet = argumentSets[completedSetIndex];
+
+      try {
+        if (completedSet.execute) {
+          const executeResult = completedSet.execute(this.collected, context);
+          this.reset();
+          return executeResult;
+        } else {
+          this.execute(completedSetIndex, this.collected, context);
+          this.reset();
+          return { success: true, message: `${this.getCommandDescription()} completed successfully` };
+        }
+      } catch (error) {
+        this.reset();
+        const message = error instanceof Error ? error.message : String(error);
+        return { success: false, message: `Failed to ${this.getCommandDescription().toLowerCase()}: ${message}` };
+      }
+    }
+
+    return { success: true, message: this.getStatusMessage() };
   }
   
   /**
@@ -331,7 +459,7 @@ export abstract class ArgumentCollectorTool extends BaseTool implements ITool {
         const methods = this.viableSets
           .map(index => argumentSets[index].label || `method ${index + 1}`)
           .join(' or ');
-        return `${collectedNames} selected, pick ${nextArgs} (${methods})`;
+        return `Creating ${this.name}: ${collectedNames} selected, pick ${nextArgs} (${methods})`;
       }
     }
   }
@@ -358,7 +486,8 @@ export abstract class ArgumentCollectorTool extends BaseTool implements ITool {
     return {
       collected: Array.from(this.collected.entries()).map(([name, argValue]) => ({
         name,
-        elementId: argValue.element?.id || null
+        elementId: argValue.element?.id || null,
+        scalar: argValue.scalar ? { ...argValue.scalar } : undefined,
       })),
       viableSets: this.viableSets
     };
@@ -395,17 +524,19 @@ export abstract class ArgumentCollectorTool extends BaseTool implements ITool {
         // Check if argument matches this spec
         let matches = false;
         
-        if (element) {
+        if (isScalarValue(argumentValue)) {
+          matches = isScalarSpec(spec) && spec.valueKind === argumentValue.scalar.valueKind;
+        } else if (element && isElementSpec(spec)) {
           // Element provided - check if it matches SelectionMask using instanceof
           matches = spec.mask.matches(element);
-        } else {
+        } else if (!element && isPlanePositionSpec(spec)) {
           // No element (null) - check if spec accepts SelectionMask.none()
-          matches = spec.mask instanceof NoneMask;
+          matches = true;
         }
         
         if (matches) {
           // Apply argument-level validator if specified (only for non-null elements)
-          if (spec.validator && element) {
+          if (isElementSpec(spec) && spec.validator && element) {
             const validationResult = spec.validator(element, context);
             if (!validationResult.valid) {
               return { 
@@ -456,12 +587,14 @@ export abstract class ArgumentCollectorTool extends BaseTool implements ITool {
         const element = argValue.element;
         
         let matches = false;
-        if (element) {
+        if (isScalarValue(argValue)) {
+          matches = isScalarSpec(spec) && spec.valueKind === argValue.scalar.valueKind;
+        } else if (element && isElementSpec(spec)) {
           // Element provided - check if it matches SelectionMask using instanceof
           matches = spec.mask.matches(element);
-        } else {
+        } else if (!element && isPlanePositionSpec(spec)) {
           // No element (null) - check if spec accepts SelectionMask.none()
-          matches = spec.mask instanceof NoneMask;
+          matches = true;
         }
         
         if (!matches) {
@@ -521,7 +654,7 @@ export abstract class ArgumentCollectorTool extends BaseTool implements ITool {
       
       for (const spec of set.arguments) {
         // Only include specs for arguments not yet collected
-        if (!this.collected.has(spec.name) && !seenNames.has(spec.name)) {
+        if (!this.collected.has(spec.name) && !seenNames.has(spec.name) && isSpecCollectable(spec, this.collected)) {
           specs.push(spec);
           seenNames.add(spec.name);
         }
@@ -530,5 +663,139 @@ export abstract class ArgumentCollectorTool extends BaseTool implements ITool {
     
     return specs;
   }
+
+  private scalarValueFromMouse(
+    spec: ScalarArgumentSpec,
+    planeCoords: Vector3,
+    context: CollectionContext,
+  ): { success: true; value: ArgumentValue } | { success: false; error: string } {
+    if (!spec.mouseInput) {
+      return { success: false, error: `${spec.name} does not accept mouse input.` };
+    }
+
+    if (spec.mouseResolver.kind === 'distance-from-point') {
+      const from = this.collected.get(spec.mouseResolver.fromArgument);
+      const point = from?.element ? context.readPort.getPoint2D(from.element.id) : undefined;
+      if (!point) return { success: false, error: `Select ${spec.mouseResolver.fromArgument} first.` };
+      const pointRealization = context.readPort.realizePoint2D(point);
+      if (!pointRealization.feasible) return { success: false, error: 'Reference point is not feasible.' };
+      const direction = planeCoords.clone().sub(pointRealization.position);
+      direction.z = 0;
+      const value = direction.length();
+      if (!this.scalarInRange(spec, value)) {
+        return { success: false, error: `${spec.name} is too small.` };
+      }
+      direction.normalize();
+      return {
+        success: true,
+        value: { kind: 'scalar', element: null, planeCoords, scalar: { valueKind: 'distance', value, direction } }
+      };
+    }
+
+    const reference = this.collected.get(spec.mouseResolver.referenceLineArgument);
+    const vertex = this.collected.get(spec.mouseResolver.vertexArgument);
+    const line = reference?.element ? context.readPort.getLine2D(reference.element.id) : undefined;
+    const point = vertex?.element ? context.readPort.getPoint2D(vertex.element.id) : undefined;
+    if (!line || !point) return { success: false, error: 'Select reference line and through point first.' };
+    const lineRealization = context.readPort.realizeLine2D(line);
+    const pointRealization = context.readPort.realizePoint2D(point);
+    if (!lineRealization.feasible || !pointRealization.feasible) {
+      return { success: false, error: 'Reference geometry is not feasible.' };
+    }
+    const targetDirection = planeCoords.clone().sub(pointRealization.position);
+    targetDirection.z = 0;
+    if (targetDirection.lengthSq() < MIN_PARAMETER_RADIUS * MIN_PARAMETER_RADIUS) {
+      return { success: false, error: 'Angle target is too close to the through point.' };
+    }
+    const radians = signedAngleCCW(lineRealization.getDirection(), targetDirection);
+    return {
+      success: true,
+      value: { kind: 'scalar', element: null, planeCoords, scalar: { valueKind: 'angle', radians } }
+    };
+  }
+
+  private scalarValueFromInput(
+    spec: ScalarArgumentSpec,
+    input: ParsedToolArgumentInput,
+    context: CollectionContext,
+  ): { success: true; value: ArgumentValue } | { success: false; error: string } {
+    if (input.kind !== 'scalar' || input.valueKind !== spec.valueKind) {
+      return { success: false, error: `Expected ${spec.valueKind} input.` };
+    }
+    if (input.valueKind === 'distance') {
+      if (!this.scalarInRange(spec, input.value)) {
+        return { success: false, error: `${spec.name} is too small.` };
+      }
+      const direction = this.defaultDirectionForDistance(spec, context);
+      return {
+        success: true,
+        value: {
+          kind: 'scalar',
+          element: null,
+          planeCoords: new Vector3(0, 0, 1),
+          scalar: { valueKind: 'distance', value: input.value, direction },
+        }
+      };
+    }
+    return {
+      success: true,
+      value: {
+        kind: 'scalar',
+        element: null,
+        planeCoords: new Vector3(0, 0, 1),
+        scalar: { valueKind: 'angle', radians: input.radians },
+      }
+    };
+  }
+
+  private defaultDirectionForDistance(spec: ScalarArgumentSpec, _context: CollectionContext): Vector3 {
+    const lastDirection = Array.from(this.collected.values()).reverse().find(value => value.scalar?.direction)?.scalar?.direction;
+    if (lastDirection) return lastDirection.clone();
+    if (spec.mouseResolver.kind === 'distance-from-point' && spec.mouseResolver.defaultDirection === 'positive-u') {
+      return new Vector3(1, 0, 0);
+    }
+    return new Vector3(1, 0, 0);
+  }
+
+  private scalarInRange(spec: ScalarArgumentSpec, value: number): boolean {
+    if (!Number.isFinite(value)) return false;
+    if (spec.min !== undefined && value < spec.min) return false;
+    if (spec.max !== undefined && value > spec.max) return false;
+    return true;
+  }
   
+}
+
+function isScalarSpec(spec: ToolArgumentSpec): spec is ScalarArgumentSpec {
+  return spec.kind === 'scalar';
+}
+
+function isElementSpec(spec: ToolArgumentSpec): spec is Extract<ToolArgumentSpec, { mask: SelectionMask }> {
+  return spec.kind === undefined || spec.kind === 'element';
+}
+
+function isPlanePositionSpec(spec: ToolArgumentSpec): boolean {
+  return isElementSpec(spec) && spec.mask instanceof NoneMask;
+}
+
+function acceptsFreeClick(spec: ToolArgumentSpec, collected: Map<string, ArgumentValue>): boolean {
+  if (isPlanePositionSpec(spec)) return true;
+  if (!isScalarSpec(spec) || !spec.mouseInput) return false;
+  return scalarPrerequisitesCollected(spec, collected);
+}
+
+function isSpecCollectable(spec: ToolArgumentSpec, collected: Map<string, ArgumentValue>): boolean {
+  if (!isScalarSpec(spec)) return true;
+  return scalarPrerequisitesCollected(spec, collected);
+}
+
+function scalarPrerequisitesCollected(spec: ScalarArgumentSpec, collected: Map<string, ArgumentValue>): boolean {
+  if (spec.mouseResolver.kind === 'distance-from-point') {
+    return collected.has(spec.mouseResolver.fromArgument);
+  }
+  return collected.has(spec.mouseResolver.referenceLineArgument) && collected.has(spec.mouseResolver.vertexArgument);
+}
+
+function isScalarValue(value: ArgumentValue): value is ArgumentValue & { scalar: NonNullable<ArgumentValue['scalar']> } {
+  return value.kind === 'scalar' && !!value.scalar;
 }

@@ -76,7 +76,7 @@ export class Guide2D extends Line2DPerpendicularToLine {
    * - Geometric failures: return realization with feasible=false
    * 
    * Phase 101: For HalfHingeLine realizations, use the guideVector from realization
-   * - HalfHingeLineRealization2D: use realization.guideVector (perpendicular for regular, parallel to T1 for broken)
+   * - HalfHingeLineRealization2D: use realization.guideVector
    * - Other lines: compute perpendicular direction (90-degree rotation)
    * 
    * Algorithm:
@@ -132,7 +132,7 @@ export class Guide2D extends Line2DPerpendicularToLine {
     if (referenceLine instanceof HalfHingeLineRealization2D) {
       // Phase 101: For hinge lines (regular or broken), use the guideVector from realization
       // - Regular HalfHingeLine2D: guideVector is perpendicular to hinge
-      // - BrokenHalfHingeLine2D: guideVector is parallel to main hinge T1
+      // - BrokenHalfHingeLine2D: guideVector is perpendicular to the replaced T2/T2' trace
       guideDirection = referenceLine.getGuideVector();
     } else {
       // For other lines: compute perpendicular direction using 90-degree rotation
@@ -357,7 +357,7 @@ export class SiblingGuide2D extends Line2D {
     // Since the sibling reference is always a HalfHingeLine2D, its realization is always
     // HalfHingeLineRealization2D which provides getGuideVector():
     // - Regular HalfHingeLine2D: guideVector is perpendicular to hinge
-    // - BrokenHalfHingeLine2D: guideVector is parallel to main hinge T1
+    // - BrokenHalfHingeLine2D: guideVector is perpendicular to the replaced T2/T2' trace
     const guideDirection = (siblingHalfHingeLineRealization as HalfHingeLineRealization2D).getGuideVector();
 
     // Check for degenerate case (shouldn't happen if HalfHingeLine is valid)

@@ -9,8 +9,7 @@
  * **Guide Direction by Hinge Line Type**:
  * - Regular HalfHingeLine2D: guideVector is PERPENDICULAR to hinge line
  *   (represents planes perpendicular to both projection planes)
- * - BrokenHalfHingeLine2D: guideVector is PARALLEL to main hinge T1
- *   (represents intersections with planes containing T1)
+ * - BrokenHalfHingeLine2D: guideVector is PERPENDICULAR to the replaced T2/T2' trace
  * 
  * **Phase 101**: Broken Hinge Lines and Distance Transport Guides
  * - Guide2D simply uses realization.guideVector (no instanceof checks needed)
@@ -68,7 +67,7 @@ export class HalfHingeLineRealization2D extends Line2DRealization2D {
    * 
    * This is used by Guide2DPerpendicularToLine to determine guide direction.
    * - For regular HalfHingeLine2D: perpendicular to hinge line
-   * - For BrokenHalfHingeLine2D: parallel to main hinge T1
+   * - For BrokenHalfHingeLine2D: perpendicular to the replaced T2/T2' trace
    * 
    * @returns Normalized guide direction
    */

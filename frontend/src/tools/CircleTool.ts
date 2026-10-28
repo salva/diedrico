@@ -18,6 +18,8 @@ import type { ToolContext } from './ITool';
 import type { ToolConstructionIntent } from './ToolCommandIntents';
 import type { Point2D } from '@/domain/world/Point';
 import { SelectionMask } from '@/types/SelectionMask';
+import { MIN_PARAMETER_RADIUS } from '@/domain/world/GeometricParameters';
+import { Vector3 } from 'three';
 
 /**
  * CircleTool using ArgumentCollectorTool framework
@@ -38,6 +40,7 @@ export class CircleTool extends ArgumentCollectorTool {
   protected getArgumentSets(): ToolArgumentSet[] {
     return [
       {
+        label: 'center and point',
         arguments: [
           { 
             name: 'center', 
@@ -68,11 +71,48 @@ export class CircleTool extends ArgumentCollectorTool {
           
           return { valid: true };
         }
+      },
+      {
+        label: 'center and radius',
+        arguments: [
+          {
+            name: 'center',
+            mask: SelectionMask.point()
+          },
+          {
+            kind: 'scalar',
+            name: 'radius',
+            valueKind: 'distance',
+            unit: 'plane-units',
+            min: MIN_PARAMETER_RADIUS,
+            numericInput: true,
+            mouseInput: true,
+            mouseResolver: {
+              kind: 'distance-from-point',
+              fromArgument: 'center',
+              defaultDirection: 'positive-u'
+            }
+          }
+        ]
       }
     ];
   }
 
   protected buildConstructionIntent(args: Map<string, ArgumentValue>, context: ToolContext): ToolConstructionIntent {
+    const radius = args.get('radius');
+    if (radius?.scalar?.valueKind === 'distance' && radius.scalar.value !== undefined) {
+      const direction = radius.scalar.direction?.clone() ?? new Vector3(1, 0, 0);
+      direction.z = 0;
+      direction.normalize();
+      return {
+        type: 'circle-by-radius',
+        planeId: context.planeId,
+        centerPointId: this.requireElementId(args, 'center'),
+        radiusVector: direction.multiplyScalar(radius.scalar.value),
+        description: this.getCommandDescription()
+      };
+    }
+
     return {
       type: 'circle',
       planeId: context.planeId,

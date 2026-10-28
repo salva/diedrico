@@ -9,6 +9,7 @@ import type { ElementDescriptor } from './ElementDescriptor';
 import type { DescriptionPart } from './DescriptionPart';
 import type { World } from '../World';
 import type { Circle2DByCenterAndPoint } from '../Circle';
+import type { Circle2DByCenterAndRadiusVector } from '../Circle';
 import type { Circle2DByThreePoints } from '../Circle';
 import type { Segment2D } from '../Segment';
 import type { Guide2D } from '../Guide';
@@ -47,6 +48,24 @@ export class Circle2DByCenterAndPointDescriptor implements ElementDescriptor<Cir
       { type: 'label', content: centerLabel, elementId: element.centerPointId },
       { type: 'text', content: ' passing through point ' },
       { type: 'label', content: radiusPointLabel, elementId: element.circumferencePointId }
+    ];
+  }
+}
+
+export class Circle2DByCenterAndRadiusVectorDescriptor implements ElementDescriptor<Circle2DByCenterAndRadiusVector> {
+  getTypeName(_element: Circle2DByCenterAndRadiusVector): string {
+    return 'Circle';
+  }
+
+  getConstructionDescription(element: Circle2DByCenterAndRadiusVector, world: World): DescriptionPart[] {
+    const planeName = requireProjectionPlaneName(world, element.planeId);
+    const centerLabel = requireElementLabel(world, element.centerPointId);
+    return [
+      { type: 'text', content: 'in ' },
+      { type: 'label', content: planeName, elementId: element.planeId },
+      { type: 'text', content: ', center at point ' },
+      { type: 'label', content: centerLabel, elementId: element.centerPointId },
+      { type: 'text', content: ` with radius ${element.radiusVector.length().toFixed(2)}` }
     ];
   }
 }

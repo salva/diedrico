@@ -50,6 +50,7 @@ if (!injectedThreePresentationPort) {
 const threePresentationPort = injectedThreePresentationPort;
 const runtime = new ThreeViewRuntime();
 let unsubscribeWorldChanges: (() => void) | undefined;
+let resizeObserver: ResizeObserver | undefined;
 
 function selectedIds(): string[] { return [...selectionStore.selectedIdsArray]; }
 function refreshThreeView(): void { runtime.refresh(threePresentationPort.buildThreePresentationModel(displayOptions.value, selectedIds())); }
@@ -62,6 +63,8 @@ onMounted(() => {
   if (!containerRef.value || !canvasRef.value) return;
   runtime.mount({ container: containerRef.value, canvas: canvasRef.value });
   refreshThreeView();
+  resizeObserver = new ResizeObserver(handleResize);
+  resizeObserver.observe(containerRef.value);
   window.addEventListener('resize', handleResize);
 
   const handleWorldChange = () => { renderTick.value++; };
@@ -75,6 +78,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   unsubscribeWorldChanges?.();
+  resizeObserver?.disconnect();
   window.removeEventListener('resize', handleResize);
   runtime.dispose();
 });

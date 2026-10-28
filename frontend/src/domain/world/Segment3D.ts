@@ -17,6 +17,7 @@ import { Vector4 } from 'three';
 import { Element3D } from './Element3D';
 import { Segment3DRealization3D } from './Element3DRealization3D';
 import type { Element3DRealizationContext } from './projectionPlane/ProjectionPlaneContext';
+import type { Point3DRealization3D } from './Element3DRealization3D';
 import type { VisualStyle } from './VisualStyle';
 import { createVisualStyle } from './VisualStyle';
 import { reconstruct3DPointFromProjections } from '@/utils/threeUtils';
@@ -185,3 +186,51 @@ export class Segment3DFromProjections extends Element3D {
     return plane1Id !== plane2Id;
   }
 }
+
+export class Segment3DByPoints extends Element3D {
+  readonly kind = 'Segment3DByPoints';
+  label: string;
+
+  constructor(
+    id: string,
+    label: string,
+    readonly startPoint3DId: string,
+    readonly endPoint3DId: string,
+    visualStyle: VisualStyle
+  ) {
+    super(id, label, visualStyle);
+    this.label = label;
+  }
+
+  realize3D(context: Element3DRealizationContext): Segment3DRealization3D {
+    const contextWithPoints = context as Element3DRealizationContext & {
+      get3DPointRealization(id: string): Point3DRealization3D | undefined;
+    };
+    const start = contextWithPoints.get3DPointRealization?.(this.startPoint3DId);
+    const end = contextWithPoints.get3DPointRealization?.(this.endPoint3DId);
+    if (!start?.feasible || !end?.feasible) {
+      return new Segment3DRealization3D(
+        new Vector4(0, 0, 0, 1),
+        new Vector4(1, 0, 0, 1),
+        false
+      );
+    }
+    return new Segment3DRealization3D(start.position.clone(), end.position.clone());
+  }
+
+  getDependencies(): string[] {
+    return [this.startPoint3DId, this.endPoint3DId];
+  }
+
+  clone(): Segment3DByPoints {
+    return new Segment3DByPoints(
+      this.id,
+      this.label,
+      this.startPoint3DId,
+      this.endPoint3DId,
+      this.visualStyle ? { ...this.visualStyle } : createVisualStyle()
+    );
+  }
+}
+
+export type Segment3D = Segment3DFromProjections | Segment3DByPoints;

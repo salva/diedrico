@@ -16,7 +16,7 @@ function event(key: string, options: Partial<KeyboardEvent> = {}) {
 
 function deps() {
   return {
-    commandStack: { canUndo: () => false, canRedo: () => false, undo: vi.fn(), redo: vi.fn() },
+    commandHistory: { canUndo: () => false, canRedo: () => false, undo: vi.fn(), redo: vi.fn() },
     toolStore: { setTool: vi.fn(), selectSubTool: vi.fn() },
     viewStore: { toggleProjectedElements: vi.fn() },
     projectSession: { newProject: vi.fn(), showStartupProjectChooser: vi.fn() },
@@ -61,8 +61,53 @@ describe('KeyboardShortcutRouter', () => {
     const router = new KeyboardShortcutRouter(d);
     const input = document.createElement('input');
     router.handle(event('Delete', { target: input }));
+    router.handle(event('Escape', { target: input }));
     router.handle(event('p', { target: input }));
     expect(d.selection.deleteSelected).not.toHaveBeenCalled();
+    expect(d.toolStore.setTool).not.toHaveBeenCalled();
+  });
+
+  it('routes coordinate starter keys to the coordinate input before shortcuts', () => {
+    const d = deps();
+    const coordinateInput = {
+      isAvailable: vi.fn(() => true),
+      focusWithText: vi.fn(),
+      isFocused: vi.fn(() => false),
+      clear: vi.fn(),
+      blur: vi.fn(),
+      hasText: vi.fn(() => false),
+    };
+    const router = new KeyboardShortcutRouter({ ...d, coordinateInput });
+
+    const e = event('-');
+    router.handle(e);
+
+    expect(coordinateInput.focusWithText).toHaveBeenCalledWith('-');
+    expect(e.preventDefault).toHaveBeenCalled();
+  });
+
+  it('lets coordinate input own Escape while focused', () => {
+    const d = deps();
+    const coordinateInput = {
+      isAvailable: vi.fn(() => true),
+      focusWithText: vi.fn(),
+      isFocused: vi.fn(() => true),
+      clear: vi.fn(),
+      blur: vi.fn(),
+      hasText: vi.fn(() => true),
+    };
+    const router = new KeyboardShortcutRouter({ ...d, coordinateInput });
+
+    const e = event('Escape');
+    router.handle(e);
+
+    expect(coordinateInput.clear).toHaveBeenCalled();
+    expect(d.toolStore.setTool).not.toHaveBeenCalled();
+    expect(e.preventDefault).toHaveBeenCalled();
+
+    coordinateInput.hasText.mockReturnValue(false);
+    router.handle(event('Escape'));
+    expect(coordinateInput.blur).toHaveBeenCalled();
     expect(d.toolStore.setTool).not.toHaveBeenCalled();
   });
 });

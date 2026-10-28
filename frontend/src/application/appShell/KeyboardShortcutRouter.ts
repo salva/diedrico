@@ -9,6 +9,15 @@ export interface KeyboardShortcutRouterTarget {
   removeEventListener(type: 'keydown', listener: (event: KeyboardEvent) => void): void;
 }
 
+export interface CoordinateInputKeyboardPort {
+  isAvailable(): boolean;
+  focusWithText(text: string): void;
+  isFocused(): boolean;
+  clear(): void;
+  blur(): void;
+  hasText(): boolean;
+}
+
 export class KeyboardShortcutRouter {
   private target: KeyboardShortcutRouterTarget | null = null;
   private readonly boundHandler = (event: KeyboardEvent) => this.handle(event);
@@ -22,6 +31,7 @@ export class KeyboardShortcutRouter {
     activePlane: Pick<ActivePlaneRuntimePort, 'cycleActivePlane'>;
     fitToView: () => void;
     startRename: () => void;
+    coordinateInput?: CoordinateInputKeyboardPort;
   }) {}
 
   install(target: KeyboardShortcutRouterTarget): void {
@@ -39,8 +49,29 @@ export class KeyboardShortcutRouter {
 
   handle(event: Pick<KeyboardEvent, 'key' | 'ctrlKey' | 'metaKey' | 'shiftKey' | 'altKey' | 'target' | 'preventDefault'>): void {
     const target = event.target as HTMLElement | null;
-    const isTextInput = target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA' || target?.isContentEditable;
+    const isTextInput = target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA' || target?.tagName === 'SELECT' || target?.isContentEditable;
     const isModifier = event.ctrlKey || event.metaKey;
+    const coordinateInput = this.deps.coordinateInput;
+
+    if (coordinateInput?.isFocused()) {
+      if (event.key === 'Escape') {
+        if (coordinateInput.hasText()) {
+          coordinateInput.clear();
+        } else {
+          coordinateInput.blur();
+        }
+        event.preventDefault();
+      }
+      return;
+    }
+
+    if (isTextInput) return;
+
+    if (coordinateInput?.isAvailable() && isCoordinateStarterKey(event)) {
+      coordinateInput.focusWithText(event.key);
+      event.preventDefault();
+      return;
+    }
 
     if (event.key === 'Escape') {
       event.preventDefault();
@@ -48,7 +79,7 @@ export class KeyboardShortcutRouter {
       this.deps.selection.clearSelection();
       return;
     }
-    if ((event.key === 'Delete' || event.key === 'Backspace') && !isTextInput) {
+    if (event.key === 'Delete' || event.key === 'Backspace') {
       event.preventDefault();
       this.deps.selection.deleteSelected();
       return;
@@ -58,12 +89,12 @@ export class KeyboardShortcutRouter {
       this.deps.startRename();
       return;
     }
-    if (event.key === 'Tab' && !isTextInput) {
+    if (event.key === 'Tab') {
       event.preventDefault();
       this.deps.activePlane.cycleActivePlane(event.shiftKey ? -1 : 1);
       return;
     }
-    if (!isModifier && !event.shiftKey && !event.altKey && !isTextInput) {
+    if (!isModifier && !event.shiftKey && !event.altKey) {
       const key = event.key.toUpperCase();
       if (key === 'D') {
         event.preventDefault();
@@ -99,4 +130,9 @@ export class KeyboardShortcutRouter {
       this.deps.commandHistory.redo();
     }
   }
+}
+
+function isCoordinateStarterKey(event: Pick<KeyboardEvent, 'key' | 'ctrlKey' | 'metaKey' | 'altKey'>): boolean {
+  if (event.ctrlKey || event.metaKey || event.altKey) return false;
+  return /^[0-9]$/.test(event.key) || event.key === '.' || event.key === ',' || event.key === '+' || event.key === '-';
 }

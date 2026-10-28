@@ -1,9 +1,14 @@
 import type { CanvasCommandProductionPort } from '@/application/commandProduction/CommandProductionPorts';
 import type { OperationContext } from '@/commands/operations/OperationContext';
-import type { ToolCommandSink, ToolConstructionIntent, MoveFreePointRequest, FreePointMoveSession, StyleUpdateRequest, ToolCommandResult } from '@/tools/ToolCommandIntents';
+import type { ToolCommandSink, ToolConstructionIntent, MoveFreePointRequest, FreePointMoveSession, StyleUpdateRequest, ToolCommandResult, ParameterUpdateRequest } from '@/tools/ToolCommandIntents';
 import { executeConstructionIntent } from '@/application/construction/ConstructionUseCases';
 import { CanvasPointMovementUseCase } from '@/application/canvas/CanvasPointMovementUseCase';
 import { CanvasStyleUseCase } from '@/application/canvas/CanvasStyleUseCase';
+import { Circle2DByCenterAndRadiusVector } from '@/domain/world/Circle';
+import { Line2DByPointAndRelativeAngle } from '@/domain/world/Line';
+import { MIN_PARAMETER_RADIUS } from '@/domain/world/GeometricParameters';
+import { UpdateCircle2DRadiusVectorOp } from '@/commands/operations/world/AddCircleOp';
+import { UpdateLine2DRelativeAngleOp } from '@/commands/operations/world/AddLineOp';
 
 export interface CanvasToolControllerDependencies {
   operationContext: OperationContext;
@@ -33,5 +38,39 @@ export class CanvasToolController implements ToolCommandSink {
 
   updateElementStyle(request: StyleUpdateRequest): ToolCommandResult {
     return this.style.update(request);
+  }
+
+  updateElementParameter(request: ParameterUpdateRequest): ToolCommandResult {
+    return this.deps.commands.executeToolCommand('Update element parameter', (command) => {
+      const plane = this.deps.operationContext.world.getProjectionPlaneById(request.planeId);
+      if (!plane) throw new Error(`Plane not found: ${request.planeId}`);
+
+      if (request.parameter.kind === 'radius') {
+        if (!Number.isFinite(request.parameter.value) || request.parameter.value < MIN_PARAMETER_RADIUS) {
+          throw new Error(`Radius must be at least ${MIN_PARAMETER_RADIUS}.`);
+        }
+        const circle = plane.getCircle(request.elementId);
+        if (!(circle instanceof Circle2DByCenterAndRadiusVector)) {
+          throw new Error('Selected circle does not have an editable radius parameter.');
+        }
+        const direction = circle.radiusVector.clone().normalize();
+        command.addAndExecute(new UpdateCircle2DRadiusVectorOp(
+          request.planeId,
+          request.elementId,
+          direction.multiplyScalar(request.parameter.value),
+        ));
+        return;
+      }
+
+      const line = plane.getLine(request.elementId);
+      if (!(line instanceof Line2DByPointAndRelativeAngle)) {
+        throw new Error('Selected line does not have an editable angle parameter.');
+      }
+      command.addAndExecute(new UpdateLine2DRelativeAngleOp(
+        request.planeId,
+        request.elementId,
+        request.parameter.degrees * Math.PI / 180,
+      ));
+    });
   }
 }

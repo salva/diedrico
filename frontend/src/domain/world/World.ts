@@ -20,7 +20,7 @@ import { ProjectionPlane } from './projectionPlane/ProjectionPlane';
 
 import type { Point3D } from './Point3D';
 import type { Line3D } from './Line3D';
-import type { Segment3DFromProjections } from './Segment3D';
+import type { Segment3D } from './Segment3D';
 
 export class World {
   private hingeLines: Map<string, HingeLine>;
@@ -29,7 +29,7 @@ export class World {
   
   private points3D: Map<string, Point3D>;        // User-created 3D points from projections
   private lines3D: Map<string, Line3D>;          // User-created 3D lines from projections
-  private segments3D: Map<string, Segment3DFromProjections>;    // User-created 3D segments from projections
+  private segments3D: Map<string, Segment3D>;    // User-created 3D segments
   
   // Fixed elements (always present)
   originPoint?: Vector4;  // O at (0,0,0) in 3D space
@@ -159,14 +159,14 @@ export class World {
   /**
    * Get 3D segment by ID
    */
-  get3DSegment(id: string): Segment3DFromProjections | undefined {
+  get3DSegment(id: string): Segment3D | undefined {
     return this.segments3D.get(id);
   }
 
   /**
    * Get all 3D segments
    */
-  getAll3DSegments(): Segment3DFromProjections[] {
+  getAll3DSegments(): Segment3D[] {
     return Array.from(this.segments3D.values());
   }
 
@@ -193,7 +193,7 @@ export class World {
     return this.lines3D.delete(id);
   }
 
-  putSegment3D(segment: Segment3DFromProjections): void {
+  putSegment3D(segment: Segment3D): void {
     this.segments3D.set(segment.id, segment);
   }
 

@@ -21,6 +21,7 @@ import { Command } from '@/commands/Command';
 import { createTestWorld, getHorizontalPlane } from '../../helpers/worldHelpers';
 import { AddFreePoint2DOp } from '@/commands/operations/world/AddFreePointOp';
 import { UpdateFreePoint2DPositionOp } from '@/commands/operations/world/UpdateFreePoint2DPositionOp';
+import { Circle2DByCenterAndRadiusVector } from '@/domain/world/Circle';
 import type { ToolContext } from '@/tools/ITool';
 import { CanvasToolController } from '@/application/tools/CanvasToolController';
 import { RuntimeCommandProducer } from '@/application/commandProduction/RuntimeCommandProducer';
@@ -191,8 +192,8 @@ describe('CircleTool', () => {
     });
   });
 
-  describe('T984: Require Both Points to Exist', () => {
-    it('should reject circle when circumference point does not exist', () => {
+  describe('Circle by Center and Radius', () => {
+    it('should create a circle by radius when second click is free space', () => {
       // Create only center point
       const setupCmd = new Command('Setup center point', operationContext);
       const centerOp = new AddFreePoint2DOp(horizontalPlaneId, new Vector3(100, 100, 1));
@@ -216,7 +217,7 @@ describe('CircleTool', () => {
       const firstResult = tool.handleClick(firstClickContext);
       expect(firstResult.success).toBe(true);
 
-      // Second click - far from any existing point (should fail)
+      // Second click - far from any existing point, interpreted as the radius target
       const secondClickContext: ToolContext = {
         planeId: horizontalPlaneId,
         planeCoords: new Vector3(300, 300, 1),
@@ -229,13 +230,58 @@ describe('CircleTool', () => {
       };
 
       const secondResult = tool.handleClick(secondClickContext);
-      expect(secondResult.success).toBe(false);
-      expect(secondResult.message).toContain('No selectable element');
+      expect(secondResult.success).toBe(true);
+      expect(secondResult.message).toContain('completed successfully');
 
-      // Verify no circle was created
+      // Verify a radius-vector circle was created without a circumference point dependency
       const plane = world.getProjectionPlaneById(horizontalPlaneId);
       const circles = plane?.getAllCircles().filter((c: any) => c.id?.startsWith(horizontalPlaneId)) || [];
-      expect(circles.length).toBe(0);
+      expect(circles.length).toBe(1);
+      expect(circles[0]).toBeInstanceOf(Circle2DByCenterAndRadiusVector);
+      expect((circles[0] as Circle2DByCenterAndRadiusVector).centerPointId).toBe(centerPointId);
+
+      const realization = circles[0].realize2D(operationContext.realizationContext);
+      expect(realization.feasible).toBe(true);
+      expect(realization.getRadius()).toBeCloseTo(Math.sqrt(200 * 200 + 200 * 200), 4);
+    });
+
+    it('should create a circle by numeric radius input', () => {
+      const setupCmd = new Command('Setup center point', operationContext);
+      const centerOp = new AddFreePoint2DOp(horizontalPlaneId, new Vector3(100, 100, 1));
+      setupCmd.addAndExecute(centerOp);
+      setupCmd.commit();
+      commandStack.push(setupCmd);
+
+      const clickContext: ToolContext = {
+        planeId: horizontalPlaneId,
+        planeCoords: new Vector3(100, 100, 1),
+        canvasCoords: new Vector3(100, 100, 1),
+        commandSink: new CanvasToolController({ operationContext, commands: new RuntimeCommandProducer(operationContext, commandStack) }),
+        readPort,
+        interactionQuery,
+        viewport: { zoom: 1, panX: 0, panY: 0 },
+        paperToPlaneTransform: new Matrix3().identity(),
+      };
+
+      const firstResult = tool.handleClick(clickContext);
+      expect(firstResult.success).toBe(true);
+
+      const inputResult = tool.handleToolArgumentInput(clickContext, {
+        kind: 'scalar',
+        valueKind: 'distance',
+        value: 90,
+      });
+      expect(inputResult.success).toBe(true);
+      expect(inputResult.message).toContain('completed successfully');
+
+      const plane = world.getProjectionPlaneById(horizontalPlaneId);
+      const circles = plane?.getAllCircles().filter((c: any) => c.id?.startsWith(horizontalPlaneId)) || [];
+      expect(circles.length).toBe(1);
+      expect(circles[0]).toBeInstanceOf(Circle2DByCenterAndRadiusVector);
+
+      const realization = circles[0].realize2D(operationContext.realizationContext);
+      expect(realization.feasible).toBe(true);
+      expect(realization.getRadius()).toBeCloseTo(90, 4);
     });
   });
 

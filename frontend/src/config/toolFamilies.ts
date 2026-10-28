@@ -12,6 +12,7 @@ import type { ToolFamilyConfig } from '@/types/ToolConfig';
 import FreePointIcon from '@/components/icons/toolbar/FreePointIcon.vue';
 import IntersectionPointIcon from '@/components/icons/toolbar/IntersectionPointIcon.vue';
 import LineByTwoPointsIcon from '@/components/icons/toolbar/LineByTwoPointsIcon.vue';
+import LineWithAngleIcon from '@/components/icons/toolbar/LineWithAngleIcon.vue';
 import ParallelLineIcon from '@/components/icons/toolbar/ParallelLineIcon.vue';
 import PerpendicularLineIcon from '@/components/icons/toolbar/PerpendicularLineIcon.vue';
 import TangentThroughPointIcon from '@/components/icons/toolbar/TangentThroughPointIcon.vue';
@@ -74,6 +75,12 @@ export const TOOL_FAMILIES: ToolFamilyConfig[] = [
         icon: LineByTwoPointsIcon,
         shortcut: 'L',
         tooltip: 'Create line through two points (L)'
+      },
+      {
+        id: 'line-with-angle',
+        label: 'Line With Angle',
+        icon: LineWithAngleIcon,
+        tooltip: 'Create line through point at an angle to reference line'
       },
       {
         id: 'parallel-line',
@@ -210,6 +217,12 @@ export const TOOL_FAMILIES: ToolFamilyConfig[] = [
         label: '3D Point XYZ',
         icon: Create3DPointIcon,
         tooltip: 'Create 3D point by entering X, Y, Z coordinates'
+      },
+      {
+        id: 'quick-yz-projection-plane',
+        label: 'Add YZ Plane',
+        icon: Create3DPlaneIcon,
+        tooltip: 'Add the YZ profile projection plane'
       },
       {
         id: 'quickprojectionsetup',

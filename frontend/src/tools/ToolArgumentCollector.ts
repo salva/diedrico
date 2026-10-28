@@ -33,36 +33,48 @@ import type { ToolInteractionReadPort } from '@/tools/ToolInteractionReadPort';
  * This structure ensures every argument captures complete "what happened" record.
  */
 export interface ArgumentValue {
+  kind?: 'element' | 'plane-position' | 'scalar';
+
   /** Selected element (null if SelectionMask.none() used) */
   element: Element2D | null;
   
   /** Position in plane coordinates where user clicked */
   planeCoords: Vector3;
+
+  /** Scalar distance/angle value for parameterized arguments */
+  scalar?: {
+    valueKind: 'distance' | 'angle';
+    value?: number;
+    radians?: number;
+    direction?: Vector3;
+  };
+}
+
+export interface ElementArgumentSpec {
+  kind?: 'element';
+  name: string;
+  mask: SelectionMask;
+  validator?: (element: Element2D, context: CollectionContext) => ValidationResult;
+}
+
+export interface ScalarArgumentSpec {
+  kind: 'scalar';
+  name: string;
+  valueKind: 'distance' | 'angle';
+  unit: 'plane-units' | 'degrees';
+  min?: number;
+  max?: number;
+  numericInput: boolean;
+  mouseInput: boolean;
+  mouseResolver:
+    | { kind: 'distance-from-point'; fromArgument: string; defaultDirection?: 'positive-u' }
+    | { kind: 'angle-from-line'; referenceLineArgument: string; vertexArgument: string };
 }
 
 /**
  * Declarative specification for a single argument in a tool's argument set
  */
-export interface ToolArgumentSpec {
-  /**
-   * Semantic name for this argument (e.g., 'center', 'referenceCircle', 'throughPoint')
-   * Used as key in collected arguments map and in status messages
-   */
-  name: string;
-  
-  /**
-   * Selection mask defining which element types are acceptable
-   * Framework uses this for CanvasInteractionQuery filtering and computing next viable selections
-   */
-  mask: SelectionMask;
-  
-  /**
-   * Optional argument-level validator.
-   * Called after type checking (SelectionMask) but before set-level validation.
-   * Validators can use the bounded readPort for geometric reads and realizations.
-   */
-  validator?: (element: Element2D, context: CollectionContext) => ValidationResult;
-}
+export type ToolArgumentSpec = ElementArgumentSpec | ScalarArgumentSpec;
 
 /**
  * Declarative specification for a complete argument set (one construction method)

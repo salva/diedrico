@@ -33,7 +33,8 @@ export class AddAuxiliaryProjectionPlaneOp implements IOperation {
     private t1HingeTraceId: string,         // ID of hinge trace line (T1)
     private t2OtherTraceId: string,         // ID of other trace line (T2)
     private t2PrimeLineId: string,          // ID of position/orientation line (T2')
-    private name?: string                   // Optional persisted name for the plane
+    private name?: string,                  // Optional persisted name for the plane
+    private label?: string                  // Optional display label for the plane
   ) {
   }
 
@@ -101,6 +102,9 @@ export class AddAuxiliaryProjectionPlaneOp implements IOperation {
         '#808080',  // Default gray
         this.plane3DId
       );
+      if (this.label) {
+        plane.label = this.label;
+      }
       
       // Add to World storage
       context.world.putProjectionPlane(plane);
@@ -141,6 +145,7 @@ export class AddAuxiliaryProjectionPlaneOp implements IOperation {
       t2OtherTraceId: this.t2OtherTraceId,
       t2PrimeLineId: this.t2PrimeLineId,
       name: this.name,
+      label: this.label,
       projPlaneId: this.outputs.projPlaneId
     };
   }

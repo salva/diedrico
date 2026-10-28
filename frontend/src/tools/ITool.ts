@@ -2,6 +2,7 @@ import type { Matrix3, Vector3 } from 'three';
 import type { ToolCommandSink } from './ToolCommandIntents';
 import type { ToolInteractionReadPort } from './ToolInteractionReadPort';
 import type { SelectionMask } from '@/types/SelectionMask';
+import type { ParsedToolArgumentInput, ToolArgumentInputRequest } from '@/types/ToolArgumentInput';
 
 export interface ToolInteractionQueryContext {
   viewport: { zoom: number; panX: number; panY: number };
@@ -54,6 +55,32 @@ export interface ITool {
   cancel?(): void;
   getState?(): Record<string, unknown>;
   getSelectionMask?(): SelectionMask | undefined;
+}
+
+export interface PlanePositionInputCapableTool extends ITool {
+  handlePlanePositionInput(context: ToolContext, position: Vector3): ToolResult;
+  acceptsPlanePositionInput(): boolean;
+  getPlanePositionInputLabel(): string;
+}
+
+export interface ToolArgumentInputCapableTool extends ITool {
+  getToolArgumentInputRequest(): ToolArgumentInputRequest | null;
+  handleToolArgumentInput(context: ToolContext, input: ParsedToolArgumentInput): ToolResult;
+}
+
+export function supportsPlanePositionInput(tool: ITool | null | undefined): tool is PlanePositionInputCapableTool {
+  if (!tool) return false;
+  const candidate = tool as Partial<PlanePositionInputCapableTool>;
+  return typeof candidate.handlePlanePositionInput === 'function'
+    && typeof candidate.acceptsPlanePositionInput === 'function'
+    && typeof candidate.getPlanePositionInputLabel === 'function';
+}
+
+export function supportsToolArgumentInput(tool: ITool | null | undefined): tool is ToolArgumentInputCapableTool {
+  if (!tool) return false;
+  const candidate = tool as Partial<ToolArgumentInputCapableTool>;
+  return typeof candidate.getToolArgumentInputRequest === 'function'
+    && typeof candidate.handleToolArgumentInput === 'function';
 }
 
 export type CanvasTool = ITool;

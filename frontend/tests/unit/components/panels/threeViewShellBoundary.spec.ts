@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import source from '../../../../src/components/panels/ThreeView.vue?raw';
+import windowSource from '../../../../src/components/panels/ThreeViewWindow.vue?raw';
 
 describe('ThreeView shell boundary', () => {
   it('delegates scene construction to ThreeViewRuntime through the three-presentation model and avoids low-level Three.js/rendering imports', () => {
@@ -9,6 +10,7 @@ describe('ThreeView shell boundary', () => {
     expect(source).toContain('runtime.mount');
     expect(source).toContain('runtime.refresh(threePresentationPort.buildThreePresentationModel(displayOptions.value, selectedIds()))');
     expect(source).toContain('runtime.resize');
+    expect(source).toContain('ResizeObserver');
     expect(source).toContain('runtime.dispose');
 
     expect(source).not.toMatch(/from 'three'/);
@@ -20,9 +22,10 @@ describe('ThreeView shell boundary', () => {
 
   it('requires the app shell overlay to own pointer events instead of allowing clicks to pass through to the SVG canvas', async () => {
     const appSource = await import('../../../../src/App.vue?raw').then(module => module.default as string);
-    expect(appSource).toContain('class="three-view-overlay"');
-    expect(appSource).toMatch(/\.three-view-overlay\s*\{[\s\S]*pointer-events:\s*auto;/);
-    expect(appSource).not.toMatch(/\.three-view-overlay\s*\{[\s\S]*pointer-events:\s*none;/);
+    expect(appSource).toContain('<ThreeViewWindow v-if="show3DView" />');
+    expect(windowSource).toContain('data-testid="three-view-overlay"');
+    expect(windowSource).toMatch(/\.three-view-window\s*\{[\s\S]*pointer-events:\s*auto;/);
+    expect(windowSource).not.toMatch(/\.three-view-window\s*\{[\s\S]*pointer-events:\s*none;/);
   });
 
 });

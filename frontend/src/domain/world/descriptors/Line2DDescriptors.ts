@@ -9,6 +9,7 @@ import type { ElementDescriptor } from './ElementDescriptor';
 import type { DescriptionPart } from './DescriptionPart';
 import type { World } from '../World';
 import type { Line2DByTwoPoints } from '../Line';
+import type { Line2DByPointAndRelativeAngle } from '../Line';
 import type { Line2DParallel } from '../Line';
 import type { Line2DPerpendicularToLine } from '../Line';
 import type { Line2DTangentToCircleThroughPoint } from '../Line';
@@ -98,6 +99,27 @@ export class Line2DPerpendicularToLineDescriptor implements ElementDescriptor<Li
       { type: 'label', content: sourceLineLabel, elementId: element.referenceLineId },
       { type: 'text', content: ' through point ' },
       { type: 'label', content: throughPointLabel, elementId: element.throughPointId }
+    ];
+  }
+}
+
+export class Line2DByPointAndRelativeAngleDescriptor implements ElementDescriptor<Line2DByPointAndRelativeAngle> {
+  getTypeName(_element: Line2DByPointAndRelativeAngle): string {
+    return 'Line';
+  }
+
+  getConstructionDescription(element: Line2DByPointAndRelativeAngle, world: World): DescriptionPart[] {
+    const planeName = requireProjectionPlaneName(world, element.planeId);
+    const sourceLineLabel = requireElementLabel(world, element.referenceLineId);
+    const throughPointLabel = requireElementLabel(world, element.throughPointId);
+    const degrees = element.angleRadians * 180 / Math.PI;
+    return [
+      { type: 'text', content: 'in ' },
+      { type: 'label', content: planeName, elementId: element.planeId },
+      { type: 'text', content: ', through point ' },
+      { type: 'label', content: throughPointLabel, elementId: element.throughPointId },
+      { type: 'text', content: ` at ${degrees.toFixed(1)} deg to line ` },
+      { type: 'label', content: sourceLineLabel, elementId: element.referenceLineId }
     ];
   }
 }

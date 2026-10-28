@@ -20,7 +20,7 @@ import { Vector3, Vector4 } from 'three';
 import { Element3D } from './Element3D';
 import { Plane3DRealization3D } from './Element3DRealization3D';
 import { applyMatrix4x3, crossVector3Homogeneous } from '@/utils/threeUtils';
-import { computeLineLineIntersection3D } from '@/utils/projectionPlaneUtils';
+import { computePlaneEquationFromTwo3DLines } from '@/utils/projectionPlaneUtils';
 import type { PlaneEquationRealizationContext } from './projectionPlane/ProjectionPlaneContext';
 
 export abstract class Plane3D extends Element3D {
@@ -303,28 +303,7 @@ export class Plane3DFromTraces extends Plane3D {
     const t2PointIn3D = applyMatrix4x3(t2InP2.point1, p2.planeTo3D);
     const t2DirIn3D = applyMatrix4x3(t2InP2.point2, p2.planeTo3D);
     
-    // Check if traces intersect (they must for a valid plane)
-    const intersection = computeLineLineIntersection3D(
-      t1PointIn3D,
-      t1DirIn3D,
-      t2PointIn3D,
-      t2DirIn3D
-    );
-    
-    if (!intersection.feasible) {
-      return null;
-    }
-    
-    // Normal = t1Dir × t2Dir (cross product of line directions, already normalized)
-    const normal = crossVector3Homogeneous(t1DirIn3D, t2DirIn3D).normalize();
-    const a = normal.x;
-    const b = normal.y;
-    const c = normal.z;
-    
-    // Compute d from plane equation: ax + by + cz + d = 0
-    const d = -(a * t1PointIn3D.x + b * t1PointIn3D.y + c * t1PointIn3D.z);
-    
-    return new Vector4(a, b, c, d);
+    return computePlaneEquationFromTwo3DLines(t1PointIn3D, t1DirIn3D, t2PointIn3D, t2DirIn3D);
   }
 
   getDependencies(): string[] {

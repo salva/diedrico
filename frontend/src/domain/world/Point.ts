@@ -20,6 +20,7 @@ import { intersectLineLine, intersectLineCircle, intersectCircleCircle } from '@
 import { isPointOnSegment } from '@/domain/calculations/SegmentUtils';
 import { Realization } from './Realization';
 import { Element2D } from './Element2D';
+import { HalfHingeLine2D } from './HingeLine';
 import { BrokenHalfHingeLine2D } from './elements/BrokenHalfHingeLine2D';
 import { applyMatrix4x3, applyMatrix3x4 } from '@/utils/threeUtils';
 import { assert } from '@/utils/assert';
@@ -508,30 +509,28 @@ export class SiblingIntersectionPoint2D extends Point2D {
       return new Point2DRealization2D(new Vector3(0, 0, 1), false);
     }
 
-    // Check if primary intersection involves a BrokenHalfHingeLine2D.
-    // If so, both BHHLs are 2D representations of the SAME 3D BrokenHingeLine,
-    // and the twin position must be found via 3D round-trip (not coordinate cloning).
+    // If the primary intersection involves any hinge representation, both points
+    // are the same 3D point seen from different projection planes. Use a 3D
+    // round-trip instead of coordinate cloning; auxiliary hinges do not always
+    // share the same local 2D parametrization.
     const primaryPointDomain = context.getPoint2D(this.primaryIntersectionId);
     if (primaryPointDomain && 'line1Id' in primaryPointDomain && 'line2Id' in primaryPointDomain) {
       const intersection = primaryPointDomain as Point2DLineLineIntersection;
       const line1 = context.getLine2D(intersection.line1Id);
       const line2 = context.getLine2D(intersection.line2Id);
 
-      const primaryBHHL = (
-        line1 instanceof BrokenHalfHingeLine2D ? line1 :
-        line2 instanceof BrokenHalfHingeLine2D ? line2 :
+      const primaryHinge = (
+        line1 instanceof BrokenHalfHingeLine2D || line1 instanceof HalfHingeLine2D ? line1 :
+        line2 instanceof BrokenHalfHingeLine2D || line2 instanceof HalfHingeLine2D ? line2 :
         null
       );
 
-      if (primaryBHHL) {
-        // BHHL 3D round-trip: lift the primary position to 3D and project to sibling plane.
-        // This is correct because both BHHLs represent the same 3D BHL — the primary
-        // intersection point on T2 and the sibling intersection on T2' are the same 3D point.
+      if (primaryHinge) {
         const R = primaryRealization.position;
-        const primaryPlaneReal3D = context.getProjectionPlane3DRealization(primaryBHHL.planeId);
+        const primaryPlaneReal3D = context.getProjectionPlane3DRealization(primaryHinge.planeId);
         const siblingPlaneReal3D = context.getProjectionPlane3DRealization(this.planeId);
 
-        if (!primaryPlaneReal3D) throw new Error(`SiblingPoint2D ${this.id}: missing 3D realization for primary plane ${primaryBHHL.planeId}`);
+        if (!primaryPlaneReal3D) throw new Error(`SiblingPoint2D ${this.id}: missing 3D realization for primary plane ${primaryHinge.planeId}`);
         if (!siblingPlaneReal3D) throw new Error(`SiblingPoint2D ${this.id}: missing 3D realization for sibling plane ${this.planeId}`);
         if (!primaryPlaneReal3D.feasible || !siblingPlaneReal3D.feasible) {
           return new Point2DRealization2D(new Vector3(0, 0, 1), false);
@@ -545,9 +544,7 @@ export class SiblingIntersectionPoint2D extends Point2D {
       }
     }
 
-    // Regular HHL case: Coordinate cloning is correct because both HalfHingeLine2D
-    // objects share identical parametric representation (same Q and D in local coords).
-    //   Primary: R = Q + d·D   Sibling: R' = Q' + d·D' = Q + d·D = R
+    // Fallback for legacy non-hinge sibling points.
     return new Point2DRealization2D(primaryRealization.position.clone());
   }
 }

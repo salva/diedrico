@@ -116,4 +116,69 @@ test.describe('Current Diedrico UI contract', () => {
     await expect.poll(async () => svg.getAttribute('viewBox')).toBe(viewBoxBefore);
   });
 
+  test('3D overlay can be moved, resized, minimized, maximized, and restored', async ({ page }) => {
+    await openApp(page);
+
+    const overlay = page.getByTestId('three-view-overlay');
+    const titlebar = page.getByTestId('three-view-titlebar');
+    const resizeCorner = page.getByTestId('three-view-resize-corner');
+    await expect(overlay).toBeVisible();
+
+    const initialBox = await overlay.boundingBox();
+    const titlebarBox = await titlebar.boundingBox();
+    if (!initialBox || !titlebarBox) throw new Error('3D overlay window bounding box unavailable');
+
+    await page.mouse.move(titlebarBox.x + titlebarBox.width / 2, titlebarBox.y + titlebarBox.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(titlebarBox.x + titlebarBox.width / 2 - 60, titlebarBox.y + titlebarBox.height / 2 + 30, { steps: 6 });
+    await page.mouse.up();
+
+    const movedBox = await overlay.boundingBox();
+    if (!movedBox) throw new Error('Moved 3D overlay window bounding box unavailable');
+    expect(movedBox.x).toBeLessThan(initialBox.x - 20);
+
+    const resizeBox = await resizeCorner.boundingBox();
+    if (!resizeBox) throw new Error('3D overlay resize handle bounding box unavailable');
+    await page.mouse.move(resizeBox.x + resizeBox.width / 2, resizeBox.y + resizeBox.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(resizeBox.x + resizeBox.width / 2 - 100, resizeBox.y + resizeBox.height / 2 - 80, { steps: 6 });
+    await page.mouse.up();
+
+    const resizedBox = await overlay.boundingBox();
+    if (!resizedBox) throw new Error('Resized 3D overlay window bounding box unavailable');
+    expect(resizedBox.width).toBeLessThan(movedBox.width);
+    expect(resizedBox.height).toBeLessThan(movedBox.height);
+
+    await page.getByTestId('three-view-minimize').click();
+    await expect(overlay.locator('canvas')).toHaveCount(0);
+    const minimizedBox = await overlay.boundingBox();
+    if (!minimizedBox) throw new Error('Minimized 3D overlay window bounding box unavailable');
+    expect(minimizedBox.height).toBeLessThan(60);
+    await page.mouse.move(minimizedBox.x + 40, minimizedBox.y + 15);
+    await page.mouse.down();
+    await page.mouse.move(minimizedBox.x + 20, minimizedBox.y - 65, { steps: 5 });
+    await page.mouse.up();
+    await expect(overlay.locator('canvas')).toHaveCount(0);
+    const draggedMinimizedBox = await overlay.boundingBox();
+    expect(draggedMinimizedBox!.height).toBeLessThan(60);
+    expect(draggedMinimizedBox!.y).toBeLessThan(minimizedBox.y - 40);
+
+    await page.getByTestId('three-view-restore').click();
+    await expect(overlay.locator('canvas')).toHaveCount(1);
+
+    const restoredBox = await overlay.boundingBox();
+    if (!restoredBox) throw new Error('Restored 3D overlay window bounding box unavailable');
+    await page.getByTestId('three-view-maximize').click();
+    const maximizedBox = await overlay.boundingBox();
+    if (!maximizedBox) throw new Error('Maximized 3D overlay window bounding box unavailable');
+    expect(maximizedBox.width).toBeGreaterThan(restoredBox.width);
+    expect(maximizedBox.height).toBeGreaterThan(restoredBox.height);
+
+    await page.getByTestId('three-view-maximize').click();
+    const finalBox = await overlay.boundingBox();
+    if (!finalBox) throw new Error('Final 3D overlay window bounding box unavailable');
+    expect(Math.abs(finalBox.width - restoredBox.width)).toBeLessThan(4);
+    expect(Math.abs(finalBox.height - restoredBox.height)).toBeLessThan(4);
+  });
+
 });

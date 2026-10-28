@@ -9,6 +9,7 @@ import { IntersectionTool } from '@/tools/IntersectionTool';
 import type { CanvasTool } from '@/tools/ITool';
 import type { ToolType } from './ToolTypes';
 import { LineTool } from '@/tools/LineTool';
+import { LineWithAngleTool } from '@/tools/LineWithAngleTool';
 import { ParallelLineTool } from '@/tools/ParallelLineTool';
 import { PerpendicularLineTool } from '@/tools/PerpendicularLineTool';
 import { PointTool } from '@/tools/PointTool';
@@ -22,6 +23,7 @@ export function createCanvasTool(tool: ToolType): CanvasTool | null {
   switch (tool) {
     case 'point': return new PointTool();
     case 'line': return new LineTool();
+    case 'line-with-angle': return new LineWithAngleTool();
     case 'segment': return new SegmentTool();
     case 'circle': return new CircleTool();
     case 'guide': return new GuideTool();

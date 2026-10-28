@@ -8,13 +8,13 @@
 import type { ElementDescriptor } from './ElementDescriptor';
 import type { DescriptionPart } from './DescriptionPart';
 import type { World } from '../World';
-import type { Point3DByCoordinates, Point3DFromProjections } from '../Point3D';
+import type { Point3DByCoordinates, Point3DByPlaneNormalOffset, Point3DFromProjectionOnPlane, Point3DFromProjections } from '../Point3D';
 import type { Line3DFromProjections } from '../Line3D';
-import type { Segment3DFromProjections } from '../Segment3D';
+import type { Segment3DByPoints, Segment3DFromProjections } from '../Segment3D';
 import type { FixedProjectionPlane } from '../projectionPlane/FixedProjectionPlane';
 import type { AuxiliaryProjectionPlane } from '../projectionPlane/AuxiliaryProjectionPlane';
 import type { Plane3DFixed, Plane3DFromTraces } from '../Plane';
-import { HalfHingeLine2D, type HingeLine } from '../HingeLine';
+import type { HingeLine } from '../HingeLine';
 import type { BrokenHingeLine } from '../BrokenHingeLine';
 import { GeometryElementLookup } from '../GeometryElementLookup';
 
@@ -34,16 +34,6 @@ function requireElementLabel(world: World, elementId: string): string {
   const element = new GeometryElementLookup(world).getElement2D(elementId);
   if (!element) throw new Error(`Descriptor invariant failed: 2D element not found: ${elementId}`);
   return element.label || elementId;
-}
-
-function failMissingHingeForTrace(traceId: string): never {
-  throw new Error(`Descriptor invariant failed: hinge line not found for trace: ${traceId}`);
-}
-
-function getHalfHingeLines2D(world: World, planeId: string): HalfHingeLine2D[] {
-  const plane = world.getProjectionPlaneById(planeId);
-  if (!plane) return [];
-  return plane.getAllLines().filter((line): line is HalfHingeLine2D => line instanceof HalfHingeLine2D);
 }
 
 /**
@@ -82,6 +72,48 @@ export class Point3DFromProjectionsDescriptor implements ElementDescriptor<Point
       { type: 'label', content: proj2Label, elementId: element.projection2 },
       { type: 'text', content: ' on ' },
       { type: 'label', content: plane2Name, elementId: element.plane2Id }
+    ];
+  }
+}
+
+export class Point3DFromProjectionOnPlaneDescriptor implements ElementDescriptor<Point3DFromProjectionOnPlane> {
+  getTypeName(_element: Point3DFromProjectionOnPlane): string {
+    return 'Point';
+  }
+
+  getConstructionDescription(element: Point3DFromProjectionOnPlane, world: World): DescriptionPart[] {
+    const projectionLabel = requireElementLabel(world, element.projectionPointId);
+    const planeName = requireProjectionPlaneName(world, element.planeId);
+
+    return [
+      { type: 'text', content: 'lifted from ' },
+      { type: 'label', content: projectionLabel, elementId: element.projectionPointId },
+      { type: 'text', content: ' on true plane ' },
+      { type: 'label', content: planeName, elementId: element.planeId },
+    ];
+  }
+}
+
+export class Point3DByPlaneNormalOffsetDescriptor implements ElementDescriptor<Point3DByPlaneNormalOffset> {
+  getTypeName(_element: Point3DByPlaneNormalOffset): string {
+    return 'Point';
+  }
+
+  getConstructionDescription(element: Point3DByPlaneNormalOffset, world: World): DescriptionPart[] {
+    const foot = world.get3DPoint(element.footPoint3DId);
+    const plane = world.get3DPlane(element.plane3DId);
+    const distanceLabel = requireElementLabel(world, element.distanceSegmentId);
+    const distancePlaneName = requireProjectionPlaneName(world, element.distancePlaneId);
+
+    return [
+      { type: 'text', content: 'normal offset from ' },
+      { type: 'label', content: foot?.label || element.footPoint3DId, elementId: element.footPoint3DId },
+      { type: 'text', content: ' to plane ' },
+      { type: 'label', content: plane?.label || element.plane3DId, elementId: element.plane3DId },
+      { type: 'text', content: ' by distance ' },
+      { type: 'label', content: distanceLabel, elementId: element.distanceSegmentId },
+      { type: 'text', content: ' on ' },
+      { type: 'label', content: distancePlaneName, elementId: element.distancePlaneId },
     ];
   }
 }
@@ -140,6 +172,24 @@ export class Segment3DFromProjectionsDescriptor implements ElementDescriptor<Seg
   }
 }
 
+export class Segment3DByPointsDescriptor implements ElementDescriptor<Segment3DByPoints> {
+  getTypeName(_element: Segment3DByPoints): string {
+    return 'Segment';
+  }
+
+  getConstructionDescription(element: Segment3DByPoints, world: World): DescriptionPart[] {
+    const start = world.get3DPoint(element.startPoint3DId);
+    const end = world.get3DPoint(element.endPoint3DId);
+
+    return [
+      { type: 'text', content: 'between 3D points ' },
+      { type: 'label', content: start?.label || element.startPoint3DId, elementId: element.startPoint3DId },
+      { type: 'text', content: ' and ' },
+      { type: 'label', content: end?.label || element.endPoint3DId, elementId: element.endPoint3DId },
+    ];
+  }
+}
+
 /**
  * Descriptor for FixedProjectionPlane - standard horizontal/vertical projection plane
  */
@@ -172,27 +222,15 @@ export class AuxiliaryProjectionPlaneDescriptor implements ElementDescriptor<Aux
     
     const basePlane = requireProjectionPlane(world, t1.planeId);
     const basePlaneName = basePlane.label || basePlane.name;
-    
-    // Get hinge line (T1 is associated with a hinge line)
-    // We need to find the hinge line that T1 is part of
-    const hingeLine = world.getAllHingeLines().find(hl => {
-      const halfHingeLines = basePlane ? getHalfHingeLines2D(world, basePlane.id) : [];
-      return halfHingeLines.some(hhl => 
-        (hhl as any).hingeLineId === hl.id && hhl.id === element.t1HingeTraceId
-      );
-    });
-    if (!hingeLine) failMissingHingeForTrace(element.t1HingeTraceId);
-    
+
     return [
       { type: 'text', content: 'auxiliary, base plane ' },
       { type: 'label', content: basePlaneName, elementId: basePlane.id },
-      { type: 'text', content: ', hinge line ' },
-      { type: 'label', content: hingeLine.label || hingeLine.id, elementId: hingeLine.id },
-      { type: 'text', content: ', traces ' },
+      { type: 'text', content: ', hinge trace ' },
       { type: 'label', content: t1.label || element.t1HingeTraceId, elementId: element.t1HingeTraceId },
-      { type: 'text', content: ', ' },
+      { type: 'text', content: ', other trace ' },
       { type: 'label', content: t2.label || element.t2OtherTraceId, elementId: element.t2OtherTraceId },
-      { type: 'text', content: ', ' },
+      { type: 'text', content: ', position trace ' },
       { type: 'label', content: t2Prime.label || element.t2PrimeLineId, elementId: element.t2PrimeLineId }
     ];
   }

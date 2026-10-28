@@ -20,6 +20,7 @@ import { Vector3 } from 'three';
 import { Realization } from './Realization';
 import { Element2D } from './Element2D';
 import { assert } from '@/utils/assert';
+import { normalizeAngleRadians, rotateVector2D } from './GeometricParameters';
 
 /**
  * Line2DRealization2D - Stores computed line using homogeneous coordinates
@@ -452,6 +453,79 @@ export class Line2DPerpendicularToLine extends Line2D {
     return new Line2DRealization2D(
       throughPointRealization.position.clone(),
       perpendicularDirection,
+      true
+    );
+  }
+}
+
+/**
+ * Line2DByPointAndRelativeAngle - Line through a point at an angle relative to a reference line.
+ */
+export class Line2DByPointAndRelativeAngle extends Line2D {
+  readonly referenceLineId: string;
+  readonly throughPointId: string;
+  readonly angleRadians: number;
+
+  constructor(
+    id: string,
+    referenceLineId: string,
+    throughPointId: string,
+    angleRadians: number,
+    planeId: string,
+    label?: string
+  ) {
+    super(id, planeId, label);
+    this.referenceLineId = referenceLineId;
+    this.throughPointId = throughPointId;
+    this.angleRadians = normalizeAngleRadians(angleRadians);
+  }
+
+  clone(): Line2DByPointAndRelativeAngle {
+    return new Line2DByPointAndRelativeAngle(
+      this.id,
+      this.referenceLineId,
+      this.throughPointId,
+      this.angleRadians,
+      this.planeId,
+      this.label
+    );
+  }
+
+  getDependencies(): string[] {
+    return [this.referenceLineId, this.throughPointId];
+  }
+
+  realize2D(context: ProjectionElementRealizationContext): Line2DRealization2D {
+    const plane = context.getProjectionPlaneById(this.planeId);
+    assert(plane, `[Line2DByPointAndRelativeAngle] plane ${this.planeId} not found for line ${this.id}`);
+
+    const refLine = context.getLine2D(this.referenceLineId);
+    assert(refLine, `[Line2DByPointAndRelativeAngle] reference line ${this.referenceLineId} not found for line ${this.id}`);
+    const referenceLine = refLine.realize2D(context);
+    assert(referenceLine, `[Line2DByPointAndRelativeAngle] refLine.realize2D() returned null for ${this.referenceLineId}`);
+
+    const throughPoint = plane.getPoint(this.throughPointId);
+    assert(throughPoint, `[Line2DByPointAndRelativeAngle] through point ${this.throughPointId} not found on plane ${this.planeId} for line ${this.id}`);
+    const throughPointRealization = throughPoint.realize2D(context);
+    assert(throughPointRealization, `[Line2DByPointAndRelativeAngle] throughPoint.realize2D() returned null for ${this.throughPointId}`);
+
+    if (!referenceLine.feasible || !throughPointRealization.feasible) {
+      return Line2DRealization2D.createInfeasible();
+    }
+
+    const baseDirection = referenceLine.getDirection();
+    if (baseDirection.lengthSq() < 1e-10) {
+      return Line2DRealization2D.createInfeasible();
+    }
+
+    const direction = rotateVector2D(baseDirection, this.angleRadians);
+    if (direction.lengthSq() < 1e-10) {
+      return Line2DRealization2D.createInfeasible();
+    }
+
+    return new Line2DRealization2D(
+      throughPointRealization.position.clone(),
+      direction,
       true
     );
   }

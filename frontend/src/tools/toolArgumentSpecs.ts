@@ -1,10 +1,10 @@
 import type { Element2D } from '@/domain/world/Element2D';
 import type { Line2D } from '@/domain/world/Line';
 import { SelectionMask } from '@/types/SelectionMask';
-import type { CollectionContext, ToolArgumentSet, ToolArgumentSpec } from '@/tools/ToolArgumentCollector';
+import type { CollectionContext, ElementArgumentSpec, ToolArgumentSet } from '@/tools/ToolArgumentCollector';
 import { validateDistinctProjectionPlanes } from './toolValidators';
 
-function pointArgument(name: string): ToolArgumentSpec {
+function pointArgument(name: string): ElementArgumentSpec {
   return { name, mask: SelectionMask.point() };
 }
 

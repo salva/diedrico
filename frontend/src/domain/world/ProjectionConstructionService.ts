@@ -5,10 +5,10 @@ import type { LabelGenerator } from './LabelGenerator';
 import type { WorldIdAllocator } from './WorldIdAllocator';
 import { HalfHingeLine2D, type HingeLine } from './HingeLine';
 import type { Line2D } from './Line';
-import { Line2DByTwoPoints, Line2DParallel, Line2DPerpendicularToLine, Line2DTangentToCircleParallelToLine, Line2DTangentToCircleThroughPoint } from './Line';
+import { Line2DByPointAndRelativeAngle, Line2DByTwoPoints, Line2DParallel, Line2DPerpendicularToLine, Line2DTangentToCircleParallelToLine, Line2DTangentToCircleThroughPoint } from './Line';
 import { Segment2D } from './Segment';
 import { Guide2D, SiblingGuide2D } from './Guide';
-import { Circle2DByCenterAndPoint } from './Circle';
+import { Circle2D, Circle2DByCenterAndPoint, Circle2DByCenterAndRadiusVector } from './Circle';
 import { FreePoint2D, Point2DCircleCircleIntersection, Point2DLineCircleIntersection, Point2DLineLineIntersection, SiblingIntersectionPoint2D, type Point2D } from './Point';
 import type { ProjectionPlane } from './projectionPlane/ProjectionPlane';
 import type { ProjectionPlaneRealizationContext } from './projectionPlane/ProjectionPlaneContext';
@@ -150,6 +150,18 @@ export class ProjectionConstructionService {
     return line;
   }
 
+  addLine2DByPointAndRelativeAngle(plane: ProjectionPlane, referenceLineId: string, throughPointId: string, angleRadians: number, id?: string): Line2DByPointAndRelativeAngle {
+    const planeId = requirePlaneId(plane.id, 'line');
+    requireLocalPoint(plane, throughPointId, 'throughPointId');
+    const refLineElement = requireWorldLine(this.context, referenceLineId, 'referenceLineId');
+    requireRealizedLine(refLineElement, referenceLineId, 'referenceLineId', this.context);
+    id = resolveElementId(id, () => this.generateLine2DId(plane));
+    const label = this.context.labelGenerator.next('Line2D');
+    const line = new Line2DByPointAndRelativeAngle(id, referenceLineId, throughPointId, angleRadians, planeId, label);
+    this.addLine(plane, line);
+    return line;
+  }
+
   addLine2DTangentToCircleThroughPoint(plane: ProjectionPlane, circleId: string, throughPointId: string, tangentIndex: 0 | 1, id?: string): Line2DTangentToCircleThroughPoint {
     const planeId = requirePlaneId(plane.id, 'line');
     requireLocalCircle(plane, circleId, 'circleId');
@@ -197,6 +209,16 @@ export class ProjectionConstructionService {
     id = resolveElementId(id, () => this.generateCircle2DId(plane));
     const label = this.context.labelGenerator.next('Circle2D');
     const circle = new Circle2DByCenterAndPoint(id, centerPointId, circumferencePointId, planeId, label);
+    this.addCircle(plane, circle);
+    return circle;
+  }
+
+  addCircle2DByCenterAndRadiusVector(plane: ProjectionPlane, centerPointId: string, radiusVector: Vector3, id?: string): Circle2DByCenterAndRadiusVector {
+    const planeId = requirePlaneId(plane.id, 'circle');
+    requireLocalPoint(plane, centerPointId, 'centerPointId');
+    id = resolveElementId(id, () => this.generateCircle2DId(plane));
+    const label = this.context.labelGenerator.next('Circle2D');
+    const circle = new Circle2DByCenterAndRadiusVector(id, centerPointId, radiusVector, planeId, label);
     this.addCircle(plane, circle);
     return circle;
   }
@@ -274,7 +296,7 @@ export class ProjectionConstructionService {
     this.dependencies.registerNode(line.id, line.getDependencies());
   }
 
-  private addCircle(plane: ProjectionPlane, circle: Circle2DByCenterAndPoint): void {
+  private addCircle(plane: ProjectionPlane, circle: Circle2D): void {
     plane.addCircle(circle);
     this.dependencies.registerNode(circle.id, circle.getDependencies());
   }

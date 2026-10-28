@@ -8,21 +8,27 @@
 
 import { describe, it, expect } from 'vitest';
 import { Matrix3, Vector3, Vector4 } from 'three';
-import { computeLineLineIntersection3D, computeProjectionPlaneMatrices } from '../../../src/utils/projectionPlaneUtils';
+import { computeLineLineIntersection3D, computePlaneEquationFromTwo3DLines, computeProjectionPlaneMatrices } from '../../../src/utils/projectionPlaneUtils';
 import { Line2D, Line2DRealization2D } from '@/domain/world/Line';
 import type { ProjectionPlaneRealizationContext } from '@/domain/world/projectionPlane/ProjectionPlaneContext';
+import { ProjectionPlaneRealization2D, ProjectionPlaneRealization3D } from '@/domain/world/projectionPlane/ProjectionPlaneRealization';
+import { applyMatrix4x3, mat3x4, mat4x3 } from '@/utils/threeUtils';
 
 class TestLine2D extends Line2D {
-  constructor(id: string, planeId: string) {
+  constructor(
+    id: string,
+    planeId: string,
+    private readonly realization = new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), true)
+  ) {
     super(id, planeId);
   }
 
   clone(): Line2D {
-    return new TestLine2D(this.id, this.planeId);
+    return new TestLine2D(this.id, this.planeId, this.realization);
   }
 
   realize2D(): Line2DRealization2D {
-    return new Line2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), true);
+    return this.realization;
   }
 }
 
@@ -188,6 +194,33 @@ describe('computeLineLineIntersection3D', () => {
   });
 });
 
+describe('computePlaneEquationFromTwo3DLines', () => {
+  it('creates a plane from two distinct parallel lines', () => {
+    const equation = computePlaneEquationFromTwo3DLines(
+      new Vector4(0, 5, 0, 1),
+      new Vector4(1, 0, 0, 0),
+      new Vector4(0, 0, 10, 1),
+      new Vector4(1, 0, 0, 0)
+    );
+
+    expect(equation).not.toBeNull();
+    expect(Math.abs(equation!.x)).toBeLessThan(1e-10);
+    expect(Math.abs(equation!.y)).toBeCloseTo(2 / Math.sqrt(5), 10);
+    expect(Math.abs(equation!.z)).toBeCloseTo(1 / Math.sqrt(5), 10);
+  });
+
+  it('rejects coincident parallel lines because infinitely many planes pass through them', () => {
+    const equation = computePlaneEquationFromTwo3DLines(
+      new Vector4(0, 0, 0, 1),
+      new Vector4(1, 0, 0, 0),
+      new Vector4(5, 0, 0, 1),
+      new Vector4(1, 0, 0, 0)
+    );
+
+    expect(equation).toBeNull();
+  });
+});
+
 // TODO: Add comprehensive tests for computeProjectionPlaneMatrices once we have test fixtures
 // These tests require a full World instance with projection planes, which is complex to set up
 // For now, testing the helper function computeLineLineIntersection3D provides good coverage
@@ -204,6 +237,90 @@ describe('computeProjectionPlaneMatrices - TODO', () => {
     const context = makeProjectionPlaneContext({ getProjectionPlane3DRealization: id => id === 'p1' ? undefined : ({ feasible: true } as any) });
 
     expect(() => computeProjectionPlaneMatrices('p1/t1', 'p2/t2', 'p1/t2Prime', context)).toThrow('T1 source projection plane 3D realization not found: p1');
+  });
+
+  it('solves the common trace origin in 3D even when the same point has different 2D coordinates per projection plane', () => {
+    const p1PlaneTo3D = mat4x3(
+      1, 0, 0,
+      0, 1, 0,
+      0, 0, 0,
+      0, 0, 1
+    );
+    const p1ThreeDToPlane = mat3x4(
+      1, 0, 0, 0,
+      0, 1, 0, 0,
+      0, 0, 0, 1
+    );
+    const p2PlaneTo3D = mat4x3(
+      1, 0, 0,
+      0, 0, 7,
+      0, 1, 0,
+      0, 0, 1
+    );
+    const p2ThreeDToPlane = mat3x4(
+      1, 0, 0, 0,
+      0, 0, 1, 0,
+      0, 0, 0, 1
+    );
+    const paper = new Matrix3().identity();
+
+    const lines = new Map<string, Line2D>([
+      ['p1/t1', new TestLine2D('p1/t1', 'p1', new Line2DRealization2D(
+        new Vector3(4, 7, 1),
+        new Vector3(1, 0, 0),
+        true
+      ))],
+      ['p2/t2', new TestLine2D('p2/t2', 'p2', new Line2DRealization2D(
+        new Vector3(4, 0, 1),
+        new Vector3(0, 1, 0),
+        true
+      ))],
+      ['p1/t2Prime', new TestLine2D('p1/t2Prime', 'p1', new Line2DRealization2D(
+        new Vector3(4, 7, 1),
+        new Vector3(0, 1, 0),
+        true
+      ))],
+    ]);
+    const plane2D = new Map([
+      ['p1', new ProjectionPlaneRealization2D('p1', paper, paper.clone(), true)],
+      ['p2', new ProjectionPlaneRealization2D('p2', paper, paper.clone(), true)],
+    ]);
+    const plane3D = new Map([
+      ['p1', new ProjectionPlaneRealization3D('p1', p1PlaneTo3D, p1ThreeDToPlane, true)],
+      ['p2', new ProjectionPlaneRealization3D('p2', p2PlaneTo3D, p2ThreeDToPlane, true)],
+    ]);
+    const context = makeProjectionPlaneContext({
+      getLine2D: id => lines.get(id),
+      getProjectionPlaneById: id => ({ id, realize2D: () => plane2D.get(id) } as any),
+      getProjectionPlane3DRealization: id => plane3D.get(id),
+    });
+
+    expect(applyMatrix4x3(new Vector3(4, 7, 1), p1PlaneTo3D)).toMatchObject({ x: 4, y: 7, z: 0, w: 1 });
+    expect(applyMatrix4x3(new Vector3(4, 0, 1), p2PlaneTo3D)).toMatchObject({ x: 4, y: 7, z: 0, w: 1 });
+
+    const matrices = computeProjectionPlaneMatrices('p1/t1', 'p2/t2', 'p1/t2Prime', context);
+
+    expect(matrices).not.toBeNull();
+    const auxOriginIn3D = applyMatrix4x3(new Vector3(0, 0, 1), matrices!.planeTo3D);
+    expect(auxOriginIn3D.x).toBeCloseTo(4, 10);
+    expect(auxOriginIn3D.y).toBeCloseTo(7, 10);
+    expect(auxOriginIn3D.z).toBeCloseTo(0, 10);
+    expect(auxOriginIn3D.w).toBeCloseTo(1, 10);
+  });
+
+  it('rejects distinct parallel traces for a finite-crossing auxiliary layout', () => {
+    const to3D = mat4x3(1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1);
+    const from3D = mat3x4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1);
+    const lines = new Map([
+      ['p1/t1', new TestLine2D('p1/t1', 'p1')],
+      ['p2/t2', new TestLine2D('p2/t2', 'p2', new Line2DRealization2D(new Vector3(0, 5, 1), new Vector3(1, 0, 0), true))],
+      ['p1/t2Prime', new TestLine2D('p1/t2Prime', 'p1', new Line2DRealization2D(new Vector3(0, 5, 1), new Vector3(1, 0, 0), true))],
+    ]);
+    const context = makeProjectionPlaneContext({
+      getLine2D: id => lines.get(id),
+      getProjectionPlane3DRealization: id => new ProjectionPlaneRealization3D(id, to3D, from3D, true),
+    });
+    expect(computeProjectionPlaneMatrices('p1/t1', 'p2/t2', 'p1/t2Prime', context)).toBeNull();
   });
 
   it.todo('should satisfy paper layout constraints: v=0 coincides with T1');

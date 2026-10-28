@@ -70,6 +70,27 @@
           <div v-if="positionError" class="error-message">{{ positionError }}</div>
         </section>
 
+        <!-- Parameter Section (Editable for parameterized geometry) -->
+        <section class="parameter-section" v-if="canEditParameter">
+          <h3>Parameter</h3>
+          <div class="position-controls">
+            <div class="control-row">
+              <label for="parameter-input">{{ parameterLabel }}:</label>
+              <input
+                id="parameter-input"
+                type="number"
+                step="any"
+                v-model.number="editableParameter"
+                class="coordinate-input"
+                :class="{ 'input-error': parameterError }"
+                @blur="validateParameter"
+              />
+              <span class="info-value">{{ parameterUnits }}</span>
+            </div>
+          </div>
+          <div v-if="parameterError" class="error-message">{{ parameterError }}</div>
+        </section>
+
         <!-- Visual Style Section (Editable) -->
         <section class="visual-style-section">
           <h3>Visual Style</h3>
@@ -202,6 +223,7 @@ interface PropertiesChanges {
   elementId: string;
   planeId?: string | null;
   position?: { u: number; v: number };
+  parameter?: { kind: 'radius' | 'angle'; value: number };
   color?: string;
   lineWidth?: number;
   lineStyle?: string;
@@ -221,6 +243,7 @@ const editableColor = ref<string>('#000000');
 const editableLineWidth = ref<number>(1.0);
 const editableLineStyle = ref<string>('solid');
 const editableVisible = ref<boolean>(true);
+const editableParameter = ref<number>(0);
 
 // Override flags
 const colorOverride = ref<boolean>(false);
@@ -233,6 +256,7 @@ const colorError = ref<string>('');
 const lineWidthError = ref<string>('');
 const lineStyleError = ref<string>('');
 const positionError = ref<string>('');
+const parameterError = ref<string>('');
 
 // Computed properties for display
 const elementLabel = computed(() => props.viewModel?.elementLabel ?? 'Unknown');
@@ -242,6 +266,9 @@ const coordinates = computed(() => props.viewModel?.coordinates ?? null);
 const dependencies = computed(() => props.viewModel?.dependencies ?? []);
 const createdBy = computed(() => props.viewModel?.createdBy ?? null);
 const canEditPosition = computed(() => props.viewModel?.position?.editable === true);
+const canEditParameter = computed(() => props.viewModel?.parameter?.editable === true);
+const parameterLabel = computed(() => props.viewModel?.parameter?.kind === 'angle' ? 'Angle' : 'Radius');
+const parameterUnits = computed(() => props.viewModel?.parameter?.units === 'degrees' ? 'deg' : 'units');
 
 const hasLineStyle = computed(() => {
   const type = elementType.value;
@@ -270,6 +297,7 @@ function loadElementProperties() {
   editableLineWidth.value = style?.lineWidth ?? 1.0;
   editableLineStyle.value = style?.lineStyle ?? 'solid';
   editableVisible.value = style?.visible ?? true;
+  editableParameter.value = props.viewModel?.parameter?.value ?? 0;
   
   // Reset override flags
   colorOverride.value = false;
@@ -282,6 +310,7 @@ function loadElementProperties() {
   lineWidthError.value = '';
   lineStyleError.value = '';
   positionError.value = '';
+  parameterError.value = '';
 }
 
 function validateFiniteCoordinate(value: number, label: string): boolean {
@@ -296,6 +325,20 @@ function validatePosition(): boolean {
   if (!validateFiniteCoordinate(editableU.value, 'u')) return false;
   if (!validateFiniteCoordinate(editableV.value, 'v')) return false;
   positionError.value = '';
+  return true;
+}
+
+function validateParameter(): boolean {
+  if (!canEditParameter.value) return true;
+  if (typeof editableParameter.value !== 'number' || !Number.isFinite(editableParameter.value)) {
+    parameterError.value = `${parameterLabel.value} must be a finite number`;
+    return false;
+  }
+  if (props.viewModel?.parameter?.kind === 'radius' && editableParameter.value <= 0) {
+    parameterError.value = 'Radius must be positive';
+    return false;
+  }
+  parameterError.value = '';
   return true;
 }
 
@@ -359,6 +402,9 @@ function handleSave() {
   if (canEditPosition.value && !validatePosition()) {
     isValid = false;
   }
+  if (canEditParameter.value && !validateParameter()) {
+    isValid = false;
+  }
   
   // Don't save if validation failed
   if (!isValid) {
@@ -376,6 +422,12 @@ function handleSave() {
     if (!currentPosition || editableU.value !== currentPosition.u || editableV.value !== currentPosition.v) {
       changes.position = { u: editableU.value, v: editableV.value };
     }
+  }
+  if (canEditParameter.value && props.viewModel.parameter && editableParameter.value !== props.viewModel.parameter.value) {
+    changes.parameter = {
+      kind: props.viewModel.parameter.kind,
+      value: editableParameter.value,
+    };
   }
   
   // Only include overridden properties

@@ -3,16 +3,17 @@
  * 
  * Extends HalfHingeLine2D to represent traces T2 and T2' that appear on different planes
  * after an auxiliary projection plane is created. Unlike regular HalfHingeLine2D where guides
- * are perpendicular, guides for BrokenHalfHingeLine2D must be PARALLEL to the main hinge T1.
+ * are perpendicular, guides for BrokenHalfHingeLine2D are also perpendicular to the
+ * broken hinge trace they replace.
  * 
  * **Key Distinction**:
  * - Regular HalfHingeLine2D: Guides perpendicular (represent plane perpendicular to both projection planes)
- * - BrokenHalfHingeLine2D: Guides parallel to T1 (represent intersections with planes containing T1)
+ * - BrokenHalfHingeLine2D: Guides perpendicular to the replaced T2/T2' trace
  * 
  * **Phase 101**: Broken Hinge Lines and Distance Transport Guides
- * - Stores mainHingeId (reference to T1) for computing parallelVector
+ * - Stores mainHingeId (reference to T1) for dependency tracking
  * - Stores siblingBHHLId for creating linked guides on both T2 and T2'
- * - realize2D() returns BrokenHalfHingeLineRealization2D with parallelVector field
+ * - realize2D() returns HalfHingeLineRealization2D with a trace-perpendicular guideVector
  * 
  */
 
@@ -21,7 +22,6 @@ import { BrokenHingeLine } from '../BrokenHingeLine';
 import { HalfHingeLineRealization2D } from '../HalfHingeLineRealization2D';
 import { AuxiliaryProjectionPlane } from '../projectionPlane/AuxiliaryProjectionPlane';
 import type { ProjectionElementRealizationContext } from '../projectionPlane/ProjectionPlaneContext';
-import { requireProjectionRealizationCollections } from '../projectionPlane/ProjectionPlaneContext';
 
 /**
  * BrokenHalfHingeLine2D - Broken hinge line projection on one plane
@@ -142,57 +142,21 @@ export class BrokenHalfHingeLine2D extends HalfHingeLine2D {
     const dirInPaper = t2Real2D.getDirection().clone().applyMatrix3(sourcePlaneReal2D.planeToPaper2D);
     const direction2D = dirInPaper.applyMatrix3(targetPlaneReal2D.paperToPlane2D);
 
-    // Get T1's direction on THIS plane for parallel guides
-    const mainHinge = context.getHingeLineById(bhl.mainHingeId);
-    if (!mainHinge) {
+    // Guide vector follows regular half-hinge behavior: perpendicular to the
+    // broken hinge line's 2D trace on this plane.
+    const guideVector = direction2D.lengthSq() > 1e-10
+      ? direction2D.clone().normalize()
+      : direction2D.clone();
+    guideVector.set(-guideVector.y, guideVector.x, 0);
+    if (guideVector.lengthSq() < 1e-10) {
       return HalfHingeLineRealization2D.createInfeasible();
     }
 
-    // Find T1's trace on THIS plane
-    const thisPlane = context.getProjectionPlaneById(this.planeId);
-    if (!thisPlane) {
-      return HalfHingeLineRealization2D.createInfeasible();
-    }
-
-    // Find hinge line connecting this plane to mainHinge.plane1Id
-    requireProjectionRealizationCollections(context, 'BrokenHalfHingeLine2D.realize2D');
-    const allHingeLines = context.getAllHingeLines();
-    
-    const t1HingeLine = allHingeLines.find(hl => 
-      (hl.plane1Id === this.planeId && hl.plane2Id === mainHinge.plane1Id) ||
-      (hl.plane2Id === this.planeId && hl.plane1Id === mainHinge.plane1Id)
-    );
-
-    if (!t1HingeLine) {
-      return HalfHingeLineRealization2D.createInfeasible();
-    }
-
-    // Get T1's HalfHingeLine2D on THIS plane
-    const allLinesOnPlane = thisPlane.getAllLines();
-    
-    const t1HalfHinge = allLinesOnPlane.find(
-      (line): line is HalfHingeLine2D => 
-        line instanceof HalfHingeLine2D && 
-        line.hingeLineId === t1HingeLine.id
-    );
-
-    if (!t1HalfHinge) {
-      return HalfHingeLineRealization2D.createInfeasible();
-    }
-
-    const t1Realization = t1HalfHinge.realize2D(context);
-    if (!t1Realization.isFeasible()) {
-      return HalfHingeLineRealization2D.createInfeasible();
-    }
-
-    // Guide vector is parallel to T1
-    const guideVector = t1Realization.getDirection().clone().normalize();
-
-    // Return realization with BHHL at T2/T2' and guides parallel to T1
+    // Return realization with BHHL at T2/T2' and guides perpendicular to the trace
     return new HalfHingeLineRealization2D(
       origin2D,          // T2 on plane2, T2' on plane1
       direction2D,       // BHHL direction (T2/T2' direction)
-      guideVector,       // Parallel to T1
+      guideVector,       // Perpendicular to the replaced T2/T2' trace
       true               // feasible
     );
   }

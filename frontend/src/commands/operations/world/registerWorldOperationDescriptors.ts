@@ -10,11 +10,15 @@ import {
   type AddLine2DParallelToLineDescriptor,
   AddLine2DPerpendicularToLineOp,
   type AddLine2DPerpendicularToLineDescriptor,
+  AddLine2DByPointAndRelativeAngleOp,
+  type AddLine2DByPointAndRelativeAngleDescriptor,
+  UpdateLine2DRelativeAngleOp,
+  type UpdateLine2DRelativeAngleDescriptor,
   AddLine2DTangentToCircleThroughPointOp,
   AddLine2DTangentToCircleParallelToLineOp
 } from './AddLineOp';
 import { AddSegment2DByPointsOp, type AddSegment2DByPointsDescriptor } from './AddSegmentOp';
-import { AddCircle2DByCenterAndPointOp, type AddCircle2DByCenterAndPointDescriptor } from './AddCircleOp';
+import { AddCircle2DByCenterAndPointOp, type AddCircle2DByCenterAndPointDescriptor, AddCircle2DByCenterAndRadiusVectorOp, type AddCircle2DByCenterAndRadiusVectorDescriptor, UpdateCircle2DRadiusVectorOp, type UpdateCircle2DRadiusVectorDescriptor } from './AddCircleOp';
 import { AddGuide2DPerpendicularToLineOp, AddSiblingGuide2DOp } from './AddGuideOp';
 import { AddLineLineIntersectionPoint2DOp, type AddLineLineIntersectionPoint2DDescriptor } from './AddLineLineIntersectionPoint2DOp';
 import { AddLineCircleIntersectionPoint2DOp, type AddLineCircleIntersectionPoint2DDescriptor } from './AddLineCircleIntersectionPoint2DOp';
@@ -50,10 +54,14 @@ export function registerWorldOperationDescriptors(registry: OperationRegistry): 
   registry.register<AddLine2DByTwoPointsDescriptor>('AddLine2DByTwoPoints', d => restoreOutput(new AddLine2DByTwoPointsOp(s(d, 'planeId'), s(d, 'point1Id'), s(d, 'point2Id')), { lineId: so(d, 'lineId') }));
   registry.register<AddLine2DParallelToLineDescriptor>('AddLine2DParallelToLine', d => restoreOutput(new AddLine2DParallelToLineOp(s(d, 'planeId'), s(d, 'referenceLineId'), s(d, 'throughPointId')), { lineId: so(d, 'lineId') }));
   registry.register<AddLine2DPerpendicularToLineDescriptor>('AddLine2DPerpendicularToLine', d => restoreOutput(new AddLine2DPerpendicularToLineOp(s(d, 'planeId'), s(d, 'referenceLineId'), s(d, 'throughPointId')), { lineId: so(d, 'lineId') }));
+  registry.register<AddLine2DByPointAndRelativeAngleDescriptor>('AddLine2DByPointAndRelativeAngle', d => restoreOutput(new AddLine2DByPointAndRelativeAngleOp(s(d, 'planeId'), s(d, 'referenceLineId'), s(d, 'throughPointId'), n(d, 'angleRadians')), { lineId: so(d, 'lineId') }));
+  registry.register<UpdateLine2DRelativeAngleDescriptor>('UpdateLine2DRelativeAngle', d => new UpdateLine2DRelativeAngleOp(s(d, 'planeId'), s(d, 'lineId'), n(d, 'newAngleRadians')));
   registry.register('AddLine2DTangentToCircleThroughPoint', d => restoreOutput(new AddLine2DTangentToCircleThroughPointOp(s(d, 'planeId'), s(d, 'circleId'), s(d, 'throughPointId'), n(d, 'index') as 0 | 1), { lineId: so(d, 'lineId') }));
   registry.register('AddLine2DTangentToCircleParallelToLine', d => restoreOutput(new AddLine2DTangentToCircleParallelToLineOp(s(d, 'planeId'), s(d, 'circleId'), s(d, 'referenceLineId'), n(d, 'index') as 0 | 1), { lineId: so(d, 'lineId') }));
   registry.register<AddSegment2DByPointsDescriptor>('AddSegment2DByPoints', d => restoreOutput(new AddSegment2DByPointsOp(s(d, 'planeId'), s(d, 'point1Id'), s(d, 'point2Id')), { segmentId: so(d, 'segmentId') }));
   registry.register<AddCircle2DByCenterAndPointDescriptor>('AddCircle2DByCenterAndPoint', d => restoreOutput(new AddCircle2DByCenterAndPointOp(s(d, 'planeId'), s(d, 'centerPointId'), s(d, 'circumferencePointId')), { circleId: so(d, 'circleId') }));
+  registry.register<AddCircle2DByCenterAndRadiusVectorDescriptor>('AddCircle2DByCenterAndRadiusVector', d => restoreOutput(new AddCircle2DByCenterAndRadiusVectorOp(s(d, 'planeId'), s(d, 'centerPointId'), new Vector3(...arr(d, 'radiusVector', 3))), { circleId: so(d, 'circleId') }));
+  registry.register<UpdateCircle2DRadiusVectorDescriptor>('UpdateCircle2DRadiusVector', d => new UpdateCircle2DRadiusVectorOp(s(d, 'planeId'), s(d, 'circleId'), new Vector3(...arr(d, 'newRadiusVector', 3))));
   registry.register<AddLineLineIntersectionPoint2DDescriptor>('AddLineLineIntersectionPoint2D', d => restoreOutput(new AddLineLineIntersectionPoint2DOp(s(d, 'planeId'), s(d, 'line1Id'), s(d, 'line2Id')), { pointId: so(d, 'pointId') }));
   registry.register<AddLineCircleIntersectionPoint2DDescriptor>('AddLineCircleIntersectionPoint2D', d => restoreOutput(new AddLineCircleIntersectionPoint2DOp(s(d, 'planeId'), s(d, 'lineId'), s(d, 'circleId'), n(d, 'index')), { pointId: so(d, 'pointId') }));
   registry.register<AddCircleCircleIntersectionPoint2DDescriptor>('AddCircleCircleIntersectionPoint2D', d => restoreOutput(new AddCircleCircleIntersectionPoint2DOp(s(d, 'planeId'), s(d, 'circle1Id'), s(d, 'circle2Id'), n(d, 'index')), { pointId: so(d, 'pointId') }));
@@ -78,7 +86,7 @@ export function registerWorldOperationDescriptors(registry: OperationRegistry): 
   registry.register<Add3DPointDescriptor>('Add3DPoint', d => restoreOutput(new Add3DPointOp(s(d, 'projection1Id'), s(d, 'projection2Id'), s(d, 'plane1Id'), s(d, 'plane2Id'), so(d, 'label')), { pointId: so(d, 'pointId') }));
   registry.register<Add3DLineDescriptor>('Add3DLine', d => restoreOutput(new Add3DLineOp(s(d, 'projection1Id'), s(d, 'projection2Id'), s(d, 'plane1Id'), s(d, 'plane2Id'), so(d, 'label')), { lineId: so(d, 'lineId') }));
   registry.register<Add3DSegmentDescriptor>('Add3DSegment', d => restoreOutput(new Add3DSegmentOp(s(d, 'projection1Id'), s(d, 'projection2Id'), s(d, 'plane1Id'), s(d, 'plane2Id'), so(d, 'label')), { segmentId: so(d, 'segmentId') }));
-  registry.register('AddAuxiliaryProjectionPlane', d => restoreOutput(new AddAuxiliaryProjectionPlaneOp(s(d, 'plane3DId'), s(d, 't1HingeTraceId'), s(d, 't2OtherTraceId'), s(d, 't2PrimeLineId'), so(d, 'name')), { projPlaneId: so(d, 'projPlaneId') }));
+  registry.register('AddAuxiliaryProjectionPlane', d => restoreOutput(new AddAuxiliaryProjectionPlaneOp(s(d, 'plane3DId'), s(d, 't1HingeTraceId'), s(d, 't2OtherTraceId'), s(d, 't2PrimeLineId'), so(d, 'name'), so(d, 'label')), { projPlaneId: so(d, 'projPlaneId') }));
 }
 
 export type RegisteredWorldOperationDescriptor = OperationDescriptor;

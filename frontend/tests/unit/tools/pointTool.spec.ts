@@ -166,6 +166,28 @@ describe('PointTool', () => {
     });
   });
 
+  describe('Plane position input', () => {
+    it('accepts direct plane position input and creates a free point', () => {
+      const context = createToolContext(
+        horizontalPlaneId,
+        new Vector3(0, 0, 1)
+      );
+
+      expect(tool.acceptsPlanePositionInput()).toBe(true);
+      expect(tool.getPlanePositionInputLabel()).toBe('position');
+
+      const result = tool.handlePlanePositionInput(context, new Vector3(-20, 105, 1));
+
+      expect(result.success).toBe(true);
+      const userPoints = getHorizontalPlane(world).getAllPoints().filter(p => !p.locked);
+      expect(userPoints).toHaveLength(1);
+      const position = (userPoints[0] as any).position;
+      expect(position.x).toBe(-20);
+      expect(position.y).toBe(105);
+      expect(position.z).toBe(1);
+    });
+  });
+
   describe('Coordinate Validation', () => {
     it('should accept valid Vector3 homogeneous coordinates', () => {
       const context = createToolContext(

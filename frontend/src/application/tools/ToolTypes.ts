@@ -2,6 +2,7 @@ export type ToolType =
   | 'select'
   | 'point'
   | 'line'
+  | 'line-with-angle'
   | 'circle'
   | 'segment'
   | 'guide'
@@ -17,6 +18,7 @@ export type ToolType =
   | 'create3dsegment'
   | 'create3dplane'
   | 'createprojectionplane'
+  | 'quick-yz-projection-plane'
   | 'quickprojectionsetup'
   | 'quick3dline'
   | 'quick3dsegment';

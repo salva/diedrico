@@ -23,11 +23,17 @@ import { Create3DPlaneTool } from '@/tools/Create3DPlaneTool';
 import { CreateProjectionPlaneTool } from '@/tools/CreateProjectionPlaneTool';
 import { CanvasInteractionQuery } from '@/application/canvasPresentation/CanvasInteractionQuery';
 import { resolveVisibility } from '@/application/canvasPresentation/styleService';
+import { buildProcessTreeReadModel } from '@/application/appShell/readModels/ProcessTreeReadModel';
+import { registerAllDescriptors } from '@/domain/world/descriptors/registerDescriptors';
 import type { ToolContext } from '@/tools/ITool';
 import type { ToolCommandSink, ToolConstructionIntent } from '@/tools/ToolCommandIntents';
 import type { ArgumentValue } from '@/tools/ToolArgumentCollector';
 import { createTestWorld, getHorizontalPlane, getHorizontalPlaneId, getVerticalPlane } from '../../helpers/worldHelpers';
 import { createToolInteractionReadPort } from '@/application/tools/ToolInteractionReadPort';
+import { HalfHingeLine2D } from '@/domain/world/HingeLine';
+import { BrokenHalfHingeLine2D } from '@/domain/world/elements/BrokenHalfHingeLine2D';
+import { Guide2D, SiblingGuide2D } from '@/domain/world/Guide';
+import { applyMatrix4x3 } from '@/utils/threeUtils';
 
 function userPoints(world: any, planeId: string) {
   return world.getProjectionPlaneById(planeId).getAllPoints().filter((point: any) => !point.locked);
@@ -222,6 +228,115 @@ describe('Wave 006a canvas/tool command controllers', () => {
     expect(findPointAt(verticalPlane.getAllPoints(), operationContext, 3, 5)).toBeUndefined();
   });
 
+  it('creates the YZ profile projection plane as a special construction helper', () => {
+    const { world, visibilityModel, commandStack, operationContext } = createTestWorld();
+    const beforeUndoCount = commandStack.getUndoCount();
+
+    const result = executeConstructionIntent({
+      operationContext,
+      commands: new RuntimeCommandProducer(operationContext, commandStack),
+      intent: {
+        type: 'create-yz-projection-plane',
+        description: 'Add YZ projection plane'
+      }
+    });
+
+    expect(result.success).toBe(true);
+    expect(commandStack.getUndoCount()).toBe(beforeUndoCount + 1);
+
+    const subprocess = operationContext.processTree.root.children.find(
+      child => child.type === 'subprocess' && child.name === 'Add YZ projection plane'
+    );
+    expect(subprocess).toBeTruthy();
+    expect(subprocess!.children.some(child => child.type === 'actionGroup')).toBe(true);
+    expect(visibilityModel.get(subprocess!.id, 'subprocess').showIntermediates).toBe(false);
+
+    const yzPlane = world.getAllProjectionPlanes().find(plane => plane.name === 'P_YZ');
+    const verticalPlane = getVerticalPlane(world);
+    const horizontalPlane = getHorizontalPlane(world);
+    expect(yzPlane).toBeTruthy();
+    expect(yzPlane!.label).toBe('P_{YZ}');
+
+    const plane3D = world.getAllPlanes().find(plane => plane.label === 'P_{YZ}');
+    expect(plane3D).toBeTruthy();
+    const planeEquation = plane3D!.getPlaneEquation(operationContext.realizationContext);
+    expect(Math.abs(planeEquation?.x ?? 0)).toBeCloseTo(1);
+    expect(planeEquation?.y).toBeCloseTo(0);
+    expect(planeEquation?.z).toBeCloseTo(0);
+    expect(planeEquation?.w).toBeCloseTo(0);
+
+    const helperTraces = [
+      ...horizontalPlane.getAllLines(),
+      ...verticalPlane.getAllLines(),
+    ].filter(line => line instanceof Guide2D || line instanceof SiblingGuide2D);
+    expect(helperTraces.length).toBeGreaterThanOrEqual(2);
+
+    const yzRealization = yzPlane!.realize3D(operationContext.realizationContext);
+    expect(yzRealization.feasible).toBe(true);
+    const mapped = applyMatrix4x3(new Vector3(10, 20, 1), yzRealization.planeTo3D);
+    expect(mapped.x).toBeCloseTo(0, 5);
+    expect(mapped.w).toBeCloseTo(1);
+
+    const hinge = world.getAllHingeLines().find(candidate => (
+      candidate.plane1Id === yzPlane!.id && candidate.plane2Id === verticalPlane.id
+    ));
+    expect(hinge).toBeTruthy();
+
+    const yzHalfHinge = yzPlane!.getAllLines().find((line): line is HalfHingeLine2D => (
+      line instanceof HalfHingeLine2D && line.hingeLineId === hinge!.id
+    ));
+    const verticalHalfHinge = verticalPlane.getAllLines().find((line): line is HalfHingeLine2D => (
+      line instanceof HalfHingeLine2D && line.hingeLineId === hinge!.id
+    ));
+    expect(yzHalfHinge).toBeTruthy();
+    expect(verticalHalfHinge).toBeTruthy();
+    expect(yzHalfHinge!.realize2D(operationContext.realizationContext).getDirection().x).toBeCloseTo(1);
+    expect(verticalHalfHinge!.realize2D(operationContext.realizationContext).getDirection().x).toBeCloseTo(0);
+    expect(Math.abs(verticalHalfHinge!.realize2D(operationContext.realizationContext).getDirection().y)).toBeGreaterThan(0);
+
+    const horizontalBrokenHalfHinge = horizontalPlane.getAllLines().find((line): line is BrokenHalfHingeLine2D => (
+      line instanceof BrokenHalfHingeLine2D
+    ));
+    const yzBrokenHalfHinge = yzPlane!.getAllLines().find((line): line is BrokenHalfHingeLine2D => (
+      line instanceof BrokenHalfHingeLine2D
+    ));
+    expect(horizontalBrokenHalfHinge).toBeTruthy();
+    expect(yzBrokenHalfHinge).toBeTruthy();
+    expect(horizontalBrokenHalfHinge!.realize2D(operationContext.realizationContext).isFeasible()).toBe(true);
+    expect(yzBrokenHalfHinge!.realize2D(operationContext.realizationContext).isFeasible()).toBe(true);
+    expect(horizontalBrokenHalfHinge!.siblingBHHLId).toBe(yzBrokenHalfHinge!.id);
+    expect(resolveVisibility(horizontalBrokenHalfHinge!, operationContext.processTree, visibilityModel)).toBe(true);
+
+    const horizontalOriginalTrace = helperTraces.find((line): line is Guide2D => (
+      line instanceof Guide2D && line.planeId === horizontalPlane.id
+    ));
+    expect(horizontalOriginalTrace).toBeTruthy();
+    expect(horizontalOriginalTrace!.visualStyle.visible).toBe(false);
+
+    const treeReadModel = buildProcessTreeReadModel({
+      world,
+      processTree: operationContext.processTree,
+      dependencyQuery: operationContext.dependencies,
+      descriptorRegistry: registerAllDescriptors(),
+      visibilityModel,
+      realizationContext: operationContext.realizationContext,
+    });
+    expect(treeReadModel.root.children.some(child => child.name === 'Add YZ projection plane')).toBe(true);
+
+    const duplicateResult = executeConstructionIntent({
+      operationContext,
+      commands: new RuntimeCommandProducer(operationContext, commandStack),
+      intent: {
+        type: 'create-yz-projection-plane',
+        description: 'Add YZ projection plane again'
+      }
+    });
+    expect(duplicateResult.success).toBe(true);
+    expect(duplicateResult.message).toContain('already exists');
+    expect(world.getAllProjectionPlanes().filter(plane => plane.name === 'P_YZ')).toHaveLength(1);
+    expect(commandStack.getUndoCount()).toBe(beforeUndoCount + 1);
+  });
+
   it('previews, cancels, commits, and undoes free-point moves through the movement use case', () => {
     const { world, visibilityModel, commandStack, operationContext } = createTestWorld();
     const plane = getHorizontalPlane(world);
@@ -366,6 +481,8 @@ describe('Wave 006a canvas/tool command controllers', () => {
     const source = svgCanvasSource;
 
     expect(source).toContain('CanvasCommandProducerInjectionKey');
+    expect(source).toContain("newTool === 'quick-yz-projection-plane'");
+    expect(source).toContain("type: 'create-yz-projection-plane'");
     expect(source).not.toContain("inject('commandStack')");
     expect(source).toContain('getMovableFreePointMoveSession');
     expect(source).toContain('.updateElementStyle(');

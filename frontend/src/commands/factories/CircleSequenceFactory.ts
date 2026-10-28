@@ -14,9 +14,10 @@
  */
 
 import type { Command } from '../Command';
-import { AddCircle2DByCenterAndPointOp } from '../operations/world/AddCircleOp';
+import { AddCircle2DByCenterAndPointOp, AddCircle2DByCenterAndRadiusVectorOp } from '../operations/world/AddCircleOp';
 import { recordProcessTreeAction, requireStringOutput } from './sequenceFactoryHelpers';
 import { createCircleAction } from '@/domain/processTree/actions/CreateCircleAction';
+import type { Vector3 } from 'three';
 
 /**
  * Result of circle creation
@@ -55,6 +56,21 @@ export class CircleSequenceFactory {
     
     recordProcessTreeAction(cmd, action, groupId);
     
+    return { circleId };
+  }
+
+  static createCircleByCenterAndRadiusVector(
+    cmd: Command,
+    planeId: string,
+    centerPointId: string,
+    radiusVector: Vector3,
+    groupId: string
+  ): CircleResult {
+    const operation = new AddCircle2DByCenterAndRadiusVectorOp(planeId, centerPointId, radiusVector);
+    const result = cmd.addAndExecute(operation);
+    const circleId = requireStringOutput(result, 'circleId', 'Failed to create circle by center and radius');
+    const action = createCircleAction(circleId);
+    recordProcessTreeAction(cmd, action, groupId);
     return { circleId };
   }
 }

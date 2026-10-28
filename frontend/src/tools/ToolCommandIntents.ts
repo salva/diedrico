@@ -5,10 +5,12 @@ export type ConstructionIntentType =
   | 'line'
   | 'segment'
   | 'circle'
+  | 'circle-by-radius'
   | 'guide'
   | 'intersection'
   | 'parallel-line'
   | 'perpendicular-line'
+  | 'line-with-angle'
   | 'tangent-line-to-circle-through-point'
   | 'tangent-line-to-circle-parallel'
   | 'create3dpoint'
@@ -16,16 +18,19 @@ export type ConstructionIntentType =
   | 'create3dline'
   | 'create3dsegment'
   | 'create3dplane'
-  | 'createprojectionplane';
+  | 'createprojectionplane'
+  | 'create-yz-projection-plane';
 
 export type ToolConstructionIntent =
   | { type: 'point'; planeId: string; position: Vector3; description: string }
   | { type: 'line'; planeId: string; point1Id: string; point2Id: string; description: string }
   | { type: 'circle'; planeId: string; centerPointId: string; circumferencePointId: string; description: string }
+  | { type: 'circle-by-radius'; planeId: string; centerPointId: string; radiusVector: Vector3; description: string }
   | { type: 'segment'; planeId: string; point1Id: string; point2Id: string; description: string }
   | { type: 'guide'; planeId: string; referenceLineId: string; throughPointId: string; description: string }
   | { type: 'parallel-line'; planeId: string; referenceLineId: string; throughPointId: string; description: string }
   | { type: 'perpendicular-line'; planeId: string; referenceLineId: string; throughPointId: string; description: string }
+  | { type: 'line-with-angle'; planeId: string; referenceLineId: string; throughPointId: string; angleRadians: number; description: string }
   | { type: 'intersection'; planeId: string; element1Id: string; element2Id: string; selectionPoint: Vector3; description: string }
   | { type: 'tangent-line-to-circle-through-point'; planeId: string; circleId: string; throughPointId: string; tangentIndex: 0 | 1; selectionPoint: Vector3; description: string }
   | { type: 'tangent-line-to-circle-parallel'; planeId: string; circleId: string; referenceLineId: string; tangentIndex: 0 | 1; selectionPoint: Vector3; description: string }
@@ -34,7 +39,8 @@ export type ToolConstructionIntent =
   | { type: 'create3dline'; projection1LineId: string; projection2LineId: string; description: string }
   | { type: 'create3dsegment'; projection1SegmentId: string; projection2SegmentId: string; description: string }
   | { type: 'create3dplane'; trace1LineId: string; trace2LineId: string; description: string }
-  | { type: 'createprojectionplane'; t1HingeTraceLineId: string; t2OtherTraceLineId: string; t2PrimePositionLineId: string; description: string };
+  | { type: 'createprojectionplane'; t1HingeTraceLineId: string; t2OtherTraceLineId: string; t2PrimePositionLineId: string; description: string }
+  | { type: 'create-yz-projection-plane'; description: string };
 
 export interface MoveFreePointRequest {
   planeId: string;
@@ -54,6 +60,10 @@ export interface StyleUpdateRequest {
   };
 }
 
+export type ParameterUpdateRequest =
+  | { elementId: string; planeId: string; parameter: { kind: 'radius'; value: number } }
+  | { elementId: string; planeId: string; parameter: { kind: 'angle'; degrees: number } };
+
 export interface ToolCommandResult {
   success: boolean;
   message?: string;
@@ -69,4 +79,5 @@ export interface ToolCommandSink {
   executeConstructionIntent(intent: ToolConstructionIntent): ToolCommandResult;
   startFreePointMove(request: MoveFreePointRequest): FreePointMoveSession;
   updateElementStyle(request: StyleUpdateRequest): ToolCommandResult;
+  updateElementParameter(request: ParameterUpdateRequest): ToolCommandResult;
 }

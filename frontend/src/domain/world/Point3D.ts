@@ -20,7 +20,7 @@ import { Point3DRealization3D } from './Element3DRealization3D';
 import type { Element3DRealizationContext, ProjectionElementRealizationContext } from './projectionPlane/ProjectionPlaneContext';
 import type { VisualStyle } from './VisualStyle';
 import { createVisualStyle } from './VisualStyle';
-import { reconstruct3DPointFromProjections } from '@/utils/threeUtils';
+import { applyMatrix4x3, reconstruct3DPointFromProjections } from '@/utils/threeUtils';
 
 /**
  * Point3DByCoordinates - Point with explicit 3D coordinates
@@ -193,6 +193,141 @@ export class Point3DFromProjections extends Element3D {
 }
 
 /**
+ * Point3DFromProjectionOnPlane - Point lifted from a true projection plane.
+ *
+ * This is useful after an auxiliary projection plane has been folded into true
+ * size: a 2D point drawn on that projection plane represents a concrete 3D
+ * point on the underlying 3D plane.
+ */
+export class Point3DFromProjectionOnPlane extends Element3D {
+  readonly kind = 'Point3DFromProjectionOnPlane';
+  label: string;
+
+  constructor(
+    id: string,
+    label: string,
+    readonly projectionPointId: string,
+    readonly planeId: string,
+    visualStyle: VisualStyle
+  ) {
+    super(id, label, visualStyle);
+    this.label = label;
+  }
+
+  realize3D(context: Element3DRealizationContext): Point3DRealization3D {
+    const plane = context.getProjectionPlaneById(this.planeId);
+    const point = plane?.getPoint(this.projectionPointId);
+    const planeRealization = context.getProjectionPlane3DRealization(this.planeId);
+    if (!point || !planeRealization?.feasible) {
+      return Point3DRealization3D.infeasible();
+    }
+
+    const pointRealization = point.realize2D(context);
+    if (!pointRealization.feasible) {
+      return Point3DRealization3D.infeasible();
+    }
+
+    return new Point3DRealization3D(applyMatrix4x3(pointRealization.position, planeRealization.planeTo3D));
+  }
+
+  getDependencies(): string[] {
+    return [this.projectionPointId, this.planeId];
+  }
+
+  clone(): Point3DFromProjectionOnPlane {
+    return new Point3DFromProjectionOnPlane(
+      this.id,
+      this.label,
+      this.projectionPointId,
+      this.planeId,
+      this.visualStyle ? { ...this.visualStyle } : createVisualStyle()
+    );
+  }
+}
+
+/**
+ * Point3DByPlaneNormalOffset - Point obtained by lifting a foot point along a
+ * plane normal by the length of an already constructed 2D segment.
+ */
+export class Point3DByPlaneNormalOffset extends Element3D {
+  readonly kind = 'Point3DByPlaneNormalOffset';
+  label: string;
+
+  constructor(
+    id: string,
+    label: string,
+    readonly footPoint3DId: string,
+    readonly plane3DId: string,
+    readonly distanceSegmentId: string,
+    readonly distancePlaneId: string,
+    readonly directionSign: 1 | -1,
+    visualStyle: VisualStyle
+  ) {
+    super(id, label, visualStyle);
+    this.label = label;
+  }
+
+  realize3D(context: Element3DRealizationContext): Point3DRealization3D {
+    const contextWithPoints = context as Element3DRealizationContext & {
+      get3DPointRealization(id: string): Point3DRealization3D | undefined;
+    };
+    const foot = contextWithPoints.get3DPointRealization?.(this.footPoint3DId);
+    const plane = context.get3DPlaneRealization(this.plane3DId);
+    const distancePlane = context.getProjectionPlaneById(this.distancePlaneId);
+    const distanceSegment = distancePlane?.getLine(this.distanceSegmentId);
+
+    if (!foot?.feasible || !plane?.feasible || !distanceSegment) {
+      return Point3DRealization3D.infeasible();
+    }
+
+    const distanceRealization = distanceSegment.realize2D(context);
+    if (!distanceRealization.feasible || !distanceRealization.isBounded()) {
+      return Point3DRealization3D.infeasible();
+    }
+
+    const distance = distanceRealization.getLength();
+    if (distance == null) {
+      return Point3DRealization3D.infeasible();
+    }
+
+    const normal = plane.getNormalVector();
+    const normalLength = Math.hypot(normal.x, normal.y, normal.z);
+    if (normalLength < 1e-10) {
+      return Point3DRealization3D.infeasible();
+    }
+
+    const scale = this.directionSign * distance / normalLength;
+    return new Point3DRealization3D(new Vector4(
+      foot.position.x + normal.x * scale,
+      foot.position.y + normal.y * scale,
+      foot.position.z + normal.z * scale,
+      1
+    ));
+  }
+
+  getDependencies(): string[] {
+    return [this.footPoint3DId, this.plane3DId, this.distanceSegmentId, this.distancePlaneId];
+  }
+
+  clone(): Point3DByPlaneNormalOffset {
+    return new Point3DByPlaneNormalOffset(
+      this.id,
+      this.label,
+      this.footPoint3DId,
+      this.plane3DId,
+      this.distanceSegmentId,
+      this.distancePlaneId,
+      this.directionSign,
+      this.visualStyle ? { ...this.visualStyle } : createVisualStyle()
+    );
+  }
+}
+
+/**
  * Type union for all Point3D types
  */
-export type Point3D = Point3DByCoordinates | Point3DFromProjections;
+export type Point3D =
+  | Point3DByCoordinates
+  | Point3DFromProjections
+  | Point3DFromProjectionOnPlane
+  | Point3DByPlaneNormalOffset;

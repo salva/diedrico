@@ -7,7 +7,7 @@ import type { ProjectionPlane } from './projectionPlane/ProjectionPlane';
 import type { Element2D } from './Element2D';
 import type { Point3D } from './Point3D';
 import type { Line3D } from './Line3D';
-import type { Segment3DFromProjections } from './Segment3D';
+import type { Segment3D } from './Segment3D';
 import { getContainerIdFromElementId } from './ElementId';
 import type { World } from './World';
 
@@ -35,7 +35,7 @@ export class GeometryElementLookup {
     return plane.getCircle(id);
   }
 
-  getElement3DById(id: string): Point3D | Line3D | Segment3DFromProjections | Plane3D | HingeLine | undefined {
+  getElement3DById(id: string): Point3D | Line3D | Segment3D | Plane3D | HingeLine | undefined {
     return this.world.get3DPoint(id)
       || this.world.get3DLine(id)
       || this.world.get3DSegment(id)

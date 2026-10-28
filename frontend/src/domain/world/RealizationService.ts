@@ -5,7 +5,7 @@ import type { Plane3D } from './Plane';
 import type { Point2D, Point2DRealization2D } from './Point';
 import type { Line3D } from './Line3D';
 import type { Point3D } from './Point3D';
-import type { Segment3DFromProjections } from './Segment3D';
+import type { Segment3D } from './Segment3D';
 import type { DependencyQueryPort } from './DependencyPorts';
 import type { Element3DRealizationContext, ProjectionElementRealizationContext, ProjectionPlaneRealizationContext } from './projectionPlane/ProjectionPlaneContext';
 import type { ProjectionPlane } from './projectionPlane/ProjectionPlane';
@@ -69,7 +69,7 @@ export class RealizationService {
     return realization;
   }
 
-  realizeSegment3D(segment: Segment3DFromProjections, context: Element3DRealizationContext): Segment3DRealization3D {
+  realizeSegment3D(segment: Segment3D, context: Element3DRealizationContext): Segment3DRealization3D {
     const cached = this.segment3D.get(segment.id);
     if (cached) return cached;
 

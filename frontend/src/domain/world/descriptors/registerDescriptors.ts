@@ -18,6 +18,7 @@ import {
 
 import {
   Line2DByTwoPointsDescriptor,
+  Line2DByPointAndRelativeAngleDescriptor,
   Line2DParallelDescriptor,
   Line2DPerpendicularToLineDescriptor,
   Line2DTangentToCircleThroughPointDescriptor,
@@ -28,6 +29,7 @@ import {
 
 import {
   Circle2DByCenterAndPointDescriptor,
+  Circle2DByCenterAndRadiusVectorDescriptor,
   Circle2DByThreePointsDescriptor,
   Segment2DDescriptor,
   Guide2DDescriptor,
@@ -36,8 +38,11 @@ import {
 
 import {
   Point3DByCoordinatesDescriptor,
+  Point3DByPlaneNormalOffsetDescriptor,
+  Point3DFromProjectionOnPlaneDescriptor,
   Point3DFromProjectionsDescriptor,
   Line3DFromProjectionsDescriptor,
+  Segment3DByPointsDescriptor,
   Segment3DFromProjectionsDescriptor,
   FixedProjectionPlaneDescriptor,
   AuxiliaryProjectionPlaneDescriptor,
@@ -49,13 +54,13 @@ import {
 
 // Import element classes
 import { FreePoint2D, Point2DLineLineIntersection, Point2DLineCircleIntersection, Point2DCircleCircleIntersection, SiblingIntersectionPoint2D } from '../Point';
-import { Line2DByTwoPoints, Line2DParallel, Line2DPerpendicularToLine, Line2DTangentToCircleThroughPoint, Line2DTangentToCircleParallelToLine } from '../Line';
-import { Circle2DByCenterAndPoint, Circle2DByThreePoints } from '../Circle';
+import { Line2DByPointAndRelativeAngle, Line2DByTwoPoints, Line2DParallel, Line2DPerpendicularToLine, Line2DTangentToCircleThroughPoint, Line2DTangentToCircleParallelToLine } from '../Line';
+import { Circle2DByCenterAndPoint, Circle2DByCenterAndRadiusVector, Circle2DByThreePoints } from '../Circle';
 import { Segment2D } from '../Segment';
 import { Guide2D, SiblingGuide2D } from '../Guide';
-import { Point3DByCoordinates, Point3DFromProjections } from '../Point3D';
+import { Point3DByCoordinates, Point3DByPlaneNormalOffset, Point3DFromProjectionOnPlane, Point3DFromProjections } from '../Point3D';
 import { Line3DFromProjections } from '../Line3D';
-import { Segment3DFromProjections } from '../Segment3D';
+import { Segment3DByPoints, Segment3DFromProjections } from '../Segment3D';
 import { FixedProjectionPlane } from '../projectionPlane/FixedProjectionPlane';
 import { AuxiliaryProjectionPlane } from '../projectionPlane/AuxiliaryProjectionPlane';
 import { Plane3DFixed, Plane3DFromTraces } from '../Plane';
@@ -80,6 +85,7 @@ export function registerAllDescriptors(registry = new DescriptorRegistry()): Des
   
   // 2D Lines
   registry.register(Line2DByTwoPoints, new Line2DByTwoPointsDescriptor());
+  registry.register(Line2DByPointAndRelativeAngle, new Line2DByPointAndRelativeAngleDescriptor());
   registry.register(Line2DParallel, new Line2DParallelDescriptor());
   registry.register(Line2DPerpendicularToLine, new Line2DPerpendicularToLineDescriptor());
   registry.register(Line2DTangentToCircleThroughPoint, new Line2DTangentToCircleThroughPointDescriptor());
@@ -89,6 +95,7 @@ export function registerAllDescriptors(registry = new DescriptorRegistry()): Des
   
   // 2D Circles
   registry.register(Circle2DByCenterAndPoint, new Circle2DByCenterAndPointDescriptor());
+  registry.register(Circle2DByCenterAndRadiusVector, new Circle2DByCenterAndRadiusVectorDescriptor());
   registry.register(Circle2DByThreePoints, new Circle2DByThreePointsDescriptor());
   
   // 2D Segments
@@ -101,6 +108,8 @@ export function registerAllDescriptors(registry = new DescriptorRegistry()): Des
   // 3D Points
   registry.register(Point3DByCoordinates, new Point3DByCoordinatesDescriptor());
   registry.register(Point3DFromProjections, new Point3DFromProjectionsDescriptor());
+  registry.register(Point3DFromProjectionOnPlane, new Point3DFromProjectionOnPlaneDescriptor());
+  registry.register(Point3DByPlaneNormalOffset, new Point3DByPlaneNormalOffsetDescriptor());
   
   // 3D Lines
   registry.register(Line3DFromProjections, new Line3DFromProjectionsDescriptor());
@@ -109,6 +118,7 @@ export function registerAllDescriptors(registry = new DescriptorRegistry()): Des
   
   // 3D Segments
   registry.register(Segment3DFromProjections, new Segment3DFromProjectionsDescriptor());
+  registry.register(Segment3DByPoints, new Segment3DByPointsDescriptor());
   
   // 3D Planes
   registry.register(Plane3DFixed, new Plane3DFixedDescriptor());

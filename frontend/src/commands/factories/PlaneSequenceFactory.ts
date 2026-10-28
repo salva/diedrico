@@ -109,7 +109,8 @@ export class PlaneSequenceFactory {
    * @param hingeTracePlaneId - ID of projection plane containing T1 (connects via hinge)
    * @param name - Optional name for the plane (e.g., 'P_A1')
    * @param groupId - The ID of the action group to attach operations to
-   * @returns Object containing the created projection plane ID
+   * @param label - Optional display label for the projection plane
+   * @returns Object containing the created projection plane ID and main hinge line ID
    */
   static createAuxiliaryProjectionPlane(
     cmd: Command,
@@ -120,8 +121,9 @@ export class PlaneSequenceFactory {
     t2PrimeLineId: string,
     hingeTracePlaneId: string,
     name: string | undefined,
-    groupId: string
-  ): { projPlaneId: string } {
+    groupId: string,
+    label?: string
+  ): { projPlaneId: string; hingeLineId: string } {
     
     // Execute operation to create auxiliary projection plane
     const result = cmd.addAndExecute(new AddAuxiliaryProjectionPlaneOp(
@@ -129,7 +131,8 @@ export class PlaneSequenceFactory {
       t1HingeTraceId,
       t2OtherTraceId,
       t2PrimeLineId,
-      name
+      name,
+      label
     ));
     
     const projPlaneId = requireStringOutput(result.outputs.projPlaneId, 'projPlaneId');
@@ -179,7 +182,7 @@ export class PlaneSequenceFactory {
       }
     }
     
-    return { projPlaneId };
+    return { projPlaneId, hingeLineId };
   }
 
   /**

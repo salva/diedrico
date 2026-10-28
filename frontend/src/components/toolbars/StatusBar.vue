@@ -10,6 +10,17 @@
         <span class="status-label">Tool:</span>
         <span class="status-value" data-testid="active-tool-status">{{ activeToolName }}</span>
       </span>
+      <PlanePositionInput
+        ref="planePositionInputRef"
+        :enabled="planePositionInput.enabled"
+        :kind="planePositionInput.kind"
+        :value-kind="planePositionInput.valueKind"
+        :label="planePositionInput.label"
+        :placeholder="planePositionInput.placeholder"
+        :active-plane-name="activePlaneName"
+        :error="planePositionInput.error"
+        @submit="input => emit('submit-tool-argument-input', input)"
+      />
     </div>
     
     <!-- Center section: Tool feedback, cascade preview, save status -->
@@ -43,7 +54,18 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
+import PlanePositionInput from './PlanePositionInput.vue';
+import type { ParsedToolArgumentInput, ToolArgumentInputRequest } from '@/types/ToolArgumentInput';
+
+export interface PlanePositionInputState {
+  enabled: boolean;
+  kind: ToolArgumentInputRequest['kind'];
+  valueKind?: ToolArgumentInputRequest['valueKind'];
+  label: string;
+  placeholder: string;
+  error?: string;
+}
 
 interface Props {
   activePlaneId?: string;
@@ -53,6 +75,7 @@ interface Props {
   saveStatus?: 'idle' | 'saving' | 'saved';
   cascadeCount?: number;  // Number of elements that will be cascade deleted
   toolStepMessage?: string;  // Contextual feedback from the active tool
+  planePositionInput?: PlanePositionInputState;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -62,8 +85,15 @@ const props = withDefaults(defineProps<Props>(), {
   coordinates3D: null,
   saveStatus: 'idle',
   cascadeCount: 0,
-  toolStepMessage: ''
+  toolStepMessage: '',
+  planePositionInput: () => ({ enabled: false, kind: 'plane-position', label: 'position', placeholder: 'u,v', error: '' })
 });
+
+const emit = defineEmits<{
+  'submit-tool-argument-input': [input: ParsedToolArgumentInput];
+}>();
+
+const planePositionInputRef = ref<InstanceType<typeof PlanePositionInput> | null>(null);
 
 const has3DCoordinates = computed(() => {
   return props.coordinates3D !== null && props.coordinates3D !== undefined;
@@ -87,6 +117,34 @@ const formattedCoordinates = computed(() => {
   const fz = z.toFixed(2);
   
   return `(${fx}, ${fy}, ${fz})`;
+});
+
+function focusCoordinateInputWithText(text: string): void {
+  planePositionInputRef.value?.focusWithText(text);
+}
+
+function clearCoordinateInput(): void {
+  planePositionInputRef.value?.clearAndBlur();
+}
+
+function blurCoordinateInput(): void {
+  planePositionInputRef.value?.blur();
+}
+
+function isCoordinateInputFocused(): boolean {
+  return planePositionInputRef.value?.isFocused() ?? false;
+}
+
+function hasCoordinateInputText(): boolean {
+  return planePositionInputRef.value?.hasText() ?? false;
+}
+
+defineExpose({
+  blurCoordinateInput,
+  clearCoordinateInput,
+  focusCoordinateInputWithText,
+  hasCoordinateInputText,
+  isCoordinateInputFocused,
 });
 </script>
 
@@ -193,7 +251,6 @@ const formattedCoordinates = computed(() => {
 
 .status-value {
   color: #222;
-  font-family: 'Courier New', Courier, monospace;
 }
 
 .coordinates-3d {

@@ -80,6 +80,7 @@ export function createAppShellRuntime(options: AppShellRuntimeOptions) {
     activePlane: { cycleActivePlane },
     fitToView,
     startRename: ports.callbacks.startRename,
+    coordinateInput: ports.callbacks.coordinateInput,
   });
 
   let started = false;

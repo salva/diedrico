@@ -57,18 +57,19 @@
         <SvgCanvas 
           ref="svgCanvasRef"
           @update-3d-coordinates="runtime.actions.updateCoordinates"
+          @update-plane-position-input-state="handlePlanePositionInputState"
+          @clear-plane-position-input="clearPlanePositionInput"
         />
         
         <!-- 3D View Overlay (Phase 25) -->
-        <div class="three-view-overlay" data-testid="three-view-overlay" v-if="show3DView">
-          <ThreeView />
-        </div>
+        <ThreeViewWindow v-if="show3DView" />
       </div>
     </main>
 
     <!-- Footer: Status bar -->
     <footer class="app-footer">
       <StatusBar 
+        ref="statusBarRef"
         :active-plane-id="activePlaneId"
         :active-plane-name="activePlaneName"
         :active-tool="activeTool"
@@ -76,6 +77,8 @@
         :save-status="saveStatus"
         :cascade-count="selectionStore.cascadeHighlightIdsArray.length"
         :tool-step-message="toolStore.currentToolStepMessage.value"
+        :plane-position-input="planePositionInputState"
+        @submit-tool-argument-input="handleSubmitToolArgumentInput"
       />
     </footer>
   </div>
@@ -88,7 +91,7 @@ import Toolbar from './components/toolbars/Toolbar.vue';
 import StatusBar from './components/toolbars/StatusBar.vue';
 import ActionsPanel from './components/panels/ActionsPanel.vue';
 import ElementsPanel from './components/panels/ElementsPanel.vue';
-import ThreeView from './components/panels/ThreeView.vue';
+import ThreeViewWindow from './components/panels/ThreeViewWindow.vue';
 import StartupDialog from './components/dialogs/StartupDialog.vue';
 import ProjectNameDisplay from './components/header/ProjectNameDisplay.vue';
 import { useToolStore } from './stores/toolStore';
@@ -111,6 +114,7 @@ import {
   ToolInteractionReadInjectionKey,
   ToolRuntimeInjectionKey,
 } from './application/appShell/RuntimeInjectionKeys';
+import type { ParsedToolArgumentInput, ToolArgumentInputRequest } from './types/ToolArgumentInput';
 
 const GOOGLE_CONFIG = {
   clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID || '',
@@ -133,9 +137,19 @@ watch(() => toolStore.lastUsedTools.value, () => toolStore.saveToStorage(), { de
 watch(() => settingsStore.settings, () => settingsStore.saveToStorage(), { deep: true });
 watch(() => viewStore.showProjectedElements.value, () => viewStore.saveToStorage());
 watch(() => viewStore.threeViewOptions.value, () => viewStore.saveToStorage(), { deep: true });
+watch(() => viewStore.threeViewWindow.value, () => viewStore.saveToStorage(), { deep: true });
 
 const svgCanvasRef = ref<InstanceType<typeof SvgCanvas> | null>(null);
+const statusBarRef = ref<InstanceType<typeof StatusBar> | null>(null);
 const projectNameDisplayRef = ref<InstanceType<typeof ProjectNameDisplay> | null>(null);
+const planePositionInputState = ref({
+  enabled: false,
+  kind: 'plane-position' as ToolArgumentInputRequest['kind'],
+  valueKind: undefined as ToolArgumentInputRequest['valueKind'],
+  label: 'position',
+  placeholder: 'u,v',
+  error: '',
+});
 
 const runtime = createProductionAppShellRuntime({
   googleConfig: GOOGLE_CONFIG,
@@ -150,8 +164,19 @@ const runtime = createProductionAppShellRuntime({
     fitToView: () => svgCanvasRef.value?.fitToView(),
     startRename: () => projectNameDisplayRef.value?.startEditing(),
     alert: (message: string) => window.alert(message),
+    coordinateInput: {
+      isAvailable: () => planePositionInputState.value.enabled,
+      focusWithText: text => statusBarRef.value?.focusCoordinateInputWithText(text),
+      isFocused: () => statusBarRef.value?.isCoordinateInputFocused() ?? false,
+      clear: () => statusBarRef.value?.clearCoordinateInput(),
+      blur: () => statusBarRef.value?.blurCoordinateInput(),
+      hasText: () => statusBarRef.value?.hasCoordinateInputText() ?? false,
+    },
   },
 });
+if (import.meta.env.DEV) {
+  (window as typeof window & { __diedricoRuntime?: typeof runtime }).__diedricoRuntime = runtime;
+}
 
 provide(CanvasViewInjectionKey, runtime.canvasViewPort);
 provide(ProcessTreeReadInjectionKey, runtime.processTreeReadPort);
@@ -186,6 +211,41 @@ const startupError = runtime.state.startupError;
 
 onMounted(() => runtime.actions.start());
 onUnmounted(() => runtime.actions.dispose());
+
+function handlePlanePositionInputState(state: { enabled: boolean; kind: ToolArgumentInputRequest['kind']; valueKind?: ToolArgumentInputRequest['valueKind']; label: string; placeholder: string }): void {
+  planePositionInputState.value = {
+    enabled: state.enabled,
+    kind: state.kind,
+    valueKind: state.valueKind,
+    label: state.label,
+    placeholder: state.placeholder,
+    error: planePositionInputState.value.error,
+  };
+}
+
+function handleSubmitToolArgumentInput(input: ParsedToolArgumentInput): void {
+  const result = svgCanvasRef.value?.submitToolArgumentInput(input);
+  if (!result || !result.success) {
+    planePositionInputState.value = {
+      ...planePositionInputState.value,
+      error: result?.message || 'Could not use input.',
+    };
+    return;
+  }
+  planePositionInputState.value = {
+    ...planePositionInputState.value,
+    error: '',
+  };
+  statusBarRef.value?.clearCoordinateInput();
+}
+
+function clearPlanePositionInput(): void {
+  planePositionInputState.value = {
+    ...planePositionInputState.value,
+    error: '',
+  };
+  statusBarRef.value?.clearCoordinateInput();
+}
 </script>
 
 <style scoped>
@@ -272,20 +332,6 @@ onUnmounted(() => runtime.actions.dispose());
   flex: 1;
   overflow: hidden;
   position: relative;
-}
-
-.three-view-overlay {
-  pointer-events: auto;
-  position: absolute;
-  bottom: 20px;
-  right: 20px;
-  width: 800px;
-  height: 600px;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-  overflow: hidden;
-  z-index: 100;
-  background: white;
 }
 
 .app-footer {

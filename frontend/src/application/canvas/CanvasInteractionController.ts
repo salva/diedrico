@@ -1,10 +1,11 @@
-import type { Matrix3, Vector3 } from 'three';
+import { Vector3, type Matrix3 } from 'three';
 import type { CanvasInteractionQuery } from '@/application/canvasPresentation/CanvasInteractionQuery';
 import type { FreePointMoveSession, ToolCommandResult, ToolCommandSink } from '@/tools/ToolCommandIntents';
 import type { ToolInteractionReadPort } from '@/tools/ToolInteractionReadPort';
 import type { ToolType } from '@/application/tools/ToolTypes';
 import type { SelectionMask } from '@/types/SelectionMask';
-import type { CanvasTool, ToolResult } from '@/tools/ITool';
+import { supportsPlanePositionInput, supportsToolArgumentInput, type CanvasTool, type ToolResult } from '@/tools/ITool';
+import type { ParsedToolArgumentInput, ToolArgumentInputRequest } from '@/types/ToolArgumentInput';
 import { createCanvasTool } from '@/application/tools/createCanvasTool';
 
 export interface CanvasSelectionPort {
@@ -56,6 +57,26 @@ export interface CanvasClickRequest {
   viewport: { zoom: number; panX: number; panY: number };
   interactionQuery: CanvasInteractionQuery;
   commandSink: ToolCommandSink;
+}
+
+export interface PlanePositionInputRequest {
+  activePlaneId: string;
+  planePos: Vector3;
+  commandSink: ToolCommandSink;
+  readPort: ToolInteractionReadPort;
+  interactionQuery: CanvasInteractionQuery;
+  paperToPlaneTransform: Matrix3 | undefined;
+  viewport: { zoom: number; panX: number; panY: number };
+}
+
+export interface ToolArgumentInputSubmitRequest {
+  activePlaneId: string;
+  commandSink: ToolCommandSink;
+  readPort: ToolInteractionReadPort;
+  interactionQuery: CanvasInteractionQuery;
+  paperToPlaneTransform: Matrix3 | undefined;
+  viewport: { zoom: number; panX: number; panY: number };
+  input: ParsedToolArgumentInput;
 }
 
 export interface MouseDownRequest {
@@ -146,6 +167,18 @@ export class CanvasInteractionController {
     return this.currentTool?.getSelectionMask?.();
   }
 
+  acceptsPlanePositionInput(): boolean {
+    return supportsPlanePositionInput(this.currentTool) && this.currentTool.acceptsPlanePositionInput();
+  }
+
+  getPlanePositionInputLabel(): string {
+    return supportsPlanePositionInput(this.currentTool) ? this.currentTool.getPlanePositionInputLabel() : 'position';
+  }
+
+  getToolArgumentInputRequest(): ToolArgumentInputRequest | null {
+    return supportsToolArgumentInput(this.currentTool) ? this.currentTool.getToolArgumentInputRequest() : null;
+  }
+
   // --- Canvas click dispatch ---
 
   handleCanvasClick(request: CanvasClickRequest): ToolResult | null {
@@ -174,6 +207,55 @@ export class CanvasInteractionController {
       paperToPlaneTransform: request.paperToPlaneTransform,
       viewport: request.viewport,
     });
+
+    this.deps.toolLifecycle.setToolStepMessage(result.message || '');
+    return result;
+  }
+
+  submitPlanePositionInput(request: PlanePositionInputRequest): ToolResult {
+    const activeTool = this.currentTool;
+    if (!supportsPlanePositionInput(activeTool)) {
+      return { success: false, message: 'Current tool does not accept coordinate input.' };
+    }
+    if (!activeTool.acceptsPlanePositionInput()) {
+      return { success: false, message: 'Current tool is not waiting for a free position.' };
+    }
+
+    const result = activeTool.handlePlanePositionInput({
+      planeId: request.activePlaneId,
+      planeCoords: request.planePos,
+      canvasCoords: { x: 0, y: 0 },
+      commandSink: request.commandSink,
+      readPort: request.readPort,
+      interactionQuery: request.interactionQuery,
+      paperToPlaneTransform: request.paperToPlaneTransform,
+      viewport: request.viewport,
+    }, request.planePos);
+
+    this.deps.toolLifecycle.setToolStepMessage(result.message || '');
+    return result;
+  }
+
+  submitToolArgumentInput(request: ToolArgumentInputSubmitRequest): ToolResult {
+    const activeTool = this.currentTool;
+    if (!supportsToolArgumentInput(activeTool)) {
+      return { success: false, message: 'Current tool does not accept direct input.' };
+    }
+
+    const planeCoords = request.input.kind === 'plane-position'
+      ? request.input.position
+      : new Vector3(0, 0, 1);
+
+    const result = activeTool.handleToolArgumentInput({
+      planeId: request.activePlaneId,
+      planeCoords,
+      canvasCoords: { x: 0, y: 0 },
+      commandSink: request.commandSink,
+      readPort: request.readPort,
+      interactionQuery: request.interactionQuery,
+      paperToPlaneTransform: request.paperToPlaneTransform,
+      viewport: request.viewport,
+    }, request.input);
 
     this.deps.toolLifecycle.setToolStepMessage(result.message || '');
     return result;

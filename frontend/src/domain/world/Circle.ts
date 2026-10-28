@@ -16,6 +16,7 @@ import type { ProjectionElementRealizationContext } from './projectionPlane/Proj
 import { Vector3 } from 'three';
 import { Realization } from './Realization';
 import { Element2D } from './Element2D';
+import { finiteRadiusVector } from './GeometricParameters';
 
 /**
  * Circle2DRealization2D - Stores computed geometry for a Circle2D
@@ -167,6 +168,64 @@ export class Circle2DByCenterAndPoint extends Circle2D {
     }
 
     return new Circle2DRealization2D(centerRealization.position.clone(), radiusVector, true);
+  }
+}
+
+/**
+ * Circle2DByCenterAndRadiusVector - Circle defined by a center point and stored radius vector.
+ * The radius is independent from any circumference point. Moving the center translates the
+ * circle without changing its radius.
+ */
+export class Circle2DByCenterAndRadiusVector extends Circle2D {
+  readonly centerPointId: string;
+  readonly radiusVector: Vector3;
+
+  constructor(
+    id: string,
+    centerPointId: string,
+    radiusVector: Vector3,
+    planeId: string,
+    label?: string
+  ) {
+    super(id, planeId, label);
+    this.centerPointId = centerPointId;
+    this.radiusVector = finiteRadiusVector(radiusVector);
+  }
+
+  clone(): Circle2DByCenterAndRadiusVector {
+    return new Circle2DByCenterAndRadiusVector(
+      this.id,
+      this.centerPointId,
+      this.radiusVector.clone(),
+      this.planeId,
+      this.label
+    );
+  }
+
+  getDependencies(): string[] {
+    return [this.centerPointId];
+  }
+
+  realize2D(context: ProjectionElementRealizationContext): Circle2DRealization2D {
+    const plane = context.getProjectionPlaneById(this.planeId);
+    if (!plane) {
+      throw new Error(`[Circle2DByCenterAndRadiusVector] Plane ${this.planeId} not found for circle ${this.id}`);
+    }
+    const centerPoint = plane.getPoint(this.centerPointId);
+    if (!centerPoint) {
+      throw new Error(`[Circle2DByCenterAndRadiusVector] Center point ${this.centerPointId} not found on plane ${this.planeId} for circle ${this.id}`);
+    }
+
+    const centerRealization = centerPoint.realize2D(context);
+    if (!centerRealization.feasible) {
+      return new Circle2DRealization2D(new Vector3(0, 0, 1), new Vector3(1, 0, 0), false);
+    }
+
+    return new Circle2DRealization2D(
+      centerRealization.position.clone(),
+      this.radiusVector.clone(),
+      true
+    );
   }
 }
 

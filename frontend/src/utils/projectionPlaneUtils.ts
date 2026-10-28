@@ -19,6 +19,8 @@ import { Point3DRealization3D } from '@/domain/world/Element3DRealization3D';
 import type { ProjectionPlane } from '@/domain/world/projectionPlane/ProjectionPlane';
 import type { ProjectionPlaneRealization3D } from '@/domain/world/projectionPlane/ProjectionPlaneRealization';
 
+const COMMON_TRACE_MAX_DISTANCE = 1e-6;
+
 function requireLine(context: ProjectionPlaneRealizationContext, id: string, role: string): Line2D {
   const line = context.getLine2D(id);
   if (!line) throw new Error(`${role} line not found: ${id}`);
@@ -51,51 +53,132 @@ function requireProjectionPlane3DRealization(
   return realization;
 }
 
-/**
- * Compute intersection point of two 2D lines in homogeneous coordinates
- * 
- * Lines in parametric form:
- * - L1: P1 + s * d1
- * - L2: P2 + t * d2
- * 
- * @param point1 - Point on first line (Vector3 with z=1)
- * @param dir1 - Direction of first line (Vector3 with z=0)
- * @param point2 - Point on second line (Vector3 with z=1)
- * @param dir2 - Direction of second line (Vector3 with z=0)
- * @returns Intersection point (Vector3 with z=1), or null if lines are parallel
- */
-function computeLineLineIntersection2D(
-  point1: Vector3,
-  dir1: Vector3,
-  point2: Vector3,
-  dir2: Vector3
+function det3(
+  a11: number, a12: number, a13: number,
+  a21: number, a22: number, a23: number,
+  a31: number, a32: number, a33: number
+): number {
+  return (
+    a11 * (a22 * a33 - a23 * a32) -
+    a12 * (a21 * a33 - a23 * a31) +
+    a13 * (a21 * a32 - a22 * a31)
+  );
+}
+
+function solveSymmetric3x3(
+  xx: number,
+  xy: number,
+  xz: number,
+  yy: number,
+  yz: number,
+  zz: number,
+  rhs: Vector3
 ): Vector3 | null {
-  // Normalize directions for numerical stability
-  const d1 = dir1.clone().normalize();
-  const d2 = dir2.clone().normalize();
-  
-  // Compute intersection using parametric form
-  // Line 1: P1 + s * d1
-  // Line 2: P2 + t * d2
-  // Solve: P1 + s * d1 = P2 + t * d2
-  const w = new Vector3().subVectors(point1, point2);
-  const d1_d1 = d1.dot(d1);
-  const d1_d2 = d1.dot(d2);
-  const d2_d2 = d2.dot(d2);
-  const d1_w = d1.dot(w);
-  const d2_w = d2.dot(w);
-  
-  const denom = d1_d1 * d2_d2 - d1_d2 * d1_d2;
-  
-  // Check for parallel lines (linearly dependent directions)
-  if (Math.abs(denom) < 1e-10) {
-    return null; // Lines are parallel - no unique intersection
+  const determinant = det3(
+    xx, xy, xz,
+    xy, yy, yz,
+    xz, yz, zz
+  );
+  if (Math.abs(determinant) < 1e-12) return null;
+
+  return new Vector3(
+    det3(
+      rhs.x, xy, xz,
+      rhs.y, yy, yz,
+      rhs.z, yz, zz
+    ) / determinant,
+    det3(
+      xx, rhs.x, xz,
+      xy, rhs.y, yz,
+      xz, rhs.z, zz
+    ) / determinant,
+    det3(
+      xx, xy, rhs.x,
+      xy, yy, rhs.y,
+      xz, yz, rhs.z
+    ) / determinant
+  );
+}
+
+function vector4PointToVector3(point: Vector4): Vector3 {
+  return new Vector3(point.x, point.y, point.z);
+}
+
+function vector4DirectionToVector3(direction: Vector4): Vector3 {
+  return new Vector3(direction.x, direction.y, direction.z);
+}
+
+function computeCommonLineIntersection3D(
+  lines: Array<{ point: Vector4; direction: Vector4 }>,
+  preferredPoint: Vector4,
+  maxDistance = COMMON_TRACE_MAX_DISTANCE
+): Vector4 | null {
+  const usableLines = lines
+    .map(({ point, direction }) => {
+      const p = vector4PointToVector3(point);
+      const u = vector4DirectionToVector3(direction);
+      if (u.lengthSq() < 1e-20) return null;
+      u.normalize();
+      return { point: p, direction: u };
+    })
+    .filter((line): line is { point: Vector3; direction: Vector3 } => line !== null);
+
+  if (usableLines.length === 0) return null;
+
+  let xx = 0;
+  let xy = 0;
+  let xz = 0;
+  let yy = 0;
+  let yz = 0;
+  let zz = 0;
+  const rhs = new Vector3();
+
+  for (const { point, direction } of usableLines) {
+    const ux = direction.x;
+    const uy = direction.y;
+    const uz = direction.z;
+    const mxx = 1 - ux * ux;
+    const mxy = -ux * uy;
+    const mxz = -ux * uz;
+    const myy = 1 - uy * uy;
+    const myz = -uy * uz;
+    const mzz = 1 - uz * uz;
+
+    xx += mxx;
+    xy += mxy;
+    xz += mxz;
+    yy += myy;
+    yz += myz;
+    zz += mzz;
+    rhs.x += mxx * point.x + mxy * point.y + mxz * point.z;
+    rhs.y += mxy * point.x + myy * point.y + myz * point.z;
+    rhs.z += mxz * point.x + myz * point.y + mzz * point.z;
   }
-  
-  const s = (d1_d2 * d2_w - d2_d2 * d1_w) / denom;
-  const intersection = point1.clone().addScaledVector(d1, s);
-  
-  return intersection;
+
+  let candidate = solveSymmetric3x3(xx, xy, xz, yy, yz, zz, rhs);
+  if (!candidate) {
+    const preferred = vector4PointToVector3(preferredPoint);
+    const trace = xx + yy + zz;
+    const lambda = Math.max(1, trace) * 1e-10;
+    candidate = solveSymmetric3x3(
+      xx + lambda,
+      xy,
+      xz,
+      yy + lambda,
+      yz,
+      zz + lambda,
+      rhs.clone().addScaledVector(preferred, lambda)
+    );
+  }
+  if (!candidate) return null;
+
+  const worstDistance = Math.max(...usableLines.map(({ point, direction }) => {
+    const offset = candidate!.clone().sub(point);
+    return offset.cross(direction).length();
+  }));
+
+  if (worstDistance > maxDistance) return null;
+  return new Vector4(candidate.x, candidate.y, candidate.z, 1);
 }
 
 /**
@@ -169,6 +252,35 @@ export function computeLineLineIntersection3D(
   return new Point3DRealization3D(intersectionPoint, true);
 }
 
+export function computePlaneEquationFromTwo3DLines(
+  point1: Vector4,
+  dir1: Vector4,
+  point2: Vector4,
+  dir2: Vector4
+): Vector4 | null {
+  const p1 = new Vector3(point1.x, point1.y, point1.z);
+  const p2 = new Vector3(point2.x, point2.y, point2.z);
+  const d1 = new Vector3(dir1.x, dir1.y, dir1.z);
+  const d2 = new Vector3(dir2.x, dir2.y, dir2.z);
+  if (d1.lengthSq() < 1e-20 || d2.lengthSq() < 1e-20) return null;
+  d1.normalize();
+  d2.normalize();
+
+  let normal = new Vector3().crossVectors(d1, d2);
+  if (normal.lengthSq() < 1e-20) {
+    const offset = new Vector3().subVectors(p2, p1);
+    normal = new Vector3().crossVectors(d1, offset);
+    if (normal.lengthSq() < 1e-20) return null;
+  } else {
+    const intersection = computeLineLineIntersection3D(point1, dir1, point2, dir2);
+    if (!intersection.feasible) return null;
+  }
+
+  normal.normalize();
+  const d = -normal.dot(p1);
+  return new Vector4(normal.x, normal.y, normal.z, d);
+}
+
 /**
  * Transformation matrices for projection plane
  */
@@ -189,12 +301,12 @@ export interface ProjectionPlaneMatrices {
  * Algorithm:
  * 
  * **Part 1: planeToPaper (Paper Layout)**
- * - Origin: T1-T2' intersection on paper
+ * - Origin: least-squares common T1/T2/T2' crossing point computed in 3D, then mapped to paper
  * - U-axis: Direction along T1 on paper
  * - V-axis: Perpendicular to T1 on paper, oriented via T2 side test
  * 
  * **Part 2: planeTo3D and threeDToPlane (3D Geometry)**
- * - Origin: T1-T2 intersection in 3D space
+ * - Origin: least-squares common T1/T2/T2' crossing point in 3D space
  * - U-axis: Direction along T1 in 3D
  * - V-axis: Double cross product t1 × (t1 × t2) - perpendicular to U, in-plane
  * - V orientation: Consistent with paper V direction
@@ -243,14 +355,12 @@ export function computeProjectionPlaneMatrices(
   }
   
   // ===== PART 1: planeToPaper (Paper Layout) =====
-  // Origin: T1-T2' intersection on paper
+  // Origin: common trace crossing point computed in 3D and mapped to paper
   // U-axis: Along T1 on paper
   // V-axis: Perpendicular to T1 on paper, oriented via T2 side test
   
-  // 1.1: Compute T1-T2' intersection on paper (both on plane P1)
-  // Lines in 2D: ax + by + c = 0
-  // T1: passes through t1Point1, direction t1Dir
-  // T2': passes through t2PrimePoint1, direction t2PrimeDir
+  // 1.1: Compute the common trace crossing point in 3D, then map it back to
+  // P1's paper coordinates for the auxiliary plane origin.
   
   // Line2DRealization2D represents infinite lines as:
   // - point1: a point on the line (z=1)
@@ -259,24 +369,34 @@ export function computeProjectionPlaneMatrices(
   
   const t1PointInP1 = t1Realization.point1;
   const t1DirInP1 = t1Realization.point2.clone().normalize();
-  
+
   const t2PrimePointInP1 = t2PrimeRealization.point1;
   const t2PrimeDirInP1 = t2PrimeRealization.point2.clone().normalize();
-  
-  // Compute T1-T2' intersection using helper function
-  const auxOriginInP1 = computeLineLineIntersection2D(
-    t1PointInP1,
-    t1DirInP1,
-    t2PrimePointInP1,
-    t2PrimeDirInP1
+
+  const t1PointIn3D = applyMatrix4x3(t1Realization.point1, planeP1Realization3D.planeTo3D);
+  const t2PointIn3D = applyMatrix4x3(t2Realization.point1, planeP2Realization3D.planeTo3D);
+  const t2PrimePointIn3D = applyMatrix4x3(t2PrimeRealization.point1, planeP1Realization3D.planeTo3D);
+  const t1DirIn3D = applyMatrix4x3(t1Realization.point2, planeP1Realization3D.planeTo3D).normalize();
+  const t2DirIn3D = applyMatrix4x3(t2Realization.point2, planeP2Realization3D.planeTo3D).normalize();
+  const t2PrimeDirIn3D = applyMatrix4x3(t2PrimeRealization.point2, planeP1Realization3D.planeTo3D).normalize();
+
+  // T1, T2, and T2' describe the same 3D crossing point. Solve the closest
+  // point to all three 3D trace lines, then reject inconsistent traces whose
+  // per-line distance is above tolerance.
+  // A common finite crossing is required for this auxiliary layout. Distinct
+  // parallel traces may define a 3D plane, but not this trace-based layout.
+  const auxOriginIn3D = computeCommonLineIntersection3D(
+    [
+      { point: t1PointIn3D, direction: t1DirIn3D },
+      { point: t2PointIn3D, direction: t2DirIn3D },
+      { point: t2PrimePointIn3D, direction: t2PrimeDirIn3D },
+    ],
+    t1PointIn3D
   );
-  
-  if (!auxOriginInP1) {
-    // T1 and T2' are parallel - cannot determine origin
-    return null;
-  }
-  
-  // Transform intersection from P1's plane coords to P1's paper coords
+
+  if (!auxOriginIn3D) return null;
+
+  const auxOriginInP1 = applyMatrix3x4(auxOriginIn3D, planeP1Realization3D.threeDToPlane);
   const auxOriginInPaper = auxOriginInP1.clone().applyMatrix3(planeP1Realization2D.planeToPaper2D);
   
   // 1.2: U-axis = direction of T1 transformed to paper coordinates
@@ -285,22 +405,22 @@ export function computeProjectionPlaneMatrices(
   // Note: V-axis will be computed in Part 2 after we have 3D directions for proper orientation
   
   // 1.5: Build planeToPaper matrix (homogeneous 2D transform)
-  // The origin_paper is T1-T2' intersection in P1's PAPER coordinates
+  // The origin_paper is the 3D common crossing point in P1's PAPER coordinates
   // This becomes the displacement/translation for the auxiliary plane's coordinate system
   // Note: planeToPaper matrix will be constructed in Part 2 after v_paper is computed
   
   
   // ===== PART 2: planeTo3D and threeDToPlane (3D Geometry) =====
-  // Origin: T1-T2 intersection in 3D
+  // Origin: common T1/T2/T2' crossing point in 3D
   // U-axis: Along T1 in 3D
   // V-axis: Double cross product t1 × (t1 × t2) - perpendicular to U, in-plane
   
   // 2.1: Get T1 and T2 direction vectors in 3D (homogeneous coordinates)
   // Line2DRealization2D.point2 is already the direction vector (z=0)
   // Work with homogeneous Vector4 throughout
-  const t1DirIn3D = applyMatrix4x3(t1Realization.point2, planeP1Realization3D.planeTo3D).normalize();
-  const t2DirIn3D = applyMatrix4x3(t2Realization.point2, planeP2Realization3D.planeTo3D).normalize();
-  
+  const t1CrossT2In3D = crossVector3Homogeneous(t1DirIn3D, t2DirIn3D);
+  const parallelTraces = (t1CrossT2In3D.x * t1CrossT2In3D.x + t1CrossT2In3D.y * t1CrossT2In3D.y + t1CrossT2In3D.z * t1CrossT2In3D.z) < 1e-20;
+
   // 2.2: Compute auxVDirInPaper with corrected T2' direction
   // Check if T2' direction needs to be flipped by comparing angles in 3D and 2D
   // If dot products have different signs, flip t2' direction
@@ -312,12 +432,20 @@ export function computeProjectionPlaneMatrices(
     t2PrimeDirInP1.multiplyScalar(-1);
   }
   
-  // V-axis using double cross product with corrected T2' direction
-  // For 2D vectors, t1 × (t1 × t2') simplifies to:
-  // z = t1x*t2'y - t1y*t2'x (2D cross product scalar)
-  // v = (t1y*z, -t1x*z)
-  const z = t1DirInP1.x * t2PrimeDirInP1.y - t1DirInP1.y * t2PrimeDirInP1.x;
-  const auxVDirInP1 = new Vector3(t1DirInP1.y * z, -t1DirInP1.x * z, 0).normalize();
+  let auxVDirInP1: Vector3;
+  if (parallelTraces) {
+    const offsetToPrime = t2PrimePointInP1.clone().sub(t1PointInP1);
+    const side = t1DirInP1.x * offsetToPrime.y - t1DirInP1.y * offsetToPrime.x;
+    if (Math.abs(side) < 1e-10) return null;
+    auxVDirInP1 = new Vector3(-t1DirInP1.y, t1DirInP1.x, 0).multiplyScalar(Math.sign(side)).normalize();
+  } else {
+    // V-axis using double cross product with corrected T2' direction
+    // For 2D vectors, t1 × (t1 × t2') simplifies to:
+    // z = t1x*t2'y - t1y*t2'x (2D cross product scalar)
+    // v = (t1y*z, -t1x*z)
+    const z = t1DirInP1.x * t2PrimeDirInP1.y - t1DirInP1.y * t2PrimeDirInP1.x;
+    auxVDirInP1 = new Vector3(t1DirInP1.y * z, -t1DirInP1.x * z, 0).normalize();
+  }
   
   // Transform V-axis from P1 plane coords to paper coords
   const auxVDirInPaper = auxVDirInP1.clone().applyMatrix3(planeP1Realization2D.planeToPaper2D);
@@ -336,30 +464,24 @@ export function computeProjectionPlaneMatrices(
   
   // 2.4: V-axis = double cross product (stable, in-plane, perpendicular to U)
   // Using homogeneous vector operations
-  const t1CrossT2In3D = crossVector3Homogeneous(t1DirIn3D, t2DirIn3D);
-  // t1 × t2 = normal to plane containing both traces
-  
-  const auxVDirIn3D = crossVector3Homogeneous(t1DirIn3D, t1CrossT2In3D).normalize();
-  // t1 × (t1 × t2) = perpendicular to t1, lying in plane Q
-  // Orientation is already correct due to T2' direction correction (needsFlip)
-  
-  // 2.6: Origin = intersection of T1 and T2 in 3D
-  const t1PointIn3D = applyMatrix4x3(t1Realization.point1, planeP1Realization3D.planeTo3D);
-  const t2PointIn3D = applyMatrix4x3(t2Realization.point1, planeP2Realization3D.planeTo3D);
-  
-  const auxOriginRealization = computeLineLineIntersection3D(
-    t1PointIn3D,
-    t1DirIn3D,
-    t2PointIn3D,
-    t2DirIn3D
-  );
-  
-  // Check feasibility - traces must intersect
-  if (!auxOriginRealization.feasible) {
-    throw new Error('Traces do not intersect - cannot compute projection plane matrices');
+  // t1 × t2 = normal to plane containing both traces. For parallel traces the
+  // normal comes from t1 × (point on T2 - point on T1), and V is the component
+  // of that offset perpendicular to U.
+  let auxVDirIn3D: Vector4;
+
+  // 2.6: Origin = the least-squares common T1/T2/T2' crossing point in 3D.
+  if (parallelTraces) {
+    const offset = new Vector3(t2PointIn3D.x - auxOriginIn3D.x, t2PointIn3D.y - auxOriginIn3D.y, t2PointIn3D.z - auxOriginIn3D.z);
+    const u3 = new Vector3(t1DirIn3D.x, t1DirIn3D.y, t1DirIn3D.z).normalize();
+    const v3 = offset.sub(u3.clone().multiplyScalar(offset.dot(u3)));
+    if (v3.lengthSq() < 1e-20) return null;
+    v3.normalize();
+    auxVDirIn3D = new Vector4(v3.x, v3.y, v3.z, 0);
+  } else {
+    auxVDirIn3D = crossVector3Homogeneous(t1DirIn3D, t1CrossT2In3D).normalize();
+    // t1 × (t1 × t2) = perpendicular to t1, lying in plane Q
+    // Orientation is already correct due to T2' direction correction (needsFlip)
   }
-  
-  const auxOriginIn3D = auxOriginRealization.position;
   
   // 2.7: Build planeTo3D matrix (homogeneous 2D → 3D)
   // Transformation: (u, v, 0) → (x, y, z, 0) for directions

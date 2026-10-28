@@ -2,7 +2,7 @@ import type { Ref } from 'vue';
 import type { ToolType } from '@/application/tools/ToolTypes';
 import type { GoogleDriveFile, GoogleUserProfile } from './DrivePortTypes';
 import type { ProjectData } from './ProjectService';
-import type { KeyboardShortcutRouterTarget } from './KeyboardShortcutRouter';
+import type { CoordinateInputKeyboardPort, KeyboardShortcutRouterTarget } from './KeyboardShortcutRouter';
 
 export type SaveStatus = 'idle' | 'saving' | 'saved';
 export type ProjectSessionPersistencePayload = ProjectData;
@@ -98,6 +98,7 @@ export interface AppShellCallbacks {
   fitToView(): void;
   startRename(): void;
   alert(message: string): void;
+  coordinateInput?: CoordinateInputKeyboardPort;
 }
 
 export interface StartupDialogState {

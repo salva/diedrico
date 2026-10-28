@@ -40,6 +40,12 @@ export interface PropertiesDialogViewModel {
     readonly v: number;
     readonly editable: boolean;
   } | null;
+  readonly parameter: {
+    readonly kind: 'radius' | 'angle';
+    readonly value: number;
+    readonly units: 'plane-units' | 'degrees';
+    readonly editable: boolean;
+  } | null;
   readonly dependencies: readonly string[];
   readonly createdBy: string | null;
   readonly style: {

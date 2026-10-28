@@ -35,6 +35,7 @@
 import type { Command } from '../Command';
 import { 
   AddLine2DByTwoPointsOp,
+  AddLine2DByPointAndRelativeAngleOp,
   AddLine2DParallelToLineOp,
   AddLine2DPerpendicularToLineOp,
   AddLine2DTangentToCircleThroughPointOp,
@@ -140,6 +141,22 @@ export class LineSequenceFactory {
     
     recordProcessTreeAction(cmd, action, groupId);
     
+    return { lineId };
+  }
+
+  static createLineByPointAndRelativeAngle(
+    cmd: Command,
+    planeId: string,
+    referenceLineId: string,
+    throughPointId: string,
+    angleRadians: number,
+    groupId: string
+  ): LineResult {
+    const operation = new AddLine2DByPointAndRelativeAngleOp(planeId, referenceLineId, throughPointId, angleRadians);
+    const result = cmd.addAndExecute(operation);
+    const lineId = requireStringOutput(result, 'lineId', 'Failed to create line by point and angle');
+    const action = createLineAction(lineId);
+    recordProcessTreeAction(cmd, action, groupId);
     return { lineId };
   }
 
