@@ -8,6 +8,7 @@ export class AutoSaveUseCases {
   private debounceTimer: TimeoutHandle | null = null;
   private savedStatusTimer: TimeoutHandle | null = null;
   private lastVersion = 0;
+  private generation = 0;
 
   constructor(
     private readonly deps: {
@@ -26,7 +27,7 @@ export class AutoSaveUseCases {
   ) {}
 
   start(): void {
-    this.stopPolling();
+    this.stop();
     this.lastVersion = this.deps.session.getVersion();
     this.pollInterval = this.deps.scheduler.setInterval(() => {
       const currentVersion = this.deps.session.getVersion();
@@ -48,16 +49,23 @@ export class AutoSaveUseCases {
   async perform(): Promise<void> {
     const { drive, currentFileId, currentProjectName } = this.deps;
     if (!drive || !currentFileId.value || !currentProjectName.value) return;
+    const generation = this.generation;
+    const fileId = currentFileId.value;
+    const projectName = currentProjectName.value;
+    // A restart also invalidates requests when reopening the same file ID.
+    const isCurrent = () => generation === this.generation
+      && currentFileId.value === fileId && currentProjectName.value === projectName;
     try {
-      const projectData = this.deps.session.snapshot(currentProjectName.value);
-      await drive.updateFile(currentFileId.value, projectData);
-      this.markSavedThenIdle();
+      const projectData = this.deps.session.snapshot(projectName);
+      await drive.updateFile(fileId, projectData);
+      if (isCurrent()) this.markSavedThenIdle();
     } catch (error: unknown) {
-      await this.handleSaveError(error);
+      if (isCurrent()) await this.handleSaveError(error, isCurrent);
     }
   }
 
   stop(): void {
+    this.generation += 1;
     this.stopPolling();
     if (this.debounceTimer) this.deps.scheduler.clearTimeout(this.debounceTimer);
     if (this.savedStatusTimer) this.deps.scheduler.clearTimeout(this.savedStatusTimer);
@@ -83,18 +91,21 @@ export class AutoSaveUseCases {
     }, 2000);
   }
 
-  private async handleSaveError(error: unknown): Promise<void> {
+  private async handleSaveError(error: unknown, isCurrent: () => boolean): Promise<void> {
     this.deps.saveStatus.value = 'idle';
     if (isMissingRemoteFileError(error)) {
       try {
         if (!this.deps.drive || !this.deps.currentProjectName.value) throw new Error('No project name');
         const projectData = this.deps.session.snapshot(this.deps.currentProjectName.value);
         const newFileId = await this.deps.drive.createFile(this.deps.currentProjectName.value, projectData);
+        // The remote create may have succeeded after a switch; do not adopt it.
+        if (!isCurrent()) return;
         this.deps.currentFileId.value = newFileId;
         this.deps.lastProjectRepository.setLastProject({ id: newFileId, name: this.deps.currentProjectName.value });
         this.markSavedThenIdle();
         return;
       } catch {
+        if (!isCurrent()) return;
         this.deps.alert('Remote file was deleted and could not be re-saved. Please try to export your work or refresh if connection is lost.');
       }
     }

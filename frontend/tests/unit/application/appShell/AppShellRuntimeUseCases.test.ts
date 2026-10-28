@@ -215,6 +215,67 @@ describe('AppShellRuntime lifecycle ownership', () => {
 });
 
 describe('AutoSaveUseCases', () => {
+  it.each(['success', 'missing', 'authentication', 'quota', 'recovery', 'recovery-failure', 'same-file', 'dispose'])(
+    'does not apply a stale %s completion to another session', async (completion) => {
+      let resolveUpdate!: () => void;
+      let rejectUpdate!: (error: Error) => void;
+      let resolveCreate!: (id: string) => void;
+      let rejectCreate!: (error: Error) => void;
+      const fakeDrive = drive({
+        updateFile: vi.fn(() => new Promise<void>((resolve, reject) => {
+          resolveUpdate = resolve;
+          rejectUpdate = reject;
+        })),
+        createFile: vi.fn(() => new Promise<string>((resolve, reject) => {
+          resolveCreate = resolve;
+          rejectCreate = reject;
+        })),
+      });
+      const repository = lastProjectRepository();
+      const currentFileId = ref<string | null>('old-file');
+      const currentProjectName = ref<string | null>('Old');
+      const saveStatus = ref<'idle' | 'saving' | 'saved'>('saving');
+      const showStartupDialog = ref(false);
+      const isSignedIn = ref(true);
+      const alert = vi.fn();
+      const autoSave = new AutoSaveUseCases({
+        session: autoSaveSession(), drive: fakeDrive, lastProjectRepository: repository,
+        scheduler: scheduler().port, currentFileId, currentProjectName,
+        saveStatus, showStartupDialog, isSignedIn, alert,
+      });
+      autoSave.start();
+      const pending = autoSave.perform();
+      if (completion.startsWith('recovery')) {
+        rejectUpdate(new Error('File not found'));
+        await Promise.resolve();
+        expect(fakeDrive.createFile).toHaveBeenCalledOnce();
+      }
+      if (completion === 'dispose') {
+        autoSave.dispose();
+      } else {
+        if (completion !== 'same-file') {
+          currentFileId.value = 'new-file';
+          currentProjectName.value = 'New';
+        }
+        autoSave.start();
+        saveStatus.value = 'saving';
+      }
+      if (completion === 'recovery') resolveCreate('orphan-file');
+      else if (completion === 'recovery-failure') rejectCreate(new Error('offline'));
+      else if (completion === 'missing') rejectUpdate(new Error('File not found'));
+      else if (completion === 'authentication') rejectUpdate(new Error('401 authentication expired'));
+      else if (completion === 'quota') rejectUpdate(new Error('quota exceeded'));
+      else resolveUpdate();
+      await pending;
+      expect(currentFileId.value).toBe(completion === 'dispose' || completion === 'same-file' ? 'old-file' : 'new-file');
+      expect(saveStatus.value).toBe(completion === 'dispose' ? 'idle' : 'saving');
+      expect(showStartupDialog.value).toBe(false);
+      expect(isSignedIn.value).toBe(true);
+      expect(repository.setLastProject).not.toHaveBeenCalled();
+      expect(alert).not.toHaveBeenCalled();
+      if (!completion.startsWith('recovery')) expect(fakeDrive.createFile).not.toHaveBeenCalled();
+    },
+  );
   it('owns polling, debounce, saved-status timers and clears them on dispose', async () => {
     const fakeScheduler = scheduler();
     let version = 1;

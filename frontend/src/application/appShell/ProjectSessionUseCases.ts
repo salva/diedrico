@@ -1,6 +1,6 @@
 import type { Ref } from 'vue';
 import type { AutoSaveUseCases } from './AutoSaveUseCases';
-import type { AuthStorePort, DrivePort, LastProjectRepositoryPort, SaveStatus, StartupDialogState } from './AppShellPorts';
+import type { AuthStorePort, DrivePort, LastProjectRepositoryPort, OpenedProjectSession, SaveStatus, StartupDialogState } from './AppShellPorts';
 import { describeUnknownError } from './AppShellErrorClassifier';
 import type { ProjectSessionKernel } from './ProjectSessionKernel';
 
@@ -95,11 +95,7 @@ export class ProjectSessionUseCases {
     try {
       const projectData = this.deps.session.snapshotEmptyProject(projectName);
       const fileId = await drive.createFile(projectName, projectData);
-      this.deps.session.restoreValidatedProject(this.deps.session.validateProjectData(projectData));
-      this.setCurrentProject(projectName, fileId);
-      this.deps.showStartupDialog.value = false;
-      this.deps.autoSave.start();
-      this.deps.saveStatus.value = 'saved';
+      this.installProject(this.deps.session.validateProjectData(projectData), fileId);
     } catch (error: unknown) {
       this.deps.startupDialog.error.value = `Failed to create project: ${describeUnknownError(error)}`;
       this.deps.startupDialog.loading.value = false;
@@ -111,11 +107,7 @@ export class ProjectSessionUseCases {
     try {
       const loadedProject = await drive.loadFile(fileId);
       const openedSession = this.deps.session.validateProjectData(loadedProject);
-      this.deps.session.restoreValidatedProject(openedSession);
-      this.setCurrentProject(openedSession.projectName, fileId);
-      this.deps.showStartupDialog.value = false;
-      this.deps.autoSave.start();
-      this.deps.saveStatus.value = 'saved';
+      this.installProject(openedSession, fileId);
     } catch (error: unknown) {
       this.deps.startupDialog.error.value = `Failed to open project: ${describeUnknownError(error)}`;
       this.deps.startupDialog.loading.value = false;
@@ -171,10 +163,14 @@ export class ProjectSessionUseCases {
     this.deps.startupDialog.error.value = null;
   }
 
-  private setCurrentProject(projectName: string, fileId: string): void {
-    this.deps.currentProjectName.value = projectName;
+  private installProject(openedSession: OpenedProjectSession, fileId: string): void {
+    this.deps.session.restoreValidatedProject(openedSession);
+    this.deps.currentProjectName.value = openedSession.projectName;
     this.deps.currentFileId.value = fileId;
-    this.deps.lastProjectRepository.setLastProject({ id: fileId, name: projectName });
+    this.deps.lastProjectRepository.setLastProject({ id: fileId, name: openedSession.projectName });
+    this.deps.showStartupDialog.value = false;
+    this.deps.autoSave.start();
+    this.deps.saveStatus.value = 'saved';
   }
 
   private requireDrive() {
