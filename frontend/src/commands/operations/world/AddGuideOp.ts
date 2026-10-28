@@ -41,7 +41,8 @@ export class AddGuide2DPerpendicularToLineOp implements IOperation {
         plane,
         this.referenceLineId,
         this.throughPointId,
-        this.restoredGuideId ?? this.outputs.guideId
+        this.restoredGuideId ?? this.outputs.guideId,
+        this.createdLabel ?? (typeof this.outputs.label === 'string' ? this.outputs.label : undefined)
       );
       if (this.createdLabel !== undefined) guide.label = this.createdLabel;
       else if (typeof this.outputs.label === 'string') guide.label = this.outputs.label;

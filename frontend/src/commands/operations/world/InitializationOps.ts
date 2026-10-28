@@ -259,6 +259,7 @@ export class AddHingeLineOp implements IOperation {
         horizontalPlaneId: this.horizontalPlaneId,
         verticalPlaneId: this.verticalPlaneId,
         hingeLineId: this.hingeLineId || this.outputs.hingeLineId,
+        label: this.createdLabel ?? (typeof this.outputs.label === 'string' ? this.outputs.label : undefined),
       });
       
       if (this.createdLabel !== undefined) hingeLine.label = this.createdLabel;

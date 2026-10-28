@@ -69,6 +69,7 @@ export class GoogleDriveService {
   private tokenClient: any = null;
   private accessToken: string | null = null;
 
+  private tokenExpiresAt: number | null = null;
   constructor(config: GoogleDriveConfig) {
     this.config = config;
   }
@@ -142,7 +143,18 @@ export class GoogleDriveService {
   /**
    * Check if user is signed in (has valid access token)
    */
+  private clearExpiredAuthentication(): void {
+    this.accessToken = null;
+    this.tokenExpiresAt = null;
+    gapi.client.setToken(null);
+    localStorage.removeItem('diedrico_was_signed_in');
+  }
+
   isSignedIn(): boolean {
+    if (this.tokenExpiresAt !== null && Date.now() >= this.tokenExpiresAt) {
+      this.clearExpiredAuthentication();
+      return false;
+    }
     // Check if we have an access token, or if gapi client has a token
     const token = gapi.client.getToken();
     return (typeof this.accessToken === 'string' && this.accessToken.length > 0)
@@ -168,6 +180,8 @@ export class GoogleDriveService {
           
           const accessToken = this.requireAccessToken(response);
           this.accessToken = accessToken;
+          this.tokenExpiresAt = typeof response.expires_in === 'number' && Number.isFinite(response.expires_in)
+            ? Date.now() + Math.max(0, response.expires_in) * 1000 : null;
           gapi.client.setToken({ access_token: accessToken });
           localStorage.setItem('diedrico_was_signed_in', 'true');
           resolve();
@@ -205,6 +219,8 @@ export class GoogleDriveService {
           
           const accessToken = this.requireAccessToken(response);
           this.accessToken = accessToken;
+          this.tokenExpiresAt = typeof response.expires_in === 'number' && Number.isFinite(response.expires_in)
+            ? Date.now() + Math.max(0, response.expires_in) * 1000 : null;
           gapi.client.setToken({ access_token: accessToken });
           localStorage.setItem('diedrico_was_signed_in', 'true');
           resolve();
@@ -240,6 +256,7 @@ export class GoogleDriveService {
         this.accessToken = null;
         gapi.client.setToken(null);
       }
+      this.tokenExpiresAt = null;
       // Restored gapi sessions may not have populated the instance token.
       this.accessToken = null;
       gapi.client.setToken(null);
@@ -267,6 +284,7 @@ export class GoogleDriveService {
       });
 
       if (!response.ok) {
+        if (response.status === 401) this.clearExpiredAuthentication();
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
@@ -319,7 +337,11 @@ export class GoogleDriveService {
 
       this.folderId = createResponse.result.id!;
       return this.folderId;
-    } catch (error) {
+    } catch (error: any) {
+      if (error.status === 401) {
+        this.clearExpiredAuthentication();
+        throw error;
+      }
       throw new Error(`Failed to get or create diedrico folder: ${error}`);
     }
   }
@@ -349,6 +371,7 @@ export class GoogleDriveService {
       }));
     } catch (error: any) {
       if (error.status === 401) {
+        this.clearExpiredAuthentication();
         throw new Error('Authentication expired. Please sign in again.');
       } else if (error.status === 403) {
         throw new Error('Permission denied. Please grant access to Google Drive.');
@@ -430,7 +453,8 @@ export class GoogleDriveService {
 
       const response = await request;
       return response.result.id;
-    } catch (error) {
+    } catch (error: any) {
+      if (error.status === 401) this.clearExpiredAuthentication();
       throw new Error(`Failed to create file: ${error}`);
     }
   }
@@ -466,6 +490,7 @@ export class GoogleDriveService {
       return JSON.parse(response.body);
     } catch (error: any) {
       if (error.status === 401) {
+        this.clearExpiredAuthentication();
         throw new Error('Authentication expired. Please sign in again.');
       } else if (error.status === 404 || error.result?.error?.code === 404) {
         throw new Error('File not found. It may have been deleted.');
@@ -539,6 +564,7 @@ export class GoogleDriveService {
       await request;
     } catch (error: any) {
       if (error.status === 401) {
+        this.clearExpiredAuthentication();
         throw new Error('Authentication expired. Please sign in again.');
       } else if (error.status === 403) {
         throw new Error('Insufficient permissions or storage quota exceeded.');
@@ -633,6 +659,7 @@ export class GoogleDriveService {
       
     } catch (error: any) {
       if (error.status === 401) {
+        this.clearExpiredAuthentication();
         throw new Error('Authentication expired. Please sign in again.');
       } else if (error.status === 404) {
         throw new Error('File not found. It may have been deleted.');
@@ -654,7 +681,8 @@ export class GoogleDriveService {
       await gapi.client.drive.files.delete({
         fileId: fileId,
       });
-    } catch (error) {
+    } catch (error: any) {
+      if (error.status === 401) this.clearExpiredAuthentication();
       throw new Error(`Failed to delete file: ${error}`);
     }
   }

@@ -72,20 +72,20 @@ export class ProjectionConstructionService {
     return point;
   }
 
-  addLineLineIntersection(plane: ProjectionPlane, line1Id: string, line2Id: string, id?: string): Point2DLineLineIntersection {
+  addLineLineIntersection(plane: ProjectionPlane, line1Id: string, line2Id: string, id?: string, label?: string): Point2DLineLineIntersection {
     const planeId = requirePlaneId(plane.id, 'point');
     const l1 = requireLocalOrWorldLine(plane, this.context, line1Id, 'line1Id');
     const l2 = requireLocalOrWorldLine(plane, this.context, line2Id, 'line2Id');
     requireRealizedLine(l1, line1Id, 'line1Id', this.context);
     requireRealizedLine(l2, line2Id, 'line2Id', this.context);
     id = resolveElementId(id, () => this.generatePoint2DId(plane));
-    const label = this.context.labelGenerator.next('Point2D');
+    label ??= this.context.labelGenerator.next('Point2D');
     const point = new Point2DLineLineIntersection(id, line1Id, line2Id, planeId, label);
     this.addPoint(plane, point);
     return point;
   }
 
-  addLineCircleIntersection(plane: ProjectionPlane, lineId: string, circleId: string, index: number, id?: string): Point2DLineCircleIntersection {
+  addLineCircleIntersection(plane: ProjectionPlane, lineId: string, circleId: string, index: number, id?: string, label?: string): Point2DLineCircleIntersection {
     const planeId = requirePlaneId(plane.id, 'point');
     const lineElement = requireLocalLine(plane, lineId, 'lineId');
     const circleElement = requireLocalCircle(plane, circleId, 'circleId', 'Circle does not exist.');
@@ -93,13 +93,13 @@ export class ProjectionConstructionService {
     requireRealizedCircle(circleElement, circleId, 'circleId', this.context);
     requireBinaryIndex(index, 'index');
     id = resolveElementId(id, () => this.generatePoint2DId(plane));
-    const label = this.context.labelGenerator.next('Point2D');
+    label ??= this.context.labelGenerator.next('Point2D');
     const point = new Point2DLineCircleIntersection(id, lineId, circleId, index, planeId, label);
     this.addPoint(plane, point);
     return point;
   }
 
-  addCircleCircleIntersection(plane: ProjectionPlane, circle1Id: string, circle2Id: string, index: number, id?: string): Point2DCircleCircleIntersection {
+  addCircleCircleIntersection(plane: ProjectionPlane, circle1Id: string, circle2Id: string, index: number, id?: string, label?: string): Point2DCircleCircleIntersection {
     const planeId = requirePlaneId(plane.id, 'point');
     const circle1Element = requireLocalCircle(plane, circle1Id, 'circle1Id', 'Circle does not exist.');
     const circle2Element = requireLocalCircle(plane, circle2Id, 'circle2Id', 'Circle does not exist.');
@@ -107,99 +107,99 @@ export class ProjectionConstructionService {
     requireRealizedCircle(circle2Element, circle2Id, 'circle2Id', this.context);
     requireBinaryIndex(index, 'index');
     id = resolveElementId(id, () => this.generatePoint2DId(plane));
-    const label = this.context.labelGenerator.next('Point2D');
+    label ??= this.context.labelGenerator.next('Point2D');
     const point = new Point2DCircleCircleIntersection(id, circle1Id, circle2Id, index, planeId, label);
     this.addPoint(plane, point);
     return point;
   }
 
-  addLine2DBetweenTwoPoints(plane: ProjectionPlane, point1Id: string, point2Id: string, id?: string): Line2DByTwoPoints {
+  addLine2DBetweenTwoPoints(plane: ProjectionPlane, point1Id: string, point2Id: string, id?: string, label?: string): Line2DByTwoPoints {
     const planeId = requirePlaneId(plane.id, 'line');
     const point1 = requireLocalPoint(plane, point1Id, 'point1Id');
     const point2 = requireLocalPoint(plane, point2Id, 'point2Id');
     requireDistinctPointIds(point1Id, point2Id, 'line');
     requireDistinctRealizedPointsForLine(point1, point2, point1Id, point2Id, this.context);
     id = resolveElementId(id, () => this.generateLine2DId(plane));
-    const label = this.context.labelGenerator.next('Line2D');
+    label ??= this.context.labelGenerator.next('Line2D');
     const line = new Line2DByTwoPoints(id, point1Id, point2Id, planeId, label);
     this.addLine(plane, line);
     return line;
   }
 
-  addLine2DParallelToLine(plane: ProjectionPlane, referenceLineId: string, throughPointId: string, id?: string): Line2DParallel {
+  addLine2DParallelToLine(plane: ProjectionPlane, referenceLineId: string, throughPointId: string, id?: string, label?: string): Line2DParallel {
     const planeId = requirePlaneId(plane.id, 'line');
     requireLocalPoint(plane, throughPointId, 'throughPointId');
     const refLineElement = requireWorldLine(this.context, referenceLineId, 'referenceLineId');
     requireRealizedLine(refLineElement, referenceLineId, 'referenceLineId', this.context);
     id = resolveElementId(id, () => this.generateLine2DId(plane));
-    const label = this.context.labelGenerator.next('Line2D');
+    label ??= this.context.labelGenerator.next('Line2D');
     const line = new Line2DParallel(id, referenceLineId, throughPointId, planeId, label);
     this.addLine(plane, line);
     return line;
   }
 
-  addLine2DPerpendicularToLine(plane: ProjectionPlane, referenceLineId: string, throughPointId: string, id?: string): Line2DPerpendicularToLine {
+  addLine2DPerpendicularToLine(plane: ProjectionPlane, referenceLineId: string, throughPointId: string, id?: string, label?: string): Line2DPerpendicularToLine {
     const planeId = requirePlaneId(plane.id, 'line');
     requireLocalPoint(plane, throughPointId, 'throughPointId');
     const refLineElement = requireWorldLine(this.context, referenceLineId, 'referenceLineId');
     requireRealizedLine(refLineElement, referenceLineId, 'referenceLineId', this.context);
     id = resolveElementId(id, () => this.generateLine2DId(plane));
-    const label = this.context.labelGenerator.next('Line2D');
+    label ??= this.context.labelGenerator.next('Line2D');
     const line = new Line2DPerpendicularToLine(id, referenceLineId, throughPointId, planeId, label);
     this.addLine(plane, line);
     return line;
   }
 
-  addLine2DByPointAndRelativeAngle(plane: ProjectionPlane, referenceLineId: string, throughPointId: string, angleRadians: number, id?: string): Line2DByPointAndRelativeAngle {
+  addLine2DByPointAndRelativeAngle(plane: ProjectionPlane, referenceLineId: string, throughPointId: string, angleRadians: number, id?: string, label?: string): Line2DByPointAndRelativeAngle {
     const planeId = requirePlaneId(plane.id, 'line');
     requireLocalPoint(plane, throughPointId, 'throughPointId');
     const refLineElement = requireWorldLine(this.context, referenceLineId, 'referenceLineId');
     requireRealizedLine(refLineElement, referenceLineId, 'referenceLineId', this.context);
     id = resolveElementId(id, () => this.generateLine2DId(plane));
-    const label = this.context.labelGenerator.next('Line2D');
+    label ??= this.context.labelGenerator.next('Line2D');
     const line = new Line2DByPointAndRelativeAngle(id, referenceLineId, throughPointId, angleRadians, planeId, label);
     this.addLine(plane, line);
     return line;
   }
 
-  addLine2DTangentToCircleThroughPoint(plane: ProjectionPlane, circleId: string, throughPointId: string, tangentIndex: 0 | 1, id?: string): Line2DTangentToCircleThroughPoint {
+  addLine2DTangentToCircleThroughPoint(plane: ProjectionPlane, circleId: string, throughPointId: string, tangentIndex: 0 | 1, id?: string, label?: string): Line2DTangentToCircleThroughPoint {
     const planeId = requirePlaneId(plane.id, 'line');
     requireLocalCircle(plane, circleId, 'circleId');
     requireLocalPoint(plane, throughPointId, 'throughPointId');
     requireBinaryIndex(tangentIndex, 'tangentIndex');
     id = resolveElementId(id, () => this.generateLine2DId(plane));
-    const label = this.context.labelGenerator.next('Line2D');
+    label ??= this.context.labelGenerator.next('Line2D');
     const line = new Line2DTangentToCircleThroughPoint(id, circleId, throughPointId, tangentIndex, planeId, label);
     this.addLine(plane, line);
     return line;
   }
 
-  addLine2DTangentToCircleParallelToLine(plane: ProjectionPlane, circleId: string, referenceLineId: string, tangentIndex: 0 | 1, id?: string): Line2DTangentToCircleParallelToLine {
+  addLine2DTangentToCircleParallelToLine(plane: ProjectionPlane, circleId: string, referenceLineId: string, tangentIndex: 0 | 1, id?: string, label?: string): Line2DTangentToCircleParallelToLine {
     const planeId = requirePlaneId(plane.id, 'line');
     requireLocalCircle(plane, circleId, 'circleId');
     const refLineElement = requireWorldLine(this.context, referenceLineId, 'referenceLineId');
     requireRealizedLine(refLineElement, referenceLineId, 'referenceLineId', this.context);
     requireBinaryIndex(tangentIndex, 'tangentIndex');
     id = resolveElementId(id, () => this.generateLine2DId(plane));
-    const label = this.context.labelGenerator.next('Line2D');
+    label ??= this.context.labelGenerator.next('Line2D');
     const line = new Line2DTangentToCircleParallelToLine(id, circleId, referenceLineId, tangentIndex, planeId, label);
     this.addLine(plane, line);
     return line;
   }
 
-  addSegment2DBetweenPoints(plane: ProjectionPlane, point1Id: string, point2Id: string, id?: string): Segment2D {
+  addSegment2DBetweenPoints(plane: ProjectionPlane, point1Id: string, point2Id: string, id?: string, label?: string): Segment2D {
     const planeId = requirePlaneId(plane.id, 'segment');
     requireLocalPoint(plane, point1Id, 'point1Id');
     requireLocalPoint(plane, point2Id, 'point2Id');
     requireDistinctPointIds(point1Id, point2Id, 'segment');
     id = resolveElementId(id, () => this.generateSegment2DId(plane));
-    const label = this.context.labelGenerator.next('Segment2D');
+    label ??= this.context.labelGenerator.next('Segment2D');
     const segment = new Segment2D(id, point1Id, point2Id, planeId, label);
     this.addLine(plane, segment);
     return segment;
   }
 
-  addCircle2DByCenterAndPoint(plane: ProjectionPlane, centerPointId: string, circumferencePointId: string, id?: string): Circle2DByCenterAndPoint {
+  addCircle2DByCenterAndPoint(plane: ProjectionPlane, centerPointId: string, circumferencePointId: string, id?: string, label?: string): Circle2DByCenterAndPoint {
     const planeId = requirePlaneId(plane.id, 'circle');
     requireLocalPoint(plane, centerPointId, 'centerPointId');
     requireLocalPoint(plane, circumferencePointId, 'circumferencePointId');
@@ -207,29 +207,29 @@ export class ProjectionConstructionService {
       throw new Error('Cannot create circle with center and circumference point being the same point.');
     }
     id = resolveElementId(id, () => this.generateCircle2DId(plane));
-    const label = this.context.labelGenerator.next('Circle2D');
+    label ??= this.context.labelGenerator.next('Circle2D');
     const circle = new Circle2DByCenterAndPoint(id, centerPointId, circumferencePointId, planeId, label);
     this.addCircle(plane, circle);
     return circle;
   }
 
-  addCircle2DByCenterAndRadiusVector(plane: ProjectionPlane, centerPointId: string, radiusVector: Vector3, id?: string): Circle2DByCenterAndRadiusVector {
+  addCircle2DByCenterAndRadiusVector(plane: ProjectionPlane, centerPointId: string, radiusVector: Vector3, id?: string, label?: string): Circle2DByCenterAndRadiusVector {
     const planeId = requirePlaneId(plane.id, 'circle');
     requireLocalPoint(plane, centerPointId, 'centerPointId');
     id = resolveElementId(id, () => this.generateCircle2DId(plane));
-    const label = this.context.labelGenerator.next('Circle2D');
+    label ??= this.context.labelGenerator.next('Circle2D');
     const circle = new Circle2DByCenterAndRadiusVector(id, centerPointId, radiusVector, planeId, label);
     this.addCircle(plane, circle);
     return circle;
   }
 
-  addGuide2D(plane: ProjectionPlane, referenceLineId: string, throughPointId: string, id?: string): Guide2D {
+  addGuide2D(plane: ProjectionPlane, referenceLineId: string, throughPointId: string, id?: string, label?: string): Guide2D {
     const planeId = requirePlaneId(plane.id, 'guide');
     requireLocalPoint(plane, throughPointId, 'throughPointId');
     const refLineElement = requireWorldLine(this.context, referenceLineId, 'referenceLineId');
     requireRealizedLine(refLineElement, referenceLineId, 'referenceLineId', this.context, 'Line cannot be realized.');
     id = resolveElementId(id, () => this.generateGuide2DId(plane));
-    const label = this.context.labelGenerator.next('Guide2D');
+    label ??= this.context.labelGenerator.next('Guide2D');
     const guide = new Guide2D(id, referenceLineId, throughPointId, planeId, label);
     this.addLine(plane, guide);
     return guide;

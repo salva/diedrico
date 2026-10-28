@@ -47,7 +47,8 @@ export class AddLineCircleIntersectionPoint2DOp implements IOperation<AddLineCir
         this.lineId,
         this.circleId,
         this.index,
-        this.outputs.pointId
+        this.outputs.pointId,
+        typeof this.outputs.label === 'string' ? this.outputs.label : undefined
       );
       
       if (typeof this.outputs.label === 'string') point.label = this.outputs.label;

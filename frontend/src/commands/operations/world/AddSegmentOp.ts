@@ -41,7 +41,8 @@ export class AddSegment2DByPointsOp implements IOperation<AddSegment2DByPointsDe
         plane,
         this.point1Id,
         this.point2Id,
-        this.outputs.segmentId
+        this.outputs.segmentId,
+        typeof this.outputs.label === 'string' ? this.outputs.label : undefined
       );
       if (typeof this.outputs.label === 'string') segment.label = this.outputs.label;
       context.labelGenerator.reserve('Segment2D', segment.label);

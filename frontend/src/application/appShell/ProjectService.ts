@@ -18,6 +18,7 @@ export interface ProjectData {
   modified: string;
   nextElementId: number;
   commands: SerializedCommand[];
+  labelCounts?: Record<string, number>;
 }
 
 type SerializedCommand = CommandSnapshot;
@@ -75,6 +76,9 @@ export class ProjectService {
       }, operationContext, notifier));
     }
 
+    if (data.labelCounts) {
+      for (const [type, count] of Object.entries(data.labelCounts)) operationContext.labelGenerator.setCount(type, count);
+    }
     commandStack.restoreCommittedCommands(restoredCommands);
 
   }
@@ -94,6 +98,14 @@ export class ProjectService {
     }
     if (typeof record.nextElementId !== 'number' || !Number.isInteger(record.nextElementId) || record.nextElementId < 1) {
       throw new Error('Invalid project file - nextElementId must be a positive integer');
+    }
+    if (record.labelCounts !== undefined) {
+      const counts = record.labelCounts;
+      const types = ['Point2D', 'Line2D', 'Circle2D', 'Guide2D', 'ProjectionPlane', 'HingeLine'];
+      if (!counts || typeof counts !== 'object' || Array.isArray(counts)
+        || Object.entries(counts).some(([type, value]) => !types.includes(type) || !Number.isSafeInteger(value) || value < 0)) {
+        throw new Error('Invalid project file - labelCounts must contain known categories and nonnegative safe integers');
+      }
     }
     if (!Array.isArray(record.commands)) {
       throw new Error('Invalid project file - commands must be an array');

@@ -43,7 +43,8 @@ export class AddLineLineIntersectionPoint2DOp implements IOperation<AddLineLineI
         plane,
         this.line1Id,
         this.line2Id,
-        this.outputs.pointId
+        this.outputs.pointId,
+        typeof this.outputs.label === 'string' ? this.outputs.label : undefined
       );
       
       if (this.createdLabel !== undefined) point.label = this.createdLabel;

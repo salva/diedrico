@@ -64,6 +64,7 @@ export class AddBrokenHingeLineOp implements IOperation {
         plane1,
         plane2,
         brokenHingeLineId: this.brokenHingeLineId || this.outputs.brokenHingeLineId,
+        label: this.createdLabel ?? (typeof this.outputs.label === 'string' ? this.outputs.label : undefined),
         bhhl1Id: this.bhhl1Id || this.outputs.bhhl1Id,
         bhhl2Id: this.bhhl2Id || this.outputs.bhhl2Id,
       });

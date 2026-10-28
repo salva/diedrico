@@ -41,7 +41,8 @@ export class AddLine2DByTwoPointsOp implements IOperation<AddLine2DByTwoPointsDe
         plane,
         this.point1Id,
         this.point2Id,
-        this.outputs.lineId
+        this.outputs.lineId,
+        typeof this.outputs.label === 'string' ? this.outputs.label : undefined
       );
       if (typeof this.outputs.label === 'string') line.label = this.outputs.label;
       context.labelGenerator.reserve('Line2D', line.label);
@@ -108,7 +109,8 @@ export class AddLine2DParallelToLineOp implements IOperation<AddLine2DParallelTo
         plane,
         this.referenceLineId,
         this.throughPointId,
-        this.outputs.lineId
+        this.outputs.lineId,
+        typeof this.outputs.label === 'string' ? this.outputs.label : undefined
       );
       if (typeof this.outputs.label === 'string') line.label = this.outputs.label;
       context.labelGenerator.reserve('Line2D', line.label);
@@ -175,7 +177,8 @@ export class AddLine2DPerpendicularToLineOp implements IOperation<AddLine2DPerpe
         plane,
         this.referenceLineId,
         this.throughPointId,
-        this.outputs.lineId
+        this.outputs.lineId,
+        typeof this.outputs.label === 'string' ? this.outputs.label : undefined
       );
       if (typeof this.outputs.label === 'string') line.label = this.outputs.label;
       context.labelGenerator.reserve('Line2D', line.label);
@@ -239,7 +242,8 @@ export class AddLine2DByPointAndRelativeAngleOp implements IOperation<AddLine2DB
         this.referenceLineId,
         this.throughPointId,
         this.angleRadians,
-        this.outputs.lineId
+        this.outputs.lineId,
+        typeof this.outputs.label === 'string' ? this.outputs.label : undefined
       );
       if (typeof this.outputs.label === 'string') line.label = this.outputs.label;
       context.labelGenerator.reserve('Line2D', line.label);
@@ -386,7 +390,8 @@ export class AddLine2DTangentToCircleThroughPointOp implements IOperation {
         this.circleId,
         this.throughPointId,
         this.tangentIndex,
-        this.outputs.lineId
+        this.outputs.lineId,
+        typeof this.outputs.label === 'string' ? this.outputs.label : undefined
       );
       if (typeof this.outputs.label === 'string') line.label = this.outputs.label;
       context.labelGenerator.reserve('Line2D', line.label);
@@ -445,7 +450,8 @@ export class AddLine2DTangentToCircleParallelToLineOp implements IOperation {
         this.circleId,
         this.referenceLineId,
         this.tangentIndex,
-        this.outputs.lineId
+        this.outputs.lineId,
+        typeof this.outputs.label === 'string' ? this.outputs.label : undefined
       );
       if (typeof this.outputs.label === 'string') line.label = this.outputs.label;
       context.labelGenerator.reserve('Line2D', line.label);

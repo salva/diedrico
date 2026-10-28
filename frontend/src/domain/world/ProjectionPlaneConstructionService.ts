@@ -64,9 +64,10 @@ export class ProjectionPlaneConstructionService {
     readonly horizontalPlaneId: string;
     readonly verticalPlaneId: string;
     readonly hingeLineId?: string;
+    readonly label?: string;
   }): HingeLine {
     const id = params.hingeLineId || this.context.ids.prefixed('hingeLine');
-    const label = this.context.labels.next('HingeLine');
+    const label = params.label ?? this.context.labels.next('HingeLine');
     const hingeLine = new HingeLine(id, label, params.horizontalPlaneId, params.verticalPlaneId);
     this.context.world.putHingeLine(hingeLine);
     this.context.dependencies.registerNode(hingeLine.id, hingeLine.getDependencies());
@@ -79,6 +80,7 @@ export class ProjectionPlaneConstructionService {
     readonly plane1: ProjectionPlane;
     readonly plane2: ProjectionPlane;
     readonly brokenHingeLineId?: string;
+    readonly label?: string;
     readonly bhhl1Id?: string;
     readonly bhhl2Id?: string;
   }): { brokenHingeLine: BrokenHingeLine; bhhl1: BrokenHalfHingeLine2D; bhhl2: BrokenHalfHingeLine2D } {
@@ -103,7 +105,7 @@ export class ProjectionPlaneConstructionService {
 
     const brokenHingeLine = new BrokenHingeLine(
       bhlId,
-      this.context.labels.next('BrokenHingeLine'),
+      params.label ?? this.context.labels.next('BrokenHingeLine'),
       plane1Id,
       plane2Id,
       params.mainHingeId,

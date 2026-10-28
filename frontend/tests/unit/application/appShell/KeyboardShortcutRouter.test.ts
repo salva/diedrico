@@ -65,6 +65,21 @@ describe('KeyboardShortcutRouter', () => {
     const e = event('Tab', { target: button });
     router.handle(e);
     expect(e.preventDefault).not.toHaveBeenCalled();
+    const dialog = document.createElement('div');
+    dialog.setAttribute('role', 'dialog');
+    dialog.append(button);
+    document.body.append(dialog);
+    button.focus();
+    expect(document.activeElement).toBe(button);
+    for (const key of ['Tab', 'Delete', 'p']) {
+      const dialogEvent = event(key, { target: button });
+      router.handle(dialogEvent);
+      expect(dialogEvent.preventDefault).not.toHaveBeenCalled();
+    }
+    expect(d.selection.deleteSelected).not.toHaveBeenCalled();
+    expect(d.toolStore.setTool).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(button);
+    dialog.remove();
     expect(d.activePlane.cycleActivePlane).not.toHaveBeenCalled();
   });
 

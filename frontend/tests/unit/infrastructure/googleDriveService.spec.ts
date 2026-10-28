@@ -139,6 +139,19 @@ describe('GoogleDriveService', () => {
       expect(service.isSignedIn()).toBe(false);
     });
 
+    it('expires an issued token at its supplied lifetime without refreshing or issuing Drive writes', async () => {
+      await service.initialize();
+      const now = vi.spyOn(Date, 'now').mockReturnValue(1000);
+      const pending = service.signIn();
+      mockTokenClient.callback({ access_token: 'expiry-fixture', expires_in: 2 });
+      await pending;
+      expect(service.isSignedIn()).toBe(true);
+      now.mockReturnValue(3000);
+      expect(service.isSignedIn()).toBe(false);
+      expect(mockGapi.client.setToken).toHaveBeenLastCalledWith(null);
+      now.mockRestore();
+    });
+
     it('rejects restored empty tokens', async () => {
       await service.initialize();
       mockGapi.client.getToken.mockReturnValue({ access_token: '' });
@@ -161,6 +174,43 @@ describe('GoogleDriveService', () => {
       mockGapi.client.getToken.mockReturnValue(null);
 
       expect(service.isSignedIn()).toBe(false);
+    });
+  });
+
+  describe('authentication lifetime and restoration', () => {
+    it('restores silently with a new deadline and expires the restored session', async () => {
+      localStorage.setItem('diedrico_was_signed_in', 'true');
+      const now = vi.spyOn(Date, 'now').mockReturnValue(1000);
+      mockTokenClient.requestAccessToken.mockImplementationOnce(() => {
+        mockTokenClient.callback({ access_token: 'restored-fixture', expires_in: 1 });
+      });
+      await service.initialize();
+      expect(service.isSignedIn()).toBe(true);
+      now.mockReturnValue(2000);
+      expect(service.isSignedIn()).toBe(false);
+      expect(localStorage.getItem('diedrico_was_signed_in')).toBeNull();
+      now.mockRestore();
+    });
+
+    it('clears authentication on a Drive 401 without retrying', async () => {
+      await service.initialize();
+      await signInHelper();
+      mockGapi.client.setToken.mockImplementation(value => mockGapi.client.getToken.mockReturnValue(value));
+      mockGapi.client.drive.files.get.mockRejectedValueOnce({ status: 401 });
+      await expect(service.loadFile('fixture')).rejects.toThrow('Authentication expired');
+      expect(service.isSignedIn()).toBe(false);
+      expect(localStorage.getItem('diedrico_was_signed_in')).toBeNull();
+      expect(mockGapi.client.drive.files.get).toHaveBeenCalledTimes(1);
+    });
+
+    it('clears authentication on a profile 401', async () => {
+      await service.initialize();
+      await signInHelper();
+      mockGapi.client.setToken.mockImplementation(value => mockGapi.client.getToken.mockReturnValue(value));
+      const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: false, status: 401, statusText: 'Unauthorized' } as Response);
+      await expect(service.fetchUserProfile()).rejects.toThrow('Authentication expired');
+      expect(service.isSignedIn()).toBe(false);
+      fetchMock.mockRestore();
     });
   });
 

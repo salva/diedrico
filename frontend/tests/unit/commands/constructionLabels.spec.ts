@@ -62,8 +62,10 @@ describe('construction label identity', () => {
       const descriptor = serializeOperation(op);
       expect(typeof descriptor.label, op.type).toBe('string');
       descriptors.push(descriptor);
+      const counts = ['Point2D', 'Line2D', 'Circle2D'].map(type => ctx.labelGenerator.getCount(type));
       op.undo(ctx);
       expect(op.apply(ctx).success).toBe(true);
+      expect(['Point2D', 'Line2D', 'Circle2D'].map(type => ctx.labelGenerator.getCount(type))).toEqual(counts);
       expect(serializeOperation(op).label).toBe(descriptor.label);
       op.undo(ctx);
       const restored = deserializeOperation(JSON.parse(JSON.stringify(descriptor)));

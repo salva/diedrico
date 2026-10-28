@@ -43,7 +43,8 @@ export class AddCircle2DByCenterAndPointOp implements IOperation<AddCircle2DByCe
         plane,
         this.centerPointId,
         this.circumferencePointId,
-        this.outputs.circleId
+        this.outputs.circleId,
+        typeof this.outputs.label === 'string' ? this.outputs.label : undefined
       );
       if (typeof this.outputs.label === 'string') circle.label = this.outputs.label;
       context.labelGenerator.reserve('Circle2D', circle.label);
@@ -112,7 +113,8 @@ export class AddCircle2DByCenterAndRadiusVectorOp implements IOperation<AddCircl
         plane,
         this.centerPointId,
         this.radiusVector,
-        this.outputs.circleId
+        this.outputs.circleId,
+        typeof this.outputs.label === 'string' ? this.outputs.label : undefined
       );
       if (typeof this.outputs.label === 'string') circle.label = this.outputs.label;
       context.labelGenerator.reserve('Circle2D', circle.label);

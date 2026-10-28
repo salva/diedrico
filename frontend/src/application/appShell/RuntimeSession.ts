@@ -231,7 +231,10 @@ export class RuntimeSession implements ProjectSessionKernel, CommandHistoryPort 
   }
 
   snapshot(projectName: string): ProjectSessionPersistencePayload {
-    return ProjectService.serializeCommands(this.commandStack, this.operationContext.idAllocator.peek(), projectName);
+    const data = ProjectService.serializeCommands(this.commandStack, this.operationContext.idAllocator.peek(), projectName);
+    data.labelCounts = Object.fromEntries(['Point2D', 'Line2D', 'Circle2D', 'Guide2D', 'ProjectionPlane', 'HingeLine']
+      .map(type => [type, this.operationContext.labelGenerator.getCount(type)]));
+    return data;
   }
 
   snapshotEmptyProject(projectName: string): ProjectSessionPersistencePayload {
