@@ -26,6 +26,8 @@ export class AddBrokenHingeLineOp implements IOperation {
   readonly type = 'AddBrokenHingeLine';
   outputs: OperationOutputBag = {};
 
+  private createdLabel?: string;
+
   constructor(
     private mainHingeId: string,           // ID of main hinge line (T1)
     private auxiliaryPlaneId: string,      // ID of auxiliary projection plane (Q)
@@ -66,6 +68,8 @@ export class AddBrokenHingeLineOp implements IOperation {
         bhhl2Id: this.bhhl2Id || this.outputs.bhhl2Id,
       });
 
+      if (this.createdLabel !== undefined) brokenHingeLine.label = this.createdLabel;
+      this.createdLabel = brokenHingeLine.label;
       // Store outputs for undo
       this.outputs = {
         brokenHingeLineId: brokenHingeLine.id,

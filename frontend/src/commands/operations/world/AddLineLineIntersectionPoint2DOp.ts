@@ -26,6 +26,8 @@ export class AddLineLineIntersectionPoint2DOp implements IOperation<AddLineLineI
   readonly type = 'AddLineLineIntersectionPoint2D';
   outputs: AddLineLineIntersectionPoint2DOutput = {};
 
+  private createdLabel?: string;
+
   constructor(
     private planeId: string,
     private line1Id: string,
@@ -44,6 +46,8 @@ export class AddLineLineIntersectionPoint2DOp implements IOperation<AddLineLineI
         this.outputs.pointId
       );
       
+      if (this.createdLabel !== undefined) point.label = this.createdLabel;
+      this.createdLabel = point.label;
       this.outputs = { pointId: point.id };
       
       return {

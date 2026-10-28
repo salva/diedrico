@@ -4,6 +4,7 @@
  * Wraps ProjectionConstructionService.addGuide2D() in the Operation interface.
  */
 
+import { Guide2D } from '@/domain/world/Guide';
 import type { IOperation, JsonObject, OperationResult } from '../IOperation';
 import type { OperationContext } from '../OperationContext';
 import { removeLineFromPlane } from './operationHelpers';
@@ -19,6 +20,8 @@ interface AddSiblingGuideOutput extends JsonObject {
 export class AddGuide2DPerpendicularToLineOp implements IOperation {
   readonly type = 'AddGuide2DPerpendicularToLine';
   outputs: AddGuideOutput = {};
+
+  private createdLabel?: string;
 
   constructor(
     private readonly planeId: string,
@@ -40,6 +43,8 @@ export class AddGuide2DPerpendicularToLineOp implements IOperation {
         this.throughPointId,
         this.restoredGuideId ?? this.outputs.guideId
       );
+      if (this.createdLabel !== undefined) guide.label = this.createdLabel;
+      this.createdLabel = guide.label;
       this.outputs = { guideId: guide.id };
       return {
         success: true,
@@ -107,6 +112,9 @@ export class AddSiblingGuide2DOp implements IOperation {
         this.referenceLineId,
         this.restoredSiblingGuideId ?? this.outputs.siblingGuideId
       );
+      const primary = context.world.getAllProjectionPlanes()
+        .map(candidate => candidate.getLine(this.primaryGuideId)).find(Boolean);
+      if (primary instanceof Guide2D) primary.siblingGuideId = siblingGuide.id;
       this.outputs = { siblingGuideId: siblingGuide.id };
       return {
         success: true,
@@ -123,6 +131,11 @@ export class AddSiblingGuide2DOp implements IOperation {
 
   undo(context: OperationContext): void {
     if (this.outputs.siblingGuideId) {
+      const primary = context.world.getAllProjectionPlanes()
+        .map(candidate => candidate.getLine(this.primaryGuideId)).find(Boolean);
+      if (primary instanceof Guide2D && primary.siblingGuideId === this.outputs.siblingGuideId) {
+        primary.siblingGuideId = undefined;
+      }
       const plane = context.world.getProjectionPlaneById(this.planeId);
       if (plane) {
         removeLineFromPlane(context, plane, this.outputs.siblingGuideId);

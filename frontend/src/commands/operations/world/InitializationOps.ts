@@ -243,6 +243,7 @@ export class AddHingeLineOp implements IOperation {
   readonly type = 'AddHingeLine';
   outputs: OperationOutputBag = {};
   
+  private createdLabel?: string;
   constructor(
     private readonly horizontalPlaneId: string,
     private readonly verticalPlaneId: string,
@@ -258,6 +259,8 @@ export class AddHingeLineOp implements IOperation {
         hingeLineId: this.hingeLineId || this.outputs.hingeLineId,
       });
       
+      if (this.createdLabel !== undefined) hingeLine.label = this.createdLabel;
+      this.createdLabel = hingeLine.label;
       // Store ID in outputs for redo support
       this.outputs = { hingeLineId: hingeLine.id };
       // Phase 95: Back-fill generated ID into parameters for persistence

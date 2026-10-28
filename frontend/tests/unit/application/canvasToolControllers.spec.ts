@@ -35,6 +35,41 @@ import { BrokenHalfHingeLine2D } from '@/domain/world/elements/BrokenHalfHingeLi
 import { Guide2D, SiblingGuide2D } from '@/domain/world/Guide';
 import { applyMatrix4x3 } from '@/utils/threeUtils';
 
+// Value snapshots of authored storage (including defining references/style), not caches,
+// allocators/label counters or history bookkeeping. Map order is not semantic.
+function compositeState(runtime: ReturnType<typeof createTestWorld>) {
+  const { world, visibilityModel, operationContext: context } = runtime;
+  const tree = context.processTree.getRootSnapshot();
+  const visibility: unknown[] = [];
+  const visit = (node: typeof tree) => {
+    visibility.push([node.id, visibilityModel.get(node.id, node.type)]);
+    if ('children' in node) node.children.forEach(visit);
+  };
+  visit(tree);
+  const elements = [
+    ...world.getAllProjectionPlanes().flatMap(plane => [plane, ...plane.getAllPoints(), ...plane.getAllLines(), ...plane.getAllCircles()]),
+    ...world.getAllPlanes(), ...world.getAllHingeLines(),
+    ...world.getAll3DPoints(), ...world.getAll3DLines(), ...world.getAll3DSegments(),
+  ];
+  return JSON.parse(JSON.stringify({
+    world, tree, visibility,
+    navigation: { active: context.processTree.getCurrentSubprocess().id, path: context.processTree.getStackPath(), depth: context.processTree.getStackDepth() },
+    references: elements.map(element => [element.id,
+      context.dependencies.getDependencies(element.id).sort(),
+      context.dependencies.getDependents(element.id).sort()]).sort(),
+    resolvedVisibility: elements.map(element => [element.id, resolveVisibility(element, context.processTree, visibilityModel)]).sort(),
+  }, (_key, value) => value instanceof Map ? [...value.entries()].sort(([a], [b]) => String(a).localeCompare(String(b))) : value));
+}
+
+function seedUnrelatedCompositeState(runtime: ReturnType<typeof createTestWorld>) {
+  const { operationContext, commandStack, world, visibilityModel } = runtime;
+  const sibling = operationContext.processTree.pushSubprocess('Unrelated retained construction');
+  executeConstructionIntent({ operationContext, commands: new RuntimeCommandProducer(operationContext, commandStack),
+    intent: { type: 'point', planeId: getHorizontalPlaneId(world), position: new Vector3(71, 83, 1), description: 'Unrelated point' } });
+  visibilityModel.setShowIntermediates(sibling.id, false);
+  operationContext.processTree.popSubprocess();
+}
+
 function userPoints(world: any, planeId: string) {
   return world.getProjectionPlaneById(planeId).getAllPoints().filter((point: any) => !point.locked);
 }
@@ -167,7 +202,10 @@ describe('Wave 006a canvas/tool command controllers', () => {
   });
 
   it('creates a 3D point from XYZ coordinates as an encapsulated construction procedure', () => {
-    const { world, visibilityModel, commandStack, operationContext } = createTestWorld();
+    const runtime = createTestWorld();
+    seedUnrelatedCompositeState(runtime);
+    const { world, visibilityModel, commandStack, operationContext } = runtime;
+    const beforeState = compositeState(runtime);
     const horizontalPlane = getHorizontalPlane(world);
     const verticalPlane = getVerticalPlane(world);
     const initialLineIds = new Set([
@@ -222,14 +260,22 @@ describe('Wave 006a canvas/tool command controllers', () => {
     expect(resolveVisibility(pointB, operationContext.processTree, visibilityModel)).toBe(false);
     expect(createdLines.every(line => resolveVisibility(line, operationContext.processTree, visibilityModel) === false)).toBe(true);
 
+    const afterState = compositeState(runtime);
     commandStack.undo();
-    expect(world.getAll3DPoints()).toHaveLength(0);
-    expect(findPointAt(horizontalPlane.getAllPoints(), operationContext, 3, -4)).toBeUndefined();
-    expect(findPointAt(verticalPlane.getAllPoints(), operationContext, 3, 5)).toBeUndefined();
+    expect(compositeState(runtime)).toEqual(beforeState);
+    expect(commandStack.getUndoCount()).toBe(beforeUndoCount);
+    expect(commandStack.getRedoCount()).toBe(1);
+    commandStack.redo();
+    expect(compositeState(runtime)).toEqual(afterState);
+    expect(commandStack.getUndoCount()).toBe(beforeUndoCount + 1);
+    expect(commandStack.getRedoCount()).toBe(0);
   });
 
   it('creates the YZ profile projection plane as a special construction helper', () => {
-    const { world, visibilityModel, commandStack, operationContext } = createTestWorld();
+    const runtime = createTestWorld();
+    seedUnrelatedCompositeState(runtime);
+    const { world, visibilityModel, commandStack, operationContext } = runtime;
+    const beforeState = compositeState(runtime);
     const beforeUndoCount = commandStack.getUndoCount();
 
     const result = executeConstructionIntent({
@@ -335,6 +381,15 @@ describe('Wave 006a canvas/tool command controllers', () => {
     expect(duplicateResult.message).toContain('already exists');
     expect(world.getAllProjectionPlanes().filter(plane => plane.name === 'P_YZ')).toHaveLength(1);
     expect(commandStack.getUndoCount()).toBe(beforeUndoCount + 1);
+    const afterState = compositeState(runtime);
+    commandStack.undo();
+    expect(compositeState(runtime)).toEqual(beforeState);
+    expect(commandStack.getUndoCount()).toBe(beforeUndoCount);
+    expect(commandStack.getRedoCount()).toBe(1);
+    commandStack.redo();
+    expect(compositeState(runtime)).toEqual(afterState);
+    expect(commandStack.getUndoCount()).toBe(beforeUndoCount + 1);
+    expect(commandStack.getRedoCount()).toBe(0);
   });
 
   it('previews, cancels, commits, and undoes free-point moves through the movement use case', () => {

@@ -84,6 +84,7 @@ export class Add3DPointOp implements IOperation<Add3DPointDescriptor, Add3DPoint
         visualStyle: this.visualStyle,
       });
       
+      this.label = point.label;
       // Store outputs for undo
       this.outputs = { pointId: point.id };
       

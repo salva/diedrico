@@ -24,6 +24,8 @@ export class AddFreePoint2DOp implements IOperation<AddFreePoint2DDescriptor, Ad
   readonly type = 'AddFreePoint2D';
   outputs: AddFreePoint2DOutput = {};
 
+  private createdLabel?: string;
+
   constructor(
     private planeId: string,
     private position: Vector3
@@ -35,7 +37,8 @@ export class AddFreePoint2DOp implements IOperation<AddFreePoint2DDescriptor, Ad
     try {
       const plane = requireProjectionPlane(context.world, this.planeId);
       
-      const point = context.projectionConstruction.addFreePoint2D(plane, this.position, this.outputs.pointId);
+      const point = context.projectionConstruction.addFreePoint2D(plane, this.position, this.outputs.pointId, this.createdLabel);
+      this.createdLabel = point.label;
       this.outputs = { pointId: point.id };
       return operationSuccess(this.outputs);
     } catch (error) {
