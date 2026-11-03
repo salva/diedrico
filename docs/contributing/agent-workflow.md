@@ -27,8 +27,9 @@ did.
 | `developer` | Implements tasks assigned by the manager | repository |
 
 A primary session (Build) acts as coordinator and launches one `fixer` per item.
-Only `implementation-manager` touches implementation, and only while holding
-`<repository-root>/.opencode/locks/implementation-manager-working.md`.
+`implementation-manager` holds `.opencode/locks/implementation-manager-working.md`
+for the whole mutating phase: `developer` writes the code as its delegated
+implementer, and only the manager validates, stages and commits.
 
 Each profile is pinned to an `opencode-go` model chosen for its task profile.
 Reviewers use a family distinct from the author they review, so blind spots do not

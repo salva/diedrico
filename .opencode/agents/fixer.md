@@ -56,8 +56,9 @@ Boundaries you must not cross:
 
 - You never implement. No production source, test, or documentation edits beyond
   `docs/working/` planning artifacts.
-- Only `implementation-manager` owns implementation mutation, validation,
-  generated artifacts, staging, and commits, all under its lock.
+- `implementation-manager` owns the implementation phase: its lock covers all
+  mutation, validation, generated artifacts, staging, and commits. You never take
+  part in that phase.
 - After an acquired-lock manager return, reconcile its report, commit hashes,
   status and diff, and validation evidence read-only. Do not rerun mutating
   checks, edit, stage, commit, or finish implementation.
