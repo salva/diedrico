@@ -1,6 +1,6 @@
 # Diedrico development guidelines
 
-Use the repository-root `AGENTS.md` for current repository layout, setup, validation commands and code boundaries. Its repository-relative guidance also applies when working through this Copilot entry point.
+Use the repository-root `AGENTS.md` for current repository layout, setup, validation commands, code boundaries and design principles. Its repository-relative guidance also applies when working through this Copilot entry point.
 
 Quick reference:
 

@@ -34,6 +34,15 @@ See `docs/contributing/development-setup.md` and `docs/contributing/testing.md` 
 
 Follow existing conventions unless a nearer file or explicit user instruction says otherwise. Domain code owns geometry; application controllers/use cases translate UI intents into commands; Vue components render state and forward interactions. Keep docs synchronized with the current tree and scripts. Do not use removed MVP planning/spec files as design authority.
 
+## Design principles
+
+- **Simple and clean architecture over everything.** When the clean solution requires a larger, deeper or more complex change, take the better path. Do not compromise the architecture to keep the diff small or to avoid a refactor.
+- **Zero backward compatibility weight.** Old test structures, project formats, component props, store shapes and naming conventions that are being replaced carry no weight in the decision. Remove them outright: no aliases, shims, dual paths or transition periods. Superseded project formats are not a compatibility surface.
+- **Be brave.** Take the large, deep or complex change when it produces the better solution. Do not preserve a legacy pattern out of caution.
+- **No over-engineering.** Build the smallest mechanism the change needs. No speculative abstraction, no configuration for cases that do not exist, no extension point without a caller. Add a layer only when it removes more complexity than it introduces.
+- **One mechanism per concern.** When a concern needs a mechanism it gets exactly one. Do not add a second path beside the first: no second command stack, no duplicate geometry path, no parallel state model.
+- **Type safety at the boundaries.** No `any` or `unknown` escapes in domain, application or command contracts. Types distinguish success from failure explicitly instead of smuggling errors through nullable fields.
+
 ## Agent development workflow
 
 Non-trivial changes — new features, bugs, regressions, review findings, architectural issues and behavior gaps — follow `.github/skills/diedrico-adversarial-development/SKILL.md`: a written design/plan under the Git-ignored `docs/working/`, adversarial review of every revision, a merit gate, a freshness check, then serialized implementation under `.opencode/locks/implementation-manager-working.md`.
