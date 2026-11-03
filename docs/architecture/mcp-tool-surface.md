@@ -152,7 +152,8 @@ active plane · `Ctrl+0` fit to view · `Ctrl+Z` undo · `Ctrl+Y`/`Ctrl+Shift+Z`
 | `set_active_plane` | `planeId` | Selects the plane; rejects unknown ids instead of falling back |
 | `list_entities` | `planeId?`, `kind?`, `limit?` | Entities with id, kind, label, plane, visibility |
 | `inspect_entity` | `entityId` | Geometry, definition mode, dependencies, representations, where it is selectable |
-| `get_relations` | `entityId` | Construction parents/children, sibling links, 3D reconstructions |
+| `get_relations` | `entityId` | Direct parents/children, sibling links, 3D reconstructions |
+| `get_dependents` | `entityId`, `depth?` | Everything that hangs from the element, transitive, in deletion order: id, kind, label, depth, immediate parent. Includes `totalDependents` |
 | `get_process_tree` | `depth?` | Process tree nodes: id, label, kind, output/encapsulation flags, active subprocess |
 | `find_candidates` | `kind`, `planeId?`, `near?` | Candidate entities for a tool argument, with the reason each qualifies |
 
@@ -239,8 +240,16 @@ Macros stay out of this protocol: they are parameterless today.
 | `move_free_point` | `entityId`, `u`, `v` | Preview + commit as one command |
 | `update_entity` | `entityId`, `position?`, `radius?`, `angleDegrees?`, `color?`, `lineWidth?`, `lineStyle?`, `visible?` | Properties dialog equivalent |
 | `toggle_visibility` | `entityId` | Eye icon in the element panel |
-| `preview_delete` | `entityIds` | Cascade list without deleting |
-| `delete_entities` | `entityIds`, `expectedCascadeCount?` | Delete with cascade confirmation guard |
+| `preview_delete` | `entityIds` | Dry run: the elements the deletion would remove, in deletion order, without deleting |
+| `delete_entities` | `entityIds` | Deletes the entities and everything that hangs from them; returns `deletedIds` and `cascadeIds` |
+
+Deletion needs no numeric guard. The agent can inspect the consequence first with
+`get_dependents` (or `preview_delete`), and the deletion result reports exactly what it
+removed, so the agent can verify afterwards and `undo` if the outcome was wrong.
+
+`get_dependents` walks the same dependency graph the deletion uses, so its list and
+`preview_delete` agree. Deeper elements appear later, which is also the safe deletion
+order; an agent that needs a shallower picture passes `depth`.
 
 ### 3.6 History
 
@@ -329,17 +338,10 @@ of trying an operation that cannot succeed.
   `run_macro({ macroId, arguments? })`, with a closed `macroId` union and per-macro
   argument schemas — not one tool per example. No per-macro tools will be added in
   between.
-- **Destructive operations**: deletion already has a cascade preview. Decision needed
-  whether `delete_entities` requires a matching `expectedCascadeCount` (safer, more
-  calls) or trusts the model's intent.
-  *What it means:* deleting an entity also deletes every transitive dependent, so one
-  requested id can remove a large part of the drawing. `expectedCascadeCount` is an
-  optimistic guard: the model calls `preview_delete` first, then passes the count it
-  saw. If the cascade changed in between, the deletion is refused with
-  `cascade_mismatch` (expected, actual, ids) instead of deleting something else. It
-  protects both the size of the action and the freshness of the preview. A reasonable
-  policy is to require it only above a small cascade threshold and always return the
-  deleted ids.
+- **Destructive operations**: decided. No cascade guard argument. The agent inspects
+  `get_dependents` (or `preview_delete`) before deleting, and `delete_entities` reports
+  the ids it removed so the agent can verify and undo. The UI keeps showing its cascade
+  warning for humans; the model gets the same information as data.
 - **Tangent and intersection branches**: decided, see 3.2.1. The tool omits
   `solutionIndex` first; multiple solutions return `ambiguous_solutions` with the
   ordered candidate list, and the model retries with the index it chose. The UI's
@@ -366,6 +368,6 @@ of trying an operation that cannot succeed.
 | 3D window | 8 | 2 |
 | Settings (no UI yet) | 4 | 2 (deferred) |
 
-Totals: **~46 tools in the first release**, grouped in nine namespaces, plus the reserved
+Totals: **~47 tools in the first release**, grouped in nine namespaces, plus the reserved
 `run_macro`. Every row in section 2 has either a tool here, an explicit exclusion, or a
 documented reason to stay out.
