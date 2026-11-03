@@ -63,6 +63,7 @@ export default defineConfig({
             { text: 'State Management', link: '/architecture/stores' },
             { text: 'OpenCode MCP Bridge', link: '/architecture/mcp-bridge' },
             { text: 'MCP Tool Surface', link: '/architecture/mcp-tool-surface' },
+            { text: 'MCP Tool Structure', link: '/architecture/mcp-tool-structure' },
             { text: 'Remediation Plan', link: '/architecture/remediation-plan' },
           ]
         },

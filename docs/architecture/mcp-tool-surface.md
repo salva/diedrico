@@ -4,7 +4,9 @@ Inventory of every interactive surface in Diedrico and the high-level tool contr
 that should expose it to an OpenCode session.
 
 Status: **enumeration and proposed contract, not implemented**. Today only `hello`
-exists (see [the MCP bridge](./mcp-bridge.md)).
+exists (see [the MCP bridge](./mcp-bridge.md)). This document owns what can be done;
+[the tool structure decision](./mcp-tool-structure.md) owns how those actions are encoded
+as tools.
 
 ## 1. Contract rules
 
@@ -368,6 +370,6 @@ of trying an operation that cannot succeed.
 | 3D window | 8 | 2 |
 | Settings (no UI yet) | 4 | 2 (deferred) |
 
-Totals: **~47 tools in the first release**, grouped in nine namespaces, plus the reserved
-`run_macro`. Every row in section 2 has either a tool here, an explicit exclusion, or a
+Totals: **63 actions**, encoded as 38 tools (see
+[the tool structure decision](./mcp-tool-structure.md)), plus the reserved `run_macro`. Every row in section 2 has either a tool here, an explicit exclusion, or a
 documented reason to stay out.
