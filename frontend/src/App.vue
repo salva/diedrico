@@ -57,6 +57,11 @@
           <div class="stacked-panel">
             <ActionsPanel />
           </div>
+
+          <!-- OpenCode MCP demo (hosts a single `hello` tool) -->
+          <div class="stacked-panel mcp-stacked-panel">
+            <McpConnectionPanel />
+          </div>
         </div>
       </aside>
 
@@ -99,6 +104,7 @@ import Toolbar from './components/toolbars/Toolbar.vue';
 import StatusBar from './components/toolbars/StatusBar.vue';
 import ActionsPanel from './components/panels/ActionsPanel.vue';
 import ElementsPanel from './components/panels/ElementsPanel.vue';
+import McpConnectionPanel from './components/panels/McpConnectionPanel.vue';
 import ThreeViewWindow from './components/panels/ThreeViewWindow.vue';
 import StartupDialog from './components/dialogs/StartupDialog.vue';
 import ProjectNameDisplay from './components/header/ProjectNameDisplay.vue';
@@ -318,6 +324,11 @@ function clearPlanePositionInput(): void {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+}
+
+.mcp-stacked-panel {
+  flex: 0 0 auto;
+  min-height: 0;
 }
 
 .stacked-panel:first-child {

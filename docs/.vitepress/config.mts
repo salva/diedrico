@@ -61,6 +61,7 @@ export default defineConfig({
             { text: 'Command Pattern', link: '/architecture/commands' },
             { text: 'Rendering Pipeline', link: '/architecture/rendering' },
             { text: 'State Management', link: '/architecture/stores' },
+            { text: 'OpenCode MCP Bridge', link: '/architecture/mcp-bridge' },
             { text: 'Remediation Plan', link: '/architecture/remediation-plan' },
           ]
         },
