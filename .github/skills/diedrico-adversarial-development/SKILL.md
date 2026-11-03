@@ -25,8 +25,8 @@ policy.
 | Coordinator | primary | Accepts the request, assigns one working directory per item, launches and tracks one `fixer` per item, records exact returned task IDs and dispositions, decides when a waiting fixer may resume. Never designs, reviews, or implements. |
 | Fixer | `fixer` | One item end to end: delegation, finding triage, merit gate, freshness check, read-only reconciliation after manager return. Writes planning artifacts only; never implementation edits, validation, staging, or commits. |
 | Designer | `designer` | Writes and revises the item's design/plan. |
-| Judgment reviewer | `reviewer` | Judges every current design/plan revision: root cause, layer ownership, scope discipline, merit. |
-| Mechanical verifier | `reviewer-2` | Verifies every current revision's citations: paths, symbols, commands, tests, and falsifiable acceptance criteria. |
+| Reviewer | `reviewer` | Adversarially reviews every current design/plan revision. |
+| Second reviewer | `reviewer-2` | Reviews every current revision in parallel with `reviewer`, with the same mission and checklist, without seeing its findings. |
 | Implementation manager | `implementation-manager` | Sole implementation orchestrator and the only agent that invokes `developer`. Its lock covers all mutation, required validation, implementation review, generated artifacts, staging, commits, and stabilization. |
 | Implementation reviewer | `implementation-reviewer` | Read-only review of developer output against the approved plan, inside the manager's lock. |
 | Developer | `developer` | Leaf implementer for manager-assigned plan tasks. |
@@ -50,7 +50,7 @@ single item the primary is a one-item coordinator and drives the same workflow.
 
 Create one directory per item: `docs/working/<YYYY-MM-DD>-<slug>/`, holding the
 current design/plan, `review-round-<N>.md` from `reviewer`,
-`review-round-<N>-factcheck.md` from `reviewer-2`, and
+`review-round-<N>-reviewer-2.md` from `reviewer-2`, and
 `implementation-review-<N>.md` from `implementation-reviewer`.
 
 - `docs/working/` is Git-ignored and must never be committed. It is not a
@@ -123,8 +123,9 @@ The plan must include:
 ## Adversarial review and revision loop
 
 The fixer uses `designer` for all plan authoring, and reviews every revision with
-`reviewer` and `reviewer-2` concurrently. Both read the same revision, and neither
-sees the other's findings before writing, so the two passes stay independent.
+`reviewer` and `reviewer-2` concurrently. Both have the same mission and the same
+checklist, and both read the same revision; neither sees the other's findings
+before writing, so the two passes stay independent.
 
 1. Ask `designer` to write or revise the self-contained plan at the item's
    unique path. For revisions, provide all confirmed material findings.

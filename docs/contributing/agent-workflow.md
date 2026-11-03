@@ -20,8 +20,8 @@ did.
 | --- | --- | --- |
 | `fixer` | Owns one item end to end: delegation, triage, merit gate, freshness, read-only reconciliation | `docs/working/` only |
 | `designer` | Writes and revises the design/plan | `docs/working/` only |
-| `reviewer` | Judgment review of every plan revision: root cause, layer ownership, scope, merit; emits `NO_MATERIAL_FINDINGS` or `MATERIAL_FINDING_FOUND` | `docs/working/` only |
-| `reviewer-2` | Mechanical verification of every plan revision: cited paths, symbols, commands and tests exist, criteria are falsifiable; same verdict vocabulary | `docs/working/` only |
+| `reviewer` | Adversarial review of every plan revision: correctness, root cause, layer ownership, scope, merit, persistence; emits `NO_MATERIAL_FINDINGS` or `MATERIAL_FINDING_FOUND` | `docs/working/` only |
+| `reviewer-2` | Second independent reviewer of every plan revision, same mission and checklist, running in parallel with `reviewer`; neither sees the other's findings | `docs/working/` only |
 | `implementation-manager` | Sole orchestrator of mutation, validation, implementation review, staging, commits | repository, under the lock |
 | `implementation-reviewer` | Read-only review of developer output against the approved plan, inside the manager's lock; emits `READY_TO_COMMIT` or `CHANGES_REQUIRED` | `docs/working/` only |
 | `developer` | Implements tasks assigned by the manager | repository |
@@ -52,7 +52,7 @@ intended behaviour: there is no fallback chain.
 
 Each item gets `docs/working/<YYYY-MM-DD>-<slug>/` containing `brief.md` (new
 features), the current `plan.md`, `review-round-<N>.md` and
-`review-round-<N>-factcheck.md` per review round, and
+`review-round-<N>-reviewer-2.md` per review round, and
 `implementation-review-<N>.md` per implementation review.
 
 `docs/working/` is Git-ignored and excluded from the VitePress build. Nothing

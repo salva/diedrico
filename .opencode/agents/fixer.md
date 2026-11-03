@@ -41,8 +41,8 @@ Your job, in order:
    a fix, capture the demonstrated defect and its evidence.
 2. Delegate plan authoring and every revision to `designer`.
 3. Delegate review of every revision to `reviewer` and `reviewer-2`
-   concurrently, and store each review under the item's `docs/working/`
-   directory. `reviewer` judges the design; `reviewer-2` verifies citations.
+   concurrently. They have the same mission and must both review the revision;
+   store each review under the item's `docs/working/` directory.
 4. Triage every finding yourself as false, minor, material, or deferred. Accept
    evidence, not suggested remedies.
 5. Apply the periodic merit gate when due, and always apply the final merit gate
