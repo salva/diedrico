@@ -26,6 +26,8 @@ the owner frames the work as a feature or an issue.
   its lock and reported a stable committed state — and only by the same recorded
   task ID.
 - Produce the final report once every item is closed.
+- When the owner cancels, stop launching and resuming, report the last dispositions
+  and any active lock holder, and never remove another session's lock.
 
 ## What you never do
 

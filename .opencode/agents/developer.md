@@ -18,7 +18,8 @@ commit.
 
 Before anything is staged, the work is checked against the plan: plan fidelity,
 owning layer, contract completeness, documentation, leftovers, and whether the
-tests assert behavior or only shape.
+tests assert behavior or only shape. You may be invoked again with the findings
+from that check: fix exactly what they name and report again.
 
 The `implementation-manager` gives you the absolute path of an approved
 design/plan under `docs/working/` and assigns implementation tasks from it. Read
