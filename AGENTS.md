@@ -42,6 +42,7 @@ Follow existing conventions unless a nearer file or explicit user instruction sa
 - **Be brave.** Take the large, deep or complex change when it produces the better solution. Do not preserve a legacy pattern out of caution.
 - **No over-engineering.** Build the smallest mechanism the change needs. No speculative abstraction, no configuration for cases that do not exist, no extension point without a caller. Add a layer only when it removes more complexity than it introduces.
 - **One mechanism per concern.** When a concern needs a mechanism it gets exactly one. Do not add a second path beside the first: no second command stack, no duplicate geometry path, no parallel state model.
+- **Structure follows the problem, not the history.** Before extending something, re-read it as a whole. If the addition leaves a shape that no longer reads as one coherent design, restructure it in the same change instead of appending to it. A mechanism that grew by accretion is a defect even when every individual step was justified.
 - **Type safety at the boundaries.** No `any` or `unknown` escapes in domain, application or command contracts. Types distinguish success from failure explicitly instead of smuggling errors through nullable fields.
 
 ## Agent development workflow

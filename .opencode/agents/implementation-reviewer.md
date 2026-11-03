@@ -70,7 +70,8 @@ already have reported. Look only for what a green build cannot show:
   transitional adapter that keeps an old call site working instead of updating
   it; a speculative abstraction, configuration for cases that do not exist, or
   an extension point without a caller; a second mechanism for a concern that
-  already has one; and any `any` or `unknown` escape in a domain, application or
+  already has one; a mechanism that grew by accretion instead of being
+  restructured; and any `any` or `unknown` escape in a domain, application or
   command contract.
 
 ## Output

@@ -61,7 +61,8 @@ Look specifically for:
 - **Compliance with the design principles in `AGENTS.md`**: architecture chosen
   over diff size, zero backward-compatibility weight, the whole surface
   refactored rather than bridged, no over-engineering, one mechanism per
-  concern, and no `any` or `unknown` escapes in contracts.
+  concern, a structure that still reads as one design rather than an accretion,
+  and no `any` or `unknown` escapes in contracts.
 
 For each finding report: severity (material or minor), concrete evidence (file
 and line, or a quote), the affected requirement and its practical consequence,
