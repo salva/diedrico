@@ -62,6 +62,7 @@ export default defineConfig({
             { text: 'Rendering Pipeline', link: '/architecture/rendering' },
             { text: 'State Management', link: '/architecture/stores' },
             { text: 'OpenCode MCP Bridge', link: '/architecture/mcp-bridge' },
+            { text: 'MCP Tool Surface', link: '/architecture/mcp-tool-surface' },
             { text: 'Remediation Plan', link: '/architecture/remediation-plan' },
           ]
         },
