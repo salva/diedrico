@@ -47,7 +47,7 @@ Follow existing conventions unless a nearer file or explicit user instruction sa
 
 ## Agent development workflow
 
-Non-trivial changes — new features, bugs, regressions, review findings, architectural issues and behavior gaps — follow `.github/skills/diedrico-adversarial-development/SKILL.md`: a written design/plan under the Git-ignored `docs/working/`, adversarial review of every revision, a merit gate, a freshness check, then serialized implementation under `.opencode/locks/implementation-manager-working.md`.
+Non-trivial changes — new features, bugs, regressions, review findings, architectural issues and behavior gaps — follow the process in `docs/contributing/agent-workflow.md`: a written design/plan under the Git-ignored `docs/working/`, adversarial review of every revision, a merit gate, a freshness check, then serialized implementation under `.opencode/locks/implementation-manager-working.md`. The coordinator invokes it through the skill at `.github/skills/diedrico-adversarial-development/SKILL.md`.
 
 The seven subagents that implement it live in `.opencode/agents/` (`fixer`, `designer`, `reviewer-1`, `reviewer-2`, `implementation-reviewer`, `implementation-manager`, `developer`). `implementation-manager` holds that lock for the whole mutating phase: `developer` writes the code as its delegated implementer, and only the manager validates, stages and commits. See `docs/contributing/agent-workflow.md` for the human-facing summary.
 

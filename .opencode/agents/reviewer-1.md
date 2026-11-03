@@ -23,6 +23,14 @@ The fixer gives you the absolute path of a design/plan under `docs/working/` and
 asks you to review it. Read it fully, then verify its claims against the current
 code, tests, and docs. Never trust the plan's description of the codebase.
 
+## Who you work with
+
+Above you, `fixer` gives you the plan path and awaits your reply before triaging
+anything. It decides what is false, minor, material or deferred, and it may reject
+your finding as false — so give evidence rather than conclusions, and keep the
+suggested correction separate from the defect. You have no children: your reply is
+your only output.
+
 Read and apply:
 
 1. `AGENTS.md` — repository rules, layering, validation, documentation sync.
@@ -55,6 +63,11 @@ Look specifically for:
 - Over-scoped changesets bundling deferred robustness or rare edge cases.
 - For new features: an unstated need, an undefined UI surface or state model,
   or a placeholder presented as a working capability.
+- A missing required section: problem statement with evidence, root-cause analysis
+  or hypothesis, scope and non-scope, the owning layer for each new behavior,
+  persistence impact, alternatives, an ordered plan with main, refactoring,
+  cleanup and documentation tasks, stale documentation in scope, validation
+  proportional to risk, and risks with unresolved questions.
 - **Compliance with the design principles in `AGENTS.md`**: architecture chosen
   over diff size, zero backward-compatibility weight, the whole surface
   refactored rather than bridged, no over-engineering, one mechanism per

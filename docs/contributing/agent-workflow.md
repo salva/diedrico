@@ -1,94 +1,457 @@
-# Agent development workflow
+# Agent development process
 
-Diedrico ships an OpenCode workflow for AI-assisted changes: a written design,
-adversarial review of every revision, a merit decision, then serialized
-implementation. It applies to new features and fixes alike.
+This is the master document for the Diedrico change process. Everything else is
+derived from it:
 
-The binding instructions live in the repository, not here:
+- `.github/skills/diedrico-adversarial-development/SKILL.md` is the entry point
+  the coordinator loads to invoke the process.
+- `.opencode/agents/*.md` are the profiles. Each one carries the slice of this
+  process that its agent executes, plus its contracts with the agents above and
+  below it.
 
-- `.github/skills/diedrico-adversarial-development/SKILL.md` — the workflow:
-  roles, design requirements, review loop, merit gate, freshness check, lock
-  protocol, dispositions.
-- `.opencode/agents/` — the seven agent profiles that implement it.
+This document is the source. When it changes, the skill and every profile that
+adapts the changed part change in the same edit.
 
-This page only explains how the parts fit, so a human can review what an agent
-did.
+The process adds cadence, not policy. `AGENTS.md` stays authoritative for
+architecture, scope, documentation, validation, design principles and safety, and
+`docs/architecture/overview.md` owns the layer boundaries.
+
+## When the process applies
+
+Non-trivial changes: new features, bugs, regressions, review findings,
+architectural flaws and behavior gaps. It applies to both "make it work" and
+"make it exist".
+
+It is not required for typo fixes, formatting-only edits, dependency bumps, or
+single-line corrections with no design choice, unless the owner frames the work as
+a feature or an issue.
+
+It does not govern its own modification. Editing this document, an agent profile
+or a model routing is meta-work, and follows the process only when the operator
+explicitly asks for it: a broken process cannot run the loop that would repair it.
 
 ## Roles
 
-| Agent | Job | May write |
+| Role | Agent | Owns |
 | --- | --- | --- |
-| `fixer` | Owns one item end to end: delegation, triage, merit gate, freshness, read-only reconciliation | read-only |
-| `designer` | Writes and revises the design/plan | `docs/working/` only |
-| `reviewer-1` | Adversarial review of every plan revision: correctness, root cause, layer ownership, scope, merit, persistence; emits `NO_MATERIAL_FINDINGS` or `MATERIAL_FINDING_FOUND` | read-only |
-| `reviewer-2` | Second independent reviewer of every plan revision, same mission and checklist, running in parallel with `reviewer-1`; neither sees the other's findings | read-only |
-| `implementation-manager` | Sole orchestrator of mutation, validation, implementation review, staging, commits | repository, under the lock |
-| `implementation-reviewer` | Read-only review of developer output against the approved plan, inside the manager's lock; emits `READY_TO_COMMIT` or `CHANGES_REQUIRED` | read-only |
-| `developer` | Implements tasks assigned by the manager | repository |
+| Coordinator | primary session | Accepts the request, gives each item its working directory, launches and tracks one `fixer` per item, records exact returned task IDs and dispositions, decides when a waiting fixer may resume. Never designs, reviews or implements. |
+| Fixer | `fixer` | One item end to end: delegation, finding triage, merit gate, freshness check, read-only reconciliation after the manager returns. Writes nothing; never implementation edits, validation, staging or commits. |
+| Designer | `designer` | Writes and revises the item's design/plan. |
+| First reviewer | `reviewer-1` | Adversarially reviews every current design/plan revision. |
+| Second reviewer | `reviewer-2` | Reviews every current revision in parallel with `reviewer-1`, with the same mission and checklist, without seeing its findings. |
+| Implementation manager | `implementation-manager` | Sole implementation orchestrator and the only agent that invokes `developer`. Its lock covers all mutation, required validation, implementation review, generated artifacts, staging, commits and stabilization. |
+| Implementation reviewer | `implementation-reviewer` | Read-only review of developer output against the approved plan, inside the manager's lock. |
+| Developer | `developer` | Leaf implementer for manager-assigned plan tasks. |
 
-A primary session (Build) acts as coordinator and launches one `fixer` per item.
-`implementation-manager` holds `.opencode/locks/implementation-manager-working.md`
-for the whole mutating phase: `developer` writes the code as its delegated
-implementer, and only the manager validates, stages and commits.
+Each item completes its own design/review loop. Items that may collide still plan
+and review concurrently; plan approval reserves no file or contract.
+Implementation stays serialized regardless of apparent independence. For a single
+item the primary is a one-item coordinator and drives the same process.
 
-Each profile is pinned to an `opencode-go` model chosen for its task profile, and
-the `model:` line in each agent file is the authority. Reviewers use a family
-distinct from the author they review, so blind spots do not correlate: design work
-gets the strongest model, high-volume roles get the cheapest one that fits, and no
-reviewer shares a family with the designer or with the other reviewer. A model
-that is unavailable fails loudly at launch; there is no fallback chain.
+## The item lifecycle
+
+One item moves through these stages. The coordinator owns the boundaries between
+them; the fixer owns the stages themselves.
+
+1. **Item.** The coordinator gives the item its own working directory and launches
+   one `fixer` for it.
+2. **Design.** `designer` writes the self-contained plan. For a new feature, the
+   problem statement establishes the need before the rest of the plan is drafted.
+3. **Review.** `reviewer-1` and `reviewer-2` review the same revision concurrently
+   and return their findings. The fixer triages them.
+4. **Revision.** Confirmed material findings go back to `designer`. Steps 3 and 4
+   repeat until no confirmed material finding remains.
+5. **Merit.** The fixer runs the merit gate: periodically during revision, and
+   mandatorily after review closes.
+6. **Approval and freshness.** On `WORTH_IMPLEMENTING` the fixer records the
+   approval block and, immediately before each implementation attempt, re-checks
+   the plan against current `HEAD` and the worktree.
+7. **Implementation.** `implementation-manager` takes the lock, delegates to
+   `developer`, runs the plan's validation, has `implementation-reviewer` check the
+   result, and commits.
+8. **Report.** The fixer reconciles the manager's report read-only and returns one
+   disposition. The coordinator records it.
 
 ## Working files
 
-Each item gets `docs/working/<YYYY-MM-DD>-<slug>/` holding the current
-`plan.md`. Reviews are not persisted: each reviewer returns its findings and
-verdict to the agent that invoked it.
+One directory per item: `docs/working/<YYYY-MM-DD>-<slug>/`, holding the current
+design/plan.
 
-`docs/working/` is Git-ignored and excluded from the VitePress build. Nothing
-there is published, committed, or treated as project documentation. Tracked
-documentation changes are separate tasks inside the plan.
+- `docs/working/` is Git-ignored and must never be committed. It is not a
+  substitute for canonical documentation.
+- Every revised plan is self-contained; a reader must not need earlier revisions
+  or the review history.
+- Reviews are not persisted. Each reviewer returns its findings and verdict to the
+  agent that invoked it.
+- Reviews stay factual and actionable. Do not preserve weak critiques as required
+  work.
 
-## What a plan must contain
+## Design phase
 
-The full list is in the skill. The parts reviewers check hardest:
+### Feature work
 
-- Which layer owns the new behavior, per `docs/architecture/overview.md`.
-- One logical user action stays one command, so undo/redo remains chronological.
-- Persistence impact: affected `opType` set, `schemaVersion` decision, registry
-  registration, replay validation, round-trip test into a fresh `World`.
-- Documentation updates as implementation tasks, not a later phase.
-- Validation proportional to risk: focused Vitest files, architecture tests
-  affected by boundary changes, and which root gates apply.
+Fixes inherit their problem statement from a demonstrated defect. New features
+have no defect, so establish the need before designing:
 
-## Gates
+1. **Establish the need first.** The plan's problem statement covers the
+   user-visible outcome, who needs it, what exists today, what stays out of scope,
+   and how success is observed. The fixer confirms it before the designer drafts
+   the rest of the plan. If the owner's request already answers these, copy it
+   faithfully instead of inventing rationale.
+2. **Interaction is part of the design.** Any user-visible capability states its
+   UI surface: which panel, control or canvas interaction, what the states are
+   (empty / busy / blocked / failed), and how it is discovered and undone.
+   `frontend/src/components` renders; it does not decide policy.
+3. **Capability honesty.** Declare what the change deliberately does not support. A
+   feature does not ship silently degraded; unavailable paths return an honest
+   result rather than a placeholder that looks functional.
 
-1. **Review closure** — no confirmed material finding remains, from both
-   `reviewer-1` and `reviewer-2`, which review every revision concurrently.
-2. **Merit** — `WORTH_IMPLEMENTING`: solves the problem at the owning layer, is
-   net simpler, follows `AGENTS.md`, and stays in scope. Review closure alone
-   never authorizes implementation.
-3. **Freshness** — the plan still matches current `HEAD` and the worktree,
-   checked immediately before implementation.
-4. **Lock** — the manager serializes all mutation. A second manager reports
-   contention and performs no work.
+Feature plans still pass the merit gate, with "worth building" replacing "root
+cause" as the first condition.
 
-## Validation
+### Design and plan requirements
 
-The manager runs what the plan requires, using root scripts:
-`npm run validate:routine`, `npm run lint`, `npm run validate:docs`,
-`npm run test:e2e`, or focused `npm run test --workspace=frontend -- <pattern>`.
-See [Testing](testing.md).
+Keep each design/plan concise, self-contained and proportional to the change's
+risk. A one-line statement that a subject is unaffected is enough.
 
-## Changing the workflow
+The plan must include:
 
-The workflow governs work on Diedrico, not work on itself. Editing the skill, an
-agent profile, or a model routing is meta-work: the primary session makes those
-changes directly on the project owner's instruction, because a broken workflow
-cannot run the loop that would repair it. Keep the OpenCode frontmatter
-conventions, and keep `AGENTS.md` and this page aligned with what the files
-actually say.
+- Problem statement with evidence, or the established need for a new capability.
+- Root-cause analysis for fixes, or the best current hypothesis.
+- Scope and non-scope. Non-essential robustness and rare edge cases are deferred
+  follow-ups unless deferral blocks the core change or leaves the system unsafe.
+- Proposed design: affected modules, contracts, Vue surfaces and public
+  application seams as applicable, named against the layer table in
+  `docs/architecture/overview.md`. State which layer owns each new behavior.
+- Persistence impact, including none. Diedrico persists committed command
+  descriptors through `ProjectService` under the current command schema (see
+  `docs/architecture/commands.md` and
+  `docs/contributing/project-persistence-ownership.md`). Old project formats are
+  not an active compatibility surface. If the change alters operation descriptors,
+  name the affected `opType` set, the `schemaVersion` decision, registry
+  registration, replay validation, and the tests that prove round-trip replay into
+  a fresh `World`.
+- Alternatives, including a broader or root-cause alternative when reasonable.
+- An ordered implementation plan with these explicit sections:
+  - Main work tasks.
+  - A refactoring stage whenever the change alters a contract: the contract and
+    every call site change together, rather than a bridge that lets old call sites
+    survive.
+  - Cleanup tasks for obsolete code, tests, fixtures, docs and scripts.
+  - Documentation-update tasks naming each document to update and how.
+    Documentation is implementation work, not a later phase. Consider
+    `docs/architecture/overview.md`, `docs/architecture/commands.md`,
+    `docs/contributing/testing.md`, `README.md`, and the VitePress pages that
+    describe the changed behavior.
+- Related stale documentation in scope, with concrete correction tasks.
+- Validation appropriate to the risk: name the focused Vitest files, the
+  architecture tests affected by boundary changes, and whether
+  `npm run validate:routine`, `npm run lint`, `npm run validate:docs` or
+  `npm run test:e2e` are required. Do not substitute prose-regex assertions or
+  repository-wide spelling bans for semantic evidence.
+- Risks, rollback considerations and unresolved questions.
 
-Each agent profile carries its own adapted form of the skill sections it needs,
-and a subagent does not read the skill; only the fixer does. That duplication is
-deliberate, and paying for it is a maintenance duty: a section change and every
-profile that adapts it move in the same edit.
+## Review phase
+
+### Review loop
+
+The fixer uses `designer` for all plan authoring, and reviews every revision with
+`reviewer-1` and `reviewer-2` concurrently. Both have the same mission and the
+same checklist, and both read the same revision; neither sees the other's findings
+before writing, so the two passes stay independent.
+
+1. Ask `designer` to write or revise the self-contained plan at the item's unique
+   path. For revisions, provide all confirmed material findings.
+2. Invoke `reviewer-1` and `reviewer-2` on the complete current plan concurrently,
+   and await both before triaging. Each returns its findings and verdict to the
+   fixer; nothing is written to `docs/working/`.
+3. Triage every finding. When the reviewers contradict each other, evidence wins
+   and the fixer is the arbiter.
+4. If any finding is material, decide whether the periodic merit gate is due. When
+   it is not due, revise and repeat directly. When it is due, continue to revision
+   only on `WORTH_CONTINUING`.
+5. When every finding is false, minor or explicitly deferred and no confirmed
+   material finding remains, run the mandatory final merit gate. Review closure
+   alone never authorizes freshness or implementation.
+
+### Finding triage
+
+- **False:** disproved, speculative, preference-only, or contradicted by current
+  requirements. Reject it. A finding is not false merely because it is outside
+  scope.
+- **Minor:** correct but too small to affect the plan. Note it without forcing
+  another round.
+- **Material:** real and significant enough to change the design or plan. Revise
+  directly.
+- **Deferred:** supported but outside the minimal coherent change. Record a brief
+  reason and any needed follow-up. Never defer a defect that blocks the core change
+  or leaves the system unsafe.
+
+Accepting a defect does not accept its proposed remedy. Separate the evidence and
+the violated requirement from the suggested correction. When an unsupported plan
+claim caused the defect, narrow that claim; do not weaken a real requirement merely
+to close review.
+
+### Merit gate
+
+The fixer, not the designer or the reviewers, owns this decision. Apply it twice:
+
+- **Periodically during revision:** reassess immediately when findings recur, a
+  revision widens or shifts scope, adds a material mechanism, or pulls a deferred
+  concern into the core change. Otherwise reassess no later than every second
+  review round with confirmed material findings. Run it after triage and before
+  another designer revision.
+- **After review closure:** always reassess the complete closed plan before
+  recording approval, checking freshness or invoking `implementation-manager`. An
+  earlier periodic result cannot satisfy this final gate.
+
+Use a concise pass/fault decision, not a scorecard or a new artifact. Confirm:
+
+- **Value and cause:** measured against the original evidenced need, the plan
+  solves the problem at the layer that owns it rather than compensating for a
+  symptom or preserving a disproved premise. When an introduced mechanism created
+  the problem, first consider removing that mechanism instead of adding machinery
+  to make it correct.
+- **Net simplicity:** the result is easier to understand and change, and its new
+  mechanisms, states, contracts and exceptions are not comparable to or worse than
+  the complexity removed unless concrete value justifies them.
+- **Project alignment:** the plan follows `AGENTS.md` and the layer boundaries in
+  `docs/architecture/overview.md`; domain code owns geometry; application code
+  translates intents into commands; components render and forward; no second
+  command stack, no duplicate geometry path, no compatibility layer for superseded
+  project formats.
+- **Scope discipline:** the plan is the minimal coherent safe change, and deferred
+  concerns stay deferred unless they block core behavior or leave the system
+  unsafe.
+
+Record exactly one outcome with concise evidence:
+
+- **`WORTH_CONTINUING`:** valid only at a due periodic gate while material findings
+  remain. Permits the next designer revision and reviewer round; it cannot approve
+  the plan, record an examined `HEAD`, run freshness or authorize implementation.
+- **`WORTH_IMPLEMENTING`:** valid only at the mandatory post-closure gate, and the
+  sole merit outcome that permits approval, freshness checking and manager
+  delegation.
+- **`REDESIGN_REQUIRED`:** the design is faulty but salvageable. Record the failed
+  conditions and the precise constraints that can plausibly restore a worthwhile
+  compliant design. Do not patch or partially implement it; give the complete item,
+  evidence and constraints to `designer` and restart the full loop on a
+  self-contained plan.
+- **`ABANDONED`:** no credible compliant redesign is worthwhile, for example when
+  the premise is disproved, the required complexity outweighs the value, or the
+  objective conflicts with `AGENTS.md`. End without freshness or implementation and
+  report the evidence and failed conditions. Do not relaunch it automatically.
+- **`BLOCKED`:** evidence is insufficient or an owner-owned tradeoff prevents a
+  reliable decision. Ask the user rather than guessing.
+
+## Escalation
+
+Ask the user when the merit gate cannot resolve unclear scope, repeated
+disagreement or a required product tradeoff. Ask before introducing stronger
+user-visible guarantees, removing unrelated capability, or changing the
+persistence schema's compatibility posture. Generic slogans such as "fail fast",
+"root cause" or "remove dead code" do not authorize those tradeoffs.
+
+If the required subagent tooling is unavailable, report `BLOCKED`. Never claim
+review or implementation passed. Do not substitute self-review or direct
+implementation for the missing agent.
+
+## Approval and freshness
+
+Only after review closes and the final merit gate returns `WORTH_IMPLEMENTING` may
+the fixer record this approval:
+
+```text
+Plan approval:
+Review closure: <both reviewers' verdicts>
+Final merit outcome: WORTH_IMPLEMENTING
+Supporting evidence: <concise evidence covering the four merit conditions>
+Examined HEAD: <commit>
+```
+
+Immediately before every manager attempt, including every attempt after lock
+waiting, the fixer performs a read-only semantic freshness check against the
+current `HEAD`, commits since the last approval, and current worktree changes.
+Compare the plan's assumptions, named files, contracts, call sites, cleanup,
+documentation and validation.
+
+- **`PLAN_STILL_VALID`:** intervening changes do not materially affect the premise,
+  intended contract, affected components, ordered tasks or validation. Record the
+  evidence and invoke the manager.
+- **`PLAN_REVIEW_REQUIRED`:** a contract or assumption changed, a target was
+  removed or substantially rewritten, planned changes conflict, scope changed, or
+  validation and docs no longer establish correctness. Do not invoke the manager.
+  Send the current evidence to `designer` and repeat the full loop.
+- **`BLOCKED`:** the worktree is broken, unclassified or unsafe for a reliable
+  check. Do not mutate or improvise.
+
+A freshness-driven return to design invalidates the prior approval. A newly closed
+revision needs a new final `WORTH_IMPLEMENTING` decision. A successful check
+reserves nothing; the manager must still acquire the lock.
+
+## Implementation phase
+
+### The lock
+
+Every approved fixer invokes `implementation-manager` with the absolute
+approved-plan path. No primary and no fixer inspects the lock and implements around
+it. The lock file is `.opencode/locks/implementation-manager-working.md` at the
+repository root, and both it and the approved-plan path are absolute; every other
+path this process names is relative to the repository root. The lock is the only
+serialization boundary.
+
+The manager must:
+
+1. Atomically acquire the lock before reading the plan or mutating anything. Create
+   `.opencode/locks/` if it does not exist. On contention it edits and delegates
+   nothing and returns the existing lock description.
+2. Capture pre-existing Git status and diff sufficiently to preserve unrelated
+   work.
+3. Decompose the plan into developer assignments. Assign sequentially when work
+   overlaps or has ordering dependencies. Launch a concurrent group only after
+   positively determining that assignments do not conflict in files, contracts,
+   generated outputs, validation side effects or required order.
+4. Await every developer in a concurrent group and reconcile each result plus the
+   combined repository state against the assigned scopes and the plan. No shared
+   validation, staging or commit while any developer is active.
+5. Run all validation the plan requires and handle generated artifacts.
+   Developer-run checks are progress evidence, not substitutes.
+6. Invoke `implementation-reviewer` with the absolute plan path. It reviews the
+   implementation against the plan, and uses read-only Git commands to see what
+   actually changed so it can also flag work the plan did not authorize. On
+   `CHANGES_REQUIRED`, return the material findings to `developer` and repeat
+   validation and review under the same lock. Stage only intended paths and commit
+   coherent stable units only after `READY_TO_COMMIT` for the current state.
+7. Prepare the final report with command results and commit hashes. Before normal
+   release, confirm completed work is stable and committed and no plan-owned
+   uncommitted mutation remains.
+8. On partial completion or redesign-worthy learning after edits, validate and
+   commit only coherent completed units, then finish or remove only this run's
+   incomplete uncommittable changes while preserving pre-existing work. If safe
+   stabilization is impossible, retain the lock and escalate.
+9. Remove only the lock this run created, as the final mutation, then return the
+   prepared report. Abnormal termination may leave the lock; no other agent removes
+   or takes it over.
+
+The lock spans tracked edits, generated outputs, mutating validation commands,
+staging, commit hooks, commits and final cleanup. Concurrent developers stay inside
+one lock holder's single item.
+
+No branches, worktrees or merge orchestration: one lock serializes one item in one
+working tree.
+
+### Implementation review
+
+`implementation-reviewer` covers what a green build cannot. Its main job is to
+confirm that what was built is what was designed, and to surface problems the
+design did not anticipate. The manager already ran the tests, typecheck, lint and
+docs build, so the reviewer does not re-run them and does not report what they
+would already have reported. It checks plan fidelity, owning layer, contract
+completeness, documentation updates, leftovers, and whether the new tests assert
+behavior or only shape.
+
+It is read-only: no edits, no staging, no commits, no lock. It may run `git
+status`, `git diff`, `git log` and `git show` to see what actually changed, which
+is how it detects work the plan did not authorize. It never runs a mutating
+command.
+
+Its verdict governs the commit. `READY_TO_COMMIT` for the current state is required
+before staging; `CHANGES_REQUIRED` sends the material findings back to `developer`
+as a new assignment under the same lock. A finding that the plan itself is wrong,
+rather than the implementation, returns the item to `designer` and the review loop
+instead.
+
+### Contention and resume
+
+A manager return that acquired no lock, edited nothing and delegated nothing maps
+to `WAITING_FOR_IMPLEMENTATION_LOCK`. It is not failure, partial implementation,
+divergence or design evidence. The fixer keeps ownership and must not poll or
+launch another manager.
+
+The coordinator may resume a waiting fixer only after the known holder has
+returned, released its lock and reported a stable committed state. Resume the
+**same recorded task ID**, not a new fixer session. On resume, the fixer must
+re-run the freshness gate before any manager delegation. There is no queue,
+scheduler, fairness promise, timer, watcher or extra lock.
+
+### Manager returns
+
+**Contention-only:** do not revise or re-review solely because of contention.
+Return control to the coordinator and wait for the resume condition.
+
+**Acquired lock:** the fixer performs read-only reconciliation only — manager
+report, commit hashes, `HEAD`, status and diff, and supplied validation evidence.
+It must not mutate, stage or commit.
+
+- Fully executed, no divergence, repository stable: report completion.
+- Work remains, run partial, or learning changes the design: return to `designer`
+  and the full review loop. A later attempt needs a fresh freshness check and lock
+  acquisition.
+- Manager cannot stabilize and retains the lock: report `BLOCKED`. No
+  implementation resumes until explicit owner or operator verification and repair.
+
+## Outcomes
+
+### Dispositions
+
+Every fixer return starts with exactly one disposition:
+
+- `COMPLETED`
+- `ABANDONED`
+- `WAITING_FOR_IMPLEMENTATION_LOCK`
+- `BLOCKED`
+- `FAILED`
+- `CANCELLED`
+
+A waiting return includes:
+
+```text
+Disposition: WAITING_FOR_IMPLEMENTATION_LOCK
+Item: <identifier and summary>
+Plan: <absolute path>
+Plan approval: <the block above, unchanged>
+Lock holder: <concise faithful description of the existing lock>
+Work performed: none
+Resume condition: known lock-holder run has returned and released its lock
+```
+
+A completed report includes item identity, plan path, the unchanged approval block,
+files changed, manager-supplied validation results, commit hashes, remaining work
+or divergence, and repository stability. An `ABANDONED` report includes the review
+outcome, merit evidence, failed conditions, and why redesign cannot make the item
+worthwhile; it claims no files changed, no validation and no commits. The fixer
+generates no new implementation evidence after the manager returns.
+
+### Cancellation and errors
+
+- **Waiting fixer cancelled:** mark `CANCELLED`, make no resume call, do not touch
+  the lock. Other items continue unless directed otherwise.
+- **Resume mismatch or a fixer that cannot identify its own prior episode:** mark
+  `BLOCKED`; never adopt a replacement session's output.
+- **Design or review tooling unavailable:** `BLOCKED`. **Item-local failure:**
+  `FAILED`. Other items may continue if the worktree is safe.
+- **Design abandoned on merit:** `ABANDONED`, an intentional terminal decision, not
+  a failure.
+- **Manager cannot stabilize or dies:** leave the lock and report a blocker
+  requiring explicit owner action. No other session takes the lock over.
+- **Coordinator cancelled:** stop launches and resumes, report last dispositions and
+  any active holder, never remove another session's lock.
+
+## Final reporting
+
+Report the items, core design choice, plan paths, review and merit outcomes,
+material findings, main docs and files changed, validation commands and results,
+commit hashes, repository stability, residual risks and follow-ups, and any
+abandoned, blocked or cancelled item. Never imply an abandoned item was
+implemented. Never commit `docs/working/` artifacts.
+
+## Maintaining this process
+
+Each agent profile carries its own adapted form of the parts of this document it
+needs, so a subagent does not read this document; the coordinator does, through
+the skill, and the fixer may. That duplication is deliberate, and paying for it is
+a maintenance duty: a change here and every profile that adapts it move in the same
+edit.
+
+When this document and a profile disagree, this document wins and the profile is
+the defect.
