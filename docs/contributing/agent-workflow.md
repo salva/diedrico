@@ -27,7 +27,7 @@ single-line corrections with no design choice, unless the owner frames the work 
 a feature or an issue.
 
 It does not govern its own modification. Editing this document, an agent profile
-or a model routing is meta-work, and follows the process only when the operator
+or a model routing is meta-work, and follows the process only when the owner
 explicitly asks for it: a broken process cannot run the loop that would repair it.
 
 ## Roles
@@ -253,11 +253,11 @@ Record exactly one outcome with concise evidence:
   objective conflicts with `AGENTS.md`. End without freshness or implementation and
   report the evidence and failed conditions. Do not relaunch it automatically.
 - **`BLOCKED`:** evidence is insufficient or an owner-owned tradeoff prevents a
-  reliable decision. Ask the user rather than guessing.
+  reliable decision. Ask the owner rather than guessing.
 
 ## Escalation
 
-Ask the user when the merit gate cannot resolve unclear scope, repeated
+Ask the owner when the merit gate cannot resolve unclear scope, repeated
 disagreement or a required product tradeoff. Ask before introducing stronger
 user-visible guarantees, removing unrelated capability, or changing the
 persistence schema's compatibility posture. Generic slogans such as "fail fast",
@@ -399,7 +399,7 @@ It must not mutate, stage or commit.
   and the full review loop. A later attempt needs a fresh freshness check and lock
   acquisition.
 - Manager cannot stabilize and retains the lock: report `BLOCKED`. No
-  implementation resumes until explicit owner or operator verification and repair.
+  implementation resumes until explicit owner verification and repair.
 
 ## Outcomes
 

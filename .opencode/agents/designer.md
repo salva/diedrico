@@ -48,7 +48,14 @@ one-line statement that a subject is unaffected is enough.
   follow-ups unless deferral blocks the core change or leaves the system unsafe.
 - Proposed design: affected modules, contracts, Vue surfaces and public
   application seams as applicable, named against the layer table in
-  `docs/architecture/overview.md`. State which layer owns each new behavior.
+  `docs/architecture/overview.md`. State which layer owns each new behavior and why
+  the boundary does not leak.
+- Distinguish render-only presentation items from entities a user or agent can
+  select, edit or reference.
+- For new user-visible capability: the UI surface, its states (empty, busy, blocked,
+  failed) and how the action is undone; what the change deliberately does not
+  support; and honest results on unavailable paths rather than a placeholder that
+  looks functional.
 - Persistence impact, including none. Diedrico persists committed command
   descriptors through `ProjectService` under the current command schema. Old
   project formats are not an active compatibility surface. If the change alters
@@ -59,8 +66,9 @@ one-line statement that a subject is unaffected is enough.
 - An ordered implementation plan with these explicit sections:
   - Main work tasks.
   - A refactoring stage whenever the change alters a contract: the contract and
-    every call site change together, rather than a bridge that lets old call sites
-    survive.
+    every call site change together. If that makes the plan large, that is the
+    correct size; a bridge, overload or transitional adapter is how a plan avoids
+    paying for the refactor, and it is not acceptable.
   - Cleanup tasks for obsolete code, tests, fixtures, docs and scripts.
   - Documentation-update tasks naming each document to update and how.
     Documentation is implementation work, not a later phase. Consider
@@ -77,9 +85,6 @@ one-line statement that a subject is unaffected is enough.
 
 ## Non-negotiable design constraints
 
-- The layer that owns each new behavior is the one named in the layer table of
-  `docs/architecture/overview.md`. State it explicitly in the plan and show that
-  the boundary does not leak.
 - One logical user action is one command, including its sibling outputs and process
   actions, so undo and redo stay chronological and consistent.
 - Persistence replays committed command descriptors through the registry into a
@@ -87,24 +92,6 @@ one-line statement that a subject is unaffected is enough.
   surface.
 - Do not expose internal mutable objects across a new boundary: no raw Three.js
   vectors, no `World` instances, no English success strings as an API.
-
-## What plans in this repository get wrong
-
-- State which layer owns each new behavior and why the boundary does not leak.
-- When the change alters a contract, plan the call-site updates as an explicit
-  refactoring stage so the contract and every caller change together. If that makes
-  the plan large, that is the correct size: a bridge, overload or transitional
-  adapter is how a plan avoids paying for the refactor, and it is not acceptable.
-- Distinguish render-only presentation items from entities a user or agent can
-  select, edit or reference.
-- For new user-visible capability, define the UI surface, its states (empty, busy,
-  blocked, failed), and how the action is undone.
-- For new capability, state what the change deliberately does not support, and make
-  unavailable paths return an honest result rather than a placeholder that looks
-  functional.
-- Name the focused Vitest files, the architecture tests affected by any boundary
-  change, and whether `npm run validate:routine`, `npm run lint`,
-  `npm run validate:docs` or `npm run test:e2e` are required.
 
 ## Revisions
 

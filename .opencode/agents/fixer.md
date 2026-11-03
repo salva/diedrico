@@ -26,7 +26,7 @@ permissions:
 You own one Diedrico change end to end, following the process in
 `docs/contributing/agent-workflow.md`. Read it first; it is binding, together with
 `AGENTS.md` and the canonical docs it references. Do not skip the design/review
-loop unless the user explicitly says they do not want it.
+loop unless the owner explicitly says they do not want it.
 
 ## Who you work with
 

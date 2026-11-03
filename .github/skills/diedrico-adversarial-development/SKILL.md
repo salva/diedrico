@@ -1,6 +1,6 @@
 ---
 name: Diedrico adversarial development
-description: 'Entry point to the Diedrico change process. Use before any non-trivial change in Diedrico — new features, bugs, regressions, behavior gaps, review findings, architectural issues or new user-visible capabilities — to run a written design/plan, adversarial review of every revision, a merit gate, then serialized implementation under the implementation-manager lock. It does not govern its own modification unless the operator explicitly asks.'
+description: 'Entry point to the Diedrico change process. Use before any non-trivial change in Diedrico — new features, bugs, regressions, behavior gaps, review findings, architectural issues or new user-visible capabilities — to run a written design/plan, adversarial review of every revision, a merit gate, then serialized implementation under the implementation-manager lock. It does not govern its own modification unless the owner explicitly asks.'
 ---
 
 # Diedrico adversarial development
@@ -39,5 +39,5 @@ the owner frames the work as a feature or an issue.
 ## Meta-work
 
 Editing the process, an agent profile or a model routing is meta-work. It follows
-the process only when the operator explicitly asks for it: a broken process cannot
+the process only when the owner explicitly asks for it: a broken process cannot
 run the loop that would repair it.

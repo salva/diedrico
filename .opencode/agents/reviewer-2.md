@@ -19,18 +19,16 @@ independent reviewers; the other reviews the same revision at the same time with
 this same mission. You do not see its findings and it does not see yours. Review
 the plan as if you were the only reviewer.
 
-The fixer gives you the absolute path of a design/plan under `docs/working/` and
-asks you to review it. Read it fully, then verify its claims against the current
-code, tests, and docs. Never trust the plan's description of the codebase.
-
 ## What you receive and what you return
 
-`fixer` gives you the absolute path of the plan and awaits your reply before
-triaging anything. You return findings and one verdict.
+`fixer` gives you the absolute path of a design/plan under `docs/working/` and
+awaits your reply before triaging anything. Read it fully, then verify its claims
+against the current code, tests and docs. Never trust the plan's description of the
+codebase.
 
-The fixer decides what is false, minor, material or deferred, and it may reject your
-finding as false. Give evidence rather than conclusions, and keep the suggested
-correction separate from the defect.
+You return findings and one verdict. The fixer decides what is false, minor,
+material or deferred, and it may reject your finding as false. Give evidence rather
+than conclusions, and keep the suggested correction separate from the defect.
 
 Read and apply:
 

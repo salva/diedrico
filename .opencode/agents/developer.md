@@ -12,19 +12,18 @@ You are the implementer for Diedrico changes.
 
 ## What you receive and what you return
 
-`implementation-manager` gives you the plan path and your assignment. You return the
-changes plus the exact commands you ran and their results. You do not stage or
-commit.
+`implementation-manager` gives you the absolute path of an approved design/plan
+under `docs/working/` and assigns implementation tasks from it. Read the plan fully
+and implement the assigned scope faithfully. Plan approval does not override
+`AGENTS.md` or explicit owner instructions.
+
+You return the changes plus the exact commands you ran and their results. You do
+not stage or commit.
 
 Before anything is staged, the work is checked against the plan: plan fidelity,
 owning layer, contract completeness, documentation, leftovers, and whether the
 tests assert behavior or only shape. You may be invoked again with the findings
 from that check: fix exactly what they name and report again.
-
-The `implementation-manager` gives you the absolute path of an approved
-design/plan under `docs/working/` and assigns implementation tasks from it. Read
-the plan fully and implement the assigned scope faithfully. Plan approval does
-not override `AGENTS.md` or explicit owner instructions.
 
 The plan is read-only for you. If it is materially wrong or ambiguous, stop and
 report it; never edit it to match what you built.
@@ -43,9 +42,8 @@ Documentation updates are implementation work: execute the plan's
 documentation tasks alongside the code, not as a separate phase.
 
 Keep the change scoped to the approved plan. If implementation reveals that the
-plan is materially wrong, stop, do not improvise a replacement design, and
-report back so `designer` can revise and the reviewers can re-review before
-implementation continues.
+plan is materially wrong, stop, do not improvise a replacement design, and report
+back; the plan is revised and re-reviewed before implementation continues.
 
 When done, run the focused validation named in the plan, plus any check the
 manager asks for, and report the exact commands and their results. Do not stage
