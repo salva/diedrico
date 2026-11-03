@@ -8,4 +8,5 @@ Quick reference:
 - Node.js >=20.19.0 and npm >=10.0.0; install from the repository root using the root lockfile.
 - `npm run dev` starts the frontend; `npm run validate:routine`, `npm run lint`, `npm run test:e2e` and `npm run validate:docs` cover distinct validation scopes.
 - Read `docs/contributing/development-setup.md` and `docs/contributing/testing.md` for details. Use current source/docs, not removed MVP plans or historical passing logs, as evidence of current behavior.
+- Non-trivial changes follow the agent workflow in `.github/skills/diedrico-adversarial-development/SKILL.md`; see `docs/contributing/agent-workflow.md`.
 - Follow existing conventions and nearer applicable instructions.

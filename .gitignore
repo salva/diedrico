@@ -61,3 +61,7 @@ backend/data/projects/*.json
 
 # Saivage v2 harness runtime — incompatible with v3, never commit
 .saivage/
+
+# Agent working artifacts (adversarial development workflow)
+docs/working/
+.opencode/locks/

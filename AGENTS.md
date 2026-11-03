@@ -33,3 +33,11 @@ See `docs/contributing/development-setup.md` and `docs/contributing/testing.md` 
 ## Code style and boundaries
 
 Follow existing conventions unless a nearer file or explicit user instruction says otherwise. Domain code owns geometry; application controllers/use cases translate UI intents into commands; Vue components render state and forward interactions. Keep docs synchronized with the current tree and scripts. Do not use removed MVP planning/spec files as design authority.
+
+## Agent development workflow
+
+Non-trivial changes — new features, bugs, regressions, review findings, architectural issues and behavior gaps — follow `.github/skills/diedrico-adversarial-development/SKILL.md`: a written design/plan under the Git-ignored `docs/working/`, adversarial review of every revision, a merit gate, a freshness check, then serialized implementation under `.opencode/locks/implementation-manager-working.md`.
+
+The five subagents that implement it live in `.opencode/agents/` (`fixer`, `designer`, `reviewer`, `implementation-manager`, `developer`). Only `implementation-manager` mutates implementation and commits, and only while holding that lock. See `docs/contributing/agent-workflow.md` for the human-facing summary.
+
+Skip the workflow only for trivial edits such as typos, formatting, dependency bumps, or a correction with no design choice, unless the user frames the task as a feature or an issue.

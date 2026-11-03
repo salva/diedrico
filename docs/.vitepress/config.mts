@@ -7,6 +7,9 @@ export default defineConfig({
 
   ignoreDeadLinks: true,
 
+  // Agent planning artifacts are Git-ignored working files, not published pages.
+  srcExclude: ['working/**'],
+
   head: [
     ['link', { rel: 'icon', type: 'image/svg+xml', href: '/diedrico/logo.svg' }],
   ],
@@ -81,6 +84,7 @@ export default defineConfig({
           items: [
             { text: 'Development Setup', link: '/contributing/development-setup' },
             { text: 'Testing', link: '/contributing/testing' },
+            { text: 'Agent Development Workflow', link: '/contributing/agent-workflow' },
             { text: 'Deployment', link: '/DEPLOYMENT' },
             { text: 'Google Drive Setup', link: '/GOOGLE_DRIVE_SETUP' },
           ]

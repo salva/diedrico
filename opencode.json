@@ -1,0 +1,12 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "skills": {
+    "paths": [
+      "/home/salva/g/ml/.github/skills",
+      "/home/salva/g/ml/diedrico/.github/skills"
+    ]
+  },
+  "experimental": {
+    "subagent_depth": 9007199254740991
+  }
+}
