@@ -161,16 +161,54 @@ active plane · `Ctrl+0` fit to view · `Ctrl+Z` undo · `Ctrl+Y`/`Ctrl+Shift+Z`
 | Tool | Arguments | Maps to tool |
 | --- | --- | --- |
 | `create_free_point` | `planeId?`, `u`, `v` | Free Point (`point`) |
-| `create_intersection` | `element1Id`, `element2Id`, `branchIndex` | Intersection Point (`intersection`) |
+| `create_intersection` | `element1Id`, `element2Id`, `solutionIndex?` | Intersection Point (`intersection`); see 3.2.1 |
 | `create_line` | `point1Id`, `point2Id` | Line Through Points (`line`) |
 | `create_angle_line` | `referenceLineId`, `throughPointId`, `angleDegrees` | Line With Angle |
 | `create_parallel_line` | `referenceLineId`, `throughPointId` | Parallel Line |
 | `create_perpendicular_line` | `referenceLineId`, `throughPointId` | Perpendicular Line |
-| `create_tangent_line` | `circleId`, `throughPointId?`, `referenceLineId?`, `solutionIndex` | Both tangent tools |
+| `create_tangent_line` | `circleId`, `throughPointId?`, `referenceLineId?`, `solutionIndex?` | Both tangent tools; see 3.2.1 |
 | `create_segment` | `point1Id`, `point2Id` | Segment (`segment`) |
 | `create_circle` | `centerPointId`, `circumferencePointId` | Circle (`circle`) |
 | `create_circle_by_radius` | `centerPointId`, `radius` | Radius-vector variant |
 | `create_guide` | `referenceLineId`, `throughPointId` | Guide (`guide`) |
+
+#### 3.2.1 Two-phase disambiguation
+
+Constructions with more than one valid answer never guess. The protocol is the same
+for every multi-solution tool (line/line, line/circle and circle/circle intersections,
+both tangent variants):
+
+1. **First call omits `solutionIndex`.** Exactly one valid solution means the tool
+   executes normally and returns the created entity.
+2. **Several valid solutions return unresolved, not an exception.**
+   `create_intersection` and `create_tangent_line` answer with `isError: true`, and the
+   text content carries this JSON payload:
+
+   ```json
+   {
+     "code": "ambiguous_solutions",
+     "message": "2 intersections between line-12 and circle-7",
+     "drawingRevision": 42,
+     "candidates": [
+       { "index": 0, "kind": "finite-segment", "position": { "u": 12.5, "v": -3 }, "summary": "inside the segment" },
+       { "index": 1, "kind": "finite-segment", "position": { "u": 41, "v": 8 }, "summary": "outside the segment" }
+     ]
+   }
+   ```
+3. **The model retries the same tool with `solutionIndex`** plus the `drawingRevision`
+   it received. A stale revision is rejected rather than silently mapped to a different
+   candidate.
+4. Zero valid solutions returns `code: "no_solution"` with the reason (parallel,
+   disjoint, degenerate), never an empty error.
+
+Candidate `index` values are derived from a deterministic ordering computed by the
+shared construction logic, so the same inputs produce the same indices. The UI's own
+click position is not part of this contract: the existing mouse-driven branch selection
+must move into that shared logic, and both the UI and the tools consume the same
+ordered candidate list.
+
+Macros stay out of this protocol: they are parameterless today.
+
 
 ### 3.3 Construction (3D and planes)
 
@@ -277,14 +315,18 @@ active plane · `Ctrl+0` fit to view · `Ctrl+Z` undo · `Ctrl+Y`/`Ctrl+Shift+Z`
 - **Transport tool** (`T`): advertised in the toolbar but not implemented. `select_tool`
   must return `unavailable` with that reason.
 - **Constructions macros** (`Folding Plane Setup`, `Quick 3D Line`, `Quick 3D Segment`):
-  they create real geometry but exist as demonstration helpers. Decision needed: expose
-  them as `run_construction_macro` or hide them from the model.
+  decided. They are proof-of-concept helpers and stay unexposed while they remain so.
+  When the family stabilizes, the whole family is reached through **one** tool,
+  `run_macro({ macroId, arguments? })`, with a closed `macroId` union and per-macro
+  argument schemas — not one tool per example. No per-macro tools will be added in
+  between.
 - **Destructive operations**: deletion already has a cascade preview. Decision needed
   whether `delete_entities` requires a matching `expectedCascadeCount` (safer, more
   calls) or trusts the model's intent.
-- **Tangent and intersection branches**: today the UI resolves them by where the user
-  clicks. The tools need the branch extracted into shared construction logic before the
-  contract is honest.
+- **Tangent and intersection branches**: decided, see 3.2.1. The tool omits
+  `solutionIndex` first; multiple solutions return `ambiguous_solutions` with the
+  ordered candidate list, and the model retries with the index it chose. The UI's
+  click-derived branch selection moves into the same shared logic so both paths agree.
 - **Project and account operations**: they cross the Drive boundary and may need a user
   gesture. Decision needed whether they are in the first release.
 - **Settings**: no UI exists today. Exposing settings before the UI exists violates the
@@ -298,7 +340,7 @@ active plane · `Ctrl+0` fit to view · `Ctrl+Z` undo · `Ctrl+Y`/`Ctrl+Shift+Z`
 | --- | --- | --- |
 | Toolbar file/history/account | 7 | 8 (project, account, history) |
 | Active plane + view toggles | 4 | 5 |
-| Tool families | 22 tools | 19 (3 excluded: transport, 3 macros pending) |
+| Tool families | 22 tools | 19 now + `run_macro` when the macros stop being PoC |
 | Canvas gestures | 9 | 8 (drag and wheel included as high-level ops) |
 | Element panel | 4 | 3 (select, visibility, list) |
 | Construction history | 8 | 6 |
@@ -306,5 +348,6 @@ active plane · `Ctrl+0` fit to view · `Ctrl+Z` undo · `Ctrl+Y`/`Ctrl+Shift+Z`
 | 3D window | 8 | 2 |
 | Settings (no UI yet) | 4 | 2 (deferred) |
 
-Totals: **~50 proposed tools**, grouped in nine namespaces. Every row in section 2 has
-either a tool here or a documented reason to stay out.
+Totals: **~50 proposed tools**, grouped in nine namespaces, plus the reserved
+`run_macro`. Every row in section 2 has either a tool here or a documented reason to
+stay out.
