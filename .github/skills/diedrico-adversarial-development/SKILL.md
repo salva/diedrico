@@ -27,7 +27,7 @@ policy.
 | Role | Agent | Owns |
 | --- | --- | --- |
 | Coordinator | primary | Accepts the request, assigns one working directory per item, launches and tracks one `fixer` per item, records exact returned task IDs and dispositions, decides when a waiting fixer may resume. Never designs, reviews, or implements. |
-| Fixer | `fixer` | One item end to end: delegation, finding triage, merit gate, freshness check, read-only reconciliation after manager return. Writes planning artifacts only; never implementation edits, validation, staging, or commits. |
+| Fixer | `fixer` | One item end to end: delegation, finding triage, merit gate, freshness check, read-only reconciliation after manager return. Writes nothing; never implementation edits, validation, staging, or commits. |
 | Designer | `designer` | Writes and revises the item's design/plan. |
 | First reviewer | `reviewer-1` | Adversarially reviews every current design/plan revision. |
 | Second reviewer | `reviewer-2` | Reviews every current revision in parallel with `reviewer-1`, with the same mission and checklist, without seeing its findings. |
@@ -82,7 +82,7 @@ risk. A one-line statement that a subject is unaffected is enough.
 
 The plan must include:
 
-- Problem statement with evidence, or the feature brief for new capability.
+- Problem statement with evidence, or the established need for a new capability.
 - Root-cause analysis for fixes, or the best current hypothesis.
 - Scope and non-scope. Non-essential robustness and rare edge cases are
   deferred follow-ups unless deferral blocks the core change or leaves the
@@ -216,8 +216,8 @@ persistence schema's compatibility posture. Generic slogans such as "fail
 fast", "root cause", or "remove dead code" do not authorize those tradeoffs.
 
 If the required subagent tooling is unavailable, report `BLOCKED`. Never claim
-review or implementation passed. Proceed only if the user explicitly changes
-the workflow, or the change repairs the unavailable workflow itself.
+review or implementation passed. Do not substitute self-review or direct
+implementation for the missing agent.
 
 ## Approval and freshness gate
 
@@ -280,10 +280,12 @@ The manager must:
 5. Run all validation the plan requires and handle generated artifacts.
    Developer-run checks are progress evidence, not substitutes.
 6. Invoke `implementation-reviewer` with the absolute plan path. It reviews the
-   files the plan names, as they now stand. On `CHANGES_REQUIRED`, return the
-   material findings to `developer` and repeat validation and review under the
-   same lock. Stage only intended paths and commit coherent stable units only
-   after `READY_TO_COMMIT` for the current state.
+   implementation against the plan, and uses read-only Git commands to see what
+   actually changed so it can also flag work the plan did not authorize. On
+   `CHANGES_REQUIRED`, return the material findings to `developer` and repeat
+   validation and review under the same lock. Stage only intended paths and
+   commit coherent stable units only after `READY_TO_COMMIT` for the current
+   state.
 7. Prepare the final report with command results and commit hashes. Before
    normal release, confirm completed work is stable and committed and no
    plan-owned uncommitted mutation remains.
@@ -346,8 +348,8 @@ stage, or commit.
 
 - Fully executed, no divergence, repository stable: report completion.
 - Work remains, run partial, or learning changes the design: return to
-  `designer` and the full review loop. Planning-file edits stay allowed. A later
-  attempt needs a fresh freshness check and lock acquisition.
+  `designer` and the full review loop. A later attempt needs a fresh freshness
+  check and lock acquisition.
 - Manager cannot stabilize and retains the lock: report `BLOCKED`. No
   implementation resumes until explicit owner or operator verification and
   repair.
@@ -370,9 +372,8 @@ Disposition: WAITING_FOR_IMPLEMENTATION_LOCK
 Item: <identifier and summary>
 Plan: <absolute path>
 Plan approval: <the block above, unchanged>
-Implementation attempt: <number>
 Lock holder: <concise faithful description of the existing lock>
-Work performed in this attempt: none
+Work performed: none
 Resume condition: known lock-holder run has returned and released its lock
 ```
 

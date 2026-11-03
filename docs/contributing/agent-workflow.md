@@ -18,7 +18,7 @@ did.
 
 | Agent | Job | May write |
 | --- | --- | --- |
-| `fixer` | Owns one item end to end: delegation, triage, merit gate, freshness, read-only reconciliation | `docs/working/` only |
+| `fixer` | Owns one item end to end: delegation, triage, merit gate, freshness, read-only reconciliation | read-only |
 | `designer` | Writes and revises the design/plan | `docs/working/` only |
 | `reviewer-1` | Adversarial review of every plan revision: correctness, root cause, layer ownership, scope, merit, persistence; emits `NO_MATERIAL_FINDINGS` or `MATERIAL_FINDING_FOUND` | read-only |
 | `reviewer-2` | Second independent reviewer of every plan revision, same mission and checklist, running in parallel with `reviewer-1`; neither sees the other's findings | read-only |

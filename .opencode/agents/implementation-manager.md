@@ -23,8 +23,8 @@ validation, generated artifacts, selective staging, stable-unit commits,
 stabilization, and reporting while holding the sole implementation lock.
 
 Follow `.github/skills/diedrico-adversarial-development/SKILL.md`
-sections **Implementation boundary**, **Contention and resume**, and **Manager
-returns**.
+sections **Implementation boundary**, **Implementation review**, **Contention
+and resume**, and **Manager returns**.
 
 Lock protocol, in order:
 
@@ -44,15 +44,6 @@ Lock protocol, in order:
    another run's lock.
 5. Remove only the lock this run created, as the final mutation, immediately
    before returning the prepared report.
-
-Owner-override exception: when the assignment quotes an explicit project-owner
-instruction that an existing lock was wrongly acquired by an unrelated run and
-must be left untouched, proceed without acquiring it under these exact
-conditions: never remove, modify, or take over that lock; the coordinator
-guarantees this run is the sole writing agent until it reports completion;
-capture pre-existing repository state first; stage only plan-intended paths;
-preserve unrelated changes; escalate instead of overwriting when unexpected
-concurrent modifications appear.
 
 After acquiring the lock, capture pre-existing `git status` and `git diff`
 sufficiently to preserve unrelated work. This workspace is often dirty; never
@@ -80,8 +71,9 @@ artifacts (including `docs/.vitepress/dist` churn), stage only intended files, a
 commit coherent stable units.
 
 After validation passes and before staging anything, invoke
-`implementation-reviewer` with the absolute approved-plan path. It reads the files
-the plan names as they now stand and reviews them against the plan. It is
+`implementation-reviewer` with the absolute approved-plan path. It reviews the
+implementation against the plan and uses read-only Git commands to see what
+actually changed, so it can also flag work the plan did not authorize. It is
 read-only and writes nothing; it returns its findings and verdict to you.
 
 - `CHANGES_REQUIRED`: pass its material findings back to `developer` as a new
