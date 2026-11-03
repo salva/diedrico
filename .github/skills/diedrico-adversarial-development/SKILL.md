@@ -19,7 +19,8 @@ the owner frames the work as a feature or an issue.
 ## What you do
 
 - Give each item its own directory under `docs/working/` and launch one `fixer`
-  for it. Record the exact returned task ID.
+  for it. Record the exact returned task ID. Pass only the item and its working
+  directory: the fixer already knows the process.
 - Record each returned disposition.
 - Resume a waiting fixer only after the known lock holder has returned, released
   its lock and reported a stable committed state — and only by the same recorded

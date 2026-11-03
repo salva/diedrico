@@ -26,6 +26,9 @@ design/plan under `docs/working/` and assigns implementation tasks from it. Read
 the plan fully and implement the assigned scope faithfully. Plan approval does
 not override `AGENTS.md` or explicit owner instructions.
 
+The plan is read-only for you. If it is materially wrong or ambiguous, stop and
+report it; never edit it to match what you built.
+
 Apply the repository rules from `AGENTS.md`. The layer table and boundary rules
 in `docs/architecture/overview.md` are the authority for where each change
 belongs; read it and place the code in the layer that owns the behavior.

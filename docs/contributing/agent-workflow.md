@@ -48,6 +48,17 @@ and review concurrently; plan approval reserves no file or contract.
 Implementation stays serialized regardless of apparent independence. For a single
 item the primary is a one-item coordinator and drives the same process.
 
+### Delegating to a child
+
+A parent passes only what is specific to the work: the item, the absolute plan
+path, the findings to address, the assignment. It never restates the child's own
+operating instructions, checklist or this process. Every profile already carries
+them, and a child handed its own instructions back may follow the copy instead of
+its profile.
+
+The plan is read-only for everyone except `designer`. An implementation that does
+not match it is a finding, not a reason to edit it.
+
 ## The item lifecycle
 
 One item moves through these stages. The coordinator owns the boundaries between
