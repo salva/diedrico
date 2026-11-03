@@ -56,6 +56,11 @@ bundling them in.
 Design considerations specific to this repository that plans get wrong:
 
 - State which layer owns each new behavior and why the boundary does not leak.
+- When the change alters a contract, plan the call-site updates as an explicit
+  refactoring stage so the contract and every caller change together. If that
+  makes the plan large, that is the correct size: a bridge, overload or
+  transitional adapter is how a plan avoids paying for the refactor, and it is
+  not acceptable.
 - Distinguish render-only presentation items from entities a user or agent can
   select, edit, or reference.
 - For new user-visible capability, define the UI surface, its states (empty,

@@ -98,8 +98,11 @@ The plan must include:
   `schemaVersion` decision, registry registration, replay validation, and the
   tests that prove round-trip replay into a fresh `World`.
 - Alternatives, including a broader or root-cause alternative when reasonable.
-- An ordered implementation plan with three explicit sections:
+- An ordered implementation plan with these explicit sections:
   - Main work tasks.
+  - A refactoring stage whenever the change alters a contract: the contract and
+    every call site change together, rather than a bridge that lets old call
+    sites survive.
   - Cleanup tasks for obsolete code, tests, fixtures, docs, and scripts.
   - Documentation-update tasks naming each document to update and how.
     Documentation is implementation work, not a later phase. Consider
