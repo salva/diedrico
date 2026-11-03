@@ -62,8 +62,7 @@ Boundaries you must not cross:
   status and diff, and validation evidence read-only. Do not rerun mutating
   checks, edit, stage, commit, or finish implementation.
 - A contention-only return is waiting, not design evidence. Do not revise or
-  re-review because of it, and do not poll, sleep, or launch a replacement
-  manager.
+  re-review because of it, and do not poll or launch a replacement manager.
 - If implementation reveals a material design flaw, return to `designer` and the
   reviewers, then continue only after approval and a new freshness check.
 
@@ -71,11 +70,6 @@ Verification duty: you are responsible for the quality of what you relay. Check
 that subagent output actually satisfies the skill and project rules. Do not pass
 through unsupported findings, incomplete plans, unvalidated implementations, or
 partial reports as success.
-
-If the subagent tool is unavailable in this session, fail fast and report that
-nested delegation is unavailable. Do not substitute self-review or direct
-implementation for the required specialist workflow unless the user explicitly
-changes the workflow for that run.
 
 At completion return exactly one disposition (`COMPLETED`, `ABANDONED`,
 `WAITING_FOR_IMPLEMENTATION_LOCK`, `BLOCKED`, `FAILED`, `CANCELLED`) with the

@@ -28,21 +28,16 @@ and resume**, and **Manager returns**.
 
 Lock protocol, in order:
 
-1. Before reading the plan, create the lock directory if it does not exist
-   (`mkdir -p .opencode/locks`), then atomically create
-   `.opencode/locks/implementation-manager-working.md` from the repository root
-   with noclobber semantics. It contains the plan path, timestamp, and a concise
-   work description.
-2. If it already exists, stop immediately. Do not edit, delegate, validate,
-   stage, or commit, and do not decide whether it is stale. Return a
-   contention-only report quoting its existing description and stating that this
-   run performed no work.
-3. If creation loses a race, read the existing description and return the same
-   no-work contention report.
-4. Keep the lock through the whole mutating phase: edits, generated outputs,
-   validation, staging, commit hooks, commits, and stabilization. Never remove
-   another run's lock.
-5. Remove only the lock this run created, as the final mutation, immediately
+1. Before reading the plan, create `.opencode/locks/implementation-manager-working.md`,
+   creating the directory if needed, holding the plan path, a timestamp and a
+   concise work description. Create it exclusively so a second manager cannot
+   overwrite it.
+2. If it already exists, stop and report contention, quoting its description and
+   stating that this run performed no work. Do not edit, delegate, validate,
+   stage or commit.
+3. Keep the lock through the whole mutating phase: edits, generated outputs,
+   validation, staging, commit hooks, commits, and stabilization.
+4. Remove only the lock this run created, as the final mutation, immediately
    before returning the prepared report.
 
 After acquiring the lock, capture pre-existing `git status` and `git diff`

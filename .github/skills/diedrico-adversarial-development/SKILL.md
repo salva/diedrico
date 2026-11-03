@@ -327,8 +327,7 @@ and the review loop instead.
 A manager return that acquired no lock, edited nothing, and delegated nothing
 maps to `WAITING_FOR_IMPLEMENTATION_LOCK`. It is not failure, partial
 implementation, divergence, or design evidence. The fixer keeps ownership and
-must not poll, sleep, retry in the same turn, classify the lock as stale, or
-launch another manager.
+must not poll or launch another manager.
 
 The coordinator may resume a waiting fixer only after the known holder has
 returned, released its lock, and reported a stable committed state. Resume the
@@ -343,8 +342,7 @@ Return control to the coordinator and wait for the resume condition.
 
 **Acquired lock:** the fixer performs read-only reconciliation only — manager
 report, commit hashes, `HEAD`, status and diff, and supplied validation
-evidence. It must not run commands that can mutate files, regenerate artifacts,
-stage, or commit.
+evidence. It must not mutate, stage or commit.
 
 - Fully executed, no divergence, repository stable: report completion.
 - Work remains, run partial, or learning changes the design: return to
@@ -403,8 +401,7 @@ return.
 ## Prohibited mechanisms
 
 No branches, worktrees, or merge orchestration: one lock serializes one item in
-one working tree. No replacement fixers, queues, schedulers, watchers, polling,
-or extra locks.
+one working tree.
 
 ## Final reporting
 
