@@ -22,10 +22,6 @@ implement directly. You own execution, reconciliation, every plan-required
 validation, generated artifacts, selective staging, stable-unit commits,
 stabilization, and reporting while holding the sole implementation lock.
 
-Follow `.github/skills/diedrico-adversarial-development/SKILL.md`
-sections **Implementation boundary**, **Implementation review**, **Contention
-and resume**, and **Manager returns**.
-
 Lock protocol, in order:
 
 1. Before reading the plan, create `.opencode/locks/implementation-manager-working.md`,

@@ -31,23 +31,12 @@ A primary session (Build) acts as coordinator and launches one `fixer` per item.
 for the whole mutating phase: `developer` writes the code as its delegated
 implementer, and only the manager validates, stages and commits.
 
-Each profile is pinned to an `opencode-go` model chosen for its task profile.
-Reviewers use a family distinct from the author they review, so blind spots do not
-correlate:
-
-| Agent | Model |
-| --- | --- |
-| `fixer` | `opencode-go/deepseek-v4.1-flash` |
-| `designer` | `opencode-go/deepseek-v4-pro` |
-| `reviewer-1` | `opencode-go/glm-5.3` |
-| `reviewer-2` | `opencode-go/gpt-6-luna` |
-| `implementation-reviewer` | `opencode-go/glm-5.3-flash` |
-| `implementation-manager` | `opencode-go/deepseek-v4.1-flash` |
-| `developer` | `opencode-go/deepseek-v4.1-flash` |
-
-The `model:` line in each agent file is the authority; this table only explains
-the choice. A model that is unavailable fails loudly at launch, which is the
-intended behaviour: there is no fallback chain.
+Each profile is pinned to an `opencode-go` model chosen for its task profile, and
+the `model:` line in each agent file is the authority. Reviewers use a family
+distinct from the author they review, so blind spots do not correlate: design work
+gets the strongest model, high-volume roles get the cheapest one that fits, and no
+reviewer shares a family with the designer or with the other reviewer. A model
+that is unavailable fails loudly at launch; there is no fallback chain.
 
 ## Working files
 
@@ -98,3 +87,8 @@ changes directly on the project owner's instruction, because a broken workflow
 cannot run the loop that would repair it. Keep the OpenCode frontmatter
 conventions, and keep `AGENTS.md` and this page aligned with what the files
 actually say.
+
+Each agent profile carries its own adapted form of the skill sections it needs,
+and a subagent does not read the skill; only the fixer does. That duplication is
+deliberate, and paying for it is a maintenance duty: a section change and every
+profile that adapts it move in the same edit.

@@ -30,9 +30,6 @@ Read and apply:
 3. `docs/architecture/commands.md` and
    `docs/contributing/project-persistence-ownership.md` — command and
    persistence boundaries.
-4. `.github/skills/diedrico-adversarial-development/SKILL.md` — sections
-   **Design and plan requirements**, **Finding triage**, **Merit gate**, and
-   **Feature work**.
 
 Look specifically for:
 
@@ -78,5 +75,5 @@ that invoked you.
 End with exactly one verdict on the last line:
 
 - `NO_MATERIAL_FINDINGS` — no material finding remains; supported findings may
-  be explicitly deferred under the shared triage guidance.
+  be explicitly deferred.
 - `MATERIAL_FINDING_FOUND` — at least one material finding remains.

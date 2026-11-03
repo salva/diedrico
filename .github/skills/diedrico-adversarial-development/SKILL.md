@@ -14,6 +14,10 @@ a model routing is meta-work, and follows this workflow only when the operator
 explicitly asks for it: a broken workflow cannot run the loop that would repair
 it.
 
+Each agent profile carries its own adapted form of the sections it needs, so a
+subagent does not read this file; only the fixer does. When a section here
+changes, every profile that adapts it changes in the same edit.
+
 Not required for typo fixes, formatting-only edits, dependency bumps, or
 single-line corrections with no design choice, unless the user frames the work
 as a feature or an issue.
@@ -138,6 +142,24 @@ before writing, so the two passes stay independent.
    material finding remains, run the mandatory final merit gate. Review closure
    alone never authorizes freshness or implementation.
 
+## Finding triage
+
+- **False:** disproved, speculative, preference-only, or contradicted by current
+  requirements. Reject it. A finding is not false merely because it is outside
+  scope.
+- **Minor:** correct but too small to affect the plan. Note it without forcing
+  another round.
+- **Material:** real and significant enough to change the design or plan. Revise
+  directly.
+- **Deferred:** supported but outside the minimal coherent change. Record a
+  brief reason and any needed follow-up. Never defer a defect that blocks the
+  core change or leaves the system unsafe.
+
+Accepting a defect does not accept its proposed remedy. Separate the evidence
+and the violated requirement from the suggested correction. When an unsupported
+plan claim caused the defect, narrow that claim; do not weaken a real
+requirement merely to close review.
+
 ## Merit gate
 
 The fixer, not the designer or the reviewers, owns this decision. Apply it twice:
@@ -191,24 +213,6 @@ Record exactly one outcome with concise evidence:
   it automatically.
 - **`BLOCKED`:** evidence is insufficient or an owner-owned tradeoff prevents a
   reliable decision. Ask the user rather than guessing.
-
-## Finding triage
-
-- **False:** disproved, speculative, preference-only, or contradicted by current
-  requirements. Reject it. A finding is not false merely because it is outside
-  scope.
-- **Minor:** correct but too small to affect the plan. Note it without forcing
-  another round.
-- **Material:** real and significant enough to change the design or plan. Revise
-  directly.
-- **Deferred:** supported but outside the minimal coherent change. Record a
-  brief reason and any needed follow-up. Never defer a defect that blocks the
-  core change or leaves the system unsafe.
-
-Accepting a defect does not accept its proposed remedy. Separate the evidence
-and the violated requirement from the suggested correction. When an unsupported
-plan claim caused the defect, narrow that claim; do not weaken a real
-requirement merely to close review.
 
 ## Escalation
 
@@ -303,6 +307,9 @@ The manager must:
 The lock spans tracked edits, generated outputs, mutating validation commands,
 staging, commit hooks, commits, and final cleanup. Concurrent developers stay
 inside one lock holder's single item.
+
+No branches, worktrees, or merge orchestration: one lock serializes one item in
+one working tree.
 
 ## Implementation review
 
@@ -400,11 +407,6 @@ return.
   requiring explicit owner action. No other session takes the lock over.
 - **Coordinator cancelled:** stop launches and resumes, report last dispositions
   and any active holder, never remove another session's lock.
-
-## Prohibited mechanisms
-
-No branches, worktrees, or merge orchestration: one lock serializes one item in
-one working tree.
 
 ## Final reporting
 

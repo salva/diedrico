@@ -30,9 +30,6 @@ Read and apply, in this order:
 3. `docs/architecture/commands.md` and
    `docs/contributing/project-persistence-ownership.md` — command, undo/redo,
    and persistence boundaries.
-4. `.github/skills/diedrico-adversarial-development/SKILL.md` — sections
-   **Design and plan requirements**, **Feature work**, **Finding triage**, and
-   **Merit gate**.
 
 Non-negotiable design constraints:
 
