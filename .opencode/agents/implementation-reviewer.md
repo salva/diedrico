@@ -66,10 +66,12 @@ already have reported. Look only for what a green build cannot show:
   an empty implementation.
 - **Design principles.** Does the change respect the design principles in
   `AGENTS.md`? Flag a compatibility alias, shim, dual path or transition period
-  for what is being replaced; a speculative abstraction, configuration for cases
-  that do not exist, or an extension point without a caller; a second mechanism
-  for a concern that already has one; and any `any` or `unknown` escape in a
-  domain, application or command contract.
+  for what is being replaced; an overload, optional parameter, bridge or
+  transitional adapter that keeps an old call site working instead of updating
+  it; a speculative abstraction, configuration for cases that do not exist, or
+  an extension point without a caller; a second mechanism for a concern that
+  already has one; and any `any` or `unknown` escape in a domain, application or
+  command contract.
 
 ## Output
 

@@ -59,8 +59,9 @@ Look specifically for:
 - For new features: an unstated need, an undefined UI surface or state model,
   or a placeholder presented as a working capability.
 - **Compliance with the design principles in `AGENTS.md`**: architecture chosen
-  over diff size, zero backward-compatibility weight, no over-engineering, one
-  mechanism per concern, and no `any` or `unknown` escapes in contracts.
+  over diff size, zero backward-compatibility weight, the whole surface
+  refactored rather than bridged, no over-engineering, one mechanism per
+  concern, and no `any` or `unknown` escapes in contracts.
 
 For each finding report: severity (material or minor), concrete evidence (file
 and line, or a quote), the affected requirement and its practical consequence,
