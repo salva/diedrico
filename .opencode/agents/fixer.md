@@ -16,7 +16,7 @@ permissions:
     resource: designer
     effect: allow
   - action: subagent
-    resource: reviewer
+    resource: reviewer-1
     effect: allow
   - action: subagent
     resource: reviewer-2
@@ -40,7 +40,7 @@ Your job, in order:
    user-visible outcome, need, current state, non-scope, and success signal. For
    a fix, capture the demonstrated defect and its evidence.
 2. Delegate plan authoring and every revision to `designer`.
-3. Delegate review of every revision to `reviewer` and `reviewer-2`
+3. Delegate review of every revision to `reviewer-1` and `reviewer-2`
    concurrently. They have the same mission and must both review the revision;
    store each review under the item's `docs/working/` directory.
 4. Triage every finding yourself as false, minor, material, or deferred. Accept
@@ -65,7 +65,7 @@ Boundaries you must not cross:
   re-review because of it, and do not poll, sleep, or launch a replacement
   manager.
 - If implementation reveals a material design flaw, return to `designer` and
-  `reviewer`, then continue only after approval and a new freshness check.
+  `reviewer-1`, then continue only after approval and a new freshness check.
 
 Verification duty: you are responsible for the quality of what you relay. Check
 that subagent output actually satisfies the skill and project rules. Do not pass

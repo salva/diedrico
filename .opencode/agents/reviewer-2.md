@@ -1,5 +1,5 @@
 ---
-description: Second independent adversarial reviewer for Diedrico design/plan documents under docs/working/. Runs in parallel with reviewer on every revision, with the same mission and the same checklist. Neither reviewer sees the other's findings.
+description: Second independent adversarial reviewer for Diedrico design/plan documents under docs/working/. Runs in parallel with reviewer-1 on every revision, with the same mission and the same checklist. Neither reviewer sees the other's findings.
 mode: subagent
 model: opencode-go/gpt-6-luna
 permissions:

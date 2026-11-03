@@ -47,6 +47,6 @@ Follow existing conventions unless a nearer file or explicit user instruction sa
 
 Non-trivial changes — new features, bugs, regressions, review findings, architectural issues and behavior gaps — follow `.github/skills/diedrico-adversarial-development/SKILL.md`: a written design/plan under the Git-ignored `docs/working/`, adversarial review of every revision, a merit gate, a freshness check, then serialized implementation under `.opencode/locks/implementation-manager-working.md`.
 
-The seven subagents that implement it live in `.opencode/agents/` (`fixer`, `designer`, `reviewer`, `reviewer-2`, `implementation-reviewer`, `implementation-manager`, `developer`). Only `implementation-manager` mutates implementation and commits, and only while holding that lock. See `docs/contributing/agent-workflow.md` for the human-facing summary.
+The seven subagents that implement it live in `.opencode/agents/` (`fixer`, `designer`, `reviewer-1`, `reviewer-2`, `implementation-reviewer`, `implementation-manager`, `developer`). Only `implementation-manager` mutates implementation and commits, and only while holding that lock. See `docs/contributing/agent-workflow.md` for the human-facing summary.
 
 Skip the workflow only for trivial edits such as typos, formatting, dependency bumps, or a correction with no design choice, unless the user frames the task as a feature or an issue.

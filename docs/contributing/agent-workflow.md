@@ -20,8 +20,8 @@ did.
 | --- | --- | --- |
 | `fixer` | Owns one item end to end: delegation, triage, merit gate, freshness, read-only reconciliation | `docs/working/` only |
 | `designer` | Writes and revises the design/plan | `docs/working/` only |
-| `reviewer` | Adversarial review of every plan revision: correctness, root cause, layer ownership, scope, merit, persistence; emits `NO_MATERIAL_FINDINGS` or `MATERIAL_FINDING_FOUND` | read-only |
-| `reviewer-2` | Second independent reviewer of every plan revision, same mission and checklist, running in parallel with `reviewer`; neither sees the other's findings | read-only |
+| `reviewer-1` | Adversarial review of every plan revision: correctness, root cause, layer ownership, scope, merit, persistence; emits `NO_MATERIAL_FINDINGS` or `MATERIAL_FINDING_FOUND` | read-only |
+| `reviewer-2` | Second independent reviewer of every plan revision, same mission and checklist, running in parallel with `reviewer-1`; neither sees the other's findings | read-only |
 | `implementation-manager` | Sole orchestrator of mutation, validation, implementation review, staging, commits | repository, under the lock |
 | `implementation-reviewer` | Read-only review of developer output against the approved plan, inside the manager's lock; emits `READY_TO_COMMIT` or `CHANGES_REQUIRED` | read-only |
 | `developer` | Implements tasks assigned by the manager | repository |
@@ -38,7 +38,7 @@ correlate:
 | --- | --- |
 | `fixer` | `opencode-go/deepseek-v4.1-flash` |
 | `designer` | `opencode-go/deepseek-v4-pro` |
-| `reviewer` | `opencode-go/glm-5.3` |
+| `reviewer-1` | `opencode-go/glm-5.3` |
 | `reviewer-2` | `opencode-go/gpt-6-luna` |
 | `implementation-reviewer` | `opencode-go/glm-5.3-flash` |
 | `implementation-manager` | `opencode-go/deepseek-v4.1-flash` |
@@ -73,7 +73,7 @@ The full list is in the skill. The parts reviewers check hardest:
 ## Gates
 
 1. **Review closure** — no confirmed material finding remains, from both
-   `reviewer` and `reviewer-2`, which review every revision concurrently.
+   `reviewer-1` and `reviewer-2`, which review every revision concurrently.
 2. **Merit** — `WORTH_IMPLEMENTING`: solves the problem at the owning layer, is
    net simpler, follows `AGENTS.md`, and stays in scope. Review closure alone
    never authorizes implementation.

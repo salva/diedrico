@@ -30,7 +30,7 @@ documentation tasks alongside the code, not as a separate phase.
 
 Keep the change scoped to the approved plan. If implementation reveals that the
 plan is materially wrong, stop, do not improvise a replacement design, and
-report back so `designer` can revise and `reviewer` can re-review before
+report back so `designer` can revise and the reviewers can re-review before
 implementation continues.
 
 When done, run the focused validation named in the plan, plus any check the
