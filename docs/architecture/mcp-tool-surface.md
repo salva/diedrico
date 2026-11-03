@@ -286,17 +286,26 @@ Macros stay out of this protocol: they are parameterless today.
 
 ### 3.10 Project, account and settings
 
+Drive and account operations are **out of scope for the first release** (decided). Only
+local project metadata and preferences remain.
+
 | Tool | Arguments | Effect |
 | --- | --- | --- |
 | `get_project_state` | — | Name, dirty state, save status, last save, Drive availability |
-| `list_projects` | — | Available projects (requires a signed-in Drive session) |
-| `create_project` | `name` | New Project |
-| `open_project` | `projectId` | Open Project |
-| `rename_project` | `name` | Inline rename (`F2`) |
-| `save_project` | — | Explicit save (autosave continues independently) |
-| `get_account_state` | — | Signed in or local mode |
-| `sign_in` / `sign_out` | — | Account transition; may require a user gesture |
+| `rename_project` | `name` | Inline rename (`F2`); autosave keeps its normal behaviour |
 | `get_settings` / `update_settings` | `gridSpacing?`, `gridColor?`, `snapEnabled?`, `snapRadius?` | Preferences; no UI exists yet for these |
+
+Excluded for now, listed so the gap is intentional and not an oversight:
+
+| Not exposed | Why |
+| --- | --- |
+| `list_projects`, `open_project` | Require a signed-in Drive session and a resource choice |
+| `create_project`, `save_project` | Cross the Drive boundary and may need a user gesture |
+| `get_account_state`, `sign_in`, `sign_out` | Account transitions, not drawing work |
+
+The startup dialog stays a human-only surface in the first release. `get_project_state`
+still reports whether Drive is available, so the model can explain the limitation instead
+of trying an operation that cannot succeed.
 
 ## 4. Interactive elements that must not become tools
 
@@ -323,12 +332,21 @@ Macros stay out of this protocol: they are parameterless today.
 - **Destructive operations**: deletion already has a cascade preview. Decision needed
   whether `delete_entities` requires a matching `expectedCascadeCount` (safer, more
   calls) or trusts the model's intent.
+  *What it means:* deleting an entity also deletes every transitive dependent, so one
+  requested id can remove a large part of the drawing. `expectedCascadeCount` is an
+  optimistic guard: the model calls `preview_delete` first, then passes the count it
+  saw. If the cascade changed in between, the deletion is refused with
+  `cascade_mismatch` (expected, actual, ids) instead of deleting something else. It
+  protects both the size of the action and the freshness of the preview. A reasonable
+  policy is to require it only above a small cascade threshold and always return the
+  deleted ids.
 - **Tangent and intersection branches**: decided, see 3.2.1. The tool omits
   `solutionIndex` first; multiple solutions return `ambiguous_solutions` with the
   ordered candidate list, and the model retries with the index it chose. The UI's
   click-derived branch selection moves into the same shared logic so both paths agree.
-- **Project and account operations**: they cross the Drive boundary and may need a user
-  gesture. Decision needed whether they are in the first release.
+- **Project and account operations**: decided, out of the first release. Drive and account
+  transitions stay human-only; see 3.10. Local project metadata remains readable so the
+  model can reason about the open document.
 - **Settings**: no UI exists today. Exposing settings before the UI exists violates the
   "user's vocabulary" rule; keep them out until the UI ships them.
 - **Zoom/pan**: exposing raw viewport numbers is borderline; `fit_to_view` covers the
@@ -338,7 +356,7 @@ Macros stay out of this protocol: they are parameterless today.
 
 | Surface | Interactive items | Proposed tools |
 | --- | --- | --- |
-| Toolbar file/history/account | 7 | 8 (project, account, history) |
+| Toolbar file/history/account | 7 | 4 now (history + project state/rename); Drive and account deferred |
 | Active plane + view toggles | 4 | 5 |
 | Tool families | 22 tools | 19 now + `run_macro` when the macros stop being PoC |
 | Canvas gestures | 9 | 8 (drag and wheel included as high-level ops) |
@@ -348,6 +366,6 @@ Macros stay out of this protocol: they are parameterless today.
 | 3D window | 8 | 2 |
 | Settings (no UI yet) | 4 | 2 (deferred) |
 
-Totals: **~50 proposed tools**, grouped in nine namespaces, plus the reserved
-`run_macro`. Every row in section 2 has either a tool here or a documented reason to
-stay out.
+Totals: **~46 tools in the first release**, grouped in nine namespaces, plus the reserved
+`run_macro`. Every row in section 2 has either a tool here, an explicit exclusion, or a
+documented reason to stay out.
