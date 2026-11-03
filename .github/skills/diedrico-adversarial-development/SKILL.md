@@ -40,20 +40,10 @@ plan and review concurrently; plan approval reserves no file or contract.
 Implementation stays serialized regardless of apparent independence. For a
 single item the primary is a one-item coordinator and drives the same workflow.
 
-## Objectives
-
-- Write the design before writing code, and force a skeptical second pass.
-- Treat review findings as hypotheses, not instructions.
-- Stop designs from accumulating unjustified complexity, and implement only
-  designs that remain worthwhile and aligned with `AGENTS.md`.
-- Allow concurrent investigation and review without overlapping implementation.
-- Keep working artifacts out of Git while updating the tracked documentation
-  the change actually requires.
-
 ## Working files
 
 Create one directory per item: `docs/working/<YYYY-MM-DD>-<slug>/`, holding the
-current design/plan and, for new features, the brief.
+current design/plan.
 
 - `docs/working/` is Git-ignored and must never be committed. It is not a
   substitute for canonical documentation.
@@ -69,11 +59,11 @@ current design/plan and, for new features, the brief.
 Fixes inherit their problem statement from a demonstrated defect. New features
 have no defect, so establish the need before designing:
 
-1. **Brief first.** Write a short brief (`brief.md` in the working directory)
-   covering: the user-visible outcome, who needs it, what exists today, what
-   stays out of scope, and how success is observed. The designer writes it; the
-   fixer approves it before any plan is drafted. If the owner's request already
-   answers these, copy it faithfully instead of inventing rationale.
+1. **Establish the need first.** The plan's problem statement covers: the
+   user-visible outcome, who needs it, what exists today, what stays out of
+   scope, and how success is observed. The fixer confirms it before the designer
+   drafts the rest of the plan. If the owner's request already answers these,
+   copy it faithfully instead of inventing rationale.
 2. **Interaction is part of the design.** Any user-visible capability states
    its UI surface: which panel, control, or canvas interaction, what the states
    are (empty / busy / blocked / failed), and how it is discovered and undone.
@@ -277,15 +267,7 @@ The manager must:
 1. Atomically acquire the lock before reading the plan or mutating anything.
    Create `.opencode/locks/` if it does not exist. On
    contention it edits and delegates nothing and returns the existing lock
-   description. Owner-override exception: when the invoking assignment quotes an
-   explicit project-owner instruction that an existing lock was wrongly acquired
-   by an unrelated run and must be left untouched, the manager proceeds without
-   acquiring it, provided the coordinator guarantees this is the sole writing
-   agent until completion, the stray lock is never removed or modified, the
-   manager captures pre-existing state first, stages only plan-intended paths,
-   preserves unrelated changes, and escalates instead of overwriting on
-   unexpected concurrent modification. Once the stray lock disappears, normal
-   acquisition resumes.
+   description.
 2. Capture pre-existing Git status and diff sufficiently to preserve unrelated
    work.
 3. Decompose the plan into developer assignments. Assign sequentially when work
@@ -319,39 +301,24 @@ inside one lock holder's single item.
 
 ## Implementation review
 
-`implementation-reviewer` covers what a green build cannot. The manager already
-ran the tests, typecheck, lint and docs build, so the reviewer does not re-run
-them and does not report what they would already have reported. It checks plan
-fidelity, owning layer, contract completeness, documentation updates, leftovers,
-and whether the new tests assert behavior or only shape.
+`implementation-reviewer` covers what a green build cannot. Its main job is to
+confirm that what was built is what was designed, and to surface problems the
+design did not anticipate. The manager already ran the tests, typecheck, lint and
+docs build, so the reviewer does not re-run them and does not report what they
+would already have reported. It checks plan fidelity, owning layer, contract
+completeness, documentation updates, leftovers, and whether the new tests assert
+behavior or only shape.
 
-It is read-only and has no shell. Its scope is the files the plan names, read as
-they now stand; there is no changed-file list to hand over. It never edits,
-stages, commits, or removes the lock.
+It is read-only: no edits, no staging, no commits, no lock. It may run
+`git status`, `git diff`, `git log` and `git show` to see what actually changed,
+which is how it detects work the plan did not authorize. It never runs a mutating
+command.
 
 Its verdict governs the commit. `READY_TO_COMMIT` for the current state is
 required before staging; `CHANGES_REQUIRED` sends the material findings back to
 `developer` as a new assignment under the same lock. A finding that the plan
 itself is wrong, rather than the implementation, returns the item to `designer`
 and the review loop instead.
-
-## Interrupted continuation
-
-An explicit owner authorization may let the original manager session continue
-its interrupted attempt under its own still-held acquisition. Before any
-continuation work, positively establish the exact original session and its
-acquisition from retained session context and independent tool evidence;
-matching lock text alone is insufficient. Verify the lock still describes that
-acquisition and that the prior invocation, every delegated worker, and their
-commands have settled. Cancellation, a timeout, silence, or an assertion alone
-is not settlement evidence. Do not overlap an active child, launch a
-replacement manager, recreate or remove the lock, or transfer ownership. If any
-evidence is unavailable or conflicting, stay `BLOCKED` with the lock untouched;
-do not poll or retry.
-
-Resuming means continuing that exact original session. Reconcile prior partial
-effects and current repository state read-only against the plan first; material
-divergence returns to design review, not improvised implementation.
 
 ## Contention and resume
 
@@ -427,30 +394,16 @@ return.
   `FAILED`. Other items may continue if the worktree is safe.
 - **Design abandoned on merit:** `ABANDONED`, an intentional terminal decision,
   not a failure.
-- **Manager cannot stabilize or dies:** leave the lock, report a blocker
-  requiring explicit owner action. Only **Interrupted continuation** lets that
-  same acquiring session continue.
+- **Manager cannot stabilize or dies:** leave the lock and report a blocker
+  requiring explicit owner action. No other session takes the lock over.
 - **Coordinator cancelled:** stop launches and resumes, report last dispositions
   and any active holder, never remove another session's lock.
 
-## Post-batch aggregate validation
-
-Only when every item is `COMPLETED` or `ABANDONED`, no implementation work is
-pending, and the lock is absent may the coordinator run one final
-read-only-or-harmless aggregate check: `npm run validate:routine` plus any
-project-level gate the items' plans required. Any `WAITING_FOR_IMPLEMENTATION_LOCK`,
-`BLOCKED`, `FAILED`, or `CANCELLED` item prevents it. Aggregate validation never
-stages or commits. Any unexpected tracked or generated diff fails the check and
-is reported, not repaired outside the manager boundary.
-
 ## Prohibited mechanisms
 
-No parallel item-level implementation, multiple lock-holding managers, direct
-primary or fixer implementation, extra locks, lock takeover or stale
-classification, polling, sleeps, retry timers, watchers, queues, schedulers,
-registries, replacement fixers, branches, worktrees, or merge orchestration. No
-concurrent developer assignments that overlap in files, contracts, outputs,
-validation side effects, or ordering.
+No branches, worktrees, or merge orchestration: one lock serializes one item in
+one working tree. No replacement fixers, queues, schedulers, watchers, polling,
+or extra locks.
 
 ## Final reporting
 

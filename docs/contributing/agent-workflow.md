@@ -50,9 +50,9 @@ intended behaviour: there is no fallback chain.
 
 ## Working files
 
-Each item gets `docs/working/<YYYY-MM-DD>-<slug>/` containing `brief.md` (new
-features) and the current `plan.md`. Reviews are not persisted: each reviewer
-returns its findings and verdict to the agent that invoked it.
+Each item gets `docs/working/<YYYY-MM-DD>-<slug>/` holding the current
+`plan.md`. Reviews are not persisted: each reviewer returns its findings and
+verdict to the agent that invoked it.
 
 `docs/working/` is Git-ignored and excluded from the VitePress build. Nothing
 there is published, committed, or treated as project documentation. Tracked
