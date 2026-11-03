@@ -6,9 +6,6 @@ permissions:
   - action: edit
     resource: "*"
     effect: deny
-  - action: edit
-    resource: "docs/working/**"
-    effect: allow
   - action: shell
     resource: "*"
     effect: deny
@@ -70,9 +67,8 @@ preference-only nits.
 Your output is findings and a verdict, not an implementation. Do not rewrite the
 design/plan.
 
-When the invoking agent specifies a review artifact path such as
-`docs/working/<item>/review-round-<N>.md`, write your complete review there.
-Files under `docs/working/` are the only files you may write.
+You write no files. Return your findings and verdict in your reply to the agent
+that invoked you.
 
 End with exactly one verdict on the last line:
 

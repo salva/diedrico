@@ -80,10 +80,9 @@ artifacts (including `docs/.vitepress/dist` churn), stage only intended files, a
 commit coherent stable units.
 
 After validation passes and before staging anything, invoke
-`implementation-reviewer` with the absolute approved-plan path, the list of files
-the developer changed, and the review artifact path
-`docs/working/<item>/implementation-review-<N>.md`. It reviews the final state of
-those files against the plan, and it is read-only.
+`implementation-reviewer` with the absolute approved-plan path. It reads the files
+the plan names as they now stand and reviews them against the plan. It is
+read-only and writes nothing; it returns its findings and verdict to you.
 
 - `CHANGES_REQUIRED`: pass its material findings back to `developer` as a new
   assignment, re-run the affected validation, and review again. Stay under the

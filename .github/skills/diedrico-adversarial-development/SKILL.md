@@ -1,14 +1,18 @@
 ---
 name: Diedrico adversarial development
-description: 'Mandatory Diedrico workflow for new features and fixes. Use for bugs, regressions, behavior gaps, review findings, design flaws, architectural issues, new user-visible capabilities, or changes to this workflow: require a written design/plan, adversarial review of every revision, a merit gate, then serialized implementation through the implementation-manager lock.'
+description: 'Mandatory Diedrico workflow for new features and fixes. Use for bugs, regressions, behavior gaps, review findings, design flaws, architectural issues, and new user-visible capabilities: require a written design/plan, adversarial review of every revision, a merit gate, then serialized implementation through the implementation-manager lock. It does not govern its own modification unless the operator explicitly asks.'
 ---
 
 # Diedrico adversarial development
 
 Use this workflow before implementing any non-trivial change in Diedrico: new
-features, bugs, regressions, review findings, architectural flaws, behavior
-gaps, and changes to this workflow itself. It applies to both "make it work"
-and "make it exist".
+features, bugs, regressions, review findings, architectural flaws, and behavior
+gaps. It applies to both "make it work" and "make it exist".
+
+It does not govern its own modification. Editing this skill, an agent profile, or
+a model routing is meta-work, and follows this workflow only when the operator
+explicitly asks for it: a broken workflow cannot run the loop that would repair
+it.
 
 Not required for typo fixes, formatting-only edits, dependency bumps, or
 single-line corrections with no design choice, unless the user frames the work
@@ -49,14 +53,14 @@ single item the primary is a one-item coordinator and drives the same workflow.
 ## Working files
 
 Create one directory per item: `docs/working/<YYYY-MM-DD>-<slug>/`, holding the
-current design/plan, `review-round-<N>.md` from `reviewer`,
-`review-round-<N>-reviewer-2.md` from `reviewer-2`, and
-`implementation-review-<N>.md` from `implementation-reviewer`.
+current design/plan and, for new features, the brief.
 
 - `docs/working/` is Git-ignored and must never be committed. It is not a
   substitute for canonical documentation.
 - Every revised plan is self-contained; a reader must not need earlier
   revisions or the review history.
+- Reviews are not persisted. Each reviewer returns its findings and verdict to
+  the agent that invoked it.
 - Reviews stay factual and actionable. Do not preserve weak critiques as
   required work.
 
@@ -130,10 +134,10 @@ before writing, so the two passes stay independent.
 1. Ask `designer` to write or revise the self-contained plan at the item's
    unique path. For revisions, provide all confirmed material findings.
 2. Invoke `reviewer` and `reviewer-2` on the complete current plan concurrently,
-   and await both before triaging.
-3. Triage every finding using the rules below. A round closes only when both
-   reviewers return `NO_MATERIAL_FINDINGS`; when they contradict each other,
-   evidence wins and the fixer is the arbiter.
+   and await both before triaging. Each returns its findings and verdict to you;
+   nothing is written to `docs/working/`.
+3. Triage every finding using the rules below. When the reviewers contradict each
+   other, evidence wins and the fixer is the arbiter.
 4. If any finding is material, decide whether the periodic merit gate is due.
    When it is not due, revise and repeat directly. When it is due, continue to
    revision only on `WORTH_CONTINUING`.
@@ -141,13 +145,9 @@ before writing, so the two passes stay independent.
    material finding remains, run the mandatory final merit gate. Review closure
    alone never authorizes freshness or implementation.
 
-The loop has a fixed cap of three review rounds. If a third round still closes
-with confirmed material findings, stop and escalate to the project owner with the
-findings and their evidence. Do not open a fourth round.
-
 ## Merit gate
 
-The fixer, not the designer or reviewer, owns this decision. Apply it twice:
+The fixer, not the designer or the reviewers, owns this decision. Apply it twice:
 
 - **Periodically during revision:** reassess immediately when findings recur, a
   revision widens or shifts scope, adds a material mechanism, or pulls a
@@ -236,7 +236,7 @@ may the fixer record this approval:
 
 ```text
 Plan approval:
-Review closure: <verdict and round/review artifact>
+Review closure: <both reviewers' verdicts>
 Final merit outcome: WORTH_IMPLEMENTING
 Supporting evidence: <concise evidence covering the four merit conditions>
 Examined HEAD: <commit>
@@ -267,14 +267,15 @@ check reserves nothing; the manager must still acquire the lock.
 Every approved fixer invokes the `implementation-manager` subagent with the
 absolute approved-plan path. No primary and no fixer inspects the lock and
 implements around it. The lock file is
-`<repository-root>/.opencode/locks/implementation-manager-working.md`, resolved to
-an absolute path; it is the only serialization boundary. Every path this workflow
-names is absolute.
+`.opencode/locks/implementation-manager-working.md` at the repository root, and
+both it and the approved-plan path are absolute; every other path this workflow
+names is relative to the repository root. The lock is the only serialization
+boundary.
 
 The manager must:
 
 1. Atomically acquire the lock before reading the plan or mutating anything.
-   Create `<repository-root>/.opencode/locks/` if it does not exist. On
+   Create `.opencode/locks/` if it does not exist. On
    contention it edits and delegates nothing and returns the existing lock
    description. Owner-override exception: when the invoking assignment quotes an
    explicit project-owner instruction that an existing lock was wrongly acquired
@@ -296,12 +297,11 @@ The manager must:
    shared validation, staging, or commit while any developer is active.
 5. Run all validation the plan requires and handle generated artifacts.
    Developer-run checks are progress evidence, not substitutes.
-6. Invoke `implementation-reviewer` with the absolute plan path, the list of
-   files the developer changed, and the artifact path
-   `docs/working/<item>/implementation-review-<N>.md`. On `CHANGES_REQUIRED`,
-   return the material findings to `developer` and repeat validation and review
-   under the same lock. Stage only intended paths and commit coherent stable
-   units only after `READY_TO_COMMIT` for the current state.
+6. Invoke `implementation-reviewer` with the absolute plan path. It reviews the
+   files the plan names, as they now stand. On `CHANGES_REQUIRED`, return the
+   material findings to `developer` and repeat validation and review under the
+   same lock. Stage only intended paths and commit coherent stable units only
+   after `READY_TO_COMMIT` for the current state.
 7. Prepare the final report with command results and commit hashes. Before
    normal release, confirm completed work is stable and committed and no
    plan-owned uncommitted mutation remains.
@@ -325,9 +325,9 @@ them and does not report what they would already have reported. It checks plan
 fidelity, owning layer, contract completeness, documentation updates, leftovers,
 and whether the new tests assert behavior or only shape.
 
-It is read-only and has no shell: the manager supplies the changed-file list and
-the reviewer reads the final state of those files. It never edits, stages,
-commits, or removes the lock.
+It is read-only and has no shell. Its scope is the files the plan names, read as
+they now stand; there is no changed-file list to hand over. It never edits,
+stages, commits, or removes the lock.
 
 Its verdict governs the commit. `READY_TO_COMMIT` for the current state is
 required before staging; `CHANGES_REQUIRED` sends the material findings back to
