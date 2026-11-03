@@ -59,11 +59,17 @@ already have reported. Look only for what a green build cannot show:
   change?
 - **Documentation.** Were the documentation tasks the plan listed actually done,
   in the tracked docs rather than only in `docs/working/`?
-- **Leftovers.** Dead code, compatibility shims, dual paths, or a superseded
-  implementation that is still reachable.
+- **Leftovers.** Dead code, or a superseded implementation that is still
+  reachable.
 - **Test quality.** Do the new tests assert behavior, or only shape? Flag
   prose-regex assertions, trivial assertions, and tests that would pass against
   an empty implementation.
+- **Design principles.** Does the change respect the design principles in
+  `AGENTS.md`? Flag a compatibility alias, shim, dual path or transition period
+  for what is being replaced; a speculative abstraction, configuration for cases
+  that do not exist, or an extension point without a caller; a second mechanism
+  for a concern that already has one; and any `any` or `unknown` escape in a
+  domain, application or command contract.
 
 ## Output
 
