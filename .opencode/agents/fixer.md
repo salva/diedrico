@@ -3,6 +3,12 @@ description: End-to-end owner of one Diedrico change. Use for a feature, bug, re
 mode: all
 model: opencode/deepseek-v4.1-flash-free
 permissions:
+  - action: edit
+    resource: "*"
+    effect: deny
+  - action: edit
+    resource: "docs/working/**"
+    effect: allow
   - action: subagent
     resource: "*"
     effect: allow

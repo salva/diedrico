@@ -3,6 +3,12 @@ description: Writes and revises Diedrico design/plans under docs/working/ before
 mode: subagent
 model: opencode/deepseek-v4.1-flash-free
 permissions:
+  - action: edit
+    resource: "*"
+    effect: deny
+  - action: edit
+    resource: "docs/working/**"
+    effect: allow
   - action: subagent
     resource: "*"
     effect: deny

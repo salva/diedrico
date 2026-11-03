@@ -258,9 +258,9 @@ only serialization boundary.
 
 The manager must:
 
-1. Atomically acquire the lock before reading the plan or mutating anything. On
-   contention it edits and delegates nothing and returns the existing lock
-   description. Owner-override exception: when the invoking assignment quotes an
+1. Atomically acquire the lock before reading the plan or mutating anything.
+   Create `.opencode/locks/` if it does not exist. On contention it edits and
+   delegates nothing and returns the existing lock description. Owner-override exception: when the invoking assignment quotes an
    explicit project-owner instruction that an existing lock was wrongly acquired
    by an unrelated run and must be left untouched, the manager proceeds without
    acquiring it, provided the coordinator guarantees this is the sole writing
@@ -412,6 +412,21 @@ classification, polling, sleeps, retry timers, watchers, queues, schedulers,
 registries, replacement fixers, branches, worktrees, or merge orchestration. No
 concurrent developer assignments that overlap in files, contracts, outputs,
 validation side effects, or ordering.
+
+## Preflight
+
+Before relying on this workflow for the first time in a checkout, confirm two
+things with one cheap subagent call:
+
+1. **The configured model is reachable and has quota.** If a subagent launch
+   fails with a usage-limit error, report `BLOCKED`. Never fall back to direct
+   implementation because a delegate could not start.
+2. **The reviewer's write boundary works.** It must be able to write under
+   `docs/working/` and be denied at the repository root. If the in-scope write is
+   denied too, the `edit` resource pattern does not match this installation's
+   path form; fix the agent permissions before running the workflow.
+
+Re-run the preflight after changing models, permissions, or the OpenCode version.
 
 ## Final reporting
 

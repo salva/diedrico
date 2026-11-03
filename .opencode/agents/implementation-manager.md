@@ -25,7 +25,8 @@ returns**.
 
 Lock protocol, in order:
 
-1. Before reading the plan, atomically create
+1. Before reading the plan, create the lock directory if it does not exist
+   (`mkdir -p .opencode/locks`), then atomically create
    `.opencode/locks/implementation-manager-working.md` from the repository root
    with noclobber semantics. It contains the plan path, timestamp, and a concise
    work description.

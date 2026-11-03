@@ -19,7 +19,7 @@ did.
 | Agent | Job | May write |
 | --- | --- | --- |
 | `fixer` | Owns one item end to end: delegation, triage, merit gate, freshness, read-only reconciliation | `docs/working/` only |
-| `designer` | Writes and revises the design/plan | repository |
+| `designer` | Writes and revises the design/plan | `docs/working/` only |
 | `reviewer` | Adversarial review of every plan revision; emits `NO_MATERIAL_FINDINGS` or `MATERIAL_FINDING_FOUND` | `docs/working/` only |
 | `implementation-manager` | Sole orchestrator of mutation, validation, staging, commits | repository, under the lock |
 | `developer` | Implements tasks assigned by the manager | repository |
@@ -27,6 +27,12 @@ did.
 A primary session (Build) acts as coordinator and launches one `fixer` per item.
 Only `implementation-manager` touches implementation, and only while holding
 `.opencode/locks/implementation-manager-working.md`.
+
+All five profiles are pinned to `opencode/deepseek-v4.1-flash-free`. That model
+has a usage quota: when it is exhausted, every subagent launch fails until it
+resets or you switch the `model:` line in the five files to a paid equivalent
+(`opencode-go/deepseek-v4.1-flash`). Changing models requires re-running the
+preflight described in the skill.
 
 ## Working files
 
