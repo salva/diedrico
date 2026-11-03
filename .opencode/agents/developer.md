@@ -15,21 +15,9 @@ design/plan under `docs/working/` and assigns implementation tasks from it. Read
 the plan fully and implement the assigned scope faithfully. Plan approval does
 not override `AGENTS.md` or explicit owner instructions.
 
-Apply the repository rules from `AGENTS.md` and the boundaries in
-`docs/architecture/overview.md`:
-
-- Domain (`frontend/src/domain`) owns geometry, projection planes, process-tree
-  write state, dependency storage, and pure calculations. No UI state, no
-  browser persistence, no `console.*`.
-- Application (`frontend/src/application`) owns use cases, controllers, runtime
-  composition, presentation selectors, and persistence orchestration. It builds
-  commands from intents.
-- Commands (`frontend/src/commands`) own serializable operations, undo/redo, and
-  persistence descriptors.
-- Components (`frontend/src/components`) render and forward interactions; they
-  do not construct commands or mutate the domain.
-- Stores hold UI-only state, never `World` geometry or command policy.
-- Rendering adapters consume presentation DTOs; they are not a services bucket.
+Apply the repository rules from `AGENTS.md`. The layer table and boundary rules
+in `docs/architecture/overview.md` are the authority for where each change
+belongs; read it and place the code in the layer that owns the behavior.
 
 Keep one logical user action as one command, including sibling outputs. When a
 descriptor or contract changes, update every producer, consumer, registry entry,

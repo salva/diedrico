@@ -9,7 +9,7 @@ The binding instructions live in the repository, not here:
 - `.github/skills/diedrico-adversarial-development/SKILL.md` — the workflow:
   roles, design requirements, review loop, merit gate, freshness check, lock
   protocol, dispositions.
-- `.opencode/agents/` — the five agent profiles that implement it.
+- `.opencode/agents/` — the seven agent profiles that implement it.
 
 This page only explains how the parts fit, so a human can review what an agent
 did.
@@ -20,24 +20,40 @@ did.
 | --- | --- | --- |
 | `fixer` | Owns one item end to end: delegation, triage, merit gate, freshness, read-only reconciliation | `docs/working/` only |
 | `designer` | Writes and revises the design/plan | `docs/working/` only |
-| `reviewer` | Adversarial review of every plan revision; emits `NO_MATERIAL_FINDINGS` or `MATERIAL_FINDING_FOUND` | `docs/working/` only |
-| `implementation-manager` | Sole orchestrator of mutation, validation, staging, commits | repository, under the lock |
+| `reviewer` | Judgment review of every plan revision: root cause, layer ownership, scope, merit; emits `NO_MATERIAL_FINDINGS` or `MATERIAL_FINDING_FOUND` | `docs/working/` only |
+| `reviewer-2` | Mechanical verification of every plan revision: cited paths, symbols, commands and tests exist, criteria are falsifiable; same verdict vocabulary | `docs/working/` only |
+| `implementation-manager` | Sole orchestrator of mutation, validation, implementation review, staging, commits | repository, under the lock |
+| `implementation-reviewer` | Read-only review of developer output against the approved plan, inside the manager's lock; emits `READY_TO_COMMIT` or `CHANGES_REQUIRED` | `docs/working/` only |
 | `developer` | Implements tasks assigned by the manager | repository |
 
 A primary session (Build) acts as coordinator and launches one `fixer` per item.
 Only `implementation-manager` touches implementation, and only while holding
-`.opencode/locks/implementation-manager-working.md`.
+`<repository-root>/.opencode/locks/implementation-manager-working.md`.
 
-All five profiles are pinned to `opencode/deepseek-v4.1-flash-free`. That model
-has a usage quota: when it is exhausted, every subagent launch fails until it
-resets or you switch the `model:` line in the five files to a paid equivalent
-(`opencode-go/deepseek-v4.1-flash`). Changing models requires re-running the
-preflight described in the skill.
+Each profile is pinned to an `opencode-go` model chosen for its task profile.
+Reviewers use a family distinct from the author they review, so blind spots do not
+correlate:
+
+| Agent | Model |
+| --- | --- |
+| `fixer` | `opencode-go/deepseek-v4.1-flash` |
+| `designer` | `opencode-go/deepseek-v4-pro` |
+| `reviewer` | `opencode-go/glm-5.3` |
+| `reviewer-2` | `opencode-go/gpt-6-luna` |
+| `implementation-reviewer` | `opencode-go/glm-5.3-flash` |
+| `implementation-manager` | `opencode-go/deepseek-v4.1-flash` |
+| `developer` | `opencode-go/deepseek-v4.1-flash` |
+
+The `model:` line in each agent file is the authority; this table only explains
+the choice. A model that is unavailable fails loudly at launch, which is the
+intended behaviour: there is no fallback chain.
 
 ## Working files
 
 Each item gets `docs/working/<YYYY-MM-DD>-<slug>/` containing `brief.md` (new
-features), the current `plan.md`, and one `review-round-<N>.md` per review.
+features), the current `plan.md`, `review-round-<N>.md` and
+`review-round-<N>-factcheck.md` per review round, and
+`implementation-review-<N>.md` per implementation review.
 
 `docs/working/` is Git-ignored and excluded from the VitePress build. Nothing
 there is published, committed, or treated as project documentation. Tracked
@@ -57,7 +73,8 @@ The full list is in the skill. The parts reviewers check hardest:
 
 ## Gates
 
-1. **Review closure** — no confirmed material finding remains.
+1. **Review closure** — no confirmed material finding remains, from both
+   `reviewer` and `reviewer-2`, which review every revision concurrently.
 2. **Merit** — `WORTH_IMPLEMENTING`: solves the problem at the owning layer, is
    net simpler, follows `AGENTS.md`, and stays in scope. Review closure alone
    never authorizes implementation.
@@ -75,7 +92,9 @@ See [Testing](testing.md).
 
 ## Changing the workflow
 
-Workflow edits go through the workflow: write the plan, have the reviewer
-attack it, then implement. For skill or agent-prompt edits, also follow the
-OpenCode frontmatter conventions and keep this page aligned with what the files
+The workflow governs work on Diedrico, not work on itself. Editing the skill, an
+agent profile, or a model routing is meta-work: the primary session makes those
+changes directly on the project owner's instruction, because a broken workflow
+cannot run the loop that would repair it. Keep the OpenCode frontmatter
+conventions, and keep `AGENTS.md` and this page aligned with what the files
 actually say.

@@ -36,9 +36,9 @@ Read and apply, in this order:
 
 Non-negotiable design constraints:
 
-- Domain code owns geometry and pure calculations. Application use cases and
-  controllers translate intents into commands. Components render state and
-  forward interactions. Rendering adapters consume presentation DTOs.
+- The layer that owns each new behavior is the one named in the layer table of
+  `docs/architecture/overview.md`. State it explicitly in the plan and show that
+  the boundary does not leak.
 - One logical user action is one command, including its sibling outputs and
   process actions, so undo and redo stay chronological and consistent.
 - Persistence replays committed command descriptors through the registry into a

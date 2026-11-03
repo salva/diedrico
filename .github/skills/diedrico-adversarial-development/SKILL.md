@@ -25,8 +25,10 @@ policy.
 | Coordinator | primary | Accepts the request, assigns one working directory per item, launches and tracks one `fixer` per item, records exact returned task IDs and dispositions, decides when a waiting fixer may resume. Never designs, reviews, or implements. |
 | Fixer | `fixer` | One item end to end: delegation, finding triage, merit gate, freshness check, read-only reconciliation after manager return. Writes planning artifacts only; never implementation edits, validation, staging, or commits. |
 | Designer | `designer` | Writes and revises the item's design/plan. |
-| Reviewer | `reviewer` | Adversarially reviews every current design/plan revision. |
-| Implementation manager | `implementation-manager` | Sole implementation orchestrator and the only agent that invokes `developer`. Its lock covers all mutation, required validation, generated artifacts, staging, commits, and stabilization. |
+| Judgment reviewer | `reviewer` | Judges every current design/plan revision: root cause, layer ownership, scope discipline, merit. |
+| Mechanical verifier | `reviewer-2` | Verifies every current revision's citations: paths, symbols, commands, tests, and falsifiable acceptance criteria. |
+| Implementation manager | `implementation-manager` | Sole implementation orchestrator and the only agent that invokes `developer`. Its lock covers all mutation, required validation, implementation review, generated artifacts, staging, commits, and stabilization. |
+| Implementation reviewer | `implementation-reviewer` | Read-only review of developer output against the approved plan, inside the manager's lock. |
 | Developer | `developer` | Leaf implementer for manager-assigned plan tasks. |
 
 Each item completes its own design/review loop. Items that may collide still
@@ -47,7 +49,9 @@ single item the primary is a one-item coordinator and drives the same workflow.
 ## Working files
 
 Create one directory per item: `docs/working/<YYYY-MM-DD>-<slug>/`, holding the
-current design/plan and one file per review round (`review-round-<N>.md`).
+current design/plan, `review-round-<N>.md` from `reviewer`,
+`review-round-<N>-factcheck.md` from `reviewer-2`, and
+`implementation-review-<N>.md` from `implementation-reviewer`.
 
 - `docs/working/` is Git-ignored and must never be committed. It is not a
   substitute for canonical documentation.
@@ -118,19 +122,27 @@ The plan must include:
 
 ## Adversarial review and revision loop
 
-The fixer uses `designer` for all plan authoring and `reviewer` for every plan
-review:
+The fixer uses `designer` for all plan authoring, and reviews every revision with
+`reviewer` and `reviewer-2` concurrently. Both read the same revision, and neither
+sees the other's findings before writing, so the two passes stay independent.
 
 1. Ask `designer` to write or revise the self-contained plan at the item's
    unique path. For revisions, provide all confirmed material findings.
-2. Invoke `reviewer` on the complete current plan.
-3. Triage every finding using the rules below.
+2. Invoke `reviewer` and `reviewer-2` on the complete current plan concurrently,
+   and await both before triaging.
+3. Triage every finding using the rules below. A round closes only when both
+   reviewers return `NO_MATERIAL_FINDINGS`; when they contradict each other,
+   evidence wins and the fixer is the arbiter.
 4. If any finding is material, decide whether the periodic merit gate is due.
    When it is not due, revise and repeat directly. When it is due, continue to
    revision only on `WORTH_CONTINUING`.
 5. When every finding is false, minor, or explicitly deferred and no confirmed
    material finding remains, run the mandatory final merit gate. Review closure
    alone never authorizes freshness or implementation.
+
+The loop has a fixed cap of three review rounds. If a third round still closes
+with confirmed material findings, stop and escalate to the project owner with the
+findings and their evidence. Do not open a fourth round.
 
 ## Merit gate
 
@@ -253,14 +265,17 @@ check reserves nothing; the manager must still acquire the lock.
 
 Every approved fixer invokes the `implementation-manager` subagent with the
 absolute approved-plan path. No primary and no fixer inspects the lock and
-implements around it. `.opencode/locks/implementation-manager-working.md` is the
-only serialization boundary.
+implements around it. The lock file is
+`<repository-root>/.opencode/locks/implementation-manager-working.md`, resolved to
+an absolute path; it is the only serialization boundary. Every path this workflow
+names is absolute.
 
 The manager must:
 
 1. Atomically acquire the lock before reading the plan or mutating anything.
-   Create `.opencode/locks/` if it does not exist. On contention it edits and
-   delegates nothing and returns the existing lock description. Owner-override exception: when the invoking assignment quotes an
+   Create `<repository-root>/.opencode/locks/` if it does not exist. On
+   contention it edits and delegates nothing and returns the existing lock
+   description. Owner-override exception: when the invoking assignment quotes an
    explicit project-owner instruction that an existing lock was wrongly acquired
    by an unrelated run and must be left untouched, the manager proceeds without
    acquiring it, provided the coordinator guarantees this is the sole writing
@@ -278,23 +293,46 @@ The manager must:
 4. Await every developer in a concurrent group and reconcile each result plus
    the combined repository state against the assigned scopes and the plan. No
    shared validation, staging, or commit while any developer is active.
-5. Run all validation the plan requires, handle generated artifacts, stage only
-   intended paths, and commit coherent stable units. Developer-run checks are
-   progress evidence, not substitutes.
-6. Prepare the final report with command results and commit hashes. Before
+5. Run all validation the plan requires and handle generated artifacts.
+   Developer-run checks are progress evidence, not substitutes.
+6. Invoke `implementation-reviewer` with the absolute plan path, the list of
+   files the developer changed, and the artifact path
+   `docs/working/<item>/implementation-review-<N>.md`. On `CHANGES_REQUIRED`,
+   return the material findings to `developer` and repeat validation and review
+   under the same lock. Stage only intended paths and commit coherent stable
+   units only after `READY_TO_COMMIT` for the current state.
+7. Prepare the final report with command results and commit hashes. Before
    normal release, confirm completed work is stable and committed and no
    plan-owned uncommitted mutation remains.
-7. On partial completion or redesign-worthy learning after edits, validate and
+8. On partial completion or redesign-worthy learning after edits, validate and
    commit only coherent completed units, then finish or remove only this run's
    incomplete uncommittable changes while preserving pre-existing work. If safe
    stabilization is impossible, retain the lock and escalate.
-8. Remove only the lock this run created, as the final mutation, then return the
+9. Remove only the lock this run created, as the final mutation, then return the
    prepared report. Abnormal termination may leave the lock; no other agent
    removes or takes it over.
 
 The lock spans tracked edits, generated outputs, mutating validation commands,
 staging, commit hooks, commits, and final cleanup. Concurrent developers stay
 inside one lock holder's single item.
+
+## Implementation review
+
+`implementation-reviewer` covers what a green build cannot. The manager already
+ran the tests, typecheck, lint and docs build, so the reviewer does not re-run
+them and does not report what they would already have reported. It checks plan
+fidelity, owning layer, contract completeness, documentation updates, leftovers,
+and whether the new tests assert behavior or only shape.
+
+It is read-only and has no shell: the manager supplies the changed-file list and
+the reviewer reads the final state of those files. It never edits, stages,
+commits, or removes the lock.
+
+Its verdict governs the commit. `READY_TO_COMMIT` for the current state is
+required before staging; `CHANGES_REQUIRED` sends the material findings back to
+`developer` as a new assignment under the same lock. A finding that the plan
+itself is wrong, rather than the implementation, returns the item to `designer`
+and the review loop instead.
 
 ## Interrupted continuation
 
@@ -412,21 +450,6 @@ classification, polling, sleeps, retry timers, watchers, queues, schedulers,
 registries, replacement fixers, branches, worktrees, or merge orchestration. No
 concurrent developer assignments that overlap in files, contracts, outputs,
 validation side effects, or ordering.
-
-## Preflight
-
-Before relying on this workflow for the first time in a checkout, confirm two
-things with one cheap subagent call:
-
-1. **The configured model is reachable and has quota.** If a subagent launch
-   fails with a usage-limit error, report `BLOCKED`. Never fall back to direct
-   implementation because a delegate could not start.
-2. **The reviewer's write boundary works.** It must be able to write under
-   `docs/working/` and be denied at the repository root. If the in-scope write is
-   denied too, the `edit` resource pattern does not match this installation's
-   path form; fix the agent permissions before running the workflow.
-
-Re-run the preflight after changing models, permissions, or the OpenCode version.
 
 ## Final reporting
 
