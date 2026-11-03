@@ -1,7 +1,7 @@
 ---
 description: Writes and revises Diedrico design/plans under docs/working/ before adversarial review. Use for new features, fixes, and architectural changes that need a written plan first.
 mode: subagent
-model: opencode/deepseek-v4.1-flash-free
+model: opencode-go/deepseek-v4-pro
 permissions:
   - action: edit
     resource: "*"

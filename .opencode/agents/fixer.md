@@ -1,7 +1,7 @@
 ---
 description: End-to-end owner of one Diedrico change. Use for a feature, bug, regression, behavior gap, review finding, or architectural issue that needs design, adversarial review, a merit gate, freshness checking, and serialized implementation.
 mode: all
-model: opencode/deepseek-v4.1-flash-free
+model: opencode-go/deepseek-v4.1-flash
 permissions:
   - action: edit
     resource: "*"

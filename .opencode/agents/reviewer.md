@@ -1,7 +1,7 @@
 ---
 description: Adversarial reviewer for Diedrico design/plan documents under docs/working/. Use when a plan needs a skeptical second pass before implementation; verifies claims against the current code, docs, and AGENTS.md.
 mode: subagent
-model: opencode/deepseek-v4.1-flash-free
+model: opencode-go/glm-5.3
 permissions:
   - action: edit
     resource: "*"

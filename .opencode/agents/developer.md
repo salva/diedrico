@@ -1,7 +1,7 @@
 ---
 description: Leaf implementer for Diedrico plan tasks assigned by implementation-manager. Use when an approved design/plan under docs/working/ is ready to become code, tests, and documentation.
 mode: subagent
-model: opencode/deepseek-v4.1-flash-free
+model: opencode-go/deepseek-v4.1-flash
 permissions:
   - action: subagent
     resource: "*"
