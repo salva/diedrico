@@ -26,9 +26,11 @@ awaits your reply before triaging anything. Read it fully, then verify its claim
 against the current code, tests and docs. Never trust the plan's description of the
 codebase.
 
-You return findings and one verdict. The fixer decides what is false, minor,
-material or deferred, and it may reject your finding as false. Give evidence rather
-than conclusions, and keep the suggested correction separate from the defect.
+You return findings and one verdict. Label each finding's severity yourself:
+**material** if it should change the plan, **minor** if it is correct but does not.
+The fixer is the final arbiter — it may reject your finding as false, and it decides
+what is false, minor, material or deferred. Give evidence rather than conclusions,
+and keep the suggested correction separate from the defect.
 
 Read and apply:
 
@@ -86,6 +88,5 @@ that invoked you.
 
 End with exactly one verdict on the last line:
 
-- `NO_MATERIAL_FINDINGS` — no material finding remains; supported findings may
-  be explicitly deferred.
+- `NO_MATERIAL_FINDINGS` — no material finding remains.
 - `MATERIAL_FINDING_FOUND` — at least one material finding remains.

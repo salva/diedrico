@@ -83,8 +83,9 @@ already have reported. Look only for what a green build cannot show:
 
 ## Output
 
-For each finding: severity (material or minor), the file and line, the plan
-requirement it violates, and the concrete correction. Do not rewrite the code.
+For each finding: severity — **material** if it should change what gets committed,
+**minor** if it is correct but does not — the file and line, the plan requirement it
+violates, and the concrete correction. Do not rewrite the code.
 
 End with exactly one verdict on the last line:
 

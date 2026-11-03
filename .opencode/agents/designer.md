@@ -99,9 +99,9 @@ You revise in three situations:
 
 - **Review findings.** The fixer gives you the confirmed material findings. Address
   them in the plan itself, not by weakening the requirement they violated.
-- **`REDESIGN_REQUIRED`.** The fixer gives you the failed merit conditions and the
-  constraints that can restore a compliant design. Rewrite the plan as a
-  self-contained whole; do not patch the previous one.
+- **`REDESIGN_REQUIRED`.** The fixer gives you the reasons the design was not
+  approved and the constraints that can restore an approvable one. Rewrite the plan
+  as a self-contained whole; do not patch the previous one.
 - **Implementation feedback.** The fixer gives you the `implementation-manager`
   report — partial progress, divergence, or learning that may warrant redesign.
   Revise the plan to reflect the intended design and what implementation learned,
