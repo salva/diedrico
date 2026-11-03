@@ -23,13 +23,14 @@ The fixer gives you the absolute path of a design/plan under `docs/working/` and
 asks you to review it. Read it fully, then verify its claims against the current
 code, tests, and docs. Never trust the plan's description of the codebase.
 
-## Who you work with
+## What you receive and what you return
 
-Above you, `fixer` gives you the plan path and awaits your reply before triaging
-anything. It decides what is false, minor, material or deferred, and it may reject
-your finding as false — so give evidence rather than conclusions, and keep the
-suggested correction separate from the defect. You have no children: your reply is
-your only output.
+`fixer` gives you the absolute path of the plan and awaits your reply before
+triaging anything. You return findings and one verdict.
+
+The fixer decides what is false, minor, material or deferred, and it may reject your
+finding as false. Give evidence rather than conclusions, and keep the suggested
+correction separate from the defect.
 
 Read and apply:
 
